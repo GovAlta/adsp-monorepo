@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { GoAButton, GoAModal, GoAButtonGroup, GoAButtonType } from '@abgov/react-components-new';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
@@ -37,15 +37,15 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
 
   const enumerators = useContext(JsonFormContext);
   const formStepperCtx = useContext(JsonFormsStepperContext);
+  const { validatePage, goToPage } = formStepperCtx as JsonFormsStepperContextProps;
 
-  const { categories, isOnReview, isValid } = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
+  const { categories, isOnReview, isValid, activeId } = (
+    formStepperCtx as JsonFormsStepperContextProps
+  ).selectStepperState();
 
   const submitFormFunction = enumerators?.submitFunction.get('submit-form');
   const submitForm = submitFormFunction && submitFormFunction();
-  const optionProps = (uischema.options as FormPageOptionProps) || {};
   const [isOpen, setIsOpen] = useState(false);
-  const [isSelected, setIsSelected] = useState(false);
-  const [selectedPage, setSelectedPage] = useState(0);
 
   const handleSubmit = () => {
     if (submitForm) {
@@ -59,8 +59,9 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
     setIsOpen(false);
   };
 
-  // eslint-disable-next-line
-  const options = (uischema as any).options;
+  useEffect(() => {
+    validatePage(activeId);
+  }, [data]);
 
   return (
     <div data-testid="form-stepper-test-wrapper">
@@ -80,16 +81,14 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
                 data,
               };
 
-              if (index === selectedPage && !isOnReview) {
+              if (index === activeId && !isOnReview) {
                 return (
                   <div
                     data-testid={`step_${index}-content-pages`}
                     key={`${category.label}`}
                     style={{ marginTop: '1.5rem' }}
                   >
-                    {index > 0 && (
-                      <BackButton testId="back-button" link={() => setSelectedPage(index - 1)} text="Back" />
-                    )}
+                    {index > 0 && <BackButton testId="back-button" link={() => goToPage(activeId - 1)} text="Back" />}
                     <PageRenderPadding>
                       <h3>
                         Step {index + 1} of {categories.length}
@@ -100,8 +99,8 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
                       {index !== categories.length - 1 ? (
                         <GoAButton
                           type="submit"
-                          onClick={() => setSelectedPage(index + 1)}
-                          disabled={!category.isValid}
+                          onClick={() => goToPage(activeId + 1)}
+                          disabled={!(category.isValid && category.isCompleted)}
                           testId="pages-save-continue-btn"
                         >
                           Save and continue

@@ -22,6 +22,7 @@ export interface JsonFormsStepperContextProps {
   selectPath: () => string;
   selectCategory: (id: number) => CategoryState;
   goToPage: (id: number, updateCategoryId?: number) => void;
+  validatePage: (id: number) => void;
   isProvided?: boolean;
 }
 
@@ -59,6 +60,7 @@ const createStepperContextInitData = (
     path,
     isOnReview: activeId === categories?.length,
     isValid: valid === true,
+    maxReachedStep: 0,
   };
 };
 
@@ -93,6 +95,12 @@ export const JsonFormsStepperContextProvider = ({
       selectCategory: (id: number) => {
         return stepperState.categories[id];
       },
+      validatePage: (id: number) => {
+        stepperDispatch({
+          type: 'update/category',
+          payload: { errors: ctx?.core?.errors, id, ajv },
+        });
+      },
       goToPage: (id: number, updateCategoryId?: number) => {
         ajv.validate(schema, ctx.core?.data || {});
 
@@ -116,23 +124,15 @@ export const JsonFormsStepperContextProvider = ({
 
   useEffect(() => {
     if (context?.isProvided === true) {
+      /* The block is used to cache the state for the tenant web app review editor  */
       stepperDispatch({
         type: 'update/uischema',
         payload: { state: createStepperContextInitData({ ...StepperProps, activeId: stepperState?.activeId }) },
       });
+      context.goToPage(stepperState.maxReachedStep);
+      context.goToPage(stepperState.activeId);
     }
   }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema)]);
-
-  useEffect(() => {
-    const newState = createStepperContextInitData({ ...StepperProps, activeId: stepperState?.activeId });
-
-    if (JSON.stringify(newState) !== JSON.stringify(stepperState)) {
-      stepperDispatch({
-        type: 'update/uischema',
-        payload: { state: newState },
-      });
-    }
-  }, [StepperProps]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
 };
