@@ -28,6 +28,7 @@ export interface StepperContextDataType {
   path: string;
   isOnReview: boolean;
   isValid: boolean;
+  maxReachedStep: number; // track the max step reached
 }
 
 export type CategorizationElement = Category | Categorization;
