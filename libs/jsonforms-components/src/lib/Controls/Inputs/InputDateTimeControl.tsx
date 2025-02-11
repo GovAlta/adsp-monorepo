@@ -13,7 +13,6 @@ import {
 export type GoAInputDateTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
-  // eslint-disable-next-line
   const { data, config, id, enabled, uischema, isVisited, errors, schema, label, setIsVisited } = props;
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
@@ -48,11 +47,10 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
         });
       }}
       onBlur={(name: string, value: string) => {
-        /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
-        /* istanbul ignore next */
+
         onBlurForDateControl({
           name,
           value,

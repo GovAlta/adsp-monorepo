@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { GoAGroupControlComponent } from './GroupControl';
+import { GoAGroupControlComponent, withIsStepper } from './GroupControl';
 import { GroupLayout, LayoutProps } from '@jsonforms/core';
 import { render, screen } from '@testing-library/react';
 
@@ -69,7 +69,7 @@ describe('Group Layout tests', () => {
     },
   };
 
-  const staticProps: LayoutProps = {
+  const staticProps: LayoutProps & withIsStepper = {
     uischema: groupUiSchema,
     schema: {},
     enabled: true,
@@ -79,9 +79,10 @@ describe('Group Layout tests', () => {
     data: '',
     visible: true,
     direction: 'row',
+    isStepperReview: false,
   };
 
-  const staticPropsThickAccent: LayoutProps = {
+  const staticPropsThickAccent: LayoutProps & withIsStepper = {
     uischema: groupUiSchema,
     schema: {},
     enabled: true,
@@ -91,9 +92,10 @@ describe('Group Layout tests', () => {
     data: '',
     visible: true,
     direction: 'row',
+    isStepperReview: false,
   };
 
-  const staticPropsThinAccent: LayoutProps = {
+  const staticPropsThinAccent: LayoutProps & withIsStepper = {
     uischema: groupUiSchemaThinAccent,
     schema: {},
     enabled: true,
@@ -103,9 +105,10 @@ describe('Group Layout tests', () => {
     data: '',
     visible: true,
     direction: 'row',
+    isStepperReview: false,
   };
 
-  const staticPropsUndefined: LayoutProps = {
+  const staticPropsUndefined: LayoutProps & withIsStepper = {
     uischema: groupUiSchemaUndefined,
     schema: {},
     enabled: true,
@@ -115,9 +118,10 @@ describe('Group Layout tests', () => {
     data: '',
     visible: true,
     direction: 'row',
+    isStepperReview: false,
   };
 
-  const staticPropsInvalidComponentProps: LayoutProps = {
+  const staticPropsInvalidComponentProps: LayoutProps & withIsStepper = {
     uischema: groupUiSchemaInvalidComponentProps,
     schema: {},
     enabled: true,
@@ -127,6 +131,7 @@ describe('Group Layout tests', () => {
     data: '',
     visible: true,
     direction: 'row',
+    isStepperReview: false,
   };
 
   describe('can create control for GoAGroupControlComponent', () => {

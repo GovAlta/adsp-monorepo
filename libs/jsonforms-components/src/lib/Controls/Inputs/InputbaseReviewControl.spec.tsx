@@ -122,16 +122,7 @@ describe('GoABaseInputReviewComponent', () => {
   it('renders an empty string for undefined data', () => {
     const props = {
       ...baseProps,
-      schema: {
-        ideclare: {
-          type: 'boolean',
-          anyOf: [
-            {
-              enum: [true],
-            },
-          ],
-        },
-      },
+      schema: {},
       data: undefined,
       label: 'test label',
     };
