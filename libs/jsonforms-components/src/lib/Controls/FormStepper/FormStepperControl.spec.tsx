@@ -407,11 +407,6 @@ describe('Form Stepper Control', () => {
       await fireEvent.click(shadowNext!);
       expect(mockDispatch.mock.calls[3].type === 'page/to/index');
       expect(mockDispatch.mock.calls[3].payload === 1);
-
-      // const submit = getByTestId('pages-submit-btn');
-      // expect(submit).toBeInTheDocument();
-      // expect(submit).toBeVisible();
-      // expect(submit.getAttribute('disabled')).toBe('false');
     });
   });
 
