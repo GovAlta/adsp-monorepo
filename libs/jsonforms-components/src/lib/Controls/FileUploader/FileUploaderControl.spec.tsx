@@ -29,6 +29,7 @@ const fileUploaderUiSchema: ControlElement = {
   type: 'Control',
   scope: '#/properties/supportingDoc',
   label: 'Uploader',
+  options: {},
 };
 const dataSchema = {
   type: 'object',
@@ -68,6 +69,22 @@ describe('FileUploaderControl tests', () => {
     expect(element).toBeInTheDocument();
   });
 
+  it('can render file upload control has help text', () => {
+    const uiSchema = {
+      ...fileUploaderUiSchema,
+      options: {
+        ...fileUploaderUiSchema.options,
+        help: 'Help text for file upload',
+      },
+    };
+
+    const { container } = render(getForm(dataSchema, uiSchema));
+
+    const html = container.innerHTML;
+    const hasHelptext = html.includes('Help text for file upload');
+    expect(hasHelptext).toBe(true);
+  });
+
   it('can upload a file', async () => {
     jest.useFakeTimers();
     const renderer = render(getForm(dataSchema, fileUploaderUiSchema));
@@ -89,6 +106,24 @@ describe('FileUploaderControl tests', () => {
     expect(downloadBtn).toBeInTheDocument();
     fireEvent(downloadBtn!, new CustomEvent('_click'));
     expect(mockDownload).toBeCalledTimes(1);
+  });
+
+  it('can click download a file if readonly', () => {
+    const uiSchema = {
+      ...fileUploaderUiSchema,
+      options: {
+        ...fileUploaderUiSchema.options,
+        componentProps: {
+          ...fileUploaderUiSchema?.options?.componentProps,
+          readOnly: true,
+        },
+      },
+    };
+    const renderer = render(getForm(dataSchema, uiSchema));
+    const downloadBtn = renderer.getByTestId('download-icon');
+    expect(downloadBtn).toBeInTheDocument();
+    fireEvent(downloadBtn!, new CustomEvent('_click'));
+    expect(mockDownload).toBeCalled();
   });
 
   it('can delete an uploaded file', () => {
