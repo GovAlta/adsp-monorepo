@@ -1,5 +1,5 @@
 import { adspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError } from '@core-services/core-common';
+import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
 import { ConfigurationEntity } from '../model';
@@ -1732,7 +1732,7 @@ describe('router', () => {
 
       const next = jest.fn();
       await handler(req, res as unknown as Response, next);
-      expect(res.sendStatus).toBeCalled();
+      expect(next).toBeCalledWith(expect.any(UnauthorizedError));
     });
   });
   it('anonymous check http codes', async () => {
