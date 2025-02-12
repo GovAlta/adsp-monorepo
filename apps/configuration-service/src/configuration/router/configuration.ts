@@ -13,6 +13,7 @@ import {
   NotFoundError,
   Results,
   decodeAfter,
+  UnauthorizedError,
 } from '@core-services/core-common';
 import { rateLimit, RateLimitRequestHandler } from 'express-rate-limit';
 import { Request, RequestHandler, Router } from 'express';
@@ -103,37 +104,20 @@ export const getTenantId = (req: Request): AdspId => {
 
 export const assertAuthenticateConfigHandler =
   (configurationServiceId: AdspId, repository: ConfigurationRepository): RequestHandler =>
-  async (req, res, next) => {
+  async (req, _res, next) => {
     try {
       const { namespace, name } = req.params;
 
-      const isRequestNotAllowed = !req.isAuthenticated || !req.user;
-
-      if (!isRequestNotAllowed) {
-        next();
-      } else {
-        if (isRequestNotAllowed && !(req.query?.tenant || req.query?.tenantId)) {
-          res.sendStatus(401);
-        }
-
-        let tenantId = null;
-
-        try {
-          tenantId = getTenantId(req);
-        } catch (err) {
-          res.sendStatus(401);
-        }
-
+      const noUserContext = !req.isAuthenticated || !req.user;
+      if (noUserContext) {
+        const tenantId = getTenantId(req);
         const definition = await getDefinition(configurationServiceId, repository, namespace, name, tenantId);
-
-        if (!definition) {
-          res.sendStatus(401);
-        } else if (definition && !definition.anonymousRead && isRequestNotAllowed) {
-          res.sendStatus(401);
-        } else {
-          next();
+        if (definition?.anonymousRead !== true) {
+          throw new UnauthorizedError('Anonymous access to configuration not allowed.');
         }
       }
+
+      next();
     } catch (err) {
       next(err);
     }
