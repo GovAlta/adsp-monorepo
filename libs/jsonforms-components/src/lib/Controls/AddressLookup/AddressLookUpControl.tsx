@@ -34,11 +34,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const label = typeof uischema?.label === 'string' && uischema.label ? uischema.label : '';
   const defaultAddress = {
-    addressLine1: '',
-    addressLine2: '',
-    municipality: '',
     subdivisionCode: isAlbertaAddress ? 'AB' : '',
-    postalCode: '',
     country: 'CA',
   };
 
@@ -76,6 +72,10 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     } else {
       newAddress = { ...address, [field]: value };
       delete errors[field];
+    }
+
+    if (value === '' && field in newAddress) {
+      delete newAddress[field];
     }
 
     setAddress(newAddress);
