@@ -122,16 +122,7 @@ describe('GoABaseInputReviewComponent', () => {
   it('renders an empty string for undefined data', () => {
     const props = {
       ...baseProps,
-      schema: {
-        ideclare: {
-          type: 'boolean',
-          anyOf: [
-            {
-              enum: [true],
-            },
-          ],
-        },
-      },
+      schema: {},
       data: undefined,
       label: 'test label',
     };
@@ -198,6 +189,17 @@ describe('GoABaseInputReviewComponent', () => {
     const props = {
       ...baseProps,
       data: null,
+    };
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl.textContent).toBe('');
+  });
+
+  it('renders an empty string for null data with skip initial validation', () => {
+    const props = {
+      ...baseProps,
+      data: null,
+      skipInitialValidation: true,
     };
     const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
     const reviewControl = getByTestId('review-control-input-id');

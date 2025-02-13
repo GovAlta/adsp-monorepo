@@ -13,6 +13,7 @@ import {
   NotFoundError,
   Results,
   decodeAfter,
+  UnauthorizedError,
 } from '@core-services/core-common';
 import { rateLimit, RateLimitRequestHandler } from 'express-rate-limit';
 import { Request, RequestHandler, Router } from 'express';
@@ -103,37 +104,20 @@ export const getTenantId = (req: Request): AdspId => {
 
 export const assertAuthenticateConfigHandler =
   (configurationServiceId: AdspId, repository: ConfigurationRepository): RequestHandler =>
-  async (req, res, next) => {
+  async (req, _res, next) => {
     try {
       const { namespace, name } = req.params;
 
-      const isRequestNotAllowed = !req.isAuthenticated || !req.user;
-
-      if (!isRequestNotAllowed) {
-        next();
-      } else {
-        if (isRequestNotAllowed && !(req.query?.tenant || req.query?.tenantId)) {
-          res.sendStatus(401);
-        }
-
-        let tenantId = null;
-
-        try {
-          tenantId = getTenantId(req);
-        } catch (err) {
-          res.sendStatus(401);
-        }
-
+      const noUserContext = !req.isAuthenticated || !req.user;
+      if (noUserContext) {
+        const tenantId = getTenantId(req);
         const definition = await getDefinition(configurationServiceId, repository, namespace, name, tenantId);
-
-        if (!definition) {
-          res.sendStatus(401);
-        } else if (definition && !definition.anonymousRead && isRequestNotAllowed) {
-          res.sendStatus(401);
-        } else {
-          next();
+        if (definition?.anonymousRead !== true) {
+          throw new UnauthorizedError('Anonymous access to configuration not allowed.');
         }
       }
+
+      next();
     } catch (err) {
       next(err);
     }
@@ -156,7 +140,7 @@ export function getConfigurationEntity(
   loadDefinition: boolean = true,
   requestCore = (_req: Request): boolean => false
 ): RequestHandler {
-  return async (req, _res, next) => {
+  return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'get-entity-time');
 
@@ -165,27 +149,38 @@ export function getConfigurationEntity(
       const getCore = requestCore(req);
       const tenantId = getTenantId(req);
 
+      // Handle the rest in a function.
+      // The rate limit handler uses the next callback, so we can't just proceed assuming it's done after the call.
+      const handle = async (err?: unknown) => {
+        if (err) {
+          next(err);
+        } else {
+          const definition = loadDefinition
+            ? await getDefinition(configurationServiceId, repository, namespace, name, tenantId)
+            : undefined;
+
+          const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition);
+
+          if (req.isAuthenticated && user) {
+            if (!entity.canAccess(user)) {
+              throw new UnauthorizedUserError('access configuration', user);
+            }
+          }
+
+          req[ENTITY_KEY] = entity;
+          end();
+          next();
+        }
+      };
+
       //if user is not logged in and is not authenticated we want
       //to do rate limiting for anonymous users.
       if (!req.isAuthenticated && !user) {
-        rateLimitHandler(req, _res, next);
+        // Note: this handler is actually awaitable (is async).
+        await rateLimitHandler(req, res, handle);
+      } else {
+        await handle();
       }
-
-      const definition = loadDefinition
-        ? await getDefinition(configurationServiceId, repository, namespace, name, tenantId)
-        : undefined;
-
-      const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition);
-
-      if (req.isAuthenticated && user) {
-        if (!entity.canAccess(user)) {
-          throw new UnauthorizedUserError('access configuration', user);
-        }
-      }
-
-      req[ENTITY_KEY] = entity;
-      end();
-      next();
     } catch (err) {
       next(err);
     }

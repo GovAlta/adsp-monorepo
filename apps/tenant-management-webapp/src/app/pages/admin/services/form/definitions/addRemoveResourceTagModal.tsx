@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { fetchFormResourceTags, fetchFormTagByTagName } from '@store/form/action';
 import { AddRemoveResourceTagSpacing } from './style-components';
+import { selectFormResourceTags } from '@store/form/selectors';
 
 interface AddRemoveResourceTagModalProps {
   baseResourceFormUrn: string;
@@ -51,9 +52,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
 
   const MAX_TAG_LENGTH = 50;
 
-  const resourceTags = useSelector((state: RootState) => {
-    return state?.form.definitions[initialFormDefinition.id].resourceTags;
-  });
+  const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, initialFormDefinition?.id));
 
   const searchedTagExists = useSelector((state: RootState) => {
     return state?.form?.searchedTagExists;

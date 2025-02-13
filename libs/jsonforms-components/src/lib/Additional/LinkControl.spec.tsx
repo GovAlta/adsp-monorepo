@@ -10,11 +10,18 @@ describe('LinkSelect component', () => {
   };
 
   describe('can create LinkSelect component', () => {
+    it('renders Link component with default link label', () => {
+      const props = { ...staticProps, link: undefined, help: undefined };
+      const component = render(<RenderLink {...props} />);
+      expect(component.getByText('Link')).toBeInTheDocument();
+    });
+
     it('renders basic LinkSelect component with link only', () => {
       const props = { ...staticProps };
       const component = render(<RenderLink {...props} />);
       expect(component.getByText('https://open.alberta.ca/dataset/70c50877...')).toBeInTheDocument();
     });
+
     it('renders LinkSelect component with link and name', () => {
       const props = { ...staticProps, link: undefined, help: 'Alberta Farm' };
       const component = render(<RenderLink {...props} />);

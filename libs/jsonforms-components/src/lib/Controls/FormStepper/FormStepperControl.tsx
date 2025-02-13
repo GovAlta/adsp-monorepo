@@ -12,7 +12,6 @@ import {
 
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
-
 import { FormStepperSummaryH3, RightAlignmentDiv } from './styled-components';
 import { JsonFormContext } from '../../Context';
 import { Visible } from '../../util';
@@ -71,6 +70,9 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
   const onCloseModal = () => {
     setIsOpen(false);
   };
+
+  // eslint-disable-next-line
+  const options = (uischema as any).options;
 
   return (
     <div data-testid="form-stepper-test-wrapper">
@@ -174,24 +176,23 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
               </RightAlignmentDiv>
             )}
           </GoAGrid>
-
-          <GoAModal
-            testId="submit-confirmation"
-            open={isOpen}
-            heading={'Form Submitted'}
-            width="640px"
-            actions={
-              <GoAButtonGroup alignment="end">
-                <GoAButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
-                  Close
-                </GoAButton>
-              </GoAButtonGroup>
-            }
-          >
-            <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
-          </GoAModal>
         </div>
       </Visible>
+      <GoAModal
+        testId="submit-confirmation"
+        open={isOpen}
+        heading={'Form Submitted'}
+        width="640px"
+        actions={
+          <GoAButtonGroup alignment="end">
+            <GoAButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
+              Close
+            </GoAButton>
+          </GoAButtonGroup>
+        }
+      >
+        <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
+      </GoAModal>
     </div>
   );
 };

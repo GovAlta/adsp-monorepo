@@ -8,6 +8,7 @@ export interface ValidInput {
 export const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
 
 ajv.addFormat('file-urn', /urn:[^:]+:[^:]+:[^:]+:[^:]+/);
+ajv.addFormat('time', /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/);
 
 /**
  * Given a list of validators and name of the input field, report on its cleanliness

@@ -3,7 +3,6 @@ import { GoAInputDate } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity } from '../../util/stringUtils';
 import { onBlurForDateControl, onChangeForDateControl, onKeyPressForDateControl } from '../../util/inputControlUtils';
 import { callout } from '../../Additional/GoACalloutControl';
 import { standardizeDate } from '../../util/dateUtils';
@@ -37,7 +36,7 @@ const reformatDateProps = (props: any): any => {
 };
 
 export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
-  const { data, config, id, enabled, uischema, path, handleChange, label } = props;
+  const { data, config, id, enabled, uischema, errors, isVisited, label, setIsVisited } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const width = uischema?.options?.componentProps?.width ?? '100%';
@@ -54,7 +53,7 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
 
   return (
     <GoAInputDate
-      error={checkFieldValidity(props as ControlProps).length > 0}
+      error={isVisited && errors.length > 0}
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={standardizeDate(data) || ''}
@@ -62,6 +61,9 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
       disabled={!enabled}
       readonly={readOnly}
       onChange={(name: string, value: Date | string) => {
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
         onChangeForDateControl({
           name,
           value,
@@ -77,6 +79,10 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
         });
       }}
       onBlur={(name: string, value: Date | string) => {
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
+
         onBlurForDateControl({
           name,
           value,

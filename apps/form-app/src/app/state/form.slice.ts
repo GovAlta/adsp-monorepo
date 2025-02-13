@@ -734,7 +734,13 @@ export const canCreateDraftSelector = createSelector(
 
 export const showSubmitSelector = createSelector(definitionSelector, ({ definition }) => {
   // Stepper variant of the categorization includes a Submit button on the review step, so don't show submit outside form.
-  return definition?.uiSchema?.type !== 'Categorization' || definition?.uiSchema?.options?.variant !== 'stepper';
+  // Pages variant of the categorization includes a save or submit button after each step, so don't show submit outside form.
+
+  return (
+    definition?.uiSchema?.type !== 'Categorization' &&
+    definition?.uiSchema?.options?.variant !== 'stepper' &&
+    definition?.uiSchema?.options?.variant !== 'pages'
+  );
 });
 
 export const canSubmitSelector = createSelector(

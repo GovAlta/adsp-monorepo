@@ -44,12 +44,17 @@ export const DispositionFormItem = styled.div`
   margin-right: 3px;
 `;
 
+export const CenterPositionProgressIndicator = styled.div`
+  display: flex;
+  justify-content: center;
+`;
+
 export const EntryDetail = styled.div`
   background: #f3f3f3;
   white-space: pre-wrap;
   font-family: monospace;
-  font-size: 12px;
-  line-height: 12px;
+  font-size: 14px;
+  line-height: 14px;
   padding: 16px;
   text-align: left;
 `;
@@ -420,14 +425,34 @@ export const SpinnerPaddingSmall = styled.div`
 `;
 
 export const TableDataName = styled.td`
-  width: 9.375rem;
+  width: 50%;
 `;
 
 export const TableDataId = styled.td`
   width: 8.125rem;
 `;
 
-export const TableDataDescription = styled.td``;
+export const TableDataDescription = styled.td`
+  width: 50%;
+`;
+
+export const DetailsTagHeading = styled.div`
+  font: var(--goa-typography-heading-s);
+  margin-bottom: var(--goa-space-s);
+  margin-top: var(--goa-space-l);
+`;
+
+export const DetailsTagDefinitionIdHeading = styled.div`
+  font: var(--goa-typography-heading-s);
+  margin-bottom: var(--goa-space-xs);
+`;
+
+export const DetailsTagWrapper = styled.div`
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: space-start;
+`;
 
 export const TableDataScriptName = styled.td`
   width: 9.375rem;

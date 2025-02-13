@@ -153,8 +153,8 @@ describe('Test jsonforms stepper context', () => {
 
     fireEvent.click(to0CategoryBtn);
     fireEvent.click(to0CategoryBtnWithUpdate);
-    expect(mockDispatch.mock.calls[5][0].type === 'validate/form');
-    expect(mockDispatch.mock.calls[5][0].type === 'page/to/index');
+
+    expect(mockDispatch.mock.calls[4][0].type === 'page/to/index');
   });
 
   it('can run reducer actions ', async () => {
@@ -165,6 +165,7 @@ describe('Test jsonforms stepper context', () => {
       path: 'test-path',
       isOnReview: false,
       isValid: false,
+      maxReachedStep: 0,
       categories: [
         {
           isCompleted: false,
@@ -184,6 +185,7 @@ describe('Test jsonforms stepper context', () => {
       path: 'test-path',
       isOnReview: false,
       isValid: false,
+      maxReachedStep: 0,
       categories: [
         {
           isCompleted: false,

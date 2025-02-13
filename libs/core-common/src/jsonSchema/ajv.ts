@@ -1,6 +1,5 @@
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import Ajv from 'ajv';
-import addErrors from 'ajv-errors';
 import addFormats from 'ajv-formats';
 import * as schemaMigration from 'json-schema-migrate';
 import { Logger } from 'winston';
@@ -12,9 +11,9 @@ export class AjvValidationService implements ValidationService {
   protected ajvErrors: string[] = [];
 
   constructor(private logger: Logger) {
-    this.ajv.addFormat('file-urn', /^urn:ads:platform:file-service:v[0-9]:\/files\/[a-zA-Z0-9.-]*$/);
     addFormats(this.ajv);
-
+    this.ajv.addFormat('file-urn', /^urn:ads:platform:file-service:v[0-9]:\/files\/[a-zA-Z0-9.-]*$/);
+    this.ajv.addFormat('time', /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/);
     this.ajv.addSchema(standardV1JsonSchema);
     this.ajv.addSchema(commonV1JsonSchema);
   }

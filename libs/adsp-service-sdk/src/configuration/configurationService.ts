@@ -146,7 +146,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       // Active endpoint returns the revision instead of just the raw configuration value.
       if (useActive && isRevision<C>(data)) {
         value = data?.configuration;
-        revision = data.revision;
+        revision = data?.revision;
       }
 
       const configuration = (value ? this.#converter(value, tenantId, revision) : null) as C;

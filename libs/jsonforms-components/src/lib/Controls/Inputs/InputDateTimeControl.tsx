@@ -4,7 +4,6 @@ import { GoAInputDateTime } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity } from '../../util/stringUtils';
 import {
   onBlurForDateControl,
   onChangeForDateTimeControl,
@@ -14,8 +13,7 @@ import {
 export type GoAInputDateTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
-  // eslint-disable-next-line
-  const { data, config, id, enabled, uischema, isValid, path, errors, handleChange, schema, label } = props;
+  const { data, config, id, enabled, uischema, isVisited, errors, schema, label, setIsVisited } = props;
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
@@ -23,7 +21,7 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
 
   return (
     <GoAInputDateTime
-      error={checkFieldValidity(props as ControlProps).length > 0}
+      error={isVisited && errors.length > 0}
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={data ? new Date(data).toISOString() : ''}
@@ -31,6 +29,9 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
       disabled={!enabled}
       readonly={readOnly}
       onChange={(name, value: Date | string) => {
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
         onChangeForDateTimeControl({
           name,
           value,
@@ -46,6 +47,10 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
         });
       }}
       onBlur={(name: string, value: string) => {
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
+
         onBlurForDateControl({
           name,
           value,

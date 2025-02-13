@@ -79,3 +79,9 @@ export const FormStepperSummaryH3 = styled.h3`
   line-height: var(--goa-line-height-4);
   font-weight: var(--goa-font-weight-regular);
 `;
+export const PageRenderPadding = styled.h3`
+  margin-top: var(--goa-space-2xl);
+`;
+export const PageBorder = styled.h3`
+  padding: var(--goa-space-3xl);
+`;

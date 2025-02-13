@@ -26,8 +26,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
 
-import { toKebabName } from '@lib/kebabName';
-
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
   isNavigatedFromEdit?: boolean;
@@ -160,6 +158,7 @@ export const FormDefinitions = ({
         <>
           <FormDefinitionsTable
             definitions={formDefinitions}
+            baseResourceFormUrn={BASE_FORM_CONFIG_URN}
             onDelete={(formDefinition) => {
               setShowDeleteConfirmation(true);
               setCurrentDefinition(formDefinition);
@@ -196,10 +195,13 @@ export const FormDefinitions = ({
             dispatch(unTagFormResource(tag));
             setTimeout(() => {
               dispatch(fetchFormResourceTags(`${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`));
-            }, 100);
+            }, 500);
           }}
           onSave={(tag: ResourceTag) => {
             dispatch(tagFormResource({ urn: tag.urn, label: tag.label }));
+            setTimeout(() => {
+              dispatch(fetchFormResourceTags(`${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`));
+            }, 500);
           }}
         ></AddRemoveResourceTagModal>
       )}

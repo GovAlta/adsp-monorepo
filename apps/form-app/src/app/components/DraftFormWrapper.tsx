@@ -62,7 +62,7 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
               mt="s"
               mb="3xl"
               disabled={!canSubmit}
-              type="primary"
+              type="submit"
               data-testid="form-submit"
               onClick={() => {
                 onSubmit(form);

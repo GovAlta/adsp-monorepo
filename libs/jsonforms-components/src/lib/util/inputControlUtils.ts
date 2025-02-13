@@ -43,7 +43,7 @@ export const onKeyPressNumericControl = (props: EventKeyPressControlProps) => {
   const { value, key, controlProps } = props;
   const { handleChange, path } = controlProps;
   if (isNotKeyPressTabOrShift(key)) {
-    let newValue: string | number = '';
+    let newValue: undefined | number = undefined;
     if (value !== '') {
       newValue = +value;
     }
@@ -61,7 +61,7 @@ export const onKeyPressForTimeControl = (props: EventKeyPressControlProps) => {
   const { handleChange, path } = controlProps;
 
   if (isNotKeyPressTabOrShift(key)) {
-    handleChange(path, value);
+    handleChange(path, value === '' ? undefined : value);
   }
 };
 
@@ -76,7 +76,7 @@ export const onKeyPressForDateControl = (props: EventKeyPressControlProps) => {
 
   if (isNotKeyPressTabOrShift(key)) {
     value = standardizeDate(value) || '';
-    handleChange(path, value);
+    handleChange(path, value === '' ? undefined : value);
   }
 };
 
@@ -88,7 +88,7 @@ export const onBlurForTextControl = (props: EventBlurControlProps) => {
   const { value, controlProps } = props;
   const { handleChange, path } = controlProps;
   if (isRequiredAndHasNoData(controlProps)) {
-    handleChange(path, value);
+    handleChange(path, value === '' ? undefined : value);
   }
 };
 
@@ -101,7 +101,7 @@ export const onBlurForNumericControl = (props: EventBlurControlProps) => {
   const { handleChange, path } = controlProps;
 
   if (isRequiredAndHasNoData(controlProps)) {
-    let newValue: string | number = '';
+    let newValue: number | undefined = undefined;
     if (value !== '') {
       newValue = +value;
     }
@@ -121,7 +121,7 @@ export const onBlurForDateControl = (props: EventBlurControlProps) => {
   if (isRequiredAndHasNoData(controlProps)) {
     value = standardizeDate(value) || '';
 
-    handleChange(path, value);
+    handleChange(path, value === '' ? undefined : value);
   }
 };
 
