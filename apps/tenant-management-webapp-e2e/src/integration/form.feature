@@ -306,4 +306,4 @@ Feature: Form
     And the user views form data of "Other" as "nationality" on data page
     And the user views form data of "true" as "isMarried" on data page
     And the user views form data of "false" as "citizen" for "residencyOptions" object on data page
-    And the user views form data of "2011-05-15:Ben:Bond" as "dob:givenName:surname" for "dependant" array on data page
+    And the user views form data of "Ben:Bond:2011-05-15" as "givenName:surname:dob" for "dependant" array on data page
