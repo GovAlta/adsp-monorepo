@@ -17,12 +17,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
   const requiredFields = (schema as { required: string[] }).required;
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const defaultNameAndDob = {
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    dateOfBirth: undefined,
-  };
+  const defaultNameAndDob = {};
 
   const validDates = () => {
     const currentDate = new Date();
