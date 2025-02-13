@@ -195,13 +195,13 @@ export const FormDefinitions = ({
             dispatch(unTagFormResource(tag));
             setTimeout(() => {
               dispatch(fetchFormResourceTags(`${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`));
-            }, 500);
+            }, 300);
           }}
           onSave={(tag: ResourceTag) => {
             dispatch(tagFormResource({ urn: tag.urn, label: tag.label }));
             setTimeout(() => {
               dispatch(fetchFormResourceTags(`${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`));
-            }, 500);
+            }, 300);
           }}
         ></AddRemoveResourceTagModal>
       )}
