@@ -16,7 +16,6 @@ import {
 export const errCategorizationHasNonCategories = "Each element of 'Categorizations' must be of type 'Category'";
 export const errCategorizationHasNoElements = 'A Categorization must contain Categories.';
 export const errNoElements = (type: string) => `A ${type} must contain elements.`;
-export const errCategorizationHasNoVariant = 'A Categorization must contain Options with a variant.';
 export const errMissingScope = 'A Control must have a scope';
 export const errMalformedScope = (scope: string): string => `Scope ${scope} must be prefixed with '#/'.`;
 export const errUnknownScope = (scope: string): string => `Failed to render: unknown scope ${scope}`;
@@ -66,10 +65,6 @@ export const getUISchemaErrors = (uiSchema: UISchemaElement, schema: JsonSchema)
   if (isCategorization(uiSchema)) {
     if (!hasElements(uiSchema)) {
       return errCategorizationHasNoElements;
-    }
-
-    if (!hasVariant(uiSchema)) {
-      return errCategorizationHasNoVariant;
     }
 
     // ensure each element has type Category, and that each category
