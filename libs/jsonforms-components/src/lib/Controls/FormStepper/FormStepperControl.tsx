@@ -57,7 +57,6 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
   const submitForm = submitFormFunction && submitFormFunction();
   const optionProps = (uischema.options as FormStepperOptionProps) || {};
   const [isOpen, setIsOpen] = useState(false);
-  const [isSelected, setIsSelected] = useState(false);
 
   const handleSubmit = () => {
     if (submitForm) {
@@ -80,10 +79,8 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
         <div id={`${path || `goa`}-form-stepper`} className="formStepper">
           <GoAFormStepper
             testId={`form-stepper-headers-${uischema?.options?.testId}` || 'form-stepper-test'}
-            step={isSelected === false ? -1 : activeId + 1}
             key="stepper-form-stepper-wrapper"
             onChange={(step) => {
-              setIsSelected(true);
               goToPage(step - 1);
             }}
           >
