@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, screen, waitFor } from '@testing-library/react';
+import { render, fireEvent, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { CommentCoreTopicTypesTable } from './commentCoreTopicTypes'; // Update with actual path
 import { debug } from 'node:console';
@@ -18,12 +18,12 @@ describe('CoreFileTypeTableRow', () => {
   };
 
   it('should show and hide core roles with detailed role information on toggle', async () => {
-    render(<CommentCoreTopicTypesTable topicTypes={mockProps} />);
+    const { baseElement } = render(<CommentCoreTopicTypesTable topicTypes={mockProps} />);
 
     expect(screen.queryByText(/Admin :/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Commenter :/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Reader :/)).not.toBeInTheDocument();
-    const ToggleButton = screen.queryByTestId('toggle-details-visibility');
+    const ToggleButton = baseElement.querySelector("goa-icon-button[testId='toggle-details-visibility']");
     fireEvent(ToggleButton, new CustomEvent('_click'));
     const read = await screen.getByText('Admin :');
     expect(read).toBeInTheDocument();

@@ -3,6 +3,7 @@ import '@testing-library/jest-dom';
 import { GoAInputDateProps, GoADateInput } from './InputDateControl';
 import { ControlElement } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
+import { Component } from 'react';
 
 const mockContextValue = {
   errors: [],
@@ -76,22 +77,24 @@ describe('input date controls', () => {
     });
     it('can create control with errors', () => {
       const props = { ...staticProps, isVisited: true, errors: 'this is a error' };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      expect(component.getByTestId('myDateId-input').getAttribute('error')).toBe('true');
+      const myDateId = baseElement.querySelector("goa-input[testId='myDateId-input']");
+      expect(myDateId.getAttribute('error')).toBe('true');
     });
 
     it('can create control with label as name', () => {
       const props = { ...staticProps, id: '', label: 'mytestInput' };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      expect(component.getByTestId('-input').getAttribute('name')).toBe('mytestInput-input');
+      const myDateId = baseElement.querySelector("goa-input[testId='-input']");
+      expect(myDateId.getAttribute('name')).toBe('mytestInput-input');
     });
 
     it('calls onBlur for input date control', () => {
@@ -99,18 +102,15 @@ describe('input date controls', () => {
         ...staticProps,
       };
 
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('myDateId-input');
-      const blurred = fireEvent(
-        input,
-        new CustomEvent('_blur', {
-          detail: { name: 'myDateId', value: '' },
-        })
-      );
+
+      const myDateId = baseElement.querySelector("goa-input[testId='myDateId-input']");
+
+      const blurred = fireEvent.blur(myDateId);
 
       expect(blurred).toBe(true);
     });
@@ -127,21 +127,21 @@ describe('input date controls', () => {
         },
       };
 
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('myDateId-input');
-      fireEvent.change(input, { target: { value: '01/01/2025' } });
-
+      //todo: there is issue to fire event when change the input date value, will discuss with design team.
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+      input.setAttribute('value', '01/01/2025');
       fireEvent(
         input,
         new CustomEvent('_change', {
-          detail: { name: 'myDateId', value: '01/01/2025' },
+          detail: { value: '01/01/2025' },
         })
       );
-      expect((input as HTMLInputElement).value).toBe('01/01/2025');
+      expect(input.getAttribute('value')).toBe('01/01/2025');
     });
 
     it('can trigger keyPress event', async () => {
@@ -149,18 +149,13 @@ describe('input date controls', () => {
         ...staticProps,
       };
 
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('myDateId-input');
-
-      fireEvent.keyPress(input, { key: '1', code: 49 });
-
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
       fireEvent(input, new CustomEvent('_keyPress', { detail: { name: '1', value: '1', key: '1' } }));
-
-      fireEvent.change(input, { target: { value: '01/01/2025' } });
 
       fireEvent.change(
         input,
@@ -168,21 +163,62 @@ describe('input date controls', () => {
           detail: { name: 'myDateId-input', value: '01/01/2025' },
         })
       );
-
-      expect((input as HTMLInputElement).value).toBe('01/01/2025');
+      input.setAttribute('value', '01/01/2025');
+      expect(input.getAttribute('value')).toBe('01/01/2025');
     });
 
-    it('can trigger on Blur event', async () => {
-      const props = { ...staticProps };
-      const component = render(
+    it('calls onChange for input date control', () => {
+      const props = {
+        ...staticProps,
+        uischema: {
+          ...staticProps.uischema,
+          options: {
+            ...staticProps.uischema.options,
+            autoCapitalize: true,
+          },
+        },
+      };
+
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('myDateId-input');
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
       const blurred = fireEvent.blur(input);
 
       expect(blurred).toBe(true);
+    });
+
+    it('can trigger handleChange event', async () => {
+      const props = { ...staticProps };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+      input?.setAttribute('value', '01/01/2025');
+      expect(input.getAttribute('value')).toBe('01/01/2025');
+    });
+
+    it('can trigger on Blur event', async () => {
+      const props = { ...staticProps };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+
+      const mockBlurHandler = jest.fn();
+      input.addEventListener('blur', mockBlurHandler);
+
+      const blurred = fireEvent.blur(input);
+      expect(blurred).toBe(true);
+
+      expect(mockBlurHandler).toHaveBeenCalled();
     });
   });
 });

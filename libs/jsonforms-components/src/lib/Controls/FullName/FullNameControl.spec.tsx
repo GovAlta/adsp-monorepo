@@ -33,21 +33,21 @@ describe('FullNameControl', () => {
   });
 
   it('renders the FullNameControl component with the correct initial values', async () => {
-    const component = render(<FullNameControl {...defaultProps} />);
-    const firstNameInput = component.getByTestId('name-form-first-name');
-    const middleNameInput = component.getByTestId('name-form-middle-name');
+    const { baseElement } = render(<FullNameControl {...defaultProps} />);
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
+    const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
 
-    const lastNameInput = component.getByTestId('name-form-last-name');
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
     await (async () => {
-      expect((firstNameInput as HTMLInputElement).value).toBe('John');
-      expect((middleNameInput as HTMLInputElement).value).toBe('A.');
-      expect((lastNameInput as HTMLInputElement).value).toBe('Doe');
+      expect(firstNameInput?.getAttribute('value')).toBe('John');
+      expect(middleNameInput?.getAttribute('value')).toBe('A.');
+      expect(lastNameInput?.getAttribute('value')).toBe('Doe');
     });
   });
 
   it('calls handleChange when user inputs a new first name', async () => {
-    render(<FullNameControl {...defaultProps} />);
-    const firstNameInput = screen.getByTestId('name-form-first-name');
+    const { baseElement } = render(<FullNameControl {...defaultProps} />);
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
 
     fireEvent(
       firstNameInput,
@@ -71,11 +71,11 @@ describe('FullNameControl', () => {
     });
   });
   it('shows error message when a required field is blurred when empty', async () => {
-    render(<FullNameControl {...defaultProps} />);
+    const { baseElement } = render(<FullNameControl {...defaultProps} />);
 
-    const firstNameInput = screen.getByTestId('name-form-first-name');
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
     fireEvent.focus(firstNameInput);
-    fireEvent.change(firstNameInput, { target: { value: '' } });
+    fireEvent(firstNameInput, new CustomEvent('_change', { detail: { value: '' } }));
     fireEvent.blur(firstNameInput);
     await (async () => {
       const errorMessage = screen.getByText('First name is required');
@@ -84,8 +84,8 @@ describe('FullNameControl', () => {
   });
 
   it('first name field is changed when key pressed with no errors.', async () => {
-    render(<FullNameControl {...defaultProps} />);
-    const firstNameInput = screen.getByTestId('name-form-first-name');
+    const { baseElement } = render(<FullNameControl {...defaultProps} />);
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
 
     fireEvent(
       firstNameInput,
@@ -107,10 +107,16 @@ describe('FullNameControl', () => {
   });
 
   it('calls handleChange when user inputs a new last name', async () => {
-    render(<FullNameControl {...defaultProps} />);
+    const { baseElement } = render(<FullNameControl {...defaultProps} />);
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
 
-    const lastNameInput = screen.getByTestId('name-form-last-name');
-    fireEvent.change(lastNameInput, { target: { value: 'Smith' } });
+    fireEvent(
+      lastNameInput,
+      new CustomEvent('_change', {
+        detail: { name: 'lastName', value: 'Smith' },
+      })
+    );
+
     await (async () => {
       expect(mockHandleChange).toHaveBeenCalledWith('path-to-data', {
         firstName: 'John',

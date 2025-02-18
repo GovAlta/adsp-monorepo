@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { GoAFormItem, GoAInput, GoAGrid } from '@abgov/react-components-new';
-import { first } from 'lodash';
-import { TextWrapDiv } from '../AddressLookup/styled-components';
+
 interface Data {
   firstName: string;
   middleName: string;
@@ -50,7 +49,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   return (
     <GoAGrid minChildWidth="0ch" gap="s" mb="m" testId="wrapper">
       <GoAFormItem
-        testId="formitem-first-name"
+        testId="form-item-first-name"
         label="First name"
         requirement={requiredFields?.includes('firstName') ? 'required' : undefined}
         error={errors?.['firstName'] ?? ''}
@@ -70,7 +69,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
         />
       </GoAFormItem>
       <GoAFormItem
-        testId="formitem-middle-name"
+        testId="form-item-middle-name"
         label="Middle name"
         requirement={requiredFields?.includes('middleName') ? 'required' : undefined}
       >
@@ -86,7 +85,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
         />
       </GoAFormItem>
       <GoAFormItem
-        testId="formitem-last-name"
+        testId="form-item-last-name"
         label="Last name"
         requirement={requiredFields?.includes('lastName') ? 'required' : undefined}
         error={errors?.['lastName'] ?? ''}

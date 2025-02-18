@@ -53,15 +53,14 @@ const dataSchema = {
 
 describe('Input Boolean Radio Control', () => {
   it('will render radio buttons', () => {
-    const renderer = render(getForm(dataSchema, uiSchema));
-    const radio = renderer.getByTestId('radio-boolean-radio-jsonform');
+    const { baseElement } = render(getForm(dataSchema, uiSchema));
+    const radio = baseElement.querySelector("goa-radio-group[testId='radio-boolean-radio-jsonform']");
     expect(radio).toBeInTheDocument();
   });
 
   it('will accept a yes click', () => {
-    const data = { radio: false };
-    const renderer = render(getForm(dataSchema, uiSchema, data));
-    const radioGroup = renderer.getByTestId('radio-boolean-radio-jsonform');
+    const { baseElement } = render(getForm(dataSchema, uiSchema));
+    const radioGroup = baseElement.querySelector("goa-radio-group[testId='radio-boolean-radio-jsonform']");
     expect(radioGroup).toBeInTheDocument();
 
     fireEvent(radioGroup, new CustomEvent('_change', { detail: { name: 'bob', value: 'Yes' } }));
@@ -69,9 +68,8 @@ describe('Input Boolean Radio Control', () => {
   });
 
   it('will accept a no click', () => {
-    const data = { radio: true };
-    const renderer = render(getForm(dataSchema, uiSchema, data));
-    const radioGroup = renderer.getByTestId('radio-boolean-radio-jsonform');
+    const { baseElement } = render(getForm(dataSchema, uiSchema));
+    const radioGroup = baseElement.querySelector("goa-radio-group[testId='radio-boolean-radio-jsonform']");
     expect(radioGroup).toBeInTheDocument();
 
     fireEvent(radioGroup, new CustomEvent('_change', { detail: { name: 'bob', value: 'No' } }));

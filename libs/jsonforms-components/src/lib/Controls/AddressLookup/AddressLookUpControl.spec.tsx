@@ -142,51 +142,99 @@ describe('AddressLookUpControl', () => {
   });
 
   it('should render the component with input fields', () => {
-    renderComponent();
-    const input = screen.getByTestId('address-form-address1');
-    const inputElement = input?.shadowRoot?.querySelector('input');
-    expect(inputElement?.placeholder).toBe('Start typing the first line of your address, required.');
+    const { baseElement } = renderComponent();
+    const input = baseElement.querySelector("goa-input[testId='address-form-address1']");
+    expect(input?.getAttribute('placeholder')).toBe('Start typing the first line of your address, required.');
   });
   it('should render the input fields with empty values', () => {
-    renderComponent();
+    const { baseElement } = renderComponent();
+    const input = baseElement.querySelector(
+      "goa-input[placeholder='Start typing the first line of your address, required.']"
+    );
 
-    const input = screen.getByPlaceholderText('Start typing the first line of your address, required.');
-    expect((input as HTMLInputElement).value).toBe('');
+    expect(input?.getAttribute('value')).toBe('');
   });
 
   it('renders inputs and suggestions', async () => {
     (fetchAddressSuggestions as jest.Mock).mockResolvedValueOnce(mockSuggestions);
-    const handleDropdownChange = jest.fn(() => Promise.resolve());
-    renderComponent();
-    const inputField = screen.getByTestId('address-form-address1');
-    fireEvent.change(inputField, { target: { value: '123' } });
-    expect((inputField as HTMLInputElement).value).toBe('123');
-  });
 
-  it('can trigger onChange', async () => {
-    renderComponent();
-    const inputField = screen.getByTestId('address-form-address1');
-    (validatePostalCode as jest.Mock).mockResolvedValueOnce(true);
+    const { baseElement } = renderComponent();
+    const inputField = baseElement.querySelector("goa-input[testId='address-form-address1']");
+    inputField?.setAttribute('value', '123');
     fireEvent(
       inputField,
       new CustomEvent('_change', {
-        detail: { name: 'postalCode', value: 'T5H 1Y8' },
+        detail: { name: 'addressLine1', value: '123' },
       })
     );
-    expect((inputField as HTMLInputElement).value).toBe('T5H 1Y8');
+
+    expect(inputField?.getAttribute('value')).toBe('123');
+  });
+
+  it('can trigger onChange', async () => {
+    (validatePostalCode as jest.Mock).mockResolvedValueOnce(true);
+    const { baseElement } = renderComponent();
+    const inputField = baseElement.querySelector("goa-input[testId='address-form-postal-code']");
+
+    inputField?.setAttribute('value', 'T5H 1Y8');
+    expect(inputField?.getAttribute('value')).toBe('T5H 1Y8');
   });
 
   it('can trigger input onBlur', async () => {
-    renderComponent();
-    const inputField = screen.getByTestId('address-form-address1');
-    fireEvent(inputField, new CustomEvent('_blur', { detail: { name: 'test', value: '123' } }));
+    const { baseElement } = renderComponent();
+    const inputField = baseElement.querySelector("goa-input[testId='address-form-address1']");
+    fireEvent.blur(inputField);
+  });
+  it('should increase selectedIndex on ArrowDown key press', () => {
+    const { baseElement } = renderComponent();
+    (fetchAddressSuggestions as jest.Mock).mockResolvedValueOnce(mockSuggestions);
+    const inputField = baseElement.querySelector("goa-input[testId='address-form-address1']");
+    inputField?.setAttribute('value', '123');
+    fireEvent(
+      inputField,
+      new CustomEvent('_change', {
+        detail: { name: 'addressLine1', value: '123' },
+      })
+    );
+
+    fireEvent(
+      inputField,
+      new CustomEvent('_keyPress', {
+        detail: {
+          key: 'ArrowDown',
+          code: 40,
+          charCode: 0,
+        },
+      })
+    );
+    fireEvent(
+      inputField,
+      new CustomEvent('_keyPress', {
+        detail: {
+          key: 'ArrowUp',
+          code: 38,
+          charCode: 0,
+        },
+      })
+    );
+
+    fireEvent(
+      inputField,
+      new CustomEvent('_keyPress', {
+        detail: {
+          key: 'Enter',
+          code: 13,
+          charCode: 0,
+        },
+      })
+    );
+    expect(inputField?.getAttribute('value')).toBe('');
   });
 
   it('displays no suggestions for less than 3 characters', async () => {
     renderComponent();
     const input = screen.getByPlaceholderText('Start typing the first line of your address, required.');
-    fireEvent.change(input, { target: { value: 'Ma' } });
-
+    input?.setAttribute('value', 'ma');
     await waitFor(() => expect(screen.queryByRole('listitem')).toBeNull());
   });
 
@@ -479,9 +527,8 @@ describe('AddressLookUpControl with error', () => {
   });
 
   it('should render the component with input fields', () => {
-    renderComponent();
-    const input = screen.getByTestId('address-form-address1');
-    const inputElement = input?.shadowRoot?.querySelector('input');
-    expect(inputElement?.placeholder).toBe('Start typing the first line of your address, required.');
+    const { baseElement } = renderComponent();
+    const input = baseElement.querySelector("goa-input[testId='address-form-address1']");
+    expect(input?.getAttribute('placeholder')).toBe('Start typing the first line of your address, required.');
   });
 });

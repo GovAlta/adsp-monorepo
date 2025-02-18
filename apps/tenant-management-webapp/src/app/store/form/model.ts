@@ -14,6 +14,7 @@ export interface FormDefinition {
   clerkRoles: string[];
   assessorRoles: string[];
   formDraftUrlTemplate: string;
+  oneFormPerApplicant: boolean;
   anonymousApply: boolean;
   uiSchema?: Record<string, unknown>;
   dispositionStates: Array<Disposition>;
@@ -66,6 +67,7 @@ export const defaultFormDefinition: FormDefinition = {
   assessorRoles: [],
   formDraftUrlTemplate: '',
   anonymousApply: false,
+  oneFormPerApplicant: true,
   dispositionStates: [],
   submissionRecords: false,
   submissionPdfTemplate: 'submitted-form',
