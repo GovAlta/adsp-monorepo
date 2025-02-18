@@ -101,7 +101,7 @@ async function initializeApp(): Promise<express.Application> {
                   {
                     namespace: serviceId.service,
                     name: FileDeletedDefinition.name,
-                    resourceIdPath: 'file.urn',
+                    resourceIdPath: ['file.urn', 'file._links.download.href'],
                   },
                 ],
               },
@@ -111,7 +111,7 @@ async function initializeApp(): Promise<express.Application> {
                   {
                     namespace: serviceId.service,
                     name: FileDeletedDefinition.name,
-                    resourceIdPath: 'file.urn',
+                    resourceIdPath: ['file.urn', 'file._links.download.href'],
                   },
                 ],
               },

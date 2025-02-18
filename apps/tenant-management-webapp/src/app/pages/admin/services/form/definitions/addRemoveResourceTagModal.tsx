@@ -3,7 +3,15 @@ import { debounce as _debounce } from 'lodash';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
-import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton, GoAChip } from '@abgov/react-components-new';
+import {
+  GoAInput,
+  GoAModal,
+  GoAButtonGroup,
+  GoAFormItem,
+  GoAButton,
+  GoAChip,
+  GoASkeleton,
+} from '@abgov/react-components-new';
 import { FormDefinition, FormResourceTagResult } from '@store/form/model';
 import { ResourceTag } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
@@ -50,8 +58,12 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
   const dispatch = useDispatch();
   const [tag, setTag] = useState<string>('');
 
+  const [isFetchLoading, setIsFetchLoading] = useState<boolean>(true);
   const MAX_TAG_LENGTH = 50;
 
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
   const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, initialFormDefinition?.id));
 
   const searchedTagExists = useSelector((state: RootState) => {
@@ -81,6 +93,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
 
   useEffect(() => {
     setTag('');
+    setIsFetchLoading(true);
   }, [open]);
 
   useEffect(() => {
@@ -167,7 +180,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
             };
 
             validators.checkAll(validations);
-
+            setIsFetchLoading(false);
             if (!validators.haveErrors()) {
               debouncedChangeHandler(value);
             }
@@ -175,11 +188,13 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
         />
       </GoAFormItem>
 
-      {resourceTags
-        ?.sort((a, b) => a.label?.toLowerCase().localeCompare(b.label?.toLowerCase()))
-        .map((tag) => (
-          <TagChipComponent key={tag.value} tag={tag} onDelete={onDelete} />
-        ))}
+      {indicator?.show && isFetchLoading && resourceTags === undefined ? (
+        <GoASkeleton type="text" size={3} testId="addResourceModal-Skeleton" key={1} />
+      ) : (
+        resourceTags
+          ?.sort((a, b) => a.label?.toLowerCase().localeCompare(b.label?.toLowerCase()))
+          .map((tag) => <TagChipComponent key={tag.value} tag={tag} onDelete={onDelete} />)
+      )}
     </GoAModal>
   );
 };

@@ -1,6 +1,6 @@
 import type { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import { FileEntity } from './model';
-import { FileResponse, mapFile } from './mapper';
+import { mapFile } from './mapper';
 
 export const FILE_UPLOADED_EVENT = 'file-uploaded';
 export const FILE_DELETED_EVENT = 'file-deleted';
@@ -94,7 +94,7 @@ export const FileScannedDefinition: DomainEventDefinition = {
   },
 };
 
-function getCorrelationId(file: FileResponse) {
+function getCorrelationId(file: ReturnType<typeof mapFile>) {
   return file.recordId || file.urn;
 }
 

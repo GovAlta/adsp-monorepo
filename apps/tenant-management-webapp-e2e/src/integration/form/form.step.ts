@@ -276,8 +276,8 @@ function findDefinition(name, description) {
             if (rowElement.cells[0].innerHTML.includes(name)) {
               counter = counter + 1;
             }
-            // cy.log(rowElement.cells[2].innerHTML); // Print out the name cell innerHTML for debug purpose
-            if (rowElement.cells[2].innerHTML.includes(description)) {
+            // cy.log(rowElement.cells[1].innerHTML); // Print out the name cell innerHTML for debug purpose
+            if (rowElement.cells[1].innerHTML.includes(description)) {
               counter = counter + 1;
             }
             Cypress.log({

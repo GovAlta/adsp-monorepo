@@ -106,14 +106,16 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
                           Save and continue
                         </GoAButton>
                       ) : (
-                        <GoAButton
-                          type={'primary'}
-                          onClick={handleSubmit}
-                          disabled={!isValid}
-                          testId="pages-submit-btn"
-                        >
-                          Submit
-                        </GoAButton>
+                        <GoAButtonGroup alignment="end">
+                          <GoAButton
+                            type={'primary'}
+                            onClick={handleSubmit}
+                            disabled={!isValid}
+                            testId="pages-submit-btn"
+                          >
+                            Submit
+                          </GoAButton>
+                        </GoAButtonGroup>
                       )}
                     </PageRenderPadding>
                   </div>
