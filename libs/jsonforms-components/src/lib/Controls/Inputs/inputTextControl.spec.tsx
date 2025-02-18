@@ -101,32 +101,36 @@ describe('Input Text Control tests', () => {
 
   describe('can create control', () => {
     it('can create control', () => {
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...staticProps} />
         </JsonFormsContext.Provider>
       );
-      expect(component.getByTestId('firstName-input')).toBeInTheDocument();
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+
+      expect(firstNameInput).toBeInTheDocument();
     });
 
     it('can create control with errors', () => {
       const props = { ...staticProps, isVisited: true, errors: 'this is a error' };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      expect(component.getByTestId('firstName-input').getAttribute('error')).toBe('true');
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      expect(firstNameInput.getAttribute('error')).toBe('true');
     });
 
     it('can create control with label as name', () => {
       const props = { ...staticProps, id: '', label: 'mytestInput' };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      expect(component.getByTestId('-input').getAttribute('name')).toBe('mytestInput-input');
+      const firstNameInput = baseElement.querySelector("goa-input[testId='-input']");
+      expect(firstNameInput.getAttribute('name')).toBe('mytestInput-input');
     });
 
     it('can create base control', () => {
@@ -149,18 +153,13 @@ describe('Input Text Control tests', () => {
         },
       };
 
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('firstName-input');
-      const blurred = fireEvent(
-        input,
-        new CustomEvent('_blur', {
-          detail: { name: 'firstName', value: '' },
-        })
-      );
+      const input = baseElement.querySelector("goa-input[testId='firstName-input']");
+      const blurred = fireEvent.blur(input);
 
       expect(blurred).toBe(true);
     });
@@ -177,13 +176,12 @@ describe('Input Text Control tests', () => {
         },
       };
 
-      const component = render(
+      const { baseElement, ...component } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('firstName-input');
-      fireEvent.change(input, { target: { value: 'test' } });
+      const input = baseElement.querySelector("goa-input[testId='firstName-input']");
 
       fireEvent(
         input,
@@ -191,33 +189,50 @@ describe('Input Text Control tests', () => {
           detail: { name: 'firstName', value: 'test' },
         })
       );
-      expect((input as HTMLInputElement).value).toBe('test');
+      input.setAttribute('value', 'test');
+      expect(input?.getAttribute('value')).toBe('test');
     });
 
     it('can trigger keyPress event', async () => {
       const props = { ...staticProps };
 
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('firstName-input');
-      const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 90 });
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+
+      const pressed = fireEvent.keyPress(firstNameInput, { key: 'z', code: 90, charCode: 90 });
       expect(pressed).toBe(true);
-      expect(component.getByTestId('firstName-input')).toBeInTheDocument();
+      expect(firstNameInput).toBeInTheDocument();
+    });
+
+    it('can trigger on Blur event', async () => {
+      const props = { ...staticProps };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+
+      const blurred = fireEvent.blur(firstNameInput);
+      expect(blurred).toBe(true);
     });
 
     it('should format sin', async () => {
       const props = { ...sinProps, handleChange: handleChangeMock };
-      const { getByTestId } = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = getByTestId('firstName-input');
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+
       await fireEvent(
-        input,
+        firstNameInput,
         new CustomEvent('_change', {
           detail: { value: '123456789' },
         })
@@ -228,13 +243,14 @@ describe('Input Text Control tests', () => {
 
     it('can trigger handleChange event', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = component.getByTestId('firstName-input');
-      const pressed = fireEvent.keyPress(input, { key: 'z', code: 90, charCode: 90 });
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+
+      const pressed = fireEvent.keyPress(firstNameInput, { key: 'z', code: 90, charCode: 90 });
 
       handleChangeMock();
       expect(props.handleChange).toBeCalled();

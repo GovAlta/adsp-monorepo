@@ -3,12 +3,10 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ValueDefinitionsList } from './definitionsList';
 import type { ValueDefinition } from '@store/value/models';
-import configureStore from 'redux-mock-store';
-import { ValueComponent } from './definitionsList';
-import { DELETE_VALUE_DEFINITION_ACTION } from '@store/value/actions';
-import { Provider } from 'react-redux';
 
-describe('ValueComponent', () => {
+import { ValueComponent } from './definitionsList';
+
+describe('Value Component', () => {
   const mockCoreDefinition = {
     namespace: 'example',
     name: 'Example Name',
@@ -34,8 +32,10 @@ describe('ValueComponent', () => {
   });
 
   it('toggles details visibility', async () => {
-    render(<ValueComponent definition={mockCoreDefinition} onDelete={mockDelete} onEdit={mockEdit} />);
-    const toggleButton = screen.getByTestId('toggle-details-visibility');
+    const { baseElement } = render(
+      <ValueComponent definition={mockCoreDefinition} onDelete={mockDelete} onEdit={mockEdit} />
+    );
+    const toggleButton = baseElement.querySelector("goa-icon-button[testId='toggle-details-visibility']");
     fireEvent(toggleButton, new CustomEvent('_click'));
     await waitFor(() => {
       expect(screen.getByTestId('value-schema-details').textContent.trim()).toBe(
@@ -49,8 +49,10 @@ describe('ValueComponent', () => {
   });
 
   it('deletes action item to be exist', async () => {
-    render(<ValueComponent definition={mockDefinition} onDelete={mockDelete} onEdit={mockEdit} />);
-    const deleteBtn = screen.getAllByTestId('delete-details')[0];
+    const { baseElement } = render(
+      <ValueComponent definition={mockDefinition} onDelete={mockDelete} onEdit={mockEdit} />
+    );
+    const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-details']")[0];
     expect(deleteBtn).toBeInTheDocument();
   });
 });
@@ -103,7 +105,7 @@ describe('ValueDefinitionsList', () => {
   });
 });
 
-describe('ValueComponent', () => {
+describe('Value Component', () => {
   const mockCoreDefinition = {
     namespace: 'example',
     name: 'Example Name',
@@ -130,8 +132,10 @@ describe('ValueComponent', () => {
   });
 
   it('toggles details visibility', async () => {
-    render(<ValueComponent definition={mockCoreDefinition} onDelete={mockDelete} onEdit={mockEdit} />);
-    const toggleButton = screen.getByTestId('toggle-details-visibility');
+    const { baseElement } = render(
+      <ValueComponent definition={mockCoreDefinition} onDelete={mockDelete} onEdit={mockEdit} />
+    );
+    const toggleButton = baseElement.querySelector("goa-icon-button[testId='toggle-details-visibility']");
     fireEvent(toggleButton, new CustomEvent('_click'));
     await waitFor(() => {
       expect(screen.getByTestId('value-schema-details').textContent.trim()).toBe(
@@ -145,14 +149,18 @@ describe('ValueComponent', () => {
   });
 
   it('deletes action item to be exist', async () => {
-    render(<ValueComponent definition={mockDefinition} onDelete={mockDelete} onEdit={mockEdit} />);
-    const deleteBtn = screen.getAllByTestId('delete-details')[0];
+    const { baseElement } = render(
+      <ValueComponent definition={mockDefinition} onDelete={mockDelete} onEdit={mockEdit} />
+    );
+    const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-details']")[0];
     expect(deleteBtn).toBeInTheDocument();
   });
 
   it('does not call onEdit when the definition is a core definition', () => {
-    render(<ValueComponent definition={mockCoreDefinition} onEdit={mockEdit} onDelete={mockDelete} />);
-    const editBtn = screen.queryByTestId('edit-details');
+    const { baseElement } = render(
+      <ValueComponent definition={mockCoreDefinition} onEdit={mockEdit} onDelete={mockDelete} />
+    );
+    const editBtn = baseElement.querySelector("goa-icon-button[testId='edit-details']");
     expect(editBtn).not.toBeInTheDocument();
   });
 
@@ -162,13 +170,17 @@ describe('ValueComponent', () => {
   });
 
   it('renders edit button for non-core definitions', () => {
-    render(<ValueComponent definition={mockDefinition} onDelete={mockDelete} onEdit={mockEdit} />);
-    expect(screen.getByTestId('edit-details')).toBeInTheDocument();
+    const { baseElement } = render(
+      <ValueComponent definition={mockDefinition} onDelete={mockDelete} onEdit={mockEdit} />
+    );
+    expect(baseElement.querySelector("goa-icon-button[testId='edit-details']")).toBeInTheDocument();
   });
 
   it('does not trigger delete action when edit button is clicked', () => {
-    render(<ValueComponent definition={mockDefinition} onEdit={mockEdit} onDelete={mockDelete} />);
-    const editBtn = screen.getByTestId('edit-details');
+    const { baseElement } = render(
+      <ValueComponent definition={mockDefinition} onEdit={mockEdit} onDelete={mockDelete} />
+    );
+    const editBtn = baseElement.querySelector("goa-icon-button[testId='edit-details']");
     fireEvent.click(editBtn);
     expect(mockDelete).not.toHaveBeenCalled();
   });

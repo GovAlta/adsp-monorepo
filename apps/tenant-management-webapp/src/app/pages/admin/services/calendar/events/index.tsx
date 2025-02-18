@@ -32,6 +32,7 @@ const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.E
         testId="calendar-event-dropdown-list"
         aria-label="select-calendar-dropdown"
         onChange={onSelect}
+        relative={true}
       >
         {Object.entries(calendars).map(([name, calendar]) => (
           <GoADropdownItem

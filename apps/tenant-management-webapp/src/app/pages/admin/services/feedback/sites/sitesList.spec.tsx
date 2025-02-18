@@ -61,14 +61,16 @@ describe('SitesListComponent', () => {
     expect(rows[0]).toHaveTextContent('https://example.com');
     expect(rows[1]).toHaveTextContent('https://second-site.com');
   });
+
   it('lists feedback sites in the table', () => {
-    render(
+    const { baseElement } = render(
       <Provider store={store}>
         <SitesList onEdit={onEditMock} onDelete={onDeleteMock} />
       </Provider>
     );
 
-    const editButtons = screen.getAllByTestId('site-edit');
+    const editButtons = baseElement.querySelectorAll("goa-icon-button[testId='site-edit']");
+    console.log('editButtons', editButtons);
     expect(editButtons).toHaveLength(2);
   });
 });

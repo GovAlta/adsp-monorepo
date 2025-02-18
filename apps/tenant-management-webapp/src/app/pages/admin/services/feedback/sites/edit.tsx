@@ -100,7 +100,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
           label="Site URL"
           requirement="required"
           labelSize="regular"
-          testId="feedback-url-formitem"
+          testId="feedback-url-formItem"
           error={errors?.['url'] || urlError}
         >
           <GoAInput

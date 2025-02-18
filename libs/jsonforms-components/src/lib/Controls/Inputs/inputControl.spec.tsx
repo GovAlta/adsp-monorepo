@@ -75,12 +75,13 @@ describe('input control tests', () => {
   describe('input date control tests', () => {
     it('can render valid date', () => {
       const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025-02-01') };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      expect(component.getByTestId('My ID-input')).toBeInTheDocument();
+      const input = baseElement.querySelector("goa-input[testId='My ID-input']");
+      expect(input).toBeInTheDocument();
     });
 
     it('can detect malformed max dates in schema', () => {
@@ -105,22 +106,24 @@ describe('input control tests', () => {
 
     it('will reformat non-standard min dates', () => {
       const props = { ...staticProps, uischema: uiSchema('2023/02-01', '2025-02-01') };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      expect(component.getByTestId('My ID-input')).toBeInTheDocument();
+      const input = baseElement.querySelector("goa-input[testId='My ID-input']");
+      expect(input).toBeInTheDocument();
     });
 
     it('will reformat non-standard max', () => {
       const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025/02-01') };
-      const component = render(
+      const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      expect(component.getByTestId('My ID-input')).toBeInTheDocument();
+      const input = baseElement.querySelector("goa-input[testId='My ID-input']");
+      expect(input).toBeInTheDocument();
     });
   });
 

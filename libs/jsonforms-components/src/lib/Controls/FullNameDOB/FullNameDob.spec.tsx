@@ -36,7 +36,7 @@ describe('FullNameDobControl', () => {
   });
 
   it('renders all name fields and date of birth with the correct initial values', () => {
-    const component = render(
+    const { baseElement } = render(
       <FullNameDobControl
         data={defaultFormData}
         handleChange={mockHandleChange}
@@ -51,24 +51,22 @@ describe('FullNameDobControl', () => {
         visible={false}
       />
     );
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
+    const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
 
-    const firstNameInput = component.getByTestId('name-form-first-name');
-    expect((firstNameInput as HTMLInputElement).value).toBe(defaultFormData.firstName);
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
 
-    const middleNameInput = component.getByTestId('name-form-middle-name');
-    expect((middleNameInput as HTMLInputElement).value).toBe(defaultFormData.middleName);
-
-    const lastNameInput = component.getByTestId('name-form-last-name');
-    expect((lastNameInput as HTMLInputElement).value).toBe(defaultFormData.lastName);
-
-    const dobInput = component.getByTestId('dob-form-dateOfBirth');
-    expect((dobInput as HTMLInputElement).value).toBe(defaultFormData.dateOfBirth);
+    const dobInput = baseElement.querySelector("goa-input[testId='dob-form-dateOfBirth']");
+    expect(firstNameInput?.getAttribute('value')).toBe(defaultFormData.firstName);
+    expect(middleNameInput?.getAttribute('value')).toBe(defaultFormData.middleName);
+    expect(lastNameInput?.getAttribute('value')).toBe(defaultFormData.lastName);
+    expect(dobInput?.getAttribute('value')).toBe(defaultFormData.dateOfBirth);
   });
 
   it('renders with required values', () => {
-    const component = render(
+    const { baseElement } = render(
       <FullNameDobControl
-        data={{...defaultFormData, lastName: null}}
+        data={{ ...defaultFormData, lastName: null }}
         handleChange={mockHandleChange}
         path="path-to-data"
         schema={{
@@ -79,7 +77,7 @@ describe('FullNameDobControl', () => {
             lastName: { type: 'string' },
             dateOfBirth: { type: 'string' },
           },
-          required: ['firstName', 'middleName', 'lastName', 'dateOfBirth']
+          required: ['firstName', 'middleName', 'lastName', 'dateOfBirth'],
         }}
         uischema={{} as ControlElement}
         label={''}
@@ -91,21 +89,22 @@ describe('FullNameDobControl', () => {
       />
     );
 
-    const firstNameInput = component.getByTestId('name-form-first-name');
-    expect((firstNameInput as HTMLInputElement).value).toBe(defaultFormData.firstName);
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
+    const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
 
-    const middleNameInput = component.getByTestId('name-form-middle-name');
-    expect((middleNameInput as HTMLInputElement).value).toBe(defaultFormData.middleName);
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
+    const lastNameFormItem = baseElement.querySelector("goa-form-item[testId='form-item-last-name']");
+    const dobInput = baseElement.querySelector("goa-input[testId='dob-form-dateOfBirth']");
+    expect(firstNameInput?.getAttribute('value')).toBe(defaultFormData.firstName);
+    expect(middleNameInput?.getAttribute('value')).toBe(defaultFormData.middleName);
+    expect(lastNameInput?.getAttribute('value')).toBe('');
 
-    const lastNameFormItem = component.getByTestId('name-form-last-name').parentElement;
+    expect(dobInput?.getAttribute('value')).toBe(defaultFormData.dateOfBirth);
     expect(lastNameFormItem?.getAttribute('requirement')).toBe('required');
-
-    const dobInput = component.getByTestId('dob-form-dateOfBirth');
-    expect((dobInput as HTMLInputElement).value).toBe(defaultFormData.dateOfBirth);
   });
 
   it('calls handleChange on user input in first name', () => {
-    render(
+    const { baseElement } = render(
       <FullNameDobControl
         data={defaultFormData}
         handleChange={mockHandleChange}
@@ -121,8 +120,7 @@ describe('FullNameDobControl', () => {
       />
     );
 
-    const firstNameInput = screen.getByTestId('name-form-first-name');
-    fireEvent.change(firstNameInput, { target: { value: 'Jane' } });
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
 
     fireEvent(
       firstNameInput,
@@ -131,7 +129,7 @@ describe('FullNameDobControl', () => {
       })
     );
 
-    expect((firstNameInput as HTMLInputElement).value).toBe('Jane');
+    expect(firstNameInput?.getAttribute('value')).toBe('Jane');
     expect(mockHandleChange).toBeCalledTimes(1);
     expect(mockHandleChange).toHaveBeenCalledWith('path-to-data', {
       ...defaultFormData,
@@ -140,7 +138,7 @@ describe('FullNameDobControl', () => {
   });
 
   it('can disable inputs', () => {
-    const { getByTestId } = render(
+    const { baseElement } = render(
       <FullNameDobControl
         data={defaultFormData}
         handleChange={mockHandleChange}
@@ -155,11 +153,12 @@ describe('FullNameDobControl', () => {
         visible={false}
       />
     );
-    expect(getByTestId('name-form-middle-name').getAttribute('disabled')).toBe('true');
+    const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
+    expect(middleNameInput.getAttribute('disabled')).toBe('true');
   });
 
   it('calls handleChange on user input in middle name', () => {
-    render(
+    const { baseElement } = render(
       <FullNameDobControl
         data={defaultFormData}
         handleChange={mockHandleChange}
@@ -174,9 +173,7 @@ describe('FullNameDobControl', () => {
         visible={false}
       />
     );
-
-    const middleNameInput = screen.getByTestId('name-form-middle-name');
-    fireEvent.change(middleNameInput, { target: { value: 'B.' } });
+    const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
 
     fireEvent(
       middleNameInput,
@@ -185,7 +182,7 @@ describe('FullNameDobControl', () => {
       })
     );
 
-    expect((middleNameInput as HTMLInputElement).value).toBe('B.');
+    expect(middleNameInput.getAttribute('value')).toBe('B.');
     expect(mockHandleChange).toBeCalledTimes(1);
     expect(mockHandleChange).toHaveBeenCalledWith('path-to-data', {
       ...defaultFormData,
@@ -194,7 +191,7 @@ describe('FullNameDobControl', () => {
   });
 
   it('calls handleChange on user input in last name', () => {
-    render(
+    const { baseElement } = render(
       <FullNameDobControl
         data={defaultFormData}
         handleChange={mockHandleChange}
@@ -209,8 +206,7 @@ describe('FullNameDobControl', () => {
         visible={false}
       />
     );
-
-    const lastNameInput = screen.getByTestId('name-form-last-name');
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
 
     fireEvent(
       lastNameInput,
@@ -219,7 +215,7 @@ describe('FullNameDobControl', () => {
       })
     );
 
-    expect((lastNameInput as HTMLInputElement).value).toBe('Smith');
+    expect(lastNameInput?.getAttribute('value')).toBe('Smith');
     expect(mockHandleChange).toBeCalledTimes(1);
     expect(mockHandleChange).toHaveBeenCalledWith('path-to-data', {
       ...defaultFormData,
@@ -228,7 +224,7 @@ describe('FullNameDobControl', () => {
   });
 
   it('calls handleChange on user input in date of birth', () => {
-    render(
+    const { baseElement } = render(
       <FullNameDobControl
         data={defaultFormData}
         handleChange={mockHandleChange}
@@ -243,9 +239,7 @@ describe('FullNameDobControl', () => {
         visible={false}
       />
     );
-
-    const dobInput = screen.getByTestId('dob-form-dateOfBirth');
-    fireEvent.change(dobInput, { target: { value: '2000-12-12' } });
+    const dobInput = baseElement.querySelector("goa-input[testId='dob-form-dateOfBirth']");
 
     fireEvent(
       dobInput,
@@ -254,7 +248,7 @@ describe('FullNameDobControl', () => {
       })
     );
 
-    expect((dobInput as HTMLInputElement).value).toBe('2000-12-12');
+    expect(dobInput?.getAttribute('value')).toBe('2000-12-12');
     expect(mockHandleChange).toBeCalledTimes(1);
     expect(mockHandleChange).toHaveBeenCalledWith('path-to-data', {
       ...defaultFormData,
@@ -263,7 +257,7 @@ describe('FullNameDobControl', () => {
   });
 
   it('calls handleRequiredFieldBlur on user input in date of birth', () => {
-    render(
+    const { baseElement } = render(
       <FullNameDobControl
         data={defaultFormData}
         handleChange={mockHandleChange}
@@ -278,8 +272,8 @@ describe('FullNameDobControl', () => {
         visible={false}
       />
     );
+    const dobInput = baseElement.querySelector("goa-input[testId='dob-form-dateOfBirth']");
 
-    const dobInput = screen.getByTestId('dob-form-dateOfBirth');
     fireEvent(
       dobInput,
       new CustomEvent('_change', {
@@ -287,14 +281,9 @@ describe('FullNameDobControl', () => {
       })
     );
 
-    fireEvent(
-      dobInput,
-      new CustomEvent('_blur', {
-        detail: { name: 'dateOfBirth', value: '2000-12-12' },
-      })
-    );
+    fireEvent.blur(dobInput);
 
-    expect((dobInput as HTMLInputElement).value).toBe('2000-12-12');
+    expect(dobInput?.getAttribute('value')).toBe('2000-12-12');
     expect(mockHandleChange).toBeCalledTimes(1);
     expect(mockHandleChange).toHaveBeenCalledWith('path-to-data', {
       ...defaultFormData,
@@ -302,7 +291,7 @@ describe('FullNameDobControl', () => {
     });
   });
 
-  it('test fullnameDoB tester', () => {
+  it('test full name DoB tester', () => {
     expect(
       isFullNameDoB(
         {

@@ -135,41 +135,41 @@ describe('NotificationTypes Page', () => {
   });
 
   it('renders', () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
-    const addDefButton = queryByTestId('add-notification');
+    const addDefButton = baseElement.querySelector("goa-button[testId='add-notification']");
     expect(addDefButton).not.toBeNull();
   });
 
   it('allows for the NotificationTypes to be added', async () => {
-    const { queryByTestId } = render(
+    const { queryByTestId, baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
-    const addDefButton = queryByTestId('add-notification');
+    const addDefButton = baseElement.querySelector("goa-button[testId='add-notification']");
     fireEvent.click(addDefButton);
-    const dialog = queryByTestId('notification-types-form');
+    const dialog = baseElement.querySelector("goa-modal[testId='notification-types-form']");
     await waitFor(() => {
       expect(dialog).not.toBeNull();
     });
   });
 
   it('deletes a notification type', async () => {
-    const { getAllByTestId, baseElement } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
 
-    const deleteBtn = getAllByTestId('delete-notification-type')[0];
+    const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-notification-type']")[0];
     fireEvent(deleteBtn, new CustomEvent('_click'));
     const confirmation = baseElement.querySelector('goa-modal');
     const actionContent = confirmation.querySelector("[slot='actions']");
-    const deleteConfirm = actionContent.querySelector("[data-testid='delete-confirm']");
+    const deleteConfirm = actionContent.querySelector("[testid='delete-confirm']");
     expect(confirmation).not.toBeNull();
 
     fireEvent(deleteConfirm, new CustomEvent('_click'));
@@ -180,37 +180,37 @@ describe('NotificationTypes Page', () => {
   });
 
   it('cancels deleting a notification type', async () => {
-    const { getAllByTestId, baseElement } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
 
-    const deleteBtn = getAllByTestId('delete-notification-type')[0];
+    const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-notification-type']")[0];
     fireEvent(deleteBtn, new CustomEvent('_click'));
     const confirmation = baseElement.querySelector('goa-modal');
     const actionContent = confirmation.querySelector("[slot='actions']");
     await waitFor(() => {
-      expect(actionContent.querySelector("[data-testid='delete-cancel']")).toBeVisible();
+      expect(actionContent.querySelector("[testid='delete-cancel']")).toBeVisible();
     });
   });
 
   it('edits the notification types', async () => {
-    const { getAllByTestId, queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
-    const editBtn = getAllByTestId('edit-notification-type')[0];
+    const editBtn = baseElement.querySelectorAll("goa-icon-button[testId='edit-notification-type']")[0];
     await waitFor(() => {
       fireEvent.click(editBtn);
     });
 
     // fields
-    const name = queryByTestId('form-name');
-    const description = queryByTestId('form-description');
-    const cancelBtn = queryByTestId('form-cancel');
-    const saveBtn = queryByTestId('form-save');
+    const name = baseElement.querySelector("goa-input[testId='form-name']");
+    const description = baseElement.querySelector("goa-textarea[testId='form-description']");
+    const cancelBtn = baseElement.querySelector("goa-button[testId='form-cancel']");
+    const saveBtn = baseElement.querySelector("goa-button[testId='form-save']");
 
     expect(name).not.toBeNull();
     expect(description).not.toBeNull();
@@ -239,40 +239,40 @@ describe('NotificationTypes Page', () => {
   });
 
   it('cancels editing the notification type', async () => {
-    const { getAllByTestId, queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
 
     await waitFor(() => {
-      const editBtn = getAllByTestId('edit-notification-type')[0];
+      const editBtn = baseElement.querySelectorAll("goa-icon-button[testId='edit-notification-type']")[0];
       fireEvent.click(editBtn);
     });
 
-    const cancelButton = queryByTestId('form-cancel');
+    const cancelButton = baseElement.querySelector("goa-button[testId='form-cancel']");
     fireEvent.click(cancelButton);
 
     await waitFor(() => {
-      const form = queryByTestId('notification-types-form');
+      const form = baseElement.querySelector("goa-modal[testId='notification-types-form']");
       expect(form).not.toBeNull();
     });
   });
 
   it('creates a new notification type', async () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
-    const addBtn = queryByTestId('add-notification');
+    const addBtn = baseElement.querySelector("goa-button[testId='add-notification']");
     fireEvent.click(addBtn);
 
     // fields
-    const name = queryByTestId('form-name');
-    const description = queryByTestId('form-description');
-    const cancelBtn = queryByTestId('form-cancel');
-    const saveBtn = queryByTestId('form-save');
+    const name = baseElement.querySelector("goa-input[testId='form-name']");
+    const description = baseElement.querySelector("goa-textarea[testId='form-description']");
+    const cancelBtn = baseElement.querySelector("goa-button[testId='form-cancel']");
+    const saveBtn = baseElement.querySelector("goa-button[testId='form-save']");
 
     expect(name).toBeTruthy();
     expect(description).toBeTruthy();
@@ -280,14 +280,13 @@ describe('NotificationTypes Page', () => {
     expect(saveBtn).toBeTruthy();
 
     // fill
+
     fireEvent(
-      name,
+      description,
       new CustomEvent('_change', {
-        detail: { value: 'name' },
+        detail: { value: 'description' },
       })
     );
-
-    fireEvent.change(description, { target: { value: 'description' } });
     fireEvent.click(saveBtn);
 
     const actions = store.getActions();
@@ -298,20 +297,20 @@ describe('NotificationTypes Page', () => {
   });
 
   it('add an event', async () => {
-    const { getAllByTestId, queryByTestId, baseElement } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
-    const addBtn = getAllByTestId('add-event')[1];
+    const addBtn = baseElement.querySelectorAll("goa-button[testId='add-event']")[1];
     await waitFor(() => {
       fireEvent.click(addBtn);
     });
 
     // fields
     const eventDropDown = baseElement.querySelector('goa-dropdown');
-    const cancelBtn = queryByTestId('event-form-cancel');
-    const saveBtn = queryByTestId('event-form-save');
+    const cancelBtn = baseElement.querySelector("goa-button[testId='event-form-cancel']");
+    const saveBtn = baseElement.querySelector("goa-button[testId='event-form-save']");
 
     expect(eventDropDown).toBeTruthy();
     expect(cancelBtn).toBeTruthy();
@@ -332,12 +331,11 @@ describe('NotificationTypes Page', () => {
     const actions = store.getActions();
 
     const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
-
     expect(saveAction).toBeTruthy();
   });
 
   it('edit an event', async () => {
-    const { getAllByTestId, queryByTestId } = render(
+    const { getAllByTestId, baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
@@ -348,8 +346,8 @@ describe('NotificationTypes Page', () => {
     });
 
     // fields
-    const cancelBtn = queryByTestId('template-form-close');
-    const saveBtn = queryByTestId('template-form-save');
+    const cancelBtn = baseElement.querySelector("goa-button[testId='template-form-close']");
+    const saveBtn = baseElement.querySelector("goa-button[testId='template-form-save']");
 
     expect(cancelBtn).toBeTruthy();
     expect(saveBtn).toBeTruthy();
@@ -360,11 +358,10 @@ describe('NotificationTypes Page', () => {
 
     const actions = store.getActions();
     const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
-
     expect(saveAction).toBeTruthy();
   });
   it('edit notification type should have title and subtitle field', async () => {
-    const { getAllByTestId, queryByTestId, queryAllByText } = render(
+    const { getAllByTestId, queryByTestId, queryAllByText, baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
@@ -382,23 +379,22 @@ describe('NotificationTypes Page', () => {
   });
 
   it('deletes an event', async () => {
-    const { getAllByTestId, baseElement } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
-    const deleteBtn = getAllByTestId('delete-event')[0];
+    const deleteBtn = baseElement.querySelectorAll("goa-icon-button[testId='delete-event']")[0];
 
     fireEvent(deleteBtn, new CustomEvent('_click'));
     const confirmation = baseElement.querySelector('goa-modal');
     const actionContent = confirmation.querySelector("[slot='actions']");
-    const deleteConfirm = actionContent.querySelector("[data-testid='delete-confirm']");
+    const deleteConfirm = actionContent.querySelector("[testid='delete-confirm']");
     expect(confirmation).not.toBeNull();
 
     fireEvent(deleteConfirm, new CustomEvent('_click'));
 
     const actions = store.getActions();
-
     const deleteAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
     expect(deleteAction).toBeTruthy();
   });

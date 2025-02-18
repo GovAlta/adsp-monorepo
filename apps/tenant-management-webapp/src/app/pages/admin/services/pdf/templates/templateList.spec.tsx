@@ -21,7 +21,7 @@ describe('Test Pdf list page', () => {
     const store = mockStore({});
     // eslint-disable-next-line
     const onDeleteMock = jest.fn(() => {});
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <MemoryRouter initialEntries={['https://mock-host.com']}>
           <PdfTemplateItem pdfTemplate={templateMock} onDelete={onDeleteMock} />
@@ -29,7 +29,7 @@ describe('Test Pdf list page', () => {
       </Provider>
     );
 
-    const deleteBtn = await queryByTestId('pdf-template-delete');
+    const deleteBtn = await baseElement.querySelector("goa-icon-button[testId='pdf-template-delete']");
     fireEvent(deleteBtn, new CustomEvent('_click'));
 
     expect(onDeleteMock).toHaveBeenCalledWith(templateMock);
