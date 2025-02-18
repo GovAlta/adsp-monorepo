@@ -1,7 +1,7 @@
 import { Dispatch } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { Category, SchemaBasedCondition, UISchemaElement } from '@jsonforms/core';
+import { Category, UISchemaElement } from '@jsonforms/core';
 import { ContextProviderFactory, GoARenderers } from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
@@ -66,6 +66,7 @@ const nameCategory = {
       label: 'first',
       scope: '#/properties/name/properties/firstName',
       options: { placeholder: 'First name', componentProps: { testId: 'first-name-input' } },
+      minLength: 1,
     },
     {
       type: 'Control',
@@ -74,6 +75,7 @@ const nameCategory = {
       options: { placeholder: 'Last name', componentProps: { testId: 'last-name-input' } },
     },
   ],
+  required: ['firstName'],
 } as unknown as Category;
 
 const addressCategory = {
@@ -106,14 +108,18 @@ const categorization = {
   },
 };
 
-const subCategorization = {
+const categorizationPages = {
   type: 'Categorization',
   label: 'Test Categorization',
-  elements: [categorization],
+  elements: [nameCategory, addressCategory],
   options: {
-    variant: 'stepper',
-    testId: 'stepper-test',
+    variant: 'pages',
+    testId: 'pages-test',
     showNavButtons: true,
+    nextButtonLabel: 'testNext',
+    nextButtonType: 'primary',
+    previousButtonLabel: 'testPrevious',
+    previousButtonType: 'primary',
     componentProps: { controlledNav: true },
   },
 };
@@ -145,7 +151,10 @@ const combineOptions = (uiSchema: UISchemaElement = categorization, componentPro
 
 const mockDispatch = jest.fn();
 
-const stepperBaseProps: CategorizationStepperLayoutRendererProps = {
+// eslint-disable-next-line
+type TestProps = CategorizationStepperLayoutRendererProps & { customDispatch: Dispatch<any> } & { activeId: number };
+
+const stepperBaseProps: TestProps = {
   uischema: categorization,
   schema: dataSchema,
   enabled: true,
@@ -157,8 +166,9 @@ const stepperBaseProps: CategorizationStepperLayoutRendererProps = {
   locale: 'en',
   activeId: 0,
   customDispatch: mockDispatch,
-  // eslint-disable-next-line
-} as unknown as CategorizationStepperLayoutRendererProps & { customDispatch: Dispatch<any> } & { activeId: number };
+};
+
+const { customDispatch, ...stepperBasePropsNoDispatch } = stepperBaseProps;
 
 const getForm = (
   data: object,
@@ -166,6 +176,24 @@ const getForm = (
   componentProps: object | undefined = undefined
 ): JSX.Element => {
   combineOptions(uiSchema, componentProps);
+
+  return (
+    <JsonForms
+      uischema={uiSchema}
+      data={data}
+      schema={dataSchema}
+      ajv={new Ajv({ allErrors: true, verbose: true })}
+      renderers={GoARenderers}
+    />
+  );
+};
+
+const getFormPages = (
+  data: object,
+  uiSchema: UISchemaElement = categorizationPages,
+  componentProps: object | undefined = undefined
+): JSX.Element => {
+  combineOptions(categorizationPages, componentProps);
 
   return (
     <JsonForms
@@ -197,6 +225,15 @@ describe('Form Stepper Control', () => {
 
     const summaryStep = renderer.getByTestId('summary_step-content');
     expect(summaryStep).toBeInTheDocument();
+  });
+
+  it('can render an initial Categorization using pages ', () => {
+    const renderer = render(
+      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getFormPages(formData)} />
+    );
+    const step1 = renderer.getByTestId('step_0-content-pages');
+    expect(step1).toBeInTheDocument();
+    expect(step1).toBeVisible();
   });
 
   it('can render a nested Categorization', () => {
@@ -312,6 +349,56 @@ describe('Form Stepper Control', () => {
 
       expect(mockDispatch.mock.calls[2][0].type === 'page/to/index');
       expect(mockDispatch.mock.calls[2][0].id === 0);
+    });
+  });
+
+  describe('page navigation', () => {
+    it('makes sure save and continue button is disabled if required field is not filled in', async () => {
+      const newStepperProps = {
+        ...stepperBasePropsNoDispatch,
+        data: {},
+      };
+      const { getByTestId, baseElement } = render(
+        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      );
+      window.HTMLElement.prototype.scrollIntoView = function () {};
+      const nextButton = baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
+
+      expect(nextButton).toBeInTheDocument();
+
+      expect(nextButton.getAttribute('disabled')).toBe('true');
+    });
+
+    it('will hide Prev Nav button on 1st step and show it on any subsequent steps', async () => {
+      const newStepperProps = {
+        ...stepperBaseProps,
+        data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
+      };
+      newStepperProps.activeId = 1;
+      const { getByTestId } = render(
+        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      );
+
+      const BackButton = getByTestId('back-button-click');
+      expect(BackButton).toBeVisible();
+    });
+
+    it('will show submit button on last step', async () => {
+      const newStepperProps = {
+        ...stepperBaseProps,
+        data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
+      };
+      const { baseElement } = render(
+        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      );
+
+      const nextButton = baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
+
+      expect(nextButton).toBeInTheDocument();
+      expect(nextButton).not.toBeNull();
+      await fireEvent.click(nextButton!);
+      expect(mockDispatch.mock.calls[3].type === 'page/to/index');
+      expect(mockDispatch.mock.calls[3].payload === 1);
     });
   });
 
@@ -476,6 +563,16 @@ describe('Form Stepper Control', () => {
     const result2 = getProperty(obj, 'prop');
     expect(result).toBe(undefined);
     expect(result2).toBe('test');
+
+    const nestedObj = {
+      level1: {
+        level2: {
+          targetProp: 'found me!',
+        },
+      },
+    };
+    const result3 = getProperty(nestedObj, 'targetProp');
+    expect(result3).toBe('found me!');
   });
 
   describe('test the jsonforms stepper layout tester', () => {
@@ -500,7 +597,13 @@ describe('Form Stepper Control', () => {
       elements: [{ type: 'Control' }],
       // eslint-disable-next-line
     } as UISchemaElement);
+    const nonCategoryType = categoriesAreValid({
+      type: 'Category',
+      elements: [{ type: 'Control' }],
+      // eslint-disable-next-line
+    } as UISchemaElement);
     expect(isCategoryLayout).toBe(true);
+    expect(nonCategoryType).toBe(false);
     expect(isNotCategoryLayout).toBe(false);
   });
 });

@@ -94,7 +94,7 @@ describe('SiteAddEditForm', () => {
     expect(urlFormItem).toHaveAttribute('error', 'Please enter a valid URL');
   });
   it('No error should exists when valid url is provided', async () => {
-    const { findByText, queryByTestId, baseElement } = render(
+    const { baseElement } = render(
       <Provider store={sitesStore}>
         <SiteAddEditForm
           initialValue={emptySite}

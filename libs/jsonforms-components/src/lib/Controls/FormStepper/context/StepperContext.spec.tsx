@@ -165,6 +165,7 @@ describe('Test jsonforms stepper context', () => {
       path: 'test-path',
       isOnReview: false,
       isValid: false,
+      maxReachedStep: 0,
       categories: [
         {
           isCompleted: false,
@@ -184,6 +185,7 @@ describe('Test jsonforms stepper context', () => {
       path: 'test-path',
       isOnReview: false,
       isValid: false,
+      maxReachedStep: 0,
       categories: [
         {
           isCompleted: false,

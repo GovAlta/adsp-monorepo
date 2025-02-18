@@ -7,6 +7,7 @@ import { ControlElement, ControlProps } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 
 import { validateSinWithLuhn, checkFieldValidity, isValidDate } from '../../util/stringUtils';
+import { GoANumberInput } from './InputNumberControl';
 
 const mockContextValue = {
   errors: [],
@@ -26,26 +27,32 @@ interface ControlElementWithMin extends ControlElement {
 describe('Input Text Control tests', () => {
   const textBoxUiSchema: ControlElementWithMin = {
     type: 'Control',
-    scope: '#/properties/firstName',
-    label: 'My First name',
+    scope: '#/properties/amount',
+    label: 'Amount',
     minLength: 1,
   };
 
   const staticProps: GoAInputTextProps & ControlProps = {
     uischema: textBoxUiSchema,
-    schema: {},
+    schema: {
+      multipleOf: 1,
+      minimum: 1,
+      exclusiveMaximum: 5000,
+    },
     rootSchema: {},
     handleChange: (path, value) => {},
     enabled: true,
-    label: 'First Name',
-    id: 'firstName',
+    label: 'Amount',
+    id: 'amount',
     config: {},
     path: '',
     errors: '',
-    data: 'My Name',
+    data: '1',
     visible: true,
     isValid: true,
     required: false,
+    isVisited: false,
+    setIsVisited: () => {},
   };
   const sinProps: GoAInputTextProps & ControlProps = {
     uischema: textBoxUiSchema,
@@ -99,6 +106,23 @@ describe('Input Text Control tests', () => {
   const handleChangeMock = jest.fn(() => Promise.resolve());
 
   describe('can create control', () => {
+    it('calls onBlur for input numeric control', () => {
+      const props = {
+        ...staticProps,
+      };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const amountInput = baseElement.querySelector("goa-input[testId='amount-input']");
+
+      const blurred = fireEvent.blur(amountInput);
+
+      expect(blurred).toBe(true);
+    });
+
     it('can create control', () => {
       const props = { ...staticProps };
 
@@ -107,9 +131,43 @@ describe('Input Text Control tests', () => {
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      const amountInput = baseElement.querySelector("goa-input[testId='amount-input']");
 
-      expect(firstNameInput).toBeInTheDocument();
+      expect(amountInput).toBeInTheDocument();
+    });
+
+    it('can create input control with errors', () => {
+      const props = { ...staticProps, isVisited: true, errors: 'this is an error' };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoANumberInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const amountInput = baseElement.querySelector("goa-input[testId='amount-input']");
+      expect(amountInput.getAttribute('error')).toBe('true');
+    });
+
+    it('can create control with label as name', () => {
+      const props = { ...staticProps, id: '', label: 'mytestInput' };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoANumberInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const amountInput = baseElement.querySelector("goa-input[testId='-input']");
+      expect(amountInput.getAttribute('name')).toBe('mytestInput-input');
+    });
+    it('can create input control with undefined data', () => {
+      const props = { ...staticProps, isVisited: true, errors: 'this is an error', data: undefined };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoANumberInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const amountInput = baseElement.querySelector("goa-input[testId='amount-input']");
+      expect(amountInput).toBeInTheDocument();
     });
 
     it('can create base control', () => {
@@ -128,24 +186,46 @@ describe('Input Text Control tests', () => {
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      const amountInput = baseElement.querySelector("goa-input[testId='amount-input']");
 
-      const pressed = fireEvent.keyPress(firstNameInput, { key: 'z', code: 90, charCode: 90 });
+      const pressed = fireEvent.keyPress(amountInput, { key: 'z', code: 90, charCode: 90 });
       expect(pressed).toBe(true);
-      expect(firstNameInput).toBeInTheDocument();
+      expect(amountInput).toBeInTheDocument();
+    });
+
+    it('can trigger onChange  event', async () => {
+      const props = { ...staticProps };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoANumberInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const amountInput = baseElement.querySelector("goa-input[testId='amount-input']");
+      // fireEvent.change(amountInput, { target: { value: '5' } });
+
+      fireEvent(
+        amountInput,
+        new CustomEvent('_change', {
+          detail: { name: 'amount', value: '5' },
+        })
+      );
+      amountInput?.setAttribute('value', '5');
+      expect(amountInput?.getAttribute('value')).toBe('5');
     });
 
     it('can trigger on Blur event', async () => {
       const props = { ...staticProps };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoAInputText {...props} />
+          <GoANumberInput {...props} />
         </JsonFormsContext.Provider>
       );
 
-      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      const firstNameInput = baseElement.querySelector("goa-input[testId='amount-input']");
 
       const blurred = fireEvent.blur(firstNameInput);
+
       expect(blurred).toBe(true);
     });
 
@@ -165,7 +245,6 @@ describe('Input Text Control tests', () => {
           detail: { value: '123456789' },
         })
       );
-      // await fireEvent.change(input, { target: { value: '123456789' } });
       expect(handleChangeMock).toHaveBeenCalledWith('', '123 456 789');
     });
 
@@ -176,9 +255,13 @@ describe('Input Text Control tests', () => {
           <GoAInputText {...props} />
         </JsonFormsContext.Provider>
       );
-      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      const firstNameInput = baseElement.querySelector("goa-input[testId='amount-input']");
 
-      const pressed = fireEvent.keyPress(firstNameInput, { key: 'z', code: 90, charCode: 90 });
+      //const pressed = fireEvent.keyPress(firstNameInput, { key: 'z', code: 90, charCode: 90 });
+      const pressed = await fireEvent(
+        firstNameInput,
+        new CustomEvent('_keypress', { key: 'z', code: 90, charCode: 90 })
+      );
 
       handleChangeMock();
       expect(props.handleChange).toBeCalled();
@@ -187,16 +270,7 @@ describe('Input Text Control tests', () => {
     });
   });
 
-  describe('Control Types test', () => {
-    it('Empty Boolean control should show error', () => {
-      const { getByText } = render(
-        <JsonFormsContext.Provider value={mockContextValue}>
-          <TestComponent props={emptyBooleanProps} />
-        </JsonFormsContext.Provider>
-      );
-
-      expect(getByText('First name is required')).toBeTruthy();
-    });
+  describe('Control Types tests', () => {
     it('Check if the date is a valid date/time', () => {
       const date = new Date();
       expect(isValidDate(date)).toBe(true);

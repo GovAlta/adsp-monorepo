@@ -281,12 +281,7 @@ describe('FullNameDobControl', () => {
       })
     );
 
-    fireEvent(
-      dobInput,
-      new CustomEvent('_blur', {
-        detail: { name: 'dateOfBirth', value: '2000-12-12' },
-      })
-    );
+    fireEvent.blur(dobInput);
 
     expect(dobInput?.getAttribute('value')).toBe('2000-12-12');
     expect(mockHandleChange).toBeCalledTimes(1);

@@ -27,15 +27,15 @@ export interface WithInput {
   noLabel?: boolean;
   isStepperReview?: boolean;
   setIsVisited?: () => void;
-  skipOnBlurValidation?: boolean;
+  skipInitialValidation?: boolean;
 }
 
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
-  const { uischema, visible, label, input, required, path, isStepperReview, skipOnBlurValidation } = props;
+  const { uischema, visible, label, input, required, path, isStepperReview, skipInitialValidation } = props;
   const InnerComponent = input;
   const labelToUpdate: string = convertToSentenceCase(getLabelText(uischema.scope, label || ''));
   let modifiedErrors = checkFieldValidity(props as ControlProps);
-  const [isVisited, setIsVisited] = useState(skipOnBlurValidation === true);
+  const [isVisited, setIsVisited] = useState(skipInitialValidation === true);
 
   if (modifiedErrors === 'must be equal to one of the allowed values') {
     modifiedErrors = '';

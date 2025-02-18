@@ -150,20 +150,30 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
     }
 
     if (registration.serviceConfigurations) {
-      for (const { serviceId, configuration } of registration.serviceConfigurations) {
-        await this.updateConfiguration(serviceId, configuration);
+      for (const { serviceId, configuration: configurationValue } of registration.serviceConfigurations) {
+        if (Array.isArray(configurationValue)) {
+          for (const { name, configuration } of configurationValue) {
+            await this.updateConfiguration(serviceId, configuration, name);
+          }
+        } else {
+          await this.updateConfiguration(serviceId, configurationValue);
+        }
       }
     }
   }
 
-  private async updateConfiguration<C extends Record<string, unknown>>(serviceId: AdspId, update: C): Promise<void> {
+  private async updateConfiguration<C extends Record<string, unknown>>(
+    serviceId: AdspId,
+    update: C,
+    name?: string
+  ): Promise<void> {
     const configurationServiceId = adspId`urn:ads:platform:configuration-service:v2`;
     const serviceUrl = await this.directory.getServiceUrl(configurationServiceId);
 
     try {
       await retry.execute(async ({ attempt }) => {
         try {
-          await this.#tryUpdateConfiguration(serviceUrl, attempt, serviceId, update);
+          await this.#tryUpdateConfiguration(serviceUrl, attempt, serviceId, update, name);
         } catch (err) {
           this.logger.debug(`Try ${attempt} failed with error. ${err}`, this.LOG_CONTEXT);
           throw err;
@@ -181,14 +191,15 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
     configurationServiceUrl: URL,
     count: number,
     serviceId: AdspId,
-    update: Record<string, unknown>
+    update: Record<string, unknown>,
+    name?: string
   ): Promise<void> => {
     this.logger.debug(`Try ${count}: updating configuration for service ${serviceId}...`, this.LOG_CONTEXT);
 
-    const configurationUrl = new URL(
-      `v2/configuration/${serviceId.namespace}/${serviceId.service}`,
-      configurationServiceUrl
-    );
+    const namespace = name ? serviceId.service : serviceId.namespace;
+    name = name || serviceId.service;
+
+    const configurationUrl = new URL(`v2/configuration/${namespace}/${name}`, configurationServiceUrl);
 
     const token = await this.tokenProvider.getAccessToken();
     await axios.patch(

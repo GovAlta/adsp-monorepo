@@ -13,8 +13,10 @@ import {
   GoAInputNumberControl,
   GoAIntegerControlTester,
   GoAInputIntegerControl,
-  CategorizationRendererTester,
+  CategorizationStepperRendererTester,
+  CategorizationPagesRendererTester,
   FormStepperControl,
+  FormStepperPagesControl,
   FileUploaderTester,
   FileUploader,
   FileUploaderReview,
@@ -161,7 +163,8 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
 
 export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   ...GoABaseReviewRenderers,
-  { tester: CategorizationRendererTester, renderer: FormStepperReviewControl },
+  { tester: CategorizationStepperRendererTester, renderer: FormStepperReviewControl },
+  { tester: CategorizationPagesRendererTester, renderer: FormStepperReviewControl },
   { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploaderReview) },
   { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameReviewControl) },
   { tester: FullNameDobTester, renderer: withJsonFormsControlProps(FullNameDobReviewControl) },
@@ -170,7 +173,8 @@ export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = [
 
 export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
   ...GoABaseRenderers,
-  { tester: CategorizationRendererTester, renderer: FormStepperControl },
+  { tester: CategorizationStepperRendererTester, renderer: FormStepperControl },
+  { tester: CategorizationPagesRendererTester, renderer: FormStepperPagesControl },
   { tester: FileUploaderTester, renderer: withJsonFormsControlProps(FileUploader) },
   { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControl) },
   { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameControl) },

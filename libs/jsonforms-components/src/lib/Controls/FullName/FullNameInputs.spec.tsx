@@ -327,12 +327,7 @@ describe('NameInputs Component', () => {
 
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
 
-    const blurred = fireEvent(
-      firstNameInput,
-      new CustomEvent('_blur', {
-        detail: { name: 'firstName', value: 'Jane' },
-      })
-    );
+    const blurred = fireEvent.blur(firstNameInput);
 
     expect(blurred).toBe(true);
   });
@@ -358,12 +353,7 @@ describe('NameInputs Component', () => {
 
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
 
-    const blurred = fireEvent(
-      firstNameInput,
-      new CustomEvent('_blur', {
-        detail: { name: 'firstName', value: '' },
-      })
-    );
+    const blurred = fireEvent.blur(firstNameInput);
 
     expect(blurred).toBe(true);
   });

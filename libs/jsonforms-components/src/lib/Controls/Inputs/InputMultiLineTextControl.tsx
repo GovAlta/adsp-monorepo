@@ -46,8 +46,6 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
       onKeyPress={(name: string, value: string, key: string) => {
         const newValue = autoCapitalize ? value.toUpperCase() : value;
 
-        /* TODO: add the unit test, when the solution is used */
-        /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
@@ -67,8 +65,6 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
         });
       }}
       onChange={(name: string, value: string) => {
-        /* TODO: add the unit test, when the solution is used */
-        /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }

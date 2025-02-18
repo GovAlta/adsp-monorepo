@@ -183,7 +183,7 @@ describe('AddressLookUpControl', () => {
   it('can trigger input onBlur', async () => {
     const { baseElement } = renderComponent();
     const inputField = baseElement.querySelector("goa-input[testId='address-form-address1']");
-    fireEvent(inputField, new CustomEvent('_blur', { detail: { name: 'test', value: '123' } }));
+    fireEvent.blur(inputField);
   });
   it('should increase selectedIndex on ArrowDown key press', () => {
     const { baseElement } = renderComponent();

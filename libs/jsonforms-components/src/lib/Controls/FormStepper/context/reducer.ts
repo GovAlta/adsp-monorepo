@@ -65,6 +65,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
         state.hasNextButton = id <= lastId;
         state.hasPrevButton = id !== 0;
         state.isOnReview = false;
+        state.maxReachedStep = Math.max(state.maxReachedStep, activeId);
         return { ...state };
       }
     }

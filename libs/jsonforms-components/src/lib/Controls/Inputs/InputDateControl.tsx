@@ -61,8 +61,6 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
       disabled={!enabled}
       readonly={readOnly}
       onChange={(name: string, value: Date | string) => {
-        /* TODO: add the unit test, when the solution is used */
-        /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
@@ -81,11 +79,10 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
         });
       }}
       onBlur={(name: string, value: Date | string) => {
-        /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
-        /* istanbul ignore next */
+
         onBlurForDateControl({
           name,
           value,

@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { GoAInputMultiLineTextProps, MultiLineText, MultiLineTextControlInput } from './InputMultiLineTextControl';
+import { GoAInputMultiLineTextProps, MultiLineText } from './InputMultiLineTextControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 
 describe('Input Text Control tests', () => {
@@ -31,6 +31,8 @@ describe('Input Text Control tests', () => {
     visible: true,
     isValid: true,
     required: false,
+    isVisited: false,
+    setIsVisited: () => {},
   };
 
   const handleChangeMock = jest.fn(() => Promise.resolve());
@@ -41,6 +43,20 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(<MultiLineText {...props} />);
       const input = baseElement.querySelector("goa-textarea[testId='firstName-input']");
       expect(input).toBeInTheDocument();
+    });
+
+    it('can create control InputMultiLineTextControl with errors', () => {
+      const props = { ...staticProps, isVisited: true, errors: 'this is a error' };
+      const { baseElement } = render(<MultiLineText {...props} />);
+      const input = baseElement.querySelector("goa-textarea[testId='firstName-input']");
+      expect(input.getAttribute('error')).toBe('true');
+    });
+
+    it('can create control with label as name', () => {
+      const props = { ...staticProps, id: '', label: '', path: 'mytestInput' };
+      const { baseElement } = render(<MultiLineText {...props} />);
+      const input = baseElement.querySelector("goa-textarea[testId='-input']");
+      expect(input.getAttribute('name')).toBe('mytestInput-text-area');
     });
 
     it('can create base control for InputMultiLineTextControl', () => {

@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { GoAInputIntegerProps, GoAInputInteger, GoAIntegerControl } from './InputIntegerControl';
+import { GoAInputIntegerProps, GoAInputInteger } from './InputIntegerControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 
@@ -19,7 +19,11 @@ describe('input number controls', () => {
   const regExNumbers = new RegExp('^\\d+$');
   const staticProps: GoAInputIntegerProps & ControlProps = {
     uischema: textBoxUiSchema,
-    schema: {},
+    schema: {
+      multipleOf: 1,
+      minimum: 1,
+      exclusiveMaximum: 5000,
+    },
     rootSchema: {},
     handleChange: (path, value) => {},
     enabled: true,
@@ -28,12 +32,12 @@ describe('input number controls', () => {
     config: {},
     path: '',
     errors: '',
-    data: 'My Age',
+    data: '10',
     visible: true,
     isValid: true,
+    isVisited: false,
+    setIsVisited: () => {},
   };
-
-  const handleChangeMock = jest.fn(() => Promise.resolve());
 
   describe('can create input number control', () => {
     it('can create control', () => {
@@ -46,11 +50,43 @@ describe('input number controls', () => {
       const ageInput = baseElement.querySelector("goa-input[testId='age-input']");
       expect(ageInput).toBeInTheDocument();
     });
+    it('can create control with errors', () => {
+      const props = { ...staticProps, isVisited: true, errors: 'this is a error' };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputInteger {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const ageInput = baseElement.querySelector("goa-input[testId='age-input']");
+      expect(ageInput).toBeInTheDocument();
+    });
+    it('can create control with undefined data', () => {
+      const props = { ...staticProps, isVisited: true, errors: 'this is a error', data: undefined };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputInteger {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const ageInput = baseElement.querySelector("goa-input[testId='age-input']");
+      expect(ageInput).toBeInTheDocument();
+    });
+
+    it('can create control with label as name', () => {
+      const props = { ...staticProps, id: '', label: 'mytestInput' };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputInteger {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const ageInput = baseElement.querySelector("goa-input[testId='-input']");
+      expect(ageInput.getAttribute('name')).toBe('mytestInput-input');
+    });
+
     it('can create base control', () => {
       const props = { ...staticProps };
       const baseControl = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoAIntegerControl {...props} />
+          <GoAInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
       expect(baseControl).toBeDefined();
@@ -130,8 +166,11 @@ describe('input number controls', () => {
       expect(blurred).toBe(true);
     });
 
-    it('can trigger handleChange event', async () => {
-      const props = { ...staticProps, handleChange: handleChangeMock };
+    it('calls onChange for input text control', () => {
+      const props = {
+        ...staticProps,
+      };
+
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputInteger {...props} />
@@ -144,12 +183,16 @@ describe('input number controls', () => {
           detail: { key: 'z', code: 90, charCode: 90 },
         })
       );
+      //  const input = component.getByTestId('age-input');
+      //  fireEvent.change(input, { target: { value: '10' } });
 
-      handleChangeMock();
-
-      expect(props.handleChange).toBeCalled();
-      expect(pressed).toBe(true);
-      expect(handleChangeMock.mock.calls.length).toBe(1);
+      fireEvent(
+        input,
+        new CustomEvent('_change', {
+          detail: { name: 'input', value: '10' },
+        })
+      );
+      expect(input?.getAttribute('value')).toBe('10');
     });
   });
 });
