@@ -3,9 +3,10 @@ import { FormSubmissionEntity } from './model';
 import { FormDefinition, Intake } from './types';
 import { FormEntityWithJobId } from './router';
 
-export function mapFormDefinition(entity: FormDefinition, intake?: Intake) {
+export function mapFormDefinition(entity: FormDefinition, revision: number, intake?: Intake) {
   return {
     id: entity.id,
+    revision,
     name: entity.name,
     description: entity.description,
     anonymousApply: entity.anonymousApply,
@@ -82,6 +83,7 @@ export function mapFormSubmission(apiId: AdspId, entity: FormSubmissionEntity) {
     id: entity.id,
     formId: entity.formId,
     formDefinitionId: entity.formDefinitionId,
+    formDefinitionRevision: entity.formDefinitionRevision,
     formData: entity.formData,
     formFiles: Object.entries(entity.formFiles || {}).reduce((f, [k, v]) => ({ ...f, [k]: v?.toString() }), {}),
     created: entity.created,

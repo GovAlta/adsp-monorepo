@@ -13,10 +13,10 @@ export function mapFileType(entity: FileTypeEntity): FileType {
   };
 }
 
-export type FileResponse = Omit<FileRecord, 'tenantId' | 'deleted'> & { urn: string; typeName: string };
-export function mapFile(apiId: AdspId, entity: FileEntity): FileResponse {
+export function mapFile(apiId: AdspId, entity: FileEntity) {
+  const urn = `${apiId}:/files/${entity.id}`;
   return {
-    urn: `${apiId}:/files/${entity.id}`,
+    urn,
     id: entity.id,
     filename: entity.filename,
     size: entity.size,
@@ -30,5 +30,9 @@ export function mapFile(apiId: AdspId, entity: FileEntity): FileResponse {
     mimeType: entity.mimeType,
     digest: entity.digest,
     securityClassification: entity.securityClassification,
+    _links: {
+      self: { href: urn },
+      download: { href: `${urn}/download` },
+    },
   };
 }

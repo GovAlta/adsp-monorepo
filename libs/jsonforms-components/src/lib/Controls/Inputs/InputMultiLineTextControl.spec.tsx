@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { GoAInputMultiLineTextProps, MultiLineText, MultiLineTextControlInput } from './InputMultiLineTextControl';
+import { GoAInputMultiLineTextProps, MultiLineText } from './InputMultiLineTextControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 
 describe('Input Text Control tests', () => {
@@ -31,6 +31,8 @@ describe('Input Text Control tests', () => {
     visible: true,
     isValid: true,
     required: false,
+    isVisited: false,
+    setIsVisited: () => {},
   };
 
   const handleChangeMock = jest.fn(() => Promise.resolve());
@@ -38,8 +40,23 @@ describe('Input Text Control tests', () => {
   describe('can create control for InputMultiLineTextControl', () => {
     it('can create control', () => {
       const props = { ...staticProps };
-      const component = render(<MultiLineText {...props} />);
-      expect(component.getByTestId('firstName-input')).toBeInTheDocument();
+      const { baseElement } = render(<MultiLineText {...props} />);
+      const input = baseElement.querySelector("goa-textarea[testId='firstName-input']");
+      expect(input).toBeInTheDocument();
+    });
+
+    it('can create control InputMultiLineTextControl with errors', () => {
+      const props = { ...staticProps, isVisited: true, errors: 'this is a error' };
+      const { baseElement } = render(<MultiLineText {...props} />);
+      const input = baseElement.querySelector("goa-textarea[testId='firstName-input']");
+      expect(input.getAttribute('error')).toBe('true');
+    });
+
+    it('can create control with label as name', () => {
+      const props = { ...staticProps, id: '', label: '', path: 'mytestInput' };
+      const { baseElement } = render(<MultiLineText {...props} />);
+      const input = baseElement.querySelector("goa-textarea[testId='-input']");
+      expect(input.getAttribute('name')).toBe('mytestInput-text-area');
     });
 
     it('can create base control for InputMultiLineTextControl', () => {
@@ -51,9 +68,8 @@ describe('Input Text Control tests', () => {
 
   describe('InputMultiLineTextControl control change events', () => {
     it('can trigger handleChange event', async () => {
-      const props = { ...staticProps, handleChange: handleChangeMock };
-      const component = render(<MultiLineText {...staticProps} />);
-      const input = component.getByTestId('firstName-input');
+      const { baseElement } = render(<MultiLineText {...staticProps} />);
+      const input = baseElement.querySelector("goa-textarea[testId='firstName-input']");
 
       fireEvent(input, new CustomEvent('_change', { detail: { name: 'test', value: 'testValue' } }));
       expect(input.getAttribute('value')).toBe('testValue');
@@ -70,8 +86,8 @@ describe('Input Text Control tests', () => {
         },
       };
       const props = { ...staticProps, uischema: textBoxUiSchema };
-      const component = render(<MultiLineText {...props} />);
-      const input = component.getByTestId('firstName-input');
+      const { baseElement } = render(<MultiLineText {...props} />);
+      const input = baseElement.querySelector("goa-textarea[testId='firstName-input']");
 
       fireEvent(input, new CustomEvent('_change', { detail: { name: 'test', value: 'testValue' } }));
       expect(input.getAttribute('value')).toBe('testValue');
@@ -89,8 +105,8 @@ describe('Input Text Control tests', () => {
         },
       };
       const props = { ...staticProps, uischema: textBoxUiSchema, data: '' };
-      const component = render(<MultiLineText {...props} />);
-      const input = component.getByTestId('firstName-input');
+      const { baseElement } = render(<MultiLineText {...props} />);
+      const input = baseElement.querySelector("goa-textarea[testId='firstName-input']");
 
       fireEvent(input, new CustomEvent('_keyPress', { detail: { name: 'test', value: '' } }));
       expect(input.getAttribute('value')).toBe('');
@@ -98,8 +114,8 @@ describe('Input Text Control tests', () => {
 
     it('can trigger handleChange keyPress events not autoCapitalize with empty text', async () => {
       const props = { ...staticProps, data: 'test', required: true };
-      const component = render(<MultiLineText {...props} />);
-      const input = component.getByTestId('firstName-input');
+      const { baseElement } = render(<MultiLineText {...props} />);
+      const input = baseElement.querySelector("goa-textarea[testId='firstName-input']");
 
       fireEvent(input, new CustomEvent('_keyPress', { detail: { name: 'test', value: 'test' } }));
       expect(input.getAttribute('value')).toBe('test');

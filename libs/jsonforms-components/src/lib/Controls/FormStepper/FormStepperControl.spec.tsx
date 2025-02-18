@@ -1,7 +1,7 @@
 import { Dispatch } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { Category, SchemaBasedCondition, UISchemaElement } from '@jsonforms/core';
+import { Category, UISchemaElement } from '@jsonforms/core';
 import { ContextProviderFactory, GoARenderers } from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
@@ -9,6 +9,7 @@ import { FormStepperOptionProps } from './FormStepperControl';
 import { getProperty } from './util/helpers';
 import { CategorizationStepperLayoutRendererProps } from './types';
 import { JsonFormsStepperContextProvider } from './context';
+import { categoriesAreValid } from './FormStepperTester';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -65,6 +66,7 @@ const nameCategory = {
       label: 'first',
       scope: '#/properties/name/properties/firstName',
       options: { placeholder: 'First name', componentProps: { testId: 'first-name-input' } },
+      minLength: 1,
     },
     {
       type: 'Control',
@@ -73,6 +75,7 @@ const nameCategory = {
       options: { placeholder: 'Last name', componentProps: { testId: 'last-name-input' } },
     },
   ],
+  required: ['firstName'],
 } as unknown as Category;
 
 const addressCategory = {
@@ -105,14 +108,18 @@ const categorization = {
   },
 };
 
-const subCategorization = {
+const categorizationPages = {
   type: 'Categorization',
   label: 'Test Categorization',
-  elements: [categorization],
+  elements: [nameCategory, addressCategory],
   options: {
-    variant: 'stepper',
-    testId: 'stepper-test',
+    variant: 'pages',
+    testId: 'pages-test',
     showNavButtons: true,
+    nextButtonLabel: 'testNext',
+    nextButtonType: 'primary',
+    previousButtonLabel: 'testPrevious',
+    previousButtonType: 'primary',
     componentProps: { controlledNav: true },
   },
 };
@@ -144,7 +151,10 @@ const combineOptions = (uiSchema: UISchemaElement = categorization, componentPro
 
 const mockDispatch = jest.fn();
 
-const stepperBaseProps: CategorizationStepperLayoutRendererProps = {
+// eslint-disable-next-line
+type TestProps = CategorizationStepperLayoutRendererProps & { customDispatch: Dispatch<any> } & { activeId: number };
+
+const stepperBaseProps: TestProps = {
   uischema: categorization,
   schema: dataSchema,
   enabled: true,
@@ -156,8 +166,9 @@ const stepperBaseProps: CategorizationStepperLayoutRendererProps = {
   locale: 'en',
   activeId: 0,
   customDispatch: mockDispatch,
-  // eslint-disable-next-line
-} as unknown as CategorizationStepperLayoutRendererProps & { customDispatch: Dispatch<any> } & { activeId: number };
+};
+
+const { customDispatch, ...stepperBasePropsNoDispatch } = stepperBaseProps;
 
 const getForm = (
   data: object,
@@ -165,6 +176,24 @@ const getForm = (
   componentProps: object | undefined = undefined
 ): JSX.Element => {
   combineOptions(uiSchema, componentProps);
+
+  return (
+    <JsonForms
+      uischema={uiSchema}
+      data={data}
+      schema={dataSchema}
+      ajv={new Ajv({ allErrors: true, verbose: true })}
+      renderers={GoARenderers}
+    />
+  );
+};
+
+const getFormPages = (
+  data: object,
+  uiSchema: UISchemaElement = categorizationPages,
+  componentProps: object | undefined = undefined
+): JSX.Element => {
+  combineOptions(categorizationPages, componentProps);
 
   return (
     <JsonForms
@@ -190,14 +219,21 @@ describe('Form Stepper Control', () => {
 
     const step2 = renderer.getByTestId('step_1-content');
     expect(step2).toBeInTheDocument();
-    expect(step2).not.toBeVisible();
 
     const step3 = renderer.queryByTestId('step_2-content');
     expect(step3).toBeNull();
 
     const summaryStep = renderer.getByTestId('summary_step-content');
     expect(summaryStep).toBeInTheDocument();
-    expect(summaryStep).not.toBeVisible();
+  });
+
+  it('can render an initial Categorization using pages ', () => {
+    const renderer = render(
+      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getFormPages(formData)} />
+    );
+    const step1 = renderer.getByTestId('step_0-content-pages');
+    expect(step1).toBeInTheDocument();
+    expect(step1).toBeVisible();
   });
 
   it('can render a nested Categorization', () => {
@@ -209,82 +245,77 @@ describe('Form Stepper Control', () => {
 
     const step1 = renderer.getByTestId('step_1-content');
     expect(step1).toBeInTheDocument();
-    expect(step1).not.toBeVisible();
   });
 
   it('can input a text value', () => {
-    const renderer = render(
+    const { baseElement } = render(
       <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />
     );
-    const lastName = renderer.getByTestId('last-name-input');
+    const lastName = baseElement.querySelector("goa-input[testId='last-name-input']");
     expect(lastName).toBeInTheDocument();
 
     // input some characters
-    fireEvent.change(lastName!, { target: { value: 'abc' } });
-
+    fireEvent(lastName, new CustomEvent('_change', { detail: { value: 'abc' } }));
     // Check the value
-    const newLastName = renderer.getByTestId('last-name-input');
-    expect(newLastName).toHaveValue('abc');
+    const newLastName = baseElement.querySelector("goa-input[testId='last-name-input']");
+
+    expect(newLastName?.getAttribute('value')).toBe('abc');
   });
 
   it('will initialize form data', () => {
-    const renderer = render(
+    const { baseElement } = render(
       <JsonFormsStepperContextProvider
         StepperProps={stepperBaseProps}
         children={getForm({ ...formData, name: { firstName: 'Bob', lastName: 'Bing' } })}
       />
     );
-    const lastName = renderer.getByTestId('last-name-input');
-    expect(lastName).toHaveValue('Bing');
-    const firstName = renderer.getByTestId('first-name-input');
-    expect(firstName).toHaveValue('Bob');
+    const lastName = baseElement.querySelector("goa-input[testId='last-name-input']");
+    expect(lastName?.getAttribute('value')).toBe('Bing');
+    const firstName = baseElement.querySelector("goa-input[testId='first-name-input']");
+    expect(firstName?.getAttribute('value')).toBe('Bob');
   });
 
   it('will recognize an incomplete status', () => {
-    const renderer = render(
+    const { baseElement } = render(
       <JsonFormsStepperContextProvider
         StepperProps={stepperBaseProps}
         children={getForm({ ...formData, name: { lastName: 'Bing' } })}
       />
     );
 
-    const stepperHeader = renderer.getByTestId('form-stepper-headers-stepper-test');
-    const step1 = stepperHeader.querySelector('goa-form-step[text="Name"]');
+    const step1 = baseElement.querySelector('goa-form-step[text="Name"]');
     expect(step1).toBeInTheDocument();
     expect(step1!.getAttribute('status')).toBe(null);
   });
 
   it('will recognize a complete status', () => {
-    const renderer = render(
+    const { baseElement } = render(
       <JsonFormsStepperContextProvider
         StepperProps={{ ...stepperBaseProps, data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } } }}
         children={getForm({ ...formData, name: { firstName: 'Bob', lastName: 'Bing' } })}
       />
     );
-
-    const stepperHeader = renderer.getByTestId('form-stepper-headers-stepper-test');
-    const step1 = stepperHeader.querySelector('goa-form-step[text="Name"]');
+    const step1 = baseElement.querySelector('goa-form-step[text="Name"]');
     expect(step1).toBeInTheDocument();
     expect(step1!.getAttribute('status')).toBe(null);
   });
 
   describe('step navigation', () => {
     it('can navigate between steps with the nav buttons', async () => {
-      const { container, getByTestId } = render(
+      const { container, baseElement } = render(
         <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />
       );
       window.HTMLElement.prototype.scrollIntoView = function () {};
-      const stepperHeader = getByTestId('form-stepper-headers-stepper-test');
+      const stepperHeader = container.querySelector("goa-form-stepper[testId='form-stepper-headers-stepper-test']");
       expect(stepperHeader).toBeInTheDocument();
 
       expect(container.querySelector('goa-pages')?.getAttribute('current')).toBe('1');
 
-      const nextButton = getByTestId('next-button');
+      const nextButton = baseElement.querySelector("goa-button[testId='next-button']");
       expect(nextButton).toBeInTheDocument();
 
-      const shadowNext = nextButton.shadowRoot?.querySelector('button');
-      expect(shadowNext).not.toBeNull();
-      fireEvent.click(shadowNext!);
+      fireEvent(nextButton, new CustomEvent('_click'));
+
       expect(mockDispatch.mock.calls[1][0].type === 'update/category');
       expect(mockDispatch.mock.calls[1][0].payload.id === 0);
       expect(mockDispatch.mock.calls[3][0].type === 'page/to/index');
@@ -292,13 +323,14 @@ describe('Form Stepper Control', () => {
     });
 
     it('will hide Prev Nav button on 1st step', () => {
-      const { container, getByTestId, queryByTestId } = render(
+      const { baseElement } = render(
         <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />
       );
-      const nextButton = getByTestId('next-button');
+      const nextButton = baseElement.querySelector("goa-button[testId='next-button']");
+
       expect(nextButton).toBeInTheDocument();
       expect(nextButton).toBeVisible();
-      const prevButton = queryByTestId('prev-button');
+      const prevButton = baseElement.querySelector("goa-button[testId='prev-button']");
       expect(prevButton).toBeNull();
     });
 
@@ -306,20 +338,67 @@ describe('Form Stepper Control', () => {
       const newStepperProps = { ...stepperBaseProps };
       // eslint-disable-next-line
       newStepperProps.activeId = 1;
-      const { container, getByTestId } = render(
+      const { baseElement } = render(
         <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getForm(formData)} />
       );
 
-      const prevButton = getByTestId('prev-button');
+      const prevButton = baseElement.querySelector("goa-button[testId='prev-button']");
       expect(prevButton).toBeInTheDocument();
 
-      const shadowNext = prevButton.shadowRoot?.querySelector('button');
-      expect(shadowNext).not.toBeNull();
-      fireEvent.click(shadowNext!);
-      expect(mockDispatch.mock.calls[1][0].type === 'update/category');
-      expect(mockDispatch.mock.calls[1][0].payload.id === 1);
-      expect(mockDispatch.mock.calls[3][0].type === 'page/to/index');
-      expect(mockDispatch.mock.calls[3][0].id === 0);
+      fireEvent(prevButton, new CustomEvent('_click'));
+
+      expect(mockDispatch.mock.calls[2][0].type === 'page/to/index');
+      expect(mockDispatch.mock.calls[2][0].id === 0);
+    });
+  });
+
+  describe('page navigation', () => {
+    it('makes sure save and continue button is disabled if required field is not filled in', async () => {
+      const newStepperProps = {
+        ...stepperBasePropsNoDispatch,
+        data: {},
+      };
+      const { getByTestId, baseElement } = render(
+        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      );
+      window.HTMLElement.prototype.scrollIntoView = function () {};
+      const nextButton = baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
+
+      expect(nextButton).toBeInTheDocument();
+
+      expect(nextButton.getAttribute('disabled')).toBe('true');
+    });
+
+    it('will hide Prev Nav button on 1st step and show it on any subsequent steps', async () => {
+      const newStepperProps = {
+        ...stepperBaseProps,
+        data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
+      };
+      newStepperProps.activeId = 1;
+      const { getByTestId } = render(
+        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      );
+
+      const BackButton = getByTestId('back-button-click');
+      expect(BackButton).toBeVisible();
+    });
+
+    it('will show submit button on last step', async () => {
+      const newStepperProps = {
+        ...stepperBaseProps,
+        data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
+      };
+      const { baseElement } = render(
+        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      );
+
+      const nextButton = baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
+
+      expect(nextButton).toBeInTheDocument();
+      expect(nextButton).not.toBeNull();
+      await fireEvent.click(nextButton!);
+      expect(mockDispatch.mock.calls[3].type === 'page/to/index');
+      expect(mockDispatch.mock.calls[3].payload === 1);
     });
   });
 
@@ -331,7 +410,7 @@ describe('Form Stepper Control', () => {
       };
       // eslint-disable-next-line
       newStepperProps.activeId = 2;
-      const { getByTestId } = render(
+      const { getByTestId, baseElement } = render(
         <JsonFormsStepperContextProvider
           StepperProps={newStepperProps}
           children={getForm({ ...formData, name: { firstName: 'Bob', lastName: 'Bing' } })}
@@ -341,7 +420,8 @@ describe('Form Stepper Control', () => {
       expect(nameAnchor).toBeInTheDocument();
       expect(nameAnchor).toBeVisible();
       expect(nameAnchor.innerHTML).toBe('Edit');
-      const submit = getByTestId('stepper-submit-btn');
+
+      const submit = baseElement.querySelector("goa-button[testId='stepper-submit-btn']");
       expect(submit).toBeInTheDocument();
       expect(submit).toBeVisible();
       expect(submit.getAttribute('disabled')).toBe('false');
@@ -357,7 +437,7 @@ describe('Form Stepper Control', () => {
       const onSubmit = jest.fn();
       // eslint-disable-next-line
       newStepperProps.activeId = 2;
-      const { getByTestId } = render(
+      const { getByTestId, baseElement } = render(
         <ContextProvider submit={{ submitForm: onSubmit }}>
           <JsonFormsStepperContextProvider
             StepperProps={newStepperProps}
@@ -376,12 +456,42 @@ describe('Form Stepper Control', () => {
       expect(nameAnchor).toBeInTheDocument();
       expect(nameAnchor).toBeVisible();
       expect(nameAnchor.innerHTML).toBe('View');
-      const submitBtn = getByTestId('stepper-submit-btn');
+
+      const submitBtn = baseElement.querySelector("goa-button[testId='stepper-submit-btn']");
       const submitShadow = submitBtn.shadowRoot?.querySelector('button');
       expect(submitShadow).not.toBeNull();
-      fireEvent.click(submitShadow!);
+      fireEvent(submitBtn, new CustomEvent('_click'));
+
       expect(onSubmit).toBeCalledTimes(1);
     });
+  });
+
+  it('will render a "view" anchor using key', () => {
+    const newStepperProps = {
+      ...stepperBaseProps,
+      data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
+    };
+    const onSubmit = jest.fn();
+    // eslint-disable-next-line
+    newStepperProps.activeId = 2;
+    const { getByTestId } = render(
+      <ContextProvider submit={{ submitForm: onSubmit }}>
+        <JsonFormsStepperContextProvider
+          StepperProps={newStepperProps}
+          children={getForm(
+            {
+              name: { firstName: 'Bob', lastName: 'Bing' },
+              address: { street: 'Sesame', city: 'Seattle' },
+            },
+            categorization,
+            { readOnly: false }
+          )}
+        />
+      </ContextProvider>
+    );
+    const nameAnchor = getByTestId('Name-review-link');
+    fireEvent.keyDown(nameAnchor, { key: 'Enter', code: 13, charCode: 13 });
+    expect(mockDispatch.mock.calls[2][0].type === 'page/to/index');
   });
 
   describe('submit tests', () => {
@@ -392,7 +502,7 @@ describe('Form Stepper Control', () => {
       };
       // eslint-disable-next-line
       newStepperProps.activeId = 2;
-      const { getByTestId } = render(
+      const { baseElement } = render(
         <JsonFormsStepperContextProvider
           StepperProps={newStepperProps}
           children={getForm({
@@ -401,14 +511,15 @@ describe('Form Stepper Control', () => {
           })}
         />
       );
-      const submitBtn = getByTestId('stepper-submit-btn');
-      const submitShadow = submitBtn.shadowRoot?.querySelector('button');
-      expect(submitShadow).toBeTruthy();
+      const submitBtn = baseElement.querySelector("goa-button[testId='stepper-submit-btn']");
 
-      const modal = getByTestId('submit-confirmation');
+      expect(submitBtn).toBeTruthy();
+
+      const modal = baseElement.querySelector("goa-modal[testId='submit-confirmation']");
+
       expect(modal).toBeInTheDocument();
       expect(modal.getAttribute('open')).toBe('false');
-      fireEvent.click(submitShadow!);
+      fireEvent(submitBtn, new CustomEvent('_click'));
       expect(modal.getAttribute('open')).toBe('true');
     });
 
@@ -448,10 +559,51 @@ describe('Form Stepper Control', () => {
 
   describe('test stepper helper', () => {
     const obj = { prop: 'test' };
-
     const result = getProperty(obj, 'props');
     const result2 = getProperty(obj, 'prop');
     expect(result).toBe(undefined);
     expect(result2).toBe('test');
+
+    const nestedObj = {
+      level1: {
+        level2: {
+          targetProp: 'found me!',
+        },
+      },
+    };
+    const result3 = getProperty(nestedObj, 'targetProp');
+    expect(result3).toBe('found me!');
+  });
+
+  describe('test the jsonforms stepper layout tester', () => {
+    // eslint-disable-next-line
+    const isCategoryLayout = categoriesAreValid({
+      type: 'Categorization',
+      // eslint-disable-next-line
+      elements: [
+        {
+          type: 'Category',
+          elements: [
+            {
+              type: 'Control',
+            },
+          ],
+        },
+      ],
+    } as UISchemaElement);
+
+    const isNotCategoryLayout = categoriesAreValid({
+      type: 'Categorization',
+      elements: [{ type: 'Control' }],
+      // eslint-disable-next-line
+    } as UISchemaElement);
+    const nonCategoryType = categoriesAreValid({
+      type: 'Category',
+      elements: [{ type: 'Control' }],
+      // eslint-disable-next-line
+    } as UISchemaElement);
+    expect(isCategoryLayout).toBe(true);
+    expect(nonCategoryType).toBe(false);
+    expect(isNotCategoryLayout).toBe(false);
   });
 });

@@ -19,7 +19,7 @@ function isNumber(value?: string): boolean {
 
 export const getIncompletePaths = (ajv: Ajv, scopes: string[]): string[] => {
   const requiredErrorPaths: string[] | undefined = ajv?.errors
-    ?.filter((e) => e.keyword === 'required')
+    ?.filter((e) => e.keyword === 'required' || e.keyword === 'minLength')
     .map((e) => {
       return getControlPath(e);
     });

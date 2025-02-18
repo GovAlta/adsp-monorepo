@@ -14,6 +14,7 @@ export interface FormDefinition {
   clerkRoles: string[];
   assessorRoles: string[];
   formDraftUrlTemplate: string;
+  oneFormPerApplicant: boolean;
   anonymousApply: boolean;
   uiSchema?: Record<string, unknown>;
   dispositionStates: Array<Disposition>;
@@ -22,6 +23,19 @@ export interface FormDefinition {
   queueTaskToProcess: QueueTaskToProcess;
   supportTopic: boolean;
   securityClassification?: SecurityClassification;
+  resourceTags?: FormResourceTagResult[];
+}
+
+export interface FormResourceTagResponse {
+  formDefinitionId: string;
+  resourceTags: FormResourceTagResult[];
+}
+
+export interface FormResourceTagResult {
+  urn: string;
+  label: string;
+  value: string;
+  _links: Record<string, unknown>;
 }
 
 export interface Disposition {
@@ -53,6 +67,7 @@ export const defaultFormDefinition: FormDefinition = {
   assessorRoles: [],
   formDraftUrlTemplate: '',
   anonymousApply: false,
+  oneFormPerApplicant: true,
   dispositionStates: [],
   submissionRecords: false,
   submissionPdfTemplate: 'submitted-form',
@@ -105,6 +120,8 @@ export interface FormState {
   columns: ColumnOption[];
   metrics: FormMetrics;
   socket: Socket;
+  searchedTag?: FormResourceTagResult;
+  searchedTagExists?: boolean;
 }
 export interface FormExportResponse {
   id?: string;

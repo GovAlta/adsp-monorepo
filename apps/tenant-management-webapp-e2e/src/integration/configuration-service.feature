@@ -10,7 +10,7 @@ Feature: Configuration-service
     And the user views the link of See the code for "configuration-service"
     And the user views the link of "Get support" under Support
 
-  @TEST_CS-1357 @REQ_CS-1272 @regression @smoke-test
+  @TEST_CS-1357 @REQ_CS-1272 @regression
   Scenario: As a tenant admin, I can see the core configuration definitions, so I understand how they are used.
     Given a tenant admin user is on tenant admin page
     When the user selects the "Configuration" menu item

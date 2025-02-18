@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GoAButton, GoAButtonGroup, GoAModal, GoATextArea, GoAInput, GoAFormItem } from '@abgov/react-components-new';
-import { CalendarItem, defaultCalendar } from '@store/calendar/models';
+import { CalendarItem } from '@store/calendar/models';
 import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
 import { useValidators } from '@lib/validation/useValidators';

@@ -17,12 +17,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
   const requiredFields = (schema as { required: string[] }).required;
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const defaultNameAndDob = {
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    dateOfBirth: undefined,
-  };
+  const defaultNameAndDob = {};
 
   const validDates = () => {
     const currentDate = new Date();
@@ -119,6 +114,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           label="Last name"
           requirement={schema?.required?.includes('lastName') ? 'required' : undefined}
           error={errors?.['lastName'] ?? ''}
+          testId="form-item-last-name"
         >
           <GoAInput
             type="text"
@@ -136,7 +132,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           />
         </GoAFormItem>
       </GoAGrid>
-      <GoAGrid minChildWidth="0ch" gap="s">
+      <GoAGrid minChildWidth="0ch" gap="s" mb="m">
         <GoAFormItem
           label="Date of birth"
           error={errors?.['dateOfBirth'] ?? ''}

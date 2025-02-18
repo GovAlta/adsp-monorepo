@@ -3,8 +3,8 @@ import { isBooleanControl, RankedTester, rankWith, ControlProps, optionIs, and }
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoARadioGroup, GoARadioItem } from '@abgov/react-components-new';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity } from '../../util/stringUtils';
 import { Visible } from '../../util';
+import { WithInputProps } from './type';
 
 export const BooleanRadioComponent = ({
   data,
@@ -15,10 +15,10 @@ export const BooleanRadioComponent = ({
   path,
   config,
   label,
-  required,
+  isVisited,
   errors,
   description,
-}: ControlProps) => {
+}: ControlProps & WithInputProps) => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const TrueValue = appliedUiSchemaOptions?.textForTrue || 'Yes';
   const FalseValue = appliedUiSchemaOptions?.textForFalse || 'No';
@@ -27,18 +27,10 @@ export const BooleanRadioComponent = ({
   const FalseDescription = description || appliedUiSchemaOptions?.descriptionForFalse;
   const BaseTestId = appliedUiSchemaOptions?.testId || `${path}-boolean-radio-jsonform`;
 
-  const errorsFormInput = checkFieldValidity({
-    data,
-    uischema,
-    label,
-    required,
-    errors,
-  } as ControlProps);
-
   return (
     <Visible visible={visible}>
       <GoARadioGroup
-        error={errorsFormInput.length > 0}
+        error={isVisited && errors.length}
         name={`${label}`}
         value={data === true ? TrueValue : data === false ? FalseValue : null}
         disabled={!enabled}

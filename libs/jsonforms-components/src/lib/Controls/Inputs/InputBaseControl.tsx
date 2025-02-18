@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoAFormItem } from '@abgov/react-components-new';
 import { ControlProps } from '@jsonforms/core';
 import { checkFieldValidity, convertToSentenceCase, getLabelText } from '../../util/stringUtils';
@@ -26,13 +26,16 @@ export interface WithInput {
   input: any;
   noLabel?: boolean;
   isStepperReview?: boolean;
+  setIsVisited?: () => void;
+  skipInitialValidation?: boolean;
 }
 
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
-  const { uischema, visible, label, input, required, path, isStepperReview } = props;
+  const { uischema, visible, label, input, required, path, isStepperReview, skipInitialValidation } = props;
   const InnerComponent = input;
   const labelToUpdate: string = convertToSentenceCase(getLabelText(uischema.scope, label || ''));
   let modifiedErrors = checkFieldValidity(props as ControlProps);
+  const [isVisited, setIsVisited] = useState(skipInitialValidation === true);
 
   if (modifiedErrors === 'must be equal to one of the allowed values') {
     modifiedErrors = '';
@@ -44,12 +47,21 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
         <FormFieldWrapper>
           <GoAFormItem
             requirement={required ? 'required' : undefined}
-            error={modifiedErrors}
+            error={isVisited === true ? modifiedErrors : undefined}
             testId={`${isStepperReview === true && 'review-base-'}${path}`}
             label={props?.noLabel === true ? '' : labelToUpdate}
             helpText={typeof uischema?.options?.help === 'string' && !isStepperReview ? uischema?.options?.help : ''}
           >
-            <InnerComponent {...props} />
+            <InnerComponent
+              {...{
+                ...props,
+                isVisited,
+                errors: modifiedErrors,
+                setIsVisited: () => {
+                  setIsVisited(true);
+                },
+              }}
+            />
           </GoAFormItem>
         </FormFieldWrapper>
       </Visible>

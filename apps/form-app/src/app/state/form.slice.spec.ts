@@ -32,6 +32,9 @@ const initialState: FormState = {
     saving: false,
     submitting: false,
   },
+  initialized: {
+    forms: false,
+  },
 };
 
 const definitionsToTest: FormState = {
@@ -55,6 +58,7 @@ const definitionsToTest: FormState = {
   form: {
     definition: {
       id: 'TEST',
+      name: 'test',
     },
     created: null,
     submitted: null,
@@ -72,6 +76,9 @@ const definitionsToTest: FormState = {
     creating: false,
     saving: false,
     submitting: false,
+  },
+  initialized: {
+    forms: false,
   },
 };
 
@@ -91,6 +98,7 @@ const payload = {
   form: {
     definition: {
       id: 'TEST',
+      name: 'test',
     },
     created: null,
     submitted: null,

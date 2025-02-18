@@ -111,6 +111,9 @@ export const formSubmissionSchema = new Schema(
       type: String,
       required: true,
     },
+    formDefinitionRevision: {
+      type: Number,
+    },
     formId: {
       type: String,
       required: true,

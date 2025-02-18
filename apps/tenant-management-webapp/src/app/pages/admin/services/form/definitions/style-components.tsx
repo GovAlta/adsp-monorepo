@@ -69,3 +69,7 @@ export const ToolTipAdjust = styled.div`
   top: var(--goa-space-s);
   display: inline-block;
 `;
+
+export const AddRemoveResourceTagSpacing = styled.div`
+  margin-bottom: var(--goa-space-m);
+`;

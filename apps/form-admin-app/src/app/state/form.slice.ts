@@ -25,6 +25,10 @@ import { getResourcesTags, getTaggedResources } from './directory.slice';
 
 export const FORM_FEATURE_KEY = 'form';
 
+interface DefinitionCriteria {
+  tag?: string;
+}
+
 interface FormSubmissionCriteria {
   dispositioned?: boolean;
   createdAfter?: string;
@@ -81,6 +85,7 @@ export interface FormState {
     forms: string[];
     submissions: string[];
   };
+  definitionCriteria: DefinitionCriteria;
   formCriteria: FormCriteria;
   submissionCriteria: FormSubmissionCriteria;
   next: {
@@ -116,6 +121,7 @@ export const initialFormState: FormState = {
     forms: [],
     submissions: [],
   },
+  definitionCriteria: {},
   formCriteria: { statusEquals: 'submitted' },
   submissionCriteria: { dispositioned: false },
   next: {
@@ -170,14 +176,17 @@ export const loadDefinitions = createAsyncThunk(
 
         result = {
           ...data,
-          results: data.results.map((result) => ({
-            ...result,
-            urn: `${CONFIGURATION_SERVICE_ID}:v2:/configuration/form-service/${result.id}`,
-          })),
         };
       }
 
       if (result.results?.length > 0) {
+        result.results = result.results.map((result) => ({
+          ...result,
+          // oneFormPerApplicant defaults to true if undefined / null.
+          oneFormPerApplicant: typeof result.oneFormPerApplicant !== 'boolean' || result.oneFormPerApplicant,
+          urn: `${CONFIGURATION_SERVICE_ID}:v2:/configuration/form-service/${result.id}`,
+        }));
+
         await dispatch(getResourcesTags(result.results.map(({ urn }) => urn)));
       }
 
@@ -374,7 +383,10 @@ export const loadDefinition = createAsyncThunk(
         await dispatch(initializeDataValues({ definitionId, schema: data.dataSchema }));
       }
 
-      return { ...data, urn: `${CONFIGURATION_SERVICE_ID}:v2:/configuration/form-service/${data.id}` };
+      return {
+        ...data,
+        urn: `${CONFIGURATION_SERVICE_ID}:v2:/configuration/form-service/${data.id}`,
+      };
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -754,6 +766,9 @@ const formSlice = createSlice({
   name: FORM_FEATURE_KEY,
   initialState: initialFormState,
   reducers: {
+    setDefinitionCriteria: (state, { payload }: { payload: DefinitionCriteria }) => {
+      state.definitionCriteria = payload;
+    },
     setFormCriteria: (state, { payload }: { payload: FormCriteria }) => {
       state.formCriteria = payload;
     },
@@ -1066,6 +1081,8 @@ export const formBusySelector = (state: AppState) => state.form.busy;
 export const submissionCriteriaSelector = (state: AppState) => state.form.submissionCriteria;
 
 export const formCriteriaSelector = (state: AppState) => state.form.formCriteria;
+
+export const definitionCriteriaSelector = (state: AppState) => state.form.definitionCriteria;
 
 export const nextSelector = (state: AppState) => state.form.next;
 

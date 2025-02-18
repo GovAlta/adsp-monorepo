@@ -111,6 +111,7 @@ export const TasksList = (): JSX.Element => {
               aria-label="select-task-dropdown"
               width="100%"
               testId="task-select-definition-dropdown"
+              relative={true}
             >
               {Object.keys(taskQueues).map((item) => (
                 <GoADropdownItem

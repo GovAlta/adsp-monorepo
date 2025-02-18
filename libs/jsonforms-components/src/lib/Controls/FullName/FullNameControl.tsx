@@ -49,11 +49,7 @@ export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
 export const FullNameControl = (props: FullNameProps): JSX.Element => {
   const { data, path, schema, handleChange, enabled } = props;
   const requiredFields = (schema as { required: string[] }).required;
-  const defaultName = {
-    firstName: '',
-    middleName: '',
-    lastName: '',
-  };
+  const defaultName = {};
   const [nameData, setNameData] = useState(data || defaultName);
 
   const updateFormData = (updatedData: object) => {
@@ -69,9 +65,9 @@ export const FullNameControl = (props: FullNameProps): JSX.Element => {
 
   return (
     <NameInputs
-      firstName={defaultName.firstName}
-      middleName={defaultName.middleName}
-      lastName={defaultName.lastName}
+      firstName={nameData.firstName}
+      middleName={nameData.middleName}
+      lastName={nameData.lastName}
       handleInputChange={handleInputChange}
       data={data}
       disabled={!enabled}

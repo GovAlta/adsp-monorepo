@@ -15,7 +15,7 @@ jest.mock('react-router-dom', () => ({
   }),
   useRouteMatch: () => ({ url: '/form/edit/A-really-really-long-formservice' }),
 }));
-describe('ScriptEditor Component', () => {
+describe('form Component', () => {
   const mockStore = configureStore([]);
   const store = mockStore({
     fileService: {
@@ -71,12 +71,12 @@ describe('ScriptEditor Component', () => {
     serviceRoles: {},
   });
   test('Save button does not route', async () => {
-    const { queryByTestId } = render(
+    const { queryByTestId, baseElement } = render(
       <Provider store={store}>
         <AddEditFormDefinitionEditor />
       </Provider>
     );
-    const saveButton = queryByTestId('definition-form-save');
+    const saveButton = baseElement.querySelector("goa-button[testId='definition-form-save']");
     fireEvent.click(saveButton);
     await waitFor(() => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires

@@ -31,7 +31,7 @@ const uiSchema = {
   type: 'Control',
   scope: '#/properties/options',
   label: 'testing',
-  options: { format: 'checkbox' },
+  options: { format: 'checkbox', orientation: 'horizontal' },
 } as UISchemaElement;
 
 const dataSchema = {
@@ -53,6 +53,7 @@ describe('Input Boolean Checkbox Control', () => {
 
   it('renders all checkboxes with correct labels', () => {
     const data = { checkboxes: ['one', 'two', 'three'] };
+
     const renderer = render(getForm(dataSchema, uiSchema, data));
     const checkboxGroup = renderer.getByTestId('testing-jsonforms-checkboxes');
     expect(checkboxGroup).toBeInTheDocument();
@@ -61,7 +62,14 @@ describe('Input Boolean Checkbox Control', () => {
     expect(checkboxGroup.children[2].getAttribute('text')).toBe(data.checkboxes[2]);
   });
   it('applies vertical orientation class', () => {
-    render(getForm(dataSchema, uiSchema));
+    const newUiSchema = {
+      ...uiSchema,
+      options: {
+        ...uiSchema.options,
+        orientation: undefined,
+      },
+    };
+    render(getForm(dataSchema, newUiSchema));
     const checkboxGroupDiv = screen.getByTestId('testing-jsonforms-checkboxes');
     expect(checkboxGroupDiv).toHaveClass('vertical');
   });

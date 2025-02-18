@@ -2,7 +2,7 @@ import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
 import range from 'lodash/range';
 import React, { useState, useReducer, useEffect, useCallback } from 'react';
-import { checkFieldValidity, isEmptyBoolean, isEmptyNumber } from '../../util';
+import { isEmptyBoolean, isEmptyNumber } from '../../util';
 import {
   ArrayLayoutProps,
   ControlElement,
@@ -298,7 +298,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                     return (
                       <td key={ix}>
                         {isInReview ? (
-                          <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>{currentData}</div>
+                          <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
+                            {typeof currentData === 'string' ? (
+                              currentData
+                            ) : (
+                              <pre>{JSON.stringify(currentData, null, 2)}</pre>
+                            )}
+                          </div>
                         ) : (
                           <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
                             {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
@@ -336,6 +342,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                     {!isInReview && (
                       <GoAIconButton
                         icon="trash"
+                        testId="trash-icon-button"
                         aria-label={`remove-element-${num}`}
                         onClick={() => openDeleteDialog(num)}
                       ></GoAIconButton>

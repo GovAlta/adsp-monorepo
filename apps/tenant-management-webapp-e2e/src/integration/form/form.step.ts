@@ -67,7 +67,7 @@ When('the user clicks Save button in Add form definition modal', function () {
 
 Then('the user views form definition editor for {string}, {string}', function (name, description) {
   cy.viewport(1920, 1080);
-  cy.wait(1000);
+  cy.wait(2000);
   formObj.editorDefinitionNameValue().should('contain.text', name);
   formObj.editorDefinitionDescriptionValue().should('contain.text', description);
 });
@@ -276,8 +276,8 @@ function findDefinition(name, description) {
             if (rowElement.cells[0].innerHTML.includes(name)) {
               counter = counter + 1;
             }
-            // cy.log(rowElement.cells[2].innerHTML); // Print out the name cell innerHTML for debug purpose
-            if (rowElement.cells[2].innerHTML.includes(description)) {
+            // cy.log(rowElement.cells[1].innerHTML); // Print out the name cell innerHTML for debug purpose
+            if (rowElement.cells[1].innerHTML.includes(description)) {
               counter = counter + 1;
             }
             Cypress.log({
@@ -1015,11 +1015,18 @@ Then(
 );
 
 When('the user enters {string} in a text field labelled {string} in preview pane', function (text: string, label) {
-  formObj.formPreviewTextField(label).shadow().find('input').clear().type(text, { force: true, delay: 200 });
+  formObj.formPreviewTextField(label).shadow().find('input').clear().type(text, { force: true, delay: 400 });
 });
 
 When('the user enters {string} in a date picker labelled {string} in preview pane', function (date: string, label) {
-  formObj.formPreviewDateInput(label).shadow().find('input').clear().type(date, { force: true });
+  formObj
+    .formPreviewDateInput(label)
+    .shadow()
+    .find('input')
+    .clear()
+    .then(() => {
+      formObj.formPreviewDateInput(label).shadow().find('input').type(date, { force: true });
+    });
 });
 
 When('the user enters {string} in a dropdown labelled {string} in preview pane', function (value: string, label) {
@@ -1085,7 +1092,7 @@ When(
       .shadow()
       .find('input')
       .clear()
-      .type(text, { force: true, delay: 200 });
+      .type(text, { force: true, delay: 400 });
   }
 );
 
@@ -1097,7 +1104,14 @@ When(
       .shadow()
       .find('input')
       .clear()
-      .type(date, { force: true });
+      .then(() => {
+        formObj
+          .formPreviewListWithDetailDependantDateInput(label)
+          .shadow()
+          .find('input')
+          .clear()
+          .type(date, { force: true });
+      });
   }
 );
 

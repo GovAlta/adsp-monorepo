@@ -69,20 +69,16 @@ export class StreamEntity implements Stream {
     );
   }
 
-  private mapEvent({ tenantId, ...event }: DomainEvent, streamEvent: StreamEvent): StreamItem {
+  private mapEvent(event: DomainEvent, streamEvent: StreamEvent): StreamItem {
     const item: StreamItem = streamEvent.map
       ? Object.entries(streamEvent.map).reduce((o, [k, p]) => ({ ...o, [k]: _.get(event, p, undefined) }), {
+          tenantId: event.tenantId,
           namespace: event.namespace,
           name: event.name,
           correlationId: event.correlationId,
           context: event.context,
         })
       : { ...event };
-
-    // Include the tenant context in case the stream is retrieved in a core context (cross-tenant).
-    if (!this.tenantId) {
-      item.tenantId = tenantId;
-    }
 
     return item;
   }

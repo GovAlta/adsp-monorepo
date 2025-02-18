@@ -512,7 +512,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             name="form-definition-anonymous-apply"
                             key="form-definition-anonymous-apply-checkbox"
                             checked={definition.anonymousApply === true}
-                            onChange={(name, checked) => {
+                            onChange={(_, checked) => {
                               setDefinition({ anonymousApply: checked });
                             }}
                             text={'Allow anonymous application'}
@@ -529,12 +529,42 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           <GoAIcon type="information-circle"></GoAIcon>
                         </GoATooltip>
                       </FlexRow>
-
+                      <FlexRow>
+                        <GoACheckboxPad>
+                          <GoACheckbox
+                            name="form-definition-allow-multiple-forms-checkbox"
+                            key="form-definition-allow-multiple-forms-checkbox"
+                            disabled={definition.anonymousApply}
+                            checked={
+                              !(
+                                definition.oneFormPerApplicant === true ||
+                                definition.oneFormPerApplicant === undefined ||
+                                definition.oneFormPerApplicant === null
+                              )
+                            }
+                            onChange={(_, checked) => {
+                              setDefinition({ oneFormPerApplicant: !checked });
+                            }}
+                            text={'Allow multiple forms per applicant'}
+                          />
+                        </GoACheckboxPad>
+                        <GoATooltip
+                          content={
+                            definition.oneFormPerApplicant
+                              ? 'Forms of this type will only allow applicants to have one form created and submitted at a time.'
+                              : 'Forms of this type will allow applicants to have multiple forms be created and submitted at a time.'
+                          }
+                          position="top"
+                        >
+                          <GoAIcon type="information-circle"></GoAIcon>
+                        </GoATooltip>
+                      </FlexRow>
                       <FlexRow>
                         <GoACheckboxPad>
                           <GoACheckbox
                             name="support-topic"
                             key="support-topic"
+                            disabled={definition.anonymousApply}
                             checked={definition.supportTopic}
                             testId="support-topic"
                             onChange={() => {

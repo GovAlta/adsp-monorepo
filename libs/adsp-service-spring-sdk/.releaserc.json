@@ -19,7 +19,7 @@
         "project": "adsp-service-spring-sdk"
       }
     ],
-    "@conveyal/maven-semantic-release",
+    "@abgov/maven-semantic-release",
     [
       "@semantic-release/github",
       {

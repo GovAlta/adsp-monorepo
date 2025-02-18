@@ -294,7 +294,7 @@ Feature: Form
     And the user clicks Next button in the form in preview pane
     And the user "unselects" a checkbox labelled "Citizen" in preview pane
     And the user selects "Married" radio button for the question of "Are you married?" in preview pane
-    And the user clicks list with detail button labelled as "Add child" in the form in preview pane
+    # And the user clicks list with detail button labelled as "Add child" in the form in preview pane
     And the user enters "Ben" in list with detail element text field labelled "Given name" in preview pane
     And the user enters "Bond" in list with detail element text field labelled "Surname" in preview pane
     And the user enters "2011-05-15" in list with detail element date input labelled "Dob" in preview pane

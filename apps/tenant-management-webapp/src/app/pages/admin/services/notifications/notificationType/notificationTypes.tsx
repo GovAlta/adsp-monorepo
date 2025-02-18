@@ -96,8 +96,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const syntaxErrorMessage = 'Cannot render the code, please fix the syntax error in the input field';
   const notification = useSelector((state: RootState) => state.notification);
   const coreNotification = useSelector((state: RootState) => state.notification.core);
-  const [formTitle, setFormTitle] = useState<string>('');
-
+  const [isNew, setIsNew] = useState(false);
   const [subject, setSubject] = useState('');
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
@@ -225,7 +224,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       setEditType(true);
       activateEdit(false);
       setShowTemplateForm(false);
-      setFormTitle('Add notification type');
+      setIsNew(true);
     }
   }, [activeEdit]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -384,7 +383,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           onClick={() => {
             setSelectedType(emptyNotificationType);
             setEditType(true);
-            setFormTitle('Add notification type');
+            setIsNew(true);
             setSelectedEvent(emptyEvent);
           }}
         >
@@ -408,7 +407,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           onClick={() => {
                             setSelectedType(notificationType);
                             setEditType(true);
-                            setFormTitle('Edit notification type');
+                            setIsNew(false);
                           }}
                           testId="edit-notification-type"
                         />
@@ -736,7 +735,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       <NotificationTypeModalForm
         open={editType}
         initialValue={selectedType}
-        title={formTitle}
+        isNew={isNew}
+        // title={formTitle}
         tenantClients={tenantClientsRoles.tenantClients}
         realmRoles={tenantClientsRoles.realmRoles}
         onSave={(type) => {

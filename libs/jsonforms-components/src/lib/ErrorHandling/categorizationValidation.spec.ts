@@ -1,6 +1,5 @@
 import {
   errCategorizationHasNoElements,
-  errCategorizationHasNoVariant,
   errCategorizationHasNonCategories,
   errNoElements,
   getUISchemaErrors,
@@ -87,11 +86,6 @@ describe('check error processing', () => {
     it('can detect a Category with no elements', () => {
       const err = getUISchemaErrors(categoryHasNoElements, dataSchema);
       expect(err).toMatch(errNoElements('Category'));
-    });
-
-    it('can detect Categorization with no variant', () => {
-      const err = getUISchemaErrors(categorizationWithNoVariant, dataSchema);
-      expect(err).toMatch(errCategorizationHasNoVariant);
     });
   });
 });

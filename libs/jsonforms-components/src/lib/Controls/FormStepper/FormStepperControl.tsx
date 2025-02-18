@@ -12,7 +12,6 @@ import {
 
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
-
 import { FormStepperSummaryH3, RightAlignmentDiv } from './styled-components';
 import { JsonFormContext } from '../../Context';
 import { Visible } from '../../util';
@@ -58,7 +57,6 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
   const submitForm = submitFormFunction && submitFormFunction();
   const optionProps = (uischema.options as FormStepperOptionProps) || {};
   const [isOpen, setIsOpen] = useState(false);
-  const [isSelected, setIsSelected] = useState(false);
 
   const handleSubmit = () => {
     if (submitForm) {
@@ -72,16 +70,17 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
     setIsOpen(false);
   };
 
+  // eslint-disable-next-line
+  const options = (uischema as any).options;
+
   return (
     <div data-testid="form-stepper-test-wrapper">
       <Visible visible={visible}>
         <div id={`${path || `goa`}-form-stepper`} className="formStepper">
           <GoAFormStepper
             testId={`form-stepper-headers-${uischema?.options?.testId}` || 'form-stepper-test'}
-            step={isSelected === false ? -1 : activeId + 1}
             key="stepper-form-stepper-wrapper"
             onChange={(step) => {
-              setIsSelected(true);
               goToPage(step - 1);
             }}
           >
@@ -174,24 +173,23 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
               </RightAlignmentDiv>
             )}
           </GoAGrid>
-
-          <GoAModal
-            testId="submit-confirmation"
-            open={isOpen}
-            heading={'Form Submitted'}
-            width="640px"
-            actions={
-              <GoAButtonGroup alignment="end">
-                <GoAButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
-                  Close
-                </GoAButton>
-              </GoAButtonGroup>
-            }
-          >
-            <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
-          </GoAModal>
         </div>
       </Visible>
+      <GoAModal
+        testId="submit-confirmation"
+        open={isOpen}
+        heading={'Form Submitted'}
+        width="640px"
+        actions={
+          <GoAButtonGroup alignment="end">
+            <GoAButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
+              Close
+            </GoAButton>
+          </GoAButtonGroup>
+        }
+      >
+        <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
+      </GoAModal>
     </div>
   );
 };

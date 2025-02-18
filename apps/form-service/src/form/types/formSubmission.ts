@@ -11,6 +11,7 @@ export interface FormDisposition {
 export interface FormSubmission {
   id: string;
   formDefinitionId: string;
+  formDefinitionRevision: number;
   formId: string;
   formData: Record<string, unknown>;
   formFiles: Record<string, AdspId>;

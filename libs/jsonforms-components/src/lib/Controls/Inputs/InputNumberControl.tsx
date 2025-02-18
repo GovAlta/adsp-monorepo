@@ -3,18 +3,13 @@ import { GoAInput } from '@abgov/react-components-new';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { checkFieldValidity } from '../../util/stringUtils';
-import {
-  onBlurForNumericControl,
-  onChangeForNumericControl,
-  onKeyPressNumericControl,
-} from '../../util/inputControlUtils';
+import { onBlurForNumericControl, onChangeForNumericControl } from '../../util/inputControlUtils';
 
 export type GoAInputNumberProps = CellProps & WithClassname & WithInputProps;
 
 export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   // eslint-disable-next-line
-  const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
+  const { data, config, id, enabled, uischema, schema, label, isVisited, errors, setIsVisited } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const InputValue = data && data !== undefined ? data : '';
@@ -24,12 +19,11 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   const MaxValue = clonedSchema.exclusiveMaximum ? clonedSchema.exclusiveMaximum : '';
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const width = uischema?.options?.componentProps?.width ?? '100%';
-  const errorsFormInput = checkFieldValidity(props as ControlProps);
 
   return (
     <GoAInput
       type="number"
-      error={errorsFormInput.length > 0}
+      error={isVisited && errors.length > 0}
       disabled={!enabled}
       readonly={readOnly}
       value={InputValue}
@@ -40,8 +34,10 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onKeyPress={(name: string, value: string, key: string) => {}}
       onBlur={(name: string, value: string) => {
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
         onBlurForNumericControl({
           name,
           value,
@@ -49,6 +45,9 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
         });
       }}
       onChange={(name: string, value: string) => {
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
         onChangeForNumericControl({
           name,
           value,
