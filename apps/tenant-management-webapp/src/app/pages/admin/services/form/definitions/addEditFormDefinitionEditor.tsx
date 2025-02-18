@@ -326,7 +326,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const saveCurrentTab = (tab: number) => {
     setCurrentTab(tab);
   };
-  console.log('definition', definition);
+
   return (
     <FormEditor>
       {isLoading ? (
