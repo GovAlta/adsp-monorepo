@@ -93,12 +93,12 @@ describe('NotificationTypes Page', () => {
   const invalidStore = mockStore(invalidScore);
 
   it('renders contact info', () => {
-    const { queryByTestId } = render(
+    const { queryByTestId, baseElement } = render(
       <Provider store={store}>
         <ContactInformation />
       </Provider>
     );
-    const email = queryByTestId('contact-email');
+    const email = queryByTestId('email');
     const supportInstructions = queryByTestId('support-instructions');
     const phone = queryByTestId('phone');
     expect(email.textContent).toContain('jonathan.weyermandn@gov.ab.ca');
@@ -117,12 +117,12 @@ describe('NotificationTypes Page', () => {
   });
 
   it('does not have functioning edit button', () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={invalidStore}>
         <ContactInformation />
       </Provider>
     );
-    const editContactInfo = queryByTestId('edit-contact-info');
+    const editContactInfo = baseElement.querySelector("goa-icon-button[testId='edit-contact-info']");
     expect(editContactInfo).toBeNull();
   });
 });

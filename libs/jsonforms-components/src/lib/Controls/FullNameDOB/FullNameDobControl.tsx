@@ -114,6 +114,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           label="Last name"
           requirement={schema?.required?.includes('lastName') ? 'required' : undefined}
           error={errors?.['lastName'] ?? ''}
+          testId="form-item-last-name"
         >
           <GoAInput
             type="text"

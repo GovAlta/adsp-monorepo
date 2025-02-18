@@ -71,12 +71,12 @@ describe('Feedbacks Components', () => {
   });
 
   it('should render correctly', () => {
-    render(
+    const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
       </Provider>
     );
-    expect(screen.getByTestId('sites-dropdown')).toBeInTheDocument();
+    expect(baseElement.querySelector("goa-dropdown[testId='sites-dropdown']")).toBeInTheDocument();
   });
 
   it('should dispatch getFeedbackSites action on mount', () => {
@@ -89,12 +89,12 @@ describe('Feedbacks Components', () => {
   });
 
   it('should dispatch getFeedbacks action when a site is selected', () => {
-    render(
+    const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
       </Provider>
     );
-    const dropDown = screen.getByTestId('sites-dropdown');
+    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
     expect(store.dispatch).toHaveBeenCalledWith(
       getFeedbacks({ url: 'http://newsite.com', allowAnonymous: true }, store.getState().searchCriteria)
@@ -102,26 +102,30 @@ describe('Feedbacks Components', () => {
   });
 
   it('should show feedbacks list with toggle-details-visibility icon button', () => {
-    render(
+    const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
       </Provider>
     );
-    const dropDown = screen.getByTestId('sites-dropdown');
+    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
     expect(screen.getByTestId('feedback-list_0')).toBeInTheDocument();
-    expect(screen.getByTestId('toggle-details-visibility_0')).toBeInTheDocument();
+    expect(baseElement.querySelector("goa-icon-button[testId='toggle-details-visibility_0']")).toBeInTheDocument();
   });
 
   it('should show details of feedback when toggle-details-visibility icon button is clicked', () => {
-    render(
+    const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
       </Provider>
     );
-    const dropDown = screen.getByTestId('sites-dropdown');
+    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
-    fireEvent(screen.getByTestId('toggle-details-visibility_0'), new CustomEvent('_click'));
+
+    fireEvent(
+      baseElement.querySelector("goa-icon-button[testId='toggle-details-visibility_0']"),
+      new CustomEvent('_click')
+    );
     expect(screen.getByTestId('moredetails')).toBeInTheDocument();
   });
 
@@ -148,27 +152,27 @@ describe('Feedbacks Components', () => {
     });
 
     store.dispatch = jest.fn();
-    render(
+    const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
       </Provider>
     );
-    const dropDown = screen.getByTestId('sites-dropdown');
+    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
     expect(screen.getByText('No feedbacks found')).toBeInTheDocument();
   });
 
   it('should enable the export button when both start and end dates are provided', async () => {
-    render(
+    const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
       </Provider>
     );
-    const dropDown = screen.getByTestId('sites-dropdown');
+    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
 
-    const startDateInput = screen.getByTestId('startDate');
-    const endDateInput = screen.getByTestId('endDate');
+    const startDateInput = baseElement.querySelector("goa-input[testId='startDate']");
+    const endDateInput = baseElement.querySelector("goa-input[testId='endDate']");
 
     await waitFor(() => {
       expect(startDateInput).toBeInTheDocument();
@@ -177,22 +181,22 @@ describe('Feedbacks Components', () => {
   });
 
   it('should call exportFeedbacks with searchCriteria when export button is clicked', async () => {
-    render(
+    const { baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
       </Provider>
     );
 
-    const dropDown = screen.getByTestId('sites-dropdown');
+    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
 
-    const startDateInput = screen.getByTestId('startDate');
-    const endDateInput = screen.getByTestId('endDate');
+    const startDateInput = baseElement.querySelector("goa-input[testId='startDate']");
+    const endDateInput = baseElement.querySelector("goa-input[testId='endDate']");
 
     fireEvent(startDateInput, new CustomEvent('_change', { detail: { value: '2023-01-01' } }));
     fireEvent(endDateInput, new CustomEvent('_change', { detail: { value: '2023-01-31' } }));
 
-    const exportButton = screen.getByTestId('exportBtn');
+    const exportButton = baseElement.querySelector("goa-button[testId='exportBtn']");
 
     fireEvent.click(exportButton);
 

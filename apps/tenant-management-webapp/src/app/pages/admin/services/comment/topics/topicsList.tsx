@@ -119,6 +119,7 @@ export const TopicsList = (): JSX.Element => {
             }}
             aria-label="select-comment-topic-type-dropdown"
             width="100%"
+            relative={true}
             testId="comment-select-topic-type-dropdown"
           >
             {Object.keys(topicTypes)

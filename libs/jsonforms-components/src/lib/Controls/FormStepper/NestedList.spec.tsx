@@ -162,20 +162,23 @@ describe('Nested List Rendering', () => {
       type: 'VerticalLayout',
       elements: [listLayout],
     };
-    const renderer = render(getForm(initialData, unCategorized));
-    const roadmapBtn = renderer.getByTestId('object-array-toolbar-Roadmap');
+    const { baseElement } = render(getForm(initialData, unCategorized));
+    const roadmapBtn = baseElement.querySelector("goa-button[testId='object-array-toolbar-Roadmap']");
     expect(roadmapBtn).toBeInTheDocument();
     expect(roadmapBtn).toBeVisible();
     const shadowRoadmapBtn = roadmapBtn.shadowRoot?.querySelector('button');
     expect(shadowRoadmapBtn).not.toBeNull();
-    fireEvent.click(shadowRoadmapBtn!);
 
-    const impactBtn = renderer.getByTestId('object-array-toolbar-Impacts');
+    fireEvent(roadmapBtn, new CustomEvent('_click'));
+
+    const impactBtn = baseElement.querySelector("goa-button[testId='object-array-toolbar-Impacts']");
+
     expect(impactBtn).toBeInTheDocument();
     expect(impactBtn).toBeVisible();
     const shadowImpactBtn = roadmapBtn.shadowRoot?.querySelector('button');
     expect(shadowImpactBtn).not.toBeNull();
-    fireEvent.click(shadowImpactBtn!);
+
+    fireEvent(impactBtn, new CustomEvent('_click'));
   });
 
   it('can render a categorized nested list', () => {
@@ -195,23 +198,25 @@ describe('Nested List Rendering', () => {
       ],
     };
 
-    const renderer = render(getForm(initialData, categorized));
+    const { baseElement, ...renderer } = render(getForm(initialData, categorized));
     const step0 = renderer.getByTestId('step_0-content');
     expect(step0).toBeInTheDocument();
     expect(step0).toBeVisible();
+    const roadmapBtn = baseElement.querySelector("goa-button[testId='object-array-toolbar-Roadmap']");
 
-    const roadmapBtn = renderer.getByTestId('object-array-toolbar-Roadmap');
     expect(roadmapBtn).toBeInTheDocument();
     expect(roadmapBtn).toBeVisible();
     const shadowRoadmapBtn = roadmapBtn.shadowRoot?.querySelector('button');
     expect(shadowRoadmapBtn).not.toBeNull();
-    fireEvent.click(shadowRoadmapBtn!);
 
-    const impactBtn = renderer.getByTestId('object-array-toolbar-Impacts');
+    fireEvent(roadmapBtn, new CustomEvent('_click'));
+    const impactBtn = baseElement.querySelector("goa-button[testId='object-array-toolbar-Impacts']");
+
     expect(impactBtn).toBeInTheDocument();
     expect(impactBtn).toBeVisible();
     const shadowImpactBtn = impactBtn.shadowRoot?.querySelector('button');
     expect(shadowImpactBtn).not.toBeNull();
-    fireEvent.click(shadowImpactBtn!);
+
+    fireEvent(impactBtn, new CustomEvent('_click'));
   });
 });

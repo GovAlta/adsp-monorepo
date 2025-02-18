@@ -172,6 +172,7 @@ export const TestStream = (): JSX.Element => {
               name="streams"
               value={selectedSteamId}
               width="100%"
+              relative={true}
               onChange={(name, streamId: string | string[]) => {
                 setSelectedStreamId([streamId.toString()]);
               }}

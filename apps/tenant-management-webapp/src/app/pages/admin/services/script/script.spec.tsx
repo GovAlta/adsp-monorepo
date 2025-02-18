@@ -44,7 +44,7 @@ describe('Script list Page', () => {
   });
 
   it('Render script service', () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <MemoryRouter>
           <ScriptsView activeEdit={false} />
@@ -52,7 +52,7 @@ describe('Script list Page', () => {
       </Provider>
     );
 
-    const addButton = queryByTestId('add-script-btn');
+    const addButton = baseElement.querySelector("goa-button[testId='add-script-btn']");
     expect(addButton).not.toBeNull();
   });
 });
