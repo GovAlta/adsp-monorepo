@@ -116,7 +116,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const helpText = uischema?.options?.help;
   const sentenceCaseLabel = convertToSentenceCase(label);
   return (
-    <FileUploaderStyle id="file-upload" className="FileUploader">
+    <FileUploaderStyle className="FileUploader">
       {required ? (
         <GoAFormItem label={sentenceCaseLabel} requirement="required"></GoAFormItem>
       ) : (
