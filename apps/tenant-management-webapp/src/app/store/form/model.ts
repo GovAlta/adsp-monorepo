@@ -67,7 +67,7 @@ export const defaultFormDefinition: FormDefinition = {
   assessorRoles: [],
   formDraftUrlTemplate: '',
   anonymousApply: false,
-  oneFormPerApplicant: false,
+  oneFormPerApplicant: true,
   dispositionStates: [],
   submissionRecords: false,
   submissionPdfTemplate: 'submitted-form',

@@ -326,7 +326,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const saveCurrentTab = (tab: number) => {
     setCurrentTab(tab);
   };
-
+  console.log('definition', definition);
   return (
     <FormEditor>
       {isLoading ? (
@@ -536,9 +536,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             key="form-definition-allow-multiple-forms-checkbox"
                             disabled={definition.anonymousApply}
                             checked={
-                              definition.oneFormPerApplicant === false ||
-                              definition.oneFormPerApplicant === undefined ||
-                              definition.oneFormPerApplicant === null
+                              !(
+                                definition.oneFormPerApplicant === true ||
+                                definition.oneFormPerApplicant === undefined ||
+                                definition.oneFormPerApplicant === null
+                              )
                             }
                             onChange={(_, checked) => {
                               setDefinition({ oneFormPerApplicant: !checked });
