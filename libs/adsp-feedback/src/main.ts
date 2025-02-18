@@ -1077,7 +1077,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                         class="adsp-fb-form-primary"
                         id="start"
                         @click=${this.closeStartForm}
-                        type="button"
+                        type="submit"
                         tabindex="0"
                         aria-label="Start feedback button"
                       >
@@ -1202,7 +1202,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                         ${ref(this.sendButtonRef)}
                         class="adsp-fb-form-primary"
                         @click=${this.sendFeedback}
-                        type="button"
+                        type="submit"
                         disabled
                         tabindex="0"
                         aria-label="Submit feedback button"
