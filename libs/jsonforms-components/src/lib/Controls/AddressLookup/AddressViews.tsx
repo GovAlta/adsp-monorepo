@@ -57,7 +57,10 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
         </GoAGrid>
         <br />
         <GoAGrid minChildWidth="0" gap="s">
-          <GoAFormItem label="Province">
+          <GoAFormItem
+            label="Province"
+            error={!isAlbertaAddress && data?.subdivisionCode === undefined ? 'Province is required' : ''}
+          >
             {isAlbertaAddress && <div data-testid="address-form-province-view">Alberta</div>}
             {!isAlbertaAddress && (
               <div data-testid="address-form-province-view">
