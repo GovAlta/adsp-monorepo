@@ -31,6 +31,7 @@ import {
   FETCH_RESOURCES_BY_TAG_ACTION,
   FETCH_RESOURCES_BY_TAG_SUCCESS,
   FETCH_RESOURCES_BY_TAG_FAILURE,
+  SET_SELECTED_TAG,
 } from './action';
 
 import { FormState } from './model';
@@ -57,7 +58,7 @@ export const defaultState: FormState = {
   tags: [],
   tagsLoading: false,
   tagsError: null,
-  selectedTag: null,
+  selectedTag: '',
   tagResources: [],
 };
 
@@ -335,6 +336,12 @@ export default function (state: FormState = defaultState, action: FormActionType
         tagResources: [],
         tagsLoading: false,
         tagsError: action.error,
+      };
+
+    case SET_SELECTED_TAG:
+      return {
+        ...state,
+        selectedTag: action.payload,
       };
 
     default:

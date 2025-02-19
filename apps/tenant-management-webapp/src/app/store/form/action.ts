@@ -68,6 +68,8 @@ export const FETCH_RESOURCES_BY_TAG_ACTION = 'form/resource/fetch-resources-by-t
 export const FETCH_RESOURCES_BY_TAG_SUCCESS = 'form/resource/fetch-resources-by-tag/success';
 export const FETCH_RESOURCES_BY_TAG_FAILURE = 'form/resource/fetch-resources-by-tag/failed';
 
+export const SET_SELECTED_TAG = 'form/resource/set-selected-tag';
+
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
 }
@@ -202,6 +204,11 @@ export interface FetchFormMetricsSuccessAction {
   payload: FormMetrics;
 }
 
+export interface SetSelectedTagAction {
+  type: typeof SET_SELECTED_TAG;
+  payload: string;
+}
+
 export type FormActionTypes =
   | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
@@ -241,7 +248,8 @@ export type FormActionTypes =
   | FetchAllTagsFailedAction
   | FetchResourcesByTagAction
   | FetchResourcesByTagSuccessAction
-  | FetchResourcesByTagFailureAction;
+  | FetchResourcesByTagFailureAction
+  | SetSelectedTagAction;
 
 export interface FetchAllTagsAction {
   type: typeof FETCH_ALL_TAGS_ACTION;
@@ -522,4 +530,9 @@ export const fetchResourcesByTagSuccess = (tag: string, resources: Resource[]): 
 export const fetchResourcesByTagFailure = (error: string): FetchResourcesByTagFailureAction => ({
   type: FETCH_RESOURCES_BY_TAG_FAILURE,
   error,
+});
+
+export const setSelectedTag = (tag: string): SetSelectedTagAction => ({
+  type: SET_SELECTED_TAG,
+  payload: tag,
 });
