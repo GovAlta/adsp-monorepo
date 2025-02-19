@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FormDefinition } from '@store/form/model';
 
-import { GoAIconButton } from '@abgov/react-components-new';
+import { GoAIconButton } from '@abgov/react-components';
 
 import { updateFormDefinition } from '@store/form/action';
 

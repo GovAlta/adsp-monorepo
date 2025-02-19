@@ -1,11 +1,4 @@
-import {
-  GoAModal,
-  GoAFormItem,
-  GoAInputDateTime,
-  GoADate,
-  GoAButtonGroup,
-  GoAButton,
-} from '@abgov/react-components-new';
+import { GoAModal, GoAFormItem, GoAInputDateTime, GoADate, GoAButtonGroup, GoAButton } from '@abgov/react-components';
 import { FunctionComponent, useState } from 'react';
 
 interface ScheduleIntakeModalProps {

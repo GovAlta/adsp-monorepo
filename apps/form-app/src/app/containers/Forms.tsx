@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoATable } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoATable } from '@abgov/react-components';
 import { Band, Container, RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
 import { FunctionComponent, useEffect } from 'react';

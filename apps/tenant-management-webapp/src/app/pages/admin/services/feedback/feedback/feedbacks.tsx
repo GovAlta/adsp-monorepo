@@ -15,7 +15,7 @@ import {
   GoAFormItem,
   GoAInputDate,
   GoASkeleton,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { FeedbackSearchCriteria, getDefaultSearchCriteria } from '@store/feedback/models';
 import { exportFeedbacks, getFeedbackSites, getFeedbacks } from '@store/feedback/actions';

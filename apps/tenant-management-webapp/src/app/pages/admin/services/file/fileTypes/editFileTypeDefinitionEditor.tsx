@@ -31,7 +31,7 @@ import {
   GoACheckbox,
   GoAFormItem,
   GoAInput,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
 import { RootState } from '@store/index';
 import { FileTypeDefault, FileTypeDefaultOnEdit, FileTypeItem } from '@store/file/models';

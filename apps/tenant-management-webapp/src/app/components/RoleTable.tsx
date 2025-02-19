@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { GoACheckbox, GoATable } from '@abgov/react-components-new';
+import { GoACheckbox, GoATable } from '@abgov/react-components';
 import { MarginAdjustment, PaddingRem } from './styled-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';

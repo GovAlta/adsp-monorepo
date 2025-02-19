@@ -8,7 +8,7 @@ import { RootState } from '@store/index';
 import { FetchTenant } from '@store/tenant/actions';
 
 import { serviceVariables } from '../../../featureFlag';
-import { GoASideMenu, GoASideMenuHeading } from '@abgov/react-components-new';
+import { GoASideMenu, GoASideMenuHeading } from '@abgov/react-components';
 
 interface SidebarProps {
   type: 'mobile' | 'desktop';

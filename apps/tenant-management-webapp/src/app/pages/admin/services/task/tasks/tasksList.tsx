@@ -13,7 +13,7 @@ import {
   GoADropdownItem,
   GoAFormItem,
   GoASkeleton,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { TaskModal } from './taskModal';
 import { ButtonPadding, ProgressWrapper } from '../styled-components';
 import { TaskListTable } from './tasksTable';

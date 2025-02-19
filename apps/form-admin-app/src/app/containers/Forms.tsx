@@ -6,7 +6,7 @@ import {
   GoAFormItem,
   GoAIcon,
   GoATable,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -55,7 +55,7 @@ const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSuppo
   const topic = useSelector((state: AppState) => topicSelector(state, form.urn));
 
   useEffect(() => {
-    if (hasSupportTopic && topic ===  undefined) {
+    if (hasSupportTopic && topic === undefined) {
       dispatch(loadTopic({ resourceId: form.urn, typeId: 'form-questions' }));
     }
   }, [dispatch, hasSupportTopic, form, topic]);
@@ -107,7 +107,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
     if (forms.length < 1) {
       dispatch(findForms({ definitionId, criteria }));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, definitionId]);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent } from 'react';
-import { GoAButton, GoAButtonGroup, GoACallout } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoACallout } from '@abgov/react-components';
 import { useLocation, useParams } from 'react-router-dom';
 import { AppDispatch, loginUser, tenantSelector, userSelector } from '../state';
 import { useDispatch, useSelector } from 'react-redux';

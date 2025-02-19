@@ -3,12 +3,11 @@ import {
   GoAInput,
   GoAFormItem,
   GoAButton,
-  GoANotification,
   GoASpacer,
   GoABadge,
   GoACircularProgress,
   GoAIconButton,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { useDispatch } from 'react-redux';
 import { FetchUserIdByEmail, FETCH_USER_ID_BY_EMAIL, DeleteUserIdp, DELETE_USER_IDP } from '@store/tenant/actions';
 import { useSelector } from 'react-redux';

@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import type { EventDefinition } from '@store/event/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal, GoATextArea } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal, GoATextArea } from '@abgov/react-components';
 import {
   wordCheck,
   isNotEmptyCheck,

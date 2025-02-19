@@ -3,6 +3,7 @@ import { debounce as _debounce } from 'lodash';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
+
 import {
   GoAInput,
   GoAModal,
@@ -11,7 +12,7 @@ import {
   GoAButton,
   GoAChip,
   GoASkeleton,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { FormDefinition, FormResourceTagResult } from '@store/form/model';
 import { ResourceTag } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';

@@ -1,4 +1,4 @@
-import { GoANotification, NotificationType } from '@abgov/react-components-new';
+import { GoANotification, NotificationType } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { feedbackSelector, feedbackActions, FeedbackMessageLevel } from '../state';
 

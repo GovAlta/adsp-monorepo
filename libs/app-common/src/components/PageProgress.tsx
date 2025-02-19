@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoACircularProgress, CircularProgressSize, CircularProgressVariant } from '@abgov/react-components-new';
+import { GoACircularProgress, CircularProgressSize, CircularProgressVariant } from '@abgov/react-components';
 import { CenterPageLoader, CenterPage } from './styled-components';
 
 interface PageLoaderProps {

@@ -1,8 +1,7 @@
-import { GoAButton, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem } from '@abgov/react-components';
 import { FunctionComponent, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, AppState, downloadFile, pdfSelector } from '../state';
-import { GoAEnumCheckboxGroupControl } from '@abgov/jsonforms-components';
 
 interface PdfDownloadProps {
   urn: string;

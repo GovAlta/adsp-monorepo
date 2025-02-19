@@ -5,7 +5,7 @@ import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck 
 import { DispositionFormItem, DescriptionItem } from '../styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { GoATextArea, GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
+import { GoATextArea, GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components';
 import { Disposition } from '@store/form/model';
 interface AddEditDispositionModalProps {
   open: boolean;

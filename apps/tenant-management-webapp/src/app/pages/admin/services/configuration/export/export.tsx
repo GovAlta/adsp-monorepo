@@ -17,7 +17,7 @@ import { Exports, ChipWrapper } from '../styled-components';
 import { NoPaddingH2 } from '@components/AppHeader';
 import { allNames } from '@store/configuration/model';
 
-import { GoAButton, GoACheckbox, GoAChip, GoAContainer, GoAIcon, GoATooltip } from '@abgov/react-components-new';
+import { GoAButton, GoACheckbox, GoAChip, GoAContainer, GoAIcon, GoATooltip } from '@abgov/react-components';
 
 function getTextWidth(text) {
   const canvas = document.createElement('canvas');

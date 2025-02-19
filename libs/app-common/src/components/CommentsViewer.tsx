@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoACircularProgress, GoAFormItem, GoATextArea } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoACircularProgress, GoAFormItem, GoATextArea } from '@abgov/react-components';
 import moment from 'moment';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';

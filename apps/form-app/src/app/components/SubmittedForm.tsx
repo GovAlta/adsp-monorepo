@@ -1,7 +1,7 @@
 import { GoAReviewRenderers, ContextProviderFactory } from '@abgov/jsonforms-components';
 import { UISchemaElement } from '@jsonforms/core';
 import { AppState } from '../state';
-import { GoACallout } from '@abgov/react-components-new';
+import { GoACallout } from '@abgov/react-components';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useEffect } from 'react';

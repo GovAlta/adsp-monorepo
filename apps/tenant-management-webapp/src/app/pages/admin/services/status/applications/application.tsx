@@ -14,7 +14,7 @@ import {
   GoABadgeType,
   GoAModal,
   GoAFormItem,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 
 import ApplicationFormModal from '../form';
 

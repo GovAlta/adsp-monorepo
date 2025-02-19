@@ -4,7 +4,7 @@ import { RootState } from '@store/index';
 import { fetchCalendars, UpdateCalendar, FETCH_CALENDARS_ACTION } from '@store/calendar/actions';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import { CalendarModal } from './calendarModal';
 import { CalendarTableComponent } from './calendarTable';
 import { fetchEventStreams } from '@store/stream/actions';

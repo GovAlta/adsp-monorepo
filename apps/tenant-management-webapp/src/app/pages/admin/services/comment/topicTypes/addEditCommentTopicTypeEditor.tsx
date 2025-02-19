@@ -42,14 +42,7 @@ import { TopicConfigTopicType } from './topicConfigTopicType';
 
 import { useNavigate, useParams } from 'react-router-dom';
 
-import {
-  GoAButtonGroup,
-  GoAButton,
-  GoAFormItem,
-  GoADropdown,
-  GoADropdownItem,
-  GoACircularProgress,
-} from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAButton, GoAFormItem, GoADropdown, GoADropdownItem } from '@abgov/react-components';
 import { useWindowDimensions } from '@lib/useWindowDimensions';
 import { CustomLoader } from '@components/CustomLoader';
 

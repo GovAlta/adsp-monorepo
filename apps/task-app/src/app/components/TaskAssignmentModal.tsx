@@ -5,7 +5,7 @@ import {
   GoADropdownItem,
   GoAFormItem,
   GoAModal,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { Person, Task, TaskUser } from '../state';
 

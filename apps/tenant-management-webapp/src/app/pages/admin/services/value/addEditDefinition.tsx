@@ -8,7 +8,7 @@ import {
   GoAFormItem,
   GoATextArea,
   GoASpacer,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { ValueDefinition } from '@store/value/models';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';

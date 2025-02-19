@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { getCommentTopicTypes, updateCommentTopicType, deleteCommentTopicType } from '@store/comment/action';

@@ -7,7 +7,7 @@ import DataTable from '@components/DataTable';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
 import { getEventDefinitions } from '@store/event/actions';
 import { LoadMoreWrapper } from '@components/styled-components';
-import { GoABadge, GoAButton, GoAInput, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components-new';
+import { GoABadge, GoAButton, GoAInput, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components';
 import styled from 'styled-components';
 
 import { PageIndicator } from '@components/Indicator';

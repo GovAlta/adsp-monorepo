@@ -15,7 +15,7 @@ import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope, convertToEditorSuggestion } from '@lib/autoComplete';
-import { GoAButton, GoAFormItem, GoAButtonGroup, GoACircularProgress } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem, GoAButtonGroup, GoACircularProgress } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';

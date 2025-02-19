@@ -1,4 +1,4 @@
-import { GoADropdown, GoADropdownItem, GoAFormItem, GoATable } from '@abgov/react-components-new';
+import { GoADropdown, GoADropdownItem, GoAFormItem, GoATable } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
 import { QueueMetrics as QueueMetricsValue, Task, TaskFilter, TaskUser } from '../state';

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import Container from '@components/Container';
 import { Grid, GridItem } from '@core-services/app-common';
 import { RootState } from '@store/index';
-import { GoAContainer } from '@abgov/react-components-new';
+import { GoAContainer } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 
 import { CardContent, ServiceLayoutMin, CardLayout, RedirectButton, H2, Paragraph } from './LandingComponents';

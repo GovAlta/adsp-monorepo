@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ScriptEditorWrapper } from './editor/scriptEditorWrapper';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 
 interface ScriptsViewProps {
   setActiveEdit: (boolean) => void;

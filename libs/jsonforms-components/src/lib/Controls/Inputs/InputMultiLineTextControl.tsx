@@ -9,7 +9,7 @@ import {
   and,
   optionIs,
 } from '@jsonforms/core';
-import { GoATextArea } from '@abgov/react-components-new';
+import { GoATextArea } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';

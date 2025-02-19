@@ -1,4 +1,4 @@
-import { GoAAppHeader, GoAMicrositeHeader } from '@abgov/react-components-new';
+import { GoAAppHeader, GoAMicrositeHeader } from '@abgov/react-components';
 import { Band, Container, Footer, Grid, GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';

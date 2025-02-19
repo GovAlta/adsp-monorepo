@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { PageLoader } from '@core-services/app-common';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { CircularProgressVariant } from '@abgov/react-components-new';
+import { CircularProgressVariant } from '@abgov/react-components';
 
 interface IndicatorProps {
   delay?: number;

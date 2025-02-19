@@ -7,7 +7,7 @@ import {
   GoAModal,
   GoADropdown,
   GoADropdownItem,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 
 import {
   ScriptItem,

@@ -9,7 +9,7 @@ import {
   GoAInput,
   GoATooltip,
   GoAIcon,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';

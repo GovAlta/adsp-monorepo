@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GoAFormItem, GoAInput, GoAGrid } from '@abgov/react-components-new';
+import { GoAFormItem, GoAInput, GoAGrid } from '@abgov/react-components';
 
 interface Data {
   firstName: string;

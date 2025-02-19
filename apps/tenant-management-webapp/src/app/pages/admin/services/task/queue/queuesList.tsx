@@ -4,7 +4,7 @@ import { RootState } from '@store/index';
 import { getTaskQueues, getTasks, UpdateTaskQueue } from '@store/task/action';
 import { TaskDefinition, defaultTaskQueue } from '@store/task/model';
 import { renderNoItem } from '@components/NoItem';
-import { GoAButton, GoACircularProgress } from '@abgov/react-components-new';
+import { GoAButton, GoACircularProgress } from '@abgov/react-components';
 import { QueueListTable } from './queueTable';
 import { QueueModal } from './queueModal';
 import { ProgressWrapper } from '../styled-components';

@@ -3,7 +3,7 @@ import { Subscriber } from '@store/subscription/models';
 import { phoneWrapper } from '@lib/wrappers';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
-import { GoABadge } from '@abgov/react-components-new';
+import { GoABadge } from '@abgov/react-components';
 import { RowFlex } from './styled-components';
 import { getSubcriberSubscriptions } from './apis';
 

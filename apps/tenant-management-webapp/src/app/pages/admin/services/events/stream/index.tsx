@@ -7,7 +7,7 @@ import { CORE_TENANT } from '@store/tenant/models';
 import { PageIndicator } from '@components/Indicator';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { AddEditStream } from './addEditStream/addEditStream';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import { initialStream } from '@store/stream/models';
 import { DeleteModal } from '@components/DeleteModal';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';

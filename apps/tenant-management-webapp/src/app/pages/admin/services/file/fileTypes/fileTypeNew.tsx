@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FileTypeModal } from './fileTypeModal';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import { Role } from '@store/tenant/models';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';

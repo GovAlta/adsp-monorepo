@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import { ReactComponent as OpenIcon } from '@assets/icons/open.svg';
 import React from 'react';
 // *****************

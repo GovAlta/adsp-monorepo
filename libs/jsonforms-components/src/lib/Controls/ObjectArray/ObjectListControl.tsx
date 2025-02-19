@@ -28,7 +28,7 @@ import {
   GoAInput,
   GoAFormItem,
   GoACallout,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import {
   ToolBarHeader,
   ObjectArrayTitle,

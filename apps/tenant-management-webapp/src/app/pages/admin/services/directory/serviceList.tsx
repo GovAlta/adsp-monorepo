@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { GoACircularProgress } from '@abgov/react-components-new';
+import { GoACircularProgress } from '@abgov/react-components';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';

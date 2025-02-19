@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';

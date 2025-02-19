@@ -11,7 +11,7 @@ import {
   getAjv,
 } from '@jsonforms/core';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoAGrid } from '@abgov/react-components-new';
+import { GoAGrid } from '@abgov/react-components';
 import { Visible } from './style-component';
 import Ajv from 'ajv';
 export type Ajv8 = Ajv;

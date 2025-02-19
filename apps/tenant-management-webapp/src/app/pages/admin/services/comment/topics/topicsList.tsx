@@ -12,7 +12,7 @@ import {
   GoADropdownItem,
   GoAFormItem,
   GoASkeleton,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { TopicModal } from './topicModal';
 import { ButtonPadding, ProgressWrapper, Topics } from '../styled-components';
 import { TopicListTable } from './topicsTable';

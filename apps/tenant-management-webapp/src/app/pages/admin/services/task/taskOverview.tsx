@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { OverviewLayout } from '@components/Overview';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import { useNavigate } from 'react-router-dom';
-import { QueueModal } from './queue/queueModal';
+
 import { useDispatch } from 'react-redux';
 import { defaultTaskQueue, TaskDefinition } from '@store/task/model';
-import { UpdateTaskQueue } from '@store/task/action';
 
 interface TaskOverviewProps {
   setOpenAddTask: (val: boolean) => void;

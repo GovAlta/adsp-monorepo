@@ -8,7 +8,7 @@ import {
   GoAButtonGroup,
   GoAGrid,
   GoAButtonType,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';

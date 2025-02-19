@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { saveWebhook } from '@store/status/actions';
 import { Webhooks } from '@store/status/models';
-import DataTable from '@components/DataTable';
 import { selectWebhookInStatus } from '@store/status/selectors';
 import {
   GoADropdown,
@@ -15,7 +14,7 @@ import {
   GoAInput,
   GoAFormItem,
   GoAModal,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { getEventDefinitions } from '@store/event/actions';
 import { useValidators } from '@lib/validation/useValidators';
 import { renderNoItem } from '@components/NoItem';
