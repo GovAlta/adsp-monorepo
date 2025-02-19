@@ -13,6 +13,7 @@ import {
   tagFormResource,
   fetchAllTags,
   fetchResourcesByTag,
+  setSelectedTag,
 } from '@store/form/action';
 import { RootState } from '@store/index';
 import { ResourceTagResult, Service } from '@store/directory/models';
@@ -77,7 +78,7 @@ export const FormDefinitions = ({
   };
   const resourceConfiguration = useSelector(selectConfigurationHost);
   const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
-  const [selectedTag, setSelectedTag] = useState(() => localStorage.getItem('selectedTag') || '');
+  const selectedTag = useSelector((state: RootState) => state.form.selectedTag);
 
   const tags = useSelector((state: RootState) => state.form.tags || []);
   const tagsLoading = useSelector((state: RootState) => state.form.tagsLoading);
@@ -145,8 +146,7 @@ export const FormDefinitions = ({
           disabled={!tags.length}
           onChange={(name, value) => {
             const selectedValue = Array.isArray(value) ? value[0] : value;
-            setSelectedTag(selectedValue);
-            localStorage.setItem('selectedTag', selectedValue);
+            dispatch(setSelectedTag(selectedValue));
             dispatch(fetchResourcesByTag(selectedValue));
           }}
           width="54ch"

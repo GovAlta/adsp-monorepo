@@ -510,6 +510,9 @@ export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIt
     });
     return;
   }
+
+  const requiredTag = tag.toLowerCase();
+
   yield put(UpdateIndicator({ show: true, message: `Fetching resources for tag: ${tag}...` }));
 
   const state: RootState = yield select();
@@ -518,7 +521,7 @@ export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIt
 
   if (baseUrl && token) {
     try {
-      const resources = yield call(getResourcesByTag, token, baseUrl, tag);
+      const resources = yield call(getResourcesByTag, token, baseUrl, requiredTag);
 
       const filteredDefinitions = resources.results
         .map(({ urn, _embedded }) => {
