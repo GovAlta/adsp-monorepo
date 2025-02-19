@@ -1,6 +1,6 @@
 import { FunctionComponent, ReactNode } from 'react';
 import { TaskMetric } from '../state';
-import { GoAContainer } from '@abgov/react-components-new';
+import { GoAContainer } from '@abgov/react-components';
 
 interface MetricProps {
   metric: TaskMetric;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoAHeader } from '@abgov/react-components';
+import { GoAHeader } from '@abgov/react-components-old';
 import { IndicatorWithDelay } from '@components/Indicator';
 
 import { Grid, GridItem } from '@core-services/app-common';
@@ -20,7 +20,7 @@ import { RootState } from '@store/index';
 import { LocalTime } from '@components/Date';
 import moment from 'moment';
 import GoaLogo from '../../assets/goa-logo.svg';
-import { GoAButton, GoAInput, GoACallout, GoAFormItem, GoASkeleton } from '@abgov/react-components-new';
+import { GoAButton, GoAInput, GoACallout, GoAFormItem, GoASkeleton } from '@abgov/react-components';
 import { emailError } from '@lib/inputValidation';
 import {
   Title,

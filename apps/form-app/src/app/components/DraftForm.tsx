@@ -5,7 +5,7 @@ import {
   ContextProviderFactory,
   JsonFormRegisterProvider,
 } from '@abgov/jsonforms-components';
-import { GoABadge } from '@abgov/react-components-new';
+import { GoABadge } from '@abgov/react-components';
 import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useContext } from 'react';

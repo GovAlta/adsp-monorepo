@@ -10,7 +10,7 @@ import {
   fileMetadataSelector,
 } from '../state';
 import { LoadingIndicator } from '../components/LoadingIndicator';
-import { GoADivider } from '@abgov/react-components-new';
+import { GoADivider } from '@abgov/react-components';
 
 interface FileViewerProps {
   className?: string;

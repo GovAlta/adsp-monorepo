@@ -1,4 +1,4 @@
-import { GoASpinner } from '@abgov/react-components-new';
+import { GoASpinner } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
 

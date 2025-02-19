@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
-import { GoAButton, GoACircularProgress, GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components-new';
+
+import { GoAButton, GoACircularProgress, GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components';
+
 
 import { useDispatch, useSelector } from 'react-redux';
 import {

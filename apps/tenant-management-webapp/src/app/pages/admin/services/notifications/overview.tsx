@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import { FetchNotificationMetrics } from '@store/notification/actions';
 import { NotificationMetrics } from './metrics';
 import { ContactInformation } from './contactInformation';

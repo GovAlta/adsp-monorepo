@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CommentTopicTypes } from '@store/comment/model';
 
-import { GoAIconButton } from '@abgov/react-components-new';
+import { GoAIconButton } from '@abgov/react-components';
 
 import { updateCommentTopicType } from '@store/comment/action';
 

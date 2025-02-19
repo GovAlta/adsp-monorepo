@@ -1,5 +1,5 @@
 import { GoARenderers, GoACells, JsonFormRegisterProvider } from '@abgov/jsonforms-components';
-import { GoACallout } from '@abgov/react-components-new';
+import { GoACallout } from '@abgov/react-components';
 import { ajv } from '@lib/validation/checkInput';
 import { JsonForms } from '@jsonforms/react';
 import { RootState } from '@store/index';

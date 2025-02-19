@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components';
 import { useDispatch } from 'react-redux';
 import { Page, Main } from '@components/Html';
 import GoALinkButton from '@components/LinkButton';

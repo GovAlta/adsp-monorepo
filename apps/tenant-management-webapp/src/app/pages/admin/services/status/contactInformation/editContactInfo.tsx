@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoAModal, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput, GoAModal, GoAFormItem } from '@abgov/react-components';
 import styled from 'styled-components';
 import { emailError } from '@lib/inputValidation';
 

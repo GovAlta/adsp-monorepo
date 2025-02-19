@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
 import { RootState } from '@store/index';
 import { TenantLogout } from '@store/tenant/actions';
 import { clearInterval, setInterval } from 'worker-timers';

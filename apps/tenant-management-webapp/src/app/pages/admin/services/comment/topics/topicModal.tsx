@@ -11,7 +11,7 @@ import {
   GoAModal,
   GoASkeleton,
   GoATextArea,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { TopicItem, defaultTopic } from '@store/comment/model';
 import {

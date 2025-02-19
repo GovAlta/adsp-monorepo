@@ -3,7 +3,7 @@ import { ControlProps } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
 
-import { GoAFormItem, GoAInput, GoASpinner } from '@abgov/react-components-new';
+import { GoAFormItem, GoAInput, GoASpinner } from '@abgov/react-components';
 import { Address, Suggestion } from './types';
 
 import {

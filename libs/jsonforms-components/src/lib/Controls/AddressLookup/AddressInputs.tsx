@@ -1,6 +1,6 @@
 import React from 'react';
 import { Address } from './types';
-import { GoAFormItem, GoAInput, GoAGrid, GoADropdownItem, GoADropdown } from '@abgov/react-components-new';
+import { GoAFormItem, GoAInput, GoAGrid, GoADropdownItem, GoADropdown } from '@abgov/react-components';
 import { LabelDiv } from './styled-components';
 
 interface AddressInputsProps {

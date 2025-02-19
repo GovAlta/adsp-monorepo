@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { isValidHref, isMailToHref } from '../Context/register/util';
-import { GoAFormItem } from '@abgov/react-components-new';
-import { GoAIconButton } from '@abgov/react-components-new';
+import { GoAFormItem, GoAIconButton } from '@abgov/react-components';
+
 import { GoAContextMenuIcon } from '../Controls/FileUploader/ContextMenu';
 
 const linkLength = 40;

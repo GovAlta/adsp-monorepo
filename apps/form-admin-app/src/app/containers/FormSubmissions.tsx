@@ -5,7 +5,7 @@ import {
   GoADropdownItem,
   GoAFormItem,
   GoATable,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -61,7 +61,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
     if (submissions.length < 1) {
       dispatch(findSubmissions({ definitionId, criteria }));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, definitionId]);
 
   return (

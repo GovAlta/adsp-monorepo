@@ -9,7 +9,7 @@ import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';
 
-import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
+import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components';
 interface AddEditCommentTopicTypeProps {
   open: boolean;
   isEdit: boolean;

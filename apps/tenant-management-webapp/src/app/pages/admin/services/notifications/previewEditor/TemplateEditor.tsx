@@ -8,7 +8,7 @@ import { Template, baseTemplate } from '@store/notification/models';
 import { SaveFormModal } from '@components/saveModal';
 import { subjectEditorConfig, bodyEditorConfig } from './config';
 import { Tab, Tabs } from '@components/Tabs';
-import { GoAButton, GoAButtonGroup, GoABadge, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoABadge, GoAFormItem } from '@abgov/react-components';
 import { areObjectsEqual } from '@lib/objectUtil';
 
 interface TemplateEditorProps {

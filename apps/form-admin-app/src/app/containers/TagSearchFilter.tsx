@@ -1,4 +1,4 @@
-import { GoAFormItem, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
+import { GoAFormItem, GoADropdown, GoADropdownItem } from '@abgov/react-components';
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, getTags, tagsSelector } from '../state';
@@ -17,7 +17,7 @@ export const TagSearchFilter: FunctionComponent<TagSearchFilterProps> = ({ value
     if (tags.length < 1) {
       dispatch(getTags({}));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 
   return (

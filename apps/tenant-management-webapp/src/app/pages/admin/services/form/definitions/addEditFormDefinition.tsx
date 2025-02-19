@@ -26,7 +26,7 @@ import {
   GoAButton,
   GoAIcon,
   GoACheckbox,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 interface AddEditFormDefinitionProps {
   open: boolean;
   isEdit: boolean;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoAButton, GoAIconButton, GoACallout } from '@abgov/react-components-new';
+import { GoAButton, GoAIconButton, GoACallout } from '@abgov/react-components';
 import _ from 'underscore';
 import {
   generatePdf,

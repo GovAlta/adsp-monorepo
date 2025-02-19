@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
 interface deleteModalProps {
   title: string;
   content?: string | JSX.Element;

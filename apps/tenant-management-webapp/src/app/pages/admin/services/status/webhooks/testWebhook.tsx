@@ -2,14 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { TestWebhooks } from '@store/status/actions';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
-import {
-  GoAButton,
-  GoAButtonGroup,
-  GoARadioItem,
-  GoARadioGroup,
-  GoAModal,
-  GoAFormItem,
-} from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoARadioItem, GoARadioGroup, GoAModal, GoAFormItem } from '@abgov/react-components';
 import { selectWebhookToTestInStatus, selectInitTestWebhookCriteria } from '@store/status/selectors';
 import { renderNoItem } from '@components/NoItem';
 import styled from 'styled-components';

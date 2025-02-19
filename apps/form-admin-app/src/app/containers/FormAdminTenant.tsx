@@ -1,4 +1,4 @@
-import { GoAAppHeader, GoAMicrositeHeader } from '@abgov/react-components-new';
+import { GoAAppHeader, GoAMicrositeHeader } from '@abgov/react-components';
 import { useScripts } from '@core-services/app-common';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -60,7 +60,7 @@ export const FormAdminTenant = () => {
       <FeedbackNotification />
       <AuthorizeUser>
         <TenantMainContainer>
-          <NavigationMenu type="side"/>
+          <NavigationMenu type="side" />
           <main>
             <section>
               <Routes>

@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';

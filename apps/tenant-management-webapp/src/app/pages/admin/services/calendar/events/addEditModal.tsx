@@ -10,7 +10,7 @@ import {
   GoAInputDate,
   GoAInputTime,
   GoAGrid,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { selectAddModalEvent, selectSelectedCalendarEventNames } from '@store/calendar/selectors';
 import { useSelector, useDispatch } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';

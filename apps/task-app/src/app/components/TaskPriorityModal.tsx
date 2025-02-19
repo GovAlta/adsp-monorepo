@@ -1,11 +1,4 @@
-import {
-  GoAButton,
-  GoAButtonGroup,
-  GoAFormItem,
-  GoAModal,
-  GoARadioGroup,
-  GoARadioItem,
-} from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal, GoARadioGroup, GoARadioItem } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { Task } from '../state';
 

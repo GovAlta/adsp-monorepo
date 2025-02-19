@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo } from 'react';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoAInput } from '@abgov/react-components-new';
+import { GoAInput } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { RegisterDataType } from '../../Context/register';

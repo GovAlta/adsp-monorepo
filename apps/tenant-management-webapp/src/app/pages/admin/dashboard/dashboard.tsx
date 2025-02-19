@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { GoAContainer, GoACallout, GoAGrid } from '@abgov/react-components-new';
+import { GoAContainer, GoACallout, GoAGrid } from '@abgov/react-components';
 import { Link } from 'react-router-dom';
 import { Main, Page } from '@components/Html';
 import { useDispatch, useSelector } from 'react-redux';

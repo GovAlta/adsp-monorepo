@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import { Container, TextGoASkeleton } from '@core-services/app-common';
 import DataTable from '@components/DataTable';
-import { GoAContainer, GoAButton, GoACallout, GoAButtonGroup, GoAModal, GoABadge } from '@abgov/react-components-new';
+import { GoAContainer, GoAButton, GoACallout, GoAButtonGroup, GoAModal, GoABadge } from '@abgov/react-components';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { FetchTenantService } from '@store/tenant/actions';
 import { Channels, expireMinutes } from '@store/subscription/models';

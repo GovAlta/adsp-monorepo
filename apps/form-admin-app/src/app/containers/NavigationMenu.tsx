@@ -1,4 +1,4 @@
-import { GoAButton, GoASideMenu, GoASideMenuHeading } from '@abgov/react-components-new';
+import { GoAButton, GoASideMenu, GoASideMenuHeading } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';

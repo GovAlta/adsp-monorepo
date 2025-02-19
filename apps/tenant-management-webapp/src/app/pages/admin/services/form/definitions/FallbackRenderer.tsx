@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoABadge, GoAButton } from '@abgov/react-components-new';
+import { GoABadge, GoAButton } from '@abgov/react-components';
 
 function fallbackRender({ error, resetErrorBoundary }) {
   return (

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { GoAButton, GoAModal, GoAButtonGroup, GoAButtonType } from '@abgov/react-components-new';
+import { GoAButton, GoAModal, GoAButtonGroup, GoAButtonType } from '@abgov/react-components';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
 import { PageRenderPadding, PageBorder } from './styled-components';

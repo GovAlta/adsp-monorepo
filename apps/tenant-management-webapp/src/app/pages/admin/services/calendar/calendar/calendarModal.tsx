@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoAButton, GoAButtonGroup, GoAModal, GoATextArea, GoAInput, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAModal, GoATextArea, GoAInput, GoAFormItem } from '@abgov/react-components';
 import { CalendarItem } from '@store/calendar/models';
 import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';

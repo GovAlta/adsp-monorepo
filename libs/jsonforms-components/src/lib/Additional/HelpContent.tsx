@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
-import { GoADetails } from '@abgov/react-components-new';
+import { GoADetails } from '@abgov/react-components';
 import { HelpContentDiv, InvalidMarkdown } from './styled-components';
 import { ControlProps, ControlElement } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';

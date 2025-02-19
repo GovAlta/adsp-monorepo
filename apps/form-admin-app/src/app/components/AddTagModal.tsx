@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { Resource } from '../state';
 
@@ -27,8 +27,8 @@ export const AddTagModal: FunctionComponent<AddTagModal> = ({ open, resource, ta
     <GoAModal heading="Add tag" open={open}>
       <form>
         <div>
-          Add a tag{resource?.name && ` to "${resource?.name}"`}. Enter the tag label that you want to use. A new tag will be created if
-          necessary.
+          Add a tag{resource?.name && ` to "${resource?.name}"`}. Enter the tag label that you want to use. A new tag
+          will be created if necessary.
         </div>
         <GoAFormItem label="Tag" mt="l" error={tagLabelError}>
           <GoAInput

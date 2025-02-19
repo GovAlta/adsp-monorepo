@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 
-import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { TableDiv } from '../styled-components';

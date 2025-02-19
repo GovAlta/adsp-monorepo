@@ -2,7 +2,7 @@ import { CellProps, WithClassname, ControlProps, StatePropsOfControl } from '@js
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoAIcon } from '@abgov/react-components-new';
+import { GoAIcon } from '@abgov/react-components';
 import { RequiredTextLabel, WarningIconDiv } from './style-component';
 import { convertToSentenceCase, getLastSegmentFromPointer } from '../../util';
 

@@ -3,7 +3,7 @@ import { Page, Main, Aside } from '@components/Html';
 import { fetchServiceStatusApps, fetchStatusMetrics, FETCH_SERVICE_STATUS_APPS_ACTION } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoACheckbox, GoAButton } from '@abgov/react-components-new';
+import { GoACheckbox, GoAButton } from '@abgov/react-components';
 import ApplicationFormModal from './form';
 import { Application } from './applications/application';
 import { WebhookListTable } from './webhooks/webhooks';

@@ -9,7 +9,7 @@ import {
   GoAIconButton,
   GoASpacer,
   GoATable,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -119,8 +119,8 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
             <GoADetails heading="One form per applicant">
               Applicants can create one form of this definition. In programs where people are expected to apply only
               once, this configuration limits the the opportunity for duplicate submissions. However, programs should
-              still consider duplicates since this configuration cannot fully prevent them (for example, if both
-              parents apply for the same dependent child).
+              still consider duplicates since this configuration cannot fully prevent them (for example, if both parents
+              apply for the same dependent child).
             </GoADetails>
           ) : (
             <GoADetails heading="Multiple forms per applicant">

@@ -6,7 +6,7 @@ import {
   GoADropdown,
   GoADropdownItem,
   GoATextArea,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { TASK_STATUS, TaskDetailsProps } from './types';
 import { registerDetailsComponent } from './register';

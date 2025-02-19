@@ -3,9 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { saveApplication } from '@store/status/actions';
 import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/actions';
 import { ApplicationStatus } from '@store/status/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoATextArea, GoAFormItem, GoAModal } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput, GoATextArea, GoAFormItem, GoAModal } from '@abgov/react-components';
 import { useValidators } from '@lib/validation/useValidators';
-import { GoADropdownOption } from '@abgov/react-components';
+import { GoADropdownOption } from '@abgov/react-components-old';
 
 import {
   characterCheck,

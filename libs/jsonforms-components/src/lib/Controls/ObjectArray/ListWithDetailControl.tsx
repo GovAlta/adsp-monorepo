@@ -18,7 +18,7 @@ import { WithDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoAGrid, GoAIconButton } from '@abgov/react-components-new';
+import { GoAGrid, GoAIconButton } from '@abgov/react-components';
 import {
   ToolBarHeader,
   ObjectArrayTitle,

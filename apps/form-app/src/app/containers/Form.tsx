@@ -1,4 +1,4 @@
-import { GoAIconButton } from '@abgov/react-components-new';
+import { GoAIconButton } from '@abgov/react-components';
 import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';

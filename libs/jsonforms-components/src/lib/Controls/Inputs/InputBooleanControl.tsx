@@ -1,6 +1,6 @@
 import { isBooleanControl, RankedTester, rankWith, ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoACheckbox } from '@abgov/react-components-new';
+import { GoACheckbox } from '@abgov/react-components';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { getLastSegmentFromPointer, convertToReadableFormat } from '../../util/stringUtils';
 import { WithInputProps } from './type';

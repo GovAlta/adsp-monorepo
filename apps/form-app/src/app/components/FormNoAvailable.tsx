@@ -1,4 +1,4 @@
-import { GoACallout } from '@abgov/react-components-new';
+import { GoACallout } from '@abgov/react-components';
 
 export const FormNotAvailable = () => {
   return (

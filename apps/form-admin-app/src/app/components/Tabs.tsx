@@ -1,4 +1,4 @@
-import { GoAIcon, type GoAIconProps } from '@abgov/react-components-new';
+import { GoAIcon, type GoAIconProps } from '@abgov/react-components';
 import { FunctionComponent, ReactNode, useState } from 'react';
 import styled from 'styled-components';
 

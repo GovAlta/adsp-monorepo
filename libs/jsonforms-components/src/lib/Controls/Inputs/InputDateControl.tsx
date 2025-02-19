@@ -1,5 +1,5 @@
 import { CellProps, WithClassname, ControlProps, isDateControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoAInputDate } from '@abgov/react-components-new';
+import { GoAInputDate } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';

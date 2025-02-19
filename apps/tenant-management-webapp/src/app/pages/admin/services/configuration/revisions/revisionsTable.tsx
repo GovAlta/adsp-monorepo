@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { PageIndicator } from '@components/Indicator';
-import { GoAButton, GoABadge, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
+import { GoAButton, GoABadge, GoAButtonGroup, GoAModal } from '@abgov/react-components';
 import { renderNoItem } from '@components/NoItem';
 import { FormatTimeWithAt } from '@lib/timeUtil';
 import { RevisionEditModal } from './revisionEditModal';

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { EventFilterWrapper } from './styled-components';
-import { GoAGrid, GoAFormItem, GoAInputDate, GoABadge } from '@abgov/react-components-new';
+import { GoAGrid, GoAFormItem, GoAInputDate, GoABadge } from '@abgov/react-components';
 import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
 import { CalendarEventSearchCriteria } from '@store/calendar/models';
 import { useDispatch, useSelector } from 'react-redux';
@@ -29,12 +29,12 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
   const [startDateValue, setStartDateValue] = useState(criteria.startDate);
   const [endDateValue, setEndDateValue] = useState(criteria.endDate);
 
-  useEffect(()=>{
-    if(calenderName !== null){
+  useEffect(() => {
+    if (calenderName !== null) {
       setStartDateValue(criteria.startDate);
       setEndDateValue(criteria.endDate);
     }
-  },[calenderName])
+  }, [calenderName]);
 
   return (
     <EventFilterWrapper>
