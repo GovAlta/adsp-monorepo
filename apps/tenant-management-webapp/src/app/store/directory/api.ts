@@ -61,3 +61,22 @@ export const getTagByNameApi = async (
 
   return data;
 };
+
+export const getAllTagsApi = async (token: string, serviceUrl: string): Promise<{ results: Tag[] }> => {
+  const { data } = await axios.get(new URL('/resource/v1/tags', serviceUrl).href, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return data;
+};
+
+export const getResourcesByTag = async (token: string, serviceUrl: string, tag: string): Promise<Resource[]> => {
+  const url = new URL(`/resource/v1/tags/${encodeURIComponent(tag)}/resources`, serviceUrl);
+
+  url.searchParams.append('includeRepresents', 'true');
+  const { data } = await axios.get(url.href, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return data;
+};

@@ -1,6 +1,7 @@
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { SecurityClassification } from '@store/common/models';
 import { Socket } from 'socket.io-client';
+import { Resource } from '@store/directory/models';
 
 export type ExportStatus = 'queued' | 'completed' | 'failed';
 export type ExportFormat = 'json' | 'csv';
@@ -101,6 +102,7 @@ export interface FormState {
   definitions: Record<string, FormDefinition>;
   nextEntries: string;
   exportResult: FormExportResponse;
+  selectedTag: string | null;
   editor: {
     selectedId: string;
     loading: boolean;
@@ -120,6 +122,10 @@ export interface FormState {
   socket: Socket;
   searchedTag?: FormResourceTagResult;
   searchedTagExists?: boolean;
+  tags: string[];
+  tagsLoading: boolean;
+  tagsError?: string;
+  tagResources: Resource[];
 }
 export interface FormExportResponse {
   id?: string;
