@@ -17,6 +17,7 @@ export interface FormDefinition {
   formDraftUrlTemplate: string;
   oneFormPerApplicant: boolean;
   anonymousApply: boolean;
+  scheduledIntakes: boolean;
   uiSchema?: Record<string, unknown>;
   dispositionStates: Array<Disposition>;
   submissionRecords: boolean;
@@ -69,6 +70,7 @@ export const defaultFormDefinition: FormDefinition = {
   formDraftUrlTemplate: '',
   anonymousApply: false,
   oneFormPerApplicant: true,
+  scheduledIntakes: false,
   dispositionStates: [],
   submissionRecords: false,
   submissionPdfTemplate: 'submitted-form',
