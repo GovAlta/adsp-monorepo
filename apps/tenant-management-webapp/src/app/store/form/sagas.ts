@@ -55,6 +55,13 @@ import {
   UNTAG_FORM_RESOURCE_ACTION,
   FETCH_FORM_RESOURCE_TAGS_ACTION,
   FETCH_FORM_TAG_BY_TAG_NAME_ACTION,
+  FETCH_ALL_TAGS_ACTION,
+  fetchAllTagsSuccess,
+  fetchAllTagsFailed,
+  FetchResourcesByTagAction,
+  fetchResourcesByTagSuccess,
+  FETCH_RESOURCES_BY_TAG_ACTION,
+  FETCH_RESOURCES_BY_TAG_SUCCESS,
 } from './action';
 import {
   fetchFormDefinitionsApi,
@@ -65,7 +72,14 @@ import {
 } from './api';
 import { FormDefinition, FormResourceTagResponse } from './model';
 import { TagResourceRequest } from '@store/directory/models';
-import { getResourceTagsApi, getTagByNameApi, tagResourceApi, unTagResourceApi } from '@store/directory/api';
+import {
+  getResourceTagsApi,
+  getTagByNameApi,
+  tagResourceApi,
+  unTagResourceApi,
+  getAllTagsApi,
+} from '@store/directory/api';
+import { getResourcesByTag } from '../directory/api';
 
 export function* fetchFormDefinitions(payload): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -454,6 +468,82 @@ export function* fetchFormTagByTagName({ payload }: FetchTagByTagNameAction): Sa
   }
 }
 
+export function* fetchAllTags(): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Fetching all tags...',
+    })
+  );
+
+  try {
+    const state: RootState = yield select();
+    const baseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl || '';
+    const token: string = yield call(getAccessToken);
+
+    if (baseUrl && token) {
+      const { results } = yield call(getAllTagsApi, token, baseUrl);
+      const tags = results.map((tag) => tag.label);
+
+      yield put(fetchAllTagsSuccess(tags));
+    } else {
+      throw new Error('Missing token or base URL');
+    }
+  } catch (err) {
+    yield put(fetchAllTagsFailed(err.message));
+    yield put(ErrorNotification({ message: 'Failed to fetch tags', error: err }));
+  } finally {
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
+  }
+}
+
+export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIterator {
+  if (!tag) {
+    console.log('Skipping fetchResourcesByTag - No tag selected');
+    yield put({
+      type: FETCH_RESOURCES_BY_TAG_SUCCESS,
+      payload: { tag: '', resources: [] },
+    });
+    return;
+  }
+  yield put(UpdateIndicator({ show: true, message: `Fetching resources for tag: ${tag}...` }));
+
+  const state: RootState = yield select();
+  const baseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
+  const token: string = yield call(getAccessToken);
+
+  if (baseUrl && token) {
+    try {
+      const resources = yield call(getResourcesByTag, token, baseUrl, tag);
+
+      const filteredDefinitions = resources.results
+        .map(({ urn, _embedded }) => {
+          const represents = _embedded?.represents?.latest?.configuration;
+          if (represents) {
+            return {
+              urn,
+              id: represents.id,
+              name: represents.name,
+              description: represents.description,
+              dataSchema: represents.dataSchema,
+              uiSchema: represents.uiSchema,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      yield put(fetchResourcesByTagSuccess(tag, filteredDefinitions));
+    } catch (err) {
+      yield put(ErrorNotification({ message: `Failed to fetch resources for tag: ${tag}`, error: err }));
+    }
+  }
+}
+
 export function* watchFormSagas(): Generator {
   yield takeEvery(FETCH_FORM_DEFINITIONS_ACTION, fetchFormDefinitions);
   yield takeEvery(EXPORT_FORM_INFO_ACTION, exportFormInfo);
@@ -471,4 +561,6 @@ export function* watchFormSagas(): Generator {
   yield takeEvery(UNTAG_FORM_RESOURCE_ACTION, unTagFormResource);
   yield takeEvery(FETCH_FORM_RESOURCE_TAGS_ACTION, fetchFormResourceTags);
   yield takeEvery(FETCH_FORM_TAG_BY_TAG_NAME_ACTION, fetchFormTagByTagName);
+  yield takeEvery(FETCH_ALL_TAGS_ACTION, fetchAllTags);
+  yield takeLatest(FETCH_RESOURCES_BY_TAG_ACTION, fetchResourcesByTag);
 }
