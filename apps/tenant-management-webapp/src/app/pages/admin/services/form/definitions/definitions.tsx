@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
-import { GoAButton, GoACircularProgress } from '@abgov/react-components';
+
+import { GoAButton, GoACircularProgress, GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components';
+
 
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -11,13 +13,15 @@ import {
   fetchFormResourceTags,
   unTagFormResource,
   tagFormResource,
+  fetchAllTags,
+  fetchResourcesByTag,
 } from '@store/form/action';
 import { RootState } from '@store/index';
 import { ResourceTagResult, Service } from '@store/directory/models';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
 import { PageIndicator } from '@components/Indicator';
-import { defaultFormDefinition } from '@store/form/model';
+import { defaultFormDefinition, FormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 import { LoadMoreWrapper } from './style-components';
@@ -47,8 +51,9 @@ export const FormDefinitions = ({
   const [showDefsFromState, setShowDefsFromState] = useState(isNavigatedFromEdit);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
-
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
+
+  const dispatch = useDispatch();
   const next = useSelector((state: RootState) => state.form.nextEntries);
 
   const orderedFormDefinitions = (state: RootState) => {
@@ -74,11 +79,24 @@ export const FormDefinitions = ({
   };
   const resourceConfiguration = useSelector(selectConfigurationHost);
   const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
+  const [selectedTag, setSelectedTag] = useState(() => localStorage.getItem('selectedTag') || '');
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
+  const tags = useSelector((state: RootState) => state.form.tags || []);
+  const tagsLoading = useSelector((state: RootState) => state.form.tagsLoading);
 
-  const dispatch = useDispatch();
+  const filteredFormDefinitions = useSelector((state: RootState) => state.form.tagResources || {});
+
+  useEffect(() => {
+    if (!tagsLoading && tags.length === 0) {
+      dispatch(fetchAllTags());
+    }
+  }, [dispatch, tagsLoading, tags.length]);
+
+  useEffect(() => {
+    if (selectedTag) {
+      dispatch(fetchResourcesByTag(selectedTag));
+    }
+  }, [dispatch, selectedTag]);
 
   useEffect(() => {
     if (openAddDefinition) {
@@ -121,6 +139,31 @@ export const FormDefinitions = ({
   return (
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
+
+      <GoAFormItem label="Filter by Tag">
+        <GoADropdown
+          name="TagFilter"
+          value={selectedTag}
+          disabled={!tags.length}
+          onChange={(name, value) => {
+            const selectedValue = Array.isArray(value) ? value[0] : value;
+            setSelectedTag(selectedValue);
+            localStorage.setItem('selectedTag', selectedValue);
+            dispatch(fetchResourcesByTag(selectedValue));
+          }}
+          width="54ch"
+        >
+          <GoADropdownItem value="" label="<No tag filter>" />
+          {tags
+            .sort((a, b) => a.localeCompare(b))
+            .map((tag) => (
+              <GoADropdownItem key={tag} value={tag} label={tag} />
+            ))}
+        </GoADropdown>
+      </GoAFormItem>
+
+      <br />
+
       {showFormDefinitions && (
         <GoAButton
           testId="add-definition"
@@ -157,7 +200,9 @@ export const FormDefinitions = ({
       {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
         <>
           <FormDefinitionsTable
-            definitions={formDefinitions}
+            definitions={
+              selectedTag && Object.keys(filteredFormDefinitions).length > 0 ? filteredFormDefinitions : formDefinitions
+            }
             baseResourceFormUrn={BASE_FORM_CONFIG_URN}
             onDelete={(formDefinition) => {
               setShowDeleteConfirmation(true);
