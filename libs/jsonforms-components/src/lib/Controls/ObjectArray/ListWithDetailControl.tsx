@@ -335,10 +335,11 @@ const LeftTab = ({
         <RowFlexMenu>
           <TabName>{name}</TabName>
           {enabled ? (
-            <Trash>
+            <Trash role="trash button">
               <GoAIconButton
                 icon="trash"
-                aria-label={translations.removeAriaLabel}
+                title={'trash button'}
+                testId="remove the details"
                 onClick={() => openDeleteDialog(childPath, rowIndex, name)}
               ></GoAIconButton>
             </Trash>

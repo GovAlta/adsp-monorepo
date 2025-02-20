@@ -27,7 +27,7 @@ export const Tags: FunctionComponent<TagsProps> = ({ urn, onTag }) => {
           <TagBadge key={tag.value} tag={tag} onDelete={() => dispatch(untagResource({ urn, tag }))} />
         ))
       )}
-      <GoAIconButton icon="add-circle" variant="color" onClick={onTag} />
+      <GoAIconButton title="add tag" icon="add-circle" variant="color" onClick={onTag} />
     </>
   );
 };

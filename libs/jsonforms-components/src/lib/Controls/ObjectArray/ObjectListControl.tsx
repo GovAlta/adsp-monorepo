@@ -339,14 +339,17 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                     );
                   })}
                   <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
-                    {!isInReview && (
-                      <GoAIconButton
-                        icon="trash"
-                        testId="trash-icon-button"
-                        aria-label={`remove-element-${num}`}
-                        onClick={() => openDeleteDialog(num)}
-                      ></GoAIconButton>
-                    )}
+                    <div aria-hidden="true">
+                      {!isInReview && (
+                        <GoAIconButton
+                          icon="trash"
+                          title="trash button"
+                          testId="trash-icon-button"
+                          aria-label={`remove-element-${num}`}
+                          onClick={() => openDeleteDialog(num)}
+                        ></GoAIconButton>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
