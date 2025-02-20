@@ -1,13 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import {
-  GoAButton,
-  GoACircularProgress,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoAHeroBanner,
-} from '@abgov/react-components';
+import { GoAButton, GoACircularProgress, GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components';
 
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -217,7 +210,9 @@ export const FormDefinitions = ({
       {indicator.show && Object.keys(formDefinitions).length === 0 && <PageIndicator />}
       {!indicator.show && !formDefinitions && renderNoItem('form templates')}
       {showEmptyBanner && (
-        <GoAHeroBanner heading="">There are no form definitions available for the selected tag.</GoAHeroBanner>
+        <p>
+          <strong>There are no form definitions available for the selected tag</strong>
+        </p>
       )}
       {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
         <>
