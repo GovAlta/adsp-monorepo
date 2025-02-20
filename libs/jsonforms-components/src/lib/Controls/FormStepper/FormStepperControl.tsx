@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   GoAFormStepper,
   GoAFormStep,
@@ -57,6 +57,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
   const submitForm = submitFormFunction && submitFormFunction();
   const optionProps = (uischema.options as FormStepperOptionProps) || {};
   const [isOpen, setIsOpen] = useState(false);
+  const [staleCategories, setStaleCategories] = React.useState(categories);
 
   const handleSubmit = () => {
     if (submitForm) {
@@ -65,6 +66,10 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
       setIsOpen(true);
     }
   };
+
+  useEffect(() => {
+    setStaleCategories(categories);
+  }, [categories]);
 
   const onCloseModal = () => {
     setIsOpen(false);
@@ -77,25 +82,28 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
     <div data-testid="form-stepper-test-wrapper">
       <Visible visible={visible}>
         <div id={`${path || `goa`}-form-stepper`} className="formStepper">
-          <GoAFormStepper
-            testId={`form-stepper-headers-${uischema?.options?.testId}` || 'form-stepper-test'}
-            key="stepper-form-stepper-wrapper"
-            onChange={(step) => {
-              goToPage(step - 1);
-            }}
-          >
-            {categories?.map((c, index) => {
-              return (
-                <GoAFormStep
-                  data-testid={`stepper-tab-${index}`}
-                  key={`stepper-tab-${index}`}
-                  text={`${c.label}`}
-                  status={c.isVisited ? (c.isCompleted && c.isValid ? 'complete' : 'incomplete') : undefined}
-                />
-              );
-            })}
-            <GoAFormStep key={`stepper-tab-review`} text="Review" />
-          </GoAFormStepper>
+          {/* Need to force a refresh here, GoAFormStepper cant change dynamically unless completely re-rendered */}
+          {categories.length === staleCategories.length && (
+            <GoAFormStepper
+              testId={`form-stepper-headers-${uischema?.options?.testId}` || 'form-stepper-test'}
+              key="stepper-form-stepper-wrapper"
+              onChange={(step) => {
+                goToPage(step - 1);
+              }}
+            >
+              {categories?.map((c, index) => {
+                return (
+                  <GoAFormStep
+                    data-testid={`stepper-tab-${index}`}
+                    key={`stepper-tab-${index}`}
+                    text={`${c.label}`}
+                    status={c.isVisited ? (c.isCompleted && c.isValid ? 'complete' : 'incomplete') : undefined}
+                  />
+                );
+              })}
+              <GoAFormStep key={`stepper-tab-review`} text="Review" />
+            </GoAFormStepper>
+          )}
 
           <GoAPages current={activeId + 1} mb="xl">
             {categories?.map((category, index) => {
