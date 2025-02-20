@@ -185,7 +185,11 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                     <td>{event.start.toFormat('LLL d, yyyy ttt')}</td>
                     <td>{event.end.toFormat('LLL d, yyyy ttt')}</td>
                     <td>
-                      <GoAIconButton icon="trash" onClick={() => dispatch(deleteEvent(event.urn))} />
+                      <GoAIconButton
+                        title="trash button"
+                        icon="trash"
+                        onClick={() => dispatch(deleteEvent(event.urn))}
+                      />
                     </td>
                   </tr>
                 ))}

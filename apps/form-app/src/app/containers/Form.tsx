@@ -96,6 +96,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
             disabled={!form}
             icon={showComments ? 'help-circle' : 'help-circle'}
             size="large"
+            title="Comments help"
             onClick={() => {
               setShowComments(!showComments);
               if (topic?.resourceId !== form?.urn) {
