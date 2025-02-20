@@ -69,7 +69,7 @@ import {
   fetchFormDefinitionApi,
   exportApi,
 } from './api';
-import { FormDefinition, FormResourceTagResponse, Tag } from './model';
+import { FormDefinition, FormResourceTagResponse, FormResourceTagResult, Tag } from './model';
 import { TagResourceRequest } from '@store/directory/models';
 import {
   getResourceTagsApi,
@@ -482,7 +482,7 @@ export function* fetchAllTags(): SagaIterator {
 
     if (baseUrl && token) {
       const { results } = yield call(getAllTagsApi, token, baseUrl);
-      const tags: Tag[] = results.map((tag: any) => ({
+      const tags: Tag[] = results.map((tag: FormResourceTagResult) => ({
         urn: tag.urn,
         label: tag.label,
         value: tag.value.toLowerCase(),
