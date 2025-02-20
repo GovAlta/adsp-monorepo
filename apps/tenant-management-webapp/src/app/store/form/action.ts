@@ -5,6 +5,7 @@ import {
   FormExportResponse,
   FormResourceTagResult,
   FormResourceTagResponse,
+  Tag,
 } from './model';
 import { Socket } from 'socket.io-client';
 import { ResourceTag, Resource } from '@store/directory/models';
@@ -206,7 +207,7 @@ export interface FetchFormMetricsSuccessAction {
 
 export interface SetSelectedTagAction {
   type: typeof SET_SELECTED_TAG;
-  payload: string;
+  payload: Tag;
 }
 
 export type FormActionTypes =
@@ -257,7 +258,7 @@ export interface FetchAllTagsAction {
 
 export interface FetchAllTagsSuccessAction {
   type: typeof FETCH_ALL_TAGS_SUCCESS_ACTION;
-  payload: string[];
+  payload: Tag[];
 }
 
 export interface FetchAllTagsFailedAction {
@@ -507,7 +508,7 @@ export const fetchAllTags = (): FetchAllTagsAction => ({
   type: FETCH_ALL_TAGS_ACTION,
 });
 
-export const fetchAllTagsSuccess = (tags: string[]): FetchAllTagsSuccessAction => ({
+export const fetchAllTagsSuccess = (tags: Tag[]): FetchAllTagsSuccessAction => ({
   type: FETCH_ALL_TAGS_SUCCESS_ACTION,
   payload: tags,
 });
@@ -532,7 +533,7 @@ export const fetchResourcesByTagFailure = (error: string): FetchResourcesByTagFa
   error,
 });
 
-export const setSelectedTag = (tag: string): SetSelectedTagAction => ({
+export const setSelectedTag = (tag: Tag): SetSelectedTagAction => ({
   type: SET_SELECTED_TAG,
   payload: tag,
 });
