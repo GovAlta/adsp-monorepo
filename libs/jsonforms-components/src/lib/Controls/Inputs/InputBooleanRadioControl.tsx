@@ -1,7 +1,7 @@
 import React from 'react';
 import { isBooleanControl, RankedTester, rankWith, ControlProps, optionIs, and } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoARadioGroup, GoARadioItem } from '@abgov/react-components-new';
+import { GoARadioGroup, GoARadioItem } from '@abgov/react-components';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { Visible } from '../../util';
 import { WithInputProps } from './type';

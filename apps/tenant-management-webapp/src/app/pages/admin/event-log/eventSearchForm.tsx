@@ -5,7 +5,7 @@ import type { EventSearchCriteria } from '@store/event/models';
 
 import { getEventDefinitions } from '@store/event/actions';
 import styled from 'styled-components';
-import { GoAButton, GoAIconButton, GoAButtonGroup, GoAGrid, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButton, GoAIconButton, GoAButtonGroup, GoAGrid, GoAFormItem } from '@abgov/react-components';
 const initCriteria: EventSearchCriteria = {
   namespace: '',
   name: '',

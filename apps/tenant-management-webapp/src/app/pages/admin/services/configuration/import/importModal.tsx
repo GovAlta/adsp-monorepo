@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components';
 
 interface ImportModalProps {
   isOpen: boolean;

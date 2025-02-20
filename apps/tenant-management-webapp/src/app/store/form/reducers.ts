@@ -25,6 +25,13 @@ import {
   FETCH_FORM_RESOURCE_TAGS_ACTION_SUCCESS,
   FETCH_FORM_TAG_BY_TAG_NAME_ACTION_SUCCESS,
   FETCH_FORM_TAG_BY_TAG_NAME_ACTION_FAILED,
+  FETCH_ALL_TAGS_ACTION,
+  FETCH_ALL_TAGS_SUCCESS_ACTION,
+  FETCH_ALL_TAGS_FAILED_ACTION,
+  FETCH_RESOURCES_BY_TAG_ACTION,
+  FETCH_RESOURCES_BY_TAG_SUCCESS,
+  FETCH_RESOURCES_BY_TAG_FAILURE,
+  SET_SELECTED_TAG,
 } from './action';
 
 import { FormState } from './model';
@@ -48,6 +55,11 @@ export const defaultState: FormState = {
   columns: [],
   socket: null,
   metrics: {},
+  tags: [],
+  tagsLoading: false,
+  tagsError: null,
+  selectedTag: '',
+  tagResources: [],
 };
 
 export default function (state: FormState = defaultState, action: FormActionTypes): FormState {
@@ -281,6 +293,57 @@ export default function (state: FormState = defaultState, action: FormActionType
         searchedTagExists: false,
       };
     }
+    case FETCH_ALL_TAGS_ACTION:
+      return {
+        ...state,
+        tagsLoading: true,
+        tagsError: null,
+      };
+
+    case FETCH_ALL_TAGS_SUCCESS_ACTION:
+      return {
+        ...state,
+        tagsLoading: false,
+        tags: action.payload,
+      };
+
+    case FETCH_ALL_TAGS_FAILED_ACTION:
+      return {
+        ...state,
+        tagsLoading: false,
+        tagsError: action.error,
+      };
+
+    case FETCH_RESOURCES_BY_TAG_ACTION:
+      return {
+        ...state,
+        tagResources: [],
+        tagsLoading: true,
+        tagsError: null,
+      };
+
+    case FETCH_RESOURCES_BY_TAG_SUCCESS:
+      return {
+        ...state,
+        tagResources: action.payload.resources,
+        tagsLoading: false,
+        tagsError: null,
+      };
+
+    case FETCH_RESOURCES_BY_TAG_FAILURE:
+      return {
+        ...state,
+        tagResources: [],
+        tagsLoading: false,
+        tagsError: action.error,
+      };
+
+    case SET_SELECTED_TAG:
+      return {
+        ...state,
+        selectedTag: action.payload,
+      };
+
     default:
       return state;
   }

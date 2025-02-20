@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { ResetModalState } from '@store/session/actions';
 import { DeleteCalendarEvent } from '@store/calendar/actions';

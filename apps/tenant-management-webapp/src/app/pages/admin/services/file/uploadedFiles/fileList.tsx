@@ -14,7 +14,7 @@ import {
   GoAInput,
   GoAFormItem,
   GoAButtonGroup,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';

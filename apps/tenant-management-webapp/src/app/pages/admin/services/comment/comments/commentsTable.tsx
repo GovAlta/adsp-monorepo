@@ -17,7 +17,7 @@ import {
 } from '../styled-components';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoACircularProgress } from '@abgov/react-components-new';
+import { GoAButton, GoACircularProgress } from '@abgov/react-components';
 import { AddCommentModal } from '../comments/addCommentModal';
 import { DeleteConfirmationsView } from '../comments/deleteConfirmationsView';
 import { addCommentRequest, fetchComments, updateComment } from '@store/comment/action';

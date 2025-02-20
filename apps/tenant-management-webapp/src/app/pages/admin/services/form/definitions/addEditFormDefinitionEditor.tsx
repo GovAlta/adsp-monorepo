@@ -9,7 +9,7 @@ import {
   GoAInput,
   GoATooltip,
   GoAIcon,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -522,7 +522,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           content={
                             definition.anonymousApply
                               ? 'Forms of this type will allow anonymous user to apply.'
-                              : 'Forms of this type will allow not anonymous user to apply.'
+                              : 'Forms of this type will not allow anonymous user to apply.'
                           }
                           position="top"
                         >
@@ -579,6 +579,29 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                             definition.supportTopic
                               ? 'Forms of this type will create a comment topic used for supporting applicants. Applicants will be able to read and write comments to the topic to interact with staff.'
                               : 'Forms of this type will not create a comment topic used for supporting applicants.'
+                          }
+                          position="top"
+                        >
+                          <GoAIcon type="information-circle"></GoAIcon>
+                        </GoATooltip>
+                      </FlexRow>
+                      <FlexRow>
+                        <GoACheckboxPad>
+                          <GoACheckbox
+                            name="form-definition-scheduled-intakes-checkbox"
+                            key="form-definition-scheduled-intakes-checkbox"
+                            checked={definition.scheduledIntakes}
+                            onChange={(_, checked) => {
+                              setDefinition({ scheduledIntakes: checked });
+                            }}
+                            text={'Use scheduled intakes'}
+                          />
+                        </GoACheckboxPad>
+                        <GoATooltip
+                          content={
+                            definition.scheduledIntakes
+                              ? 'Forms of this type will have a timeframe to complete and submit a form.'
+                              : 'Forms of this type will not have a timeframe to complete and submit a form.'
                           }
                           position="top"
                         >

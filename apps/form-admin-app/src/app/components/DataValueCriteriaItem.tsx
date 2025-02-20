@@ -1,4 +1,4 @@
-import { GoAFormItem, GoAInput } from '@abgov/react-components-new';
+import { GoAFormItem, GoAInput } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 
 interface DataValueCriteriaItemProps {

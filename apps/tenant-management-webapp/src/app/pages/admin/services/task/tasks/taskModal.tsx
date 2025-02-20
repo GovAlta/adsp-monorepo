@@ -10,7 +10,7 @@ import {
   GoARadioGroup,
   GoARadioItem,
   GoATextArea,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 
 import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
 import { badCharsCheck, wordMaxLengthCheck, isNotEmptyCheck, Validator } from '@lib/validation/checkInput';

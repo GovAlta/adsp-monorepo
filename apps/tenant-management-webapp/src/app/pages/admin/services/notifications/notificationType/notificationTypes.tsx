@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoAContainer } from '@abgov/react-components-new';
+import { GoAButton, GoAContainer } from '@abgov/react-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Grid, GridItem } from '@core-services/app-common';
 import { NotificationTypeModalForm } from '../addEditNotification/addEditNotification';

@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { GoAIconButton } from '@abgov/react-components-new';
+import { GoAIconButton } from '@abgov/react-components';
 
 interface ExternalLinkProps {
   text: string;

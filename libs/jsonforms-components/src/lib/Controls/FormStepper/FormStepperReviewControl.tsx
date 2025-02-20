@@ -6,7 +6,7 @@ import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { Anchor, ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle } from './styled-components';
 import { getProperty } from './util/helpers';
 import { withAjvProps } from '../../util/layout';
-import { GoAGrid } from '@abgov/react-components-new';
+import { GoAGrid } from '@abgov/react-components';
 import { FormStepperComponentProps } from './types';
 import { GoAReviewRenderers } from '../../../index';
 

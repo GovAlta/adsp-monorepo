@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import { OverviewLayout } from './OverviewLayout';
 
 export interface AddButtonConfig {

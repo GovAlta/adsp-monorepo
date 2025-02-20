@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -16,7 +16,7 @@ import {
   GoAButtonGroup,
   GoADetails,
   GoADivider,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ReactComponent as Error } from '@icons/close-circle-outline.svg';
 import { getFormDefinitions, getExportFormInfo, startSocket, openEditorForDefinition } from '@store/form/action';

@@ -5,7 +5,7 @@ import {
   GoADropdownItem,
   GoAFormItem,
   GoATextArea,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { DateTime } from 'luxon';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';

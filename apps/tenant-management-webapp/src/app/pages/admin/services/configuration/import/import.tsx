@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState, useRef } from 'react';
 import { RootState } from '@store/index';
-import { GoAButton, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getConfigurationDefinitions,

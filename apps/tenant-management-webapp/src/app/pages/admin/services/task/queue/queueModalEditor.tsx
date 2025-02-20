@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useCallback, useEffect, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -15,7 +15,7 @@ import {
 import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { UpdateTaskQueue, getTaskQueues } from '@store/task/action';
 import { ClientRoleTable } from '@components/RoleTable';
-import { GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components';
 import { PageIndicator } from '@components/Indicator';
 import { TaskDefinition, defaultTaskQueue } from '@store/task/model';
 import { ServiceRoleConfig } from '@store/access/models';

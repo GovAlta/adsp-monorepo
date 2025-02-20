@@ -1,4 +1,4 @@
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import React, { FunctionComponent } from 'react';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
 import { RootState } from '@store/index';

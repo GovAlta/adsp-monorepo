@@ -7,7 +7,7 @@ import {
   FormResourceTagResponse,
 } from './model';
 import { Socket } from 'socket.io-client';
-import { ResourceTag } from '@store/directory/models';
+import { ResourceTag, Resource } from '@store/directory/models';
 
 export const CLEAR_FORM_DEFINITIONS_ACTION = 'form/CLEAR_FORM_DEFINITIONS_ACTION';
 export const FETCH_FORM_DEFINITIONS_ACTION = 'form/FETCH_FORM_DEFINITIONS_ACTION';
@@ -59,6 +59,16 @@ export const FETCH_FORM_RESOURCE_TAGS_ACTION_SUCCESS = 'form/resource/fetch-reso
 export const FETCH_FORM_TAG_BY_TAG_NAME_ACTION = 'form/resource/fetch-tag-by-tag-name';
 export const FETCH_FORM_TAG_BY_TAG_NAME_ACTION_SUCCESS = 'form/resource/fetch-tag-by-tag-name/success';
 export const FETCH_FORM_TAG_BY_TAG_NAME_ACTION_FAILED = 'form/resource/fetch-tag-by-tag-name/failed';
+
+export const FETCH_ALL_TAGS_ACTION = 'form/resource/fetch-all-tags';
+export const FETCH_ALL_TAGS_SUCCESS_ACTION = 'form/resource/fetch-all-tags/success';
+export const FETCH_ALL_TAGS_FAILED_ACTION = 'form/resource/fetch-all-tags/failed';
+
+export const FETCH_RESOURCES_BY_TAG_ACTION = 'form/resource/fetch-resources-by-tag';
+export const FETCH_RESOURCES_BY_TAG_SUCCESS = 'form/resource/fetch-resources-by-tag/success';
+export const FETCH_RESOURCES_BY_TAG_FAILURE = 'form/resource/fetch-resources-by-tag/failed';
+
+export const SET_SELECTED_TAG = 'form/resource/set-selected-tag';
 
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
@@ -194,6 +204,11 @@ export interface FetchFormMetricsSuccessAction {
   payload: FormMetrics;
 }
 
+export interface SetSelectedTagAction {
+  type: typeof SET_SELECTED_TAG;
+  payload: string;
+}
+
 export type FormActionTypes =
   | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
@@ -227,7 +242,46 @@ export type FormActionTypes =
   | FetchResourceTagsSuccessAction
   | FetchTagByTagNameAction
   | FetchTagByTagNameActionSuccess
-  | FetchTagByTagNameActionFailed;
+  | FetchTagByTagNameActionFailed
+  | FetchAllTagsAction
+  | FetchAllTagsSuccessAction
+  | FetchAllTagsFailedAction
+  | FetchResourcesByTagAction
+  | FetchResourcesByTagSuccessAction
+  | FetchResourcesByTagFailureAction
+  | SetSelectedTagAction;
+
+export interface FetchAllTagsAction {
+  type: typeof FETCH_ALL_TAGS_ACTION;
+}
+
+export interface FetchAllTagsSuccessAction {
+  type: typeof FETCH_ALL_TAGS_SUCCESS_ACTION;
+  payload: string[];
+}
+
+export interface FetchAllTagsFailedAction {
+  type: typeof FETCH_ALL_TAGS_FAILED_ACTION;
+  error: string;
+}
+
+export interface FetchResourcesByTagAction {
+  type: typeof FETCH_RESOURCES_BY_TAG_ACTION;
+  tag: string;
+}
+
+export interface FetchResourcesByTagSuccessAction {
+  type: typeof FETCH_RESOURCES_BY_TAG_SUCCESS;
+  payload: {
+    tag: string;
+    resources: Resource[];
+  };
+}
+
+export interface FetchResourcesByTagFailureAction {
+  type: typeof FETCH_RESOURCES_BY_TAG_FAILURE;
+  error: string;
+}
 
 export interface TagResourceAction {
   type: typeof TAG_FORM_RESOURCE_ACTION;
@@ -447,4 +501,38 @@ export const fetchFormTagByTagNameSuccess = (data: FormResourceTagResult): Fetch
 export const fetchFormTagByTagNameFailed = (data: FormResourceTagResult): FetchTagByTagNameActionFailed => ({
   type: FETCH_FORM_TAG_BY_TAG_NAME_ACTION_FAILED,
   payload: data,
+});
+
+export const fetchAllTags = (): FetchAllTagsAction => ({
+  type: FETCH_ALL_TAGS_ACTION,
+});
+
+export const fetchAllTagsSuccess = (tags: string[]): FetchAllTagsSuccessAction => ({
+  type: FETCH_ALL_TAGS_SUCCESS_ACTION,
+  payload: tags,
+});
+
+export const fetchAllTagsFailed = (error: string): FetchAllTagsFailedAction => ({
+  type: FETCH_ALL_TAGS_FAILED_ACTION,
+  error,
+});
+
+export const fetchResourcesByTag = (tag: string): FetchResourcesByTagAction => ({
+  type: FETCH_RESOURCES_BY_TAG_ACTION,
+  tag,
+});
+
+export const fetchResourcesByTagSuccess = (tag: string, resources: Resource[]): FetchResourcesByTagSuccessAction => ({
+  type: FETCH_RESOURCES_BY_TAG_SUCCESS,
+  payload: { tag, resources },
+});
+
+export const fetchResourcesByTagFailure = (error: string): FetchResourcesByTagFailureAction => ({
+  type: FETCH_RESOURCES_BY_TAG_FAILURE,
+  error,
+});
+
+export const setSelectedTag = (tag: string): SetSelectedTagAction => ({
+  type: SET_SELECTED_TAG,
+  payload: tag,
 });

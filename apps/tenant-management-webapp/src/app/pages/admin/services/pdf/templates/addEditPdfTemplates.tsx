@@ -4,7 +4,6 @@ import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { PdfFormItem, HelpText, DescriptionItem, ErrorMsg, PopulateTemplateWrapper } from '../styled-components';
-import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import {
@@ -16,7 +15,7 @@ import {
   GoAButton,
   GoAIcon,
   GoACheckbox,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 interface AddEditPdfTemplateProps {
   open: boolean;
   isEdit: boolean;

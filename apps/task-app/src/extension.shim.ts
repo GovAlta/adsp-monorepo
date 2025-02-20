@@ -1,4 +1,4 @@
-import * as ABGovReactComponents from '@abgov/react-components-new';
+import * as ABGovReactComponents from '@abgov/react-components';
 import axios from 'axios';
 import React from 'react';
 import * as StyledComponents from 'styled-components';

@@ -9,7 +9,7 @@ import {
   GoATextArea,
   GoACheckbox,
   GoASpacer,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { ConfigDefinition } from '@store/configuration/model';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';

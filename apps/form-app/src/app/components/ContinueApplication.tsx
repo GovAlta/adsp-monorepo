@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components';
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent } from 'react';
 import { Form, FormDefinition } from '../state';

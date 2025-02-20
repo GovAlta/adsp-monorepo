@@ -3,7 +3,7 @@ import Editor from '@monaco-editor/react';
 import { RootState } from '@store/index';
 import { Revision } from '@store/configuration/model';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components';
 import { replaceConfigurationDataAction } from '@store/configuration/action';
 import styled from 'styled-components';
 

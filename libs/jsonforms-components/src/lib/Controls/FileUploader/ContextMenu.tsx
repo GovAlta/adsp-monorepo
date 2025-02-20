@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { GoAButton, GoAIconButton, GoAIconType } from '@abgov/react-components-new';
+import { GoAButton, GoAIconButton, GoAIconType } from '@abgov/react-components';
 import styled from 'styled-components';
 
 interface ContextMenuIconProps {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SelectCalendarHeader, CalendarDropdownWrapper } from './styled-components';
-import { GoADropdown, GoADropdownItem, GoAButton, GoASkeleton } from '@abgov/react-components-new';
+import { GoADropdown, GoADropdownItem, GoAButton, GoASkeleton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { CalendarObjectType, EventAddEditModalType } from '@store/calendar/models';
 import {

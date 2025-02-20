@@ -1,4 +1,4 @@
-import { GoAChip, GoAIconButton, GoASkeleton } from '@abgov/react-components-new';
+import { GoAChip, GoAIconButton, GoASkeleton } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { AppDispatch, AppState, directoryBusySelector, resourceTagsSelector, Tag, untagResource } from '../state';
 import { useDispatch, useSelector } from 'react-redux';

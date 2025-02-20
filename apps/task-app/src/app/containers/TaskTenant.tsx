@@ -1,4 +1,4 @@
-import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
+import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components';
 import { useScripts } from '@core-services/app-common';
 import React, { Suspense, lazy, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';

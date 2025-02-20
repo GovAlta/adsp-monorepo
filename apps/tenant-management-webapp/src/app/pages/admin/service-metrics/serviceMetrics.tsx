@@ -1,4 +1,4 @@
-import { GoACallout } from '@abgov/react-components-new';
+import { GoACallout } from '@abgov/react-components';
 import { Main } from '@components/Html';
 import { RootState } from '@store/index';
 import { fetchServiceMetrics, fetchServices, setIntervalCriteria, setServiceCriteria } from '@store/metrics/actions';

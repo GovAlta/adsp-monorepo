@@ -1,5 +1,5 @@
 import { RootState } from '@store/index';
-import { GoACallout } from '@abgov/react-components-new';
+import { GoACallout } from '@abgov/react-components';
 import React, { ReactNode } from 'react';
 import { useSelector } from 'react-redux';
 

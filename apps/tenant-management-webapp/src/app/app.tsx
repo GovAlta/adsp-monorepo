@@ -21,7 +21,7 @@ import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
 import styled from 'styled-components';
-import { GoAHeader } from '@abgov/react-components';
+import { GoAHeader } from '@abgov/react-components-old';
 import '@abgov/web-components/index.css';
 import { useScripts } from '@core-services/app-common';
 

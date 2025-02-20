@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import { OverviewLayout } from '@components/Overview';
 
 interface ConfigurationOverviewProps {

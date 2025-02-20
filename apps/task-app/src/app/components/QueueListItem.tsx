@@ -1,4 +1,4 @@
-import { GoAContainer, GoAIconButton } from '@abgov/react-components-new';
+import { GoAContainer, GoAIconButton } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
 import { QueueDefinition, QueueMetrics as QueueMetricsValue } from '../state';

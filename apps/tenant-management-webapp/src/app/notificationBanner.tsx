@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { GoANotification } from '@abgov/react-components-new';
+import { GoANotification } from '@abgov/react-components';
 import { DismissNotification } from '@store/notifications/actions';
 import styled from 'styled-components';
 

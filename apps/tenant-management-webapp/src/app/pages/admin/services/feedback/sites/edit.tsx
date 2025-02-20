@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 
 import type { FeedbackSite } from '@store/feedback/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal, GoACheckbox } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal, GoACheckbox } from '@abgov/react-components';
 import { useValidators } from '@lib/validation/useValidators';
 
 import styled from 'styled-components';

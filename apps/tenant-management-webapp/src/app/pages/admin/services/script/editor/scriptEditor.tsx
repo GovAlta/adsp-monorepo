@@ -32,7 +32,7 @@ import {
   retrieveScriptSuggestions,
 } from '@lib/luaCodeCompletion';
 import { buildSuggestions, luaTriggerInScope } from '@lib/autoComplete';
-import { GoAButton, GoAFormItem, GoACheckbox, GoASkeleton, GoACircularProgress } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem, GoACheckbox, GoASkeleton, GoACircularProgress } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { ClientRoleTable } from '@components/RoleTable';
 import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';

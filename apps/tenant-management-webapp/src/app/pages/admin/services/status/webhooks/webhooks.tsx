@@ -4,13 +4,12 @@ import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { WebhookHistoryModal } from './webhookHistoryForm';
 import { TestWebhookModal } from './testWebhook';
-import History from '@assets/icons/history.svg';
 import { HoverWrapper, ToolTip } from '../styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { WebhookDeleteModal } from './webhookDeleteModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateModalState } from '@store/session/actions';
-import { GoACircularProgress } from '@abgov/react-components-new';
+import { GoACircularProgress } from '@abgov/react-components';
 import {
   AddEditStatusWebhookType,
   StatusWebhookHistoryType,

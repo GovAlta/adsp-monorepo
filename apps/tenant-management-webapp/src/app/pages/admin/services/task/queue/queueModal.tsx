@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState } from 'react';
 
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components';
 
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +14,7 @@ import {
 } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 import { RootState } from '@store/index';
-import { toKebabName } from '@lib/kebabName';
+
 interface QueueModalProps {
   initialValue?: TaskDefinition;
   type: string;

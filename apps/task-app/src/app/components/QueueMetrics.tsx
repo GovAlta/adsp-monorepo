@@ -1,4 +1,4 @@
-import { GoABlock } from '@abgov/react-components-new';
+import { GoABlock } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
 import { QueueMetrics as QueueMetricsValue } from '../state';

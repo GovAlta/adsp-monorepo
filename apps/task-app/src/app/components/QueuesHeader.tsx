@@ -1,4 +1,4 @@
-import { GoADivider } from '@abgov/react-components-new';
+import { GoADivider } from '@abgov/react-components';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
 

@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
+import React, { useEffect } from 'react';
+import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { PageIndicator } from './Indicator';
 import { CenterPosition } from './styled-components';
-import { divide } from 'lodash';
+
 interface deleteModalProps {
   title: string;
   content?: string | JSX.Element;

@@ -20,7 +20,7 @@ import {
   GoARadioGroup,
   GoABadge,
   GoAFormItem,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 
 import { FormGap } from './styled-components';
 interface ContactInfoCardProps {

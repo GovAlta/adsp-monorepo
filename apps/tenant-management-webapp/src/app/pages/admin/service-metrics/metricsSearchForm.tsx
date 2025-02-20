@@ -1,11 +1,4 @@
-import {
-  GoADropdown,
-  GoADropdownItem,
-  GoAButton,
-  GoAButtonGroup,
-  GoAFormItem,
-  GoAGrid,
-} from '@abgov/react-components-new';
+import { GoADropdown, GoADropdownItem, GoAButton, GoAButtonGroup, GoAFormItem, GoAGrid } from '@abgov/react-components';
 
 import { RootState } from '@store/index';
 import { setIntervalCriteria, setServiceCriteria } from '@store/metrics/actions';
