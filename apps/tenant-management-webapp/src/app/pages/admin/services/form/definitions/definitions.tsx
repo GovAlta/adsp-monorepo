@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
 
-
-import { GoAButton, GoACircularProgress, GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components';
-
+import {
+  GoAButton,
+  GoACircularProgress,
+  GoADropdown,
+  GoADropdownItem,
+  GoAFormItem,
+  GoAHeroBanner,
+} from '@abgov/react-components';
 
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -30,6 +35,7 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
+import { Tag } from '../../../../../store/form/model';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -68,6 +74,7 @@ export const FormDefinitions = ({
   const formDefinitions = useSelector(orderedFormDefinitions);
 
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
+  const [showEmptyBanner, setShowEmptyBanner] = useState(false);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -80,7 +87,7 @@ export const FormDefinitions = ({
   };
   const resourceConfiguration = useSelector(selectConfigurationHost);
   const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
-  const selectedTag = useSelector((state: RootState) => state.form.selectedTag);
+  const selectedTag = useSelector((state: RootState) => state.form.selectedTag as Tag | null);
 
   const tags = useSelector((state: RootState) => state.form.tags || []);
   const tagsLoading = useSelector((state: RootState) => state.form.tagsLoading);
@@ -95,9 +102,17 @@ export const FormDefinitions = ({
 
   useEffect(() => {
     if (selectedTag) {
-      dispatch(fetchResourcesByTag(selectedTag));
+      dispatch(fetchResourcesByTag(selectedTag.value));
     }
   }, [dispatch, selectedTag]);
+
+  useEffect(() => {
+    if (selectedTag && Object.keys(filteredFormDefinitions).length === 0) {
+      setShowEmptyBanner(true);
+    } else {
+      setShowEmptyBanner(false);
+    }
+  }, [filteredFormDefinitions, selectedTag]);
 
   useEffect(() => {
     if (openAddDefinition) {
@@ -144,20 +159,24 @@ export const FormDefinitions = ({
       <GoAFormItem label="Filter by Tag">
         <GoADropdown
           name="TagFilter"
-          value={selectedTag}
+          value={selectedTag?.value || ''}
           disabled={!tags.length}
           onChange={(name, value) => {
-            const selectedValue = Array.isArray(value) ? value[0] : value;
-            dispatch(setSelectedTag(selectedValue));
-            dispatch(fetchResourcesByTag(selectedValue));
+            const selectedTagObj = tags.find((tag) => tag?.value === value);
+            if (selectedTagObj) {
+              dispatch(setSelectedTag(selectedTagObj));
+              dispatch(fetchResourcesByTag(selectedTagObj.value));
+            } else {
+              dispatch(setSelectedTag(null));
+            }
           }}
           width="54ch"
         >
           <GoADropdownItem value="" label="<No tag filter>" />
           {tags
-            .sort((a, b) => a.localeCompare(b))
+            .sort((a, b) => a.label.localeCompare(b.label))
             .map((tag) => (
-              <GoADropdownItem key={tag} value={tag} label={tag} />
+              <GoADropdownItem key={tag.urn} value={tag.value} label={tag.label} />
             ))}
         </GoADropdown>
       </GoAFormItem>
@@ -197,6 +216,9 @@ export const FormDefinitions = ({
 
       {indicator.show && Object.keys(formDefinitions).length === 0 && <PageIndicator />}
       {!indicator.show && !formDefinitions && renderNoItem('form templates')}
+      {showEmptyBanner && (
+        <GoAHeroBanner heading="">There are no form definitions available for the selected tag.</GoAHeroBanner>
+      )}
       {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
         <>
           <FormDefinitionsTable

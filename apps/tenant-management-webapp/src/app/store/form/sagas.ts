@@ -10,7 +10,6 @@ import { getAccessToken } from '@store/tenant/sagas';
 import { select, call, put, takeEvery, delay, takeLatest } from 'redux-saga/effects';
 import { RootState } from '../index';
 import { io, Socket } from 'socket.io-client';
-
 import {
   UpdateFormDefinitionsAction,
   getFormDefinitionsSuccess,
@@ -70,7 +69,7 @@ import {
   fetchFormDefinitionApi,
   exportApi,
 } from './api';
-import { FormDefinition, FormResourceTagResponse } from './model';
+import { FormDefinition, FormResourceTagResponse, Tag } from './model';
 import { TagResourceRequest } from '@store/directory/models';
 import {
   getResourceTagsApi,
@@ -483,7 +482,12 @@ export function* fetchAllTags(): SagaIterator {
 
     if (baseUrl && token) {
       const { results } = yield call(getAllTagsApi, token, baseUrl);
-      const tags = results.map((tag) => tag.label);
+      const tags: Tag[] = results.map((tag: any) => ({
+        urn: tag.urn,
+        label: tag.label,
+        value: tag.value.toLowerCase(),
+        _links: tag._links,
+      }));
 
       yield put(fetchAllTagsSuccess(tags));
     } else {

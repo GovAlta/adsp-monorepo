@@ -106,7 +106,7 @@ export interface FormState {
   definitions: Record<string, FormDefinition>;
   nextEntries: string;
   exportResult: FormExportResponse;
-  selectedTag: string | null;
+  selectedTag: Tag | null;
   editor: {
     selectedId: string;
     loading: boolean;
@@ -126,7 +126,7 @@ export interface FormState {
   socket: Socket;
   searchedTag?: FormResourceTagResult;
   searchedTagExists?: boolean;
-  tags: string[];
+  tags: Tag[];
   tagsLoading: boolean;
   tagsError?: string;
   tagResources: Resource[];
@@ -230,4 +230,11 @@ export interface SubmissionInfoItem {
     reason?: string;
     date?: string;
   };
+}
+
+export interface Tag {
+  urn: string;
+  label: string;
+  value: string;
+  _links: Record<string, { href: string }>;
 }
