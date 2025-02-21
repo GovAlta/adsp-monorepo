@@ -67,7 +67,6 @@ export const FormDefinitions = ({
   const formDefinitions = useSelector(orderedFormDefinitions);
 
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
-  const [showEmptyBanner, setShowEmptyBanner] = useState(false);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -98,14 +97,6 @@ export const FormDefinitions = ({
       dispatch(fetchResourcesByTag(selectedTag.value));
     }
   }, [dispatch, selectedTag]);
-
-  useEffect(() => {
-    if (selectedTag && Object.keys(filteredFormDefinitions).length === 0) {
-      setShowEmptyBanner(true);
-    } else {
-      setShowEmptyBanner(false);
-    }
-  }, [filteredFormDefinitions, selectedTag]);
 
   useEffect(() => {
     if (openAddDefinition) {
@@ -207,43 +198,41 @@ export const FormDefinitions = ({
         }}
       />
 
-      {indicator.show && Object.keys(formDefinitions).length === 0 && <PageIndicator />}
-      {!indicator.show && !formDefinitions && renderNoItem('form templates')}
-      {showEmptyBanner && (
-        <p>
-          <strong>There are no form definitions available for the selected tag</strong>
-        </p>
-      )}
-      {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
-        <>
-          <FormDefinitionsTable
-            definitions={
-              selectedTag && Object.keys(filteredFormDefinitions).length > 0 ? filteredFormDefinitions : formDefinitions
-            }
-            baseResourceFormUrn={BASE_FORM_CONFIG_URN}
-            onDelete={(formDefinition) => {
-              setShowDeleteConfirmation(true);
-              setCurrentDefinition(formDefinition);
-            }}
-            onAddResourceTag={(formDefinition) => {
-              setShowAddRemoveResourceTagModal(true);
-              setCurrentDefinition(formDefinition);
-            }}
-          />
-          {next && (
-            <LoadMoreWrapper>
-              <GoAButton
-                testId="form-event-load-more-btn"
-                key="form-event-load-more-btn"
-                type="tertiary"
-                onClick={onNext}
-              >
-                Load more
-              </GoAButton>
-            </LoadMoreWrapper>
-          )}
-        </>
-      )}
+      {indicator.show && <PageIndicator />}
+      {!indicator.show &&
+        ((selectedTag && Object.keys(filteredFormDefinitions).length === 0) ||
+          (!selectedTag && Object.keys(formDefinitions).length === 0)) &&
+        renderNoItem('form templates')}
+      {((selectedTag && Object.keys(filteredFormDefinitions).length > 0) ||
+        (!selectedTag && Object.keys(formDefinitions).length > 0)) &&
+        showFormDefinitions && (
+          <>
+            <FormDefinitionsTable
+              definitions={selectedTag ? filteredFormDefinitions : formDefinitions}
+              baseResourceFormUrn={BASE_FORM_CONFIG_URN}
+              onDelete={(formDefinition) => {
+                setShowDeleteConfirmation(true);
+                setCurrentDefinition(formDefinition);
+              }}
+              onAddResourceTag={(formDefinition) => {
+                setShowAddRemoveResourceTagModal(true);
+                setCurrentDefinition(formDefinition);
+              }}
+            />
+            {next && (
+              <LoadMoreWrapper>
+                <GoAButton
+                  testId="form-event-load-more-btn"
+                  key="form-event-load-more-btn"
+                  type="tertiary"
+                  onClick={onNext}
+                >
+                  Load more
+                </GoAButton>
+              </LoadMoreWrapper>
+            )}
+          </>
+        )}
       {showAddRemoveResourceTagModal && (
         <AddRemoveResourceTagModal
           baseResourceFormUrn={BASE_FORM_CONFIG_URN}

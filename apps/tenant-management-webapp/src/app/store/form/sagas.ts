@@ -79,6 +79,7 @@ import {
   getAllTagsApi,
 } from '@store/directory/api';
 import { getResourcesByTag } from '../directory/api';
+import { toKebabName } from '@lib/kebabName';
 
 export function* fetchFormDefinitions(payload): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -515,7 +516,7 @@ export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIt
     return;
   }
 
-  const requiredTag = tag.toLowerCase();
+  const requiredTag = toKebabName(tag);
 
   yield put(UpdateIndicator({ show: true, message: `Fetching resources for tag: ${tag}...` }));
 
@@ -547,7 +548,11 @@ export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIt
       yield put(fetchResourcesByTagSuccess(tag, filteredDefinitions));
     } catch (err) {
       yield put(ErrorNotification({ message: `Failed to fetch resources for tag: ${tag}`, error: err }));
+    } finally {
+      yield put(UpdateIndicator({ show: false }));
     }
+  } else {
+    yield put(UpdateIndicator({ show: false }));
   }
 }
 
