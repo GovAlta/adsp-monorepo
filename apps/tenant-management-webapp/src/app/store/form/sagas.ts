@@ -548,7 +548,11 @@ export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIt
       yield put(fetchResourcesByTagSuccess(tag, filteredDefinitions));
     } catch (err) {
       yield put(ErrorNotification({ message: `Failed to fetch resources for tag: ${tag}`, error: err }));
+    } finally {
+      yield put(UpdateIndicator({ show: false }));
     }
+  } else {
+    yield put(UpdateIndicator({ show: false }));
   }
 }
 
