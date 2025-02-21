@@ -100,7 +100,9 @@ describe('ResourceType', () => {
       const name = 'Test 123';
       const description = 'This is a description.';
       axiosMock.get.mockResolvedValueOnce({ data: { testName: name, testDescription: description } });
-      repositoryMock.saveResource.mockImplementationOnce((resource) => Promise.resolve(resource));
+      repositoryMock.saveResource
+        .mockImplementationOnce((resource) => Promise.resolve(resource))
+        .mockImplementationOnce((resource) => Promise.resolve(resource));
 
       const result = await type.resolve('token', { tenantId, urn }, true);
       expect(result.tenantId).toBe(tenantId);
@@ -127,7 +129,9 @@ describe('ResourceType', () => {
       const name = 'Test 123';
       const description = 'This is a description.';
       axiosMock.get.mockResolvedValueOnce({ data: { testName: name, testDescription: description } });
-      repositoryMock.saveResource.mockImplementationOnce((resource) => Promise.resolve(resource));
+      repositoryMock.saveResource
+        .mockImplementationOnce((resource) => Promise.resolve(resource))
+        .mockImplementationOnce((resource) => Promise.resolve(resource));
 
       const result = await type.resolve('token', { tenantId, urn });
       expect(result.tenantId).toBe(tenantId);
@@ -151,7 +155,9 @@ describe('ResourceType', () => {
       const name = 'Test 123';
       const description = 'This is a description.';
       axiosMock.get.mockResolvedValueOnce({ data: { testName: name, testDescription: description } });
-      repositoryMock.saveResource.mockImplementationOnce((resource) => Promise.resolve(resource));
+      repositoryMock.saveResource
+        .mockImplementationOnce((resource) => Promise.resolve(resource))
+        .mockImplementationOnce((resource) => Promise.resolve(resource));
 
       const result = await type.resolve('token', { tenantId, urn });
       expect(result.tenantId).toBe(tenantId);
