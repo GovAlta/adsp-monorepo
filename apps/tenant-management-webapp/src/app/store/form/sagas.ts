@@ -10,7 +10,6 @@ import { getAccessToken } from '@store/tenant/sagas';
 import { select, call, put, takeEvery, delay, takeLatest } from 'redux-saga/effects';
 import { RootState } from '../index';
 import { io, Socket } from 'socket.io-client';
-
 import {
   UpdateFormDefinitionsAction,
   getFormDefinitionsSuccess,
@@ -70,7 +69,7 @@ import {
   fetchFormDefinitionApi,
   exportApi,
 } from './api';
-import { FormDefinition, FormResourceTagResponse } from './model';
+import { FormDefinition, FormResourceTagResponse, FormResourceTagResult, Tag } from './model';
 import { TagResourceRequest } from '@store/directory/models';
 import {
   getResourceTagsApi,
@@ -80,6 +79,7 @@ import {
   getAllTagsApi,
 } from '@store/directory/api';
 import { getResourcesByTag } from '../directory/api';
+import { toKebabName } from '@lib/kebabName';
 
 export function* fetchFormDefinitions(payload): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -483,7 +483,12 @@ export function* fetchAllTags(): SagaIterator {
 
     if (baseUrl && token) {
       const { results } = yield call(getAllTagsApi, token, baseUrl);
-      const tags = results.map((tag) => tag.label);
+      const tags: Tag[] = results.map((tag: FormResourceTagResult) => ({
+        urn: tag.urn,
+        label: tag.label,
+        value: tag.value.toLowerCase(),
+        _links: tag._links,
+      }));
 
       yield put(fetchAllTagsSuccess(tags));
     } else {
@@ -511,7 +516,7 @@ export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIt
     return;
   }
 
-  const requiredTag = tag.toLowerCase();
+  const requiredTag = toKebabName(tag);
 
   yield put(UpdateIndicator({ show: true, message: `Fetching resources for tag: ${tag}...` }));
 
@@ -543,7 +548,11 @@ export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIt
       yield put(fetchResourcesByTagSuccess(tag, filteredDefinitions));
     } catch (err) {
       yield put(ErrorNotification({ message: `Failed to fetch resources for tag: ${tag}`, error: err }));
+    } finally {
+      yield put(UpdateIndicator({ show: false }));
     }
+  } else {
+    yield put(UpdateIndicator({ show: false }));
   }
 }
 

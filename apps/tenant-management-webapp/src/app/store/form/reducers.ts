@@ -34,7 +34,7 @@ import {
   SET_SELECTED_TAG,
 } from './action';
 
-import { FormState } from './model';
+import { FormState, Tag } from './model';
 
 export const defaultState: FormState = {
   definitions: {},
@@ -58,7 +58,7 @@ export const defaultState: FormState = {
   tags: [],
   tagsLoading: false,
   tagsError: null,
-  selectedTag: '',
+  selectedTag: null as Tag | null,
   tagResources: [],
 };
 

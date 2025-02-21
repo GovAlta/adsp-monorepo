@@ -46,6 +46,11 @@ export class ResourceType {
     }
 
     try {
+      if (sync) {
+        // Set the type since it's a match on the resource URN.
+        resource = await this.repository.saveResource({ ...resource, type: this.type });
+      }
+
       const resourceUrl = await this.directory.getResourceUrl(resource.urn);
       if (!resourceUrl) {
         throw new NotFoundError(`Failed to lookup URL for resource: ${resource.urn}.`);
@@ -68,10 +73,10 @@ export class ResourceType {
 
       const name = this.nameGetter(data) || resource.name;
       const description = this.descriptionGetter(data) || resource.description;
-      if (name !== resource.name || description !== resource.description || this.type !== resource.type) {
+      if (name !== resource.name || description !== resource.description) {
         resource = sync
-          ? await this.repository.saveResource({ ...resource, name, description, type: this.type })
-          : { ...resource, name, description, type: this.type };
+          ? await this.repository.saveResource({ ...resource, name, description })
+          : { ...resource, name, description };
       }
 
       return { ...resource, data };
