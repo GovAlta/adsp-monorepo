@@ -96,7 +96,8 @@ export class AdspFeedback implements AdspFeedbackApi {
     }
   }
 
-  private closeStartForm() {
+  private closeStartForm(event: Event) {
+    event.preventDefault();
     this.startRef?.value?.setAttribute('data-show', 'false');
     this.feedbackBadgeRef?.value?.setAttribute('data-show', 'false');
     this.feedbackFormRef?.value?.setAttribute('data-show', 'true');
@@ -252,7 +253,8 @@ export class AdspFeedback implements AdspFeedbackApi {
     }
   }
 
-  private async sendFeedback() {
+  private async sendFeedback(event: Event) {
+    event.preventDefault();
     const headers: Record<string, string> = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
