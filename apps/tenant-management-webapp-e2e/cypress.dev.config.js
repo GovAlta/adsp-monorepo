@@ -35,6 +35,7 @@ module.exports = defineConfig({
     subscriptionUrl: 'https://subscription.adsp-dev.gov.ab.ca',
     formApi: 'https://form-service.adsp-dev.gov.ab.ca/',
     formAppUrl: 'https://form.adsp-dev.gov.ab.ca/',
+    taskApi: 'https://task-service.adsp-dev.gov.ab.ca',
   },
   retries: 1,
   defaultCommandTimeout: 10000,

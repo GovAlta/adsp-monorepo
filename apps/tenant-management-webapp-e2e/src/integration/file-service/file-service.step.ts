@@ -409,13 +409,13 @@ When(
       fileServiceObj
         .fileTypePagePublicCheckbox()
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (classAttr?.includes('--selected')) {
             cy.log('Make public checkbox is already checked off. ');
           } else {
-            fileServiceObj.fileTypePagePublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
+            fileServiceObj.fileTypePagePublicCheckbox().shadow().find('[class^="container"]').click({ force: true });
             cy.wait(1000);
           }
         });
@@ -425,10 +425,10 @@ When(
         .fileTypePageCheckboxesTables()
         .find('goa-checkbox')
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .then((elements) => {
           for (let i = 0; i < elements.length; i++) {
-            if (elements[i].getAttribute('class')?.includes('--selected')) {
+            if (elements[i].getAttribute('class')?.includes('selected')) {
               elements[i].click();
             }
           }
@@ -457,7 +457,7 @@ When(
               .next()
               .find('goa-checkbox')
               .shadow()
-              .find('.goa-checkbox-container')
+              .find('[class^="container"]')
               .scrollIntoView()
               .click({ force: true });
           } else {
@@ -469,7 +469,7 @@ When(
               .next()
               .find('goa-checkbox')
               .shadow()
-              .find('.goa-checkbox-container')
+              .find('[class^="container"]')
               .scrollIntoView()
               .click({ force: true }); // The checkbox clicking doesn't work properly (selects and unselects the checkbox).Need further investigation
           }
@@ -480,14 +480,14 @@ When(
       fileServiceObj
         .fileTypePagePublicCheckbox()
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (classAttr?.includes('-selected')) {
             fileServiceObj
               .fileTypePagePublicCheckbox()
               .shadow()
-              .find('.goa-checkbox-container')
+              .find('[class^="container"]')
               .click({ force: true, multiple: true });
             cy.wait(1000);
             cy.log('Make public checkbox has been unchecked. ');
@@ -502,10 +502,10 @@ When(
         .fileTypePageCheckboxesTables()
         .find('goa-checkbox')
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .then((elements) => {
           for (let i = 0; i < elements.length; i++) {
-            if (elements[i].getAttribute('class')?.includes('--selected')) {
+            if (elements[i].getAttribute('class')?.includes('selected')) {
               elements[i].click();
               cy.wait(1000);
             }
@@ -520,7 +520,7 @@ When(
             .fileTypePageCheckboxesTables()
             .find('goa-checkbox[data-testid="FileType-read-role-checkbox-' + readRoles[i].trim() + '"]')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .click({ force: true, multiple: true });
         }
       }
@@ -548,7 +548,7 @@ When(
               .next()
               .find('goa-checkbox')
               .shadow()
-              .find('.goa-checkbox-container')
+              .find('[class^="container"]')
               .scrollIntoView()
               .click({ force: true });
           } else {
@@ -560,7 +560,7 @@ When(
               .next()
               .find('goa-checkbox')
               .shadow()
-              .find('.goa-checkbox-container')
+              .find('[class^="container"]')
               .scrollIntoView()
               .click({ force: true });
           }
@@ -576,12 +576,7 @@ When(
         .invoke('prop', 'checked')
         .then((checkedAttr) => {
           if (checkedAttr == 'true') {
-            fileServiceObj
-              .fileRetentionCheckBox()
-              .shadow()
-              .find('.goa-checkbox-container')
-              .clear()
-              .click({ force: true });
+            fileServiceObj.fileRetentionCheckBox().shadow().find('[class^="container"]').clear().click({ force: true });
           } else {
             cy.log('Active retention policy checkbox is already unselected. ');
           }
@@ -593,7 +588,7 @@ When(
         .then((checkedAttr) => {
           cy.log(checkedAttr!);
           if (checkedAttr != 'true') {
-            fileServiceObj.fileRetentionCheckBox().shadow().find('.goa-checkbox-container').click({ force: true });
+            fileServiceObj.fileRetentionCheckBox().shadow().find('[class^="container"]').click({ force: true });
             cy.wait(1000);
           }
           fileServiceObj
@@ -888,7 +883,7 @@ Then('check the file data with in recent 30 days.', function () {
 
 Then('the user clicks Active retention policy checkbox', function () {
   cy.wait(1000); // Wait for modal
-  fileServiceObj.fileRetentionCheckBox().shadow().find('.goa-checkbox-container').click({ force: true });
+  fileServiceObj.fileRetentionCheckBox().shadow().find('[class^="container"]').click({ force: true });
 });
 
 Then('the user view retention policy 1 days in file type modal', function () {
@@ -898,7 +893,7 @@ Then('the user view retention policy 1 days in file type modal', function () {
 
 Then('the user uncheck Active retention policy checkbox', function () {
   cy.wait(1000); // Wait for modal
-  fileServiceObj.fileRetentionCheckBox().shadow().find('.goa-checkbox-container').click({ force: true });
+  fileServiceObj.fileRetentionCheckBox().shadow().find('[class^="container"]').click({ force: true });
 });
 
 Then('the user views uploaded files page', function () {

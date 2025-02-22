@@ -57,10 +57,10 @@ When(
       .queuePageCheckboxesTables()
       .find('goa-checkbox')
       .shadow()
-      .find('.goa-checkbox-container')
+      .find('[class^="container"]')
       .then((elements) => {
         for (let i = 0; i < elements.length; i++) {
-          if (elements[i].getAttribute('class')?.includes('--selected')) {
+          if (elements[i].getAttribute('class')?.includes('selected')) {
             elements[i].click();
           }
         }
@@ -74,7 +74,7 @@ When(
           .queuePageCheckboxesTables()
           .find('goa-checkbox[data-testid="Queue-Assigner roles-role-checkbox-' + assignerRoles[i].trim() + '"]')
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .click({ force: true });
         cy.wait(1000); // Wait the checkbox status to change before proceeding
       }
@@ -103,7 +103,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -116,7 +116,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding

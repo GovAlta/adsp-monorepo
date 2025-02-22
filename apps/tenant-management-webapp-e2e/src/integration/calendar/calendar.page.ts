@@ -1,22 +1,22 @@
 class CalendarPage {
   addCalendarOverviewTabBtn() {
-    return cy.get('[data-testid="overall-calendar-add-btn"]');
+    return cy.get('[testid="overall-calendar-add-btn"]');
   }
 
   addCalendarBtn() {
-    return cy.get('[data-testid="add-calendar-btn"]');
+    return cy.get('[testid="add-calendar-btn"]');
   }
 
   addScriptModalTitle() {
-    return cy.xpath('//goa-modal[@data-testid="add-calendar-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//goa-modal[@testid="add-calendar-modal" and @open="true"]//*[@slot="heading"]');
   }
 
   calendarModalCancelButton() {
-    return cy.get('[data-testid="calendar-modal-cancel"]');
+    return cy.get('[testid="calendar-modal-cancel"]');
   }
 
   calendarModalSaveButton() {
-    return cy.get('[data-testid="calendar-modal-save"]');
+    return cy.get('[testid="calendar-modal-save"]');
   }
 
   calendarTableHeader() {
@@ -25,29 +25,29 @@ class CalendarPage {
 
   addCalendarModalNameField() {
     return cy.xpath(
-      '//goa-modal[@data-testid="add-calendar-modal" and @open="true"]//*[@data-testid="calendar-modal-name-input"]'
+      '//goa-modal[@testid="add-calendar-modal" and @open="true"]//*[@testid="calendar-modal-name-input"]'
     );
   }
 
   addCalendarModalNameFormItem() {
-    return cy.xpath('//goa-modal[@data-testid="add-calendar-modal" and @open="true"]//*[@label="Name"]');
+    return cy.xpath('//goa-modal[@testid="add-calendar-modal" and @open="true"]//*[@label="Name"]');
   }
 
   addCalendarModalDescriptionField() {
     return cy.xpath(
-      '//goa-modal[@data-testid="add-calendar-modal" and @open="true"]//*[@data-testid="calendar-modal-description-input"]'
+      '//goa-modal[@testid="add-calendar-modal" and @open="true"]//*[@testid="calendar-modal-description-input"]'
     );
   }
 
   addCalendarModalClientRolesTable(clientName) {
     return cy.xpath(
-      `//*[@data-testid="add-calendar-modal" and @open="true"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table`
+      `//*[@testid="add-calendar-modal" and @open="true"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table`
     );
   }
 
   addCalendarModalRolesTable() {
     return cy.xpath(
-      `//*[@data-testid="add-calendar-modal" and @open="true"]//h4/div[text()="autotest"]/parent::h4/following-sibling::goa-table`
+      `//*[@testid="add-calendar-modal" and @open="true"]//h4/div[text()="autotest"]/parent::h4/following-sibling::goa-table`
     );
   }
 
@@ -56,31 +56,27 @@ class CalendarPage {
   }
 
   calendarEditButton(rowNumber) {
-    return cy.xpath(
-      `(//table[@data-testid="calendar-table"]//*[contains(@data-testid, "calendar-edit")])[${rowNumber}]`
-    );
+    return cy.xpath(`(//table[@data-testid="calendar-table"]//*[contains(@testid, "calendar-edit")])[${rowNumber}]`);
   }
 
   calendarDeleteButton(rowNumber) {
-    return cy.xpath(`(//table[@data-testid="calendar-table"]//*[contains(@data-testid, "delete-icon")])[${rowNumber}]`);
+    return cy.xpath(`(//table[@data-testid="calendar-table"]//*[contains(@testid, "delete-icon")])[${rowNumber}]`);
   }
 
   editCalendarModal() {
-    return cy.xpath('//*[@data-testid="add-calendar-modal" and @open]');
+    return cy.xpath('//*[@testid="add-calendar-modal" and @open]');
   }
 
   editCalendarModalDescriptionField() {
-    return cy.xpath(
-      '//*[@data-testid="add-calendar-modal" and @open]//*[@data-testid="calendar-modal-description-input"]'
-    );
+    return cy.xpath('//*[@testid="add-calendar-modal" and @open]//*[@testid="calendar-modal-description-input"]');
   }
 
   editCalendarModalTable() {
-    return cy.xpath('//*[@data-testid="add-calendar-modal"]//goa-table');
+    return cy.xpath('//*[@testid="add-calendar-modal"]//goa-table');
   }
 
   eventsSelectACalendarDropdown() {
-    return cy.xpath('//goa-dropdown[@data-testid="calendar-event-dropdown-list"]');
+    return cy.xpath('//goa-dropdown[@testid="calendar-event-dropdown-list"]');
   }
 
   eventsAddEventButton() {
@@ -92,7 +88,7 @@ class CalendarPage {
   }
 
   eventsCalendarEventModalNameTextField() {
-    return cy.xpath('//goa-form-item[@label="Name"]/goa-input[@data-testid="calendar-event-modal-name-input"]');
+    return cy.xpath('//goa-form-item[@label="Name"]/goa-input[@testid="calendar-event-modal-name-input"]');
   }
 
   eventsCalendarEventModalNameFormItem() {
@@ -100,7 +96,7 @@ class CalendarPage {
   }
 
   eventsCalendarEventModalDescription() {
-    return cy.xpath('//goa-textarea[@data-testid="calendar-event-modal-description-input"]');
+    return cy.xpath('//goa-textarea[@testid="calendar-event-modal-description-input"]');
   }
 
   eventsCalendarEventModalIsPublicCheckbox() {

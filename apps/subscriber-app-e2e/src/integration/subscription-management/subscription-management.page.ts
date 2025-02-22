@@ -52,7 +52,7 @@ class SubscriptionManagementPage {
   }
 
   editContactInformation() {
-    return cy.get('[data-testid="edit-contact-button"]');
+    return cy.get('[testid="edit-contact-button"]');
   }
 
   phoneNumberInput() {
@@ -60,11 +60,11 @@ class SubscriptionManagementPage {
   }
 
   emailInput() {
-    return cy.get('[data-testid="contact-email-input"]');
+    return cy.get('[testid="contact-email-input"]');
   }
 
   contactInformationSaveBtn() {
-    return cy.get('[data-testid="edit-contact-save-button"]');
+    return cy.get('[testid="edit-contact-save-button"]');
   }
 
   phoneNumberFormItemWithError() {

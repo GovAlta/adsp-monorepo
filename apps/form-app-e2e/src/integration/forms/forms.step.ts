@@ -101,7 +101,7 @@ When('the user {string} a checkbox labelled {string}', function (checkboxOperati
   formsObj
     .formCheckbox(label)
     .shadow()
-    .find('.goa-checkbox-container')
+    .find('[class^="container"]')
     .invoke('attr', 'class')
     .then((classAttVal) => {
       if (classAttVal == undefined) {
@@ -112,13 +112,13 @@ When('the user {string} a checkbox labelled {string}', function (checkboxOperati
             if (classAttVal.includes('selected')) {
               cy.log('The checkbox was already checked.');
             } else {
-              formsObj.formCheckbox(label).shadow().find('.goa-checkbox-container').click({ force: true });
+              formsObj.formCheckbox(label).shadow().find('[class^="container"]').click({ force: true });
               cy.wait(1000);
             }
             break;
           case 'unselects':
             if (classAttVal.includes('selected')) {
-              formsObj.formCheckbox(label).shadow().find('.goa-checkbox-container').click({ force: true });
+              formsObj.formCheckbox(label).shadow().find('[class^="container"]').click({ force: true });
               cy.wait(1000);
             } else {
               cy.log('The checkbox was already unchecked.');
@@ -246,7 +246,7 @@ Then(
 );
 
 When('the user selects {string} radio button for the question of {string}', function (radioLabel, question) {
-  formsObj.formRadioGroup(question).shadow().find(`[value="${radioLabel}"]`).click({ force: true });
+  formsObj.formRadioGroup(question).find(`[value="${radioLabel}"]`).shadow().find('input').click({ force: true });
   cy.wait(1000);
 });
 
