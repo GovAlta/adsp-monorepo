@@ -8,7 +8,7 @@ class NotificationsPage {
   }
 
   notificationTypeModalTitle() {
-    return cy.xpath('//*[@data-testid="notification-types-form" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="notification-types-form" and @open="true"]//*[@slot="heading"]');
   }
 
   notificationTypeModalNameField() {
@@ -60,11 +60,11 @@ class NotificationsPage {
   }
 
   notificationTypeModalSaveBtn() {
-    return cy.get('[data-testid="form-save"]');
+    return cy.get('[testid="form-save"]');
   }
 
   notificationTypeModalCancelBtn() {
-    return cy.get('[data-testid="form-cancel"]');
+    return cy.get('[testid="form-cancel"]');
   }
 
   notificationTypeEditBtn(notificationTypeTitle) {
@@ -132,11 +132,11 @@ class NotificationsPage {
   }
 
   selectAnEventModalNextBtn() {
-    return cy.get('[data-testid="event-form-save"]');
+    return cy.get('[testid="event-form-save"]');
   }
 
   selectAnEventModalCancelBtn() {
-    return cy.get('[data-testid="event-form-cancel"]');
+    return cy.get('[testid="event-form-cancel"]');
   }
 
   addAnEmailTemplateModalTitle() {
@@ -156,7 +156,7 @@ class NotificationsPage {
   }
 
   addAnEmailTemplateModalAddBtn() {
-    return cy.get('[data-testid="template-form-save"]');
+    return cy.get('[testid="template-form-save"]');
   }
 
   notificationTypeEvents(notificationTypeTitle) {
@@ -259,7 +259,7 @@ class NotificationsPage {
   }
 
   deleteConfirmationModalTitle() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
   }
 
   deleteConfirmationModalContent() {
@@ -267,7 +267,7 @@ class NotificationsPage {
   }
 
   deleteConfirmationModalConfirmBtn() {
-    return cy.get('[data-testid="delete-confirm"]');
+    return cy.get('[testid="delete-confirm"]');
   }
 
   notificationTypeEventDeleteBtn(cardTitle, eventName) {
@@ -359,11 +359,11 @@ class NotificationsPage {
   }
 
   editContactModalSaveBtn() {
-    return cy.get('[data-testid="form-save"]');
+    return cy.get('[testid="form-save"]');
   }
 
   editContactModalCancelBtn() {
-    return cy.get('[data-testid="form-cancel"]');
+    return cy.get('[testid="form-cancel"]');
   }
 
   contactInformationEmail() {
@@ -389,7 +389,7 @@ class NotificationsPage {
   }
 
   editSubscriberModalSaveBtn() {
-    return cy.get('[data-testid="form-save"]');
+    return cy.get('[testid="form-save"]');
   }
 
   editSubscriberModalNameField() {
@@ -539,7 +539,7 @@ class NotificationsPage {
   }
 
   notificationOverviewEmailInformationEditIcon() {
-    return cy.xpath('//goa-icon-button[@data-testid="edit-email-info-edit"]');
+    return cy.xpath('//goa-icon-button[@testid="edit-email-info-edit"]');
   }
 
   notificationOverviewEmailInformationModal() {
@@ -560,13 +560,13 @@ class NotificationsPage {
 
   notificationOverviewEmailInformationModalSaveBtn() {
     return cy.xpath(
-      '//goa-modal[@open="true" and @data-testid="edit-email-information-notification"]//goa-button[@data-testid="edit-email-form-save"]'
+      '//goa-modal[@open="true" and @data-testid="edit-email-information-notification"]//goa-button[@testid="edit-email-form-save"]'
     );
   }
 
   notificationOverviewEmailInformationModalCancelBtn() {
     return cy.xpath(
-      '//goa-modal[@open="true" and @data-testid="edit-email-information-notification"]//goa-button[@data-testid="edit-email-form-cancel"]'
+      '//goa-modal[@open="true" and @data-testid="edit-email-information-notification"]//goa-button[@testid="edit-email-form-cancel"]'
     );
   }
 

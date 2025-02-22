@@ -105,10 +105,10 @@ When(
         .editorCheckboxesTables()
         .find('goa-checkbox')
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .then((elements) => {
           for (let i = 0; i < elements.length; i++) {
-            if (elements[i].getAttribute('class')?.includes('--selected')) {
+            if (elements[i].getAttribute('class')?.includes('selected')) {
               elements[i].click();
             }
           }
@@ -137,7 +137,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -149,7 +149,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -180,7 +180,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -193,7 +193,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -225,7 +225,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -239,7 +239,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -384,7 +384,7 @@ Then(
       const adminRoles = adminRole.split(',');
       commentObj
         .topicTypeEditorRolesTables()
-        .find('goa-checkbox[data-testid*="Admin roles"]')
+        .find('goa-checkbox[testid*="Admin roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
             if (appRoles[i].getAttribute('checked') == 'true') {
@@ -406,7 +406,7 @@ Then(
     } else {
       commentObj
         .topicTypeEditorRolesTables()
-        .find('goa-checkbox[data-testid*="Admin roles"]')
+        .find('goa-checkbox[testid*="Admin roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
             if (appRoles[i].getAttribute('checked') == 'true') {
@@ -423,7 +423,7 @@ Then(
       const commenterRoles = commenterRole.split(',');
       commentObj
         .topicTypeEditorRolesTables()
-        .find('goa-checkbox[data-testid*="Commenter roles"]')
+        .find('goa-checkbox[testid*="Commenter roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
             if (appRoles[i].getAttribute('checked') == 'true') {
@@ -445,7 +445,7 @@ Then(
     } else {
       commentObj
         .topicTypeEditorRolesTables()
-        .find('goa-checkbox[data-testid*="Commenter roles"]')
+        .find('goa-checkbox[testid*="Commenter roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
             if (appRoles[i].getAttribute('checked') == 'true') {
@@ -462,7 +462,7 @@ Then(
       const readerRoles = readerRole.split(',');
       commentObj
         .topicTypeEditorRolesTables()
-        .find('goa-checkbox[data-testid*="Reader roles"]')
+        .find('goa-checkbox[testid*="Reader roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
             if (appRoles[i].getAttribute('checked') == 'true') {
@@ -484,7 +484,7 @@ Then(
     } else {
       commentObj
         .topicTypeEditorRolesTables()
-        .find('goa-checkbox[data-testid*="Reader roles"]')
+        .find('goa-checkbox[testid*="Reader roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
             if (appRoles[i].getAttribute('checked') == 'true') {

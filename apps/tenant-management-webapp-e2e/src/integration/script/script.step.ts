@@ -44,7 +44,7 @@ When(
     scriptObj.addScriptModalDescriptionField().shadow().find('textarea').type(desc, { force: true });
     switch (useServiceAcct) {
       case 'yes':
-        scriptObj.addScriptModalUseServiceAccountCheckbox().shadow().find('.goa-checkbox-container').click();
+        scriptObj.addScriptModalUseServiceAccountCheckbox().shadow().find('[class^="container"]').click();
         break;
       case 'no':
         break;
@@ -72,7 +72,7 @@ When(
           .next()
           .find('goa-checkbox')
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .scrollIntoView()
           .click({ force: true });
       } else {
@@ -83,7 +83,7 @@ When(
           .next()
           .find('goa-checkbox')
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .scrollIntoView()
           .click({ force: true });
       }
@@ -225,10 +225,10 @@ When('the user enters {string} for roles in script editor', function (role: stri
       .editorRolesTabRoleTables()
       .find('goa-checkbox')
       .shadow()
-      .find('.goa-checkbox-container')
+      .find('[class^="container"]')
       .then((elements) => {
         for (let i = 0; i < elements.length; i++) {
-          if (elements[i].getAttribute('class')?.includes('--selected')) {
+          if (elements[i].getAttribute('class')?.includes('selected')) {
             elements[i].click();
             cy.wait(1000);
           }
@@ -257,7 +257,7 @@ When('the user enters {string} for roles in script editor', function (role: stri
         .next()
         .find('goa-checkbox')
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .scrollIntoView()
         .click({ force: true });
     } else {
@@ -268,7 +268,7 @@ When('the user enters {string} for roles in script editor', function (role: stri
         .next()
         .find('goa-checkbox')
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .scrollIntoView()
         .click({ force: true });
     }

@@ -49,7 +49,7 @@ Then('the user views the error message of {string} on namespace in calendar moda
   calendarObj
     .addCalendarModalNameFormItem()
     .shadow()
-    .find('[class="error-msg"]')
+    .find('[class*="error-msg"]')
     .invoke('text')
     .should('contain', errorMsg);
 });
@@ -81,7 +81,7 @@ When(
           .next()
           .find('goa-checkbox')
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .scrollIntoView()
           .click({ force: true });
       } else {
@@ -92,7 +92,7 @@ When(
           .next()
           .find('goa-checkbox')
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .scrollIntoView()
           .click({ force: true });
       }
@@ -120,7 +120,7 @@ When(
           .next()
           .find('goa-checkbox')
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .scrollIntoView()
           .click({ force: true });
       } else {
@@ -132,7 +132,7 @@ When(
           .next()
           .find('goa-checkbox')
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .scrollIntoView()
           .click({ force: true });
       }
@@ -238,10 +238,10 @@ When(
         .editCalendarModalTable()
         .find('goa-checkbox')
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .then((elements) => {
           for (let i = 0; i < elements.length; i++) {
-            if (elements[i].getAttribute('class')?.includes('--selected')) {
+            if (elements[i].getAttribute('class')?.includes('selected')) {
               elements[i].click();
             }
           }
@@ -269,7 +269,7 @@ When(
           .next()
           .find('goa-checkbox')
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .scrollIntoView()
           .click({ force: true });
       } else {
@@ -280,7 +280,7 @@ When(
           .next()
           .find('goa-checkbox')
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .scrollIntoView()
           .click({ force: true });
       }
@@ -309,7 +309,7 @@ When(
           .next()
           .find('goa-checkbox')
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .scrollIntoView()
           .click({ force: true });
       } else {
@@ -321,7 +321,7 @@ When(
           .next()
           .find('goa-checkbox')
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .scrollIntoView()
           .click({ force: true });
       }
@@ -396,14 +396,14 @@ When(
         calendarObj
           .eventsCalendarEventModalIsAllDayCheckbox()
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .invoke('attr', 'class')
           .then((classAttr) => {
             if (!classAttr?.includes('--selected')) {
               calendarObj
                 .eventsCalendarEventModalIsAllDayCheckbox()
                 .shadow()
-                .find('.goa-checkbox-container')
+                .find('[class^="container"]')
                 .click({ force: true });
             } else {
               cy.log('Is all day checkbox is already checked off. ');
@@ -414,14 +414,14 @@ When(
         calendarObj
           .eventsCalendarEventModalIsAllDayCheckbox()
           .shadow()
-          .find('.goa-checkbox-container')
+          .find('[class^="container"]')
           .invoke('attr', 'class')
           .then((classAttr) => {
             if (classAttr?.includes('--selected')) {
               calendarObj
                 .eventsCalendarEventModalIsAllDayCheckbox()
                 .shadow()
-                .find('.goa-checkbox-container')
+                .find('[class^="container"]')
                 .click({ force: true });
             } else {
               cy.log('Is all day checkbox is already unchecked. ');
@@ -488,14 +488,14 @@ When(
           calendarObj
             .eventsCalendarEventModalIsPublicCheckbox()
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .invoke('attr', 'class')
             .then((classAttr) => {
               if (!classAttr?.includes('--selected')) {
                 calendarObj
                   .eventsCalendarEventModalIsPublicCheckbox()
                   .shadow()
-                  .find('.goa-checkbox-container')
+                  .find('[class^="container"]')
                   .click({ force: true });
               } else {
                 cy.log('Is Public checkbox is already checked off. ');
@@ -506,14 +506,14 @@ When(
           calendarObj
             .eventsCalendarEventModalIsPublicCheckbox()
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .invoke('attr', 'class')
             .then((classAttr) => {
               if (classAttr?.includes('--selected')) {
                 calendarObj
                   .eventsCalendarEventModalIsPublicCheckbox()
                   .shadow()
-                  .find('.goa-checkbox-container')
+                  .find('[class^="container"]')
                   .click({ force: true });
               } else {
                 cy.log('Is Public checkbox is already unchecked. ');

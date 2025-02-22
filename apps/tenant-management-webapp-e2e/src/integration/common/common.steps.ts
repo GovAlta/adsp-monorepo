@@ -871,7 +871,7 @@ When('the user {string} the subscribe checkbox for health check notification typ
   statusObj
     .applicationHealthChangeNotificationSubscribeCheckbox()
     .shadow()
-    .find('.goa-checkbox-container')
+    .find('[class^="container"]')
     .invoke('attr', 'class')
     .then((classAttVal) => {
       if (classAttVal == undefined) {
@@ -885,7 +885,7 @@ When('the user {string} the subscribe checkbox for health check notification typ
               statusObj
                 .applicationHealthChangeNotificationSubscribeCheckbox()
                 .shadow()
-                .find('.goa-checkbox-container')
+                .find('[class^="container"]')
                 .click();
             }
             break;
@@ -894,7 +894,7 @@ When('the user {string} the subscribe checkbox for health check notification typ
               statusObj
                 .applicationHealthChangeNotificationSubscribeCheckbox()
                 .shadow()
-                .find('.goa-checkbox-container')
+                .find('[class^="container"]')
                 .click();
             } else {
               cy.log('The subscribe checkbox was already unchecked.');
@@ -912,7 +912,7 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
   statusObj
     .applicationHealthChangeNotificationSubscribeCheckbox()
     .shadow()
-    .find('.goa-checkbox-container')
+    .find('[class^="container"]')
     .invoke('attr', 'class')
     .then((classAttVal) => {
       if (classAttVal == undefined) {
