@@ -1,4 +1,4 @@
-import { GoAChip, GoAIconButton, GoASkeleton } from '@abgov/react-components-new';
+import { GoAChip, GoAIconButton, GoASkeleton } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { AppDispatch, AppState, directoryBusySelector, resourceTagsSelector, Tag, untagResource } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,7 +27,7 @@ export const Tags: FunctionComponent<TagsProps> = ({ urn, onTag }) => {
           <TagBadge key={tag.value} tag={tag} onDelete={() => dispatch(untagResource({ urn, tag }))} />
         ))
       )}
-      <GoAIconButton icon="add-circle" variant="color" onClick={onTag} />
+      <GoAIconButton title="add tag" icon="add-circle" variant="color" onClick={onTag} />
     </>
   );
 };

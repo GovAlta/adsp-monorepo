@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Stream } from '@store/stream/models';
 import { EntryDetail, IconDiv, NoPaddingTd } from './styleComponents';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { GoABadge } from '@abgov/react-components-new';
+import { GoABadge } from '@abgov/react-components';
 
 interface SubscriberRolesProps {
   roles?: string[];

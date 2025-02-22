@@ -1,6 +1,7 @@
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { SecurityClassification } from '@store/common/models';
 import { Socket } from 'socket.io-client';
+import { Resource } from '@store/directory/models';
 
 export type ExportStatus = 'queued' | 'completed' | 'failed';
 export type ExportFormat = 'json' | 'csv';
@@ -16,6 +17,7 @@ export interface FormDefinition {
   formDraftUrlTemplate: string;
   oneFormPerApplicant: boolean;
   anonymousApply: boolean;
+  scheduledIntakes: boolean;
   uiSchema?: Record<string, unknown>;
   dispositionStates: Array<Disposition>;
   submissionRecords: boolean;
@@ -68,6 +70,7 @@ export const defaultFormDefinition: FormDefinition = {
   formDraftUrlTemplate: '',
   anonymousApply: false,
   oneFormPerApplicant: true,
+  scheduledIntakes: false,
   dispositionStates: [],
   submissionRecords: false,
   submissionPdfTemplate: 'submitted-form',
@@ -103,6 +106,7 @@ export interface FormState {
   definitions: Record<string, FormDefinition>;
   nextEntries: string;
   exportResult: FormExportResponse;
+  selectedTag: Tag | null;
   editor: {
     selectedId: string;
     loading: boolean;
@@ -122,6 +126,10 @@ export interface FormState {
   socket: Socket;
   searchedTag?: FormResourceTagResult;
   searchedTagExists?: boolean;
+  tags: Tag[];
+  tagsLoading: boolean;
+  tagsError?: string;
+  tagResources: Resource[];
 }
 export interface FormExportResponse {
   id?: string;
@@ -222,4 +230,11 @@ export interface SubmissionInfoItem {
     reason?: string;
     date?: string;
   };
+}
+
+export interface Tag {
+  urn: string;
+  label: string;
+  value: string;
+  _links: Record<string, { href: string }>;
 }

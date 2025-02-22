@@ -1,6 +1,6 @@
 import React, { useState, createRef, useEffect } from 'react';
-import { GoAHeroBanner } from '@abgov/react-components-new';
-import { GoAContainer } from '@abgov/react-components-new';
+import { GoAHeroBanner, GoAContainer } from '@abgov/react-components';
+
 import bannerBackground from '@assets/BannerBackground.jpg';
 import Header from '@components/AppHeader';
 import { Footer } from '@core-services/app-common';

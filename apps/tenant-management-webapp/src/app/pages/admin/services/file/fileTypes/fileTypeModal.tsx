@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Role } from '@store/tenant/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal } from '@abgov/react-components';
 import { FileIdItem, ModalOverwrite } from '../styled-components';
 import { CreateFileTypeService } from '@store/file/actions';
 import { FileTypeItem, RetentionPolicy } from '@store/file/models';

@@ -1,13 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 
-import {
-  GoAButton,
-  GoAButtonGroup,
-  GoARadioItem,
-  GoARadioGroup,
-  GoAModal,
-  GoAFormItem,
-} from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoARadioItem, GoARadioGroup, GoAModal, GoAFormItem } from '@abgov/react-components';
 
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { GoAFormItem } from '@abgov/react-components-new';
+import React, { useState } from 'react';
+import { GoAFormItem } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { checkFieldValidity, convertToSentenceCase, getLabelText } from '../../util/stringUtils';
 import { Visible } from '../../util';

@@ -4,7 +4,7 @@ import { fetchEventStreams, startSocket } from '@store/stream/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';
 import { TextGoASkeleton } from '@core-services/app-common';
-import { GoADropdown, GoADropdownItem, GoAButton } from '@abgov/react-components-new';
+import { GoADropdown, GoADropdownItem, GoAButton } from '@abgov/react-components';
 import { Divider, StreamHeading, StreamsDropdown } from './styledComponents';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ReactComponent as Error } from '@icons/close-circle-outline.svg';

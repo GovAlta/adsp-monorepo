@@ -18,7 +18,7 @@ import { WithDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoAGrid, GoAIconButton } from '@abgov/react-components-new';
+import { GoAGrid, GoAIconButton } from '@abgov/react-components';
 import {
   ToolBarHeader,
   ObjectArrayTitle,
@@ -335,10 +335,11 @@ const LeftTab = ({
         <RowFlexMenu>
           <TabName>{name}</TabName>
           {enabled ? (
-            <Trash>
+            <Trash role="trash button">
               <GoAIconButton
                 icon="trash"
-                aria-label={translations.removeAriaLabel}
+                title={'trash button'}
+                testId="remove the details"
                 onClick={() => openDeleteDialog(childPath, rowIndex, name)}
               ></GoAIconButton>
             </Trash>

@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber } from '@store/subscription/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoATextArea, GoAModal, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput, GoATextArea, GoAModal, GoAFormItem } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import styled from 'styled-components';

@@ -8,7 +8,7 @@ import {
   GoADropdownItem,
   GoAModal,
   GoAFormItem,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { RootState } from '@store/index';
 import { getEventDefinitions } from '@store/event/actions';
 import { EventItem, baseTemplate } from '@store/notification/models';

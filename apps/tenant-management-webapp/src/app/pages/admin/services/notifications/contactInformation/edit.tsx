@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
 import styled from 'styled-components';
-import { GoATextArea, GoAInput, GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components-new';
+import { GoATextArea, GoAInput, GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components';
 import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
 
 interface NotificationTypeFormProps {

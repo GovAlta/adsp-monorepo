@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectSelectedCalendarEvents, selectSelectedCalendarNextEvents } from '@store/calendar/selectors';
 import { CalendarEvent, EventAddEditModalType, EventDeleteModalType } from '@store/calendar/models';
-import { GoABadge, GoAButton, GoASkeleton } from '@abgov/react-components-new';
+import { GoABadge, GoAButton, GoASkeleton, GoACircularProgress } from '@abgov/react-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { UpdateModalState } from '@store/session/actions';
 import { RootState } from '@store/index';
@@ -18,7 +18,6 @@ import {
 } from './styled-components';
 import { DeleteModal } from './deleteModal';
 import DataTable from '@components/DataTable';
-import { GoACircularProgress } from '@abgov/react-components-new';
 import { ProgressWrapper, CalendarEventListWrapper, EventListNameTd, EventTableHeader } from './styled-components';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { FetchEventsByCalendar } from '@store/calendar/actions';

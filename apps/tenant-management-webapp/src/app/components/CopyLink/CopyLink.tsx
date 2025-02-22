@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CopyLinkToolTipClipboardWrapper, CopyLinkToolTipWrapper, LinkCopyComponentWrapper } from './styled-components';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 
 interface LinkCopyComponentProps {
   link: string;

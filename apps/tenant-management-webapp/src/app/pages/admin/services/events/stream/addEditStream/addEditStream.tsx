@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
+import { GoADropdownOption, GoADropdown } from '@abgov/react-components-old';
 import { ChipsWrapper, IdField, StreamModalStyles } from '../styleComponents';
 import { Stream, EditModalType, AddModalType } from '@store/stream/models';
 import { useValidators } from '@lib/validation/useValidators';
@@ -18,7 +18,7 @@ import {
   GoASkeleton,
   GoAFormItem,
   GoAModal,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { initialStream } from '@store/stream/models';
 import { selectAddEditInitStream } from '@store/stream/selectors';
 import { useSelector, useDispatch } from 'react-redux';

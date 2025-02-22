@@ -7,7 +7,7 @@ import {
   GoAInput,
   GoAFormItem,
   GoAModal,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { ScriptItem, defaultScript } from '@store/script/models';
 import { useSelector, useDispatch } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';

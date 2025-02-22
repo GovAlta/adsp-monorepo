@@ -14,7 +14,7 @@ import {
   GoADropdown,
   GoADropdownItem,
   GoAGrid,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { getTimeFromGMT, getDateTime } from '@lib/timeUtil';
 
 interface NoticeModalProps {

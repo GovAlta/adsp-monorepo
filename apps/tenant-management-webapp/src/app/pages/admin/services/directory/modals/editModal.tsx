@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoAButton, GoAButtonGroup, GoAInput, GoAModal, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput, GoAModal, GoAFormItem } from '@abgov/react-components';
 import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';

@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import { CodeSpan, PRE, FeedbackOverviewSection } from '../feedback/styled-components';
 import { useNavigate } from 'react-router-dom';
 import { NoPaddingH2 } from '@components/AppHeader';

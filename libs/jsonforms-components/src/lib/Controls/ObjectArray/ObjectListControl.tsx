@@ -28,7 +28,7 @@ import {
   GoAInput,
   GoAFormItem,
   GoACallout,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import {
   ToolBarHeader,
   ObjectArrayTitle,
@@ -74,6 +74,24 @@ interface HandleChangeProps {
 
 export type ObjectArrayControlProps = ArrayLayoutProps & ArrayLayoutExtProps & ControlProps;
 
+function extractNames(obj: unknown, names: string[] = []): string[] {
+  if (Array.isArray(obj)) {
+    obj.forEach((item) => extractNames(item, names));
+  } else if (typeof obj === 'object' && obj !== null) {
+    const typedObj = obj as Record<string, unknown>;
+
+    if (typeof typedObj.label === 'string') {
+      names.push(typedObj.label);
+    } else if (typeof typedObj.scope === 'string') {
+      const parts = typedObj.scope.split('/');
+      names.push(parts[parts.length - 1]);
+    }
+
+    Object.values(typedObj).forEach((value) => extractNames(value, names));
+  }
+  return names;
+}
+
 const GenerateRows = (
   Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
   schema: JsonSchema,
@@ -113,6 +131,7 @@ const GenerateRows = (
       rowPath,
       cellPath: rowPath,
       enabled,
+      uischema,
       isInReview,
       openDeleteDialog,
       handleChange,
@@ -225,6 +244,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
   const required = (schema.items as Record<string, Array<string>>)?.required;
 
+  let tableKeys = extractNames(uischema?.options?.detail);
+  if (tableKeys.length === 0) {
+    tableKeys = Object.keys(properties);
+  }
+
   return (
     <NonEmptyCellStyle>
       {
@@ -248,7 +272,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
         <GoATable width="100%">
           <thead>
             <tr key={0}>
-              {Object.keys(properties).map((key, index) => {
+              {tableKeys.map((key, index) => {
                 if (!isInReview) {
                   return (
                     <th key={index}>
@@ -339,14 +363,17 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                     );
                   })}
                   <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
-                    {!isInReview && (
-                      <GoAIconButton
-                        icon="trash"
-                        testId="trash-icon-button"
-                        aria-label={`remove-element-${num}`}
-                        onClick={() => openDeleteDialog(num)}
-                      ></GoAIconButton>
-                    )}
+                    <div aria-hidden="true">
+                      {!isInReview && (
+                        <GoAIconButton
+                          icon="trash"
+                          title="trash button"
+                          testId="trash-icon-button"
+                          aria-label={`remove-element-${num}`}
+                          onClick={() => openDeleteDialog(num)}
+                        ></GoAIconButton>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

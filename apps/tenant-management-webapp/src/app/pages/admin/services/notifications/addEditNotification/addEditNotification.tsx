@@ -12,7 +12,7 @@ import {
   GoAFormItem,
   GoARadioGroup,
   GoARadioItem,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { toKebabName } from '@lib/kebabName';
 import { Role } from '@store/tenant/models';
 import { ServiceRoleConfig } from '@store/access/models';

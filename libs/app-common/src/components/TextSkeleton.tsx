@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoASkeleton } from '@abgov/react-components-new';
+import { GoASkeleton } from '@abgov/react-components';
 
 interface TextSkeletonProps {
   lineCount?: number;

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { GoAHeader } from '@abgov/react-components';
+import { GoAHeader } from '@abgov/react-components-old';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
 import { getIdpHint } from '@lib/keycloak';
 import { selectUserName, selectUserEmail, selectIsAuthenticated } from '@store/session/selectors';

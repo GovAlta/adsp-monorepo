@@ -3,7 +3,7 @@ import DataTable from '@components/DataTable';
 import { Role } from '@store/tenant/models';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
-import { GoAButtonGroup, GoAModal, GoAButton, GoABadge } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAModal, GoAButton } from '@abgov/react-components';
 import { FileTypeItem } from '@store/file/models';
 import { useNavigate } from 'react-router-dom';
 import { DeleteModal } from '@components/DeleteModal';

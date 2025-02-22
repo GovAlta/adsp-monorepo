@@ -1,4 +1,4 @@
-import { GoADate } from '@abgov/react-components-new';
+import { GoADate } from '@abgov/react-components';
 
 export interface EventDefinition {
   isCore: boolean;

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Notice } from '@store/notice/models';
 import styled from 'styled-components';
-import { GoABadge } from '@abgov/react-components-new';
+import { GoABadge } from '@abgov/react-components';
 import { DraftDropdownMenu, PublishedDropdownMenu } from './noticeCardMenu';
 import { IconContext } from '@components/icons/IconContext';
 import { useSelector } from 'react-redux';

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ControlProps, isEnabled } from '@jsonforms/core';
-import { GoAFormItem, GoAGrid } from '@abgov/react-components-new';
+import { GoAFormItem, GoAGrid } from '@abgov/react-components';
 import { NameInputs } from './FullNameInputs';
 import { TextWrapDiv } from '../AddressLookup/styled-components';
 

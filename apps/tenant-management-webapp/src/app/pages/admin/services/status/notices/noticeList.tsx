@@ -5,7 +5,7 @@ import { NoticeCard } from './noticeCard';
 import FilterIcon from '@assets/icons/filter-filled.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { GoARadioItem, GoARadioGroup } from '@abgov/react-components-new';
+import { GoARadioItem, GoARadioGroup } from '@abgov/react-components';
 import { renderNoItem } from '@components/NoItem';
 import NoticeModal from './noticeModal';
 import { createSelector } from 'reselect';

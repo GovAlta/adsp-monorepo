@@ -1,4 +1,4 @@
-import { GoAIconButton } from '@abgov/react-components-new';
+import { GoAIconButton } from '@abgov/react-components';
 import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -96,6 +96,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
             disabled={!form}
             icon={showComments ? 'help-circle' : 'help-circle'}
             size="large"
+            title="Comments help"
             onClick={() => {
               setShowComments(!showComments);
               if (topic?.resourceId !== form?.urn) {

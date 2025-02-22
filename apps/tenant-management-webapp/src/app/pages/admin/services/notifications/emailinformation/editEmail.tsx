@@ -1,9 +1,8 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import type { FromEmailInformation } from '@store/notification/models';
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components-new';
-import { useSelector } from 'react-redux';
-import { RootState } from '@store/index';
+import { GoAButton, GoAButtonGroup, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components';
+
 import { emailError, hasMultipleEmailError } from '@lib/inputValidation';
 
 interface EmailNotificationTypeFormProps {

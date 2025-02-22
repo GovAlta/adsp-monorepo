@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 
 interface RowLoadMoreProps {

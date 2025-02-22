@@ -1,7 +1,7 @@
 import React from 'react';
 
 import styled from 'styled-components';
-import { GoACallout } from '@abgov/react-components-new';
+import { GoACallout } from '@abgov/react-components';
 import { Notice, sortNotices } from '@store/status/models';
 import { LocalTime } from '@components/Date';
 

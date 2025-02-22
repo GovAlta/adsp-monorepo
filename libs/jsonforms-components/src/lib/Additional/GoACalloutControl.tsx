@@ -1,7 +1,7 @@
 import React from 'react';
 import { JsonFormsProps, RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsRendererProps } from '@jsonforms/react';
-import { GoACallout, GoACalloutSize, GoACalloutType } from '@abgov/react-components-new';
+import { GoACallout, GoACalloutSize, GoACalloutType } from '@abgov/react-components';
 
 export interface CalloutProps {
   size?: GoACalloutSize;

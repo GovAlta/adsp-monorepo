@@ -7,7 +7,7 @@ import {
   GoARadioItem,
   GoASpacer,
   GoASpinner,
-} from '@abgov/react-components-new';
+} from '@abgov/react-components';
 import { FunctionComponent, useState } from 'react';
 
 interface ExportModalProps {

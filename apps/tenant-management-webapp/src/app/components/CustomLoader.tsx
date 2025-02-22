@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoACircularProgress } from '@abgov/react-components-new';
+import { GoACircularProgress } from '@abgov/react-components';
 import styled from 'styled-components';
 
 // eslint-disable-next-line

@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAContainer } from '@abgov/react-components-new';
+import { GoAContainer } from '@abgov/react-components';
 import { GroupLayout, LayoutProps, RankedTester, rankWith, uiTypeIs, withIncreasedRank } from '@jsonforms/core';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { renderLayoutElements } from '../util/layout';

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AddEditPdfTemplate } from './addEditPdfTemplates';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { getPdfTemplates, updatePdfTemplate, deletePdfTemplate, getCorePdfTemplates } from '@store/pdf/action';
 import { RootState } from '@store/index';

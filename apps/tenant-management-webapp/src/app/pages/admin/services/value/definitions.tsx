@@ -1,17 +1,14 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import { defaultValueDefinition, type ValueDefinition } from '@store/value/models';
-import styled from 'styled-components';
-import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { renderNoItem } from '@components/NoItem';
-import { Dispatch } from '@jsonforms/react';
+
 import { ValueDefinitionsList } from './definitionsList';
 import { AddEditValueDefinition } from './addEditDefinition';
 import { deleteValueDefinition, getValueDefinitions, updateValueDefinition } from '@store/value/actions';
 import { PageIndicator } from '@components/Indicator';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components';
 import { Buttons } from '../styled-components';
 import { DeleteModal } from '@components/DeleteModal';
 
