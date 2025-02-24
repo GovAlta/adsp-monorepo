@@ -31,12 +31,12 @@ readme = "README.md"
     develop = true
 
 [tool.poetry.group.dev.dependencies]
-flake8 = "^7.1.1"
-pytest = "^8.3.3"
+flake8 = "^7.1.2"
+pytest = "^8.3.4"
 pytest-coverage = "^0.0"
 pytest-html = "^4.1.1"
-black = "^24.10.0"
-tox = "^4.23.2"
+black = "^25.1.0"
+tox = "^4.24.1"
 
 [build-system]
 requires = [ "poetry-core==1.1.0" ]
