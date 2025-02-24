@@ -19,3 +19,19 @@ export const RequiredTextLabel = styled.label`
   line-height: var(--goa-line-height-1);
   font-style: normal;
 `;
+
+export const PageReviewNameCol = styled.td`
+  width: 70%;
+  padding-top: var(--goa-space-s);
+  padding-bottom: var(--goa-space-s);
+  padding-right: var(--goa-space-m);
+`;
+
+export const PageReviewValueCol = styled.td`
+  width: 20%;
+  text-align: left;
+`;
+
+export const PageReviewActionCol = styled.td`
+  width: 10%;
+`;

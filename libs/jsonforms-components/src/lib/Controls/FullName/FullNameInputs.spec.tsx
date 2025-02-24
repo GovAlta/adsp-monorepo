@@ -159,7 +159,12 @@ describe('NameInputs', () => {
     );
 
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
-    const blurred = fireEvent.blur(firstNameInput);
+    const blurred = fireEvent(
+      firstNameInput,
+      new CustomEvent('_blur', {
+        detail: { name: 'firstName', value: 'firstName' },
+      })
+    );
     expect(blurred).toBe(true);
   });
 

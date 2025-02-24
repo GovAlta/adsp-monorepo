@@ -10,6 +10,7 @@ import { CategorizationStepperLayoutRendererProps } from './types';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
 import { CategorizationElement } from './context/types';
 import { BackButton } from './BackButton';
+import { FormStepperPageReviewer } from './PageStepperReviewControl';
 
 export interface FormPageOptionProps {
   nextButtonLabel?: string;
@@ -37,7 +38,7 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
 
   const enumerators = useContext(JsonFormContext);
   const formStepperCtx = useContext(JsonFormsStepperContext);
-  const { validatePage, goToPage } = formStepperCtx as JsonFormsStepperContextProps;
+  const { validatePage, goToPage, toggleShowReviewLink } = formStepperCtx as JsonFormsStepperContextProps;
 
   const { categories, isOnReview, isValid, activeId } = (
     formStepperCtx as JsonFormsStepperContextProps
@@ -69,7 +70,7 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
         <div id={`${path || `goa`}-form-pages`}>
           <PageBorder>
             {categories?.map((category, index) => {
-              const props: StepProps = {
+              const categoryProps: StepProps = {
                 category: category.uischema as CategorizationElement,
                 categoryIndex: category.id,
                 visible: category?.visible as boolean,
@@ -93,10 +94,10 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
                       <h3>
                         Step {index + 1} of {categories.length}
                       </h3>
-                      <RenderStepElements {...props} />
+                      <RenderStepElements {...categoryProps} />
                     </PageRenderPadding>
                     <PageRenderPadding>
-                      {index !== categories.length - 1 ? (
+                      <GoAButtonGroup alignment="start">
                         <GoAButton
                           type="submit"
                           onClick={() => goToPage(activeId + 1)}
@@ -105,23 +106,37 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
                         >
                           Save and continue
                         </GoAButton>
-                      ) : (
-                        <GoAButtonGroup alignment="end">
+                        {category.showReviewPageLink && (
                           <GoAButton
-                            type={'primary'}
-                            onClick={handleSubmit}
-                            disabled={!isValid}
-                            testId="pages-submit-btn"
+                            type="tertiary"
+                            onClick={() => {
+                              toggleShowReviewLink(activeId);
+                              goToPage(categories.length);
+                            }}
+                            testId="pages-to-review-page-btn"
                           >
-                            Submit
+                            Back to application overview
                           </GoAButton>
-                        </GoAButtonGroup>
-                      )}
+                        )}
+                      </GoAButtonGroup>
                     </PageRenderPadding>
                   </div>
                 );
               }
             })}
+
+            {isOnReview && (
+              <div data-testid="stepper-pages-review-page">
+                <FormStepperPageReviewer {...{ ...props, navigationFunc: goToPage }} />
+                <PageRenderPadding>
+                  <GoAButtonGroup alignment="end">
+                    <GoAButton type={'primary'} onClick={handleSubmit} disabled={!isValid} testId="pages-submit-btn">
+                      Submit
+                    </GoAButton>
+                  </GoAButtonGroup>
+                </PageRenderPadding>
+              </div>
+            )}
           </PageBorder>
         </div>
       </Visible>
