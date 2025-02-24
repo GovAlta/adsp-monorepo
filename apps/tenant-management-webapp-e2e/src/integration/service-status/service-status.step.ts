@@ -51,17 +51,17 @@ When(
     statusObj.noticeModalDescField().shadow().find('textarea').clear({ force: true }).type(desc, { force: true });
     // Select Application
     if (app == 'All') {
-      statusObj.noticeModalAllApplicationsCheckbox().shadow().find('.goa-checkbox-container').click();
+      statusObj.noticeModalAllApplicationsCheckbox().shadow().find('[class^="container"]').click();
     } else {
       // Uncheck All applications checkbox if checked
       statusObj
         .noticeModalAllApplicationsCheckbox()
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (classAttr?.includes('-selected')) {
-            statusObj.noticeModalAllApplicationsCheckbox().shadow().find('.goa-checkbox-container').click();
+            statusObj.noticeModalAllApplicationsCheckbox().shadow().find('[class^="container"]').click();
           }
         });
       statusObj.noticeModalApplicationDropdown().shadow().find('goa-popover').find('input').click({ force: true });
@@ -662,7 +662,7 @@ When('the user {string} Monitor only checkbox for {string}', function (checkboxO
   statusObj
     .applicationCardMonitorOnlyCheckbox(applicationName)
     .shadow()
-    .find('.goa-checkbox-container')
+    .find('[class^="container"]')
     .then((checkbox) => {
       switch (checkboxOperation) {
         case 'selects':
@@ -670,7 +670,7 @@ When('the user {string} Monitor only checkbox for {string}', function (checkboxO
             statusObj
               .applicationCardMonitorOnlyCheckbox(applicationName)
               .shadow()
-              .find('.goa-checkbox-container')
+              .find('[class^="container"]')
               .scrollIntoView()
               .click({ force: true });
           }
@@ -680,7 +680,7 @@ When('the user {string} Monitor only checkbox for {string}', function (checkboxO
             statusObj
               .applicationCardMonitorOnlyCheckbox(applicationName)
               .shadow()
-              .find('.goa-checkbox-container')
+              .find('[class^="container"]')
               .scrollIntoView()
               .click({ force: true });
           }

@@ -16,7 +16,7 @@ class feedbackPage {
   }
 
   feedbackSitesRegisterSiteButton() {
-    return cy.xpath('//*[@data-testid="feedback-sites-tab"]//goa-button[@data-testid="add-site"]');
+    return cy.xpath('//*[@data-testid="feedback-sites-tab"]//goa-button[@testid="add-site"]');
   }
 
   feedbackSitesSiteModalTitle() {
@@ -24,7 +24,7 @@ class feedbackPage {
   }
 
   feedbackSitesSiteModalAnonymousCheckbox() {
-    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-checkbox[@data-testid="anonymous-feedback"]');
+    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-checkbox[@testid="anonymous-feedback"]');
   }
 
   feedbackSitesRegisterSiteModalHintText(hintText) {
@@ -32,7 +32,7 @@ class feedbackPage {
   }
 
   feedbackSitesSiteModalSiteUrl() {
-    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-input[@data-testid="feedback-url"]');
+    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-input[@testid="feedback-url"]');
   }
 
   feedbackSitesSiteModalSiteUrlFormItem() {
@@ -40,15 +40,15 @@ class feedbackPage {
   }
 
   feedbackSitesRegisterSiteModalRegisterBtn() {
-    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-button[@data-testid="site-register"]');
+    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-button[@testid="site-register"]');
   }
 
   feedbackSitesEditRegisteredSiteModalSaveBtn() {
-    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-button[@data-testid="site-edit"]');
+    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-button[@testid="site-edit"]');
   }
 
   feedbackSitesSiteModalCancelBtn() {
-    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-button[@data-testid="site-cancel"]');
+    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-button[@testid="site-cancel"]');
   }
 
   feedbackSitesTableBody() {
@@ -172,11 +172,11 @@ class feedbackPage {
   }
 
   feedbackFeedbackSitesDropdown() {
-    return cy.xpath('//goa-dropdown[@data-testid="sites-dropdown"]');
+    return cy.xpath('//goa-dropdown[@testid="sites-dropdown"]');
   }
 
   feedbackFeedbackSitesDropdownItems() {
-    return cy.xpath('//goa-dropdown[@data-testid="sites-dropdown"]/goa-dropdown-item');
+    return cy.xpath('//goa-dropdown[@testid="sites-dropdown"]/goa-dropdown-item');
   }
 
   feedbackSitesSiteURLs() {

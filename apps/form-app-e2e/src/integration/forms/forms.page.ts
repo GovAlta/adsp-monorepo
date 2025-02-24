@@ -28,7 +28,7 @@ class FormsPage {
   }
 
   formNextButton() {
-    return cy.xpath('//goa-button[@data-testid="next-button"]');
+    return cy.xpath('//goa-button[@testid="next-button"]');
   }
 
   formCheckbox(label) {
@@ -36,11 +36,11 @@ class FormsPage {
   }
 
   formSubmitButton() {
-    return cy.xpath('//goa-button[@data-testid="stepper-submit-btn"]');
+    return cy.xpath('//goa-button[@testid="stepper-submit-btn"]');
   }
 
   formListWithDetailButton(label) {
-    return cy.xpath(`//goa-button[contains(@data-testid, "object-array-toolbar") and text()="${label}"]`);
+    return cy.xpath(`//goa-button[contains(@testid, "object-array-toolbar") and text()="${label}"]`);
   }
 
   formListWithDetailDependantTextField(label) {

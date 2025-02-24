@@ -29,13 +29,13 @@ class eventsPage {
 
   showDetailsIcon(namespace, eventName) {
     return cy.xpath(
-      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td//*[@data-testid="toggle-details-visibility" and @icon="eye"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td//*[@testid="toggle-details-visibility" and @icon="eye"]`
     );
   }
 
   hideDetailsIcon(namespace, eventName) {
     return cy.xpath(
-      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td//*[@data-testid="toggle-details-visibility" and @icon="eye-off"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td//*[@testid="toggle-details-visibility" and @icon="eye-off"]`
     );
   }
 
@@ -46,72 +46,72 @@ class eventsPage {
   }
 
   addDefinitionButton() {
-    return cy.get('[data-testid="add-definition"]');
+    return cy.get('[testid="add-definition"]');
   }
 
   definitionModal() {
-    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]');
   }
 
   definitionModalTitle() {
-    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]//*[@slot="heading"]');
   }
 
   definitionModalNamespaceFormItem() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-input[@data-testid="form-namespace"]/parent::goa-form-item');
+    return cy.xpath('//goa-modal[@open="true"]//goa-input[@testid="form-namespace"]/parent::goa-form-item');
   }
 
   definitionModalNamespaceField() {
-    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@data-testid="form-namespace"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]//*[@testid="form-namespace"]');
   }
 
   definitionModalNameFormItem() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-input[@data-testid="form-name"]/parent::goa-form-item');
+    return cy.xpath('//goa-modal[@open="true"]//goa-input[@testid="form-name"]/parent::goa-form-item');
   }
 
   definitionModalNameField() {
-    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@data-testid="form-name"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]//*[@testid="form-name"]');
   }
 
   definitionModalDescriptionField() {
-    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@data-testid="form-description"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]//*[@testid="form-description"]');
   }
 
   definitionModalPayloadSchema() {
     return cy.xpath(
-      '//*[@data-testid="definition-form" and @open="true"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
+      '//*[@testid="definition-form" and @open="true"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
     );
   }
 
   definitionModalSaveButton() {
-    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@data-testid="form-save"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]//*[@testid="form-save"]');
   }
 
   definitionModalCancelButton() {
-    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@data-testid="form-cancel"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]//*[@testid="form-cancel"]');
   }
 
   editDefinitionButton(namespace, eventName, eventDesc) {
     return cy.xpath(
-      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[@data-testid="description" and contains(text(), "${eventDesc}")]/following-sibling::td//*[@data-testid="edit-details"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[@data-testid="description" and contains(text(), "${eventDesc}")]/following-sibling::td//*[@testid="edit-details"]`
     );
   }
 
   editDefinitionButtonWithNamespaceAndName(namespace, eventName) {
     return cy.xpath(
-      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[@data-testid="description"]/following-sibling::td//*[@data-testid="edit-details"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[@data-testid="description"]/following-sibling::td//*[@testid="edit-details"]`
     );
   }
 
   deleteDefinitionButton(namespace, eventName, eventDesc) {
     return cy.xpath(
-      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[@data-testid="description" and contains(text(), "${eventDesc}")]/following-sibling::td//*[@data-testid="delete-details"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[@data-testid="description" and contains(text(), "${eventDesc}")]/following-sibling::td//*[@testid="delete-details"]`
     );
   }
 
   deleteDefinitionButtonWithNamespaceAndName(namespace, eventName) {
     return cy.xpath(
-      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[@data-testid="description"]/following-sibling::td//*[@data-testid="delete-details"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[@data-testid="description"]/following-sibling::td//*[@testid="delete-details"]`
     );
   }
 
@@ -121,7 +121,7 @@ class eventsPage {
 
   streamToggleButton(streamName) {
     return cy.xpath(
-      `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/following-sibling::td//*[@data-testid="toggle-stream-visibility"]`
+      `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/following-sibling::td//*[@testid="toggle-stream-visibility"]`
     );
   }
 
@@ -132,7 +132,7 @@ class eventsPage {
   }
 
   addStreamBtn() {
-    return cy.get('[data-testid="add-stream"]');
+    return cy.get('[testid="add-stream"]');
   }
 
   streamModal() {
@@ -140,34 +140,34 @@ class eventsPage {
   }
 
   streamModalTitle() {
-    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="stream-form" and @open="true"]//*[@slot="heading"]');
   }
 
   streamModalNameInput() {
-    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]//*[@data-testid="stream-name"]');
+    return cy.xpath('//*[@testid="stream-form" and @open="true"]//*[@testid="stream-name"]');
   }
 
   streamModalDescriptionInput() {
-    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]//*[@data-testid="stream-description"]');
+    return cy.xpath('//*[@testid="stream-form" and @open="true"]//*[@testid="stream-description"]');
   }
 
   streamModalSaveButton() {
-    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]//*[@data-testid="form-save"]');
+    return cy.xpath('//*[@testid="stream-form" and @open="true"]//*[@testid="form-save"]');
   }
 
   streamModalEventDropdown() {
-    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]//*[@data-testid="streamEvents-dropdown"]');
+    return cy.xpath('//*[@testid="stream-form" and @open="true"]//*[@data-testid="streamEvents-dropdown"]');
   }
 
   streamModalEventDropdownItem(text) {
     return cy.xpath(
-      `//*[@data-testid="stream-form" and @open="true"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
+      `//*[@testid="stream-form" and @open="true"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
     );
   }
 
   streamModalEventDropdownItems() {
     return cy.xpath(
-      '//*[@data-testid="stream-form" and @open="true"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//li'
+      '//*[@testid="stream-form" and @open="true"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//li'
     );
   }
 
@@ -182,25 +182,21 @@ class eventsPage {
   }
 
   streamModalRolesTables() {
-    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]//goa-table');
+    return cy.xpath('//*[@testid="stream-form" and @open="true"]//goa-table');
   }
 
   streamModalClientRolesTable(clientName) {
     return cy.xpath(
-      `//*[@data-testid="stream-form" and @open="true"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table`
+      `//*[@testid="stream-form" and @open="true"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table`
     );
   }
 
   streamModalRolesTable() {
-    return cy.xpath(
-      `//*[@data-testid="stream-form" and @open="true"]//h4[text()="autotest"]/following-sibling::goa-table`
-    );
+    return cy.xpath(`//*[@testid="stream-form" and @open="true"]//h4[text()="autotest"]/following-sibling::goa-table`);
   }
 
   streamModalRolesCheckboxes() {
-    return cy.xpath(
-      `//*[@data-testid="stream-form" and @open="true"]//goa-checkbox[contains(@name, "auto-test-role1")]`
-    );
+    return cy.xpath(`//*[@testid="stream-form" and @open="true"]//goa-checkbox[contains(@name, "auto-test-role1")]`);
   }
 
   streamNameList() {
@@ -213,19 +209,19 @@ class eventsPage {
 
   streamDetailsEyeIcon(name) {
     return cy.xpath(
-      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="toggle-stream-visibility" and @icon="eye"]`
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@testid="toggle-stream-visibility" and @icon="eye"]`
     );
   }
 
   streamDetailsEyeOffIcon(name) {
     return cy.xpath(
-      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="toggle-stream-visibility" and @icon="eye-off"]`
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@testid="toggle-stream-visibility" and @icon="eye-off"]`
     );
   }
 
   streamEditBtn(name) {
     return cy.xpath(
-      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="edit-stream"]`
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@testid="edit-stream"]`
     );
   }
 
@@ -240,9 +236,7 @@ class eventsPage {
   }
 
   streamModalPublicCheckbox() {
-    return cy.xpath(
-      '//*[@data-testid="stream-form" and @open="true"]//goa-checkbox[@name="stream-anonymousRead-checkbox"]'
-    );
+    return cy.xpath('//*[@testid="stream-form" and @open="true"]//goa-checkbox[@name="stream-anonymousRead-checkbox"]');
   }
 }
 

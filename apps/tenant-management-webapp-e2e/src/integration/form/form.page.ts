@@ -4,11 +4,11 @@ class FormPage {
   }
 
   addDefinitionModalTitle() {
-    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]//*[@slot="heading"]');
   }
 
   addDefinitionModalCancelButton() {
-    return cy.get('[data-testid="add-edit-form-cancel"]');
+    return cy.get('[testid="add-edit-form-cancel"]');
   }
 
   definitionTable() {
@@ -16,11 +16,11 @@ class FormPage {
   }
 
   addDefinitionNameTextField() {
-    return cy.xpath('//goa-form-item[@label="Name"]/goa-input[@data-testid="form-definition-name"]');
+    return cy.xpath('//goa-form-item[@label="Name"]/goa-input[@testid="form-definition-name"]');
   }
 
   addDefinitionDescriptionField() {
-    return cy.xpath('//goa-form-item[@label="Description"]//goa-textarea[@data-testid="form-definition-description"]');
+    return cy.xpath('//goa-form-item[@label="Description"]//goa-textarea[@testid="form-definition-description"]');
   }
 
   nameFormItem() {
@@ -40,15 +40,15 @@ class FormPage {
   }
 
   editorSaveButtonEnabled() {
-    return cy.xpath('//*[@data-testid="definition-form-save" and @disabled="false"]');
+    return cy.xpath('//*[@testid="definition-form-save" and @disabled="false"]');
   }
 
   editorSaveButton() {
-    return cy.xpath('//*[@data-testid="definition-form-save"]');
+    return cy.xpath('//*[@testid="definition-form-save"]');
   }
 
   editorBackButton() {
-    return cy.xpath('//*[@data-testid="form-editor-cancel" and @disabled="false"]');
+    return cy.xpath('//*[@testid="form-editor-cancel" and @disabled="false"]');
   }
 
   editorCheckboxesTables() {
@@ -71,13 +71,13 @@ class FormPage {
 
   definitionEditButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="form-definitions-table"]//*[contains(@data-testid, "form-definition-edit")])[${rowNumber}]`
+      `(//table[@data-testid="form-definitions-table"]//*[contains(@testid, "form-definition-edit")])[${rowNumber}]`
     );
   }
 
   definitionDeleteButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="form-definitions-table"]//*[contains(@data-testid, "form-definition-delete")])[${rowNumber}]`
+      `(//table[@data-testid="form-definitions-table"]//*[contains(@testid, "form-definition-delete")])[${rowNumber}]`
     );
   }
 
@@ -90,23 +90,23 @@ class FormPage {
   }
 
   definitionEditorEditDefinitionModal() {
-    return cy.xpath('//goa-modal[@open="true" and @data-testid="definition-form"]');
+    return cy.xpath('//goa-modal[@open="true" and @testid="definition-form"]');
   }
 
   definitionEditorEditDefinitionModalTitle() {
-    return cy.xpath('//goa-modal[@open="true" and @data-testid="definition-form"]/*[@slot="heading"]');
+    return cy.xpath('//goa-modal[@open="true" and @testid="definition-form"]/*[@slot="heading"]');
   }
 
   definitionEditorEditDefinitionModalNameInput() {
-    return cy.xpath('//goa-input[@data-testid="form-definition-name"]');
+    return cy.xpath('//goa-input[@testid="form-definition-name"]');
   }
 
   definitionEditorEditDefinitionModalDescriptionField() {
-    return cy.xpath('//goa-textarea[@data-testid="form-definition-description"]');
+    return cy.xpath('//goa-textarea[@testid="form-definition-description"]');
   }
 
   definitionEditorEditDefinitionModalSaveButton() {
-    return cy.xpath('//goa-modal[@open="true" and @data-testid="definition-form"]//goa-button[text()="Save"]');
+    return cy.xpath('//goa-modal[@open="true" and @testid="definition-form"]//goa-button[text()="Save"]');
   }
 
   definitionEditorRolesTables() {
@@ -118,17 +118,17 @@ class FormPage {
   }
 
   definitionEditorSubmissionConfigSubmissionRecordCheckbox() {
-    return cy.xpath('//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]');
+    return cy.xpath('//*[@data-testid="lifecycle"]//goa-checkbox[@testid="submission-records"]');
   }
 
   definitionEditorSubmissionConfigSubmissionRecordCheckboxInfoCircle() {
     return cy.xpath(
-      '//*[@data-testid="lifecycle"]//goa-checkbox[@data-testid="submission-records"]/parent::*/following-sibling::goa-tooltip'
+      '//*[@data-testid="lifecycle"]//goa-checkbox[@testid="submission-records"]/parent::*/following-sibling::goa-tooltip'
     );
   }
 
   definitionEditorSubmissionConfigAddStateBtn() {
-    return cy.xpath('//goa-button[@data-testid="Add state"]');
+    return cy.xpath('//goa-button[@testid="Add state"]');
   }
 
   definitionEditorSubmissionConfigDispositionStatesInfoCircle() {
@@ -154,11 +154,11 @@ class FormPage {
   }
 
   definitionEditorSubmissionConfigDispositionStateModalSaveBtn() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-button[@data-testid="disposition-state-save"]');
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[@testid="disposition-state-save"]');
   }
 
   definitionEditorSubmissionConfigEditDispositionStateModalCancelBtn() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-button[@data-testid="disposition-state-cancel-edit"]');
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[@testid="disposition-state-cancel-edit"]');
   }
 
   definitionEditorSubmissionConfigDispositionStateTableBody() {
@@ -201,7 +201,7 @@ class FormPage {
   }
 
   definitionsLoadMoreButton() {
-    return cy.xpath('//goa-button[@data-testid="form-event-load-more-btn"]');
+    return cy.xpath('//goa-button[@testid="form-event-load-more-btn"]');
   }
 
   definitionsPage() {
@@ -239,7 +239,7 @@ class FormPage {
   }
 
   formPreviewNextButton() {
-    return cy.xpath('//goa-button[@data-testid="next-button"]');
+    return cy.xpath('//goa-button[@testid="next-button"]');
   }
 
   formPreviewCheckbox(label) {
@@ -247,11 +247,11 @@ class FormPage {
   }
 
   formPreviewSubmitButton() {
-    return cy.xpath('//goa-button[@data-testid="stepper-submit-btn"]');
+    return cy.xpath('//goa-button[@testid="stepper-submit-btn"]');
   }
 
   formPreviewListWithDetailButton(label) {
-    return cy.xpath(`//goa-button[contains(@data-testid, "object-array-toolbar") and text()="${label}"]`);
+    return cy.xpath(`//goa-button[contains(@testid, "object-array-toolbar") and text()="${label}"]`);
   }
 
   formPreviewListWithDetailDependantTextField(label) {
