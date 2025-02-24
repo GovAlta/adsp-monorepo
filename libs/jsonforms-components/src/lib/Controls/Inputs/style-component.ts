@@ -19,3 +19,8 @@ export const RequiredTextLabel = styled.label`
   line-height: var(--goa-line-height-1);
   font-style: normal;
 `;
+
+//Check and unchecked are different heights otherwise
+export const CheckboxWrapper = styled.div`
+  height: 28px;
+`
