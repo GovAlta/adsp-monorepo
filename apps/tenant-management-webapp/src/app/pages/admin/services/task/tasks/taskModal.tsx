@@ -159,7 +159,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
                 <div> {descErrMessage} </div>
               ) : (
                 <ErrorMsg>
-                  <GoAIcon type="warning" size="small" theme="filled" />
+                  <GoAIcon type="warning" size="small" theme="filled" ariaLabel="warning" />
                   {`  ${errors?.['description']}`}
                 </ErrorMsg>
               )}
