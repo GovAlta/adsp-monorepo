@@ -96,6 +96,7 @@ When('the user removes phone number value in contact information', function () {
 When('the user selects {string} as the preferred channel in contact information', function (selection) {
   subscriptionManagementObj
     .preferredNotificationChannelGroup()
+    .find('goa-radio-item')
     .shadow()
     .find('input[value="' + selection + '"]')
     .click({ force: true });
@@ -137,6 +138,7 @@ When(
     }
     subscriptionManagementObj
       .preferredNotificationChannelGroup()
+      .find('goa-radio-item')
       .shadow()
       .find('input[value="' + channel + '"]')
       .click({ force: true });

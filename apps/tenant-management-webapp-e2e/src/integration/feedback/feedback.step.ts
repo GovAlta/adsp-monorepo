@@ -73,7 +73,7 @@ Then('the user views the checkbox of Allow anonymous feedback is unchecked', fun
   feedbackObj
     .feedbackSitesSiteModalAnonymousCheckbox()
     .shadow()
-    .find('.goa-checkbox-container')
+    .find('[class^="container"]')
     .invoke('attr', 'class')
     .should('not.contain', 'selected');
 });
@@ -86,7 +86,7 @@ When('the user enters {string}, {string} in Register site modal', function (site
   feedbackObj
     .feedbackSitesSiteModalAnonymousCheckbox()
     .shadow()
-    .find('.goa-checkbox-container')
+    .find('[class^="container"]')
     .invoke('attr', 'class')
     .then((classAttVal) => {
       if (classAttVal == undefined) {
@@ -100,7 +100,7 @@ When('the user enters {string}, {string} in Register site modal', function (site
               feedbackObj
                 .feedbackSitesSiteModalAnonymousCheckbox()
                 .shadow()
-                .find('.goa-checkbox-container')
+                .find('[class^="container"]')
                 .click({ force: true });
               cy.wait(1000);
             }
@@ -110,7 +110,7 @@ When('the user enters {string}, {string} in Register site modal', function (site
               feedbackObj
                 .feedbackSitesSiteModalAnonymousCheckbox()
                 .shadow()
-                .find('.goa-checkbox-container')
+                .find('[class^="container"]')
                 .click({ force: true });
               cy.wait(1000);
             } else {
@@ -236,7 +236,7 @@ When(
     feedbackObj
       .feedbackSitesSiteModalAnonymousCheckbox()
       .shadow()
-      .find('.goa-checkbox-container')
+      .find('[class^="container"]')
       .invoke('attr', 'class')
       .then((classAttVal) => {
         if (classAttVal == undefined) {
@@ -250,7 +250,7 @@ When(
                 feedbackObj
                   .feedbackSitesSiteModalAnonymousCheckbox()
                   .shadow()
-                  .find('.goa-checkbox-container')
+                  .find('[class^="container"]')
                   .click({ force: true });
                 cy.wait(1000);
               }
@@ -260,7 +260,7 @@ When(
                 feedbackObj
                   .feedbackSitesSiteModalAnonymousCheckbox()
                   .shadow()
-                  .find('.goa-checkbox-container')
+                  .find('[class^="container"]')
                   .click({ force: true });
                 cy.wait(1000);
               } else {

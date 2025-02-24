@@ -1,5 +1,4 @@
-import { addHook } from 'dompurify';
-import { sanitize as docPurified } from 'dompurify';
+import dompurify from 'dompurify';
 import * as xss from 'xss';
 
 const options = {
@@ -69,8 +68,8 @@ const options = {
 }; // Custom rules
 const xssFilter = new xss.FilterXSS(options);
 
-export { sanitize as sanitizeHtml } from 'dompurify';
-addHook('afterSanitizeAttributes', function (node) {
+export const sanitizeHtml = dompurify.sanitize;
+dompurify.addHook('afterSanitizeAttributes', function (node) {
   // set all elements owning target to target=_blank
   if ('target' in node) {
     node.setAttribute('target', '_blank');
@@ -90,7 +89,7 @@ export function hasXSS(html) {
 }
 
 export const htmlSanitized = (html) => {
-  return docPurified(html, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'] });
+  return dompurify.sanitize(html, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'] });
 };
 
 export const XSSErrorMessage =

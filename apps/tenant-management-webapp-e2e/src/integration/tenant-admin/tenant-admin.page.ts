@@ -12,7 +12,7 @@ class TenantAdminPage {
   }
 
   keycloakLinkOpenIcon() {
-    return cy.xpath('//a[contains(text(), "Keycloak admin")]/goa-icon-button[@data-testid="open-icon"]');
+    return cy.xpath('//a[contains(text(), "Keycloak admin")]/goa-icon-button[@testid="open-icon"]');
   }
 
   userCount() {
@@ -122,7 +122,7 @@ class TenantAdminPage {
   }
 
   eventToggleDetailsIcons() {
-    return cy.xpath('//*[@data-testid="toggle-details-visibility"]');
+    return cy.xpath('//*[@testid="toggle-details-visibility"]');
   }
 
   eventDetails() {

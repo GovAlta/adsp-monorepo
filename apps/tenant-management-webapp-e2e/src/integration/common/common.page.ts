@@ -34,23 +34,19 @@ class Common {
   }
 
   deleteConfirmationModalTitle() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
   }
 
   deleteConfirmationModalContent() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]');
   }
 
   deleteConfirmationModalDeleteBtn() {
-    return cy.xpath(
-      '//*[@data-testid="delete-confirmation" and @open="true"]//goa-button[@data-testid="delete-confirm"]'
-    );
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//goa-button[@testid="delete-confirm"]');
   }
 
   deleteConfirmationModalCancelBtn() {
-    return cy.xpath(
-      '//*[@data-testid="delete-confirmation" and @open="true"]//goa-button[@data-testid="delete-cancel"]'
-    );
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//goa-button[@testid="delete-cancel"]');
   }
 
   seeTheCodeLink() {
@@ -58,7 +54,7 @@ class Common {
   }
 
   seeTheCodeIcon() {
-    return cy.xpath('//*[contains(text(), "Helpful links")]/following-sibling::*//*[@data-testid="open-icon"]');
+    return cy.xpath('//*[contains(text(), "Helpful links")]/following-sibling::*//*[@testid="open-icon"]');
   }
 
   supportLink(link) {
@@ -66,7 +62,7 @@ class Common {
   }
 
   getSupportIcon() {
-    return cy.xpath('//h3[text()="Support"]/following-sibling::*//goa-icon-button[@data-testid="mail-icon"]');
+    return cy.xpath('//h3[text()="Support"]/following-sibling::*//goa-icon-button[@testid="mail-icon"]');
   }
 
   serviceOverviewContent(serviceOverviewTitle) {
@@ -78,15 +74,15 @@ class Common {
   }
 
   dontSaveButtonUnsavedChangesModal() {
-    return cy.xpath('//goa-button[@data-testid="form-dont-save"]');
+    return cy.xpath('//goa-button[@testid="form-dont-save"]');
   }
 
   saveButtonUnsavedChangesModal() {
-    return cy.xpath('//goa-button[@data-testid="form-agree-save"]');
+    return cy.xpath('//goa-button[@testid="form-agree-save"]');
   }
 
   cancelButtonUnsavedChangesModal() {
-    return cy.xpath('//goa-button[@data-testid="form-cancel-modal"]');
+    return cy.xpath('//goa-button[@testid="form-cancel-modal"]');
   }
 
   loadMoreButton() {

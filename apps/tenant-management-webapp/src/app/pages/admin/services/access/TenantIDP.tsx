@@ -135,6 +135,7 @@ export const TenantIdp = (): JSX.Element => {
                 variant="color"
                 size="small"
                 icon="copy"
+                title="copy button"
                 onClick={copyUserIdHandler}
               />
             )}

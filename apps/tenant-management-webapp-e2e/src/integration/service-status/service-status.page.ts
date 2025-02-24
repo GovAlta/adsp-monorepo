@@ -12,11 +12,11 @@ class StatusServicePage {
   }
 
   addNoticeButton() {
-    return cy.get('[data-testid="add-notice"]');
+    return cy.get('[testid="add-notice"]');
   }
 
   noticeModalTitle() {
-    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="notice-modal" and @open="true"]//*[@slot="heading"]');
   }
 
   noticeModalDescField() {
@@ -38,9 +38,7 @@ class StatusServicePage {
   }
 
   noticeModalApplicationDropdownItems() {
-    return cy.xpath(
-      '//goa-modal[@open="true"]//goa-dropdown[@data-testid="application-dropdown-list"]//goa-dropdown-item'
-    );
+    return cy.xpath('//goa-modal[@open="true"]//goa-dropdown[@testid="application-dropdown-list"]//goa-dropdown-item');
   }
 
   noticeModalStartTimeField() {
@@ -92,7 +90,7 @@ class StatusServicePage {
   }
 
   noticeCardGearButtons() {
-    return cy.get('[data-testid="notice-card-gear-button"]');
+    return cy.get('[testid="notice-card-gear-button"]');
   }
 
   noticeCardEditMenu(index) {
@@ -211,15 +209,15 @@ class StatusServicePage {
 
   editContactInformationEmail() {
     // return cy.get('[data-testid="form-email"]');
-    return cy.xpath('//goa-input[@data-testid="form-email"]');
+    return cy.xpath('//goa-input[@testid="form-email"]');
   }
 
   editContactInformationEmailSaveBtn() {
-    return cy.get('[data-testid="form-save"]');
+    return cy.get('[testid="form-save"]');
   }
 
   editContactInformationEmailCancelBtn() {
-    return cy.get('[data-testid="form-cancel"]');
+    return cy.get('[testid="form-cancel"]');
   }
 
   contactInformationEmailDisplay() {

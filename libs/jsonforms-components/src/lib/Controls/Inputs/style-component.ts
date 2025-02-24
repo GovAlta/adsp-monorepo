@@ -35,3 +35,7 @@ export const PageReviewValueCol = styled.td`
 export const PageReviewActionCol = styled.td`
   width: 10%;
 `;
+//Check and unchecked are different heights otherwise
+export const CheckboxWrapper = styled.div`
+  height: 28px;
+`

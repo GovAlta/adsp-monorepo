@@ -21,19 +21,17 @@ class valuePage {
 
   valueDefinitionsDefinitionModalNamespace() {
     return cy.xpath(
-      '//goa-modal[@data-testid="definition-value" and @open="true"]//goa-input[@data-testid="value-namespace"]'
+      '//goa-modal[@data-testid="definition-value" and @open="true"]//goa-input[@testid="value-namespace"]'
     );
   }
 
   valueDefinitionsDefinitionModalName() {
-    return cy.xpath(
-      '//goa-modal[@data-testid="definition-value" and @open="true"]//goa-input[@data-testid="value-name"]'
-    );
+    return cy.xpath('//goa-modal[@data-testid="definition-value" and @open="true"]//goa-input[@testid="value-name"]');
   }
 
   valueDefinitionsDefinitionModalDescription() {
     return cy.xpath(
-      '//goa-modal[@data-testid="definition-value" and @open="true"]//goa-textarea[@data-testid="value-description"]'
+      '//goa-modal[@data-testid="definition-value" and @open="true"]//goa-textarea[@testid="value-description"]'
     );
   }
 
@@ -63,19 +61,19 @@ class valuePage {
 
   valueDefinitionsDefinitionDeleteBtn(namespace, name, desc) {
     return cy.xpath(
-      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@data-testid="delete-details"]`
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@testid="delete-details"]`
     );
   }
 
   valueDefinitionsDefinitionEditBtn(namespace, name, desc) {
     return cy.xpath(
-      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@data-testid="edit-details"]`
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@testid="edit-details"]`
     );
   }
 
   valueDefinitionsDefinitionEyeBtn(namespace, name, desc) {
     return cy.xpath(
-      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@data-testid="toggle-details-visibility"]`
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@testid="toggle-details-visibility"]`
     );
   }
 

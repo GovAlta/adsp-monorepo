@@ -79,7 +79,7 @@ class WelcomePage {
   }
 
   chatAppCardLearnMoreBtn() {
-    return cy.xpath('//goa-button[@data-testid="redirect-button-chat-service"]');
+    return cy.xpath('//goa-button[@testid="redirect-button-chat-service"]');
   }
 }
 

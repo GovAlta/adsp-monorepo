@@ -22,11 +22,11 @@ class FileServicePage {
   }
 
   addFileTypeButton() {
-    return cy.get('[data-testid="add-file-type-btn"]');
+    return cy.get('[testid="add-file-type-btn"]');
   }
 
   addFileTypeModalTitle() {
-    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="file-type-modal" and @open="true"]//*[@slot="heading"]');
   }
 
   addFileTypeModalNameField() {
@@ -120,9 +120,7 @@ class FileServicePage {
   }
 
   fileTypeDeleteModalDeleteButton() {
-    return cy.xpath(
-      '//*[@data-testid="delete-confirmation" and @open="true"]//goa-button[@data-testid="delete-confirm"]'
-    );
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//goa-button[@testid="delete-confirm"]');
   }
 
   fileTypeDeleteModalFileTypeName() {
@@ -134,24 +132,24 @@ class FileServicePage {
   }
 
   fileTypeDeleteModalTitle() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
   }
 
   fileTypeDeleteModalContent() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//div[3]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//div[3]');
   }
 
   fileTypeInUseModalTitle() {
-    return cy.xpath('//*[@data-testid="file-type-delete-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="file-type-delete-modal" and @open="true"]//*[@slot="heading"]');
   }
 
   fileTypeInUseModalContent() {
-    return cy.xpath('//*[@data-testid="file-type-delete-modal" and @open="true"]//p');
+    return cy.xpath('//*[@testid="file-type-delete-modal" and @open="true"]//p');
   }
 
   fileTypeInUseModalOkayButton() {
     return cy.xpath(
-      '//*[@data-testid="file-type-delete-modal" and @open="true"]//goa-button[@data-testid="file-type-delete-modal-cancel-btn"]'
+      '//*[@testid="file-type-delete-modal" and @open="true"]//goa-button[@testid="file-type-delete-modal-cancel-btn"]'
     );
   }
 
@@ -168,7 +166,7 @@ class FileServicePage {
   }
 
   fileRetentionPeriodInput() {
-    return cy.xpath('//goa-input[@data-testid="delete-in-days-input"]');
+    return cy.xpath('//goa-input[@testid="delete-in-days-input"]');
   }
 
   uploadedFilesPageTitle() {
@@ -176,7 +174,7 @@ class FileServicePage {
   }
 
   uploadedFilesFilterFileTypeDropdown() {
-    return cy.xpath('//goa-dropdown[@data-testid="file-type-name-dropdown-2"]');
+    return cy.xpath('//goa-dropdown[@testid="file-type-name-dropdown-2"]');
   }
 
   uploadedFilesSearchFileName() {
@@ -193,7 +191,7 @@ class FileServicePage {
 
   uploadedFilesDownloadButton(fileName) {
     return cy.xpath(
-      `//tbody//td[text()="${fileName}"]/following-sibling::td//goa-icon-button[@data-testid="download-icon"]`
+      `//tbody//td[text()="${fileName}"]/following-sibling::td//goa-icon-button[@testid="download-icon"]`
     );
   }
 

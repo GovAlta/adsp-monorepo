@@ -84,10 +84,10 @@ When(
         .editorCheckboxesTables()
         .find('goa-checkbox')
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .then((elements) => {
           for (let i = 0; i < elements.length; i++) {
-            if (elements[i].getAttribute('class')?.includes('--selected')) {
+            if (elements[i].getAttribute('class')?.includes('selected')) {
               elements[i].click();
             }
           }
@@ -116,7 +116,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -128,7 +128,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -159,7 +159,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -172,7 +172,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -204,7 +204,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -218,7 +218,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -384,7 +384,7 @@ Then(
       const applicantRoles = applicantRole.split(',');
       formObj
         .definitionEditorRolesTables()
-        .find('goa-checkbox[data-testid*="Applicant roles"]')
+        .find('goa-checkbox[testid*="Applicant roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
             if (appRoles[i].getAttribute('checked') == 'true') {
@@ -406,7 +406,7 @@ Then(
     } else {
       formObj
         .definitionEditorRolesTables()
-        .find('goa-checkbox[data-testid*="Applicant roles"]')
+        .find('goa-checkbox[testid*="Applicant roles"]')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
             if (appRoles[i].getAttribute('checked') == 'true') {
@@ -423,7 +423,7 @@ Then(
       const clerkRoles = clerkRole.split(',');
       formObj
         .definitionEditorRolesTables()
-        .find('goa-checkbox[data-testid*="Clerk roles"]')
+        .find('goa-checkbox[testid*="Clerk roles"]')
         .then((cRoles) => {
           for (let i = 0; i < cRoles.length; i++) {
             if (cRoles[i].getAttribute('checked') == 'true') {
@@ -445,7 +445,7 @@ Then(
     } else {
       formObj
         .definitionEditorRolesTables()
-        .find('goa-checkbox[data-testid*="Clerk roles"]')
+        .find('goa-checkbox[testid*="Clerk roles"]')
         .then((cRoles) => {
           for (let i = 0; i < cRoles.length; i++) {
             if (cRoles[i].getAttribute('checked') == 'true') {
@@ -462,7 +462,7 @@ Then(
       const assessorRoles = assessorRole.split(',');
       formObj
         .definitionEditorRolesTables()
-        .find('goa-checkbox[data-testid*="Assessor roles"]')
+        .find('goa-checkbox[testid*="Assessor roles"]')
         .then((assRoles) => {
           for (let i = 0; i < assRoles.length; i++) {
             if (assRoles[i].getAttribute('checked') == 'true') {
@@ -484,7 +484,7 @@ Then(
     } else {
       formObj
         .definitionEditorRolesTables()
-        .find('goa-checkbox[data-testid*="Assessor roles"]')
+        .find('goa-checkbox[testid*="Assessor roles"]')
         .then((assRoles) => {
           for (let i = 0; i < assRoles.length; i++) {
             if (assRoles[i].getAttribute('checked') == 'true') {
@@ -501,7 +501,7 @@ Then('the user views a checkbox of {string}', function (checkboxTitle) {
   formObj
     .definitionEditorSubmissionConfigSubmissionRecordCheckbox()
     .shadow()
-    .find('slot')
+    .find('[class*="text"]')
     .invoke('text')
     .should('contain', checkboxTitle);
 });
@@ -564,9 +564,9 @@ When('the user {string} the checkbox of Create submission records on submit', fu
       formObj
         .definitionEditorSubmissionConfigSubmissionRecordCheckbox()
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .then((checkboxElement) => {
-          if (checkboxElement[0].getAttribute('class')?.includes('--selected')) {
+          if (checkboxElement[0].getAttribute('class')?.includes('selected')) {
             cy.log('Create submission records on submit checkbox is already checked');
           } else {
             checkboxElement[0].click();
@@ -578,9 +578,9 @@ When('the user {string} the checkbox of Create submission records on submit', fu
       formObj
         .definitionEditorSubmissionConfigSubmissionRecordCheckbox()
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .then((checkboxElement) => {
-          if (checkboxElement[0].getAttribute('class')?.includes('--selected')) {
+          if (checkboxElement[0].getAttribute('class')?.includes('selected')) {
             checkboxElement[0].click();
             cy.wait(1000);
           } else {
@@ -997,7 +997,7 @@ Then(
     formObj
       .definitionsEditorApplicantRole(service, applicantRole)
       .shadow()
-      .find('.goa-checkbox-container')
+      .find('[class^="container"]')
       .invoke('attr', 'class')
       .then((classAttr) => {
         switch (checkedOrNot) {
@@ -1043,7 +1043,7 @@ When('the user {string} a checkbox labelled {string} in preview pane', function 
   formObj
     .formPreviewCheckbox(label)
     .shadow()
-    .find('.goa-checkbox-container')
+    .find('[class^="container"]')
     .invoke('attr', 'class')
     .then((classAttVal) => {
       if (classAttVal == undefined) {
@@ -1054,13 +1054,13 @@ When('the user {string} a checkbox labelled {string} in preview pane', function 
             if (classAttVal.includes('selected')) {
               cy.log('The checkbox was already checked.');
             } else {
-              formObj.formPreviewCheckbox(label).shadow().find('.goa-checkbox-container').click({ force: true });
+              formObj.formPreviewCheckbox(label).shadow().find('[class^="container"]').click({ force: true });
               cy.wait(1000);
             }
             break;
           case 'unselects':
             if (classAttVal.includes('selected')) {
-              formObj.formPreviewCheckbox(label).shadow().find('.goa-checkbox-container').click({ force: true });
+              formObj.formPreviewCheckbox(label).shadow().find('[class^="container"]').click({ force: true });
               cy.wait(1000);
             } else {
               cy.log('The checkbox was already unchecked.');
@@ -1110,7 +1110,7 @@ When(
           .shadow()
           .find('input')
           .clear()
-          .type(date, { force: true });
+          .type(date, { force: true, delay: 400 });
       });
   }
 );
@@ -1118,7 +1118,12 @@ When(
 When(
   'the user selects {string} radio button for the question of {string} in preview pane',
   function (radioLabel, question) {
-    formObj.formPreviewRadioGroup(question).shadow().find(`[value="${radioLabel}"]`).click({ force: true });
+    formObj
+      .formPreviewRadioGroup(question)
+      .find(`[value="${radioLabel}"]`)
+      .shadow()
+      .find('input')
+      .click({ force: true });
     cy.wait(1000);
   }
 );

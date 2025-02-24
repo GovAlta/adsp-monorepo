@@ -6,7 +6,7 @@ class PDFServicePage {
     return cy.xpath(`//h1[contains(text(),"${service}")]/ancestor::main//div[text()="${text}"]`);
   }
   pdfAddTemplateBtn() {
-    return cy.get('[data-testid="add-templates"]');
+    return cy.get('[testid="add-templates"]');
   }
 
   pdfAddTemplateModalHeading() {
@@ -22,11 +22,11 @@ class PDFServicePage {
   }
 
   pdfAddTemplateModalSaveBtn() {
-    return cy.get('[data-testid="form-save"]');
+    return cy.get('[testid="form-save"]');
   }
 
   pdfAddTemplateModalCancelBtn() {
-    return cy.get('[data-testid="form-cancel"]');
+    return cy.get('[testid="form-cancel"]');
   }
 
   tabTemplate() {

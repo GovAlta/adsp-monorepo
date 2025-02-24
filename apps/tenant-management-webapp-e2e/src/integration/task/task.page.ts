@@ -4,11 +4,11 @@ class TaskPage {
   }
 
   addQueueModalTitle() {
-    return cy.xpath('//*[@data-testid="add-queue-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="add-queue-modal" and @open="true"]//*[@slot="heading"]');
   }
 
   queueModalCancelButton() {
-    return cy.get('[data-testid="queue-modal-cancel"]');
+    return cy.get('[testid="queue-modal-cancel"]');
   }
 
   queueTable() {
@@ -82,7 +82,7 @@ class TaskPage {
   }
 
   tasksSelectAQueueDropdown() {
-    return cy.xpath('//goa-dropdown[@data-testid="task-select-definition-dropdown"]');
+    return cy.xpath('//goa-dropdown[@testid="task-select-definition-dropdown"]');
   }
 
   tasksTaskRecord(taskName, taskDescriptionKeyword) {
