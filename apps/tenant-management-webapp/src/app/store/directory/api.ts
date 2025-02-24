@@ -63,7 +63,7 @@ export const getTagByNameApi = async (
 };
 
 export const getAllTagsApi = async (token: string, serviceUrl: string): Promise<{ results: Tag[] }> => {
-  const { data } = await axios.get(new URL('/resource/v1/tags', serviceUrl).href, {
+  const { data } = await axios.get(new URL('/resource/v1/tags?top=50', serviceUrl).href, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
