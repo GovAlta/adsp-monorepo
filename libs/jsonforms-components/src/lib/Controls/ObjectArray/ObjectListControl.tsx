@@ -629,7 +629,9 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
 
   useEffect(() => {
     // eslint-disable-next-line
-    const updatedData = Object.fromEntries((parsedData || []).map((item, index) => [index, item]));
+    const updatedData = Array.isArray(parsedData)
+      ? Object.fromEntries(parsedData.map((item, index) => [index, item]))
+      : {};
     const count = Object.keys(updatedData).length;
     const dispatchData = { [path]: { count: count, data: updatedData } } as unknown as Categories;
     if (Object.keys(updatedData).length > 0) {
