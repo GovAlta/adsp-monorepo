@@ -234,7 +234,7 @@ export const AddEditFormDefinition = ({
                   <div> {descErrMessage} </div>
                 ) : (
                   <ErrorMsg>
-                    <GoAIcon type="warning" size="small" theme="filled" />
+                    <GoAIcon type="warning" size="small" theme="filled" title="warning" />
                     {`  ${errors?.['description']}`}
                   </ErrorMsg>
                 )}

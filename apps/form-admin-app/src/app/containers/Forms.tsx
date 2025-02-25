@@ -62,7 +62,7 @@ const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSuppo
 
   return (
     <tr key={form.urn}>
-      <td>{topic?.requiresAttention && <GoAIcon type="mail-unread" size="small" />}</td>
+      <td>{topic?.requiresAttention && <GoAIcon type="mail-unread" size="small" ariaLabel="mail-unread" />}</td>
       <td>{form.created.toFormat('LLL d, yyyy')}</td>
       <td>{form.status}</td>
       <td>

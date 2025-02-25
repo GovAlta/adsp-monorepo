@@ -34,7 +34,7 @@ const LinkCopyComponent = ({ link, text }: LinkCopyComponentProps): JSX.Element 
         const shadowRoot = goaButton?.shadowRoot;
         const icon = shadowRoot?.querySelector("[id='leading-icon']");
         if (icon) {
-          icon.setAttribute('title', 'leading icon');
+          icon.setAttribute('aria-hidden', 'true');
         }
       }, 500);
     }

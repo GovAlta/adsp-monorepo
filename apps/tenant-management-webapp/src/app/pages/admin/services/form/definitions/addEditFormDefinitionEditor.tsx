@@ -526,7 +526,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           }
                           position="top"
                         >
-                          <GoAIcon type="information-circle"></GoAIcon>
+                          <GoAIcon type="information-circle" ariaLabel="anonymous-icon"></GoAIcon>
                         </GoATooltip>
                       </FlexRow>
                       <FlexRow>
@@ -556,7 +556,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           }
                           position="top"
                         >
-                          <GoAIcon type="information-circle"></GoAIcon>
+                          <GoAIcon type="information-circle" ariaLabel="allow-multiple-icon"></GoAIcon>
                         </GoATooltip>
                       </FlexRow>
                       <FlexRow>
@@ -582,7 +582,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           }
                           position="top"
                         >
-                          <GoAIcon type="information-circle"></GoAIcon>
+                          <GoAIcon type="information-circle" ariaLabel="support-topic-icon"></GoAIcon>
                         </GoATooltip>
                       </FlexRow>
                       <FlexRow>
@@ -605,7 +605,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           }
                           position="top"
                         >
-                          <GoAIcon type="information-circle"></GoAIcon>
+                          <GoAIcon type="information-circle" ariaLabel="scheduled-icon"></GoAIcon>
                         </GoATooltip>
                       </FlexRow>
                     </div>
@@ -653,7 +653,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                         }
                         position="top"
                       >
-                        <GoAIcon type="information-circle"></GoAIcon>
+                        <GoAIcon type="information-circle" ariaLabel="generate-pdf-icon"></GoAIcon>
                       </GoATooltip>
                     </FlexRow>
                     <FlexRow>
@@ -678,7 +678,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                         }
                         position="top"
                       >
-                        <GoAIcon type="information-circle"></GoAIcon>
+                        <GoAIcon type="information-circle" ariaLabel="submission-icon"></GoAIcon>
                       </GoATooltip>
                     </FlexRow>
                     <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
@@ -693,7 +693,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                                   : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
                               }
                             >
-                              <GoAIcon type="information-circle"></GoAIcon>
+                              <GoAIcon type="information-circle" ariaLabel="queue"></GoAIcon>
                             </GoATooltip>
                           )}
                         </ToolTipAdjust>
@@ -747,7 +747,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                                 content="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
                                 position="top"
                               >
-                                <GoAIcon type="information-circle"></GoAIcon>
+                                <GoAIcon type="information-circle" ariaLabel="disposition-icon"></GoAIcon>
                               </GoATooltip>
                             ) : (
                               <FakeButton />

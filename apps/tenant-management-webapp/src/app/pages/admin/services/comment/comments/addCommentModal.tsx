@@ -97,7 +97,7 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
                 <div> {descErrMessage} </div>
               ) : (
                 <ErrorMsg>
-                  <GoAIcon type="warning" size="small" theme="filled" />
+                  <GoAIcon type="warning" size="small" theme="filled" ariaLabel="warning" />
                   {`  ${errors?.['content']}`}
                 </ErrorMsg>
               )}
