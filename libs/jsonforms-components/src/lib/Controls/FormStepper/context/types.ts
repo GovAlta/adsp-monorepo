@@ -4,6 +4,7 @@ export interface CategoryInternalState {
   isCompleted?: boolean;
   isVisited?: boolean;
   isValid?: boolean;
+  showReviewPageLink?: boolean;
   id: number;
   uischema?: CategorizationElement;
   isEnabled?: boolean;

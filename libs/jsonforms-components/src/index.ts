@@ -48,6 +48,7 @@ import {
   FullNameReviewControl,
   FullNameDobReviewControl,
   FormStepperReviewControl,
+  GoAInputBaseTableReviewControl,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -159,6 +160,47 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: GoAlVerticalLayoutTester, renderer: GoAVerticalLayout },
   { tester: GoAGroupReviewLayoutTester, renderer: GoAGroupReviewControl },
   { tester: HelpContentTester, renderer: HelpReviewContent },
+];
+
+export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
+  // controls
+  { tester: GoAEnumControlTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoAIntegerControlTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoANumberControlTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoATextControlTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoADateControlTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoADateTimeControlTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoATimeControlTester, renderer: GoAInputBaseTableReviewControl },
+  {
+    tester: GoARadioGroupControlTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  {
+    tester: GoACheckoutGroupControlTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  { tester: GoABooleanControlTester, renderer: GoAInputBaseTableReviewControl },
+
+  { tester: GoABooleanRadioControlTester, renderer: GoAInputBaseTableReviewControl },
+  {
+    tester: MultiLineTextControlTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  {
+    tester: GoAArrayControlTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  {
+    tester: GoAListWithDetailsTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  {
+    tester: GoAHorizontalLayoutTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  { tester: GoAlVerticalLayoutTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoAGroupReviewLayoutTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: HelpContentTester, renderer: GoAInputBaseTableReviewControl },
 ];
 
 export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = [
