@@ -8,24 +8,24 @@ class ScriptPage {
   }
 
   addScriptModalNameFormItem() {
-    return cy.xpath('//goa-modal[@data-testid="add-script-modal" and @open="true"]//*[@label="Name"]');
+    return cy.xpath('//goa-modal[@testid="add-script-modal" and @open="true"]//*[@label="Name"]');
   }
 
   addScriptModalNameField() {
     return cy.xpath(
-      '//goa-modal[@data-testid="add-script-modal" and @open="true"]//*[@data-testid="script-modal-name-input"]'
+      '//goa-modal[@testid="add-script-modal" and @open="true"]//*[@data-testid="script-modal-name-input"]'
     );
   }
 
   addScriptModalNameErrorMsg() {
     return cy.xpath(
-      '//goa-modal[@data-testid="add-script-modal" and @open="true"]//label[text()="Name"]/following-sibling::div[@class="error-msg"]'
+      '//goa-modal[@testid="add-script-modal" and @open="true"]//label[text()="Name"]/following-sibling::div[@class="error-msg"]'
     );
   }
 
   addScriptModalDescriptionField() {
     return cy.xpath(
-      '//goa-modal[@data-testid="add-script-modal" and @open="true"]//*[@data-testid="script-modal-description-input"]'
+      '//goa-modal[@testid="add-script-modal" and @open="true"]//*[@data-testid="script-modal-description-input"]'
     );
   }
 
