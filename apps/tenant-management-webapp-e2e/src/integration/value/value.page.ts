@@ -4,11 +4,11 @@ class valuePage {
   }
 
   valueAddDefinitionModal() {
-    return cy.xpath('//goa-modal[@data-testid="definition-value"]');
+    return cy.xpath('//goa-modal[@testid="definition-value"]');
   }
 
   valueAddDefinitionModalHeading() {
-    return cy.xpath('//goa-modal[@data-testid="definition-value" and @open="true"]/*[@slot="heading"]');
+    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]/*[@slot="heading"]');
   }
 
   valueActiveTab() {
@@ -20,35 +20,31 @@ class valuePage {
   }
 
   valueDefinitionsDefinitionModalNamespace() {
-    return cy.xpath(
-      '//goa-modal[@data-testid="definition-value" and @open="true"]//goa-input[@data-testid="value-namespace"]'
-    );
+    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]//goa-input[@testid="value-namespace"]');
   }
 
   valueDefinitionsDefinitionModalName() {
-    return cy.xpath(
-      '//goa-modal[@data-testid="definition-value" and @open="true"]//goa-input[@data-testid="value-name"]'
-    );
+    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]//goa-input[@testid="value-name"]');
   }
 
   valueDefinitionsDefinitionModalDescription() {
     return cy.xpath(
-      '//goa-modal[@data-testid="definition-value" and @open="true"]//goa-textarea[@data-testid="value-description"]'
+      '//goa-modal[@testid="definition-value" and @open="true"]//goa-textarea[@testid="value-description"]'
     );
   }
 
   valueDefinitionsDefinitionModalSchema() {
     return cy.xpath(
-      '//goa-modal[@data-testid="definition-value" and @open="true"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea'
+      '//goa-modal[@testid="definition-value" and @open="true"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea'
     );
   }
 
   valueDefinitionsDefinitionModalSaveBtn() {
-    return cy.xpath('//goa-modal[@data-testid="definition-value" and @open="true"]//goa-button[text()="Save"]');
+    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]//goa-button[text()="Save"]');
   }
 
   valueDefinitionsDefinitionModalCancelBtn() {
-    return cy.xpath('//goa-modal[@data-testid="definition-value" and @open="true"]//goa-button[text()="Cancel"]');
+    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]//goa-button[text()="Cancel"]');
   }
 
   valueDefinitionsDefinition(namespace, name, desc) {
@@ -58,24 +54,24 @@ class valuePage {
   }
 
   valueDefinitionsDefinitionModalNameFormItem() {
-    return cy.xpath('//goa-modal[@data-testid="definition-value" and @open="true"]//goa-form-item[@label="Name"]');
+    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]//goa-form-item[@label="Name"]');
   }
 
   valueDefinitionsDefinitionDeleteBtn(namespace, name, desc) {
     return cy.xpath(
-      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@data-testid="delete-details"]`
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@testid="delete-details"]`
     );
   }
 
   valueDefinitionsDefinitionEditBtn(namespace, name, desc) {
     return cy.xpath(
-      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@data-testid="edit-details"]`
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@testid="edit-details"]`
     );
   }
 
   valueDefinitionsDefinitionEyeBtn(namespace, name, desc) {
     return cy.xpath(
-      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@data-testid="toggle-details-visibility"]`
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@testid="toggle-details-visibility"]`
     );
   }
 

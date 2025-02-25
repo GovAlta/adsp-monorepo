@@ -175,13 +175,13 @@ When(
       eventsObj
         .streamModalPublicCheckbox()
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (classAttr?.includes('selected')) {
             cy.log('Make stream public checkbox is already checked. ');
           } else {
-            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
+            eventsObj.streamModalPublicCheckbox().shadow().find('[class^="container"]').click();
           }
         });
     } else if (role == 'n/a') {
@@ -208,7 +208,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
         } else {
@@ -219,7 +219,7 @@ When(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
         }
@@ -389,13 +389,13 @@ Then(
       eventsObj
         .streamModalPublicCheckbox()
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (classAttr?.includes('--selected')) {
             cy.log('Make stream public is already checked off.');
           } else {
-            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
+            eventsObj.streamModalPublicCheckbox().shadow().find('[class^="container"]').click({ force: true });
           }
         });
     } else if (role == 'n/a') {
@@ -404,11 +404,11 @@ Then(
       eventsObj
         .streamModalPublicCheckbox()
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (classAttr?.includes('--selected')) {
-            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
+            eventsObj.streamModalPublicCheckbox().shadow().find('[class^="container"]').click({ force: true });
           }
         });
       cy.wait(1000);
@@ -417,7 +417,7 @@ Then(
         .streamModalRolesTables()
         .find('goa-checkbox')
         .shadow()
-        .find('.goa-checkbox-container')
+        .find('[class^="container"]')
         .then((elements) => {
           for (let i = 0; i < elements.length; i++) {
             if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
@@ -446,7 +446,7 @@ Then(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
         } else {
@@ -457,7 +457,7 @@ Then(
             .next()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .scrollIntoView()
             .click({ force: true });
         }
@@ -477,7 +477,7 @@ When('the user {string} Make stream public checkbox in Stream modal', function (
   eventsObj
     .streamModalPublicCheckbox()
     .shadow()
-    .find('.goa-checkbox-container')
+    .find('[class^="container"]')
     .invoke('attr', 'class')
     .then((classAttr) => {
       switch (selectOrUnselect) {
@@ -488,7 +488,7 @@ When('the user {string} Make stream public checkbox in Stream modal', function (
             eventsObj
               .streamModalPublicCheckbox()
               .shadow()
-              .find('.goa-checkbox-container')
+              .find('[class^="container"]')
               .scrollIntoView()
               .click({ force: true });
           }
@@ -498,7 +498,7 @@ When('the user {string} Make stream public checkbox in Stream modal', function (
             eventsObj
               .streamModalPublicCheckbox()
               .shadow()
-              .find('.goa-checkbox-container')
+              .find('[class^="container"]')
               .scrollIntoView()
               .click({ force: true });
           } else {

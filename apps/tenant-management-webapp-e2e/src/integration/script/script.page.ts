@@ -1,31 +1,31 @@
 class ScriptPage {
   addScriptBtn() {
-    return cy.get('[data-testid="add-script-btn"]');
+    return cy.get('[testid="add-script-btn"]');
   }
 
   addScriptModalTitle() {
-    return cy.xpath('//goa-modal[@data-testid="add-script-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//goa-modal[@testid="add-script-modal" and @open="true"]//*[@slot="heading"]');
   }
 
   addScriptModalNameFormItem() {
-    return cy.xpath('//goa-modal[@data-testid="add-script-modal" and @open="true"]//*[@label="Name"]');
+    return cy.xpath('//goa-modal[@testid="add-script-modal" and @open="true"]//*[@label="Name"]');
   }
 
   addScriptModalNameField() {
     return cy.xpath(
-      '//goa-modal[@data-testid="add-script-modal" and @open="true"]//*[@data-testid="script-modal-name-input"]'
+      '//goa-modal[@testid="add-script-modal" and @open="true"]//*[@data-testid="script-modal-name-input"]'
     );
   }
 
   addScriptModalNameErrorMsg() {
     return cy.xpath(
-      '//goa-modal[@data-testid="add-script-modal" and @open="true"]//label[text()="Name"]/following-sibling::div[@class="error-msg"]'
+      '//goa-modal[@testid="add-script-modal" and @open="true"]//label[text()="Name"]/following-sibling::div[@class="error-msg"]'
     );
   }
 
   addScriptModalDescriptionField() {
     return cy.xpath(
-      '//goa-modal[@data-testid="add-script-modal" and @open="true"]//*[@data-testid="script-modal-description-input"]'
+      '//goa-modal[@testid="add-script-modal" and @open="true"]//*[@data-testid="script-modal-description-input"]'
     );
   }
 
@@ -56,11 +56,11 @@ class ScriptPage {
   }
 
   scriptModalSaveButton() {
-    return cy.get('[data-testid="script-modal-save"]');
+    return cy.get('[testid="script-modal-save"]');
   }
 
   scriptModalCancelButton() {
-    return cy.get('[data-testid="script-modal-cancel"]');
+    return cy.get('[testid="script-modal-cancel"]');
   }
 
   scriptTableBody() {
@@ -81,18 +81,18 @@ class ScriptPage {
 
   editorSaveBtn() {
     return cy.xpath(
-      '//*[@data-testid="script-edit-form" and @open]//goa-button[@data-testid="template-form-save" and @type="primary"]'
+      '//*[@data-testid="script-edit-form" and @open]//goa-button[@testid="template-form-save" and @type="primary"]'
     );
   }
 
   editorBackBtn() {
     return cy.xpath(
-      '//*[@data-testid="script-edit-form" and @open]//goa-button[@data-testid="template-form-close" and @type="secondary"]'
+      '//*[@data-testid="script-edit-form" and @open]//goa-button[@testid="template-form-close" and @type="secondary"]'
     );
   }
 
   editScriptModalSaveButton() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-button[@data-testid="script-modal-save" and text()="Save"]');
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[@testid="script-modal-save" and text()="Save"]');
   }
 
   editScriptModalNameField() {

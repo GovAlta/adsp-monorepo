@@ -16,39 +16,39 @@ class feedbackPage {
   }
 
   feedbackSitesRegisterSiteButton() {
-    return cy.xpath('//*[@data-testid="feedback-sites-tab"]//goa-button[@data-testid="add-site"]');
+    return cy.xpath('//*[@data-testid="feedback-sites-tab"]//goa-button[@testid="add-site"]');
   }
 
   feedbackSitesSiteModalTitle() {
-    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]/div[@slot="heading"]');
+    return cy.xpath('//goa-modal[@testid="add-site-modal"]/div[@slot="heading"]');
   }
 
   feedbackSitesSiteModalAnonymousCheckbox() {
-    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-checkbox[@data-testid="anonymous-feedback"]');
+    return cy.xpath('//goa-modal[@testid="add-site-modal"]//goa-checkbox[@testid="anonymous-feedback"]');
   }
 
   feedbackSitesRegisterSiteModalHintText(hintText) {
-    return cy.xpath(`//goa-modal[@data-testid="add-site-modal"]//div[text()="${hintText}"]`);
+    return cy.xpath(`//goa-modal[@testid="add-site-modal"]//div[text()="${hintText}"]`);
   }
 
   feedbackSitesSiteModalSiteUrl() {
-    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-input[@data-testid="feedback-url"]');
+    return cy.xpath('//goa-modal[@testid="add-site-modal"]//goa-input[@testid="feedback-url"]');
   }
 
   feedbackSitesSiteModalSiteUrlFormItem() {
-    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-form-item[@label="Site URL"]');
+    return cy.xpath('//goa-modal[@testid="add-site-modal"]//goa-form-item[@label="Site URL"]');
   }
 
   feedbackSitesRegisterSiteModalRegisterBtn() {
-    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-button[@data-testid="site-register"]');
+    return cy.xpath('//goa-modal[@testid="add-site-modal"]//goa-button[@testid="site-register"]');
   }
 
   feedbackSitesEditRegisteredSiteModalSaveBtn() {
-    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-button[@data-testid="site-edit"]');
+    return cy.xpath('//goa-modal[@testid="add-site-modal"]//goa-button[@testid="site-edit"]');
   }
 
   feedbackSitesSiteModalCancelBtn() {
-    return cy.xpath('//goa-modal[@data-testid="add-site-modal"]//goa-button[@data-testid="site-cancel"]');
+    return cy.xpath('//goa-modal[@testid="add-site-modal"]//goa-button[@testid="site-cancel"]');
   }
 
   feedbackSitesTableBody() {
@@ -56,14 +56,12 @@ class feedbackPage {
   }
 
   feedbackSitesEditButton(rowNumber) {
-    return cy.xpath(
-      `(//table[@data-testid="feedbacks-sites-table"]//*[contains(@data-testid, "site-edit")])[${rowNumber}]`
-    );
+    return cy.xpath(`(//table[@data-testid="feedbacks-sites-table"]//*[contains(@testid, "site-edit")])[${rowNumber}]`);
   }
 
   feedbackSitesDeleteButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="feedbacks-sites-table"]//*[contains(@data-testid, "site-delete")])[${rowNumber}]`
+      `(//table[@data-testid="feedbacks-sites-table"]//*[contains(@testid, "site-delete")])[${rowNumber}]`
     );
   }
 
@@ -172,11 +170,11 @@ class feedbackPage {
   }
 
   feedbackFeedbackSitesDropdown() {
-    return cy.xpath('//goa-dropdown[@data-testid="sites-dropdown"]');
+    return cy.xpath('//goa-dropdown[@testid="sites-dropdown"]');
   }
 
   feedbackFeedbackSitesDropdownItems() {
-    return cy.xpath('//goa-dropdown[@data-testid="sites-dropdown"]/goa-dropdown-item');
+    return cy.xpath('//goa-dropdown[@testid="sites-dropdown"]/goa-dropdown-item');
   }
 
   feedbackSitesSiteURLs() {

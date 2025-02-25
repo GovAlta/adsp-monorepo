@@ -17,31 +17,31 @@ class ConfigurationServicePage {
 
   configurationDefinitionEditBtn(namespace, name, desc) {
     return cy.xpath(
-      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@data-testid="edit-details"]`
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@testid="edit-details"]`
     );
   }
 
   configurationDefinitionDeleteBtn(namespace, name, desc) {
     return cy.xpath(
-      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@data-testid="delete-config"]`
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@testid="delete-config"]`
     );
   }
 
   configurationDefinitionEyeBtn(namespace, name, desc) {
     return cy.xpath(
-      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@data-testid="configuration-toggle-details-visibility"]`
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@testid="configuration-toggle-details-visibility"]`
     );
   }
 
   configurationDetailsIcon(name) {
     return cy.xpath(
-      `//*[@data-testid="configuration-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="configuration-toggle-details-visibility" and @icon="eye"]`
+      `//*[@data-testid="configuration-name" and contains(text(), "${name}")]/following-sibling::td//*[@testid="configuration-toggle-details-visibility" and @icon="eye"]`
     );
   }
 
   configurationHideDetailsIcon(name) {
     return cy.xpath(
-      `//*[@data-testid="configuration-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="configuration-toggle-details-visibility" and @icon="eye-off"]`
+      `//*[@data-testid="configuration-name" and contains(text(), "${name}")]/following-sibling::td//*[@testid="configuration-toggle-details-visibility" and @icon="eye-off"]`
     );
   }
 
@@ -58,39 +58,39 @@ class ConfigurationServicePage {
   }
 
   addConfigurationDefinitionBtn() {
-    return cy.get('[data-testid="add-definition"]');
+    return cy.get('[testid="add-definition"]');
   }
 
   configurationDefinitionModalTitle() {
-    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]//*[@slot="heading"]');
   }
 
   addConfigurationDefinitionModalNamespaceField() {
-    return cy.get('[data-testid="form-namespace"]');
+    return cy.get('[testid="form-namespace"]');
   }
 
   addConfigurationDefinitionModalNameField() {
-    return cy.get('[data-testid="form-name"]');
+    return cy.get('[testid="form-name"]');
   }
 
   addConfigurationDefinitionModalDescField() {
-    return cy.get('[data-testid="form-description"]');
+    return cy.get('[testid="form-description"]');
   }
 
   addConfigurationDefinitionModalNamespaceFormItem() {
-    return cy.xpath('//*[@data-testid="definition-form"]//*[@label="Namespace"]');
+    return cy.xpath('//*[@testid="definition-form"]//*[@label="Namespace"]');
   }
 
   addConfigurationDefinitionModalNameFormItem() {
-    return cy.xpath('//*[@data-testid="definition-form"]//*[@label="Name"]');
+    return cy.xpath('//*[@testid="definition-form"]//*[@label="Name"]');
   }
 
   configurationDefinitionModalSaveBtn() {
-    return cy.xpath('//*[@data-testid="definition-form"]//goa-button[@data-testid="form-save"]');
+    return cy.xpath('//*[@testid="definition-form"]//goa-button[@testid="form-save"]');
   }
 
   configurationDefinitionModalCancelBtn() {
-    return cy.xpath('//*[@data-testid="definition-form"]//goa-button[@data-testid="form-cancel"]');
+    return cy.xpath('//*[@testid="definition-form"]//goa-button[@testid="form-cancel"]');
   }
 
   configurationDefinitionModalPayloadEditor() {
@@ -104,11 +104,11 @@ class ConfigurationServicePage {
   }
 
   selectDefinitionDropdown() {
-    return cy.xpath('//goa-dropdown[@data-testid="configuration-select-definition-dropdown"]');
+    return cy.xpath('//goa-dropdown[@testid="configuration-select-definition-dropdown"]');
   }
 
   selectDefinitionDropdownItems() {
-    return cy.xpath('//goa-dropdown[@data-testid="configuration-select-definition-dropdown"]/goa-dropdown-item');
+    return cy.xpath('//goa-dropdown[@testid="configuration-select-definition-dropdown"]/goa-dropdown-item');
   }
 
   revisionTableWithHeaderTitles() {
@@ -134,7 +134,7 @@ class ConfigurationServicePage {
   }
 
   revisionCreationConfirmationModalCreateButton() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-button[@data-testid="revision-create-button"]');
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[@testid="revision-create-button"]');
   }
 
   revisionTableLatestRevisionDate() {
@@ -176,7 +176,7 @@ class ConfigurationServicePage {
   }
 
   revisionTableEditRevisionModalTitle() {
-    return cy.xpath('//goa-modal[@data-testid="definition-form" and @open="true"]/*[@slot="heading"]');
+    return cy.xpath('//goa-modal[@testid="definition-form" and @open="true"]/*[@slot="heading"]');
   }
 
   revisionTableEditRevisionModalFormItem() {

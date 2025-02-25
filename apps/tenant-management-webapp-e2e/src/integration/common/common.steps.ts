@@ -86,49 +86,49 @@ Then('no critical or serious accessibility issues for {string} on {string}', fun
   let elementIdentifier;
   switch (elementName) {
     case 'PDF template modal':
-      elementIdentifier = '[data-testid="template-form"]';
+      elementIdentifier = '[testid="template-form"]';
       break;
     case 'script edit modal':
-      elementIdentifier = '[data-testid="script-edit-form"]';
+      elementIdentifier = '[testid="script-edit-form"]';
       break;
     case 'event template modal':
-      elementIdentifier = '[data-testid="template-form"]';
+      elementIdentifier = '[testid="template-form"]';
       break;
     case 'configuration definition modal':
-      elementIdentifier = '[data-testid="definition-form"]';
+      elementIdentifier = '[testid="definition-form"]';
       break;
     case 'directory entry modal':
-      elementIdentifier = '[data-testid="directory-modal"]';
+      elementIdentifier = '[testid="directory-modal"]';
       break;
     case 'event definition modal':
-      elementIdentifier = '[data-testid="definition-form"]';
+      elementIdentifier = '[testid="definition-form"]';
       break;
     case 'file type modal':
-      elementIdentifier = '[data-testid="file-type-modal"]';
+      elementIdentifier = '[testid="file-type-modal"]';
       break;
     case 'notification type modal':
-      elementIdentifier = '[data-testid="notification-types-form"]';
+      elementIdentifier = '[testid="notification-types-form"]';
       break;
     case 'select an event modal':
-      elementIdentifier = '[data-testid="event-form"]';
+      elementIdentifier = '[testid="event-form"]';
       break;
     case 'edit notification contact information modal':
-      elementIdentifier = '[data-testid="edit-contact-information-notification"]';
+      elementIdentifier = '[testid="edit-contact-information-notification"]';
       break;
     case 'add PDF template modal':
-      elementIdentifier = '[data-testid="template-form"]';
+      elementIdentifier = '[testid="template-form"]';
       break;
     case 'add script modal':
-      elementIdentifier = '[data-testid="add-script-modal"]';
+      elementIdentifier = '[testid="add-script-modal"]';
       break;
     case 'edit status contact information modal':
-      elementIdentifier = '[data-testid="edit-contact-information-status"]';
+      elementIdentifier = '[testid="edit-contact-information-status"]';
       break;
     case 'add application modal':
-      elementIdentifier = '[data-testid="add-application"]';
+      elementIdentifier = '[testid="add-application"]';
       break;
     case 'add notice modal':
-      elementIdentifier = '[data-testid="notice-modal"]';
+      elementIdentifier = '[testid="notice-modal"]';
       break;
     default:
       expect(elementName).to.be.oneOf([
@@ -871,7 +871,7 @@ When('the user {string} the subscribe checkbox for health check notification typ
   statusObj
     .applicationHealthChangeNotificationSubscribeCheckbox()
     .shadow()
-    .find('.goa-checkbox-container')
+    .find('[class^="container"]')
     .invoke('attr', 'class')
     .then((classAttVal) => {
       if (classAttVal == undefined) {
@@ -885,7 +885,7 @@ When('the user {string} the subscribe checkbox for health check notification typ
               statusObj
                 .applicationHealthChangeNotificationSubscribeCheckbox()
                 .shadow()
-                .find('.goa-checkbox-container')
+                .find('[class^="container"]')
                 .click();
             }
             break;
@@ -894,7 +894,7 @@ When('the user {string} the subscribe checkbox for health check notification typ
               statusObj
                 .applicationHealthChangeNotificationSubscribeCheckbox()
                 .shadow()
-                .find('.goa-checkbox-container')
+                .find('[class^="container"]')
                 .click();
             } else {
               cy.log('The subscribe checkbox was already unchecked.');
@@ -912,7 +912,7 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
   statusObj
     .applicationHealthChangeNotificationSubscribeCheckbox()
     .shadow()
-    .find('.goa-checkbox-container')
+    .find('[class^="container"]')
     .invoke('attr', 'class')
     .then((classAttVal) => {
       if (classAttVal == undefined) {

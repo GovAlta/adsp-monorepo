@@ -49,23 +49,23 @@ When(
     notificationsObj
       .notificationTypeModalPublicCheckbox()
       .shadow()
-      .find('.goa-checkbox-container')
+      .find('[class^="container"]')
       .invoke('attr', 'class')
       .then((publicCheckboxClassName) => {
         if (role.toLowerCase() === 'public') {
-          if (!publicCheckboxClassName?.includes('--selected')) {
+          if (!publicCheckboxClassName?.includes('selected')) {
             notificationsObj
               .notificationTypeModalPublicCheckbox()
               .shadow()
-              .find('.goa-checkbox-container')
+              .find('[class^="container"]')
               .click({ force: true });
           }
         } else {
-          if (publicCheckboxClassName?.includes('--selected')) {
+          if (publicCheckboxClassName?.includes('selected')) {
             notificationsObj
               .notificationTypeModalPublicCheckbox()
               .shadow()
-              .find('.goa-checkbox-container')
+              .find('[class^="container"]')
               .click({ force: true });
           }
           // Deselect all previously selected roles and then select new roles
@@ -73,10 +73,10 @@ When(
             .notificationTypeModalRolesTable()
             .find('goa-checkbox')
             .shadow()
-            .find('.goa-checkbox-container')
+            .find('[class^="container"]')
             .then((elements) => {
               for (let i = 0; i < elements.length; i++) {
-                if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+                if (elements[i].className?.includes('selected')) {
                   elements[i].click();
                 }
               }
@@ -88,14 +88,14 @@ When(
                   notificationsObj
                     .notificationTypeModalClientRoleCheckbox(roles[i].trim())
                     .shadow()
-                    .find('.goa-checkbox-container')
+                    .find('[class^="container"]')
                     .click();
                 } else {
                   notificationsObj
                     .notificationTypeModalRolesTable()
                     .find('goa-checkbox[name="Notifications-type-subscribe-role-checkbox-' + roles[i].trim() + '"]')
                     .shadow()
-                    .find('.goa-checkbox-container')
+                    .find('[class^="container"]')
                     .click({ force: true });
                 }
               }
@@ -107,7 +107,7 @@ When(
     notificationsObj
       .notificationChannelCheckbox('bot')
       .shadow()
-      .find('.goa-checkbox-container')
+      .find('[class^="container"]')
       .invoke('attr', 'class')
       .then((classAttVal) => {
         if (classAttVal == undefined) {
@@ -118,7 +118,7 @@ When(
               if (classAttVal.includes('selected')) {
                 cy.log('Bot check box is already selected. ');
               } else {
-                notificationsObj.notificationChannelCheckbox('bot').shadow().find('.goa-checkbox-container').click();
+                notificationsObj.notificationChannelCheckbox('bot').shadow().find('[class^="container"]').click();
               }
               break;
             case 'no':
@@ -126,7 +126,7 @@ When(
                 if (!classAttVal.includes('selected')) {
                   cy.log('Bot check box is already not selected. ');
                 } else {
-                  notificationsObj.notificationChannelCheckbox('bot').shadow().find('.goa-checkbox-container').click();
+                  notificationsObj.notificationChannelCheckbox('bot').shadow().find('[class^="container"]').click();
                 }
               }
               break;
@@ -139,7 +139,7 @@ When(
     notificationsObj
       .notificationChannelCheckbox('sms')
       .shadow()
-      .find('.goa-checkbox-container')
+      .find('[class^="container"]')
       .invoke('attr', 'class')
       .then((classAttVal) => {
         if (classAttVal == undefined) {
@@ -150,7 +150,7 @@ When(
               if (classAttVal.includes('selected')) {
                 cy.log('SMS check box is already selected. ');
               } else {
-                notificationsObj.notificationChannelCheckbox('sms').shadow().find('.goa-checkbox-container').click();
+                notificationsObj.notificationChannelCheckbox('sms').shadow().find('[class^="container"]').click();
               }
               break;
             case 'no':
@@ -158,7 +158,7 @@ When(
                 if (!classAttVal.includes('selected')) {
                   cy.log('SMS check box is already not selected. ');
                 } else {
-                  notificationsObj.notificationChannelCheckbox('sms').shadow().find('.goa-checkbox-container').click();
+                  notificationsObj.notificationChannelCheckbox('sms').shadow().find('[class^="container"]').click();
                 }
               }
               break;
@@ -171,7 +171,7 @@ When(
     notificationsObj
       .notificationTypeModalSelfServiceCheckbox()
       .shadow()
-      .find('.goa-checkbox-container')
+      .find('[class^="container"]')
       .invoke('attr', 'class')
       .then((classAttVal) => {
         if (classAttVal == undefined) {
@@ -185,7 +185,7 @@ When(
                 notificationsObj
                   .notificationTypeModalSelfServiceCheckbox()
                   .shadow()
-                  .find('.goa-checkbox-container')
+                  .find('[class^="container"]')
                   .click({ force: true });
                 notificationsObj.notificationTypeModalSelfServiceCalloutContent().scrollIntoView().should('be.visible');
               }
@@ -198,7 +198,7 @@ When(
                   notificationsObj
                     .notificationTypeModalSelfServiceCheckbox()
                     .shadow()
-                    .find('.goa-checkbox-container')
+                    .find('[class^="container"]')
                     .click();
                   notificationsObj.notificationTypeModalSelfServiceCalloutContent().should('not.exist');
                 }
@@ -363,14 +363,14 @@ Then('the user {string} the event of {string} in {string}', function (viewOrNot,
 When('the user clicks {string} button for {string} in {string}', function (buttonName: string, event, cardTitle) {
   switch (buttonName.toLowerCase()) {
     case 'edit':
-      notificationsObj.notificationTypeEventEditButton(cardTitle, event).click();
+      notificationsObj.notificationTypeEventEditButton(cardTitle, event).click({ force: true });
       cy.wait(2000);
       break;
     case 'delete':
       notificationsObj.eventDeleteIcon(cardTitle, event).shadow().find('button').click({ force: true });
       break;
     case 'reset':
-      notificationsObj.notificationTypeEventResetBtn(cardTitle, event).click();
+      notificationsObj.notificationTypeEventResetBtn(cardTitle, event).click({ force: true });
       break;
     default:
       expect(buttonName.toLowerCase()).to.be.oneOf(['edit', 'delete', 'reset']);

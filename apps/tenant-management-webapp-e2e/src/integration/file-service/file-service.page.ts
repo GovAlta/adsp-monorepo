@@ -22,17 +22,15 @@ class FileServicePage {
   }
 
   addFileTypeButton() {
-    return cy.get('[data-testid="add-file-type-btn"]');
+    return cy.get('[testid="add-file-type-btn"]');
   }
 
   addFileTypeModalTitle() {
-    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="file-type-modal" and @open="true"]//*[@slot="heading"]');
   }
 
   addFileTypeModalNameField() {
-    return cy.xpath(
-      '//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-name-input"]'
-    );
+    return cy.xpath('//*[@testid="file-type-modal" and @open="true"]//*[@testid="file-type-modal-name-input"]');
   }
 
   fileTypePageNameField() {
@@ -45,17 +43,17 @@ class FileServicePage {
 
   fileTypeModalReadCheckbox(roleName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal" and @open="true"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "read-role")]`
+      `//*[@testid="file-type-modal" and @open="true"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "read-role")]`
     );
   }
 
   fileTypeModalReadCheckboxes() {
-    return cy.xpath(`//*[@data-testid="file-type-modal" and @open="true"]//goa-checkbox[contains(@name, "read-role")]`);
+    return cy.xpath(`//*[@testid="file-type-modal" and @open="true"]//goa-checkbox[contains(@name, "read-role")]`);
   }
 
   fileTypeModalCheckboxesTable(tableName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal" and @open="true"]//h4[text()="${tableName}"]/following-sibling::goa-table`
+      `//*[@testid="file-type-modal" and @open="true"]//h4[text()="${tableName}"]/following-sibling::goa-table`
     );
   }
 
@@ -84,23 +82,23 @@ class FileServicePage {
   }
 
   fileTypePageSaveButton() {
-    return cy.xpath('//*[@data-testid="filetype-editor"]//*[@data-testid="form-save"]');
+    return cy.xpath('//*[@data-testid="filetype-editor"]//*[@testid="form-save"]');
   }
 
   fileTypePageBackButton() {
-    return cy.xpath('//*[@data-testid="filetype-editor"]//*[@data-testid="form-cancel"]');
+    return cy.xpath('//*[@data-testid="filetype-editor"]//*[@testid="form-cancel"]');
   }
 
   addFileTypeModalSaveButton() {
-    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-save"]');
+    return cy.xpath('//*[@testid="file-type-modal" and @open="true"]//*[@testid="file-type-modal-save"]');
   }
 
   addFileTypeModalCancelButton() {
-    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-cancel"]');
+    return cy.xpath('//*[@testid="file-type-modal" and @open="true"]//*[@testid="file-type-modal-cancel"]');
   }
 
   addFileTypeModalNameFormItem() {
-    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//goa-form-item[@label="Name"]');
+    return cy.xpath('//*[@testid="file-type-modal" and @open="true"]//goa-form-item[@label="Name"]');
   }
 
   fileTypeTableBody() {
@@ -109,20 +107,18 @@ class FileServicePage {
 
   fileTypeEditButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="file-types-table"]//*[contains(@data-testid, "file-type-row-edit-btn")])[${rowNumber}]`
+      `(//table[@data-testid="file-types-table"]//*[contains(@testid, "file-type-row-edit-btn")])[${rowNumber}]`
     );
   }
 
   fileTypeDeleteButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="file-types-table"]//*[contains(@data-testid, "file-type-row-delete-btn")])[${rowNumber}]`
+      `(//table[@data-testid="file-types-table"]//*[contains(@testid, "file-type-row-delete-btn")])[${rowNumber}]`
     );
   }
 
   fileTypeDeleteModalDeleteButton() {
-    return cy.xpath(
-      '//*[@data-testid="delete-confirmation" and @open="true"]//goa-button[@data-testid="delete-confirm"]'
-    );
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//goa-button[@testid="delete-confirm"]');
   }
 
   fileTypeDeleteModalFileTypeName() {
@@ -130,28 +126,28 @@ class FileServicePage {
   }
 
   fileTypeDeleteModal() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]');
   }
 
   fileTypeDeleteModalTitle() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
   }
 
   fileTypeDeleteModalContent() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//div[3]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//div[3]');
   }
 
   fileTypeInUseModalTitle() {
-    return cy.xpath('//*[@data-testid="file-type-delete-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="file-type-delete-modal" and @open="true"]//*[@slot="heading"]');
   }
 
   fileTypeInUseModalContent() {
-    return cy.xpath('//*[@data-testid="file-type-delete-modal" and @open="true"]//p');
+    return cy.xpath('//*[@testid="file-type-delete-modal" and @open="true"]//p');
   }
 
   fileTypeInUseModalOkayButton() {
     return cy.xpath(
-      '//*[@data-testid="file-type-delete-modal" and @open="true"]//goa-button[@data-testid="file-type-delete-modal-cancel-btn"]'
+      '//*[@testid="file-type-delete-modal" and @open="true"]//goa-button[@testid="file-type-delete-modal-cancel-btn"]'
     );
   }
 
@@ -168,7 +164,7 @@ class FileServicePage {
   }
 
   fileRetentionPeriodInput() {
-    return cy.xpath('//goa-input[@data-testid="delete-in-days-input"]');
+    return cy.xpath('//goa-input[@testid="delete-in-days-input"]');
   }
 
   uploadedFilesPageTitle() {
@@ -176,7 +172,7 @@ class FileServicePage {
   }
 
   uploadedFilesFilterFileTypeDropdown() {
-    return cy.xpath('//goa-dropdown[@data-testid="file-type-name-dropdown-2"]');
+    return cy.xpath('//goa-dropdown[@testid="file-type-name-dropdown-2"]');
   }
 
   uploadedFilesSearchFileName() {
@@ -193,7 +189,7 @@ class FileServicePage {
 
   uploadedFilesDownloadButton(fileName) {
     return cy.xpath(
-      `//tbody//td[text()="${fileName}"]/following-sibling::td//goa-icon-button[@data-testid="download-icon"]`
+      `//tbody//td[text()="${fileName}"]/following-sibling::td//goa-icon-button[@testid="download-icon"]`
     );
   }
 
