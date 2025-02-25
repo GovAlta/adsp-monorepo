@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith, optionIs, and } from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
@@ -8,13 +8,17 @@ import { WithOptionLabel } from '../../util';
 import { GoACheckbox } from '@abgov/react-components';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import Checkboxes from '../../Components/CheckboxGroup';
-import { onChangeForCheckboxData } from '../../util/inputControlUtils';
 type CheckboxGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
-  const { data, className, id, schema, uischema, path, handleChange, options, config, label, t } = props;
-  const enumData = schema?.enum || [];
+  const { data, id, schema, uischema, path, handleChange, options, config, label, t } = props;
+  const newSchema = schema as { items: { enum: string[] } };
+  const enumData = schema?.enum || newSchema?.items?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
+
+  useEffect(() => {
+    handleChange(path, data || []);
+  }, []);
 
   return (
     <Checkboxes
@@ -31,7 +35,13 @@ export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
             text={enumValue}
             testId={`${enumValue}-checkbox`}
             onChange={(name: string, value: string) => {
-              handleChange(path, value === 'true' ? 'Yes' : 'No');
+              let newData = Array.isArray(data) ? [...data] : [];
+              if (value) {
+                newData.push(enumValue);
+              } else {
+                newData = newData.filter((item) => item !== enumValue);
+              }
+              handleChange(path, newData);
             }}
           />
         );
@@ -45,7 +55,4 @@ export const EnumCheckboxControl = (props: ControlProps & OwnPropsOfEnum & WithO
 };
 
 export const GoAEnumCheckboxGroupControl = withJsonFormsEnumProps(withTranslateProps(EnumCheckboxControl), true);
-export const GoACheckoutGroupControlTester: RankedTester = rankWith(
-  18,
-  and(isEnumControl, optionIs('format', 'checkbox'))
-);
+export const GoACheckoutGroupControlTester: RankedTester = rankWith(18, and(optionIs('format', 'checkbox')));

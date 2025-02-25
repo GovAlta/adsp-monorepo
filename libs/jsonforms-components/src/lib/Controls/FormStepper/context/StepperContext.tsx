@@ -10,8 +10,10 @@ import { getIncompletePaths } from './util';
 
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
-  // eslint-disable-next-line
-  StepperProps: CategorizationStepperLayoutRendererProps & { customDispatch?: Dispatch<any> & { activeId?: number } };
+  StepperProps: CategorizationStepperLayoutRendererProps & {
+    // eslint-disable-next-line
+    customDispatch?: Dispatch<any> & { activeId?: number } & { withBackReviewBtn?: boolean };
+  };
 }
 
 export interface JsonFormsStepperContextProps {
@@ -22,12 +24,13 @@ export interface JsonFormsStepperContextProps {
   selectPath: () => string;
   selectCategory: (id: number) => CategoryState;
   goToPage: (id: number, updateCategoryId?: number) => void;
+  toggleShowReviewLink: (id: number) => void;
   validatePage: (id: number) => void;
   isProvided?: boolean;
 }
 
 const createStepperContextInitData = (
-  props: CategorizationStepperLayoutRendererProps & { activeId?: number }
+  props: CategorizationStepperLayoutRendererProps & { activeId?: number } & { withBackReviewBtn?: boolean }
 ): StepperContextDataType => {
   const { uischema, data, schema, ajv, t, visible, path } = props;
   const categorization = uischema as Categorization;
@@ -45,6 +48,7 @@ const createStepperContextInitData = (
       isCompleted: incompletePaths?.length === 0,
       isValid: incompletePaths?.length === 0,
       uischema: c,
+      showReviewPageLink: props.withBackReviewBtn || false,
       isEnabled: isEnabled(c, data, '', ajv),
       visible,
     };
@@ -118,6 +122,12 @@ export const JsonFormsStepperContextProvider = ({
           payload: { errors: ctx?.core?.errors },
         });
         stepperDispatch({ type: 'page/to/index', payload: { id } });
+      },
+      toggleShowReviewLink: (id: number) => {
+        stepperDispatch({
+          type: 'toggle/category/review-link',
+          payload: { id },
+        });
       },
     };
   }, [stepperDispatch, stepperState, ctx.core?.errors]);

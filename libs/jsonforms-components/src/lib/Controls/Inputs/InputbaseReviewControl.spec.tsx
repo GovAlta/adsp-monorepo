@@ -1,7 +1,8 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { GoABaseInputReviewComponent } from './InputBaseReviewControl';
-import { CellProps, StatePropsOfControl, UISchemaElement } from '@jsonforms/core';
+import { CellProps, StatePropsOfControl } from '@jsonforms/core';
+import { GoAInputBaseTableReview } from './InputBaseTableReviewControl';
 
 describe('GoABaseInputReviewComponent', () => {
   const baseProps: CellProps & StatePropsOfControl & { id: string } = {
@@ -204,5 +205,37 @@ describe('GoABaseInputReviewComponent', () => {
     const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
     const reviewControl = getByTestId('review-control-input-id');
     expect(reviewControl.textContent).toBe('');
+  });
+});
+
+describe('Can render GoAInputBaseTableReview', () => {
+  const baseTableReviewProps = {
+    id: 'mock-id-input',
+    label: 'mock',
+    uischema: {
+      type: 'Control',
+      scope: '#/properties/mock',
+    },
+    data: 'mock-data',
+    schema: {},
+    errors: '',
+    rootSchema: {},
+    path: '',
+    visible: true,
+    enabled: true,
+    config: {},
+    handleChange: jest.fn(),
+  };
+  it('can render the GoAInputBaseTableReview', () => {
+    const { getByTestId } = render(<GoAInputBaseTableReview {...baseTableReviewProps} />);
+    const tableReviewRow = getByTestId('input-base-table-mock-row');
+    expect(tableReviewRow).toBeTruthy();
+    expect(tableReviewRow?.textContent).toContain('mock-data');
+  });
+
+  it('can render the GoAInputBaseTableReview with boolean value', () => {
+    const { getByTestId } = render(<GoAInputBaseTableReview {...{ ...baseTableReviewProps, data: true }} />);
+    const tableReviewRow = getByTestId('input-base-table-mock-row');
+    expect(tableReviewRow?.textContent).toContain('Yes');
   });
 });
