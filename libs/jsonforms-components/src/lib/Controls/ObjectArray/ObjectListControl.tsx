@@ -2,18 +2,13 @@ import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
 import range from 'lodash/range';
 import React, { useState, useReducer, useEffect, useCallback } from 'react';
-import { isEmptyBoolean, isEmptyNumber } from '../../util';
+import { capitalizeFirstLetter, isEmptyBoolean, isEmptyNumber } from '../../util';
 import {
-  ArrayLayoutProps,
   ControlElement,
   JsonSchema,
-  Paths,
-  JsonFormsRendererRegistryEntry,
   JsonFormsCellRendererRegistryEntry,
-  ArrayTranslations,
   UISchemaElement,
   Layout,
-  ControlProps,
 } from '@jsonforms/core';
 import { DeleteDialog } from './DeleteDialog';
 import { WithBasicDeleteDialogSupport } from './DeleteDialog';
@@ -28,6 +23,7 @@ import {
   GoAInput,
   GoAFormItem,
   GoACallout,
+  GoAIcon,
 } from '@abgov/react-components';
 import {
   ToolBarHeader,
@@ -36,6 +32,9 @@ import {
   NonEmptyCellStyle,
   TableTHHeader,
   RequiredSpan,
+  HasErrorLabel,
+  HilightCellWarning,
+  ObjectArrayWarningIconDiv,
 } from './styled-components';
 import { convertToSentenceCase, Visible } from '../../util';
 import { GoAReviewRenderers } from '../../../index';
@@ -49,48 +48,56 @@ import {
   StateData,
   Categories,
 } from './arrayData';
+import {
+  EmptyListProps,
+  HandleChangeProps,
+  Items,
+  NonEmptyCellProps,
+  NonEmptyRowComponentProps,
+  NonEmptyRowProps,
+  ObjectArrayControlProps,
+  OwnPropsOfNonEmptyCell,
+  OwnPropsOfNonEmptyCellWithDialog,
+  TableRowsProp,
+} from './ObjectListControlTypes';
+import { ErrorObject } from 'ajv';
 
-interface ArrayLayoutExtProps {
-  isStepperReview?: boolean;
-}
-interface DataProperty {
-  type: string;
-  format?: string;
-  maxLength?: number;
-  enum: string[];
-}
-interface DataObject {
-  [key: string]: DataProperty;
-}
-
-interface Items {
-  type: string;
-  properties: DataObject;
-}
-interface HandleChangeProps {
-  // eslint-disable-next-line
-  handleChange(path: string, value: any): void;
-}
-
-export type ObjectArrayControlProps = ArrayLayoutProps & ArrayLayoutExtProps & ControlProps;
-
-function extractNames(obj: unknown, names: string[] = []): string[] {
+/**
+ * Extract Json data schema name attribute and the ui schema label name
+ * @param obj
+ * @param names
+ * @returns A key value of the data attribute name and the uiSchema label value
+ */
+function extractNames(obj: unknown, names: Record<string, string> = {}): Record<string, string> {
   if (Array.isArray(obj)) {
     obj.forEach((item) => extractNames(item, names));
   } else if (typeof obj === 'object' && obj !== null) {
     const typedObj = obj as Record<string, unknown>;
 
-    if (typeof typedObj.label === 'string') {
-      names.push(typedObj.label);
-    } else if (typeof typedObj.scope === 'string') {
+    if (typeof typedObj.scope === 'string') {
       const parts = typedObj.scope.split('/');
-      names.push(parts[parts.length - 1]);
+      if (typeof typedObj.label === 'string') {
+        names[parts[parts.length - 1]] = typedObj.label;
+      } else if (typeof typedObj.scope === 'string') {
+        const parts = typedObj.scope.split('/');
+        names[parts[parts.length - 1]] = parts[parts.length - 1];
+      }
     }
 
     Object.values(typedObj).forEach((value) => extractNames(value, names));
   }
+
   return names;
 }
+
+const hasAnyErrors = (rowPath: string, errors: ErrorObject[]) => {
+  const filteredErrors = errors.filter((err) => {
+    return err.instancePath.includes(rowPath);
+  });
+
+  console.log('filteredErrors', filteredErrors);
+  return filteredErrors?.length > 0 || false;
+};
 
 const GenerateRows = (
   Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
@@ -149,11 +156,6 @@ const getValidColumnProps = (scopedSchema: JsonSchema) => {
   return [''];
 };
 
-export interface EmptyListProps {
-  numColumns: number;
-  translations: ArrayTranslations;
-}
-
 const EmptyList = ({ numColumns, translations }: EmptyListProps) => (
   <GoAGrid minChildWidth="30ch">
     <TextCenter>
@@ -161,30 +163,6 @@ const EmptyList = ({ numColumns, translations }: EmptyListProps) => (
     </TextCenter>
   </GoAGrid>
 );
-
-interface NonEmptyCellProps extends OwnPropsOfNonEmptyCell {
-  rootSchema?: JsonSchema;
-  // eslint-disable-next-line
-  errors?: Record<string, any>;
-  enabled: boolean;
-}
-interface OwnPropsOfNonEmptyCell {
-  rowPath: string;
-  propName?: string;
-  schema: JsonSchema;
-  enabled: boolean;
-  renderers?: JsonFormsRendererRegistryEntry[];
-  cells?: JsonFormsCellRendererRegistryEntry[];
-  uischema?: ControlElement;
-  isInReview?: boolean;
-  data?: StateData;
-  count?: number;
-  handleChange(path: string, value: string): void;
-}
-
-interface OwnPropsOfNonEmptyCellWithDialog extends OwnPropsOfNonEmptyCell {
-  openDeleteDialog: (rowIndex: number) => void;
-}
 
 const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOfNonEmptyCell): NonEmptyCellProps => {
   return {
@@ -199,30 +177,6 @@ const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOf
     handleChange: ownProps.handleChange,
   };
 };
-
-interface NonEmptyRowComponentProps {
-  propName?: string;
-  schema: JsonSchema;
-  rootSchema?: JsonSchema;
-  rowPath: string;
-  // eslint-disable-next-line
-  errors?: Record<string, any>;
-  enabled: boolean;
-  renderers?: JsonFormsRendererRegistryEntry[];
-  cells?: JsonFormsCellRendererRegistryEntry[];
-  isValid: boolean;
-  uischema?: ControlElement | Layout;
-  isInReview?: boolean;
-  count?: number;
-  data: StateData | undefined;
-  handleChange(path: string, value: string): void;
-  openDeleteDialog(rowIndex: number): void;
-}
-
-function capitalizeFirstLetter(str: string) {
-  if (!str) return ''; // Handle empty strings
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
 
 export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   props: NonEmptyRowComponentProps & HandleChangeProps
@@ -245,141 +199,161 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   const required = (schema.items as Record<string, Array<string>>)?.required;
 
   let tableKeys = extractNames(uischema?.options?.detail);
-  if (tableKeys.length === 0) {
-    tableKeys = Object.keys(properties);
+  if (Object.keys(tableKeys).length === 0) {
+    tableKeys = extractNames(properties);
   }
+
+  const hasErrors =
+    (errors as ErrorObject[]).filter((err) => {
+      return err.instancePath.includes(rowPath);
+    }).length > 0;
 
   return (
     <NonEmptyCellStyle>
-      {
-        // eslint-disable-next-line
-        (uischema as Layout)?.elements?.map((element: UISchemaElement) => {
-          return (
-            <JsonFormsDispatch
-              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-              key={rowPath}
-              schema={schema}
-              uischema={element}
-              path={rowPath}
-              enabled={enabled}
-              renderers={isInReview ? GoAReviewRenderers : renderers}
-              cells={cells}
-            />
-          );
-        })
-      }
+      {(uischema as Layout)?.elements?.map((element: UISchemaElement) => {
+        return (
+          <JsonFormsDispatch
+            data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+            key={rowPath}
+            schema={schema}
+            uischema={element}
+            path={rowPath}
+            enabled={enabled}
+            renderers={isInReview ? GoAReviewRenderers : renderers}
+            cells={cells}
+          />
+        );
+      })}
       {Object.keys(properties).length > 0 && (
-        <GoATable width="100%">
-          <thead>
-            <tr key={0}>
-              {tableKeys.map((key, index) => {
-                if (!isInReview) {
+        <>
+          <GoATable width="100%">
+            <thead>
+              <tr key={0}>
+                {Object.entries(tableKeys).map(([value, index]) => {
+                  if (!isInReview) {
+                    return (
+                      <th key={index}>
+                        <p>
+                          {convertToSentenceCase(tableKeys[value])}
+                          {required?.includes(tableKeys[value]) && <RequiredSpan>(required)</RequiredSpan>}
+                        </p>
+                      </th>
+                    );
+                  }
                   return (
-                    <th key={index}>
+                    <TableTHHeader key={index}>
                       <p>
-                        {convertToSentenceCase(key)}
-                        {required?.includes(key) && <RequiredSpan>(required)</RequiredSpan>}
+                        {`${convertToSentenceCase(tableKeys[value])}`}
+
+                        {required?.includes(value) && (
+                          <RequiredSpan>
+                            <br /> (required)
+                          </RequiredSpan>
+                        )}
                       </p>
-                    </th>
+                    </TableTHHeader>
                   );
-                }
+                })}
+                {isInReview !== true && (
+                  <th>
+                    <p>Actions</p>
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {range(count || 0).map((num, i) => {
+                // eslint-disable-next-line
+                const errorRow = errors?.find((error: any) =>
+                  error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`)
+                ) as { message: string };
                 return (
-                  <TableTHHeader key={index}>
-                    <p>{convertToSentenceCase(key)}</p>
-                  </TableTHHeader>
+                  <tr key={i}>
+                    {Object.keys(properties).map((element, ix) => {
+                      const dataObject = properties[element];
+                      const schemaName = element;
+                      const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
+                      const error = errors?.find(
+                        // eslint-disable-next-line
+                        (e: any) => e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}`
+                      ) as { message: string };
+                      if (
+                        error?.message.includes('must NOT have fewer') &&
+                        required.find((r) => r === schemaName) &&
+                        (isEmptyBoolean(schema, currentData) || isEmptyNumber(schema, currentData))
+                      ) {
+                        error.message = `${capitalizeFirstLetter(schemaName)} is required`;
+                      }
+                      return (
+                        <td key={ix}>
+                          {isInReview ? (
+                            <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
+                              {typeof currentData === 'string' || currentData === undefined ? (
+                                <HilightCellWarning>
+                                  <ObjectArrayWarningIconDiv>
+                                    <GoAIcon type="warning" size="small" theme="filled" mt="2xs"></GoAIcon>
+                                    {/* {currentData} */}{' '}
+                                  </ObjectArrayWarningIconDiv>
+                                </HilightCellWarning>
+                              ) : (
+                                <pre>{JSON.stringify(currentData, null, 2)}</pre>
+                              )}
+                            </div>
+                          ) : (
+                            <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
+                              {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
+                                <GoAInput
+                                  error={error?.message.length > 0}
+                                  type={dataObject.type === 'number' ? 'number' : 'text'}
+                                  id={schemaName}
+                                  name={schemaName}
+                                  value={currentData}
+                                  testId={`#/properties/${schemaName}-input-${i}`}
+                                  onChange={(name: string, value: string) => {
+                                    handleChange(rowPath, {
+                                      [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
+                                    });
+                                  }}
+                                  aria-label={schemaName}
+                                  width="100%"
+                                />
+                              ) : (
+                                <GoACallout
+                                  type="important"
+                                  size="medium"
+                                  testId="form-support-callout"
+                                  heading="Not supported"
+                                >
+                                  Only string and number are supported inside arrays
+                                </GoACallout>
+                              )}
+                            </GoAFormItem>
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
+                      <div aria-hidden="true">
+                        {!isInReview && (
+                          <GoAIconButton
+                            icon="trash"
+                            title="trash button"
+                            testId="trash-icon-button"
+                            aria-label={`remove-element-${num}`}
+                            onClick={() => openDeleteDialog(num)}
+                          ></GoAIconButton>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
                 );
               })}
-              {isInReview !== true && (
-                <th>
-                  <p>Actions</p>
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {range(count || 0).map((num, i) => {
-              // eslint-disable-next-line
-              const errorRow = errors?.find((error: any) =>
-                error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`)
-              ) as { message: string };
-              return (
-                <tr key={i}>
-                  {Object.keys(properties).map((element, ix) => {
-                    const dataObject = properties[element];
-                    const schemaName = element;
-                    const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
-                    const error = errors?.find(
-                      // eslint-disable-next-line
-                      (e: any) => e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}`
-                    ) as { message: string };
-                    if (
-                      error?.message.includes('must NOT have fewer') &&
-                      required.find((r) => r === schemaName) &&
-                      (isEmptyBoolean(schema, currentData) || isEmptyNumber(schema, currentData))
-                    ) {
-                      error.message = `${capitalizeFirstLetter(schemaName)} is required`;
-                    }
-                    return (
-                      <td key={ix}>
-                        {isInReview ? (
-                          <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
-                            {typeof currentData === 'string' ? (
-                              currentData
-                            ) : (
-                              <pre>{JSON.stringify(currentData, null, 2)}</pre>
-                            )}
-                          </div>
-                        ) : (
-                          <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
-                            {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
-                              <GoAInput
-                                error={error?.message.length > 0}
-                                type={dataObject.type === 'number' ? 'number' : 'text'}
-                                id={schemaName}
-                                name={schemaName}
-                                value={currentData}
-                                testId={`#/properties/${schemaName}-input-${i}`}
-                                onChange={(name: string, value: string) => {
-                                  handleChange(rowPath, {
-                                    [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
-                                  });
-                                }}
-                                aria-label={schemaName}
-                                width="100%"
-                              />
-                            ) : (
-                              <GoACallout
-                                type="important"
-                                size="medium"
-                                testId="form-support-callout"
-                                heading="Not supported"
-                              >
-                                Only string and number are supported inside arrays
-                              </GoACallout>
-                            )}
-                          </GoAFormItem>
-                        )}
-                      </td>
-                    );
-                  })}
-                  <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
-                    <div aria-hidden="true">
-                      {!isInReview && (
-                        <GoAIconButton
-                          icon="trash"
-                          title="trash button"
-                          testId="trash-icon-button"
-                          aria-label={`remove-element-${num}`}
-                          onClick={() => openDeleteDialog(num)}
-                        ></GoAIconButton>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </GoATable>
+            </tbody>
+          </GoATable>
+          {hasErrors && (
+            <GoAFormItem error={`There are validation errors for '${capitalizeFirstLetter(rowPath)}'`}></GoAFormItem>
+          )}
+        </>
       )}
     </NonEmptyCellStyle>
   );
@@ -403,21 +377,6 @@ const NonEmptyCell = (ownProps: OwnPropsOfNonEmptyCellWithDialog) => {
     />
   );
 };
-
-interface NonEmptyRowProps {
-  childPath: string;
-  schema: JsonSchema;
-  rowIndex: number;
-  showSortButtons: boolean;
-  enabled: boolean;
-  cells?: JsonFormsCellRendererRegistryEntry[];
-  path: string;
-  translations: ArrayTranslations;
-  uischema: ControlElement;
-  isInReview?: boolean;
-  data?: StateData;
-  count: number;
-}
 
 const NonEmptyRowComponent = ({
   childPath,
@@ -459,21 +418,6 @@ const NonEmptyRowComponent = ({
 };
 
 export const NonEmptyList = React.memo(NonEmptyRowComponent);
-interface TableRowsProp {
-  data: StateData;
-  path: string;
-  schema: JsonSchema;
-  uischema: ControlElement;
-  //eslint-disable-next-line
-  config?: any;
-  enabled: boolean;
-  cells?: JsonFormsCellRendererRegistryEntry[];
-  translations: ArrayTranslations;
-  count: number;
-  isInReview?: boolean;
-  // eslint-disable-next-line
-  handleChange: (path: string, value: any) => void;
-}
 
 const ObjectArrayList = ({
   data,
@@ -518,7 +462,6 @@ const ObjectArrayList = ({
   );
 };
 
-// eslint-disable-next-line
 export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element => {
   const [registers, dispatch] = useReducer(objectListReducer, initialState);
   const [open, setOpen] = useState(false);
@@ -628,7 +571,6 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   };
 
   useEffect(() => {
-    // eslint-disable-next-line
     const updatedData = Object.fromEntries((parsedData || []).map((item, index) => [index, item]));
     const count = Object.keys(updatedData).length;
     const dispatchData = { [path]: { count: count, data: updatedData } } as unknown as Categories;
@@ -638,9 +580,9 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
         payload: dispatchData,
       });
     }
-  }, []);
+  }, [parsedData, path]);
   const controlElement = uischema as ControlElement;
-  // eslint-disable-next-line
+
   const listTitle = label || uischema.options?.title;
   const isInReview = isStepperReview === true;
 
