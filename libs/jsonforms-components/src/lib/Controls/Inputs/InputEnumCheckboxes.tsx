@@ -16,9 +16,6 @@ export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
   const enumData = schema?.enum || newSchema?.items?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
 
-  useEffect(() => {
-    handleChange(path, data || []);
-  }, []);
 
   return (
     <Checkboxes
