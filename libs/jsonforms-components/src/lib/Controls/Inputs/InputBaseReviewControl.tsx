@@ -11,7 +11,7 @@ export type WithBaseInputReviewProps = CellProps & WithClassname & WithInputProp
 const warningIcon = (errorMessage: string) => {
   return (
     <WarningIconDiv>
-      <GoAIcon type="warning" size="small" theme="filled" mt="2xs"></GoAIcon>
+      <GoAIcon type="warning" size="small" theme="filled" mt="2xs" ariaLabel="warning"></GoAIcon>
       {errorMessage}
     </WarningIconDiv>
   );

@@ -85,3 +85,19 @@ export const PageRenderPadding = styled.h3`
 export const PageBorder = styled.h3`
   padding: var(--goa-space-3xl);
 `;
+
+export const TableReviewItemSection = styled.div`
+  .element-style {
+    max-width: 1600px;
+  }
+`;
+
+export const TableReviewItem = styled.div`
+  border: 1px solid #dcdcdc;
+  border-radius: 5px;
+  padding: var(--goa-space-2xl);
+`;
+
+export const TableReviewCategoryLabel = styled.h3`
+  color: var(--goa-color-text-secondary) !important;
+`;

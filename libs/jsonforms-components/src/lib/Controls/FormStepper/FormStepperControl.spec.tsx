@@ -381,6 +381,8 @@ describe('Form Stepper Control', () => {
 
       const BackButton = getByTestId('back-button-click');
       expect(BackButton).toBeVisible();
+      await fireEvent.click(BackButton!);
+      console.log(mockDispatch.mock.calls);
     });
 
     it('will show submit button on last step', async () => {
@@ -397,8 +399,42 @@ describe('Form Stepper Control', () => {
       expect(nextButton).toBeInTheDocument();
       expect(nextButton).not.toBeNull();
       await fireEvent.click(nextButton!);
-      expect(mockDispatch.mock.calls[3].type === 'page/to/index');
-      expect(mockDispatch.mock.calls[3].payload === 1);
+      expect(mockDispatch.mock.calls.length > 0).toBe(true);
+    });
+
+    it('can render the review page', async () => {
+      const newStepperProps = {
+        ...stepperBaseProps,
+        data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
+      };
+      newStepperProps.activeId = 2;
+      const { getByTestId, baseElement } = render(
+        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      );
+
+      expect(getByTestId('stepper-pages-review-page')).toBeTruthy();
+      const changeButton = baseElement.querySelector("goa-button[testId='page-review-change-first-btn']");
+      expect(changeButton).toBeTruthy();
+      await fireEvent.click(changeButton!);
+      expect((mockDispatch.mock.calls[5].type = 'page/to/index'));
+    });
+
+    it('can render the back to review page', async () => {
+      const newStepperProps = {
+        ...stepperBaseProps,
+
+        data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
+      };
+      newStepperProps.withBackReviewBtn = true;
+
+      const { baseElement } = render(
+        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      );
+      const backToReviewBtn = baseElement.querySelector("goa-button[testId='pages-to-review-page-btn']");
+      expect(backToReviewBtn).toBeTruthy();
+
+      await fireEvent.click(backToReviewBtn!);
+      expect((mockDispatch.mock.calls[5].type = 'page/to/index'));
     });
   });
 

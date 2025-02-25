@@ -26,6 +26,20 @@ const LinkCopyComponent = ({ link, text }: LinkCopyComponentProps): JSX.Element 
     };
   }, [isCopied]);
 
+  useEffect(() => {
+    const goaButton = document.querySelector("[testId='copy-link-button']");
+
+    if (goaButton) {
+      setTimeout(() => {
+        const shadowRoot = goaButton?.shadowRoot;
+        const icon = shadowRoot?.querySelector("[id='leading-icon']");
+        if (icon) {
+          icon.setAttribute('aria-hidden', 'true');
+        }
+      }, 500);
+    }
+  }, []);
+
   return (
     <LinkCopyComponentWrapper
       onMouseEnter={() => {

@@ -28,10 +28,32 @@ const getForm = (schema: object, uiSchema: UISchemaElement, data: object = {}) =
 };
 
 const uiSchema = {
-  type: 'Control',
-  scope: '#/properties/options',
-  label: 'testing',
-  options: { format: 'checkbox', orientation: 'horizontal' },
+  type: 'Group',
+  elements: [
+    {
+      type: 'Control',
+      scope: '#/properties/options',
+      label: 'testing',
+      options: { format: 'checkbox', orientation: 'horizontal' },
+    },
+    {
+      type: 'Control',
+      scope: '#/properties/otherSpecify',
+      label: 'If three, specify:',
+      rule: {
+        effect: 'ENABLE',
+        condition: {
+          scope: '#/properties/options',
+          schema: {
+            type: 'array',
+            contains: {
+              const: 'three',
+            },
+          },
+        },
+      },
+    },
+  ],
 } as UISchemaElement;
 
 const dataSchema = {
@@ -40,6 +62,9 @@ const dataSchema = {
     options: {
       type: 'string',
       enum: ['one', 'two', 'three'],
+    },
+    otherSpecify: {
+      type: 'string',
     },
   },
 };
@@ -61,14 +86,24 @@ describe('Input Boolean Checkbox Control', () => {
     expect(checkboxGroup.children[1].getAttribute('text')).toBe(data.checkboxes[1]);
     expect(checkboxGroup.children[2].getAttribute('text')).toBe(data.checkboxes[2]);
   });
+  it('disables input box by default because of condition', () => {
+    const renderer = render(getForm(dataSchema, uiSchema));
+    const inputBox = renderer.container.querySelector('goa-input');
+    expect(inputBox?.getAttribute('disabled')).toBe('true');
+    expect(inputBox).toBeDisabled();
+  });
+  it('enables input box once box is checked because of condition', () => {
+    const data = { options: ['three'] };
+    const renderer = render(getForm(dataSchema, uiSchema, data));
+    const inputBox = renderer.container.querySelector('goa-input');
+    expect(inputBox?.getAttribute('disabled')).toBe('false');
+  });
   it('applies vertical orientation class', () => {
-    const newUiSchema = {
-      ...uiSchema,
-      options: {
-        ...uiSchema.options,
-        orientation: undefined,
-      },
-    };
+    const newUiSchema = { ...uiSchema };
+
+    // eslint-disable-next-line
+    (uiSchema as any).elements[0].options.orientation = undefined;
+
     render(getForm(dataSchema, newUiSchema));
     const checkboxGroupDiv = screen.getByTestId('testing-jsonforms-checkboxes');
     expect(checkboxGroupDiv).toHaveClass('vertical');

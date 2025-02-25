@@ -4,6 +4,7 @@ import { GoACheckbox } from '@abgov/react-components';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { getLastSegmentFromPointer, convertToReadableFormat } from '../../util/stringUtils';
 import { WithInputProps } from './type';
+import { CheckboxWrapper } from './style-component';
 
 export const BooleanComponent = ({
   data,
@@ -22,19 +23,21 @@ export const BooleanComponent = ({
   }${required ? ' (required)' : ''}`;
 
   return (
-    <GoACheckbox
-      error={isVisited && errors.length > 0}
-      testId={`${path}-checkbox-test-id`}
-      disabled={!enabled}
-      text={text && text !== 'undefined' ? text : convertToReadableFormat(getLastSegmentFromPointer(uischema.scope))}
-      name={`${path}`}
-      checked={data}
-      onChange={(_: string, checked: boolean) => {
-        handleChange(path, checked);
-      }}
-      {...uischema?.options?.componentProps}
-      mb="none"
-    />
+    <CheckboxWrapper>
+      <GoACheckbox
+        error={isVisited && errors.length > 0}
+        testId={`${path}-checkbox-test-id`}
+        disabled={!enabled}
+        text={text && text !== 'undefined' ? text : convertToReadableFormat(getLastSegmentFromPointer(uischema.scope))}
+        name={`${path}`}
+        checked={data}
+        onChange={(_: string, checked: boolean) => {
+          handleChange(path, checked);
+        }}
+        {...uischema?.options?.componentProps}
+        mb="none"
+      />
+    </CheckboxWrapper>
   );
 };
 export const BooleanControl = (props: ControlProps) => (

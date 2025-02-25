@@ -30,9 +30,7 @@ class FileServicePage {
   }
 
   addFileTypeModalNameField() {
-    return cy.xpath(
-      '//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-name-input"]'
-    );
+    return cy.xpath('//*[@testid="file-type-modal" and @open="true"]//*[@testid="file-type-modal-name-input"]');
   }
 
   fileTypePageNameField() {
@@ -45,17 +43,17 @@ class FileServicePage {
 
   fileTypeModalReadCheckbox(roleName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal" and @open="true"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "read-role")]`
+      `//*[@testid="file-type-modal" and @open="true"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "read-role")]`
     );
   }
 
   fileTypeModalReadCheckboxes() {
-    return cy.xpath(`//*[@data-testid="file-type-modal" and @open="true"]//goa-checkbox[contains(@name, "read-role")]`);
+    return cy.xpath(`//*[@testid="file-type-modal" and @open="true"]//goa-checkbox[contains(@name, "read-role")]`);
   }
 
   fileTypeModalCheckboxesTable(tableName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal" and @open="true"]//h4[text()="${tableName}"]/following-sibling::goa-table`
+      `//*[@testid="file-type-modal" and @open="true"]//h4[text()="${tableName}"]/following-sibling::goa-table`
     );
   }
 
@@ -84,23 +82,23 @@ class FileServicePage {
   }
 
   fileTypePageSaveButton() {
-    return cy.xpath('//*[@data-testid="filetype-editor"]//*[@data-testid="form-save"]');
+    return cy.xpath('//*[@data-testid="filetype-editor"]//*[@testid="form-save"]');
   }
 
   fileTypePageBackButton() {
-    return cy.xpath('//*[@data-testid="filetype-editor"]//*[@data-testid="form-cancel"]');
+    return cy.xpath('//*[@data-testid="filetype-editor"]//*[@testid="form-cancel"]');
   }
 
   addFileTypeModalSaveButton() {
-    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-save"]');
+    return cy.xpath('//*[@testid="file-type-modal" and @open="true"]//*[@testid="file-type-modal-save"]');
   }
 
   addFileTypeModalCancelButton() {
-    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-cancel"]');
+    return cy.xpath('//*[@testid="file-type-modal" and @open="true"]//*[@testid="file-type-modal-cancel"]');
   }
 
   addFileTypeModalNameFormItem() {
-    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//goa-form-item[@label="Name"]');
+    return cy.xpath('//*[@testid="file-type-modal" and @open="true"]//goa-form-item[@label="Name"]');
   }
 
   fileTypeTableBody() {
@@ -109,18 +107,18 @@ class FileServicePage {
 
   fileTypeEditButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="file-types-table"]//*[contains(@data-testid, "file-type-row-edit-btn")])[${rowNumber}]`
+      `(//table[@data-testid="file-types-table"]//*[contains(@testid, "file-type-row-edit-btn")])[${rowNumber}]`
     );
   }
 
   fileTypeDeleteButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="file-types-table"]//*[contains(@data-testid, "file-type-row-delete-btn")])[${rowNumber}]`
+      `(//table[@data-testid="file-types-table"]//*[contains(@testid, "file-type-row-delete-btn")])[${rowNumber}]`
     );
   }
 
   fileTypeDeleteModalDeleteButton() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//goa-button[@testid="delete-confirm"]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//goa-button[@testid="delete-confirm"]');
   }
 
   fileTypeDeleteModalFileTypeName() {
@@ -128,7 +126,7 @@ class FileServicePage {
   }
 
   fileTypeDeleteModal() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]');
   }
 
   fileTypeDeleteModalTitle() {
