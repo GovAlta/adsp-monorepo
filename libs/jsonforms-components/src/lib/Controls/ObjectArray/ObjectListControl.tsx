@@ -177,7 +177,40 @@ const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOf
     handleChange: ownProps.handleChange,
   };
 };
-
+const renderCellColumn = (currentData: unknown, error: string) => {
+  if (currentData === undefined) {
+    return (
+      <HilightCellWarning>
+        <ObjectArrayWarningIconDiv>
+          <GoAIcon type="warning" title="warning-icons" size="small" theme="filled" mt="2xs"></GoAIcon>
+          {currentData}
+        </ObjectArrayWarningIconDiv>
+      </HilightCellWarning>
+    );
+  }
+  if (typeof currentData === 'string') {
+    return currentData;
+  }
+  return null;
+  // {typeof currentData === 'string' || currentData === undefined ? (
+  //   <HilightCellWarning>
+  //     <ObjectArrayWarningIconDiv>
+  //       <GoAIcon
+  //         type="warning"
+  //         title="warning-icons"
+  //         size="small"
+  //         theme="filled"
+  //         mt="2xs"
+  //       ></GoAIcon>
+  //       {currentData}
+  //     </ObjectArrayWarningIconDiv>
+  //   </HilightCellWarning>
+  // ) : typeof currentData === 'string' ? (
+  //   currentData
+  // ) : (
+  //   <pre>{JSON.stringify(currentData, null, 2)}</pre>
+  // )}
+};
 export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   props: NonEmptyRowComponentProps & HandleChangeProps
 ) {
@@ -203,10 +236,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     tableKeys = extractNames(properties);
   }
 
-  const hasErrors =
-    (errors as ErrorObject[]).filter((err) => {
-      return err.instancePath.includes(rowPath);
-    }).length > 0;
+  const hasErrors = Array.isArray(errors as ErrorObject[])
+    ? (errors as ErrorObject[])?.filter((err) => {
+        return err.instancePath.includes(rowPath);
+      })?.length > 0
+    : false;
 
   return (
     <NonEmptyCellStyle>
@@ -263,10 +297,10 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
             </thead>
             <tbody>
               {range(count || 0).map((num, i) => {
-                // eslint-disable-next-line
-                const errorRow = errors?.find((error: any) =>
+                const errorRow = errors?.find((error: ErrorObject) =>
                   error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`)
                 ) as { message: string };
+
                 return (
                   <tr key={i}>
                     {Object.keys(properties).map((element, ix) => {
@@ -274,9 +308,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       const schemaName = element;
                       const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
                       const error = errors?.find(
-                        // eslint-disable-next-line
-                        (e: any) => e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}`
+                        (e: ErrorObject) =>
+                          e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
+                          e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
                       ) as { message: string };
+                      //Get out of the loop to not render extra columns
+                      if (Object.keys(tableKeys).length === ix) return null;
+
                       if (
                         error?.message.includes('must NOT have fewer') &&
                         required.find((r) => r === schemaName) &&
@@ -284,52 +322,47 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       ) {
                         error.message = `${capitalizeFirstLetter(schemaName)} is required`;
                       }
-                      return (
-                        <td key={ix}>
-                          {isInReview ? (
+
+                      console.log('error', error);
+                      if (isInReview === true) {
+                        return (
+                          <td key={ix}>
                             <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
-                              {typeof currentData === 'string' || currentData === undefined ? (
-                                <HilightCellWarning>
-                                  <ObjectArrayWarningIconDiv>
-                                    <GoAIcon type="warning" size="small" theme="filled" mt="2xs"></GoAIcon>
-                                    {/* {currentData} */}{' '}
-                                  </ObjectArrayWarningIconDiv>
-                                </HilightCellWarning>
-                              ) : (
-                                <pre>{JSON.stringify(currentData, null, 2)}</pre>
-                              )}
+                              {renderCellColumn(currentData, error?.message)}
                             </div>
+                          </td>
+                        );
+                      }
+
+                      return (
+                        <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
+                          {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
+                            <GoAInput
+                              error={error?.message.length > 0}
+                              type={dataObject.type === 'number' ? 'number' : 'text'}
+                              id={schemaName}
+                              name={schemaName}
+                              value={currentData}
+                              testId={`#/properties/${schemaName}-input-${i}`}
+                              onChange={(name: string, value: string) => {
+                                handleChange(rowPath, {
+                                  [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
+                                });
+                              }}
+                              aria-label={schemaName}
+                              width="100%"
+                            />
                           ) : (
-                            <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
-                              {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
-                                <GoAInput
-                                  error={error?.message.length > 0}
-                                  type={dataObject.type === 'number' ? 'number' : 'text'}
-                                  id={schemaName}
-                                  name={schemaName}
-                                  value={currentData}
-                                  testId={`#/properties/${schemaName}-input-${i}`}
-                                  onChange={(name: string, value: string) => {
-                                    handleChange(rowPath, {
-                                      [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
-                                    });
-                                  }}
-                                  aria-label={schemaName}
-                                  width="100%"
-                                />
-                              ) : (
-                                <GoACallout
-                                  type="important"
-                                  size="medium"
-                                  testId="form-support-callout"
-                                  heading="Not supported"
-                                >
-                                  Only string and number are supported inside arrays
-                                </GoACallout>
-                              )}
-                            </GoAFormItem>
+                            <GoACallout
+                              type="important"
+                              size="medium"
+                              testId="form-support-callout"
+                              heading="Not supported"
+                            >
+                              Only string and number are supported inside arrays
+                            </GoACallout>
                           )}
-                        </td>
+                        </GoAFormItem>
                       );
                     })}
                     <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
@@ -572,9 +605,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
 
   useEffect(() => {
     // eslint-disable-next-line
-    const updatedData = Array.isArray(parsedData)
-      ? Object.fromEntries(parsedData.map((item, index) => [index, item]))
-      : {};
+    const updatedData = Object.fromEntries((parsedData || []).map((item, index) => [index, item]));
     const count = Object.keys(updatedData).length;
     const dispatchData = { [path]: { count: count, data: updatedData } } as unknown as Categories;
     if (Object.keys(updatedData).length > 0) {
