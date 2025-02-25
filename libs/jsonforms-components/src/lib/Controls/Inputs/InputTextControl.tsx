@@ -9,7 +9,7 @@ import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register
 import { onBlurForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 import { Dropdown } from '../../Components/Dropdown';
 import { sinTitle } from '../../common/Constants';
-
+import { GoADropdown, GoADropdownItem } from '@abgov/react-components';
 import { Item } from '../../Components/DropDownTypes';
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
@@ -97,18 +97,34 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   return (
     <div>
       {mergedOptions.length > 0 ? (
-        <Dropdown
-          items={mergedOptions as unknown as Item[]}
-          enabled={enabled}
-          selected={data}
-          key={`jsonforms-${label}-dropdown`}
-          id={`jsonforms-${label}-dropdown`}
-          label={label || ''}
-          isAutoCompletion={autoCompletion}
+        // <Dropdown
+        //   items={mergedOptions as unknown as Item[]}
+        //   enabled={enabled}
+        //   selected={data}
+        //   key={`jsonforms-${label}-dropdown`}
+        //   id={`jsonforms-${label}-dropdown`}
+        //   label={label || ''}
+        //   isAutoCompletion={autoCompletion}
+        //   onChange={(value: string) => {
+        //     handleChange(path, value);
+        //   }}
+        // />
+        <GoADropdown
+          name="input-dropdown"
+          width="100%"
+          placeholder="Select"
+          testId="input-dropdown-list"
+          aria-label="select-dropdown"
+          filterable={autoCompletion}
           onChange={(value: string) => {
             handleChange(path, value);
           }}
-        />
+          relative={true}
+        >
+          {Object.entries(mergedOptions as unknown as Item[]).map(([name, item]) => (
+            <GoADropdownItem label={item?.label} value={`${item.value}`} key={name} testId={`dropdown-${name}`} />
+          ))}
+        </GoADropdown>
       ) : (
         <GoAInput
           error={isVisited && errors.length > 0}

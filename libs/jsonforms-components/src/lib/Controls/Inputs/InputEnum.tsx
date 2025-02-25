@@ -10,6 +10,7 @@ import { callout } from '../../Additional/GoACalloutControl';
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
 import { Dropdown } from '../../Components/Dropdown';
 import { Item } from '../../Components/DropDownTypes';
+import { GoADropdown, GoADropdownItem } from '@abgov/react-components';
 
 type EnumSelectProps = EnumCellProps & WithClassname & TranslateProps & WithInputProps & ControlProps;
 
@@ -75,18 +76,34 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
       {error.length > 0 ? (
         callout({ message: error })
       ) : (
-        <Dropdown
-          items={mergedOptions as unknown as Item[]}
-          enabled={enabled}
-          selected={data}
-          key={`jsonforms-${label}-dropdown`}
-          id={`jsonforms-${label}-dropdown`}
-          label={label}
-          isAutoCompletion={autoCompletion}
+        // <Dropdown
+        //   items={mergedOptions as unknown as Item[]}
+        //   enabled={enabled}
+        //   selected={data}
+        //   key={`jsonforms-${label}-dropdown`}
+        //   id={`jsonforms-${label}-dropdown`}
+        //   label={label}
+        //   isAutoCompletion={autoCompletion}
+        //   onChange={(value: string) => {
+        //     handleChange(path, value);
+        //   }}
+        // />
+        <GoADropdown
+          name="input-dropdown"
+          width="100%"
+          placeholder="Select"
+          testId="input-dropdown-list"
+          aria-label="select-dropdown"
+          filterable={autoCompletion}
           onChange={(value: string) => {
             handleChange(path, value);
           }}
-        />
+          relative={true}
+        >
+          {Object.entries(mergedOptions as unknown as Item[]).map(([name, item]) => (
+            <GoADropdownItem label={item?.label} value={`${item.value}`} key={name} testId={`dropdown-${name}`} />
+          ))}
+        </GoADropdown>
       )}
     </div>
   );
