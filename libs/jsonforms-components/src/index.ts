@@ -49,6 +49,7 @@ import {
   FullNameDobReviewControl,
   FormStepperReviewControl,
   GoAInputBaseTableReviewControl,
+  AddressLoopUpControlTableReview,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -194,6 +195,12 @@ export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
     tester: GoAListWithDetailsTester,
     renderer: GoAInputBaseTableReviewControl,
   },
+  {
+    tester: FullNameDobTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLoopUpControlTableReview) },
+
   {
     tester: GoAHorizontalLayoutTester,
     renderer: GoAInputBaseTableReviewControl,
