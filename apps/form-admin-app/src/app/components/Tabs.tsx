@@ -63,7 +63,9 @@ export const Tabs: FunctionComponent<TabsProps> = ({ children }) => {
           available.map((child, idx) => (
             <button key={child.props.heading} data-selected={idx === selected} onClick={() => setSelected(idx)}>
               <span>{child.props.heading}</span>
-              {child.props.icon && <GoAIcon type={child.props.icon} size="small" ml="xs" />}
+              {child.props.icon && (
+                <GoAIcon type={child.props.icon} size="small" ml="xs" ariaLabel={child.props.icon} />
+              )}
             </button>
           ))}
       </div>
