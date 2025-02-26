@@ -5,11 +5,13 @@ import { AddressIndent, TextWrap } from './styled-components';
 interface AddressInputsProps {
   data: Record<string, string>;
   isAlbertaAddress?: boolean;
+  withoutHeader?: boolean;
 }
 
 export const AddressViews: React.FC<AddressInputsProps> = ({
   data,
   isAlbertaAddress,
+  withoutHeader,
 }: AddressInputsProps): JSX.Element => {
   const provinces = [
     { value: 'AB', label: 'Alberta' },
@@ -29,9 +31,11 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
 
   return (
     <>
-      <GoAGrid minChildWidth="0" gap="s">
-        <GoAFormItem label={`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}></GoAFormItem>
-      </GoAGrid>
+      {withoutHeader !== true && (
+        <GoAGrid minChildWidth="0" gap="s">
+          <GoAFormItem label={`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}></GoAFormItem>
+        </GoAGrid>
+      )}
       <AddressIndent>
         <GoAGrid minChildWidth="0" gap="s">
           <GoAFormItem
