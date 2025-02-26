@@ -412,7 +412,7 @@ When(
         .find('[class^="container"]')
         .invoke('attr', 'class')
         .then((classAttr) => {
-          if (classAttr?.includes('--selected')) {
+          if (classAttr?.includes('selected')) {
             cy.log('Make public checkbox is already checked off. ');
           } else {
             fileServiceObj.fileTypePagePublicCheckbox().shadow().find('[class^="container"]').click({ force: true });
@@ -483,7 +483,7 @@ When(
         .find('[class^="container"]')
         .invoke('attr', 'class')
         .then((classAttr) => {
-          if (classAttr?.includes('-selected')) {
+          if (classAttr?.includes('selected')) {
             fileServiceObj
               .fileTypePagePublicCheckbox()
               .shadow()

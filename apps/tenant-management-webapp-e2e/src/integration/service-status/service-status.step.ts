@@ -60,7 +60,7 @@ When(
         .find('[class^="container"]')
         .invoke('attr', 'class')
         .then((classAttr) => {
-          if (classAttr?.includes('-selected')) {
+          if (classAttr?.includes('selected')) {
             statusObj.noticeModalAllApplicationsCheckbox().shadow().find('[class^="container"]').click();
           }
         });
@@ -247,6 +247,7 @@ When('the user selects {string} filter by status radio button', function (filter
   cy.wait(2000); // To avoid clicking the filter too early
   statusObj
     .filterByStatusRadioGroup()
+    .find('goa-radio-item')
     .shadow()
     .find('input[value="' + filterType.toLowerCase() + '"]')
     .click({ force: true });
@@ -534,6 +535,7 @@ Then('the user views Manual status change modal', function () {
 When('the user selects {string} and clicks Save button', function (statusName: string) {
   statusObj
     .manualStatusChangeModalStatusRadioGroup()
+    .find('goa-radio-item')
     .shadow()
     .find('input[value="' + statusName.toLowerCase() + '"]')
     .click({ force: true });
@@ -568,14 +570,13 @@ Then('the user changes status to the first unused status', function () {
   let radioListIndexToCheck;
   const radioList = ['operational', 'maintenance', 'outage', 'reported-issues'];
   // statusObj.manualStatusChangeModalItemList().should('have.length', 4);
-  statusObj.manualStatusChangeModalStatusRadioGroup().shadow().find('.goa-radio-label').should('have.length', 4);
+  statusObj.manualStatusChangeModalStatusRadioGroup().find('goa-radio-item').should('have.length', 4);
   // statusObj.manualStatusChangeModalItemList().each((item, index) => {
   statusObj
     .manualStatusChangeModalStatusRadioGroup()
-    .shadow()
-    .find('.goa-radio-label')
+    .find('goa-radio-item')
     .each((item, index) => {
-      expect(Cypress.$(item).text()).to.eq(radioList[index]);
+      expect(Cypress.$(item).attr('value')).to.eq(radioList[index]);
     });
   statusObj
     .manualStatusChangeModalStatusRadioGroup()
@@ -590,6 +591,7 @@ Then('the user changes status to the first unused status', function () {
       }
       statusObj
         .manualStatusChangeModalStatusRadioGroup()
+        .find('goa-radio-item')
         .shadow()
         .find('input[value="' + radioList[radioListIndexToCheck] + '"]')
         .click({ force: true });
@@ -666,7 +668,7 @@ When('the user {string} Monitor only checkbox for {string}', function (checkboxO
     .then((checkbox) => {
       switch (checkboxOperation) {
         case 'selects':
-          if (!checkbox.attr('class')?.includes('--selected')) {
+          if (!checkbox.attr('class')?.includes('selected')) {
             statusObj
               .applicationCardMonitorOnlyCheckbox(applicationName)
               .shadow()
@@ -676,7 +678,7 @@ When('the user {string} Monitor only checkbox for {string}', function (checkboxO
           }
           break;
         case 'unselects':
-          if (checkbox.attr('class')?.includes('--selected')) {
+          if (checkbox.attr('class')?.includes('selected')) {
             statusObj
               .applicationCardMonitorOnlyCheckbox(applicationName)
               .shadow()

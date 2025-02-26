@@ -20,20 +20,20 @@ class StatusServicePage {
   }
 
   noticeModalDescField() {
-    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//*[@data-testid="notice-form-description"]');
+    return cy.xpath('//*[@testid="notice-modal" and @open="true"]//*[@testid="notice-form-description"]');
   }
 
   noticeModalAllApplicationsCheckbox() {
-    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//goa-checkbox[@name="isAllApplications"]');
+    return cy.xpath('//*[@testid="notice-modal" and @open="true"]//goa-checkbox[@name="isAllApplications"]');
   }
 
   noticeModalApplicationDropdown() {
-    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//*[@data-testid="application-dropdown-list"]');
+    return cy.xpath('//*[@testid="notice-modal" and @open="true"]//*[@testid="application-dropdown-list"]');
   }
 
   noticeModalApplicationDropdownItem(itemText) {
     return cy.xpath(
-      `//*[@data-testid="notice-modal" and @open="true"]//*[@data-testid="dropdown-menu"]//li[text() = "${itemText}"]`
+      `//*[@testid="notice-modal" and @open="true"]//*[@data-testid="dropdown-menu"]//li[text() = "${itemText}"]`
     );
   }
 
@@ -42,19 +42,19 @@ class StatusServicePage {
   }
 
   noticeModalStartTimeField() {
-    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//goa-form-item[@label="Start time"]//goa-input');
+    return cy.xpath('//*[@testid="notice-modal" and @open="true"]//goa-form-item[@label="Start time"]//goa-input');
   }
 
   noticeModalEndTimeField() {
-    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//goa-form-item[@label="End time"]//goa-input');
+    return cy.xpath('//*[@testid="notice-modal" and @open="true"]//goa-form-item[@label="End time"]//goa-input');
   }
 
   noticeModalSaveButton() {
-    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//goa-button[@type="primary"]');
+    return cy.xpath('//*[@testid="notice-modal" and @open="true"]//goa-button[@type="primary"]');
   }
 
   noticeModalCancelButton() {
-    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//*[@data-testid=notice-form-cancel]');
+    return cy.xpath('//*[@testid="notice-modal" and @open="true"]//*[@testid=notice-form-cancel]');
   }
 
   noticeList() {
@@ -62,7 +62,7 @@ class StatusServicePage {
   }
 
   noticeCardMode(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-mode"]`);
+    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@testid="notice-card-mode"]`);
   }
 
   noticeCardDesc(index) {
@@ -86,7 +86,7 @@ class StatusServicePage {
   }
 
   noticeCardGearButton(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-gear-button"]`);
+    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@testid="notice-card-gear-button"]`);
   }
 
   noticeCardGearButtons() {
@@ -122,7 +122,7 @@ class StatusServicePage {
   }
 
   addApplicationButton() {
-    return cy.get('[data-testid="add-application"]');
+    return cy.get('[testid="add-application"]');
   }
 
   addEditApplicationModalTitle() {
@@ -155,7 +155,7 @@ class StatusServicePage {
 
   applicationCardEditBtn(appName) {
     return cy.xpath(
-      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[@data-testid="status-edit-button"]`
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[@testid="status-edit-button"]`
     );
   }
 
@@ -173,7 +173,7 @@ class StatusServicePage {
 
   applicationCardMonitorOnlyCheckbox(appName) {
     return cy.xpath(
-      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]//ancestor::*[@data-testid="application"]//*[@data-testid="monitor-only-checkbox"]`
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]//ancestor::*[@data-testid="application"]//*[@testid="monitor-only-checkbox"]`
     );
   }
 
@@ -182,7 +182,7 @@ class StatusServicePage {
   }
 
   manualStatusChangeModalStatusRadioGroup() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-radio-group[@data-testid="status-radio-group"]');
+    return cy.xpath('//goa-modal[@open="true"]//goa-radio-group[@testid="status-radio-group"]');
   }
 
   manualStatusChangeModalSaveBtn() {
@@ -204,7 +204,7 @@ class StatusServicePage {
   }
 
   editContactInformationModal() {
-    return cy.xpath('//*[@data-testid="edit-contact-information-status"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="edit-contact-information-status"]//*[@slot="heading"]');
   }
 
   editContactInformationEmail() {
