@@ -392,7 +392,7 @@ Then(
         .find('[class^="container"]')
         .invoke('attr', 'class')
         .then((classAttr) => {
-          if (classAttr?.includes('--selected')) {
+          if (classAttr?.includes('selected')) {
             cy.log('Make stream public is already checked off.');
           } else {
             eventsObj.streamModalPublicCheckbox().shadow().find('[class^="container"]').click({ force: true });
@@ -407,7 +407,7 @@ Then(
         .find('[class^="container"]')
         .invoke('attr', 'class')
         .then((classAttr) => {
-          if (classAttr?.includes('--selected')) {
+          if (classAttr?.includes('selected')) {
             eventsObj.streamModalPublicCheckbox().shadow().find('[class^="container"]').click({ force: true });
           }
         });

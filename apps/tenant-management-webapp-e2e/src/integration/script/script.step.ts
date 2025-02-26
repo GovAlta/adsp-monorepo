@@ -31,7 +31,7 @@ Then('the user views the error message of {string} on namespace in script modal'
   scriptObj
     .addScriptModalNameFormItem()
     .shadow()
-    .find('[class="error-msg"]')
+    .find('[class*="error-msg"]')
     .invoke('text')
     .should('contain', errorMsg);
 });

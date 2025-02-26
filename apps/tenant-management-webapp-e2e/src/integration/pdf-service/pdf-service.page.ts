@@ -14,11 +14,11 @@ class PDFServicePage {
   }
 
   pdfAddTemplateModalName() {
-    return cy.get('[data-testid="pdf-template-name"]');
+    return cy.get('[testid="pdf-template-name"]');
   }
 
   pdfAddTemplateModalDescription() {
-    return cy.get('[data-testid="pdf-template-description"]');
+    return cy.get('[testid="pdf-template-description"]');
   }
 
   pdfAddTemplateModalSaveBtn() {
@@ -60,23 +60,23 @@ class PDFServicePage {
   }
 
   pdfTemplateDeleteConfirmationModalHeading() {
-    return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="delete-confirmation"]//*[@slot="heading"]');
   }
 
   pdfTemplateDeleteConfirmationModalContent() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" ]//div[3]');
+    return cy.xpath('//*[@testid="delete-confirmation" ]//div[3]');
   }
 
   pdfTemplateDeleteConfirmationModalDeleteBtn() {
-    return cy.xpath('//*[@data-testid="delete-confirm"]');
+    return cy.xpath('//*[@testid="delete-confirm"]');
   }
 
   pdfTemplateModalTemplateIdField() {
-    return cy.get('[data-testid="pdf-template-id"]');
+    return cy.get('[testid="pdf-template-id"]');
   }
 
   pdfTemplateModalDescriptionField() {
-    return cy.xpath('//*[contains(@data-testid, "pdf-template-description")]');
+    return cy.xpath('//*[contains(@testid, "pdf-template-description")]');
   }
 
   pdfTemplateEditorNameField() {
@@ -92,7 +92,7 @@ class PDFServicePage {
   }
 
   pdfTemplateModalSaveBtn() {
-    return cy.xpath('//button[@data-testid="template-form-save"]');
+    return cy.xpath('//button[@testid="template-form-save"]');
   }
 
   pdfTemplateBodyTab() {
@@ -150,11 +150,11 @@ class PDFServicePage {
   }
 
   pdfDownloadIconOnTopIframe() {
-    return cy.xpath('//*[@data-testid="download-template-icon"]');
+    return cy.xpath('//*[@testid="download-template-icon"]');
   }
 
   pdfGeneratePDFButton() {
-    return cy.xpath('//*[@data-testid="generate-template"]');
+    return cy.xpath('//*[@testid="generate-template"]');
   }
   pdfTemplateEditorScreenTitle() {
     return cy.xpath('//div[text()="PDF / Template Editor"]');
@@ -165,15 +165,15 @@ class PDFServicePage {
   }
 
   pdfTemplateEditorScreenEditIcon() {
-    return cy.xpath('//*[@data-testid="pdf-template-information-edit-icon"]');
+    return cy.xpath('//*[@testid="pdf-template-information-edit-icon"]');
   }
 
   pdfTemplateEditorScreenBackButton() {
-    return cy.xpath('//*[@data-testid="template-form-close"]');
+    return cy.xpath('//*[@testid="template-form-close"]');
   }
 
   pdfTemplateEditorScreenSaveButton() {
-    return cy.xpath('//*[@data-testid="template-form-save"]');
+    return cy.xpath('//*[@testid="template-form-save"]');
   }
 }
 export default PDFServicePage;

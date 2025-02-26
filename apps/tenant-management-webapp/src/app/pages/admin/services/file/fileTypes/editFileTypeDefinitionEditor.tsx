@@ -281,7 +281,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   content="The untouched files within the file type will be deleted after the retention period provided."
                   position="right"
                 >
-                  <GoAIcon type="information-circle"></GoAIcon>
+                  <GoAIcon type="information-circle" ariaLabel="Retention policy"></GoAIcon>
                 </GoATooltip>
                 <RetentionPolicyWrapper>
                   <GoACheckbox
