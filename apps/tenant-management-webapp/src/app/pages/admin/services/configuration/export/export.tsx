@@ -201,7 +201,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                             <div>
                               {desc && (
                                 <GoATooltip content={desc} position="top">
-                                  <GoAIcon type="information-circle" />
+                                  <GoAIcon type="information-circle" ariaLabel="info" />
                                 </GoATooltip>
                               )}
                             </div>

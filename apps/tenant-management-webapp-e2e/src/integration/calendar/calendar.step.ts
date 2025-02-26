@@ -399,7 +399,7 @@ When(
           .find('[class^="container"]')
           .invoke('attr', 'class')
           .then((classAttr) => {
-            if (!classAttr?.includes('--selected')) {
+            if (!classAttr?.includes('selected')) {
               calendarObj
                 .eventsCalendarEventModalIsAllDayCheckbox()
                 .shadow()
@@ -417,7 +417,7 @@ When(
           .find('[class^="container"]')
           .invoke('attr', 'class')
           .then((classAttr) => {
-            if (classAttr?.includes('--selected')) {
+            if (classAttr?.includes('selected')) {
               calendarObj
                 .eventsCalendarEventModalIsAllDayCheckbox()
                 .shadow()
@@ -491,7 +491,7 @@ When(
             .find('[class^="container"]')
             .invoke('attr', 'class')
             .then((classAttr) => {
-              if (!classAttr?.includes('--selected')) {
+              if (!classAttr?.includes('selected')) {
                 calendarObj
                   .eventsCalendarEventModalIsPublicCheckbox()
                   .shadow()
@@ -509,7 +509,7 @@ When(
             .find('[class^="container"]')
             .invoke('attr', 'class')
             .then((classAttr) => {
-              if (classAttr?.includes('--selected')) {
+              if (classAttr?.includes('selected')) {
                 calendarObj
                   .eventsCalendarEventModalIsPublicCheckbox()
                   .shadow()

@@ -86,10 +86,10 @@ Then('no critical or serious accessibility issues for {string} on {string}', fun
   let elementIdentifier;
   switch (elementName) {
     case 'PDF template modal':
-      elementIdentifier = '[testid="template-form"]';
+      elementIdentifier = '[data-testid="template-form"]';
       break;
     case 'script edit modal':
-      elementIdentifier = '[testid="script-edit-form"]';
+      elementIdentifier = '[data-testid="script-edit-form"]';
       break;
     case 'event template modal':
       elementIdentifier = '[testid="template-form"]';

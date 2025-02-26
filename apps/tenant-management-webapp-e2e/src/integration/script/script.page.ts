@@ -12,9 +12,7 @@ class ScriptPage {
   }
 
   addScriptModalNameField() {
-    return cy.xpath(
-      '//goa-modal[@testid="add-script-modal" and @open="true"]//*[@data-testid="script-modal-name-input"]'
-    );
+    return cy.xpath('//goa-modal[@testid="add-script-modal" and @open="true"]//*[@testid="script-modal-name-input"]');
   }
 
   addScriptModalNameErrorMsg() {
@@ -25,7 +23,7 @@ class ScriptPage {
 
   addScriptModalDescriptionField() {
     return cy.xpath(
-      '//goa-modal[@testid="add-script-modal" and @open="true"]//*[@data-testid="script-modal-description-input"]'
+      '//goa-modal[@testid="add-script-modal" and @open="true"]//*[@testid="script-modal-description-input"]'
     );
   }
 
@@ -35,23 +33,23 @@ class ScriptPage {
 
   addScriptModalRolesCheckbox(roleName) {
     return cy.xpath(
-      `//*[@data-testid="add-script-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "runner")]`
+      `//*[@testid="add-script-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "runner")]`
     );
   }
 
   addScriptModalRolesTitle(roleTitle) {
-    return cy.xpath(`//*[@data-testid="add-script-modal"]//h4[text()="${roleTitle}"]`);
+    return cy.xpath(`//*[@testid="add-script-modal"]//h4[text()="${roleTitle}"]`);
   }
 
   addScriptModalClientRolesTable(clientName) {
     return cy.xpath(
-      `//*[@data-testid="add-script-modal" and @open="true"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table`
+      `//*[@testid="add-script-modal" and @open="true"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table`
     );
   }
 
   addScriptModalRolesTable() {
     return cy.xpath(
-      `//*[@data-testid="add-script-modal" and @open="true"]//h4/div[text()="autotest"]/parent::h4/following-sibling::goa-table[1]`
+      `//*[@testid="add-script-modal" and @open="true"]//h4/div[text()="autotest"]/parent::h4/following-sibling::goa-table[1]`
     );
   }
 
@@ -68,11 +66,11 @@ class ScriptPage {
   }
 
   scriptDeleteButton(rowNumber) {
-    return cy.xpath(`(//table[@data-testid="script-table"]//*[contains(@data-testid, "delete-icon")])[${rowNumber}]`);
+    return cy.xpath(`(//table[@data-testid="script-table"]//*[contains(@testid, "delete-icon")])[${rowNumber}]`);
   }
 
   scriptEditButton(rowNumber) {
-    return cy.xpath(`(//table[@data-testid="script-table"]//*[contains(@data-testid, "script-edit")])[${rowNumber}]`);
+    return cy.xpath(`(//table[@data-testid="script-table"]//*[contains(@testid, "script-edit")])[${rowNumber}]`);
   }
 
   editScriptModal() {
@@ -96,11 +94,11 @@ class ScriptPage {
   }
 
   editScriptModalNameField() {
-    return cy.xpath('//*[@data-testid="script-edit-form" and @open]//*[@data-testid="script-modal-name-input"]');
+    return cy.xpath('//*[@data-testid="script-edit-form" and @open]//*[@testid="script-modal-name-input"]');
   }
 
   editScriptModalDescriptionField() {
-    return cy.xpath('//*[@data-testid="script-edit-form" and @open]//*[@data-testid="script-modal-description-input"]');
+    return cy.xpath('//*[@data-testid="script-edit-form" and @open]//*[@testid="script-modal-description-input"]');
   }
 
   editScriptModalLuaScriptEditor() {
