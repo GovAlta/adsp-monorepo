@@ -300,7 +300,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
             {range(count || 0).map((num, i) => {
               // eslint-disable-next-line
               const errorRow = errors?.find((error: any) =>
-                error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`)
+                error.instancePath.includes(`/${props.rowPath?.replace(/\./g, '/')}/${i}`)
               ) as { message: string };
               return (
                 <tr key={i}>
@@ -310,7 +310,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                     const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
                     const error = errors?.find(
                       // eslint-disable-next-line
-                      (e: any) => e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}`
+                      (e: any) => e.instancePath === `/${props.rowPath?.replace(/\./g, '/')}/${i}/${element}`
                     ) as { message: string };
                     if (
                       error?.message.includes('must NOT have fewer') &&

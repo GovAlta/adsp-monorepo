@@ -22,8 +22,8 @@ function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undef
 }
 
 export const formatSin = (value: string) => {
-  const inputVal = value.replace(/ /g, '');
-  let inputNumbersOnly = inputVal.replace(/\D/g, '');
+  const inputVal = value?.replace(/ /g, '');
+  let inputNumbersOnly = inputVal?.replace(/\D/g, '');
 
   if (inputNumbersOnly.length > 16) {
     inputNumbersOnly = inputNumbersOnly.substr(0, 9);

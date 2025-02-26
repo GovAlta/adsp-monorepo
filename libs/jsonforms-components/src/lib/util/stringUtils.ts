@@ -19,8 +19,8 @@ export const capitalizeFirstLetter = (words: string) => {
  */
 export const controlScopeMatchesLabel = (scope: string, label: string) => {
   // Get the property name in the string from the scope
-  const splitIdName = scope.replace(' ', '').split('/')?.at(-1)?.toLowerCase() ?? '';
-  const labelWithNoSpaces = label.replace(' ', '').toLowerCase();
+  const splitIdName = scope?.replace(' ', '').split('/')?.at(-1)?.toLowerCase() ?? '';
+  const labelWithNoSpaces = label?.replace(' ', '').toLowerCase();
   return splitIdName === labelWithNoSpaces;
 };
 

@@ -5,10 +5,11 @@ import { GoAButton } from '@abgov/react-components';
 import { PageReviewActionCol, PageReviewNameCol, PageReviewValueCol } from './style-component';
 import { convertToSentenceCase, getLastSegmentFromPointer } from '../../util';
 import { getLabelText } from '../../util/stringUtils';
-import { JsonFormsStepperContextProps, JsonFormsStepperContext } from '../FormStepper/context';
+import { JsonFormsStepperContext } from '../FormStepper/context';
+import { GoATable } from '@abgov/react-components';
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
-  const { data, uischema, label } = props;
+  const { data, uischema, label, schema } = props;
   const labelToUpdate: string = convertToSentenceCase(getLabelText(uischema.scope, label || ''));
   const categoryIndex = uischema.options?.categoryIndex;
   const formStepperCtx = useContext(JsonFormsStepperContext);
@@ -29,12 +30,69 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
     }
   }
 
+  const elements = (uischema as any)?.elements
+    ?.map((element: any) => {
+      console.log(JSON.stringify(element) + '<element');
+      const result = element?.scope.split('/').filter((part, index, arr) => part !== 'properties' && index !== 0);
+      return result;
+    })
+    .flat();
+
+  const properties = schema.properties || {};
+
   return (
     <tr data-testid={`input-base-table-${label}-row`}>
-      <PageReviewNameCol>
-        <strong>{labelToUpdate}</strong>
-      </PageReviewNameCol>
-      <PageReviewValueCol>{reviewText}</PageReviewValueCol>
+      {labelToUpdate && (
+        <PageReviewNameCol>
+          <strong>{labelToUpdate}</strong>
+        </PageReviewNameCol>
+      )}
+      <PageReviewValueCol>
+        {typeof reviewText === 'string' ? (
+          <div>a{reviewText}a</div>
+        ) : (
+          <div>
+            {Object.keys(reviewText)
+              ?.filter((k) => elements?.includes(k))
+              .map((key) => {
+                const itemsSchema = properties[key]?.items as { properties: any };
+
+                return Array.isArray(reviewText[key]) ? (
+                  <GoATable width="100%">
+                    <thead>
+                      <tr>
+                        {properties[key] &&
+                          Object.keys(itemsSchema?.properties).map((headNames, ix) => {
+                            return <th key={ix}>{headNames}</th>;
+                          })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reviewText[key]?.map((obj: any, index: string) => (
+                        <tr key={index}>
+                          {properties[key] &&
+                            Object.keys(itemsSchema?.properties).map((headNames, ix) => {
+                              return <td key={ix}>{obj[headNames]}</td>;
+                            })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </GoATable>
+                ) : (
+                  <div key={key}>
+                    <div>a{JSON.stringify(uischema)}uischema</div>
+                    <div>a{JSON.stringify(key)}key</div>
+                    -----------
+                    <div>a{JSON.stringify(reviewText)}reviewText</div>
+                    --------
+                    <div>a{JSON.stringify(reviewText[key])}reviewText[key]</div>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+        {/* <pre>{JSON.stringify(elements, null, 2)}</pre> */}
+      </PageReviewValueCol>
       <PageReviewActionCol>
         <GoAButton
           type="tertiary"
