@@ -19,8 +19,10 @@ export interface DataProperty {
   type: string;
   format?: string;
   maxLength?: number;
+  required?: string[];
   enum: string[];
 }
+
 export interface DataObject {
   [key: string]: DataProperty;
 }

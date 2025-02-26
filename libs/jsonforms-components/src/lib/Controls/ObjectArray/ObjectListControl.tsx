@@ -1,3 +1,4 @@
+import { ErrorObject } from 'ajv';
 import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
 import range from 'lodash/range';
@@ -32,7 +33,6 @@ import {
   NonEmptyCellStyle,
   TableTHHeader,
   RequiredSpan,
-  HasErrorLabel,
   HilightCellWarning,
   ObjectArrayWarningIconDiv,
 } from './styled-components';
@@ -60,7 +60,6 @@ import {
   OwnPropsOfNonEmptyCellWithDialog,
   TableRowsProp,
 } from './ObjectListControlTypes';
-import { ErrorObject } from 'ajv';
 
 /**
  * Extract Json data schema name attribute and the ui schema label name
@@ -89,15 +88,22 @@ function extractNames(obj: unknown, names: Record<string, string> = {}): Record<
 
   return names;
 }
+function extractRequiredNames(obj: unknown, names: string[] = []): string[] {
+  if (Array.isArray(obj)) {
+    obj.forEach((item) => extractRequiredNames(item, names));
+  } else if (typeof obj === 'object' && obj !== null) {
+    const typedObj = obj as Record<string, unknown>;
+    const items = typedObj.items as Record<string, unknown>;
 
-const hasAnyErrors = (rowPath: string, errors: ErrorObject[]) => {
-  const filteredErrors = errors.filter((err) => {
-    return err.instancePath.includes(rowPath);
-  });
+    if (items && items.required) {
+      names.push(...Object.values(items.required));
+    }
 
-  console.log('filteredErrors', filteredErrors);
-  return filteredErrors?.length > 0 || false;
-};
+    Object.values(typedObj).forEach((value) => extractRequiredNames(value, names));
+  }
+
+  return names;
+}
 
 const GenerateRows = (
   Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
@@ -177,40 +183,33 @@ const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOf
     handleChange: ownProps.handleChange,
   };
 };
-const renderCellColumn = (currentData: unknown, error: string) => {
-  if (currentData === undefined) {
+const renderCellColumn = (currentData: string, error: string, isRequired: boolean) => {
+  const renderWarningCell = () => {
     return (
       <HilightCellWarning>
         <ObjectArrayWarningIconDiv>
-          <GoAIcon type="warning" title="warning-icons" size="small" theme="filled" mt="2xs"></GoAIcon>
-          {currentData}
+          <GoAIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoAIcon>
         </ObjectArrayWarningIconDiv>
       </HilightCellWarning>
     );
+  };
+  if ((currentData === undefined && isRequired) || (error !== '' && error !== undefined)) {
+    return renderWarningCell();
   }
   if (typeof currentData === 'string') {
     return currentData;
+  } else if (typeof currentData === 'object' || Array.isArray(currentData)) {
+    const result = Object.keys(currentData[0]).length === 0;
+    if (result) {
+      return renderWarningCell();
+    } else {
+      return <pre>{JSON.stringify(currentData, null, 2)}</pre>;
+    }
   }
+
   return null;
-  // {typeof currentData === 'string' || currentData === undefined ? (
-  //   <HilightCellWarning>
-  //     <ObjectArrayWarningIconDiv>
-  //       <GoAIcon
-  //         type="warning"
-  //         title="warning-icons"
-  //         size="small"
-  //         theme="filled"
-  //         mt="2xs"
-  //       ></GoAIcon>
-  //       {currentData}
-  //     </ObjectArrayWarningIconDiv>
-  //   </HilightCellWarning>
-  // ) : typeof currentData === 'string' ? (
-  //   currentData
-  // ) : (
-  //   <pre>{JSON.stringify(currentData, null, 2)}</pre>
-  // )}
 };
+
 export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   props: NonEmptyRowComponentProps & HandleChangeProps
 ) {
@@ -229,14 +228,15 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     errors,
   } = props;
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
-  const required = (schema.items as Record<string, Array<string>>)?.required;
+  const rootRequired = (schema.items as Record<string, Array<string>>)?.required;
+  const nestedRequired = extractRequiredNames((schema.items as Record<string, Array<string>>)?.properties);
+  const required = [...new Set(rootRequired), ...new Set(nestedRequired)];
 
   let tableKeys = extractNames(uischema?.options?.detail);
   if (Object.keys(tableKeys).length === 0) {
     tableKeys = extractNames(properties);
   }
-
-  const hasErrors = Array.isArray(errors as ErrorObject[])
+  const hasAnyErrors = Array.isArray(errors as ErrorObject[])
     ? (errors as ErrorObject[])?.filter((err) => {
         return err.instancePath.includes(rowPath);
       })?.length > 0
@@ -307,13 +307,19 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       const dataObject = properties[element];
                       const schemaName = element;
                       const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
-                      const error = errors?.find(
-                        (e: ErrorObject) =>
-                          e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
-                          e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
-                      ) as { message: string };
+
+                      const error = (
+                        errors?.filter(
+                          (e: ErrorObject) =>
+                            e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
+                            e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
+                        ) as { message: string; instancePath: string; data: { key: string; value: string } }[]
+                      ).find((y) => {
+                        return y?.message?.includes(element) || y.instancePath.includes(element);
+                      }) as { message: string };
+
                       //Get out of the loop to not render extra columns
-                      if (Object.keys(tableKeys).length === ix) return null;
+                      if (ix > 1 && Object.keys(tableKeys).length === ix) return null;
 
                       if (
                         error?.message.includes('must NOT have fewer') &&
@@ -323,12 +329,15 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                         error.message = `${capitalizeFirstLetter(schemaName)} is required`;
                       }
 
-                      console.log('error', error);
                       if (isInReview === true) {
                         return (
                           <td key={ix}>
                             <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
-                              {renderCellColumn(currentData, error?.message)}
+                              {renderCellColumn(
+                                currentData,
+                                error?.message,
+                                required?.includes(tableKeys[currentData])
+                              )}
                             </div>
                           </td>
                         );
@@ -383,7 +392,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
               })}
             </tbody>
           </GoATable>
-          {hasErrors && (
+          {hasAnyErrors && (
             <GoAFormItem error={`There are validation errors for '${capitalizeFirstLetter(rowPath)}'`}></GoAFormItem>
           )}
         </>
