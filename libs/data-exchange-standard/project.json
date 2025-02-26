@@ -8,11 +8,37 @@
     "lint": {
       "executor": "@nx/eslint:lint"
     },
+    "build": {
+      "executor": "@nx/rollup:rollup",
+      "options": {
+        "outputPath": "dist/libs/data-exchange-standard",
+        "tsConfig": "libs/data-exchange-standard/tsconfig.lib.json",
+        "project": "libs/data-exchange-standard/package.json",
+        "entryFile": "libs/data-exchange-standard/src/index.ts",
+        "external": [
+        ],
+        "rollupConfig": "libs/data-exchange-standard/rollup.config.js",
+        "compiler": "babel",
+        "assets": [
+          {
+            "glob": "libs/data-exchange-standard/README.md",
+            "input": ".",
+            "output": "."
+          }
+        ]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "libs/data-exchange-standard/jest.config.ts"
+      }
+    },
+    "release": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx semantic-release -e ./libs/data-exchange-standard/.releaserc.json"
       }
     }
   }
