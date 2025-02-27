@@ -38,5 +38,5 @@ export const configurationSchema = {
     submissionPdfTemplate: { type: 'string' },
     scheduledIntakes: { type: 'boolean' },
   },
-  required: ['id', 'name', 'formDraftUrlTemplate', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
+  required: ['id', 'name', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
 };
