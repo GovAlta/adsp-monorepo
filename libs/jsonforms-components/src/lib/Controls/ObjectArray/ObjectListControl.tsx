@@ -157,23 +157,14 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   } = props;
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
   const required = (schema.items as Record<string, Array<string>>)?.required;
-  // const nestedRequired = extractRequiredNames((schema.items as Record<string, Array<string>>)?.properties);
-  // const required = [...new Set(rootRequired)];
 
-  let tableKeys = extractNames(uischema?.options?.detail);
+  const tableKeys = extractNames(uischema?.options?.detail);
 
   if (Object.keys(tableKeys).length === 0) {
-    tableKeys = extractNames(properties);
+    Object.keys(properties).forEach((item) => {
+      tableKeys[item] = item;
+    });
   }
-
-  const tempTableKeys: Record<string, string> = {};
-  Object.keys(properties).forEach((item) => {
-    if (Object.keys(tableKeys).includes(item)) {
-      tempTableKeys[item] = tableKeys[item];
-    }
-  });
-
-  tableKeys = tempTableKeys;
 
   const hasAnyErrors = Array.isArray(errors as ErrorObject[])
     ? (errors as ErrorObject[])?.filter((err) => {
@@ -207,8 +198,8 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                     return (
                       <th key={index}>
                         <p>
-                          {convertToSentenceCase(tableKeys[value])}
-                          {required?.includes(tableKeys[value]) && <RequiredSpan>(required)</RequiredSpan>}
+                          {convertToSentenceCase(index)}
+                          {required?.includes(index) && <RequiredSpan>(required)</RequiredSpan>}
                         </p>
                       </th>
                     );
@@ -216,9 +207,9 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                   return (
                     <TableTHHeader key={index}>
                       <p>
-                        {`${convertToSentenceCase(tableKeys[value])}`}
+                        {`${convertToSentenceCase(index)}`}
 
-                        {required?.includes(value) && (
+                        {required?.includes(index) && (
                           <RequiredSpan>
                             <br /> (required)
                           </RequiredSpan>
@@ -241,20 +232,20 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                 ) as { message: string };
 
                 return (
-                  <tr key={i}>
+                  <tr key={`${i}-${num}`}>
                     {Object.keys(properties).map((element, ix) => {
                       const dataObject = properties[element];
                       const schemaName = element;
                       const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
 
                       //Get out of the loop to not render extra blank columns at the end of the table
-                      if (ix > 1 && Object.keys(tableKeys).length === ix) return null;
+                      //if (ix > 1 && Object.keys(tableKeys).length === ix) return null;
 
                       const error = (
                         errors?.filter(
                           (e: ErrorObject) =>
                             e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
-                            e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}` //||
+                            e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
                         ) as { message: string; instancePath: string; data: { key: string; value: string } }[]
                       ).find((y) => {
                         return y?.message?.includes(element) || y.instancePath.includes(element);
@@ -283,34 +274,36 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       }
 
                       return (
-                        <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
-                          {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
-                            <GoAInput
-                              error={error?.message.length > 0}
-                              type={dataObject.type === 'number' ? 'number' : 'text'}
-                              id={schemaName}
-                              name={schemaName}
-                              value={currentData}
-                              testId={`#/properties/${schemaName}-input-${i}`}
-                              onChange={(name: string, value: string) => {
-                                handleChange(rowPath, {
-                                  [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
-                                });
-                              }}
-                              aria-label={schemaName}
-                              width="100%"
-                            />
-                          ) : (
-                            <GoACallout
-                              type="important"
-                              size="medium"
-                              testId="form-support-callout"
-                              heading="Not supported"
-                            >
-                              Only string and number are supported inside arrays
-                            </GoACallout>
-                          )}
-                        </GoAFormItem>
+                        <td key={ix}>
+                          <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
+                            {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
+                              <GoAInput
+                                error={error?.message.length > 0}
+                                type={dataObject.type === 'number' ? 'number' : 'text'}
+                                id={schemaName}
+                                name={schemaName}
+                                value={currentData}
+                                testId={`#/properties/${schemaName}-input-${i}`}
+                                onChange={(name: string, value: string) => {
+                                  handleChange(rowPath, {
+                                    [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
+                                  });
+                                }}
+                                aria-label={schemaName}
+                                width="100%"
+                              />
+                            ) : (
+                              <GoACallout
+                                type="important"
+                                size="medium"
+                                testId="form-support-callout"
+                                heading="Not supported"
+                              >
+                                Only string and number are supported inside arrays
+                              </GoACallout>
+                            )}
+                          </GoAFormItem>
+                        </td>
                       );
                     })}
                     <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
@@ -331,7 +324,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
               })}
             </tbody>
           </GoATable>
-          {hasAnyErrors && (
+          {hasAnyErrors && isInReview && (
             <GoAFormItem error={`There are validation errors for '${capitalizeFirstLetter(rowPath)}'`}></GoAFormItem>
           )}
         </>
@@ -562,7 +555,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
         payload: dispatchData,
       });
     }
-  }, [parsedData, path]);
+  }, []);
   const controlElement = uischema as ControlElement;
 
   const listTitle = label || uischema.options?.title;
