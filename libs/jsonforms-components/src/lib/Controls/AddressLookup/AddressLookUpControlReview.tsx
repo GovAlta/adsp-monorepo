@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { AddressViews } from './AddressViews';
 import { JsonFormsStepperContext } from '../FormStepper/context';
-import { PageReviewActionCol, PageReviewNameCol, PageReviewValueCol } from '../Inputs/style-component';
+import { PageReviewNameCol, PageReviewValueCol } from '../Inputs/style-component';
 import { GoAButton } from '@abgov/react-components';
 import { JsonFormsStepperContextProvider } from '../FormStepper/context';
 
@@ -29,21 +29,6 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
         <PageReviewNameCol>
           <strong>{`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}</strong>
         </PageReviewNameCol>
-        <PageReviewValueCol></PageReviewValueCol>
-        <PageReviewActionCol>
-          <GoAButton
-            type="tertiary"
-            testId={`page-review-change-address-btn`}
-            onClick={() => {
-              if (formStepperCtx) {
-                formStepperCtx.toggleShowReviewLink(categoryIndex);
-                formStepperCtx.goToPage(categoryIndex);
-              }
-            }}
-          >
-            Change
-          </GoAButton>
-        </PageReviewActionCol>
       </tr>
       <tr>
         <td colSpan={3}>
