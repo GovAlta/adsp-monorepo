@@ -9,6 +9,7 @@ export * from './components/TextSkeleton';
 export * from './components/Recaptcha';
 export * from './components/RowSkeleton';
 export * from './components/RowLoadMore';
+export * from './components/useShadowDomMutation';
 
 export * from './utils';
 export * from './useScripts';

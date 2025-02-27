@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CopyLinkToolTipClipboardWrapper, CopyLinkToolTipWrapper, LinkCopyComponentWrapper } from './styled-components';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { GoAButton } from '@abgov/react-components';
+import { useShadowDomMutation } from '@core-services/app-common';
 
 interface LinkCopyComponentProps {
   link: string;
@@ -26,19 +27,12 @@ const LinkCopyComponent = ({ link, text }: LinkCopyComponentProps): JSX.Element 
     };
   }, [isCopied]);
 
-  useEffect(() => {
-    const goaButton = document.querySelector("[testId='copy-link-button']");
-
-    if (goaButton) {
-      setTimeout(() => {
-        const shadowRoot = goaButton?.shadowRoot;
-        const icon = shadowRoot?.querySelector("[id='leading-icon']");
-        if (icon) {
-          icon.setAttribute('aria-hidden', 'true');
-        }
-      }, 500);
-    }
-  }, []);
+  useShadowDomMutation({
+    testId: 'copy-link-button',
+    elementSelector: '#leading-icon',
+    attribute: 'aria-hidden',
+    value: 'true',
+  });
 
   return (
     <LinkCopyComponentWrapper

@@ -63,11 +63,11 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
                 <div>
                   {channel.channel === 'email' ? (
                     <IconsCell>
-                      <GoAIcon data-testid="mail-icon" size="small" type="mail" />
+                      <GoAIcon data-testid="mail-icon" size="small" type="mail" title="email" />
                     </IconsCell>
                   ) : channel.channel === 'sms' ? (
                     <IconsCell>
-                      <GoAIcon data-testid="sms-icon" size="small" type="phone-portrait" />
+                      <GoAIcon data-testid="sms-icon" size="small" type="phone-portrait" title="sms" />
                     </IconsCell>
                   ) : (
                     `${channel.channel}:`
