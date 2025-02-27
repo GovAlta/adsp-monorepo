@@ -21,7 +21,7 @@ export const FormStatusNotificationType: NotificationType = {
           subtitle: 'Form draft created',
           body: `
 <section>
-  <p>We're saving the draft of the <b>{{ event.payload.form.definition.name }}</b> form you started so you can submit it later. Use the following link to go back to the draft when you're ready to continue working on it: <a href="{{ event.payload.form.formDraftUrl }}">{{ event.payload.form.formDraftUrl }}</a></p>
+  <p>We're saving the draft of the <b>{{ event.payload.form.definition.name }}</b> form you started so you can submit it later.{{#if event.payload.form.formDraftUrl}} Use the following link to go back to the draft when you're ready to continue working on it: <a href="{{ event.payload.form.formDraftUrl }}">{{ event.payload.form.formDraftUrl }}</a>{{/if}}</p>
   <p>Future updates on your form draft and submission will also be sent to this inbox.</p>
 </section>`,
         },
@@ -29,7 +29,9 @@ export const FormStatusNotificationType: NotificationType = {
           subject: '{{ event.payload.form.definition.name }} draft created',
           body:
             `We're saving the draft of the {{ event.payload.form.definition.name }} form you started so you can submit it later. ` +
+            '{{#if event.payload.form.formDraftUrl}}' +
             `Use the following link to go back to the draft when you're ready to continue working on it: {{ event.payload.form.formDraftUrl }}. ` +
+            '{{/if}}' +
             'Future updates on your form draft and submission will also be sent to this number.',
         },
       },
@@ -68,14 +70,16 @@ export const FormStatusNotificationType: NotificationType = {
           body: `
 <section>
   <p>Your draft <b>{{ event.payload.form.definition.name }}</b> form has been unlocked.</p>
-  <p>Click <a href="{{ event.payload.form.formDraftUrl }}">here</a> to get back to your draft.</p>
+  {{#if event.payload.form.formDraftUrl}}<p>Click <a href="{{ event.payload.form.formDraftUrl }}">here</a> to get back to your draft.</p>{{/if}}
 </section>`,
         },
         sms: {
           subject: '{{ event.payload.form.definition.name }} unlocked',
           body:
-            'Your draft {{ event.payload.form.definition.name }} form has been unlocked. Go to {{ event.payload.form.formDraftUrl }} ' +
-            'to get back to your draft.',
+            'Your draft {{ event.payload.form.definition.name }} form has been unlocked.' +
+            '{{#if event.payload.form.formDraftUrl}} ' +
+            'Go to {{ event.payload.form.formDraftUrl }} to get back to your draft.' +
+            '{{/if}}',
         },
       },
     },
@@ -90,14 +94,16 @@ export const FormStatusNotificationType: NotificationType = {
           body: `
 <section>
   <p>Your <b>{{ event.payload.form.definition.name }}</b> form has been returned to draft.</p>
-  <p>Click <a href="{{ event.payload.form.formDraftUrl }}">here</a> to get back to your draft.</p>
+  {{#if event.payload.form.formDraftUrl}}<p>Click <a href="{{ event.payload.form.formDraftUrl }}">here</a> to get back to your draft.</p>{{/if}}
 </section>`,
         },
         sms: {
           subject: '{{ event.payload.form.definition.name }} unlocked',
           body:
-            'Your {{ event.payload.form.definition.name }} form has been set to draft, making it editable. Go to {{ event.payload.form.formDraftUrl }} ' +
-            'to get back to your draft.',
+            'Your {{ event.payload.form.definition.name }} form has been set to draft, making it editable.' +
+            '{{#if event.payload.form.formDraftUrl}} ' +
+            'Go to {{ event.payload.form.formDraftUrl }} to get back to your draft.' +
+            '{{/if}}',
         },
       },
     },
@@ -112,14 +118,16 @@ export const FormStatusNotificationType: NotificationType = {
           body: `
 <section>
   <p>We received your <b>{{ event.payload.form.definition.name }}</b> form submission. We appreciate your patience while it is being reviewed.</p>
-  <p>Use the following link to see a copy of your submitted form: <a href="{{ event.payload.form.formDraftUrl }}">{{ event.payload.form.formDraftUrl }}</a></p>
+  {{#if event.payload.form.formDraftUrl}}<p>Use the following link to see a copy of your submitted form: <a href="{{ event.payload.form.formDraftUrl }}">{{ event.payload.form.formDraftUrl }}</a></p>{{/if}}
 </section>`,
         },
         sms: {
           subject: '{{ event.payload.form.definition.name }} received',
           body:
             'We received your {{ event.payload.form.definition.name }} form submission. We appreciate your patience while it is being reviewed. ' +
-            'Use the following link to see a copy of your submitted form: {{ event.payload.form.formDraftUrl }}',
+            '{{#if event.payload.form.formDraftUrl}} ' +
+            'Use the following link to see a copy of your submitted form: {{ event.payload.form.formDraftUrl }}' +
+            '{{/if}}',
         },
       },
     },
