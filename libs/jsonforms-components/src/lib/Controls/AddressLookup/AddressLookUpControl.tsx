@@ -5,6 +5,7 @@ import { AddressInputs } from './AddressInputs';
 
 import { GoAFormItem, GoAInput, GoASpinner } from '@abgov/react-components';
 import { Address, Suggestion } from './types';
+import { useShadowDomMutation } from '../../common/useShadowDomMutation';
 
 import {
   fetchAddressSuggestions,
@@ -45,6 +46,12 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       country: 'CA',
     };
   }
+  useShadowDomMutation({
+    testId: 'address-form-address1',
+    elementSelector: "[data-testid='leading-icon']",
+    attribute: 'title',
+    value: 'search address',
+  });
 
   const [address, setAddress] = useState<Address>(data || defaultAddress);
   const [searchTerm, setSearchTerm] = useState('');

@@ -19,6 +19,7 @@ import {
   GoADropdownListOption,
   GoADropdownTextbox,
 } from './styled-components';
+import { useShadowDomMutation } from '../common/useShadowDomMutation';
 
 export const isValidKey = (keyCode: string): boolean => {
   if (keyCode === SHIFT_KEY || keyCode === ALT_KEY) return false;
@@ -220,6 +221,13 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       }
     }
   };
+
+  useShadowDomMutation({
+    testId: `${id}-input`,
+    elementSelector: "[data-testid='trailing-icon-button']",
+    attribute: 'title',
+    value: isOpen ? 'close dropdown' : 'open dropdown',
+  });
 
   return (
     <div data-testid={id} key={id}>
