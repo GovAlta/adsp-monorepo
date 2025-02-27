@@ -32,23 +32,23 @@ class TaskPage {
   }
 
   queueModalSaveButton() {
-    return cy.xpath('//goa-button[text()="Save" and @disabled="false"]');
+    return cy.xpath('//goa-button[@testid="queue-modal-save" and @disabled="false"]');
   }
 
   queueNamespaceValue() {
-    return cy.get('[data-testid="queue-namespace"]');
+    return cy.get('[testid="queue-namespace"]');
   }
 
   queueNameValue() {
-    return cy.get('[data-testid="queue-name"]');
+    return cy.get('[testid="queue-name"]');
   }
 
   queuePageSaveButton() {
-    return cy.xpath('//*[@data-testid="queue-save" and @disabled="false"]');
+    return cy.xpath('//*[@testid="queue-save" and @disabled="false"]');
   }
 
   queuePageBackButton() {
-    return cy.xpath('//*[@data-testid="queue-cancel" and @disabled="false"]');
+    return cy.xpath('//*[@testid="queue-cancel" and @disabled="false"]');
   }
 
   queuePageCheckboxesTables() {

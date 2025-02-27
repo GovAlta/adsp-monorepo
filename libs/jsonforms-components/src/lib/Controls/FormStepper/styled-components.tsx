@@ -98,6 +98,14 @@ export const TableReviewItem = styled.div`
   padding: var(--goa-space-2xl);
 `;
 
+export const TableReviewPageTitleRow = styled.div`
+  margin-top: var(--goa-space-xl);
+  display: flex;
+  .right {
+    margin-left: auto;
+  }
+`;
+
 export const TableReviewCategoryLabel = styled.h3`
   color: var(--goa-color-text-secondary) !important;
 `;

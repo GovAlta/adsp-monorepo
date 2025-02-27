@@ -33,10 +33,18 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const [open, setOpen] = useState(false);
 
   const label = typeof uischema?.label === 'string' && uischema.label ? uischema.label : '';
-  const defaultAddress = {
-    subdivisionCode: isAlbertaAddress ? 'AB' : '',
-    country: 'CA',
-  };
+  let defaultAddress = {};
+
+  if (isAlbertaAddress) {
+    defaultAddress = {
+      country: 'CA',
+      subdivisionCode: 'AB',
+    };
+  } else {
+    defaultAddress = {
+      country: 'CA',
+    };
+  }
 
   const [address, setAddress] = useState<Address>(data || defaultAddress);
   const [searchTerm, setSearchTerm] = useState('');

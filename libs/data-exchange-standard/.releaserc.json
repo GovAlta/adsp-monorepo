@@ -1,0 +1,25 @@
+{
+  "extends": "../../.releaserc.json",
+  "tagFormat": "data-exchange-standard-v${version}",
+  "plugins": [
+    [
+      "@abgov/nx-release",
+      {
+        "project": "data-exchange-standard"
+      }
+    ],
+    [
+      "@semantic-release/npm",
+      {
+        "pkgRoot": "dist/libs/data-exchange-standard"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "releasedLabels": false,
+        "successComment": false
+      }
+    ]
+  ]
+}
