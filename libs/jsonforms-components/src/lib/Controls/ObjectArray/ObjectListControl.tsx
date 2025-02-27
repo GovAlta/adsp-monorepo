@@ -33,8 +33,6 @@ import {
   NonEmptyCellStyle,
   TableTHHeader,
   RequiredSpan,
-  HilightCellWarning,
-  ObjectArrayWarningIconDiv,
 } from './styled-components';
 import { convertToSentenceCase, Visible } from '../../util';
 import { GoAReviewRenderers } from '../../../index';
@@ -60,50 +58,7 @@ import {
   OwnPropsOfNonEmptyCellWithDialog,
   TableRowsProp,
 } from './ObjectListControlTypes';
-
-/**
- * Extract Json data schema name attribute and the ui schema label name
- * @param obj
- * @param names
- * @returns A key value of the data attribute name and the uiSchema label value
- */
-function extractNames(obj: unknown, names: Record<string, string> = {}): Record<string, string> {
-  if (Array.isArray(obj)) {
-    obj.forEach((item) => extractNames(item, names));
-  } else if (typeof obj === 'object' && obj !== null) {
-    const typedObj = obj as Record<string, unknown>;
-
-    if (typeof typedObj.scope === 'string') {
-      const parts = typedObj.scope.split('/');
-      if (typeof typedObj.label === 'string') {
-        names[parts[parts.length - 1]] = typedObj.label;
-      } else if (typeof typedObj.scope === 'string') {
-        const parts = typedObj.scope.split('/');
-        names[parts[parts.length - 1]] = parts[parts.length - 1];
-      }
-    }
-
-    Object.values(typedObj).forEach((value) => extractNames(value, names));
-  }
-
-  return names;
-}
-function extractRequiredNames(obj: unknown, names: string[] = []): string[] {
-  if (Array.isArray(obj)) {
-    obj.forEach((item) => extractRequiredNames(item, names));
-  } else if (typeof obj === 'object' && obj !== null) {
-    const typedObj = obj as Record<string, unknown>;
-    const items = typedObj.items as Record<string, unknown>;
-
-    if (items && items.required) {
-      names.push(...Object.values(items.required));
-    }
-
-    Object.values(typedObj).forEach((value) => extractRequiredNames(value, names));
-  }
-
-  return names;
-}
+import { extractNames, renderCellColumn } from './ObjectListControlUtils';
 
 const GenerateRows = (
   Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
@@ -117,8 +72,7 @@ const GenerateRows = (
   isInReview?: boolean,
   count?: number,
   data?: StateData,
-  // eslint-disable-next-line
-  errors?: any
+  errors?: ErrorObject[]
 ) => {
   if (schema?.type === 'object') {
     const props = {
@@ -183,32 +137,6 @@ const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOf
     handleChange: ownProps.handleChange,
   };
 };
-const renderCellColumn = (currentData: string, error: string, isRequired: boolean) => {
-  const renderWarningCell = () => {
-    return (
-      <HilightCellWarning>
-        <ObjectArrayWarningIconDiv>
-          <GoAIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoAIcon>
-        </ObjectArrayWarningIconDiv>
-      </HilightCellWarning>
-    );
-  };
-  if ((currentData === undefined && isRequired) || (error !== '' && error !== undefined)) {
-    return renderWarningCell();
-  }
-  if (typeof currentData === 'string') {
-    return currentData;
-  } else if (typeof currentData === 'object' || Array.isArray(currentData)) {
-    const result = Object.keys(currentData[0]).length === 0;
-    if (result) {
-      return renderWarningCell();
-    } else {
-      return <pre>{JSON.stringify(currentData, null, 2)}</pre>;
-    }
-  }
-
-  return null;
-};
 
 export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   props: NonEmptyRowComponentProps & HandleChangeProps
@@ -228,14 +156,25 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     errors,
   } = props;
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
-  const rootRequired = (schema.items as Record<string, Array<string>>)?.required;
-  const nestedRequired = extractRequiredNames((schema.items as Record<string, Array<string>>)?.properties);
-  const required = [...new Set(rootRequired), ...new Set(nestedRequired)];
+  const required = (schema.items as Record<string, Array<string>>)?.required;
+  // const nestedRequired = extractRequiredNames((schema.items as Record<string, Array<string>>)?.properties);
+  // const required = [...new Set(rootRequired)];
 
   let tableKeys = extractNames(uischema?.options?.detail);
+
   if (Object.keys(tableKeys).length === 0) {
     tableKeys = extractNames(properties);
   }
+
+  const tempTableKeys: Record<string, string> = {};
+  Object.keys(properties).forEach((item) => {
+    if (Object.keys(tableKeys).includes(item)) {
+      tempTableKeys[item] = tableKeys[item];
+    }
+  });
+
+  tableKeys = tempTableKeys;
+
   const hasAnyErrors = Array.isArray(errors as ErrorObject[])
     ? (errors as ErrorObject[])?.filter((err) => {
         return err.instancePath.includes(rowPath);
@@ -308,18 +247,18 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       const schemaName = element;
                       const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
 
+                      //Get out of the loop to not render extra blank columns at the end of the table
+                      if (ix > 1 && Object.keys(tableKeys).length === ix) return null;
+
                       const error = (
                         errors?.filter(
                           (e: ErrorObject) =>
                             e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
-                            e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
+                            e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}` //||
                         ) as { message: string; instancePath: string; data: { key: string; value: string } }[]
                       ).find((y) => {
                         return y?.message?.includes(element) || y.instancePath.includes(element);
                       }) as { message: string };
-
-                      //Get out of the loop to not render extra columns
-                      if (ix > 1 && Object.keys(tableKeys).length === ix) return null;
 
                       if (
                         error?.message.includes('must NOT have fewer') &&
@@ -333,11 +272,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                         return (
                           <td key={ix}>
                             <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
-                              {renderCellColumn(
+                              {renderCellColumn({
                                 currentData,
-                                error?.message,
-                                required?.includes(tableKeys[currentData])
-                              )}
+                                error: error?.message,
+                                isRequired: required?.includes(tableKeys[element]),
+                              })}
                             </div>
                           </td>
                         );

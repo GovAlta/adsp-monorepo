@@ -15,6 +15,7 @@ export type ObjectArrayControlProps = ArrayLayoutProps & ArrayLayoutExtProps & C
 export interface ArrayLayoutExtProps {
   isStepperReview?: boolean;
 }
+
 export interface DataProperty {
   type: string;
   format?: string;
@@ -31,6 +32,7 @@ export interface Items {
   type: string;
   properties: DataObject;
 }
+
 export interface HandleChangeProps {
   // eslint-disable-next-line
   handleChange(path: string, value: any): void;
@@ -42,6 +44,7 @@ export interface NonEmptyCellProps extends OwnPropsOfNonEmptyCell {
   errors?: Record<string, any>;
   enabled: boolean;
 }
+
 export interface OwnPropsOfNonEmptyCell {
   rowPath: string;
   propName?: string;
@@ -112,4 +115,10 @@ export interface TableRowsProp {
   isInReview?: boolean;
   // eslint-disable-next-line
   handleChange: (path: string, value: any) => void;
+}
+export interface RenderCellColumnProps {
+  currentData: string | undefined;
+  error: string | undefined;
+  isRequired: boolean;
+  tableKeys?: string[];
 }
