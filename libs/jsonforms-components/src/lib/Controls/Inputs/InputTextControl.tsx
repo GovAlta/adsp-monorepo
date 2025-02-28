@@ -43,7 +43,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, schema, label, path, handleChange, errors, isVisited, setIsVisited } =
     props;
 
-  const width = uischema?.options?.componentProps?.readOnly ?? '100%';
+  const width = uischema?.options?.componentProps?.width ?? '100%';
   const registerCtx = useContext(JsonFormsRegisterContext);
   const registerConfig: RegisterConfig | undefined = fetchRegisterConfigFromOptions(props.uischema?.options?.register);
   // eslint-disable-next-line react-hooks/exhaustive-deps
