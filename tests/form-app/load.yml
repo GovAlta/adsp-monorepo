@@ -1,0 +1,12 @@
+config:
+  environments:
+    dev:
+      target: 'https://form.adsp-dev.gov.ab.ca'
+    uat:
+      target: 'https://form.adsp-uat.alberta.ca'
+scenarios:
+  - name: 'User visit small size form'
+    weight: 25
+    flow:
+      - get:
+          url: '/autotest/load-test-small-do-not-delete'
