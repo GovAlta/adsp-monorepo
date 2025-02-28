@@ -46,7 +46,7 @@ import {
   OwnPropsOfNonEmptyCellWithDialog,
   TableRowsProp,
 } from './ObjectListControlTypes';
-import { extractNames, renderCellColumn } from './ObjectListControlUtils';
+import { extractNames, extractNestedFields, renderCellColumn } from './ObjectListControlUtils';
 import {
   NonEmptyCellStyle,
   ObjectArrayTitle,
@@ -152,10 +152,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     errors,
   } = props;
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
+  const propertyKeys = Object.keys(properties);
   const required = (schema.items as Record<string, Array<string>>)?.required;
+  const nestedItems = extractNestedFields(properties, propertyKeys, data);
 
   let tableKeys = extractNames(uischema?.options?.detail);
 
+  console.log('count', count);
   if (Object.keys(tableKeys).length === 0) {
     Object.keys(properties).forEach((item) => {
       tableKeys[item] = item;
@@ -217,7 +220,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       <p>
                         {`${convertToSentenceCase(index)}`}
 
-                        {required?.includes(value) && (
+                        {(required?.includes(value) || nestedItems[value]?.required.length > 0) && (
                           <RequiredSpan>
                             <br /> (required)
                           </RequiredSpan>
@@ -259,13 +262,12 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                         return y?.message?.includes(element) || y.instancePath.includes(element);
                       }) as { message: string };
 
-                      const newErrors = errors?.filter(
-                        (e: ErrorObject) =>
-                          e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
-                          e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
-                      ) as { message: string; instancePath: string; data: { key: string; value: string } }[];
+                      // const newErrors = errors?.filter(
+                      //   (e: ErrorObject) =>
+                      //     e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
+                      //     e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
+                      // ) as { message: string; instancePath: string; data: { key: string; value: string } }[];
 
-                      console.log('newErrors', newErrors);
                       if (
                         error?.message.includes('must NOT have fewer') &&
                         required.find((r) => r === schemaName) &&
@@ -282,6 +284,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                 currentData,
                                 error: error?.message,
                                 isRequired: required?.includes(tableKeys[element]),
+                                errors: errors !== undefined ? errors : [],
+                                count: count !== undefined ? count : -1,
+                                element,
+                                rowPath,
+                                index: i,
                               })}
                             </div>
                           </td>
