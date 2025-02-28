@@ -42,7 +42,7 @@ const XDataTable = ({ properties, itemsSchema, reviewText, newKey }: TableProps)
         <tr>
           {properties[newKey] &&
             Object.keys(itemsSchema?.properties)?.map((headNames, ix) => {
-              return <th key={ix}>{JSON.stringify(headNames)}</th>;
+              return <th key={ix}>{headNames}</th>;
             })}
         </tr>
       </thead>
@@ -51,7 +51,7 @@ const XDataTable = ({ properties, itemsSchema, reviewText, newKey }: TableProps)
           <tr key={index}>
             {properties[newKey] &&
               Object.keys(itemsSchema?.properties).map((headNames, ix) => {
-                return <td key={ix}>{JSON.stringify(obj[headNames as keyof typeof obj] as ReactNode)}</td>;
+                return <td key={ix}>{obj[headNames as keyof typeof obj] as ReactNode}</td>;
               })}
           </tr>
         ))}
@@ -62,19 +62,40 @@ const XDataTable = ({ properties, itemsSchema, reviewText, newKey }: TableProps)
 
 const IsArray = ({ properties, itemsSchema, reviewText, newKey, currentElements }: TablePropsIsArray): JSX.Element => {
   return Array.isArray(reviewText[newKey]) ? (
-    <XDataTable properties={properties} itemsSchema={itemsSchema} reviewText={reviewText} newKey={newKey} />
+    <div>
+      <h4 style={{ margin: '2rem 0 0.25rem 0', fontSize: 'larger' }}>{convertToSentenceCase(newKey)}</h4>
+      <XDataTable properties={properties} itemsSchema={itemsSchema} reviewText={reviewText} newKey={newKey} />
+    </div>
   ) : (
-    <div key={newKey}>
+    <div key={newKey} className="a">
       <GoAGrid minChildWidth="26ch" gap="m">
-        {Object.keys(reviewText[newKey])
-          .filter((k) => currentElements.includes(k))
-          .map((element) => {
-            return (
-              <div>
-                <b>{JSON.stringify(convertToSentenceCase(element))}</b>: {JSON.stringify(reviewText[newKey][element])}
-              </div>
-            );
-          })}
+        {typeof reviewText[newKey] === 'object' && reviewText[newKey] !== null ? (
+          Object.keys(reviewText[newKey])
+            .filter((k) => currentElements.includes(k))
+            .map((element) => {
+              if (Array.isArray(reviewText[newKey][element])) {
+                return (
+                  <IsArray
+                    properties={properties}
+                    itemsSchema={itemsSchema}
+                    reviewText={reviewText[newKey][element]}
+                    newKey={newKey}
+                    currentElements={currentElements}
+                  />
+                );
+              } else {
+                return (
+                  <div className="b">
+                    <b>{convertToSentenceCase(element)}</b>: {reviewText[newKey][element]}
+                  </div>
+                );
+              }
+            })
+        ) : (
+          <div className="c">
+            <b>{convertToSentenceCase(newKey)}</b>: {reviewText[newKey]}
+          </div>
+        )}
       </GoAGrid>
     </div>
   );
@@ -123,7 +144,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
         {typeof reviewText === 'string' ? (
           <div>{reviewText}</div>
         ) : (
-          <div>
+          <GoAGrid minChildWidth="26ch" gap="xs">
             {Object.keys(reviewText)
               ?.filter((k) => elements?.includes(k))
               .map((key) => {
@@ -142,7 +163,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
                   />
                 );
               })}
-          </div>
+          </GoAGrid>
         )}
       </PageReviewValueCol>
       <PageReviewActionCol>
