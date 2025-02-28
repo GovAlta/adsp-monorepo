@@ -1,51 +1,39 @@
-import { ErrorObject } from 'ajv';
-import isEmpty from 'lodash/isEmpty';
-import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
-import range from 'lodash/range';
-import React, { useState, useReducer, useEffect, useCallback } from 'react';
-import { capitalizeFirstLetter, isEmptyBoolean, isEmptyNumber } from '../../util';
 import {
-  ControlElement,
-  JsonSchema,
-  JsonFormsCellRendererRegistryEntry,
-  UISchemaElement,
-  Layout,
-} from '@jsonforms/core';
-import { DeleteDialog } from './DeleteDialog';
-import { WithBasicDeleteDialogSupport } from './DeleteDialog';
-import ObjectArrayToolBar from './ObjectArrayToolBar';
-import merge from 'lodash/merge';
-import { JsonFormsDispatch } from '@jsonforms/react';
-import {
+  GoACallout,
+  GoAContainer,
+  GoAFormItem,
   GoAGrid,
   GoAIconButton,
-  GoAContainer,
-  GoATable,
   GoAInput,
-  GoAFormItem,
-  GoACallout,
-  GoAIcon,
+  GoATable,
 } from '@abgov/react-components';
 import {
-  ToolBarHeader,
-  ObjectArrayTitle,
-  TextCenter,
-  NonEmptyCellStyle,
-  TableTHHeader,
-  RequiredSpan,
-} from './styled-components';
-import { convertToSentenceCase, Visible } from '../../util';
+  ControlElement,
+  JsonFormsCellRendererRegistryEntry,
+  JsonSchema,
+  Layout,
+  UISchemaElement,
+} from '@jsonforms/core';
+import { JsonFormsDispatch, JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
+import { ErrorObject } from 'ajv';
+import isEmpty from 'lodash/isEmpty';
+import merge from 'lodash/merge';
+import range from 'lodash/range';
+import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import { GoAReviewRenderers } from '../../../index';
+import { capitalizeFirstLetter, convertToSentenceCase, isEmptyBoolean, isEmptyNumber, Visible } from '../../util';
 import {
-  objectListReducer,
-  INCREMENT_ACTION,
   ADD_DATA_ACTION,
-  SET_DATA_ACTION,
-  DELETE_ACTION,
-  initialState,
-  StateData,
   Categories,
+  DELETE_ACTION,
+  INCREMENT_ACTION,
+  initialState,
+  objectListReducer,
+  SET_DATA_ACTION,
+  StateData,
 } from './arrayData';
+import { DeleteDialog, WithBasicDeleteDialogSupport } from './DeleteDialog';
+import ObjectArrayToolBar from './ObjectArrayToolBar';
 import {
   EmptyListProps,
   HandleChangeProps,
@@ -59,6 +47,14 @@ import {
   TableRowsProp,
 } from './ObjectListControlTypes';
 import { extractNames, renderCellColumn } from './ObjectListControlUtils';
+import {
+  NonEmptyCellStyle,
+  ObjectArrayTitle,
+  RequiredSpan,
+  TableTHHeader,
+  TextCenter,
+  ToolBarHeader,
+} from './styled-components';
 
 const GenerateRows = (
   Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
@@ -199,7 +195,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       <th key={index}>
                         <p>
                           {convertToSentenceCase(index)}
-                          {required?.includes(index) && <RequiredSpan>(required)</RequiredSpan>}
+                          {required?.includes(value) && <RequiredSpan>(required)</RequiredSpan>}
                         </p>
                       </th>
                     );
@@ -209,7 +205,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       <p>
                         {`${convertToSentenceCase(index)}`}
 
-                        {required?.includes(index) && (
+                        {required?.includes(value) && (
                           <RequiredSpan>
                             <br /> (required)
                           </RequiredSpan>
@@ -239,7 +235,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
 
                       //Get out of the loop to not render extra blank columns at the end of the table
-                      //if (ix > 1 && Object.keys(tableKeys).length === ix) return null;
+                      if (ix > 1 && Object.keys(tableKeys).length === ix) return null;
 
                       const error = (
                         errors?.filter(
@@ -306,9 +302,9 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                         </td>
                       );
                     })}
-                    <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
-                      <div aria-hidden="true">
-                        {!isInReview && (
+                    {!isInReview && (
+                      <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
+                        <div aria-hidden="true">
                           <GoAIconButton
                             icon="trash"
                             title="trash button"
@@ -316,9 +312,9 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                             aria-label={`remove-element-${num}`}
                             onClick={() => openDeleteDialog(num)}
                           ></GoAIconButton>
-                        )}
-                      </div>
-                    </td>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -545,7 +541,6 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   };
 
   useEffect(() => {
-    // eslint-disable-next-line
     const updatedData = Object.fromEntries((parsedData || []).map((item, index) => [index, item]));
     const count = Object.keys(updatedData).length;
     const dispatchData = { [path]: { count: count, data: updatedData } } as unknown as Categories;
@@ -555,6 +550,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
         payload: dispatchData,
       });
     }
+    // eslint-disable-next-line
   }, []);
   const controlElement = uischema as ControlElement;
 

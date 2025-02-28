@@ -9,6 +9,7 @@ import {
   Layout,
 } from '@jsonforms/core';
 import { StateData } from './arrayData';
+import { ErrorObject } from 'ajv';
 
 export type ObjectArrayControlProps = ArrayLayoutProps & ArrayLayoutExtProps & ControlProps;
 
@@ -40,8 +41,7 @@ export interface HandleChangeProps {
 
 export interface NonEmptyCellProps extends OwnPropsOfNonEmptyCell {
   rootSchema?: JsonSchema;
-  // eslint-disable-next-line
-  errors?: Record<string, any>;
+  errors?: ErrorObject[];
   enabled: boolean;
 }
 
@@ -69,7 +69,7 @@ export interface NonEmptyRowComponentProps {
   rootSchema?: JsonSchema;
   rowPath: string;
   // eslint-disable-next-line
-  errors?: Record<string, any>;
+  errors?: ErrorObject[];
   enabled: boolean;
   renderers?: JsonFormsRendererRegistryEntry[];
   cells?: JsonFormsCellRendererRegistryEntry[];
