@@ -50,7 +50,6 @@ export const renderCellColumn = ({ currentData, error, isRequired }: RenderCellC
   if (typeof currentData === 'string') {
     return currentData;
   } else if (typeof currentData === 'object' || Array.isArray(currentData)) {
-    console.log('currentData', JSON.stringify(currentData, null, 2));
     const result = Object.keys(currentData);
     if (result.length === 0) {
       return renderWarningCell();
