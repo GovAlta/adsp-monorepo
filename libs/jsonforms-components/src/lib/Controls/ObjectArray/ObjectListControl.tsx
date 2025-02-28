@@ -154,12 +154,24 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
   const required = (schema.items as Record<string, Array<string>>)?.required;
 
-  const tableKeys = extractNames(uischema?.options?.detail);
+  let tableKeys = extractNames(uischema?.options?.detail);
 
   if (Object.keys(tableKeys).length === 0) {
     Object.keys(properties).forEach((item) => {
       tableKeys[item] = item;
     });
+  }
+
+  if (Object.keys(properties).length !== Object.keys(tableKeys).length) {
+    const tempTableKeys: Record<string, string> = {};
+
+    //For nested objects to display only the top level column.
+    Object.keys(properties).forEach((item) => {
+      if (Object.keys(tableKeys).includes(item)) {
+        tempTableKeys[item] = tableKeys[item];
+      }
+    });
+    tableKeys = tempTableKeys;
   }
 
   const hasAnyErrors = Array.isArray(errors as ErrorObject[])
