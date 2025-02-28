@@ -75,12 +75,11 @@ export const Trash = styled.div`
 
 export const ListContainer = styled.div`
   padding: 0 1.5rem 0 0;
-  border: 5px solid #dcdcdc;
+  border: 1px solid #dcdcdc;
 `;
 
 export const TableTHHeader = styled.th`
   background-color: var(--goa-color-greyscale-100) !important;
-  vertical-align: top;
 `;
 
 export const ObjectArrayWarningIconDiv = styled.div`
