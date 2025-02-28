@@ -1,6 +1,7 @@
 import { RenderCellColumnProps } from './ObjectListControlTypes';
 import { GoAIcon } from '@abgov/react-components';
 import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-components';
+import { isEmpty } from 'lodash';
 
 /**
  * Extract Json data schema name attribute and the ui schema label name.
@@ -29,6 +30,11 @@ export const extractNames = (obj: unknown, names: Record<string, string> = {}): 
   return names;
 };
 
+export const isObjectArrayEmpty = (currentData: string) => {
+  const result = isEmpty(currentData) || JSON.stringify(currentData) === '[{}]';
+  return result;
+};
+
 export const renderCellColumn = ({ currentData, error, isRequired }: RenderCellColumnProps) => {
   const renderWarningCell = (data?: string) => {
     return (
@@ -53,6 +59,8 @@ export const renderCellColumn = ({ currentData, error, isRequired }: RenderCellC
     const result = Object.keys(currentData);
     if (result.length === 0) {
       return renderWarningCell();
+    } else if (result.length === 1 && isObjectArrayEmpty(currentData)) {
+      return <pre>{renderWarningCell(JSON.stringify(currentData, null, 2))}</pre>;
     } else if (currentData !== undefined && result.length > 0 && error !== '' && error !== undefined) {
       const values = Object.values(currentData) as string[];
       if (values && values.length > 0) {

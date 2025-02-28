@@ -259,6 +259,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                         return y?.message?.includes(element) || y.instancePath.includes(element);
                       }) as { message: string };
 
+                      const newErrors = errors?.filter(
+                        (e: ErrorObject) =>
+                          e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
+                          e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
+                      ) as { message: string; instancePath: string; data: { key: string; value: string } }[];
+
+                      console.log('newErrors', newErrors);
                       if (
                         error?.message.includes('must NOT have fewer') &&
                         required.find((r) => r === schemaName) &&
