@@ -89,7 +89,7 @@ export const renderCellColumn = ({
 
     if (result.length === 0) {
       return renderWarningCell();
-    } else if (result.length > 0 && (isObjectArrayEmpty(currentData) || nestedErrors.length > 0)) {
+    } else if (result.length > 0 && isRequired && (isObjectArrayEmpty(currentData) || nestedErrors.length > 0)) {
       return <pre>{renderWarningCell(JSON.stringify(currentData, null, 2))}</pre>;
     } else if (currentData !== undefined && result.length > 0 && error !== '' && error !== undefined) {
       const values = Object.values(currentData) as string[];
