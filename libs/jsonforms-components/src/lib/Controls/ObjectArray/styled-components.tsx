@@ -80,6 +80,7 @@ export const ListContainer = styled.div`
 
 export const TableTHHeader = styled.th`
   background-color: var(--goa-color-greyscale-100) !important;
+  vertical-align: top;
 `;
 
 export const ObjectArrayWarningIconDiv = styled.div`

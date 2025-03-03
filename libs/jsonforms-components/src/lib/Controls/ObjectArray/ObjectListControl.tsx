@@ -46,7 +46,7 @@ import {
   OwnPropsOfNonEmptyCellWithDialog,
   TableRowsProp,
 } from './ObjectListControlTypes';
-import { extractNames, renderCellColumn } from './ObjectListControlUtils';
+import { extractNames, extractNestedFields, renderCellColumn } from './ObjectListControlUtils';
 import {
   NonEmptyCellStyle,
   ObjectArrayTitle,
@@ -153,6 +153,8 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   } = props;
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
   const required = (schema.items as Record<string, Array<string>>)?.required;
+  const propertyKeys = Object.keys(properties);
+  const nestedItems = extractNestedFields(properties, propertyKeys);
 
   let tableKeys = extractNames(uischema?.options?.detail);
 
@@ -217,7 +219,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       <p>
                         {`${convertToSentenceCase(index)}`}
 
-                        {required?.includes(value) && (
+                        {(required?.includes(value) || nestedItems[value]?.required.length > 0) && (
                           <RequiredSpan>
                             <br /> (required)
                           </RequiredSpan>
@@ -240,7 +242,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                 ) as { message: string };
 
                 return (
-                  <tr key={`${i}-${num}`}>
+                  <tr key={`${rowPath}-${i}-${num}`}>
                     {Object.keys(properties).map((element, ix) => {
                       const dataObject = properties[element];
                       const schemaName = element;
@@ -275,6 +277,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                 currentData,
                                 error: error?.message,
                                 isRequired: required?.includes(tableKeys[element]),
+                                errors: errors !== undefined ? errors : [],
+                                count: count !== undefined ? count : -1,
+                                element,
+                                rowPath,
+                                index: i,
                               })}
                             </div>
                           </td>
