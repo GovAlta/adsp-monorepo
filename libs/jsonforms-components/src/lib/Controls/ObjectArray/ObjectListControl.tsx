@@ -152,13 +152,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     errors,
   } = props;
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
-  const propertyKeys = Object.keys(properties);
   const required = (schema.items as Record<string, Array<string>>)?.required;
-  const nestedItems = extractNestedFields(properties, propertyKeys, data);
+  const nestedItems = extractNestedFields(properties, data);
 
   let tableKeys = extractNames(uischema?.options?.detail);
 
-  console.log('count', count);
   if (Object.keys(tableKeys).length === 0) {
     Object.keys(properties).forEach((item) => {
       tableKeys[item] = item;
@@ -177,8 +175,8 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     tableKeys = tempTableKeys;
   }
 
-  const hasAnyErrors = Array.isArray(errors as ErrorObject[])
-    ? (errors as ErrorObject[])?.filter((err) => {
+  const hasAnyErrors = Array.isArray(errors)
+    ? errors?.filter((err) => {
         return err.instancePath.includes(rowPath);
       })?.length > 0
     : false;
@@ -243,7 +241,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                 ) as { message: string };
 
                 return (
-                  <tr key={`${i}-${num}`}>
+                  <tr key={`${rowPath}-${i}-${num}`}>
                     {Object.keys(properties).map((element, ix) => {
                       const dataObject = properties[element];
                       const schemaName = element;
@@ -254,19 +252,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
 
                       const error = (
                         errors?.filter(
-                          (e: ErrorObject) =>
+                          (e) =>
                             e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
                             e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
                         ) as { message: string; instancePath: string; data: { key: string; value: string } }[]
                       ).find((y) => {
                         return y?.message?.includes(element) || y.instancePath.includes(element);
                       }) as { message: string };
-
-                      // const newErrors = errors?.filter(
-                      //   (e: ErrorObject) =>
-                      //     e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
-                      //     e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
-                      // ) as { message: string; instancePath: string; data: { key: string; value: string } }[];
 
                       if (
                         error?.message.includes('must NOT have fewer') &&

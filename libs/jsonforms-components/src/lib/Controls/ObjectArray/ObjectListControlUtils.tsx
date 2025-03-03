@@ -3,23 +3,22 @@ import { GoAIcon } from '@abgov/react-components';
 import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-components';
 import { isEmpty } from 'lodash';
 import { StateData } from './arrayData';
-import { ErrorObject } from 'ajv';
 
 export const extractNestedFields = (
   properties: DataObject,
-  propertyKeys: string[],
   data: StateData | undefined
 ): Record<string, NestedItem> => {
   const nestedItems: Record<string, NestedItem> = {};
+  const propertyKeys = Object.keys(properties);
   propertyKeys.forEach((key) => {
     if (properties[key].type === 'array') {
-      const propsItems =
+      const propItems =
         (properties[key]?.items && 'properties' in properties[key].items && properties[key].items.properties) || [];
-      const propsReqItems =
+      const propReqItems =
         (properties[key]?.items && 'properties' in properties[key].items && properties[key].items.required) || [];
       nestedItems[key] = {
-        properties: [...Object.keys(propsItems)],
-        required: [...Object.keys(propsReqItems)],
+        properties: [...Object.keys(propItems)],
+        required: [...Object.keys(propReqItems)],
       };
     }
   });
@@ -85,12 +84,13 @@ export const renderCellColumn = ({
   }
 
   const path = `/${rowPath}/${index}/${element}/${index === 0 ? index : index - 1}`;
-  const nestedErrors = errors?.filter((e: ErrorObject) => e.instancePath.includes(path));
+  const nestedErrors = errors?.filter((e) => e.instancePath.includes(path));
 
   if (typeof currentData === 'string') {
     return currentData;
   } else if (typeof currentData === 'object' || Array.isArray(currentData)) {
     const result = Object.keys(currentData);
+
     if (result.length === 0) {
       return renderWarningCell();
     } else if (result.length > 0 && (isObjectArrayEmpty(currentData) || nestedErrors.length > 0)) {
