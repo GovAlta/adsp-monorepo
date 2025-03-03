@@ -1,21 +1,26 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { Categorization, Layout, SchemaBasedCondition, isVisible, Scoped } from '@jsonforms/core';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { CategorizationStepperLayoutReviewRendererProps } from './types';
-import { TableReviewItemSection, TableReviewItem, TableReviewCategoryLabel } from './styled-components';
+import {
+  TableReviewItemSection,
+  TableReviewItem,
+  TableReviewCategoryLabel,
+  TableReviewPageTitleRow,
+} from './styled-components';
 import { getProperty } from './util/helpers';
 import { withAjvProps } from '../../util/layout';
-import { GoATable } from '@abgov/react-components';
-import { FormStepperComponentProps } from './types';
+import { GoATable, GoAButton } from '@abgov/react-components';
 import { GoABaseTableReviewRenderers } from '../../../index';
+import { JsonFormsStepperContext } from './context';
 
 export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, cells, enabled, navigationFunc } = props;
-  const componentProps = (uischema.options?.componentProps as FormStepperComponentProps) ?? {};
   const categorization = uischema as Categorization;
   const categories = categorization.elements.filter((category) => isVisible(category, data, '', ajv));
   const rescopeMaps = ['#/properties/albertaAddress', '#/properties/canadianAddress', '#/properties/sin'];
+  const formStepperCtx = useContext(JsonFormsStepperContext);
 
   return (
     <TableReviewItem>
@@ -24,7 +29,25 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
         const categoryLabel = category.label || category.i18n || 'Unknown Category';
         return (
           <>
-            <TableReviewCategoryLabel>{categoryLabel}</TableReviewCategoryLabel>
+            <div>
+              <TableReviewPageTitleRow>
+                <TableReviewCategoryLabel>{categoryLabel}</TableReviewCategoryLabel>
+                <div className="right">
+                  <GoAButton
+                    type="tertiary"
+                    testId={`page-review-change-${category.label}-btn`}
+                    onClick={() => {
+                      if (formStepperCtx) {
+                        formStepperCtx.toggleShowReviewLink(index);
+                        formStepperCtx.goToPage(index);
+                      }
+                    }}
+                  >
+                    Change
+                  </GoAButton>
+                </div>
+              </TableReviewPageTitleRow>
+            </div>
             <TableReviewItemSection key={index}>
               {category.elements
                 .filter((field) => {

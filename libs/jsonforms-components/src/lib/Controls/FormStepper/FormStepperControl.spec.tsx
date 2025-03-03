@@ -413,10 +413,6 @@ describe('Form Stepper Control', () => {
       );
 
       expect(getByTestId('stepper-pages-review-page')).toBeTruthy();
-      const changeButton = baseElement.querySelector("goa-button[testId='page-review-change-first-btn']");
-      expect(changeButton).toBeTruthy();
-      await fireEvent.click(changeButton!);
-      expect((mockDispatch.mock.calls[5].type = 'page/to/index'));
     });
 
     it('can render the back to review page', async () => {

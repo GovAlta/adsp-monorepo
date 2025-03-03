@@ -21,7 +21,7 @@ export const RequiredTextLabel = styled.label`
 `;
 
 export const PageReviewNameCol = styled.td`
-  width: 70%;
+  width: 80%;
   padding-top: var(--goa-space-s);
   padding-bottom: var(--goa-space-s);
   padding-right: var(--goa-space-m);
@@ -32,10 +32,11 @@ export const PageReviewValueCol = styled.td`
   text-align: left;
 `;
 
-export const PageReviewActionCol = styled.td`
-  width: 10%;
-`;
 //Check and unchecked are different heights otherwise
 export const CheckboxWrapper = styled.div`
   height: 28px;
-`
+`;
+export const H4Large = styled.h4`
+  margin: 0 0 0.25rem 0;
+  fontsize: larger;
+`;
