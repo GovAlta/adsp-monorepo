@@ -1,27 +1,23 @@
-import { DataObject, Items, NestedItem, RenderCellColumnProps } from './ObjectListControlTypes';
+import { DataObject, NestedItem, RenderCellColumnProps } from './ObjectListControlTypes';
 import { GoAIcon } from '@abgov/react-components';
 import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-components';
 import { isEmpty } from 'lodash';
-import { StateData } from './arrayData';
+import { ErrorObject } from 'ajv';
 
-export const extractNestedFields = (
-  properties: DataObject,
-  data: StateData | undefined
-): Record<string, NestedItem> => {
+export const extractNestedFields = (properties: DataObject, propertyKeys: string[]): Record<string, NestedItem> => {
   const nestedItems: Record<string, NestedItem> = {};
-  const propertyKeys = Object.keys(properties);
+
   propertyKeys.forEach((key) => {
     if (properties[key].type === 'array') {
-      const propItems =
-        (properties[key]?.items && 'properties' in properties[key].items && properties[key].items.properties) || [];
-      const propReqItems =
-        (properties[key]?.items && 'properties' in properties[key].items && properties[key].items.required) || [];
+      const propItems = (properties[key] && properties[key].items?.properties) || [];
+      const propReqItems = (properties[key].items && properties[key].items?.required) || [];
       nestedItems[key] = {
         properties: [...Object.keys(propItems)],
         required: [...Object.keys(propReqItems)],
       };
     }
   });
+
   return nestedItems;
 };
 
@@ -84,7 +80,7 @@ export const renderCellColumn = ({
   }
 
   const path = `/${rowPath}/${index}/${element}/${index === 0 ? index : index - 1}`;
-  const nestedErrors = errors?.filter((e) => e.instancePath.includes(path));
+  const nestedErrors = errors?.filter((e: ErrorObject) => e.instancePath.includes(path));
 
   if (typeof currentData === 'string') {
     return currentData;

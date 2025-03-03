@@ -153,7 +153,8 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   } = props;
   const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
   const required = (schema.items as Record<string, Array<string>>)?.required;
-  const nestedItems = extractNestedFields(properties, data);
+  const propertyKeys = Object.keys(properties);
+  const nestedItems = extractNestedFields(properties, propertyKeys);
 
   let tableKeys = extractNames(uischema?.options?.detail);
 
@@ -175,8 +176,8 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     tableKeys = tempTableKeys;
   }
 
-  const hasAnyErrors = Array.isArray(errors)
-    ? errors?.filter((err) => {
+  const hasAnyErrors = Array.isArray(errors as ErrorObject[])
+    ? (errors as ErrorObject[])?.filter((err) => {
         return err.instancePath.includes(rowPath);
       })?.length > 0
     : false;
@@ -252,7 +253,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
 
                       const error = (
                         errors?.filter(
-                          (e) =>
+                          (e: ErrorObject) =>
                             e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
                             e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
                         ) as { message: string; instancePath: string; data: { key: string; value: string } }[]
