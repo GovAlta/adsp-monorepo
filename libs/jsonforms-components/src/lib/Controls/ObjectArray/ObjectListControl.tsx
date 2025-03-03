@@ -219,7 +219,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       <p>
                         {`${convertToSentenceCase(index)}`}
 
-                        {(required?.includes(value) || nestedItems[value]?.required.length > 0) && (
+                        {required?.includes(value) && (
                           <RequiredSpan>
                             <br /> (required)
                           </RequiredSpan>
