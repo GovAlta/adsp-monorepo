@@ -276,8 +276,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                               {renderCellColumn({
                                 currentData,
                                 error: error?.message,
-                                isRequired:
-                                  required?.includes(tableKeys[element]) || nestedItems[element]?.required.length > 0,
+                                isRequired: required?.includes(tableKeys[element]),
                                 errors: errors !== undefined ? errors : [],
                                 count: count !== undefined ? count : -1,
                                 element,
