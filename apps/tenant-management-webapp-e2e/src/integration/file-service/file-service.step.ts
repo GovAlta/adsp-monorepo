@@ -267,7 +267,7 @@ When(
 );
 
 Then(
-  '{string} is returned for the file upload request as well as {string}, file size and created time with a successful request',
+  '{string} is returned for the file metadata request as well as {string}, file size and created time with a successful request',
   function (statusCode, fileName) {
     expect(responseObj.status).to.equal(Number(statusCode));
     if (responseObj.status == 200) {
