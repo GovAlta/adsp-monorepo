@@ -221,14 +221,14 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
     <>
       {
         // eslint-disable-next-line
-        (uischema as Layout)?.elements?.map((element: UISchemaElement) => {
+        (uischema as Layout)?.elements?.map((element: UISchemaElement, index) => {
           return (
             <JsonFormsDispatch
               data-testid={`jsonforms-object-list-defined-elements-dispatch`}
               key={rowPath}
               schema={schema}
               uischema={element}
-              path={`${rowPath}-${props.schema.type}`}
+              path={`${rowPath}-${index}`}
               enabled={enabled}
               renderers={renderers}
               cells={cells}
