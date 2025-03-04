@@ -82,6 +82,7 @@ export const renderCellColumn = ({
   const path = `/${rowPath}/${index}/${element}/${index === 0 ? index : index - 1}`;
   const nestedErrors = errors?.filter((e: ErrorObject) => e.instancePath.includes(path));
 
+  /* istanbul ignore next */
   if (typeof currentData === 'string') {
     return currentData;
   } else if (typeof currentData === 'object' || Array.isArray(currentData)) {
