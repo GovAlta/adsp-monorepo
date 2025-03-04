@@ -82,7 +82,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Make reports directory
         run: mkdir reports
       - name: Execute load tests form app

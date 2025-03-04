@@ -4,9 +4,26 @@ config:
       target: 'https://form.adsp-dev.gov.ab.ca'
     uat:
       target: 'https://form.adsp-uat.alberta.ca'
+  ensure:
+    thresholds:
+      - 'http.response_time.p99': 500
+      - 'http.response_time.p95': 300
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      rampTo: 5
+      name: Warm up phase
+    - duration: 240
+      arrivalRate: 15
+      name: Soak test phase
 scenarios:
   - name: 'User visit small size form'
     weight: 25
     flow:
       - get:
           url: '/autotest/load-test-small-do-not-delete'
+  - name: 'User visit medium size form'
+    weight: 25
+    flow:
+      - get:
+          url: '/autotest/load-test-m-do-not-delete'
