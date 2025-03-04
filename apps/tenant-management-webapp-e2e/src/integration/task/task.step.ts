@@ -72,7 +72,7 @@ When(
       for (let i = 0; i < assignerRoles.length; i++) {
         taskObj
           .queuePageCheckboxesTables()
-          .find('goa-checkbox[data-testid="Queue-Assigner roles-role-checkbox-' + assignerRoles[i].trim() + '"]')
+          .find('goa-checkbox[testid="Queue-Assigner roles-role-checkbox-' + assignerRoles[i].trim() + '"]')
           .shadow()
           .find('[class^="container"]')
           .click({ force: true });
