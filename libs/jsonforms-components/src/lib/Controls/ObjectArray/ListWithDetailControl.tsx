@@ -259,6 +259,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
         <JsonFormsDispatch
           schema={schema}
           uischema={uiSchemaElementsForNotDefined}
+          path={rowPath}
           key={`${rowPath}`}
           enabled={enabled}
           renderers={renderers}
