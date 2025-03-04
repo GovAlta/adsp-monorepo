@@ -227,7 +227,7 @@ class eventsPage {
 
   streamDeleteBtn(name) {
     return cy.xpath(
-      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="delete-stream"]`
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@testid="delete-stream"]`
     );
   }
 
