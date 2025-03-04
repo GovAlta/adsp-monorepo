@@ -87,7 +87,9 @@ export const renderCellColumn = ({
   } else if (typeof currentData === 'object' || Array.isArray(currentData)) {
     const result = Object.keys(currentData);
 
-    if (result.length === 0) {
+    if (!isRequired && nestedErrors.length === 0) {
+      return <pre>{JSON.stringify(currentData, null, 2)}</pre>;
+    } else if (result.length === 0) {
       return renderWarningCell();
     } else if (result.length > 0 && (isObjectArrayEmpty(currentData) || nestedErrors.length > 0)) {
       return <pre>{renderWarningCell(JSON.stringify(currentData, null, 2))}</pre>;
