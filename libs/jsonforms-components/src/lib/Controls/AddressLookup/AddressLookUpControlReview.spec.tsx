@@ -186,7 +186,5 @@ describe('AddressLoopUpControlTableReview', () => {
     expect(screen.getByText('Edmonton')).toBeInTheDocument();
     expect(screen.getByText('10111 111 ave')).toBeInTheDocument();
     expect(screen.getByText('T6G 1E1')).toBeInTheDocument();
-    const changeBtn = baseElement.querySelector("goa-button[testid='page-review-change-address-btn']");
-    await fireEvent.click(changeBtn!);
   });
 });

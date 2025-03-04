@@ -219,18 +219,20 @@ export const FormDefinitions = ({
                 setCurrentDefinition(formDefinition);
               }}
             />
-            {next && (
-              <LoadMoreWrapper>
-                <GoAButton
-                  testId="form-event-load-more-btn"
-                  key="form-event-load-more-btn"
-                  type="tertiary"
-                  onClick={onNext}
-                >
-                  Load more
-                </GoAButton>
-              </LoadMoreWrapper>
-            )}
+            {next &&
+              ((selectedTag && Object.keys(filteredFormDefinitions).length > 0) ||
+                (!selectedTag && Object.keys(formDefinitions).length > 0)) && (
+                <LoadMoreWrapper>
+                  <GoAButton
+                    testId="form-event-load-more-btn"
+                    key="form-event-load-more-btn"
+                    type="tertiary"
+                    onClick={onNext}
+                  >
+                    Load more
+                  </GoAButton>
+                </LoadMoreWrapper>
+              )}
           </>
         )}
       {showAddRemoveResourceTagModal && (

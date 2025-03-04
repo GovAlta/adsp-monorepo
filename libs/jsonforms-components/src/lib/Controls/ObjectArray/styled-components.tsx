@@ -80,4 +80,33 @@ export const ListContainer = styled.div`
 
 export const TableTHHeader = styled.th`
   background-color: var(--goa-color-greyscale-100) !important;
+  vertical-align: top;
+`;
+
+export const ObjectArrayWarningIconDiv = styled.div`
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  font-size: var(--goa-font-size-2);
+  color: var(--goa-color-interactive-error);
+`;
+export const ObjectArrayRequiredTextLabel = styled.label`
+  color: var(--goa-color-interactive-error);
+  font-weight: var(--goa-font-weight-regular);
+  font-size: var(--goa-font-size-3);
+  line-height: var(--goa-line-height-1);
+  font-style: normal;
+`;
+
+export const HasErrorLabel = styled.div`
+  margin-top: var(--goa-space-m);
+  color: var(--goa-color-interactive-error);
+  font-weight: var(--goa-font-weight-regular);
+  font-size: var(--goa-font-size-2);
+  line-height: var(--goa-line-height-1);
+  font-style: normal;
+`;
+
+export const HilightCellWarning = styled.div`
+  background-color: var(--goa-color-warning-default);
 `;

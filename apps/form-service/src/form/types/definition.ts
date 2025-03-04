@@ -8,7 +8,7 @@ export interface FormDefinition {
   applicantRoles: string[];
   assessorRoles: string[];
   clerkRoles: string[];
-  formDraftUrlTemplate: string;
+  formDraftUrlTemplate?: string;
   dataSchema: Record<string, unknown>;
   uiSchema?: Record<string, unknown>;
   dispositionStates?: Array<Disposition>;
