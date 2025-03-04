@@ -105,7 +105,7 @@ const GenerateRows = (
       cellPath: rowPath,
       enabled,
     };
-    return <Cell key={rowPath} {...props} />;
+    return <Cell key={`${rowPath}`} {...props} />;
   }
 };
 
@@ -228,7 +228,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
               key={rowPath}
               schema={schema}
               uischema={element}
-              path={rowPath}
+              path={`${rowPath}-${props.schema.type}`}
               enabled={enabled}
               renderers={renderers}
               cells={cells}
@@ -239,11 +239,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
 
       {
         // eslint-disable-next-line
-        (uischema as Layout)?.options?.detail?.elements?.map((element: UISchemaElement) => {
+        (uischema as Layout)?.options?.detail?.elements?.map((element: UISchemaElement, index: number) => {
           return (
             <JsonFormsDispatch
               data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-              key={rowPath}
+              key={`${rowPath}-${index}`}
               schema={schema}
               uischema={element}
               path={rowPath}
@@ -259,7 +259,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
         <JsonFormsDispatch
           schema={schema}
           uischema={uiSchemaElementsForNotDefined}
-          path={rowPath}
+          key={`${rowPath}`}
           enabled={enabled}
           renderers={renderers}
           cells={cells}
