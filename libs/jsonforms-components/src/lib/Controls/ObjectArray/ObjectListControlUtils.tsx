@@ -82,12 +82,15 @@ export const renderCellColumn = ({
   const path = `/${rowPath}/${index}/${element}/${index === 0 ? index : index - 1}`;
   const nestedErrors = errors?.filter((e: ErrorObject) => e.instancePath.includes(path));
 
+  /* istanbul ignore next */
   if (typeof currentData === 'string') {
     return currentData;
   } else if (typeof currentData === 'object' || Array.isArray(currentData)) {
     const result = Object.keys(currentData);
 
-    if (result.length === 0) {
+    if (!isRequired && nestedErrors.length === 0) {
+      return <pre>{JSON.stringify(currentData, null, 2)}</pre>;
+    } else if (result.length === 0) {
       return renderWarningCell();
     } else if (result.length > 0 && (isObjectArrayEmpty(currentData) || nestedErrors.length > 0)) {
       return <pre>{renderWarningCell(JSON.stringify(currentData, null, 2))}</pre>;
