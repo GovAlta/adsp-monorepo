@@ -188,23 +188,6 @@ const getForm = (
   );
 };
 
-const getFormPages = (
-  data: object,
-  uiSchema: UISchemaElement = categorizationPages,
-  componentProps: object | undefined = undefined
-): JSX.Element => {
-  combineOptions(categorizationPages, componentProps);
-
-  return (
-    <JsonForms
-      uischema={uiSchema}
-      data={data}
-      schema={dataSchema}
-      ajv={new Ajv({ allErrors: true, verbose: true })}
-      renderers={GoARenderers}
-    />
-  );
-};
 afterEach(() => {
   jest.clearAllMocks();
 });
@@ -229,8 +212,18 @@ describe('Form Stepper Control', () => {
 
   it('can render an initial Categorization using pages ', () => {
     const renderer = render(
-      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getFormPages(formData)} />
+      <JsonFormsStepperContextProvider
+        StepperProps={stepperBaseProps}
+        children={getForm(formData, categorizationPages)}
+      />
     );
+    const toc = renderer.getByTestId('table-of-contents');
+    expect(toc).toBeInTheDocument();
+    expect(toc).toBeVisible();
+
+    const page1Ref = renderer.getByTestId('page-ref-0');
+    expect(page1Ref).toBeInTheDocument();
+    fireEvent.click(page1Ref);
     const step1 = renderer.getByTestId('step_0-content-pages');
     expect(step1).toBeInTheDocument();
     expect(step1).toBeVisible();
@@ -255,7 +248,7 @@ describe('Form Stepper Control', () => {
     expect(lastName).toBeInTheDocument();
 
     // input some characters
-    fireEvent(lastName, new CustomEvent('_change', { detail: { value: 'abc' } }));
+    fireEvent(lastName!, new CustomEvent('_change', { detail: { value: 'abc' } }));
     // Check the value
     const newLastName = baseElement.querySelector("goa-input[testId='last-name-input']");
 
@@ -314,7 +307,7 @@ describe('Form Stepper Control', () => {
       const nextButton = baseElement.querySelector("goa-button[testId='next-button']");
       expect(nextButton).toBeInTheDocument();
 
-      fireEvent(nextButton, new CustomEvent('_click'));
+      fireEvent(nextButton!, new CustomEvent('_click'));
 
       expect(mockDispatch.mock.calls[1][0].type === 'update/category');
       expect(mockDispatch.mock.calls[1][0].payload.id === 0);
@@ -345,7 +338,7 @@ describe('Form Stepper Control', () => {
       const prevButton = baseElement.querySelector("goa-button[testId='prev-button']");
       expect(prevButton).toBeInTheDocument();
 
-      fireEvent(prevButton, new CustomEvent('_click'));
+      fireEvent(prevButton!, new CustomEvent('_click'));
 
       expect(mockDispatch.mock.calls[2][0].type === 'page/to/index');
       expect(mockDispatch.mock.calls[2][0].id === 0);
@@ -358,15 +351,25 @@ describe('Form Stepper Control', () => {
         ...stepperBasePropsNoDispatch,
         data: {},
       };
-      const { getByTestId, baseElement } = render(
-        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      const renderer = render(
+        <JsonFormsStepperContextProvider
+          StepperProps={newStepperProps}
+          children={getForm(formData, categorizationPages)}
+        />
       );
+      const toc = renderer.getByTestId('table-of-contents');
+      expect(toc).toBeInTheDocument();
+      expect(toc).toBeVisible();
+      const page1Ref = renderer.getByTestId('page-ref-0');
+      expect(page1Ref).toBeInTheDocument();
+      fireEvent.click(page1Ref);
+
       window.HTMLElement.prototype.scrollIntoView = function () {};
-      const nextButton = baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
+      const nextButton = renderer.baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
 
       expect(nextButton).toBeInTheDocument();
 
-      expect(nextButton.getAttribute('disabled')).toBe('true');
+      expect(nextButton!.getAttribute('disabled')).toBe('true');
     });
 
     it('will hide Prev Nav button on 1st step and show it on any subsequent steps', async () => {
@@ -375,11 +378,20 @@ describe('Form Stepper Control', () => {
         data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
       };
       newStepperProps.activeId = 1;
-      const { getByTestId } = render(
-        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      const renderer = render(
+        <JsonFormsStepperContextProvider
+          StepperProps={newStepperProps}
+          children={getForm(formData, categorizationPages)}
+        />
       );
+      const toc = renderer.getByTestId('table-of-contents');
+      expect(toc).toBeInTheDocument();
+      expect(toc).toBeVisible();
+      const page1Ref = renderer.getByTestId('page-ref-0');
+      expect(page1Ref).toBeInTheDocument();
+      fireEvent.click(page1Ref);
 
-      const BackButton = getByTestId('back-button-click');
+      const BackButton = renderer.getByTestId('back-button-click');
       expect(BackButton).toBeVisible();
       await fireEvent.click(BackButton!);
       console.log(mockDispatch.mock.calls);
@@ -390,11 +402,20 @@ describe('Form Stepper Control', () => {
         ...stepperBaseProps,
         data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
       };
-      const { baseElement } = render(
-        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      const renderer = render(
+        <JsonFormsStepperContextProvider
+          StepperProps={newStepperProps}
+          children={getForm(formData, categorizationPages)}
+        />
       );
+      const toc = renderer.getByTestId('table-of-contents');
+      expect(toc).toBeInTheDocument();
+      expect(toc).toBeVisible();
+      const page1Ref = renderer.getByTestId('page-ref-0');
+      expect(page1Ref).toBeInTheDocument();
+      fireEvent.click(page1Ref);
 
-      const nextButton = baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
+      const nextButton = renderer.baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
 
       expect(nextButton).toBeInTheDocument();
       expect(nextButton).not.toBeNull();
@@ -408,11 +429,23 @@ describe('Form Stepper Control', () => {
         data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
       };
       newStepperProps.activeId = 2;
-      const { getByTestId, baseElement } = render(
-        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      const renderer = render(
+        <JsonFormsStepperContextProvider
+          StepperProps={newStepperProps}
+          children={getForm(formData, categorizationPages)}
+        />
       );
+      const toc = renderer.getByTestId('table-of-contents');
+      expect(toc).toBeInTheDocument();
+      expect(toc).toBeVisible();
 
-      expect(getByTestId('stepper-pages-review-page')).toBeTruthy();
+      const page1Ref = renderer.getByTestId('page-ref-0');
+      expect(page1Ref).toBeInTheDocument();
+      fireEvent.click(page1Ref);
+
+      const baseElement = renderer.getByTestId('stepper-pages-review-page');
+
+      expect(renderer.getByTestId('stepper-pages-review-page')).toBeTruthy();
     });
 
     it('can render the back to review page', async () => {
@@ -423,9 +456,23 @@ describe('Form Stepper Control', () => {
       };
       newStepperProps.withBackReviewBtn = true;
 
-      const { baseElement } = render(
-        <JsonFormsStepperContextProvider StepperProps={newStepperProps} children={getFormPages(formData)} />
+      const renderer = render(
+        <JsonFormsStepperContextProvider
+          StepperProps={newStepperProps}
+          children={getForm(formData, categorizationPages)}
+        />
       );
+
+      const toc = renderer.getByTestId('table-of-contents');
+      expect(toc).toBeInTheDocument();
+      expect(toc).toBeVisible();
+
+      const page1Ref = renderer.getByTestId('page-ref-0');
+      expect(page1Ref).toBeInTheDocument();
+      fireEvent.click(page1Ref);
+
+      const baseElement = renderer.getByTestId('step_0-content-pages');
+
       const backToReviewBtn = baseElement.querySelector("goa-button[testId='pages-to-review-page-btn']");
       expect(backToReviewBtn).toBeTruthy();
 
@@ -456,7 +503,7 @@ describe('Form Stepper Control', () => {
       const submit = baseElement.querySelector("goa-button[testId='stepper-submit-btn']");
       expect(submit).toBeInTheDocument();
       expect(submit).toBeVisible();
-      expect(submit.getAttribute('disabled')).toBe('false');
+      expect(submit!.getAttribute('disabled')).toBe('false');
       fireEvent.click(nameAnchor);
       expect(mockDispatch.mock.calls[1][0].type === 'page/to/index');
     });
@@ -490,9 +537,9 @@ describe('Form Stepper Control', () => {
       expect(nameAnchor.innerHTML).toBe('View');
 
       const submitBtn = baseElement.querySelector("goa-button[testId='stepper-submit-btn']");
-      const submitShadow = submitBtn.shadowRoot?.querySelector('button');
+      const submitShadow = submitBtn!.shadowRoot?.querySelector('button');
       expect(submitShadow).not.toBeNull();
-      fireEvent(submitBtn, new CustomEvent('_click'));
+      fireEvent(submitBtn!, new CustomEvent('_click'));
 
       expect(onSubmit).toBeCalledTimes(1);
     });
@@ -550,9 +597,9 @@ describe('Form Stepper Control', () => {
       const modal = baseElement.querySelector("goa-modal[testId='submit-confirmation']");
 
       expect(modal).toBeInTheDocument();
-      expect(modal.getAttribute('open')).toBe('false');
-      fireEvent(submitBtn, new CustomEvent('_click'));
-      expect(modal.getAttribute('open')).toBe('true');
+      expect(modal!.getAttribute('open')).toBe('false');
+      fireEvent(submitBtn!, new CustomEvent('_click'));
+      expect(modal!.getAttribute('open')).toBe('true');
     });
 
     it('first page has next button is has componentProps', () => {
