@@ -29,29 +29,31 @@ export const TableOfContents = (props: TocProps): JSX.Element => {
   const testid = 'table-of-contents';
   return (
     <PageBorder>
-      <GoATable width="100%" data-testid={testid}>
-        <tbody>
-          {props.categories?.map((category, index) => {
-            const pageStatus = getPageStatus(category);
-            return (
-              <tr>
-                <TocPageRef>
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      props.onClick(index);
-                    }}
-                  >
-                    {category.label}
-                  </a>
-                </TocPageRef>
-                <TocStatus>{getPageStatus(category)}</TocStatus>
-              </tr>
-            );
-          })}
-        </tbody>
-      </GoATable>
+      <div data-testid={testid}>
+        <GoATable width="100%">
+          <tbody>
+            {props.categories?.map((category, index) => {
+              return (
+                <tr>
+                  <TocPageRef>
+                    <a
+                      data-testid={`page-ref-${index}`}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        props.onClick(index);
+                      }}
+                    >
+                      {category.label}
+                    </a>
+                  </TocPageRef>
+                  <TocStatus>{getPageStatus(category)}</TocStatus>
+                </tr>
+              );
+            })}
+          </tbody>
+        </GoATable>
+      </div>
     </PageBorder>
   );
 };
