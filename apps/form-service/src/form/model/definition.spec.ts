@@ -233,7 +233,11 @@ describe('FormDefinitionEntity', () => {
     });
 
     it('can return true for scheduled intake form without scheduled intake for testers', async () => {
-      const result = await scheduled.canApply({ tenantId, id: 'tester', roles: [FormServiceRoles.Tester, 'test-applicant'] } as User);
+      const result = await scheduled.canApply({
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.Tester, 'test-applicant'],
+      } as User);
       expect(result).toBe(true);
     });
 
@@ -330,6 +334,10 @@ describe('FormDefinitionEntity', () => {
       queueTaskToProcess: {} as QueueTaskToProcess,
     });
 
+    beforeEach(() => {
+      notificationMock.subscribe.mockReset();
+    });
+
     it('can create form', async () => {
       notificationMock.subscribe.mockResolvedValueOnce(subscriber);
       const form = await entity.createForm(
@@ -343,6 +351,59 @@ describe('FormDefinitionEntity', () => {
     });
 
     it('can set applicant userId for user applicant', async () => {
+      notificationMock.subscribe.mockResolvedValueOnce(subscriber);
+      const form = await entity.createForm(user, repositoryMock, notificationMock, subscriber);
+      expect(form).toBeTruthy();
+      expect(notificationMock.subscribe).toHaveBeenCalledWith(
+        entity.tenantId,
+        entity,
+        expect.any(String),
+        expect.objectContaining({ userId: user.id })
+      );
+    });
+
+    it('can allow unset user applicant for definitions that allow multiple forms', async () => {
+      const entity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
+        id: 'test',
+        name: 'test-form-definition',
+        description: null,
+        formDraftUrlTemplate: 'https://my-form/{{ id }}',
+        anonymousApply: true,
+        applicantRoles: ['test-applicant'],
+        assessorRoles: ['test-assessor'],
+        clerkRoles: [],
+        dataSchema: null,
+        submissionRecords: false,
+        submissionPdfTemplate: '',
+        supportTopic: false,
+        queueTaskToProcess: {} as QueueTaskToProcess,
+        oneFormPerApplicant: false,
+      });
+
+      notificationMock.subscribe.mockResolvedValueOnce(subscriber);
+      const form = await entity.createForm(user, repositoryMock, notificationMock);
+      expect(form).toBeTruthy();
+      expect(notificationMock.subscribe).not.toHaveBeenCalled();
+    });
+
+    it('can set applicant userId for definitions that allow multiple forms', async () => {
+      const entity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
+        id: 'test',
+        name: 'test-form-definition',
+        description: null,
+        formDraftUrlTemplate: 'https://my-form/{{ id }}',
+        anonymousApply: true,
+        applicantRoles: ['test-applicant'],
+        assessorRoles: ['test-assessor'],
+        clerkRoles: [],
+        dataSchema: null,
+        submissionRecords: false,
+        submissionPdfTemplate: '',
+        supportTopic: false,
+        queueTaskToProcess: {} as QueueTaskToProcess,
+        oneFormPerApplicant: false,
+      });
+
       notificationMock.subscribe.mockResolvedValueOnce(subscriber);
       const form = await entity.createForm(user, repositoryMock, notificationMock, subscriber);
       expect(form).toBeTruthy();

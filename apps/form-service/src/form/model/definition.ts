@@ -114,7 +114,9 @@ export class FormDefinitionEntity implements FormDefinition {
       throw new UnauthorizedUserError('create form', user);
     }
 
-    if (this.isUserApplicant(user)) {
+    // Update user applicant if applicant info is provided or if the form is on per applicant (for backwards compatibility).
+    // This means that form definitions that permit multiple forms allow a unset applicant (i.e. no notifications).
+    if (this.isUserApplicant(user) && (applicantInfo || this.oneFormPerApplicant)) {
       // In case where user is the applicant, the userId of the applicant must match the user's own ID.
       applicantInfo = {
         channels: [{ channel: Channel.email, address: user.email }],
