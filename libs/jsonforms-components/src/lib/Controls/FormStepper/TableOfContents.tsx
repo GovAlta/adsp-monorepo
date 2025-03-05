@@ -1,28 +1,16 @@
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
-import { GoABadge, GoATable } from '@abgov/react-components';
-import { PageBorder, TocPageRef, TocStatus } from './styled-components';
-import { CategoriesState, CategoryState } from './context';
+import { GoATable } from '@abgov/react-components';
+import { PageBorder, TocTitle, TocPageRef, CategoryStatus, TocSubtitle } from './styled-components';
+import { CategoriesState } from './context';
+import { ApplicationStatus } from './ApplicationStatus';
+import { getCategoryStatusBadge } from './CategoryStatus';
 
 export interface TocProps {
   categories: CategoriesState;
   onClick: (id: number) => void;
+  title: string | undefined;
+  subtitle: string | undefined;
 }
-
-enum PageStatus {
-  Complete = 'Completed',
-  Incomplete = 'Incomplete',
-  NotStarted = 'Not started',
-}
-
-const getPageStatus = (category: CategoryState): JSX.Element => {
-  const status = category.isVisited
-    ? category.isCompleted && category.isValid
-      ? PageStatus.Complete
-      : PageStatus.Incomplete
-    : PageStatus.NotStarted;
-  const badgeType = status === PageStatus.Complete ? 'success' : 'information';
-  return <GoABadge type={badgeType} content={status} ariaLabel={status}></GoABadge>;
-};
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
 export const TableOfContents = (props: TocProps): JSX.Element => {
@@ -30,6 +18,9 @@ export const TableOfContents = (props: TocProps): JSX.Element => {
   return (
     <PageBorder>
       <div data-testid={testid}>
+        {props.title && <TocTitle>{props.title}</TocTitle>}
+        <ApplicationStatus categories={props.categories}></ApplicationStatus>
+        {props.subtitle && <TocSubtitle>{props.subtitle}</TocSubtitle>}
         <GoATable width="100%">
           <tbody>
             {props.categories?.map((category, index) => {
@@ -47,7 +38,7 @@ export const TableOfContents = (props: TocProps): JSX.Element => {
                       {category.label}
                     </a>
                   </TocPageRef>
-                  <TocStatus>{getPageStatus(category)}</TocStatus>
+                  <CategoryStatus>{getCategoryStatusBadge(category)}</CategoryStatus>
                 </tr>
               );
             })}
