@@ -2,7 +2,6 @@ import { useContext, useEffect, useState } from 'react';
 import { GoAButtonType } from '@abgov/react-components';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
-import { PageBorder } from './styled-components';
 import { CategorizationStepperLayoutRendererProps } from './types';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
 import { BackButton } from './BackButton';
@@ -56,7 +55,12 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
   };
 
   if (showTOC) {
-    const tocProps: TocProps = { categories, onClick: handleGoToPage };
+    const tocProps: TocProps = {
+      categories,
+      onClick: handleGoToPage,
+      title: props.uischema?.options?.title,
+      subtitle: props.uischema?.options?.subtitle,
+    };
     return <TableOfContents {...tocProps} />;
   } else {
     return <RenderPages categoryProps={props} renderBackButton={renderBackButton}></RenderPages>;
