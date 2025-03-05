@@ -14,6 +14,7 @@ import {
   fetchAllTags,
   fetchResourcesByTag,
   setSelectedTag,
+  resetNextEntries,
 } from '@store/form/action';
 import { RootState } from '@store/index';
 import { ResourceTagResult, Service } from '@store/directory/models';
@@ -84,7 +85,7 @@ export const FormDefinitions = ({
   const tags = useSelector((state: RootState) => state.form.tags || []);
   const tagsLoading = useSelector((state: RootState) => state.form.tagsLoading);
 
-  const filteredFormDefinitions = useSelector((state: RootState) => state.form.tagResources || {});
+  const filteredFormDefinitions = useSelector((state: RootState) => state?.form?.tagResources || {});
 
   useEffect(() => {
     if (!tagsLoading && tags.length === 0) {
@@ -94,6 +95,7 @@ export const FormDefinitions = ({
 
   useEffect(() => {
     if (selectedTag) {
+      dispatch(resetNextEntries());
       dispatch(fetchResourcesByTag(selectedTag.value));
     }
   }, [dispatch, selectedTag]);

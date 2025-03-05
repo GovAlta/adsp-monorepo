@@ -32,6 +32,7 @@ import {
   FETCH_RESOURCES_BY_TAG_SUCCESS,
   FETCH_RESOURCES_BY_TAG_FAILURE,
   SET_SELECTED_TAG,
+  RESET_NEXT_ENTRIES,
 } from './action';
 
 import { FormState, Tag } from './model';
@@ -342,6 +343,12 @@ export default function (state: FormState = defaultState, action: FormActionType
       return {
         ...state,
         selectedTag: action.payload,
+      };
+
+    case RESET_NEXT_ENTRIES:
+      return {
+        ...state,
+        nextEntries: null,
       };
 
     default:
