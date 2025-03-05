@@ -459,7 +459,13 @@ const ObjectArrayList = ({
 // eslint-disable-next-line
 export class ListWithDetailControl extends React.Component<ObjectArrayControlProps, any> {
   // eslint-disable-next-line
-  addItem = (path: string, value: any) => this.props.addItem(path, value);
+  addItem = (path: string, value: any) => {
+    const pathIdValue = path?.split('.') || '';
+    if ((pathIdValue.length > 1 && +this.props.data === 0) || pathIdValue.length === 1) {
+      this.props.addItem(path, value)();
+    }
+  };
+
   render() {
     const {
       label,
@@ -493,7 +499,9 @@ export class ListWithDetailControl extends React.Component<ObjectArrayControlPro
           <ObjectArrayToolBar
             errors={errors}
             label={label}
-            addItem={this.addItem}
+            addItem={(path, value) => () => {
+              this.addItem(path, value);
+            }}
             numColumns={0}
             path={path}
             uischema={controlElement}
