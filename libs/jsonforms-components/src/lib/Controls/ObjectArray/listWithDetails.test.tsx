@@ -1,9 +1,9 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { JsonForms } from '@jsonforms/react';
-import Ajv from 'ajv';
+import Ajv, { ErrorObject } from 'ajv';
 import { GoACells, GoARenderers } from '../../../index';
-import { renderCellColumn } from './ObjectListControlUtils';
+import { isObjectArrayEmpty, renderCellColumn } from './ObjectListControlUtils';
 import { RenderCellColumnProps } from './ObjectListControlTypes';
 
 // Mock ResizeObserver in the scope of this test file
@@ -243,5 +243,17 @@ describe('ObjectListControl util functions tests', () => {
 
     const element = renderCellColumn(props);
     expect(element).not.toBeNull();
+  });
+
+  it('isObjectArrayEmpty util function test object emptyness', () => {
+    const arr = {} as string;
+    const result = isObjectArrayEmpty(arr);
+    expect(result).toBe(true);
+  });
+
+  it('isObjectArrayEmpty util function test array emptyness', () => {
+    const arr = [{}] as unknown as string;
+    const result = isObjectArrayEmpty(arr);
+    expect(result).toBe(true);
   });
 });
