@@ -8,22 +8,50 @@ config:
     thresholds:
       - 'http.response_time.p99': 500
       - 'http.response_time.p95': 300
+  payload:
+    - path: './artillery.{{ $environment }}.csv'
+      skipHeader: true
+      fields:
+        - 'keycloak_url'
+        - 'tenant_realm_id'
   phases:
-    - duration: 30
+    - duration: 10
       arrivalRate: 5
       rampTo: 5
       name: Warm up phase
-    - duration: 240
-      arrivalRate: 15
+    - duration: 20
+      arrivalRate: 10
       name: Soak test phase
+before:
+  flow:
+    - log: 'Getting the access token (tenant: {{ tenant_realm_id }})'
+    - post:
+        url: '{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token'
+        headers:
+          Content-Type: 'application/x-www-form-urlencoded'
+          Accept: 'application/json'
+        form:
+          {
+            grant_type: 'client_credentials',
+            client_id: '{{ $processEnvironment.CLIENT_ID }}',
+            client_secret: '{{ $processEnvironment.CLIENT_SECRET }}',
+          }
+        capture:
+          - json: '$.access_token'
+            as: token
 scenarios:
   - name: 'User visit small size form'
     weight: 25
     flow:
       - get:
-          url: '/autotest/load-test-small-do-not-delete'
-  - name: 'User visit medium size form'
-    weight: 25
-    flow:
-      - get:
-          url: '/autotest/load-test-m-do-not-delete'
+          url: '/autotest/load-test-s-v1-pub'
+      - think: 20 # stop for 20 seconds
+      - post:
+          url: 'https://form-service.adsp-dev.gov.ab.ca/form/v1/forms'
+          headers:
+            authorization: 'Bearer {{ token }}'
+          json:
+            definitionId: load-test-s-v1
+            data:
+              name: mock-test-name
+            submit: false

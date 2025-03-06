@@ -86,3 +86,6 @@ jobs:
         run: mkdir reports
       - name: Execute load tests form app
         run: /home/node/artillery/bin/run run tests/form-app/load.yml --environment dev --output reports/form-app-report.json
+        env:
+          CLIENT_ID: ${{ inputs.CLIENT_ID }}
+          CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
