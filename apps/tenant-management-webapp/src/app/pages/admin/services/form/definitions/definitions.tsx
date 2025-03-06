@@ -88,10 +88,10 @@ export const FormDefinitions = ({
   const filteredFormDefinitions = useSelector((state: RootState) => state?.form?.tagResources || {});
 
   useEffect(() => {
-    if (!tagsLoading && tags.length === 0) {
+    if (!tagsLoading && indicator.show) {
       dispatch(fetchAllTags());
     }
-  }, [dispatch, tagsLoading, tags.length]);
+  }, [dispatch, tagsLoading, indicator]);
 
   useEffect(() => {
     if (selectedTag) {
