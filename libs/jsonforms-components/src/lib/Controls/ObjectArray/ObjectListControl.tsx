@@ -3,6 +3,7 @@ import {
   GoAContainer,
   GoAFormItem,
   GoAGrid,
+  GoAIcon,
   GoAIconButton,
   GoAInput,
   GoATable,
@@ -48,6 +49,7 @@ import {
 } from './ObjectListControlTypes';
 import { extractNames, extractNestedFields, renderCellColumn } from './ObjectListControlUtils';
 import {
+  ListWithDetailWarningIconDiv,
   NonEmptyCellStyle,
   ObjectArrayTitle,
   RequiredSpan,
@@ -575,15 +577,27 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
 
   const listTitle = label || uischema.options?.title;
   const isInReview = isStepperReview === true;
-
+  const isListWithDetail = (controlElement.type as string) === 'ListWithDetail';
   return (
     <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
       <ToolBarHeader>
-        {isInReview && listTitle && (
+        {isInReview &&
+        listTitle &&
+        isListWithDetail &&
+        additionalProps.required &&
+        (data === null || data === undefined) ? (
+          <b>
+            <ListWithDetailWarningIconDiv>
+              <GoAIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoAIcon>
+              {listTitle} is required.
+            </ListWithDetailWarningIconDiv>
+          </b>
+        ) : (
           <b>
             {listTitle} <span>{additionalProps.required && '(required)'}</span>
           </b>
         )}
+
         {!isInReview && listTitle && (
           <ObjectArrayTitle>
             {listTitle} <span>{additionalProps.required && '(required)'}</span>

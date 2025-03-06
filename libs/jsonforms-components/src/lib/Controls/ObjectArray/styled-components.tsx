@@ -90,6 +90,14 @@ export const ObjectArrayWarningIconDiv = styled.div`
   font-size: var(--goa-font-size-2);
   color: var(--goa-color-interactive-error);
 `;
+
+export const ListWithDetailWarningIconDiv = styled.div`
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  font-size: var(--goa-font-size-3);
+  color: var(--goa-color-interactive-error);
+`;
 export const ObjectArrayRequiredTextLabel = styled.label`
   color: var(--goa-color-interactive-error);
   font-weight: var(--goa-font-weight-regular);
