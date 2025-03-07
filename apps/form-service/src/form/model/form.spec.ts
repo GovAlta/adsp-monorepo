@@ -840,8 +840,8 @@ describe('FormEntity', () => {
       );
       expect(deleted).toBe(true);
       expect(fileMock.delete).toHaveBeenCalled();
-      expect(notificationMock.unsubscribe).toHaveBeenCalledWith(tenantId, entity.applicant.id, entity.id);
-      expect(repositoryMock.delete).toHaveBeenCalledWith(entity, notificationMock);
+      expect(notificationMock.unsubscribe).toHaveBeenCalledWith(tenantId, entity.applicant.urn, entity.id);
+      expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
     });
 
     it('can throw for non admin user', async () => {
