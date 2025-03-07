@@ -109,9 +109,11 @@ export const AddEditFormDefinition = ({
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
+    .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .add('formDraftUrlTemplate', 'formDraftUrlTemplate', checkFormDefaultUrl())
     .build();
+
   return (
     <GoAModal
       testId="definition-form"
@@ -179,8 +181,15 @@ export const AddEditFormDefinition = ({
                 onChange={(name, value) => {
                   const validations = {
                     name: value,
-                    duplicate: value,
                   };
+
+                  if (!isEdit) {
+                    validations['duplicate'] = value;
+
+                    if (!validators.checkAll(validations)) {
+                      return;
+                    }
+                  }
 
                   if (definition.id.length > 0) {
                     validators.remove('name');
