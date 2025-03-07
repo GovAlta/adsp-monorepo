@@ -665,7 +665,7 @@ export function formOperation(
           break;
         }
         case ARCHIVE_FORM_OPERATION: {
-          result = await form.archive(user);
+          result = await form.archive(user, notificationService);
           event = formArchived(apiId, user, result);
           break;
         }
