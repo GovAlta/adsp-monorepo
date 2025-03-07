@@ -27,6 +27,7 @@ import {
   GoAIcon,
   GoACheckbox,
 } from '@abgov/react-components';
+
 interface AddEditFormDefinitionProps {
   open: boolean;
   isEdit: boolean;
@@ -109,6 +110,7 @@ export const AddEditFormDefinition = ({
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
+    .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .add('formDraftUrlTemplate', 'formDraftUrlTemplate', checkFormDefaultUrl())
     .build();
@@ -201,7 +203,13 @@ export const AddEditFormDefinition = ({
                   );
                 }}
                 onBlur={() => {
-                  validators.checkAll({ name: definition.name, duplicate: definition.name });
+                  const validations = {
+                    name: definition.name,
+                  };
+                  if (!isEdit) {
+                    validations['duplicate'] = definition.name;
+                  }
+                  validators.checkAll(validations);
                 }}
               />
             </GoAFormItem>
@@ -214,7 +222,6 @@ export const AddEditFormDefinition = ({
                 testId="form-definition-id"
                 disabled={true}
                 width="100%"
-                // eslint-disable-next-line
                 onChange={() => {}}
               />
             </FormFormItem>
@@ -233,7 +240,6 @@ export const AddEditFormDefinition = ({
                   validators['description'].check(value);
                   setDefinition({ ...definition, description: value });
                 }}
-                // eslint-disable-next-line
                 onChange={(name, value) => {}}
               />
               <HelpText>
