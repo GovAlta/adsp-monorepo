@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Resource, ResourceTagResult, Tag, TagResourceRequest } from './models';
+import { Resource, ResourceTagResult, Tag, TagResourceRequest, ResourceType } from './models';
 
 export const tagResourceApi = async (
   token: string,
@@ -77,6 +77,27 @@ export const getResourcesByTag = async (token: string, serviceUrl: string, tag: 
   const { data } = await axios.get(url.href, {
     headers: { Authorization: `Bearer ${token}` },
   });
+
+  return data;
+};
+export const fetchResourceTypeApi = async (token: string, url: string): Promise<Record<string, ResourceType>> => {
+  const res = await axios.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
+export const updateResourceTypeApi = async (
+  token: string,
+  serviceUrl: string,
+  resourceType: ResourceType,
+  urn: string
+) => {
+  const { data } = await axios.patch<{ latest: { configuration: Record<string, ResourceType> } }>(
+    new URL(`configuration/v2/configuration/platform/directory-service/`, serviceUrl).href,
+    { operation: 'UPDATE', update: { [urn]: resourceType } },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
 
   return data;
 };

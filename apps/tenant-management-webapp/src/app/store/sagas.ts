@@ -1,4 +1,4 @@
-import { all, takeEvery, takeLatest, takeLeading } from 'redux-saga/effects';
+import { all, takeEvery, takeLatest } from 'redux-saga/effects';
 
 // Sagas
 import { fetchAccess, fetchServiceRoles, fetchKeycloakServiceRoles, createKeycloakClient } from './access/sagas';
@@ -27,14 +27,7 @@ import { watchTaskSagas } from './task/sagas';
 import { watchFeedbackSagas } from './feedback/sagas';
 import { watchFileSagas } from './file/sagas';
 import { watchConfigurationSagas } from './configuration/sagas';
-import {
-  fetchDirectory,
-  createEntryDirectory,
-  updateEntryDirectory,
-  deleteEntryDirectory,
-  fetchEntryDetail,
-  fetchDirectoryByDetailURNs,
-} from './directory/sagas';
+
 import { watchNotificationSagas } from './notification/sagas';
 import { watchSubscriptionSagas } from './subscription/sagas';
 import { watchCalendarSagas } from './calendar/sagas';
@@ -46,14 +39,7 @@ import {
   CREATE_KEYCLOAK_ROLE,
 } from './access/actions';
 import { FETCH_CONFIG_ACTION } from './config/actions';
-import {
-  FETCH_DIRECTORY,
-  CREATE_ENTRY,
-  UPDATE_ENTRY,
-  DELETE_ENTRY,
-  FETCH_ENTRY_DETAIL,
-  FETCH_ENTRY_DETAIL_BY_URNS,
-} from './directory/actions';
+
 import {
   DELETE_APPLICATION_ACTION,
   FETCH_SERVICE_STATUS_APPS_ACTION,
@@ -73,6 +59,7 @@ import { TOGGLE_APPLICATION_STATUS_ACTION } from './status/actions/toggleApplica
 import { watchServiceMetricsSagas } from './metrics/sagas';
 import { watchScriptSagas } from './script/sagas';
 import { watchValueSagas } from './value/sagas';
+import { watchDirectorySagas } from './directory/sagas';
 
 // eslint-disable-next-line  @typescript-eslint/explicit-module-boundary-types
 export function* watchSagas() {
@@ -81,14 +68,6 @@ export function* watchSagas() {
   yield takeLatest(FETCH_SERVICE_ROLES, fetchServiceRoles);
   yield takeLatest(FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles);
   yield takeEvery(CREATE_KEYCLOAK_ROLE, createKeycloakClient);
-
-  //directory
-  yield takeEvery(FETCH_DIRECTORY, fetchDirectory);
-  yield takeEvery(CREATE_ENTRY, createEntryDirectory);
-  yield takeEvery(UPDATE_ENTRY, updateEntryDirectory);
-  yield takeEvery(DELETE_ENTRY, deleteEntryDirectory);
-  yield takeEvery(FETCH_ENTRY_DETAIL, fetchEntryDetail);
-  yield takeLeading(FETCH_ENTRY_DETAIL_BY_URNS, fetchDirectoryByDetailURNs);
 
   // service status
   yield takeEvery(FETCH_SERVICE_STATUS_APPS_ACTION, fetchServiceStatusApps);
@@ -143,6 +122,8 @@ export function* watchSagas() {
     watchScriptSagas(),
     //Value
     watchValueSagas(),
+    //Directory
+    watchDirectorySagas(),
   ]);
 
   // yield all([watchNotixSagas()]);
