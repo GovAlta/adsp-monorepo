@@ -109,7 +109,6 @@ export const AddEditFormDefinition = ({
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .add('formDraftUrlTemplate', 'formDraftUrlTemplate', checkFormDefaultUrl())
     .build();

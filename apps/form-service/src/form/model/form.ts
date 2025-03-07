@@ -294,9 +294,13 @@ export class FormEntity implements Form {
     return [saved, submission, jobId];
   }
 
-  async archive(user: User): Promise<FormEntity> {
+  async archive(user: User, notificationService: NotificationService): Promise<FormEntity> {
     if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true)) {
       throw new UnauthorizedUserError('archive form', user);
+    }
+
+    if (this.applicant) {
+      await notificationService.unsubscribe(this.tenantId, this.applicant.urn, this.id);
     }
 
     this.status = FormStatus.Archived;

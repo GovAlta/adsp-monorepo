@@ -73,6 +73,7 @@ describe('FormEntity', () => {
     repositoryMock.delete.mockClear();
     notificationMock.sendCode.mockReset();
     notificationMock.verifyCode.mockReset();
+    notificationMock.unsubscribe.mockReset();
     validationService.validate.mockReset();
     pdfServiceMock.generateFormPdf.mockReset();
     calendarService.getScheduledIntake.mockReset();
@@ -795,13 +796,17 @@ describe('FormEntity', () => {
     const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
     it('can archive form', async () => {
-      const archived = await entity.archive({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
+      const archived = await entity.archive(
+        { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User,
+        notificationMock
+      );
       expect(archived.status).toBe(FormStatus.Archived);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+      expect(notificationMock.unsubscribe).toHaveBeenCalledWith(tenantId, entity.applicant.urn, entity.id);
     });
 
     it('can throw for non admin user', async () => {
-      await expect(entity.archive({ tenantId, id: 'tester', roles: [] } as User)).rejects.toThrow(
+      await expect(entity.archive({ tenantId, id: 'tester', roles: [] } as User, notificationMock)).rejects.toThrow(
         UnauthorizedUserError
       );
     });
@@ -835,7 +840,7 @@ describe('FormEntity', () => {
       );
       expect(deleted).toBe(true);
       expect(fileMock.delete).toHaveBeenCalled();
-      expect(notificationMock.unsubscribe).toHaveBeenCalled();
+      expect(notificationMock.unsubscribe).toHaveBeenCalledWith(tenantId, entity.applicant.urn, entity.id);
       expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
     });
 
