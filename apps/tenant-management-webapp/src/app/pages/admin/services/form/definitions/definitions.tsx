@@ -142,7 +142,7 @@ export const FormDefinitions = ({
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
 
-      <GoAFormItem label="Filter by Tag">
+      <GoAFormItem label="Filter by tag">
         <GoADropdown
           name="TagFilter"
           value={selectedTag?.value || ''}

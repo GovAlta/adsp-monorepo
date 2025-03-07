@@ -87,7 +87,7 @@ export const FormDefinitionItem = ({
               title="Toggle details"
               onClick={() => {
                 if (!showDetails) {
-                  if (baseResourceFormUrn && formDefinition.id.length > 0 && resourceTags === undefined) {
+                  if (baseResourceFormUrn && formDefinition.id.length > 0 && resourceTags.length === 0) {
                     dispatch(fetchFormResourceTags(`${baseResourceFormUrn}/${formDefinition.id}`));
                   }
                 }
