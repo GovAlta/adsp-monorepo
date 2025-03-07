@@ -239,6 +239,7 @@ describe('form router', () => {
     notificationServiceMock.subscribe.mockReset();
     notificationServiceMock.sendCode.mockReset();
     notificationServiceMock.verifyCode.mockReset();
+    notificationServiceMock.unsubscribe.mockReset();
     eventServiceMock.send.mockReset();
     commentServiceMock.createSupportTopic.mockClear();
     pdfServiceMock.generateFormPdf.mockClear();
@@ -1233,6 +1234,7 @@ describe('form router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+      expect(notificationServiceMock.unsubscribe).toHaveBeenCalledWith(tenantId, subscriber.urn, entity.id);
     });
 
     it('can call next with unauthorized user', async () => {
@@ -1469,6 +1471,7 @@ describe('form router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Archived }));
+      expect(notificationServiceMock.unsubscribe).toHaveBeenCalledWith(tenantId, subscriber.urn, entity.id);
     });
 
     it('can unlock form', async () => {
