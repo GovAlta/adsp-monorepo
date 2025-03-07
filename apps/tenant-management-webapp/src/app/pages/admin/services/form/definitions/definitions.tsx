@@ -14,6 +14,7 @@ import {
   fetchAllTags,
   fetchResourcesByTag,
   setSelectedTag,
+  resetNextEntries,
 } from '@store/form/action';
 import { RootState } from '@store/index';
 import { ResourceTagResult, Service } from '@store/directory/models';
@@ -84,16 +85,17 @@ export const FormDefinitions = ({
   const tags = useSelector((state: RootState) => state.form.tags || []);
   const tagsLoading = useSelector((state: RootState) => state.form.tagsLoading);
 
-  const filteredFormDefinitions = useSelector((state: RootState) => state.form.tagResources || {});
+  const filteredFormDefinitions = useSelector((state: RootState) => state?.form?.tagResources || {});
 
   useEffect(() => {
-    if (!tagsLoading && tags.length === 0) {
+    if (!tagsLoading && indicator.show) {
       dispatch(fetchAllTags());
     }
-  }, [dispatch, tagsLoading, tags.length]);
+  }, [dispatch, tagsLoading, indicator]);
 
   useEffect(() => {
     if (selectedTag) {
+      dispatch(resetNextEntries());
       dispatch(fetchResourcesByTag(selectedTag.value));
     }
   }, [dispatch, selectedTag]);
@@ -140,7 +142,7 @@ export const FormDefinitions = ({
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
 
-      <GoAFormItem label="Filter by Tag">
+      <GoAFormItem label="Filter by tag">
         <GoADropdown
           name="TagFilter"
           value={selectedTag?.value || ''}
@@ -219,18 +221,20 @@ export const FormDefinitions = ({
                 setCurrentDefinition(formDefinition);
               }}
             />
-            {next && (
-              <LoadMoreWrapper>
-                <GoAButton
-                  testId="form-event-load-more-btn"
-                  key="form-event-load-more-btn"
-                  type="tertiary"
-                  onClick={onNext}
-                >
-                  Load more
-                </GoAButton>
-              </LoadMoreWrapper>
-            )}
+            {next &&
+              ((selectedTag && Object.keys(filteredFormDefinitions).length > 0) ||
+                (!selectedTag && Object.keys(formDefinitions).length > 0)) && (
+                <LoadMoreWrapper>
+                  <GoAButton
+                    testId="form-event-load-more-btn"
+                    key="form-event-load-more-btn"
+                    type="tertiary"
+                    onClick={onNext}
+                  >
+                    Load more
+                  </GoAButton>
+                </LoadMoreWrapper>
+              )}
           </>
         )}
       {showAddRemoveResourceTagModal && (

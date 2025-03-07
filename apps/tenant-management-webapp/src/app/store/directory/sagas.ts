@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { put, select, call } from 'redux-saga/effects';
+import { put, select, call, takeEvery, takeLeading } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
@@ -14,6 +14,16 @@ import {
   FetchEntryDetailAction,
   fetchEntryDetailSuccess,
   FetchEntryDetailByURNsAction,
+  FETCH_DIRECTORY,
+  CREATE_ENTRY,
+  UPDATE_ENTRY,
+  DELETE_ENTRY,
+  FETCH_ENTRY_DETAIL,
+  FETCH_ENTRY_DETAIL_BY_URNS,
+  FETCH_RESOURCE_TYPE,
+  UPDATE_RESOURCE_TYPE,
+  fetchResourceTypeSuccessAction,
+  updateResourceTypeSuccessAction,
 } from './actions';
 
 import { SagaIterator } from '@redux-saga/core';
@@ -22,7 +32,7 @@ import { adspId } from '@lib/adspId';
 import { Service } from './models';
 import { toKebabName } from '@lib/kebabName';
 import { getAccessToken } from '@store/tenant/sagas';
-
+import { fetchResourceTypeApi } from './api';
 export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
   const core = 'platform';
   const state: RootState = yield select();
@@ -59,11 +69,7 @@ export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
         tenantDirectoryData = tenantDirectory;
       }
 
-      yield put(
-        fetchDirectorySuccess({
-          directory: [...tenantDirectoryData, ...coreDirectory],
-        })
-      );
+      yield put(fetchDirectorySuccess([...tenantDirectoryData, ...coreDirectory]));
 
       yield put(
         UpdateIndicator({
@@ -262,4 +268,77 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
   } catch (err) {
     yield put(ErrorNotification({ message: 'Failed to fetch metadata by urns', error: err }));
   }
+}
+
+export function* fetchResourceTypes(payload): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield call(getAccessToken);
+  const next = payload.next ?? '';
+  if (configBaseUrl && token) {
+    try {
+      const url = `${configBaseUrl}/configuration/v2/configuration/platform/directory-service/latest`;
+      const { resourceType } = yield call(fetchResourceTypeApi, token, url);
+      yield put(
+        UpdateIndicator({
+          show: true,
+        })
+      );
+
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+      yield put(fetchResourceTypeSuccessAction(resourceType));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    }
+  }
+}
+
+export function* updateResourceType(payload): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+
+  const resourceType = { [payload.urn]: { ...payload.resourceType } };
+  if (baseUrl && token) {
+    try {
+      const {
+        data: { latest },
+      } = yield call(
+        axios.patch,
+        `${baseUrl}/configuration/v2/configuration/platform/directory-service`,
+        {
+          operation: 'UPDATE',
+          update: { resourceType },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(updateResourceTypeSuccessAction(latest.configuration));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
+
+export function* watchDirectorySagas(): Generator {
+  yield takeEvery(FETCH_DIRECTORY, fetchDirectory);
+  yield takeEvery(CREATE_ENTRY, createEntryDirectory);
+  yield takeEvery(UPDATE_ENTRY, updateEntryDirectory);
+  yield takeEvery(DELETE_ENTRY, deleteEntryDirectory);
+  yield takeEvery(FETCH_ENTRY_DETAIL, fetchEntryDetail);
+  yield takeEvery(FETCH_RESOURCE_TYPE, fetchResourceTypes);
+  yield takeEvery(UPDATE_RESOURCE_TYPE, updateResourceType);
+
+  yield takeLeading(FETCH_ENTRY_DETAIL_BY_URNS, fetchDirectoryByDetailURNs);
 }
