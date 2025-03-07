@@ -18,6 +18,7 @@ import { selectFormAppLink, selectFormResourceTags } from '@store/form/selectors
 import { isValidUrl } from '@lib/validation/urlUtil';
 import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
 import { GoABadge, GoACircularProgress } from '@abgov/react-components';
+import { FormResourceTagResult } from '../../../../../store/form/model';
 
 interface FormDefinitionItemProps {
   formDefinition: FormDefinition;
@@ -27,7 +28,13 @@ interface FormDefinitionItemProps {
 }
 
 const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinition }) => {
-  const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, formDefinition?.id));
+  const resourceTags = useSelector((state: RootState) =>
+    selectFormResourceTags(state, formDefinition?.id)
+  ) as FormResourceTagResult[];
+
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
 
   return (
     <>
@@ -35,11 +42,12 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
       {formDefinition.id}
 
       <DetailsTagHeading>Tags</DetailsTagHeading>
-      {resourceTags === undefined && (
-        <CenterPositionProgressIndicator>
-          <GoACircularProgress visible={true} size="small" />
-        </CenterPositionProgressIndicator>
-      )}
+      {resourceTags === undefined ||
+        (indicator.show === true && (
+          <CenterPositionProgressIndicator>
+            <GoACircularProgress visible={true} size="small" />
+          </CenterPositionProgressIndicator>
+        ))}
 
       {resourceTags && resourceTags?.length > 0 && (
         <DetailsTagWrapper>
