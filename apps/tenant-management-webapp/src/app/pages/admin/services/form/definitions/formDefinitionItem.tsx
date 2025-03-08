@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FormDefinition, FormResourceTagResult } from '@store/form/model';
+import React, { useEffect, useState } from 'react';
+import { FormDefinition } from '@store/form/model';
 import {
   OverflowWrap,
   EntryDetail,
@@ -27,13 +27,7 @@ interface FormDefinitionItemProps {
 }
 
 const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinition }) => {
-  const resourceTags = useSelector((state: RootState) =>
-    selectFormResourceTags(state, formDefinition?.id)
-  ) as FormResourceTagResult[];
-
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
+  const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, formDefinition?.id));
 
   return (
     <>

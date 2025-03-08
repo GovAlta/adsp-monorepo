@@ -65,6 +65,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
   const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, initialFormDefinition?.id));
 
   const searchedTagExists = useSelector((state: RootState) => {
@@ -104,10 +105,10 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
   }, [debouncedChangeHandler]);
 
   useEffect(() => {
-    if (baseResourceFormUrn && initialFormDefinition.id.length > 0) {
+    if (baseResourceFormUrn && initialFormDefinition.id.length > 0 && resourceTags === undefined) {
       dispatch(fetchFormResourceTags(`${baseResourceFormUrn}/${initialFormDefinition.id}`));
     }
-  }, [baseResourceFormUrn, dispatch, initialFormDefinition]);
+  }, [baseResourceFormUrn, dispatch, initialFormDefinition, resourceTags]);
 
   const { errors, validators } = useValidators(
     'name',

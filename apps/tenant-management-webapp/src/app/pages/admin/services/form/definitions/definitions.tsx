@@ -12,16 +12,16 @@ import {
   unTagFormResource,
   tagFormResource,
   fetchAllTags,
+  resetNextEntries,
   fetchResourcesByTag,
   setSelectedTag,
-  resetNextEntries,
 } from '@store/form/action';
 import { RootState } from '@store/index';
-import { ResourceTagResult, Service } from '@store/directory/models';
+import { ResourceTagResult, Service, Tag } from '@store/directory/models';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
 import { PageIndicator } from '@components/Indicator';
-import { defaultFormDefinition, FormDefinition } from '@store/form/model';
+import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 import { LoadMoreWrapper } from './style-components';
@@ -29,7 +29,6 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
-import { Tag } from '../../../../../store/form/model';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -52,13 +51,17 @@ export const FormDefinitions = ({
   const [showDefsFromState, setShowDefsFromState] = useState(isNavigatedFromEdit);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
-  const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
 
-  const dispatch = useDispatch();
+  const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
 
   const orderedFormDefinitions = (state: RootState) => {
     const entries = Object.entries(state?.form?.definitions);
+
+    if (state?.form?.selectedTag) {
+      return state?.form?.tagResources || null;
+    }
+
     return entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
       tempObj[formDefinitionId] = formDefinitionData;
       return tempObj;
@@ -67,11 +70,17 @@ export const FormDefinitions = ({
 
   const formDefinitions = useSelector(orderedFormDefinitions);
 
+  console.log('formDefinitions', formDefinitions);
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  const selectedTag = useSelector((state: RootState) => state.form.selectedTag as Tag | null);
+
+  const tags = useSelector((state: RootState) => state.form.tags || []);
+  const tagsLoading = useSelector((state: RootState) => state.form.tagsLoading);
 
   const selectConfigurationHost = (state: RootState) => {
     return (state?.directory?.directory?.filter(
@@ -80,25 +89,13 @@ export const FormDefinitions = ({
   };
   const resourceConfiguration = useSelector(selectConfigurationHost);
   const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
-  const selectedTag = useSelector((state: RootState) => state.form.selectedTag as Tag | null);
 
-  const tags = useSelector((state: RootState) => state.form.tags || []);
-  const tagsLoading = useSelector((state: RootState) => state.form.tagsLoading);
+  useSelector((state: RootState) => state?.form?.tagResources || {});
 
-  const filteredFormDefinitions = useSelector((state: RootState) => state?.form?.tagResources || {});
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
 
-  useEffect(() => {
-    if (!tagsLoading && indicator.show) {
-      dispatch(fetchAllTags());
-    }
-  }, [dispatch, tagsLoading, indicator]);
-
-  useEffect(() => {
-    if (selectedTag) {
-      dispatch(resetNextEntries());
-      dispatch(fetchResourcesByTag(selectedTag.value));
-    }
-  }, [dispatch, selectedTag]);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (openAddDefinition) {
@@ -120,6 +117,18 @@ export const FormDefinitions = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!tagsLoading && indicator.show) {
+      dispatch(fetchAllTags());
+    }
+  }, [dispatch, tagsLoading, indicator]);
+
+  useEffect(() => {
+    if (selectedTag) {
+      dispatch(resetNextEntries());
+      dispatch(fetchResourcesByTag(selectedTag.value));
+    }
+  }, [dispatch, selectedTag]);
   const onNext = () => {
     dispatch(getFormDefinitions(next));
   };
@@ -146,7 +155,7 @@ export const FormDefinitions = ({
         <GoADropdown
           name="TagFilter"
           value={selectedTag?.value || ''}
-          disabled={!tags.length}
+          disabled={false}
           onChange={(name, value) => {
             const selectedTagObj = tags.find((tag) => tag?.value === value);
             if (selectedTagObj) {
@@ -168,7 +177,6 @@ export const FormDefinitions = ({
       </GoAFormItem>
 
       <br />
-
       {showFormDefinitions && (
         <GoAButton
           testId="add-definition"
@@ -200,43 +208,38 @@ export const FormDefinitions = ({
         }}
       />
 
-      {indicator.show && <PageIndicator />}
+      {indicator.show && Object.keys(formDefinitions).length === 0 && <PageIndicator />}
       {!indicator.show &&
-        ((selectedTag && Object.keys(filteredFormDefinitions).length === 0) ||
-          (!selectedTag && Object.keys(formDefinitions).length === 0)) &&
+        (!formDefinitions || Object.keys(formDefinitions).length === 0) &&
         renderNoItem('form templates')}
-      {((selectedTag && Object.keys(filteredFormDefinitions).length > 0) ||
-        (!selectedTag && Object.keys(formDefinitions).length > 0)) &&
-        showFormDefinitions && (
-          <>
-            <FormDefinitionsTable
-              definitions={selectedTag ? filteredFormDefinitions : formDefinitions}
-              baseResourceFormUrn={BASE_FORM_CONFIG_URN}
-              onDelete={(formDefinition) => {
-                setShowDeleteConfirmation(true);
-                setCurrentDefinition(formDefinition);
-              }}
-              onAddResourceTag={(formDefinition) => {
-                setShowAddRemoveResourceTagModal(true);
-                setCurrentDefinition(formDefinition);
-              }}
-            />
-            {next &&
-              ((selectedTag && Object.keys(filteredFormDefinitions).length > 0) ||
-                (!selectedTag && Object.keys(formDefinitions).length > 0)) && (
-                <LoadMoreWrapper>
-                  <GoAButton
-                    testId="form-event-load-more-btn"
-                    key="form-event-load-more-btn"
-                    type="tertiary"
-                    onClick={onNext}
-                  >
-                    Load more
-                  </GoAButton>
-                </LoadMoreWrapper>
-              )}
-          </>
-        )}
+      {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
+        <>
+          <FormDefinitionsTable
+            definitions={formDefinitions}
+            baseResourceFormUrn={BASE_FORM_CONFIG_URN}
+            onDelete={(formDefinition) => {
+              setShowDeleteConfirmation(true);
+              setCurrentDefinition(formDefinition);
+            }}
+            onAddResourceTag={(formDefinition) => {
+              setShowAddRemoveResourceTagModal(true);
+              setCurrentDefinition(formDefinition);
+            }}
+          />
+          {next && (
+            <LoadMoreWrapper>
+              <GoAButton
+                testId="form-event-load-more-btn"
+                key="form-event-load-more-btn"
+                type="tertiary"
+                onClick={onNext}
+              >
+                Load more
+              </GoAButton>
+            </LoadMoreWrapper>
+          )}
+        </>
+      )}
       {showAddRemoveResourceTagModal && (
         <AddRemoveResourceTagModal
           baseResourceFormUrn={BASE_FORM_CONFIG_URN}
