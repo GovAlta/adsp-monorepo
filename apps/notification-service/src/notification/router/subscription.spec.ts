@@ -1492,6 +1492,27 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
+      req.getConfiguration.mockResolvedValueOnce(
+        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+      );
+
+      const subscription: Subscription = {
+        tenantId,
+        subscriberId: subscriber.id,
+        typeId: 'test',
+        criteria: {},
+      };
+      repositoryMock.getSubscriptions.mockResolvedValueOnce({
+        results: [
+          new SubscriptionEntity(
+            repositoryMock,
+            subscription,
+            new NotificationTypeEntity(notificationType, tenantId),
+            subscriber
+          ),
+        ],
+      });
+
       const handler = getSubscriberDetails(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.getConfiguration).toHaveBeenCalledWith(subscriber.tenantId);
