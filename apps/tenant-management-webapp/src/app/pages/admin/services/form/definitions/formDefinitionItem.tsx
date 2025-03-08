@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FormDefinition } from '@store/form/model';
+import { FormDefinition, FormResourceTagResult } from '@store/form/model';
 import {
   OverflowWrap,
   EntryDetail,
@@ -18,7 +18,6 @@ import { selectFormAppLink, selectFormResourceTags } from '@store/form/selectors
 import { isValidUrl } from '@lib/validation/urlUtil';
 import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
 import { GoABadge, GoACircularProgress } from '@abgov/react-components';
-import { FormResourceTagResult } from '../../../../../store/form/model';
 
 interface FormDefinitionItemProps {
   formDefinition: FormDefinition;
@@ -42,12 +41,11 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
       {formDefinition.id}
 
       <DetailsTagHeading>Tags</DetailsTagHeading>
-      {resourceTags === undefined ||
-        (indicator.show === true && (
-          <CenterPositionProgressIndicator>
-            <GoACircularProgress visible={true} size="small" />
-          </CenterPositionProgressIndicator>
-        ))}
+      {resourceTags === undefined && (
+        <CenterPositionProgressIndicator>
+          <GoACircularProgress visible={true} size="small" />
+        </CenterPositionProgressIndicator>
+      )}
 
       {resourceTags && resourceTags?.length > 0 && (
         <DetailsTagWrapper>
@@ -95,7 +93,7 @@ export const FormDefinitionItem = ({
               title="Toggle details"
               onClick={() => {
                 if (!showDetails) {
-                  if (baseResourceFormUrn && formDefinition.id.length > 0 && resourceTags.length === 0) {
+                  if (baseResourceFormUrn && formDefinition.id.length > 0 && resourceTags === undefined) {
                     dispatch(fetchFormResourceTags(`${baseResourceFormUrn}/${formDefinition.id}`));
                   }
                 }
