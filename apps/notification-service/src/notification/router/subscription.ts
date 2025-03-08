@@ -585,7 +585,9 @@ export function getSubscriberDetails(apiId: AdspId, repository: SubscriptionRepo
 
       let subscriberDetails = mapSubscriber(apiId, subscriber);
       if (includeSubscriptions === 'true') {
-        const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
+        // Note that explicit tenantId is necessary here because there is sometimes no request tenant context
+        // and we're using the subscriber tenant Id.
+        const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>(tenantId);
         const { results } = await repository.getSubscriptions(configuration, tenantId, 0, undefined, {
           subscriberIdEquals: subscriber.id,
         });
