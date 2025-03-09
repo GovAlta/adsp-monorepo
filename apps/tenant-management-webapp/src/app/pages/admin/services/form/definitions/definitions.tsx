@@ -54,12 +54,13 @@ export const FormDefinitions = ({
 
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
+  const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries);
 
   const orderedFormDefinitions = (state: RootState) => {
     const entries = Object.entries(state?.form?.definitions);
 
-    if (state?.form?.selectedTag) {
-      return state?.form?.tagResources || null;
+    if (state.form?.formResourceTag?.selectedTag) {
+      return state.form?.formResourceTag.tagResources || null;
     }
 
     return entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
@@ -70,17 +71,16 @@ export const FormDefinitions = ({
 
   const formDefinitions = useSelector(orderedFormDefinitions);
 
-  console.log('formDefinitions', formDefinitions);
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
 
-  const selectedTag = useSelector((state: RootState) => state.form.selectedTag as Tag | null);
+  const selectedTag = useSelector((state: RootState) => state.form?.formResourceTag?.selectedTag as Tag | null);
 
-  const tags = useSelector((state: RootState) => state.form.tags || []);
-  const tagsLoading = useSelector((state: RootState) => state.form.tagsLoading);
+  const tags = useSelector((state: RootState) => state.form.formResourceTag.tags || []);
+  const tagsLoading = useSelector((state: RootState) => state.form.formResourceTag.tagsLoading);
 
   const selectConfigurationHost = (state: RootState) => {
     return (state?.directory?.directory?.filter(
@@ -90,7 +90,7 @@ export const FormDefinitions = ({
   const resourceConfiguration = useSelector(selectConfigurationHost);
   const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
 
-  useSelector((state: RootState) => state?.form?.tagResources || {});
+  useSelector((state: RootState) => state?.form?.formResourceTag?.tagResources || {});
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
@@ -109,6 +109,7 @@ export const FormDefinitions = ({
   useEffect(() => {
     document.body.style.overflow = 'unset';
     dispatch(getConfigurationDefinitions());
+    dispatch(fetchAllTags());
     const hasFormDefinitions = Object.keys(formDefinitions).length > 0;
 
     if (!showDefsFromState && !hasFormDefinitions) {
@@ -129,8 +130,13 @@ export const FormDefinitions = ({
       dispatch(fetchResourcesByTag(selectedTag.value));
     }
   }, [dispatch, selectedTag]);
+
   const onNext = () => {
-    dispatch(getFormDefinitions(next));
+    if (!selectedTag) {
+      dispatch(getFormDefinitions(next));
+    } else {
+      dispatch(fetchResourcesByTag(selectedTag.value, tagNext));
+    }
   };
 
   useEffect(() => {
@@ -138,15 +144,20 @@ export const FormDefinitions = ({
   }, [formDefinitions]);
 
   useEffect(() => {
-    document.body.style.overflow = 'unset';
-  }, []);
-
-  useEffect(() => {
     if (!indicator.show) {
       setShowDeleteConfirmation(false);
     }
   }, [indicator.show]);
 
+  const NO_TAG_FILTER = {
+    label: '<No tag filter>',
+    value: '',
+  };
+
+  const getNextEntries = () => {
+    if (selectedTag) return tagNext;
+    return next;
+  };
   return (
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
@@ -156,18 +167,18 @@ export const FormDefinitions = ({
           name="TagFilter"
           value={selectedTag?.value || ''}
           disabled={false}
-          onChange={(name, value) => {
+          onChange={(_, value) => {
             const selectedTagObj = tags.find((tag) => tag?.value === value);
             if (selectedTagObj) {
               dispatch(setSelectedTag(selectedTagObj));
-              dispatch(fetchResourcesByTag(selectedTagObj.value));
+              dispatch(fetchResourcesByTag(selectedTagObj.value, next));
             } else {
               dispatch(setSelectedTag(null));
             }
           }}
           width="54ch"
         >
-          <GoADropdownItem value="" label="<No tag filter>" />
+          <GoADropdownItem value={NO_TAG_FILTER.value} label={NO_TAG_FILTER.label} />
           {tags
             .sort((a, b) => a.label.localeCompare(b.label))
             .map((tag) => (
@@ -209,9 +220,11 @@ export const FormDefinitions = ({
       />
 
       {indicator.show && Object.keys(formDefinitions).length === 0 && <PageIndicator />}
+
       {!indicator.show &&
         (!formDefinitions || Object.keys(formDefinitions).length === 0) &&
         renderNoItem('form templates')}
+
       {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
         <>
           <FormDefinitionsTable
@@ -226,7 +239,7 @@ export const FormDefinitions = ({
               setCurrentDefinition(formDefinition);
             }}
           />
-          {next && (
+          {getNextEntries() && (
             <LoadMoreWrapper>
               <GoAButton
                 testId="form-event-load-more-btn"

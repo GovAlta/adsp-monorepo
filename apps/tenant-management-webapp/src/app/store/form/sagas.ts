@@ -506,7 +506,7 @@ export function* fetchAllTags(): SagaIterator {
   }
 }
 
-export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIterator {
+export function* fetchResourcesByTag({ tag, next, after }: FetchResourcesByTagAction): SagaIterator {
   if (!tag) {
     console.log('Skipping fetchResourcesByTag - No tag selected');
     yield put({
@@ -526,9 +526,9 @@ export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIt
 
   if (baseUrl && token) {
     try {
-      const resources = yield call(getResourcesByTag, token, baseUrl, requiredTag);
+      const { results, page } = yield call(getResourcesByTag, token, baseUrl, requiredTag, next);
 
-      const filteredDefinitions = resources.results
+      const filteredDefinitions = results
         .map(({ urn, _embedded }) => {
           const represents = _embedded?.represents?.latest?.configuration;
           if (represents) {
@@ -545,7 +545,7 @@ export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIt
         })
         .filter(Boolean);
 
-      yield put(fetchResourcesByTagSuccess(tag, filteredDefinitions));
+      yield put(fetchResourcesByTagSuccess(tag, filteredDefinitions, page.next, page.after));
     } catch (err) {
       yield put(ErrorNotification({ message: `Failed to fetch resources for tag: ${tag}`, error: err }));
     } finally {

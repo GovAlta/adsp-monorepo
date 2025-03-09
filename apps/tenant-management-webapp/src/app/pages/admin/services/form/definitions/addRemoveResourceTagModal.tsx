@@ -69,7 +69,7 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
   const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, initialFormDefinition?.id));
 
   const searchedTagExists = useSelector((state: RootState) => {
-    return state?.form?.searchedTagExists;
+    return state?.form?.formResourceTag?.searchedTagExists;
   });
 
   const tagAlreadyAdded = () => {
