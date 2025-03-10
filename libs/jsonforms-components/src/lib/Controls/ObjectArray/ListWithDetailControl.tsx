@@ -225,10 +225,10 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
           return (
             <JsonFormsDispatch
               data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-              key={rowPath}
+              key={`${rowPath}-${index}`}
               schema={schema}
               uischema={element}
-              path={`${rowPath}-${index}`}
+              path={`${rowPath}`}
               enabled={enabled}
               renderers={renderers}
               cells={cells}
@@ -461,7 +461,7 @@ export class ListWithDetailControl extends React.Component<ObjectArrayControlPro
   // eslint-disable-next-line
   addItem = (path: string, value: any) => {
     const pathIdValue = path?.split('.') || '';
-    if ((pathIdValue.length > 1 && +this.props.data === 0) || pathIdValue.length === 1) {
+    if ((pathIdValue.length > 1 && +this.props.data >= 0) || pathIdValue.length === 1) {
       this.props.addItem(path, value)();
     }
   };
