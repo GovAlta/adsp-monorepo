@@ -58,10 +58,7 @@ export const FormDefinitions = ({
   const orderedFormDefinitions = (state: RootState) => {
     const entries = Object.entries(state?.form?.definitions);
     if (state.form?.formResourceTag?.selectedTag) {
-      const tagKeys = Object.values(state.form?.formResourceTag.tagResources)
-        .map((obj) => obj)
-        .map((y) => y)
-        .map((item) => item.id);
+      const tagKeys = Object.values(state.form?.formResourceTag.tagResources).map((item) => item.id);
 
       const values = entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
         if (tagKeys.includes(formDefinitionId)) {
