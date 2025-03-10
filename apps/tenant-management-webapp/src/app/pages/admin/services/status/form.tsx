@@ -81,7 +81,9 @@ export const ApplicationFormModal: FC<Props> = ({
     return (appName: string) => {
       const existingApp = applications.filter((app) => app.name === appName);
 
-      return existingApp.length === 1 ? 'application name is duplicate, please use a different name' : '';
+      return existingApp.length === 1 && !(isEdit && existingApp[0]?.name === defaultApplication.name)
+        ? 'application name is duplicate, please use a different name'
+        : '';
     };
   };
   const isDuplicateAppKey = (): Validator => {
@@ -200,8 +202,7 @@ export const ApplicationFormModal: FC<Props> = ({
             } else {
               validators.remove('nameOnly');
               validators['nameOnly'].check(value);
-              validators.remove('duplicated');
-              validators['duplicated'].check(value);
+
               setApplication({
                 ...application,
                 name: value,

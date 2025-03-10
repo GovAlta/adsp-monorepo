@@ -1466,6 +1466,63 @@ describe('subscription router', () => {
         })
       );
     });
+
+    it('can get subscriber with no request tenant context', async () => {
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [],
+      });
+
+      const req = {
+        user: {
+          isCore: true,
+          id: 'tester',
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [],
+        },
+        query: {
+          includeSubscriptions: 'true',
+        },
+        subscriber,
+        getConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce(
+        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+      );
+
+      const subscription: Subscription = {
+        tenantId,
+        subscriberId: subscriber.id,
+        typeId: 'test',
+        criteria: {},
+      };
+      repositoryMock.getSubscriptions.mockResolvedValueOnce({
+        results: [
+          new SubscriptionEntity(
+            repositoryMock,
+            subscription,
+            new NotificationTypeEntity(notificationType, tenantId),
+            subscriber
+          ),
+        ],
+      });
+
+      const handler = getSubscriberDetails(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(req.getConfiguration).toHaveBeenCalledWith(subscriber.tenantId);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'subscriber',
+          addressAs: 'tester',
+        })
+      );
+    });
   });
 
   describe('deleteSubscriber', () => {
