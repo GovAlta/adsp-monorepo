@@ -12,7 +12,6 @@ import {
   unTagFormResource,
   tagFormResource,
   fetchAllTags,
-  resetNextEntries,
   fetchResourcesByTag,
   setSelectedTag,
 } from '@store/form/action';
@@ -59,7 +58,10 @@ export const FormDefinitions = ({
   const orderedFormDefinitions = (state: RootState) => {
     const entries = Object.entries(state?.form?.definitions);
     if (state.form?.formResourceTag?.selectedTag) {
-      const tagKeys = Object.values(state.form?.formResourceTag.tagResources).map((obj) => obj.id);
+      const tagKeys = Object.values(state.form?.formResourceTag.tagResources)
+        .map((obj) => obj)
+        .map((y) => y)
+        .map((item) => item.id);
 
       const values = entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
         if (tagKeys.includes(formDefinitionId)) {
@@ -134,7 +136,6 @@ export const FormDefinitions = ({
 
   useEffect(() => {
     if (selectedTag) {
-      dispatch(resetNextEntries());
       dispatch(fetchResourcesByTag(selectedTag.value));
     }
   }, [dispatch, selectedTag]);
