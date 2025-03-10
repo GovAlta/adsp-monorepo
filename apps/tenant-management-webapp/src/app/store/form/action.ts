@@ -71,8 +71,6 @@ export const FETCH_RESOURCES_BY_TAG_FAILURE = 'form/resource/fetch-resources-by-
 
 export const SET_SELECTED_TAG = 'form/resource/set-selected-tag';
 
-export const RESET_NEXT_ENTRIES = 'form/resource/reset-next-entries';
-
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
 }
@@ -212,11 +210,6 @@ export interface SetSelectedTagAction {
   payload: Tag;
 }
 
-export interface ResetNextEntriesAction {
-  type: typeof RESET_NEXT_ENTRIES;
-  payload: Tag;
-}
-
 export type FormActionTypes =
   | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
@@ -257,8 +250,7 @@ export type FormActionTypes =
   | FetchResourcesByTagAction
   | FetchResourcesByTagSuccessAction
   | FetchResourcesByTagFailureAction
-  | SetSelectedTagAction
-  | ResetNextEntriesAction;
+  | SetSelectedTagAction;
 
 export interface FetchAllTagsAction {
   type: typeof FETCH_ALL_TAGS_ACTION;
@@ -277,6 +269,8 @@ export interface FetchAllTagsFailedAction {
 export interface FetchResourcesByTagAction {
   type: typeof FETCH_RESOURCES_BY_TAG_ACTION;
   tag: string;
+  next?: string;
+  after?: string;
 }
 
 export interface FetchResourcesByTagSuccessAction {
@@ -284,6 +278,8 @@ export interface FetchResourcesByTagSuccessAction {
   payload: {
     tag: string;
     resources: Resource[];
+    next: string;
+    after: string;
   };
 }
 
@@ -526,14 +522,20 @@ export const fetchAllTagsFailed = (error: string): FetchAllTagsFailedAction => (
   error,
 });
 
-export const fetchResourcesByTag = (tag: string): FetchResourcesByTagAction => ({
+export const fetchResourcesByTag = (tag: string, next?: string): FetchResourcesByTagAction => ({
   type: FETCH_RESOURCES_BY_TAG_ACTION,
   tag,
+  next,
 });
 
-export const fetchResourcesByTagSuccess = (tag: string, resources: Resource[]): FetchResourcesByTagSuccessAction => ({
+export const fetchResourcesByTagSuccess = (
+  tag: string,
+  resources: Resource[],
+  next: string,
+  after: string
+): FetchResourcesByTagSuccessAction => ({
   type: FETCH_RESOURCES_BY_TAG_SUCCESS,
-  payload: { tag, resources },
+  payload: { tag, resources, next, after },
 });
 
 export const fetchResourcesByTagFailure = (error: string): FetchResourcesByTagFailureAction => ({
@@ -544,8 +546,4 @@ export const fetchResourcesByTagFailure = (error: string): FetchResourcesByTagFa
 export const setSelectedTag = (tag: Tag): SetSelectedTagAction => ({
   type: SET_SELECTED_TAG,
   payload: tag,
-});
-
-export const resetNextEntries = () => ({
-  type: RESET_NEXT_ENTRIES,
 });
