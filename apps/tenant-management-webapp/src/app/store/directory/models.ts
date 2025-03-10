@@ -4,7 +4,7 @@ export const AddModalType = 'directory-add-modal';
 
 export interface Directory {
   directory: Service[];
-  resourceType: Record<string, ResourceType>;
+  resourceType: Record<string, ResourceType[]>;
 }
 
 export interface Service {

@@ -81,7 +81,7 @@ export interface FetchResourceTypeAction {
 }
 export interface FetchResourceTypeSuccessAction {
   type: typeof FETCH_RESOURCE_TYPE_SUCCESS;
-  payload: Record<string, ResourceType>;
+  payload: Record<string, ResourceType[]>;
 }
 
 export interface UpdateResourceTypeAction {
@@ -91,7 +91,7 @@ export interface UpdateResourceTypeAction {
 }
 export interface UpdateResourceTypeSuccessAction {
   type: typeof UPDATE_RESOURCE_TYPE_SUCCESS;
-  payload: Record<string, ResourceType>;
+  payload: Record<string, ResourceType[]>;
 }
 export interface FetchEntryDetailByURNsAction {
   type: typeof FETCH_ENTRY_DETAIL_BY_URNS;
@@ -172,7 +172,7 @@ export const fetchResourceTypeAction = (next?: string): FetchResourceTypeAction 
 });
 
 export const fetchResourceTypeSuccessAction = (
-  payload: Record<string, ResourceType>
+  payload: Record<string, ResourceType[]>
 ): FetchResourceTypeSuccessAction => ({
   type: FETCH_RESOURCE_TYPE_SUCCESS,
   payload,
@@ -185,7 +185,7 @@ export const updateResourceTypeAction = (resourceType: ResourceType, urn?: strin
 });
 
 export const updateResourceTypeSuccessAction = (
-  payload: Record<string, ResourceType>
+  payload: Record<string, ResourceType[]>
 ): UpdateResourceTypeSuccessAction => ({
   type: UPDATE_RESOURCE_TYPE_SUCCESS,
   payload,

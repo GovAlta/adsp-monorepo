@@ -12,23 +12,30 @@ import { NameDiv, EntryDetail } from '../styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 
 interface ResourceTypeProps {
-  resourceType: ResourceType;
+  resourceType: ResourceType[];
+  key?: string;
 }
 
-const ResourceTypeComponent: FunctionComponent<ResourceTypeProps> = ({ resourceType }) => {
+const ResourceTypeComponent: FunctionComponent<ResourceTypeProps> = ({ resourceType }) =>
+  resourceType && resourceType.length > 0 && resourceType.map((resource) => <ResourceItem resource={resource} />);
+interface ResourceProps {
+  resource: ResourceType;
+}
+const ResourceItem: FunctionComponent<ResourceProps> = (resource) => {
   const [showDetails, setShowDetails] = useState(false);
   useEffect(() => {
     document.body.style.overflow = 'unset';
   }, []);
 
+  const currentResource = resource.resource;
   return (
     <>
       <tr>
         <td headers="type" data-testid="type">
-          {resourceType?.type}
+          {currentResource?.type}
         </td>
         <td headers="matcher" data-testid="matcher">
-          {resourceType?.matcher}
+          {currentResource?.matcher}
         </td>
         <td headers="actions" data-testid="actions">
           <GoAContextMenu>
@@ -45,10 +52,10 @@ const ResourceTypeComponent: FunctionComponent<ResourceTypeProps> = ({ resourceT
         <tr>
           <td className="payload-details" headers="namespace name description payload" colSpan={5}>
             <EntryDetail>
-              <span data-testid="name-path-details">{`Name path: ${resourceType.namePath}`}</span>
+              <span data-testid="name-path-details">{`Name path: ${currentResource.namePath}`}</span>
               <br />
-              {resourceType.deleteEvent && (
-                <span data-testid="delete-event-details">{`Delete event: ${resourceType.deleteEvent.namespace}:${resourceType.deleteEvent.name}`}</span>
+              {resource.deleteEvent && (
+                <span data-testid="delete-event-details">{`Delete event: ${currentResource.deleteEvent.namespace}:${currentResource.deleteEvent.name}`}</span>
               )}
             </EntryDetail>
           </td>
@@ -73,9 +80,9 @@ export const ResourceTypePage = (): JSX.Element => {
   const reset = () => {
     setOpenAddResourceType(false);
   };
-  const groupResources = (data: Record<string, ResourceType>) => {
-    const platformGroup: Record<string, ResourceType> = {};
-    const othersGroup: Record<string, ResourceType> = {};
+  const groupResources = (data: Record<string, ResourceType[]>) => {
+    const platformGroup: Record<string, ResourceType[]> = {};
+    const othersGroup: Record<string, ResourceType[]> = {};
 
     Object.entries(data).forEach(([key, value]) => {
       if (key.includes(':platform:')) {
@@ -117,7 +124,7 @@ export const ResourceTypePage = (): JSX.Element => {
           Object.keys(groupedResourceTypes).map((group, value) => (
             <div key={group}>
               <NameDiv>{group}</NameDiv>
-              <DataTable data-testid="resource-type-table">
+              <DataTable data-testid="resource-type-table" id="resource-type-table">
                 <thead data-testid="resource-type-table-header">
                   <tr>
                     <th id="type" data-testid="resource-type-table-header-name">
@@ -128,7 +135,7 @@ export const ResourceTypePage = (): JSX.Element => {
                   </tr>
                 </thead>
                 <tbody>
-                  <ResourceTypeComponent resourceType={resourceTypes[group]} />
+                  <ResourceTypeComponent key={`resource-type-${group}`} resourceType={resourceTypes[group]} />
                 </tbody>
               </DataTable>
             </div>

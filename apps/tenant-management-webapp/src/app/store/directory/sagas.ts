@@ -306,8 +306,13 @@ export function* fetchResourceTypes(payload): SagaIterator {
 export function* updateResourceType(payload): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
+  const currentResourceType = yield select((state: RootState) => state.directory.resourceType);
+  const urnExists: boolean = Object.keys(currentResourceType).some((key) => key.includes(payload.urn));
 
-  const resourceType = { [payload.urn]: { ...payload.resourceType } };
+  const resourceType = urnExists
+    ? { [payload.urn]: [...currentResourceType[payload.urn], payload.resourceType] }
+    : { [payload.urn]: [payload.resourceType] };
+
   if (baseUrl && token) {
     try {
       const {
