@@ -331,7 +331,7 @@ export default function (state: FormState = defaultState, action: FormActionType
         ...state,
         formResourceTag: {
           ...state.formResourceTag,
-          tagResources: action.next ? [...state.formResourceTag.tagResources] : [],
+          tagResources: [],
           tagsLoading: true,
           tagsError: null,
           nextEntries: action.next,

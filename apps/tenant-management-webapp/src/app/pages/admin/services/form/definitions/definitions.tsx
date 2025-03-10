@@ -21,7 +21,7 @@ import { ResourceTagResult, Service, Tag } from '@store/directory/models';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
 import { PageIndicator } from '@components/Indicator';
-import { defaultFormDefinition } from '@store/form/model';
+import { defaultFormDefinition, Form, FormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 import { LoadMoreWrapper } from './style-components';
@@ -58,9 +58,17 @@ export const FormDefinitions = ({
 
   const orderedFormDefinitions = (state: RootState) => {
     const entries = Object.entries(state?.form?.definitions);
-
     if (state.form?.formResourceTag?.selectedTag) {
-      return state.form?.formResourceTag.tagResources || null;
+      const tagKeys = Object.values(state.form?.formResourceTag.tagResources).map((obj) => obj.id);
+
+      const values = entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
+        if (tagKeys.includes(formDefinitionId)) {
+          tempObj[formDefinitionId] = formDefinitionData;
+          return tempObj;
+        }
+        return tempObj;
+      }, {});
+      return values;
     }
 
     return entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
