@@ -25,10 +25,10 @@ const ResourceTypeComponent: FunctionComponent<ResourceTypeProps> = ({ resourceT
     <>
       <tr>
         <td headers="type" data-testid="type">
-          {resourceType.type}
+          {resourceType?.type}
         </td>
         <td headers="matcher" data-testid="matcher">
-          {resourceType.matcher}
+          {resourceType?.matcher}
         </td>
         <td headers="actions" data-testid="actions">
           <GoAContextMenu>
@@ -73,6 +73,22 @@ export const ResourceTypePage = (): JSX.Element => {
   const reset = () => {
     setOpenAddResourceType(false);
   };
+  const groupResources = (data: Record<string, ResourceType>) => {
+    const platformGroup: Record<string, ResourceType> = {};
+    const othersGroup: Record<string, ResourceType> = {};
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (key.includes(':platform:')) {
+        platformGroup[key] = value;
+      } else {
+        othersGroup[key] = value;
+      }
+    });
+
+    return { ...othersGroup, ...platformGroup };
+  };
+  const groupedResourceTypes = resourceTypes && groupResources(resourceTypes);
+
   return (
     <section>
       <GoAButton
@@ -92,30 +108,31 @@ export const ResourceTypePage = (): JSX.Element => {
         onCancel={reset}
         initialType={defaultResourceType}
         urn=""
-        onSave={(type) => {
-          dispatch(updateResourceTypeAction(type, type.type));
+        onSave={(type, urn) => {
+          dispatch(updateResourceTypeAction(type, urn));
         }}
       />
       <div>
-        {Object.keys(resourceTypes).map((group, value) => (
-          <div key={group}>
-            <NameDiv>{group}</NameDiv>
-            <DataTable data-testid="resource-type-table">
-              <thead data-testid="resource-type-table-header">
-                <tr>
-                  <th id="type" data-testid="resource-type-table-header-name">
-                    Type
-                  </th>
-                  <th id="description">Matcher</th>
-                  <th id="actions">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <ResourceTypeComponent resourceType={resourceTypes[group]} />
-              </tbody>
-            </DataTable>
-          </div>
-        ))}
+        {groupedResourceTypes &&
+          Object.keys(groupedResourceTypes).map((group, value) => (
+            <div key={group}>
+              <NameDiv>{group}</NameDiv>
+              <DataTable data-testid="resource-type-table">
+                <thead data-testid="resource-type-table-header">
+                  <tr>
+                    <th id="type" data-testid="resource-type-table-header-name">
+                      Type
+                    </th>
+                    <th id="description">Matcher</th>
+                    <th id="actions">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <ResourceTypeComponent resourceType={resourceTypes[group]} />
+                </tbody>
+              </DataTable>
+            </div>
+          ))}
       </div>
     </section>
   );
