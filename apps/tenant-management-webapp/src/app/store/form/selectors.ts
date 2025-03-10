@@ -24,8 +24,7 @@ export const selectFormResourceTags = createSelector(
   (state: RootState) => state.form,
   (_, formDefinitionId: string) => formDefinitionId,
   (state, formDefinitionId) => {
-    const definition = state.definitions[formDefinitionId];
-    return definition ? definition.resourceTags || [] : [];
+    return state.definitions[formDefinitionId]?.resourceTags;
   }
 );
 

@@ -70,8 +70,15 @@ export const getAllTagsApi = async (token: string, serviceUrl: string): Promise<
   return data;
 };
 
-export const getResourcesByTag = async (token: string, serviceUrl: string, tag: string): Promise<Resource[]> => {
-  const url = new URL(`/resource/v1/tags/${encodeURIComponent(tag)}/resources?top=50`, serviceUrl);
+export const getResourcesByTag = async (
+  token: string,
+  serviceUrl: string,
+  tag: string,
+  next?: string
+): Promise<Resource[]> => {
+  const tagNext = next ?? '';
+
+  const url = new URL(`/resource/v1/tags/${encodeURIComponent(tag)}/resources?top=50&after=${tagNext}`, serviceUrl);
 
   url.searchParams.append('includeRepresents', 'true');
   const { data } = await axios.get(url.href, {

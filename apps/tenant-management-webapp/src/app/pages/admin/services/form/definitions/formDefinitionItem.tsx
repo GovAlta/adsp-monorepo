@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FormDefinition } from '@store/form/model';
 import {
   OverflowWrap,
@@ -18,7 +18,6 @@ import { selectFormAppLink, selectFormResourceTags } from '@store/form/selectors
 import { isValidUrl } from '@lib/validation/urlUtil';
 import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
 import { GoABadge, GoACircularProgress } from '@abgov/react-components';
-import { FormResourceTagResult } from '../../../../../store/form/model';
 
 interface FormDefinitionItemProps {
   formDefinition: FormDefinition;
@@ -28,13 +27,7 @@ interface FormDefinitionItemProps {
 }
 
 const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinition }) => {
-  const resourceTags = useSelector((state: RootState) =>
-    selectFormResourceTags(state, formDefinition?.id)
-  ) as FormResourceTagResult[];
-
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
+  const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, formDefinition?.id));
 
   return (
     <>
@@ -42,12 +35,11 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
       {formDefinition.id}
 
       <DetailsTagHeading>Tags</DetailsTagHeading>
-      {resourceTags === undefined ||
-        (indicator.show === true && (
-          <CenterPositionProgressIndicator>
-            <GoACircularProgress visible={true} size="small" />
-          </CenterPositionProgressIndicator>
-        ))}
+      {resourceTags === undefined && (
+        <CenterPositionProgressIndicator>
+          <GoACircularProgress visible={true} size="small" />
+        </CenterPositionProgressIndicator>
+      )}
 
       {resourceTags && resourceTags?.length > 0 && (
         <DetailsTagWrapper>
@@ -95,7 +87,7 @@ export const FormDefinitionItem = ({
               title="Toggle details"
               onClick={() => {
                 if (!showDetails) {
-                  if (baseResourceFormUrn && formDefinition.id.length > 0 && resourceTags.length === 0) {
+                  if (baseResourceFormUrn && formDefinition.id.length > 0 && resourceTags === undefined) {
                     dispatch(fetchFormResourceTags(`${baseResourceFormUrn}/${formDefinition.id}`));
                   }
                 }

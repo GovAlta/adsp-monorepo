@@ -54,6 +54,7 @@ export interface Resource {
   urn: string;
   name: string;
   description: string;
+  id: string;
   type: string;
   _embedded?: {
     represents?: unknown;
