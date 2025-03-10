@@ -158,6 +158,7 @@ export const FormDefinitions = ({
     if (selectedTag) return tagNext;
     return next;
   };
+
   return (
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
@@ -221,9 +222,7 @@ export const FormDefinitions = ({
 
       {indicator.show && Object.keys(formDefinitions).length === 0 && <PageIndicator />}
 
-      {!indicator.show &&
-        (!formDefinitions || Object.keys(formDefinitions).length === 0) &&
-        renderNoItem('form templates')}
+      {!indicator.show && Object.keys(formDefinitions)?.length === 0 && renderNoItem('form templates')}
 
       {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
         <>
