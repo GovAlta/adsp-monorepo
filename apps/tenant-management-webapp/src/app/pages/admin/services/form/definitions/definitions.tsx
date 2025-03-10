@@ -126,10 +126,10 @@ export const FormDefinitions = ({
   }, []);
 
   useEffect(() => {
-    if (!tagsLoading && indicator.show) {
+    if ((!tagsLoading && indicator.show && tags === undefined) || tags === null) {
       dispatch(fetchAllTags());
     }
-  }, [dispatch, tagsLoading, indicator]);
+  }, [dispatch, tagsLoading, indicator, tags]);
 
   useEffect(() => {
     if (selectedTag) {
@@ -228,7 +228,7 @@ export const FormDefinitions = ({
 
       {indicator.show && Object.keys(formDefinitions).length === 0 && <PageIndicator />}
 
-      {!indicator.show && Object.keys(formDefinitions)?.length === 0 && renderNoItem('form templates')}
+      {!indicator.show && Object.keys(formDefinitions)?.length === 0 && renderNoItem('form definitions')}
 
       {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
         <>
