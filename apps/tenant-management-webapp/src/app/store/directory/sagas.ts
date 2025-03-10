@@ -324,7 +324,11 @@ export function* updateResourceType(payload): SagaIterator {
         }
       );
 
-      yield put(updateResourceTypeSuccessAction(latest.configuration));
+      yield put(
+        updateResourceTypeSuccessAction({
+          ...latest.configuration?.resourceType,
+        })
+      );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }

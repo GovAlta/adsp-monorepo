@@ -30,7 +30,7 @@ interface ResourceTypeModalProps {
   initialType: ResourceType;
   urn: string;
   onCancel?: () => void;
-  onSave: (resourceType: ResourceType) => void;
+  onSave: (resourceType: ResourceType, urnStr) => void;
   open: boolean;
 }
 
@@ -46,15 +46,10 @@ export const AddEditResourceTypeModal = ({
   const dispatch = useDispatch();
 
   const [selectedEvent, setSelectEvent] = useState('');
-
+  const [urnStr, setUrnStr] = useState('');
   const { tenantDirectory } = useSelector(selectSortedDirectory);
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
-  const { errors, validators } = useValidators(
-    'name',
-    'name',
-
-    isNotEmptyCheck('name')
-  )
+  const { errors, validators } = useValidators('name', 'name', isNotEmptyCheck('name'))
     .add('duplicated', 'name', isNotEmptyCheck('name'))
     .add('type', 'type', isNotEmptyCheck('type'))
     .add('matcher', 'matcher', isNotEmptyCheck('matcher'))
@@ -105,8 +100,7 @@ export const AddEditResourceTypeModal = ({
               if (!validators.checkAll(validations)) {
                 return;
               }
-              onSave(resourceType);
-
+              onSave(resourceType, urnStr);
               validators.clear();
               onCancel();
             }}
@@ -124,6 +118,7 @@ export const AddEditResourceTypeModal = ({
           width="100%"
           testId="resource-type-api"
           onChange={(_, value: string) => {
+            setUrnStr(value);
             setResourceType({
               ...resourceType,
               deleteEvent: {
@@ -134,7 +129,7 @@ export const AddEditResourceTypeModal = ({
           }}
           relative={true}
         >
-          <GoADropdownItem value={''} label={'None selected'} />
+          {/* <GoADropdownItem value={''} label={'None selected'} /> */}
           {tenantDirectory &&
             tenantDirectory.length > 0 &&
             tenantDirectory.map((state, key) => <GoADropdownItem key={key} value={state.urn} label={state.urn} />)}
