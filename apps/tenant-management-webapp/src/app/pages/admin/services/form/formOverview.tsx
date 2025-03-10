@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoAButton } from '@abgov/react-components';
-import { fetchFormMetrics } from '@store/form/action';
+import { fetchFormMetrics, fetchAllTags } from '@store/form/action';
 import { useDispatch } from 'react-redux';
 import { FormMetrics } from './metrics';
 import { fetchDirectory } from '@store/directory/actions';
@@ -22,6 +22,7 @@ const FormOverview = ({ setOpenAddDefinition, setActiveIndex }: FormOverviewProp
   }, []);
   useEffect(() => {
     dispatch(fetchDirectory());
+    dispatch(fetchAllTags());
     dispatch(fetchFormMetrics());
   }, [dispatch]);
 
