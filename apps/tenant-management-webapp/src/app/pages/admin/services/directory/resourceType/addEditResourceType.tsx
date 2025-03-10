@@ -102,6 +102,7 @@ export const AddEditResourceTypeModal = ({
               }
               onSave(resourceType, urnStr);
               validators.clear();
+              setResourceType(defaultResourceType);
               onCancel();
             }}
           >
@@ -113,7 +114,7 @@ export const AddEditResourceTypeModal = ({
       <GoAFormItem label="Api" requirement="required">
         <GoADropdown
           name="resource-type-api"
-          value={urn}
+          value={isEdit ? urn : ['']}
           aria-label="resource-type-api"
           width="100%"
           testId="resource-type-api"
@@ -129,7 +130,6 @@ export const AddEditResourceTypeModal = ({
           }}
           relative={true}
         >
-          {/* <GoADropdownItem value={''} label={'None selected'} /> */}
           {tenantDirectory &&
             tenantDirectory.length > 0 &&
             tenantDirectory.map((state, key) => <GoADropdownItem key={key} value={state.urn} label={state.urn} />)}
