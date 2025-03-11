@@ -12,7 +12,7 @@ import {
 import { getProperty } from './util/helpers';
 import { withAjvProps } from '../../util/layout';
 import { GoATable, GoAButton } from '@abgov/react-components';
-import { GoABaseTableReviewRenderers } from '../../../index';
+import { GoABaseTableReviewRenderers, GoARenderers } from '../../../index';
 import { JsonFormsStepperContext } from './context';
 
 export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
@@ -29,25 +29,21 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
         const categoryLabel = category.label || category.i18n || 'Unknown Category';
         return (
           <>
-            <div>
-              <TableReviewPageTitleRow>
-                <TableReviewCategoryLabel>{categoryLabel}</TableReviewCategoryLabel>
-                <div className="right">
-                  <GoAButton
-                    type="tertiary"
-                    testId={`page-review-change-${category.label}-btn`}
-                    onClick={() => {
-                      if (formStepperCtx) {
-                        formStepperCtx.toggleShowReviewLink(index);
-                        formStepperCtx.goToPage(index);
-                      }
-                    }}
-                  >
-                    Change
-                  </GoAButton>
-                </div>
-              </TableReviewPageTitleRow>
-            </div>
+            <TableReviewPageTitleRow>
+              <TableReviewCategoryLabel>{categoryLabel}</TableReviewCategoryLabel>
+              <GoAButton
+                type="tertiary"
+                testId={`page-review-change-${category.label}-btn`}
+                onClick={() => {
+                  if (formStepperCtx) {
+                    formStepperCtx.toggleShowReviewLink(index);
+                    formStepperCtx.goToPage(index);
+                  }
+                }}
+              >
+                Change
+              </GoAButton>
+            </TableReviewPageTitleRow>
             <TableReviewItemSection key={index}>
               {category.elements
                 .filter((field) => {
@@ -83,9 +79,9 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
                   }
                 })
                 .flat()
-                .map((element) => {
+                .map((element, index) => {
                   return (
-                    <GoATable width="100%">
+                    <GoATable width="100%" key={index}>
                       <tbody>
                         <JsonFormsDispatch
                           data-testid={`jsonforms-object-list-defined-elements-dispatch`}

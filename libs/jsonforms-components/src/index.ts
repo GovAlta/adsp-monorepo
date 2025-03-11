@@ -74,6 +74,11 @@ export * from './lib/common';
 export * from './lib/Context/register';
 export * from './lib/Controls';
 
+export const GoATestRenderers: JsonFormsRendererRegistryEntry[] = [
+  { tester: FullNameDobTester, renderer: FullNameDobControl },
+  { tester: FullNameTester, renderer: FullNameControl },
+];
+
 export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
   { tester: GoAEnumControlTester, renderer: GoAEnumControl },
@@ -165,6 +170,10 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
 
 export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
+  //test
+  { tester: FullNameTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: FullNameDobTester, renderer: GoAInputBaseTableReviewControl },
+  //test
   { tester: GoAEnumControlTester, renderer: GoAInputBaseTableReviewControl },
   { tester: GoAIntegerControlTester, renderer: GoAInputBaseTableReviewControl },
   { tester: GoANumberControlTester, renderer: GoAInputBaseTableReviewControl },
