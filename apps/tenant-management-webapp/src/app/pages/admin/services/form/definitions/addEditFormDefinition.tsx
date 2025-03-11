@@ -185,6 +185,7 @@ export const AddEditFormDefinition = ({
                   };
 
                   if (!isEdit) {
+                    validators.remove('name');
                     validations['duplicate'] = value;
 
                     if (!validators.checkAll(validations)) {
