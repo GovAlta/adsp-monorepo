@@ -197,7 +197,7 @@ export const FormDefinitions = ({
               dispatch(setSelectedTag(null));
             }
           }}
-          width="54ch"
+          width="60ch"
         >
           <GoADropdownItem value={NO_TAG_FILTER.value} label={NO_TAG_FILTER.label} />
           {tags
