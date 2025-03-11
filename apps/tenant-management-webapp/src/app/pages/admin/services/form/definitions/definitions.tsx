@@ -118,7 +118,10 @@ export const FormDefinitions = ({
     document.body.style.overflow = 'unset';
     dispatch(getConfigurationDefinitions());
     dispatch(fetchAllTags());
-    dispatch(getFormDefinitions());
+
+    if (!formDefinitions || Object.keys(formDefinitions).length === 0) {
+      dispatch(getFormDefinitions());
+    }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -237,12 +240,8 @@ export const FormDefinitions = ({
         }}
       />
 
-      {indicator.show && Object.keys(formDefinitions).length === 0 && <PageIndicator />}
-
-      {/* {!indicator.show && !formDefinitions && selectedTag.label !== '' && renderNoItem('form definitions')}
-      {!indicator.show && !formDefinitions && selectedTag.label === '' && renderNoItem('form definitions')} */}
-
       {renderNoItems()}
+
       {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
         <>
           <FormDefinitionsTable
