@@ -28,6 +28,7 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
+import { isEmpty } from 'lodash';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -117,11 +118,11 @@ export const FormDefinitions = ({
     document.body.style.overflow = 'unset';
     dispatch(getConfigurationDefinitions());
     dispatch(fetchAllTags());
-    const hasFormDefinitions = Object.keys(formDefinitions).length > 0;
 
-    if (!showDefsFromState && !hasFormDefinitions) {
+    if (!formDefinitions || Object.keys(formDefinitions).length === 0) {
       dispatch(getFormDefinitions());
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -165,6 +166,19 @@ export const FormDefinitions = ({
     return next;
   };
 
+  const renderNoItems = () => {
+    if (indicator.show && Object.keys(formDefinitions).length === 0) {
+      return <PageIndicator />;
+    }
+    if (!indicator.show && Object.keys(formDefinitions).length === 0 && selectedTag?.label !== '') {
+      return renderNoItem('form definitions');
+    }
+    if (!indicator.show && Object.keys(formDefinitions).length > 0 && selectedTag?.label === '') {
+      return renderNoItem('form definitions');
+    }
+    return null;
+  };
+
   return (
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
@@ -183,7 +197,7 @@ export const FormDefinitions = ({
               dispatch(setSelectedTag(null));
             }
           }}
-          width="54ch"
+          width="60ch"
         >
           <GoADropdownItem value={NO_TAG_FILTER.value} label={NO_TAG_FILTER.label} />
           {tags
@@ -226,9 +240,7 @@ export const FormDefinitions = ({
         }}
       />
 
-      {indicator.show && Object.keys(formDefinitions).length === 0 && <PageIndicator />}
-
-      {!indicator.show && Object.keys(formDefinitions)?.length === 0 && renderNoItem('form definitions')}
+      {renderNoItems()}
 
       {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
         <>
