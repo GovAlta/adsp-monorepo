@@ -3,6 +3,7 @@ import {
   GoAContainer,
   GoAFormItem,
   GoAGrid,
+  GoAIcon,
   GoAIconButton,
   GoAInput,
   GoATable,
@@ -46,8 +47,9 @@ import {
   OwnPropsOfNonEmptyCellWithDialog,
   TableRowsProp,
 } from './ObjectListControlTypes';
-import { extractNames, renderCellColumn } from './ObjectListControlUtils';
+import { extractNames, extractNestedFields, renderCellColumn } from './ObjectListControlUtils';
 import {
+  ListWithDetailWarningIconDiv,
   NonEmptyCellStyle,
   ObjectArrayTitle,
   RequiredSpan,
@@ -244,7 +246,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                 ) as { message: string };
 
                 return (
-                  <tr key={`${i}-${num}`}>
+                  <tr key={`${rowPath}-${i}-${num}`}>
                     {Object.keys(properties).map((element, ix) => {
                       const dataObject = properties[element];
                       const schemaName = element;
@@ -278,7 +280,12 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                               {renderCellColumn({
                                 data: currentData,
                                 error: error?.message,
-                                isRequired: required?.includes(tableKeys[element]),
+                                isRequired: required?.includes(tableKeys[element]) ?? false,
+                                errors: errors !== undefined ? errors : [],
+                                count: count !== undefined ? count : -1,
+                                element,
+                                rowPath,
+                                index: i,
                               })}
                             </div>
                           </td>
@@ -573,15 +580,27 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
 
   const listTitle = label || uischema.options?.title;
   const isInReview = isStepperReview === true;
-
+  const isListWithDetail = (controlElement.type as string) === 'ListWithDetail';
   return (
     <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
       <ToolBarHeader>
-        {isInReview && listTitle && (
+        {isInReview &&
+        listTitle &&
+        isListWithDetail &&
+        additionalProps.required &&
+        (data === null || data === undefined) ? (
+          <b>
+            <ListWithDetailWarningIconDiv>
+              <GoAIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoAIcon>
+              {listTitle} is required.
+            </ListWithDetailWarningIconDiv>
+          </b>
+        ) : (
           <b>
             {listTitle} <span>{additionalProps.required && '(required)'}</span>
           </b>
         )}
+
         {!isInReview && listTitle && (
           <ObjectArrayTitle>
             {listTitle} <span>{additionalProps.required && '(required)'}</span>

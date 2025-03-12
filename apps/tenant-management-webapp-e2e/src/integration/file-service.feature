@@ -37,7 +37,7 @@ Feature: File service
   @TEST_CS-440 @REQ_CS-227 @regression @api
   Scenario Outline: As a developer of a GoA digital service, I can consume the file service API to get file metadata from my service
     When a developer of a GoA digital service sends a file metadata request with "<Request endpoint>", "<Request Type>", "<Type>", "<File Name>" and "<Record Id>"
-    Then "<Status Code>" is returned for the file upload request as well as "<File Name>", file size and created time with a successful request
+    Then "<Status Code>" is returned for the file metadata request as well as "<File Name>", file size and created time with a successful request
 
     Examples:
       | Request endpoint        | Request Type | Type           | File Name          | Record Id           | Status Code |

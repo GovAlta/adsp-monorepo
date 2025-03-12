@@ -1,16 +1,12 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { GoAButton, GoAModal, GoAButtonGroup, GoAButtonType } from '@abgov/react-components';
+import { useContext, useEffect, useState } from 'react';
+import { GoAButtonType } from '@abgov/react-components';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
-import { PageRenderPadding, PageBorder } from './styled-components';
-import { JsonFormContext } from '../../Context';
-import { Visible } from '../../util';
-import { RenderStepElements, StepProps } from './RenderStepElements';
 import { CategorizationStepperLayoutRendererProps } from './types';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
-import { CategorizationElement } from './context/types';
 import { BackButton } from './BackButton';
-import { FormStepperPageReviewer } from './PageStepperReviewControl';
+import { TableOfContents, TocProps } from './TableOfContents';
+import { RenderPages } from './RenderPages';
 
 export interface FormPageOptionProps {
   nextButtonLabel?: string;
@@ -18,8 +14,6 @@ export interface FormPageOptionProps {
   previousButtonLabel?: string;
   previousButtonType?: GoAButtonType;
 }
-
-const summaryLabel = 'Summary';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const FormPageStepper = (props: CategorizationStepperLayoutRendererProps) => {
@@ -34,129 +28,43 @@ export const FormPageStepper = (props: CategorizationStepperLayoutRendererProps)
 };
 
 export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): JSX.Element => {
-  const { uischema, data, schema, path, cells, renderers, visible, t } = props;
+  const data = props.data;
 
-  const enumerators = useContext(JsonFormContext);
   const formStepperCtx = useContext(JsonFormsStepperContext);
-  const { validatePage, goToPage, toggleShowReviewLink } = formStepperCtx as JsonFormsStepperContextProps;
+  const { validatePage, goToPage } = formStepperCtx as JsonFormsStepperContextProps;
 
-  const { categories, isOnReview, isValid, activeId } = (
-    formStepperCtx as JsonFormsStepperContextProps
-  ).selectStepperState();
-
-  const submitFormFunction = enumerators?.submitFunction.get('submit-form');
-  const submitForm = submitFormFunction && submitFormFunction();
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleSubmit = () => {
-    if (submitForm) {
-      submitForm(data);
-    } else {
-      setIsOpen(true);
-    }
-  };
-
-  const onCloseModal = () => {
-    setIsOpen(false);
-  };
+  const { categories, activeId } = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
 
   useEffect(() => {
     validatePage(activeId);
   }, [data]);
 
-  return (
-    <div data-testid="form-stepper-test-wrapper">
-      <Visible visible={visible}>
-        <div id={`${path || `goa`}-form-pages`}>
-          <PageBorder>
-            {categories?.map((category, index) => {
-              const categoryProps: StepProps = {
-                category: category.uischema as CategorizationElement,
-                categoryIndex: category.id,
-                visible: category?.visible as boolean,
-                enabled: category?.isEnabled as boolean,
-                path,
-                schema,
-                renderers,
-                cells,
-                data,
-              };
+  const [showTOC, setShowTOC] = useState(true);
 
-              if (index === activeId && !isOnReview) {
-                return (
-                  <div
-                    data-testid={`step_${index}-content-pages`}
-                    key={`${category.label}`}
-                    style={{ marginTop: '1.5rem' }}
-                  >
-                    {index > 0 && <BackButton testId="back-button" link={() => goToPage(activeId - 1)} text="Back" />}
-                    <PageRenderPadding>
-                      <h3>
-                        Step {index + 1} of {categories.length}
-                      </h3>
-                      <RenderStepElements {...categoryProps} />
-                    </PageRenderPadding>
-                    <PageRenderPadding>
-                      <GoAButtonGroup alignment="start">
-                        <GoAButton
-                          type="submit"
-                          onClick={() => goToPage(activeId + 1)}
-                          disabled={!(category.isValid && category.isCompleted)}
-                          testId="pages-save-continue-btn"
-                        >
-                          Save and continue
-                        </GoAButton>
-                        {category.showReviewPageLink && (
-                          <GoAButton
-                            type="tertiary"
-                            onClick={() => {
-                              toggleShowReviewLink(activeId);
-                              goToPage(categories.length);
-                            }}
-                            testId="pages-to-review-page-btn"
-                          >
-                            Back to application overview
-                          </GoAButton>
-                        )}
-                      </GoAButtonGroup>
-                    </PageRenderPadding>
-                  </div>
-                );
-              }
-            })}
+  const handleGoToPage = (index: number) => {
+    setShowTOC(false);
+    goToPage(index);
+  };
 
-            {isOnReview && (
-              <div data-testid="stepper-pages-review-page">
-                <FormStepperPageReviewer {...{ ...props, navigationFunc: goToPage }} />
-                <PageRenderPadding>
-                  <GoAButtonGroup alignment="end">
-                    <GoAButton type={'primary'} onClick={handleSubmit} disabled={!isValid} testId="pages-submit-btn">
-                      Submit
-                    </GoAButton>
-                  </GoAButtonGroup>
-                </PageRenderPadding>
-              </div>
-            )}
-          </PageBorder>
-        </div>
-      </Visible>
-      <GoAModal
-        testId="submit-confirmation"
-        open={isOpen}
-        heading={'Form Submitted'}
-        width="640px"
-        actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
-              Close
-            </GoAButton>
-          </GoAButtonGroup>
-        }
-      >
-        <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
-      </GoAModal>
-    </div>
-  );
+  // Make sure the back button on the first page takes us to the Table of Contents.
+  const renderBackButton = (index: number, activeId: number): JSX.Element => {
+    if (index > 0) {
+      return <BackButton testId="back-button" link={() => goToPage(activeId - 1)} text="Back" />;
+    }
+    return <BackButton testId="back-button" link={() => setShowTOC(true)} text="Back" />;
+  };
+
+  if (showTOC) {
+    const tocProps: TocProps = {
+      categories,
+      onClick: handleGoToPage,
+      title: props.uischema?.options?.title,
+      subtitle: props.uischema?.options?.subtitle,
+    };
+    return <TableOfContents {...tocProps} />;
+  } else {
+    return <RenderPages categoryProps={props} renderBackButton={renderBackButton}></RenderPages>;
+  }
 };
 
 export const FormStepperPagesControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormPageStepper)));

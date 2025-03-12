@@ -1,8 +1,27 @@
 import React, { ReactNode } from 'react';
-import { RenderCellColumnProps } from './ObjectListControlTypes';
+import { GoATable } from '@abgov/react-components';
+import { DataObject, NestedItem, RenderCellColumnProps } from './ObjectListControlTypes';
 import { GoAIcon } from '@abgov/react-components';
 import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-components';
-import { GoATable } from '@abgov/react-components';
+import { isEmpty } from 'lodash';
+import { ErrorObject } from 'ajv';
+
+export const extractNestedFields = (properties: DataObject, propertyKeys: string[]): Record<string, NestedItem> => {
+  const nestedItems: Record<string, NestedItem> = {};
+
+  propertyKeys.forEach((key) => {
+    if (properties[key].type === 'array') {
+      const propItems = (properties[key] && properties[key].items?.properties) || [];
+      const propReqItems = (properties[key].items && properties[key].items?.required) || [];
+      nestedItems[key] = {
+        properties: [...Object.keys(propItems)],
+        required: [...Object.keys(propReqItems)],
+      };
+    }
+  });
+
+  return nestedItems;
+};
 
 /**
  * Extract Json data schema name attribute and the ui schema label name.
@@ -61,7 +80,20 @@ const DataTable = ({ itemsSchema, data }: TableProps): JSX.Element => {
   );
 };
 
-export const renderCellColumn = ({ data, error, isRequired }: RenderCellColumnProps) => {
+export const isObjectArrayEmpty = (currentData: string) => {
+  const result = isEmpty(currentData) || JSON.stringify(currentData) === '[{}]';
+  return result;
+};
+
+export const renderCellColumn = ({
+  data,
+  error,
+  errors,
+  index,
+  rowPath,
+  element,
+  isRequired,
+}: RenderCellColumnProps) => {
   const renderWarningCell = (data?: string) => {
     return (
       <HilightCellWarning>
@@ -79,12 +111,21 @@ export const renderCellColumn = ({ data, error, isRequired }: RenderCellColumnPr
     return renderWarningCell(data);
   }
 
+  const path = `/${rowPath}/${index}/${element}/${index === 0 ? index : index - 1}`;
+  const nestedErrors = errors?.filter((e: ErrorObject) => e.instancePath.includes(path));
+
+  /* istanbul ignore next */
   if (typeof data === 'string') {
     return data;
   } else if (typeof data === 'object' || Array.isArray(data)) {
     const result = Object.keys(data);
-    if (result.length === 0) {
+
+    if (!isRequired && nestedErrors.length === 0) {
+      return <pre>{JSON.stringify(data, null, 2)}</pre>;
+    } else if (result.length === 0) {
       return renderWarningCell();
+    } else if (result.length > 0 && (isObjectArrayEmpty(data) || nestedErrors.length > 0)) {
+      return <pre>{renderWarningCell(JSON.stringify(data, null, 2))}</pre>;
     } else if (data !== undefined && result.length > 0 && error !== '' && error !== undefined) {
       const values = Object.values(data) as string[];
       if (values && values.length > 0) {

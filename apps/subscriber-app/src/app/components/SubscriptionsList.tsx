@@ -101,44 +101,46 @@ const SubscriptionsList = ({ subscriber, onUnsubscribe }: SubscriptionsListProps
 
   return (
     <>
-      {subscriptions.map((subscription: Subscription) => {
-        const typeChannels = subscription.type.channels;
-        return (
-          <tr key={`${subscription.typeId}`}>
-            <td data-testid="subscription-name">{subscription.type.name}</td>
-            <td>
-              <p>{subscription.type.description}</p>
-              {subscription.criteria?.filter((c) => c.description).length > 0 && (
-                <ul>
-                  {subscription.criteria
-                    .filter((c) => c.description)
-                    .map(({ correlationId, description }, idx) => (
-                      <li key={correlationId || idx}>{description}</li>
-                    ))}
-                </ul>
-              )}
-            </td>
-            <td>
-              <AvailableChannels channels={typeChannels} effectiveChannel={effectiveChannel?.channel as Channel} />
-            </td>
-            <td>
-              {subscription.type?.manageSubscribe ? (
-                <GoAButton
-                  size="compact"
-                  type="tertiary"
-                  key={`${subscription.typeId}`}
-                  onClick={() => onUnsubscribe(subscription.typeId)}
-                  testId="unsubscribe-button"
-                >
-                  Unsubscribe
-                </GoAButton>
-              ) : (
-                <UnsubscribeMessage />
-              )}
-            </td>
-          </tr>
-        );
-      })}
+      {subscriptions
+        .filter(({ type }) => !!type)
+        .map((subscription: Subscription) => {
+          const typeChannels = subscription.type?.channels;
+          return (
+            <tr key={`${subscription.typeId}`}>
+              <td data-testid="subscription-name">{subscription.type.name}</td>
+              <td>
+                <p>{subscription.type.description}</p>
+                {subscription.criteria?.filter((c) => c.description).length > 0 && (
+                  <ul>
+                    {subscription.criteria
+                      .filter((c) => c.description)
+                      .map(({ correlationId, description }, idx) => (
+                        <li key={correlationId || idx}>{description}</li>
+                      ))}
+                  </ul>
+                )}
+              </td>
+              <td>
+                <AvailableChannels channels={typeChannels} effectiveChannel={effectiveChannel?.channel as Channel} />
+              </td>
+              <td>
+                {subscription.type?.manageSubscribe ? (
+                  <GoAButton
+                    size="compact"
+                    type="tertiary"
+                    key={`${subscription.typeId}`}
+                    onClick={() => onUnsubscribe(subscription.typeId)}
+                    testId="unsubscribe-button"
+                  >
+                    Unsubscribe
+                  </GoAButton>
+                ) : (
+                  <UnsubscribeMessage />
+                )}
+              </td>
+            </tr>
+          );
+        })}
     </>
   );
 };

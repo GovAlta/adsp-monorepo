@@ -269,6 +269,8 @@ export interface FetchAllTagsFailedAction {
 export interface FetchResourcesByTagAction {
   type: typeof FETCH_RESOURCES_BY_TAG_ACTION;
   tag: string;
+  next?: string;
+  after?: string;
 }
 
 export interface FetchResourcesByTagSuccessAction {
@@ -276,6 +278,8 @@ export interface FetchResourcesByTagSuccessAction {
   payload: {
     tag: string;
     resources: Resource[];
+    next: string;
+    after: string;
   };
 }
 
@@ -518,14 +522,20 @@ export const fetchAllTagsFailed = (error: string): FetchAllTagsFailedAction => (
   error,
 });
 
-export const fetchResourcesByTag = (tag: string): FetchResourcesByTagAction => ({
+export const fetchResourcesByTag = (tag: string, next?: string): FetchResourcesByTagAction => ({
   type: FETCH_RESOURCES_BY_TAG_ACTION,
   tag,
+  next,
 });
 
-export const fetchResourcesByTagSuccess = (tag: string, resources: Resource[]): FetchResourcesByTagSuccessAction => ({
+export const fetchResourcesByTagSuccess = (
+  tag: string,
+  resources: Resource[],
+  next: string,
+  after: string
+): FetchResourcesByTagSuccessAction => ({
   type: FETCH_RESOURCES_BY_TAG_SUCCESS,
-  payload: { tag, resources },
+  payload: { tag, resources, next, after },
 });
 
 export const fetchResourcesByTagFailure = (error: string): FetchResourcesByTagFailureAction => ({

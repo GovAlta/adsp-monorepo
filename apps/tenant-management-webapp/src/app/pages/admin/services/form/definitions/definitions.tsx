@@ -16,11 +16,11 @@ import {
   setSelectedTag,
 } from '@store/form/action';
 import { RootState } from '@store/index';
-import { ResourceTagResult, Service } from '@store/directory/models';
+import { ResourceTagResult, Service, Tag } from '@store/directory/models';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
 import { PageIndicator } from '@components/Indicator';
-import { defaultFormDefinition, FormDefinition } from '@store/form/model';
+import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 import { LoadMoreWrapper } from './style-components';
@@ -28,7 +28,7 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
-import { Tag } from '../../../../../store/form/model';
+import { isEmpty } from 'lodash';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -51,13 +51,29 @@ export const FormDefinitions = ({
   const [showDefsFromState, setShowDefsFromState] = useState(isNavigatedFromEdit);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
-  const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
 
-  const dispatch = useDispatch();
+  const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
+  const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries);
+  const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
 
   const orderedFormDefinitions = (state: RootState) => {
     const entries = Object.entries(state?.form?.definitions);
+
+    if (state.form?.formResourceTag?.selectedTag) {
+      const tagKeys = Object.values(state.form?.formResourceTag.tagResources).map((item) => item.id);
+
+      const values = entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
+        if (tagKeys.includes(formDefinitionId)) {
+          tempObj[formDefinitionId] = formDefinitionData;
+          return tempObj;
+        }
+        return tempObj;
+      }, {});
+
+      return values;
+    }
+
     return entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
       tempObj[formDefinitionId] = formDefinitionData;
       return tempObj;
@@ -72,6 +88,11 @@ export const FormDefinitions = ({
     return state?.session?.indicator;
   });
 
+  const selectedTag = useSelector((state: RootState) => state.form?.formResourceTag?.selectedTag as Tag | null);
+
+  const tags = useSelector((state: RootState) => state.form.formResourceTag.tags || []);
+  const tagsLoading = useSelector((state: RootState) => state.form.formResourceTag.tagsLoading);
+
   const selectConfigurationHost = (state: RootState) => {
     return (state?.directory?.directory?.filter(
       (y) => y.service === CONFIGURATION_SERVICE && y.namespace?.toLowerCase() === 'platform' && y.urn.endsWith('v2')
@@ -79,24 +100,13 @@ export const FormDefinitions = ({
   };
   const resourceConfiguration = useSelector(selectConfigurationHost);
   const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
-  const selectedTag = useSelector((state: RootState) => state.form.selectedTag as Tag | null);
 
-  const tags = useSelector((state: RootState) => state.form.tags || []);
-  const tagsLoading = useSelector((state: RootState) => state.form.tagsLoading);
+  useSelector((state: RootState) => state?.form?.formResourceTag?.tagResources || {});
 
-  const filteredFormDefinitions = useSelector((state: RootState) => state.form.tagResources || {});
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
 
-  useEffect(() => {
-    if (!tagsLoading && tags.length === 0) {
-      dispatch(fetchAllTags());
-    }
-  }, [dispatch, tagsLoading, tags.length]);
-
-  useEffect(() => {
-    if (selectedTag) {
-      dispatch(fetchResourcesByTag(selectedTag.value));
-    }
-  }, [dispatch, selectedTag]);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (openAddDefinition) {
@@ -110,16 +120,38 @@ export const FormDefinitions = ({
   useEffect(() => {
     document.body.style.overflow = 'unset';
     dispatch(getConfigurationDefinitions());
-    const hasFormDefinitions = Object.keys(formDefinitions).length > 0;
+    dispatch(fetchAllTags());
 
-    if (!showDefsFromState && !hasFormDefinitions) {
+    if (!formDefinitions || Object.keys(formDefinitions).length === 0) {
       dispatch(getFormDefinitions());
     }
+
+    return () => {
+      dispatch(setSelectedTag(null));
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if ((!tagsLoading && indicator.show && tags === undefined) || tags === null) {
+      dispatch(fetchAllTags());
+    }
+  }, [dispatch, tagsLoading, indicator, tags]);
+
+  useEffect(() => {
+    if (selectedTag && !isNavigatedFromEdit && formResourceTag?.tagResources.length === 0) {
+      dispatch(fetchResourcesByTag(selectedTag.value));
+    }
+
+    // eslint-disable-next-line
+  }, [dispatch, selectedTag]);
+
   const onNext = () => {
-    dispatch(getFormDefinitions(next));
+    if (!selectedTag) {
+      dispatch(getFormDefinitions(next));
+    } else {
+      dispatch(fetchResourcesByTag(selectedTag.value, tagNext));
+    }
   };
 
   useEffect(() => {
@@ -127,36 +159,65 @@ export const FormDefinitions = ({
   }, [formDefinitions]);
 
   useEffect(() => {
-    document.body.style.overflow = 'unset';
-  }, []);
-
-  useEffect(() => {
     if (!indicator.show) {
       setShowDeleteConfirmation(false);
     }
   }, [indicator.show]);
 
+  const NO_TAG_FILTER = {
+    label: '<No tag filter>',
+    value: '',
+  };
+
+  const getNextEntries = () => {
+    if (selectedTag) return tagNext;
+    return next;
+  };
+
+  const renderNoItems = () => {
+    if (
+      (indicator.show && Object.keys(formDefinitions).length === 0) ||
+      (formResourceTag.tagResources && formResourceTag.tagResources.length === 0 && formResourceTag.tagsLoading)
+    ) {
+      return <PageIndicator />;
+    }
+
+    if (
+      !indicator.show &&
+      !formResourceTag.tagsLoading &&
+      Object.keys(formDefinitions).length === 0 &&
+      selectedTag &&
+      selectedTag.label !== ''
+    ) {
+      return renderNoItem('form definitions');
+    }
+    if (!indicator.show && Object.keys(formDefinitions).length > 0 && selectedTag && selectedTag.label === '') {
+      return renderNoItem('form definitions');
+    }
+    return null;
+  };
+
   return (
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
 
-      <GoAFormItem label="Filter by Tag">
+      <GoAFormItem label="Filter by tag">
         <GoADropdown
           name="TagFilter"
           value={selectedTag?.value || ''}
-          disabled={!tags.length}
-          onChange={(name, value) => {
+          disabled={false}
+          onChange={(_, value) => {
             const selectedTagObj = tags.find((tag) => tag?.value === value);
             if (selectedTagObj) {
               dispatch(setSelectedTag(selectedTagObj));
-              dispatch(fetchResourcesByTag(selectedTagObj.value));
+              dispatch(fetchResourcesByTag(selectedTagObj.value, getNextEntries()));
             } else {
               dispatch(setSelectedTag(null));
             }
           }}
-          width="54ch"
+          width="60ch"
         >
-          <GoADropdownItem value="" label="<No tag filter>" />
+          <GoADropdownItem value={NO_TAG_FILTER.value} label={NO_TAG_FILTER.label} />
           {tags
             .sort((a, b) => a.label.localeCompare(b.label))
             .map((tag) => (
@@ -166,7 +227,6 @@ export const FormDefinitions = ({
       </GoAFormItem>
 
       <br />
-
       {showFormDefinitions && (
         <GoAButton
           testId="add-definition"
@@ -198,41 +258,36 @@ export const FormDefinitions = ({
         }}
       />
 
-      {indicator.show && <PageIndicator />}
-      {!indicator.show &&
-        ((selectedTag && Object.keys(filteredFormDefinitions).length === 0) ||
-          (!selectedTag && Object.keys(formDefinitions).length === 0)) &&
-        renderNoItem('form templates')}
-      {((selectedTag && Object.keys(filteredFormDefinitions).length > 0) ||
-        (!selectedTag && Object.keys(formDefinitions).length > 0)) &&
-        showFormDefinitions && (
-          <>
-            <FormDefinitionsTable
-              definitions={selectedTag ? filteredFormDefinitions : formDefinitions}
-              baseResourceFormUrn={BASE_FORM_CONFIG_URN}
-              onDelete={(formDefinition) => {
-                setShowDeleteConfirmation(true);
-                setCurrentDefinition(formDefinition);
-              }}
-              onAddResourceTag={(formDefinition) => {
-                setShowAddRemoveResourceTagModal(true);
-                setCurrentDefinition(formDefinition);
-              }}
-            />
-            {next && (
-              <LoadMoreWrapper>
-                <GoAButton
-                  testId="form-event-load-more-btn"
-                  key="form-event-load-more-btn"
-                  type="tertiary"
-                  onClick={onNext}
-                >
-                  Load more
-                </GoAButton>
-              </LoadMoreWrapper>
-            )}
-          </>
-        )}
+      {renderNoItems()}
+
+      {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
+        <>
+          <FormDefinitionsTable
+            definitions={formDefinitions}
+            baseResourceFormUrn={BASE_FORM_CONFIG_URN}
+            onDelete={(formDefinition) => {
+              setShowDeleteConfirmation(true);
+              setCurrentDefinition(formDefinition);
+            }}
+            onAddResourceTag={(formDefinition) => {
+              setShowAddRemoveResourceTagModal(true);
+              setCurrentDefinition(formDefinition);
+            }}
+          />
+          {getNextEntries() && (
+            <LoadMoreWrapper>
+              <GoAButton
+                testId="form-event-load-more-btn"
+                key="form-event-load-more-btn"
+                type="tertiary"
+                onClick={onNext}
+              >
+                Load more
+              </GoAButton>
+            </LoadMoreWrapper>
+          )}
+        </>
+      )}
       {showAddRemoveResourceTagModal && (
         <AddRemoveResourceTagModal
           baseResourceFormUrn={BASE_FORM_CONFIG_URN}

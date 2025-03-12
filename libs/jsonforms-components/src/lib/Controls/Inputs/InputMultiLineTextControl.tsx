@@ -25,7 +25,7 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
 
-  const width = uischema?.options?.componentProps?.readOnly ?? '100%';
+  const width = uischema?.options?.componentProps?.width ?? '100%';
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;

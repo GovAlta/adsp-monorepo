@@ -110,3 +110,28 @@ export const TableReviewCategoryLabel = styled.h3`
   color: var(--goa-color-text-secondary) !important;
   margin-bottom: 24px;
 `;
+
+export const CategoryStatus = styled.td`
+  width: var(--goa-space-xl);
+  padding-right: var(--goa-space-xl);
+`;
+export const TocPageRef = styled.td`
+  padding-left: var(--goa-space-xl);
+`;
+export const TocTitle = styled.h1`
+  padding: 0;
+  margin: 0;
+  padding-left: var(--goa-space-xl);
+  padding-bottom: var(--goa-space-3xl);
+`;
+export const TocSubtitle = styled.h2`
+  padding: 0;
+  margin: 0;
+  padding-left: var(--goa-space-xl);
+`;
+export const CompletionStatus = styled.div`
+  padding: 0;
+  margin: 0;
+  padding-left: var(--goa-space-xl);
+  padding-bottom: var(--goa-space-xl);
+`;
