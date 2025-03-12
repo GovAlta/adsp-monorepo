@@ -21,7 +21,7 @@ export const RequiredTextLabel = styled.label`
 `;
 
 export const PageReviewNameCol = styled.td`
-  width: 80%;
+  width: 5%;
   padding-top: var(--goa-space-s);
   padding-bottom: var(--goa-space-s);
   padding-right: var(--goa-space-m);
@@ -39,4 +39,7 @@ export const CheckboxWrapper = styled.div`
 export const H4Large = styled.h4`
   margin: 0 0 0.25rem 0;
   fontsize: larger;
+`;
+export const Row = styled.h4`
+  border-bottom: 1px solid #ddd;
 `;

@@ -85,7 +85,7 @@ const GenerateRows = (
     };
     return (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <Cell {...props} count={count || 0} />d
+        <Cell {...props} count={count || 0} />
       </div>
     );
   } else {
@@ -106,7 +106,7 @@ const GenerateRows = (
 
 const getValidColumnProps = (scopedSchema: JsonSchema) => {
   if (scopedSchema.type === 'object' && typeof scopedSchema.properties === 'object') {
-    return Object.keys(scopedSchema.properties).filter((prop) => scopedSchema.properties?.[prop].type !== 'array');
+    return Object.keys(scopedSchema.properties);
   }
   // primitives
   return [''];
@@ -151,8 +151,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     handleChange,
     errors,
   } = props;
-  const properties = (schema?.items && 'properties' in schema.items && (schema.items as Items).properties) || {};
-  const required = (schema.items as Record<string, Array<string>>)?.required;
+
+  const element =
+    (schema?.items as Record<string, Array<string>>) ||
+    (schema?.properties?.[rowPath]?.items as Record<string, Array<string>>);
+
+  const required = element?.required;
+  const properties = element?.properties;
 
   let tableKeys = extractNames(uischema?.options?.detail);
 
@@ -216,7 +221,6 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                     <TableTHHeader key={index}>
                       <p>
                         {`${convertToSentenceCase(index)}`}
-
                         {required?.includes(value) && (
                           <RequiredSpan>
                             <br /> (required)
@@ -272,7 +276,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                           <td key={ix}>
                             <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
                               {renderCellColumn({
-                                currentData,
+                                data: currentData,
                                 error: error?.message,
                                 isRequired: required?.includes(tableKeys[element]),
                               })}
@@ -420,6 +424,7 @@ const ObjectArrayList = ({
   if (isEmptyList) {
     return <EmptyList numColumns={getValidColumnProps(schema).length + 1} translations={translations} />;
   }
+
   const appliedUiSchemaOptions = merge({}, config, uischema.options);
   const childPath = path;
 

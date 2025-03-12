@@ -117,7 +117,7 @@ export interface TableRowsProp {
   handleChange: (path: string, value: any) => void;
 }
 export interface RenderCellColumnProps {
-  currentData: string | undefined;
+  data: string | undefined;
   error: string | undefined;
   isRequired: boolean;
   tableKeys?: string[];
