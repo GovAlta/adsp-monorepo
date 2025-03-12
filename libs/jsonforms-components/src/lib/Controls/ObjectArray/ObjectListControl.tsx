@@ -57,6 +57,7 @@ import {
   TextCenter,
   ToolBarHeader,
 } from './styled-components';
+import { DataProperty } from './ObjectListControlTypes';
 
 const GenerateRows = (
   Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
@@ -154,9 +155,12 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     errors,
   } = props;
 
-  const element =
-    (schema?.items as Record<string, Array<string>>) ||
-    (schema?.properties?.[rowPath]?.items as Record<string, Array<string>>);
+  interface SchemaElement {
+    required: string[];
+    properties?: Record<string, DataProperty>;
+  }
+
+  const element = (schema?.items as SchemaElement) || (schema?.properties?.[rowPath]?.items as SchemaElement);
 
   const required = element?.required;
   const properties = element?.properties;
