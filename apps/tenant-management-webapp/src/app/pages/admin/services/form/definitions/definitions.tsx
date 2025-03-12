@@ -125,6 +125,9 @@ export const FormDefinitions = ({
       dispatch(getFormDefinitions());
     }
 
+    return () => {
+      dispatch(setSelectedTag(null));
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -181,7 +184,7 @@ export const FormDefinitions = ({
     if (
       !indicator.show &&
       !formResourceTag.tagsLoading &&
-      formResourceTag.tagResources?.length === 0 &&
+      Object.keys(formDefinitions).length === 0 &&
       selectedTag &&
       selectedTag.label !== ''
     ) {
