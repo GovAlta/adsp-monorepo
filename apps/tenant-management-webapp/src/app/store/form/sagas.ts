@@ -515,7 +515,6 @@ export function* fetchResourcesByTag({ tag, next }: FetchResourcesByTagAction): 
     try {
       const { results, page } = yield call(getResourcesByTag, token, baseUrl, requiredTag, next);
 
-      console.log('results', results);
       const filteredDefinitions = results
         .map(({ urn, _embedded }) => {
           const represents = _embedded?.represents?.latest?.configuration;
