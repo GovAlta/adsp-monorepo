@@ -108,6 +108,7 @@ export const TableReviewPageTitleRow = styled.div`
 
 export const TableReviewCategoryLabel = styled.h3`
   color: var(--goa-color-text-secondary) !important;
+  margin-bottom: var(--goa-space-l);
 `;
 
 export const CategoryStatus = styled.td`

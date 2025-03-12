@@ -14,6 +14,7 @@ import { withAjvProps } from '../../util/layout';
 import { GoATable, GoAButton } from '@abgov/react-components';
 import { GoABaseTableReviewRenderers } from '../../../index';
 import { JsonFormsStepperContext } from './context';
+import { Row } from '../Inputs/style-component';
 
 export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, cells, enabled, navigationFunc } = props;
@@ -28,7 +29,7 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
       {categories.map((category, index) => {
         const categoryLabel = category.label || category.i18n || 'Unknown Category';
         return (
-          <>
+          <Row>
             <div>
               <TableReviewPageTitleRow>
                 <TableReviewCategoryLabel>{categoryLabel}</TableReviewCategoryLabel>
@@ -100,7 +101,7 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
                   );
                 })}
             </TableReviewItemSection>
-          </>
+          </Row>
         );
       })}
     </TableReviewItem>
