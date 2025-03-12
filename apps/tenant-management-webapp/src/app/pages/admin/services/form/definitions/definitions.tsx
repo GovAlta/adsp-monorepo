@@ -138,6 +138,7 @@ export const FormDefinitions = ({
     if (selectedTag && !isNavigatedFromEdit && formResourceTag?.tagResources.length === 0) {
       dispatch(fetchResourcesByTag(selectedTag.value));
     }
+
     // eslint-disable-next-line
   }, [dispatch, selectedTag]);
 
@@ -205,7 +206,7 @@ export const FormDefinitions = ({
             const selectedTagObj = tags.find((tag) => tag?.value === value);
             if (selectedTagObj) {
               dispatch(setSelectedTag(selectedTagObj));
-              dispatch(fetchResourcesByTag(selectedTagObj.value, next));
+              dispatch(fetchResourcesByTag(selectedTagObj.value, getNextEntries()));
             } else {
               dispatch(setSelectedTag(null));
             }
