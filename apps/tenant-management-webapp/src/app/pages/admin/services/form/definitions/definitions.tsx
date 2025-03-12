@@ -28,6 +28,7 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
+import { isEmpty } from 'lodash';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
