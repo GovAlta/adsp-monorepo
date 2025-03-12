@@ -20,7 +20,7 @@ import { ResourceTagResult, Service, Tag } from '@store/directory/models';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
 import { PageIndicator } from '@components/Indicator';
-import { defaultFormDefinition, Form, FormDefinition } from '@store/form/model';
+import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 import { LoadMoreWrapper } from './style-components';
@@ -28,7 +28,6 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
-import { isEmpty } from 'lodash';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -55,9 +54,11 @@ export const FormDefinitions = ({
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
   const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries);
+  const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
 
   const orderedFormDefinitions = (state: RootState) => {
     const entries = Object.entries(state?.form?.definitions);
+
     if (state.form?.formResourceTag?.selectedTag) {
       const tagKeys = Object.values(state.form?.formResourceTag.tagResources).map((item) => item.id);
 
@@ -68,6 +69,7 @@ export const FormDefinitions = ({
         }
         return tempObj;
       }, {});
+
       return values;
     }
 
@@ -133,9 +135,10 @@ export const FormDefinitions = ({
   }, [dispatch, tagsLoading, indicator, tags]);
 
   useEffect(() => {
-    if (selectedTag) {
+    if (selectedTag && !isNavigatedFromEdit && formResourceTag?.tagResources.length === 0) {
       dispatch(fetchResourcesByTag(selectedTag.value));
     }
+    // eslint-disable-next-line
   }, [dispatch, selectedTag]);
 
   const onNext = () => {
@@ -167,13 +170,23 @@ export const FormDefinitions = ({
   };
 
   const renderNoItems = () => {
-    if (indicator.show && Object.keys(formDefinitions).length === 0) {
+    if (
+      (indicator.show && Object.keys(formDefinitions).length === 0) ||
+      (formResourceTag.tagResources && formResourceTag.tagResources.length === 0 && formResourceTag.tagsLoading)
+    ) {
       return <PageIndicator />;
     }
-    if (!indicator.show && Object.keys(formDefinitions).length === 0 && selectedTag?.label !== '') {
+
+    if (
+      !indicator.show &&
+      !formResourceTag.tagsLoading &&
+      formResourceTag.tagResources?.length === 0 &&
+      selectedTag &&
+      selectedTag.label !== ''
+    ) {
       return renderNoItem('form definitions');
     }
-    if (!indicator.show && Object.keys(formDefinitions).length > 0 && selectedTag?.label === '') {
+    if (!indicator.show && Object.keys(formDefinitions).length > 0 && selectedTag && selectedTag.label === '') {
       return renderNoItem('form definitions');
     }
     return null;
