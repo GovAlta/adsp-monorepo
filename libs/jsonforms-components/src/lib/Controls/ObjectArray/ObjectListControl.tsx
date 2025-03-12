@@ -164,20 +164,22 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
   let tableKeys = extractNames(uischema?.options?.detail);
 
   if (Object.keys(tableKeys).length === 0) {
-    Object.keys(properties).forEach((item) => {
-      tableKeys[item] = item;
-    });
+    properties &&
+      Object.keys(properties).forEach((item) => {
+        tableKeys[item] = item;
+      });
   }
 
-  if (Object.keys(properties).length !== Object.keys(tableKeys).length) {
+  if (properties && Object.keys(properties).length !== Object.keys(tableKeys).length) {
     const tempTableKeys: Record<string, string> = {};
 
     //For nested objects to display only the top level column.
-    Object.keys(properties).forEach((item) => {
-      if (Object.keys(tableKeys).includes(item)) {
-        tempTableKeys[item] = tableKeys[item];
-      }
-    });
+    properties &&
+      Object.keys(properties).forEach((item) => {
+        if (Object.keys(tableKeys).includes(item)) {
+          tempTableKeys[item] = tableKeys[item];
+        }
+      });
     tableKeys = tempTableKeys;
   }
 
@@ -203,7 +205,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
           />
         );
       })}
-      {Object.keys(properties).length > 0 && (
+      {properties && Object.keys(properties).length > 0 && (
         <>
           <GoATable width="100%">
             <thead>

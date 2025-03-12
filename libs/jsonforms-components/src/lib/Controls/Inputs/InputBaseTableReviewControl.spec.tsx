@@ -401,12 +401,15 @@ const stepperBasePropsReview: TestProps = {
 describe('page review arrays', () => {
   it('can render the review page with root array', async () => {
     stepperBasePropsReview.activeId = 1;
-    render(
+    const renderer = render(
       <JsonFormsStepperContextProvider
         StepperProps={stepperBasePropsReview}
         children={getFormBase(arrayUischema, arrayDataSchema, arrayData)}
       />
     );
+    const page1Ref = renderer.getByTestId('page-ref-0');
+    expect(page1Ref).toBeInTheDocument();
+    fireEvent.click(page1Ref);
 
     const reviewPage = screen.getByTestId('stepper-pages-review-page');
     expect(reviewPage).toHaveTextContent('avocado');
@@ -420,13 +423,16 @@ describe('page review arrays', () => {
     };
 
     newStepperReview.activeId = 1;
-    render(
+    const renderer = render(
       <JsonFormsStepperContextProvider
         StepperProps={newStepperReview}
         children={getFormBase(listWithDetailsUiSchema, listWithDetailsSchema, ListWithDetailsData)}
       />
     );
 
+    const page1Ref = renderer.getByTestId('page-ref-0');
+    expect(page1Ref).toBeInTheDocument();
+    fireEvent.click(page1Ref);
     const reviewPage = screen.getByTestId('stepper-pages-review-page');
     expect(reviewPage).toHaveTextContent('Hello world');
     expect(reviewPage).toHaveTextContent('This is a description');
@@ -443,12 +449,16 @@ describe('page review arrays', () => {
     };
 
     newStepperReview.activeId = 1;
-    render(
+    const renderer = render(
       <JsonFormsStepperContextProvider
         StepperProps={newStepperReview}
         children={getFormBase(nestedListWithDetailsUiSchema, nestedListWithDetailsSchema, nestedListWithDetailsData)}
       />
     );
+
+    const page1Ref = renderer.getByTestId('page-ref-0');
+    expect(page1Ref).toBeInTheDocument();
+    fireEvent.click(page1Ref);
 
     const reviewPage = screen.getByTestId('stepper-pages-review-page');
     expect(reviewPage).toHaveTextContent('BERNIE');
