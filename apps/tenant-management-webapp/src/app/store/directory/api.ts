@@ -83,9 +83,9 @@ export const getResourcesByTag = async (
     serviceUrl
   );
 
-  url.searchParams.append('includeRepresents', 'true');
   const { data } = await axios.get(url.href, {
     headers: { Authorization: `Bearer ${token}` },
+    params: { includeRepresents: true },
   });
 
   return data;
