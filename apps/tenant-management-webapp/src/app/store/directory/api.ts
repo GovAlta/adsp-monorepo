@@ -78,11 +78,14 @@ export const getResourcesByTag = async (
 ): Promise<Resource[]> => {
   const tagNext = next ?? '';
 
-  const url = new URL(`/resource/v1/tags/${encodeURIComponent(tag)}/resources?top=50&after=${tagNext}`, serviceUrl);
+  const url = new URL(
+    `/resource/v1/tags/${encodeURIComponent(tag)}/resources?top=50${next ? `&after=${tagNext}` : ''}`,
+    serviceUrl
+  );
 
-  url.searchParams.append('includeRepresents', 'true');
   const { data } = await axios.get(url.href, {
     headers: { Authorization: `Bearer ${token}` },
+    params: { includeRepresents: true },
   });
 
   return data;
