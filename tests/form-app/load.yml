@@ -9,18 +9,19 @@ config:
       - 'http.response_time.p99': 500
       - 'http.response_time.p95': 300
   payload:
-    - path: './artillery.{{ $environment }}.csv'
+    - path: './artillery.{{ $processEnvironment.ARTILLERY_ENV }}.csv'
       skipHeader: true
       fields:
         - 'keycloak_url'
         - 'tenant_realm_id'
+        - 'form-service-host'
   phases:
     - duration: 10
       arrivalRate: 5
       rampTo: 5
       name: Warm up phase
-    - duration: 20
-      arrivalRate: 10
+    - duration: '10m'
+      arrivalCount: 360
       name: Soak test phase
 before:
   flow:
@@ -45,9 +46,9 @@ scenarios:
     flow:
       - get:
           url: '/autotest/load-test-s-v1-pub'
-      - think: 20 # stop for 20 seconds
+      - think: '{{ $randomNumber(15,20) }}' # stop for 20 seconds
       - post:
-          url: 'https://form-service.adsp-dev.gov.ab.ca/form/v1/forms'
+          url: '{{ form-service-host }}/form/v1/forms'
           headers:
             authorization: 'Bearer {{ token }}'
           json:
