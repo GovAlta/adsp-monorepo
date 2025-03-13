@@ -12,6 +12,7 @@ config:
         - 'keycloak_url'
         - 'tenant_realm_id'
         - 'form-service-host'
+        - 'form-app-host'
   phases:
     - duration: 10
       arrivalRate: 5
