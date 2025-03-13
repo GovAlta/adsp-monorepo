@@ -133,8 +133,6 @@ export const FormDefinitions = ({
     if (selectedTag) {
       dispatch(fetchResourcesByTag(selectedTag.value));
     }
-
-    // eslint-disable-next-line
   }, [dispatch, selectedTag]);
 
   const onNext = () => {
@@ -161,10 +159,7 @@ export const FormDefinitions = ({
   };
 
   const renderNoItems = () => {
-    if (
-      (indicator.show && Object.keys(formDefinitions).length === 0) ||
-      (tagResources && tagResources.length === 0 && formResourceTag.tagsLoading)
-    ) {
+    if ((indicator.show && Object.keys(formDefinitions).length === 0) || (tagResources && tagResources.length === 0)) {
       return <PageIndicator />;
     }
 

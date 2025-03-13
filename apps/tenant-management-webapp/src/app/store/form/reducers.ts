@@ -330,10 +330,9 @@ export default function (state: FormState = defaultState, action: FormActionType
         ...state,
         formResourceTag: {
           ...state.formResourceTag,
-          tagResources: [],
+          tagResources: action.next ? [...state.formResourceTag.tagResources] : [],
           tagsLoading: true,
           tagsError: null,
-          nextEntries: action.next,
         },
       };
 
@@ -368,6 +367,7 @@ export default function (state: FormState = defaultState, action: FormActionType
         ...state,
         formResourceTag: {
           ...state.formResourceTag,
+          tagResources: [],
           selectedTag: action.payload,
         },
       };
