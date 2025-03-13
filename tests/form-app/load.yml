@@ -1,4 +1,6 @@
 config:
+  # The target will not be overwrote in the configuration.
+  target: 'https://form-service.adsp-dev.gov.ab.ca'
   ensure:
     thresholds:
       - 'http.response_time.p99': 500
