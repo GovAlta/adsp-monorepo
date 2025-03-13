@@ -34,7 +34,7 @@ import {
   SET_SELECTED_TAG,
 } from './action';
 
-import { FormResourceTag, FormState, Tag } from './model';
+import { FormResourceTag, FormState } from './model';
 
 export const defaultState: FormState = {
   definitions: {},

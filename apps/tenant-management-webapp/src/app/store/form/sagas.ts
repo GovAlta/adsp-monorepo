@@ -515,7 +515,7 @@ export function* fetchResourcesByTag({ tag, next }: FetchResourcesByTagAction): 
     try {
       const { results, page } = yield call(getResourcesByTag, token, baseUrl, requiredTag, next);
 
-      const filteredDefinitions = results
+      const filteredFormDefinitions: Resource[] = results
         .map(({ urn, _embedded }) => {
           const represents = _embedded?.represents?.latest?.configuration;
           if (represents) {
@@ -532,7 +532,7 @@ export function* fetchResourcesByTag({ tag, next }: FetchResourcesByTagAction): 
         })
         .filter(Boolean);
 
-      yield put(fetchResourcesByTagSuccess(tag, filteredDefinitions, page.next, page.after));
+      yield put(fetchResourcesByTagSuccess(tag, filteredFormDefinitions, page.next, page.after));
     } catch (err) {
       yield put(ErrorNotification({ message: `Failed to fetch resources for tag: ${tag}`, error: err }));
     } finally {

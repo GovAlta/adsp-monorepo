@@ -43,6 +43,10 @@ export const FormDefinitions = ({
   showFormDefinitions,
 }: FormDefinitionsProps) => {
   const CONFIGURATION_SERVICE = 'configuration-service';
+  const NO_TAG_FILTER = {
+    label: '<No tag filter>',
+    value: '',
+  };
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,7 +58,7 @@ export const FormDefinitions = ({
 
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
-  const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries);
+  const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries) || null;
   const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
 
   const orderedFormDefinitions = (state: RootState) => {
@@ -164,11 +168,6 @@ export const FormDefinitions = ({
     }
   }, [indicator.show]);
 
-  const NO_TAG_FILTER = {
-    label: '<No tag filter>',
-    value: '',
-  };
-
   const getNextEntries = () => {
     if (selectedTag) return tagNext;
     return next;
@@ -185,7 +184,8 @@ export const FormDefinitions = ({
     if (
       !indicator.show &&
       !formResourceTag.tagsLoading &&
-      Object.keys(formDefinitions).length === 0 &&
+      formResourceTag.tagResources &&
+      formResourceTag.tagResources.length === 0 &&
       selectedTag &&
       selectedTag.label !== ''
     ) {
@@ -263,7 +263,7 @@ export const FormDefinitions = ({
       {formDefinitions && Object.keys(formDefinitions).length > 0 && showFormDefinitions && (
         <>
           <FormDefinitionsTable
-            definitions={formDefinitions}
+            definitions={selectedTag ? formResourceTag.tagResources : formDefinitions}
             baseResourceFormUrn={BASE_FORM_CONFIG_URN}
             onDelete={(formDefinition) => {
               setShowDeleteConfirmation(true);
