@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
@@ -6,70 +6,23 @@ import { PageIndicator } from '@components/Indicator';
 import { defaultResourceType } from '@store/directory/models';
 import { AddEditResourceTypeModal } from './addEditResourceType';
 import { ResourceType } from '@store/directory/models';
-import { fetchResourceTypeAction, updateResourceTypeAction } from '@store/directory/actions';
+import { fetchResourceTypeAction, updateResourceTypeAction, deleteResourceTypeAction } from '@store/directory/actions';
 import DataTable from '@components/DataTable';
-import { NameDiv, EntryDetail } from '../styled-components';
-import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 
-interface ResourceTypeProps {
-  resourceType: ResourceType[];
-  key?: string;
-}
-
-const ResourceTypeComponent: FunctionComponent<ResourceTypeProps> = ({ resourceType }) =>
-  resourceType && resourceType.length > 0 && resourceType.map((resource) => <ResourceItem resource={resource} />);
-interface ResourceProps {
-  resource: ResourceType;
-}
-const ResourceItem: FunctionComponent<ResourceProps> = (resource) => {
-  const [showDetails, setShowDetails] = useState(false);
-  useEffect(() => {
-    document.body.style.overflow = 'unset';
-  }, []);
-
-  const currentResource = resource.resource;
-  return (
-    <>
-      <tr>
-        <td headers="type" data-testid="type">
-          {currentResource?.type}
-        </td>
-        <td headers="matcher" data-testid="matcher">
-          {currentResource?.matcher}
-        </td>
-        <td headers="actions" data-testid="actions">
-          <GoAContextMenu>
-            <GoAContextMenuIcon
-              type={showDetails ? 'eye-off' : 'eye'}
-              title="Toggle details"
-              onClick={() => setShowDetails(!showDetails)}
-              testId="toggle-details-visibility"
-            />
-          </GoAContextMenu>
-        </td>
-      </tr>
-      {showDetails && (
-        <tr>
-          <td className="payload-details" headers="namespace name description payload" colSpan={5}>
-            <EntryDetail>
-              <span data-testid="name-path-details">{`Name path: ${currentResource.namePath}`}</span>
-              <br />
-              {resource.deleteEvent && (
-                <span data-testid="delete-event-details">{`Delete event: ${currentResource.deleteEvent.namespace}:${currentResource.deleteEvent.name}`}</span>
-              )}
-            </EntryDetail>
-          </td>
-        </tr>
-      )}
-    </>
-  );
-};
+import { TableDiv, NameDiv } from '../../styled-components';
+import { DeleteModal } from '@components/DeleteModal';
+import { ResourceTypeComponent } from './resourceTypeItem';
+import { v4 as uuidv4 } from 'uuid';
 
 export const ResourceTypePage = (): JSX.Element => {
   const [openAddResourceType, setOpenAddResourceType] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+  const [selectedType, setSelectedType] = useState<ResourceType>(defaultResourceType);
+  const [urn, setUrn] = useState('');
   const resourceTypes = useSelector((state: RootState) => state.directory.resourceType);
 
   const dispatch = useDispatch();
@@ -80,6 +33,7 @@ export const ResourceTypePage = (): JSX.Element => {
   const reset = () => {
     setOpenAddResourceType(false);
   };
+
   const groupResources = (data: Record<string, ResourceType[]>) => {
     const platformGroup: Record<string, ResourceType[]> = {};
     const othersGroup: Record<string, ResourceType[]> = {};
@@ -96,12 +50,26 @@ export const ResourceTypePage = (): JSX.Element => {
   };
   const groupedResourceTypes = resourceTypes && groupResources(resourceTypes);
 
+  const onEdit = (urn, resource) => {
+    setOpenAddResourceType(true);
+    setSelectedType(resource);
+
+    setUrn(urn);
+    setIsEdit(true);
+  };
+  const onDelete = (urn, resource) => {
+    setShowDeleteConfirmation(true);
+    setSelectedType(resource);
+    setUrn(urn);
+  };
+
   return (
     <section>
       <GoAButton
         testId="add-resource-type"
         onClick={() => {
           setOpenAddResourceType(true);
+          setIsEdit(false);
         }}
       >
         Add type
@@ -111,18 +79,55 @@ export const ResourceTypePage = (): JSX.Element => {
       <PageIndicator />
       <AddEditResourceTypeModal
         open={openAddResourceType}
-        isEdit={false}
+        isEdit={isEdit}
         onCancel={reset}
-        initialType={defaultResourceType}
-        urn=""
+        initialType={isEdit ? selectedType : defaultResourceType}
+        urn={urn}
         onSave={(type, urn) => {
-          dispatch(updateResourceTypeAction(type, urn));
+          if (resourceTypes && isEdit) {
+            //edit resource
+            const resourceType = resourceTypes[urn];
+
+            const updatedResourceType = resourceType.map((item) => (item.id === type.id ? type : item));
+            dispatch(updateResourceTypeAction(updatedResourceType, urn));
+          } else {
+            //Add new resource type
+            type['id'] = uuidv4();
+            if (resourceTypes && Object.keys(resourceTypes).some((key) => key.includes(urn))) {
+              const resourceType = resourceTypes[urn];
+              dispatch(updateResourceTypeAction([...resourceType, type], urn));
+            } else {
+              dispatch(updateResourceTypeAction([type], urn));
+            }
+          }
         }}
       />
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete resource type"
+        content={
+          <div>
+            Are you sure you wish to delete <b> {selectedType?.type}</b>?
+          </div>
+        }
+        onCancel={() => setShowDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowDeleteConfirmation(false);
+          if (resourceTypes[urn].length > 1) {
+            const resourceType = resourceTypes[urn];
+
+            const updatedResourceType = resourceType.filter((item) => item.id !== selectedType.id);
+            dispatch(updateResourceTypeAction(updatedResourceType, urn));
+          } else {
+            dispatch(deleteResourceTypeAction(urn));
+          }
+        }}
+      />
+
       <div>
         {groupedResourceTypes &&
           Object.keys(groupedResourceTypes).map((group, value) => (
-            <div key={group}>
+            <TableDiv key={group}>
               <NameDiv>{group}</NameDiv>
               <DataTable data-testid="resource-type-table" id="resource-type-table">
                 <thead data-testid="resource-type-table-header">
@@ -135,10 +140,16 @@ export const ResourceTypePage = (): JSX.Element => {
                   </tr>
                 </thead>
                 <tbody>
-                  <ResourceTypeComponent key={`resource-type-${group}`} resourceType={resourceTypes[group]} />
+                  <ResourceTypeComponent
+                    resourceType={resourceTypes[group]}
+                    urn={group}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    index={value}
+                  />
                 </tbody>
               </DataTable>
-            </div>
+            </TableDiv>
           ))}
       </div>
     </section>

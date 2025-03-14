@@ -1,4 +1,4 @@
-import { Directory, Service, ResourceType } from './models';
+import { Service, ResourceType } from './models';
 
 export const FETCH_DIRECTORY = 'directory/FETCH_DIRECTORY_ACTION';
 export const FETCH_DIRECTORY_SUCCESS = 'directory/FETCH_DIRECTORY_SUCCESS_ACTION';
@@ -22,6 +22,9 @@ export const FETCH_RESOURCE_TYPE_SUCCESS = 'directory/FETCH_RESOURCE_TYPE_SUCCES
 export const UPDATE_RESOURCE_TYPE = 'directory/UPDATE_RESOURCE_TYPE_ACTION';
 export const UPDATE_RESOURCE_TYPE_SUCCESS = 'directory/UPDATE_RESOURCE_TYPE_SUCCESS_ACTION';
 
+export const DELETE_RESOURCE_TYPE = 'directory/DELETE_RESOURCE_TYPE_ACTION';
+export const DELETE_RESOURCE_TYPE_SUCCESS = 'directory/DELETE_RESOURCE_TYPE_SUCCESS_ACTION';
+
 // =============
 // Actions Types
 // =============
@@ -40,7 +43,9 @@ export type ActionType =
   | FetchResourceTypeAction
   | FetchResourceTypeSuccessAction
   | UpdateResourceTypeAction
-  | UpdateResourceTypeSuccessAction;
+  | UpdateResourceTypeSuccessAction
+  | DeleteResourceTypeAction
+  | DeleteResourceTypeSuccessAction;
 
 export interface FetchDirectoryAction {
   type: typeof FETCH_DIRECTORY;
@@ -86,7 +91,7 @@ export interface FetchResourceTypeSuccessAction {
 
 export interface UpdateResourceTypeAction {
   type: typeof UPDATE_RESOURCE_TYPE;
-  resourceType: ResourceType;
+  resourceType: ResourceType[];
   urn?: string;
 }
 export interface UpdateResourceTypeSuccessAction {
@@ -96,6 +101,14 @@ export interface UpdateResourceTypeSuccessAction {
 export interface FetchEntryDetailByURNsAction {
   type: typeof FETCH_ENTRY_DETAIL_BY_URNS;
   payload: string[];
+}
+export interface DeleteResourceTypeAction {
+  type: typeof DELETE_RESOURCE_TYPE;
+  urn?: string;
+}
+export interface DeleteResourceTypeSuccessAction {
+  type: typeof DELETE_RESOURCE_TYPE_SUCCESS;
+  payload: Record<string, ResourceType[]>;
 }
 
 interface DeleteEntrySuccessAction {
@@ -178,7 +191,7 @@ export const fetchResourceTypeSuccessAction = (
   payload,
 });
 
-export const updateResourceTypeAction = (resourceType: ResourceType, urn?: string): UpdateResourceTypeAction => ({
+export const updateResourceTypeAction = (resourceType: ResourceType[], urn?: string): UpdateResourceTypeAction => ({
   type: UPDATE_RESOURCE_TYPE,
   resourceType,
   urn,
@@ -188,5 +201,18 @@ export const updateResourceTypeSuccessAction = (
   payload: Record<string, ResourceType[]>
 ): UpdateResourceTypeSuccessAction => ({
   type: UPDATE_RESOURCE_TYPE_SUCCESS,
+  payload,
+});
+
+export const deleteResourceTypeAction = (urn?: string): DeleteResourceTypeAction => ({
+  type: DELETE_RESOURCE_TYPE,
+
+  urn,
+});
+
+export const deleteResourceTypeSuccessAction = (
+  payload: Record<string, ResourceType[]>
+): DeleteResourceTypeSuccessAction => ({
+  type: DELETE_RESOURCE_TYPE_SUCCESS,
   payload,
 });
