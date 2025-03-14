@@ -28,7 +28,7 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
-import { isEmpty } from 'lodash';
+import { Resource } from '../../../../../store/directory/models';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -60,10 +60,8 @@ export const FormDefinitions = ({
   const next = useSelector((state: RootState) => state.form.nextEntries);
   const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries) || null;
   const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
-  const tagResources =
-    (formResourceTag &&
-      formResourceTag.tagResources?.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))) ||
-    [];
+  const tagResources = formResourceTag.tagResources || [];
+
   const orderedFormDefinitions = (state: RootState) => {
     const entries = Object.entries(state?.form?.definitions);
 
@@ -93,11 +91,10 @@ export const FormDefinitions = ({
   };
   const resourceConfiguration = useSelector(selectConfigurationHost);
   const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
+  const dispatch = useDispatch();
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
-
-  const dispatch = useDispatch();
 
   useEffect(() => {
     if (openAddDefinition) {
@@ -120,7 +117,7 @@ export const FormDefinitions = ({
     return () => {
       dispatch(setSelectedTag(null));
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -159,13 +156,16 @@ export const FormDefinitions = ({
   };
 
   const renderNoItems = () => {
-    if ((indicator.show && Object.keys(formDefinitions).length === 0) || (tagResources && tagResources.length === 0)) {
+    if (
+      (indicator.show && !selectedTag && Object.keys(formDefinitions).length === 0) ||
+      (selectedTag && tagsLoading && tagResources && tagResources.length === 0)
+    ) {
       return <PageIndicator />;
     }
 
     if (
       !indicator.show &&
-      !formResourceTag.tagsLoading &&
+      !tagsLoading &&
       tagResources &&
       tagResources.length === 0 &&
       selectedTag &&
@@ -247,7 +247,14 @@ export const FormDefinitions = ({
         ((!selectedTag && Object.keys(formDefinitions).length > 0) || (selectedTag && tagResources?.length > 0)) && (
           <>
             <FormDefinitionsTable
-              definitions={selectedTag ? tagResources : formDefinitions}
+              definitions={
+                selectedTag
+                  ? tagResources &&
+                    tagResources.sort((a: Resource, b: Resource) =>
+                      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+                    )
+                  : formDefinitions
+              }
               baseResourceFormUrn={BASE_FORM_CONFIG_URN}
               onDelete={(formDefinition) => {
                 setShowDeleteConfirmation(true);

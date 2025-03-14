@@ -505,7 +505,7 @@ export function* fetchResourcesByTag({ tag, next }: FetchResourcesByTagAction): 
 
   const requiredTag = toKebabName(tag);
 
-  yield put(UpdateIndicator({ show: true, message: `Fetching resources for tag: ${tag}...` }));
+  yield put(UpdateIndicator({ show: true, message: `Fetching form definitions for tag: ${tag}...` }));
 
   const state: RootState = yield select();
   const baseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
