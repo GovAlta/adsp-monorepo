@@ -109,7 +109,7 @@ export const FormSubmission = () => {
                   onClick={() =>
                     dispatch(
                       updateFormDisposition({
-                        submissionUrn: AdspId.parse(submission.urn),
+                        submissionUrn: `/forms/${submission.formId}${AdspId.parse(submission.urn).resource}`,
                         status: draft.status,
                         reason: draft.reason,
                       })

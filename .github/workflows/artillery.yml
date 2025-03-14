@@ -9,6 +9,12 @@ on:
       CLIENT_SECRET:
         description: CLIENT_SECRET
         required: true
+      ENVIRONMENT:
+        type: choice
+        description: Choose environment you want to test
+        options:
+          - dev
+          - uat
 env:
   NODE_OPTIONS: --max-old-space-size=16384
 
@@ -85,7 +91,8 @@ jobs:
       - name: Make reports directory
         run: mkdir reports
       - name: Execute load tests form app
-        run: /home/node/artillery/bin/run run tests/form-app/load.yml --environment dev --output reports/form-app-report.json
+        run: /home/node/artillery/bin/run run tests/form-app/load.yml --output reports/form-app-report.json
         env:
           CLIENT_ID: ${{ inputs.CLIENT_ID }}
           CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
+          ARTILLERY_ENV: ${{ inputs.ENVIRONMENT }}
