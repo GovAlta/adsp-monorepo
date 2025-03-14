@@ -24,7 +24,6 @@ const FormOverview = ({ setOpenAddDefinition, setActiveIndex }: FormOverviewProp
   useEffect(() => {
     dispatch(fetchDirectory());
     dispatch(fetchAllTags());
-    dispatch(getFormDefinitions());
     dispatch(fetchFormMetrics());
   }, [dispatch]);
 

@@ -34,7 +34,7 @@ import {
   SET_SELECTED_TAG,
 } from './action';
 
-import { FormResourceTag, FormState, Tag } from './model';
+import { FormResourceTag, FormState } from './model';
 
 export const defaultState: FormState = {
   definitions: {},
@@ -330,10 +330,9 @@ export default function (state: FormState = defaultState, action: FormActionType
         ...state,
         formResourceTag: {
           ...state.formResourceTag,
-          tagResources: [],
+          tagResources: action.next ? [...state.formResourceTag.tagResources] : [],
           tagsLoading: true,
           tagsError: null,
-          nextEntries: action.next,
         },
       };
 
@@ -368,6 +367,7 @@ export default function (state: FormState = defaultState, action: FormActionType
         ...state,
         formResourceTag: {
           ...state.formResourceTag,
+          tagResources: [],
           selectedTag: action.payload,
         },
       };

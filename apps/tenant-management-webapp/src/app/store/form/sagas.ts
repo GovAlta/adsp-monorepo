@@ -70,7 +70,7 @@ import {
   exportApi,
 } from './api';
 import { FormDefinition, FormResourceTagResponse, FormResourceTagResult, Tag } from './model';
-import { Resource, TagResourceRequest } from '@store/directory/models';
+import { Resource, ResourceTagRequest } from '@store/directory/models';
 import {
   getResourceTagsApi,
   getTagByNameApi,
@@ -349,7 +349,7 @@ export function* tagFormResource({ tag }: TagResourceAction): SagaIterator {
         resource: {
           urn: tag.urn,
         },
-      } as TagResourceRequest;
+      } as ResourceTagRequest;
       yield call(tagResourceApi, token, baseUrl, tagResourceRequest);
       yield put(
         UpdateIndicator({
@@ -505,7 +505,7 @@ export function* fetchResourcesByTag({ tag, next }: FetchResourcesByTagAction): 
 
   const requiredTag = toKebabName(tag);
 
-  yield put(UpdateIndicator({ show: true, message: `Fetching resources for tag: ${tag}...` }));
+  yield put(UpdateIndicator({ show: true, message: `Fetching form definitions for tag: ${tag}...` }));
 
   const state: RootState = yield select();
   const baseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
@@ -515,7 +515,7 @@ export function* fetchResourcesByTag({ tag, next }: FetchResourcesByTagAction): 
     try {
       const { results, page } = yield call(getResourcesByTag, token, baseUrl, requiredTag, next);
 
-      const filteredDefinitions = results
+      const filteredFormDefinitions: Resource[] = results
         .map(({ urn, _embedded }) => {
           const represents = _embedded?.represents?.latest?.configuration;
           if (represents) {
@@ -532,7 +532,7 @@ export function* fetchResourcesByTag({ tag, next }: FetchResourcesByTagAction): 
         })
         .filter(Boolean);
 
-      yield put(fetchResourcesByTagSuccess(tag, filteredDefinitions, page.next, page.after));
+      yield put(fetchResourcesByTagSuccess(tag, filteredFormDefinitions, page.next, page.after));
     } catch (err) {
       yield put(ErrorNotification({ message: `Failed to fetch resources for tag: ${tag}`, error: err }));
     } finally {

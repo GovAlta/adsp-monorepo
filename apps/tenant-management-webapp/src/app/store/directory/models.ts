@@ -78,7 +78,7 @@ export interface ResourceRequest {
   };
 }
 
-export interface TagResourceRequest {
+export interface ResourceTagRequest {
   tag: Tag;
   resource: ResourceRequest;
 }
