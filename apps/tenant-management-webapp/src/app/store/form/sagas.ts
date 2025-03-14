@@ -70,7 +70,7 @@ import {
   exportApi,
 } from './api';
 import { FormDefinition, FormResourceTagResponse, FormResourceTagResult, Tag } from './model';
-import { Resource, TagResourceRequest } from '@store/directory/models';
+import { Resource, ResourceTagRequest } from '@store/directory/models';
 import {
   getResourceTagsApi,
   getTagByNameApi,
@@ -349,7 +349,7 @@ export function* tagFormResource({ tag }: TagResourceAction): SagaIterator {
         resource: {
           urn: tag.urn,
         },
-      } as TagResourceRequest;
+      } as ResourceTagRequest;
       yield call(tagResourceApi, token, baseUrl, tagResourceRequest);
       yield put(
         UpdateIndicator({

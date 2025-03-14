@@ -1,10 +1,10 @@
 import axios from 'axios';
-import { Resource, ResourceTagResult, Tag, TagResourceRequest, ResourceType } from './models';
+import { Resource, ResourceTagResult, Tag, ResourceTagRequest, ResourceType } from './models';
 
 export const tagResourceApi = async (
   token: string,
   serviceUrl: string,
-  tagResourceRequest: TagResourceRequest
+  tagResourceRequest: ResourceTagRequest
 ): Promise<{ tagged: boolean; tag: Tag; resource: Resource }> => {
   const { tag, resource } = tagResourceRequest;
   const { data } = await axios.post<{ tagged: boolean; tag: Tag; resource: Resource }>(

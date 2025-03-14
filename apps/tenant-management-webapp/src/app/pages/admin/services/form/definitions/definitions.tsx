@@ -179,6 +179,7 @@ export const FormDefinitions = ({
     return null;
   };
 
+  console.log('keys', Object.keys(formDefinitions).length);
   return (
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
