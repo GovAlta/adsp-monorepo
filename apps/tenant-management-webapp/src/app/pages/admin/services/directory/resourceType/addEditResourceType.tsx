@@ -26,12 +26,12 @@ import { useValidators } from '@lib/validation/useValidators';
 import { areObjectsEqual } from '@lib/objectUtil';
 
 interface ResourceTypeModalProps {
+  open: boolean;
   isEdit: boolean;
   initialType: ResourceType;
   urn: string;
   onCancel?: () => void;
   onSave: (resourceType: ResourceType, urnStr) => void;
-  open: boolean;
 }
 
 export const AddEditResourceTypeModal = ({
@@ -44,7 +44,6 @@ export const AddEditResourceTypeModal = ({
 }: ResourceTypeModalProps): JSX.Element => {
   const [resourceType, setResourceType] = useState<ResourceType>(initialType);
   const dispatch = useDispatch();
-
   const [selectedEvent, setSelectEvent] = useState('');
   const [urnStr, setUrnStr] = useState('');
   const { tenantDirectory } = useSelector(selectSortedDirectory);
@@ -55,6 +54,13 @@ export const AddEditResourceTypeModal = ({
     .add('matcher', 'matcher', isNotEmptyCheck('matcher'))
 
     .build();
+
+  useEffect(() => {
+    setResourceType(initialType);
+    const initialDeleteEvent = `${initialType?.deleteEvent.namespace}:${initialType.deleteEvent.name} `;
+    setSelectEvent(initialDeleteEvent);
+    setUrnStr(urn);
+  }, [initialType, isEdit === true]);
 
   useEffect(() => {
     dispatch(fetchDirectory());
@@ -100,6 +106,7 @@ export const AddEditResourceTypeModal = ({
               if (!validators.checkAll(validations)) {
                 return;
               }
+
               onSave(resourceType, urnStr);
               validators.clear();
               setResourceType(defaultResourceType);
@@ -118,6 +125,7 @@ export const AddEditResourceTypeModal = ({
           aria-label="resource-type-api"
           width="100%"
           testId="resource-type-api"
+          disabled={isEdit}
           onChange={(_, value: string) => {
             setUrnStr(value);
             setResourceType({
@@ -184,7 +192,7 @@ export const AddEditResourceTypeModal = ({
       <GoAFormItem label="Delete event">
         <GoADropdown
           name="resource-type-event-definitions"
-          value={selectedEvent ? selectedEvent : ''}
+          value={selectedEvent}
           aria-label="resource-type-form-dropdown"
           width="100%"
           testId="resource-type-event-dropdown"

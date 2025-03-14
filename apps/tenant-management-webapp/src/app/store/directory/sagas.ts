@@ -22,10 +22,11 @@ import {
   FETCH_ENTRY_DETAIL_BY_URNS,
   FETCH_RESOURCE_TYPE,
   UPDATE_RESOURCE_TYPE,
+  DELETE_RESOURCE_TYPE,
   fetchResourceTypeSuccessAction,
   updateResourceTypeSuccessAction,
+  deleteResourceTypeSuccessAction,
 } from './actions';
-
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator, UpdateElementIndicator } from '@store/session/actions';
 import { adspId } from '@lib/adspId';
@@ -270,12 +271,12 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
   }
 }
 
-export function* fetchResourceTypes(payload): SagaIterator {
+export function* fetchResourceTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
   const token: string = yield call(getAccessToken);
-  const next = payload.next ?? '';
+
   if (configBaseUrl && token) {
     try {
       const url = `${configBaseUrl}/configuration/v2/configuration/platform/directory-service/latest`;
@@ -306,13 +307,7 @@ export function* fetchResourceTypes(payload): SagaIterator {
 export function* updateResourceType(payload): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
-  const currentResourceType = yield select((state: RootState) => state.directory.resourceType);
-  const urnExists: boolean = Object.keys(currentResourceType).some((key) => key.includes(payload.urn));
-
-  const resourceType = urnExists
-    ? { [payload.urn]: [...currentResourceType[payload.urn], payload.resourceType] }
-    : { [payload.urn]: [payload.resourceType] };
-
+  const resourceType = { [payload.urn]: payload.resourceType };
   if (baseUrl && token) {
     try {
       const {
@@ -339,6 +334,40 @@ export function* updateResourceType(payload): SagaIterator {
     }
   }
 }
+export function* deleteResourceType(payload): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+  const currentResourceTypes = yield select((state: RootState) => state.directory.resourceType);
+  if (Object.prototype.hasOwnProperty.call(currentResourceTypes, payload.urn)) {
+    delete currentResourceTypes[payload.urn];
+  }
+
+  if (baseUrl && token) {
+    try {
+      const {
+        data: { latest },
+      } = yield call(
+        axios.patch,
+        `${baseUrl}/configuration/v2/configuration/platform/directory-service`,
+        {
+          operation: 'REPLACE',
+          configuration: { resourceType: currentResourceTypes },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(
+        deleteResourceTypeSuccessAction({
+          ...latest.configuration?.resourceType,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
 
 export function* watchDirectorySagas(): Generator {
   yield takeEvery(FETCH_DIRECTORY, fetchDirectory);
@@ -348,6 +377,6 @@ export function* watchDirectorySagas(): Generator {
   yield takeEvery(FETCH_ENTRY_DETAIL, fetchEntryDetail);
   yield takeEvery(FETCH_RESOURCE_TYPE, fetchResourceTypes);
   yield takeEvery(UPDATE_RESOURCE_TYPE, updateResourceType);
-
+  yield takeEvery(DELETE_RESOURCE_TYPE, deleteResourceType);
   yield takeLeading(FETCH_ENTRY_DETAIL_BY_URNS, fetchDirectoryByDetailURNs);
 }

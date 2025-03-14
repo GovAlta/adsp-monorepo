@@ -91,6 +91,7 @@ export interface ResourceTagResult {
 }
 
 export interface ResourceType {
+  id?: string;
   type: string;
   matcher: string;
   namePath: string;
@@ -103,6 +104,7 @@ export interface ResourceType {
 }
 
 export const defaultResourceType: ResourceType = {
+  id: '',
   type: '',
   matcher: '',
   namePath: '',
