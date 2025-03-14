@@ -706,7 +706,7 @@ export const findFormPdf = createAsyncThunk(
 export const updateFormDisposition = createAsyncThunk(
   'form/update-form-disposition',
   async (
-    { submissionUrn, status, reason }: { submissionUrn: AdspId; status: string; reason: string },
+    { submissionUrn, status, reason }: { submissionUrn: string; status: string; reason: string },
     { getState, rejectWithValue }
   ) => {
     try {
@@ -715,7 +715,7 @@ export const updateFormDisposition = createAsyncThunk(
       const accessToken = await getAccessToken();
 
       const { data } = await axios.post<FormSubmission>(
-        new URL(`/form/v1${submissionUrn.resource}`, formServiceUrl).href,
+        new URL(`/form/v1${submissionUrn}`, formServiceUrl).href,
         { dispositionStatus: status, dispositionReason: reason },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
