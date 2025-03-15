@@ -28,7 +28,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
 import { Resource } from '../../../../../store/directory/models';
-import { styled } from 'styled-components';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -62,6 +61,7 @@ export const FormDefinitions = ({
   const next = useSelector((state: RootState) => state.form.nextEntries);
   const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries) || null;
   const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
+  // eslint-disable-next-line
   const tagResources = formResourceTag.tagResources || [];
 
   const orderedFormDefinitions = (state: RootState) => {
@@ -170,7 +170,7 @@ export const FormDefinitions = ({
       return <PageIndicator />;
     }
 
-    if (selectedTag && tagResources.length >= 0 && tagsLoading) {
+    if (selectedTag && tagResources && !tagNext && tagResources?.length >= 0 && tagsLoading) {
       return (
         <Center>
           <IndicatorWithDelay message={`Fetching form definitions for tag: ${selectedTag.label}...`} pageLock={false} />

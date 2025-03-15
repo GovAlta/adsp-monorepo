@@ -515,23 +515,7 @@ export function* fetchResourcesByTag({ tag, next }: FetchResourcesByTagAction): 
     try {
       const { results, page } = yield call(getResourcesByTag, token, baseUrl, requiredTag, next);
 
-      // const filteredFormDefinitions = results.reduce((acc, def) => {
-      //   const { urn, _embedded } = def;
-
-      //   const represents = _embedded?.represents?.latest?.configuration;
-      //   if (represents) {
-      //     acc[represents.id] = {
-      //       urn,
-      //       id: represents.id,
-      //       name: represents.name,
-      //       description: represents.description,
-      //       dataSchema: represents.dataSchema,
-      //       uiSchema: represents.uiSchema,
-      //     };
-      //   }
-      //   return acc;
-      // }, {});
-      if (results.length === 0) {
+      if (results && results?.length === 0) {
         yield put(UpdateIndicator({ show: false }));
         yield put(fetchResourcesByTagSuccess(tag, null, page.next, page.after));
         return;
