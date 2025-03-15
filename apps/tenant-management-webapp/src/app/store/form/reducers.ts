@@ -343,11 +343,12 @@ export default function (state: FormState = defaultState, action: FormActionType
           ...state.formResourceTag,
           nextEntries: action.payload.next,
           tagsLoading: false,
-          tagResources: action.payload.after
-            ? [...state.formResourceTag.tagResources, ...action.payload.resources]
-            : action.payload.resources
-            ? action.payload.resources
-            : state.formResourceTag.tagResources,
+          tagResources:
+            action.payload.after && action.payload.resources.length > 0
+              ? [...state.formResourceTag.tagResources, ...action.payload.resources]
+              : action.payload.resources
+              ? action.payload.resources
+              : null,
         },
       };
 

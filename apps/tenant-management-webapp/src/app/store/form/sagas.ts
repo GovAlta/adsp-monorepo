@@ -515,6 +515,27 @@ export function* fetchResourcesByTag({ tag, next }: FetchResourcesByTagAction): 
     try {
       const { results, page } = yield call(getResourcesByTag, token, baseUrl, requiredTag, next);
 
+      // const filteredFormDefinitions = results.reduce((acc, def) => {
+      //   const { urn, _embedded } = def;
+
+      //   const represents = _embedded?.represents?.latest?.configuration;
+      //   if (represents) {
+      //     acc[represents.id] = {
+      //       urn,
+      //       id: represents.id,
+      //       name: represents.name,
+      //       description: represents.description,
+      //       dataSchema: represents.dataSchema,
+      //       uiSchema: represents.uiSchema,
+      //     };
+      //   }
+      //   return acc;
+      // }, {});
+      if (results.length === 0) {
+        yield put(UpdateIndicator({ show: false }));
+        yield put(fetchResourcesByTagSuccess(tag, null, page.next, page.after));
+        return;
+      }
       const filteredFormDefinitions: Resource[] = results
         .map(({ urn, _embedded }) => {
           const represents = _embedded?.represents?.latest?.configuration;
@@ -532,11 +553,10 @@ export function* fetchResourcesByTag({ tag, next }: FetchResourcesByTagAction): 
         })
         .filter(Boolean);
 
+      yield put(UpdateIndicator({ show: false }));
       yield put(fetchResourcesByTagSuccess(tag, filteredFormDefinitions, page.next, page.after));
     } catch (err) {
       yield put(ErrorNotification({ message: `Failed to fetch resources for tag: ${tag}`, error: err }));
-    } finally {
-      yield put(UpdateIndicator({ show: false }));
     }
   } else {
     yield put(UpdateIndicator({ show: false }));

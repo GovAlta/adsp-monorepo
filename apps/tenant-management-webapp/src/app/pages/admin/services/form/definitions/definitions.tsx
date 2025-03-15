@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-
 import { GoAButton, GoACircularProgress, GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -19,7 +18,7 @@ import { RootState } from '@store/index';
 import { ResourceTagResult, Service, Tag } from '@store/directory/models';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
-import { PageIndicator } from '@components/Indicator';
+import { Center, IndicatorWithDelay, PageIndicator } from '@components/Indicator';
 import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
@@ -29,6 +28,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
 import { Resource } from '../../../../../store/directory/models';
+import { styled } from 'styled-components';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -54,6 +54,8 @@ export const FormDefinitions = ({
 
   const [showDefsFromState, setShowDefsFromState] = useState(isNavigatedFromEdit);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [hasResourceTags, setHasResourceTags] = useState(false);
+  const [resourceTags, setResourceTags] = useState<Resource[]>([]);
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
 
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
@@ -113,10 +115,18 @@ export const FormDefinitions = ({
     if (!formDefinitions || Object.keys(formDefinitions).length === 0) {
       dispatch(getFormDefinitions());
     }
+    if (tagResources && tagResources.length > 0) {
+      setHasResourceTags(true);
+      setResourceTags(tagResources);
+    } else {
+      if (selectedTag) {
+        dispatch(fetchResourcesByTag(selectedTag?.value));
+      }
+    }
+    if (!tags || tags?.length === 0) {
+      dispatch(fetchAllTags());
+    }
 
-    return () => {
-      dispatch(setSelectedTag(null));
-    };
     // eslint-disable-next-line
   }, []);
 
@@ -127,10 +137,10 @@ export const FormDefinitions = ({
   }, [dispatch, tagsLoading, indicator, tags]);
 
   useEffect(() => {
-    if (selectedTag) {
+    if (selectedTag && !tagResources) {
       dispatch(fetchResourcesByTag(selectedTag.value));
     }
-  }, [dispatch, selectedTag]);
+  }, [dispatch, selectedTag, tagResources]);
 
   const onNext = () => {
     if (!selectedTag) {
@@ -156,30 +166,28 @@ export const FormDefinitions = ({
   };
 
   const renderNoItems = () => {
-    if (
-      (indicator.show && !selectedTag && Object.keys(formDefinitions).length === 0) ||
-      (selectedTag && tagsLoading && tagResources && tagResources.length === 0)
-    ) {
+    if (indicator.show && !selectedTag && Object.keys(formDefinitions).length === 0) {
       return <PageIndicator />;
     }
 
-    if (
-      !indicator.show &&
-      !tagsLoading &&
-      tagResources &&
-      tagResources.length === 0 &&
-      selectedTag &&
-      selectedTag.label !== ''
-    ) {
+    if (selectedTag && tagResources.length >= 0 && tagsLoading) {
+      return (
+        <Center>
+          <IndicatorWithDelay message={`Fetching form definitions for tag: ${selectedTag.label}...`} pageLock={false} />
+        </Center>
+      );
+    }
+
+    if (formResourceTag.tagResources === null && !indicator.show && selectedTag && selectedTag.label !== '') {
       return renderNoItem('form definitions');
     }
+
     if (!indicator.show && Object.keys(formDefinitions).length > 0 && selectedTag && selectedTag.label === '') {
       return renderNoItem('form definitions');
     }
     return null;
   };
 
-  console.log('keys', Object.keys(formDefinitions).length);
   return (
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
@@ -193,7 +201,9 @@ export const FormDefinitions = ({
             const selectedTagObj = tags.find((tag) => tag?.value === value);
             if (selectedTagObj) {
               dispatch(setSelectedTag(selectedTagObj));
-              dispatch(fetchResourcesByTag(selectedTagObj.value, getNextEntries()));
+              setTimeout(() => {
+                dispatch(fetchResourcesByTag(selectedTagObj.value));
+              }, 300);
             } else {
               dispatch(setSelectedTag(null));
             }
