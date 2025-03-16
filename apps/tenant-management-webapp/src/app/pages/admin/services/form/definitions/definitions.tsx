@@ -27,7 +27,6 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
-import { Resource } from '../../../../../store/directory/models';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -61,19 +60,11 @@ export const FormDefinitions = ({
   const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
   const selectedTag = useSelector((state: RootState) => state.form?.formResourceTag?.selectedTag as Tag | null);
 
-  // eslint-disable-next-line
-  const tagResources = formResourceTag.tagResources || [];
+  const tagResources = formResourceTag.tagResources;
 
   const orderedFormDefinitions = (state: RootState) => {
     const entries = Object.entries(state?.form?.definitions);
-    const tagEntries = Object.entries(state?.form?.formResourceTag?.tagResources || {});
 
-    if (selectedTag) {
-      return tagEntries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
-        tempObj[formDefinitionId] = formDefinitionData;
-        return tempObj;
-      }, {});
-    }
     return entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
       tempObj[formDefinitionId] = formDefinitionData;
       return tempObj;
@@ -132,9 +123,7 @@ export const FormDefinitions = ({
     return () => {
       const currentHref = location.pathname;
       const redirectHref = window.location.href;
-      //If we are leaving the form definitions we should remove the selected tag.
-      //If we are coming out of the form definitions we should keep the selected tag.
-      if (currentHref !== redirectHref && !redirectHref.includes('headless') && selectedTag) {
+      if (currentHref !== redirectHref && !redirectHref.includes('?headless')) {
         dispatch(setSelectedTag(null));
       }
     };
@@ -146,12 +135,6 @@ export const FormDefinitions = ({
       dispatch(fetchAllTags());
     }
   }, [dispatch, tagsLoading, indicator, tags]);
-
-  useEffect(() => {
-    if (selectedTag && !tagResources) {
-      dispatch(fetchResourcesByTag(selectedTag.value));
-    }
-  }, [dispatch, selectedTag, tagResources]);
 
   const onNext = () => {
     if (!selectedTag) {
@@ -189,7 +172,7 @@ export const FormDefinitions = ({
       );
     }
 
-    if (formResourceTag.tagResources === null && !indicator.show && selectedTag && selectedTag.label !== '') {
+    if (tagResources === null && !indicator.show && selectedTag && selectedTag.label !== '') {
       return renderNoItem('form definitions');
     }
 
@@ -267,10 +250,10 @@ export const FormDefinitions = ({
       {formDefinitions &&
         showFormDefinitions &&
         ((!selectedTag && Object.keys(formDefinitions).length > 0) ||
-          (selectedTag && Object.keys(tagResources).length > 0)) && (
+          (selectedTag && Object.keys(tagResources ?? {}).length > 0)) && (
           <>
             <FormDefinitionsTable
-              definitions={formDefinitions}
+              definitions={selectedTag ? tagResources : formDefinitions}
               baseResourceFormUrn={BASE_FORM_CONFIG_URN}
               onDelete={(formDefinition) => {
                 setShowDeleteConfirmation(true);
