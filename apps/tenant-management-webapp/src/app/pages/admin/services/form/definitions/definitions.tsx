@@ -53,20 +53,27 @@ export const FormDefinitions = ({
 
   const [showDefsFromState, setShowDefsFromState] = useState(isNavigatedFromEdit);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [hasResourceTags, setHasResourceTags] = useState(false);
-  const [resourceTags, setResourceTags] = useState<Resource[]>([]);
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
 
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
   const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries) || null;
   const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
+  const selectedTag = useSelector((state: RootState) => state.form?.formResourceTag?.selectedTag as Tag | null);
+
   // eslint-disable-next-line
   const tagResources = formResourceTag.tagResources || [];
 
   const orderedFormDefinitions = (state: RootState) => {
     const entries = Object.entries(state?.form?.definitions);
+    const tagEntries = Object.entries(state?.form?.formResourceTag?.tagResources || {});
 
+    if (selectedTag) {
+      return tagEntries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
+        tempObj[formDefinitionId] = formDefinitionData;
+        return tempObj;
+      }, {});
+    }
     return entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
       tempObj[formDefinitionId] = formDefinitionData;
       return tempObj;
@@ -80,8 +87,6 @@ export const FormDefinitions = ({
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-
-  const selectedTag = useSelector((state: RootState) => state.form?.formResourceTag?.selectedTag as Tag | null);
 
   const tags = useSelector((state: RootState) => state.form.formResourceTag.tags || []);
   const tagsLoading = useSelector((state: RootState) => state.form.formResourceTag.tagsLoading);
@@ -115,18 +120,24 @@ export const FormDefinitions = ({
     if (!formDefinitions || Object.keys(formDefinitions).length === 0) {
       dispatch(getFormDefinitions());
     }
-    if (tagResources && tagResources.length > 0) {
-      setHasResourceTags(true);
-      setResourceTags(tagResources);
-    } else {
-      if (selectedTag) {
-        dispatch(fetchResourcesByTag(selectedTag?.value));
-      }
+
+    if (selectedTag) {
+      dispatch(fetchResourcesByTag(selectedTag?.value));
     }
+
     if (!tags || tags?.length === 0) {
       dispatch(fetchAllTags());
     }
 
+    return () => {
+      const currentHref = location.pathname;
+      const redirectHref = window.location.href;
+      //If we are leaving the form definitions we should remove the selected tag.
+      //If we are coming out of the form definitions we should keep the selected tag.
+      if (currentHref !== redirectHref && !redirectHref.includes('headless') && selectedTag) {
+        dispatch(setSelectedTag(null));
+      }
+    };
     // eslint-disable-next-line
   }, []);
 
@@ -170,7 +181,7 @@ export const FormDefinitions = ({
       return <PageIndicator />;
     }
 
-    if (selectedTag && tagResources && !tagNext && tagResources?.length >= 0 && tagsLoading) {
+    if (selectedTag && tagResources && !tagNext && Object.keys(tagResources)?.length >= 0 && tagsLoading) {
       return (
         <Center>
           <IndicatorWithDelay message={`Fetching form definitions for tag: ${selectedTag.label}...`} pageLock={false} />
@@ -255,17 +266,11 @@ export const FormDefinitions = ({
 
       {formDefinitions &&
         showFormDefinitions &&
-        ((!selectedTag && Object.keys(formDefinitions).length > 0) || (selectedTag && tagResources?.length > 0)) && (
+        ((!selectedTag && Object.keys(formDefinitions).length > 0) ||
+          (selectedTag && Object.keys(tagResources).length > 0)) && (
           <>
             <FormDefinitionsTable
-              definitions={
-                selectedTag
-                  ? tagResources &&
-                    tagResources.sort((a: Resource, b: Resource) =>
-                      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-                    )
-                  : formDefinitions
-              }
+              definitions={formDefinitions}
               baseResourceFormUrn={BASE_FORM_CONFIG_URN}
               onDelete={(formDefinition) => {
                 setShowDeleteConfirmation(true);

@@ -330,7 +330,7 @@ export default function (state: FormState = defaultState, action: FormActionType
         ...state,
         formResourceTag: {
           ...state.formResourceTag,
-          tagResources: action.next ? [...state.formResourceTag.tagResources] : [],
+          tagResources: action.next ? { ...state.formResourceTag.tagResources } : {},
           tagsLoading: true,
           tagsError: null,
         },
@@ -344,7 +344,7 @@ export default function (state: FormState = defaultState, action: FormActionType
           nextEntries: action.payload.next,
           tagsLoading: false,
           tagResources: action.payload.after
-            ? [...state.formResourceTag.tagResources, ...(action.payload.resources ?? [])]
+            ? { ...state.formResourceTag.tagResources, ...(action.payload.resources ?? {}) }
             : action.payload.resources
             ? action.payload.resources
             : null,
@@ -356,7 +356,7 @@ export default function (state: FormState = defaultState, action: FormActionType
         ...state,
         formResourceTag: {
           ...state.formResourceTag,
-          tagResources: [],
+          tagResources: {},
           tagsLoading: false,
           tagsError: action.error,
         },
@@ -367,7 +367,7 @@ export default function (state: FormState = defaultState, action: FormActionType
         ...state,
         formResourceTag: {
           ...state.formResourceTag,
-          tagResources: [],
+          tagResources: {},
           selectedTag: action.payload,
         },
       };
