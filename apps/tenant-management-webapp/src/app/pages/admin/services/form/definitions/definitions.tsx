@@ -112,7 +112,7 @@ export const FormDefinitions = ({
       dispatch(getFormDefinitions());
     }
 
-    if (selectedTag) {
+    if (selectedTag && Object.keys(tagResources).length === 0) {
       dispatch(fetchResourcesByTag(selectedTag?.value));
     }
 
