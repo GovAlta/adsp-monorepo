@@ -49,15 +49,6 @@ export const CenterPositionProgressIndicator = styled.div`
   justify-content: center;
 `;
 
-export const EntryDetail = styled.div`
-  background: #f3f3f3;
-  white-space: pre-wrap;
-  font-family: monospace;
-  font-size: 14px;
-  line-height: 14px;
-  padding: 16px;
-  text-align: left;
-`;
 export const FinalButtonPadding = styled.div`
   padding-top: 20px;
 `;

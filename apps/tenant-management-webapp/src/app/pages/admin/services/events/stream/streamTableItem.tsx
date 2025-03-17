@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Stream } from '@store/stream/models';
-import { EntryDetail, IconDiv, NoPaddingTd } from './styleComponents';
+import { IconDiv, NoPaddingTd } from './styleComponents';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { GoABadge } from '@abgov/react-components';
+import { EntryDetail } from '../../styled-components';
 
 interface SubscriberRolesProps {
   roles?: string[];

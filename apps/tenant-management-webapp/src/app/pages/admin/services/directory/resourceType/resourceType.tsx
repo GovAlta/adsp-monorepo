@@ -18,9 +18,7 @@ export const ResourceTypePage = (): JSX.Element => {
   const [openAddResourceType, setOpenAddResourceType] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
+
   const [selectedType, setSelectedType] = useState<ResourceType>(defaultResourceType);
   const [urn, setUrn] = useState('');
   const resourceTypes = useSelector((state: RootState) => state.directory.resourceType);
@@ -82,6 +80,7 @@ export const ResourceTypePage = (): JSX.Element => {
         isEdit={isEdit}
         onCancel={reset}
         initialType={isEdit ? selectedType : defaultResourceType}
+        initialDeleteEvent={isEdit ? `${selectedType?.deleteEvent.namespace}:${selectedType.deleteEvent.name}` : ''}
         urn={urn}
         onSave={(type, urn) => {
           if (resourceTypes && isEdit) {
