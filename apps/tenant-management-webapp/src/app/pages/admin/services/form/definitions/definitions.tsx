@@ -106,7 +106,9 @@ export const FormDefinitions = ({
   useEffect(() => {
     document.body.style.overflow = 'unset';
     dispatch(getConfigurationDefinitions());
-    dispatch(fetchAllTags());
+    if (!tags || tags?.length === 0) {
+      dispatch(fetchAllTags());
+    }
 
     if (!formDefinitions || Object.keys(formDefinitions).length === 0) {
       dispatch(getFormDefinitions());
@@ -114,10 +116,6 @@ export const FormDefinitions = ({
 
     if (selectedTag && Object.keys(tagResources).length === 0) {
       dispatch(fetchResourcesByTag(selectedTag?.value));
-    }
-
-    if (!tags || tags?.length === 0) {
-      dispatch(fetchAllTags());
     }
 
     return () => {
