@@ -8,7 +8,7 @@ import {
   Tag,
 } from './model';
 import { Socket } from 'socket.io-client';
-import { ResourceTag, Resource } from '@store/directory/models';
+import { ResourceTag, ResourceTagFilterCriteria } from '@store/directory/models';
 
 export const CLEAR_FORM_DEFINITIONS_ACTION = 'form/CLEAR_FORM_DEFINITIONS_ACTION';
 export const FETCH_FORM_DEFINITIONS_ACTION = 'form/FETCH_FORM_DEFINITIONS_ACTION';
@@ -271,6 +271,7 @@ export interface FetchResourcesByTagAction {
   tag: string;
   next?: string;
   after?: string;
+  criteria: ResourceTagFilterCriteria;
 }
 
 export interface FetchResourcesByTagSuccessAction {
@@ -522,9 +523,14 @@ export const fetchAllTagsFailed = (error: string): FetchAllTagsFailedAction => (
   error,
 });
 
-export const fetchResourcesByTag = (tag: string, next?: string): FetchResourcesByTagAction => ({
+export const fetchResourcesByTag = (
+  tag: string,
+  criteria: ResourceTagFilterCriteria,
+  next?: string
+): FetchResourcesByTagAction => ({
   type: FETCH_RESOURCES_BY_TAG_ACTION,
   tag,
+  criteria,
   next,
 });
 

@@ -62,6 +62,12 @@ export interface Resource {
   };
 }
 
+export interface ResourceTagFilterCriteria {
+  typeEquals?: string;
+  urnEquals?: string;
+  top?: number;
+}
+
 export interface Tag {
   value: string;
   label: string;

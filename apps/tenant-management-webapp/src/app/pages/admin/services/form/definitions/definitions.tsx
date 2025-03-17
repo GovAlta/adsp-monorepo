@@ -15,7 +15,7 @@ import {
   setSelectedTag,
 } from '@store/form/action';
 import { RootState } from '@store/index';
-import { ResourceTagResult, Service, Tag } from '@store/directory/models';
+import { ResourceTagFilterCriteria, ResourceTagResult, Service, Tag } from '@store/directory/models';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
 import { Center, IndicatorWithDelay, PageIndicator } from '@components/Indicator';
@@ -44,6 +44,11 @@ export const FormDefinitions = ({
   const NO_TAG_FILTER = {
     label: '<No tag filter>',
     value: '',
+  };
+
+  const resourceTagCriteria: ResourceTagFilterCriteria = {
+    typeEquals: 'configuration',
+    top: 50,
   };
 
   const navigate = useNavigate();
@@ -115,7 +120,7 @@ export const FormDefinitions = ({
     }
 
     if (selectedTag && Object.keys(tagResources).length === 0) {
-      dispatch(fetchResourcesByTag(selectedTag?.value));
+      dispatch(fetchResourcesByTag(selectedTag?.value, resourceTagCriteria));
     }
 
     return () => {
@@ -138,7 +143,7 @@ export const FormDefinitions = ({
     if (!selectedTag) {
       dispatch(getFormDefinitions(next));
     } else {
-      dispatch(fetchResourcesByTag(selectedTag.value, tagNext));
+      dispatch(fetchResourcesByTag(selectedTag.value, resourceTagCriteria, tagNext));
     }
   };
 
@@ -194,7 +199,7 @@ export const FormDefinitions = ({
             if (selectedTagObj) {
               dispatch(setSelectedTag(selectedTagObj));
               setTimeout(() => {
-                dispatch(fetchResourcesByTag(selectedTagObj.value));
+                dispatch(fetchResourcesByTag(selectedTagObj.value, resourceTagCriteria));
               }, 300);
             } else {
               dispatch(setSelectedTag(null));

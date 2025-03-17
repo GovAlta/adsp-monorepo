@@ -493,7 +493,7 @@ export function* fetchAllTags(): SagaIterator {
   }
 }
 
-export function* fetchResourcesByTag({ tag, next }: FetchResourcesByTagAction): SagaIterator {
+export function* fetchResourcesByTag({ tag, next, criteria }: FetchResourcesByTagAction): SagaIterator {
   if (!tag) {
     console.log('Skipping fetchResourcesByTag - No tag selected');
     yield put({
@@ -513,7 +513,7 @@ export function* fetchResourcesByTag({ tag, next }: FetchResourcesByTagAction): 
 
   if (baseUrl && token) {
     try {
-      const { results, page } = yield call(getResourcesByTag, token, baseUrl, requiredTag, next);
+      const { results, page } = yield call(getResourcesByTag, token, baseUrl, requiredTag, criteria, next);
 
       if (results && results?.length === 0) {
         yield put(UpdateIndicator({ show: false }));
