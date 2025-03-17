@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect, useMemo } from 'react';
-import { NameDiv, TableDiv } from '../styled-components';
+import { NameDiv, TableDiv } from '../../styled-components';
 import DataTable from '@components/DataTable';
 import { ConfigurationDefinitionItemComponent } from './definitionListItem';
 import { ConfigDefinition } from '@store/configuration/model';

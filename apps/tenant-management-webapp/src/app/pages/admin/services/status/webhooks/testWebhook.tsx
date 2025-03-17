@@ -9,14 +9,13 @@ import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { ResetModalState } from '@store/session/actions';
 import { PageIndicator } from '@components/Indicator';
-
+import { EntryDetail } from '../../styled-components';
 export const TestWebhookModal = (): JSX.Element => {
   const dispatch = useDispatch();
 
   const [showEntries, setShowEntries] = useState<boolean>(false);
   const webhook = useSelector(selectWebhookToTestInStatus);
 
-  const isOpen = webhook !== undefined;
   const events = webhook?.eventTypes.map((e) => e.id.split(':')[1]);
 
   const [selectedStatusName, setSelectedStatusName] = useState<string>(events && events[0]);
@@ -182,17 +181,6 @@ export const Events = styled.div`
 
 export const NoPaddingTd = styled.td`
   padding: 0px !important;
-`;
-
-export const EntryDetail = styled.div`
-  background: #f3f3f3;
-  white-space: pre-wrap;
-  font-size: 12px;
-  line-height: 12px;
-  padding: 16px;
-  margin-bottom: 4px;
-  text-align: left;
-  min-height: 320px;
 `;
 
 export const JSONFont = styled.div`

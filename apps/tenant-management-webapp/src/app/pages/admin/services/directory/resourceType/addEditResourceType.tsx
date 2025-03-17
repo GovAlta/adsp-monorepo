@@ -30,6 +30,7 @@ interface ResourceTypeModalProps {
   isEdit: boolean;
   initialType: ResourceType;
   urn: string;
+  initialDeleteEvent: string;
   onCancel?: () => void;
   onSave: (resourceType: ResourceType, urnStr) => void;
 }
@@ -37,6 +38,7 @@ interface ResourceTypeModalProps {
 export const AddEditResourceTypeModal = ({
   initialType,
   urn,
+  initialDeleteEvent,
   onCancel,
   onSave,
   open,
@@ -44,7 +46,6 @@ export const AddEditResourceTypeModal = ({
 }: ResourceTypeModalProps): JSX.Element => {
   const [resourceType, setResourceType] = useState<ResourceType>(initialType);
   const dispatch = useDispatch();
-  const [selectedEvent, setSelectEvent] = useState('');
   const [urnStr, setUrnStr] = useState('');
   const { tenantDirectory } = useSelector(selectSortedDirectory);
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
@@ -55,18 +56,6 @@ export const AddEditResourceTypeModal = ({
 
     .build();
 
-  useEffect(() => {
-    setResourceType(initialType);
-    const initialDeleteEvent = `${initialType?.deleteEvent.namespace}:${initialType.deleteEvent.name} `;
-    setSelectEvent(initialDeleteEvent);
-    setUrnStr(urn);
-  }, [initialType, isEdit === true]);
-
-  useEffect(() => {
-    dispatch(fetchDirectory());
-    dispatch(getEventDefinitions());
-  }, [dispatch]);
-
   const filteredEventDefinitions = Object.entries(eventDefinitions).reduce((acc, [key, eventDef]) => {
     if (eventDef.isCore !== true) {
       acc[key] = eventDef;
@@ -74,6 +63,20 @@ export const AddEditResourceTypeModal = ({
     return acc;
   }, {} as Record<string, EventDefinition>);
 
+  useEffect(() => {
+    setResourceType(initialType);
+    setUrnStr(urn);
+  }, [initialType, eventDefinitions]);
+
+  useEffect(() => {
+    dispatch(fetchDirectory());
+    dispatch(getEventDefinitions());
+  }, [dispatch]);
+  const onCancelModal = () => {
+    validators.clear();
+    setResourceType(defaultResourceType);
+    onCancel();
+  };
   return (
     <GoAModal
       testId="add-edit-resource-type-modal"
@@ -85,9 +88,7 @@ export const AddEditResourceTypeModal = ({
             type="secondary"
             testId="resource-type-modal-cancel"
             onClick={() => {
-              validators.clear();
-              setResourceType(defaultResourceType);
-              onCancel();
+              onCancelModal();
             }}
           >
             Cancel
@@ -108,9 +109,7 @@ export const AddEditResourceTypeModal = ({
               }
 
               onSave(resourceType, urnStr);
-              validators.clear();
-              setResourceType(defaultResourceType);
-              onCancel();
+              onCancelModal();
             }}
           >
             Save
@@ -121,7 +120,7 @@ export const AddEditResourceTypeModal = ({
       <GoAFormItem label="Api" requirement="required">
         <GoADropdown
           name="resource-type-api"
-          value={isEdit ? urn : ['']}
+          value={isEdit ? urn : ''}
           aria-label="resource-type-api"
           width="100%"
           testId="resource-type-api"
@@ -192,15 +191,14 @@ export const AddEditResourceTypeModal = ({
       <GoAFormItem label="Delete event">
         <GoADropdown
           name="resource-type-event-definitions"
-          value={selectedEvent}
+          value={isEdit ? initialDeleteEvent : ''}
           aria-label="resource-type-form-dropdown"
           width="100%"
           testId="resource-type-event-dropdown"
+          relative={true}
           mt="s"
           mb="4xl"
-          relative={true}
           onChange={(_, value: string) => {
-            setSelectEvent(value);
             if (value && value.indexOf(':') > -1) {
               setResourceType({
                 ...resourceType,

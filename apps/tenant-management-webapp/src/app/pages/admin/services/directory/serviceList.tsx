@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchEntryDetail } from '@store/directory/actions';
 import DataTable from '@components/DataTable';
 import { UpdateModalState } from '@store/session/actions';
-
+import { EntryDetail } from '../styled-components';
 interface serviceItemProps {
   service: Service;
   id: string;
@@ -177,15 +177,6 @@ export const ServiceTableComponent = ({ directory, headerId }: serviceTableProps
     </TableDiv>
   );
 };
-const EntryDetail = styled.div`
-  background: #f3f3f3;
-  white-space: pre-wrap;
-  font-family: monospace;
-  font-size: 12px;
-  line-height: 16px;
-  text-align: left;
-  padding: 16px;
-`;
 
 const TableDiv = memo(styled.div`
   & td:first-child {
