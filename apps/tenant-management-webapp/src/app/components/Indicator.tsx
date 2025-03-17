@@ -28,7 +28,7 @@ export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
   return showIndicator && <PageLoader message={message} variant={props.variant} />;
 };
 
-const Center = styled.div`
+export const Center = styled.div`
   margin-top: 2em;
   display: flex;
   justify-content: center;

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-
 import { GoAButton, GoACircularProgress, GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -19,7 +18,7 @@ import { RootState } from '@store/index';
 import { ResourceTagResult, Service, Tag } from '@store/directory/models';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
-import { PageIndicator } from '@components/Indicator';
+import { Center, IndicatorWithDelay, PageIndicator } from '@components/Indicator';
 import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
@@ -28,7 +27,6 @@ import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
 import { ResourceTag } from '@store/directory/models';
-import { Resource } from '../../../../../store/directory/models';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -60,7 +58,9 @@ export const FormDefinitions = ({
   const next = useSelector((state: RootState) => state.form.nextEntries);
   const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries) || null;
   const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
-  const tagResources = formResourceTag.tagResources || [];
+  const selectedTag = useSelector((state: RootState) => state.form?.formResourceTag?.selectedTag as Tag | null);
+
+  const tagResources = formResourceTag.tagResources;
 
   const orderedFormDefinitions = (state: RootState) => {
     const entries = Object.entries(state?.form?.definitions);
@@ -78,8 +78,6 @@ export const FormDefinitions = ({
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-
-  const selectedTag = useSelector((state: RootState) => state.form?.formResourceTag?.selectedTag as Tag | null);
 
   const tags = useSelector((state: RootState) => state.form.formResourceTag.tags || []);
   const tagsLoading = useSelector((state: RootState) => state.form.formResourceTag.tagsLoading);
@@ -108,14 +106,24 @@ export const FormDefinitions = ({
   useEffect(() => {
     document.body.style.overflow = 'unset';
     dispatch(getConfigurationDefinitions());
-    dispatch(fetchAllTags());
+    if (!tags || tags?.length === 0) {
+      dispatch(fetchAllTags());
+    }
 
     if (!formDefinitions || Object.keys(formDefinitions).length === 0) {
       dispatch(getFormDefinitions());
     }
 
+    if (selectedTag && Object.keys(tagResources).length === 0) {
+      dispatch(fetchResourcesByTag(selectedTag?.value));
+    }
+
     return () => {
-      dispatch(setSelectedTag(null));
+      const currentHref = location.pathname;
+      const redirectHref = window.location.href;
+      if (currentHref !== redirectHref && !redirectHref.includes('?headless')) {
+        dispatch(setSelectedTag(null));
+      }
     };
     // eslint-disable-next-line
   }, []);
@@ -125,12 +133,6 @@ export const FormDefinitions = ({
       dispatch(fetchAllTags());
     }
   }, [dispatch, tagsLoading, indicator, tags]);
-
-  useEffect(() => {
-    if (selectedTag) {
-      dispatch(fetchResourcesByTag(selectedTag.value));
-    }
-  }, [dispatch, selectedTag]);
 
   const onNext = () => {
     if (!selectedTag) {
@@ -156,30 +158,28 @@ export const FormDefinitions = ({
   };
 
   const renderNoItems = () => {
-    if (
-      (indicator.show && !selectedTag && Object.keys(formDefinitions).length === 0) ||
-      (selectedTag && tagsLoading && tagResources && tagResources.length === 0)
-    ) {
+    if (indicator.show && !selectedTag && Object.keys(formDefinitions).length === 0) {
       return <PageIndicator />;
     }
 
-    if (
-      !indicator.show &&
-      !tagsLoading &&
-      tagResources &&
-      tagResources.length === 0 &&
-      selectedTag &&
-      selectedTag.label !== ''
-    ) {
+    if (selectedTag && tagResources && !tagNext && Object.keys(tagResources)?.length >= 0 && tagsLoading) {
+      return (
+        <Center>
+          <IndicatorWithDelay message={`Fetching form definitions for tag: ${selectedTag.label}...`} pageLock={false} />
+        </Center>
+      );
+    }
+
+    if (tagResources === null && !indicator.show && selectedTag && selectedTag.label !== '') {
       return renderNoItem('form definitions');
     }
+
     if (!indicator.show && Object.keys(formDefinitions).length > 0 && selectedTag && selectedTag.label === '') {
       return renderNoItem('form definitions');
     }
     return null;
   };
 
-  console.log('keys', Object.keys(formDefinitions).length);
   return (
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
@@ -193,7 +193,9 @@ export const FormDefinitions = ({
             const selectedTagObj = tags.find((tag) => tag?.value === value);
             if (selectedTagObj) {
               dispatch(setSelectedTag(selectedTagObj));
-              dispatch(fetchResourcesByTag(selectedTagObj.value, getNextEntries()));
+              setTimeout(() => {
+                dispatch(fetchResourcesByTag(selectedTagObj.value));
+              }, 300);
             } else {
               dispatch(setSelectedTag(null));
             }
@@ -245,17 +247,11 @@ export const FormDefinitions = ({
 
       {formDefinitions &&
         showFormDefinitions &&
-        ((!selectedTag && Object.keys(formDefinitions).length > 0) || (selectedTag && tagResources?.length > 0)) && (
+        ((!selectedTag && Object.keys(formDefinitions).length > 0) ||
+          (selectedTag && Object.keys(tagResources ?? {}).length > 0)) && (
           <>
             <FormDefinitionsTable
-              definitions={
-                selectedTag
-                  ? tagResources &&
-                    tagResources.sort((a: Resource, b: Resource) =>
-                      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-                    )
-                  : formDefinitions
-              }
+              definitions={selectedTag ? tagResources : formDefinitions}
               baseResourceFormUrn={BASE_FORM_CONFIG_URN}
               onDelete={(formDefinition) => {
                 setShowDeleteConfirmation(true);

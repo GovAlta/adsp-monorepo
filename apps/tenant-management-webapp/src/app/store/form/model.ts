@@ -134,7 +134,7 @@ export interface FormResourceTag {
   tags: Tag[];
   tagsLoading: boolean;
   tagsError?: string;
-  tagResources: Resource[];
+  tagResources: Record<string, FormDefinition>;
   nextEntries: string | null;
 }
 

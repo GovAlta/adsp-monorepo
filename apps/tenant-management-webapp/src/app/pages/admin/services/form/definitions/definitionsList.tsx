@@ -33,17 +33,19 @@ export const FormDefinitionsTable: FunctionComponent<formDefinitionTableProps> =
         </tr>
       </thead>
       <tbody>
-        {Object.keys(newTemplates).map((templateName) => {
-          return (
-            <FormDefinitionItem
-              key={templateName}
-              baseResourceFormUrn={baseResourceFormUrn}
-              formDefinition={newTemplates[templateName]}
-              onDelete={onDelete}
-              onAddResourceTag={onAddResourceTag}
-            />
-          );
-        })}
+        {Object.keys(newTemplates)
+          .sort()
+          .map((templateName) => {
+            return (
+              <FormDefinitionItem
+                key={templateName}
+                baseResourceFormUrn={baseResourceFormUrn}
+                formDefinition={newTemplates[templateName]}
+                onDelete={onDelete}
+                onAddResourceTag={onAddResourceTag}
+              />
+            );
+          })}
       </tbody>
     </DataTable>
   );

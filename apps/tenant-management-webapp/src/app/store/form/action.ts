@@ -277,7 +277,7 @@ export interface FetchResourcesByTagSuccessAction {
   type: typeof FETCH_RESOURCES_BY_TAG_SUCCESS;
   payload: {
     tag: string;
-    resources: Resource[];
+    resources: Record<string, FormDefinition>;
     next: string;
     after: string;
   };
@@ -530,7 +530,7 @@ export const fetchResourcesByTag = (tag: string, next?: string): FetchResourcesB
 
 export const fetchResourcesByTagSuccess = (
   tag: string,
-  resources: Resource[],
+  resources: Record<string, FormDefinition>,
   next: string,
   after: string
 ): FetchResourcesByTagSuccessAction => ({
