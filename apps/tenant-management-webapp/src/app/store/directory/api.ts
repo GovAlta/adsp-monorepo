@@ -1,5 +1,12 @@
 import axios from 'axios';
-import { Resource, ResourceTagResult, Tag, ResourceTagRequest, ResourceType } from './models';
+import {
+  Resource,
+  ResourceTagResult,
+  Tag,
+  ResourceTagRequest,
+  ResourceType,
+  ResourceTagFilterCriteria,
+} from './models';
 
 export const tagResourceApi = async (
   token: string,
@@ -74,18 +81,27 @@ export const getResourcesByTag = async (
   token: string,
   serviceUrl: string,
   tag: string,
+  criteria: ResourceTagFilterCriteria,
   next?: string
 ): Promise<Resource[]> => {
   const tagNext = next ?? '';
 
+  const newCriteria = JSON.stringify({
+    typeIdEquals: criteria.typeEquals,
+  });
+
   const url = new URL(
-    `/resource/v1/tags/${encodeURIComponent(tag)}/resources?top=50${next ? `&after=${tagNext}` : ''}`,
+    `/resource/v1/tags/${encodeURIComponent(tag)}/resources?${next ? `&after=${tagNext}` : ''}`,
     serviceUrl
   );
 
   const { data } = await axios.get(url.href, {
     headers: { Authorization: `Bearer ${token}` },
-    params: { includeRepresents: true },
+    params: {
+      includeRepresents: true,
+      top: criteria.top,
+      criteria: newCriteria,
+    },
   });
 
   return data;
