@@ -42,6 +42,17 @@ export const unTagResourceApi = async (
   return data;
 };
 
+export const deleteResourceTagsApi = async (token: string, serviceUrl: string, urn: string): Promise<boolean> => {
+  const { data } = await axios.delete<{ deleted: boolean }>(
+    new URL(`/resource/v1/resources/${encodeURIComponent(urn)}`, serviceUrl).href,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+
+  return data.deleted;
+};
+
 export const getResourceTagsApi = async (
   token: string,
   serviceUrl: string,

@@ -32,6 +32,7 @@ import {
   FETCH_RESOURCES_BY_TAG_SUCCESS,
   FETCH_RESOURCES_BY_TAG_FAILURE,
   SET_SELECTED_TAG,
+  DELETE_RESOURCE_TAGS_SUCCESS,
 } from './action';
 
 import { FormResourceTag, FormState } from './model';
@@ -372,6 +373,16 @@ export default function (state: FormState = defaultState, action: FormActionType
         },
       };
 
+    case DELETE_RESOURCE_TAGS_SUCCESS: {
+      const { formResourceTag: toDeleteResourceTags } = { ...state };
+      delete toDeleteResourceTags.tagResources[action.formDefinitionId || ''];
+      return {
+        ...state,
+        formResourceTag: {
+          ...toDeleteResourceTags,
+        },
+      };
+    }
     default:
       return state;
   }

@@ -206,7 +206,6 @@ export const updateResourceTypeSuccessAction = (
 
 export const deleteResourceTypeAction = (urn?: string): DeleteResourceTypeAction => ({
   type: DELETE_RESOURCE_TYPE,
-
   urn,
 });
 
