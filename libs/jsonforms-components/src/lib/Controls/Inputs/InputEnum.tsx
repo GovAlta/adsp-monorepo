@@ -5,14 +5,14 @@ import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '../../util';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
-import { RegisterDataType } from '../../Context/register';
+import { RegisterDataType, LabelValueRegisterData } from '../../Context/register';
 import { callout } from '../../Additional/GoACalloutControl';
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
 import { Dropdown } from '../../Components/Dropdown';
 import { Item } from '../../Components/DropDownTypes';
 
 type EnumSelectProps = EnumCellProps & WithClassname & TranslateProps & WithInputProps & ControlProps;
-
+type EnumRegisterDataType = string[] | LabelValueRegisterData[];
 function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undefined): RegisterConfig | undefined {
   if (!options?.url && !options?.urn) return undefined;
   const config: RegisterConfig = {
@@ -40,16 +40,18 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
   const mergedOptions = useMemo(() => {
     const newOptions = [
       ...(options || []),
-      ...(registerData?.map((d) => {
-        if (typeof d === 'string') {
-          return {
-            value: d,
-            label: d,
-          };
-        } else {
-          return { ...d };
-        }
-      }) || []),
+      ...((registerData &&
+        (registerData as EnumRegisterDataType | undefined)?.map((d) => {
+          if (typeof d === 'string') {
+            return {
+              value: d,
+              label: d,
+            };
+          } else {
+            return { ...d };
+          }
+        })) ||
+        []),
     ];
 
     const hasNonEmptyOptions = newOptions.some((option) => option.value !== '');

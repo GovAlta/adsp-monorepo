@@ -5,7 +5,7 @@ import { GoAInput } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { RegisterDataType } from '../../Context/register';
-import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
+import { JsonFormsRegisterContext, RegisterConfig, LabelValueRegisterData } from '../../Context/register';
 import { onBlurForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 import { Dropdown } from '../../Components/Dropdown';
 import { sinTitle } from '../../common/Constants';
@@ -42,6 +42,7 @@ export const formatSin = (value: string) => {
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, schema, label, path, handleChange, errors, isVisited, setIsVisited } =
     props;
+  type InputRegisterDataType = string[] | LabelValueRegisterData[];
 
   const width = uischema?.options?.componentProps?.width ?? '100%';
   const registerCtx = useContext(JsonFormsRegisterContext);
@@ -56,7 +57,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   const mergedOptions = useMemo(() => {
     const newOptions = [
-      ...(registerData?.map((d) => {
+      ...((registerData as InputRegisterDataType | undefined)?.map((d) => {
         if (typeof d === 'string') {
           return {
             value: d,

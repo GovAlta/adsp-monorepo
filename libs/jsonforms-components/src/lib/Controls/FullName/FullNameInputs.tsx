@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { GoAFormItem, GoAInput, GoAGrid } from '@abgov/react-components';
+import { JsonFormsRegisterContext, RegisterConfig, LabelValueRegisterData } from '../../Context/register';
 
 interface Data {
   firstName: string;
@@ -29,6 +30,8 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   disabled,
 }: NameInputsProps): JSX.Element => {
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const registerCtx = useContext(JsonFormsRegisterContext);
+  const userData = registerCtx?.selectDefaultUserData();
 
   // eslint-disable-next-line
   const handleRequiredFieldBlur = (name: string, updatedData?: any) => {
@@ -58,6 +61,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
           type="text"
           name="firstName"
           disabled={disabled}
+          placeholder={userData?.firstName}
           testId="name-form-first-name"
           ariaLabel={'name-form-first-name'}
           value={firstName || ''}
