@@ -82,16 +82,6 @@ export const Details = styled.div`
   margin-bottom: 1rem;
 `;
 
-export const EntryDetail = styled.div`
-  background: #f3f3f3;
-  white-space: pre-wrap;
-  font-family: monospace;
-  font-size: 12px;
-  line-height: 16px;
-  text-align: left;
-  padding: 1rem;
-`;
-
 export const DataTableWrapper = styled.div`
   .goa-checkbox input[type='checkbox'] {
     display: none !important;

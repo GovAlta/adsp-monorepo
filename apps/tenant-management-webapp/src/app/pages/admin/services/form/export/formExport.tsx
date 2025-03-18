@@ -83,6 +83,7 @@ export const FormExport = (): JSX.Element => {
       setFileNamePrefix(`Exports-${truncateString(selectedForm?.id)}-${generateRandomNumber()}`);
     }
   }, [selectedForm]);
+
   useEffect(() => {
     dispatch(FetchFilesService());
   }, [exportStream]);

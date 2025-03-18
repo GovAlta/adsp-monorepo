@@ -70,7 +70,7 @@ import {
   exportApi,
 } from './api';
 import { FormDefinition, FormResourceTagResponse, FormResourceTagResult, Tag } from './model';
-import { TagResourceRequest } from '@store/directory/models';
+import { Resource, ResourceTagRequest } from '@store/directory/models';
 import {
   getResourceTagsApi,
   getTagByNameApi,
@@ -349,7 +349,7 @@ export function* tagFormResource({ tag }: TagResourceAction): SagaIterator {
         resource: {
           urn: tag.urn,
         },
-      } as TagResourceRequest;
+      } as ResourceTagRequest;
       yield call(tagResourceApi, token, baseUrl, tagResourceRequest);
       yield put(
         UpdateIndicator({
@@ -469,13 +469,6 @@ export function* fetchFormTagByTagName({ payload }: FetchTagByTagNameAction): Sa
 }
 
 export function* fetchAllTags(): SagaIterator {
-  yield put(
-    UpdateIndicator({
-      show: true,
-      message: 'Fetching all tags...',
-    })
-  );
-
   try {
     const state: RootState = yield select();
     const baseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl || '';
@@ -497,16 +490,10 @@ export function* fetchAllTags(): SagaIterator {
   } catch (err) {
     yield put(fetchAllTagsFailed(err.message));
     yield put(ErrorNotification({ message: 'Failed to fetch tags', error: err }));
-  } finally {
-    yield put(
-      UpdateIndicator({
-        show: false,
-      })
-    );
   }
 }
 
-export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIterator {
+export function* fetchResourcesByTag({ tag, next, criteria }: FetchResourcesByTagAction): SagaIterator {
   if (!tag) {
     console.log('Skipping fetchResourcesByTag - No tag selected');
     yield put({
@@ -518,7 +505,7 @@ export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIt
 
   const requiredTag = toKebabName(tag);
 
-  yield put(UpdateIndicator({ show: true, message: `Fetching resources for tag: ${tag}...` }));
+  yield put(UpdateIndicator({ show: true, message: `Fetching form definitions for tag: ${tag}...` }));
 
   const state: RootState = yield select();
   const baseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
@@ -526,30 +513,34 @@ export function* fetchResourcesByTag({ tag }: FetchResourcesByTagAction): SagaIt
 
   if (baseUrl && token) {
     try {
-      const resources = yield call(getResourcesByTag, token, baseUrl, requiredTag);
+      const { results, page } = yield call(getResourcesByTag, token, baseUrl, requiredTag, criteria, next);
 
-      const filteredDefinitions = resources.results
-        .map(({ urn, _embedded }) => {
-          const represents = _embedded?.represents?.latest?.configuration;
-          if (represents) {
-            return {
-              urn,
-              id: represents.id,
-              name: represents.name,
-              description: represents.description,
-              dataSchema: represents.dataSchema,
-              uiSchema: represents.uiSchema,
-            };
-          }
-          return null;
-        })
-        .filter(Boolean);
+      if (results && results?.length === 0) {
+        yield put(UpdateIndicator({ show: false }));
+        yield put(fetchResourcesByTagSuccess(tag, null, page.next, page.after));
+        return;
+      }
+      const filteredFormDefinitions = results.reduce((acc, def) => {
+        const { urn, _embedded } = def;
 
-      yield put(fetchResourcesByTagSuccess(tag, filteredDefinitions));
+        const represents = _embedded?.represents?.latest?.configuration;
+        if (represents) {
+          acc[represents.id] = {
+            urn,
+            id: represents.id,
+            name: represents.name,
+            description: represents.description,
+            dataSchema: represents.dataSchema,
+            uiSchema: represents.uiSchema,
+          };
+        }
+        return acc;
+      }, {});
+
+      yield put(UpdateIndicator({ show: false }));
+      yield put(fetchResourcesByTagSuccess(tag, filteredFormDefinitions, page.next, page.after));
     } catch (err) {
       yield put(ErrorNotification({ message: `Failed to fetch resources for tag: ${tag}`, error: err }));
-    } finally {
-      yield put(UpdateIndicator({ show: false }));
     }
   } else {
     yield put(UpdateIndicator({ show: false }));

@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import {
   GoAFormStepper,
   GoAFormStep,
@@ -57,7 +57,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
   const submitForm = submitFormFunction && submitFormFunction();
   const optionProps = (uischema.options as FormStepperOptionProps) || {};
   const [isOpen, setIsOpen] = useState(false);
-  const [staleCategories, setStaleCategories] = React.useState(categories);
+  const headersRef = useRef<HTMLElement[]>([]);
 
   const handleSubmit = () => {
     if (submitForm) {
@@ -67,23 +67,15 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
     }
   };
 
-  useEffect(() => {
-    setStaleCategories(categories);
-  }, [categories]);
-
   const onCloseModal = () => {
     setIsOpen(false);
   };
-
-  // eslint-disable-next-line
-  const options = (uischema as any).options;
 
   return (
     <div data-testid="form-stepper-test-wrapper">
       <Visible visible={visible}>
         <div id={`${path || `goa`}-form-stepper`} className="formStepper">
-          {/* Need to force a refresh here, GoAFormStepper cant change dynamically unless completely re-rendered */}
-          {categories.length === staleCategories.length && (
+          {
             <GoAFormStepper
               testId={`form-stepper-headers-${uischema?.options?.testId}` || 'form-stepper-test'}
               key="stepper-form-stepper-wrapper"
@@ -93,17 +85,21 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
             >
               {categories?.map((c, index) => {
                 return (
-                  <GoAFormStep
-                    data-testid={`stepper-tab-${index}`}
-                    key={`stepper-tab-${index}`}
-                    text={`${c.label}`}
-                    status={c.isVisited ? (c.isCompleted && c.isValid ? 'complete' : 'incomplete') : undefined}
-                  />
+                  <div ref={(el) => (headersRef.current[index] = el as HTMLDivElement)}>
+                    <GoAFormStep
+                      data-testid={`stepper-tab-${index}`}
+                      key={`stepper-tab-${index}`}
+                      text={`${c.label}`}
+                      status={c.isVisited ? (c.isCompleted && c.isValid ? 'complete' : 'incomplete') : undefined}
+                    />
+                  </div>
                 );
               })}
-              <GoAFormStep key={`stepper-tab-review`} text="Review" />
+              <div ref={(el) => (headersRef.current[categories.length] = el as HTMLDivElement)}>
+                <GoAFormStep key={`stepper-tab-review`} text="Review" />
+              </div>
             </GoAFormStepper>
-          )}
+          }
 
           <GoAPages current={activeId + 1} mb="xl">
             {categories?.map((category, index) => {
@@ -142,7 +138,11 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
                       element.scrollIntoView();
                     }
 
-                    goToPage(activeId - 1, activeId);
+                    headersRef.current[activeId - 1] &&
+                      headersRef.current[activeId - 1]
+                        .querySelector('goa-form-step')
+                        ?.shadowRoot?.querySelector('input')
+                        ?.click();
                   }}
                   testId="prev-button"
                 >
@@ -158,7 +158,11 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
                   type={optionProps?.nextButtonType ? optionProps?.nextButtonType : 'primary'}
                   disabled={selectIsDisabled()}
                   onClick={() => {
-                    goToPage(activeId + 1, activeId);
+                    headersRef.current[activeId + 1] &&
+                      headersRef.current[activeId + 1]
+                        .querySelector('goa-form-step')
+                        ?.shadowRoot?.querySelector('input')
+                        ?.click();
 
                     const element = document.getElementById(`${path || `goa`}-form-stepper`);
                     if (element) {

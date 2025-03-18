@@ -1,12 +1,15 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { PageReviewNameCol, PageReviewValueCol } from './style-component';
 import { convertToSentenceCase, getLastSegmentFromPointer } from '../../util';
 import { getLabelText } from '../../util/stringUtils';
 
+import { GoAReviewRenderers } from '../../../index';
+import { JsonFormsDispatch } from '@jsonforms/react';
+
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
-  const { data, uischema, label } = props;
+  const { data, uischema, label, schema, path, errors, enabled, cells } = props;
   const labelToUpdate: string = convertToSentenceCase(getLabelText(uischema.scope, label || ''));
   let reviewText = data;
   const isBoolean = typeof data === 'boolean';
@@ -27,10 +30,25 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
 
   return (
     <tr data-testid={`input-base-table-${label}-row`}>
-      <PageReviewNameCol>
-        <strong>{labelToUpdate}</strong>
-      </PageReviewNameCol>
-      <PageReviewValueCol>{reviewText}</PageReviewValueCol>
+      {labelToUpdate && (
+        <PageReviewNameCol>
+          <strong>{labelToUpdate}</strong>
+        </PageReviewNameCol>
+      )}
+      <PageReviewValueCol>
+        {typeof reviewText === 'string' ? (
+          <div>{reviewText}</div>
+        ) : (
+          <JsonFormsDispatch
+            data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+            schema={schema}
+            uischema={uischema}
+            enabled={enabled}
+            renderers={GoAReviewRenderers}
+            cells={cells}
+          />
+        )}
+      </PageReviewValueCol>
     </tr>
   );
 };

@@ -95,7 +95,7 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
                   );
                 })}
             </TableReviewItemSection>
-          </>
+          </Row>
         );
       })}
     </TableReviewItem>

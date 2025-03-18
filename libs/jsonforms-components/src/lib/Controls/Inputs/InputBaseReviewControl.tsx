@@ -59,7 +59,7 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
   }
 
   return (
-    <div style={{ textWrap: 'wrap', wordBreak: 'break-word' }} data-testid={`review-control-${id}`}>
+    <div style={{ fontWeight: '400', textWrap: 'wrap', wordBreak: 'break-word' }} data-testid={`review-control-${id}`}>
       {reviewText}
       {renderRequiredLabel()}
       {renderWarningMessage()}

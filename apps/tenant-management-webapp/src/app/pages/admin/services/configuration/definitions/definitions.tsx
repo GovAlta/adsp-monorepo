@@ -13,7 +13,7 @@ import {
 } from '@store/configuration/action';
 import { AddEditConfigDefinition } from './addEditDefinition';
 import { DeleteModal } from '@components/DeleteModal';
-import { NameDiv } from '../styled-components';
+import { NameDiv } from '../../styled-components';
 
 interface ParentCompProps {
   activeEdit?: boolean;

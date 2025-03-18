@@ -34,7 +34,7 @@ import {
   SET_SELECTED_TAG,
 } from './action';
 
-import { FormState, Tag } from './model';
+import { FormResourceTag, FormState } from './model';
 
 export const defaultState: FormState = {
   definitions: {},
@@ -55,11 +55,7 @@ export const defaultState: FormState = {
   columns: [],
   socket: null,
   metrics: {},
-  tags: [],
-  tagsLoading: false,
-  tagsError: null,
-  selectedTag: null as Tag | null,
-  tagResources: [],
+  formResourceTag: {} as FormResourceTag,
 };
 
 export default function (state: FormState = defaultState, action: FormActionTypes): FormState {
@@ -282,66 +278,98 @@ export default function (state: FormState = defaultState, action: FormActionType
     case FETCH_FORM_TAG_BY_TAG_NAME_ACTION_SUCCESS: {
       return {
         ...state,
-        searchedTag: action.payload,
-        searchedTagExists: action.payload ? true : false,
+        formResourceTag: {
+          ...state.formResourceTag,
+          searchedTag: action.payload,
+          searchedTagExists: action.payload ? true : false,
+        },
       };
     }
     case FETCH_FORM_TAG_BY_TAG_NAME_ACTION_FAILED: {
       return {
         ...state,
-        searchedTag: null,
-        searchedTagExists: false,
+        formResourceTag: {
+          ...state.formResourceTag,
+          searchedTag: null,
+          searchedTagExists: false,
+        },
       };
     }
     case FETCH_ALL_TAGS_ACTION:
       return {
         ...state,
-        tagsLoading: true,
-        tagsError: null,
+        formResourceTag: {
+          ...state.formResourceTag,
+          tagsLoading: true,
+          tagsError: null,
+        },
       };
 
     case FETCH_ALL_TAGS_SUCCESS_ACTION:
       return {
         ...state,
-        tagsLoading: false,
-        tags: action.payload,
+        formResourceTag: {
+          ...state.formResourceTag,
+          tagsLoading: false,
+          tags: action.payload,
+        },
       };
 
     case FETCH_ALL_TAGS_FAILED_ACTION:
       return {
         ...state,
-        tagsLoading: false,
-        tagsError: action.error,
+        formResourceTag: {
+          ...state.formResourceTag,
+          tagsLoading: false,
+          tagsError: action.error,
+        },
       };
 
     case FETCH_RESOURCES_BY_TAG_ACTION:
       return {
         ...state,
-        tagResources: [],
-        tagsLoading: true,
-        tagsError: null,
+        formResourceTag: {
+          ...state.formResourceTag,
+          tagResources: action.next ? { ...state.formResourceTag.tagResources } : {},
+          tagsLoading: true,
+          tagsError: null,
+        },
       };
 
     case FETCH_RESOURCES_BY_TAG_SUCCESS:
       return {
         ...state,
-        tagResources: action.payload.resources,
-        tagsLoading: false,
-        tagsError: null,
+        formResourceTag: {
+          ...state.formResourceTag,
+          nextEntries: action.payload.next,
+          tagsLoading: false,
+          tagResources: action.payload.after
+            ? { ...state.formResourceTag.tagResources, ...(action.payload.resources ?? {}) }
+            : action.payload.resources
+            ? action.payload.resources
+            : null,
+        },
       };
 
     case FETCH_RESOURCES_BY_TAG_FAILURE:
       return {
         ...state,
-        tagResources: [],
-        tagsLoading: false,
-        tagsError: action.error,
+        formResourceTag: {
+          ...state.formResourceTag,
+          tagResources: {},
+          tagsLoading: false,
+          tagsError: action.error,
+        },
       };
 
     case SET_SELECTED_TAG:
       return {
         ...state,
-        selectedTag: action.payload,
+        formResourceTag: {
+          ...state.formResourceTag,
+          tagResources: {},
+          selectedTag: action.payload,
+        },
       };
 
     default:

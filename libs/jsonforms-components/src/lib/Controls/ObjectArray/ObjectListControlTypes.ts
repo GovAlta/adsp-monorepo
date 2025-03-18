@@ -23,10 +23,16 @@ export interface DataProperty {
   maxLength?: number;
   required?: string[];
   enum: string[];
+  items?: Record<string, unknown>;
 }
 
 export interface DataObject {
   [key: string]: DataProperty;
+}
+
+export interface NestedItem {
+  properties: string[];
+  required: string[];
 }
 
 export interface Items {
@@ -117,8 +123,13 @@ export interface TableRowsProp {
   handleChange: (path: string, value: any) => void;
 }
 export interface RenderCellColumnProps {
-  currentData: string | undefined;
+  data: string | undefined;
   error: string | undefined;
   isRequired: boolean;
   tableKeys?: string[];
+  errors: ErrorObject[];
+  count: number;
+  rowPath: string;
+  index: number;
+  element: string;
 }

@@ -80,6 +80,7 @@ export const ListContainer = styled.div`
 
 export const TableTHHeader = styled.th`
   background-color: var(--goa-color-greyscale-100) !important;
+  vertical-align: top;
 `;
 
 export const ObjectArrayWarningIconDiv = styled.div`
@@ -87,6 +88,14 @@ export const ObjectArrayWarningIconDiv = styled.div`
   align-items: flex-start;
   gap: 0.25rem;
   font-size: var(--goa-font-size-2);
+  color: var(--goa-color-interactive-error);
+`;
+
+export const ListWithDetailWarningIconDiv = styled.div`
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  font-size: var(--goa-font-size-3);
   color: var(--goa-color-interactive-error);
 `;
 export const ObjectArrayRequiredTextLabel = styled.label`

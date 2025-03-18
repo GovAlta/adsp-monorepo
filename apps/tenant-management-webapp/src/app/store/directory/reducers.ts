@@ -6,12 +6,15 @@ import {
   UPDATE_ENTRY_SUCCESS,
   DELETE_ENTRY_SUCCESS,
   FETCH_ENTRY_DETAIL_SUCCESS,
+  FETCH_RESOURCE_TYPE_SUCCESS,
+  UPDATE_RESOURCE_TYPE_SUCCESS,
+  DELETE_RESOURCE_TYPE_SUCCESS,
 } from './actions';
 
 export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
   switch (action.type) {
     case FETCH_DIRECTORY_SUCCESS: {
-      const directories = action.payload.directory;
+      const directories = action.payload;
       directories.forEach((dir) => {
         dir.isCore = dir.namespace.toLowerCase() === 'platform';
         if (dir.service?.indexOf(':') > -1) {
@@ -61,6 +64,11 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
         isExist.loaded = action.payload?.loaded;
       }
       return { ...state, directory: [...directoryUpdateList] };
+    }
+    case UPDATE_RESOURCE_TYPE_SUCCESS:
+    case FETCH_RESOURCE_TYPE_SUCCESS:
+    case DELETE_RESOURCE_TYPE_SUCCESS: {
+      return { ...state, resourceType: action.payload };
     }
     default:
       return state;

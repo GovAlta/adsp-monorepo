@@ -36,11 +36,11 @@ class TaskPage {
   }
 
   queueNamespaceValue() {
-    return cy.get('[testid="queue-namespace"]');
+    return cy.get('[data-testid="queue-namespace"]');
   }
 
   queueNameValue() {
-    return cy.get('[testid="queue-name"]');
+    return cy.get('[data-testid="queue-name"]');
   }
 
   queuePageSaveButton() {
@@ -71,13 +71,13 @@ class TaskPage {
 
   queueEditButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="task-queue-table"]//*[contains(@data-testid, "queue-definition-edit")])[${rowNumber}]`
+      `(//table[@data-testid="task-queue-table"]//*[contains(@testid, "queue-definition-edit")])[${rowNumber}]`
     );
   }
 
   queueDeleteButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="task-queue-table"]//*[contains(@data-testid, "queue-definition-delete")])[${rowNumber}]`
+      `(//table[@data-testid="task-queue-table"]//*[contains(@testid, "queue-definition-delete")])[${rowNumber}]`
     );
   }
 

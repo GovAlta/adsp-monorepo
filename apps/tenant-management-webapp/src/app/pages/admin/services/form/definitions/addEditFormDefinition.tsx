@@ -27,6 +27,7 @@ import {
   GoAIcon,
   GoACheckbox,
 } from '@abgov/react-components';
+
 interface AddEditFormDefinitionProps {
   open: boolean;
   isEdit: boolean;
@@ -113,6 +114,7 @@ export const AddEditFormDefinition = ({
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .add('formDraftUrlTemplate', 'formDraftUrlTemplate', checkFormDefaultUrl())
     .build();
+
   return (
     <GoAModal
       testId="definition-form"
@@ -180,8 +182,16 @@ export const AddEditFormDefinition = ({
                 onChange={(name, value) => {
                   const validations = {
                     name: value,
-                    duplicate: value,
                   };
+
+                  if (!isEdit) {
+                    validators.remove('name');
+                    validations['duplicate'] = value;
+
+                    if (!validators.checkAll(validations)) {
+                      return;
+                    }
+                  }
 
                   if (definition.id.length > 0) {
                     validators.remove('name');
@@ -194,7 +204,13 @@ export const AddEditFormDefinition = ({
                   );
                 }}
                 onBlur={() => {
-                  validators.checkAll({ name: definition.name, duplicate: definition.name });
+                  const validations = {
+                    name: definition.name,
+                  };
+                  if (!isEdit) {
+                    validations['duplicate'] = definition.name;
+                  }
+                  validators.checkAll(validations);
                 }}
               />
             </GoAFormItem>
@@ -207,7 +223,6 @@ export const AddEditFormDefinition = ({
                 testId="form-definition-id"
                 disabled={true}
                 width="100%"
-                // eslint-disable-next-line
                 onChange={() => {}}
               />
             </FormFormItem>
@@ -226,7 +241,6 @@ export const AddEditFormDefinition = ({
                   validators['description'].check(value);
                   setDefinition({ ...definition, description: value });
                 }}
-                // eslint-disable-next-line
                 onChange={(name, value) => {}}
               />
               <HelpText>

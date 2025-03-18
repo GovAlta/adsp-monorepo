@@ -1,6 +1,27 @@
-import { RenderCellColumnProps } from './ObjectListControlTypes';
+import React, { ReactNode } from 'react';
+import { GoATable } from '@abgov/react-components';
+import { DataObject, NestedItem, RenderCellColumnProps } from './ObjectListControlTypes';
 import { GoAIcon } from '@abgov/react-components';
 import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-components';
+import { isEmpty } from 'lodash';
+import { ErrorObject } from 'ajv';
+
+export const extractNestedFields = (properties: DataObject, propertyKeys: string[]): Record<string, NestedItem> => {
+  const nestedItems: Record<string, NestedItem> = {};
+
+  propertyKeys.forEach((key) => {
+    if (properties[key].type === 'array') {
+      const propItems = (properties[key] && properties[key].items?.properties) || [];
+      const propReqItems = (properties[key].items && properties[key].items?.required) || [];
+      nestedItems[key] = {
+        properties: [...Object.keys(propItems)],
+        required: [...Object.keys(propReqItems)],
+      };
+    }
+  });
+
+  return nestedItems;
+};
 
 /**
  * Extract Json data schema name attribute and the ui schema label name.
@@ -29,7 +50,50 @@ export const extractNames = (obj: unknown, names: Record<string, string> = {}): 
   return names;
 };
 
-export const renderCellColumn = ({ currentData, error, isRequired }: RenderCellColumnProps) => {
+export interface TableProps {
+  itemsSchema: Record<string, unknown>;
+  data: Record<string, unknown>[];
+}
+
+const DataTable = ({ itemsSchema, data }: TableProps): JSX.Element => {
+  return (
+    <GoATable width="100%">
+      <thead>
+        <tr>
+          {itemsSchema &&
+            Object.keys(itemsSchema)?.map((headNames, ix) => {
+              return <th key={ix}>{headNames}</th>;
+            })}
+        </tr>
+      </thead>
+      <tbody>
+        {(data as Record<string, unknown>[]).map((obj, index) => (
+          <tr key={index}>
+            {itemsSchema &&
+              Object.keys(itemsSchema).map((headNames, ix) => {
+                return <td key={ix}>{obj[headNames as keyof typeof obj] as ReactNode}</td>;
+              })}
+          </tr>
+        ))}
+      </tbody>
+    </GoATable>
+  );
+};
+
+export const isObjectArrayEmpty = (currentData: string) => {
+  const result = isEmpty(currentData) || JSON.stringify(currentData) === '[{}]';
+  return result;
+};
+
+export const renderCellColumn = ({
+  data,
+  error,
+  errors,
+  index,
+  rowPath,
+  element,
+  isRequired,
+}: RenderCellColumnProps) => {
   const renderWarningCell = (data?: string) => {
     return (
       <HilightCellWarning>
@@ -41,25 +105,34 @@ export const renderCellColumn = ({ currentData, error, isRequired }: RenderCellC
     );
   };
 
-  if ((currentData === undefined && isRequired) || (error !== '' && error !== undefined)) {
-    return renderWarningCell(currentData);
-  } else if (currentData !== undefined && isRequired && error) {
-    return renderWarningCell(currentData);
+  if ((data === undefined && isRequired) || (error !== '' && error !== undefined)) {
+    return renderWarningCell(data);
+  } else if (data !== undefined && isRequired && error) {
+    return renderWarningCell(data);
   }
 
-  if (typeof currentData === 'string') {
-    return currentData;
-  } else if (typeof currentData === 'object' || Array.isArray(currentData)) {
-    const result = Object.keys(currentData);
-    if (result.length === 0) {
+  const path = `/${rowPath}/${index}/${element}/${index === 0 ? index : index - 1}`;
+  const nestedErrors = errors?.filter((e: ErrorObject) => e.instancePath.includes(path));
+
+  /* istanbul ignore next */
+  if (typeof data === 'string') {
+    return data;
+  } else if (typeof data === 'object' || Array.isArray(data)) {
+    const result = Object.keys(data);
+
+    if (!isRequired && nestedErrors.length === 0) {
+      return <pre>{JSON.stringify(data, null, 2)}</pre>;
+    } else if (result.length === 0) {
       return renderWarningCell();
-    } else if (currentData !== undefined && result.length > 0 && error !== '' && error !== undefined) {
-      const values = Object.values(currentData) as string[];
+    } else if (result.length > 0 && (isObjectArrayEmpty(data) || nestedErrors.length > 0)) {
+      return <pre>{renderWarningCell(JSON.stringify(data, null, 2))}</pre>;
+    } else if (data !== undefined && result.length > 0 && error !== '' && error !== undefined) {
+      const values = Object.values(data) as string[];
       if (values && values.length > 0) {
         return <pre>{renderWarningCell(JSON.stringify(values.at(0), null, 2))}</pre>;
       }
     } else {
-      return <pre>{JSON.stringify(currentData, null, 2)}</pre>;
+      return <DataTable itemsSchema={data[0]} data={data} />;
     }
   }
 
