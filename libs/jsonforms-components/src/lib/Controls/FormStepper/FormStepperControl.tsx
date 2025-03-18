@@ -36,6 +36,8 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps) => 
   /**
    * StepperCtx can only be provided once to prevent issues from categorization in categorization
    *  */
+  // eslint-disable-next-line
+  useEffect(() => {}, [formStepperCtx?.isProvided]);
   if (formStepperCtx?.isProvided === true) {
     return <FormStepperView {...props} />;
   }
