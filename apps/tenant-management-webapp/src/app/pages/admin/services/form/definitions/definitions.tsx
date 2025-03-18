@@ -13,6 +13,7 @@ import {
   fetchAllTags,
   fetchResourcesByTag,
   setSelectedTag,
+  deleteResourceTags,
 } from '@store/form/action';
 import { RootState } from '@store/index';
 import { ResourceTagFilterCriteria, ResourceTagResult, Service, Tag } from '@store/directory/models';
@@ -316,6 +317,8 @@ export const FormDefinitions = ({
           }
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
+            const urn = `${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`;
+            dispatch(deleteResourceTags(urn, currentDefinition.id));
             dispatch(deleteFormDefinition(currentDefinition));
           }}
         />

@@ -61,6 +61,9 @@ import {
   fetchResourcesByTagSuccess,
   FETCH_RESOURCES_BY_TAG_ACTION,
   FETCH_RESOURCES_BY_TAG_SUCCESS,
+  DELETE_RESOURCE_TAGS,
+  DeleteResourceTagsAction,
+  deleteResourceSuccessTags,
 } from './action';
 import {
   fetchFormDefinitionsApi,
@@ -70,13 +73,14 @@ import {
   exportApi,
 } from './api';
 import { FormDefinition, FormResourceTagResponse, FormResourceTagResult, Tag } from './model';
-import { Resource, ResourceTagRequest } from '@store/directory/models';
+import { ResourceTagRequest } from '@store/directory/models';
 import {
   getResourceTagsApi,
   getTagByNameApi,
   tagResourceApi,
   unTagResourceApi,
   getAllTagsApi,
+  deleteResourceTagsApi,
 } from '@store/directory/api';
 import { getResourcesByTag } from '../directory/api';
 import { toKebabName } from '@lib/kebabName';
@@ -547,6 +551,25 @@ export function* fetchResourcesByTag({ tag, next, criteria }: FetchResourcesByTa
   }
 }
 
+export function* deleteResourceTags({ urn, formDefinitionId }: DeleteResourceTagsAction): SagaIterator {
+  try {
+    const state: RootState = yield select();
+    const baseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl || '';
+    const token: string = yield call(getAccessToken);
+
+    if (baseUrl && token) {
+      const deleted = yield call(deleteResourceTagsApi, token, baseUrl, urn);
+      if (deleted) {
+        yield put(deleteResourceSuccessTags(urn, formDefinitionId));
+      }
+    } else {
+      throw new Error('Missing token or base URL');
+    }
+  } catch (err) {
+    yield put(ErrorNotification({ message: `Failed to delete tags from resource ${formDefinitionId}`, error: err }));
+  }
+}
+
 export function* watchFormSagas(): Generator {
   yield takeEvery(FETCH_FORM_DEFINITIONS_ACTION, fetchFormDefinitions);
   yield takeEvery(EXPORT_FORM_INFO_ACTION, exportFormInfo);
@@ -560,6 +583,7 @@ export function* watchFormSagas(): Generator {
   yield takeLatest(FETCH_FORM_METRICS_ACTION, fetchFormMetrics);
   yield takeEvery(START_SOCKET_STREAM_ACTION, startSocket);
 
+  yield takeEvery(DELETE_RESOURCE_TAGS, deleteResourceTags);
   yield takeEvery(TAG_FORM_RESOURCE_ACTION, tagFormResource);
   yield takeEvery(UNTAG_FORM_RESOURCE_ACTION, unTagFormResource);
   yield takeEvery(FETCH_FORM_RESOURCE_TAGS_ACTION, fetchFormResourceTags);
