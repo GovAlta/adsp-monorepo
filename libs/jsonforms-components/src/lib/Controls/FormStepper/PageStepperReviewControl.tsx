@@ -1,19 +1,18 @@
-import React, { useContext } from 'react';
-import { JsonFormsDispatch } from '@jsonforms/react';
-import { Categorization, Layout, SchemaBasedCondition, isVisible, Scoped } from '@jsonforms/core';
-import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
-import { CategorizationStepperLayoutReviewRendererProps } from './types';
+import { GoAButton, GoATable } from '@abgov/react-components';
+import { Categorization, isVisible, Layout, SchemaBasedCondition, Scoped } from '@jsonforms/core';
+import { JsonFormsDispatch, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
+import { useContext } from 'react';
+import { GoABaseTableReviewRenderers } from '../../../index';
+import { withAjvProps } from '../../util/layout';
+import { JsonFormsStepperContext } from './context';
 import {
-  TableReviewItemSection,
-  TableReviewItem,
   TableReviewCategoryLabel,
+  TableReviewItem,
+  TableReviewItemSection,
   TableReviewPageTitleRow,
 } from './styled-components';
+import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { getProperty } from './util/helpers';
-import { withAjvProps } from '../../util/layout';
-import { GoATable, GoAButton } from '@abgov/react-components';
-import { GoABaseTableReviewRenderers, GoARenderers } from '../../../index';
-import { JsonFormsStepperContext } from './context';
 
 export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, cells, enabled, navigationFunc } = props;

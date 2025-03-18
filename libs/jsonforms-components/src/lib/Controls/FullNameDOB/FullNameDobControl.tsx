@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { ControlProps } from '@jsonforms/core';
 import { GoADate, GoAFormItem, GoAGrid, GoAInput } from '@abgov/react-components';
-import { TextWrap, TextWrapDiv } from '../AddressLookup/styled-components';
+import { ControlProps } from '@jsonforms/core';
+import { useState } from 'react';
 
 type DateOfBirthControlProps = ControlProps;
 
