@@ -24,6 +24,7 @@ import { CommentRouter } from './services/comment';
 import { FormRouter } from './services/form';
 import { FileRouter } from './services/file';
 import { ValueRouter } from './services/value';
+import { CacheRouter } from './services/cache';
 import { serviceVariables } from '../../../featureFlag';
 
 import { ScriptRouter } from './services/script';
@@ -46,6 +47,8 @@ const TenantManagement = (): JSX.Element => {
     switch (serviceName) {
       case 'Access':
         return <AccessPage />;
+      case 'Cache':
+        return <CacheRouter />;
       case 'Calendar':
         return <Calendar />;
       case 'Comment':
@@ -65,7 +68,7 @@ const TenantManagement = (): JSX.Element => {
       case 'PDF':
         return <PDFRouter />;
       case 'Script':
-        return <ScriptRouter />
+        return <ScriptRouter />;
       case 'Status':
         return <Status />;
       case 'Task':
@@ -74,6 +77,7 @@ const TenantManagement = (): JSX.Element => {
         return <Feedback />;
       case 'Value':
         return <ValueRouter />;
+
       default:
         return <Navigate to="/404" />;
     }
