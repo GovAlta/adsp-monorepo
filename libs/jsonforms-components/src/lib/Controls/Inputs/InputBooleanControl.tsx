@@ -32,7 +32,7 @@ export const BooleanComponent = ({
     if (schema?.description) {
       label = schema?.description;
     }
-    return `${label} ${required ? ' is required' : ''}`;
+    return `${label}`;
   };
 
   const text = getRequiredLabelText();
