@@ -50,6 +50,8 @@ import {
   FormStepperReviewControl,
   GoAInputBaseTableReviewControl,
   AddressLoopUpControlTableReview,
+  GoAInputBaseFullNameControlReview,
+  GoAInputBaseFullNameDobControlReview,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -165,6 +167,9 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
 
 export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
+  { tester: FullNameTester, renderer: GoAInputBaseFullNameControlReview },
+  { tester: FullNameDobTester, renderer: GoAInputBaseFullNameDobControlReview },
+
   { tester: GoAEnumControlTester, renderer: GoAInputBaseTableReviewControl },
   { tester: GoAIntegerControlTester, renderer: GoAInputBaseTableReviewControl },
   { tester: GoANumberControlTester, renderer: GoAInputBaseTableReviewControl },

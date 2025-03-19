@@ -1,13 +1,13 @@
-import { GoAFormItem, GoAGrid } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
-import { withJsonFormsAllOfProps } from '@jsonforms/react';
+import { GoAFormItem, GoAGrid } from '@abgov/react-components';
 import { TextWrapDiv } from '../AddressLookup/styled-components';
+import { withJsonFormsAllOfProps } from '@jsonforms/react';
 
-type DateOfBirthReviewControlProps = ControlProps;
+type FullNameControlReviewProps = ControlProps;
 
-export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): JSX.Element => {
+export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.Element => {
   return (
-    <>
+    <div>
       <GoAGrid minChildWidth="0ch" gap="s" mb="m">
         <GoAFormItem label="First name">
           <TextWrapDiv>
@@ -25,15 +25,8 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
           </TextWrapDiv>
         </GoAFormItem>
       </GoAGrid>
-      <GoAGrid minChildWidth="0ch" gap="s">
-        <GoAFormItem label="Date of birth">
-          <TextWrapDiv>
-            <div data-testid={`dob-control-${props.id}`}>{props.data?.dateOfBirth}</div>
-          </TextWrapDiv>
-        </GoAFormItem>
-      </GoAGrid>
-    </>
+    </div>
   );
 };
 
-export const GoAInputBaseFullNameDobControlReview = withJsonFormsAllOfProps(FullNameDobReviewControl);
+export const GoAInputBaseFullNameControlReview = withJsonFormsAllOfProps(FullNameControlReview);

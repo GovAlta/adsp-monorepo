@@ -79,7 +79,7 @@ export const FormStepperSummaryH3 = styled.h3`
   line-height: var(--goa-line-height-4);
   font-weight: var(--goa-font-weight-regular);
 `;
-export const PageRenderPadding = styled.h3`
+export const PageRenderPadding = styled.div`
   margin-top: var(--goa-space-2xl);
 `;
 export const PageBorder = styled.h3`
@@ -101,9 +101,7 @@ export const TableReviewItem = styled.div`
 export const TableReviewPageTitleRow = styled.div`
   margin-top: var(--goa-space-xl);
   display: flex;
-  .right {
-    margin-left: auto;
-  }
+  justify-content: space-between;
 `;
 
 export const TableReviewCategoryLabel = styled.h3`

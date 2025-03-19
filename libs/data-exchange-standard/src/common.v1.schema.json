@@ -35,12 +35,15 @@
       "type": "object",
       "properties": {
         "firstName": {
+          "type": "string",
           "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
         },
         "middleName": {
+          "type": "string",
           "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
         },
         "lastName": {
+          "type": "string",
           "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
         },
         "dateOfBirth": {
