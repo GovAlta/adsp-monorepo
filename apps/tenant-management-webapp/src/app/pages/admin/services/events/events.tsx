@@ -53,16 +53,18 @@ export const Events: FunctionComponent = () => {
           </Tab>
         </Tabs>
 
-        <EventDefinitionModalForm
-          open={activateEditState}
-          initialValue={defaultEventDefinition}
-          isEdit={false}
-          definitions={definitions}
-          coreNamespaces={coreNamespaces}
-          onClose={() => {
-            setActivateEditState(false);
-          }}
-        />
+        {activateEditState && (
+          <EventDefinitionModalForm
+            open={activateEditState}
+            initialValue={defaultEventDefinition}
+            isEdit={false}
+            definitions={definitions}
+            coreNamespaces={coreNamespaces}
+            onClose={() => {
+              setActivateEditState(false);
+            }}
+          />
+        )}
       </Main>
       <Aside>
         <AsideLinks serviceName="event" />
