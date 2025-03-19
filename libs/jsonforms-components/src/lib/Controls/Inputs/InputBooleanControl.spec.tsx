@@ -42,7 +42,7 @@ describe('Input Boolean Control', () => {
     const { baseElement } = render(getForm(dataSchema, uiSchema));
     const checkbox = baseElement.querySelector("goa-checkbox[testId='isAlive-checkbox-test-id']");
     expect(checkbox).toBeInTheDocument();
-    expect(checkbox.getAttribute('text')).toBe('Check Me');
+    expect(checkbox!.getAttribute('text')).toBe('Check Me');
   });
 
   it('can render a required checkbox', () => {
@@ -51,7 +51,7 @@ describe('Input Boolean Control', () => {
     const { baseElement } = render(getForm(dataSchema, uiSchema));
     const checkbox = baseElement.querySelector("goa-checkbox[testId='isAlive-checkbox-test-id']");
     expect(checkbox).toBeInTheDocument();
-    expect(checkbox.getAttribute('text')).toBe('Check Me (required)');
+    expect(checkbox!.getAttribute('text')).toBe('Check Me (required)');
   });
 
   it('will use a description if no label', () => {
@@ -60,6 +60,6 @@ describe('Input Boolean Control', () => {
     const { baseElement } = render(getForm(dataSchema, uiSchema));
     const checkbox = baseElement.querySelector("goa-checkbox[testId='isAlive-checkbox-test-id']");
     expect(checkbox).toBeInTheDocument();
-    expect(checkbox.getAttribute('text')).toBe('Bob');
+    expect(checkbox!.getAttribute('text')).toBe('Bob');
   });
 });

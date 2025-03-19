@@ -26,18 +26,18 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
     let label = '';
     if (uischema?.options?.text) {
       label = uischema?.options?.text;
-    }
-    if (uischema?.label) {
+    } else if (schema?.title) {
+      label = schema?.title;
+    } else if (schema?.description) {
+      label = schema?.description;
+    } else if (uischema?.label) {
       label = (uischema?.label as string) || '';
     }
-    if (schema?.title) {
-      label = schema?.title;
-    }
-    if (schema?.description) {
-      label = schema?.description;
-    }
-    return `${label} ${required ? ' is required' : ''}`;
+    return `${label} ${required ? 'is required.' : ''}`;
   };
+  // const requiredText = `${
+  //   uischema?.options?.text ? uischema?.options?.text : schema?.title ? schema?.title : schema?.description
+  // }${required ? ' is required.' : ''}`;
 
   const renderRequiredLabel = () => {
     if (label !== '' && uischema.options?.text !== '') return null;
