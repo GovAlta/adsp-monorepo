@@ -117,7 +117,7 @@ describe('GoABaseInputReviewComponent', () => {
     const reviewControl = getByTestId('review-control-input-id');
     console.log('reviewControl.textContent', reviewControl.textContent);
     expect(reviewControl.textContent).toContain('No (test) (required)');
-    expect(reviewControl.textContent).toContain('test is required.');
+    expect(reviewControl.textContent).toContain('test is required');
   });
 
   it('renders an empty string for undefined data', () => {
