@@ -9,7 +9,7 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
   return (
     <>
       <GoAGrid minChildWidth="0ch" gap="s" mb="m">
-        <GoAFormItem label="First name">
+        <GoAFormItem label="First name" requirement="required">
           <TextWrapDiv>
             <div data-testid={`firstName-control-${props.id}`}>{props.data?.firstName}</div>
           </TextWrapDiv>
@@ -19,14 +19,14 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
             <div data-testid={`middleName-control-${props.id}`}>{props.data?.middleName}</div>
           </TextWrapDiv>
         </GoAFormItem>
-        <GoAFormItem label="Last name">
+        <GoAFormItem label="Last name" requirement="required">
           <TextWrapDiv>
             <div data-testid={`lastName-control-${props.id}`}>{props.data?.lastName}</div>
           </TextWrapDiv>
         </GoAFormItem>
       </GoAGrid>
       <GoAGrid minChildWidth="0ch" gap="s">
-        <GoAFormItem label="Date of birth">
+        <GoAFormItem label="Date of birth" requirement="required">
           <TextWrapDiv>
             <div data-testid={`dob-control-${props.id}`}>{props.data?.dateOfBirth}</div>
           </TextWrapDiv>
