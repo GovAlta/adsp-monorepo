@@ -108,6 +108,8 @@ export const defaultTemplateBody = `<!--
   .caseWorker p, .office p { margin: 0; padding: 0; }
 </style>
 
+<title>PDF Title goes here</title>
+
 <div class="body-wrapper">
   <div>
     <!--
