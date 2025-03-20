@@ -18,9 +18,21 @@ export const BooleanComponent = ({
   schema,
   isVisited,
 }: ControlProps & WithInputProps) => {
-  const text = `${
-    uischema?.options?.text ? uischema?.options?.text : schema?.title ? schema?.title : schema?.description
-  }${required ? ' (required)' : ''}`;
+  const getRequiredLabelText = () => {
+    let label = '';
+    if (uischema?.options?.text) {
+      label = uischema?.options?.text;
+    } else if (schema?.title) {
+      label = schema?.title;
+    } else if (schema?.description) {
+      label = schema?.description;
+    } else if (uischema?.label) {
+      label = uischema?.label as string;
+    }
+    return `${label}${required ? ' (required)' : ''}`;
+  };
+
+  const text = getRequiredLabelText();
 
   return (
     <CheckboxWrapper>
