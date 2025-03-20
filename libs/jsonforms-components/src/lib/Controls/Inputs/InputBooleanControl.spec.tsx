@@ -54,9 +54,35 @@ describe('Input Boolean Control', () => {
     expect(checkbox!.getAttribute('text')).toBe('Check Me (required)');
   });
 
-  it('will use a description if no label', () => {
+  it('will use a title if no label', () => {
     const dataSchema = { type: 'object', properties: { isAlive: { type: 'boolean', title: 'Bob' } } };
     const uiSchema = { type: 'Control', scope: '#/properties/isAlive' };
+    const { baseElement } = render(getForm(dataSchema, uiSchema));
+    const checkbox = baseElement.querySelector("goa-checkbox[testId='isAlive-checkbox-test-id']");
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox!.getAttribute('text')).toBe('Bob');
+  });
+
+  it('will use a description if no label', () => {
+    const dataSchema = { type: 'object', properties: { isAlive: { type: 'boolean', description: 'Bob' } } };
+    const uiSchema = { type: 'Control', scope: '#/properties/isAlive' };
+    const { baseElement } = render(getForm(dataSchema, uiSchema));
+    const checkbox = baseElement.querySelector("goa-checkbox[testId='isAlive-checkbox-test-id']");
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox!.getAttribute('text')).toBe('Bob');
+  });
+  it('will use a uischema label', () => {
+    const dataSchema = { type: 'object', properties: { isAlive: { type: 'boolean' } } };
+    const uiSchema = { type: 'Control', scope: '#/properties/isAlive', label: 'checkbox' };
+    const { baseElement } = render(getForm(dataSchema, uiSchema));
+    const checkbox = baseElement.querySelector("goa-checkbox[testId='isAlive-checkbox-test-id']");
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox!.getAttribute('text')).toBe('checkbox');
+  });
+
+  it('will use a uischema label', () => {
+    const dataSchema = { type: 'object', properties: { isAlive: { type: 'boolean' } } };
+    const uiSchema = { type: 'Control', scope: '#/properties/isAlive', label: 'Bob' };
     const { baseElement } = render(getForm(dataSchema, uiSchema));
     const checkbox = baseElement.querySelector("goa-checkbox[testId='isAlive-checkbox-test-id']");
     expect(checkbox).toBeInTheDocument();

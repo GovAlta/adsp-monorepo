@@ -63,8 +63,8 @@ describe('Input Boolean Radio Control', () => {
     const radioGroup = baseElement.querySelector("goa-radio-group[testId='radio-boolean-radio-jsonform']");
     expect(radioGroup).toBeInTheDocument();
 
-    fireEvent(radioGroup, new CustomEvent('_change', { detail: { name: 'bob', value: 'Yes' } }));
-    expect(radioGroup.getAttribute('value')).toBe('Yes');
+    fireEvent(radioGroup!, new CustomEvent('_change', { detail: { name: 'bob', value: 'Yes' } }));
+    expect(radioGroup!.getAttribute('value')).toBe('Yes');
   });
 
   it('will accept a no click', () => {
@@ -72,7 +72,7 @@ describe('Input Boolean Radio Control', () => {
     const radioGroup = baseElement.querySelector("goa-radio-group[testId='radio-boolean-radio-jsonform']");
     expect(radioGroup).toBeInTheDocument();
 
-    fireEvent(radioGroup, new CustomEvent('_change', { detail: { name: 'bob', value: 'No' } }));
-    expect(radioGroup.getAttribute('value')).toBe('No');
+    fireEvent(radioGroup!, new CustomEvent('_change', { detail: { name: 'bob', value: 'No' } }));
+    expect(radioGroup!.getAttribute('value')).toBe('No');
   });
 });

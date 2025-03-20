@@ -33,11 +33,8 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
     } else if (uischema?.label) {
       label = (uischema?.label as string) || '';
     }
-    return `${label} ${required ? 'is required.' : ''}`;
+    return `${label} ${required ? 'is required' : ''}`;
   };
-  // const requiredText = `${
-  //   uischema?.options?.text ? uischema?.options?.text : schema?.title ? schema?.title : schema?.description
-  // }${required ? ' is required.' : ''}`;
 
   const renderRequiredLabel = () => {
     if (label !== '' && uischema.options?.text !== '') return null;
