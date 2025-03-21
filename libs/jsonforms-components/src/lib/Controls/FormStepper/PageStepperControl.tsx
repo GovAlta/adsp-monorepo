@@ -33,7 +33,7 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const { validatePage, goToPage } = formStepperCtx as JsonFormsStepperContextProps;
 
-  const { categories, activeId } = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
+  const { categories, activeId, isValid } = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
 
   useEffect(() => {
     validatePage(activeId);
@@ -60,6 +60,7 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
       onClick: handleGoToPage,
       title: props.uischema?.options?.title,
       subtitle: props.uischema?.options?.subtitle,
+      isValid: isValid,
     };
     return <TableOfContents {...tocProps} />;
   } else {
