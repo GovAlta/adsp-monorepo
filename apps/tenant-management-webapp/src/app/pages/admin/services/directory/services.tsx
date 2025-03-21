@@ -6,14 +6,13 @@ import { renderNoItem } from '@components/NoItem';
 import { GoAButton } from '@abgov/react-components';
 import { DirectoryModal } from './modals/editModal';
 import { ServiceTableComponent } from './serviceList';
-import styled from 'styled-components';
 import { DirectoryDeleteModal } from './modals/deleteModal';
 import { selectDirectory } from '@store/directory/selectors';
 import { selectTenantName, selectPageIndicator } from '@store/session/selectors';
 import { selectSortedDirectory } from '@store/directory/selectors';
 import { UpdateModalState } from '@store/session/actions';
 import { AddModalType } from '@store/directory/models';
-
+import { NameDiv } from '../styled-components';
 export const DirectoryService = (): JSX.Element => {
   const dispatch = useDispatch();
   const { tenantDirectory, coreDirectory } = useSelector(selectSortedDirectory);
@@ -66,11 +65,3 @@ export const DirectoryService = (): JSX.Element => {
     </section>
   );
 };
-const NameDiv = styled.div`
-  margin-top: 1rem;
-  text-transform: capitalize;
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-bold);
-  padding-left: 0.4rem;
-  padding-bottom: 0.5rem;
-`;

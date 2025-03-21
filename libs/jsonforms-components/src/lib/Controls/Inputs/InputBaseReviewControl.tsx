@@ -21,9 +21,20 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
   const { data, id, uischema, schema, required, label } = props;
   let reviewText = data;
   const isBoolean = typeof data === 'boolean';
-  const requiredText = `${
-    uischema?.options?.text ? uischema?.options?.text : schema?.title ? schema?.title : schema?.description
-  }${required ? ' is required.' : ''}`;
+
+  const getRequiredLabelText = () => {
+    let label = '';
+    if (uischema?.options?.text) {
+      label = uischema?.options?.text;
+    } else if (schema?.title) {
+      label = schema?.title;
+    } else if (schema?.description) {
+      label = schema?.description;
+    } else if (uischema?.label) {
+      label = (uischema?.label as string) || '';
+    }
+    return `${label} ${required ? 'is required' : ''}`;
+  };
 
   const renderRequiredLabel = () => {
     if (label !== '' && uischema.options?.text !== '') return null;
@@ -32,6 +43,8 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
       <RequiredTextLabel>{` (required)`}</RequiredTextLabel>
     ) : null;
   };
+
+  const requiredText = getRequiredLabelText();
 
   const renderWarningMessage = () => {
     if (uischema.options?.radio) return null;
@@ -59,7 +72,7 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
   }
 
   return (
-    <div style={{ textWrap: 'wrap', wordBreak: 'break-word' }} data-testid={`review-control-${id}`}>
+    <div style={{ fontWeight: '400', textWrap: 'wrap', wordBreak: 'break-word' }} data-testid={`review-control-${id}`}>
       {reviewText}
       {renderRequiredLabel()}
       {renderWarningMessage()}

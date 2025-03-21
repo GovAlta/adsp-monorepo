@@ -344,8 +344,7 @@ export function createForm(
 
       let form = await definition.createForm(user, repository, notificationService, applicantInfo);
       let formSubmission: FormSubmissionEntity = null;
-      const events: DomainEvent[] = [];
-      events.push(formCreated(apiId, user, form));
+      let event = formCreated(apiId, user, form);
 
       // If data or files is set, then update the form.
       if (data || fileIds) {
@@ -356,24 +355,25 @@ export function createForm(
         form = await form.update(user, data, files);
       }
 
-      let jId = null;
-
+      let jobId = null;
       // If submit is true, then immediately submit the form.
       if (submit === true) {
-        const [submittedForm, submission, jobId] = await form.submit(
+        const [submittedForm, submission, pdfJobId] = await form.submit(
           user,
           queueTaskService,
           submissionRepository,
           pdfService
         );
-        jId = jobId;
+        jobId = pdfJobId;
         form = submittedForm;
         formSubmission = submission;
-        events.push(formSubmitted(apiId, user, form, submission));
+        // The create event is replaced with the submitted even.
+        // This means that create events won't capture every new form creation.
+        event = formSubmitted(apiId, user, form, submission);
       }
 
       const formWithJobId: FormEntityWithJobId = form;
-      formWithJobId.jobId = jId;
+      formWithJobId.jobId = jobId;
 
       const result = formSubmission?.id
         ? mapFormWithFormSubmission(apiId, formWithJobId, formSubmission)
@@ -381,9 +381,7 @@ export function createForm(
 
       res.send(result);
 
-      for (const event of events) {
-        eventService.send(event);
-      }
+      eventService.send(event);
 
       if (definition.supportTopic) {
         commentService.createSupportTopic(form, result.urn);
@@ -667,7 +665,7 @@ export function formOperation(
           break;
         }
         case ARCHIVE_FORM_OPERATION: {
-          result = await form.archive(user);
+          result = await form.archive(user, notificationService);
           event = formArchived(apiId, user, result);
           break;
         }

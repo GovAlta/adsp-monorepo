@@ -21,7 +21,6 @@ import {
 
 import { RootState } from '../index';
 import axios from 'axios';
-import moment from 'moment';
 import { EventItem } from './models';
 import { UpdateIndicator, UpdateLoadingState } from '@store/session/actions';
 

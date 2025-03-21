@@ -74,9 +74,7 @@ export const EventDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdi
           />
         </div>
       )}
-
       {/* Delete confirmation */}
-
       <DeleteModal
         isOpen={showDeleteConfirmation}
         title="Delete event definition"
@@ -91,17 +89,18 @@ export const EventDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdi
           dispatch(deleteEventDefinition(selectedDefinition));
         }}
       />
-
-      <EventDefinitionModalForm
-        open={editDefinition}
-        initialValue={selectedDefinition}
-        isEdit={isEdit}
-        definitions={definitions}
-        coreNamespaces={coreNamespaces}
-        onClose={() => {
-          reset();
-        }}
-      />
+      {editDefinition && (
+        <EventDefinitionModalForm
+          open={editDefinition}
+          initialValue={selectedDefinition}
+          isEdit={isEdit}
+          definitions={definitions}
+          coreNamespaces={coreNamespaces}
+          onClose={() => {
+            reset();
+          }}
+        />
+      )}
     </section>
   );
 };

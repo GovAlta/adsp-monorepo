@@ -78,22 +78,28 @@ export const FormExport = (): JSX.Element => {
 
     setLoadingMessage('Exporting File ...');
   };
+
+  // eslint-disable-next-line
   useEffect(() => {
     if (selectedForm) {
       setFileNamePrefix(`Exports-${truncateString(selectedForm?.id)}-${generateRandomNumber()}`);
     }
   }, [selectedForm]);
+
+  // eslint-disable-next-line
   useEffect(() => {
     dispatch(FetchFilesService());
-  }, [exportStream]);
+  }, [dispatch, exportStream]);
 
+  // eslint-disable-next-line
   useEffect(() => {
     dispatch(getFormDefinitions());
-  }, [Object.keys(formDefinitions).length === 0]);
+  }, [dispatch, Object.keys(formDefinitions).length === 0]);
 
+  // eslint-disable-next-line
   useEffect(() => {
     setColumns(transformToColumns(selectedForm, dataSchema));
-  }, [exportFormat, selectedForm]);
+  }, [exportFormat, selectedForm, dataSchema]);
 
   useEffect(() => {
     const file = fileList.find((file) => exportStream?.payload?.jobId === file?.recordId);
@@ -102,14 +108,15 @@ export const FormExport = (): JSX.Element => {
       setDownloadDisable(false);
       setSpinner(false);
     }
-  }, [fileList]);
-
+  }, [fileList, exportStream?.payload?.jobId]);
+  // eslint-disable-next-line
   useEffect(() => {
     if (next) {
       dispatch(getFormDefinitions(next));
     }
-  }, [next === 'NTA=']);
+  }, [dispatch, next === 'NTA=']);
 
+  // eslint-disable-next-line
   useEffect(() => {}, [exportResult]);
 
   useEffect(() => {

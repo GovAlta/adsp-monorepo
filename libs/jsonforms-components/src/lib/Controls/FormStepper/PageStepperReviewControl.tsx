@@ -1,19 +1,18 @@
-import React, { useContext } from 'react';
-import { JsonFormsDispatch } from '@jsonforms/react';
-import { Categorization, Layout, SchemaBasedCondition, isVisible, Scoped } from '@jsonforms/core';
-import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
-import { CategorizationStepperLayoutReviewRendererProps } from './types';
+import { GoAButton, GoATable } from '@abgov/react-components';
+import { Categorization, isVisible, Layout, SchemaBasedCondition, Scoped } from '@jsonforms/core';
+import { JsonFormsDispatch, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
+import { useContext } from 'react';
+import { GoABaseTableReviewRenderers } from '../../../index';
+import { withAjvProps } from '../../util/layout';
+import { JsonFormsStepperContext } from './context';
 import {
-  TableReviewItemSection,
-  TableReviewItem,
   TableReviewCategoryLabel,
+  TableReviewItem,
+  TableReviewItemSection,
   TableReviewPageTitleRow,
 } from './styled-components';
+import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { getProperty } from './util/helpers';
-import { withAjvProps } from '../../util/layout';
-import { GoATable, GoAButton } from '@abgov/react-components';
-import { GoABaseTableReviewRenderers } from '../../../index';
-import { JsonFormsStepperContext } from './context';
 
 export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, cells, enabled, navigationFunc } = props;
@@ -29,25 +28,21 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
         const categoryLabel = category.label || category.i18n || 'Unknown Category';
         return (
           <>
-            <div>
-              <TableReviewPageTitleRow>
-                <TableReviewCategoryLabel>{categoryLabel}</TableReviewCategoryLabel>
-                <div className="right">
-                  <GoAButton
-                    type="tertiary"
-                    testId={`page-review-change-${category.label}-btn`}
-                    onClick={() => {
-                      if (formStepperCtx) {
-                        formStepperCtx.toggleShowReviewLink(index);
-                        formStepperCtx.goToPage(index);
-                      }
-                    }}
-                  >
-                    Change
-                  </GoAButton>
-                </div>
-              </TableReviewPageTitleRow>
-            </div>
+            <TableReviewPageTitleRow>
+              <TableReviewCategoryLabel>{categoryLabel}</TableReviewCategoryLabel>
+              <GoAButton
+                type="tertiary"
+                testId={`page-review-change-${category.label}-btn`}
+                onClick={() => {
+                  if (formStepperCtx) {
+                    formStepperCtx.toggleShowReviewLink(index);
+                    formStepperCtx.goToPage(index);
+                  }
+                }}
+              >
+                Change
+              </GoAButton>
+            </TableReviewPageTitleRow>
             <TableReviewItemSection key={index}>
               {category.elements
                 .filter((field) => {
@@ -83,9 +78,9 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
                   }
                 })
                 .flat()
-                .map((element) => {
+                .map((element, index) => {
                   return (
-                    <GoATable width="100%">
+                    <GoATable width="100%" key={index}>
                       <tbody>
                         <JsonFormsDispatch
                           data-testid={`jsonforms-object-list-defined-elements-dispatch`}

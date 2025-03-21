@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FormDefinition } from '@store/form/model';
 import {
   OverflowWrap,
-  EntryDetail,
   TableDataName,
   TableDataDescription,
   DetailsTagWrapper,
@@ -18,7 +17,7 @@ import { selectFormAppLink, selectFormResourceTags } from '@store/form/selectors
 import { isValidUrl } from '@lib/validation/urlUtil';
 import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
 import { GoABadge, GoACircularProgress } from '@abgov/react-components';
-
+import { EntryDetail } from '../../styled-components';
 interface FormDefinitionItemProps {
   formDefinition: FormDefinition;
   baseResourceFormUrn: string;

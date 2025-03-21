@@ -1,10 +1,17 @@
 import axios from 'axios';
-import { Resource, ResourceTagResult, Tag, TagResourceRequest } from './models';
+import {
+  Resource,
+  ResourceTagResult,
+  Tag,
+  ResourceTagRequest,
+  ResourceType,
+  ResourceTagFilterCriteria,
+} from './models';
 
 export const tagResourceApi = async (
   token: string,
   serviceUrl: string,
-  tagResourceRequest: TagResourceRequest
+  tagResourceRequest: ResourceTagRequest
 ): Promise<{ tagged: boolean; tag: Tag; resource: Resource }> => {
   const { tag, resource } = tagResourceRequest;
   const { data } = await axios.post<{ tagged: boolean; tag: Tag; resource: Resource }>(
@@ -35,6 +42,17 @@ export const unTagResourceApi = async (
   return data;
 };
 
+export const deleteResourceTagsApi = async (token: string, serviceUrl: string, urn: string): Promise<boolean> => {
+  const { data } = await axios.delete<{ deleted: boolean }>(
+    new URL(`/resource/v1/resources/${encodeURIComponent(urn)}`, serviceUrl).href,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+
+  return data.deleted;
+};
+
 export const getResourceTagsApi = async (
   token: string,
   serviceUrl: string,
@@ -63,20 +81,60 @@ export const getTagByNameApi = async (
 };
 
 export const getAllTagsApi = async (token: string, serviceUrl: string): Promise<{ results: Tag[] }> => {
-  const { data } = await axios.get(new URL('/resource/v1/tags?top=50', serviceUrl).href, {
+  const { data } = await axios.get(new URL('/resource/v1/tags?top=200', serviceUrl).href, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
   return data;
 };
 
-export const getResourcesByTag = async (token: string, serviceUrl: string, tag: string): Promise<Resource[]> => {
-  const url = new URL(`/resource/v1/tags/${encodeURIComponent(tag)}/resources`, serviceUrl);
+export const getResourcesByTag = async (
+  token: string,
+  serviceUrl: string,
+  tag: string,
+  criteria: ResourceTagFilterCriteria,
+  next?: string
+): Promise<Resource[]> => {
+  const tagNext = next ?? '';
 
-  url.searchParams.append('includeRepresents', 'true');
+  const newCriteria = JSON.stringify({
+    typeIdEquals: criteria.typeEquals,
+  });
+
+  const url = new URL(
+    `/resource/v1/tags/${encodeURIComponent(tag)}/resources?${next ? `&after=${tagNext}` : ''}`,
+    serviceUrl
+  );
+
   const { data } = await axios.get(url.href, {
     headers: { Authorization: `Bearer ${token}` },
+    params: {
+      includeRepresents: true,
+      top: criteria.top,
+      criteria: newCriteria,
+    },
   });
+
+  return data;
+};
+export const fetchResourceTypeApi = async (token: string, url: string): Promise<Record<string, ResourceType>> => {
+  const res = await axios.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
+export const updateResourceTypeApi = async (
+  token: string,
+  serviceUrl: string,
+  resourceType: ResourceType,
+  urn: string
+) => {
+  const { data } = await axios.patch<{ latest: { configuration: Record<string, ResourceType> } }>(
+    new URL(`configuration/v2/configuration/platform/directory-service/`, serviceUrl).href,
+    { operation: 'UPDATE', update: { [urn]: resourceType } },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
 
   return data;
 };

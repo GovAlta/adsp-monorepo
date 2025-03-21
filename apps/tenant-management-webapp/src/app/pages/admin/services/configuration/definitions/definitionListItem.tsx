@@ -1,8 +1,8 @@
 import React, { FunctionComponent, useState } from 'react';
-import { IconDiv, EntryDetail } from '../styled-components';
+import { IconDiv } from '../styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { ConfigDefinition, ConfigurationSchema } from '@store/configuration/model';
-
+import { EntryDetail } from '../../styled-components';
 interface serviceItemProps {
   configSchema: ConfigurationSchema;
   configName: string;

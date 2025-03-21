@@ -14,6 +14,13 @@ export const EntryDetail = styled.div`
   padding: var(--goa-space-m);
   text-align: left;
 `;
+export const NameDiv = styled.div`
+  margin-top: 1rem;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  padding-left: 0.4rem;
+  padding-bottom: 0.5rem;
+`;
 
 export const TableDiv = styled.div`
   & td:first-child {
@@ -73,4 +80,14 @@ export const TableDiv = styled.div`
 export const Buttons = styled.div`
   margin-bottom: 1rem;
   text-align: left;
+`;
+
+export const ActionIconsDiv = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  goa-icon-button {
+    margin: 0 4px;
+  }
 `;

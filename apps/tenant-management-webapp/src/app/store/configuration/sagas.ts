@@ -275,7 +275,7 @@ export function* fetchRegisterData(): SagaIterator {
 
     const registerData: RegisterConfigData[] = [];
 
-    const dataList = dataListObject.map(([name, config]) => name.replace(':', '/')) || [];
+    const dataList = dataListObject.map(([name]) => name.replace(':', '/')) || [];
 
     const anonymousRead =
       dataListObject

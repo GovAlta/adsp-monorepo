@@ -79,7 +79,7 @@ export const FormStepperSummaryH3 = styled.h3`
   line-height: var(--goa-line-height-4);
   font-weight: var(--goa-font-weight-regular);
 `;
-export const PageRenderPadding = styled.h3`
+export const PageRenderPadding = styled.div`
   margin-top: var(--goa-space-2xl);
 `;
 export const PageBorder = styled.h3`
@@ -101,11 +101,35 @@ export const TableReviewItem = styled.div`
 export const TableReviewPageTitleRow = styled.div`
   margin-top: var(--goa-space-xl);
   display: flex;
-  .right {
-    margin-left: auto;
-  }
+  justify-content: space-between;
 `;
 
 export const TableReviewCategoryLabel = styled.h3`
   color: var(--goa-color-text-secondary) !important;
+  margin-bottom: var(--goa-space-l);
+`;
+
+export const CategoryStatus = styled.td`
+  width: var(--goa-space-xl);
+  padding-right: var(--goa-space-xl);
+`;
+export const TocPageRef = styled.td`
+  padding-left: var(--goa-space-xl);
+`;
+export const TocTitle = styled.h1`
+  padding: 0;
+  margin: 0;
+  padding-left: var(--goa-space-xl);
+  padding-bottom: var(--goa-space-3xl);
+`;
+export const TocSubtitle = styled.h2`
+  padding: 0;
+  margin: 0;
+  padding-left: var(--goa-space-xl);
+`;
+export const CompletionStatus = styled.div`
+  padding: 0;
+  margin: 0;
+  padding-left: var(--goa-space-xl);
+  padding-bottom: var(--goa-space-xl);
 `;

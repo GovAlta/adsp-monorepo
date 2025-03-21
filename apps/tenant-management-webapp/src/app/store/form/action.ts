@@ -8,7 +8,7 @@ import {
   Tag,
 } from './model';
 import { Socket } from 'socket.io-client';
-import { ResourceTag, Resource } from '@store/directory/models';
+import { ResourceTag, ResourceTagFilterCriteria } from '@store/directory/models';
 
 export const CLEAR_FORM_DEFINITIONS_ACTION = 'form/CLEAR_FORM_DEFINITIONS_ACTION';
 export const FETCH_FORM_DEFINITIONS_ACTION = 'form/FETCH_FORM_DEFINITIONS_ACTION';
@@ -70,6 +70,10 @@ export const FETCH_RESOURCES_BY_TAG_SUCCESS = 'form/resource/fetch-resources-by-
 export const FETCH_RESOURCES_BY_TAG_FAILURE = 'form/resource/fetch-resources-by-tag/failed';
 
 export const SET_SELECTED_TAG = 'form/resource/set-selected-tag';
+
+export const DELETE_RESOURCE_TAGS = 'form/resource/delete-resource-tags';
+
+export const DELETE_RESOURCE_TAGS_SUCCESS = 'form/resource/delete-resource-tags/success';
 
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
@@ -210,6 +214,18 @@ export interface SetSelectedTagAction {
   payload: Tag;
 }
 
+export interface DeleteResourceTagsAction {
+  type: typeof DELETE_RESOURCE_TAGS;
+  urn: string;
+  formDefinitionId: string;
+}
+
+export interface DeleteResourceSuccessTagsAction {
+  type: typeof DELETE_RESOURCE_TAGS_SUCCESS;
+  urn: string;
+  formDefinitionId: string;
+}
+
 export type FormActionTypes =
   | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
@@ -250,7 +266,9 @@ export type FormActionTypes =
   | FetchResourcesByTagAction
   | FetchResourcesByTagSuccessAction
   | FetchResourcesByTagFailureAction
-  | SetSelectedTagAction;
+  | SetSelectedTagAction
+  | DeleteResourceTagsAction
+  | DeleteResourceSuccessTagsAction;
 
 export interface FetchAllTagsAction {
   type: typeof FETCH_ALL_TAGS_ACTION;
@@ -269,13 +287,18 @@ export interface FetchAllTagsFailedAction {
 export interface FetchResourcesByTagAction {
   type: typeof FETCH_RESOURCES_BY_TAG_ACTION;
   tag: string;
+  next?: string;
+  after?: string;
+  criteria: ResourceTagFilterCriteria;
 }
 
 export interface FetchResourcesByTagSuccessAction {
   type: typeof FETCH_RESOURCES_BY_TAG_SUCCESS;
   payload: {
     tag: string;
-    resources: Resource[];
+    resources: Record<string, FormDefinition>;
+    next: string;
+    after: string;
   };
 }
 
@@ -518,14 +541,25 @@ export const fetchAllTagsFailed = (error: string): FetchAllTagsFailedAction => (
   error,
 });
 
-export const fetchResourcesByTag = (tag: string): FetchResourcesByTagAction => ({
+export const fetchResourcesByTag = (
+  tag: string,
+  criteria: ResourceTagFilterCriteria,
+  next?: string
+): FetchResourcesByTagAction => ({
   type: FETCH_RESOURCES_BY_TAG_ACTION,
   tag,
+  criteria,
+  next,
 });
 
-export const fetchResourcesByTagSuccess = (tag: string, resources: Resource[]): FetchResourcesByTagSuccessAction => ({
+export const fetchResourcesByTagSuccess = (
+  tag: string,
+  resources: Record<string, FormDefinition>,
+  next: string,
+  after: string
+): FetchResourcesByTagSuccessAction => ({
   type: FETCH_RESOURCES_BY_TAG_SUCCESS,
-  payload: { tag, resources },
+  payload: { tag, resources, next, after },
 });
 
 export const fetchResourcesByTagFailure = (error: string): FetchResourcesByTagFailureAction => ({
@@ -536,4 +570,16 @@ export const fetchResourcesByTagFailure = (error: string): FetchResourcesByTagFa
 export const setSelectedTag = (tag: Tag): SetSelectedTagAction => ({
   type: SET_SELECTED_TAG,
   payload: tag,
+});
+
+export const deleteResourceTags = (urn: string, formDefinitionId: string): DeleteResourceTagsAction => ({
+  type: DELETE_RESOURCE_TAGS,
+  urn,
+  formDefinitionId,
+});
+
+export const deleteResourceSuccessTags = (urn: string, formDefinitionId: string): DeleteResourceSuccessTagsAction => ({
+  type: DELETE_RESOURCE_TAGS_SUCCESS,
+  urn,
+  formDefinitionId,
 });

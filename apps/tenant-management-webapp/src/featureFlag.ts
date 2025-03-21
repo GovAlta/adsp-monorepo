@@ -7,6 +7,13 @@ const completeServiceVariables = [
     beta: false,
   },
   {
+    name: 'Cache',
+    link: 'services/cache',
+    description:
+      'Cache service provides a read-through cache to upstream targets. Unlike generic HTTP shared cache solutions, the cache service is integrated into the ADSP multi-tenant security layer and user context aware. This allows it to cache resources protected by role-based access control (RBAC) using user-specific cache entries.',
+    beta: true,
+  },
+  {
     name: 'Calendar',
     link: 'services/calendar',
     description:
@@ -121,6 +128,7 @@ export const defaultFeaturesVisible = {
   Status: true,
   Task: false,
   Value: true,
+  Cache: true,
 };
 
 export const serviceVariables = (featuresVisible = {}) => {

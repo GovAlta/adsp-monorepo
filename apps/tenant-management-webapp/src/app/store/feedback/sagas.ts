@@ -25,7 +25,7 @@ import { getAccessToken } from '@store/tenant/sagas';
 import { SagaIterator } from 'redux-saga';
 import moment from 'moment';
 import { ErrorNotification } from '@store/notifications/actions';
-import { FeedbackMetrics } from './models';
+
 function* fetchFeedbacks(payload: FetchFeedbacksAction) {
   yield put(
     UpdateIndicator({

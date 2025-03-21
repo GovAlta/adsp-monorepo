@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { EntryDetail, NoPaddingTd } from '../styleComponents';
+import { NoPaddingTd } from '../styleComponents';
+import { EntryDetail } from '../../../styled-components';
 
 interface StreamPayloadTableItemProps {
   //eslint-disable-next-line
