@@ -4,12 +4,14 @@ import { PageBorder, TocTitle, TocPageRef, CategoryStatus, TocSubtitle } from '.
 import { CategoriesState } from './context';
 import { ApplicationStatus } from './ApplicationStatus';
 import { getCategoryStatusBadge } from './CategoryStatus';
+import { GoABadge } from '@abgov/react-components';
 
 export interface TocProps {
   categories: CategoriesState;
   onClick: (id: number) => void;
   title: string | undefined;
   subtitle: string | undefined;
+  isValid: boolean;
 }
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
@@ -42,6 +44,28 @@ export const TableOfContents = (props: TocProps): JSX.Element => {
                 </tr>
               );
             })}
+            <tr>
+              <TocPageRef>
+                <a
+                  data-testid={`page-ref-${props.categories?.length}`}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    props.onClick(props.categories?.length);
+                  }}
+                >
+                  <b>Summary</b>
+                </a>
+              </TocPageRef>
+              <CategoryStatus>
+                <GoABadge
+                  type={props.isValid ? 'success' : 'information'}
+                  content={props.isValid ? 'Completed' : 'Incomplete'}
+                  ariaLabel={props.isValid ? 'Completed' : 'Incomplete'}
+                ></GoABadge>
+                {props.isValid}
+              </CategoryStatus>
+            </tr>
           </tbody>
         </GoATable>
       </div>
