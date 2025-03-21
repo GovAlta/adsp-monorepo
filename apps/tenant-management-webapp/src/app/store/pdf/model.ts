@@ -53,11 +53,6 @@ export interface PdfGenerationPayload {
   fileName: string;
 }
 
-interface SocketChannel {
-  connected: boolean;
-  disconnected: boolean;
-}
-
 export type SchemaType = unknown;
 
 export interface PdfMetrics {

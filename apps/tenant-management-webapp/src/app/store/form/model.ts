@@ -1,7 +1,6 @@
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { SecurityClassification } from '@store/common/models';
 import { Socket } from 'socket.io-client';
-import { Resource } from '@store/directory/models';
 
 export type ExportStatus = 'queued' | 'completed' | 'failed';
 export type ExportFormat = 'json' | 'csv';
