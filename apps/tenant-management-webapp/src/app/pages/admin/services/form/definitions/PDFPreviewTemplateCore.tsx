@@ -119,7 +119,7 @@ export const PDFPreviewTemplateCore = (formName) => {
     } else {
       dispatch(setPdfDisplayFileId(null));
     }
-  }, [fileList]);
+  }, [dispatch, fileList]);
 
   const PdfPreview = () => {
     const blob = files[currentId] && base64toBlob(files[currentId], 'application/pdf');

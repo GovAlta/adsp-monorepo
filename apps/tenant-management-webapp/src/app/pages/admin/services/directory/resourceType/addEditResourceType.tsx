@@ -13,15 +13,13 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import { isNotEmptyCheck } from '@lib/validation/checkInput';
 
-import { RootState } from '@store/index';
-
 import { fetchDirectory } from '@store/directory/actions';
 
 import { defaultResourceType, ResourceType } from '@store/directory/models';
 import { selectSortedDirectory } from '@store/directory/selectors';
 import { getEventDefinitions } from '@store/event/actions';
+import { selectFilteredEventDefinitions } from '@store/event/selectors';
 
-import { EventDefinition } from '@store/event/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { areObjectsEqual } from '@lib/objectUtil';
 
@@ -45,10 +43,18 @@ export const AddEditResourceTypeModal = ({
   isEdit,
 }: ResourceTypeModalProps): JSX.Element => {
   const [resourceType, setResourceType] = useState<ResourceType>(initialType);
-  const dispatch = useDispatch();
   const [urnStr, setUrnStr] = useState('');
+  const [selectedDeleteEvent, setSelectedDeleteEvent] = useState('');
+  useEffect(() => {
+    setResourceType(initialType);
+    setUrnStr(urn);
+    setSelectedDeleteEvent(initialDeleteEvent);
+  }, [initialType, urn, initialDeleteEvent]);
+
+  const dispatch = useDispatch();
   const { tenantDirectory } = useSelector(selectSortedDirectory);
-  const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
+  const filteredEventDefinitions = useSelector(selectFilteredEventDefinitions);
+
   const { errors, validators } = useValidators('name', 'name', isNotEmptyCheck('name'))
     .add('duplicated', 'name', isNotEmptyCheck('name'))
     .add('type', 'type', isNotEmptyCheck('type'))
@@ -56,27 +62,36 @@ export const AddEditResourceTypeModal = ({
 
     .build();
 
-  const filteredEventDefinitions = Object.entries(eventDefinitions).reduce((acc, [key, eventDef]) => {
-    if (eventDef.isCore !== true) {
-      acc[key] = eventDef;
-    }
-    return acc;
-  }, {} as Record<string, EventDefinition>);
+  const resetForm = () => {
+    validators.clear();
+    setResourceType(defaultResourceType);
+    setSelectedDeleteEvent('');
+    setUrnStr('');
+  };
 
-  useEffect(() => {
-    setResourceType(initialType);
-    setUrnStr(urn);
-  }, [initialType, eventDefinitions]);
+  const onCancelModal = () => {
+    resetForm();
+    onCancel?.();
+  };
+
+  const handleSave = () => {
+    const validations = {
+      type: resourceType?.type,
+      matcher: resourceType?.matcher,
+    };
+
+    if (!validators.checkAll(validations)) {
+      return;
+    }
+    onSave(resourceType, urnStr);
+    onCancelModal();
+  };
 
   useEffect(() => {
     dispatch(fetchDirectory());
     dispatch(getEventDefinitions());
   }, [dispatch]);
-  const onCancelModal = () => {
-    validators.clear();
-    setResourceType(defaultResourceType);
-    onCancel();
-  };
+
   return (
     <GoAModal
       testId="add-edit-resource-type-modal"
@@ -84,33 +99,19 @@ export const AddEditResourceTypeModal = ({
       heading={`${isEdit ? 'Edit' : 'New'} resource type`}
       actions={
         <GoAButtonGroup alignment="end">
-          <GoAButton
-            type="secondary"
-            testId="resource-type-modal-cancel"
-            onClick={() => {
-              onCancelModal();
-            }}
-          >
+          <GoAButton type="secondary" testId="resource-type-modal-cancel" onClick={onCancelModal}>
             Cancel
           </GoAButton>
           <GoAButton
             type="primary"
             testId="resource-type-modal-save"
-            disabled={validators.haveErrors() || areObjectsEqual(resourceType, defaultResourceType)}
-            onClick={() => {
-              const validations = {
-                type: resourceType?.type,
-                matcher: resourceType?.matcher,
-              };
-              validations['type'] = resourceType?.type;
-              validations['matcher'] = resourceType?.matcher;
-              if (!validators.checkAll(validations)) {
-                return;
-              }
-
-              onSave(resourceType, urnStr);
-              onCancelModal();
-            }}
+            disabled={
+              validators.haveErrors() &&
+              areObjectsEqual(resourceType, defaultResourceType) &&
+              resourceType?.type.length > 0 &&
+              resourceType?.matcher.length > 0
+            }
+            onClick={handleSave}
           >
             Save
           </GoAButton>
@@ -120,7 +121,7 @@ export const AddEditResourceTypeModal = ({
       <GoAFormItem label="Api" requirement="required">
         <GoADropdown
           name="resource-type-api"
-          value={isEdit ? urn : ''}
+          value={isEdit ? urn : urnStr}
           aria-label="resource-type-api"
           width="100%"
           testId="resource-type-api"
@@ -191,7 +192,7 @@ export const AddEditResourceTypeModal = ({
       <GoAFormItem label="Delete event">
         <GoADropdown
           name="resource-type-event-definitions"
-          value={isEdit ? initialDeleteEvent : ''}
+          value={isEdit ? initialDeleteEvent : selectedDeleteEvent}
           aria-label="resource-type-form-dropdown"
           width="100%"
           testId="resource-type-event-dropdown"
@@ -199,7 +200,8 @@ export const AddEditResourceTypeModal = ({
           mt="s"
           mb="4xl"
           onChange={(_, value: string) => {
-            if (value && value.indexOf(':') > -1) {
+            if (value.indexOf(':') > -1) {
+              setSelectedDeleteEvent(value);
               setResourceType({
                 ...resourceType,
                 deleteEvent: {
@@ -213,7 +215,7 @@ export const AddEditResourceTypeModal = ({
         >
           {filteredEventDefinitions &&
             Object.keys(filteredEventDefinitions).map((item, key) => (
-              <GoADropdownItem label={item} value={item} key={key} data-testid={item} />
+              <GoADropdownItem key={key} label={item} value={item} />
             ))}
         </GoADropdown>
       </GoAFormItem>

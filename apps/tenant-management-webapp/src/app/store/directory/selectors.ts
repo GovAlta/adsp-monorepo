@@ -113,3 +113,8 @@ export const selectSortedDirectory = createSelector(
     };
   }
 );
+
+export const selectedResourceType = createSelector(
+  (state: RootState) => state.directory,
+  (directory) => directory?.resourceType
+);

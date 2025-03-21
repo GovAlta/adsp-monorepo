@@ -70,7 +70,7 @@ import {
   exportApi,
 } from './api';
 import { FormDefinition, FormResourceTagResponse, FormResourceTagResult, Tag } from './model';
-import { Resource, ResourceTagRequest } from '@store/directory/models';
+import { ResourceTagRequest } from '@store/directory/models';
 import {
   getResourceTagsApi,
   getTagByNameApi,

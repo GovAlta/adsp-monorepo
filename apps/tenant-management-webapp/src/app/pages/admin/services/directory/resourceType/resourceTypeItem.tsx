@@ -6,7 +6,6 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 interface ResourceTypeProps {
   resourceType: ResourceType[];
   urn?: string;
-  index?: number;
   onEdit: (urn: string, rt: ResourceType) => void;
   onDelete: (urn: string, rt: ResourceType) => void;
 }
@@ -19,7 +18,7 @@ export const ResourceTypeComponent: FunctionComponent<ResourceTypeProps> = ({
 }) => (
   <>
     {resourceType.map((resource) => (
-      <ResourceItem key={resource.type} urn={urn} resource={resource} onEdit={onEdit} onDelete={onDelete} />
+      <ResourceItem key={resource.id} urn={urn} resource={resource} onEdit={onEdit} onDelete={onDelete} />
     ))}
   </>
 );

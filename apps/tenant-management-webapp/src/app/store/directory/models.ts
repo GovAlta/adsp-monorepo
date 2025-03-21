@@ -121,3 +121,4 @@ export const defaultResourceType: ResourceType = {
     resourceIdPath: '',
   },
 };
+export type ResourceTypeObjectType = Record<string, ResourceType>;
