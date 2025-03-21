@@ -4,7 +4,7 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAIcon } from '@abgov/react-components';
 import { RequiredTextLabel, WarningIconDiv } from './style-component';
-import { convertToSentenceCase, getLastSegmentFromPointer } from '../../util';
+import { convertToSentenceCase, getLastSegmentFromPointer, to12HourFormat, UTCToFullLocalTime } from '../../util';
 
 export type WithBaseInputReviewProps = CellProps & WithClassname & WithInputProps & StatePropsOfControl;
 
@@ -16,11 +16,14 @@ const warningIcon = (errorMessage: string) => {
     </WarningIconDiv>
   );
 };
+
 export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JSX.Element => {
   // eslint-disable-next-line
   const { data, id, uischema, schema, required, label } = props;
   let reviewText = data;
   const isBoolean = typeof data === 'boolean';
+  const isTime = schema?.type === 'string' && schema?.format === 'time';
+  const isDateTime = schema?.type === 'string' && schema?.format === 'date-time';
 
   const getRequiredLabelText = () => {
     let label = '';
@@ -69,6 +72,14 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
         reviewText = data ? `Yes (${checkboxLabel.trim()})` : `No (${checkboxLabel.trim()})`;
       }
     }
+  }
+
+  if (isTime) {
+    reviewText = reviewText && to12HourFormat(reviewText);
+  }
+
+  if (isDateTime) {
+    reviewText = reviewText && UTCToFullLocalTime(reviewText);
   }
 
   return (
