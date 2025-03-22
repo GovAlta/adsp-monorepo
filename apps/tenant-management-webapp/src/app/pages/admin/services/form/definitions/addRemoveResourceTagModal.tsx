@@ -17,7 +17,7 @@ import { FormDefinition, FormResourceTagResult } from '@store/form/model';
 import { ResourceTag } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { fetchFormResourceTags, fetchFormTagByTagName } from '@store/form/action';
+import { clearAllTags, fetchAllTags, fetchFormResourceTags, fetchFormTagByTagName } from '@store/form/action';
 import { AddRemoveResourceTagSpacing } from './style-components';
 import { selectFormResourceTags } from '@store/form/selectors';
 
@@ -154,6 +154,12 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
                 label: tag.trim(),
                 urn: `${baseResourceFormUrn}/${initialFormDefinition.id}`,
               } as ResourceTag);
+
+              if (!tagAlreadyAdded()) {
+                dispatch(clearAllTags());
+                dispatch(fetchAllTags());
+              }
+
               onClose();
             }}
           >
