@@ -64,6 +64,7 @@ export const FETCH_FORM_TAG_BY_TAG_NAME_ACTION_FAILED = 'form/resource/fetch-tag
 export const FETCH_ALL_TAGS_ACTION = 'form/resource/fetch-all-tags';
 export const FETCH_ALL_TAGS_SUCCESS_ACTION = 'form/resource/fetch-all-tags/success';
 export const FETCH_ALL_TAGS_FAILED_ACTION = 'form/resource/fetch-all-tags/failed';
+export const CLEAR_ALL_TAGS_ACTION = 'form/resource/clear-all-tags/success';
 
 export const FETCH_RESOURCES_BY_TAG_ACTION = 'form/resource/fetch-resources-by-tag';
 export const FETCH_RESOURCES_BY_TAG_SUCCESS = 'form/resource/fetch-resources-by-tag/success';
@@ -268,7 +269,8 @@ export type FormActionTypes =
   | FetchResourcesByTagFailureAction
   | SetSelectedTagAction
   | DeleteResourceTagsAction
-  | DeleteResourceSuccessTagsAction;
+  | DeleteResourceSuccessTagsAction
+  | ClearAllTagsAction;
 
 export interface FetchAllTagsAction {
   type: typeof FETCH_ALL_TAGS_ACTION;
@@ -277,6 +279,10 @@ export interface FetchAllTagsAction {
 export interface FetchAllTagsSuccessAction {
   type: typeof FETCH_ALL_TAGS_SUCCESS_ACTION;
   payload: Tag[];
+}
+
+export interface ClearAllTagsAction {
+  type: typeof CLEAR_ALL_TAGS_ACTION;
 }
 
 export interface FetchAllTagsFailedAction {
@@ -525,6 +531,10 @@ export const fetchFormTagByTagNameSuccess = (data: FormResourceTagResult): Fetch
 export const fetchFormTagByTagNameFailed = (data: FormResourceTagResult): FetchTagByTagNameActionFailed => ({
   type: FETCH_FORM_TAG_BY_TAG_NAME_ACTION_FAILED,
   payload: data,
+});
+
+export const clearAllTags = (): ClearAllTagsAction => ({
+  type: CLEAR_ALL_TAGS_ACTION,
 });
 
 export const fetchAllTags = (): FetchAllTagsAction => ({
