@@ -89,6 +89,7 @@ export const ResourceTypePage = (): JSX.Element => {
     } else {
       dispatch(deleteResourceTypeAction(urn));
     }
+    reset();
   };
 
   return (
