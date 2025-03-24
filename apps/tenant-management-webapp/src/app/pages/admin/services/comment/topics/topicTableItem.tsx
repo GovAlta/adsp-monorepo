@@ -1,5 +1,6 @@
 import React, { FunctionComponent } from 'react';
-import { IconDiv, MoreDetails } from '../styled-components';
+import { ActionIconsDiv } from '../../styled-components';
+import { MoreDetails } from '../styled-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { TopicItem } from '@store/comment/model';
 import { CommentListTable } from '../comments/commentsTable';
@@ -27,7 +28,7 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
         <td>{topic.name}</td>
         <td>{topic.resourceId}</td>
         <td>
-          <IconDiv>
+          <ActionIconsDiv>
             <GoAContextMenuIcon
               title="Toggle details"
               type={showDetails ? 'eye-off' : 'eye'}
@@ -40,7 +41,7 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
               type="trash"
               onClick={() => onDeleteTopic(topic)}
             />
-          </IconDiv>
+          </ActionIconsDiv>
         </td>
       </tr>
       {showDetails && (

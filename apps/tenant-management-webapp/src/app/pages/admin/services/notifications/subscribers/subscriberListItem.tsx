@@ -5,8 +5,8 @@ import { GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
 import { GoABadge } from '@abgov/react-components';
 import { RowFlex } from './styled-components';
-import { getSubcriberSubscriptions } from './apis';
-
+import { getSubscriberSubscriptions } from './apis';
+import { EntryDetail } from '../../styled-components';
 interface ActionComponentProps {
   subscriber: Subscriber;
   openModalFunction?: (subscriber: Subscriber) => void;
@@ -91,7 +91,7 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
                 title="Toggle details"
                 onClick={async () => {
                   if (subSubs == null) {
-                    const subscriptions = await getSubcriberSubscriptions(subscriber.id);
+                    const subscriptions = await getSubscriberSubscriptions(subscriber.id);
                     setSubSubs(subscriptions);
                     setShowHide(true);
                   } else {
@@ -123,24 +123,21 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
       </tr>
       {showHide && (
         <tr>
-          <td colSpan={3}>
-            <h2>Subscriptions</h2>
-            {subSubs.length < 1 ? (
-              <span>
-                <b>No subscriptions</b>
-              </span>
-            ) : (
-              ''
-            )}
-            {subSubs?.length >= 0
-              ? subSubs?.map((typeId, i) => {
-                  return (
-                    <div data-testid={`subscriptions-${i}`}>
-                      <b>{typeId}</b>
-                    </div>
-                  );
-                })
-              : ''}
+          <td colSpan={4}>
+            <EntryDetail>
+              <h2>Subscriptions</h2>
+              {subSubs.length === 0 ? (
+                <span>
+                  <b>No subscriptions</b>
+                </span>
+              ) : (
+                subSubs.map((typeId, i) => (
+                  <div key={i} data-testid={`subscriptions-${i}`}>
+                    <b>{typeId}</b>
+                  </div>
+                ))
+              )}
+            </EntryDetail>
           </td>
         </tr>
       )}

@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { IconDiv, MoreDetails } from '../styled-components';
+import { ActionIconsDiv } from '../../styled-components';
+import { MoreDetails } from '../styled-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Feedback, Rating } from '@store/feedback/models';
 import { URL } from '../styled-components';
@@ -38,14 +39,14 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
         </td>
         <td data-testid={`feedback-list-rating_${id}`}>{ratingValue}</td>
         <td data-testid={`feedback-list-action_${id}`}>
-          <IconDiv>
+          <ActionIconsDiv>
             <GoAContextMenuIcon
               title="Toggle details"
               type={showDetails ? 'eye-off' : 'eye'}
               onClick={() => setShowDetails(!showDetails)}
               testId={`toggle-details-visibility_${id}`}
             />
-          </IconDiv>
+          </ActionIconsDiv>
         </td>
       </tr>
       {showDetails && (
