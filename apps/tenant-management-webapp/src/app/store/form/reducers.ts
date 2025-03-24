@@ -33,6 +33,7 @@ import {
   FETCH_RESOURCES_BY_TAG_FAILURE,
   SET_SELECTED_TAG,
   DELETE_RESOURCE_TAGS_SUCCESS,
+  CLEAR_ALL_TAGS_ACTION,
 } from './action';
 
 import { FormResourceTag, FormState } from './model';
@@ -312,10 +313,18 @@ export default function (state: FormState = defaultState, action: FormActionType
         formResourceTag: {
           ...state.formResourceTag,
           tagsLoading: false,
-          tags: action.payload,
+          tags: [...action.payload],
         },
       };
-
+    case CLEAR_ALL_TAGS_ACTION:
+      return {
+        ...state,
+        formResourceTag: {
+          ...state.formResourceTag,
+          tagsLoading: false,
+          tags: [],
+        },
+      };
     case FETCH_ALL_TAGS_FAILED_ACTION:
       return {
         ...state,
