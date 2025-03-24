@@ -156,8 +156,12 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
               } as ResourceTag);
 
               if (!tagAlreadyAdded()) {
-                dispatch(clearAllTags());
-                dispatch(fetchAllTags());
+                setTimeout(() => {
+                  dispatch(clearAllTags());
+                }, 300);
+                setTimeout(() => {
+                  dispatch(fetchAllTags());
+                }, 300);
               }
 
               onClose();
