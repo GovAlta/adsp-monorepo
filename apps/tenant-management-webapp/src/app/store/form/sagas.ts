@@ -64,6 +64,7 @@ import {
   DELETE_RESOURCE_TAGS,
   DeleteResourceTagsAction,
   deleteResourceSuccessTags,
+  clearAllTags,
 } from './action';
 import {
   fetchFormDefinitionsApi,
@@ -332,7 +333,7 @@ export function* fetchFormMetrics(): SagaIterator {
   });
 }
 
-export function* tagFormResource({ tag }: TagResourceAction): SagaIterator {
+export function* tagFormResource({ tag, isTagAdded }: TagResourceAction): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
@@ -354,7 +355,11 @@ export function* tagFormResource({ tag }: TagResourceAction): SagaIterator {
           urn: tag.urn,
         },
       } as ResourceTagRequest;
-      yield call(tagResourceApi, token, baseUrl, tagResourceRequest);
+      const data = yield call(tagResourceApi, token, baseUrl, tagResourceRequest);
+      if (data && !isTagAdded) {
+        yield put(clearAllTags());
+        yield call(fetchAllTags);
+      }
       yield put(
         UpdateIndicator({
           show: false,

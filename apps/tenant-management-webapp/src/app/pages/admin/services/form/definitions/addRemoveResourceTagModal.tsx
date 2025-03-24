@@ -27,7 +27,7 @@ interface AddRemoveResourceTagModalProps {
   initialFormDefinition?: FormDefinition;
   onClose: () => void;
   onDelete: (tag: FormResourceTagResult) => void;
-  onSave: (tag: ResourceTag) => void;
+  onSave: (tag: ResourceTag, isTagAdded: boolean) => void;
 }
 
 const TagChipComponent: FunctionComponent<{
@@ -150,15 +150,13 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
             testId="resource-tag-save"
             disabled={isNotValid()}
             onClick={() => {
-              onSave({
-                label: tag.trim(),
-                urn: `${baseResourceFormUrn}/${initialFormDefinition.id}`,
-              } as ResourceTag);
-
-              if (!tagAlreadyAdded()) {
-                dispatch(clearAllTags());
-                dispatch(fetchAllTags());
-              }
+              onSave(
+                {
+                  label: tag.trim(),
+                  urn: `${baseResourceFormUrn}/${initialFormDefinition.id}`,
+                } as ResourceTag,
+                tagAlreadyAdded()
+              );
 
               onClose();
             }}
