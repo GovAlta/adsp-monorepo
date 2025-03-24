@@ -12,6 +12,7 @@ import { SubscriptionNextLoader } from './subscriptionNextLoader';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { phoneWrapper } from '@lib/wrappers';
 import { PageIndicator } from '@components/Indicator';
+import { EntryDetail } from '../../styled-components';
 interface SubscriptionProps {
   subscriber: Subscriber;
   criteria: Criteria;
@@ -104,7 +105,9 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
       {showDetails && (
         <tr>
           <td className="payload-details" colSpan={3}>
-            <div data-testid="subscriber-criteria">{JSON.stringify(criteria, null, 2)}</div>
+            <EntryDetail>
+              <div data-testid="subscriber-criteria">{JSON.stringify(criteria, null, 2)}</div>
+            </EntryDetail>
           </td>
         </tr>
       )}
@@ -269,17 +272,17 @@ export const SubscriptionList = styled(SubscriptionsListComponent)`
     text-overflow: ellipsis;
   }
 
-  & .payload-details {
-    div {
-      background: #f3f3f3;
-      white-space: pre-wrap;
-      font-family: monospace;
-      font-size: 12px;
-      line-height: 16px;
-      padding: 16px;
-    }
-    padding: 0;
-  }
+  // & .payload-details {
+  //   div {
+  //     background: #f3f3f3;
+  //     white-space: pre-wrap;
+  //     font-family: monospace;
+  //     font-size: 12px;
+  //     line-height: 16px;
+  //     padding: 16px;
+  //   }
+  //   padding: 0;
+  // }
 
   table {
     margin-bottom: 2rem;

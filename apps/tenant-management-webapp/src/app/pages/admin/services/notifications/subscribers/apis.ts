@@ -1,8 +1,8 @@
 import { SubscriberSubscriptions } from '@store/subscription/models';
 import axios from 'axios';
-import { store } from '../../../../../store/index';
+import { store } from '@store/index';
 
-export async function getSubcriberSubscriptions(subscriberId: string): Promise<SubscriberSubscriptions[]> {
+export async function getSubscriberSubscriptions(subscriberId: string): Promise<SubscriberSubscriptions[]> {
   const configBaseUrl: string = store.getState().config.serviceUrls?.notificationServiceUrl;
   const token: string = store.getState().session.credentials.token;
   const findSubscriberPath = `subscription/v1/subscribers/${subscriberId}/subscriptions?top=100`;

@@ -9,12 +9,12 @@ import {
   CommentsHeading,
   CommentsActions,
   CommentBody,
-  IconDiv,
   LoadMoreCommentsWrapper,
   CommentsHeadGroup,
   CommentsDate,
   CommentLoader,
 } from '../styled-components';
+import { ActionIconsDiv } from '../../styled-components';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACircularProgress } from '@abgov/react-components';
@@ -115,7 +115,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
                   <CommentsDate data-testid={`commentDate-${index}`}> {formatDate(date)} </CommentsDate>
                 </CommentsHeadGroup>
                 <CommentsActions>
-                  <IconDiv>
+                  <ActionIconsDiv>
                     <GoAContextMenuIcon
                       type="create"
                       title="Edit"
@@ -132,7 +132,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
                       type="trash"
                       onClick={() => onDeleteComment(comment)}
                     />
-                  </IconDiv>
+                  </ActionIconsDiv>
                 </CommentsActions>
               </CommentsHeader>
 
