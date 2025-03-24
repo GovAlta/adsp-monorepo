@@ -8,6 +8,10 @@ export const MarginAdjustment = styled.h4`
 export const PaddingRem = styled.div`
   padding-top: 1rem;
 `;
+export const Padding = styled.div`
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+`;
 
 export const ActionButtonWrapper = styled.div`
   display: flex;

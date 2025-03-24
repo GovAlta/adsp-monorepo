@@ -17,32 +17,20 @@ export function* fetchCacheTargets(payload): SagaIterator {
   const next = payload.next ?? '';
   if (configBaseUrl && token) {
     try {
-      const url = `${configBaseUrl}/configuration/v2/configuration/cache-service?top=50&after=${next}`;
-      const { results, page } = yield call(fetchCacheTargetsApi, token, url);
+      const url = `${configBaseUrl}/configuration/v2/configuration/platform/cache-service?top=50&after=${next}`;
+      const { latest } = yield call(fetchCacheTargetsApi, token, url);
       yield put(
         UpdateIndicator({
           show: true,
         })
       );
-      console.log(JSON.stringify(url) + '><url');
-      console.log(JSON.stringify(results) + '><results');
-      const targets = results.reduce((acc, def) => {
-        if (def.latest?.configuration?.id) {
-          acc[def.latest.configuration.id] = def.latest.configuration;
-        } else {
-          acc[def.id] = def.latest.configuration;
-        }
-
-        return acc;
-      }, {});
-
-      console.log(JSON.stringify(targets) + '><targets');
+      const targets = latest.configuration?.targets;
       yield put(
         UpdateIndicator({
           show: false,
         })
       );
-      yield put(getCacheTargetsSuccess(targets, page.next, page.after));
+      yield put(getCacheTargetsSuccess(targets));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(

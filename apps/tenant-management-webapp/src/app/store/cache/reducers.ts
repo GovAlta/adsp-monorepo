@@ -10,15 +10,9 @@ export const defaultState: CacheState = {
 export default function (state: CacheState = defaultState, action: CacheActionTypes): CacheState {
   switch (action.type) {
     case FETCH_CACHE_DEFINITIONS_SUCCESS_ACTION:
-      console.log(JSON.stringify(action) + '<action');
       return {
         ...state,
-        targets: action.after
-          ? { ...state.targets, ...action.payload }
-          : action.payload
-          ? action.payload
-          : state.targets,
-        nextEntries: action.next,
+        targets: { ...state.targets, ...action.payload },
       };
 
     default:
