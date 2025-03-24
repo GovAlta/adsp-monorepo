@@ -41,6 +41,7 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
           <GoAFormItem
             label="Address line 1"
             error={data?.addressLine1 === undefined ? 'addressLine1 is required' : ''}
+            requirement="required"
           >
             <TextWrap>{data?.addressLine1}</TextWrap>
           </GoAFormItem>
@@ -52,10 +53,18 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
         </GoAGrid>
         <br />
         <GoAGrid minChildWidth="0ch" gap="s">
-          <GoAFormItem error={data?.municipality === undefined ? 'city is required' : ''} label="City">
+          <GoAFormItem
+            error={data?.municipality === undefined ? 'city is required' : ''}
+            label="City"
+            requirement="required"
+          >
             <TextWrap>{data?.municipality}</TextWrap>
           </GoAFormItem>
-          <GoAFormItem error={data?.postalCode === undefined ? 'postalCode is required' : ''} label="Postal Code">
+          <GoAFormItem
+            error={data?.postalCode === undefined ? 'postalCode is required' : ''}
+            label="Postal Code"
+            requirement="required"
+          >
             <TextWrap>{data?.postalCode}</TextWrap>
           </GoAFormItem>
         </GoAGrid>
@@ -64,6 +73,7 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
           <GoAFormItem
             label="Province"
             error={!isAlbertaAddress && data?.subdivisionCode === undefined ? 'Province is required' : ''}
+            requirement="required"
           >
             {isAlbertaAddress && <div data-testid="address-form-province-view">Alberta</div>}
             {!isAlbertaAddress && (
