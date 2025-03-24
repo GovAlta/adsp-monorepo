@@ -9,8 +9,8 @@ export const PaddingRem = styled.div`
   padding-top: 1rem;
 `;
 export const Padding = styled.div`
-  padding-top: 1rem;
-  padding-bottom: 1rem;
+  padding-top: var(--goa-space-m);
+  padding-bottom: var(--goa-space-m);
 `;
 
 export const ActionButtonWrapper = styled.div`
