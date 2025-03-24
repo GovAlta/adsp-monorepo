@@ -11,7 +11,7 @@ import {
 
 import { useSelector, useDispatch } from 'react-redux';
 
-import { isNotEmptyCheck } from '@lib/validation/checkInput';
+import { isNotEmptyCheck, isValidRegexString } from '@lib/validation/checkInput';
 
 import { fetchDirectory } from '@store/directory/actions';
 
@@ -56,10 +56,9 @@ export const AddEditResourceTypeModal = ({
   const filteredEventDefinitions = useSelector(selectFilteredEventDefinitions);
 
   const { errors, validators } = useValidators('name', 'name', isNotEmptyCheck('name'))
-    .add('duplicated', 'name', isNotEmptyCheck('name'))
     .add('type', 'type', isNotEmptyCheck('type'))
     .add('matcher', 'matcher', isNotEmptyCheck('matcher'))
-
+    .add('matcher', 'matcher', isValidRegexString('matcher'))
     .build();
 
   const resetForm = () => {
@@ -106,10 +105,10 @@ export const AddEditResourceTypeModal = ({
             type="primary"
             testId="resource-type-modal-save"
             disabled={
-              validators.haveErrors() &&
-              areObjectsEqual(resourceType, defaultResourceType) &&
-              resourceType?.type.length > 0 &&
-              resourceType?.matcher.length > 0
+              validators.haveErrors() ||
+              areObjectsEqual(resourceType, defaultResourceType) ||
+              resourceType?.type.length === 0 ||
+              resourceType?.matcher.length === 0
             }
             onClick={handleSave}
           >
@@ -153,6 +152,8 @@ export const AddEditResourceTypeModal = ({
           width="100%"
           aria-label="type"
           onChange={(name, value) => {
+            validators.remove('type');
+            validators['type'].check(value);
             setResourceType({ ...resourceType, type: value });
           }}
         />
@@ -167,6 +168,8 @@ export const AddEditResourceTypeModal = ({
           width="100%"
           aria-label="matcher"
           onChange={(name, value) => {
+            validators.remove('matcher');
+            validators['matcher'].check(value);
             setResourceType({ ...resourceType, matcher: value });
           }}
         />
