@@ -1,10 +1,14 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect } from 'react';
 import { GoAButtonType } from '@abgov/react-components';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
 import { CategorizationStepperLayoutRendererProps } from './types';
-import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
-import { BackButton } from './BackButton';
+import {
+  JsonFormsStepperContextProvider,
+  JsonFormsStepperContext,
+  JsonFormsStepperContextProps,
+  TABLE_CONTEXT_ID,
+} from './context';
 import { TableOfContents, TocProps } from './TableOfContents';
 import { RenderPages } from './RenderPages';
 
@@ -39,22 +43,11 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
     validatePage(activeId);
   }, [data]);
 
-  const [showTOC, setShowTOC] = useState(true);
-
   const handleGoToPage = (index: number) => {
-    setShowTOC(false);
     goToPage(index);
   };
 
-  // Make sure the back button on the first page takes us to the Table of Contents.
-  const renderBackButton = (index: number, activeId: number): JSX.Element => {
-    if (index > 0) {
-      return <BackButton testId="back-button" link={() => goToPage(activeId - 1)} text="Back" />;
-    }
-    return <BackButton testId="back-button" link={() => setShowTOC(true)} text="Back" />;
-  };
-
-  if (showTOC) {
+  if (TABLE_CONTEXT_ID === activeId) {
     const tocProps: TocProps = {
       categories,
       onClick: handleGoToPage,
@@ -64,7 +57,7 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
     };
     return <TableOfContents {...tocProps} />;
   } else {
-    return <RenderPages categoryProps={props} renderBackButton={renderBackButton}></RenderPages>;
+    return <RenderPages categoryProps={props}></RenderPages>;
   }
 };
 

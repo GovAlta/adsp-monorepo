@@ -7,10 +7,10 @@ import { CategorizationElement, JsonFormsStepperContext, JsonFormsStepperContext
 import { CategorizationStepperLayoutRendererProps } from './types';
 import { useContext, useState } from 'react';
 import { JsonFormContext } from '../../Context';
+import { BackButton } from './BackButton';
 
 export interface PageRenderingProps {
   categoryProps: CategorizationStepperLayoutRendererProps;
-  renderBackButton: (index: number, activeId: number) => JSX.Element;
 }
 
 export const RenderPages = (props: PageRenderingProps): JSX.Element => {
@@ -18,7 +18,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   const enumerators = useContext(JsonFormContext);
 
   const formStepperCtx = useContext(JsonFormsStepperContext);
-  const { goToPage, toggleShowReviewLink } = formStepperCtx as JsonFormsStepperContextProps;
+  const { goToPage, toggleShowReviewLink, goToTableOfContext } = formStepperCtx as JsonFormsStepperContextProps;
   const { categories, isOnReview, isValid, activeId } = (
     formStepperCtx as JsonFormsStepperContextProps
   ).selectStepperState();
@@ -64,7 +64,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                     key={`${category.label}`}
                     style={{ marginTop: '1.5rem' }}
                   >
-                    {props.renderBackButton(index, activeId)}
+                    <BackButton testId="back-button" link={() => goToTableOfContext()} text="Back" />
                     <PageRenderPadding>
                       <h3>
                         Step {index + 1} of {categories.length}

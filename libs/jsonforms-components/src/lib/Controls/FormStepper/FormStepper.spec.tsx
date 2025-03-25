@@ -9,6 +9,7 @@ import { Translator } from '@jsonforms/core';
 import { AjvProps } from '../../util/layout';
 import { TranslateProps } from '@jsonforms/react';
 import { ContextProviderFactory } from '../../../lib/Context';
+import { getCategoryStatus } from './CategoryStatus';
 
 export const ContextProvider = ContextProviderFactory();
 const ajvInstance = new ajv({ allErrors: true, verbose: true, validateFormats: false });
@@ -131,5 +132,9 @@ describe('form stepper control', () => {
     const props = staticProps;
     const component = render(<FormStepper {...props} />, { wrapper: CustomWrapper });
     expect(component.getByTestId('form-stepper-test-wrapper')).toBeInTheDocument();
+  });
+
+  it('can calculate form status', () => {
+    expect(getCategoryStatus({ isVisited: true, isCompleted: true, isValid: true })).toBe('Completed');
   });
 });
