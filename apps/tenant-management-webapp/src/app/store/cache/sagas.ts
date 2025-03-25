@@ -6,8 +6,15 @@ import { getAccessToken } from '@store/tenant/sagas';
 import { select, call, put, takeEvery } from 'redux-saga/effects';
 import { RootState } from '../index';
 
-import { getCacheTargetsSuccess, FETCH_CACHE_DEFINITIONS_ACTION } from './action';
-import { fetchCacheTargetsApi } from './api';
+import {
+  getCacheTargetsSuccess,
+  FETCH_CACHE_DEFINITIONS_ACTION,
+  UpdateCacheTargetAction,
+  updateCacheTargetSuccess,
+  UPDATE_CACHE_TARGETS_ACTION,
+} from './action';
+import {} from './action';
+import { fetchCacheTargetsApi, updateCacheTargetApi } from './api';
 
 export function* fetchCacheTargets(payload): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -42,6 +49,22 @@ export function* fetchCacheTargets(payload): SagaIterator {
   }
 }
 
+export function* updateCacheTargets({ definition }: UpdateCacheTargetAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+
+  if (baseUrl && token) {
+    try {
+      const { latest } = yield call(updateCacheTargetApi, token, baseUrl, definition);
+
+      yield put(updateCacheTargetSuccess(latest.configuration));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
+
 export function* watchCacheSagas(): Generator {
   yield takeEvery(FETCH_CACHE_DEFINITIONS_ACTION, fetchCacheTargets);
+  yield takeEvery(UPDATE_CACHE_TARGETS_ACTION, updateCacheTargets);
 }

@@ -7,12 +7,7 @@ import AsideLinks from '@components/AsideLinks';
 
 export const Cache: FunctionComponent = () => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [activateEditState, setActivateEditState] = useState<boolean>(false);
-
-  const activateEdit = (edit: boolean) => {
-    setActiveIndex(1);
-    setActivateEditState(edit);
-  };
+  const [openAddDefinition, setOpenAddDefinition] = useState<boolean>(false);
 
   return (
     <Page>
@@ -20,10 +15,10 @@ export const Cache: FunctionComponent = () => {
         <h1 data-testid="cache-title">Cache service</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview" data-testid="cache-service-overview-tab-overview">
-            <CacheOverview setActiveEdit={activateEdit} setActiveIndex={setActiveIndex} />
+            <CacheOverview setActiveIndex={setActiveIndex} setOpenAddDefinition={setOpenAddDefinition} />
           </Tab>
           <Tab label="Targets" data-testid="cache-service-overview-tab-target">
-            <Targets />
+            <Targets openAddDefinition={openAddDefinition} setOpenAddDefinition={setOpenAddDefinition} />
           </Tab>
         </Tabs>
       </Main>

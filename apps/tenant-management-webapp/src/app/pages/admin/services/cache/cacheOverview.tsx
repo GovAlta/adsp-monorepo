@@ -1,24 +1,37 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { NoPaddingH2 } from '@components/AppHeader';
+import { GoAButton } from '@abgov/react-components';
 
 interface CacheOverviewProps {
-  setActiveEdit: (boolean) => void;
+  setOpenAddDefinition: (val: boolean) => void;
   setActiveIndex: (number) => void;
-  disabled?: boolean;
 }
-export const CacheOverview: FunctionComponent<CacheOverviewProps> = (props) => {
-  const { setActiveEdit, setActiveIndex, disabled } = props;
-
+export const CacheOverview: FunctionComponent<CacheOverviewProps> = ({
+  setOpenAddDefinition,
+  setActiveIndex,
+}: CacheOverviewProps) => {
   useEffect(() => {
-    setActiveEdit(false);
     setActiveIndex(0);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const description = `Cache service provides a read-through cache to upstream targets. Unlike generic HTTP shared cache solutions, the cache service is integrated into the ADSP multi-tenant security layer and user context aware. This allows it to cache resources protected by role-based access control (RBAC) using user-specific cache entries.`;
 
   return (
     <div>
-      <OverviewLayout description={description} />
+      <OverviewLayout
+        description={description}
+        addButton={
+          <GoAButton
+            testId="add-definition"
+            onClick={() => {
+              setActiveIndex(1);
+              setOpenAddDefinition(true);
+            }}
+          >
+            Add cache target
+          </GoAButton>
+        }
+      />
       <NoPaddingH2>Cache targets</NoPaddingH2>
       <p>
         Targets are upstream services and APIs that cache service can provide read-through requests to. This

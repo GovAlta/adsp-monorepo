@@ -1,7 +1,6 @@
 export interface CacheTarget {
-  id: string;
-  name: string;
-  ttl: number;
+  urn: string;
+  ttl: string;
   invalidationEvents?: Array<{
     namespace: string;
     name: string;
@@ -9,8 +8,7 @@ export interface CacheTarget {
   }>;
 }
 export const defaultCacheTarget: CacheTarget = {
-  id: '',
-  name: '',
+  urn: '',
   ttl: undefined,
   invalidationEvents: [],
 };
