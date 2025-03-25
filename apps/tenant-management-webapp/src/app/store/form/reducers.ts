@@ -385,7 +385,9 @@ export default function (state: FormState = defaultState, action: FormActionType
 
     case DELETE_RESOURCE_TAGS_SUCCESS: {
       const { formResourceTag: toDeleteResourceTags } = { ...state };
-      delete toDeleteResourceTags.tagResources[action.formDefinitionId || ''];
+      if (toDeleteResourceTags?.tagResources) {
+        delete toDeleteResourceTags.tagResources[action.formDefinitionId || ''];
+      }
       return {
         ...state,
         formResourceTag: {
