@@ -375,9 +375,10 @@ Then('the login link is copied to the clipboard', function () {
 });
 
 Then(
-  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}',
+  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}',
   function (
     access,
+    cache,
     calendar,
     comment,
     configuration,
@@ -395,6 +396,7 @@ Then(
   ) {
     const cardTextArray = [
       'Access allows',
+      'Cache service provides',
       'The calendar service provides',
       'Comment service',
       'The configuration service provides',
@@ -412,6 +414,7 @@ Then(
     ];
     const cardTitleArray = [
       access,
+      cache,
       calendar,
       comment,
       configuration,
