@@ -3,7 +3,7 @@ import { CategorizationStepperLayoutRendererProps } from '../types';
 import { Categorization, deriveLabelForUISchemaElement, isEnabled } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
 import { stepperReducer } from './reducer';
-import { StepperContextDataType, CategoryState } from './types';
+import { StepperContextDataType, CategoryState, TABLE_CONTEXT_ID } from './types';
 import { JsonFormStepperDispatch } from './reducer';
 import { useJsonForms } from '@jsonforms/react';
 import { getIncompletePaths } from './util';
@@ -24,6 +24,7 @@ export interface JsonFormsStepperContextProps {
   selectPath: () => string;
   selectCategory: (id: number) => CategoryState;
   goToPage: (id: number, updateCategoryId?: number) => void;
+  goToTableOfContext: () => void;
   toggleShowReviewLink: (id: number) => void;
   validatePage: (id: number) => void;
   isProvided?: boolean;
@@ -35,7 +36,7 @@ const createStepperContextInitData = (
   const { uischema, data, schema, ajv, t, visible, path } = props;
   const categorization = uischema as Categorization;
   const valid = ajv.validate(schema, data || {});
-
+  const isPage = uischema?.options?.variant === 'pages';
   const categories = categorization.elements?.map((c, id) => {
     const scopes = pickPropertyValues(c, 'scope', 'ListWithDetail');
     const incompletePaths = getIncompletePaths(ajv, scopes);
@@ -54,7 +55,7 @@ const createStepperContextInitData = (
     };
   });
 
-  const activeId = props?.activeId || 0;
+  const activeId = props?.activeId || (isPage ? TABLE_CONTEXT_ID : 0);
 
   return {
     categories: categories,
@@ -99,13 +100,16 @@ export const JsonFormsStepperContextProvider = ({
       selectCategory: (id: number) => {
         return stepperState.categories[id];
       },
+      goToTableOfContext: () => {
+        stepperDispatch({ type: 'page/to/index', payload: { id: TABLE_CONTEXT_ID } });
+      },
       validatePage: (id: number) => {
         stepperDispatch({
           type: 'update/category',
           payload: { errors: ctx?.core?.errors, id, ajv },
         });
       },
-      goToPage: (id: number, updateCategoryId?: number) => {
+      goToPage: (id: number) => {
         ajv.validate(schema, ctx.core?.data || {});
 
         if (stepperState.isOnReview !== true) {
@@ -139,8 +143,10 @@ export const JsonFormsStepperContextProvider = ({
         type: 'update/uischema',
         payload: { state: createStepperContextInitData({ ...StepperProps, activeId: stepperState?.activeId }) },
       });
-      context.goToPage(stepperState.maxReachedStep);
-      context.goToPage(stepperState.activeId);
+      if (stepperState.activeId != TABLE_CONTEXT_ID) {
+        context.goToPage(stepperState.maxReachedStep);
+        context.goToPage(stepperState.activeId);
+      }
     }
   }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema)]);
 

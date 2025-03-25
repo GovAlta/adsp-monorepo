@@ -152,6 +152,22 @@ export const isValidJSONSchemaCheck = (label?: string): Validator => {
     }
   };
 };
+const STRICT_REGEX_SYNTAX = /\\d|\[.*?\]|\\.|\(.*?\)|\^|\$/;
+export const isValidRegexString = (patternStr: string): Validator => {
+  return (input: string) => {
+    try {
+      new RegExp(input);
+      if (!STRICT_REGEX_SYNTAX.test(input)) {
+        return `${capitalize(patternStr)} is invalid for regular expression.`;
+      }
+
+      return '';
+    } catch (err) {
+      console.log('should have failed with err');
+      return `${capitalize(patternStr)} is invalid for regular expression.`;
+    }
+  };
+};
 
 export const duplicateNameCheck = (names: string[], service: string): Validator => {
   return (name: string) => {

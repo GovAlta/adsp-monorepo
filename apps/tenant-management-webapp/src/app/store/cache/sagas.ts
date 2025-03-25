@@ -1,0 +1,47 @@
+import { SagaIterator } from '@redux-saga/core';
+import { UpdateIndicator } from '@store/session/actions';
+import { ErrorNotification } from '@store/notifications/actions';
+
+import { getAccessToken } from '@store/tenant/sagas';
+import { select, call, put, takeEvery } from 'redux-saga/effects';
+import { RootState } from '../index';
+
+import { getCacheTargetsSuccess, FETCH_CACHE_DEFINITIONS_ACTION } from './action';
+import { fetchCacheTargetsApi } from './api';
+
+export function* fetchCacheTargets(payload): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield call(getAccessToken);
+  const next = payload.next ?? '';
+  if (configBaseUrl && token) {
+    try {
+      const url = `${configBaseUrl}/configuration/v2/configuration/platform/cache-service?top=50&after=${next}`;
+      const { latest } = yield call(fetchCacheTargetsApi, token, url);
+      yield put(
+        UpdateIndicator({
+          show: true,
+        })
+      );
+      const targets = latest.configuration?.targets;
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+      yield put(getCacheTargetsSuccess(targets));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    }
+  }
+}
+
+export function* watchCacheSagas(): Generator {
+  yield takeEvery(FETCH_CACHE_DEFINITIONS_ACTION, fetchCacheTargets);
+}

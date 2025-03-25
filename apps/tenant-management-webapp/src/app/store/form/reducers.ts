@@ -33,6 +33,7 @@ import {
   FETCH_RESOURCES_BY_TAG_FAILURE,
   SET_SELECTED_TAG,
   DELETE_RESOURCE_TAGS_SUCCESS,
+  CLEAR_ALL_TAGS_ACTION,
 } from './action';
 
 import { FormResourceTag, FormState } from './model';
@@ -312,7 +313,16 @@ export default function (state: FormState = defaultState, action: FormActionType
         formResourceTag: {
           ...state.formResourceTag,
           tagsLoading: false,
-          tags: action.payload,
+          tags: [...action.payload].sort((a, b) => a.label.localeCompare(b.label)),
+        },
+      };
+    case CLEAR_ALL_TAGS_ACTION:
+      return {
+        ...state,
+        formResourceTag: {
+          ...state.formResourceTag,
+          tagsLoading: false,
+          tags: [],
         },
       };
 
@@ -375,7 +385,9 @@ export default function (state: FormState = defaultState, action: FormActionType
 
     case DELETE_RESOURCE_TAGS_SUCCESS: {
       const { formResourceTag: toDeleteResourceTags } = { ...state };
-      delete toDeleteResourceTags.tagResources[action.formDefinitionId || ''];
+      if (toDeleteResourceTags?.tagResources) {
+        delete toDeleteResourceTags.tagResources[action.formDefinitionId || ''];
+      }
       return {
         ...state,
         formResourceTag: {

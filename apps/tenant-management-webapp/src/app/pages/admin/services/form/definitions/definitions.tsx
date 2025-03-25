@@ -297,8 +297,8 @@ export const FormDefinitions = ({
               dispatch(fetchFormResourceTags(`${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`));
             }, 300);
           }}
-          onSave={(tag: ResourceTag) => {
-            dispatch(tagFormResource({ urn: tag.urn, label: tag.label }));
+          onSave={(tag: ResourceTag, isTagAdded: boolean) => {
+            dispatch(tagFormResource({ urn: tag.urn, label: tag.label }, isTagAdded));
             setTimeout(() => {
               dispatch(fetchFormResourceTags(`${BASE_FORM_CONFIG_URN}/${currentDefinition.id}`));
             }, 300);

@@ -168,6 +168,20 @@ const stepperBaseProps: TestProps = {
   customDispatch: mockDispatch,
 };
 
+const pagesBaseProps: TestProps = {
+  uischema: categorizationPages,
+  schema: dataSchema,
+  enabled: true,
+  direction: 'column',
+  visible: true,
+  path: 'test-path',
+  ajv: new Ajv({ allErrors: true, verbose: true }),
+  t: jest.fn(),
+  locale: 'en',
+  activeId: 0,
+  customDispatch: mockDispatch,
+};
+
 const { customDispatch, ...stepperBasePropsNoDispatch } = stepperBaseProps;
 
 const getForm = (
@@ -208,25 +222,6 @@ describe('Form Stepper Control', () => {
 
     const summaryStep = renderer.getByTestId('summary_step-content');
     expect(summaryStep).toBeInTheDocument();
-  });
-
-  it('can render an initial Categorization using pages ', () => {
-    const renderer = render(
-      <JsonFormsStepperContextProvider
-        StepperProps={stepperBaseProps}
-        children={getForm(formData, categorizationPages)}
-      />
-    );
-    const toc = renderer.getByTestId('table-of-contents');
-    expect(toc).toBeInTheDocument();
-    expect(toc).toBeVisible();
-
-    const page1Ref = renderer.getByTestId('page-ref-0');
-    expect(page1Ref).toBeInTheDocument();
-    fireEvent.click(page1Ref);
-    const step1 = renderer.getByTestId('step_0-content-pages');
-    expect(step1).toBeInTheDocument();
-    expect(step1).toBeVisible();
   });
 
   it('can render a nested Categorization', () => {
@@ -351,24 +346,17 @@ describe('Form Stepper Control', () => {
         ...stepperBasePropsNoDispatch,
         data: {},
       };
+      newStepperProps.activeId = 0;
       const renderer = render(
         <JsonFormsStepperContextProvider
           StepperProps={newStepperProps}
           children={getForm(formData, categorizationPages)}
         />
       );
-      const toc = renderer.getByTestId('table-of-contents');
-      expect(toc).toBeInTheDocument();
-      expect(toc).toBeVisible();
-      const page1Ref = renderer.getByTestId('page-ref-0');
-      expect(page1Ref).toBeInTheDocument();
-      fireEvent.click(page1Ref);
 
       window.HTMLElement.prototype.scrollIntoView = function () {};
       const nextButton = renderer.baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
-
       expect(nextButton).toBeInTheDocument();
-
       expect(nextButton!.getAttribute('disabled')).toBe('true');
     });
 
@@ -384,36 +372,23 @@ describe('Form Stepper Control', () => {
           children={getForm(formData, categorizationPages)}
         />
       );
-      const toc = renderer.getByTestId('table-of-contents');
-      expect(toc).toBeInTheDocument();
-      expect(toc).toBeVisible();
-      const page1Ref = renderer.getByTestId('page-ref-0');
-      expect(page1Ref).toBeInTheDocument();
-      fireEvent.click(page1Ref);
-
       const BackButton = renderer.getByTestId('back-button-click');
       expect(BackButton).toBeVisible();
       await fireEvent.click(BackButton!);
-      console.log(mockDispatch.mock.calls);
     });
 
     it('will show submit button on last step', async () => {
       const newStepperProps = {
-        ...stepperBaseProps,
+        ...pagesBaseProps,
         data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
       };
+      newStepperProps.activeId = 1;
       const renderer = render(
         <JsonFormsStepperContextProvider
           StepperProps={newStepperProps}
           children={getForm(formData, categorizationPages)}
         />
       );
-      const toc = renderer.getByTestId('table-of-contents');
-      expect(toc).toBeInTheDocument();
-      expect(toc).toBeVisible();
-      const page1Ref = renderer.getByTestId('page-ref-0');
-      expect(page1Ref).toBeInTheDocument();
-      fireEvent.click(page1Ref);
 
       const nextButton = renderer.baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
 
@@ -423,38 +398,35 @@ describe('Form Stepper Control', () => {
       expect(mockDispatch.mock.calls.length > 0).toBe(true);
     });
 
-    it('can render the review page', async () => {
+    it('can render the content table', async () => {
       const newStepperProps = {
-        ...stepperBaseProps,
+        ...pagesBaseProps,
+
         data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
       };
-      newStepperProps.activeId = 2;
+
       const renderer = render(
         <JsonFormsStepperContextProvider
           StepperProps={newStepperProps}
           children={getForm(formData, categorizationPages)}
         />
       );
+
       const toc = renderer.getByTestId('table-of-contents');
       expect(toc).toBeInTheDocument();
       expect(toc).toBeVisible();
-
-      const page1Ref = renderer.getByTestId('page-ref-0');
-      expect(page1Ref).toBeInTheDocument();
-      fireEvent.click(page1Ref);
-
-      const baseElement = renderer.getByTestId('stepper-pages-review-page');
-
-      expect(renderer.getByTestId('stepper-pages-review-page')).toBeTruthy();
+      const pageLink = renderer.getByTestId('page-ref-0');
+      expect(pageLink).toBeVisible();
+      fireEvent.click(pageLink);
+      expect(mockDispatch.mock.calls.length > 0);
     });
 
-    it('can render the back to review page', async () => {
+    it('can render back to application button', async () => {
       const newStepperProps = {
-        ...stepperBaseProps,
+        ...pagesBaseProps,
 
         data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
       };
-      newStepperProps.withBackReviewBtn = true;
 
       const renderer = render(
         <JsonFormsStepperContextProvider
@@ -466,18 +438,8 @@ describe('Form Stepper Control', () => {
       const toc = renderer.getByTestId('table-of-contents');
       expect(toc).toBeInTheDocument();
       expect(toc).toBeVisible();
-
-      const page1Ref = renderer.getByTestId('page-ref-0');
-      expect(page1Ref).toBeInTheDocument();
-      fireEvent.click(page1Ref);
-
-      const baseElement = renderer.getByTestId('step_0-content-pages');
-
-      const backToReviewBtn = baseElement.querySelector("goa-button[testId='pages-to-review-page-btn']");
-      expect(backToReviewBtn).toBeTruthy();
-
-      await fireEvent.click(backToReviewBtn!);
-      expect((mockDispatch.mock.calls[5].type = 'page/to/index'));
+      const pageLink = renderer.getByTestId('page-ref-0');
+      expect(pageLink).toBeVisible();
     });
   });
 

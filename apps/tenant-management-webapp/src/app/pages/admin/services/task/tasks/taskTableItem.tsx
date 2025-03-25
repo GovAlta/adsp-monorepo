@@ -1,7 +1,8 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { IconDiv, MoreDetails } from '../styled-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { QueueTaskDefinition } from '@store/task/model';
+import { ActionIconsDiv } from '../../styled-components';
+import { MoreDetails } from '../styled-components';
 
 interface TaskTableItemProps {
   id: string;
@@ -37,7 +38,7 @@ export const TaskTableItem: FunctionComponent<TaskTableItemProps> = ({ id, task,
         <td data-testid="task-list-namespace">{task.name}</td>
         <td data-testid="task-list-name">{task.description}</td>
         <td data-testid="queue-list-action">
-          <IconDiv>
+          <ActionIconsDiv>
             <GoAContextMenuIcon
               title="Toggle details"
               type={showDetails ? 'eye-off' : 'eye'}
@@ -50,7 +51,7 @@ export const TaskTableItem: FunctionComponent<TaskTableItemProps> = ({ id, task,
               type="create"
               onClick={() => onEditTask(task)}
             />
-          </IconDiv>
+          </ActionIconsDiv>
         </td>
       </tr>
       {showDetails && (

@@ -17,7 +17,7 @@ import { FormDefinition, FormResourceTagResult } from '@store/form/model';
 import { ResourceTag } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { fetchFormResourceTags, fetchFormTagByTagName } from '@store/form/action';
+import { clearAllTags, fetchAllTags, fetchFormResourceTags, fetchFormTagByTagName } from '@store/form/action';
 import { AddRemoveResourceTagSpacing } from './style-components';
 import { selectFormResourceTags } from '@store/form/selectors';
 
@@ -27,7 +27,7 @@ interface AddRemoveResourceTagModalProps {
   initialFormDefinition?: FormDefinition;
   onClose: () => void;
   onDelete: (tag: FormResourceTagResult) => void;
-  onSave: (tag: ResourceTag) => void;
+  onSave: (tag: ResourceTag, isTagAdded: boolean) => void;
 }
 
 const TagChipComponent: FunctionComponent<{
@@ -150,10 +150,14 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
             testId="resource-tag-save"
             disabled={isNotValid()}
             onClick={() => {
-              onSave({
-                label: tag.trim(),
-                urn: `${baseResourceFormUrn}/${initialFormDefinition.id}`,
-              } as ResourceTag);
+              onSave(
+                {
+                  label: tag.trim(),
+                  urn: `${baseResourceFormUrn}/${initialFormDefinition.id}`,
+                } as ResourceTag,
+                tagAlreadyAdded()
+              );
+
               onClose();
             }}
           >

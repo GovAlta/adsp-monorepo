@@ -2,6 +2,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { CacheOverview } from './cacheOverview';
+import { Targets } from './targets';
 import AsideLinks from '@components/AsideLinks';
 
 export const Cache: FunctionComponent = () => {
@@ -18,8 +19,11 @@ export const Cache: FunctionComponent = () => {
       <Main>
         <h1 data-testid="cache-title">Cache service</h1>
         <Tabs activeIndex={activeIndex}>
-          <Tab label="Overview" data-testid="cache-service-overview-tab">
+          <Tab label="Overview" data-testid="cache-service-overview-tab-overview">
             <CacheOverview setActiveEdit={activateEdit} setActiveIndex={setActiveIndex} />
+          </Tab>
+          <Tab label="Targets" data-testid="cache-service-overview-tab-target">
+            <Targets />
           </Tab>
         </Tabs>
       </Main>
