@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RegisterConfig } from './actions';
+import { RegisterConfig, UserContext, RegisterConfigData, USER_CONTEXT_DATA_URN } from './actions';
 import get from 'lodash/get';
 
 export const fetchRegister = async (props: RegisterConfig) => {
@@ -40,4 +40,11 @@ export const isValidHref = function (url: string) {
 export const isMailToHref = function (url: string) {
   const mailToPattern = new RegExp(/^(mailto):[^ "]+$/);
   return mailToPattern.test(url);
+};
+
+export const createUserRegisterData = (userCtx: UserContext): RegisterConfigData => {
+  return {
+    urn: USER_CONTEXT_DATA_URN,
+    data: userCtx,
+  };
 };

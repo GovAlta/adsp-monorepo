@@ -19,12 +19,20 @@ export interface LabelValueRegisterData {
   value: string;
 }
 
+export interface UserContext {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export const USER_CONTEXT_DATA_URN = 'urn:ads:context:user';
+
 export interface Errors {
   url: string;
   message: string;
 }
 
-export type RegisterDataType = string[] | LabelValueRegisterData[];
+export type RegisterDataType = string[] | LabelValueRegisterData[] | UserContext;
 export interface RegisterConfigData extends RegisterConfig {
   data?: RegisterDataType;
   errors?: Record<string, Errors>;
