@@ -3,7 +3,7 @@ import { UpdateIndicator } from '@store/session/actions';
 import { ErrorNotification } from '@store/notifications/actions';
 
 import { getAccessToken } from '@store/tenant/sagas';
-import { select, call, put, takeEvery } from 'redux-saga/effects';
+import { select, call, put, takeEvery, all } from 'redux-saga/effects';
 import { RootState } from '../index';
 
 import { getCacheTargetsSuccess, FETCH_CACHE_DEFINITIONS_ACTION } from './action';
@@ -18,19 +18,26 @@ export function* fetchCacheTargets(payload): SagaIterator {
   if (configBaseUrl && token) {
     try {
       const url = `${configBaseUrl}/configuration/v2/configuration/platform/cache-service?top=50&after=${next}`;
-      const { latest } = yield call(fetchCacheTargetsApi, token, url);
+      const coreUrl = `${configBaseUrl}/configuration/v2/configuration/platform/cache-service?core`;
+
+      const { tenant, core } = yield all({
+        tenant: call(fetchCacheTargetsApi, token, url),
+        core: call(fetchCacheTargetsApi, token, coreUrl),
+      });
+
       yield put(
         UpdateIndicator({
           show: true,
         })
       );
-      const targets = latest.configuration?.targets;
+      const targets = tenant.latest.configuration?.targets;
+      const coreTargets = core.latest.configuration?.targets;
       yield put(
         UpdateIndicator({
           show: false,
         })
       );
-      yield put(getCacheTargetsSuccess(targets));
+      yield put(getCacheTargetsSuccess({ tenant: targets, core: coreTargets }));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
