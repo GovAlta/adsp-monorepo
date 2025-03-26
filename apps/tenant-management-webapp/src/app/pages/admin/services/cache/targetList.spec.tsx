@@ -19,31 +19,34 @@ describe('form Component', () => {
     },
     cache: {
       targets: {
-        'urn:ads:platform:file-service': {
-          ttl: 3600,
-          invalidationEvents: [
-            {
-              namespace: 'storage',
-              name: 'fileDeleted',
-              resourceIdPath: '/files/{fileId}',
-            },
-            {
-              namespace: 'storage',
-              name: 'fileUpdated',
-              resourceIdPath: ['/files/{fileId}', '/users/{userId}/files'],
-            },
-          ],
+        tenant: {
+          'urn:ads:platform:file-service': {
+            ttl: 3600,
+            invalidationEvents: [
+              {
+                namespace: 'storage',
+                name: 'fileDeleted',
+                resourceIdPath: '/files/{fileId}',
+              },
+              {
+                namespace: 'storage',
+                name: 'fileUpdated',
+                resourceIdPath: ['/files/{fileId}', '/users/{userId}/files'],
+              },
+            ],
+          },
+          'urn:ads:platform:file-service:v1': {
+            ttl: 7200,
+            invalidationEvents: [
+              {
+                namespace: 'storage',
+                name: 'fileUploaded',
+                resourceIdPath: '/uploads/{uploadId}',
+              },
+            ],
+          },
         },
-        'urn:ads:platform:file-service:v1': {
-          ttl: 7200,
-          invalidationEvents: [
-            {
-              namespace: 'storage',
-              name: 'fileUploaded',
-              resourceIdPath: '/uploads/{uploadId}',
-            },
-          ],
-        },
+        core: {},
       },
       nextEntries: null,
     },

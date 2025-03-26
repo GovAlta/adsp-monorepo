@@ -16,6 +16,6 @@ export const defaultCacheTarget: CacheTarget = {
 };
 
 export interface CacheState {
-  targets: Record<string, CacheTarget>;
+  targets: { tenant: Record<string, CacheTarget>; core: Record<string, CacheTarget> };
   nextEntries: string | null;
 }

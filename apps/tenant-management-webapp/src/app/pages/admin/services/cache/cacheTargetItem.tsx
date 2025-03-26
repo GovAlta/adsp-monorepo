@@ -16,7 +16,7 @@ export const CacheTargetItem = ({ target, name }: FormDefinitionItemProps): JSX.
   const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <React.Fragment key={target.id}>
+    <React.Fragment key={name}>
       <tr>
         <td data-testid="cache-targets-name">
           <OverflowWrap>{name}</OverflowWrap>

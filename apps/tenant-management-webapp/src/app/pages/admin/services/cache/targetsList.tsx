@@ -16,7 +16,7 @@ export const CacheTargetTable: FunctionComponent<cacheTargetTableProps> = ({ tar
         <tr>
           <th data-testid="cache-targets-table-header-name">Name</th>
           <th id="cache-targets-Description" data-testid="cache-targets-table-header-description">
-            Description
+            TTL
           </th>
           <th id="cache-targets-action" data-testid="cache-targets-table-header-action">
             Actions
@@ -24,8 +24,8 @@ export const CacheTargetTable: FunctionComponent<cacheTargetTableProps> = ({ tar
         </tr>
       </thead>
       <tbody>
-        {Object.keys(newTargets).map((target) => {
-          return <CacheTargetItem target={newTargets[target]} name={target} />;
+        {Object.keys(newTargets).map((target, index) => {
+          return <CacheTargetItem key={index} target={newTargets[target]} name={target} />;
         })}
       </tbody>
     </DataTable>

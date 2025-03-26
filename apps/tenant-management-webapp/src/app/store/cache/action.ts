@@ -12,7 +12,7 @@ export interface FetchCacheTargetsAction {
 
 export interface FetchCacheTargetsSuccessAction {
   type: typeof FETCH_CACHE_DEFINITIONS_SUCCESS_ACTION;
-  payload: Record<string, CacheTarget>;
+  payload: { tenant: Record<string, CacheTarget>; core: Record<string, CacheTarget> };
 }
 
 export const getCacheTargets = (next?: string): FetchCacheTargetsAction => ({
@@ -20,7 +20,10 @@ export const getCacheTargets = (next?: string): FetchCacheTargetsAction => ({
   next,
 });
 
-export const getCacheTargetsSuccess = (results: Record<string, CacheTarget>): FetchCacheTargetsSuccessAction => ({
+export const getCacheTargetsSuccess = (results: {
+  tenant: Record<string, CacheTarget>;
+  core: Record<string, CacheTarget>;
+}): FetchCacheTargetsSuccessAction => ({
   type: FETCH_CACHE_DEFINITIONS_SUCCESS_ACTION,
   payload: results,
 });
