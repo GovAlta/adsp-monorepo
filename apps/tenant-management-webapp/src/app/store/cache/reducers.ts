@@ -21,10 +21,7 @@ export default function (state: CacheState = defaultState, action: CacheActionTy
     case UPDATE_CACHE_TARGETS_SUCCESS_ACTION:
       return {
         ...state,
-        targets: {
-          ...state.targets,
-          [action.payload.urn]: action.payload,
-        },
+        targets: { ...state.targets, ...action.payload },
       };
     default:
       return state;

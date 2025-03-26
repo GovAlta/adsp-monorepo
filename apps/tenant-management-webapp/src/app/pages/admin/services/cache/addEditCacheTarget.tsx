@@ -7,7 +7,6 @@ import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDirectory } from '@store/directory/actions';
 import { selectSortedDirectory } from '@store/directory/selectors';
-
 import { GoADropdownItem, GoADropdown } from '@abgov/react-components';
 
 import {
@@ -52,6 +51,8 @@ export const AddEditTargetCache = ({
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  const combinedDirectory = [...tenantDirectory, ...coreDirectory];
 
   useEffect(() => {
     if (Object.keys(targets).length > 0 && !isEdit) {
@@ -119,26 +120,31 @@ export const AddEditTargetCache = ({
         </GoAButtonGroup>
       }
     >
-      <>
+      <div style={{ height: '360px' }}>
         <GoAFormItem error={errors?.['urn']} label="URN" mb="3" mt="3">
           <GoADropdown
             relative={true}
             name="cache-status"
+            width="100%"
             value={target.urn}
-            onChange={(_, value: string) => setTarget({ ...target, urn: value })}
+            onChange={(_, value: string) => {
+              validators.clear();
+              setTarget({ ...target, urn: value });
+            }}
           >
-            {coreDirectory.map((directory) => (
+            {combinedDirectory.map((directory) => (
               <GoADropdownItem value={directory.urn} label={directory.urn} />
             ))}
             <GoADropdownItem label="qqq" value="qqq" />
           </GoADropdown>
         </GoAFormItem>
 
-        <GoAFormItem label="Url" mb="3" mt="3">
+        <GoAFormItem label="Url" mb="5" mt="5">
           <GoAInput
             name="cache-url"
+            width="100%"
             disabled={true}
-            value={coreDirectory.find((directory) => directory.urn === target.urn)?.url}
+            value={combinedDirectory.find((directory) => directory.urn === target.urn)?.url}
           />
 
           {/* <pre>{JSON.stringify(coreDirectory, null, 2)}</pre> */}
@@ -148,16 +154,15 @@ export const AddEditTargetCache = ({
           <GoAInput
             name="cache-url-id"
             type="number"
-            value={target?.ttl}
+            value={target?.ttl?.toString()}
             testId="cache-url-id"
             width="100%"
-            // eslint-disable-next-line
             onChange={(name, value) => {
-              setTarget({ ...target, ttl: value });
+              setTarget({ ...target, ttl: parseInt(value) });
             }}
           />
         </GoAFormItem>
-      </>
+      </div>
     </GoAModal>
   );
 };

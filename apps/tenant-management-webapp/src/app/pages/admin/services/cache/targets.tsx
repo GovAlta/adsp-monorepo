@@ -7,6 +7,7 @@ import { Padding } from '@components/styled-components';
 import { AddEditTargetCache } from './addEditCacheTarget';
 import { defaultCacheTarget } from '@store/cache/model';
 import { GoAButton } from '@abgov/react-components';
+import { CacheTarget } from '@store/cache/model';
 
 interface CacheTargetProps {
   openAddDefinition: boolean;
@@ -50,9 +51,11 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
           setOpenAddDefinition(false);
         }}
         initialValue={defaultCacheTarget}
-        onSave={(definition) => {
+        onSave={(target) => {
           setOpenAddDefinition(false);
-          dispatch(updateCacheTarget(definition));
+          const updatedCacheTargets = JSON.parse(JSON.stringify(cacheTargets)) as Record<string, CacheTarget>;
+          updatedCacheTargets[target.urn] = target;
+          dispatch(updateCacheTarget(updatedCacheTargets));
         }}
       />
     </div>

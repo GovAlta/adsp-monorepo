@@ -1,6 +1,6 @@
 export interface CacheTarget {
   urn: string;
-  ttl: string;
+  ttl: number;
   invalidationEvents?: Array<{
     namespace: string;
     name: string;

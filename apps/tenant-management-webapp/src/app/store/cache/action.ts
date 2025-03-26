@@ -23,13 +23,13 @@ export interface FetchCacheTargetsSuccessAction {
 
 export interface UpdateCacheTargetAction {
   type: typeof UPDATE_CACHE_TARGETS_ACTION;
-  definition: CacheTarget;
+  definition: Record<string, CacheTarget>;
   options?: string;
 }
 
 export interface UpdateCacheTargetSuccessAction {
   type: typeof UPDATE_CACHE_TARGETS_SUCCESS_ACTION;
-  payload: CacheTarget;
+  payload: Record<string, CacheTarget>;
 }
 
 export const getCacheTargets = (next?: string): FetchCacheTargetsAction => ({
@@ -42,13 +42,16 @@ export const getCacheTargetsSuccess = (results: Record<string, CacheTarget>): Fe
   payload: results,
 });
 
-export const updateCacheTarget = (definition: CacheTarget, options?: string): UpdateCacheTargetAction => ({
+export const updateCacheTarget = (
+  definition: Record<string, CacheTarget>,
+  options?: string
+): UpdateCacheTargetAction => ({
   type: UPDATE_CACHE_TARGETS_ACTION,
   definition,
   options,
 });
 
-export const updateCacheTargetSuccess = (definition: CacheTarget): UpdateCacheTargetSuccessAction => ({
+export const updateCacheTargetSuccess = (definition: Record<string, CacheTarget>): UpdateCacheTargetSuccessAction => ({
   type: UPDATE_CACHE_TARGETS_SUCCESS_ACTION,
   payload: definition,
 });

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { CacheTarget } from './model';
+import { v4 as uuidv4 } from 'uuid';
 
 export const fetchCacheTargetsApi = async (token: string, url: string): Promise<Record<string, CacheTarget>> => {
   const res = await axios.get(url, {
@@ -8,11 +9,10 @@ export const fetchCacheTargetsApi = async (token: string, url: string): Promise<
   return res.data;
 };
 
-export const updateCacheTargetApi = async (token: string, serviceUrl: string, target: CacheTarget) => {
-  console.log(JSON.stringify(target) + '<target');
+export const updateCacheTargetApi = async (token: string, serviceUrl: string, targets: Record<string, CacheTarget>) => {
   const { data } = await axios.patch<{ latest: { configuration: Record<string, CacheTarget> } }>(
-    new URL(`configuration/v2/configuration/cache-service/${target.urn}`, serviceUrl).href,
-    { operation: 'REPLACE', configuration: target },
+    new URL(`configuration/v2/configuration/platform/cache-service`, serviceUrl).href,
+    { operation: 'REPLACE', configuration: { targets: targets } },
     { headers: { Authorization: `Bearer ${token}` } }
   );
 
