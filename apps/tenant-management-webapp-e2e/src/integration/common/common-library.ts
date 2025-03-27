@@ -117,4 +117,16 @@ export function nowPlusMinusMinutes(nowPlusMinusMinutesString) {
   }
 }
 
-export default { tenantAdminDirectURLLogin, tenantAdminMenuItem, nowPlusMinusMinutes };
+// Replace the placeholder <$ph> string with the passed-in replacement string
+export function stringReplacement(nameString, replacementString) {
+  let nameAfterPlacement;
+  if (nameString.includes('<$ph>')) {
+    // Replace the placeholder string with repacement string
+    nameAfterPlacement = nameString.replace('<$ph>', replacementString);
+  } else {
+    nameAfterPlacement = nameString;
+  }
+  return nameAfterPlacement;
+}
+
+export default { tenantAdminDirectURLLogin, tenantAdminMenuItem, nowPlusMinusMinutes, stringReplacement };
