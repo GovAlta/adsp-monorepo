@@ -2,6 +2,7 @@ import React, { FunctionComponent } from 'react';
 import DataTable from '@components/DataTable';
 import { CacheTarget } from '../../../../store/cache/model';
 import { CacheTargetItem } from './cacheTargetItem';
+import { PageIndicator } from '@components/Indicator';
 
 export interface cacheTargetTableProps {
   targets: Record<string, CacheTarget>;
@@ -23,6 +24,7 @@ export const CacheTargetTable: FunctionComponent<cacheTargetTableProps> = ({ tar
           </th>
         </tr>
       </thead>
+      <PageIndicator />
       <tbody>
         {Object.keys(newTargets).map((target, index) => {
           return <CacheTargetItem key={index} target={newTargets[target]} name={target} />;

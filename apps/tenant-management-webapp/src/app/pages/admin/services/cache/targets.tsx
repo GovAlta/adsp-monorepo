@@ -42,7 +42,6 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
       >
         Add cache targets
       </GoAButton>
-      {/* <pre>{JSON.stringify(cacheTargets.tenant, null, 2)}</pre> */}
       {cacheTargets && <CacheTargetTable targets={cacheTargets.tenant} />}
       <h2>Core cache targets</h2>
       {cacheTargets && <CacheTargetTable targets={cacheTargets.core} />}
@@ -55,8 +54,9 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
         initialValue={defaultCacheTarget}
         onSave={(target) => {
           setOpenAddDefinition(false);
-          const updatedCacheTargets = JSON.parse(JSON.stringify(cacheTargets)) as Record<string, CacheTarget>;
-          updatedCacheTargets.tenant[target.urn] = target;
+          const updatedCacheTargets = JSON.parse(JSON.stringify(cacheTargets.tenant)) as Record<string, CacheTarget>;
+          updatedCacheTargets[target.urn] = target;
+
           dispatch(updateCacheTarget(updatedCacheTargets));
         }}
       />

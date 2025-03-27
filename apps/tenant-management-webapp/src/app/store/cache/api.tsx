@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { CacheTarget } from './model';
-import { v4 as uuidv4 } from 'uuid';
 
 export const fetchCacheTargetsApi = async (token: string, url: string): Promise<Record<string, CacheTarget>> => {
   const res = await axios.get(url, {

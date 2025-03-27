@@ -21,14 +21,12 @@ export default function (state: CacheState = defaultState, action: CacheActionTy
         targets: { ...state.targets, ...action.payload },
       };
     case UPDATE_CACHE_TARGETS_SUCCESS_ACTION:
-      console.log(JSON.stringify(action.payload) + '<action.payload');
-      console.log(JSON.stringify(state.targets) + '<-state.targets');
-      console.log(
-        JSON.stringify(merge({}, state.targets, action.payload)) + '<-merge({}, state.targets, action.payload)'
-      );
       return {
         ...state,
-        targets: merge({}, state.targets, action.payload), // Deep merge instead of shallow merge
+        targets: {
+          ...state.targets,
+          tenant: merge({}, state.targets.tenant, action.payload),
+        },
       };
     default:
       return state;

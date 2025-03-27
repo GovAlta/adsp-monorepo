@@ -26,17 +26,17 @@ export function* fetchCacheTargets(payload): SagaIterator {
     try {
       const url = `${configBaseUrl}/configuration/v2/configuration/platform/cache-service?top=50&after=${next}`;
       const coreUrl = `${configBaseUrl}/configuration/v2/configuration/platform/cache-service?core`;
+      yield put(
+        UpdateIndicator({
+          show: true,
+        })
+      );
 
       const { tenant, core } = yield all({
         tenant: call(fetchCacheTargetsApi, token, url),
         core: call(fetchCacheTargetsApi, token, coreUrl),
       });
 
-      yield put(
-        UpdateIndicator({
-          show: true,
-        })
-      );
       const targets = tenant.latest.configuration?.targets;
       const coreTargets = core.latest.configuration?.targets;
       yield put(
