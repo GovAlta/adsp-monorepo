@@ -43,11 +43,11 @@ export const AddEditResourceTypeModal = ({
   isEdit,
 }: ResourceTypeModalProps): JSX.Element => {
   const [resourceType, setResourceType] = useState<ResourceType>(initialType);
-  const [urnStr, setUrnStr] = useState('');
+  const [api, setApi] = useState('');
   const [selectedDeleteEvent, setSelectedDeleteEvent] = useState('');
   useEffect(() => {
     setResourceType(initialType);
-    setUrnStr(urn);
+    setApi(urn);
     setSelectedDeleteEvent(initialDeleteEvent);
   }, [initialType, urn, initialDeleteEvent]);
 
@@ -56,6 +56,7 @@ export const AddEditResourceTypeModal = ({
   const filteredEventDefinitions = useSelector(selectFilteredEventDefinitions);
 
   const { errors, validators } = useValidators('name', 'name', isNotEmptyCheck('name'))
+    .add('api', 'api', isNotEmptyCheck('api'))
     .add('type', 'type', isNotEmptyCheck('type'))
     .add('matcher', 'matcher', isNotEmptyCheck('matcher'))
     .add('matcher', 'matcher', isValidRegexString('matcher'))
@@ -65,7 +66,7 @@ export const AddEditResourceTypeModal = ({
     validators.clear();
     setResourceType(defaultResourceType);
     setSelectedDeleteEvent('');
-    setUrnStr('');
+    setApi('');
   };
 
   const onCancelModal = () => {
@@ -77,12 +78,13 @@ export const AddEditResourceTypeModal = ({
     const validations = {
       type: resourceType?.type,
       matcher: resourceType?.matcher,
+      api: api,
     };
 
     if (!validators.checkAll(validations)) {
       return;
     }
-    onSave(resourceType, urnStr);
+    onSave(resourceType, api);
     onCancelModal();
   };
 
@@ -117,16 +119,19 @@ export const AddEditResourceTypeModal = ({
         </GoAButtonGroup>
       }
     >
-      <GoAFormItem label="Api" requirement="required">
+      <GoAFormItem label="Api" requirement="required" error={errors?.['api']}>
         <GoADropdown
-          name="resource-type-api"
-          value={isEdit ? urn : urnStr}
+          name="api"
+          value={isEdit ? urn : api}
           aria-label="resource-type-api"
           width="100%"
           testId="resource-type-api"
           disabled={isEdit}
           onChange={(_, value: string) => {
-            setUrnStr(value);
+            validators.remove('api');
+            validators['api'].check(value);
+
+            setApi(value);
             setResourceType({
               ...resourceType,
               deleteEvent: {

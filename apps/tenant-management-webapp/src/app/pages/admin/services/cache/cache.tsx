@@ -1,6 +1,8 @@
 import React, { FunctionComponent, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
+import BetaBadge from '@icons/beta-badge.svg';
+import { HeadingDiv } from '../form/styled-components';
 import { CacheOverview } from './cacheOverview';
 import { Targets } from './targets';
 import AsideLinks from '@components/AsideLinks';
@@ -12,7 +14,10 @@ export const Cache: FunctionComponent = () => {
   return (
     <Page>
       <Main>
-        <h1 data-testid="cache-title">Cache service</h1>
+        <HeadingDiv>
+          <h1 data-testid="cache-title">Cache service</h1>
+          <img src={BetaBadge} alt="Cache Service" />
+        </HeadingDiv>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview" data-testid="cache-service-overview-tab-overview">
             <CacheOverview setActiveIndex={setActiveIndex} setOpenAddDefinition={setOpenAddDefinition} />

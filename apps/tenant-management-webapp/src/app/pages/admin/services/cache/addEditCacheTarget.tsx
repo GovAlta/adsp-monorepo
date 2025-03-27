@@ -20,6 +20,7 @@ import {
   GoACheckbox,
 } from '@abgov/react-components';
 import { Directory } from '../directory';
+import { Targets } from './targets';
 
 interface AddEditTargetCacheProps {
   open: boolean;
@@ -46,7 +47,12 @@ export const AddEditTargetCache = ({
   const targets = useSelector((state: RootState) => {
     return state.cache?.targets;
   });
-  const definitionIds = Object.values(targets).map((x) => x.urn);
+
+  const definitionIds = [
+    ...Object.values(targets.core).map((x) => x.urn),
+    ...Object.values(targets.tenant).map((x) => x.urn),
+  ];
+  //const definitionIds = Object.values().map((x) => x.urn);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;

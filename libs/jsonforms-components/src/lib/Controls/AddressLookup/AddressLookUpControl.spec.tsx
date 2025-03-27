@@ -228,7 +228,7 @@ describe('AddressLookUpControl', () => {
         },
       })
     );
-    expect(inputField?.getAttribute('value')).toBe('');
+    expect(inputField?.getAttribute('value')).toBe('123');
   });
 
   it('displays no suggestions for less than 3 characters', async () => {

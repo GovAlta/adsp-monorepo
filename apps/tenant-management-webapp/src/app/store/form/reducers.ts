@@ -313,7 +313,7 @@ export default function (state: FormState = defaultState, action: FormActionType
         formResourceTag: {
           ...state.formResourceTag,
           tagsLoading: false,
-          tags: [...action.payload],
+          tags: [...action.payload].sort((a, b) => a.label.localeCompare(b.label)),
         },
       };
     case CLEAR_ALL_TAGS_ACTION:
@@ -325,6 +325,7 @@ export default function (state: FormState = defaultState, action: FormActionType
           tags: [],
         },
       };
+
     case FETCH_ALL_TAGS_FAILED_ACTION:
       return {
         ...state,
@@ -384,7 +385,9 @@ export default function (state: FormState = defaultState, action: FormActionType
 
     case DELETE_RESOURCE_TAGS_SUCCESS: {
       const { formResourceTag: toDeleteResourceTags } = { ...state };
-      delete toDeleteResourceTags.tagResources[action.formDefinitionId || ''];
+      if (toDeleteResourceTags?.tagResources) {
+        delete toDeleteResourceTags.tagResources[action.formDefinitionId || ''];
+      }
       return {
         ...state,
         formResourceTag: {

@@ -76,7 +76,7 @@ export default PrivateApp;
 const FixedContainer = styled.div`
   position: fixed;
   width: 100%;
-  z-index: 1;
+  z-index: 100;
 `;
 const ScrollBarFixTop = styled.div`
   margin-right: calc(100% - 100vw);

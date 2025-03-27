@@ -24,7 +24,6 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cacheTargets = useSelector((state: RootState) => state.cache.targets);
-  const [currentDefinition, setCurrentDefinition] = useState(defaultCacheTarget);
 
   return (
     <div>
@@ -43,7 +42,10 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
       >
         Add cache targets
       </GoAButton>
-      {cacheTargets && <CacheTargetTable targets={cacheTargets} />}
+      {/* <pre>{JSON.stringify(cacheTargets.tenant, null, 2)}</pre> */}
+      {cacheTargets && <CacheTargetTable targets={cacheTargets.tenant} />}
+      <h2>Core cache targets</h2>
+      {cacheTargets && <CacheTargetTable targets={cacheTargets.core} />}
       <AddEditTargetCache
         open={openAddDefinition}
         isEdit={false}
@@ -54,7 +56,7 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
         onSave={(target) => {
           setOpenAddDefinition(false);
           const updatedCacheTargets = JSON.parse(JSON.stringify(cacheTargets)) as Record<string, CacheTarget>;
-          updatedCacheTargets[target.urn] = target;
+          updatedCacheTargets.tenant[target.urn] = target;
           dispatch(updateCacheTarget(updatedCacheTargets));
         }}
       />

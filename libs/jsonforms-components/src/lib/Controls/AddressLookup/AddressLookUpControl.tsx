@@ -17,6 +17,7 @@ import {
 } from './utils';
 import { ListItem, SearchBox } from './styled-components';
 import { HelpContentComponent } from '../../Additional';
+import { useDebounce } from '../../util/useDebounce';
 
 type AddressLookUpProps = ControlProps;
 
@@ -48,7 +49,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const [address, setAddress] = useState<Address>(data || defaultAddress);
   const [searchTerm, setSearchTerm] = useState('');
-  const [saveSearchTerm, setSaveSearchTerm] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -58,6 +58,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setAddress(updatedAddress);
     handleChange(path, updatedAddress);
   };
+  const debouncedRenderAddress = useDebounce(searchTerm, 500);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
   const dropdownRef = useRef<HTMLUListElement>(null);
@@ -95,11 +96,8 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
 
   useEffect(() => {
-    if (saveSearchTerm) {
-      handleInputChange('addressLine1', searchTerm);
-      setSaveSearchTerm(false);
-    }
-  }, [saveSearchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
+    handleInputChange('addressLine1', searchTerm);
+  }, [debouncedRenderAddress]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -126,7 +124,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const handleDropdownChange = (value: string) => {
     setSearchTerm(value);
-    setSaveSearchTerm(true);
   };
 
   const handleSuggestionClick = (suggestion: Suggestion) => {

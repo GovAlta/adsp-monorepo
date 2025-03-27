@@ -1,4 +1,4 @@
-import { StepperContextDataType } from './types';
+import { StepperContextDataType, TABLE_CONTEXT_ID } from './types';
 import { ErrorObject } from 'ajv';
 import { Dispatch } from 'react';
 import Ajv from 'ajv';
@@ -56,7 +56,10 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
       const { id } = action.payload;
       state.activeId = id;
 
-      if (id > lastId) {
+      if (id === TABLE_CONTEXT_ID) {
+        return { ...state };
+      }
+      if (id === lastId + 1) {
         state.isOnReview = true;
         state.hasNextButton = false;
         state.hasPrevButton = true;
@@ -72,7 +75,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
     }
     case 'update/category': {
       const { id, ajv, errors } = action.payload as { ajv: Ajv; id: number; errors: ErrorObject[] };
-      if (id === state.categories.length) {
+      if (id === state.categories.length || id === TABLE_CONTEXT_ID) {
         return { ...state };
       }
       /*

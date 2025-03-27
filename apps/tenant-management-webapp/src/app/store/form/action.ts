@@ -284,7 +284,6 @@ export interface FetchAllTagsSuccessAction {
 export interface ClearAllTagsAction {
   type: typeof CLEAR_ALL_TAGS_ACTION;
 }
-
 export interface FetchAllTagsFailedAction {
   type: typeof FETCH_ALL_TAGS_FAILED_ACTION;
   error: string;
@@ -316,6 +315,7 @@ export interface FetchResourcesByTagFailureAction {
 export interface TagResourceAction {
   type: typeof TAG_FORM_RESOURCE_ACTION;
   tag: ResourceTag;
+  isTagAdded: boolean;
 }
 
 export interface FetchResourceTagsAction {
@@ -498,9 +498,10 @@ export const fetchFormMetricsSuccess = (metrics: FormMetrics): FetchFormMetricsS
   payload: metrics,
 });
 
-export const tagFormResource = (data: ResourceTag): TagResourceAction => ({
+export const tagFormResource = (data: ResourceTag, isTagAdded: boolean): TagResourceAction => ({
   type: TAG_FORM_RESOURCE_ACTION,
   tag: data,
+  isTagAdded: isTagAdded,
 });
 
 export const unTagFormResource = (data: FormResourceTagResult): UnTagResourceAction => ({

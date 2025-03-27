@@ -18,27 +18,27 @@ export const CacheOverview: FunctionComponent<CacheOverviewProps> = ({
 
   return (
     <div>
-      <OverviewLayout
-        description={description}
-        addButton={
-          <GoAButton
-            testId="add-definition"
-            onClick={() => {
-              setActiveIndex(1);
-              setOpenAddDefinition(true);
-            }}
-          >
-            Add cache target
-          </GoAButton>
-        }
-      />
-      <NoPaddingH2>Cache targets</NoPaddingH2>
-      <p>
-        Targets are upstream services and APIs that cache service can provide read-through requests to. This
-        configuration is a whitelist that restricts the upstream resources available through the cache service API.
-        Targets are configured as service or API URNs and must be registered in directory service, and an associated TTL
-        can be set.
-      </p>
+      <section>
+        <p></p>
+        {description}
+        <NoPaddingH2>Cache targets</NoPaddingH2>
+
+        <p>
+          Targets are upstream services and APIs that cache service can provide read-through requests to. This
+          configuration is a whitelist that restricts the upstream resources available through the cache service API.
+          Targets are configured as service or API URNs and must be registered in directory service, and an associated
+          TTL can be set.
+        </p>
+        <GoAButton
+          testId="add-definition"
+          onClick={() => {
+            setActiveIndex(1);
+            setOpenAddDefinition(true);
+          }}
+        >
+          Add cache target
+        </GoAButton>
+      </section>
     </div>
   );
 };
