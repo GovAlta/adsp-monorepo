@@ -121,7 +121,7 @@ export function nowPlusMinusMinutes(nowPlusMinusMinutesString) {
 export function stringReplacement(nameString, replacementString) {
   let nameAfterPlacement;
   if (nameString.includes('<$ph>')) {
-    // Replace the placeholder string with -MMDDHHMMSS
+    // Replace the placeholder string with repacement string
     nameAfterPlacement = nameString.replace('<$ph>', replacementString);
   } else {
     nameAfterPlacement = nameString;
