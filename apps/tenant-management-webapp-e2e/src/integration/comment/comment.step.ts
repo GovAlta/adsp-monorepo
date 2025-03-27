@@ -6,6 +6,8 @@ import common from '../common/common.page';
 const commonObj = new common();
 const commentObj = new CommentPage();
 
+let replacementString;
+
 Given('a tenant admin user is on comment service overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
@@ -519,7 +521,21 @@ Then('the user views Add topic modal', function () {
 When(
   'the user enters {string}, {string}, {string} in Add topic modal',
   function (topicName: string, topicDesc: string, topicResourceId: string) {
-    commentObj.addTopicModalName().shadow().find('input').clear().type(topicName, { force: true, delay: 200 });
+    const currentTime = new Date();
+    replacementString =
+      '-' +
+      ('0' + currentTime.getMonth()).substr(-2) +
+      ('0' + currentTime.getDate()).substr(-2) +
+      ('0' + currentTime.getHours()).substr(-2) +
+      ('0' + currentTime.getHours()).substr(-2) +
+      ('0' + currentTime.getSeconds()).substr(-2);
+    const topicNameAfterReplacement = commonlib.stringReplacement(topicName, replacementString);
+    commentObj
+      .addTopicModalName()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(topicNameAfterReplacement, { force: true, delay: 200 });
     commentObj.addTopicModalDesc().shadow().find('textarea').clear().type(topicDesc, { force: true, delay: 100 });
     commentObj
       .addTopicModalResourceId()
@@ -564,6 +580,8 @@ Then('the user {string} a topic of {string}, {string}', function (viewOrNot, nam
       }
     });
   }
+
+  name = commonlib.stringReplacement(name, replacementString);
 
   findTopic(name, resourceId).then((rowNumber) => {
     switch (viewOrNot) {
@@ -634,6 +652,9 @@ When('the user clicks {string} icon for the topic of {string}, {string}', functi
       }
     });
   }
+
+  name = commonlib.stringReplacement(name, replacementString);
+
   findTopic(name, resourceId).then((rowNumber) => {
     switch (iconName) {
       case 'eye':
@@ -655,6 +676,7 @@ When('the user clicks {string} icon for the topic of {string}, {string}', functi
 Then(
   'the user views the description of {string} for the topic of {string}, {string}',
   function (desc, name, resourceId) {
+    name = commonlib.stringReplacement(name, replacementString);
     findTopic(name, resourceId).then((rowNumber) => {
       const topicDetailsRowNumber = (Number(rowNumber) + 1).toString();
       commentObj.topicDescription(topicDetailsRowNumber).should('contain', desc);
@@ -665,6 +687,7 @@ Then(
 Then(
   'the user views the message of No comments found for the topic of {string}, {string}',
   function (name, resourceId) {
+    name = commonlib.stringReplacement(name, replacementString);
     findTopic(name, resourceId).then((rowNumber) => {
       const topicDetailsRowNumber = (Number(rowNumber) + 1).toString();
       commentObj.topicDetailsNoCommentsFoundMessage(topicDetailsRowNumber).should('exist');
@@ -831,11 +854,13 @@ Then('the user {string} the comment of {string}', function (viewOrNotView, comme
 });
 
 Then('the user views Delete topic modal for {string}', function (topicName) {
+  topicName = commonlib.stringReplacement(topicName, replacementString);
   commentObj.deleteTopicModalHeading().invoke('text').should('eq', 'Delete topic');
   commentObj.deleteTopicModalContentTopicName().invoke('text').should('contain', topicName);
 });
 
 Then('the user views the message of associated comments with {string} to be deleted', function (topicName) {
+  topicName = commonlib.stringReplacement(topicName, replacementString);
   commentObj
     .deleteTopicModalContentNote()
     .invoke('text')

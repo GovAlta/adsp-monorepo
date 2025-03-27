@@ -92,15 +92,15 @@ Feature: Comment
     Then the user "should not view" a topic of "autotest-addDeleteTopic", "autotest123"
     When the user clicks Add topic type button on comments page
     Then the user views Add topic modal
-    When the user enters "autotest-addDeleteTopic", "autotest topic desc", "autotest123" in Add topic modal
+    When the user enters "autotest-addDelTopic<$ph>", "autotest topic desc", "autotest123" in Add topic modal
     And the user clicks "Save" button in Add topic modal
     # View topic with Load more button
     And the user clicks Load more button for topic list
     Then the user views more than 10 topics
-    And the user "views" a topic of "autotest-addDeleteTopic", "autotest123"
-    When the user clicks "eye" icon for the topic of "autotest-addDeleteTopic", "autotest123"
-    Then the user views the description of "autotest topic desc" for the topic of "autotest-addDeleteTopic", "autotest123"
-    And the user views the message of No comments found for the topic of "autotest-addDeleteTopic", "autotest123"
+    And the user "views" a topic of "autotest-addDelTopic<$ph>", "autotest123"
+    When the user clicks "eye" icon for the topic of "autotest-addDelTopic<$ph>", "autotest123"
+    Then the user views the description of "autotest topic desc" for the topic of "autotest-addDelTopic<$ph>", "autotest123"
+    And the user views the message of No comments found for the topic of "autotest-addDelTopic<$ph>", "autotest123"
     # Add comment
     When the user clicks Add comment button for the topic
     Then the user views Add comment modal
@@ -131,11 +131,11 @@ Feature: Comment
     When the user clicks Delete button in Delete comment modal
     Then the user "should not view" the comment of "Comment number two"
     # Delete topic
-    When the user clicks "delete" icon for the topic of "autotest-addDeleteTopic", "autotest123"
-    Then the user views Delete topic modal for "autotest-addDeleteTopic"
-    And the user views the message of associated comments with "autotest-addDeleteTopic" to be deleted
+    When the user clicks "delete" icon for the topic of "autotest-addDelTopic<$ph>", "autotest123"
+    Then the user views Delete topic modal for "autotest-addDelTopic<$ph>"
+    And the user views the message of associated comments with "autotest-addDelTopic<$ph>" to be deleted
     When the user clicks Delete button in Delete topic modal
-    Then the user "should not view" a topic of "autotest-addDeleteTopic", "autotest123"
+    Then the user "should not view" a topic of "autotest-addDelTopic<$ph>", "autotest123"
     # Load more button for comments
     When the user clicks "eye" icon for the topic of "autotest-submission001", "auto-001"
     Then the user views "10" comments
