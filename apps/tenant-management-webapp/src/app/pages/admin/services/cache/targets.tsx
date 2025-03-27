@@ -26,7 +26,10 @@ export const Targets: FunctionComponent<CacheTargetProps> = (props) => {
         Targets are configured as service or API URNs and must be registered in directory service, and an associated TTL
         can be set.
       </Padding>
-      {cacheTargets && <CacheTargetTable targets={cacheTargets} />}
+      {cacheTargets && <CacheTargetTable targets={cacheTargets.tenant} />}
+
+      <h2>Core cache targets</h2>
+      {cacheTargets && <CacheTargetTable targets={cacheTargets.core} />}
     </div>
   );
 };

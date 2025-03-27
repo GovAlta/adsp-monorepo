@@ -3,7 +3,7 @@ import { FETCH_CACHE_DEFINITIONS_SUCCESS_ACTION, CacheActionTypes } from './acti
 import { CacheState } from './model';
 
 export const defaultState: CacheState = {
-  targets: {},
+  targets: { core: {}, tenant: {} },
   nextEntries: null,
 };
 
