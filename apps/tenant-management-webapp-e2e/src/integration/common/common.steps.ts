@@ -10,6 +10,7 @@ import ServiceStatusPage from '../service-status/service-status.page';
 import NotificationsPage from '../notifications/notifications.page';
 
 let formId;
+let replacementString;
 
 import dayjs = require('dayjs');
 
@@ -200,6 +201,9 @@ Then('the user views a notification message of {string}', function (message) {
 });
 
 Then('the user views delete {string} confirmation modal for {string}', function (deleteItemType, deleteItemName) {
+  if (String(deleteItemName).includes('<$ph>')) {
+    deleteItemName = commonlib.stringReplacement(deleteItemName, replacementString);
+  }
   cy.wait(4000);
   commonObj
     .deleteConfirmationModalTitle()
@@ -317,6 +321,15 @@ Then('the user views Add definition dialog', function () {
 When(
   'the user enters {string} in Namespace, {string} in Name, {string} in Description',
   function (namespace: string, name: string, desc: string) {
+    const currentTime = new Date();
+    replacementString =
+      '-' +
+      ('0' + currentTime.getMonth()).substr(-2) +
+      ('0' + currentTime.getDate()).substr(-2) +
+      ('0' + currentTime.getHours()).substr(-2) +
+      ('0' + currentTime.getHours()).substr(-2) +
+      ('0' + currentTime.getSeconds()).substr(-2);
+    name = commonlib.stringReplacement(name, replacementString);
     eventsObj
       .definitionModalNamespaceField()
       .shadow()
@@ -336,6 +349,7 @@ When('the user clicks Save button on Definition modal', function () {
 Then(
   'the user {string} an event definition of {string} and {string} under {string}',
   function (viewOrNot, eventName, eventDesc, eventNamespace) {
+    eventName = commonlib.stringReplacement(eventName, replacementString);
     switch (viewOrNot) {
       case 'views':
         eventsObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('exist');
@@ -352,6 +366,7 @@ Then(
 When(
   'the user clicks {string} button for the definition of {string} and {string} under {string}',
   function (button, eventName, eventDesc, eventNamespace) {
+    eventName = commonlib.stringReplacement(eventName, replacementString);
     switch (button) {
       case 'Edit':
         eventsObj
