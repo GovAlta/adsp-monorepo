@@ -1,7 +1,6 @@
 import { ControlProps, JsonSchema, JsonSchema7, extractSchema } from '@jsonforms/core';
 import { invalidSin, sinTitle } from '../common/Constants';
 
-type JsonSchemaV7 = JsonSchema7;
 /**
  * Sets the first word to be capitalized so that it is sentence cased.
  * @param words
@@ -90,11 +89,11 @@ interface extractSchema {
 export const getRequiredIfThen = (props: ControlProps) => {
   const { path } = props;
 
-  const rootSchema = props.rootSchema as JsonSchemaV7;
+  const rootSchema = props.rootSchema as JsonSchema7;
   let rootRequired = '';
   if (rootSchema?.if && rootSchema.then) {
     if (rootSchema.then?.required && Array.isArray(rootSchema.then?.required)) {
-      const foundRequired = rootSchema.then?.required.find((req) => req === path);
+      const foundRequired = rootSchema.then?.required?.find((req) => req === path);
       if (foundRequired !== null) {
         rootRequired = foundRequired ?? '';
       }
@@ -110,11 +109,9 @@ export const getRequiredIfThen = (props: ControlProps) => {
  * @returns error message
  */
 export const checkFieldValidity = (props: ControlProps): string => {
-  const { data, errors: ajvErrors, path, required, label, uischema, schema } = props;
+  const { data, errors: ajvErrors, required, label, uischema, schema } = props;
   const labelToUpdate = uischema?.scope ? getLabelText(uischema?.scope, label) : label;
   const extraSchema = schema as JsonSchema & extractSchema;
-
-  const rootSchema = props.rootSchema as JsonSchemaV7;
 
   if (extraSchema && data && extraSchema?.title === sinTitle) {
     if (data.length === 11 && !validateSinWithLuhn(data)) {

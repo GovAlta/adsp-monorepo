@@ -32,13 +32,18 @@ describe('Input Text Control tests', () => {
   const staticProps: GoAInputTextProps & ControlProps = {
     uischema: textBoxUiSchema,
     schema: {},
-    rootSchema: {},
+    rootSchema: {
+      if: {},
+      then: {
+        required: ['firstName'],
+      },
+    },
     handleChange: (path, value) => {},
     enabled: true,
     label: 'First Name',
     id: 'firstName',
     config: {},
-    path: '',
+    path: 'firstName',
     errors: '',
     data: 'My Name',
     visible: true,
