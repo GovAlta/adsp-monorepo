@@ -64,6 +64,8 @@ export function* updateCacheTargets({ definition }: UpdateCacheTargetAction): Sa
     try {
       const { latest } = yield call(updateCacheTargetApi, token, baseUrl, definition);
 
+      console.log(JSON.stringify(latest.configuration.targets) + '<latest.configuration.targets');
+
       yield put(updateCacheTargetSuccess(latest.configuration.targets));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));

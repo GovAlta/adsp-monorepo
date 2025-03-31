@@ -9,18 +9,7 @@ import { fetchDirectory } from '@store/directory/actions';
 import { selectSortedDirectory } from '@store/directory/selectors';
 import { GoADropdownItem, GoADropdown } from '@abgov/react-components';
 
-import {
-  GoATextArea,
-  GoAInput,
-  GoAModal,
-  GoAButtonGroup,
-  GoAFormItem,
-  GoAButton,
-  GoAIcon,
-  GoACheckbox,
-} from '@abgov/react-components';
-import { Directory } from '../directory';
-import { Targets } from './targets';
+import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components';
 
 interface AddEditTargetCacheProps {
   open: boolean;
