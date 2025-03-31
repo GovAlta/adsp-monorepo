@@ -129,15 +129,15 @@ Feature: Tenant admin
   @TEST_CS-715 @REQ_CS-254 @regression
   Scenario: As a tenant admin, I can search the event log, so I can find events of interest
     Given a tenant admin user is on tenant admin page
-    #//First create an event definition under events it will be used to verify the event log
+    # First create an event definition under events it will be used to verify the event log
     When the user selects the "Event" menu item
     And the user selects "Definitions" tab for "Event"
     And the user clicks Add definition button on event definitions page
     Then the user views Add definition dialog
-    When the user enters "Autotest" in Namespace, "Autotest-eventDefinition" in Name, "event log testing" in Description
+    When the user enters "Autotest" in Namespace, "Autotest-eventDef<$ph>" in Name, "event log testing" in Description
     And the user clicks Save button on Definition modal
-    Then the user "views" an event definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"
-    #//Test event log
+    Then the user "views" an event definition of "Autotest-eventDef<$ph>" and "event log testing" under "Autotest"
+    # Test event log
     When the user selects the "Event log" menu item
     Then the "Event log" landing page is displayed
     When the user searches with "configuration-service:configuration-updated"
@@ -159,13 +159,13 @@ Feature: Tenant admin
     When the user resets event log views
     Then the user views that search fields are empty
     And the user views that the event log is no longer filtered by "configuration-service:configuration-updated", "now-2mins", "now+2mins"
-    #//Last the user deletes the event at the end of the test
+    # Last the user deletes the event at the end of the test
     When the user selects the "Event" menu item
     And the user selects "Definitions" tab for "Event"
-    When the user clicks "Delete" button for the definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"
-    Then the user views delete "event definition" confirmation modal for "Autotest-eventDefinition"
+    When the user clicks "Delete" button for the definition of "Autotest-eventDef<$ph>" and "event log testing" under "Autotest"
+    Then the user views delete "event definition" confirmation modal for "Autotest-eventDef<$ph>"
     And the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" an event definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"
+    Then the user "should not view" an event definition of "Autotest-eventDef<$ph>" and "event log testing" under "Autotest"
 
   @TEST_CS-1494 @REQ_CS-1443 @regression
   Scenario: As a tenant admin, I can see service roles registered by services, so that I can see expected services and roles
