@@ -1,4 +1,9 @@
-import { FETCH_CACHE_DEFINITIONS_SUCCESS_ACTION, CacheActionTypes } from './action';
+import {
+  FETCH_CACHE_DEFINITIONS_SUCCESS_ACTION,
+  CacheActionTypes,
+  UPDATE_CACHE_TARGETS_SUCCESS_ACTION,
+} from './action';
+import { merge } from 'lodash';
 
 import { CacheState } from './model';
 
@@ -14,7 +19,14 @@ export default function (state: CacheState = defaultState, action: CacheActionTy
         ...state,
         targets: { ...state.targets, ...action.payload },
       };
-
+    case UPDATE_CACHE_TARGETS_SUCCESS_ACTION:
+      return {
+        ...state,
+        targets: {
+          ...state.targets,
+          tenant: merge({}, state.targets.tenant, action.payload),
+        },
+      };
     default:
       return state;
   }

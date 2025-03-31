@@ -1,4 +1,4 @@
-import { ControlProps, JsonSchema, extractSchema } from '@jsonforms/core';
+import { ControlProps, JsonSchema, JsonSchema7, extractSchema } from '@jsonforms/core';
 import { invalidSin, sinTitle } from '../common/Constants';
 
 /**
@@ -82,6 +82,27 @@ interface extractSchema {
 }
 
 /**
+ * Gets the required field in the If/Then json schema condition.
+ * @param props - ControlProps
+ * @returns - The required field name.
+ */
+export const getRequiredIfThen = (props: ControlProps) => {
+  const { path } = props;
+
+  const rootSchema = props.rootSchema as JsonSchema7;
+  let rootRequired = '';
+  if (rootSchema?.if && rootSchema.then) {
+    if (rootSchema?.then?.required && Array.isArray(rootSchema.then?.required)) {
+      const foundRequired = rootSchema.then?.required?.find((req) => req === path);
+      if (foundRequired !== undefined) {
+        rootRequired = foundRequired;
+      }
+    }
+  }
+  return rootRequired;
+};
+
+/**
  * Check if a required, defined input value is valid. Returns an appropriate
  * error message if not.
  * @param props
@@ -89,7 +110,7 @@ interface extractSchema {
  */
 export const checkFieldValidity = (props: ControlProps): string => {
   const { data, errors: ajvErrors, required, label, uischema, schema } = props;
-  const labelToUpdate = uischema?.scope ? getLabelText(uischema?.scope, label) : label;
+  const labelToUpdate = uischema?.scope ? convertToSentenceCase(getLabelText(uischema?.scope, label)) : label;
   const extraSchema = schema as JsonSchema & extractSchema;
 
   if (extraSchema && data && extraSchema?.title === sinTitle) {
@@ -100,7 +121,9 @@ export const checkFieldValidity = (props: ControlProps): string => {
     }
   }
 
-  if (required) {
+  const rootRequired = getRequiredIfThen(props);
+
+  if (required || rootRequired.length > 0) {
     if (schema) {
       if (isEmptyBoolean(schema, data)) {
         return `${labelToUpdate} is required`;

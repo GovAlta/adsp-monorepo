@@ -8,16 +8,12 @@ export const fetchCacheTargetsApi = async (token: string, url: string): Promise<
   return res.data;
 };
 
-export const fetchCacheTargetApi = async (
-  token: string,
-  serviceUrl: string,
-  definitionId: string
-): Promise<CacheTarget | null> => {
-  const { data } = await axios.get<CacheTarget>(
-    new URL(`configuration/v2/configuration/form-service/${definitionId}/latest`, serviceUrl).href,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
+export const updateCacheTargetApi = async (token: string, serviceUrl: string, targets: Record<string, CacheTarget>) => {
+  const { data } = await axios.patch<{ latest: { configuration: Record<string, CacheTarget> } }>(
+    new URL(`configuration/v2/configuration/platform/cache-service`, serviceUrl).href,
+    { operation: 'REPLACE', configuration: { targets: targets } },
+    { headers: { Authorization: `Bearer ${token}` } }
   );
-  return data?.id ? data : null;
+
+  return data;
 };

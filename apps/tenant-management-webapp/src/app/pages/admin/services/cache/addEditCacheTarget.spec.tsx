@@ -1,11 +1,13 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, fireEvent } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
-import { Cache } from './cache';
 
-describe('target Component', () => {
+import { CacheTarget } from '@store/cache/model';
+import { AddEditTargetCache } from './addEditCacheTarget';
+
+describe('addEditCacheTarget', () => {
   const mockStore = configureStore([]);
   const store = mockStore({
     tenant: {
@@ -52,38 +54,47 @@ describe('target Component', () => {
     },
   });
 
-  it('shows cache object', async () => {
-    const { getByText, getByTestId } = render(
-      <Provider store={store}>
-        <Cache />
-      </Provider>
-    );
+  const initialValue: CacheTarget = {
+    urn: '',
+    ttl: undefined,
+    invalidationEvents: [],
+  };
 
-    expect(getByText('Overview')).toBeInTheDocument();
-    expect(getByText('Targets')).toBeInTheDocument();
-
-    fireEvent.click(getByText('Targets'));
-
-    expect(getByText('urn:ads:platform:file-service')).toBeInTheDocument();
-    expect(getByText('3600')).toBeInTheDocument();
-    expect(getByText('urn:ads:platform:file-service:v1')).toBeInTheDocument();
-    expect(getByText('7200')).toBeInTheDocument();
-  });
-  it('shows more details if you click the eye', async () => {
+  it('renders the add window', async () => {
     const { getByText, baseElement } = render(
       <Provider store={store}>
-        <Cache />
+        <AddEditTargetCache
+          onSave={() => {}}
+          initialValue={initialValue}
+          open={true}
+          isEdit={false}
+          onClose={() => {}}
+        />
       </Provider>
     );
 
-    await fireEvent.click(getByText('Targets'));
+    expect(getByText('Save')).toBeInTheDocument();
+    expect(getByText('Cancel')).toBeInTheDocument();
+    const dropdown = baseElement.querySelector("goa-dropdown[testId='cache-status']");
+    expect(dropdown?.getAttribute('disabled')).not.toBe('true');
+  });
+  it('renders the edit window', async () => {
+    const { getByText, getByRole, baseElement } = render(
+      <Provider store={store}>
+        <AddEditTargetCache
+          onSave={() => {}}
+          initialValue={initialValue}
+          open={true}
+          isEdit={true}
+          onClose={() => {}}
+        />
+      </Provider>
+    );
 
-    const eyes = baseElement.querySelectorAll("goa-icon-button[testId='cache-toggle-details-visibility']");
-    const shadowDeleteBtn = eyes[0].shadowRoot?.querySelector('button');
-    expect(shadowDeleteBtn).not.toBeNull();
-    fireEvent(eyes[0]!, new CustomEvent('_click'));
+    expect(getByText('Save')).toBeInTheDocument();
+    expect(getByText('Cancel')).toBeInTheDocument();
+    const dropdown = baseElement.querySelector("goa-dropdown[testId='cache-status']");
 
-    expect(getByText(/storage/)).toBeInTheDocument();
-    expect(getByText(/fileDeleted/)).toBeInTheDocument();
+    expect(dropdown).toBeDisabled();
   });
 });

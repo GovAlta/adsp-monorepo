@@ -1,14 +1,25 @@
 import React, { FunctionComponent } from 'react';
 import DataTable from '@components/DataTable';
+import { useSelector } from 'react-redux';
 import { CacheTarget } from '../../../../store/cache/model';
 import { CacheTargetItem } from './cacheTargetItem';
+import { PageIndicator } from '@components/Indicator';
+import { RootState } from '@store/index';
 
 export interface cacheTargetTableProps {
   targets: Record<string, CacheTarget>;
+  openModalFunction?: (target: CacheTarget) => void;
+  tenantMode?: boolean;
 }
 
-export const CacheTargetTable: FunctionComponent<cacheTargetTableProps> = ({ targets }) => {
+export const CacheTargetTable: FunctionComponent<cacheTargetTableProps> = ({
+  targets,
+  openModalFunction,
+  tenantMode,
+}) => {
   const newTargets = JSON.parse(JSON.stringify(targets));
+
+  const indicator = useSelector((state: RootState) => state?.session?.indicator);
 
   return (
     <DataTable data-testid="cache-targets-table">
@@ -23,9 +34,18 @@ export const CacheTargetTable: FunctionComponent<cacheTargetTableProps> = ({ tar
           </th>
         </tr>
       </thead>
+      {indicator && <PageIndicator />}
       <tbody>
         {Object.keys(newTargets).map((target, index) => {
-          return <CacheTargetItem key={index} target={newTargets[target]} name={target} />;
+          return (
+            <CacheTargetItem
+              key={index}
+              target={newTargets[target]}
+              name={target}
+              openModalFunction={openModalFunction}
+              tenantMode={tenantMode}
+            />
+          );
         })}
       </tbody>
     </DataTable>

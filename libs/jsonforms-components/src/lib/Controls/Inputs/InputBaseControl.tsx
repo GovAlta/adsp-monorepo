@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { GoAFormItem } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
-import { checkFieldValidity, convertToSentenceCase, getLabelText } from '../../util/stringUtils';
+import { checkFieldValidity, convertToSentenceCase, getLabelText, getRequiredIfThen } from '../../util/stringUtils';
 import { Visible } from '../../util';
 import { JsonFormRegisterProvider } from '../../Context/register';
 import { FormFieldWrapper } from './style-component';
@@ -31,9 +31,10 @@ export interface WithInput {
 }
 
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
-  const { uischema, visible, label, input, required, path, isStepperReview, skipInitialValidation } = props;
+  const { uischema, visible, label, input, required, errors, path, isStepperReview, skipInitialValidation } = props;
   const InnerComponent = input;
   const labelToUpdate: string = convertToSentenceCase(getLabelText(uischema.scope, label || ''));
+
   let modifiedErrors = checkFieldValidity(props as ControlProps);
   const [isVisited, setIsVisited] = useState(skipInitialValidation === true);
 
@@ -46,7 +47,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
       <Visible visible={visible}>
         <FormFieldWrapper>
           <GoAFormItem
-            requirement={required ? 'required' : undefined}
+            requirement={required || getRequiredIfThen(props).length > 0 ? 'required' : undefined}
             error={isVisited === true ? modifiedErrors : undefined}
             testId={`${isStepperReview === true && 'review-base-'}${path}`}
             label={props?.noLabel === true ? '' : labelToUpdate}
