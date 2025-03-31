@@ -25,6 +25,9 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
 
   const cacheTargets = useSelector((state: RootState) => state.cache.targets);
 
+  const [currentTarget, setCurrentTarget] = useState(defaultCacheTarget);
+  const [isEdit, setIsEdit] = useState(false);
+
   return (
     <div>
       <Padding>
@@ -37,26 +40,36 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
         testId="add-definition"
         onClick={() => {
           setOpenAddDefinition(true);
+          setIsEdit(false);
         }}
         mb={'l'}
       >
         Add cache targets
       </GoAButton>
-      {cacheTargets && <CacheTargetTable targets={cacheTargets.tenant} />}
+      {cacheTargets && (
+        <CacheTargetTable
+          targets={cacheTargets.tenant}
+          openModalFunction={(cacheTarget) => {
+            setIsEdit(true);
+            setCurrentTarget(cacheTarget);
+            setOpenAddDefinition(true);
+          }}
+          tenantMode={true}
+        />
+      )}
       <h2>Core cache targets</h2>
       {cacheTargets && <CacheTargetTable targets={cacheTargets.core} />}
       <AddEditTargetCache
         open={openAddDefinition}
-        isEdit={false}
+        isEdit={isEdit}
         onClose={() => {
           setOpenAddDefinition(false);
         }}
-        initialValue={defaultCacheTarget}
+        initialValue={currentTarget}
         onSave={(target) => {
           setOpenAddDefinition(false);
           const updatedCacheTargets = JSON.parse(JSON.stringify(cacheTargets.tenant)) as Record<string, CacheTarget>;
           updatedCacheTargets[target.urn] = target;
-
           dispatch(updateCacheTarget(updatedCacheTargets));
         }}
       />

@@ -2,17 +2,25 @@ import React, { useState } from 'react';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { CacheTarget } from '../../../../store/cache/model';
 import { OverflowWrap, EntryDetail } from './style-components';
+import { IconDiv } from '../task/styled-components';
 
 interface FormDefinitionItemProps {
   target: CacheTarget;
   name: string;
+  openModalFunction?: (disposition: CacheTarget) => void;
+  tenantMode?: boolean;
 }
 
 const CacheTargetDetails = ({ cacheTarget }: { cacheTarget: CacheTarget }) => {
   return <pre>{JSON.stringify(cacheTarget, null, 2)}</pre>;
 };
 
-export const CacheTargetItem = ({ target, name }: FormDefinitionItemProps): JSX.Element => {
+export const CacheTargetItem = ({
+  target,
+  name,
+  openModalFunction,
+  tenantMode,
+}: FormDefinitionItemProps): JSX.Element => {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -25,16 +33,28 @@ export const CacheTargetItem = ({ target, name }: FormDefinitionItemProps): JSX.
           <OverflowWrap>{target?.ttl}</OverflowWrap>
         </td>
         <td data-testid="cache-targets-action">
-          <GoAContextMenu>
-            <GoAContextMenuIcon
-              type={showDetails ? 'eye-off' : 'eye'}
-              title="Toggle details"
-              onClick={() => {
-                setShowDetails(!showDetails);
-              }}
-              testId="cache-toggle-details-visibility"
-            />
-          </GoAContextMenu>
+          <IconDiv>
+            <GoAContextMenu>
+              <GoAContextMenuIcon
+                type={showDetails ? 'eye-off' : 'eye'}
+                title="Toggle details"
+                onClick={() => {
+                  setShowDetails(!showDetails);
+                }}
+                testId="cache-toggle-details-visibility"
+              />
+            </GoAContextMenu>
+            {tenantMode && (
+              <GoAContextMenu>
+                <GoAContextMenuIcon
+                  type="create"
+                  title="Edit"
+                  onClick={() => openModalFunction(target)}
+                  testId={`edit-disposition-item-${target.urn}`}
+                />
+              </GoAContextMenu>
+            )}
+          </IconDiv>
         </td>
       </tr>
       {showDetails && (

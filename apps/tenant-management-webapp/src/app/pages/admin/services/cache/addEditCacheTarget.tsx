@@ -38,7 +38,6 @@ export const AddEditTargetCache = ({
   onSave,
 }: AddEditTargetCacheProps): JSX.Element => {
   const [target, setTarget] = useState<CacheTarget>(initialValue);
-  // const [spinner, setSpinner] = useState<boolean>(false);
 
   const dispatch = useDispatch();
 
@@ -52,7 +51,6 @@ export const AddEditTargetCache = ({
     ...Object.values(targets.core).map((x) => x.urn),
     ...Object.values(targets.tenant).map((x) => x.urn),
   ];
-  //const definitionIds = Object.values().map((x) => x.urn);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -63,7 +61,6 @@ export const AddEditTargetCache = ({
   useEffect(() => {
     if (Object.keys(targets).length > 0 && !isEdit) {
       if (validators['duplicate'].check(target.urn)) {
-        // setSpinner(false);
         onClose();
       }
     }
@@ -104,21 +101,15 @@ export const AddEditTargetCache = ({
             testId="cache-save"
             disabled={!target.urn || validators.haveErrors()}
             onClick={() => {
-              if (indicator.show === true) {
-                // setSpinner(true);
-              } else {
-                if (!isEdit) {
-                  const validations = {
-                    duplicate: target.urn,
-                  };
-                  if (!validators.checkAll(validations)) {
-                    return;
-                  }
+              if (!isEdit) {
+                const validations = {
+                  duplicate: target.urn,
+                };
+                if (!validators.checkAll(validations)) {
+                  return;
                 }
-                // setSpinner(true);
-
-                onSave(target);
               }
+              onSave(target);
             }}
           >
             Save
@@ -131,7 +122,9 @@ export const AddEditTargetCache = ({
           <GoADropdown
             relative={true}
             name="cache-status"
+            testId="cache-status"
             width="100%"
+            disabled={isEdit}
             value={target.urn}
             onChange={(_, value: string) => {
               validators.clear();
@@ -141,7 +134,6 @@ export const AddEditTargetCache = ({
             {combinedDirectory.map((directory) => (
               <GoADropdownItem value={directory.urn} label={directory.urn} />
             ))}
-            <GoADropdownItem label="qqq" value="qqq" />
           </GoADropdown>
         </GoAFormItem>
 
@@ -152,8 +144,6 @@ export const AddEditTargetCache = ({
             disabled={true}
             value={combinedDirectory.find((directory) => directory.urn === target.urn)?.url}
           />
-
-          {/* <pre>{JSON.stringify(coreDirectory, null, 2)}</pre> */}
         </GoAFormItem>
 
         <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="TTL" mb="3" mt="3">
