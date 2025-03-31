@@ -47,7 +47,7 @@ export const BooleanComponent = ({
           handleChange(path, checked);
         }}
         {...uischema?.options?.componentProps}
-        mb="l"
+        mb="none"
       />
     </CheckboxWrapper>
   );

@@ -92,10 +92,10 @@ export const getRequiredIfThen = (props: ControlProps) => {
   const rootSchema = props.rootSchema as JsonSchema7;
   let rootRequired = '';
   if (rootSchema?.if && rootSchema.then) {
-    if (rootSchema.then?.required && Array.isArray(rootSchema.then?.required)) {
+    if (rootSchema?.then?.required && Array.isArray(rootSchema.then?.required)) {
       const foundRequired = rootSchema.then?.required?.find((req) => req === path);
-      if (foundRequired !== null) {
-        rootRequired = foundRequired ?? '';
+      if (foundRequired !== undefined) {
+        rootRequired = foundRequired;
       }
     }
   }
@@ -110,7 +110,7 @@ export const getRequiredIfThen = (props: ControlProps) => {
  */
 export const checkFieldValidity = (props: ControlProps): string => {
   const { data, errors: ajvErrors, required, label, uischema, schema } = props;
-  const labelToUpdate = uischema?.scope ? getLabelText(uischema?.scope, label) : label;
+  const labelToUpdate = uischema?.scope ? convertToSentenceCase(getLabelText(uischema?.scope, label)) : label;
   const extraSchema = schema as JsonSchema & extractSchema;
 
   if (extraSchema && data && extraSchema?.title === sinTitle) {
@@ -126,11 +126,11 @@ export const checkFieldValidity = (props: ControlProps): string => {
   if (required || rootRequired.length > 0) {
     if (schema) {
       if (isEmptyBoolean(schema, data)) {
-        return `${convertToSentenceCase(labelToUpdate)} is required`;
+        return `${labelToUpdate} is required`;
       }
 
       if (isEmptyNumber(schema, data)) {
-        return `${convertToSentenceCase(labelToUpdate)} is required`;
+        return `${labelToUpdate} is required`;
       }
     }
   }
