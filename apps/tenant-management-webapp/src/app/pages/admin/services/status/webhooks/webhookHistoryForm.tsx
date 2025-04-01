@@ -152,19 +152,18 @@ export const WebhookHistoryModal = (): JSX.Element => {
             <GoAButton
               type="secondary"
               onClick={() => {
-                onSearch(searchCriteria);
-              }}
-            >
-              Search
-            </GoAButton>
-
-            <GoAButton
-              type="primary"
-              onClick={() => {
                 dispatch(ResetModalState());
               }}
             >
               Close
+            </GoAButton>
+            <GoAButton
+              type="primary"
+              onClick={() => {
+                onSearch(searchCriteria);
+              }}
+            >
+              Search
             </GoAButton>
           </GoAButtonGroup>
         }

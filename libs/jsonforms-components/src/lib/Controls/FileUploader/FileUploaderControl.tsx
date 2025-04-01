@@ -58,8 +58,9 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const propertyId = i18nKeyPrefix as string;
 
   const variant = uischema?.options?.variant || 'button';
+  const multiFileUploader = variant === 'dragdrop';
 
-  const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
+  const [deleteHide, setDeleteHide] = useState(false);
 
   function uploadFile(file: File) {
     if (uploadTrigger) {
@@ -68,7 +69,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
         const value = ['Loading', Array.isArray(data) ? data[1] : file?.name];
         handleChange(propertyId, value);
       };
-
+      setDeleteHide(false);
       setTimeout(handleFunction, DELAY_UPLOAD_TIMEOUT_MS);
     }
   }
@@ -85,12 +86,14 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     }
   }
 
-  function getFileName() {
-    return fileList && fileList[props.i18nKeyPrefix as string].filename;
+  function getFileName(index: number) {
+    return (
+      fileList && fileList[props.i18nKeyPrefix as string] && fileList[props.i18nKeyPrefix as string][index]?.filename
+    );
   }
 
-  function getFile() {
-    return fileList && fileList[props.i18nKeyPrefix as string];
+  function getFile(index: number) {
+    return fileList && fileList[props.i18nKeyPrefix as string] && fileList[props.i18nKeyPrefix as string][index];
   }
 
   useEffect(() => {
@@ -115,6 +118,63 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   }
   const helpText = uischema?.options?.help;
   const sentenceCaseLabel = convertToSentenceCase(label);
+
+  const DownloadFileWidget = ({ index }: { index: number }): JSX.Element => {
+    const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
+    return (
+      <div>
+        {readOnly && index ? (
+          <AttachmentBorderDisabled>
+            {getFileName(index)}
+            <GoAContextMenuIcon
+              testId="download-icon"
+              title="Download"
+              type="download"
+              onClick={() => downloadFile(getFile(index))}
+            />
+          </AttachmentBorderDisabled>
+        ) : (
+          <AttachmentBorder>
+            <div>{getFileName(index)}</div>
+            <GoAContextMenu>
+              <GoAContextMenuIcon
+                testId="download-icon"
+                title="Download"
+                type="download"
+                onClick={() => downloadFile(getFile(index))}
+              />
+              <GoAContextMenuIcon
+                data-testid="delete-icon"
+                title="Delete"
+                type="trash"
+                onClick={() => {
+                  setShowFileDeleteConfirmation(true);
+                }}
+              />
+            </GoAContextMenu>
+            <DeleteFileModal
+              isOpen={showFileDeleteConfirmation}
+              title="Delete file"
+              content={`Delete file ${getFile(index)?.filename} ?`}
+              onCancel={() => setShowFileDeleteConfirmation(false)}
+              onDelete={() => {
+                setShowFileDeleteConfirmation(false);
+                deleteFile(getFile(index));
+                setDeleteHide(true);
+                const handleFunction = () => {
+                  handleChange(propertyId, '');
+                };
+                setTimeout(handleFunction, DELAY_DELETE_TIMEOUT_MS);
+              }}
+            />
+          </AttachmentBorder>
+        )}
+      </div>
+    );
+  };
+
+  const fileListLength = (fileList && fileList[props.i18nKeyPrefix as string]?.length) || 0;
+
   return (
     <FileUploaderStyle className="FileUploader">
       {required ? (
@@ -137,55 +197,15 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
           </GoAModal>
         ) : (
           <div>
-            {fileList && getFile() && (
-              <div>
-                {readOnly ? (
-                  <AttachmentBorderDisabled>
-                    {getFileName()}{' '}
-                    <GoAContextMenuIcon
-                      testId="download-icon"
-                      title="Download"
-                      type="download"
-                      onClick={() => downloadFile(getFile())}
-                    />
-                  </AttachmentBorderDisabled>
-                ) : (
-                  <AttachmentBorder>
-                    <div>{getFileName()}</div>
-                    <GoAContextMenu>
-                      <GoAContextMenuIcon
-                        testId="download-icon"
-                        title="Download"
-                        type="download"
-                        onClick={() => downloadFile(getFile())}
-                      />
-                      <GoAContextMenuIcon
-                        data-testid="delete-icon"
-                        title="Delete"
-                        type="trash"
-                        onClick={() => {
-                          setShowFileDeleteConfirmation(true);
-                        }}
-                      />
-                    </GoAContextMenu>
-                    <DeleteFileModal
-                      isOpen={showFileDeleteConfirmation}
-                      title="Delete file"
-                      content={`Delete file ${getFile().filename} ?`}
-                      onCancel={() => setShowFileDeleteConfirmation(false)}
-                      onDelete={() => {
-                        setShowFileDeleteConfirmation(false);
-                        deleteFile(getFile());
-                        const handleFunction = () => {
-                          handleChange(propertyId, '');
-                        };
-                        setTimeout(handleFunction, DELAY_DELETE_TIMEOUT_MS);
-                      }}
-                    />
-                  </AttachmentBorder>
-                )}
-              </div>
-            )}
+            {multiFileUploader
+              ? fileList &&
+                (fileList[props.i18nKeyPrefix as string] || []).map((_: File, index: number) => {
+                  return <DownloadFileWidget index={index} />;
+                })
+              : fileList &&
+                !deleteHide &&
+                getFile(fileListLength - 1) &&
+                fileListLength >= 0 && <DownloadFileWidget index={fileListLength - 1} />}
           </div>
         )}
       </div>
