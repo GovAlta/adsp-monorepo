@@ -88,7 +88,7 @@ export interface FileMetrics {
 
 export interface FileService {
   fileList: Array<FileItem>;
-  newFileList: Record<string, FileItem>;
+  newFileList: Record<string, FileItem[]>;
   nextEntries: string;
   isLoading: boolean;
   fileTypes: Array<FileTypeItem>;
