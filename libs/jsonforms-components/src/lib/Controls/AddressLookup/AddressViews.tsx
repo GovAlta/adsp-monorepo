@@ -40,7 +40,7 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
         <GoAGrid minChildWidth="0" gap="s">
           <GoAFormItem
             label="Address line 1"
-            error={data?.addressLine1 === undefined ? 'addressLine1 is required' : ''}
+            error={data?.addressLine1 === undefined ? 'Address line 1 is required' : ''}
             requirement="required"
           >
             <TextWrap>{data?.addressLine1}</TextWrap>
@@ -54,14 +54,14 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
         <br />
         <GoAGrid minChildWidth="0ch" gap="s">
           <GoAFormItem
-            error={data?.municipality === undefined ? 'city is required' : ''}
+            error={data?.municipality === undefined ? 'City is required' : ''}
             label="City"
             requirement="required"
           >
             <TextWrap>{data?.municipality}</TextWrap>
           </GoAFormItem>
           <GoAFormItem
-            error={data?.postalCode === undefined ? 'postalCode is required' : ''}
+            error={data?.postalCode === undefined ? 'Postal code is required' : ''}
             label="Postal Code"
             requirement="required"
           >
