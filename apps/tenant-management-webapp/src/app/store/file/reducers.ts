@@ -69,7 +69,7 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
         const keyList = Object.keys(newFileList);
 
         keyList.forEach((file) => {
-          const fileList = newFileList[file]; 
+          const fileList = newFileList[file];
           newFileList[file] = fileList
             .map((f) => {
               if (f.id === action.payload.data) {
@@ -79,7 +79,6 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
               }
             })
             .filter(Boolean);
-          console.log(JSON.stringify(newFileList[file]) + "< newFileList[file]")
         });
       }
 
