@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { CacheTarget } from '@store/cache/model';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
+import { defaultCacheTarget } from '@store/cache/model';
 import { fetchDirectory } from '@store/directory/actions';
 import { selectSortedDirectory } from '@store/directory/selectors';
 import { GoADropdownItem, GoADropdown } from '@abgov/react-components';
@@ -14,19 +14,20 @@ import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abg
 interface AddEditTargetCacheProps {
   open: boolean;
   isEdit: boolean;
-  initialValue?: CacheTarget;
+  currentValue?: CacheTarget;
   onClose: () => void;
   onSave: (target: CacheTarget) => void;
 }
 
 export const AddEditTargetCache = ({
-  initialValue,
+  currentValue,
   isEdit,
   onClose,
   open,
   onSave,
 }: AddEditTargetCacheProps): JSX.Element => {
-  const [target, setTarget] = useState<CacheTarget>(initialValue);
+  const initialTarget = isEdit ? currentValue : defaultCacheTarget;
+  const [target, setTarget] = useState<CacheTarget>(initialTarget);
 
   const dispatch = useDispatch();
 
@@ -60,8 +61,8 @@ export const AddEditTargetCache = ({
   }, [dispatch]);
 
   useEffect(() => {
-    setTarget(initialValue);
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+    setTarget(initialTarget);
+  }, [open, initialTarget]);
 
   const { errors, validators } = useValidators('urn', 'urn', isNotEmptyCheck('urn'))
     .add('duplicate', 'urn', duplicateNameCheck(definitionIds, 'urn'))

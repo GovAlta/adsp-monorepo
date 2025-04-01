@@ -65,7 +65,7 @@ describe('addEditCacheTarget', () => {
       <Provider store={store}>
         <AddEditTargetCache
           onSave={() => {}}
-          initialValue={initialValue}
+          currentValue={initialValue}
           open={true}
           isEdit={false}
           onClose={() => {}}
@@ -83,7 +83,7 @@ describe('addEditCacheTarget', () => {
       <Provider store={store}>
         <AddEditTargetCache
           onSave={() => {}}
-          initialValue={initialValue}
+          currentValue={initialValue}
           open={true}
           isEdit={true}
           onClose={() => {}}

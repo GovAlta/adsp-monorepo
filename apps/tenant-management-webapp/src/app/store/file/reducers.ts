@@ -46,8 +46,10 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
   switch (action.type) {
     case UPLOAD_FILE_SUCCESSES: {
       // add file to fileList
+      const propertyId = action.payload.result.propertyId;
+
       const newFileList = JSON.parse(JSON.stringify(state.newFileList)) || {};
-      newFileList[action.payload.result.propertyId] = action.payload.result;
+      newFileList[propertyId] = [...(newFileList[propertyId] || []), action.payload.result];
       return {
         ...state,
         fileList: uploadFile(state.fileList, action.payload.result),
@@ -67,14 +69,21 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
         const keyList = Object.keys(newFileList);
 
         keyList.forEach((file) => {
-          if (newFileList[file].id === action.payload.data) {
-            delete newFileList[file];
-          }
+          const fileList = newFileList[file];
+          newFileList[file] = fileList
+            .map((f) => {
+              if (f.id === action.payload.data) {
+                return null;
+              } else {
+                return f;
+              }
+            })
+            .filter(Boolean);
         });
       }
 
       return {
-        ...state, // remove delete file from reducer
+        ...state,
         fileList: deleteFile(state.fileList, action.payload.data),
         newFileList: newFileList,
       };

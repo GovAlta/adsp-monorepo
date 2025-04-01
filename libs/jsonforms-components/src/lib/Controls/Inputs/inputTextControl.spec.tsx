@@ -3,11 +3,13 @@ import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { GoAInputTextProps, GoAInputText, formatSin } from './InputTextControl';
-import { ControlElement, ControlProps } from '@jsonforms/core';
+import { ControlElement, ControlProps, JsonSchema7 } from '@jsonforms/core';
 
 import { validateSinWithLuhn, checkFieldValidity, isValidDate } from '../../util/stringUtils';
 import { JsonFormsContext } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
+import { describe } from 'node:test';
+import { assert } from 'console';
 
 const mockContextValue = {
   errors: [],
@@ -32,13 +34,18 @@ describe('Input Text Control tests', () => {
   const staticProps: GoAInputTextProps & ControlProps = {
     uischema: textBoxUiSchema,
     schema: {},
-    rootSchema: {},
+    rootSchema: {
+      if: {},
+      then: {
+        required: ['firstName'],
+      },
+    },
     handleChange: (path, value) => {},
     enabled: true,
     label: 'First Name',
     id: 'firstName',
     config: {},
-    path: '',
+    path: 'firstName',
     errors: '',
     data: 'My Name',
     visible: true,
@@ -345,6 +352,44 @@ describe('Input Text Control tests', () => {
       const input = '';
       const expected = '';
       expect(formatSin(input)).toBe(expected);
+    });
+  });
+
+  describe('Rootschema validations', () => {
+    const schemaProps: GoAInputTextProps & ControlProps = {
+      uischema: textBoxUiSchema,
+      schema: {},
+      rootSchema: {
+        if: {},
+        then: {
+          required: ['firstName'],
+        },
+      },
+      handleChange: (path, value) => {},
+      enabled: true,
+      label: 'First Name',
+      id: 'firstName',
+      config: {},
+      path: 'firstName',
+      errors: '',
+      data: 'My Name',
+      visible: true,
+      isValid: true,
+      required: false,
+      isVisited: false,
+      setIsVisited: () => {},
+    };
+
+    it('root schema must exist', () => {
+      expect(schemaProps).toBeTruthy();
+      expect(schemaProps?.rootSchema).toBeTruthy();
+    });
+
+    it('Then condition should exist if there is a If condition', () => {
+      const rootSchema = schemaProps?.rootSchema as JsonSchema7;
+      expect(schemaProps).toBeTruthy();
+      expect(rootSchema?.if).toBeTruthy();
+      expect(rootSchema?.then).toBeTruthy();
     });
   });
 });

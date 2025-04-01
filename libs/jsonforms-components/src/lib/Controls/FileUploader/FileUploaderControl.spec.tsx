@@ -31,6 +31,12 @@ const fileUploaderUiSchema: ControlElement = {
   label: 'Uploader',
   options: {},
 };
+const fileUploaderUiSchemaMultiple: ControlElement = {
+  type: 'Control',
+  scope: '#/properties/supportingDoc',
+  label: 'Uploader',
+  options: { variant: 'button' },
+};
 const dataSchema = {
   type: 'object',
   properties: {
@@ -40,11 +46,21 @@ const dataSchema = {
     },
   },
 };
+const dataSchemaRequired = {
+  type: 'object',
+  properties: {
+    supportingDoc: {
+      type: 'string',
+      format: 'file-urn',
+    },
+  },
+  required: ['supportingDoc'],
+};
 
 const mockUpload = jest.fn();
 const mockDownload = jest.fn();
 const mockDelete = jest.fn();
-const fileList = { supportingDoc: { urn: 'urn:1q3e131', filename: 'bob.pdf' } };
+const fileList = { supportingDoc: [{ urn: 'urn:1q3e131', filename: 'bob.pdf' }] };
 const ContextProvider = ContextProviderFactory();
 
 const getForm = (schema: object, uiSchema: UISchemaElement, data: object = {}) => {
@@ -95,6 +111,20 @@ describe('FileUploaderControl tests', () => {
       fireEvent(uploadBtn!, new CustomEvent('_selectFile', { detail: {} }));
       await jest.runAllTimers();
       expect(mockUpload).toBeCalledTimes(1);
+      const file = await renderer.findByText('bob.pdf');
+      expect(file).toBeInTheDocument();
+    });
+  });
+  it('can upload file in multi-file scenario', async () => {
+    jest.useFakeTimers();
+    const renderer = render(getForm(dataSchemaRequired, fileUploaderUiSchemaMultiple));
+    // This act() wrapper is needed for the jest.runAllTimers() call.
+    await act(async () => {
+      const uploadBtn = await renderer.container.querySelector('div > :scope goa-file-upload-input');
+      expect(uploadBtn).toBeInTheDocument();
+      fireEvent(uploadBtn!, new CustomEvent('_selectFile', { detail: {} }));
+      await jest.runAllTimers();
+
       const file = await renderer.findByText('bob.pdf');
       expect(file).toBeInTheDocument();
     });

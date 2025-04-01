@@ -70,7 +70,7 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
         onClose={() => {
           setOpenAddDefinition(false);
         }}
-        initialValue={currentTarget}
+        currentValue={currentTarget}
         onSave={(target) => {
           setOpenAddDefinition(false);
           const updatedCacheTargets = JSON.parse(JSON.stringify(cacheTargets.tenant)) as Record<string, CacheTarget>;
@@ -80,10 +80,10 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
       />
       <DeleteModal
         isOpen={showDeleteConfirmation}
-        title="Delete PDF file"
+        title="Delete cache target"
         content={
           <div>
-            Are you sure you wish to delete <b>{showDeleteConfirmation?.filename}</b>?
+            Are you sure you wish to delete <b>{showDeleteConfirmation?.urn}</b>?
           </div>
         }
         onCancel={() => setShowDeleteConfirmation(null)}
