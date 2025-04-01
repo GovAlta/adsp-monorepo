@@ -120,7 +120,6 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const sentenceCaseLabel = convertToSentenceCase(label);
 
   const DownloadFileWidget = ({ index }: { index: number }): JSX.Element => {
-    console.log(JSON.stringify(index) + ',index');
     const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
     return (
       <div>
@@ -175,10 +174,6 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   };
 
   const fileListLength = (fileList && fileList[props.i18nKeyPrefix as string]?.length) || 0;
-
-  console.log(JSON.stringify(fileList) + '<fileList');
-  console.log(JSON.stringify(fileListLength) + '<fileListLength');
-  console.log(JSON.stringify(props) + '<props');
 
   return (
     <FileUploaderStyle className="FileUploader">
