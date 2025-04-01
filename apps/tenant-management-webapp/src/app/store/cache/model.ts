@@ -9,7 +9,7 @@ export interface CacheTarget {
 }
 export const defaultCacheTarget: CacheTarget = {
   urn: '',
-  ttl: undefined,
+  ttl: 900,
   invalidationEvents: [],
 };
 
