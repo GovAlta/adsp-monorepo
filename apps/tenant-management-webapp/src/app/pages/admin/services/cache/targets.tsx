@@ -7,6 +7,7 @@ import { Padding } from '@components/styled-components';
 import { AddEditTargetCache } from './addEditCacheTarget';
 import { defaultCacheTarget } from '@store/cache/model';
 import { GoAButton } from '@abgov/react-components';
+import { DeleteModal } from '@components/DeleteModal';
 import { CacheTarget } from '@store/cache/model';
 
 interface CacheTargetProps {
@@ -27,6 +28,7 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
 
   const [currentTarget, setCurrentTarget] = useState(defaultCacheTarget);
   const [isEdit, setIsEdit] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(null);
 
   return (
     <div>
@@ -54,6 +56,9 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
             setCurrentTarget(cacheTarget);
             setOpenAddDefinition(true);
           }}
+          onDeleteTarget={(cacheTarget) => {
+            setShowDeleteConfirmation(cacheTarget);
+          }}
           tenantMode={true}
         />
       )}
@@ -71,6 +76,23 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
           const updatedCacheTargets = JSON.parse(JSON.stringify(cacheTargets.tenant)) as Record<string, CacheTarget>;
           updatedCacheTargets[target.urn] = target;
           dispatch(updateCacheTarget(updatedCacheTargets));
+        }}
+      />
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete cache target"
+        content={
+          <div>
+            Are you sure you wish to delete <b>{showDeleteConfirmation?.urn}</b>?
+          </div>
+        }
+        onCancel={() => setShowDeleteConfirmation(null)}
+        onDelete={() => {
+          setOpenAddDefinition(false);
+          const updatedCacheTargets = JSON.parse(JSON.stringify(cacheTargets.tenant)) as Record<string, CacheTarget>;
+          delete updatedCacheTargets[showDeleteConfirmation.urn];
+          dispatch(updateCacheTarget(updatedCacheTargets));
+          setShowDeleteConfirmation(null);
         }}
       />
     </div>

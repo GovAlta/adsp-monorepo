@@ -9,12 +9,14 @@ import { RootState } from '@store/index';
 export interface cacheTargetTableProps {
   targets: Record<string, CacheTarget>;
   openModalFunction?: (target: CacheTarget) => void;
+  onDeleteTarget?: (target: CacheTarget) => void;
   tenantMode?: boolean;
 }
 
 export const CacheTargetTable: FunctionComponent<cacheTargetTableProps> = ({
   targets,
   openModalFunction,
+  onDeleteTarget,
   tenantMode,
 }) => {
   const newTargets = JSON.parse(JSON.stringify(targets));
@@ -43,6 +45,7 @@ export const CacheTargetTable: FunctionComponent<cacheTargetTableProps> = ({
               target={newTargets[target]}
               name={target}
               openModalFunction={openModalFunction}
+              onDeleteTarget={onDeleteTarget}
               tenantMode={tenantMode}
             />
           );

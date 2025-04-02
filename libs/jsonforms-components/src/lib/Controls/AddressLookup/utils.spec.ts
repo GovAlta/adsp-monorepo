@@ -6,6 +6,8 @@ import {
   validatePostalCode,
   handlePostalCodeValidation,
   formatPostalCode,
+  detectPostalCodeType,
+  formatPostalCodeIfNeeded,
 } from './utils';
 import axios from 'axios';
 import { Suggestion, Address } from './types';
@@ -41,7 +43,7 @@ describe('fetchAddressSuggestions', () => {
     };
     mockedAxios.get.mockResolvedValueOnce(mockResponse);
 
-    await fetchAddressSuggestions(formUrl, searchTerm, true).then((result)=>{
+    await fetchAddressSuggestions(formUrl, searchTerm, true).then((result) => {
       expect(result).toEqual(mockResponse.data.Items);
     });
   });
@@ -57,7 +59,7 @@ describe('fetchAddressSuggestions', () => {
     // Restore console.error after the test
     consoleErrorSpy.mockRestore();
   });
-})
+});
 describe('filterAlbertaAddresses', () => {
   it('should filter out non-Alberta addresses', () => {
     const result = filterAlbertaAddresses(mockSuggestions);
@@ -351,5 +353,39 @@ describe('formatPostalCode', () => {
   it('should return the original string if the length is less than 4', () => {
     expect(formatPostalCode('A0')).toBe('A0');
     expect(formatPostalCode('A')).toBe('A');
+  });
+});
+
+describe('detectPostalCodeType', () => {
+  test.each([
+    ['T3H 5Y1', 'full'],
+    ['T3H5Y1', 'full'],
+    ['t3h5y1', 'full'],
+    ['T3H', 'partial'],
+    ['T3H5', 'partial'],
+    ['T3H5Y', 'partial'],
+    ['T3', 'partial'],
+    ['T3H 5', 'partial'],
+    ['123 Main St', 'none'],
+    ['', 'none'],
+    ['Vancouver', 'none'],
+    ['M4B-1B3', 'full'],
+    ['k1a0b1', 'full'],
+  ])('input "%s" → %s', (input, expected) => {
+    expect(detectPostalCodeType(input)).toBe(expected);
+  });
+});
+
+describe('formatPostalCodeIfNeeded', () => {
+  test.each([
+    ['t3h5y1', 'T3H 5Y1', 'full'],
+    ['T3H5Y', 'T3H 5Y', 'partial'],
+    ['T3H5', 'T3H 5', 'partial'],
+    ['T3H', 'T3H ', 'partial'],
+    ['123 Main St', '123 Main St', 'none'],
+    ['T3H 5Y1', 'T3H 5Y1', 'full'],
+    [' t3h5y1 ', 'T3H 5Y1', 'full'],
+  ])('input "%s" (type %s) → "%s"', (input, expected, mockType) => {
+    expect(formatPostalCodeIfNeeded(input)).toBe(expected);
   });
 });
