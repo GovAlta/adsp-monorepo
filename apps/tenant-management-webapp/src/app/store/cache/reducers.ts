@@ -19,14 +19,16 @@ export default function (state: CacheState = defaultState, action: CacheActionTy
         ...state,
         targets: { ...state.targets, ...action.payload },
       };
-    case UPDATE_CACHE_TARGETS_SUCCESS_ACTION:
+    case UPDATE_CACHE_TARGETS_SUCCESS_ACTION: {
+      const newTenant = JSON.parse(JSON.stringify(Object.assign({}, action.payload)));
       return {
         ...state,
         targets: {
           ...state.targets,
-          tenant: merge({}, state.targets.tenant, action.payload),
+          tenant: { ...newTenant },
         },
       };
+    }
     default:
       return state;
   }

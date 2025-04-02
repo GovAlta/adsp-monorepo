@@ -8,6 +8,7 @@ interface FormDefinitionItemProps {
   target: CacheTarget;
   name: string;
   openModalFunction?: (disposition: CacheTarget) => void;
+  onDeleteTarget?: (disposition: CacheTarget) => void;
   tenantMode?: boolean;
 }
 
@@ -19,6 +20,7 @@ export const CacheTargetItem = ({
   target,
   name,
   openModalFunction,
+  onDeleteTarget,
   tenantMode,
 }: FormDefinitionItemProps): JSX.Element => {
   const [showDetails, setShowDetails] = useState(false);
@@ -50,7 +52,17 @@ export const CacheTargetItem = ({
                   type="create"
                   title="Edit"
                   onClick={() => openModalFunction(target)}
-                  testId={`edit-disposition-item-${target.urn}`}
+                  testId={`create-target-item-${target.urn}`}
+                />
+              </GoAContextMenu>
+            )}
+            {tenantMode && (
+              <GoAContextMenu>
+                <GoAContextMenuIcon
+                  data-testid="delete-icon"
+                  type="trash"
+                  onClick={() => onDeleteTarget(target)}
+                  testId={`delete-target-item-${target.urn}`}
                 />
               </GoAContextMenu>
             )}
