@@ -76,6 +76,8 @@ export const ApplicationFormModal: FC<Props> = ({
   const { applications } = useSelector((state: RootState) => state.serviceStatus);
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
   const [openDropdown, setOpenDropdown] = useState<boolean>(false);
+  const [appName, setAppName] = useState('');
+  const [appDescription, setAppDescription] = useState('');
 
   const isDuplicateAppName = (): Validator => {
     return (appName: string) => {
@@ -165,6 +167,8 @@ export const ApplicationFormModal: FC<Props> = ({
               if (onCancel) onCancel();
               validators.clear();
               setApplication({ ...defaultApplication });
+              setAppName(defaultApplication?.name);
+              setAppDescription(defaultApplication?.description);
             }}
           >
             Cancel
@@ -186,7 +190,7 @@ export const ApplicationFormModal: FC<Props> = ({
           name="name"
           width="100%"
           testId="application-name-input"
-          value={application?.name}
+          value={appName ? appName : application?.name}
           onChange={(name, value) => {
             if (!isEdit) {
               const appKey = toKebabName(value);
@@ -207,6 +211,7 @@ export const ApplicationFormModal: FC<Props> = ({
                 ...application,
                 name: value,
               });
+              setAppName(value);
             }
           }}
           onBlur={() => {
@@ -226,7 +231,7 @@ export const ApplicationFormModal: FC<Props> = ({
         <GoATextArea
           name="description"
           width="100%"
-          value={application?.description}
+          value={appDescription ? appDescription : application?.description}
           testId="application-description"
           onChange={(name, value) => {
             validators.remove('description');
@@ -235,6 +240,7 @@ export const ApplicationFormModal: FC<Props> = ({
               ...application,
               description: value,
             });
+            setAppDescription(value);
           }}
           aria-label="description"
         />
