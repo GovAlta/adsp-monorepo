@@ -62,47 +62,47 @@ Feature: Form
     When the user enters "auto-test-1-$", "autotest desc" in Add form definition modal
     Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -, [space]" for Name field in Add form definition modal
     # Validate data
-    When the user enters "autotest-formDef", "autotest desc" in Add form definition modal
+    When the user enters "autotest-formDef<$ph>", "autotest desc" in Add form definition modal
     And the user clicks Save button in Add form definition modal
-    Then the user views form definition editor for "autotest-formDef", "autotest desc"
+    Then the user views form definition editor for "autotest-formDef<$ph>", "autotest desc"
     When the user clicks "Roles" tab in form definition editor
     And the user enters "auto-test-role1" as applicant roles, "auto-test-role2" as clerk roles, "empty" as assessor roles
     And the user clicks Save button in form definition editor
     And the user clicks Back button in form definition editor
-    Then the user "views" the form definition of "autotest-formDef", "autotest desc"
+    Then the user "views" the form definition of "autotest-formDef<$ph>", "autotest desc"
     # Edit and back
-    When the user clicks "Edit" button for the form definition of "autotest-formDef", "autotest desc"
-    Then the user views form definition editor for "autotest-formDef", "autotest desc"
+    When the user clicks "Edit" button for the form definition of "autotest-formDef<$ph>", "autotest desc"
+    Then the user views form definition editor for "autotest-formDef<$ph>", "autotest desc"
     When the user clicks "Roles" tab in form definition editor
     And the user enters "auto-test-role2" as applicant roles, "auto-test-role1" as clerk roles, "auto-test-role3" as assessor roles
     And the user clicks Back button in form definition editor
     And the user clicks "Don't save" button on unsaved changes modal
-    And the user clicks "Edit" button for the form definition of "autotest-formDef", "autotest desc"
-    Then the user views form definition editor for "autotest-formDef", "autotest desc"
+    And the user clicks "Edit" button for the form definition of "autotest-formDef<$ph>", "autotest desc"
+    Then the user views form definition editor for "autotest-formDef<$ph>", "autotest desc"
     When the user clicks "Roles" tab in form definition editor
     Then the user views "auto-test-role1" as applicant roles, "auto-test-role2" as clerk roles, "empty" as assessor roles in roles tab
     And the user clicks Back button in form definition editor
     # Edit and save
-    When the user clicks "Edit" button for the form definition of "autotest-formDef", "autotest desc"
-    Then the user views form definition editor for "autotest-formDef", "autotest desc"
+    When the user clicks "Edit" button for the form definition of "autotest-formDef<$ph>", "autotest desc"
+    Then the user views form definition editor for "autotest-formDef<$ph>", "autotest desc"
     When the user clicks Edit button in form definition editor
     Then the user views Edit definition modal in form definition editor
-    When the user enters "autotest-formDef-edited", "autotest desc edited" in Edit definition modal
+    When the user enters "autotest-formDef<$ph>-new", "autotest desc edited" in Edit definition modal
     And the user clicks Save button in Edit definition modal
     And the user clicks "Roles" tab in form definition editor
     And the user enters "auto-test-role2" as applicant roles, "auto-test-role1" as clerk roles, "auto-test-role3" as assessor roles
     And the user clicks Save button in form definition editor
     And the user clicks Back button in form definition editor
-    Then the user "views" the form definition of "autotest-formDef-edited", "autotest desc edited"
-    When the user clicks "Edit" button for the form definition of "autotest-formDef-edited", "autotest desc edited"
+    Then the user "views" the form definition of "autotest-formDef<$ph>-new", "autotest desc edited"
+    When the user clicks "Edit" button for the form definition of "autotest-formDef<$ph>-new", "autotest desc edited"
     And the user clicks "Roles" tab in form definition editor
     Then the user views "auto-test-role2" as applicant roles, "auto-test-role1" as clerk roles, "auto-test-role3" as assessor roles in roles tab
     And the user clicks Back button in form definition editor
     # Delete
-    When the user clicks "Delete" button for the form definition of "autotest-formDef-edited", "autotest desc edited"
-    Then the user views delete "form definition" confirmation modal for "autotest-formDef"
+    When the user clicks "Delete" button for the form definition of "autotest-formDef<$ph>-new", "autotest desc edited"
+    Then the user views delete form definition confirmation modal for "autotest-formDef<$ph>"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the form definition of "autotest-formDef-edited", "autotest desc edited"
+    Then the user "should not view" the form definition of "autotest-formDef<$ph>-new", "autotest desc edited"
 
   # Ignore the test for now as the copy link icon has accessibility issue
   #TEST DATA: precreated form definition of "autotest-formDefAccessibility", "DO NOT DELETE", "auto-test-role1", "auto-test-role1", "auto-test-role1"
@@ -211,17 +211,17 @@ Feature: Form
     # Add a form definition
     When the user clicks Add definition button on form definitions page
     Then the user views Add form definition modal
-    When the user enters "autotest-securityClassification", "autotest desc" in Add form definition modal
+    When the user enters "autotest-sec-cls<$ph>", "autotest desc" in Add form definition modal
     And the user clicks Save button in Add form definition modal
     # Lifecycle page validation for security classification
-    Then the user views form definition editor for "autotest-securityClassification", "autotest desc"
+    Then the user views form definition editor for "autotest-sec-cls<$ph>", "autotest desc"
     When the user clicks "Lifecycle" tab in form definition editor
     Then the user views Security classification dropdown after Form template URL under Application
     And the user views the security classification dropdown has the default value of "Protected B" from the options of "Public", "Protected A", "Protected B", "Protected C"
     When the user selects "Protected C" from the security classification dropdown in form definition editor
     And the user clicks Save button in form definition editor
     And the user clicks Back button in form definition editor
-    And the user clicks "Edit" button for the form definition of "autotest-securityClassification", "autotest desc"
+    And the user clicks "Edit" button for the form definition of "autotest-sec-cls<$ph>", "autotest desc"
     And the user clicks "Lifecycle" tab in form definition editor
     Then the user views "Protected C" in security classification dropdown in form definition editor
     When the user clicks Back button in form definition editor
@@ -233,10 +233,10 @@ Feature: Form
     # Delete the created form definition
     When the user selects the "Form" menu item
     And the user selects "Definitions" tab for "Form"
-    And the user clicks "Delete" button for the form definition of "autotest-securityClassification", "autotest desc"
-    Then the user views delete "form definition" confirmation modal for "autotest-securityClassification"
+    And the user clicks "Delete" button for the form definition of "autotest-sec-cls<$ph>", "autotest desc"
+    Then the user views delete form definition confirmation modal for "autotest-sec-cls<$ph>"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the form definition of "autotest-securityClassification", "autotest desc"
+    Then the user "should not view" the form definition of "autotest-sec-cls<$ph>", "autotest desc"
 
   @TEST_CS-3358 @REQ_CS-3306 @regression
   Scenario: As a tenant admin, I can see form-applicant as default applicant role for new form definitions
