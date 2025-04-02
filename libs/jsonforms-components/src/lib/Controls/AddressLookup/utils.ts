@@ -90,3 +90,28 @@ export const formatPostalCode = (value: string) => {
   }
   return value;
 };
+
+export function detectPostalCodeType(input: string): 'full' | 'partial' | 'none' {
+  const cleaned = input.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  const fullPostal = /^[A-Z]\d[A-Z]\d[A-Z]\d$/;
+  const partialPostal = /^[A-Z]\d[A-Z]?\d?[A-Z]?\d?$/;
+
+  if (fullPostal.test(cleaned)) return 'full';
+  if (partialPostal.test(cleaned)) return 'partial';
+  return 'none';
+}
+
+export function formatPostalCodeIfNeeded(input: string): string {
+  const cleaned = input
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+  const type = detectPostalCodeType(cleaned);
+
+  if (type === 'none') return input;
+
+  const before = cleaned.slice(0, 3);
+  const after = cleaned.slice(3);
+  return `${before} ${after}`;
+}

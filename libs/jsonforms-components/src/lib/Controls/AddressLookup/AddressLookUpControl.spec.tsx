@@ -45,6 +45,7 @@ jest.mock('./utils', () => ({
   mapSuggestionToAddress: jest.fn(),
   filterSuggestionsWithoutAddressCount: jest.fn(),
   validatePostalCode: jest.fn(),
+  formatPostalCodeIfNeeded: jest.fn(),
 }));
 const mockHandleChange = jest.fn();
 const formUrl = 'http://mock-form-url.com';

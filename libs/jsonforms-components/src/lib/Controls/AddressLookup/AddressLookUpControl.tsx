@@ -14,6 +14,7 @@ import {
   validatePostalCode,
   handlePostalCodeValidation,
   formatPostalCode,
+  formatPostalCodeIfNeeded,
 } from './utils';
 import { ListItem, SearchBox } from './styled-components';
 import { HelpContentComponent } from '../../Additional';
@@ -104,15 +105,18 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       if (searchTerm.length > 2 && dropdownSelected === false) {
         setLoading(true);
         setOpen(true);
-        await fetchAddressSuggestions(formUrl, searchTerm, isAlbertaAddress).then((response) => {
-          const suggestions = filterSuggestionsWithoutAddressCount(response);
-          if (isAlbertaAddress) {
-            setSuggestions(filterAlbertaAddresses(suggestions));
-          } else {
-            setSuggestions(suggestions);
+
+        await fetchAddressSuggestions(formUrl, formatPostalCodeIfNeeded(searchTerm), isAlbertaAddress).then(
+          (response) => {
+            const suggestions = filterSuggestionsWithoutAddressCount(response);
+            if (isAlbertaAddress) {
+              setSuggestions(filterAlbertaAddresses(suggestions));
+            } else {
+              setSuggestions(suggestions);
+            }
+            setLoading(false);
           }
-          setLoading(false);
-        });
+        );
       } else {
         setSuggestions([]);
         setOpen(false);
