@@ -108,7 +108,7 @@ export const AddEditTargetCache = ({
       }
     >
       <div style={{ height: '360px' }}>
-        <GoAFormItem error={errors?.['urn']} label="URN" mb="3" mt="3">
+        <GoAFormItem error={errors?.['urn']} label="Target" mb="3" mt="3">
           <GoADropdown
             relative={true}
             name="cache-status"
