@@ -68,6 +68,7 @@ libs/*/obj
 coveragereport/*
 
 .nx/cache
+.nx/workspace-data
 .cache
 
 # Github Pages doesn't use the lock file; keep local when working with docs in jekyll
