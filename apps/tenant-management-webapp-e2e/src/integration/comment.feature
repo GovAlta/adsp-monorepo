@@ -22,44 +22,44 @@ Feature: Comment
     When the user enters "auto-test-1-$" in Add topic type modal
     Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -, [space]" for Name field in Add topic type modal
     # Validate data
-    When the user enters "autotest-aedTopicType" in Add topic type modal
+    When the user enters "autotest-aedType<$ph>" in Add topic type modal
     And the user clicks Save button in Add topic type modal
-    Then the user views topic type editor for "autotest-aedTopicType"
+    Then the user views topic type editor for "autotest-aedType<$ph>"
     And the user views "Protected A" as default selection for security classification
     And the user views "Public, Protected A, Protected B, Protected C" in Select a security classification dropdown
     When the user enters "skip" as classification, "auto-test-role1" as admin roles, "auto-test-role2" as commenter roles, "empty" as reader roles
     And the user clicks Save button in topic type editor
     And the user clicks Back button in topic type editor
-    Then the user "views" the topic type of "autotest-aedTopicType", "Protected A"
+    Then the user "views" the topic type of "autotest-aedType<$ph>", "Protected A"
     # Edit and back
-    When the user clicks "Edit" button for the topic type of "autotest-aedTopicType", "Protected A"
-    Then the user views topic type editor for "autotest-aedTopicType"
+    When the user clicks "Edit" button for the topic type of "autotest-aedType<$ph>", "Protected A"
+    Then the user views topic type editor for "autotest-aedType<$ph>"
     When the user enters "Protected B" as classification, "auto-test-role2" as admin roles, "auto-test-role1" as commenter roles, "auto-test-role3" as reader roles
     And the user clicks Back button in topic type editor
     And the user clicks "Don't save" button on unsaved changes modal
-    And the user clicks "Edit" button for the topic type of "autotest-aedTopicType", "Protected A"
+    And the user clicks "Edit" button for the topic type of "autotest-aedType<$ph>", "Protected A"
     Then the user views "Protected A" as classification, "auto-test-role1" as admin roles, "auto-test-role2" as commenter roles, "empty" as reader roles
     When the user clicks Back button in topic type editor
     # Edit and save
-    When the user clicks "Edit" button for the topic type of "autotest-aedTopicType", "Protected A"
-    Then the user views topic type editor for "autotest-aedTopicType"
+    When the user clicks "Edit" button for the topic type of "autotest-aedType<$ph>", "Protected A"
+    Then the user views topic type editor for "autotest-aedType<$ph>"
     When the user clicks Edit button in topic type editor
     Then the user views Edit topic type modal in topic type editor
-    When the user enters "autotest-aedTopicType-edited" in Edit topic type modal
+    When the user enters "autotest-aedType<$ph>-new" in Edit topic type modal
     And the user clicks Save button in Edit topic type modal
-    Then the user views topic type editor for "autotest-aedTopicType-edited"
+    Then the user views topic type editor for "autotest-aedType<$ph>-new"
     When the user enters "Protected B" as classification, "auto-test-role2" as admin roles, "auto-test-role1" as commenter roles, "auto-test-role3" as reader roles
     And the user clicks Save button in topic type editor
     And the user clicks Back button in topic type editor
-    Then the user "views" the topic type of "autotest-aedTopicType-edited", "Protected B"
-    When the user clicks "Edit" button for the topic type of "autotest-aedTopicType-edited", "Protected B"
+    Then the user "views" the topic type of "autotest-aedType<$ph>-new", "Protected B"
+    When the user clicks "Edit" button for the topic type of "autotest-aedType<$ph>-new", "Protected B"
     Then the user views "Protected B" as classification, "auto-test-role2" as admin roles, "auto-test-role1" as commenter roles, "auto-test-role3" as reader roles
     And the user clicks Back button in topic type editor
     # Delete
-    When the user clicks "Delete" button for the topic type of "autotest-aedTopicType-edited", "Protected B"
-    Then the user views delete "topic type" confirmation modal for "autotest-aedTopicType-edited"
+    When the user clicks "Delete" button for the topic type of "autotest-aedType<$ph>-new", "Protected B"
+    Then the user views delete topic type confirmation modal for "autotest-aedType<$ph>-new"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the topic type of "autotest-aedTopicType-edited", "Protected B"
+    Then the user "should not view" the topic type of "autotest-aedType<$ph>-new", "Protected B"
 
   #TEST DATA: precreated topic type of "autotest-topicTypesAccessibility", "auto-test-role1", "auto-test-role1", "auto-test-role1", "Protected A"
   @accessibility @regression
