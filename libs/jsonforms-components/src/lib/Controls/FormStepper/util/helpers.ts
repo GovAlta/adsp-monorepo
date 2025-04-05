@@ -10,26 +10,27 @@ export const getProperty: any = (obj: any, propName: string) => {
   }
 };
 
-// eslint-disable-next-line
-export const pickPropertyValues = (obj: any, property: string, endWithType?: string) => {
+// TODO: Typing in this function is inconsistent. Needs to be cleaned up since it's not clear that
+// output typing of string[] is correct which could affect downstream code.
+export const pickPropertyValues = (obj: unknown, property: string, endWithType?: string) => {
   let values: string[] = [];
-  Object.keys(obj).forEach(function (key) {
+  Object.entries(obj as object).forEach(function ([key, value]) {
     if (key === property) {
-      values.push(obj[key]);
-    } else if (_.isObject(obj[key])) {
+      values.push(value as string);
+    } else if (_.isObject(value)) {
       // if the object type is equal to end type, we are not going to continue the recursive approach
-      if (endWithType && obj[key]?.type === endWithType) {
-        if (property in obj[key]) {
-          values.push(obj[key][property]);
+      if (endWithType && (value as Record<string, unknown>)?.type === endWithType) {
+        if (property in value) {
+          values.push((value as  Record<string, string>)[property]);
         }
       } else {
-        values = [...values, ...pickPropertyValues(obj[key], property, endWithType)];
+        values = [...values, ...pickPropertyValues(value, property, endWithType)];
       }
-    } else if (_.isArray(obj[key])) {
-      const nextValues = obj[key].map(function (arrayObj: object) {
+    } else if (_.isArray(value)) {
+      const nextValues = value.map(function (arrayObj: Record<string, unknown>) {
         return pickPropertyValues(arrayObj, property, endWithType);
       });
-      values = [...values, ...nextValues];
+      values = [...values, ...nextValues.reduce((vs, v) => [...vs, ...v], [])];
     }
   });
   return values;
