@@ -19,6 +19,11 @@ import { SubscriberEntity } from './subscriber';
 import { SubscriptionEntity } from './subscription';
 import { NotificationConfiguration } from '../configuration';
 
+function isValidPhoneNumber(str) {
+  const digits = str.replace(/\D/g, '');
+  return /^\d{10}$/.test(digits) || /^1\d{10}$/.test(digits);
+}
+
 export class NotificationTypeEntity implements NotificationType {
   tenantId?: AdspId;
   id: string;
@@ -173,6 +178,7 @@ export class NotificationTypeEntity implements NotificationType {
     messageContext: Record<string, unknown>
   ): Notification {
     const eventNotification = this.events.find((e) => e.namespace === event.namespace && e.name === event.name);
+
     const { address, channel } =
       (eventNotification && subscription.getSubscriberChannel(this, eventNotification)) || {};
 
@@ -290,8 +296,14 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
 
     const eventNotification = this.events.find((e) => e.namespace === event.namespace && e.name === event.name);
 
-    // For direct notification, channel is the first (only) channel and address is from event.
-    const [channel] = this.channels;
+    // Address can now be a phone number
+    let [channel] = this.channels;
+    if (isValidPhoneNumber(this.address)) {
+      if (this.channels.includes('sms' as Channel)) {
+        channel = 'sms' as Channel;
+      }
+    }
+
     const address = (this.addressPath && getAtPath(event.payload, this.addressPath)) || this.address;
 
     const notifications = [];

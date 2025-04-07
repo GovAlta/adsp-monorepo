@@ -315,23 +315,23 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           text="Make notification public"
         />
 
-        <GoAFormItem label="Select Notify subscribers or Notify address" error={errors?.['priority']}>
+        <GoAFormItem label="Select Notify subscribers or Notify contact" error={errors?.['priority']}>
           <GoARadioGroup
             name="notify"
             testId="select-type-notification-radio-group"
             ariaLabel="select-type-notification-radio-group"
-            value={isNotifyAddress ? 'Notify address' : 'Notify subscribers'}
+            value={isNotifyAddress ? 'Notify contact' : 'Notify subscribers'}
             onChange={(_, value) => {
               setIsNotifyAddress(!isNotifyAddress);
             }}
           >
             <GoARadioItem name="notify" value="Notify subscribers" />
-            <GoARadioItem name="notify" value="Notify address" />
+            <GoARadioItem name="notify" value="Notify contact" />
           </GoARadioGroup>
         </GoAFormItem>
         {isNotifyAddress && (
           <div>
-            <GoAFormItem label="Address" error={errors?.['address']}>
+            <GoAFormItem label="Notify this contact" error={errors?.['address']}>
               <GoAInput
                 type="text"
                 name="address"
@@ -340,16 +340,11 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 aria-label="input-address"
                 width="60%"
                 onChange={(_, value) => {
-                  const validations = {
-                    address: value,
-                  };
-                  validators.remove('address');
-                  validators.checkAll(validations);
                   type.address = value;
                 }}
               />
             </GoAFormItem>
-            <GoAFormItem label="Address Path">
+            <GoAFormItem label="Notify contact in event payload at Json schema path ">
               <GoAInput
                 type="text"
                 name="addressPath"
