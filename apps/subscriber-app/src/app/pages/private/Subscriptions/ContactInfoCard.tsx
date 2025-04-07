@@ -345,22 +345,24 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 </GridItem>
               </Grid>
 
-              <ValidateModal
-                isOpen={viewValidateModal}
-                testId={'validate-modal'}
-                onValidate={(channel) => {
-                  if (channel === 'email') {
-                    dispatch(VerifyEmail(subscriber, false));
-                  } else if (channel === 'SMS') {
-                    dispatch(VerifyPhone(subscriber, false));
-                  }
-                  setViewValidateModal(false);
-                }}
-                title="Verify channel"
-                onClose={() => {
-                  setViewValidateModal(false);
-                }}
-              />
+              {viewValidateModal && (
+                <ValidateModal
+                  isOpen={viewValidateModal}
+                  testId={'validate-modal'}
+                  onValidate={(channel) => {
+                    if (channel === 'email') {
+                      dispatch(VerifyEmail(subscriber, false));
+                    } else if (channel === 'SMS') {
+                      dispatch(VerifyPhone(subscriber, false));
+                    }
+                    setViewValidateModal(false);
+                  }}
+                  title="Verify channel"
+                  onClose={() => {
+                    setViewValidateModal(false);
+                  }}
+                />
+              )}
             </div>
           )}
         </div>
