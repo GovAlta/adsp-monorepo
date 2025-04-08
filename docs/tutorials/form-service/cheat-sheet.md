@@ -21,6 +21,7 @@ Note: in some UI schemas you will see "ComponentProps" in the options element. C
 - [File Uploads](#target-uploads)
 - [Repeating Items](#target-lists)
 - [Steppers](#target-steppers)
+- [Validation](#target-validation)
 
 ### Common data formats {#target-common-formats}
 
@@ -809,3 +810,72 @@ Steppers allow you to partition your form into one or more steps, so users can f
 }
     </code></pre></td>
   </tr>
+</table>
+
+### Validation {#target-validation}
+
+Validation is most easily accomplished through the semantics of JSON Schemas. Note the "minLength" attribute of the name property. This is needed to address a fix needed when required string fields.
+
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>JSON schema</th>
+  </tr>
+  <tr>
+    <td>Required</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "isAlbertan": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "firstName",
+    "lastName"
+  ]
+}
+    </code></pre></td>
+  </tr>
+    <tr>
+    <td>Conditionally Required</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "hasChild": {
+      "type": boolean
+    },
+    "childsName": {
+      "type": "string",
+    },
+  },
+  "required": [
+    "hasChild"
+  ],
+  "if": {
+    "properties": {
+      "hasChild": {
+        "const": true
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "childsName": {
+      "minLength": 1
+      }
+    },
+    "required": [
+      "childsName"
+    ]
+  }
+}
+    </code></pre></td>
+  </tr>
+</table>
