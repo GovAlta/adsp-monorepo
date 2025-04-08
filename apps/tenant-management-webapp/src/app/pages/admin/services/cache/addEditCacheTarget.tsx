@@ -140,12 +140,15 @@ export const AddEditTargetCache = ({
           <GoAInput
             name="cache-url-id"
             type="number"
+            min="0"
+            max="2000000000"
             value={target?.ttl?.toString()}
             testId="cache-url-id"
             width="100%"
             onChange={(name, value) => {
-              setTarget({ ...target, ttl: parseInt(value) });
+              setTarget({ ...target, ttl: Math.min(parseInt(value), 2000000000) });
             }}
+            trailingContent="seconds"
           />
         </GoAFormItem>
       </div>
