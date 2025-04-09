@@ -480,12 +480,36 @@ For when you need to add instructions, or help, to guide users when they are fil
 
 Note: the optional labels are used as paragraph headings, when so desired. Nesting paragraphs (see below) can be used to generate subparagraphs, with appropriately sized subheadings. You can nest up to 3 levels.
 
+As of **Jan. 2025** you can use markdown for help content, significantly simplifying the process of adding help text. Please see the [section on help text](/adsp-monorepo/tutorials/form-service/instructions.html).
+
 <table>
   <tr>
     <th>Feature</th>
     <th>JSON schema</th>
     <th>UI schema</th>
   </tr>
+  <tr>
+    <td>Markdown</td>
+    <td>N/A</td>
+    <td><pre><code>
+{
+  "type": "HelpContent",
+  "label": "Paragraph Heading (bold, H2)",
+  "options": {
+    "markdown": true,
+    "help": [
+    "## Section Heading",
+    "This is a paragraph with some **bold** text.",
+    "This is another paragraph, with _italic_ text.",
+    "This paragraph has [a link](https://google.com)."
+    "- First bullet point",
+    "- Second bullet point"
+    ]
+  }
+}
+    </code></pre></td>
+  </tr>
+
   <tr>
     <td>Paragraph</td>
     <td>N/A</td>
