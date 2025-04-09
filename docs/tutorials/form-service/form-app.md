@@ -45,3 +45,15 @@ You can added an audience by clicking on the "Create" button and filling in the 
 Ideally users will be able to access the link to the _Form App_ directly from the alberta.ca website. Clicking on it will bring them to the form app where they will be asked to log in. If all their roles and permissions are correct they will see the form in question, e.g.
 
 ![](/adsp-monorepo/assets/form-service/formAppExample.png){: width="800" }
+
+### Summary PDF
+
+You can give users of the Form App the capability of downloading a PDF summary of their completed application. In the [Tenant Management Webapp](https://adsp-uat.alberta.ca), go to the form editor for the form in question. There you will see a "Lifecycle" tab and a checkbox for creating a PDF upon submission.
+
+![](/adsp-monorepo/assets/form-service/lifecycleTab.png){: width="400" }
+
+When checked you will see a PDF Preview tab in on the right-hand pane of the editor that shows what the generated PDF will look like. In the form app the user will see this after submission:
+
+![](/adsp-monorepo/assets/form-service/PDF-download.png){: width="400" }
+
+**NOTE**: The download capability is only available to forms that require login. It is not available to anonymous forms.
