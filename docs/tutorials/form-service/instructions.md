@@ -20,7 +20,41 @@ One of the differences between a professional and an amateur looking form is the
 }
 ```
 
-by combining several HelpContent types into a list you can create a full page of instructions to help your end-users navigate the form, e.g.
+### Markdown
+
+[Markdown](http://markdownguide.org/cheat-sheet/) is an industry standard way to add text formatting directives to a document. In this case the document is your form. Its similar to the other help elements, but allows markdown syntax to be added to the text, allowing you to **bold** or _italicize_ text, and add headings, links, images, bullets, etc. You tell the system to interpret the text as markdown when you add a _HelpContent_ element with the markdown option, like so:
+
+```Json
+{
+  "type": "HelpContent",
+  "label": "Program Overview",
+  "options": {
+    "markdown": true,
+    "help": [
+      "#### Farmers Market Program",
+      "The **Alberta Approved Farmers’ Market Program** was started in 1973 as a way to provide an opportunity for local Alberta businesses to sell their products. [Farmers’ markets](http://google.com) are a critical channel for business incubation – entrepreneurs start in markets, test market their products and develop business skills. The Program creates an operational framework, providing direction and guidance to approved farmers’ markets in Alberta through provincial guidelines that _outline minimum requirements and best practices_.",
+      "The end."
+    ]
+  }
+}
+```
+
+The "help" array consists of a set of paragraphs, one per entry, and you add the markdown syntax to each as needed. The above will render as:
+
+#### Farmers Market Program
+
+The **Alberta Approved Farmers’ Market Program** was started in 1973 as a way to provide an opportunity for local Alberta businesses to sell their products. [Farmers’ markets](http://google.com) are a critical channel for business incubation – entrepreneurs start in markets, test market their products and develop business skills. The Program creates an operational framework, providing direction and guidance to approved farmers’ markets in Alberta through provincial guidelines that _outline minimum requirements and best practices_.
+The end.
+
+**Note**: We currently do not support Markdown's extended syntax.
+
+### Deprecated Help Constructs
+
+The following constructs are still available for use, but are not really needed since the introduction of markdown.
+
+#### Combining elements
+
+By combining several HelpContent types into a list you can create a full page of instructions to help your end-users navigate the form, e.g.
 
 ```json
 {
@@ -60,7 +94,7 @@ will render
 
 Notice that providing an array of text fragments in options/help will render as a bulleted list of points.
 
-### Detail Variant
+#### Detail Variant
 
 Often a form will look cleaner if the end-user doesn't have to browse through instructions they are already familiar with, or those that are not directly relevant to the task at hand. One of the _Help Content variants_ will render instructions as a title that, when clicked on, will open up the details of the instruction. The variant looks like this:
 
@@ -102,7 +136,7 @@ In this variant the Help Content contains
 - The details of the instruction (elements) that get exposed when the section is opened,
 - the name of the variant (details), in the options section
 
-### Image Variant
+#### Image Variant
 
 You can add images to further clarify what is needed, with the img variant
 
