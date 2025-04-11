@@ -38,7 +38,7 @@ export const DeleteDialog = React.memo(function DeleteDialog({
   return (
     <GoAModal open={open} key={1} testId="object-array-modal" heading={title}>
       <DeleteDialogContent data-testid="object-array-modal-content">{message}</DeleteDialogContent>
-      <GoAButtonGroup alignment="end">
+      <GoAButtonGroup alignment="end" mb={'l'}>
         <GoAButton
           type="secondary"
           testId="object-array-modal-button"
