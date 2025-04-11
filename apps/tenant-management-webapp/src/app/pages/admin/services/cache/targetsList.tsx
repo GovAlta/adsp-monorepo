@@ -27,7 +27,7 @@ export const CacheTargetTable: FunctionComponent<cacheTargetTableProps> = ({
     <DataTable data-testid="cache-targets-table">
       <thead data-testid="cache-targets-table-header">
         <tr>
-          <th data-testid="cache-targets-table-header-name">Name</th>
+          <th data-testid="cache-targets-table-header-name">Target</th>
           <th id="cache-targets-Description" data-testid="cache-targets-table-header-description">
             TTL
           </th>

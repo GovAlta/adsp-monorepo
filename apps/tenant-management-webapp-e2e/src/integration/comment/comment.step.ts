@@ -42,7 +42,21 @@ When('the user clicks Add topic type button on topic types page', function () {
 });
 
 When('the user enters {string} in Add topic type modal', function (name: string) {
-  commentObj.addTopicTypeNameTextField().shadow().find('input').clear().type(name, { force: true, delay: 200 });
+  const currentTime = new Date();
+  replacementString =
+    '-' +
+    ('0' + currentTime.getMonth()).substr(-2) +
+    ('0' + currentTime.getDate()).substr(-2) +
+    ('0' + currentTime.getHours()).substr(-2) +
+    ('0' + currentTime.getHours()).substr(-2) +
+    ('0' + currentTime.getSeconds()).substr(-2);
+  const nameAfterReplacement = commonlib.stringReplacement(name, replacementString);
+  commentObj
+    .addTopicTypeNameTextField()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(nameAfterReplacement, { force: true, delay: 200 });
 });
 
 Then('the user views the error message of {string} for Name field in Add topic type modal', function (errorMsg) {
@@ -57,7 +71,8 @@ When('the user clicks Save button in Add topic type modal', function () {
 Then('the user views topic type editor for {string}', function (name) {
   cy.viewport(1920, 1080);
   cy.wait(4000);
-  commentObj.editorTopicTypeNameValue().should('contain.text', name);
+  const nameAfterReplacement = commonlib.stringReplacement(name, replacementString);
+  commentObj.editorTopicTypeNameValue().should('contain.text', nameAfterReplacement);
 });
 
 Then(
@@ -258,7 +273,8 @@ Then('the user clicks Save button in topic type editor', function () {
 
 Then('the user {string} the topic type of {string}, {string}', function (action, name, classification) {
   cy.wait(1000); //Wait for the grid to load all data
-  findTopicType(name, classification).then((rowNumber) => {
+  const nameAfterReplacement = commonlib.stringReplacement(name, replacementString);
+  findTopicType(nameAfterReplacement, classification).then((rowNumber) => {
     switch (action) {
       case 'views':
         expect(rowNumber).to.be.greaterThan(
@@ -323,7 +339,8 @@ function findTopicType(name, classification) {
 When(
   'the user clicks {string} button for the topic type of {string}, {string}',
   function (button, name, classification) {
-    findTopicType(name, classification).then((rowNumber) => {
+    const nameAfterReplacement = commonlib.stringReplacement(name, replacementString);
+    findTopicType(nameAfterReplacement, classification).then((rowNumber) => {
       switch (button) {
         case 'Edit':
           commentObj.topicTypeEditButton(rowNumber).shadow().find('button').click({ force: true });
@@ -339,6 +356,12 @@ When(
     });
   }
 );
+
+Then('the user views delete topic type confirmation modal for {string}', function (topicTypeName) {
+  topicTypeName = commonlib.stringReplacement(topicTypeName, replacementString);
+  commentObj.deleteTopicTypeModalHeading().invoke('text').should('eq', 'Delete topic type');
+  commentObj.deleteTopicTypeModalContentTopicName().invoke('text').should('contain', topicTypeName);
+});
 
 When('the user clicks Back button in topic type editor', function () {
   commentObj.editorBackButton().shadow().find('button').click({ force: true });
@@ -356,12 +379,13 @@ Then('the user views Edit topic type modal in topic type editor', function () {
 });
 
 When('the user enters {string} in Edit topic type modal', function (name: string) {
+  const nameAfterReplacement = commonlib.stringReplacement(name, replacementString);
   commentObj
     .topicTypeEditorEditTopicTypeModalNameInput()
     .shadow()
     .find('input')
     .clear()
-    .type(name, { force: true, delay: 200 });
+    .type(nameAfterReplacement, { force: true, delay: 200 });
 });
 
 When('the user clicks Save button in Edit topic type modal', function () {

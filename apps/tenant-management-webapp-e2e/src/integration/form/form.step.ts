@@ -5,6 +5,7 @@ import common from '../common/common.page';
 
 const commonObj = new common();
 const formObj = new FormPage();
+let replacementString;
 
 Given('a tenant admin user is on form service overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
@@ -52,7 +53,21 @@ When('the user clicks Add definition button on form definitions page', function 
 
 When('the user enters {string}, {string} in Add form definition modal', function (name: string, description: string) {
   cy.viewport(1920, 1080);
-  formObj.addDefinitionNameTextField().shadow().find('input').clear().type(name, { force: true, delay: 200 });
+  const currentTime = new Date();
+  replacementString =
+    '-' +
+    ('0' + currentTime.getMonth()).substr(-2) +
+    ('0' + currentTime.getDate()).substr(-2) +
+    ('0' + currentTime.getHours()).substr(-2) +
+    ('0' + currentTime.getHours()).substr(-2) +
+    ('0' + currentTime.getSeconds()).substr(-2);
+  const nameAfterReplacement = commonlib.stringReplacement(name, replacementString);
+  formObj
+    .addDefinitionNameTextField()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(nameAfterReplacement, { force: true, delay: 200 });
   formObj.addDefinitionDescriptionField().shadow().find('textarea').clear().type(description, { force: true });
 });
 
@@ -68,6 +83,7 @@ When('the user clicks Save button in Add form definition modal', function () {
 Then('the user views form definition editor for {string}, {string}', function (name, description) {
   cy.viewport(1920, 1080);
   cy.wait(2000);
+  name = commonlib.stringReplacement(name, replacementString);
   formObj.editorDefinitionNameValue().should('contain.text', name);
   formObj.editorDefinitionDescriptionValue().should('contain.text', description);
 });
@@ -235,6 +251,7 @@ Then('the user clicks Save button in form definition editor', function () {
 
 Then('the user {string} the form definition of {string}, {string}', function (action, name, description) {
   cy.wait(1000); //Wait for the grid to load all data
+  name = commonlib.stringReplacement(name, replacementString);
   findDefinition(name, description).then((rowNumber) => {
     switch (action) {
       case 'views':
@@ -303,6 +320,7 @@ function findDefinition(name, description) {
 When(
   'the user clicks {string} button for the form definition of {string}, {string}',
   function (button, name, description) {
+    name = commonlib.stringReplacement(name, replacementString);
     findDefinition(name, description).then((rowNumber) => {
       switch (button) {
         case 'Edit':
@@ -319,6 +337,18 @@ When(
     });
   }
 );
+
+Then('the user views delete form definition confirmation modal for {string}', function (deleteItemName) {
+  if (String(deleteItemName).includes('<$ph>')) {
+    deleteItemName = commonlib.stringReplacement(deleteItemName, replacementString);
+  }
+  cy.wait(4000);
+  commonObj
+    .deleteConfirmationModalTitle()
+    .invoke('text')
+    .should('eq', 'Delete ' + 'form definition');
+  commonObj.deleteConfirmationModalContent().invoke('text').should('contains', deleteItemName);
+});
 
 When('the user clicks Back button in form definition editor', function () {
   formObj.editorBackButton().shadow().find('button').click({ force: true });
@@ -350,6 +380,7 @@ Then('the user views Edit definition modal in form definition editor', function 
 });
 
 When('the user enters {string}, {string} in Edit definition modal', function (name: string, description: string) {
+  name = commonlib.stringReplacement(name, replacementString);
   formObj
     .definitionEditorEditDefinitionModalNameInput()
     .shadow()
