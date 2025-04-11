@@ -75,7 +75,7 @@ function Tab(props: TabProps & { children: ReactNode }): JSX.Element {
   return (
     <TabContent
       data-testid={`${props.testId ? props.testId : props['data-testid']}`}
-      isTightContent={props?.isTightContent}
+      isDenseContent={props?.isTightContent}
     >
       {props.children}
     </TabContent>
@@ -147,11 +147,11 @@ const SCTab = styled.div`
 `;
 
 interface TabContentProps {
-  isTightContent?: boolean;
+  isDenseContent?: boolean;
 }
 
 const TabContent = styled.div<TabContentProps>`
-  padding: ${(props) => (props?.isTightContent === true ? `0rem` : `1rem 0`)} > h1, > h2, > h3, > h4, > ul, > ol {
+  padding: ${(props) => (props?.isDenseContent === true ? `0rem` : `1rem 0`)} > h1, > h2, > h3, > h4, > ul, > ol {
     margin-top: 0;
   }
 `;

@@ -10,14 +10,14 @@ import {
   GoAButtonGroup,
   GoAFormItem,
   GoAButton,
-  GoAChip,
+  GoAFilterChip,
   GoASkeleton,
 } from '@abgov/react-components';
 import { FormDefinition, FormResourceTagResult } from '@store/form/model';
 import { ResourceTag } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { clearAllTags, fetchAllTags, fetchFormResourceTags, fetchFormTagByTagName } from '@store/form/action';
+import { fetchFormResourceTags, fetchFormTagByTagName } from '@store/form/action';
 import { AddRemoveResourceTagSpacing } from './style-components';
 import { selectFormResourceTags } from '@store/form/selectors';
 
@@ -35,10 +35,9 @@ const TagChipComponent: FunctionComponent<{
   onDelete(tag: FormResourceTagResult);
 }> = ({ tag, onDelete }) => {
   return (
-    <GoAChip
+    <GoAFilterChip
       testId={`tag-label-${tag.label}`}
       content={tag.label}
-      deletable={true}
       onClick={() => {
         onDelete(tag);
       }}

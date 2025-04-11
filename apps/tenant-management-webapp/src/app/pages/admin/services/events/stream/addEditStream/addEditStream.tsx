@@ -9,7 +9,7 @@ import { generateEventOptions } from '../utils';
 import { EventDefinition } from '@store/event/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import {
-  GoAChip,
+  GoAFilterChip,
   GoACheckbox,
   GoAInput,
   GoATextArea,
@@ -185,14 +185,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
         </GoAFormItem>
         <ChipsWrapper>
           {streamEvents.map((eventChip) => {
-            return (
-              <GoAChip
-                key={eventChip}
-                deletable={true}
-                content={eventChip}
-                onClick={() => deleteEventChip(eventChip)}
-              />
-            );
+            return <GoAFilterChip key={eventChip} content={eventChip} onClick={() => deleteEventChip(eventChip)} />;
           })}
         </ChipsWrapper>
 
