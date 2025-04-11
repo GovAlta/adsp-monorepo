@@ -46,7 +46,7 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
         }}
         mb={'l'}
       >
-        Add cache targets
+        Add cache target
       </GoAButton>
       {cacheTargets && (
         <CacheTargetTable
