@@ -1,10 +1,10 @@
-import { GoAChip, GoAIconButton, GoASkeleton } from '@abgov/react-components';
+import { GoAFilterChip, GoAIconButton, GoASkeleton } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { AppDispatch, AppState, directoryBusySelector, resourceTagsSelector, Tag, untagResource } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 
 const TagBadge: FunctionComponent<{ tag: Tag; onDelete: () => void }> = ({ tag, onDelete }) => {
-  return <GoAChip content={tag.label} deletable={true} onClick={onDelete} mr="xs" mb="xs" />;
+  return <GoAFilterChip content={tag.label} onClick={onDelete} mr="xs" mb="xs" />;
 };
 
 interface TagsProps {

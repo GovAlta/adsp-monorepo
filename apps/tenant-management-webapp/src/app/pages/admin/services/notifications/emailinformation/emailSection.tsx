@@ -2,7 +2,6 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { NoPaddingH2 } from '@components/AppHeader';
-import { Grid, GridItem } from '@core-services/app-common';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { RootState } from '@store/index';
 import { useActionStateCheck } from '@components/Indicator';
@@ -13,7 +12,7 @@ import {
 } from '@store/notification/actions';
 import { ReactComponent as Edit } from '@icons/edit.svg';
 import { EditEmailInformationTypeModalForm } from './editEmail';
-
+import { GoAGrid } from '@abgov/react-components';
 export const EmailInformation: FunctionComponent = () => {
   const [editEmailInformation, setEditEmailInformation] = useState<boolean>(false);
   const dispatch = useDispatch();
@@ -67,13 +66,12 @@ export const EmailInformation: FunctionComponent = () => {
           The following email information are provided to your subscribers in the subscription management application so
           they know who sent the email and how to get support for notification related issues.
         </p>
-
-        <Grid>
-          <GridItem data-testid="from-email" className="word-break contact-border" md={12} vSpacing={1} hSpacing={0.5}>
+        <GoAGrid minChildWidth="320px">
+          <div className="word-break contact-border">
             <h4>From email</h4>
             {fromEmail?.fromEmail}
-          </GridItem>
-        </Grid>
+          </div>
+        </GoAGrid>
         <EditEmailInformationTypeModalForm
           open={editEmailInformation}
           initialValue={fromEmail || { fromEmail: '' }}
