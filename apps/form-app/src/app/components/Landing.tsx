@@ -36,8 +36,8 @@ export const Landing: FunctionComponent = () => {
                     <h2>Overview</h2>
                     <p>
                       The form app allows users to fill in and submit forms. Configure forms and make them available to
-                      users to quickly accept intake applications. Here are some features that we provide to your teams
-                      to for user form submissions.
+                      users to quickly accept intake applications. Here are some features that we provide to support
+                      user form submissions.
                     </p>
                   </GridItem>
                 </Grid>
