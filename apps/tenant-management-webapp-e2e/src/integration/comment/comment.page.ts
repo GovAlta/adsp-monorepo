@@ -264,6 +264,16 @@ class CommentPage {
     );
   }
 
+  deleteTopicTypeModalHeading() {
+    return cy.xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]/div[@slot="heading"]');
+  }
+
+  deleteTopicTypeModalContentTopicName() {
+    return cy.xpath(
+      '//goa-modal[@open="true" and @testid="delete-confirmation"]/div[text()="Are you sure you wish to delete "]/b'
+    );
+  }
+
   deleteTopicModalContentNote() {
     return cy.xpath(
       '//goa-modal[@open="true" and @testid="delete-confirmation"]/div/div/div[contains(text(), "note")]'
