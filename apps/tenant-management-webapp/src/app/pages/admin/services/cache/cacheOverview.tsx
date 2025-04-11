@@ -19,7 +19,6 @@ export const CacheOverview: FunctionComponent<CacheOverviewProps> = ({
   return (
     <div>
       <section>
-        <p></p>
         {description}
         <NoPaddingH2>Cache targets</NoPaddingH2>
 
