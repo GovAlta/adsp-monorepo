@@ -82,23 +82,47 @@ interface extractSchema {
 }
 
 /**
- * Gets the required field in the If/Then json schema condition.
+ * Gets the required fields in the If/Then/Else json schema condition.
  * @param props - ControlProps
  * @returns - The required field name.
  */
 export const getRequiredIfThen = (props: ControlProps) => {
   const { path } = props;
-
   const rootSchema = props.rootSchema as JsonSchema7;
-  let rootRequired = '';
-  if (rootSchema?.if && rootSchema.then) {
-    if (rootSchema?.then?.required && Array.isArray(rootSchema.then?.required)) {
+  let rootRequired: string[] = [];
+
+  if (rootSchema?.allOf) {
+    (rootSchema?.allOf as JsonSchema7[])?.forEach((el: JsonSchema7) => {
+      if (el.if && el.then && el.then?.required) {
+        const foundIfThenRequired = el.then?.required?.find((req) => req === path);
+        if (foundIfThenRequired !== undefined) {
+          rootRequired = [...rootRequired, foundIfThenRequired];
+        }
+      }
+      if (el.if && el.else) {
+        const foundIfElseRequired = el.else?.required?.find((req) => req === path);
+        if (foundIfElseRequired !== undefined) {
+          rootRequired = [...rootRequired, foundIfElseRequired];
+        }
+      }
+    });
+  }
+
+  if (rootSchema?.if) {
+    if (rootSchema?.then && rootSchema?.then?.required) {
       const foundRequired = rootSchema.then?.required?.find((req) => req === path);
       if (foundRequired !== undefined) {
-        rootRequired = foundRequired;
+        rootRequired = [...rootRequired, foundRequired];
+      }
+      if (rootSchema?.else && rootSchema?.else?.required) {
+        const foundIfElseRequired = rootSchema.else?.required?.find((req) => req === path);
+        if (foundIfElseRequired !== undefined) {
+          rootRequired = [...rootRequired, foundIfElseRequired];
+        }
       }
     }
   }
+
   return rootRequired;
 };
 

@@ -9,7 +9,6 @@ import { validateSinWithLuhn, checkFieldValidity, isValidDate } from '../../util
 import { JsonFormsContext } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { describe } from 'node:test';
-import { assert } from 'console';
 
 const mockContextValue = {
   errors: [],
@@ -126,7 +125,7 @@ describe('Input Text Control tests', () => {
         </JsonFormsContext.Provider>
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
-      expect(firstNameInput.getAttribute('error')).toBe('true');
+      expect(firstNameInput!.getAttribute('error')).toBe('true');
     });
 
     it('can create control with label as name', () => {
@@ -137,7 +136,7 @@ describe('Input Text Control tests', () => {
         </JsonFormsContext.Provider>
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='-input']");
-      expect(firstNameInput.getAttribute('name')).toBe('mytestInput-input');
+      expect(firstNameInput!.getAttribute('name')).toBe('mytestInput-input');
     });
 
     it('can create base control', () => {
@@ -166,7 +165,7 @@ describe('Input Text Control tests', () => {
         </JsonFormsContext.Provider>
       );
       const input = baseElement.querySelector("goa-input[testId='firstName-input']");
-      const blurred = fireEvent.blur(input);
+      const blurred = fireEvent.blur(input!);
 
       expect(blurred).toBe(true);
     });
@@ -191,12 +190,12 @@ describe('Input Text Control tests', () => {
       const input = baseElement.querySelector("goa-input[testId='firstName-input']");
 
       fireEvent(
-        input,
+        input!,
         new CustomEvent('_change', {
           detail: { name: 'firstName', value: 'test' },
         })
       );
-      input.setAttribute('value', 'test');
+      input!.setAttribute('value', 'test');
       expect(input?.getAttribute('value')).toBe('test');
     });
 
@@ -210,7 +209,7 @@ describe('Input Text Control tests', () => {
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
 
-      const pressed = fireEvent.keyPress(firstNameInput, { key: 'z', code: 90, charCode: 90 });
+      const pressed = fireEvent.keyPress(firstNameInput!, { key: 'z', code: 90, charCode: 90 });
       expect(pressed).toBe(true);
       expect(firstNameInput).toBeInTheDocument();
     });
@@ -225,7 +224,7 @@ describe('Input Text Control tests', () => {
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
 
-      const blurred = fireEvent.blur(firstNameInput);
+      const blurred = fireEvent.blur(firstNameInput!);
       expect(blurred).toBe(true);
     });
 
@@ -239,7 +238,7 @@ describe('Input Text Control tests', () => {
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
 
       await fireEvent(
-        firstNameInput,
+        firstNameInput!,
         new CustomEvent('_change', {
           detail: { value: '123456789' },
         })
@@ -257,7 +256,7 @@ describe('Input Text Control tests', () => {
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
 
-      const pressed = fireEvent.keyPress(firstNameInput, { key: 'z', code: 90, charCode: 90 });
+      const pressed = fireEvent.keyPress(firstNameInput!, { key: 'z', code: 90, charCode: 90 });
 
       handleChangeMock();
       expect(props.handleChange).toBeCalled();
@@ -352,44 +351,6 @@ describe('Input Text Control tests', () => {
       const input = '';
       const expected = '';
       expect(formatSin(input)).toBe(expected);
-    });
-  });
-
-  describe('Rootschema validations', () => {
-    const schemaProps: GoAInputTextProps & ControlProps = {
-      uischema: textBoxUiSchema,
-      schema: {},
-      rootSchema: {
-        if: {},
-        then: {
-          required: ['firstName'],
-        },
-      },
-      handleChange: (path, value) => {},
-      enabled: true,
-      label: 'First Name',
-      id: 'firstName',
-      config: {},
-      path: 'firstName',
-      errors: '',
-      data: 'My Name',
-      visible: true,
-      isValid: true,
-      required: false,
-      isVisited: false,
-      setIsVisited: () => {},
-    };
-
-    it('root schema must exist', () => {
-      expect(schemaProps).toBeTruthy();
-      expect(schemaProps?.rootSchema).toBeTruthy();
-    });
-
-    it('Then condition should exist if there is a If condition', () => {
-      const rootSchema = schemaProps?.rootSchema as JsonSchema7;
-      expect(schemaProps).toBeTruthy();
-      expect(rootSchema?.if).toBeTruthy();
-      expect(rootSchema?.then).toBeTruthy();
     });
   });
 });

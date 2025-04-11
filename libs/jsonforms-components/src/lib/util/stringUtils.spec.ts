@@ -1,0 +1,145 @@
+import '@testing-library/jest-dom';
+import { ControlElement, ControlProps, JsonSchema7 } from '@jsonforms/core';
+
+import { getRequiredIfThen } from './stringUtils';
+import { describe } from 'node:test';
+import { GoAInputTextProps } from '../Controls';
+
+describe('stringUtils string tests', () => {
+  const textBoxUiSchema: ControlElement = {
+    type: 'Control',
+    scope: '#/properties/firstName',
+    label: 'My First name',
+    options: {
+      autoCapitalize: false,
+    },
+  };
+  const schemaIfThenProps: GoAInputTextProps & ControlProps = {
+    uischema: textBoxUiSchema,
+    schema: {},
+    rootSchema: {
+      properties: {
+        firstName: {
+          type: 'string',
+        },
+        lastName: {
+          type: 'string',
+        },
+      },
+      if: {
+        properties: {},
+      },
+      then: {
+        required: ['firstName'],
+      },
+      else: {
+        required: ['firstName'],
+      },
+    },
+    handleChange: (path, value) => {},
+    enabled: true,
+    label: 'First Name',
+    id: 'firstName',
+    config: {},
+    path: 'firstName',
+    errors: '',
+    data: 'My Name',
+    visible: true,
+    isValid: true,
+    required: false,
+    isVisited: false,
+    setIsVisited: () => {},
+  };
+
+  const schemaAllOfIfThenProps: GoAInputTextProps & ControlProps = {
+    uischema: textBoxUiSchema,
+    schema: {},
+    rootSchema: {
+      properties: {
+        firstName: {
+          type: 'string',
+        },
+        lastName: {
+          type: 'string',
+        },
+      },
+      allOf: [
+        {
+          if: {
+            properties: {
+              firstName: {
+                const: 'Test',
+              },
+            },
+          },
+          then: {
+            required: ['firstName'],
+          },
+          else: {
+            required: [],
+          },
+        },
+      ],
+    },
+    handleChange: (path, value) => {},
+    enabled: true,
+    label: 'First Name',
+    id: 'firstName',
+    config: {},
+    path: 'firstName',
+    errors: '',
+    data: 'My Name',
+    visible: true,
+    isValid: true,
+    required: false,
+    isVisited: false,
+    setIsVisited: () => {},
+  };
+
+  it('test getIfThenRequired has If Then', () => {
+    const result = getRequiredIfThen(schemaIfThenProps);
+    expect(result).not.toBeNull();
+  });
+
+  it('root schema must exist', () => {
+    expect(schemaIfThenProps).toBeTruthy();
+    expect(schemaIfThenProps?.rootSchema).toBeTruthy();
+  });
+
+  it('Then condition should exist if there is a If condition', () => {
+    const rootSchema = schemaIfThenProps?.rootSchema as JsonSchema7;
+    expect(schemaIfThenProps).toBeTruthy();
+    expect(rootSchema?.if).toBeTruthy();
+    expect(rootSchema?.then).toBeTruthy();
+  });
+
+  it('Then/Else condition should exist if there is a If condition', () => {
+    const rootSchema = schemaIfThenProps?.rootSchema as JsonSchema7;
+    expect(schemaIfThenProps).toBeTruthy();
+    expect(rootSchema?.if).toBeTruthy();
+    expect(rootSchema?.then).toBeTruthy();
+    expect(rootSchema?.else).toBeTruthy();
+  });
+
+  it('When If condition changes to true required data must be entered', () => {
+    const result = getRequiredIfThen(schemaIfThenProps);
+    expect(result.length > 0).toBe(true);
+  });
+
+  it('When allOf IfThenElse has should have required conditions', () => {
+    const result = getRequiredIfThen(schemaAllOfIfThenProps);
+    expect(result.length > 0).toBe(true);
+  });
+
+  it('When allOf If then should trigger else with invalid path and data', () => {
+    const clonedSchema = {
+      ...schemaAllOfIfThenProps,
+      path: 'lastName',
+      data: {
+        firstName: 'Test',
+      },
+    };
+    const results = getRequiredIfThen(clonedSchema);
+    expect(results.length === 0).toBe(true);
+  });
+});
