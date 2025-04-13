@@ -29,6 +29,7 @@ class PuppeteerPdfService implements PdfService {
       }
 
       return Readable.from(result);
+      
     } finally {
       if (page) {
         await page.close();
