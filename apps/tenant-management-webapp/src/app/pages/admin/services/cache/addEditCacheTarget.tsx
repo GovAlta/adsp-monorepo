@@ -42,12 +42,6 @@ export const AddEditTargetCache = ({
     ...Object.values(targets.tenant).map((x) => x.urn),
   ];
 
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-
-  const combinedDirectory = [...tenantDirectory, ...coreDirectory];
-
   useEffect(() => {
     if (Object.keys(targets).length > 0 && !isEdit) {
       if (validators['duplicate'].check(target.urn)) {
@@ -121,7 +115,7 @@ export const AddEditTargetCache = ({
               setTarget({ ...target, urn: value });
             }}
           >
-            {combinedDirectory.map((directory) => (
+            {tenantDirectory.map((directory) => (
               <GoADropdownItem value={directory.urn} label={directory.urn} />
             ))}
           </GoADropdown>
@@ -132,7 +126,7 @@ export const AddEditTargetCache = ({
             name="cache-url"
             width="100%"
             disabled={true}
-            value={combinedDirectory.find((directory) => directory.urn === target.urn)?.url}
+            value={tenantDirectory.find((directory) => directory.urn === target.urn)?.url}
           />
         </GoAFormItem>
 

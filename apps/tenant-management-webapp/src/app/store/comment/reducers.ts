@@ -59,7 +59,7 @@ export default function (state: CommentState = defaultState, action: CommentActi
     case CREATE_COMMENT_TOPIC_SUCCESS_ACTION:
       return {
         ...state,
-        topics: [...state.topics, action.payload],
+        topics: [...state.topics, action.payload].slice(0, 10),
       };
 
     case SET_COMMENT_TOPICS_ACTION:
