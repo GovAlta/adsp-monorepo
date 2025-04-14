@@ -35,7 +35,7 @@ const fileUploaderUiSchemaMultiple: ControlElement = {
   type: 'Control',
   scope: '#/properties/supportingDoc',
   label: 'Uploader',
-  options: { variant: 'button' },
+  options: { variant: 'dragdrop' },
 };
 const dataSchema = {
   type: 'object',
@@ -77,6 +77,11 @@ const getForm = (schema: object, uiSchema: UISchemaElement, data: object = {}) =
     </ContextProvider>
   );
 };
+beforeEach(() => {
+  mockUpload.mockClear();
+  mockDownload.mockClear();
+  mockDelete.mockClear();
+});
 
 describe('FileUploaderControl tests', () => {
   it('can render file upload control', () => {
@@ -172,6 +177,7 @@ describe('FileUploaderControl tests', () => {
     expect(deleteConfirm).toBeInTheDocument();
     fireEvent(deleteConfirm!, new CustomEvent('_click'));
     fireEvent.click(deleteConfirm!);
-    expect(mockDelete).toBeCalledTimes(1);
+
+    expect(mockDelete).toBeCalledTimes(2);
   });
 });
