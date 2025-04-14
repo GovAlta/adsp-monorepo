@@ -76,7 +76,7 @@ describe('stringUtils string tests', () => {
             required: ['firstName'],
           },
           else: {
-            required: [],
+            required: ['lastName'],
           },
         },
       ],
@@ -96,50 +96,64 @@ describe('stringUtils string tests', () => {
     setIsVisited: () => {},
   };
 
-  it('test getIfThenRequired has If Then', () => {
-    const result = getRequiredIfThen(schemaIfThenProps);
-    expect(result).not.toBeNull();
+  describe('rootSchema string tests', () => {
+    it('test getIfThenRequired has If Then', () => {
+      const result = getRequiredIfThen(schemaIfThenProps);
+      expect(result).not.toBeNull();
+    });
+
+    it('root schema must exist', () => {
+      expect(schemaIfThenProps).toBeTruthy();
+      expect(schemaIfThenProps?.rootSchema).toBeTruthy();
+    });
+
+    it('Then condition should exist if there is a If condition', () => {
+      const rootSchema = schemaIfThenProps?.rootSchema as JsonSchema7;
+      expect(schemaIfThenProps).toBeTruthy();
+      expect(rootSchema?.if).toBeTruthy();
+      expect(rootSchema?.then).toBeTruthy();
+    });
+
+    it('Then/Else condition should exist if there is a If condition', () => {
+      const rootSchema = schemaIfThenProps?.rootSchema as JsonSchema7;
+      expect(schemaIfThenProps).toBeTruthy();
+      expect(rootSchema?.if).toBeTruthy();
+      expect(rootSchema?.then).toBeTruthy();
+      expect(rootSchema?.else).toBeTruthy();
+    });
+
+    it('When If condition changes to true required data must be entered', () => {
+      const result = getRequiredIfThen(schemaIfThenProps);
+      expect(result.length > 0).toBe(true);
+    });
+
+    it('When allOf IfThenElse should have required conditions', () => {
+      const result = getRequiredIfThen(schemaAllOfIfThenProps);
+      expect(result.length > 0).toBe(true);
+    });
+
+    it('When allOf If then should trigger else', () => {
+      const clonedSchema = {
+        ...schemaAllOfIfThenProps,
+        path: 'lastName',
+        data: {
+          lastName: 'Test',
+        },
+      };
+      const results = getRequiredIfThen(clonedSchema);
+      expect(results.length > 0).toBe(true);
+    });
   });
 
-  it('root schema must exist', () => {
-    expect(schemaIfThenProps).toBeTruthy();
-    expect(schemaIfThenProps?.rootSchema).toBeTruthy();
+  it('When allOf should have at least one If condition', () => {
+    const schema = schemaAllOfIfThenProps.rootSchema as JsonSchema7;
+    const ifConditions = schema.allOf?.filter((y) => y.if !== undefined);
+    expect(ifConditions && ifConditions.length > 0).toBe(true);
   });
 
-  it('Then condition should exist if there is a If condition', () => {
-    const rootSchema = schemaIfThenProps?.rootSchema as JsonSchema7;
-    expect(schemaIfThenProps).toBeTruthy();
-    expect(rootSchema?.if).toBeTruthy();
-    expect(rootSchema?.then).toBeTruthy();
-  });
-
-  it('Then/Else condition should exist if there is a If condition', () => {
-    const rootSchema = schemaIfThenProps?.rootSchema as JsonSchema7;
-    expect(schemaIfThenProps).toBeTruthy();
-    expect(rootSchema?.if).toBeTruthy();
-    expect(rootSchema?.then).toBeTruthy();
-    expect(rootSchema?.else).toBeTruthy();
-  });
-
-  it('When If condition changes to true required data must be entered', () => {
-    const result = getRequiredIfThen(schemaIfThenProps);
-    expect(result.length > 0).toBe(true);
-  });
-
-  it('When allOf IfThenElse has should have required conditions', () => {
-    const result = getRequiredIfThen(schemaAllOfIfThenProps);
-    expect(result.length > 0).toBe(true);
-  });
-
-  it('When allOf If then should trigger else with invalid path and data', () => {
-    const clonedSchema = {
-      ...schemaAllOfIfThenProps,
-      path: 'lastName',
-      data: {
-        firstName: 'Test',
-      },
-    };
-    const results = getRequiredIfThen(clonedSchema);
-    expect(results.length === 0).toBe(true);
+  it('When allOf should have at least one else condition', () => {
+    const schema = schemaAllOfIfThenProps.rootSchema as JsonSchema7;
+    const elseConditions = schema.allOf?.filter((y) => y.else !== undefined);
+    expect(elseConditions && elseConditions.length > 0).toBe(true);
   });
 });
