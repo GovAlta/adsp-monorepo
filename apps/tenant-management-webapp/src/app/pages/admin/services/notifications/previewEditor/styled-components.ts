@@ -47,6 +47,9 @@ export const MonacoDivBody = styled.div`
   @media (max-width: 1420px) {
     height: calc(100vh - 560px);
   }
+  @media (max-height: 920px) {
+    height: calc(100vh - 675px);
+  }
 `;
 
 export const EditTemplateActions = styled.div`

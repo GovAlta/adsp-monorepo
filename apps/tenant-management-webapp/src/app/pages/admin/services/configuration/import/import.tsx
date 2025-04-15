@@ -156,23 +156,22 @@ export const ConfigurationImport: FunctionComponent = () => {
                 const element = event.target as HTMLInputElement;
                 element.value = '';
               }}
-            />{' '}
+            />
           </GoAFormItem>
-          <p>
-            <div className="row-flex">
-              <button
-                className="choose-button"
-                data-testid="import-input-button"
-                onClick={() => fileName.current.click()}
-              >
-                {' Choose a file'}
-              </button>
 
-              <div className="margin-left">
-                {fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}
-              </div>
+          <div className="row-flex">
+            <button
+              className="choose-button"
+              data-testid="import-input-button"
+              onClick={() => fileName.current.click()}
+            >
+              {' Choose a file'}
+            </button>
+
+            <div className="margin-left">
+              {fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}
             </div>
-          </p>
+          </div>
 
           <GoAButton
             type="primary"

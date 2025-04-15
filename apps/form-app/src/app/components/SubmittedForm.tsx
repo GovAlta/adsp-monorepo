@@ -64,7 +64,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
     if (!localFileCache) {
       const fileData = await dispatch(downloadFile(file.urn)).unwrap();
       element.href = URL.createObjectURL(new Blob([fileData.data]));
-      element.download = fileData.metadata.filename;
+      element.download = fileData.metadata.find((f) => f.urn === file.urn)?.filename;
     } else {
       element.href = localFileCache;
       element.download = file.filename;

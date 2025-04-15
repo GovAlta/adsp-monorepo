@@ -62,7 +62,7 @@ export const downloadFile = createAsyncThunk(
 
       let metadata = fileState.metadata[urn];
       if (!metadata) {
-        metadata = await getFileMetadata(fileServiceUrl, urn);
+        metadata = [await getFileMetadata(fileServiceUrl, urn)];
       }
 
       const token = await getAccessToken();
@@ -77,7 +77,7 @@ export const downloadFile = createAsyncThunk(
 
       const file = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.readAsDataURL(new File([data], metadata.filename, { type: mimeType }));
+        reader.readAsDataURL(new File([data], metadata.find((f) => f.urn === urn)?.filename, { type: mimeType }));
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = () => reject(reader.error);
       });
@@ -272,7 +272,6 @@ export const deleteFile = createAsyncThunk(
       }
 
       const token = await getAccessToken();
-
       const filePath = urn.split(':').pop();
       const { data } = await axios.delete<{ deleted: boolean }>(new URL(`/file/v1${filePath}`, fileServiceUrl).href, {
         headers: { Authorization: `Bearer ${token}` },
@@ -296,7 +295,7 @@ interface FileState {
   files: Record<string, string>;
   pdfFile: string;
   pdfFileExists?: boolean;
-  metadata: Record<string, FileMetadata>;
+  metadata: Record<string, Array<FileMetadata>>;
   upload: { name: string; progress: number };
   busy: {
     download: Record<string, boolean>;
@@ -335,7 +334,7 @@ const fileSlice = createSlice({
         state.busy.loading = true;
       })
       .addCase(loadFileMetadata.fulfilled, (state, { meta, payload }) => {
-        state.metadata[meta.arg.propertyId] = payload;
+        state.metadata[meta.arg.propertyId] = [...(state.metadata?.[meta.arg.propertyId] || []), payload];
 
         state.busy.loading = false;
         state.busy.metadata[meta.arg.propertyId] = false;
@@ -382,7 +381,7 @@ const fileSlice = createSlice({
       .addCase(uploadFile.fulfilled, (state, { meta, payload }) => {
         state.busy.uploading = false;
         state.files[payload.metadata.urn] = payload.file;
-        state.metadata[meta.arg.propertyId] = payload.metadata;
+        state.metadata[meta.arg.propertyId] = [...(state.metadata?.[meta.arg.propertyId] || []), payload.metadata];
       })
       .addCase(uploadFile.rejected, (state) => {
         state.busy.uploading = false;
@@ -394,7 +393,7 @@ const fileSlice = createSlice({
       .addCase(uploadAnonymousFile.fulfilled, (state, { meta, payload }) => {
         state.busy.uploading = false;
         state.files[payload.metadata.urn] = payload.file;
-        state.metadata[meta.arg.propertyId] = payload.metadata;
+        state.metadata[meta.arg.propertyId] = [...(state.metadata?.[meta.arg.propertyId] || []), payload.metadata];
       })
       .addCase(uploadAnonymousFile.rejected, (state) => {
         state.busy.uploading = false;

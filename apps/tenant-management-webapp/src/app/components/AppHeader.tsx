@@ -150,5 +150,6 @@ const Actions = styled.div`
 `;
 
 export const NoPaddingH2 = styled.h2`
+  margin-top: var(--goa-space-s) !important;
   padding-left: 0rem !important;
 `;
