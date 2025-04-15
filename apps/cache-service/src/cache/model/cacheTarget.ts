@@ -152,8 +152,7 @@ export class CacheTarget implements Target {
     }
 
     const relative = req.originalUrl.substring(`${req.baseUrl}/cache/${this.serviceId}`.length);
-    const targetPath = new URL(relative, upstreamUrl).pathname;
- 
+    const targetPath = upstreamUrl.pathname.replace(/\/$/, '') + relative;
     if (!targetPath.includes(upstreamUrl.pathname)) {
       throw new InvalidOperationError('Request path not supported.');
     }
