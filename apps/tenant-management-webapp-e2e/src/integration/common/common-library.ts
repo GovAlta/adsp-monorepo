@@ -29,6 +29,9 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
     case 'File':
       menuItemTestid = 'menu-file';
       break;
+    case 'Cache':
+      menuItemTestid = 'menu-cache';
+      break;
     case 'Access':
       menuItemTestid = 'menu-access';
       break;
@@ -78,6 +81,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
       expect(menuItem).to.be.oneOf([
         'File',
         'Access',
+        'Cache',
         'Configuration',
         'Status',
         'Event',
