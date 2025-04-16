@@ -59,10 +59,17 @@ export const downloadFile = createAsyncThunk(
     try {
       const { config, file: fileState } = getState() as AppState;
       const fileServiceUrl = config.directory[FILE_SERVICE_ID];
+      let metadata = undefined;
 
-      let metadata = fileState.metadata[urn];
+      for (const propertyId in fileState.metadata) {
+        metadata = fileState.metadata[propertyId].find((f) => f.urn === urn);
+        if (metadata) {
+          break;
+        }
+      }
+
       if (!metadata) {
-        metadata = [await getFileMetadata(fileServiceUrl, urn)];
+        metadata = await getFileMetadata(fileServiceUrl, urn);
       }
 
       const token = await getAccessToken();
@@ -77,7 +84,7 @@ export const downloadFile = createAsyncThunk(
 
       const file = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.readAsDataURL(new File([data], metadata.find((f) => f.urn === urn)?.filename, { type: mimeType }));
+        reader.readAsDataURL(new File([data], metadata.filename, { type: mimeType }));
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = () => reject(reader.error);
       });
@@ -400,7 +407,11 @@ const fileSlice = createSlice({
       })
       .addCase(deleteFile.fulfilled, (state, { meta }) => {
         state.files[meta.arg.urn] = null;
-        delete state.metadata[meta.arg.propertyId];
+        const propertyIdRoot = meta.arg.propertyId.split('.')?.[0];
+        state.metadata[propertyIdRoot] = state.metadata[propertyIdRoot].filter((f) => f.urn !== meta.arg.urn);
+        if (state.metadata[propertyIdRoot].length === 0) {
+          delete state.metadata[propertyIdRoot];
+        }
         state.busy.loading = false;
       });
   },
