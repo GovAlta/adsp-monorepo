@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 interface ListItemProps {
-  selectedIndex: number;
+  selected: number;
   index: number;
 }
 
@@ -73,9 +73,9 @@ export const LabelDiv = styled.div`
 
 /* istanbul ignore next */
 export const ListItem = styled.li<ListItemProps>`
-  background-color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--goa-color-interactive-default)' : '')};
-  color: ${({ selectedIndex, index }) => (selectedIndex === index ? 'var(--goa-color-greyscale-white) !important' : '')};
-  font-weight: ${({ selectedIndex, index }) => (selectedIndex === index ? '600' : '')};
+  background-color: ${({ selected, index }) => (selected === index ? 'var(--goa-color-interactive-default)' : '')};
+  color: ${({ selected, index }) => (selected === index ? 'var(--goa-color-greyscale-white) !important' : '')};
+  font-weight: ${({ selected, index }) => (selected === index ? '600' : '')};
   padding: var(--goa-space-xs) var(--goa-space-2xs) var(--goa-space-xs) var(--goa-space-xs);
   margin-left: 0.25rem;
 `;
