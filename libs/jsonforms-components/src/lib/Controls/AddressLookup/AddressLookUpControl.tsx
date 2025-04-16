@@ -59,8 +59,8 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setAddress(updatedAddress);
     handleChange(path, updatedAddress);
   };
-  const debouncedRenderAddress = useDebounce(searchTerm, 500);
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const debouncedRenderAddress = useDebounce(searchTerm, 300);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
 
   const dropdownRef = useRef<HTMLUListElement>(null);
 
@@ -152,8 +152,8 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
 
   useEffect(() => {
-    if (dropdownRef.current && selectedIndex !== -1) {
-      const activeItem = dropdownRef.current?.querySelector(`li[data-index="${selectedIndex}"]`);
+    if (dropdownRef.current && activeIndex !== -1) {
+      const activeItem = dropdownRef.current?.querySelector(`li[data-index="${activeIndex}"]`);
       if (activeItem) {
         activeItem.scrollIntoView({
           behavior: 'smooth',
@@ -161,21 +161,21 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
         });
       }
     }
-  }, [selectedIndex]);
+  }, [activeIndex]);
 
   const handleKeyDown = (e: string, value: string, key: string) => {
     if (key === 'ArrowDown') {
-      setSelectedIndex((prevIndex) => (prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0));
+      setActiveIndex((prevIndex) => (prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0));
       handleInputChange('addressLine1', value);
     } else if (key === 'ArrowUp') {
-      setSelectedIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : suggestions.length - 1));
+      setActiveIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : suggestions.length - 1));
       handleInputChange('addressLine1', value);
     } else if (key === 'Enter') {
       handleInputChange('addressLine1', value);
       setLoading(false);
-      if (selectedIndex >= 0) {
+      if (activeIndex >= 0) {
         document.getElementById('goaInput')?.blur();
-        const suggestion = suggestions[selectedIndex];
+        const suggestion = suggestions[activeIndex];
         if (suggestion) {
           setTimeout(() => {
             handleSuggestionClick(suggestion);
@@ -241,7 +241,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
                     onClick={() => {
                       handleSuggestionClick(suggestion);
                     }}
-                    selectedIndex={selectedIndex}
+                    selectedIndex={activeIndex}
                     index={index}
                   >
                     {`${suggestion.Text}  ${suggestion.Description}`}

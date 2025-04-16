@@ -25,7 +25,7 @@ export const FeedbackMetrics: FunctionComponent = () => {
         metrics={[
           { id: 'feedback-count', name: 'Feedback submitted (#)', value: metrics.feedbackCount },
           { id: 'feedback-avg-rating', name: 'Average rating', value: metrics.averageRating },
-          { id: 'feedback-count', name: 'Lowest site rating', value: metrics.lowestSiteAverageRating },
+          { id: 'feedback-lowest-rating', name: 'Lowest site rating', value: metrics.lowestSiteAverageRating },
         ]}
       />
     </section>

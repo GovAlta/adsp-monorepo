@@ -4,6 +4,7 @@ import {
   enumerators,
   ContextProviderFactory,
   JsonFormRegisterProvider,
+  createDefaultAjv,
 } from '@abgov/jsonforms-components';
 import { GoABadge } from '@abgov/react-components';
 import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
@@ -11,7 +12,7 @@ import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useContext } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import {
   AppDispatch,
   Form,
@@ -69,6 +70,7 @@ const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
         validationMode="ValidateAndShow"
         renderers={GoARenderers}
         onChange={onChange}
+        ajv={createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema)}
       />
     </JsonFormRegisterProvider>
   );
@@ -110,14 +112,6 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
 
   const uploadFormFile = async (file: File, propertyId: string) => {
     const clonedFiles = { ...files };
-
-    // Handle deleting an existing file if a new file is selected to be uploaded again.
-    if (clonedFiles[propertyId]) {
-      const urn = files[propertyId];
-      delete clonedFiles[propertyId];
-      dispatch(deleteFile({ urn, propertyId, anonymousApply }));
-    }
-
     const fileMetaData =
       anonymousApply === true
         ? (
@@ -140,7 +134,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     if (!localFileCache) {
       const fileData = await dispatch(downloadFile(file.urn)).unwrap();
       element.href = URL.createObjectURL(new Blob([fileData.data]));
-      element.download = fileData.metadata.filename;
+      element.download = fileData.metadata.find((file) => file.urn === file.urn)?.filename;
     } else {
       element.href = localFileCache;
       element.download = file.filename;

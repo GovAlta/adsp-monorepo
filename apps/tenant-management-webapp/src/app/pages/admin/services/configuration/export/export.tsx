@@ -17,7 +17,7 @@ import { Exports, ChipWrapper } from '../styled-components';
 import { NoPaddingH2 } from '@components/AppHeader';
 import { allNames } from '@store/configuration/model';
 
-import { GoAButton, GoACheckbox, GoAChip, GoAContainer, GoAIcon, GoATooltip } from '@abgov/react-components';
+import { GoAButton, GoACheckbox, GoAFilterChip, GoAContainer, GoAIcon, GoATooltip } from '@abgov/react-components';
 
 function getTextWidth(text) {
   const canvas = document.createElement('canvas');
@@ -236,9 +236,9 @@ export const ConfigurationExport: FunctionComponent = () => {
                       <h3>
                         <b>Selected Configuration</b>
                       </h3>
-                      {selectedNamespaces.map((namespace) => {
+                      {selectedNamespaces.map((namespace, index) => {
                         return (
-                          <div key={namespace}>
+                          <div key={`${namespace}-${index}`}>
                             <h3 className="header-margin ellipsis-wrapper">{namespace}</h3>
                             {
                               //eslint-disable-next-line
@@ -256,9 +256,8 @@ export const ConfigurationExport: FunctionComponent = () => {
                                 if (exp.split(':')[0] === namespace) {
                                   return (
                                     <ChipWrapper>
-                                      <GoAChip
+                                      <GoAFilterChip
                                         key={exp}
-                                        deletable={true}
                                         content={shortName || 'all names'}
                                         onClick={() => toggleSelection(exp)}
                                       />

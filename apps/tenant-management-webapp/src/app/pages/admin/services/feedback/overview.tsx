@@ -91,14 +91,14 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
             &lt;/body&gt;
           </PRE>
         </p>
-        <p>
-          For more information on integrating the feedback service with your application please see the{' '}
+        <div>
+          <p>For more information on integrating the feedback service with your application please see the </p>
           <ExternalLink
             testId="feedback-tutorial-link"
             link="https://govalta.github.io/adsp-monorepo/tutorials/feedback-service/collectingFeedback.html"
             text="feedback service tutorial"
           />
-        </p>
+        </div>
       </FeedbackOverviewSection>
       <GoAButton
         testId="add-feedback"

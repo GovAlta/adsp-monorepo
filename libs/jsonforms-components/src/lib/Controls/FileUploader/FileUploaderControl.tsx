@@ -14,8 +14,6 @@ interface FileUploadAdditionalProps {
 }
 
 export type FileUploaderLayoutRendererProps = ControlProps & WithClassname & FileUploadAdditionalProps;
-
-const DELAY_UPLOAD_TIMEOUT_MS = 5;
 const DELAY_DELETE_TIMEOUT_MS = 5;
 
 export const FileUploaderReview = (props: FileUploaderLayoutRendererProps) => {
@@ -31,7 +29,6 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const downloadTrigger = downloadTriggerFunction && downloadTriggerFunction();
   const deleteTriggerFunction = enumerators?.functions?.get('delete-file');
   const deleteTrigger = deleteTriggerFunction && deleteTriggerFunction();
-
   const fileListValue = enumerators?.data.get('file-list');
 
   const countries = [
@@ -59,18 +56,21 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   const variant = uischema?.options?.variant || 'button';
   const multiFileUploader = variant === 'dragdrop';
-
   const [deleteHide, setDeleteHide] = useState(false);
+  const fileListLength = (fileList && fileList[props.i18nKeyPrefix as string]?.length) || 0;
 
   function uploadFile(file: File) {
     if (uploadTrigger) {
+      if (!multiFileUploader) {
+        const fileInList = getFile(fileListLength - 1);
+        if (fileInList) {
+          deleteTrigger(fileInList, propertyId);
+        }
+      }
+
       uploadTrigger(file, propertyId);
-      const handleFunction = () => {
-        const value = ['Loading', Array.isArray(data) ? data[1] : file?.name];
-        handleChange(propertyId, value);
-      };
+
       setDeleteHide(false);
-      setTimeout(handleFunction, DELAY_UPLOAD_TIMEOUT_MS);
     }
   }
 
@@ -87,21 +87,28 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   }
 
   function getFileName(index: number) {
-    return (
-      fileList && fileList[props.i18nKeyPrefix as string] && fileList[props.i18nKeyPrefix as string][index]?.filename
-    );
+    return getFile(index)?.filename;
   }
 
   function getFile(index: number) {
-    return fileList && fileList[props.i18nKeyPrefix as string] && fileList[props.i18nKeyPrefix as string][index];
+    return fileList?.[props.i18nKeyPrefix as string]?.[index];
   }
 
   useEffect(() => {
     // UseEffect is required because not having it causes a react update error, but
     // it doesn't function correctly within jsonforms unless there is a minor delay here
     const delayedFunction = () => {
+      const files = [];
+      for (let i = 0; i < fileListLength; i++) {
+        files.push(getFile(i));
+      }
       if (fileList) {
-        handleChange(propertyId, fileList && fileList[propertyId]?.urn);
+        const data = files.map((f) => f.urn).join(';');
+        if (data === '') {
+          handleChange(path, undefined);
+        } else {
+          handleChange(path, data);
+        }
       }
     };
 
@@ -123,7 +130,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);
     return (
       <div>
-        {readOnly && index ? (
+        {readOnly ? (
           <AttachmentBorderDisabled>
             {getFileName(index)}
             <GoAContextMenuIcon
@@ -162,7 +169,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
                 deleteFile(getFile(index));
                 setDeleteHide(true);
                 const handleFunction = () => {
-                  handleChange(propertyId, '');
+                  handleChange(path, undefined);
                 };
                 setTimeout(handleFunction, DELAY_DELETE_TIMEOUT_MS);
               }}
@@ -172,8 +179,6 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
       </div>
     );
   };
-
-  const fileListLength = (fileList && fileList[props.i18nKeyPrefix as string]?.length) || 0;
 
   return (
     <FileUploaderStyle className="FileUploader">

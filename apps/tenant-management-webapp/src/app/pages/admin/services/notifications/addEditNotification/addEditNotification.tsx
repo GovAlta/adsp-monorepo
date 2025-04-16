@@ -61,7 +61,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   const core = useSelector((state: RootState) => state.notification.core);
   const typeObjects = Object.values({ ...notificationTypes, ...core });
   const typeNames = typeObjects.map((type: NotificationItem) => type.name);
-  const checkForEmail = characterCheck(validationPattern.validEmail);
+  const checkForContact = characterCheck(validationPattern.validContact);
   const [isNotifyAddress, setIsNotifyAddress] = useState(false);
   const [addressPathChanged, setAddressPathChanged] = useState(false);
 
@@ -157,7 +157,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   )
     .add('duplicated', 'name', duplicateNameCheck(typeNames, 'Notification type'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
-    .add('address', 'address', checkForEmail)
+    .add('address', 'address', checkForContact)
     .build();
   return (
     <EditStyles>
@@ -315,23 +315,23 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           text="Make notification public"
         />
 
-        <GoAFormItem label="Select Notify subscribers or Notify address" error={errors?.['priority']}>
+        <GoAFormItem label="Select Notify subscribers or Notify contact" error={errors?.['priority']}>
           <GoARadioGroup
             name="notify"
             testId="select-type-notification-radio-group"
             ariaLabel="select-type-notification-radio-group"
-            value={isNotifyAddress ? 'Notify address' : 'Notify subscribers'}
+            value={isNotifyAddress ? 'Notify contact' : 'Notify subscribers'}
             onChange={(_, value) => {
               setIsNotifyAddress(!isNotifyAddress);
             }}
           >
             <GoARadioItem name="notify" value="Notify subscribers" />
-            <GoARadioItem name="notify" value="Notify address" />
+            <GoARadioItem name="notify" value="Notify contact" />
           </GoARadioGroup>
         </GoAFormItem>
         {isNotifyAddress && (
           <div>
-            <GoAFormItem label="Address" error={errors?.['address']}>
+            <GoAFormItem label="Notify this contact" error={errors?.['address']}>
               <GoAInput
                 type="text"
                 name="address"
@@ -349,7 +349,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 }}
               />
             </GoAFormItem>
-            <GoAFormItem label="Address Path">
+            <GoAFormItem label="Notify contact in event payload at Json schema path">
               <GoAInput
                 type="text"
                 name="addressPath"

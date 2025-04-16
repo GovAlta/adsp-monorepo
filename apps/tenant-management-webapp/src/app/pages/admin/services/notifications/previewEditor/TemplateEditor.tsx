@@ -224,6 +224,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
                 <GoAFormItem
                   error={errors['body'] ?? ''}
+                  mb={'s'}
                   helpText={errors['body'] ? '' : bodyEditorHintText}
                   label="Body"
                 >

@@ -87,6 +87,10 @@ export const validationPattern = {
     pattern: new RegExp(/^\d{10}$/),
     onFailureMessage: 'Please enter a valid 10 digit phone number ie. 7801234567',
   },
+  validContact: {
+    pattern: new RegExp(/^(?:\w+(?:[.-]\w+)*@\w+(?:[.-]\w+)*(?:\.\w{2,3})|\d{10})$/),
+    onFailureMessage: 'Please enter a valid email address or 10 digit phone number (e.g., 7801234567)',
+  },
 };
 
 export type Validator = (input) => string;
