@@ -136,11 +136,13 @@ export const AddEditTargetCache = ({
             type="number"
             min="0"
             max="2000000000"
+            step={1}
             value={target?.ttl?.toString()}
             testId="cache-url-id"
             width="100%"
             onChange={(name, value) => {
-              setTarget({ ...target, ttl: Math.min(parseInt(value), 2000000000) });
+              const cleanedValue = value.replace(/[e.-]/g, '');
+              setTarget({ ...target, ttl: Math.min(parseInt(cleanedValue) || 0, 2000000000) });
             }}
             trailingContent="seconds"
           />

@@ -16,7 +16,7 @@ export const Band: FunctionComponent<BandProps> = ({ title, children }: BandProp
       }}
     >
       <HeroBannerLayout>
-        <Container style={{ padding: '56px 0 56px 0' }} hs={1} vs={3}>
+        <Container style={{ padding: '56px 10px 56px 10px' }} hs={1} vs={3}>
           <Grid>
             <GridItem md={1} />
             <GridItem md={10}>

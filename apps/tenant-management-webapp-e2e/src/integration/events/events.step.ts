@@ -469,7 +469,7 @@ Then(
 When('the user removes event chips of {string} in Edit stream modal', function (event: string) {
   const eventChip = event.split(',');
   for (let i = 0; i < eventChip.length; i++) {
-    eventsObj.streamModalEventChips().shadow().get(`[content="${eventChip}"]`).click();
+    eventsObj.streamModalEventChips().shadow().contains(`${eventChip}`).click();
   }
 });
 
