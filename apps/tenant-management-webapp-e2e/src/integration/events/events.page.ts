@@ -232,7 +232,7 @@ class eventsPage {
   }
 
   streamModalEventChips() {
-    return cy.get('goa-chip');
+    return cy.get('goa-filter-chip');
   }
 
   streamModalPublicCheckbox() {
