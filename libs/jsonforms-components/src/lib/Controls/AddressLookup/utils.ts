@@ -115,3 +115,26 @@ export function formatPostalCodeIfNeeded(input: string): string {
   const after = cleaned.slice(3);
   return `${before} ${after}`;
 }
+export function handleAddressKeyDown(
+  key: string,
+  value: string,
+  activeIndex: number,
+  suggestions: Suggestion[],
+  onInputChange: (value: string) => void,
+  onSelect: (suggestion: Suggestion) => void
+): number {
+  if (key === 'ArrowDown') {
+    const newIndex = activeIndex < suggestions.length - 1 ? activeIndex + 1 : 0;
+    onInputChange(value);
+    return newIndex;
+  } else if (key === 'ArrowUp') {
+    const newIndex = activeIndex > 0 ? activeIndex - 1 : suggestions.length - 1;
+    onInputChange(value);
+    return newIndex;
+  } else if (key === 'Enter' && suggestions[activeIndex]) {
+    onInputChange(value);
+    onSelect(suggestions[activeIndex]);
+  }
+
+  return activeIndex;
+}

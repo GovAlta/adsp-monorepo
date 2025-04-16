@@ -1,15 +1,8 @@
-import { GoADate, GoAFormItem, GoAGrid, GoAInput } from '@abgov/react-components';
+import { GoAFormItem, GoAGrid, GoAInput } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { useState } from 'react';
-
+import { useSyncAutofillFields } from '../../util/useSyncAutofillFields';
 type DateOfBirthControlProps = ControlProps;
-
-interface Data {
-  firstName: string;
-  middleName: string;
-  lastName: string;
-  dateOfBirth: GoADate;
-}
 
 export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element => {
   const { data, path, schema, handleChange, enabled } = props;
@@ -17,7 +10,6 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const defaultNameAndDob = {};
-
   const validDates = () => {
     const currentDate = new Date();
     const minDate = new Date(currentDate.getFullYear() - 150, currentDate.getMonth(), currentDate.getDate())
@@ -33,28 +25,26 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
 
   const updateFormData = (updatedData: object) => {
     updatedData = Object.fromEntries(Object.entries(updatedData).filter(([_, value]) => value !== ''));
+    setFormData(updatedData);
     handleChange(path, updatedData);
   };
 
   const handleInputChange = (field: string, value: string) => {
     const updatedData = { ...formData, [field]: value };
-    setFormData(updatedData);
-    updateFormData(updatedData);
-  };
-  const handleDobChange = (field: string, value: GoADate) => {
-    const updatedData = { ...formData, [field]: value };
-    setFormData(updatedData);
     updateFormData(updatedData);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleRequiredFieldBlur = (name: string, updatedData?: any) => {
+  // eslint-disable-next-line
+  const handleRequiredFieldBlur = (name: string, updatedData?: Record<string, string>) => {
     const err = { ...errors };
-    if (
-      (!data?.[name] || data?.[name] === '') &&
-      requiredFields.includes(name) &&
-      (!updatedData || updatedData?.[name] === '')
-    ) {
+
+    const liveInputValue =
+      updatedData?.[name] ??
+      data?.[name] ??
+      document.querySelector<HTMLInputElement>(`goa-input[name="${name}"]`)?.value ??
+      '';
+
+    if (requiredFields.includes(name) && liveInputValue.trim() === '') {
       const modifiedName =
         name === 'firstName'
           ? 'First name'
@@ -62,14 +52,20 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           ? 'Last name'
           : name === 'dateOfBirth'
           ? 'Date of birth'
-          : '';
+          : name;
       err[name] = `${modifiedName} is required`;
     } else {
-      err[name] = '';
+      delete err[name];
     }
+
     setErrors(err);
   };
-
+  useSyncAutofillFields(
+    ['firstName', 'middleName', 'lastName', 'dateOfBirth'],
+    formData,
+    updateFormData,
+    handleRequiredFieldBlur
+  );
   return (
     <>
       <GoAGrid minChildWidth="0ch" gap="s" mb="m">
@@ -77,6 +73,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           label="First name"
           requirement={schema?.required?.includes('firstName') ? 'required' : undefined}
           error={errors?.['firstName'] ?? ''}
+          testId="form-item-first-name"
         >
           <GoAInput
             disabled={!enabled}
@@ -84,7 +81,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
             name="firstName"
             testId="name-form-first-name"
             ariaLabel={'name-form-first-name'}
-            value={formData.firstName || ''}
+            value={formData.firstName}
             onChange={(name, value) => {
               handleInputChange(name, value);
             }}
@@ -122,9 +119,10 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
             testId="name-form-last-name"
             ariaLabel={'name-form-last-name'}
             value={formData.lastName || ''}
-            onChange={(name, value) => handleInputChange(name, value)}
+            onChange={(name, value) => {
+              handleInputChange(name, value);
+            }}
             onBlur={(name) => {
-              /* istanbul ignore next */
               handleRequiredFieldBlur(name);
             }}
             width="100%"
@@ -147,7 +145,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
             ariaLabel="dob-form-dateOfBirth"
             placeholder="YYYY-MM-DD"
             value={formData?.dateOfBirth}
-            onChange={(name, value) => handleDobChange(name, value)}
+            onChange={(name, value) => handleInputChange(name, value)}
             onBlur={(name) => {
               /* istanbul ignore next */
               handleRequiredFieldBlur(name);
