@@ -84,7 +84,12 @@ const initializeApp = async (): Promise<express.Application> => {
           directory,
           tenantService,
           cacheProvider,
-          { ...config, ...coreConfig },
+          {
+            targets: {
+              ...config.targets,
+              ...coreConfig.targets,
+            },
+          },
           tenantId
         );
       },
