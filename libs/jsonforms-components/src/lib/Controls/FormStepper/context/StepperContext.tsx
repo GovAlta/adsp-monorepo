@@ -3,7 +3,7 @@ import { CategorizationStepperLayoutRendererProps } from '../types';
 import { Categorization, deriveLabelForUISchemaElement, isEnabled } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
 import { stepperReducer } from './reducer';
-import { StepperContextDataType, CategoryState, TABLE_CONTEXT_ID } from './types';
+import { StepperContextDataType, CategoryState } from './types';
 import { JsonFormStepperDispatch } from './reducer';
 import { useJsonForms } from '@jsonforms/react';
 import { getIncompletePaths } from './util';
@@ -55,7 +55,7 @@ const createStepperContextInitData = (
     };
   });
 
-  const activeId = props?.activeId || (isPage ? TABLE_CONTEXT_ID : 0);
+  const activeId = props?.activeId || (isPage ? categories.length + 1 : 0);
 
   return {
     categories: categories,
@@ -101,7 +101,7 @@ export const JsonFormsStepperContextProvider = ({
         return stepperState.categories[id];
       },
       goToTableOfContext: () => {
-        stepperDispatch({ type: 'page/to/index', payload: { id: TABLE_CONTEXT_ID } });
+        stepperDispatch({ type: 'page/to/index', payload: { id: stepperState.categories.length + 1 } });
       },
       validatePage: (id: number) => {
         stepperDispatch({
@@ -143,7 +143,7 @@ export const JsonFormsStepperContextProvider = ({
         type: 'update/uischema',
         payload: { state: createStepperContextInitData({ ...StepperProps, activeId: stepperState?.activeId }) },
       });
-      if (stepperState.activeId != TABLE_CONTEXT_ID) {
+      if (stepperState.activeId !== stepperState.categories.length + 1) {
         context.goToPage(stepperState.maxReachedStep);
         context.goToPage(stepperState.activeId);
       }

@@ -33,5 +33,3 @@ export interface StepperContextDataType {
 }
 
 export type CategorizationElement = Category | Categorization;
-
-export const TABLE_CONTEXT_ID = 100001;
