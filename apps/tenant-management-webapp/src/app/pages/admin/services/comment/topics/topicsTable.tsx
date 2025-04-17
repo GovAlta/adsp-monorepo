@@ -22,34 +22,35 @@ export const TopicListTable = ({ topics, selectedType, onDeleteTopic }: TopicTab
     dispatch(clearComments());
   }, [activeRow, dispatch]);
   return (
-        <TableDiv>
-        <DataTable data-testid="topic-table">
-          <thead data-testid="topic-table-header">
-            <tr>
-              <th data-testid="topic-table-header-topic-name">Topic name</th>
-              <th data-testid="topic-table-header-resource-id">Resource ID</th>
-              <th data-testid="topic-table-header-action">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(newTopics).map((topic) => {
-              return (
-                <TopicTableItem
-                  key={topic}
-                  selectedType={selectedType}
-                  id={newTopics[topic]['id']}
-                  topic={newTopics[topic]}
-                  onDeleteTopic={onDeleteTopic}
-                  showDetails={activeRow === newTopics[topic]['id']}
-                  onToggleDetails={() => {
-                    dispatch(clearComments());
-                    setActiveRow(activeRow === newTopics[topic]['id'] ? null : newTopics[topic]['id']);
-                  }}
-                />
-              );
-            })}
-          </tbody>
-        </DataTable>
-      </TableDiv>
+    <TableDiv>
+      <DataTable data-testid="topic-table">
+        <thead data-testid="topic-table-header">
+          <tr>
+            <th data-testid="topic-table-header-topic-id">Topic id</th>
+            <th data-testid="topic-table-header-topic-name">Topic name</th>
+            <th data-testid="topic-table-header-resource-id">Resource ID</th>
+            <th data-testid="topic-table-header-action">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.keys(newTopics).map((topic) => {
+            return (
+              <TopicTableItem
+                key={topic}
+                selectedType={selectedType}
+                id={newTopics[topic]['id']}
+                topic={newTopics[topic]}
+                onDeleteTopic={onDeleteTopic}
+                showDetails={activeRow === newTopics[topic]['id']}
+                onToggleDetails={() => {
+                  dispatch(clearComments());
+                  setActiveRow(activeRow === newTopics[topic]['id'] ? null : newTopics[topic]['id']);
+                }}
+              />
+            );
+          })}
+        </tbody>
+      </DataTable>
+    </TableDiv>
   );
 };
