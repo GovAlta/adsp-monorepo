@@ -170,7 +170,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
   const uploadFile = (file: File, propertyId: string) => {
-    const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId };
+    const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId.split('.')?.[0] };
     dispatch(UploadFileService(fileInfo));
   };
   const downloadFile = (file) => {
