@@ -33,7 +33,7 @@ export interface FetchCalendarsAction {
 }
 export interface FetchCalendarsSuccessAction {
   type: typeof FETCH_CALENDARS_SUCCESS_ACTION;
-  payload: Record<string, CalendarItem>;
+  payload: { tenant: Record<string, CalendarItem>; core: Record<string, CalendarItem> };
 }
 
 export interface UpdateCalendarAction {
@@ -157,7 +157,10 @@ export const fetchCalendars = (): FetchCalendarsAction => ({
   type: FETCH_CALENDARS_ACTION,
 });
 
-export const fetchCalendarSuccess = (calendars: Record<string, CalendarItem>): FetchCalendarsSuccessAction => ({
+export const fetchCalendarSuccess = (calendars: {
+  tenant: Record<string, CalendarItem>;
+  core: Record<string, CalendarItem>;
+}): FetchCalendarsSuccessAction => ({
   type: FETCH_CALENDARS_SUCCESS_ACTION,
   payload: calendars,
 });

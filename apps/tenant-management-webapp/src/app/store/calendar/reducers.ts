@@ -16,7 +16,7 @@ import { CalendarService, CALENDAR_INIT, getDefaultSearchCriteria } from './mode
 export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => {
   switch (action.type) {
     case FETCH_CALENDARS_SUCCESS_ACTION: {
-      return { ...state, calendars: action.payload };
+      return { ...state, calendars: action.payload.tenant, coreCalendars: action.payload.core };
     }
     case DELETE_CALENDAR_SUCCESS_ACTION: {
       const deletedCalendar = Object.keys(state.calendars).find((calendarName) => calendarName === action.calendarId);
@@ -45,7 +45,12 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
       };
     }
     case CREATE_EVENT_CALENDAR_SUCCESS_ACTION: {
-      state.calendars[action.calendarName].selectedCalendarEvents.push(action.payload);
+      if (state.calendars[action.calendarName]) {
+        state.calendars[action.calendarName].selectedCalendarEvents.push(action.payload);
+      } else {
+        state.coreCalendars[action.calendarName].selectedCalendarEvents.push(action.payload);
+      }
+
       return {
         ...state,
       };
@@ -62,25 +67,31 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
     case FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION: {
       const events = action.payload;
       const name = action.calendarName;
+
+      let currentCalendar = 'calendars';
+      if (state.coreCalendars[name]) {
+        currentCalendar = 'coreCalendars';
+      }
+
       if (!action.after) {
-        state.calendars[name].selectedCalendarEvents = events;
-        state.calendars[name].nextEvents = action.nextEvents;
+        state[currentCalendar][name].selectedCalendarEvents = events;
+        state[currentCalendar][name].nextEvents = action.nextEvents;
         return {
           ...state,
         };
       }
 
-      if (!state.calendars[name]?.selectedCalendarEvents) {
-        state.calendars[name].selectedCalendarEvents = [];
+      if (!state[currentCalendar][name]?.selectedCalendarEvents) {
+        state[currentCalendar][name].selectedCalendarEvents = [];
       }
-      const eventIds = state.calendars[name]?.selectedCalendarEvents.map((e) => e.id);
+      const eventIds = state[currentCalendar][name]?.selectedCalendarEvents.map((e) => e.id);
       for (const event of events) {
         if (!(event?.id in eventIds)) {
-          state.calendars[name].selectedCalendarEvents.push(event);
+          state[currentCalendar][name].selectedCalendarEvents.push(event);
         }
       }
 
-      state.calendars[name].nextEvents = action.nextEvents;
+      state[currentCalendar][name].nextEvents = action.nextEvents;
       return {
         ...state,
       };
@@ -101,7 +112,11 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
     case DELETE_CALENDAR_EVENT_SUCCESS_ACTION: {
       const calendarName = action.calendarName;
       const eventId = Number(action.eventId);
-      state.calendars[calendarName].selectedCalendarEvents = state.calendars[
+      let currentCalendar = 'calendars';
+      if (state.coreCalendars[calendarName]) {
+        currentCalendar = 'coreCalendars';
+      }
+      state[currentCalendar][calendarName].selectedCalendarEvents = state[currentCalendar][
         calendarName
       ].selectedCalendarEvents.filter((e) => e.id !== eventId);
       return {
