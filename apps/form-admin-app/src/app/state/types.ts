@@ -79,6 +79,7 @@ export interface Form {
   applicant: { addressAs: string };
   data?: Record<string, unknown>;
   files?: Record<string, string>;
+  submission?: FormSubmission;
 }
 
 export interface FormDisposition {
