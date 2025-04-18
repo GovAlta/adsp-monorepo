@@ -70,6 +70,7 @@ export enum FormStatus {
 export interface Form {
   urn: string;
   id: string;
+  formId: string;
   status: FormStatus;
   created: string;
   createdBy: { id: string; name: string };

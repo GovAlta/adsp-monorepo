@@ -496,7 +496,6 @@ export const loadForm = createAsyncThunk(
           await dispatch(loadFileMetadata(urn));
         }
       }
-
       dispatch(findFormPdf(data.urn));
 
       return { ...data, status: FormStatus[data.status] };
@@ -533,8 +532,11 @@ export const loadSubmission = createAsyncThunk(
           await dispatch(loadFileMetadata(urn));
         }
       }
+      const formSubmissionUrn = `urn:ads:platform:form-service:v1:/forms/${data.formId}${
+        data.id ? `/submissions/${data.id}` : ''
+      }`;
 
-      dispatch(findFormPdf(data.urn));
+      dispatch(findFormPdf(formSubmissionUrn));
 
       return data;
     } catch (err) {
