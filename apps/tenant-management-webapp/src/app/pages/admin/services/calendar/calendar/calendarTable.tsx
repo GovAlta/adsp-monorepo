@@ -10,12 +10,14 @@ interface CalendarItemProps {
   calendar: CalendarItem;
   onEdit?: (calendar: CalendarItem) => void;
   onDelete?: (calendar: CalendarItem) => void;
+  tenantMode: boolean;
 }
 
 const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
   calendar,
   onDelete,
   onEdit,
+  tenantMode,
 }: CalendarItemProps) => {
   return (
     <tr key={calendar.name}>
@@ -24,22 +26,26 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
 
       <td headers="calendar-description">{calendar.description}</td>
       <td headers="calendar-actions">
-        <GoAContextMenuIcon
-          type="create"
-          title="Edit"
-          testId={`calendar-edit-${calendar.name}`}
-          onClick={() => {
-            onEdit(calendar);
-          }}
-        />
-        <GoAContextMenuIcon
-          testId="delete-icon"
-          title="Delete"
-          type="trash"
-          onClick={() => {
-            onDelete(calendar);
-          }}
-        />
+        {tenantMode && (
+          <div>
+            <GoAContextMenuIcon
+              type="create"
+              title="Edit"
+              testId={`calendar-edit-${calendar.name}`}
+              onClick={() => {
+                onEdit(calendar);
+              }}
+            />
+            <GoAContextMenuIcon
+              testId="delete-icon"
+              title="Delete"
+              type="trash"
+              onClick={() => {
+                onDelete(calendar);
+              }}
+            />
+          </div>
+        )}
       </td>
     </tr>
   );
@@ -49,9 +55,15 @@ interface calendarTableProps {
   calendars: Record<string, CalendarItem>;
   onEdit?: (calendar: CalendarItem) => void;
   onDelete?: (calendar: CalendarItem) => void;
+  tenantMode?: boolean;
 }
 
-export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ calendars, onEdit, onDelete }) => {
+export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({
+  calendars,
+  onEdit,
+  onDelete,
+  tenantMode,
+}) => {
   return (
     <TableDiv key="calendar">
       <DataTable data-testid="calendar-table">
@@ -79,6 +91,7 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
               calendar={calendars[calendarName]}
               onEdit={onEdit}
               onDelete={onDelete}
+              tenantMode={tenantMode}
             />
           ))}
         </tbody>

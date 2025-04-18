@@ -26,6 +26,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
   }, [dispatch]);
 
   const { calendars } = useSelector((state: RootState) => state.calendarService);
+  const { coreCalendars } = useSelector((state: RootState) => state.calendarService);
   const { fetchCalendarState } = useSelector((state: RootState) => ({
     fetchCalendarState: state.calendarService.indicator?.details[FETCH_CALENDARS_ACTION] || '',
   }));
@@ -72,7 +73,14 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
       {fetchCalendarState === ActionState.completed && !calendars && renderNoItem('calendar')}
       {fetchCalendarState === ActionState.completed && calendars && (
         <div>
-          <CalendarTableComponent calendars={calendars} onEdit={onEdit} onDelete={onDelete} />
+          <CalendarTableComponent calendars={calendars} onEdit={onEdit} onDelete={onDelete} tenantMode={true} />
+        </div>
+      )}
+      <h2>Core calendars</h2>
+
+      {fetchCalendarState === ActionState.completed && coreCalendars && (
+        <div>
+          <CalendarTableComponent calendars={coreCalendars} onEdit={onEdit} onDelete={onDelete} />
         </div>
       )}
 
