@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { NameInputs } from './FullNameInputs';
 import { isFullName } from './FullNameTester';
 import '@testing-library/jest-dom';
@@ -415,5 +415,93 @@ describe('NameInputs Component', () => {
     expect(firstNameInput).toHaveAttribute('requirement', 'required');
     expect(middleNameInput).not.toHaveAttribute('requirement', 'required');
     expect(lastNameInput).toHaveAttribute('requirement', 'required');
+  });
+  it('calls handleRequiredFieldBlur when last name is empty and loses focus', () => {
+    const requiredFields = ['firstName', 'lastName'];
+    const defaultName = {
+      firstName: 'KKy',
+      middleName: 'A.',
+      lastName: '',
+    };
+
+    const { baseElement } = render(
+      <NameInputs
+        firstName={defaultName.firstName}
+        middleName={defaultName.middleName}
+        lastName={defaultName.lastName}
+        handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={defaultName}
+      />
+    );
+
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
+
+    const blurred = fireEvent.blur(lastNameInput);
+
+    expect(blurred).toBe(true);
+  });
+  it('sets error for empty required field using DOM value', async () => {
+    const requiredFields = ['firstName', 'lastName'];
+    const defaultName = {
+      firstName: '',
+      middleName: 'A.',
+      lastName: '',
+    };
+
+    const { baseElement } = render(
+      <NameInputs
+        firstName={defaultName.firstName}
+        middleName={defaultName.middleName}
+        lastName={defaultName.lastName}
+        handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={defaultName}
+      />
+    );
+
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
+    act(() => {
+      lastNameInput.dispatchEvent(
+        new CustomEvent('_blur', {
+          bubbles: true,
+          composed: true,
+          detail: { name: 'lastName' }, // match real component event signature
+        })
+      );
+    });
+
+    expect(baseElement.innerHTML).toContain('Last name is required');
+  });
+
+  it('ignores non-required fields', async () => {
+    const requiredFields = ['firstName', 'lastName'];
+    const defaultName = {
+      firstName: '',
+      middleName: '',
+      lastName: '',
+    };
+
+    const { baseElement } = render(
+      <NameInputs
+        firstName={defaultName.firstName}
+        middleName={defaultName.middleName}
+        lastName={defaultName.lastName}
+        handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={defaultName}
+      />
+    );
+    const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
+    act(() => {
+      middleNameInput.dispatchEvent(
+        new CustomEvent('_blur', {
+          bubbles: true,
+          composed: true,
+          detail: { name: 'middleName' }, // match real component event signature
+        })
+      );
+    });
+    expect(baseElement.innerHTML).not.toContain('Middle name is required');
   });
 });

@@ -8,6 +8,7 @@ import {
   formatPostalCode,
   detectPostalCodeType,
   formatPostalCodeIfNeeded,
+  handleAddressKeyDown,
 } from './utils';
 import axios from 'axios';
 import { Suggestion, Address } from './types';
@@ -387,5 +388,40 @@ describe('formatPostalCodeIfNeeded', () => {
     [' t3h5y1 ', 'T3H 5Y1', 'full'],
   ])('input "%s" (type %s) → "%s"', (input, expected, mockType) => {
     expect(formatPostalCodeIfNeeded(input)).toBe(expected);
+  });
+});
+
+describe('handleAddressKeyDown', () => {
+  const mockSuggestions = [
+    { Text: 'A', Description: 'A1' },
+    { Text: 'B', Description: 'B2' },
+  ];
+
+  it('increments index on ArrowDown', () => {
+    const mockInput = jest.fn();
+    const newIndex = handleAddressKeyDown('ArrowDown', '123', 0, mockSuggestions, mockInput, jest.fn());
+    expect(newIndex).toBe(1);
+    expect(mockInput).toHaveBeenCalledWith('123');
+  });
+
+  it('wraps to 0 on ArrowDown at end', () => {
+    const newIndex = handleAddressKeyDown('ArrowDown', '123', 1, mockSuggestions, jest.fn(), jest.fn());
+    expect(newIndex).toBe(0);
+  });
+
+  it('decrements index on ArrowUp', () => {
+    const newIndex = handleAddressKeyDown('ArrowUp', '123', 1, mockSuggestions, jest.fn(), jest.fn());
+    expect(newIndex).toBe(0);
+  });
+
+  it('wraps to end on ArrowUp at start', () => {
+    const newIndex = handleAddressKeyDown('ArrowUp', '123', 0, mockSuggestions, jest.fn(), jest.fn());
+    expect(newIndex).toBe(1);
+  });
+
+  it('calls onSelect on Enter', () => {
+    const mockSelect = jest.fn();
+    handleAddressKeyDown('Enter', '123', 0, mockSuggestions, jest.fn(), mockSelect);
+    expect(mockSelect).toHaveBeenCalledWith(mockSuggestions[0]);
   });
 });
