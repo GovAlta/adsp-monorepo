@@ -51,7 +51,7 @@ export const Form = () => {
   const canSetToDraft = useSelector(canSetToDraftSelector);
   const canArchive = useSelector(canArchiveSelector);
 
-  const [formUrn, setFormUrn] = useState(null);
+  const [formUrn, setFormUrn] = useState<string>(null);
 
   useEffect(() => {
     dispatch(selectForm(formId));
@@ -96,7 +96,7 @@ export const Form = () => {
             <GoAFormItem mr="xl" mb="s" label="Submitted on">
               {form.submitted && DateTime.fromISO(form.submitted).toFormat('LLL d, yyyy')}
             </GoAFormItem>
-            {formUrn && <PdfDownload urn={formUrn} />}
+            {form.submitted && <PdfDownload urn={formUrn} />}
           </PropertiesContainer>
         )
       }

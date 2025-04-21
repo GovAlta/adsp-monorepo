@@ -38,8 +38,9 @@ export const FormSubmission = () => {
   const definition = useSelector(definitionSelector);
   const { submission, next } = useSelector(submissionSelector);
   const files = useSelector(submissionFilesSelector);
+
   const draft = useSelector(dispositionDraftSelector);
-  const [formSubmissionUrn, setFormSubmissionUrn] = useState('');
+  const [formSubmissionUrn, setFormSubmissionUrn] = useState<string>(null);
 
   useEffect(() => {
     dispatch(selectSubmission(submissionId));
