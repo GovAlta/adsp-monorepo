@@ -510,7 +510,6 @@ export const loadForm = createAsyncThunk(
         data.id ? `/submissions/${data.submission ? data.submission.id : ''}` : ''
       }`;
 
-      console.log('formSubmissionUrn', formSubmissionUrn);
       dispatch(findFormPdf(formSubmissionUrn));
 
       return { ...data, status: FormStatus[data.status] };
