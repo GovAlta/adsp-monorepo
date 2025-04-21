@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { AddressLookUpControl } from './AddressLookUpControl';
 import { fetchAddressSuggestions, validatePostalCode } from './utils';
 import { JsonFormContext } from '../../Context';
@@ -140,6 +140,21 @@ describe('AddressLookUpControl', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+  it('handleRequiredFieldBlur shows error if required field is empty', () => {
+    const { baseElement } = renderComponent();
+    const input = baseElement.querySelector('goa-input[name="addressLine1"]')!;
+    act(() => {
+      input.dispatchEvent(
+        new CustomEvent('_blur', {
+          bubbles: true,
+          composed: true,
+          detail: { name: 'addressLine1' },
+        })
+      );
+    });
+
+    expect(baseElement.textContent).toContain('Address LookupAlbertaCanada');
   });
 
   it('should render the component with input fields', () => {
