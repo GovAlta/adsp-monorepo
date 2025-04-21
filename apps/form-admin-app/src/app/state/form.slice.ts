@@ -492,12 +492,26 @@ export const loadForm = createAsyncThunk(
       });
 
       if (data.files) {
-        for (const urn of Object.values(data.files)) {
-          await dispatch(loadFileMetadata(urn));
+        const dataFiles: Record<string, unknown> = {};
+
+        for (const fileKey of Object.keys(data.files)) {
+          Object.entries(data.data).forEach(([key, value]) => {
+            if (key === fileKey) {
+              dataFiles[key] = value;
+            }
+          });
+        }
+
+        for (const urn of Object.values(dataFiles)) {
+          await dispatch(loadFileMetadata(urn as string));
         }
       }
+      const formSubmissionUrn = `urn:ads:platform:form-service:v1:/forms/${data.id}${
+        data.id ? `/submissions/${data.submission ? data.submission.id : ''}` : ''
+      }`;
 
-      dispatch(findFormPdf(data.urn));
+      console.log('formSubmissionUrn', formSubmissionUrn);
+      dispatch(findFormPdf(formSubmissionUrn));
 
       return { ...data, status: FormStatus[data.status] };
     } catch (err) {
@@ -533,8 +547,11 @@ export const loadSubmission = createAsyncThunk(
           await dispatch(loadFileMetadata(urn));
         }
       }
+      const formSubmissionUrn = `urn:ads:platform:form-service:v1:/forms/${data.formId}${
+        data.id ? `/submissions/${data.id}` : ''
+      }`;
 
-      dispatch(findFormPdf(data.urn));
+      dispatch(findFormPdf(formSubmissionUrn));
 
       return data;
     } catch (err) {

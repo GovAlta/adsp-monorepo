@@ -7,7 +7,7 @@ import {
   GoATextArea,
 } from '@abgov/react-components';
 import { DateTime } from 'luxon';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -38,11 +38,22 @@ export const FormSubmission = () => {
   const definition = useSelector(definitionSelector);
   const { submission, next } = useSelector(submissionSelector);
   const files = useSelector(submissionFilesSelector);
+
   const draft = useSelector(dispositionDraftSelector);
+  const [formSubmissionUrn, setFormSubmissionUrn] = useState<string>(null);
 
   useEffect(() => {
     dispatch(selectSubmission(submissionId));
   }, [dispatch, submissionId]);
+
+  useEffect(() => {
+    if (submission) {
+      const urn = `urn:ads:platform:form-service:v1:/forms/${submission.formId}${
+        submission.id ? `/submissions/${submission.id}` : ''
+      }`;
+      setFormSubmissionUrn(urn);
+    }
+  }, [submission]);
 
   return (
     <DetailsLayout
@@ -64,7 +75,7 @@ export const FormSubmission = () => {
             <GoAFormItem mr="xl" mb="s" label="Submitted on">
               {DateTime.fromISO(submission.created).toFormat('LLL d, yyyy')}
             </GoAFormItem>
-            <PdfDownload urn={submission.urn} />
+            <PdfDownload urn={formSubmissionUrn} />
           </PropertiesContainer>
         )
       }

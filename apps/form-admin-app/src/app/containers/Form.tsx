@@ -43,12 +43,15 @@ export const Form = () => {
 
   const definition = useSelector(definitionSelector);
   const { form, next } = useSelector(formSelector);
+
   const files = useSelector(formFilesSelector);
   const topic = useSelector((state: AppState) => topicSelector(state, form?.urn));
 
   const busy = useSelector(formBusySelector);
   const canSetToDraft = useSelector(canSetToDraftSelector);
   const canArchive = useSelector(canArchiveSelector);
+
+  const [formUrn, setFormUrn] = useState<string>(null);
 
   useEffect(() => {
     dispatch(selectForm(formId));
@@ -62,6 +65,15 @@ export const Form = () => {
       })();
     }
   }, [dispatch, definition, form]);
+
+  useEffect(() => {
+    if (form) {
+      const urn = `urn:ads:platform:form-service:v1:/forms/${form.id}${
+        form.submission?.id ? `/submissions/${form.submission?.id}` : ''
+      }`;
+      setFormUrn(urn);
+    }
+  }, [form]);
 
   return (
     <DetailsLayout
@@ -84,7 +96,7 @@ export const Form = () => {
             <GoAFormItem mr="xl" mb="s" label="Submitted on">
               {form.submitted && DateTime.fromISO(form.submitted).toFormat('LLL d, yyyy')}
             </GoAFormItem>
-            <PdfDownload urn={form.urn} />
+            {form.submitted && <PdfDownload urn={formUrn} />}
           </PropertiesContainer>
         )
       }

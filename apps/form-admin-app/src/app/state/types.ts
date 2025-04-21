@@ -70,6 +70,7 @@ export enum FormStatus {
 export interface Form {
   urn: string;
   id: string;
+  formId: string;
   status: FormStatus;
   created: string;
   createdBy: { id: string; name: string };
@@ -78,6 +79,7 @@ export interface Form {
   applicant: { addressAs: string };
   data?: Record<string, unknown>;
   files?: Record<string, string>;
+  submission?: FormSubmission;
 }
 
 export interface FormDisposition {
