@@ -507,7 +507,7 @@ export const loadForm = createAsyncThunk(
         }
       }
       const formSubmissionUrn = `urn:ads:platform:form-service:v1:/forms/${data.id}${
-        data.id ? `/submissions/${data.submission ? data.submission.id : ''}` : ''
+        data.submission ? `/submissions/${data.submission ? data.submission.id : ''}` : ''
       }`;
 
       dispatch(findFormPdf(formSubmissionUrn));
