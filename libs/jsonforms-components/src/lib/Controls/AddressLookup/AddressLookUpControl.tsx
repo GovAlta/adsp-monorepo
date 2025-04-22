@@ -58,7 +58,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const updateFormData = (updatedAddress: Address) => {
     handleChange(path, updatedAddress);
   };
-  const debouncedRenderAddress = useDebounce(searchTerm, 200);
+  const debouncedRenderAddress = useDebounce(searchTerm, 1000);
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
 
