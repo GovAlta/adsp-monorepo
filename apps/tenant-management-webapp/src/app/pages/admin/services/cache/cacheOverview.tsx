@@ -29,7 +29,7 @@ export const CacheOverview: FunctionComponent<CacheOverviewProps> = ({
           TTL can be set.
         </p>
         <GoAButton
-          testId="add-definition"
+          testId="add-cache-target"
           onClick={() => {
             setActiveIndex(1);
             setOpenAddDefinition(true);
