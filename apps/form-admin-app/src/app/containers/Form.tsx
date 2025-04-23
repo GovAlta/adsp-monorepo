@@ -110,7 +110,7 @@ export const Form = () => {
                 dataSchema={definition?.dataSchema}
                 uiSchema={definition?.uiSchema}
                 data={form?.data}
-                files={files}
+                files={{ ...files }}
               />
             </ContentContainer>
             <ActionsForm>
