@@ -20,9 +20,16 @@ interface CalendarModalProps {
   onCancel?: () => void;
   onSave: (calendar: CalendarItem) => void;
   open: boolean;
+  tenantMode: boolean;
 }
 
-export const CalendarModal = ({ calendarName, onCancel, onSave, open }: CalendarModalProps): JSX.Element => {
+export const CalendarModal = ({
+  tenantMode,
+  calendarName,
+  onCancel,
+  onSave,
+  open,
+}: CalendarModalProps): JSX.Element => {
   const isNew = !(calendarName?.length > 0);
   const initialValue = useSelector((state: RootState) => selectCalendarsByName(state, calendarName));
 
@@ -40,7 +47,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
   });
 
   const calendarNames = calendars ? Object.values(calendars).map((c) => c.displayName) : [];
-  const title = isNew ? 'Add calendar' : 'Edit calendar';
+  const title = isNew ? 'Add calendar' : tenantMode ? 'Edit calendar' : 'View calendar details';
 
   const { errors, validators } = useValidators(
     'name',
@@ -99,8 +106,8 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
         nameColumnWidth={80}
         service="Calendar"
         checkedRoles={[
-          { title: 'read', selectedRoles: calendar?.readRoles },
-          { title: 'modify', selectedRoles: calendar?.updateRoles },
+          { title: 'read', selectedRoles: calendar?.readRoles, disabled: !tenantMode },
+          { title: 'modify', selectedRoles: calendar?.updateRoles, disabled: !tenantMode },
         ]}
       />
     );
@@ -119,17 +126,23 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
       heading={title}
       actions={
         <GoAButtonGroup alignment="end">
-          <GoAButton type="secondary" testId="calendar-modal-cancel" onClick={handleCancelClick}>
-            Cancel
-          </GoAButton>
           <GoAButton
-            type="primary"
-            testId="calendar-modal-save"
-            disabled={validators.haveErrors() || areObjectsEqual(calendar, initialValue)}
-            onClick={validationCheck}
+            type={tenantMode ? 'secondary' : 'primary'}
+            testId="calendar-modal-cancel"
+            onClick={handleCancelClick}
           >
-            Save
+            {tenantMode ? 'Cancel' : 'Close'}
           </GoAButton>
+          {tenantMode && (
+            <GoAButton
+              type="primary"
+              testId="calendar-modal-save"
+              disabled={validators.haveErrors() || areObjectsEqual(calendar, initialValue)}
+              onClick={validationCheck}
+            >
+              Save
+            </GoAButton>
+          )}
         </GoAButtonGroup>
       }
     >
@@ -140,7 +153,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
           value={calendar?.displayName}
           testId={`calendar-modal-name-input`}
           aria-label="name"
-          disabled={!isNew}
+          disabled={!isNew || !tenantMode}
           width="100%"
           onChange={(name, value) => {
             validateField('name', value);
@@ -150,25 +163,29 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
           onBlur={() => validateField('name', calendar?.displayName || '')}
         />
       </GoAFormItem>
-      <GoAFormItem label="Calendar ID">
-        <IdField>{calendar?.name}</IdField>
-      </GoAFormItem>
-      <GoAFormItem error={errors?.['description']} label="Description">
-        <GoATextArea
-          name="description"
-          value={calendar?.description}
-          testId={`calendar-modal-description-input`}
-          aria-label="description"
-          width="100%"
-          onKeyPress={(name, value, key) => {
-            validators.remove('description');
-            validators['description'].check(value);
-            setCalendar({ ...calendar, description: value });
-          }}
-          // eslint-disable-next-line
-          onChange={(name, value) => {}}
-        />
-      </GoAFormItem>
+      {tenantMode && (
+        <GoAFormItem label="Calendar ID">
+          <IdField>{calendar?.name}</IdField>
+        </GoAFormItem>
+      )}
+      {tenantMode && (
+        <GoAFormItem error={errors?.['description']} label="Description">
+          <GoATextArea
+            name="description"
+            value={calendar?.description}
+            testId={`calendar-modal-description-input`}
+            aria-label="description"
+            width="100%"
+            onKeyPress={(name, value, key) => {
+              validators.remove('description');
+              validators['description'].check(value);
+              setCalendar({ ...calendar, description: value });
+            }}
+            // eslint-disable-next-line
+            onChange={(name, value) => {}}
+          />
+        </GoAFormItem>
+      )}
       {roles?.length !== 0 &&
         roles.map((r) => <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />)}
       {roles?.length === 0 && <TextGoASkeleton />}
