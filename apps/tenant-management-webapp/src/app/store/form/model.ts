@@ -75,7 +75,7 @@ export const defaultFormDefinition: FormDefinition = {
   submissionPdfTemplate: 'submitted-form',
   queueTaskToProcess: { queueName: '', queueNameSpace: '' } as QueueTaskToProcess,
   supportTopic: false,
-  securityClassification: SecurityClassification.ProtectedB
+  securityClassification: SecurityClassification.ProtectedB,
 };
 export interface Stream {
   namespace: string;
