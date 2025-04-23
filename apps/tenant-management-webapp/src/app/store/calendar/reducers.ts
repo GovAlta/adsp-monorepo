@@ -56,10 +56,17 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
       };
     }
     case UPDATE_EVENT_CALENDAR_SUCCESS_ACTION: {
-      const eventIndex = state.calendars[action.calendarName].selectedCalendarEvents.findIndex(
-        (event) => event.id.toString() === action.eventId
-      );
-      state.calendars[action.calendarName].selectedCalendarEvents[eventIndex] = action.payload;
+      if (state.calendars[action.calendarName]) {
+        const eventIndex = state.calendars[action.calendarName].selectedCalendarEvents.findIndex(
+          (event) => event.id.toString() === action.eventId
+        );
+        state.calendars[action.calendarName].selectedCalendarEvents[eventIndex] = action.payload;
+      } else {
+        const eventIndex = state.coreCalendars[action.calendarName].selectedCalendarEvents.findIndex(
+          (event) => event.id.toString() === action.eventId
+        );
+        state.coreCalendars[action.calendarName].selectedCalendarEvents[eventIndex] = action.payload;
+      }
       return {
         ...state,
       };
