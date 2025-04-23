@@ -38,7 +38,7 @@ export const FormConfigDefinition = ({ definition }: PDFConfigFormProps) => {
         <table>
           <thead>
             <tr>
-              <th>Definition ID</th>
+              <th>Definition IDy</th>
             </tr>
             <tr>
               <td data-testid="template-id" className="overflowContainer">

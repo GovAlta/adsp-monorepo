@@ -16,7 +16,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { selectFormAppLink, selectFormResourceTags } from '@store/form/selectors';
 import { isValidUrl } from '@lib/validation/urlUtil';
 import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
-import { GoABadge, GoACircularProgress } from '@abgov/react-components';
+import { GoABadge, GoACircularProgress, GoADetails } from '@abgov/react-components';
 import { EntryDetail } from '../../styled-components';
 interface FormDefinitionItemProps {
   formDefinition: FormDefinition;
@@ -32,14 +32,12 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
     <>
       <DetailsTagDefinitionIdHeading>Definition ID</DetailsTagDefinitionIdHeading>
       {formDefinition.id}
-
       <DetailsTagHeading>Tags</DetailsTagHeading>
       {resourceTags === undefined && (
         <CenterPositionProgressIndicator>
           <GoACircularProgress visible={true} size="small" />
         </CenterPositionProgressIndicator>
       )}
-
       {resourceTags && resourceTags?.length > 0 && (
         <DetailsTagWrapper>
           {resourceTags
@@ -49,6 +47,39 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
             ))}
         </DetailsTagWrapper>
       )}
+      <p></p>
+      <DetailsTagDefinitionIdHeading>Form intake information including</DetailsTagDefinitionIdHeading>
+      <li>from when (date time) to when (date time) the form will be available to users for submission</li>
+      <li>date time values show in client time zone</li>
+      <p></p>
+      <DetailsTagDefinitionIdHeading>Form submission information</DetailsTagDefinitionIdHeading>
+      {formDefinition.submissionPdfTemplate ? (
+        <div>
+          <p>Creates PDF when submitted</p>
+          PDF copy of the submitted information is created when forms are submitted.
+        </div>
+      ) : (
+        <div>
+          <p>No PDF is created</p>
+          PDF copy is not created when forms are submitted.
+        </div>
+      )}
+      <p>Has submission Records: {formDefinition.submissionRecords ? 'Yes' : 'No'}</p>
+      <div>
+        {formDefinition.dispositionStates.map((state, index) => {
+          return (
+            <div>
+              Disposition {index + 1}
+              <ul>
+                <li>{state.id}</li>
+                <li>{state.name}</li>
+                <li>{state.description}</li>
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+      <pre>{JSON.stringify(formDefinition, null, 2)}</pre>
     </>
   );
 };
