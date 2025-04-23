@@ -16,7 +16,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { selectFormAppLink, selectFormResourceTags } from '@store/form/selectors';
 import { isValidUrl } from '@lib/validation/urlUtil';
 import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
-import { GoABadge, GoACircularProgress, GoADetails } from '@abgov/react-components';
+import { GoABadge, GoACircularProgress } from '@abgov/react-components';
 import { EntryDetail } from '../../styled-components';
 interface FormDefinitionItemProps {
   formDefinition: FormDefinition;
