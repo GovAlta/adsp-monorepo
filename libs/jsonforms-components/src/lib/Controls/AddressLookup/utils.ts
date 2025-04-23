@@ -24,7 +24,7 @@ export const fetchAddressSuggestions = async (
 };
 
 export const filterAlbertaAddresses = (suggestions: Suggestion[]): Suggestion[] => {
-  return suggestions.filter((suggestion) => suggestion.Description.includes('AB'));
+  return suggestions.filter((suggestion) => suggestion.Description.includes('AB')).slice(0, 10);
 };
 export const filterSuggestionsWithoutAddressCount = (suggestions: Suggestion[]): Suggestion[] => {
   return suggestions.filter((suggestion) => {
