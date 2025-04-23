@@ -39,7 +39,6 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
           <GoACircularProgress visible={true} size="small" />
         </CenterPositionProgressIndicator>
       )}
-
       {resourceTags && resourceTags?.length > 0 && (
         <DetailsTagWrapper>
           {resourceTags
@@ -49,10 +48,7 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
             ))}
         </DetailsTagWrapper>
       )}
-      <p></p>
-      <DetailsTagDefinitionIdHeading>Form intake information including</DetailsTagDefinitionIdHeading>
-      <li>from when (date time) to when (date time) the form will be available to users for submission</li>
-      <li>date time values show in client time zone</li>
+    
     </>
   );
 };
