@@ -32,13 +32,14 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
     <>
       <DetailsTagDefinitionIdHeading>Definition ID</DetailsTagDefinitionIdHeading>
       {formDefinition.id}
-      
+
       <DetailsTagHeading>Tags</DetailsTagHeading>
       {resourceTags === undefined && (
         <CenterPositionProgressIndicator>
           <GoACircularProgress visible={true} size="small" />
         </CenterPositionProgressIndicator>
       )}
+
       {resourceTags && resourceTags?.length > 0 && (
         <DetailsTagWrapper>
           {resourceTags
