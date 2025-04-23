@@ -444,6 +444,9 @@ export const DetailsTagWrapper = styled.div`
   flex-wrap: wrap;
   justify-content: space-start;
 `;
+export const TagBadgePadding = styled.div`
+  padding-bottom: var(--goa-space-3xs);
+`;
 
 export const TableDataScriptName = styled.td`
   width: 9.375rem;
