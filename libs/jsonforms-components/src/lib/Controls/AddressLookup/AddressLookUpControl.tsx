@@ -5,7 +5,7 @@ import { AddressInputs } from './AddressInputs';
 
 import { GoAFormItem, GoAInput, GoASpinner } from '@abgov/react-components';
 import { Address, Suggestion } from './types';
-
+import { handleAddressKeyDown } from './utils';
 import {
   fetchAddressSuggestions,
   filterAlbertaAddresses,
@@ -56,10 +56,10 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const requiredFields = (schema as { required: string[] }).required;
   const [dropdownSelected, setDropdownSelected] = useState(false);
   const updateFormData = (updatedAddress: Address) => {
-    setAddress(updatedAddress);
     handleChange(path, updatedAddress);
   };
-  const debouncedRenderAddress = useDebounce(searchTerm, 300);
+  const debouncedRenderAddress = useDebounce(searchTerm, 1000);
+
   const [activeIndex, setActiveIndex] = useState<number>(0);
 
   const dropdownRef = useRef<HTMLUListElement>(null);
@@ -97,26 +97,34 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
 
   useEffect(() => {
-    handleInputChange('addressLine1', searchTerm);
+    handleInputChange('addressLine1', debouncedRenderAddress);
   }, [debouncedRenderAddress]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (searchTerm.length > 2 && dropdownSelected === false) {
+      if (debouncedRenderAddress.length > 2 && dropdownSelected === false) {
         setLoading(true);
         setOpen(true);
-
-        await fetchAddressSuggestions(formUrl, formatPostalCodeIfNeeded(searchTerm), isAlbertaAddress).then(
-          (response) => {
-            const suggestions = filterSuggestionsWithoutAddressCount(response);
-            if (isAlbertaAddress) {
-              setSuggestions(filterAlbertaAddresses(suggestions));
-            } else {
-              setSuggestions(suggestions);
+        try {
+          await fetchAddressSuggestions(formUrl, formatPostalCodeIfNeeded(searchTerm), isAlbertaAddress).then(
+            (response) => {
+              const suggestions = filterSuggestionsWithoutAddressCount(response);
+              if (isAlbertaAddress) {
+                setSuggestions(filterAlbertaAddresses(suggestions));
+              } else {
+                setSuggestions(suggestions);
+              }
+              setLoading(false);
             }
-            setLoading(false);
+          );
+          // eslint-disable-next-line
+        } catch (error: any) {
+          if (error.name !== 'AbortError') {
+            console.error('Address fetch failed:', error);
           }
-        );
+        } finally {
+          setLoading(false);
+        }
       } else {
         setSuggestions([]);
         setOpen(false);
@@ -124,7 +132,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     };
 
     fetchSuggestions();
-  }, [searchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [debouncedRenderAddress]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDropdownChange = (value: string) => {
     setSearchTerm(value);
@@ -163,29 +171,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     }
   }, [activeIndex]);
 
-  const handleKeyDown = (e: string, value: string, key: string) => {
-    if (key === 'ArrowDown') {
-      setActiveIndex((prevIndex) => (prevIndex < suggestions.length - 1 ? prevIndex + 1 : 0));
-      handleInputChange('addressLine1', value);
-    } else if (key === 'ArrowUp') {
-      setActiveIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : suggestions.length - 1));
-      handleInputChange('addressLine1', value);
-    } else if (key === 'Enter') {
-      handleInputChange('addressLine1', value);
-      setLoading(false);
-      if (activeIndex >= 0) {
-        document.getElementById('goaInput')?.blur();
-        const suggestion = suggestions[activeIndex];
-        if (suggestion) {
-          setTimeout(() => {
-            handleSuggestionClick(suggestion);
-            setOpen(false);
-          }, 50);
-        }
-      }
-    }
-  };
-
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   return (
     <div>
@@ -214,7 +199,15 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
               width="100%"
               onKeyPress={(e: string, value: string, key: string) => {
                 if (open) {
-                  handleKeyDown(e, value, key);
+                  const newIndex = handleAddressKeyDown(
+                    key,
+                    value,
+                    activeIndex,
+                    suggestions,
+                    (val) => handleInputChange('addressLine1', val),
+                    (suggestion) => handleSuggestionClick(suggestion)
+                  );
+                  setActiveIndex(newIndex);
                 }
               }}
             />
@@ -241,8 +234,9 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
                     onClick={() => {
                       handleSuggestionClick(suggestion);
                     }}
-                    selectedIndex={activeIndex}
+                    selected={activeIndex}
                     index={index}
+                    data-testId={`listItem-${index}`}
                   >
                     {`${suggestion.Text}  ${suggestion.Description}`}
                   </ListItem>

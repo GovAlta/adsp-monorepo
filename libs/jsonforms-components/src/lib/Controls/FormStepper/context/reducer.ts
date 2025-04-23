@@ -1,4 +1,4 @@
-import { StepperContextDataType, TABLE_CONTEXT_ID } from './types';
+import { StepperContextDataType } from './types';
 import { ErrorObject } from 'ajv';
 import { Dispatch } from 'react';
 import Ajv from 'ajv';
@@ -56,16 +56,15 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
       const { id } = action.payload;
       state.activeId = id;
 
-      if (id === TABLE_CONTEXT_ID) {
-        return { ...state };
-      }
       if (id === lastId + 1) {
         state.isOnReview = true;
         state.hasNextButton = false;
         state.hasPrevButton = true;
         return { ...state };
       } else {
-        state.categories[id].isVisited = true;
+        if (state.categories[id]) {
+          state.categories[id].isVisited = true;
+        }
         state.hasNextButton = id <= lastId;
         state.hasPrevButton = id !== 0;
         state.isOnReview = false;
@@ -75,7 +74,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
     }
     case 'update/category': {
       const { id, ajv, errors } = action.payload as { ajv: Ajv; id: number; errors: ErrorObject[] };
-      if (id === state.categories.length || id === TABLE_CONTEXT_ID) {
+      if (id === state.categories.length || id === state.categories.length + 1) {
         return { ...state };
       }
       /*
@@ -83,9 +82,12 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
        */
       const incompletePaths = getIncompletePaths(ajv, state.categories[id]?.scopes || []);
       const errorsInCategory = getErrorsInScopes(errors, state.categories[id]?.scopes || []);
-      state.categories[id].isCompleted = incompletePaths?.length === 0;
-      state.categories[id].isValid = errorsInCategory.length === 0;
-      state.categories[id].isVisited = true;
+
+      if (state.categories[id]) {
+        state.categories[id].isCompleted = incompletePaths?.length === 0;
+        state.categories[id].isValid = errorsInCategory.length === 0;
+        state.categories[id].isVisited = true;
+      }
 
       return { ...state };
     }

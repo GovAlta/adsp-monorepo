@@ -25,6 +25,7 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
   return (
     <>
       <tr>
+        <td>{topic.id}</td>
         <td>{topic.name}</td>
         <td>{topic.resourceId}</td>
         <td>

@@ -19,10 +19,10 @@ export const Cache: FunctionComponent = () => {
           <img src={BetaBadge} alt="Cache Service" />
         </HeadingDiv>
         <Tabs activeIndex={activeIndex}>
-          <Tab label="Overview" data-testid="cache-service-overview-tab-overview">
+          <Tab label="Overview" data-testid="cache-service-overview-tab">
             <CacheOverview setActiveIndex={setActiveIndex} setOpenAddDefinition={setOpenAddDefinition} />
           </Tab>
-          <Tab label="Targets" data-testid="cache-service-overview-tab-target">
+          <Tab label="Targets" data-testid="cache-service-targets-tab">
             <Targets openAddDefinition={openAddDefinition} setOpenAddDefinition={setOpenAddDefinition} />
           </Tab>
         </Tabs>

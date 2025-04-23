@@ -11,7 +11,7 @@ import {
   GoAIcon,
 } from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
@@ -158,6 +158,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   });
 
   const dispatch = useDispatch();
+  const editorRefData = useRef(null);
+  const editorRefUi = useRef(null);
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
@@ -170,7 +172,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
   const uploadFile = (file: File, propertyId: string) => {
-    const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId };
+    const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId.split('.')?.[0] };
     dispatch(UploadFileService(fileInfo));
   };
   const downloadFile = (file) => {
@@ -205,7 +207,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   });
   const formServiceApiUrl = useSelector((state: RootState) => state.config?.serviceUrls?.formServiceApiUrl);
 
-  const [activeIndex] = useState<number>(0);
+  const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
+  const [uiEditorLocation, setUiEditorLocation] = useState<number>(0);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
   const [data, setData] = useState<unknown>();
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
@@ -327,6 +331,34 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     setCurrentTab(tab);
   };
 
+  const handleEditorDidMountData = (editor) => {
+    editorRefData.current = editor;
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        editor.setScrollTop(dataEditorLocation);
+      }, 5);
+    });
+
+    editor.onDidScrollChange((e) => {
+      setDataEditorLocation(e.scrollTop);
+    });
+  };
+
+  const handleEditorDidMountUi = (editor) => {
+    editorRefUi.current = editor;
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        editor.setScrollTop(uiEditorLocation);
+      }, 5);
+    });
+
+    editor.onDidScrollChange((e) => {
+      setUiEditorLocation(e.scrollTop);
+    });
+  };
+
   return (
     <FormEditor>
       {isLoading ? (
@@ -339,7 +371,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             <hr className="hr-resize" />
             {definition && <FormConfigDefinition definition={definition} />}
 
-            <Tabs activeIndex={activeIndex} data-testid="form-editor-tabs">
+            <Tabs
+              activeIndex={activeIndex}
+              changeTabCallback={(index) => {
+                setActiveIndex(index);
+              }}
+              data-testid="form-editor-tabs"
+            >
               <Tab label="Data schema" data-testid="form-editor-data-schema-tab" isTightContent={true}>
                 <GoAFormItem
                   error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
@@ -350,6 +388,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       data-testid="form-data-schema"
                       height={EditorHeight}
                       value={tempDataSchema}
+                      onMount={handleEditorDidMountData}
                       onChange={(value) => {
                         const jsonSchemaValidResult = JSONSchemaValidator(value);
                         dispatch(setDraftDataSchema(value));
@@ -415,6 +454,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
                         });
                       }}
+                      onMount={handleEditorDidMountUi}
                       onChange={(value) => {
                         dispatch(setDraftUISchema(value));
                       }}

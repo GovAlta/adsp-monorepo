@@ -8,6 +8,7 @@ import {
   DetailsTagHeading,
   DetailsTagDefinitionIdHeading,
   CenterPositionProgressIndicator,
+  TagBadgePadding,
 } from '../styled-components';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '@store/index';
@@ -45,7 +46,9 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
           {resourceTags
             ?.sort((a, b) => a.label?.toLowerCase().localeCompare(b.label?.toLowerCase()))
             .map((tag) => (
-              <GoABadge type={'midtone'} content={tag.label} testId={tag.label} mb="xs" mr="xs"></GoABadge>
+              <TagBadgePadding>
+                <GoABadge type={'midtone'} content={tag.label} testId={tag.label} mb="xs" mr="xs"></GoABadge>
+              </TagBadgePadding>
             ))}
         </DetailsTagWrapper>
       )}

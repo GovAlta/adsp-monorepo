@@ -492,12 +492,30 @@ export const loadForm = createAsyncThunk(
       });
 
       if (data.files) {
-        for (const urn of Object.values(data.files)) {
-          await dispatch(loadFileMetadata(urn));
+        const dataFiles: Record<string, string> = {};
+
+        for (const fileKey of Object.keys(data.files)) {
+          Object.entries(data.data).forEach(([path, value]) => {
+            const rootKeyPath = fileKey.slice(0, fileKey.lastIndexOf('.'));
+            if (path === rootKeyPath) {
+              dataFiles[path] = value as string;
+              // the return of the files from endpoint is AdspId object, we need to change it to urn string.
+              data.files[fileKey] = value as string;
+            }
+          });
+        }
+
+        for (const urns of Object.values(dataFiles)) {
+          urns.split(';').map(async (urn) => {
+            await dispatch(loadFileMetadata(urn as string));
+          });
         }
       }
+      const formSubmissionUrn = `urn:ads:platform:form-service:v1:/forms/${data.id}${
+        data.submission ? `/submissions/${data.submission ? data.submission.id : ''}` : ''
+      }`;
 
-      dispatch(findFormPdf(data.urn));
+      dispatch(findFormPdf(formSubmissionUrn));
 
       return { ...data, status: FormStatus[data.status] };
     } catch (err) {
@@ -533,8 +551,11 @@ export const loadSubmission = createAsyncThunk(
           await dispatch(loadFileMetadata(urn));
         }
       }
+      const formSubmissionUrn = `urn:ads:platform:form-service:v1:/forms/${data.formId}${
+        data.id ? `/submissions/${data.id}` : ''
+      }`;
 
-      dispatch(findFormPdf(data.urn));
+      dispatch(findFormPdf(formSubmissionUrn));
 
       return data;
     } catch (err) {
@@ -1055,7 +1076,18 @@ export const formFilesSelector = createSelector(
   formSelector,
   (state: AppState) => state.file.metadata,
   ({ form }, metadata) =>
-    Object.entries(form?.files || {}).reduce((files, [key, urn]) => ({ ...files, [key]: metadata[urn] }), {})
+    Object.entries(form?.files || {}).reduce((files, [key, urn]) => {
+      const root = key.slice(0, key.lastIndexOf('.'));
+      const fileItems = urn
+        ?.split(';')
+        .map((u) => metadata[u])
+        .filter((f) => f !== undefined);
+
+      return {
+        ...files,
+        [root]: fileItems,
+      };
+    }, {})
 );
 
 export const submissionSelector = createSelector(

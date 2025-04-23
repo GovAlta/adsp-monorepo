@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { SagaIterator } from '@redux-saga/core';
 import { RootState } from '..';
-import { select, call, put, takeEvery } from 'redux-saga/effects';
+import { select, call, put, takeEvery, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 
 import { getAccessToken } from '@store/tenant/sagas';
@@ -39,6 +39,7 @@ import {
 import { UpdateElementIndicator } from '@store/session/actions';
 
 import { ActionState } from '@store/session/models';
+import { fetchCalendarApi } from './api';
 
 export function* fetchCalendars(action: FetchCalendarsAction): SagaIterator {
   const details = {};
@@ -53,15 +54,15 @@ export function* fetchCalendars(action: FetchCalendarsAction): SagaIterator {
   );
   const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
+    const url = `${configBaseUrl}/configuration/v2/configuration/platform/calendar-service/latest`;
+    const coreUrl = `${configBaseUrl}/configuration/v2/configuration/platform/calendar-service?core`;
     try {
-      const { data } = yield call(
-        axios.get,
-        `${configBaseUrl}/configuration/v2/configuration/platform/calendar-service/latest`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      yield put(fetchCalendarSuccess(data));
+      const { tenant, core } = yield all({
+        tenant: call(fetchCalendarApi, token, url),
+        core: call(fetchCalendarApi, token, coreUrl),
+      });
+      const coreConfiguration = core.latest?.configuration;
+      yield put(fetchCalendarSuccess({ tenant, core: coreConfiguration }));
 
       details[action.type] = ActionState.completed;
       yield put(

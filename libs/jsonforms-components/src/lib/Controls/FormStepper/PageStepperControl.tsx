@@ -3,12 +3,7 @@ import { GoAButtonType } from '@abgov/react-components';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
 import { CategorizationStepperLayoutRendererProps } from './types';
-import {
-  JsonFormsStepperContextProvider,
-  JsonFormsStepperContext,
-  JsonFormsStepperContextProps,
-  TABLE_CONTEXT_ID,
-} from './context';
+import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
 import { TableOfContents, TocProps } from './TableOfContents';
 import { RenderPages } from './RenderPages';
 
@@ -47,7 +42,7 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
     goToPage(index);
   };
 
-  if (TABLE_CONTEXT_ID === activeId) {
+  if (categories.length + 1 === activeId) {
     const tocProps: TocProps = {
       categories,
       onClick: handleGoToPage,

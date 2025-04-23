@@ -82,6 +82,11 @@ export const FormStepperSummaryH3 = styled.h3`
 export const PageRenderPadding = styled.div`
   margin-top: var(--goa-space-2xl);
 `;
+
+export const PageRenderPaddingBottom = styled.div`
+  margin-bottom: var(--goa-space-2xl);
+`;
+
 export const PageBorder = styled.h3`
   padding: var(--goa-space-3xl);
 `;

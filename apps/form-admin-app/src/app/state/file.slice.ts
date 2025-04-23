@@ -73,6 +73,9 @@ export const downloadFile = createAsyncThunk(
           {
             responseType: 'blob',
             headers: { Authorization: `Bearer ${token}` },
+            params: {
+              unsafe: true,
+            },
           }
         );
         const mimeType = headers['content-type']?.toString();

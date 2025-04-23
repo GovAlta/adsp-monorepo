@@ -64,14 +64,14 @@ export const AddEditTargetCache = ({
 
   return (
     <GoAModal
-      testId="target-cache"
+      testId="cache-target-modal"
       open={open}
       heading={`${isEdit ? 'Edit' : 'Add'} target`}
       width="640px"
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
-            testId="add-edit-cache-cancel"
+            testId="add-edit-target-cancel"
             type="secondary"
             onClick={() => {
               validators.clear();
@@ -82,7 +82,7 @@ export const AddEditTargetCache = ({
           </GoAButton>
           <GoAButton
             type="primary"
-            testId="cache-save"
+            testId="target-save"
             disabled={!target.urn || validators.haveErrors()}
             onClick={() => {
               if (!isEdit) {
@@ -105,8 +105,8 @@ export const AddEditTargetCache = ({
         <GoAFormItem error={errors?.['urn']} label="Target" mb="3" mt="3">
           <GoADropdown
             relative={true}
-            name="cache-status"
-            testId="cache-status"
+            name="target"
+            testId="target"
             width="100%"
             disabled={isEdit}
             value={target.urn}
@@ -123,7 +123,8 @@ export const AddEditTargetCache = ({
 
         <GoAFormItem label="Url" mb="5" mt="5">
           <GoAInput
-            name="cache-url"
+            name="target-url"
+            testId="target-url"
             width="100%"
             disabled={true}
             value={tenantDirectory.find((directory) => directory.urn === target.urn)?.url}
@@ -132,15 +133,17 @@ export const AddEditTargetCache = ({
 
         <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="TTL" mb="3" mt="3">
           <GoAInput
-            name="cache-url-id"
+            name="target-ttl-seconds"
             type="number"
             min="0"
             max="2000000000"
+            step={1}
             value={target?.ttl?.toString()}
-            testId="cache-url-id"
+            testId="target-ttl-seconds"
             width="100%"
             onChange={(name, value) => {
-              setTarget({ ...target, ttl: Math.min(parseInt(value), 2000000000) });
+              const cleanedValue = value.replace(/[e.-]/g, '');
+              setTarget({ ...target, ttl: Math.min(parseInt(cleanedValue) || 0, 2000000000) });
             }}
             trailingContent="seconds"
           />
