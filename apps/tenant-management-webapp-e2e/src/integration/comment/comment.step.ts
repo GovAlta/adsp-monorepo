@@ -635,14 +635,14 @@ function findTopic(name, id) {
         .then((rows) => {
           rows.toArray().forEach((rowElement) => {
             let counter = 0;
-            if (rowElement.cells.length == 3) {
-              // only check rows with 3 cells (exclude details row)
+            if (rowElement.cells.length == 4) {
+              // only check rows with 4 cells
               // cy.log(rowElement.cells[0].innerHTML); // Print out the name cell innerHTML for debug purpose
-              if (rowElement.cells[0].innerHTML.includes(name)) {
+              if (rowElement.cells[1].innerHTML.includes(name)) {
                 counter = counter + 1;
               }
               // cy.log(rowElement.cells[1].innerHTML); // Print out the description cell innerHTML for debug purpose
-              if (rowElement.cells[1].innerHTML.includes(id)) {
+              if (rowElement.cells[2].innerHTML.includes(id)) {
                 counter = counter + 1;
               }
               Cypress.log({
