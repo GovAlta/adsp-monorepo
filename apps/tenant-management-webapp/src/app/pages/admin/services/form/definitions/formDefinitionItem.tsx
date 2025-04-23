@@ -32,8 +32,8 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
     <>
       <DetailsTagDefinitionIdHeading>Definition ID</DetailsTagDefinitionIdHeading>
       {formDefinition.id}
+      
       <DetailsTagHeading>Tags</DetailsTagHeading>
-
       {resourceTags === undefined && (
         <CenterPositionProgressIndicator>
           <GoACircularProgress visible={true} size="small" />
@@ -48,7 +48,6 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
             ))}
         </DetailsTagWrapper>
       )}
-    
     </>
   );
 };
