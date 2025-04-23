@@ -75,7 +75,7 @@ describe('addEditCacheTarget', () => {
 
     expect(getByText('Save')).toBeInTheDocument();
     expect(getByText('Cancel')).toBeInTheDocument();
-    const dropdown = baseElement.querySelector("goa-dropdown[testId='cache-status']");
+    const dropdown = baseElement.querySelector("goa-dropdown[testId='target']");
     expect(dropdown?.getAttribute('disabled')).not.toBe('true');
   });
   it('renders the edit window', async () => {
@@ -93,7 +93,7 @@ describe('addEditCacheTarget', () => {
 
     expect(getByText('Save')).toBeInTheDocument();
     expect(getByText('Cancel')).toBeInTheDocument();
-    const dropdown = baseElement.querySelector("goa-dropdown[testId='cache-status']");
+    const dropdown = baseElement.querySelector("goa-dropdown[testId='target']");
 
     expect(dropdown).toBeDisabled();
   });

@@ -21,6 +21,7 @@ Note: in some UI schemas you will see "ComponentProps" in the options element. C
 - [File Uploads](#target-uploads)
 - [Repeating Items](#target-lists)
 - [Steppers](#target-steppers)
+- [Validation](#target-validation)
 
 ### Common data formats {#target-common-formats}
 
@@ -480,12 +481,36 @@ For when you need to add instructions, or help, to guide users when they are fil
 
 Note: the optional labels are used as paragraph headings, when so desired. Nesting paragraphs (see below) can be used to generate subparagraphs, with appropriately sized subheadings. You can nest up to 3 levels.
 
+As of **Jan. 2025** you can use markdown for help content, significantly simplifying the process of adding help text. Please see the [section on help text](/adsp-monorepo/tutorials/form-service/instructions.html).
+
 <table>
   <tr>
     <th>Feature</th>
     <th>JSON schema</th>
     <th>UI schema</th>
   </tr>
+  <tr>
+    <td>Markdown</td>
+    <td>N/A</td>
+    <td><pre><code>
+{
+  "type": "HelpContent",
+  "label": "Paragraph Heading (bold, H2)",
+  "options": {
+    "markdown": true,
+    "help": [
+    "## Section Heading",
+    "This is a paragraph with some **bold** text.",
+    "This is another paragraph, with _italic_ text.",
+    "This paragraph has [a link](https://google.com)."
+    "- First bullet point",
+    "- Second bullet point"
+    ]
+  }
+}
+    </code></pre></td>
+  </tr>
+
   <tr>
     <td>Paragraph</td>
     <td>N/A</td>
@@ -809,3 +834,72 @@ Steppers allow you to partition your form into one or more steps, so users can f
 }
     </code></pre></td>
   </tr>
+</table>
+
+### Validation {#target-validation}
+
+Validation is most easily accomplished through the semantics of JSON Schemas. Note the "minLength" attribute of the name property. This is needed to address a fix needed when required string fields.
+
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>JSON schema</th>
+  </tr>
+  <tr>
+    <td>Required</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "isAlbertan": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "firstName",
+    "lastName"
+  ]
+}
+    </code></pre></td>
+  </tr>
+    <tr>
+    <td>Conditionally Required</td>
+    <td><pre><code>
+{
+  "type": "object",
+  "properties": {
+    "hasChild": {
+      "type": boolean
+    },
+    "childsName": {
+      "type": "string",
+    },
+  },
+  "required": [
+    "hasChild"
+  ],
+  "if": {
+    "properties": {
+      "hasChild": {
+        "const": true
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "childsName": {
+      "minLength": 1
+      }
+    },
+    "required": [
+      "childsName"
+    ]
+  }
+}
+    </code></pre></td>
+  </tr>
+</table>

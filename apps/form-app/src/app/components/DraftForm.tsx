@@ -112,15 +112,24 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
 
   const uploadFormFile = async (file: File, propertyId: string) => {
     const clonedFiles = { ...files };
+    const propertyIdRoot = propertyId.split('.')[0];
     const fileMetaData =
       anonymousApply === true
         ? (
             await dispatch(
-              uploadAnonymousFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form?.urn, file, propertyId })
+              uploadAnonymousFile({
+                typeId: FORM_SUPPORTING_DOCS,
+                recordId: form?.urn,
+                file,
+                propertyId: propertyIdRoot,
+              })
             ).unwrap()
           ).metadata
-        : (await dispatch(uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file, propertyId })).unwrap())
-            .metadata;
+        : (
+            await dispatch(
+              uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file, propertyId: propertyIdRoot })
+            ).unwrap()
+          ).metadata;
 
     clonedFiles[propertyId] = fileMetaData.urn;
     dispatch(formActions.updateFormFiles(clonedFiles));
@@ -134,7 +143,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     if (!localFileCache) {
       const fileData = await dispatch(downloadFile(file.urn)).unwrap();
       element.href = URL.createObjectURL(new Blob([fileData.data]));
-      element.download = fileData.metadata.find((file) => file.urn === file.urn)?.filename;
+      element.download = fileData.metadata.filename;
     } else {
       element.href = localFileCache;
       element.download = file.filename;

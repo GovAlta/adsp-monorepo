@@ -39,7 +39,7 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
         can be set.
       </Padding>
       <GoAButton
-        testId="add-definition"
+        testId="add-cache-target"
         onClick={() => {
           setOpenAddDefinition(true);
           setIsEdit(false);

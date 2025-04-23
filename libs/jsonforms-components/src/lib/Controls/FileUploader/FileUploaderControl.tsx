@@ -67,8 +67,8 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
           deleteTrigger(fileInList, propertyId);
         }
       }
-
-      uploadTrigger(file, propertyId);
+      // To support multipleFileUploader, the propertyId (path) is in propertyId.index format
+      uploadTrigger(file, `${propertyId}.${fileListLength}`);
 
       setDeleteHide(false);
     }

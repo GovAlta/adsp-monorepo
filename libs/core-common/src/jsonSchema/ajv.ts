@@ -12,7 +12,19 @@ export class AjvValidationService implements ValidationService {
 
   constructor(private logger: Logger) {
     addFormats(this.ajv);
-    this.ajv.addFormat('file-urn', /^urn:ads:platform:file-service:v[0-9]:\/files\/[a-zA-Z0-9.-]*$/);
+    this.ajv.addFormat('file-urn', {
+      type: 'string',
+      validate: (input) => {
+        const fileUrnRegExp = new RegExp('^urn:ads:platform:file-service:v[0-9]:/files/[a-zA-Z0-9.-]*$');
+        const fileUrns = input.split(';');
+        for (const urn of fileUrns) {
+          if (!fileUrnRegExp.test(urn)) {
+            return false;
+          }
+        }
+        return true;
+      },
+    });
     this.ajv.addFormat('time', /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/);
     this.ajv.addSchema(standardV1JsonSchema);
     this.ajv.addSchema(commonV1JsonSchema);

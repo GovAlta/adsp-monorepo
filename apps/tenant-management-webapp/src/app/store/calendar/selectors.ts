@@ -6,10 +6,11 @@ import { ModalState } from '@store/session/models';
 import { defaultCalendar } from '@store/calendar/models';
 
 export const selectCalendars = createSelector(
-  (state: RootState) => state?.calendarService?.calendars,
-  (calendars: CalendarObjectType) => {
-    return calendars;
-  }
+  (state: RootState) => ({
+    ...state?.calendarService?.calendars,
+    ...state?.calendarService?.coreCalendars,
+  }),
+  (calendars: CalendarObjectType) => calendars
 );
 
 export const selectCalendarsByName = createSelector(
