@@ -25,7 +25,6 @@ export interface FormDefinition {
   supportTopic: boolean;
   securityClassification?: SecurityClassification;
   resourceTags?: FormResourceTagResult[];
-  generatesPdf: boolean;
 }
 
 export interface FormResourceTagResponse {
@@ -76,8 +75,7 @@ export const defaultFormDefinition: FormDefinition = {
   submissionPdfTemplate: 'submitted-form',
   queueTaskToProcess: { queueName: '', queueNameSpace: '' } as QueueTaskToProcess,
   supportTopic: false,
-  securityClassification: SecurityClassification.ProtectedB,
-  generatesPdf: false,
+  securityClassification: SecurityClassification.ProtectedB
 };
 export interface Stream {
   namespace: string;
