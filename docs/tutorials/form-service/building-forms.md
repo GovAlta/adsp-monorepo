@@ -46,6 +46,68 @@ There is a known issue in jsonforms that allows an empty string to satisfy the r
 }
 ```
 
+#### Conditional Validation
+
+Form validation can be conditional; something that is especially important when working with hidden fields. For example, suppose a form has a boolean field called _hasChildren_. When a use checks it some hidden fields appear, like _childsFirstName_ and _childsLastName_. If the latter are marked as required and hasChildren remains false, the form validation would fail because the user couldn't enter any values for the hidden names. Even worse, there really wouldn't be any clues as to why the form was failing.
+
+To help manage these situations the form service has implemented _conditional validations_ for JSON Schemas, based on the if-then-else construct introduce in [json schema draft 7](https://json-schema.org/draft-07). With this we can specify such things as "if hasChildren is true then make _childsFirstName_ and _childsLastName_ required, otherwise they are not". The syntax in the JSON Schema would look like this:
+
+```json
+  "if": {
+    "properties": {
+      "hasChildren": {
+        "const": true
+      }
+    }
+  },
+  "then": {
+    "required": [
+      "childsFirstName",
+      "childsLastName"
+    ]
+  }
+```
+
+"if" and "then" are treated as attributes of the schema, and can appear anywhere at the top level (same level as "required" or "properties"). However, since they are _properties_ there can only be one "if" or "else" at that level, which limits their usefulness. If you have more than one dependent validation though, you can wrap them in an "allOf" property, like so:
+
+```json
+"allOf": [
+  {
+    "if": {
+      "properties": {
+        "hasChildren": {
+          "const": true
+        }
+      }
+    },
+    "then": {
+      "required": [
+        "childsFirstName",
+        "childsLastName"
+      ]
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "category": {
+          "const": "Highway Issues"
+        }
+      }
+    },
+    "then": {
+      "required": [
+        "highwayIssues"
+      ]
+    }
+  }
+]
+```
+
+This says that if _hasChildren_ is checked then child names are required, and if _category_ has the value _Highway Issues_ then the subcategory _highwayIssues_ is required. You can add as many dependencies of this type as needed.
+
+You can conditionally specify pretty much any validation that is part of the JSON schema, such as patterns, length, or even format.
+
 ### Repeating Items
 
 You will sometimes need to capture [lists of information](/adsp-monorepo/tutorials/form-service/repeated-items.html) in a form. Lists contain a variable number of items, each containing the necessary details. For example, an application for a Farmers Market License may require list of vendors, each with contact information, a classification, and their expected yearly revenue. Users are able to add one item at a time and fill in the details as needed.
