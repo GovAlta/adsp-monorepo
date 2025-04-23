@@ -1,6 +1,6 @@
 import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components';
 import { Visible } from '../../util';
-import { PageBorder, PageRenderPadding } from './styled-components';
+import { PageBorder, PageRenderPadding, PageRenderPaddingBottom } from './styled-components';
 import FormStepperPageReviewer from './PageStepperReviewControl';
 import { RenderStepElements, StepProps } from './RenderStepElements';
 import { CategorizationElement, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
@@ -102,6 +102,9 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
 
             {isOnReview && (
               <div data-testid="stepper-pages-review-page">
+                <PageRenderPaddingBottom>
+                  <BackButton testId="review-back-button" link={() => goToTableOfContext()} text="Back" />
+                </PageRenderPaddingBottom>
                 <FormStepperPageReviewer {...{ ...props.categoryProps, navigationFunc: goToPage }} />
                 <PageRenderPadding>
                   <GoAButtonGroup alignment="end">
