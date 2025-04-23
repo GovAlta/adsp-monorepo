@@ -8,7 +8,7 @@ import { GoAContextMenuIcon } from '@components/ContextMenu';
 
 interface CalendarItemProps {
   calendar: CalendarItem;
-  onEdit?: (calendar: CalendarItem) => void;
+  onEdit?: (calendar: CalendarItem, tenantMode: boolean) => void;
   onDelete?: (calendar: CalendarItem) => void;
   tenantMode: boolean;
 }
@@ -26,16 +26,17 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
 
       <td headers="calendar-description">{calendar.description}</td>
       <td headers="calendar-actions">
-        {tenantMode && (
-          <div>
-            <GoAContextMenuIcon
-              type="create"
-              title="Edit"
-              testId={`calendar-edit-${calendar.name}`}
-              onClick={() => {
-                onEdit(calendar);
-              }}
-            />
+        <div>
+          <GoAContextMenuIcon
+            type={tenantMode ? 'create' : 'eye'}
+            title={tenantMode ? 'Edit' : 'View'}
+            testId={`calendar-edit-${calendar.name}`}
+            onClick={() => {
+              onEdit(calendar, tenantMode);
+            }}
+          />
+
+          {tenantMode && (
             <GoAContextMenuIcon
               testId="delete-icon"
               title="Delete"
@@ -44,8 +45,8 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
                 onDelete(calendar);
               }}
             />
-          </div>
-        )}
+          )}
+        </div>
       </td>
     </tr>
   );
@@ -53,7 +54,7 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
 
 interface calendarTableProps {
   calendars: Record<string, CalendarItem>;
-  onEdit?: (calendar: CalendarItem) => void;
+  onEdit?: (calendar: CalendarItem, tenantMode: boolean) => void;
   onDelete?: (calendar: CalendarItem) => void;
   tenantMode?: boolean;
 }
