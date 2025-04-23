@@ -19,6 +19,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
   const [openEditCalendar, setOpenEditCalendar] = useState(false);
   const [selectedCalendarName, setSelectedCalendarName] = useState<string | undefined>();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [modalTenantMode, setModalTenantMode] = useState(true);
 
   useEffect(() => {
     dispatch(fetchCalendars());
@@ -45,8 +46,9 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
     document.body.style.overflow = 'unset';
   };
 
-  const onEdit = (calendar) => {
+  const onEdit = (calendar, tenantMode) => {
     setSelectedCalendarName(calendar.name);
+    setModalTenantMode(tenantMode);
     setOpenEditCalendar(true);
   };
 
@@ -91,6 +93,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
           onCancel={() => {
             reset();
           }}
+          tenantMode={modalTenantMode}
           onSave={(calendar) => dispatch(UpdateCalendar(calendar))}
         />
       )}
