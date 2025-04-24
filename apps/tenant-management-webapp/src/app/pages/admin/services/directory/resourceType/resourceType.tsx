@@ -20,6 +20,8 @@ export const ResourceTypePage = (): JSX.Element => {
   const [selectedType, setSelectedType] = useState<ResourceType>(defaultResourceType);
   const [urn, setUrn] = useState('');
   const resourceTypes = useSelector((state: RootState) => state.directory.resourceType);
+  const platformGroup: Record<string, ResourceType[]> = {};
+  const othersGroup: Record<string, ResourceType[]> = {};
 
   const dispatch = useDispatch();
   useEffect(() => {
@@ -31,10 +33,7 @@ export const ResourceTypePage = (): JSX.Element => {
     setSelectedType(defaultResourceType);
   }, []);
 
-  const groupResources = useCallback((data: Record<string, ResourceType[]>) => {
-    const platformGroup: Record<string, ResourceType[]> = {};
-    const othersGroup: Record<string, ResourceType[]> = {};
-
+  const groupResources = (data: Record<string, ResourceType[]>) => {
     Object.entries(data).forEach(([key, value]) => {
       if (key.includes(':platform:')) {
         platformGroup[key] = value;
@@ -42,9 +41,7 @@ export const ResourceTypePage = (): JSX.Element => {
         othersGroup[key] = value;
       }
     });
-
-    return { ...othersGroup, ...platformGroup };
-  }, []);
+  };
 
   const groupedResourceTypes = useMemo(
     () => resourceTypes && groupResources(resourceTypes),
@@ -129,33 +126,72 @@ export const ResourceTypePage = (): JSX.Element => {
         onDelete={handleDelete}
       />
 
-      <div>
-        {groupedResourceTypes &&
-          Object.keys(groupedResourceTypes).map((group, value) => (
-            <TableDiv key={group}>
-              <NameDiv>{group}</NameDiv>
-              <DataTable data-testid="resource-type-table" id="resource-type-table">
-                <thead data-testid="resource-type-table-header">
-                  <tr>
-                    <th id="type" data-testid="resource-type-table-header-name">
-                      Type
-                    </th>
-                    <th id="description">Matcher</th>
-                    <th id="actions">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <ResourceTypeComponent
-                    resourceType={resourceTypes[group]}
-                    urn={group}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                  />
-                </tbody>
-              </DataTable>
-            </TableDiv>
-          ))}
-      </div>
+      {othersGroup && (
+        <div>
+          <GroupedResourceTypesTable
+            groupedResourceTypes={othersGroup}
+            resourceTypes={resourceTypes}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        </div>
+      )}
+      {platformGroup && (
+        <div>
+          <h2>Core Resource Type</h2>
+          <GroupedResourceTypesTable
+            groupedResourceTypes={platformGroup}
+            resourceTypes={resourceTypes}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        </div>
+      )}
     </section>
+  );
+};
+
+interface GroupedResourceTypesTableProps {
+  groupedResourceTypes: Record<string, ResourceType[]>;
+  resourceTypes: Record<string, ResourceType[]>;
+  onEdit: (urn: string, resource: ResourceType) => void;
+  onDelete: (urn: string, resource: ResourceType) => void;
+}
+
+const GroupedResourceTypesTable: React.FC<GroupedResourceTypesTableProps> = ({
+  groupedResourceTypes,
+  resourceTypes,
+  onEdit,
+  onDelete,
+}) => {
+  if (!groupedResourceTypes) return null;
+
+  return (
+    <>
+      {Object.keys(groupedResourceTypes).map((group) => (
+        <TableDiv key={group}>
+          <NameDiv>{group}</NameDiv>
+          <DataTable data-testid="resource-type-table" id="resource-type-table">
+            <thead data-testid="resource-type-table-header">
+              <tr>
+                <th id="type" data-testid="resource-type-table-header-name">
+                  Type
+                </th>
+                <th id="description">Matcher</th>
+                <th id="actions">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ResourceTypeComponent
+                resourceType={resourceTypes[group]}
+                urn={group}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            </tbody>
+          </DataTable>
+        </TableDiv>
+      ))}
+    </>
   );
 };
