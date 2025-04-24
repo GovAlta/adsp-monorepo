@@ -30,6 +30,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const deleteTriggerFunction = enumerators?.functions?.get('delete-file');
   const deleteTrigger = deleteTriggerFunction && deleteTriggerFunction();
   const fileListValue = enumerators?.data.get('file-list');
+  const [loadingFileName, setLoadingFileName] = useState<string | undefined>(undefined);
 
   const countries = [
     'Argentina',
@@ -67,9 +68,10 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
           deleteTrigger(fileInList, propertyId);
         }
       }
+      setLoadingFileName(file?.name);
       // To support multipleFileUploader, the propertyId (path) is in propertyId.index format
-      uploadTrigger(file, `${propertyId}.${fileListLength}`);
 
+      uploadTrigger(file, `${propertyId}.${fileListLength}`);
       setDeleteHide(false);
     }
   }
@@ -95,6 +97,10 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   }
 
   useEffect(() => {
+    if (loadingFileName !== undefined) {
+      setLoadingFileName(undefined);
+    }
+
     // UseEffect is required because not having it causes a react update error, but
     // it doesn't function correctly within jsonforms unless there is a minor delay here
     const delayedFunction = () => {
@@ -194,10 +200,10 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
       )}
       {helpText && <HelpText>{helpText}</HelpText>}
       <div>
-        {Array.isArray(data) && data[0] === 'Loading' ? (
-          <GoAModal open={Array.isArray(data) && data[0] === 'Loading'}>
+        {loadingFileName !== undefined ? (
+          <GoAModal open={loadingFileName !== undefined}>
             <div className="align-center">
-              <GoACircularProgress visible={true} message={`Uploading ${data[1]}`} size="large" />
+              <GoACircularProgress visible={true} message={`Uploading ${loadingFileName}`} size="large" />
             </div>
           </GoAModal>
         ) : (
