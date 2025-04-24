@@ -4,9 +4,7 @@ class CachePage {
   }
 
   cacheOverviewCachetargetsContent(sectionName) {
-    return cy.xpath(
-      `//*[@data-testid="cache-service-overview-tab-overview"]//h2[text()="${sectionName}"]/following-sibling::p`
-    );
+    return cy.xpath(`//*[@data-testid="cache-service-overview-tab"]//h2[text()="${sectionName}"]/following-sibling::p`);
   }
 }
 export default CachePage;
