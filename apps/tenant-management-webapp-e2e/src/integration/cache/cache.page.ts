@@ -40,5 +40,13 @@ class CachePage {
   targetModalTtlFieldTrailingContent() {
     return cy.xpath('//goa-form-item[@label="TTL"]/goa-input[@testid="cache-url-id"]/div[@slot="trailingContent"]');
   }
+
+  targetModalTargetDropdown() {
+    return cy.xpath('//goa-dropdown[@testid="target"]');
+  }
+
+  targetModalTargetDropdownItems() {
+    return cy.xpath('//goa-dropdown[@testid="target"]/goa-dropdown-item');
+  }
 }
 export default CachePage;

@@ -59,3 +59,9 @@ Then('the user views {string} as the default value for TTL in Add target modal',
 Then('the user views {string} as TTL unit in Add target modal', function (unitString) {
   cacheObj.targetModalTtlFieldTrailingContent().invoke('text').should('eq', unitString);
 });
+
+When('the user enters {string}, {string} in Add target modal', function (targetName: string, ttlSeconds) {
+  cacheObj.targetModalTargetDropdown().shadow().find('input').click({ force: true });
+  cacheObj.targetModalTargetDropdown().shadow().find('li').contains(targetName).click({ force: true });
+  cy.wait(2000);
+});
