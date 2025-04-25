@@ -217,6 +217,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
     }),
   };
 
+  const hasNoElements = () => {
+    const hasNoLayoutElements =
+      (uischema as Layout)?.elements?.length === 0 && (uischema as Layout)?.options?.detail?.elements?.length === 0;
+
+    return hasNoLayoutElements;
+  };
+
   return (
     <>
       {
@@ -255,7 +262,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
         })
       }
 
-      {uiSchemaElementsForNotDefined?.elements?.length > 0 && (
+      {hasNoElements() && uiSchemaElementsForNotDefined?.elements?.length > 0 && (
         <JsonFormsDispatch
           schema={schema}
           uischema={uiSchemaElementsForNotDefined}
@@ -306,12 +313,16 @@ const NonEmptyRowComponent = ({
   cells,
   uischema,
 }: NonEmptyRowProps & WithDeleteDialogSupport) => {
+  const isHorizontal = uischema?.options?.detail?.type === 'HorizontalLayout';
+
   return (
     <div key={childPath}>
-      {enabled ? (
+      {enabled && isHorizontal ? (
         <GoAGrid minChildWidth="30ch">
           {GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}
         </GoAGrid>
+      ) : enabled && !isHorizontal ? (
+        <>{GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}</>
       ) : null}
     </div>
   );
