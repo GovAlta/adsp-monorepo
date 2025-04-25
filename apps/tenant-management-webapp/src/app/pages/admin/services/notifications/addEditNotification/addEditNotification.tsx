@@ -46,6 +46,18 @@ const channels = [
   { value: 'sms', title: 'SMS' },
 ];
 
+const NotificationType = {
+  SUBSCRIBERS: 0,
+  CONTACT: 1,
+  CONTACT_EVENT_PAYLOAD: 2,
+};
+
+const NotificationTypeValue = {
+  SUBSCRIBERS: 'Notify subscribers',
+  CONTACT: 'Notify contact',
+  CONTACT_EVENT_PAYLOAD: 'Notify contact in event payload at Json schema path',
+};
+
 export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormProps> = ({
   initialValue,
   onCancel,
@@ -62,7 +74,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   const typeObjects = Object.values({ ...notificationTypes, ...core });
   const typeNames = typeObjects.map((type: NotificationItem) => type.name);
   const checkForContact = characterCheck(validationPattern.validContact);
-  const [isNotifyAddress, setIsNotifyAddress] = useState(false);
+  const [isNotifyAddressSetting, setIsNotifyAddressSetting] = useState(NotificationType.SUBSCRIBERS);
   const [addressPathChanged, setAddressPathChanged] = useState(false);
 
   useEffect(() => {
@@ -71,9 +83,11 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   }, [initialValue]);
 
   useEffect(() => {
-    setIsNotifyAddress(
-      (type?.address && type.address.length > 0) || (type?.addressPath && type.addressPath.length > 0)
-    );
+    if (type?.addressPath && type.addressPath.length > 0) {
+      setIsNotifyAddressSetting(NotificationType.CONTACT_EVENT_PAYLOAD);
+    } else if (type?.address && type.address.length > 0) {
+      setIsNotifyAddressSetting(NotificationType.CONTACT);
+    }
   }, [type]);
 
   const roleNames = realmRoles
@@ -135,7 +149,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
       return;
     }
 
-    if (!isNotifyAddress) {
+    if (isNotifyAddressSetting === NotificationType.SUBSCRIBERS) {
       type.address = null;
       type.addressPath = null;
     }
@@ -173,7 +187,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               onClick={() => {
                 setType(initialValue);
                 validators.clear();
-                setIsNotifyAddress(false);
+                setIsNotifyAddressSetting(NotificationType.SUBSCRIBERS);
                 setAddressPathChanged(false);
                 onCancel();
               }}
@@ -242,40 +256,42 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             onChange={(name, value) => {}}
           />
         </GoAFormItem>
-        <GoAFormItem error={errors?.['channels']} label="Select Notification Channels">
-          <div key="select channel" style={{ display: 'flex', flexDirection: 'row' }}>
-            {channels.map((channel, key) => {
-              return (
-                <div key={key}>
-                  <div style={{ paddingRight: '20px' }}>
-                    <GoACheckbox
-                      name={channel.value}
-                      checked={
-                        type.channels?.map((value) => value).includes(channel.value) || channel.value === 'email'
-                      }
-                      disabled={isNotifyAddress || channel.value === 'email'}
-                      onChange={() => {
-                        const channels = type.channels || ['email'];
-                        const checked = channels.findIndex((ch) => ch === channel.value);
-                        if (checked === -1) {
-                          channels.push(channel.value);
-                        } else {
-                          channels.splice(checked, 1);
+        {isNotifyAddressSetting === NotificationType.SUBSCRIBERS && (
+          <GoAFormItem error={errors?.['channels']} label="Select Notification Channels">
+            <div key="select channel" style={{ display: 'flex', flexDirection: 'row' }}>
+              {channels.map((channel, key) => {
+                return (
+                  <div key={key}>
+                    <div style={{ paddingRight: '20px' }}>
+                      <GoACheckbox
+                        name={channel.value}
+                        checked={
+                          type.channels?.map((value) => value).includes(channel.value) || channel.value === 'email'
                         }
+                        disabled={channel.value === 'email'}
+                        onChange={() => {
+                          const channels = type.channels || ['email'];
+                          const checked = channels.findIndex((ch) => ch === channel.value);
+                          if (checked === -1) {
+                            channels.push(channel.value);
+                          } else {
+                            channels.splice(checked, 1);
+                          }
 
-                        setType({ ...type, channels: channels });
-                      }}
-                      testId="manage-subscriptions-checkbox"
-                      value="manageSubscribe"
-                      ariaLabel={`manage-subscriptions-checkbox`}
-                      text={channel.title}
-                    />
+                          setType({ ...type, channels: channels });
+                        }}
+                        testId="manage-subscriptions-checkbox"
+                        value="manageSubscribe"
+                        ariaLabel={`manage-subscriptions-checkbox`}
+                        text={channel.title}
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </GoAFormItem>
+                );
+              })}
+            </div>
+          </GoAFormItem>
+        )}
 
         <div data-testid="manage-subscriptions-checkbox-wrapper">
           <GoAFormItem label="">
@@ -316,59 +332,62 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
         />
 
         <GoAFormItem label="Select Notify subscribers or Notify contact" error={errors?.['priority']}>
-          <GoARadioGroup
-            name="notify"
-            testId="select-type-notification-radio-group"
-            ariaLabel="select-type-notification-radio-group"
-            value={isNotifyAddress ? 'Notify contact' : 'Notify subscribers'}
-            onChange={(_, value) => {
-              setIsNotifyAddress(!isNotifyAddress);
-            }}
-          >
-            <GoARadioItem name="notify" value="Notify subscribers" />
-            <GoARadioItem name="notify" value="Notify contact" />
-          </GoARadioGroup>
-        </GoAFormItem>
-        {isNotifyAddress && (
-          <div>
-            <GoAFormItem label="Notify this contact" error={errors?.['address']}>
-              <GoAInput
-                type="text"
-                name="address"
-                value={type.address}
-                testId={`address-notification-modal-input`}
-                aria-label="input-address"
-                width="60%"
-                onChange={(_, value) => {
-                  const validations = {
-                    address: value,
-                  };
-                  validators.remove('address');
-                  validators.checkAll(validations);
-                  type.address = value;
-                }}
-              />
-            </GoAFormItem>
-            <GoAFormItem label="Notify contact in event payload at Json schema path">
-              <GoAInput
-                type="text"
-                name="addressPath"
-                value={type.addressPath}
-                testId={`address-notification-modal-input`}
-                aria-label="input-path-address"
-                width="60%"
-                onChange={(_, value) => {
-                  setType({ ...type, addressPath: value });
-                  if (value !== initialValue?.addressPath) {
-                    setAddressPathChanged(true);
-                  }
-                }}
-              />
-            </GoAFormItem>
+          <div style={{ marginBottom: '1rem' }}>
+            <GoARadioGroup
+              name="notify"
+              testId="select-type-notification-radio-group"
+              ariaLabel="select-type-notification-radio-group"
+              value={Object.keys(NotificationType).find((key) => NotificationType[key] === isNotifyAddressSetting)} //
+              onChange={(_, value) => {
+                setIsNotifyAddressSetting(NotificationType[value]);
+              }}
+            >
+              {Object.keys(NotificationType).map((label, key) => (
+                <GoARadioItem key={key} name="notify" label={NotificationTypeValue[label]} value={label} />
+              ))}
+            </GoARadioGroup>
           </div>
+        </GoAFormItem>
+        {isNotifyAddressSetting === NotificationType.CONTACT && (
+          <GoAFormItem label="Notify this contact" error={errors?.['address']}>
+            <GoAInput
+              type="text"
+              name="address"
+              value={type.address}
+              testId={`address-notification-modal-input`}
+              aria-label="input-address"
+              width="60%"
+              onChange={(_, value) => {
+                const validations = {
+                  address: value,
+                };
+                validators.remove('address');
+                validators.checkAll(validations);
+                type.address = value;
+              }}
+            />
+          </GoAFormItem>
+        )}
+        {isNotifyAddressSetting === NotificationType.CONTACT_EVENT_PAYLOAD && (
+          <GoAFormItem label="Notify contact in event payload at Json schema path">
+            <GoAInput
+              type="text"
+              name="addressPath"
+              value={type.addressPath}
+              testId={`address-notification-modal-input`}
+              aria-label="input-path-address"
+              width="60%"
+              onChange={(_, value) => {
+                setType({ ...type, addressPath: value });
+                if (value !== initialValue?.addressPath) {
+                  setAddressPathChanged(true);
+                }
+              }}
+            />
+          </GoAFormItem>
         )}
         {tenantClients &&
-          !isNotifyAddress &&
+          isNotifyAddressSetting === NotificationType.SUBSCRIBERS &&
           !type.publicSubscribe &&
           elements.map((e, key) => {
             return <SubscribeRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
