@@ -7,7 +7,7 @@ import { JsonFormContext } from '../../Context';
 
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
 import { DeleteFileModal } from './DeleteFileModal';
-import { convertToSentenceCase } from '../../util';
+import { convertToSentenceCase, Visible } from '../../util';
 
 interface FileUploadAdditionalProps {
   isStepperReview?: boolean;
@@ -51,7 +51,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   // eslint-disable-next-line
   const fileList = fileListValue && (fileListValue() as Record<string, any>);
 
-  const { required, label, i18nKeyPrefix } = props;
+  const { required, label, i18nKeyPrefix, visible } = props;
 
   const propertyId = i18nKeyPrefix as string;
 
@@ -187,40 +187,42 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   };
 
   return (
-    <FileUploaderStyle className="FileUploader">
-      {required ? (
-        <GoAFormItem label={sentenceCaseLabel} requirement="required"></GoAFormItem>
-      ) : (
-        <div className="label">{sentenceCaseLabel}</div>
-      )}
-      {!readOnly && (
-        <div className="file-upload">
-          <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} maxFileSize={maxFileSize} accept={accept} />
-        </div>
-      )}
-      {helpText && <HelpText>{helpText}</HelpText>}
-      <div>
-        {loadingFileName !== undefined ? (
-          <GoAModal open={loadingFileName !== undefined}>
-            <div className="align-center">
-              <GoACircularProgress visible={true} message={`Uploading ${loadingFileName}`} size="large" />
-            </div>
-          </GoAModal>
+    <Visible visible={visible}>
+      <FileUploaderStyle className="FileUploader">
+        {required ? (
+          <GoAFormItem label={sentenceCaseLabel} requirement="required"></GoAFormItem>
         ) : (
-          <div>
-            {multiFileUploader
-              ? fileList &&
-                (fileList[props.i18nKeyPrefix as string] || []).map((_: File, index: number) => {
-                  return <DownloadFileWidget index={index} />;
-                })
-              : fileList &&
-                !deleteHide &&
-                getFile(fileListLength - 1) &&
-                fileListLength >= 0 && <DownloadFileWidget index={fileListLength - 1} />}
+          <div className="label">{sentenceCaseLabel}</div>
+        )}
+        {!readOnly && (
+          <div className="file-upload">
+            <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} maxFileSize={maxFileSize} accept={accept} />
           </div>
         )}
-      </div>
-    </FileUploaderStyle>
+        {helpText && <HelpText>{helpText}</HelpText>}
+        <div>
+          {loadingFileName !== undefined ? (
+            <GoAModal open={loadingFileName !== undefined}>
+              <div className="align-center">
+                <GoACircularProgress visible={true} message={`Uploading ${loadingFileName}`} size="large" />
+              </div>
+            </GoAModal>
+          ) : (
+            <div>
+              {multiFileUploader
+                ? fileList &&
+                  (fileList[props.i18nKeyPrefix as string] || []).map((_: File, index: number) => {
+                    return <DownloadFileWidget index={index} />;
+                  })
+                : fileList &&
+                  !deleteHide &&
+                  getFile(fileListLength - 1) &&
+                  fileListLength >= 0 && <DownloadFileWidget index={fileListLength - 1} />}
+            </div>
+          )}
+        </div>
+      </FileUploaderStyle>
+    </Visible>
   );
 };
 
