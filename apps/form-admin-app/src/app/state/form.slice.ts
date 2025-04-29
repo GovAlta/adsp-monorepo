@@ -1076,18 +1076,20 @@ export const formFilesSelector = createSelector(
   formSelector,
   (state: AppState) => state.file.metadata,
   ({ form }, metadata) =>
-    Object.entries(form?.files || {}).reduce((files, [key, urn]) => {
-      const root = key.slice(0, key.lastIndexOf('.'));
-      const fileItems = urn
-        ?.split(';')
-        .map((u) => metadata[u])
-        .filter((f) => f !== undefined);
+    Object.entries(form?.files || {})
+      .filter(([key, urn]) => typeof urn === 'string')
+      .reduce((files, [key, urn]) => {
+        const root = key.slice(0, key.lastIndexOf('.'));
+        const fileItems = urn
+          ?.split(';')
+          .map((u) => metadata[u])
+          .filter((f) => f !== undefined);
 
-      return {
-        ...files,
-        [root]: fileItems,
-      };
-    }, {})
+        return {
+          ...files,
+          [root]: fileItems,
+        };
+      }, {})
 );
 
 export const submissionSelector = createSelector(
