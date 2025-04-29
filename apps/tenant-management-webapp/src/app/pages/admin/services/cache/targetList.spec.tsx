@@ -78,7 +78,7 @@ describe('target Component', () => {
 
     await fireEvent.click(getByText('Targets'));
 
-    const eyes = baseElement.querySelectorAll("goa-icon-button[testId='cache-toggle-details-visibility']");
+    const eyes = baseElement.querySelectorAll("goa-icon-button[testId='target-toggle-details-visibility']");
     const shadowDeleteBtn = eyes[0].shadowRoot?.querySelector('button');
     expect(shadowDeleteBtn).not.toBeNull();
     fireEvent(eyes[0]!, new CustomEvent('_click'));
