@@ -43,7 +43,7 @@ export const CacheTargetItem = ({
                 onClick={() => {
                   setShowDetails(!showDetails);
                 }}
-                testId="cache-toggle-details-visibility"
+                testId="target-toggle-details-visibility"
               />
             </GoAContextMenu>
             {tenantMode && (
