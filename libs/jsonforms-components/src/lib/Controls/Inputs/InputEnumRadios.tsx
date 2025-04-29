@@ -5,7 +5,7 @@ import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jso
 import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { WithOptionLabel } from '../../util';
+import { Visible, WithOptionLabel } from '../../util';
 import { GoARadioGroup, GoARadioItem } from '@abgov/react-components';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 
@@ -14,7 +14,7 @@ type RadioGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInput
 export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
   const {
     data,
-    className,
+    visible,
     id,
     enabled,
     schema,
@@ -31,28 +31,30 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
   const enumData = schema?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
   return (
-    <GoARadioGroup
-      error={isVisited && errors.length > 0}
-      name={`${options || appliedUiSchemaOptions.label}`}
-      testId={`${label || id}-jsonforms-radio`}
-      value={data}
-      disabled={!enabled}
-      {...appliedUiSchemaOptions}
-      onChange={(name: string, value: string) => handleChange(path, value)}
-      {...uischema?.options?.componentProps}
-    >
-      {enumData.map((enumValue, index) => {
-        return (
-          <GoARadioItem
-            key={`list-item-${enumValue}-${index}`}
-            name={enumValue}
-            value={`${enumValue}`}
-            {...appliedUiSchemaOptions}
-            label={enumValue}
-          />
-        );
-      })}
-    </GoARadioGroup>
+    <Visible visible={visible}>
+      <GoARadioGroup
+        error={isVisited && errors.length > 0}
+        name={`${options || appliedUiSchemaOptions.label}`}
+        testId={`${label || id}-jsonforms-radio`}
+        value={data}
+        disabled={!enabled}
+        {...appliedUiSchemaOptions}
+        onChange={(name: string, value: string) => handleChange(path, value)}
+        {...uischema?.options?.componentProps}
+      >
+        {enumData.map((enumValue, index) => {
+          return (
+            <GoARadioItem
+              key={`list-item-${enumValue}-${index}`}
+              name={enumValue}
+              value={`${enumValue}`}
+              {...appliedUiSchemaOptions}
+              label={enumValue}
+            />
+          );
+        })}
+      </GoARadioGroup>
+    </Visible>
   );
 };
 

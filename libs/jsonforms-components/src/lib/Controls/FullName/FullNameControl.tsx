@@ -3,6 +3,7 @@ import { ControlProps, isEnabled } from '@jsonforms/core';
 import { GoAFormItem, GoAGrid } from '@abgov/react-components';
 import { NameInputs } from './FullNameInputs';
 import { TextWrapDiv } from '../AddressLookup/styled-components';
+import { Visible } from '../../util';
 
 type FullNameProps = ControlProps;
 export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
@@ -46,8 +47,9 @@ export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
     </GoAGrid>
   );
 };
+
 export const FullNameControl = (props: FullNameProps): JSX.Element => {
-  const { data, path, schema, handleChange, enabled } = props;
+  const { data, path, schema, handleChange, enabled, visible } = props;
   const requiredFields = (schema as { required: string[] }).required;
   const defaultName = {};
   const [nameData, setNameData] = useState(data || defaultName);
@@ -64,14 +66,16 @@ export const FullNameControl = (props: FullNameProps): JSX.Element => {
   };
 
   return (
-    <NameInputs
-      firstName={nameData.firstName}
-      middleName={nameData.middleName}
-      lastName={nameData.lastName}
-      handleInputChange={handleInputChange}
-      data={data}
-      disabled={!enabled}
-      requiredFields={requiredFields}
-    />
+    <Visible visible={visible}>
+      <NameInputs
+        firstName={nameData.firstName}
+        middleName={nameData.middleName}
+        lastName={nameData.lastName}
+        handleInputChange={handleInputChange}
+        data={data}
+        disabled={!enabled}
+        requiredFields={requiredFields}
+      />
+    </Visible>
   );
 };

@@ -11,6 +11,7 @@ import { Dropdown } from '../../Components/Dropdown';
 import { sinTitle } from '../../common/Constants';
 
 import { Item } from '../../Components/DropDownTypes';
+import { Visible } from '../../util';
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
 function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undefined): RegisterConfig | undefined {
@@ -40,8 +41,21 @@ export const formatSin = (value: string) => {
 };
 
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
-  const { data, config, id, enabled, uischema, schema, label, path, handleChange, errors, isVisited, setIsVisited } =
-    props;
+  const {
+    data,
+    config,
+    id,
+    enabled,
+    uischema,
+    schema,
+    label,
+    path,
+    handleChange,
+    visible,
+    errors,
+    isVisited,
+    setIsVisited,
+  } = props;
 
   const width = uischema?.options?.componentProps?.width ?? '100%';
   const registerCtx = useContext(JsonFormsRegisterContext);
@@ -96,7 +110,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
 
   return (
-    <div>
+    <Visible visible={visible}>
       {mergedOptions.length > 0 ? (
         <Dropdown
           items={mergedOptions as unknown as Item[]}
@@ -153,7 +167,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
           {...uischema?.options?.componentProps}
         />
       )}
-    </div>
+    </Visible>
   );
 };
 

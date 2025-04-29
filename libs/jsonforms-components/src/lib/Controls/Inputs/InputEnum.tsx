@@ -3,7 +3,7 @@ import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith } f
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { WithOptionLabel } from '../../util';
+import { Visible, WithOptionLabel } from '../../util';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import { RegisterDataType } from '../../Context/register';
 import { callout } from '../../Additional/GoACalloutControl';
@@ -22,7 +22,7 @@ function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undef
 }
 
 export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
-  const { data, enabled, path, handleChange, options, config, label, uischema, required, setIsVisited, isVisited } =
+  const { data, enabled, path, handleChange, options, visible, label, uischema, required, setIsVisited, isVisited } =
     props;
 
   const registerCtx = useContext(JsonFormsRegisterContext);
@@ -71,7 +71,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
   }, [registerCtx, registerConfig]);
 
   return (
-    <div>
+    <Visible visible={visible}>
       {error.length > 0 ? (
         callout({ message: error })
       ) : (
@@ -88,7 +88,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
           }}
         />
       )}
-    </div>
+    </Visible>
   );
 };
 
