@@ -3,7 +3,7 @@ import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith } f
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { Visible, WithOptionLabel } from '../../util';
+import { WithOptionLabel } from '../../util';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import { RegisterDataType } from '../../Context/register';
 import { callout } from '../../Additional/GoACalloutControl';
@@ -22,8 +22,7 @@ function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undef
 }
 
 export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
-  const { data, enabled, path, handleChange, options, visible, label, uischema, required, setIsVisited, isVisited } =
-    props;
+  const { data, enabled, path, handleChange, options, label, uischema, required, setIsVisited, isVisited } = props;
 
   const registerCtx = useContext(JsonFormsRegisterContext);
   const registerConfig: RegisterConfig | undefined = fetchRegisterConfigFromOptions(props.uischema?.options?.register);

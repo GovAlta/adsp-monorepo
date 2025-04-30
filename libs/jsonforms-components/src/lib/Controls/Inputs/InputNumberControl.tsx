@@ -4,13 +4,12 @@ import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { onBlurForNumericControl, onChangeForNumericControl } from '../../util/inputControlUtils';
-import { Visible } from '../../util';
 
 export type GoAInputNumberProps = CellProps & WithClassname & WithInputProps;
 
 export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   // eslint-disable-next-line
-  const { data, config, id, enabled, uischema, schema, label, isVisited, errors, visible, setIsVisited } = props;
+  const { data, config, id, enabled, uischema, schema, label, isVisited, errors, setIsVisited } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
   const InputValue = data && data !== undefined ? data : '';
