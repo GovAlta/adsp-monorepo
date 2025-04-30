@@ -19,6 +19,17 @@ describe('addEditCacheTarget', () => {
         docServiceApiUrl: 'http://mock-dock-service.com',
       },
     },
+    event: {
+      definitions: {
+        'foo:bar': {
+          namespace: 'foo',
+          name: 'bar',
+          description: 'foobar',
+          isCore: false,
+          payloadSchema: {},
+        },
+      },
+    },
     cache: {
       targets: {
         tenant: {
