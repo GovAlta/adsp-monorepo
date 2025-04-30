@@ -1,12 +1,15 @@
 export interface CacheTarget {
   urn: string;
   ttl: number;
-  invalidationEvents?: Array<{
-    namespace: string;
-    name: string;
-    resourceIdPath: string | string[];
-  }>;
+  invalidationEvents?: InvalidationEvent[];
 }
+
+export interface InvalidationEvent {
+  namespace: string;
+  name: string;
+  resourceIdPath?: string | string[];
+}
+
 export const defaultCacheTarget: CacheTarget = {
   urn: '',
   ttl: 900,

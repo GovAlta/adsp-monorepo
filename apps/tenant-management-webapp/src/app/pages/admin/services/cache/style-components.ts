@@ -13,3 +13,13 @@ export const EntryDetail = styled.div`
   padding: var(--goa-space-m);
   text-align: left;
 `;
+
+export const Mt = styled.div`
+  margin-top: var(--goa-space-m);
+`;
+export const MbXs = styled.div`
+  margin-bottom: var(--goa-space-2xs);
+`;
+export const MbS = styled.div`
+  margin-bottom: var(--goa-space-s);
+`;
