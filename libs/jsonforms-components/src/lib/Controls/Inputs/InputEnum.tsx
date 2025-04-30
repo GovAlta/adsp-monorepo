@@ -71,7 +71,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
   }, [registerCtx, registerConfig]);
 
   return (
-    <Visible visible={visible}>
+    <div>
       {error.length > 0 ? (
         callout({ message: error })
       ) : (
@@ -88,7 +88,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
           }}
         />
       )}
-    </Visible>
+    </div>
   );
 };
 

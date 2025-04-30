@@ -6,7 +6,6 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { onBlurForDateControl, onChangeForDateControl, onKeyPressForDateControl } from '../../util/inputControlUtils';
 import { callout } from '../../Additional/GoACalloutControl';
 import { standardizeDate } from '../../util/dateUtils';
-import { Visible } from '../../util';
 
 export type GoAInputDateProps = CellProps & WithClassname & WithInputProps;
 export const errMalformedDate = (scope: string, type: string): string => {
@@ -37,7 +36,7 @@ const reformatDateProps = (props: any): any => {
 };
 
 export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
-  const { data, config, id, enabled, uischema, errors, isVisited, label, setIsVisited, visible } = props;
+  const { data, config, id, enabled, uischema, errors, isVisited, label, setIsVisited } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const width = uischema?.options?.componentProps?.width ?? '100%';
@@ -53,47 +52,45 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   }
 
   return (
-    <Visible visible={visible}>
-      <GoAInputDate
-        error={isVisited && errors.length > 0}
-        width={width}
-        name={appliedUiSchemaOptions?.name || `${id || label}-input`}
-        value={standardizeDate(data) || ''}
-        testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-        disabled={!enabled}
-        readonly={readOnly}
-        onChange={(name: string, value: Date | string) => {
-          if (isVisited === false && setIsVisited) {
-            setIsVisited();
-          }
-          onChangeForDateControl({
-            name,
-            value,
-            controlProps: props as ControlProps,
-          });
-        }}
-        onKeyPress={(name: string, value: Date | string, key: string) => {
-          onKeyPressForDateControl({
-            name,
-            value,
-            key,
-            controlProps: props as ControlProps,
-          });
-        }}
-        onBlur={(name: string, value: Date | string) => {
-          if (isVisited === false && setIsVisited) {
-            setIsVisited();
-          }
+    <GoAInputDate
+      error={isVisited && errors.length > 0}
+      width={width}
+      name={appliedUiSchemaOptions?.name || `${id || label}-input`}
+      value={standardizeDate(data) || ''}
+      testId={appliedUiSchemaOptions?.testId || `${id}-input`}
+      disabled={!enabled}
+      readonly={readOnly}
+      onChange={(name: string, value: Date | string) => {
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
+        onChangeForDateControl({
+          name,
+          value,
+          controlProps: props as ControlProps,
+        });
+      }}
+      onKeyPress={(name: string, value: Date | string, key: string) => {
+        onKeyPressForDateControl({
+          name,
+          value,
+          key,
+          controlProps: props as ControlProps,
+        });
+      }}
+      onBlur={(name: string, value: Date | string) => {
+        if (isVisited === false && setIsVisited) {
+          setIsVisited();
+        }
 
-          onBlurForDateControl({
-            name,
-            value,
-            controlProps: props as ControlProps,
-          });
-        }}
-        {...reformatDateProps(uischema?.options?.componentProps)}
-      />
-    </Visible>
+        onBlurForDateControl({
+          name,
+          value,
+          controlProps: props as ControlProps,
+        });
+      }}
+      {...reformatDateProps(uischema?.options?.componentProps)}
+    />
   );
 };
 

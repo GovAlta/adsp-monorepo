@@ -3,12 +3,10 @@ import { isBooleanControl, RankedTester, rankWith, ControlProps, optionIs, and }
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoARadioGroup, GoARadioItem } from '@abgov/react-components';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { Visible } from '../../util';
 import { WithInputProps } from './type';
 
 export const BooleanRadioComponent = ({
   data,
-  visible,
   enabled,
   uischema,
   handleChange,
@@ -28,35 +26,33 @@ export const BooleanRadioComponent = ({
   const BaseTestId = appliedUiSchemaOptions?.testId || `${path}-boolean-radio-jsonform`;
 
   return (
-    <Visible visible={visible}>
-      <GoARadioGroup
-        error={isVisited && errors.length}
-        name={`${label}`}
-        value={data === true ? TrueValue : data === false ? FalseValue : null}
-        disabled={!enabled}
-        testId={BaseTestId}
-        onChange={(_name, value) => {
-          if (value === TrueValue) {
-            handleChange(path, true);
-          }
-          if (value === FalseValue) {
-            handleChange(path, false);
-          }
-        }}
-        {...uischema?.options?.componentProps}
-      >
-        <GoARadioItem
-          value={TrueValue}
-          testId={`${BaseTestId}-yes-option`}
-          description={EnableDescription ? TrueDescription : null}
-        />
-        <GoARadioItem
-          value={FalseValue}
-          testId={`${BaseTestId}-no-option`}
-          description={EnableDescription ? FalseDescription : null}
-        />
-      </GoARadioGroup>
-    </Visible>
+    <GoARadioGroup
+      error={isVisited && errors.length}
+      name={`${label}`}
+      value={data === true ? TrueValue : data === false ? FalseValue : null}
+      disabled={!enabled}
+      testId={BaseTestId}
+      onChange={(_name, value) => {
+        if (value === TrueValue) {
+          handleChange(path, true);
+        }
+        if (value === FalseValue) {
+          handleChange(path, false);
+        }
+      }}
+      {...uischema?.options?.componentProps}
+    >
+      <GoARadioItem
+        value={TrueValue}
+        testId={`${BaseTestId}-yes-option`}
+        description={EnableDescription ? TrueDescription : null}
+      />
+      <GoARadioItem
+        value={FalseValue}
+        testId={`${BaseTestId}-no-option`}
+        description={EnableDescription ? FalseDescription : null}
+      />
+    </GoARadioGroup>
   );
 };
 export const BooleanRadioControl = (props: ControlProps) => (
