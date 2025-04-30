@@ -52,7 +52,7 @@ export const CacheTargetItem = ({
                   type="create"
                   title="Edit"
                   onClick={() => openModalFunction(target)}
-                  testId={`create-target-item-${target.urn}`}
+                  testId={`edit-target-item-${target.urn}`}
                 />
               </GoAContextMenu>
             )}
