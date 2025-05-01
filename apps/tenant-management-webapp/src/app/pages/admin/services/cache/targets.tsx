@@ -79,7 +79,7 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
         }}
       />
       <DeleteModal
-        isOpen={showDeleteConfirmation}
+        isOpen={showDeleteConfirmation !== null}
         title="Delete cache target"
         content={
           <div>

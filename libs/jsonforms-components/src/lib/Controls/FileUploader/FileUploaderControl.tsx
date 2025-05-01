@@ -7,7 +7,7 @@ import { JsonFormContext } from '../../Context';
 
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
 import { DeleteFileModal } from './DeleteFileModal';
-import { convertToSentenceCase } from '../../util';
+import { convertToSentenceCase, Visible } from '../../util';
 
 interface FileUploadAdditionalProps {
   isStepperReview?: boolean;
@@ -30,6 +30,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const deleteTriggerFunction = enumerators?.functions?.get('delete-file');
   const deleteTrigger = deleteTriggerFunction && deleteTriggerFunction();
   const fileListValue = enumerators?.data.get('file-list');
+  const [loadingFileName, setLoadingFileName] = useState<string | undefined>(undefined);
 
   const countries = [
     'Argentina',
@@ -50,7 +51,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   // eslint-disable-next-line
   const fileList = fileListValue && (fileListValue() as Record<string, any>);
 
-  const { required, label, i18nKeyPrefix } = props;
+  const { required, label, i18nKeyPrefix, visible } = props;
 
   const propertyId = i18nKeyPrefix as string;
 
@@ -67,9 +68,10 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
           deleteTrigger(fileInList, propertyId);
         }
       }
+      setLoadingFileName(file?.name);
       // To support multipleFileUploader, the propertyId (path) is in propertyId.index format
-      uploadTrigger(file, `${propertyId}.${fileListLength}`);
 
+      uploadTrigger(file, `${propertyId}.${fileListLength}`);
       setDeleteHide(false);
     }
   }
@@ -95,6 +97,10 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   }
 
   useEffect(() => {
+    if (loadingFileName !== undefined) {
+      setLoadingFileName(undefined);
+    }
+
     // UseEffect is required because not having it causes a react update error, but
     // it doesn't function correctly within jsonforms unless there is a minor delay here
     const delayedFunction = () => {
@@ -181,40 +187,42 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   };
 
   return (
-    <FileUploaderStyle className="FileUploader">
-      {required ? (
-        <GoAFormItem label={sentenceCaseLabel} requirement="required"></GoAFormItem>
-      ) : (
-        <div className="label">{sentenceCaseLabel}</div>
-      )}
-      {!readOnly && (
-        <div className="file-upload">
-          <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} maxFileSize={maxFileSize} accept={accept} />
-        </div>
-      )}
-      {helpText && <HelpText>{helpText}</HelpText>}
-      <div>
-        {Array.isArray(data) && data[0] === 'Loading' ? (
-          <GoAModal open={Array.isArray(data) && data[0] === 'Loading'}>
-            <div className="align-center">
-              <GoACircularProgress visible={true} message={`Uploading ${data[1]}`} size="large" />
-            </div>
-          </GoAModal>
+    <Visible visible={visible}>
+      <FileUploaderStyle className="FileUploader">
+        {required ? (
+          <GoAFormItem label={sentenceCaseLabel} requirement="required"></GoAFormItem>
         ) : (
-          <div>
-            {multiFileUploader
-              ? fileList &&
-                (fileList[props.i18nKeyPrefix as string] || []).map((_: File, index: number) => {
-                  return <DownloadFileWidget index={index} />;
-                })
-              : fileList &&
-                !deleteHide &&
-                getFile(fileListLength - 1) &&
-                fileListLength >= 0 && <DownloadFileWidget index={fileListLength - 1} />}
+          <div className="label">{sentenceCaseLabel}</div>
+        )}
+        {!readOnly && (
+          <div className="file-upload">
+            <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} maxFileSize={maxFileSize} accept={accept} />
           </div>
         )}
-      </div>
-    </FileUploaderStyle>
+        {helpText && <HelpText>{helpText}</HelpText>}
+        <div>
+          {loadingFileName !== undefined ? (
+            <GoAModal open={loadingFileName !== undefined}>
+              <div className="align-center">
+                <GoACircularProgress visible={true} message={`Uploading ${loadingFileName}`} size="large" />
+              </div>
+            </GoAModal>
+          ) : (
+            <div>
+              {multiFileUploader
+                ? fileList &&
+                  (fileList[props.i18nKeyPrefix as string] || []).map((_: File, index: number) => {
+                    return <DownloadFileWidget index={index} />;
+                  })
+                : fileList &&
+                  !deleteHide &&
+                  getFile(fileListLength - 1) &&
+                  fileListLength >= 0 && <DownloadFileWidget index={fileListLength - 1} />}
+            </div>
+          )}
+        </div>
+      </FileUploaderStyle>
+    </Visible>
   );
 };
 

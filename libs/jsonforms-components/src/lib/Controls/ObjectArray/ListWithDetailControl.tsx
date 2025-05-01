@@ -217,6 +217,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
     }),
   };
 
+  const hasNoElements = () => {
+    const hasNoLayoutElements =
+      (uischema as Layout)?.elements?.length === 0 && (uischema as Layout)?.options?.detail?.elements?.length === 0;
+
+    return hasNoLayoutElements;
+  };
+
   return (
     <>
       {
@@ -255,7 +262,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
         })
       }
 
-      {uiSchemaElementsForNotDefined?.elements?.length > 0 && (
+      {hasNoElements() && uiSchemaElementsForNotDefined?.elements?.length > 0 && (
         <JsonFormsDispatch
           schema={schema}
           uischema={uiSchemaElementsForNotDefined}
@@ -306,12 +313,16 @@ const NonEmptyRowComponent = ({
   cells,
   uischema,
 }: NonEmptyRowProps & WithDeleteDialogSupport) => {
+  const isHorizontal = uischema?.options?.detail?.type === 'HorizontalLayout';
+
   return (
     <div key={childPath}>
-      {enabled ? (
+      {enabled && isHorizontal ? (
         <GoAGrid minChildWidth="30ch">
           {GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}
         </GoAGrid>
+      ) : enabled && !isHorizontal ? (
+        <>{GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}</>
       ) : null}
     </div>
   );
@@ -362,6 +373,8 @@ interface TableRowsProp {
   enabled: boolean;
   cells?: JsonFormsCellRendererRegistryEntry[];
   translations: ArrayTranslations;
+  currentTab: number;
+  setCurrentTab: (index: number) => void;
 }
 const ObjectArrayList = ({
   data,
@@ -373,14 +386,14 @@ const ObjectArrayList = ({
   enabled,
   cells,
   translations,
+  currentTab,
+  setCurrentTab,
 }: TableRowsProp & WithDeleteDialogSupport) => {
   const isEmptyList = data === 0;
   const rightRef = useRef(null);
   const current = rightRef.current as HTMLElement | null;
   const minHeight = 300;
   const [rightHeight, setRightHeight] = useState<number | undefined>(minHeight);
-
-  const [currentTab, setCurrentTab] = useState(0);
 
   useEffect(() => {
     const resizeObserver = new ResizeObserver(() => {
@@ -463,7 +476,11 @@ export class ListWithDetailControl extends React.Component<ObjectArrayControlPro
     const pathIdValue = path?.split('.') || '';
     if ((pathIdValue.length > 1 && +this.props.data >= 0) || pathIdValue.length === 1) {
       this.props.addItem(path, value)();
+      this.setState({ currentTab: this.props.data + 1 });
     }
+  };
+  state = {
+    currentTab: 0,
   };
 
   render() {
@@ -522,6 +539,8 @@ export class ListWithDetailControl extends React.Component<ObjectArrayControlPro
             data={data}
             cells={cells}
             config={config}
+            currentTab={this.state.currentTab}
+            setCurrentTab={(i) => this.setState({ currentTab: i })}
             {...additionalProps}
           />
         </div>

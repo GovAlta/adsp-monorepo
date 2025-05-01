@@ -43,7 +43,7 @@ export const CacheTargetItem = ({
                 onClick={() => {
                   setShowDetails(!showDetails);
                 }}
-                testId="cache-toggle-details-visibility"
+                testId="target-toggle-details-visibility"
               />
             </GoAContextMenu>
             {tenantMode && (
@@ -52,7 +52,7 @@ export const CacheTargetItem = ({
                   type="create"
                   title="Edit"
                   onClick={() => openModalFunction(target)}
-                  testId={`create-target-item-${target.urn}`}
+                  testId={`edit-target-item-${target.urn}`}
                 />
               </GoAContextMenu>
             )}
