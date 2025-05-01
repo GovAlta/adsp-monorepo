@@ -2,6 +2,7 @@ import React from 'react';
 import { LayoutRenderer, LayoutRendererProps } from '../util/layout';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { LayoutProps, RankedTester, rankWith, uiTypeIs, VerticalLayout } from '@jsonforms/core';
+import { Spacing } from '@abgov/react-components';
 
 export const GoAVerticalLayoutComponent = ({
   uischema,
@@ -13,6 +14,7 @@ export const GoAVerticalLayoutComponent = ({
   visible,
 }: LayoutProps) => {
   const verticalLayout = uischema as VerticalLayout;
+  const spacing: Spacing = uischema?.options?.spacing || 's';
   const childProps: LayoutRendererProps = {
     elements: verticalLayout.elements,
     schema,
@@ -20,6 +22,9 @@ export const GoAVerticalLayoutComponent = ({
     enabled,
     direction: 'column',
     visible,
+    option: {
+      space: 'xl',
+    },
   };
 
   return <LayoutRenderer {...childProps} renderers={renderers} cells={cells} />;

@@ -23,6 +23,9 @@ export const GoAHorizontalLayoutComponent = ({
     direction: 'row',
     visible,
     width: '10ch',
+    option: {
+      space: 'xl',
+    },
   };
 
   return <LayoutRenderer {...childProps} renderers={renderers} cells={cells} />;
@@ -46,6 +49,9 @@ export const GoAHorizontalReviewLayoutComponent = ({
     direction: 'row',
     visible,
     width: uischema?.options?.review?.width || '30ch',
+    option: {
+      space: 'xl',
+    },
   };
 
   return <ReviewLayoutRenderer {...childProps} renderers={renderers} cells={cells} />;

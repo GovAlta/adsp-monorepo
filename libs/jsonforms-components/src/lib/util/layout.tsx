@@ -40,6 +40,9 @@ export interface LayoutRendererProps extends OwnPropsOfRenderer {
   elements: UISchemaElement[];
   direction: 'row' | 'column';
   width?: string;
+  option: {
+    space?: string;
+  };
 }
 export interface AjvProps {
   ajv: Ajv;
