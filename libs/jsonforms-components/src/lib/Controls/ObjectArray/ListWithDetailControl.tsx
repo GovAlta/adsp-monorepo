@@ -373,8 +373,8 @@ interface TableRowsProp {
   enabled: boolean;
   cells?: JsonFormsCellRendererRegistryEntry[];
   translations: ArrayTranslations;
-  currentTab: number;
-  setCurrentTab: (index: number) => void;
+  currentIndex: number;
+  setCurrentIndex: (index: number) => void;
 }
 const ObjectArrayList = ({
   data,
@@ -386,8 +386,8 @@ const ObjectArrayList = ({
   enabled,
   cells,
   translations,
-  currentTab,
-  setCurrentTab,
+  currentIndex,
+  setCurrentIndex,
 }: TableRowsProp & WithDeleteDialogSupport) => {
   const isEmptyList = data === 0;
   const rightRef = useRef(null);
@@ -420,7 +420,7 @@ const ObjectArrayList = ({
   const appliedUiSchemaOptions = merge({}, config, uischema.options);
 
   const selectCurrentTab = (index: number) => {
-    setCurrentTab(index);
+    setCurrentIndex(index);
   };
 
   const paddedHeight = rightHeight && rightHeight + 48;
@@ -439,7 +439,7 @@ const ObjectArrayList = ({
                 key={childPath}
                 childPath={childPath}
                 rowIndex={index}
-                currentTab={currentTab}
+                currentTab={currentIndex}
                 name={name}
                 openDeleteDialog={openDeleteDialog}
                 selectCurrentTab={selectCurrentTab}
@@ -451,9 +451,9 @@ const ObjectArrayList = ({
         </FlexTabs>
         <FlexForm ref={rightRef}>
           <NonEmptyList
-            key={Paths.compose(path, `${currentTab}`)}
-            childPath={Paths.compose(path, `${currentTab}`)}
-            rowIndex={currentTab}
+            key={Paths.compose(path, `${currentIndex}`)}
+            childPath={Paths.compose(path, `${currentIndex}`)}
+            rowIndex={currentIndex}
             schema={schema}
             openDeleteDialog={openDeleteDialog}
             showSortButtons={appliedUiSchemaOptions.showSortButtons || appliedUiSchemaOptions.showArrayTableSortButtons}
@@ -468,19 +468,26 @@ const ObjectArrayList = ({
     </ListContainer>
   );
 };
-
+interface ListWithDetailControlProps extends ObjectArrayControlProps {
+  currentTab: number;
+  setCurrentTab: (index: number) => void;
+}
 // eslint-disable-next-line
-export class ListWithDetailControl extends React.Component<ObjectArrayControlProps, any> {
+export class ListWithDetailControl extends React.Component<ListWithDetailControlProps, any> {
   // eslint-disable-next-line
   addItem = (path: string, value: any) => {
-    const pathIdValue = path?.split('.') || '';
-    if ((pathIdValue.length > 1 && +this.props.data >= 0) || pathIdValue.length === 1) {
-      this.props.addItem(path, value)();
-      this.setState({ currentTab: this.props.data + 1 });
+    const { data, addItem, setCurrentTab } = this.props;
+
+    const isNonEmpty = data !== undefined && data !== null;
+    const newIndex = isNonEmpty ? data ?? 0 : 0;
+
+    if (addItem) {
+      addItem(path, value)();
     }
-  };
-  state = {
-    currentTab: 0,
+
+    if (typeof setCurrentTab === 'function') {
+      setCurrentTab(newIndex);
+    }
   };
 
   render() {
@@ -539,8 +546,8 @@ export class ListWithDetailControl extends React.Component<ObjectArrayControlPro
             data={data}
             cells={cells}
             config={config}
-            currentTab={this.state.currentTab}
-            setCurrentTab={(i) => this.setState({ currentTab: i })}
+            currentIndex={this.props.currentTab}
+            setCurrentIndex={this.props.setCurrentTab}
             {...additionalProps}
           />
         </div>
