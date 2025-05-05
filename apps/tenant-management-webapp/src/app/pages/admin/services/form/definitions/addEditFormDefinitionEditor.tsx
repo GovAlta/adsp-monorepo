@@ -210,7 +210,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
   const [uiEditorLocation, setUiEditorLocation] = useState<number>(0);
   const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [data, setData] = useState<unknown>();
+  const [data, setData] = useState<unknown>({});
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
 
