@@ -16,7 +16,6 @@ export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
   const enumData = schema?.enum || newSchema?.items?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
 
-
   return (
     <Checkboxes
       orientation={uischema.options?.orientation ? uischema.options?.orientation : 'vertical'}
@@ -32,13 +31,13 @@ export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
             text={enumValue}
             testId={`${enumValue}-checkbox`}
             onChange={(name: string, value: string) => {
-              let newData = Array.isArray(data) ? [...data] : [];
+              let newData: Array<string> = Array.isArray(data) ? [...data] : [];
               if (value) {
                 newData.push(enumValue);
               } else {
                 newData = newData.filter((item) => item !== enumValue);
               }
-              handleChange(path, newData);
+              handleChange(path, newData.length === 0 ? undefined : newData);
             }}
           />
         );
