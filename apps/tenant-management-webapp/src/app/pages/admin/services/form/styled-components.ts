@@ -22,6 +22,10 @@ export const EditorPadding = styled.div`
   }
 `;
 
+export const LinkMargin = styled.div`
+  margin: var(--goa-space-s) 0 var(--goa-space-s) 0;
+`;
+
 export const ButtonIconPadding = styled.div`
   margin-top: -4px;
 `;

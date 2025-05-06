@@ -18,6 +18,20 @@ jest.mock('react-router-dom', () => ({
 describe('form Component', () => {
   const mockStore = configureStore([]);
   const store = mockStore({
+    calendarService: {
+      calendars: {
+        coreCalendars: {
+          'form-intake': {
+            name: 'form-intake',
+            displayName: 'Form intake',
+            description: 'Calendar of scheduled form intakes.',
+            readRoles: ['urn:ads:platform:tenant-service:platform-service'],
+            updateRoles: ['urn:ads:platform:form-service:form-admin'],
+            selectedCalendarEvents: [],
+          },
+        },
+      },
+    },
     fileService: {
       fileType: [
         {
