@@ -302,6 +302,7 @@ interface LeftRowProps {
   enabled: boolean;
   name: string;
   currentTab: number;
+  current: HTMLElement | null;
   translations: ArrayTranslations;
   selectCurrentTab: (index: number) => void;
 }
@@ -336,6 +337,7 @@ const LeftTab = ({
   enabled,
   currentTab,
   name,
+  current,
   translations,
 }: LeftRowProps & WithDeleteDialogSupport) => {
   return (
@@ -343,8 +345,22 @@ const LeftTab = ({
       <SideMenuItem
         style={currentTab === rowIndex ? { background: '#EFF8FF' } : {}}
         onClick={() => selectCurrentTab(rowIndex)}
+        onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            if (current) {
+              const goa = current?.querySelector('goa-input, goa-button');
+              if (goa?.shadowRoot) {
+                const internal = goa.shadowRoot.querySelector('input, button');
+
+                (internal as HTMLElement)?.focus();
+                selectCurrentTab(rowIndex);
+              }
+            }
+          }
+        }}
       >
-        <RowFlexMenu>
+        <RowFlexMenu tabIndex={0}>
           <TabName>{name}</TabName>
           {enabled ? (
             <Trash role="trash button">
@@ -424,7 +440,7 @@ const ObjectArrayList = ({
   };
 
   const paddedHeight = rightHeight && rightHeight + 48;
-
+  // const detailRef = useRef<HTMLDivElement>(null);
   return (
     <ListContainer>
       <RowFlex>
@@ -444,12 +460,13 @@ const ObjectArrayList = ({
                 openDeleteDialog={openDeleteDialog}
                 selectCurrentTab={selectCurrentTab}
                 enabled={enabled}
+                current={current}
                 translations={translations}
               />
             );
           })}
         </FlexTabs>
-        <FlexForm ref={rightRef}>
+        <FlexForm ref={rightRef} tabIndex={-1}>
           <NonEmptyList
             key={Paths.compose(path, `${currentIndex}`)}
             childPath={Paths.compose(path, `${currentIndex}`)}

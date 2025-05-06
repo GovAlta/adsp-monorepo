@@ -128,8 +128,8 @@ export const FeedbacksList = (): JSX.Element => {
 
   return (
     <section>
-      {!sites && renderNoItem('feedback sites')}
-      {!indicator.show && sites && Object.keys(sites).length === 0 && renderNoItem('feedback sites')}
+      {!sites && renderNoItem('feedback')}
+      {!indicator.show && sites && Object.keys(sites).length === 0 && renderNoItem('feedback')}
       {sites && Object.keys(sites).length > 0 && (
         <div>
           <GoAFormItem label="Registered sites">
