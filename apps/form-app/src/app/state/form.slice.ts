@@ -1,5 +1,5 @@
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
-import { RegisterData, tryResolveRefs, ajv } from '@abgov/jsonforms-components';
+import { createDefaultAjv, RegisterData, tryResolveRefs } from '@abgov/jsonforms-components';
 import { JsonFormsCore, JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
@@ -89,6 +89,7 @@ export interface FormState {
 const FORM_SERVICE_ID = 'urn:ads:platform:form-service';
 const CONFIGURATION_SERVICE_ID = 'urn:ads:platform:configuration-service:v2';
 const CACHE_SERVICE_ID = 'urn:ads:platform:cache-service';
+const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 
 export const selectedDefinition = createAsyncThunk(
   'form/select-definition',
