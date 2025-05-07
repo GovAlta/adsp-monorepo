@@ -4,7 +4,7 @@ import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
 import { CategorizationStepperLayoutRendererProps } from './types';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
-import { TableOfContents, TocProps } from './TableOfContents';
+import { TaskList, TocProps } from './TaskList/TaskList';
 import { RenderPages } from './RenderPages';
 
 export interface FormPageOptionProps {
@@ -50,7 +50,7 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
       subtitle: props.uischema?.options?.subtitle,
       isValid: selectNumberOfCompletedCategories() === categories.length,
     };
-    return <TableOfContents {...tocProps} />;
+    return <TaskList {...tocProps} />;
   } else {
     return <RenderPages categoryProps={props}></RenderPages>;
   }
