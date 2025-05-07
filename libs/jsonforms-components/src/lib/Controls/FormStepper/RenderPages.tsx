@@ -18,7 +18,8 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   const enumerators = useContext(JsonFormContext);
 
   const formStepperCtx = useContext(JsonFormsStepperContext);
-  const { goToPage, toggleShowReviewLink, goToTableOfContext } = formStepperCtx as JsonFormsStepperContextProps;
+  const { goToPage, toggleShowReviewLink, goToTableOfContext, validatePage } =
+    formStepperCtx as JsonFormsStepperContextProps;
   const { categories, isOnReview, isValid, activeId } = (
     formStepperCtx as JsonFormsStepperContextProps
   ).selectStepperState();
@@ -64,7 +65,14 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                     key={`${category.label}`}
                     style={{ marginTop: '1.5rem' }}
                   >
-                    <BackButton testId="back-button" link={() => goToTableOfContext()} text="Back" />
+                    <BackButton
+                      testId="back-button"
+                      link={() => {
+                        validatePage(index);
+                        goToTableOfContext();
+                      }}
+                      text="Back"
+                    />
                     <PageRenderPadding>
                       <h3>
                         Step {index + 1} of {categories.length}
@@ -103,7 +111,13 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
             {isOnReview && (
               <div data-testid="stepper-pages-review-page">
                 <PageRenderPaddingBottom>
-                  <BackButton testId="review-back-button" link={() => goToTableOfContext()} text="Back" />
+                  <BackButton
+                    testId="review-back-button"
+                    link={() => {
+                      goToTableOfContext();
+                    }}
+                    text="Back"
+                  />
                 </PageRenderPaddingBottom>
                 <FormStepperPageReviewer {...{ ...props.categoryProps, navigationFunc: goToPage }} />
                 <PageRenderPadding>
