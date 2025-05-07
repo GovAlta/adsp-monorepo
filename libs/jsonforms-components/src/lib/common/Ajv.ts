@@ -1,6 +1,7 @@
 import Ajv, { AnySchema } from 'ajv';
 import addErrors from 'ajv-errors';
 import addFormats from 'ajv-formats';
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 
 export const createDefaultAjv = (...schemas: AnySchema[]) => {
   const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log', strictRequired: false, useDefaults: true });
@@ -26,3 +27,5 @@ export const createDefaultAjv = (...schemas: AnySchema[]) => {
   });
   return ajv;
 };
+
+export const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);

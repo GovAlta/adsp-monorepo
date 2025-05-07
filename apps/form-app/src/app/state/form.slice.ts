@@ -1,5 +1,5 @@
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
-import { RegisterData, tryResolveRefs } from '@abgov/jsonforms-components';
+import { RegisterData, tryResolveRefs, ajv } from '@abgov/jsonforms-components';
 import { JsonFormsCore, JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
@@ -260,7 +260,7 @@ export const loadForm = createAsyncThunk(
   'form/load-form',
   async (formId: string, { getState, dispatch, rejectWithValue }) => {
     try {
-      const { config } = getState() as AppState;
+      const { config, form: loadedForm } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
 
       let token = await getAccessToken();
@@ -303,6 +303,11 @@ export const loadForm = createAsyncThunk(
           })
         );
       }
+
+      //Need to run a ajv validate here when we load the form to initalize data
+      //that are using the default keyword in the data schema.
+      const currentDefinition = loadedForm.definitions[form.definition.id];
+      ajv.validate(currentDefinition.dataSchema, data.data);
 
       return { ...data, form, digest: await hashData(data) };
     } catch (err) {
