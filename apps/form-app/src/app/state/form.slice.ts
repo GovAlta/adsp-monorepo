@@ -306,9 +306,10 @@ export const loadForm = createAsyncThunk(
 
       //Need to run a ajv validate here when we load the form to initalize data
       //that are using the default keyword in the data schema.
-      const currentDefinition = loadedForm.definitions[form.definition.id];
-      ajv.validate(currentDefinition.dataSchema, data.data);
-
+      if (loadedForm && loadedForm.definitions) {
+        const currentDefinition = loadedForm.definitions[form.definition.id];
+        ajv.validate(currentDefinition.dataSchema, data.data);
+      }
       return { ...data, form, digest: await hashData(data) };
     } catch (err) {
       if (axios.isAxiosError(err)) {
