@@ -28,8 +28,11 @@ const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.E
   const hasRunRef = useRef(0);
   useEffect(() => {
     if (hasRunRef.current < 5 && Object.keys(calendars).length > 0 && eventName) {
-      onSelect('calendars', eventName);
-      hasRunRef.current = hasRunRef.current + 1;
+      const timeout = setTimeout(() => {
+        onSelect('calendars', eventName);
+        hasRunRef.current = hasRunRef.current + 1;
+      }, 500);
+      return () => clearTimeout(timeout);
     }
   }, [calendars, eventName, onSelect]);
 
