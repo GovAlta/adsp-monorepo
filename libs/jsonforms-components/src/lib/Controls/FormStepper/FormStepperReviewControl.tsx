@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { Categorization, Layout, SchemaBasedCondition, isVisible, Scoped } from '@jsonforms/core';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';

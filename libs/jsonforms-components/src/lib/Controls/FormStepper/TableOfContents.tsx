@@ -21,7 +21,7 @@ export const TableOfContents = (props: TocProps): JSX.Element => {
     <PageBorder>
       <div data-testid={testid}>
         {props.title && <TocTitle>{props.title}</TocTitle>}
-        <ApplicationStatus categories={props.categories}></ApplicationStatus>
+        <ApplicationStatus />
         {props.subtitle && <TocSubtitle>{props.subtitle}</TocSubtitle>}
         <GoATable width="100%">
           <tbody>
