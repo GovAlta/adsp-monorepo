@@ -13,6 +13,7 @@ import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { phoneWrapper } from '@lib/wrappers';
 import { PageIndicator } from '@components/Indicator';
 import { EntryDetail } from '../../styled-components';
+import { renderNoItem } from '@components/NoItem';
 interface SubscriptionProps {
   subscriber: Subscriber;
   criteria: Criteria;
@@ -191,6 +192,9 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
       dispatch(GetTypeSubscriptions(type, searchCriteria, searchCriteria.next));
     }
   };
+  if (groups.length === 0) {
+    return renderNoItem('subscription');
+  }
 
   return (
     <div className={className}>

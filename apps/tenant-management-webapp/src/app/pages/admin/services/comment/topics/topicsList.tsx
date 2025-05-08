@@ -104,7 +104,7 @@ export const TopicsList = (): JSX.Element => {
       {!indicator.show &&
         Object.keys(topicTypes).length === 0 &&
         Object.keys(coreTopicTypes).length === 0 &&
-        renderNoItem('Topic types')}
+        renderNoItem('comments')}
       {(Object.keys(topicTypes).length > 0 || Object.keys(coreTopicTypes).length > 0) && (
         <GoAFormItem label="Select a topic type">
           {indicator.show && Object.keys(topicTypes).length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}

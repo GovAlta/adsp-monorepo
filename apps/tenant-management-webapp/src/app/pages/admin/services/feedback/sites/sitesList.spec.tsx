@@ -35,7 +35,7 @@ describe('SitesListComponent', () => {
       </Provider>
     );
 
-    expect(renderer.getByText('No feedback sites found')).toBeInTheDocument();
+    expect(renderer.getByText('No sites found')).toBeInTheDocument();
   });
 
   it('renders table headers correctly', () => {

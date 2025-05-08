@@ -90,7 +90,7 @@ export const QueuesList = ({ openAddTask }: AddEditQueueProps): JSX.Element => {
           <GoACircularProgress visible={indicator.show} size="small" />
         </ProgressWrapper>
       )}
-      {!indicator.show && Object.keys(taskQueues).length === 0 && renderNoItem('task queues')}
+      {!indicator.show && Object.keys(taskQueues).length === 0 && renderNoItem('queues')}
       {Object.keys(taskQueues).length > 0 && (
         <QueueListTable
           taskQueues={taskQueues}

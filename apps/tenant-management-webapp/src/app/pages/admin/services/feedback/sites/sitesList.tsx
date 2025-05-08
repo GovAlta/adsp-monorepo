@@ -50,7 +50,7 @@ const SitesListComponent: FunctionComponent<SitesListComponentProps> = ({ onEdit
   const sites = useSelector((state: RootState) => state.feedback?.sites || []);
   return (
     <div>
-      {!sites.length && renderNoItem('feedback sites')}
+      {!sites.length && renderNoItem('sites')}
       {sites.length > 0 && (
         <DataTable data-testid="feedbacks-sites-table">
           <thead data-testid="feedbacks-sites-table-header">

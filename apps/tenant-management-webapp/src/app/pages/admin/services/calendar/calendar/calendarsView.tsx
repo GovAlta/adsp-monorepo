@@ -72,18 +72,24 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
         </GoAButton>
       </div>
       {fetchCalendarState === ActionState.inProcess && <PageIndicator />}
-      {fetchCalendarState === ActionState.completed && !calendars && renderNoItem('calendar')}
-      {fetchCalendarState === ActionState.completed && calendars && (
+      {fetchCalendarState === ActionState.completed &&
+        Object.keys(calendars).length === 0 &&
+        renderNoItem('tenant calendar')}
+      {fetchCalendarState === ActionState.completed && Object.keys(calendars).length > 0 && (
         <div>
           <CalendarTableComponent calendars={calendars} onEdit={onEdit} onDelete={onDelete} tenantMode={true} />
         </div>
       )}
-      <h2>Core calendars</h2>
-
-      {fetchCalendarState === ActionState.completed && coreCalendars && (
-        <div>
-          <CalendarTableComponent calendars={coreCalendars} onEdit={onEdit} onDelete={onDelete} />
-        </div>
+      {fetchCalendarState === ActionState.completed &&
+        Object.keys(coreCalendars).length === 0 &&
+        renderNoItem('core calendar')}
+      {fetchCalendarState === ActionState.completed && Object.keys(coreCalendars).length > 0 && (
+        <>
+          <h2>Core calendars</h2>
+          <div>
+            <CalendarTableComponent calendars={coreCalendars} onEdit={onEdit} onDelete={onDelete} />
+          </div>
+        </>
       )}
 
       {openEditCalendar && (

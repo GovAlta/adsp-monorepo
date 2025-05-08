@@ -67,7 +67,7 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
         </GoAButton>
       </Buttons>
       {indicator.show && <PageIndicator />}
-      {!indicator.show && !tenantDefinitions && renderNoItem('tenant value')}
+      {!indicator.show && tenantDefinitions.length === 0 && renderNoItem('tenant value')}
       {!indicator.show && tenantDefinitions && (
         <ValueDefinitionsList
           definitions={tenantDefinitions}
@@ -83,7 +83,8 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
           }}
         />
       )}
-      {!indicator.show && coreDefinitions && (
+      {!indicator.show && coreDefinitions.length === 0 && renderNoItem('core value')}
+      {!indicator.show && coreDefinitions.length > 0 && (
         <div>
           <h2>Core definitions</h2>
           <ValueDefinitionsList
