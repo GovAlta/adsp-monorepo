@@ -9,6 +9,7 @@ import { fetchEntryDetail } from '@store/directory/actions';
 import DataTable from '@components/DataTable';
 import { UpdateModalState } from '@store/session/actions';
 import { EntryDetail } from '../styled-components';
+import { renderNoItem } from '@components/NoItem';
 interface serviceItemProps {
   service: Service;
   id: string;
@@ -34,13 +35,6 @@ const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.
     return state?.session?.elementIndicator;
   });
 
-  const renderNoItem = () => {
-    return (
-      <NoItem>
-        <p>No metadata found</p>
-      </NoItem>
-    );
-  };
   // eslint-disable-next-line
   useEffect(() => {}, [elementIndicator]);
 
@@ -129,7 +123,7 @@ const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.
                   <GoACircularProgress visible={true} size="small" />
                 </ElementLoader>
               )}
-              {service.metadata === null ? renderNoItem() : JSON.stringify(service.metadata, null, 2)}
+              {service.metadata === null ? renderNoItem('metadata') : JSON.stringify(service.metadata, null, 2)}
             </EntryDetail>
           </td>
         </tr>

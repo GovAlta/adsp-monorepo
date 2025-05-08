@@ -162,7 +162,7 @@ export const WebhookListTable = () => {
       {indicator.show && Object.keys(webhooks).length === 0 && (
         <GoACircularProgress visible={indicator.show} size="small" />
       )}
-
+      {!indicator.show && Object.keys(webhooks)?.length === 0 && renderNoItem('webhooks')}
       {!indicator.show && Object.keys(webhooks).length > 0 && (
         <TableLayout>
           <DataTable data-testid="file-types-table">
@@ -186,13 +186,13 @@ export const WebhookListTable = () => {
               {webhooks &&
                 Object.values(webhooks).map((webhook) => {
                   if (webhook === null) return null;
-                  return <WebhookTableRow key={`webhook-${webhook.id}`} webhook={webhook} />;
+                  return <WebhookTableRow key={`webhook-${webhook?.id}`} webhook={webhook} />;
                 })}
             </tbody>
           </DataTable>
         </TableLayout>
       )}
-      {!indicator.show && !webhooks && Object.keys(webhooks).length === 0 && renderNoItem('webhooks')}
+
       <WebhookActionModals />
     </>
   );

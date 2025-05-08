@@ -37,29 +37,35 @@ export const DirectoryService = (): JSX.Element => {
         <div>
           <p>Add your own entry so they can be found using the directory.</p>
 
-          {tenantDirectory && (
+          <GoAButton
+            testId="add-directory-btn"
+            onClick={() => {
+              dispatch(
+                UpdateModalState({
+                  type: AddModalType,
+                  id: null,
+                  isOpen: true,
+                })
+              );
+            }}
+          >
+            Add entry
+          </GoAButton>
+          {!indicator.show && tenantDirectory?.length === 0 && renderNoItem('tenant directory')}
+          {tenantDirectory?.length > 0 && (
             <>
               <NameDiv>{tenantName}</NameDiv>
-              <GoAButton
-                testId="add-directory-btn"
-                onClick={() => {
-                  dispatch(
-                    UpdateModalState({
-                      type: AddModalType,
-                      id: null,
-                      isOpen: true,
-                    })
-                  );
-                }}
-              >
-                Add entry
-              </GoAButton>
-
               <ServiceTableComponent headerId={`directory-tenant-table`} directory={tenantDirectory} />
             </>
           )}
-          <NameDiv>{coreTenant}</NameDiv>
-          <ServiceTableComponent headerId={`directory-core-table`} directory={coreDirectory} />
+
+          {!indicator.show && coreDirectory?.length === 0 && renderNoItem('core directory')}
+          {coreDirectory?.length > 0 && (
+            <>
+              <NameDiv>{coreTenant}</NameDiv>
+              <ServiceTableComponent headerId={`directory-core-table`} directory={coreDirectory} />
+            </>
+          )}
         </div>
       )}
     </section>
