@@ -353,7 +353,7 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
       // generate after
       const pdfData = {
         templateId: payload.templateId,
-        data: payload.data,
+        data: { definition: payload.data.content.config, content: payload.data.content },
         filename: payload.fileName,
       };
 
