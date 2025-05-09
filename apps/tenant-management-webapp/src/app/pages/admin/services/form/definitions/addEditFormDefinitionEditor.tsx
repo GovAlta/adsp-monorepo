@@ -89,6 +89,7 @@ import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 import { RowFlex, QueueTaskDropdown, H3, BorderBottom, H3Inline, ToolTipAdjust } from './style-components';
 import { UpdateSearchCriteriaAndFetchEvents, fetchCalendars } from '@store/calendar/actions';
+import { StartEndDateEditor } from './startEndDateEditor';
 export const ContextProvider = ContextProviderFactory();
 
 const isUseMiniMap = window.screen.availWidth >= 1920;
@@ -1042,43 +1043,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   <GoAAccordion heading={coreEvent.name} open={true}>
                     <GoAGrid minChildWidth="25ch" gap="s">
                       <GoAFormItem label="Start date" error={errors?.['start']}>
-                        <GoAInputDate
-                          name="endDate"
-                          value={coreEvent.start ? new Date(coreEvent.start) : new Date()}
-                          width="100%"
-                          testId="calendar-event-modal-end-date-input"
-                          disabled={true}
-                        />
-                      </GoAFormItem>
-                      <GoAFormItem label="Start time">
-                        <GoAInputTime
-                          name="StartTime"
-                          value={new Date(coreEvent.start)?.toTimeString().split(' ')[0]}
-                          step={1}
-                          width="100%"
-                          testId="calendar-event-modal-start-time-input"
-                          disabled={true}
-                        />
-                      </GoAFormItem>
-                      <GoAFormItem label="End date">
-                        <GoAInputDate
-                          name="endDate"
-                          value={coreEvent.end ? new Date(coreEvent.end) : new Date()}
-                          width="100%"
-                          testId="calendar-event-modal-end-date-input"
-                          disabled={true}
-                        />
-                      </GoAFormItem>
-
-                      <GoAFormItem label="End time">
-                        <GoAInputTime
-                          name="endTime"
-                          value={new Date(coreEvent.end)?.toTimeString().split(' ')[0]}
-                          step={1}
-                          width="100%"
-                          disabled={true}
-                          testId="calendar-event-modal-end-time-input"
-                        />
+                        <StartEndDateEditor event={coreEvent} />
                       </GoAFormItem>
                     </GoAGrid>
                   </GoAAccordion>

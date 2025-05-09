@@ -72,7 +72,7 @@ export const uischema = {
             },
             {
               type: 'Control',
-              scope: '#/properties/lastName',
+              scope: '#/properties/secondName',
             },
           ],
         },
