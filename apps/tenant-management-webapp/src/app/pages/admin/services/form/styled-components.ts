@@ -22,7 +22,7 @@ export const EditorPadding = styled.div`
   }
 `;
 
-export const LinkMargin = styled.div`
+export const Margin = styled.div`
   margin: var(--goa-space-s) 0 var(--goa-space-s) 0;
 `;
 
