@@ -431,7 +431,9 @@ const ObjectArrayList = ({
   }, [current, rightHeight, rightRef]);
 
   if (isEmptyList) {
-    translations.noDataMessage = uischema.options?.noDataMessage;
+    if (uischema.options?.noDataMessage !== undefined) {
+      translations.noDataMessage = uischema.options?.noDataMessage;
+    }
     return <EmptyList numColumns={getValidColumnProps(schema).length + 1} translations={translations} />;
   }
 
@@ -442,7 +444,7 @@ const ObjectArrayList = ({
   };
 
   const paddedHeight = rightHeight && rightHeight + 48;
-
+  // const detailRef = useRef<HTMLDivElement>(null);
   return (
     <ListContainer>
       <RowFlex>
@@ -530,10 +532,6 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
     const controlElement = uischema as ControlElement;
     // eslint-disable-next-line
     const listTitle = label || uischema.options?.title;
-
-    if (uischema.options?.noDataMessage) {
-      translations.noDataMessage = uischema.options?.noDataMessage;
-    }
 
     return (
       <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
