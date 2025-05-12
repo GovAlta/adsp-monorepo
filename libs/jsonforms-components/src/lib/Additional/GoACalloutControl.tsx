@@ -29,6 +29,10 @@ const CalloutControl = (props: JsonFormsProps) => {
   return callout(props?.uischema?.options?.componentProps || {});
 };
 
+export const CalloutReviewControl = () => {
+  return <></>;
+};
+
 export const GoACalloutControlTester: RankedTester = rankWith(1, uiTypeIs('Callout'));
 
 export default withJsonFormsRendererProps(CalloutControl);
