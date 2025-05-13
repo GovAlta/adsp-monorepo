@@ -1,8 +1,7 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext } from 'react';
 import { GoACallout } from '@abgov/react-components';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
 import { CompletionStatus } from './styled-components';
-import { getCategoryStatus, PageStatus } from './CategoryStatus';
 
 export const ApplicationStatus = (): JSX.Element => {
   const formStepperCtx = useContext(JsonFormsStepperContext);

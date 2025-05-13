@@ -9,6 +9,7 @@ import { defaultCacheTarget } from '@store/cache/model';
 import { GoAButton } from '@abgov/react-components';
 import { DeleteModal } from '@components/DeleteModal';
 import { CacheTarget } from '@store/cache/model';
+import { renderNoItem } from '@components/NoItem';
 
 interface CacheTargetProps {
   openAddDefinition: boolean;
@@ -48,7 +49,8 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
       >
         Add cache target
       </GoAButton>
-      {cacheTargets && (
+      {Object.keys(cacheTargets.tenant).length === 0 && renderNoItem('tenant cache')}
+      {cacheTargets?.tenant && Object.keys(cacheTargets.tenant).length > 0 && (
         <CacheTargetTable
           targets={cacheTargets.tenant}
           openModalFunction={(cacheTarget) => {
@@ -62,8 +64,14 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
           tenantMode={true}
         />
       )}
-      <h2>Core cache targets</h2>
-      {cacheTargets && <CacheTargetTable targets={cacheTargets.core} />}
+
+      {Object.keys(cacheTargets.core).length === 0 && renderNoItem('core cache')}
+      {cacheTargets?.core && Object.keys(cacheTargets.core).length > 0 && (
+        <>
+          <h2>Core cache targets</h2>
+          <CacheTargetTable targets={cacheTargets.core} />
+        </>
+      )}
       <AddEditTargetCache
         open={openAddDefinition}
         isEdit={isEdit}

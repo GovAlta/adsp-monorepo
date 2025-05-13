@@ -11,7 +11,7 @@ import { TableDiv, NameDiv } from '../../styled-components';
 import { DeleteModal } from '@components/DeleteModal';
 import { ResourceTypeComponent } from './resourceTypeItem';
 import { v4 as uuidv4 } from 'uuid';
-
+import { renderNoItem } from '@components/NoItem';
 export const ResourceTypePage = (): JSX.Element => {
   const [openAddResourceType, setOpenAddResourceType] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -125,8 +125,8 @@ export const ResourceTypePage = (): JSX.Element => {
         }}
         onDelete={handleDelete}
       />
-
-      {othersGroup && (
+      {Object.keys(othersGroup)?.length === 0 && renderNoItem('tenant resource type')}
+      {othersGroup && Object.keys(othersGroup)?.length > 0 && (
         <div>
           <GroupedResourceTypesTable
             groupedResourceTypes={othersGroup}
@@ -136,7 +136,8 @@ export const ResourceTypePage = (): JSX.Element => {
           />
         </div>
       )}
-      {platformGroup && (
+      {Object.keys(platformGroup)?.length === 0 && renderNoItem('Core resource type')}
+      {platformGroup && Object.keys(platformGroup)?.length > 0 && (
         <div>
           <h2>Core Resource Type</h2>
           <GroupedResourceTypesTable

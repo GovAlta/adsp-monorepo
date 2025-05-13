@@ -429,7 +429,11 @@ const ObjectArrayList = ({
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, rightHeight, rightRef]);
+
   if (isEmptyList) {
+    if (uischema.options?.noDataMessage !== undefined) {
+      translations.noDataMessage = uischema.options?.noDataMessage;
+    }
     return <EmptyList numColumns={getValidColumnProps(schema).length + 1} translations={translations} />;
   }
 

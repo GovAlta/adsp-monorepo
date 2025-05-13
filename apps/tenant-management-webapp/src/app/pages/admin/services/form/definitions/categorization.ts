@@ -2,15 +2,10 @@ export const schema = {
   type: 'object',
   properties: {
     link: {},
-    firstName: {
+    fullName: {
       type: 'string',
       minLength: 3,
-      description: 'Please enter your first name',
-    },
-    secondName: {
-      type: 'string',
-      minLength: 3,
-      description: 'Please enter your second name',
+      description: 'Please enter your full name',
     },
     birthDate: {
       type: 'string',
@@ -19,28 +14,11 @@ export const schema = {
     },
     mailingAddress: {
       type: 'object',
-      properties: {
-        street: {
-          type: 'string',
-          minLength: 5,
-          description: 'Please enter your street address. This field is required.',
-        },
-        city: {
-          type: 'string',
-          minLength: 3,
-          description: 'Please enter your city. This field is required.',
-        },
-        postalCode: {
-          type: 'string',
-          pattern: '^[0-9]{5}$',
-          description: 'Please enter your 5-digit postal code.',
-        },
-      },
-      required: ['street', 'city', 'postalCode'],
+      $ref: 'https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressCanada',
     },
     phoneNumber: {
       type: 'string',
-      pattern: '^[0-9]{10}$',
+      maxLength: 10,
       description: 'Please enter your phone number (10 digits).',
     },
     email: {
@@ -53,7 +31,7 @@ export const schema = {
       description: 'Please indicate your agreement with the terms and conditions.',
     },
   },
-  required: ['firstName', 'secondName', 'birthDate', 'mailingAddress', 'phoneNumber', 'email', 'isAttestationAccepted'],
+  required: ['fullName', 'birthDate', 'mailingAddress', 'phoneNumber', 'email', 'isAttestationAccepted'],
 };
 
 export const uischema = {
@@ -68,11 +46,7 @@ export const uischema = {
           elements: [
             {
               type: 'Control',
-              scope: '#/properties/firstName',
-            },
-            {
-              type: 'Control',
-              scope: '#/properties/secondName',
+              scope: '#/properties/fullName',
             },
           ],
         },
@@ -86,19 +60,17 @@ export const uischema = {
           ],
         },
         {
-          type: 'HorizontalLayout',
+          type: 'VerticalLayout',
           elements: [
             {
-              type: 'Control',
-              scope: '#/properties/mailingAddress/properties/street',
-            },
-            {
-              type: 'Control',
-              scope: '#/properties/mailingAddress/properties/city',
-            },
-            {
-              type: 'Control',
-              scope: '#/properties/mailingAddress/properties/postalCode',
+              type: 'Group',
+              label: 'Mailing address',
+              elements: [
+                {
+                  type: 'Control',
+                  scope: '#/properties/mailingAddress',
+                },
+              ],
             },
           ],
         },

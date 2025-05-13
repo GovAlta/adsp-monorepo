@@ -43,8 +43,8 @@ export const defaultCalendar: CalendarItem = {
   updateRoles: [],
 };
 export const CALENDAR_INIT: CalendarService = {
-  calendars: null,
-  coreCalendars: null,
+  calendars: {},
+  coreCalendars: {},
   indicator: {
     details: {},
   },

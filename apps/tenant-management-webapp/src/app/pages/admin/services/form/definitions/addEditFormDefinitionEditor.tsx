@@ -193,7 +193,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const selectedCoreEvent = useSelector(
     (state: RootState) =>
-      state.calendarService?.coreCalendars && state.calendarService?.coreCalendars['form-intake'].selectedCalendarEvents
+      state.calendarService?.coreCalendars &&
+      state.calendarService?.coreCalendars['form-intake']?.selectedCalendarEvents
   );
 
   useEffect(() => {
