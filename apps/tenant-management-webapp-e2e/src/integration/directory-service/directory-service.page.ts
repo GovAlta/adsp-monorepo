@@ -124,5 +124,51 @@ class DirectoryServicePage {
   entryModalTitle() {
     return cy.xpath('//*[@testid="directory-modal" and @open="true"]//*[@slot="heading"]');
   }
+
+  addTypeButton() {
+    return cy.get('[testid="add-resource-type"]');
+  }
+
+  resourceTypeModalTitle() {
+    return cy.xpath('//*[@testid="add-edit-resource-type-modal" and @open="true"]//*[@slot="heading"]');
+  }
+
+  resourceTypeModalApiDropdown() {
+    return cy.xpath('//goa-dropdown[@testid="resource-type-api"]');
+  }
+
+  resourceTypeModalDeleteEventDropdown() {
+    return cy.xpath('//goa-dropdown[@testid="resource-type-event-dropdown"]');
+  }
+
+  resourceTypeModalTypeField() {
+    return cy.xpath('//goa-input[@testid="resource-type-modal-type-input"]');
+  }
+
+  resourceTypeModalMatcherField() {
+    return cy.xpath('//goa-input[@testid="resource-type-modal-matcher-input"]');
+  }
+
+  resourceTypeModalNamePathField() {
+    return cy.xpath('//goa-input[@testid="resource-type-modal-name-path-input"]');
+  }
+
+  resourceTypeModalCancelButton() {
+    return cy.xpath(
+      '//*[@testid="add-edit-resource-type-modal" and @open="true"]//*[@testid="resource-type-modal-cancel"]'
+    );
+  }
+
+  resourceTypeModalSaveButton() {
+    return cy.xpath(
+      '//*[@testid="add-edit-resource-type-modal" and @open="true"]//*[@testid="resource-type-modal-save"]'
+    );
+  }
+
+  resourceType(api, type, matcher) {
+    return cy.xpath(
+      `//div[text()="${api}"]/following-sibling::div/table//tbody/tr/td[@data-testid="type" and text()="${type}"]/following-sibling::td[@data-testid="matcher" and text()="${matcher}"]/parent::*`
+    );
+  }
 }
 export default DirectoryServicePage;
