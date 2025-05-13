@@ -53,7 +53,10 @@ export interface PdfGenerationPayload {
   fileName: string;
 }
 
-export type SchemaType = unknown;
+export type SchemaType = {
+  config: Record<string, unknown>;
+  data: Record<string, unknown>;
+};
 
 export interface PdfMetrics {
   pdfGenerated?: number;

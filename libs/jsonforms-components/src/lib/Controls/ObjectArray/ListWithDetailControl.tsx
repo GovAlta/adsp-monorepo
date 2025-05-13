@@ -217,6 +217,13 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
     }),
   };
 
+  const hasNoElements = () => {
+    const hasNoLayoutElements =
+      (uischema as Layout)?.elements?.length === 0 && (uischema as Layout)?.options?.detail?.elements?.length === 0;
+
+    return hasNoLayoutElements;
+  };
+
   return (
     <>
       {
@@ -255,7 +262,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
         })
       }
 
-      {uiSchemaElementsForNotDefined?.elements?.length > 0 && (
+      {hasNoElements() && uiSchemaElementsForNotDefined?.elements?.length > 0 && (
         <JsonFormsDispatch
           schema={schema}
           uischema={uiSchemaElementsForNotDefined}
@@ -295,6 +302,7 @@ interface LeftRowProps {
   enabled: boolean;
   name: string;
   currentTab: number;
+  current: HTMLElement | null;
   translations: ArrayTranslations;
   selectCurrentTab: (index: number) => void;
 }
@@ -306,12 +314,16 @@ const NonEmptyRowComponent = ({
   cells,
   uischema,
 }: NonEmptyRowProps & WithDeleteDialogSupport) => {
+  const isHorizontal = uischema?.options?.detail?.type === 'HorizontalLayout';
+
   return (
     <div key={childPath}>
-      {enabled ? (
+      {enabled && isHorizontal ? (
         <GoAGrid minChildWidth="30ch">
           {GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}
         </GoAGrid>
+      ) : enabled && !isHorizontal ? (
+        <>{GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}</>
       ) : null}
     </div>
   );
@@ -325,6 +337,7 @@ const LeftTab = ({
   enabled,
   currentTab,
   name,
+  current,
   translations,
 }: LeftRowProps & WithDeleteDialogSupport) => {
   return (
@@ -332,8 +345,22 @@ const LeftTab = ({
       <SideMenuItem
         style={currentTab === rowIndex ? { background: '#EFF8FF' } : {}}
         onClick={() => selectCurrentTab(rowIndex)}
+        onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            if (current) {
+              const goa = current?.querySelector('goa-input, goa-button');
+              if (goa?.shadowRoot) {
+                const internal = goa.shadowRoot.querySelector('input, button');
+
+                (internal as HTMLElement)?.focus();
+                selectCurrentTab(rowIndex);
+              }
+            }
+          }
+        }}
       >
-        <RowFlexMenu>
+        <RowFlexMenu tabIndex={0}>
           <TabName>{name}</TabName>
           {enabled ? (
             <Trash role="trash button">
@@ -362,6 +389,8 @@ interface TableRowsProp {
   enabled: boolean;
   cells?: JsonFormsCellRendererRegistryEntry[];
   translations: ArrayTranslations;
+  currentIndex: number;
+  setCurrentIndex: (index: number) => void;
 }
 const ObjectArrayList = ({
   data,
@@ -373,14 +402,14 @@ const ObjectArrayList = ({
   enabled,
   cells,
   translations,
+  currentIndex,
+  setCurrentIndex,
 }: TableRowsProp & WithDeleteDialogSupport) => {
   const isEmptyList = data === 0;
   const rightRef = useRef(null);
   const current = rightRef.current as HTMLElement | null;
   const minHeight = 300;
   const [rightHeight, setRightHeight] = useState<number | undefined>(minHeight);
-
-  const [currentTab, setCurrentTab] = useState(0);
 
   useEffect(() => {
     const resizeObserver = new ResizeObserver(() => {
@@ -400,18 +429,22 @@ const ObjectArrayList = ({
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, rightHeight, rightRef]);
+
   if (isEmptyList) {
+    if (uischema.options?.noDataMessage !== undefined) {
+      translations.noDataMessage = uischema.options?.noDataMessage;
+    }
     return <EmptyList numColumns={getValidColumnProps(schema).length + 1} translations={translations} />;
   }
 
   const appliedUiSchemaOptions = merge({}, config, uischema.options);
 
   const selectCurrentTab = (index: number) => {
-    setCurrentTab(index);
+    setCurrentIndex(index);
   };
 
   const paddedHeight = rightHeight && rightHeight + 48;
-
+  // const detailRef = useRef<HTMLDivElement>(null);
   return (
     <ListContainer>
       <RowFlex>
@@ -426,21 +459,22 @@ const ObjectArrayList = ({
                 key={childPath}
                 childPath={childPath}
                 rowIndex={index}
-                currentTab={currentTab}
+                currentTab={currentIndex}
                 name={name}
                 openDeleteDialog={openDeleteDialog}
                 selectCurrentTab={selectCurrentTab}
                 enabled={enabled}
+                current={current}
                 translations={translations}
               />
             );
           })}
         </FlexTabs>
-        <FlexForm ref={rightRef}>
+        <FlexForm ref={rightRef} tabIndex={-1}>
           <NonEmptyList
-            key={Paths.compose(path, `${currentTab}`)}
-            childPath={Paths.compose(path, `${currentTab}`)}
-            rowIndex={currentTab}
+            key={Paths.compose(path, `${currentIndex}`)}
+            childPath={Paths.compose(path, `${currentIndex}`)}
+            rowIndex={currentIndex}
             schema={schema}
             openDeleteDialog={openDeleteDialog}
             showSortButtons={appliedUiSchemaOptions.showSortButtons || appliedUiSchemaOptions.showArrayTableSortButtons}
@@ -455,14 +489,25 @@ const ObjectArrayList = ({
     </ListContainer>
   );
 };
-
+interface ListWithDetailControlProps extends ObjectArrayControlProps {
+  currentTab: number;
+  setCurrentTab: (index: number) => void;
+}
 // eslint-disable-next-line
-export class ListWithDetailControl extends React.Component<ObjectArrayControlProps, any> {
+export class ListWithDetailControl extends React.Component<ListWithDetailControlProps, any> {
   // eslint-disable-next-line
   addItem = (path: string, value: any) => {
-    const pathIdValue = path?.split('.') || '';
-    if ((pathIdValue.length > 1 && +this.props.data >= 0) || pathIdValue.length === 1) {
-      this.props.addItem(path, value)();
+    const { data, addItem, setCurrentTab } = this.props;
+
+    const isNonEmpty = data !== undefined && data !== null;
+    const newIndex = isNonEmpty ? data ?? 0 : 0;
+
+    if (addItem) {
+      addItem(path, value)();
+    }
+
+    if (typeof setCurrentTab === 'function') {
+      setCurrentTab(newIndex);
     }
   };
 
@@ -522,6 +567,8 @@ export class ListWithDetailControl extends React.Component<ObjectArrayControlPro
             data={data}
             cells={cells}
             config={config}
+            currentIndex={this.props.currentTab}
+            setCurrentIndex={this.props.setCurrentTab}
             {...additionalProps}
           />
         </div>

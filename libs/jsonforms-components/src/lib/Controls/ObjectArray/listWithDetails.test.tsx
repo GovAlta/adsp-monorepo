@@ -60,6 +60,12 @@ const getUiSchema = () => {
   return {
     type: 'ListWithDetail',
     scope: '#/properties/messages',
+    elements: [],
+    options: {
+      detail: {
+        elements: [],
+      },
+    },
   };
 };
 

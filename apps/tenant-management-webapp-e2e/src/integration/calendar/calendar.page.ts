@@ -7,7 +7,7 @@ class CalendarPage {
     return cy.get('[testid="add-calendar-btn"]');
   }
 
-  addScriptModalTitle() {
+  addCalendarModalTitle() {
     return cy.xpath('//goa-modal[@testid="add-calendar-modal" and @open="true"]//*[@slot="heading"]');
   }
 

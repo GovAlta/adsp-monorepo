@@ -27,6 +27,7 @@ export interface JsonFormsStepperContextProps {
   goToTableOfContext: () => void;
   toggleShowReviewLink: (id: number) => void;
   validatePage: (id: number) => void;
+  selectNumberOfCompletedCategories: () => number;
   isProvided?: boolean;
 }
 
@@ -90,6 +91,12 @@ export const JsonFormsStepperContextProvider = ({
       selectIsDisabled: () => {
         const category = stepperState.categories?.[stepperState.activeId];
         return category === undefined ? false : !category?.isEnabled;
+      },
+      selectNumberOfCompletedCategories: (): number => {
+        return stepperState?.categories.reduce(
+          (acc, cat) => acc + (cat.isValid && cat.isCompleted && cat.isVisited ? 1 : 0),
+          0
+        );
       },
       selectIsActive: (id: number) => {
         return id === stepperState.activeId;

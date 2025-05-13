@@ -11,11 +11,10 @@ import Checkboxes from '../../Components/CheckboxGroup';
 type CheckboxGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
-  const { data, id, schema, uischema, path, handleChange, options, config, label, t } = props;
+  const { data, id, schema, uischema, path, handleChange, options, config, label } = props;
   const newSchema = schema as { items: { enum: string[] } };
   const enumData = schema?.enum || newSchema?.items?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
-
 
   return (
     <Checkboxes
@@ -32,13 +31,13 @@ export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
             text={enumValue}
             testId={`${enumValue}-checkbox`}
             onChange={(name: string, value: string) => {
-              let newData = Array.isArray(data) ? [...data] : [];
+              let newData: Array<string> = Array.isArray(data) ? [...data] : [];
               if (value) {
                 newData.push(enumValue);
               } else {
                 newData = newData.filter((item) => item !== enumValue);
               }
-              handleChange(path, newData);
+              handleChange(path, newData.length === 0 ? undefined : newData);
             }}
           />
         );

@@ -13,7 +13,7 @@ import {
 export type GoAInputDateTimeProps = CellProps & WithClassname & WithInputProps;
 
 export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
-  const { data, config, id, enabled, uischema, isVisited, errors, schema, label, setIsVisited } = props;
+  const { data, config, id, enabled, uischema, isVisited, errors, label, setIsVisited } = props;
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;

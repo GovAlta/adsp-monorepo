@@ -14,7 +14,7 @@ Given('a tenant admin user is on calendar service overview page', function () {
   commonlib.tenantAdminMenuItem('Calendar', 4000);
 });
 
-Then('the user clicks Add calendar button on overview tab', function () {
+When('the user clicks Add calendar button on overview tab', function () {
   calendarObj.addCalendarOverviewTabBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
@@ -25,7 +25,7 @@ When('the user clicks Add calendar button', function () {
 });
 
 Then('the user views Add calendar modal', function () {
-  calendarObj.addScriptModalTitle().invoke('text').should('eq', 'Add calendar');
+  calendarObj.addCalendarModalTitle().invoke('text').should('eq', 'Add calendar');
 });
 
 When('the user clicks Save button in Add calendar modal', function () {

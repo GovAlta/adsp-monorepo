@@ -11,7 +11,7 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
   const [name, setName] = useState<string>();
   const [rowData, setRowData] = useState<number>(0);
   const { removeItems, visible, handleChange } = props as ArrayLayoutProps & ControlProps;
-
+  const [currentTab, setCurrentTab] = useState(0);
   const openDeleteDialog = useCallback(
     (p: string, rowIndex: number, name?: string) => {
       setOpen(true);
@@ -29,17 +29,25 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
     if (removeItems && p) {
       if (props.data === 1) {
         handleChange(p, null);
+        setCurrentTab(0);
       } else {
         removeItems(p, [rowData])();
+        setCurrentTab((prev) => Math.max(0, rowData - 1)); // Safe fallback
       }
     }
     setOpen(false);
     // eslint-disable-next-line
-  }, [setOpen, path, rowData]);
+  }, [setOpen, path, rowData, rowData]);
 
   return (
     <Visible visible={visible}>
-      <ListWithDetailControl {...props} openDeleteDialog={openDeleteDialog} enabled={true} />
+      <ListWithDetailControl
+        {...props}
+        openDeleteDialog={openDeleteDialog}
+        enabled={true}
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+      />
 
       <DeleteDialog
         open={open}

@@ -43,8 +43,8 @@ export const defaultCalendar: CalendarItem = {
   updateRoles: [],
 };
 export const CALENDAR_INIT: CalendarService = {
-  calendars: null,
-  coreCalendars: null,
+  calendars: {},
+  coreCalendars: {},
   indicator: {
     details: {},
   },
@@ -70,6 +70,7 @@ export interface CalendarEvent {
   isPublic: boolean;
   isAllDay?: boolean;
   attendees?: Attendee[];
+  recordId?: string;
 }
 
 export const CalendarEventDefault = {
@@ -80,10 +81,12 @@ export const CalendarEventDefault = {
   end: getLocalISOString(new Date()),
   isPublic: false,
   isAllDay: false,
+  recordId: '',
 };
 
 export interface CalendarEventSearchCriteria {
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   calendarName?: string;
+  recordId?: string;
 }

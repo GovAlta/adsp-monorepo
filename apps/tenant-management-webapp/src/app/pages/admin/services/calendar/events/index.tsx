@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { SelectCalendarHeader, CalendarDropdownWrapper } from './styled-components';
 import { GoADropdown, GoADropdownItem, GoAButton, GoASkeleton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
@@ -23,12 +23,23 @@ interface CalendarDropdownProps {
 }
 
 const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.Element => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const eventName = urlParams.get('event');
+  const hasRunRef = useRef(0);
+  useEffect(() => {
+    if (hasRunRef.current < 5 && Object.keys(calendars).length > 0 && eventName) {
+      onSelect('calendars', eventName);
+      hasRunRef.current = hasRunRef.current + 1;
+    }
+  }, [calendars, eventName, onSelect]);
+
   return (
     <CalendarDropdownWrapper>
       <GoADropdown
         name="calendars"
         width="100%"
         placeholder="Select"
+        value={eventName || ''}
         testId="calendar-event-dropdown-list"
         aria-label="select-calendar-dropdown"
         onChange={onSelect}

@@ -21,6 +21,15 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
     top: 10,
     next: null,
   };
+  const subscribers = useSelector((state: RootState) => {
+    if (state.subscription.subscriberSearch.results) {
+      return state.subscription.subscriberSearch.results
+        .map((id) => state.subscription.subscribers[id])
+        .filter((subs) => !!subs);
+    } else {
+      return null;
+    }
+  });
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -63,7 +72,9 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
           />
 
           <SubscriberList searchCriteria={criteriaState} />
-          {indicator.show === false && <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />}
+          {indicator.show === false && subscribers?.length > 0 && (
+            <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />
+          )}
           {indicator.show && <PageIndicator />}
         </div>
       </CheckSubscriberRoles>

@@ -71,8 +71,8 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
             </thead>
             <tbody>
               {subscribers &&
-                subscribers.length > 0 &&
-                subscribers.map((subscriber) => (
+                subscribers?.length > 0 &&
+                subscribers?.map((subscriber) => (
                   <SubscriberListItem
                     openModalFunction={openModalFunction}
                     subscriber={subscriber}

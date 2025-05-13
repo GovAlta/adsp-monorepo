@@ -19,13 +19,14 @@ import {
 import { ListItem, SearchBox } from './styled-components';
 import { HelpContentComponent } from '../../Additional';
 import { useDebounce } from '../../util/useDebounce';
+import { Visible } from '../../util';
 
 type AddressLookUpProps = ControlProps;
 
 const ADDRESS_PATH = 'api/gateway/v1/address/v1/find';
 
 export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => {
-  const { data, path, schema, enabled, handleChange, uischema, rootSchema } = props;
+  const { data, path, schema, enabled, handleChange, uischema, visible } = props;
 
   const isAlbertaAddress = schema?.properties?.subdivisionCode?.const === 'AB';
   const formCtx = useContext(JsonFormContext);
@@ -173,7 +174,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   return (
-    <div>
+    <Visible visible={visible}>
       {renderHelp()}
       <h3>{label}</h3>
       <GoAFormItem
@@ -256,6 +257,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
         handleOnBlur={handleRequiredFieldBlur}
         requiredFields={requiredFields}
       />
-    </div>
+    </Visible>
   );
 };

@@ -9,10 +9,15 @@ import {
   GoAInput,
   GoATooltip,
   GoAIcon,
+  GoAModal,
+  GoAInputDate,
+  GoAInputTime,
+  GoAGrid,
+  GoAAccordion,
 } from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
@@ -75,6 +80,7 @@ import {
   GoACheckboxPad,
   ReviewPageTabWrapper,
   AddToggleButtonPadding,
+  LinkMargin,
 } from '../styled-components';
 import { AddEditDispositionModal } from './addEditDispositionModal';
 import { DispositionItems } from './dispositionItems';
@@ -82,7 +88,7 @@ import { FormConfigDefinition } from './formConfigDefinition';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 import { RowFlex, QueueTaskDropdown, H3, BorderBottom, H3Inline, ToolTipAdjust } from './style-components';
-
+import { UpdateSearchCriteriaAndFetchEvents, fetchCalendars } from '@store/calendar/actions';
 export const ContextProvider = ContextProviderFactory();
 
 const isUseMiniMap = window.screen.availWidth >= 1920;
@@ -161,14 +167,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const editorRefData = useRef(null);
   const editorRefUi = useRef(null);
 
-  useEffect(() => {
-    dispatch(FetchRealmRoles());
-    dispatch(fetchKeycloakServiceRoles());
-    dispatch(getTaskQueues());
-    dispatch(getConfigurationDefinitions());
-    dispatch(FetchFileTypeService());
-  }, [dispatch]);
-
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
   const uploadFile = (file: File, propertyId: string) => {
@@ -190,6 +188,33 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const tempUiSchema = useSelector((state: RootState) => state.form.editor.uiSchemaDraft);
   const tempDataSchema = useSelector((state: RootState) => state.form.editor.dataSchemaDraft);
   const schemaError = useSelector(schemaErrorSelector);
+  const { coreCalendars } = useSelector((state: RootState) => state.calendarService);
+
+  const selectedCoreEvent = useSelector(
+    (state: RootState) =>
+      state.calendarService?.coreCalendars &&
+      state.calendarService?.coreCalendars['form-intake']?.selectedCalendarEvents
+  );
+
+  useEffect(() => {
+    dispatch(fetchCalendars());
+  }, []);
+
+  useEffect(() => {
+    dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
+    dispatch(getTaskQueues());
+    dispatch(getConfigurationDefinitions());
+    dispatch(FetchFileTypeService());
+    if (definition.id && coreCalendars) {
+      dispatch(
+        UpdateSearchCriteriaAndFetchEvents({
+          recordId: `urn:ads:platform:configuration-service:v2:/configuration/form-service/${definition.id}`,
+          calendarName: 'form-intake',
+        })
+      );
+    }
+  }, [dispatch, definition, coreCalendars]);
 
   const isFormUpdated = useSelector(isFormUpdatedSelector);
 
@@ -210,11 +235,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
   const [uiEditorLocation, setUiEditorLocation] = useState<number>(0);
   const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [data, setData] = useState<unknown>();
+  const [data, setData] = useState<unknown>({});
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
 
   const [newDisposition, setNewDisposition] = useState<boolean>(false);
+  const [intakePeriodModal, setIntakePeriodModal] = useState<boolean>(false);
   const [saveModal, setSaveModal] = useState({ visible: false });
   const [currentTab, setCurrentTab] = useState(0);
 
@@ -534,6 +560,18 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   <div className="life-cycle-auto-scroll" style={{ height: EditorHeight + 7 }}>
                     <H3>Application</H3>
                     <div>
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <GoAButton
+                          type="primary"
+                          testId="set-intake-period"
+                          onClick={() => {
+                            setIntakePeriodModal(true);
+                          }}
+                        >
+                          Intake periods
+                        </GoAButton>
+                      </div>
+
                       <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
                         <FormFormItem>
                           <GoAInput
@@ -991,6 +1029,78 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           setSelectedEditModalIndex(null);
         }}
       />
+      {intakePeriodModal && (
+        <GoAModal heading="Intake Periods" open={intakePeriodModal} maxWidth={'70ch !important'}>
+          <form style={{ width: '100%' }}>
+            <div>These are configured in the form-intake Events in Calendar Service</div>
+            <LinkMargin>
+              <Link to="/admin/services/calendar?page=events&event=form-intake">Go to Form Intake Event</Link>
+            </LinkMargin>
+
+            {selectedCoreEvent && selectedCoreEvent.length > 0 ? (
+              selectedCoreEvent.map((coreEvent) => {
+                return (
+                  <GoAAccordion heading={coreEvent.name} open={true}>
+                    <GoAGrid minChildWidth="25ch" gap="s">
+                      <GoAFormItem label="Start date" error={errors?.['start']}>
+                        <GoAInputDate
+                          name="endDate"
+                          value={coreEvent.start ? new Date(coreEvent.start) : new Date()}
+                          width="100%"
+                          testId="calendar-event-modal-end-date-input"
+                          disabled={true}
+                        />
+                      </GoAFormItem>
+                      <GoAFormItem label="Start time">
+                        <GoAInputTime
+                          name="StartTime"
+                          value={new Date(coreEvent.start)?.toTimeString().split(' ')[0]}
+                          step={1}
+                          width="100%"
+                          testId="calendar-event-modal-start-time-input"
+                          disabled={true}
+                        />
+                      </GoAFormItem>
+                      <GoAFormItem label="End date">
+                        <GoAInputDate
+                          name="endDate"
+                          value={coreEvent.end ? new Date(coreEvent.end) : new Date()}
+                          width="100%"
+                          testId="calendar-event-modal-end-date-input"
+                          disabled={true}
+                        />
+                      </GoAFormItem>
+
+                      <GoAFormItem label="End time">
+                        <GoAInputTime
+                          name="endTime"
+                          value={new Date(coreEvent.end)?.toTimeString().split(' ')[0]}
+                          step={1}
+                          width="100%"
+                          disabled={true}
+                          testId="calendar-event-modal-end-time-input"
+                        />
+                      </GoAFormItem>
+                    </GoAGrid>
+                  </GoAAccordion>
+                );
+              })
+            ) : (
+              <b>No intake periods configured for this form</b>
+            )}
+            <GoAButtonGroup alignment="end" mt="xl">
+              <GoAButton
+                type="primary"
+                onClick={() => {
+                  setIntakePeriodModal(false);
+                }}
+              >
+                Close
+              </GoAButton>
+            </GoAButtonGroup>
+          </form>
+        </GoAModal>
+      )}
     </FormEditor>
   );
 }

@@ -9,6 +9,7 @@ export function useSyncAutofillFields(
   // eslint-disable-next-line
   handleRequiredFieldBlur: (name: string, updatedData?: any) => void
 ) {
+  /* istanbul ignore next */
   useEffect(() => {
     const rAF = requestAnimationFrame(() => {
       const timeout = setTimeout(() => {

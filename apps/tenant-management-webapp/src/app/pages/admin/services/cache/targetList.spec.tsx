@@ -17,6 +17,17 @@ describe('target Component', () => {
         docServiceApiUrl: 'http://mock-dock-service.com',
       },
     },
+    event: {
+      definitions: {
+        'foo:bar': {
+          namespace: 'foo',
+          name: 'bar',
+          description: 'foobar',
+          isCore: false,
+          payloadSchema: {},
+        },
+      },
+    },
     cache: {
       targets: {
         tenant: {
@@ -78,7 +89,7 @@ describe('target Component', () => {
 
     await fireEvent.click(getByText('Targets'));
 
-    const eyes = baseElement.querySelectorAll("goa-icon-button[testId='cache-toggle-details-visibility']");
+    const eyes = baseElement.querySelectorAll("goa-icon-button[testId='target-toggle-details-visibility']");
     const shadowDeleteBtn = eyes[0].shadowRoot?.querySelector('button');
     expect(shadowDeleteBtn).not.toBeNull();
     fireEvent(eyes[0]!, new CustomEvent('_click'));

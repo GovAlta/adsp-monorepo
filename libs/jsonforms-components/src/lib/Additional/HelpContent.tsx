@@ -128,7 +128,9 @@ export const HelpContentComponent = ({
     (uischema.options?.variant !== 'details' && uischema.options?.variant !== 'hyperlink');
 
   if (markdown) {
-    return MarkdownComponent({ markdown: getMarkDownData(uischema?.options?.help) });
+    return (
+      <Visible visible={visible}>{MarkdownComponent({ markdown: getMarkDownData(uischema?.options?.help) })}</Visible>
+    );
   }
   return (
     <Visible visible={visible}>

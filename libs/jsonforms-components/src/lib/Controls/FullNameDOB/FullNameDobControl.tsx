@@ -2,10 +2,11 @@ import { GoAFormItem, GoAGrid, GoAInput } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { useState } from 'react';
 import { useSyncAutofillFields } from '../../util/useSyncAutofillFields';
+import { Visible } from '../../util';
 type DateOfBirthControlProps = ControlProps;
 
 export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element => {
-  const { data, path, schema, handleChange, enabled } = props;
+  const { data, path, schema, handleChange, enabled, visible } = props;
   const requiredFields = (schema as { required: string[] }).required;
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -67,7 +68,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
     handleRequiredFieldBlur
   );
   return (
-    <>
+    <Visible visible={visible}>
       <GoAGrid minChildWidth="0ch" gap="s" mb="m">
         <GoAFormItem
           label="First name"
@@ -154,6 +155,6 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
           />
         </GoAFormItem>
       </GoAGrid>
-    </>
+    </Visible>
   );
 };

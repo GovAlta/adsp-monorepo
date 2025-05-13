@@ -12,22 +12,7 @@ import { EnumCellProps, WithClassname } from '@jsonforms/core';
 type RadioGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
-  const {
-    data,
-    className,
-    id,
-    enabled,
-    schema,
-    uischema,
-    path,
-    handleChange,
-    options,
-    config,
-    label,
-    t,
-    isVisited,
-    errors,
-  } = props;
+  const { data, id, enabled, schema, uischema, path, handleChange, options, config, label, isVisited, errors } = props;
   const enumData = schema?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
   return (

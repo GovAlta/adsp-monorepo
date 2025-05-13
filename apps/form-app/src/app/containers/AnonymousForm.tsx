@@ -42,7 +42,7 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
         <Container vs={1} hs={1}>
           {definition?.anonymousApply ? (
             <>
-              {form?.status === 'submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
+              {form?.status === 'Submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
               {!form && (
                 <DraftFormWrapper
                   definition={definition}

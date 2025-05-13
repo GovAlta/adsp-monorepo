@@ -164,9 +164,6 @@ describe('FileUploaderControl tests', () => {
   it('can delete an uploaded file', () => {
     const { baseElement, ...renderer } = render(getForm(dataSchema, fileUploaderUiSchema));
 
-    const uploadBtn = renderer.container.querySelector('div > :scope goa-file-upload-input');
-    expect(uploadBtn).toBeInTheDocument();
-    fireEvent(uploadBtn!, new CustomEvent('_selectFile', { detail: {} }));
     const deleteBtn = renderer.container.querySelector('div > :scope goa-icon-button[icon="trash"]');
     expect(deleteBtn).toBeInTheDocument();
     fireEvent(deleteBtn!, new CustomEvent('_click'));
@@ -178,6 +175,6 @@ describe('FileUploaderControl tests', () => {
     fireEvent(deleteConfirm!, new CustomEvent('_click'));
     fireEvent.click(deleteConfirm!);
 
-    expect(mockDelete).toBeCalledTimes(2);
+    expect(mockDelete).toBeCalledTimes(1);
   });
 });

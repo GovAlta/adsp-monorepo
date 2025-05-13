@@ -3,7 +3,7 @@ import { CategoryState } from './context';
 
 export enum PageStatus {
   Complete = 'Completed',
-  Incomplete = 'Incomplete',
+  Inprogress = 'In progress',
   NotStarted = 'Not started',
 }
 
@@ -11,7 +11,7 @@ export const getCategoryStatus = (category: CategoryState): string => {
   return category.isVisited
     ? category.isCompleted && category.isValid
       ? PageStatus.Complete
-      : PageStatus.Incomplete
+      : PageStatus.Inprogress
     : PageStatus.NotStarted;
 };
 

@@ -11,6 +11,7 @@ import { Dropdown } from '../../Components/Dropdown';
 import { sinTitle } from '../../common/Constants';
 
 import { Item } from '../../Components/DropDownTypes';
+
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
 function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undefined): RegisterConfig | undefined {
