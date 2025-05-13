@@ -87,7 +87,8 @@ Feature: Directory-service
     When the user clicks Delete button in Entry modal
     Then the user "should not view" the entry of "automatedtest-use-only" in Service, "v1" in API, "https://file-service.adsp-uat.alberta.ca/file/v1" in URL
 
-  @TEST_CS-1464 @REQ_CS-1318 @regression
+  # ignore due to CS-4167
+  @TEST_CS-1464 @REQ_CS-1318 @regression @ignore
   Scenario: As a tenant admin, I can see the event definitions for directory service, so I know what events are available
     # Create and update a service api entry
     Given a tenant admin user is on directory entries page
