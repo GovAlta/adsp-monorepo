@@ -58,6 +58,7 @@ import {
   ToolBarHeader,
 } from './styled-components';
 import { DataProperty } from './ObjectListControlTypes';
+import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
 
 const GenerateRows = (
   Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
@@ -466,6 +467,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   const [registers, dispatch] = useReducer(objectListReducer, initialState);
   const [open, setOpen] = useState(false);
   const [rowData, setRowData] = useState<number>(0);
+  const [maxItemsError, setMaxItemsError] = useState('');
 
   const {
     label,
@@ -507,8 +509,20 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
 
   //  eslint-disable-next-line
   const addItem = (path: string, value: any) => {
-    dispatch({ type: INCREMENT_ACTION, payload: path });
-    return () => props.addItem(path, value);
+    const maxItems = uischema.options?.detail?.maxItems ? uischema.options?.detail?.maxItems : DEFAULT_MAX_ITEMS;
+    const categories = registers.categories;
+    const currentCategory = categories[path];
+
+    const count = currentCategory?.count !== undefined ? currentCategory?.count : 0;
+    if (count < maxItems) {
+      dispatch({ type: INCREMENT_ACTION, payload: path });
+      return () => props.addItem(path, value);
+    } else {
+      setMaxItemsError(`Maximum ${maxItems} items allowed.`);
+      setTimeout(() => {
+        setMaxItemsError('');
+      }, 3000);
+    }
   };
 
   // eslint-disable-next-line
@@ -532,7 +546,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
     if (handleChangeData.length === 0) {
       handleChangeData = null;
     }
-
+    setMaxItemsError('');
     props.handleChange(path, handleChangeData);
     dispatch({ type: DELETE_ACTION, payload: { name: path, category: currentCategory } });
   };
@@ -604,6 +618,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
         ) : (
           <b>
             {listTitle} <span>{additionalProps.required && '(required)'}</span>
+            {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
           </b>
         )}
 
