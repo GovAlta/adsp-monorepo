@@ -34,6 +34,8 @@ import {
 } from './styled-components';
 import { Visible } from '../../util';
 
+import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
+
 export type ObjectArrayControlProps = ArrayLayoutProps & WithDeleteDialogSupport;
 
 // eslint-disable-next-line
@@ -182,7 +184,6 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
     : [];
 
   const scopesInElements = extractScopesFromUISchema(uischema);
-
   const scopesNotInElements = propScopes.filter((scope) => {
     return !scopesInElements.includes(scope);
   });
@@ -495,19 +496,32 @@ interface ListWithDetailControlProps extends ObjectArrayControlProps {
 }
 // eslint-disable-next-line
 export class ListWithDetailControl extends React.Component<ListWithDetailControlProps, any> {
+  state = {
+    maxItemsError: '',
+  };
   // eslint-disable-next-line
   addItem = (path: string, value: any) => {
-    const { data, addItem, setCurrentTab } = this.props;
+    const { data, addItem, setCurrentTab, uischema, errors } = this.props;
 
     const isNonEmpty = data !== undefined && data !== null;
     const newIndex = isNonEmpty ? data ?? 0 : 0;
+    const maxItems = uischema?.options?.detail?.maxItems ?? DEFAULT_MAX_ITEMS;
 
-    if (addItem) {
-      addItem(path, value)();
-    }
+    if (data < maxItems) {
+      if (addItem) {
+        addItem(path, value)();
+      }
 
-    if (typeof setCurrentTab === 'function') {
-      setCurrentTab(newIndex);
+      if (typeof setCurrentTab === 'function') {
+        setCurrentTab(newIndex);
+      }
+    } else {
+      this.setState({
+        maxItemsError: `Maximum ${maxItems} items allowed.`,
+      });
+      setTimeout(() => {
+        this.setState({ maxItemsError: '' });
+      }, 3000);
     }
   };
 
@@ -539,6 +553,9 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
           {listTitle && (
             <ObjectArrayTitle>
               {listTitle} <span>{additionalProps.required && '(required)'}</span>
+              {this.state.maxItemsError && (
+                <span style={{ color: 'red', marginLeft: '1rem' }}>{this.state.maxItemsError}</span>
+              )}
             </ObjectArrayTitle>
           )}
           <ObjectArrayToolBar
