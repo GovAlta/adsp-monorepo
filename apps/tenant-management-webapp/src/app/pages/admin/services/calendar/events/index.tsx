@@ -23,23 +23,12 @@ interface CalendarDropdownProps {
 }
 
 const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.Element => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const eventName = urlParams.get('event');
-  const hasRunRef = useRef(0);
-  useEffect(() => {
-    if (hasRunRef.current < 5 && Object.keys(calendars).length > 0 && eventName) {
-      onSelect('calendars', eventName);
-      hasRunRef.current = hasRunRef.current + 1;
-    }
-  }, [calendars, eventName, onSelect]);
-
   return (
     <CalendarDropdownWrapper>
       <GoADropdown
         name="calendars"
         width="100%"
         placeholder="Select"
-        value={eventName || ''}
         testId="calendar-event-dropdown-list"
         aria-label="select-calendar-dropdown"
         onChange={onSelect}
