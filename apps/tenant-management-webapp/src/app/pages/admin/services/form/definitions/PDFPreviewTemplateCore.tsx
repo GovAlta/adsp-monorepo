@@ -184,22 +184,15 @@ export const PreviewTop = ({ title, form, data, currentTab }) => {
   const generateTemplate = () => {
     const payload = {
       templateId: PDF_FORM_TEMPLATE_ID,
-      data: getFormData(),
+      data: { definition: form },
       fileName: getFileName(form.name),
       formId: form.name,
+      inputData: data,
     };
 
     dispatch(generatePdf(payload));
   };
 
-  const getFormData = () => {
-    return {
-      content: {
-        config: form,
-        data: data,
-      },
-    };
-  };
   return (
     <PreviewTopStyleWrapper>
       <PreviewTopStyle>

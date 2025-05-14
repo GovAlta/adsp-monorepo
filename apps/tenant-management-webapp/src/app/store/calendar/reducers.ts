@@ -80,6 +80,14 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
         currentCalendar = 'coreCalendars';
       }
 
+      if (!state[currentCalendar]) {
+        state[currentCalendar] = {};
+      }
+
+      if (!state[currentCalendar][name]) {
+        state[currentCalendar][name] = {};
+      }
+
       if (!action.after) {
         state[currentCalendar][name].selectedCalendarEvents = events;
         state[currentCalendar][name].nextEvents = action.nextEvents;

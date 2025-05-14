@@ -350,10 +350,18 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
       const saveBody: UpdatePdfConfig = { operation: 'UPDATE', update: { ...pdfTemplate } };
       const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
       yield call(generatePdfApi, token, url, saveBody);
+      console.log(JSON.stringify(payload) + '<payload xx');
+
+      const combinedData = payload.data;
+      if (payload.inputData) {
+        combinedData.content = { data: payload.inputData };
+      }
+
       // generate after
       const pdfData = {
         templateId: payload.templateId,
-        data: { definition: payload.data.content.config, content: payload.data.content },
+        data: combinedData,
+        // data: { definition: payload.data.content.config, content: payload.data.content },
         filename: payload.fileName,
       };
 
