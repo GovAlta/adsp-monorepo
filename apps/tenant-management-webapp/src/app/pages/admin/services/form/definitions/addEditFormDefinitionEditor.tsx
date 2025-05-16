@@ -9,10 +9,13 @@ import {
   GoAInput,
   GoATooltip,
   GoAIcon,
+  GoAModal,
+  GoAAccordion,
+  GoAContainer,
 } from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
@@ -75,6 +78,7 @@ import {
   GoACheckboxPad,
   ReviewPageTabWrapper,
   AddToggleButtonPadding,
+  Margin,
 } from '../styled-components';
 import { AddEditDispositionModal } from './addEditDispositionModal';
 import { DispositionItems } from './dispositionItems';
@@ -82,7 +86,10 @@ import { FormConfigDefinition } from './formConfigDefinition';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 import { RowFlex, QueueTaskDropdown, H3, BorderBottom, H3Inline, ToolTipAdjust } from './style-components';
+import { UpdateSearchCriteriaAndFetchEvents, fetchCalendars } from '@store/calendar/actions';
 
+import { CalendarEventDefault } from '@store/calendar/models';
+import { StartEndDateEditor } from './startEndDateEditor';
 export const ContextProvider = ContextProviderFactory();
 
 const isUseMiniMap = window.screen.availWidth >= 1920;
@@ -161,14 +168,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const editorRefData = useRef(null);
   const editorRefUi = useRef(null);
 
-  useEffect(() => {
-    dispatch(FetchRealmRoles());
-    dispatch(fetchKeycloakServiceRoles());
-    dispatch(getTaskQueues());
-    dispatch(getConfigurationDefinitions());
-    dispatch(FetchFileTypeService());
-  }, [dispatch]);
-
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
   const uploadFile = (file: File, propertyId: string) => {
@@ -190,6 +189,33 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const tempUiSchema = useSelector((state: RootState) => state.form.editor.uiSchemaDraft);
   const tempDataSchema = useSelector((state: RootState) => state.form.editor.dataSchemaDraft);
   const schemaError = useSelector(schemaErrorSelector);
+  const { coreCalendars } = useSelector((state: RootState) => state.calendarService);
+
+  const selectedCoreEvent = useSelector(
+    (state: RootState) =>
+      state.calendarService?.coreCalendars &&
+      state.calendarService?.coreCalendars['form-intake']?.selectedCalendarEvents
+  );
+
+  useEffect(() => {
+    dispatch(fetchCalendars());
+  }, []);
+
+  useEffect(() => {
+    dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
+    dispatch(getTaskQueues());
+    dispatch(getConfigurationDefinitions());
+    dispatch(FetchFileTypeService());
+    if (definition.id && coreCalendars) {
+      dispatch(
+        UpdateSearchCriteriaAndFetchEvents({
+          recordId: `urn:ads:platform:configuration-service:v2:/configuration/form-service/${definition.id}`,
+          calendarName: 'form-intake',
+        })
+      );
+    }
+  }, [dispatch, definition, coreCalendars]);
 
   const isFormUpdated = useSelector(isFormUpdatedSelector);
 
@@ -210,13 +236,15 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
   const [uiEditorLocation, setUiEditorLocation] = useState<number>(0);
   const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [data, setData] = useState<unknown>();
+  const [data, setData] = useState<unknown>({});
   const [selectedDeleteDispositionIndex, setSelectedDeleteDispositionIndex] = useState<number>(null);
   const [selectedEditModalIndex, setSelectedEditModalIndex] = useState<number>(null);
 
   const [newDisposition, setNewDisposition] = useState<boolean>(false);
+  const [intakePeriodModal, setIntakePeriodModal] = useState<boolean>(false);
   const [saveModal, setSaveModal] = useState({ visible: false });
   const [currentTab, setCurrentTab] = useState(0);
+  const [showNew, setShowNew] = useState(false);
 
   const [showSelectedRoles, setShowSelectedRoles] = useState(false);
 
@@ -534,6 +562,18 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   <div className="life-cycle-auto-scroll" style={{ height: EditorHeight + 7 }}>
                     <H3>Application</H3>
                     <div>
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <GoAButton
+                          type="primary"
+                          testId="set-intake-period"
+                          onClick={() => {
+                            setIntakePeriodModal(true);
+                          }}
+                        >
+                          Intake periods
+                        </GoAButton>
+                      </div>
+
                       <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
                         <FormFormItem>
                           <GoAInput
@@ -852,7 +892,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             </Tabs>
 
             <FinalButtonPadding>
-              <GoAButtonGroup alignment="start">
+              <GoAButtonGroup alignment="end">
                 <GoAButton
                   type="primary"
                   testId="definition-form-save"
@@ -991,6 +1031,59 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           setSelectedEditModalIndex(null);
         }}
       />
+      {intakePeriodModal && (
+        <GoAModal heading="Intake Periods" open={intakePeriodModal} maxWidth={'70ch !important'}>
+          <form style={{ width: '100%' }}>
+            <Margin>
+              <div>
+                Use intake periods to control when applicants can access and submit this form. You can create one or
+                more windows of time to match your application cycles.
+              </div>
+            </Margin>
+
+            {selectedCoreEvent && selectedCoreEvent.length > 0
+              ? selectedCoreEvent.map((coreEvent) => {
+                  return (
+                    <GoAAccordion heading={coreEvent.name} open={false}>
+                      <StartEndDateEditor event={coreEvent} newEvent={false} closeIntake={() => null} />
+                    </GoAAccordion>
+                  );
+                })
+              : !showNew && <b>No intake periods configured for this form</b>}
+
+            {showNew && (
+              <Margin>
+                <GoAContainer mt="m">
+                  <StartEndDateEditor
+                    formName={definition.name}
+                    event={CalendarEventDefault}
+                    closeIntake={() => setShowNew(false)}
+                    newEvent={true}
+                  />
+                </GoAContainer>
+              </Margin>
+            )}
+            {!showNew && (
+              <Margin>
+                <GoAButton type="primary" onClick={() => setShowNew(true)}>
+                  New intake period
+                </GoAButton>
+              </Margin>
+            )}
+            <GoAButtonGroup alignment="end" mt="xl">
+              <GoAButton
+                type="secondary"
+                disabled={showNew}
+                onClick={() => {
+                  setIntakePeriodModal(false);
+                }}
+              >
+                Close
+              </GoAButton>
+            </GoAButtonGroup>
+          </form>
+        </GoAModal>
+      )}
     </FormEditor>
   );
 }

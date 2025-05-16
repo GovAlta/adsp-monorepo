@@ -13,6 +13,13 @@ export const selectCalendars = createSelector(
   (calendars: CalendarObjectType) => calendars
 );
 
+export const selectCoreCalendars = createSelector(
+  (state: RootState) => state?.calendarService.coreCalendars,
+  (calendars: CalendarObjectType) => {
+    return calendars;
+  }
+);
+
 export const selectCalendarsByName = createSelector(
   selectCalendars,
   (_, name: string | undefined) => name,

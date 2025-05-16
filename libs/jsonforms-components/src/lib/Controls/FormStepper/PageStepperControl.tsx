@@ -4,7 +4,7 @@ import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
 import { CategorizationStepperLayoutRendererProps } from './types';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
-import { TableOfContents, TocProps } from './TableOfContents';
+import { TaskList, TocProps } from './TaskList/TaskList';
 import { RenderPages } from './RenderPages';
 
 export interface FormPageOptionProps {
@@ -30,9 +30,9 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
   const data = props.data;
 
   const formStepperCtx = useContext(JsonFormsStepperContext);
-  const { validatePage, goToPage } = formStepperCtx as JsonFormsStepperContextProps;
+  const { validatePage, goToPage, selectNumberOfCompletedCategories } = formStepperCtx as JsonFormsStepperContextProps;
 
-  const { categories, activeId, isValid } = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
+  const { categories, activeId } = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
 
   useEffect(() => {
     validatePage(activeId);
@@ -48,9 +48,9 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
       onClick: handleGoToPage,
       title: props.uischema?.options?.title,
       subtitle: props.uischema?.options?.subtitle,
-      isValid: isValid,
+      isValid: selectNumberOfCompletedCategories() === categories.length,
     };
-    return <TableOfContents {...tocProps} />;
+    return <TaskList {...tocProps} />;
   } else {
     return <RenderPages categoryProps={props}></RenderPages>;
   }

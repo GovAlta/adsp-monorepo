@@ -33,6 +33,7 @@ import {
   RowFlexMenu,
 } from './styled-components';
 import { Visible } from '../../util';
+import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
 
 export type ObjectArrayControlProps = ArrayLayoutProps & WithDeleteDialogSupport;
 
@@ -302,6 +303,7 @@ interface LeftRowProps {
   enabled: boolean;
   name: string;
   currentTab: number;
+  current: HTMLElement | null;
   translations: ArrayTranslations;
   selectCurrentTab: (index: number) => void;
 }
@@ -336,6 +338,7 @@ const LeftTab = ({
   enabled,
   currentTab,
   name,
+  current,
   translations,
 }: LeftRowProps & WithDeleteDialogSupport) => {
   return (
@@ -343,8 +346,22 @@ const LeftTab = ({
       <SideMenuItem
         style={currentTab === rowIndex ? { background: '#EFF8FF' } : {}}
         onClick={() => selectCurrentTab(rowIndex)}
+        onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            if (current) {
+              const goa = current?.querySelector('goa-input, goa-button');
+              if (goa?.shadowRoot) {
+                const internal = goa.shadowRoot.querySelector('input, button');
+
+                (internal as HTMLElement)?.focus();
+                selectCurrentTab(rowIndex);
+              }
+            }
+          }
+        }}
       >
-        <RowFlexMenu>
+        <RowFlexMenu tabIndex={0}>
           <TabName>{name}</TabName>
           {enabled ? (
             <Trash role="trash button">
@@ -413,7 +430,11 @@ const ObjectArrayList = ({
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, rightHeight, rightRef]);
+
   if (isEmptyList) {
+    if (uischema.options?.noDataMessage !== undefined) {
+      translations.noDataMessage = uischema.options?.noDataMessage;
+    }
     return <EmptyList numColumns={getValidColumnProps(schema).length + 1} translations={translations} />;
   }
 
@@ -424,7 +445,7 @@ const ObjectArrayList = ({
   };
 
   const paddedHeight = rightHeight && rightHeight + 48;
-
+  // const detailRef = useRef<HTMLDivElement>(null);
   return (
     <ListContainer>
       <RowFlex>
@@ -444,12 +465,13 @@ const ObjectArrayList = ({
                 openDeleteDialog={openDeleteDialog}
                 selectCurrentTab={selectCurrentTab}
                 enabled={enabled}
+                current={current}
                 translations={translations}
               />
             );
           })}
         </FlexTabs>
-        <FlexForm ref={rightRef}>
+        <FlexForm ref={rightRef} tabIndex={-1}>
           <NonEmptyList
             key={Paths.compose(path, `${currentIndex}`)}
             childPath={Paths.compose(path, `${currentIndex}`)}
@@ -474,19 +496,32 @@ interface ListWithDetailControlProps extends ObjectArrayControlProps {
 }
 // eslint-disable-next-line
 export class ListWithDetailControl extends React.Component<ListWithDetailControlProps, any> {
+  state = {
+    maxItemsError: '',
+  };
+
   // eslint-disable-next-line
   addItem = (path: string, value: any) => {
-    const { data, addItem, setCurrentTab } = this.props;
+    const { data, addItem, setCurrentTab, uischema } = this.props;
 
     const isNonEmpty = data !== undefined && data !== null;
     const newIndex = isNonEmpty ? data ?? 0 : 0;
+    const maxItems = uischema?.options?.detail?.maxItems ?? DEFAULT_MAX_ITEMS;
+    if (data < maxItems) {
+      if (addItem) {
+        addItem(path, value)();
+      }
 
-    if (addItem) {
-      addItem(path, value)();
-    }
-
-    if (typeof setCurrentTab === 'function') {
-      setCurrentTab(newIndex);
+      if (typeof setCurrentTab === 'function') {
+        setCurrentTab(newIndex);
+      }
+    } else {
+      this.setState({
+        maxItemsError: `Maximum ${maxItems} items allowed.`,
+      });
+      setTimeout(() => {
+        this.setState({ maxItemsError: '' });
+      }, 3000);
     }
   };
 
@@ -518,6 +553,9 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
           {listTitle && (
             <ObjectArrayTitle>
               {listTitle} <span>{additionalProps.required && '(required)'}</span>
+              {this.state.maxItemsError && (
+                <span style={{ color: 'red', marginLeft: '1rem' }}>{this.state.maxItemsError}</span>
+              )}
             </ObjectArrayTitle>
           )}
           <ObjectArrayToolBar

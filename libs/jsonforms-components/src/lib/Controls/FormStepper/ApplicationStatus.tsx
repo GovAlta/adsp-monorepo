@@ -1,15 +1,15 @@
+import React, { useContext } from 'react';
 import { GoACallout } from '@abgov/react-components';
-import { CategoriesState } from './context';
+import { JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
 import { CompletionStatus } from './styled-components';
-import { getCategoryStatus, PageStatus } from './CategoryStatus';
 
-export interface ApplicationStatusProps {
-  categories: CategoriesState;
-}
+export const ApplicationStatus = (): JSX.Element => {
+  const formStepperCtx = useContext(JsonFormsStepperContext);
+  const { selectNumberOfCompletedCategories } = formStepperCtx as JsonFormsStepperContextProps;
 
-export const ApplicationStatus = ({ categories }: ApplicationStatusProps): JSX.Element => {
+  const { categories } = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
   const total = categories.length;
-  const completed = categories.reduce((acc, cat) => acc + (getCategoryStatus(cat) === PageStatus.Complete ? 1 : 0), 0);
+  const completed = selectNumberOfCompletedCategories();
   const type = total === completed ? 'success' : 'important';
   const heading = total === completed ? 'Application complete' : 'Application incomplete';
   const message = `You have completed ${completed} of ${total} sections.`;

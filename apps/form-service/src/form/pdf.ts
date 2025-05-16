@@ -11,10 +11,10 @@ const template = `
 <body>
   <div class="content">
     <div class="review-item">
-      {{#each data.content.config.uiSchema.elements }}
+      {{#each data.definition.uiSchema.elements }}
         {{#if (isControl this)}}
           <div class="review-item-basic">
-            {{> elements element=this data=@root.data.content.data dataSchema=@root.data.content.config.dataSchema requiredFields=(requiredField @root.data.content.config.dataSchema) }}
+            {{> elements element=this data=@root.data.content.data dataSchema=@root.data.definition.dataSchema requiredFields=(requiredField @root.data.definition.dataSchema) }}
           </div>
         {{else}}
           <div class="review-item-section">
@@ -24,16 +24,16 @@ const template = `
             <div class="grid">
                 {{#each this.elements }}
                     <div class="grid-padding">
-                        {{> elements element=this data=@root.data.content.data dataSchema=@root.data.content.config.dataSchema requiredFields=(requiredField @root.data.content.config.dataSchema) styles=@root.content.styles }}
+                        {{> elements element=this data=@root.data.content.data dataSchema=@root.data.definition.dataSchema requiredFields=(requiredField @root.data.definition.dataSchema) styles=@root.content.styles }}
                      </div>
                 {{/each}}
             </div>
           </div>
         {{/if}}
       {{/each}}
-     {{#if (hasTypeControlOrList data.content.config.uiSchema )}}
+     {{#if (hasTypeControlOrList data.definition.uiSchema )}}
           <div class="review-item-basic">
-            {{> elements element=data.content.config.uiSchema data=@root.data.content.data dataSchema=@root.data.content.config.dataSchema requiredFields=(requiredField @root.data.content.config.dataSchema) }}
+            {{> elements element=data.definition.uiSchema data=@root.data.content.data dataSchema=@root.data.definition.dataSchema requiredFields=(requiredField @root.data.definition.dataSchema) }}
           </div>
      {{/if}}
     </div>
@@ -251,7 +251,7 @@ const header = `
     -- See the JSON in the Test Data tab for the examples used here.
     -->
   <p>Form submission</p>
-  <div class="subtitle"><span>{{data.content.config.name}} (submitted: {{formatDate data.form.submitted}})</span><span>{{data.form.securityClassification}}</span></div>
+  <div class="subtitle"><span>{{data.definition.name}} (submitted: {{formatDate data.form.submitted}})</span><span>{{data.form.securityClassification}}</span></div>
   <div class="clear" />
 </div>
 `;

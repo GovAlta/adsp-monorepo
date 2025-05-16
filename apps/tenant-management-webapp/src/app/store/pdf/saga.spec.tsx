@@ -125,7 +125,7 @@ it('Update Pdf template', () => {
 it('Generate Pdf template', () => {
   const mockPayload = {
     templateId: 'mock-template-id',
-    data: { mockTest: 'anything' },
+    data: { content: { config: { mockTest: 'anything' } } },
     fileName: 'mock-filename',
   };
 

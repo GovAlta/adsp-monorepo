@@ -11,7 +11,7 @@ import {
   GoAInputTime,
   GoAGrid,
 } from '@abgov/react-components';
-import { selectAddModalEvent, selectSelectedCalendarEventNames } from '@store/calendar/selectors';
+import { selectAddModalEvent, selectCoreCalendars, selectSelectedCalendarEventNames } from '@store/calendar/selectors';
 import { useSelector, useDispatch } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
@@ -26,6 +26,8 @@ interface EventAddEditModalProps {
 }
 export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX.Element => {
   const initCalendarEvent = useSelector((state) => selectAddModalEvent(state, calendarName));
+
+  const core = useSelector(selectCoreCalendars);
 
   const [calendarEvent, setCalendarEvent] = useState<CalendarEvent>(initCalendarEvent);
   const calendarEvents = useSelector((state) => selectSelectedCalendarEventNames(state, calendarName));
@@ -53,6 +55,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   )
     .add('duplicated', 'name', badCharsCheck, duplicateNameCheck(calendarEvents, 'Calendar Events'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
+    .add('formId', 'formId', badCharsCheck, isNotEmptyCheck('formId'))
     .build();
 
   const getTimeString = (calendarDateString: string) => {
@@ -198,6 +201,25 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           setCalendarEvent({ ...calendarEvent, isAllDay: value });
         }}
       />
+
+      {Object.keys(core).includes(calendarName) && calendarName === 'form-intake' && isEdit && (
+        <GoAFormItem error={errors?.['formId']} label="Form Id" mb="3" mt="3">
+          <GoAInput
+            type="text"
+            name="eventName"
+            value={calendarEvent?.recordId.substring(calendarEvent?.recordId.lastIndexOf('/') + 1)}
+            testId={`calendar-event-modal-name-input`}
+            aria-label="eventName"
+            disabled={true}
+            width="100%"
+            onChange={(_, value) => {
+              validators.remove('formId');
+              validators['formId'].check(value);
+              setCalendarEvent({ ...calendarEvent, recordId: value });
+            }}
+          />
+        </GoAFormItem>
+      )}
 
       <GoAGrid minChildWidth="25ch" gap="s">
         <GoAFormItem label="Start date" error={errors?.['start']}>

@@ -4,6 +4,7 @@ import { defaultTemplateFooter } from '../../store/pdf/defaultTemplates/footer';
 import { defaultTemplateCss } from '../../store/pdf/defaultTemplates/css';
 import { defaultAssignments } from '../../store/pdf/defaultTemplates/assignments';
 import { FileItem } from '@store/file/models';
+import { FormDefinition } from '@store/form/model';
 export interface PdfTemplate {
   id: string;
   name: string;
@@ -49,11 +50,15 @@ export interface UpdatePDFResponse {
 
 export interface PdfGenerationPayload {
   templateId: string;
-  data: Record<string, SchemaType>;
+  data: { definition: FormDefinition; content?: Record<string, unknown> };
   fileName: string;
+  inputData?: Record<string, SchemaType>;
 }
 
-export type SchemaType = unknown;
+export type SchemaType = {
+  config: Record<string, unknown>;
+  data: Record<string, unknown>;
+};
 
 export interface PdfMetrics {
   pdfGenerated?: number;

@@ -144,6 +144,12 @@ function* deleteCalendar(action: DeleteCalendarAction): SagaIterator {
   }
 }
 
+type CriteriaParse = {
+  startsAfter?: string;
+  endsBefore?: string;
+  recordId?: string;
+};
+
 export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): SagaIterator {
   const calendarBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.calendarServiceApiUrl);
   const token: string = yield call(getAccessToken);
@@ -153,10 +159,18 @@ export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): Sag
     const params = {};
 
     if (criteria) {
-      params['criteria'] = JSON.stringify({
-        startsAfter: criteria.startDate,
-        endsBefore: criteria.endDate,
-      });
+      const criteriaParse: CriteriaParse = {};
+
+      if (criteria?.startDate) {
+        criteriaParse.startsAfter = criteria.startDate;
+      }
+      if (criteria?.endDate) {
+        criteriaParse.endsBefore = criteria.endDate;
+      }
+      if (criteria?.recordId) {
+        criteriaParse.recordId = criteria.recordId;
+      }
+      params['criteria'] = JSON.stringify(criteriaParse);
     }
 
     if (action?.after) {
@@ -187,6 +201,11 @@ export function* CreateEventByCalendar(action: CreateEventsByCalendarAction): Sa
   const calendarBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.calendarServiceApiUrl);
   const token: string = yield call(getAccessToken);
   const calendarId = action.calendarName;
+
+  if (action.payload.recordId) {
+    action.payload.recordId = `urn:ads:platform:configuration-service:v2:/configuration/form-service/${action.payload.recordId}`;
+  }
+
   if (calendarBaseUrl && token) {
     try {
       const response = yield call(

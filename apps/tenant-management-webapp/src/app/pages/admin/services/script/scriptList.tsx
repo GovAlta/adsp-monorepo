@@ -8,6 +8,7 @@ import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { TableDataScriptDescription, TableDataScriptId, TableDataScriptName } from '../form/styled-components';
 import { TableDiv } from './styled-components';
+import { renderNoItem } from '@components/NoItem';
 interface ScriptItemProps {
   script: ScriptItem;
   onDelete?: (script: ScriptItem) => void;
@@ -82,49 +83,55 @@ export const ScriptTableComponent: FunctionComponent<scriptTableProps> = ({ scri
     setShowDeleteConfirmation(true);
   };
 
-  return (
-    <TableDiv key="script">
-      <DataTable data-testid="script-table">
-        <thead data-testid="script-table-header">
-          <tr>
-            <th id="script-name" data-testid="script-table-header-name">
-              Name
-            </th>
-            <th id="script-id" data-testid="script-table-header-id">
-              Script ID
-            </th>
-            <th id="script-description" data-testid="script-table-header-description">
-              Description
-            </th>
-            <th id="script-actions" data-testid="script-table-header-actions">
-              Actions
-            </th>
-          </tr>
-        </thead>
+  if (Object.keys(scripts).length === 0) {
+    return renderNoItem('script');
+  }
 
-        <tbody>
-          {Object.keys(scripts).map((scriptName) => (
-            <ScriptItemComponent key={scriptName} script={scripts[scriptName]} onDelete={onDelete} onEdit={onEdit} />
-          ))}
-        </tbody>
-      </DataTable>
-      <DeleteModal
-        title="Delete script"
-        isOpen={showDeleteConfirmation}
-        onCancel={() => {
-          setShowDeleteConfirmation(false);
-        }}
-        content={
-          <div>
-            Are you sure you wish to delete <b>{selectedDeleteScript?.name}</b>?
-          </div>
-        }
-        onDelete={() => {
-          setShowDeleteConfirmation(false);
-          dispatch(DeleteScript(selectedDeleteScript?.id));
-        }}
-      />
-      <br />
-    </TableDiv>
+  return (
+    Object.keys(scripts).length > 0 && (
+      <TableDiv key="script">
+        <DataTable data-testid="script-table">
+          <thead data-testid="script-table-header">
+            <tr>
+              <th id="script-name" data-testid="script-table-header-name">
+                Name
+              </th>
+              <th id="script-id" data-testid="script-table-header-id">
+                Script ID
+              </th>
+              <th id="script-description" data-testid="script-table-header-description">
+                Description
+              </th>
+              <th id="script-actions" data-testid="script-table-header-actions">
+                Actions
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {Object.keys(scripts).map((scriptName) => (
+              <ScriptItemComponent key={scriptName} script={scripts[scriptName]} onDelete={onDelete} onEdit={onEdit} />
+            ))}
+          </tbody>
+        </DataTable>
+        <DeleteModal
+          title="Delete script"
+          isOpen={showDeleteConfirmation}
+          onCancel={() => {
+            setShowDeleteConfirmation(false);
+          }}
+          content={
+            <div>
+              Are you sure you wish to delete <b>{selectedDeleteScript?.name}</b>?
+            </div>
+          }
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(DeleteScript(selectedDeleteScript?.id));
+          }}
+        />
+        <br />
+      </TableDiv>
+    )
   );
 };
