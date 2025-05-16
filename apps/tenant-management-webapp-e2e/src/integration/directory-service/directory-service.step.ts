@@ -315,7 +315,7 @@ When(
   'the user clicks {string} icon of {string}, {string}, {string} on resource types page',
   function (icon, api: string, type: string, matcher: string) {
     switch (icon) {
-      case 'Edit':
+      case 'edit':
         directoryObj
           .resourceType(api, type, matcher)
           .find('goa-icon-button[title="Edit"]')
@@ -323,7 +323,7 @@ When(
           .find('button')
           .click({ force: true });
         break;
-      case 'Delete':
+      case 'delete':
         directoryObj
           .resourceType(api, type, matcher)
           .find('goa-icon-button[title="Delete"]')
@@ -331,8 +331,54 @@ When(
           .find('button')
           .click({ force: true });
         break;
+      case 'eye':
+        directoryObj
+          .resourceType(api, type, matcher)
+          .find('goa-icon-button[title="Toggle details"]')
+          .invoke('attr', 'icon')
+          .then((attr) => {
+            if (attr === 'eye') {
+              directoryObj
+                .resourceType(api, type, matcher)
+                .find('goa-icon-button[icon="eye"]')
+                .shadow()
+                .find('button')
+                .click({ force: true });
+            } else {
+              cy.log('Eye icon is already clicked');
+            }
+          });
+        break;
       default:
-        expect(icon).to.be.oneOf(['Edit', 'Delete']);
+        expect(icon).to.be.oneOf(['edit', 'delete', 'eye']);
     }
+  }
+);
+
+Then('the user views Api, Type and Matcher fields having required label in resource type modal', function () {
+  directoryObj.resourceTypeModalApiFieldFormItem().shadow().find('label').should('contain.text', 'required');
+  directoryObj.resourceTypeModalTypeFieldFormItem().shadow().find('label').should('contain.text', 'required');
+  directoryObj.resourceTypeModalMatcherFieldFormItem().shadow().find('label').should('contain.text', 'required');
+});
+
+Then('the user views the error message of {string} for Matcher field in resource type modal', function (errorMsg) {
+  directoryObj
+    .resourceTypeModalMatcherFieldFormItem()
+    .shadow()
+    .find('[class^="error-msg"]')
+    .invoke('text')
+    .should('contains', errorMsg);
+});
+
+Then('the user views Api dropdown is disabled in resource type modal', function () {
+  directoryObj.resourceTypeModalApiDropdown().should('have.attr', 'disabled');
+});
+
+Then(
+  'the user views {string}, {string} in the details view of the resource type of {string}, {string}, {string} on resource types page',
+  function (namePath: string, deleteEvent: string, api: string, type: string, matcher: string) {
+    directoryObj.resourceTypePayloadDetailsNamePath(api, type, matcher).invoke('text').should('contain', namePath);
+    // directoryObj.resourceTypePayloadDetailsNamePath(api, type, matcher).should('contain.text', namePath);
+    directoryObj.resourceTypePayloadDetailsDeleteEvent(api, type, matcher).should('contain.text', deleteEvent);
   }
 );

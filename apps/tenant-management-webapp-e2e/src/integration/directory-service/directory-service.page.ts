@@ -170,5 +170,29 @@ class DirectoryServicePage {
       `//div[text()="${api}"]/following-sibling::div/table//tbody/tr/td[@data-testid="type" and text()="${type}"]/following-sibling::td[@data-testid="matcher" and text()="${matcher}"]/parent::*`
     );
   }
+
+  resourceTypeModalApiFieldFormItem() {
+    return cy.xpath('//goa-form-item[@label="Api"]');
+  }
+
+  resourceTypeModalTypeFieldFormItem() {
+    return cy.xpath('//goa-form-item[@label="Type"]');
+  }
+
+  resourceTypeModalMatcherFieldFormItem() {
+    return cy.xpath('//goa-form-item[@label="Matcher"]');
+  }
+
+  resourceTypePayloadDetailsNamePath(api, type, matcher) {
+    return cy.xpath(
+      `//div[text()="${api}"]/following-sibling::div/table//tbody/tr/td[@data-testid="type" and text()="${type}"]/following-sibling::td[@data-testid="matcher" and text()="${matcher}"]/parent::*/following-sibling::tr//*[@data-testid="name-path-details"]`
+    );
+  }
+
+  resourceTypePayloadDetailsDeleteEvent(api, type, matcher) {
+    return cy.xpath(
+      `//div[text()="${api}"]/following-sibling::div/table//tbody/tr/td[@data-testid="type" and text()="${type}"]/following-sibling::td[@data-testid="matcher" and text()="${matcher}"]/parent::*/following-sibling::tr//*[@data-testid="delete-event-details"]`
+    );
+  }
 }
 export default DirectoryServicePage;
