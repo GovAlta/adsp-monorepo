@@ -231,7 +231,7 @@ When('the user clicks Add type button on resource types page', function () {
   directoryObj.addTypeButton().shadow().find('button').click({ force: true });
 });
 
-Then('the user {string} Add resource type modal', function (viewOrNot) {
+Then('the user {string} New resource type modal', function (viewOrNot) {
   switch (viewOrNot) {
     case 'views':
       directoryObj.resourceTypeModalTitle().invoke('text').should('eq', 'New resource type');

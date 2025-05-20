@@ -149,7 +149,7 @@ Feature: Directory-service
     Given a tenant admin user is on resource types page
     # Add a resource type
     When the user clicks Add type button on resource types page
-    Then the user "views" Add resource type modal
+    Then the user "views" New resource type modal
     And the user views Api, Type and Matcher fields having required label in resource type modal
     When the user enters "urn:ads:autotest:autotest-resource-types:api", "auto-test", "Child Service", "autotest-namepath", "Autotest:autotest-eventDefinition" in resource type modal
     Then the user views the error message of "Matcher is invalid for regular expression." for Matcher field in resource type modal
@@ -158,7 +158,7 @@ Feature: Directory-service
     And the user clicks Cancel button in resource type modal
     Then the user "should not view" the entry of "urn:ads:autotest:autotest-resource-types:api", "auto-test", "^Child Service .+" on resource types page
     When the user clicks Add type button on resource types page
-    Then the user "views" Add resource type modal
+    Then the user "views" New resource type modal
     When the user enters "urn:ads:autotest:autotest-resource-types:api", "auto-test", "^Child Service .+", "autotest-namepath", "Autotest:autotest-eventDefinition" in resource type modal
     And the user clicks Save button in resource type modal
     Then the user "views" the entry of "urn:ads:autotest:autotest-resource-types:api", "auto-test", "^Child Service .+" on resource types page
@@ -185,5 +185,5 @@ Feature: Directory-service
     When the user clicks Cancel button in delete confirmation modal
     Then the user "views" the entry of "urn:ads:autotest:autotest-resource-types:api", "auto-test-new", "^Land Title .+" on resource types page
     When the user clicks "delete" icon of "urn:ads:autotest:autotest-resource-types:api", "auto-test-new", "^Land Title .+" on resource types page
-    When the user clicks Delete button in delete confirmation modal
+    And the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the entry of "urn:ads:autotest:autotest-resource-types:api", "auto-test-new", "^Land Title .+" on resource types page
