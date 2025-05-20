@@ -93,7 +93,7 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
       uischema?.options?.text?.trim() || convertToSentenceCase(getLastSegmentFromPointer(uischema.scope));
     reviewText = (
       <ul>
-        <li>{`${checkboxLabel.trim()} (not selected)`}</li>
+        <li>{`No (${checkboxLabel.trim()})`}</li>
       </ul>
     );
   }
