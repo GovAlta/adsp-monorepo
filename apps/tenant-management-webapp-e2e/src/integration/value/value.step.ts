@@ -5,6 +5,7 @@ import common from '../common/common.page';
 
 const valueObj = new value();
 const commonObj = new common();
+let responseObj: Cypress.Response<any>;
 
 Given('a tenant admin user is on value overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
@@ -248,4 +249,27 @@ Then(
 
 Then('the user views {string} namespace under Core definitions heading', function (coreNamespace) {
   valueObj.valueDefinitionsCoreDefinitionNamespace(coreNamespace).should('exist');
+});
+
+When(
+  'a developer sends a value service get events request with {string}, {string} and {string}',
+  function (requestEndpoint: string, requestType: string, interval) {
+    const valueServiceGetEventEndPoint = requestEndpoint.replace('<interval>', interval as string);
+    const valueServiceGetEventURL = Cypress.env('valueApi') + valueServiceGetEventEndPoint;
+    cy.request({
+      method: requestType,
+      url: valueServiceGetEventURL,
+      failOnStatusCode: false,
+      auth: {
+        bearer: Cypress.env('autotest-admin-token'),
+      },
+    }).then(function (response) {
+      responseObj = response;
+    });
+  }
+);
+
+Then('{string} is returned with top 5 events in the response', function (statusCode: string) {
+  expect(responseObj.status).to.equal(parseInt(statusCode));
+  expect(responseObj.body.page.size).to.be.eq(5);
 });

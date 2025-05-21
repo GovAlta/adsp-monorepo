@@ -32,7 +32,7 @@ module.exports = defineConfig({
     directoryServiceApiUrl: '',
     configurationServiceApiUrl: '',
     tenantWebAppUrl: 'https://adsp-uat.alberta.ca/',
-    formApi: 'https://form-service.adsp-uat.alberta.ca/',
+    formServiceUrl: '',
   },
   retries: 2,
   defaultCommandTimeout: 10000,

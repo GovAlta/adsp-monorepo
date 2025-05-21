@@ -113,5 +113,10 @@ Cypress.Commands.add('getConfig', () => {
       name: 'configurationServiceApiUrl: ',
       message: response.body.serviceUrls.configurationServiceApiUrl,
     });
+    Cypress.env('formServiceUrl', response.body.serviceUrls.formServiceUrl);
+    Cypress.log({
+      name: 'formServiceUrl: ',
+      message: response.body.serviceUrls.formServiceUrl,
+    });
   });
 });

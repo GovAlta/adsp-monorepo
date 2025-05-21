@@ -73,3 +73,16 @@ Feature: Value
     And the user "should not view" "edit" button of the core value definition of "calendar-service", "service-metrics", "Low level metrics of the service."
     And the user "should not view" "delete" button of the core value definition of "form-service", "service-metrics", "Low level metrics of the service."
     And the user "views" "eye" button of the core value definition of "pdf-service", "service-metrics", "Low level metrics of the service."
+
+  @TEST_CS-4226 @regression
+  Scenario: As a developer, I can use value service to get events with different intervals
+    When a developer sends a value service get events request with "<Request endpoint>", "<Request Type>" and "<Interval>"
+    Then "<Status Code>" is returned with top 5 events in the response
+
+    Examples:
+      | Request endpoint                                                       | Request Type | Interval     | Status Code |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | one_minute   | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | five_minutes | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | hourly       | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | daily        | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | weekly       | 200         |
