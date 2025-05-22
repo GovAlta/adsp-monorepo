@@ -56,24 +56,29 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const propertyId = i18nKeyPrefix as string;
 
   const variant = uischema?.options?.variant || 'button';
-  const multiFileUploader = variant === 'dragdrop';
   const [deleteHide, setDeleteHide] = useState(false);
   const fileListLength = (fileList && fileList[props.i18nKeyPrefix as string]?.length) || 0;
 
-  function uploadFile(file: File) {
-    if (uploadTrigger) {
-      if (!multiFileUploader) {
-        const fileInList = getFile(fileListLength - 1);
-        if (fileInList) {
-          deleteTrigger(fileInList, propertyId);
-        }
-      }
-      setLoadingFileName(file?.name);
-      // To support multipleFileUploader, the propertyId (path) is in propertyId.index format
+  const maxFiles = uischema?.options?.componentProps?.maximum ?? 1;
+  const isMultiFile = maxFiles > 1;
 
-      uploadTrigger(file, `${propertyId}.${fileListLength}`);
-      setDeleteHide(false);
+  function uploadFile(file: File) {
+    if (!uploadTrigger) return;
+
+    if (fileListLength >= maxFiles) {
+      if (!isMultiFile && maxFiles === 1) {
+        const existingFile = getFile(0);
+        if (existingFile) {
+          deleteTrigger(existingFile, propertyId);
+        }
+      } else {
+        return;
+      }
     }
+
+    setLoadingFileName(file?.name);
+    uploadTrigger(file, `${propertyId}.${fileListLength}`);
+    setDeleteHide(false);
   }
 
   function downloadFile(file: File) {
@@ -209,13 +214,11 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
             </GoAModal>
           ) : (
             <div>
-              {multiFileUploader
-                ? fileList &&
-                  (fileList[props.i18nKeyPrefix as string] || []).map((_: File, index: number) => {
-                    return <DownloadFileWidget index={index} />;
-                  })
-                : fileList &&
-                  !deleteHide &&
+              {fileList && isMultiFile
+                ? (fileList[props.i18nKeyPrefix as string] || []).map((_: File, index: number) => (
+                    <DownloadFileWidget key={index} index={index} />
+                  ))
+                : !deleteHide &&
                   getFile(fileListLength - 1) &&
                   fileListLength >= 0 && <DownloadFileWidget index={fileListLength - 1} />}
             </div>
