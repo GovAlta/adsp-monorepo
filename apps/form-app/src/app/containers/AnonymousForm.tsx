@@ -1,5 +1,5 @@
 import { Container, Grid, GridItem, Recaptcha } from '@core-services/app-common';
-import { FunctionComponent } from 'react';
+import { FunctionComponent, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { DraftFormWrapper } from '../components/DraftFormWrapper';
@@ -18,14 +18,21 @@ import {
   updateForm,
   submitAnonymousForm,
   AppState,
+  formActions,
 } from '../state';
+import { createDefaultAjv } from '@abgov/jsonforms-components';
+import { commonV1JsonSchema, standardV1JsonSchema } from '@abgov/data-exchange-standard';
 
 interface FormProps {
   className?: string;
 }
+const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 
 const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const dispatch = useDispatch<AppDispatch>();
+
+  const [emptyData, _] = useState({});
+  const [initialLoad, setInitialLoad] = useState<boolean>(true);
 
   const recaptchaKey = useSelector((state: AppState) => state.config.environment.recaptchaKey);
   const { definition } = useSelector(definitionSelector);
@@ -35,6 +42,15 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
   const busy = useSelector(busySelector);
   const canSubmit = useSelector(canSubmitSelector);
   const showSubmit = useSelector(showSubmitSelector);
+
+  useEffect(() => {
+    if (emptyData) {
+      ajv.validate(definition.dataSchema, data);
+      dispatch(updateForm({ data: data }));
+      setInitialLoad(false);
+    }
+    //eslint-disable-next-line
+  }, []);
 
   return (
     <div key={`anonymous-${definition?.id}`}>
@@ -47,7 +63,7 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
                 <DraftFormWrapper
                   definition={definition}
                   form={form}
-                  data={data}
+                  data={initialLoad ? emptyData : data}
                   canSubmit={canSubmit}
                   showSubmit={showSubmit}
                   saving={busy.saving}

@@ -10,10 +10,8 @@ import {
   GoATooltip,
   GoAIcon,
   GoAModal,
-  GoAInputDate,
-  GoAInputTime,
-  GoAGrid,
   GoAAccordion,
+  GoAContainer,
 } from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { useState, useEffect, useRef } from 'react';
@@ -80,7 +78,7 @@ import {
   GoACheckboxPad,
   ReviewPageTabWrapper,
   AddToggleButtonPadding,
-  LinkMargin,
+  Margin,
 } from '../styled-components';
 import { AddEditDispositionModal } from './addEditDispositionModal';
 import { DispositionItems } from './dispositionItems';
@@ -89,6 +87,9 @@ import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 import { RowFlex, QueueTaskDropdown, H3, BorderBottom, H3Inline, ToolTipAdjust } from './style-components';
 import { UpdateSearchCriteriaAndFetchEvents, fetchCalendars } from '@store/calendar/actions';
+
+import { CalendarEventDefault } from '@store/calendar/models';
+import { StartEndDateEditor } from './startEndDateEditor';
 export const ContextProvider = ContextProviderFactory();
 
 const isUseMiniMap = window.screen.availWidth >= 1920;
@@ -243,6 +244,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [intakePeriodModal, setIntakePeriodModal] = useState<boolean>(false);
   const [saveModal, setSaveModal] = useState({ visible: false });
   const [currentTab, setCurrentTab] = useState(0);
+  const [showNew, setShowNew] = useState(false);
 
   const [showSelectedRoles, setShowSelectedRoles] = useState(false);
 
@@ -890,7 +892,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             </Tabs>
 
             <FinalButtonPadding>
-              <GoAButtonGroup alignment="start">
+              <GoAButtonGroup alignment="end">
                 <GoAButton
                   type="primary"
                   testId="definition-form-save"
@@ -1032,65 +1034,46 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       {intakePeriodModal && (
         <GoAModal heading="Intake Periods" open={intakePeriodModal} maxWidth={'70ch !important'}>
           <form style={{ width: '100%' }}>
-            <div>These are configured in the form-intake Events in Calendar Service</div>
-            <LinkMargin>
-              <Link to="/admin/services/calendar?page=events&event=form-intake">Go to Form Intake Event</Link>
-            </LinkMargin>
+            <Margin>
+              <div>
+                Use intake periods to control when applicants can access and submit this form. You can create one or
+                more windows of time to match your application cycles.
+              </div>
+            </Margin>
 
-            {selectedCoreEvent && selectedCoreEvent.length > 0 ? (
-              selectedCoreEvent.map((coreEvent) => {
-                return (
-                  <GoAAccordion heading={coreEvent.name} open={true}>
-                    <GoAGrid minChildWidth="25ch" gap="s">
-                      <GoAFormItem label="Start date" error={errors?.['start']}>
-                        <GoAInputDate
-                          name="endDate"
-                          value={coreEvent.start ? new Date(coreEvent.start) : new Date()}
-                          width="100%"
-                          testId="calendar-event-modal-end-date-input"
-                          disabled={true}
-                        />
-                      </GoAFormItem>
-                      <GoAFormItem label="Start time">
-                        <GoAInputTime
-                          name="StartTime"
-                          value={new Date(coreEvent.start)?.toTimeString().split(' ')[0]}
-                          step={1}
-                          width="100%"
-                          testId="calendar-event-modal-start-time-input"
-                          disabled={true}
-                        />
-                      </GoAFormItem>
-                      <GoAFormItem label="End date">
-                        <GoAInputDate
-                          name="endDate"
-                          value={coreEvent.end ? new Date(coreEvent.end) : new Date()}
-                          width="100%"
-                          testId="calendar-event-modal-end-date-input"
-                          disabled={true}
-                        />
-                      </GoAFormItem>
+            {selectedCoreEvent && selectedCoreEvent.length > 0
+              ? selectedCoreEvent.map((coreEvent) => {
+                  return (
+                    <GoAAccordion heading={coreEvent.name} open={false}>
+                      <StartEndDateEditor event={coreEvent} newEvent={false} closeIntake={() => null} />
+                    </GoAAccordion>
+                  );
+                })
+              : !showNew && <b>No intake periods configured for this form</b>}
 
-                      <GoAFormItem label="End time">
-                        <GoAInputTime
-                          name="endTime"
-                          value={new Date(coreEvent.end)?.toTimeString().split(' ')[0]}
-                          step={1}
-                          width="100%"
-                          disabled={true}
-                          testId="calendar-event-modal-end-time-input"
-                        />
-                      </GoAFormItem>
-                    </GoAGrid>
-                  </GoAAccordion>
-                );
-              })
-            ) : (
-              <b>No intake periods configured for this form</b>
+            {showNew && (
+              <Margin>
+                <GoAContainer mt="m">
+                  <StartEndDateEditor
+                    formId={definition.id}
+                    event={CalendarEventDefault}
+                    closeIntake={() => setShowNew(false)}
+                    newEvent={true}
+                  />
+                </GoAContainer>
+              </Margin>
+            )}
+            {!showNew && (
+              <Margin>
+                <GoAButton type="primary" onClick={() => setShowNew(true)}>
+                  New intake period
+                </GoAButton>
+              </Margin>
             )}
             <GoAButtonGroup alignment="end" mt="xl">
               <GoAButton
-                type="primary"
+                type="secondary"
+                disabled={showNew}
                 onClick={() => {
                   setIntakePeriodModal(false);
                 }}

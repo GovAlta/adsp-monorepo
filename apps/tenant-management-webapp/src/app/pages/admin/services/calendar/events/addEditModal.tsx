@@ -202,19 +202,15 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
         }}
       />
 
-      {Object.keys(core).includes(calendarName) && calendarName === 'form-intake' && (
+      {Object.keys(core).includes(calendarName) && calendarName === 'form-intake' && isEdit && (
         <GoAFormItem error={errors?.['formId']} label="Form Id" mb="3" mt="3">
           <GoAInput
             type="text"
             name="eventName"
-            value={
-              isEdit
-                ? calendarEvent?.recordId.substring(calendarEvent?.recordId.lastIndexOf('/') + 1)
-                : calendarEvent?.recordId
-            }
+            value={calendarEvent?.recordId.substring(calendarEvent?.recordId.lastIndexOf('/') + 1)}
             testId={`calendar-event-modal-name-input`}
             aria-label="eventName"
-            disabled={isEdit}
+            disabled={true}
             width="100%"
             onChange={(_, value) => {
               validators.remove('formId');
