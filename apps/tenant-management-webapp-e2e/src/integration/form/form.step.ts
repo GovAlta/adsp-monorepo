@@ -245,6 +245,7 @@ When(
 );
 
 Then('the user clicks Save button in form definition editor', function () {
+  cy.wait(1000); // wait for save button to enable
   formObj.editorSaveButtonEnabled().shadow().find('button').click({ force: true });
   cy.wait(8000);
 });
