@@ -57,6 +57,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   const variant = uischema?.options?.variant || 'button';
   const noDownloadButton = uischema?.options?.format?.noDownloadButton;
+  const noDownloadButtonInReview = uischema?.options?.format?.review?.noDownloadButton;
 
   const multiFileUploader = variant === 'dragdrop';
   const [deleteHide, setDeleteHide] = useState(false);
@@ -141,12 +142,14 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
         {readOnly ? (
           <AttachmentBorderDisabled>
             {getFileName(index)}
-            <GoAContextMenuIcon
-              testId="download-icon"
-              title="Download"
-              type="download"
-              onClick={() => downloadFile(getFile(index))}
-            />
+            {noDownloadButtonInReview !== true && (
+              <GoAContextMenuIcon
+                testId="download-icon"
+                title="Download"
+                type="download"
+                onClick={() => downloadFile(getFile(index))}
+              />
+            )}
           </AttachmentBorderDisabled>
         ) : (
           <AttachmentBorder>
