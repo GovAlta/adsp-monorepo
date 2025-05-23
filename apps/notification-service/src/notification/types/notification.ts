@@ -5,6 +5,8 @@ export interface NotificationContent {
   to: string;
   message: Message;
   from?: string;
+  bcc?: string[];
+  cc?: string[];
 }
 
 export interface Notification extends NotificationContent {
