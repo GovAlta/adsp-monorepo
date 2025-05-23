@@ -152,22 +152,23 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
           <AttachmentBorder>
             <div>{getFileName(index)}</div>
             <GoAContextMenu>
-              <GoAContextMenuIcon
-                testId="download-icon"
-                title="Download"
-                type="download"
-                onClick={() => downloadFile(getFile(index))}
-              />
               {noDownloadButton !== true && (
                 <GoAContextMenuIcon
-                  data-testid="delete-icon"
-                  title="Delete"
-                  type="trash"
-                  onClick={() => {
-                    setShowFileDeleteConfirmation(true);
-                  }}
+                  testId="download-icon"
+                  title="Download"
+                  type="download"
+                  onClick={() => downloadFile(getFile(index))}
                 />
               )}
+
+              <GoAContextMenuIcon
+                data-testid="delete-icon"
+                title="Delete"
+                type="trash"
+                onClick={() => {
+                  setShowFileDeleteConfirmation(true);
+                }}
+              />
             </GoAContextMenu>
             <DeleteFileModal
               isOpen={showFileDeleteConfirmation}
