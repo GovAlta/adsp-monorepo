@@ -58,6 +58,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const variant = uischema?.options?.variant || 'button';
   const noDownloadButton = uischema?.options?.format?.noDownloadButton;
   const noDownloadButtonInReview = uischema?.options?.format?.review?.noDownloadButton;
+  const noDeleteButton = uischema?.options?.format?.review?.noDeleteButton;
 
   const multiFileUploader = variant === 'dragdrop';
   const [deleteHide, setDeleteHide] = useState(false);
@@ -164,14 +165,16 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
                 />
               )}
 
-              <GoAContextMenuIcon
-                data-testid="delete-icon"
-                title="Delete"
-                type="trash"
-                onClick={() => {
-                  setShowFileDeleteConfirmation(true);
-                }}
-              />
+              {noDeleteButton !== true && (
+                <GoAContextMenuIcon
+                  data-testid="delete-icon"
+                  title="Delete"
+                  type="trash"
+                  onClick={() => {
+                    setShowFileDeleteConfirmation(true);
+                  }}
+                />
+              )}
             </GoAContextMenu>
             <DeleteFileModal
               isOpen={showFileDeleteConfirmation}
