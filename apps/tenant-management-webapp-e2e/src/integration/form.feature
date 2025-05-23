@@ -226,6 +226,7 @@ Feature: Form
     Then the user views "Protected C" in security classification dropdown in form definition editor
     When the user clicks Back button in form definition editor
     # Configuration updated event log validation for security classification
+    And the user waits "10" seconds
     And the user selects the "Event log" menu item
     And the user searches with "configuration-service:configuration-updated", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
     And the user clicks Show details button for the latest event of "configuration-updated" for "configuration-service"
