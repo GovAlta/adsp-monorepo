@@ -62,7 +62,7 @@ describe('GoABaseInputReviewComponent', () => {
       uischema: {
         ...baseProps.uischema,
         options: {
-          radio: false,
+          radio: true,
           text: 'test',
         },
       },
@@ -70,7 +70,7 @@ describe('GoABaseInputReviewComponent', () => {
     };
     const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
     const reviewControl = getByTestId('review-control-input-id');
-    expect(reviewControl.textContent).toBe('No (test)');
+    expect(reviewControl.textContent).toBe('No');
   });
 
   it('renders "Yes" for checkbox boolean true data', () => {
@@ -165,7 +165,7 @@ describe('GoABaseInputReviewComponent', () => {
     };
     const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
     const reviewControl = getByTestId('review-control-input-id');
-    expect(reviewControl.textContent).toBe('Yes');
+    expect(reviewControl.textContent).toBe('Yes (Ideclare)');
   });
 
   it('renders checkbox label with No label', () => {
@@ -183,7 +183,7 @@ describe('GoABaseInputReviewComponent', () => {
     };
     const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
     const reviewControl = getByTestId('review-control-input-id');
-    expect(reviewControl.textContent).toBe('No');
+    expect(reviewControl.textContent).toBe('No (Ideclare)');
   });
 
   it('renders an empty string for null data', () => {

@@ -213,10 +213,10 @@ class HandlebarsTemplateService implements TemplateService {
       return element.type === 'ListWithDetail' && element.scope;
     });
     handlebars.registerHelper('hasOptionElements', function (element) {
-      return element.options && element.options.detail.elements;
+      return element?.options?.detail?.elements;
     });
     handlebars.registerHelper('hasElements', function (element) {
-      return element.elements;
+      return element?.elements;
     });
     handlebars.registerHelper('isArray', function (element, data) {
       if (data !== undefined) {
@@ -353,7 +353,7 @@ class HandlebarsTemplateService implements TemplateService {
 
         for (let i = 0, j = dataArray.length; i < j; i++) {
           const extendedContext = Object.assign({}, dataArray[i], {
-            params: { requiredFields, element, items: items || [] },
+            params: { requiredFields, element, items: items || dataArray[i] || [] },
           });
           ret = ret + options.fn(extendedContext);
         }
@@ -389,7 +389,12 @@ class HandlebarsTemplateService implements TemplateService {
         const dataArray = context[scopeName];
 
         const extendedContext = Object.assign({}, dataArray, {
-          params: { requiredFields, element, items: items || [], title: sentenceCase(pathArray[0]) },
+          params: {
+            requiredFields,
+            element,
+            items: items || dataArray || {},
+            title: sentenceCase(pathArray[0]),
+          },
         });
         ret = ret + options.fn(extendedContext);
 
@@ -461,11 +466,11 @@ class HandlebarsTemplateService implements TemplateService {
       return !!dataSchema;
     });
     handlebars.registerHelper('hasTypeControlOrList', function (element) {
-      return element.type === 'Control' || element.type === 'ListWithDetail';
+      return element?.type === 'Control' || element?.type === 'ListWithDetail';
     });
 
     handlebars.registerHelper('hasElements', function (element) {
-      return element.elements && element.elements.length > 0;
+      return element?.elements && element.elements.length > 0;
     });
 
     handlebars.registerHelper('eq', function (a, b) {

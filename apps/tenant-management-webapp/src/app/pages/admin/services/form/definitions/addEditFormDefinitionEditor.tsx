@@ -1055,7 +1055,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Margin>
                 <GoAContainer mt="m">
                   <StartEndDateEditor
-                    formName={definition.name}
+                    formId={definition.id}
                     event={CalendarEventDefault}
                     closeIntake={() => setShowNew(false)}
                     newEvent={true}

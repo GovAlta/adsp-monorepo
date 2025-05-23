@@ -214,3 +214,171 @@ Then('the user receives response with all services and their URLs for {string}',
     expect(responseObj.body[i].urn).to.contain('urn:ads:' + tenant);
   }
 });
+
+Given('a tenant admin user is on resource types page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonlib.tenantAdminMenuItem('Directory', 4000);
+  commonObj.serviceTab('Directory', 'Resource types').click();
+  cy.wait(4000);
+});
+
+When('the user clicks Add type button on resource types page', function () {
+  directoryObj.addTypeButton().shadow().find('button').click({ force: true });
+});
+
+Then('the user {string} New resource type modal', function (viewOrNot) {
+  switch (viewOrNot) {
+    case 'views':
+      directoryObj.resourceTypeModalTitle().invoke('text').should('eq', 'New resource type');
+      break;
+    case 'should not view':
+      directoryObj.resourceTypeModalTitle().should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+Then('the user {string} Edit resource type modal', function (viewOrNot) {
+  switch (viewOrNot) {
+    case 'views':
+      directoryObj.resourceTypeModalTitle().invoke('text').should('eq', 'Edit resource type');
+      break;
+    case 'should not view':
+      directoryObj.resourceTypeModalTitle().should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+When(
+  'the user enters {string}, {string}, {string}, {string}, {string} in resource type modal',
+  function (api: string, type: string, matcher: string, namePath: string, deleteEvent: string) {
+    if (api.toLowerCase() !== 'n/a') {
+      directoryObj.resourceTypeModalApiDropdown().shadow().find('input').click({ force: true });
+      directoryObj.resourceTypeModalApiDropdown().shadow().find('li').contains(api).click({ force: true });
+    }
+    directoryObj.resourceTypeModalTypeField().shadow().find('input').clear().type(type, { delay: 50, force: true });
+    directoryObj
+      .resourceTypeModalMatcherField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(matcher, { delay: 50, force: true });
+    directoryObj
+      .resourceTypeModalNamePathField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(namePath, { delay: 50, force: true });
+    directoryObj.resourceTypeModalDeleteEventDropdown().shadow().find('input').click({ force: true });
+    directoryObj
+      .resourceTypeModalDeleteEventDropdown()
+      .shadow()
+      .find('li')
+      .contains(deleteEvent)
+      .click({ force: true });
+  }
+);
+
+When('the user clicks Cancel button in resource type modal', function () {
+  directoryObj.resourceTypeModalCancelButton().shadow().find('button').click({ force: true });
+});
+
+When('the user clicks Save button in resource type modal', function () {
+  directoryObj.resourceTypeModalSaveButton().shadow().find('button').click({ force: true });
+});
+
+Then(
+  'the user {string} the entry of {string}, {string}, {string} on resource types page',
+  function (viewOrNot, api: string, type: string, matcher: string) {
+    switch (viewOrNot) {
+      case 'views':
+        directoryObj.resourceType(api, type, matcher).should('exist');
+        break;
+      case 'should not view':
+        directoryObj.resourceType(api, type, matcher).should('not.exist');
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+When(
+  'the user clicks {string} icon of {string}, {string}, {string} on resource types page',
+  function (icon, api: string, type: string, matcher: string) {
+    switch (icon) {
+      case 'edit':
+        directoryObj
+          .resourceType(api, type, matcher)
+          .find('goa-icon-button[title="Edit"]')
+          .shadow()
+          .find('button')
+          .click({ force: true });
+        break;
+      case 'delete':
+        directoryObj
+          .resourceType(api, type, matcher)
+          .find('goa-icon-button[title="Delete"]')
+          .shadow()
+          .find('button')
+          .click({ force: true });
+        break;
+      case 'eye':
+        directoryObj
+          .resourceType(api, type, matcher)
+          .find('goa-icon-button[title="Toggle details"]')
+          .invoke('attr', 'icon')
+          .then((attr) => {
+            if (attr === 'eye') {
+              directoryObj
+                .resourceType(api, type, matcher)
+                .find('goa-icon-button[icon="eye"]')
+                .shadow()
+                .find('button')
+                .click({ force: true });
+            } else {
+              cy.log('Eye icon is already clicked');
+            }
+          });
+        break;
+      default:
+        expect(icon).to.be.oneOf(['edit', 'delete', 'eye']);
+    }
+  }
+);
+
+Then('the user views Api, Type and Matcher fields having required label in resource type modal', function () {
+  directoryObj.resourceTypeModalApiFieldFormItem().shadow().find('label').should('contain.text', 'required');
+  directoryObj.resourceTypeModalTypeFieldFormItem().shadow().find('label').should('contain.text', 'required');
+  directoryObj.resourceTypeModalMatcherFieldFormItem().shadow().find('label').should('contain.text', 'required');
+});
+
+Then('the user views the error message of {string} for Matcher field in resource type modal', function (errorMsg) {
+  directoryObj
+    .resourceTypeModalMatcherFieldFormItem()
+    .shadow()
+    .find('[class^="error-msg"]')
+    .invoke('text')
+    .should('contains', errorMsg);
+});
+
+Then('the user views Api dropdown is disabled in resource type modal', function () {
+  directoryObj.resourceTypeModalApiDropdown().should('have.attr', 'disabled');
+});
+
+Then(
+  'the user views {string}, {string} in the details view of the resource type of {string}, {string}, {string} on resource types page',
+  function (namePath: string, deleteEvent: string, api: string, type: string, matcher: string) {
+    directoryObj.resourceTypePayloadDetailsNamePath(api, type, matcher).invoke('text').should('contain', namePath);
+    // directoryObj.resourceTypePayloadDetailsNamePath(api, type, matcher).should('contain.text', namePath);
+    directoryObj.resourceTypePayloadDetailsDeleteEvent(api, type, matcher).should('contain.text', deleteEvent);
+  }
+);

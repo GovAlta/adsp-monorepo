@@ -66,11 +66,7 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
     if (uischema.options?.radio === true) {
       reviewText = data ? `Yes` : `No`;
     } else {
-      if (label !== '' || typeof label === 'boolean') {
-        reviewText = data ? `Yes` : `No`;
-      } else {
-        reviewText = data ? `Yes (${checkboxLabel.trim()})` : `No (${checkboxLabel.trim()})`;
-      }
+      reviewText = data ? `Yes (${checkboxLabel.trim()})` : `No (${checkboxLabel.trim()})`;
     }
   }
 
@@ -80,6 +76,18 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
 
   if (isDateTime) {
     reviewText = reviewText && UTCToFullLocalTime(reviewText);
+  }
+
+  if (Array.isArray(data) && data.length > 0) {
+    reviewText = (
+      <ul>
+        {data.map((checkbox: string, index: number) => {
+          const checkboxLabel =
+            uischema?.options?.text?.trim() || convertToSentenceCase(getLastSegmentFromPointer(uischema.scope));
+          return <li key={index}>{checkbox.trim() || checkboxLabel.trim()}</li>;
+        })}
+      </ul>
+    );
   }
 
   return (
