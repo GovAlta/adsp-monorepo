@@ -52,7 +52,7 @@ describe('GoABaseInputReviewComponent', () => {
     };
     const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
     const reviewControl = getByTestId('review-control-input-id');
-    expect(reviewControl.textContent).toBe('No (test)');
+    expect(reviewControl.textContent).toBe('No');
   });
 
   it('renders "No" for checkbox boolean false data', () => {
@@ -70,7 +70,7 @@ describe('GoABaseInputReviewComponent', () => {
     };
     const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
     const reviewControl = getByTestId('review-control-input-id');
-    expect(reviewControl.textContent).toBe('No (test)');
+    expect(reviewControl.textContent).toBe('No');
   });
 
   it('renders "Yes" for checkbox boolean true data', () => {
@@ -129,7 +129,7 @@ describe('GoABaseInputReviewComponent', () => {
     };
     const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
     const reviewControl = getByTestId('review-control-input-id');
-    expect(reviewControl.textContent).toBe('No (test)');
+    expect(reviewControl.textContent).toBe('');
   });
 
   it('renders checkbox label with scope without options text property', () => {
