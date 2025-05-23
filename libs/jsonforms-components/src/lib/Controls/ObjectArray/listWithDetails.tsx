@@ -39,9 +39,10 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
     // eslint-disable-next-line
   }, [setOpen, path, rowData, rowData]);
 
-  if (props.translations?.deleteDialogTitle === undefined || props.translations.deleteDialogTitle === null) {
-    props.translations.deleteDialogTitle = '';
-  }
+  const deleteTitle =
+    props.translations !== null && props.translations.deleteDialogTitle !== undefined
+      ? props.translations.deleteDialogTitle
+      : '';
 
   return (
     <Visible visible={visible}>
@@ -57,7 +58,7 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
         open={open}
         onCancel={deleteCancel}
         onConfirm={deleteConfirm}
-        title={props.translations.deleteDialogTitle ?? ''}
+        title={deleteTitle}
         message={`Are you sure you wish to delete ${name}`}
       />
     </Visible>
