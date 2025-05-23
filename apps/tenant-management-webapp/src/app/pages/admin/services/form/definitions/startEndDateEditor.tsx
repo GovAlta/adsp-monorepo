@@ -12,7 +12,7 @@ import { DeleteCalendarEvent } from '@store/calendar/actions';
 
 export interface startEndProps {
   event: CalendarEvent;
-  formName?: string;
+  formId?: string;
   closeIntake?: () => void;
   newEvent: boolean;
 }
@@ -27,7 +27,7 @@ const setTimeString = (dateString, timeString?) => {
   return dateDate.toISOString();
 };
 
-export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, formName, closeIntake, newEvent }) => {
+export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, formId, closeIntake, newEvent }) => {
   const [edit, setEdit] = useState<boolean>(newEvent);
   const [deleteConfirm, setDeleteConfirm] = useState<boolean>(false);
   const dispatch = useDispatch();
@@ -162,12 +162,12 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
 
                   event.start = setTimeString(startDate, startTime);
                   event.end = setTimeString(endDate, endTime);
-                  event.recordId = formName;
+                  event.recordId = formId;
 
                   if (event?.id) {
                     dispatch(UpdateEventsByCalendar('form-intake', event?.id.toString(), event));
                   } else {
-                    event.name = `${formName}-${String(Math.floor(Date.now() / 1000))}`;
+                    event.name = `${formId}-${String(Math.floor(Date.now() / 1000))}`;
                     dispatch(CreateEventsByCalendar('form-intake', event));
                   }
                   closeIntake();

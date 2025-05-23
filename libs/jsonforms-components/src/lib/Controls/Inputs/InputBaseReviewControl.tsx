@@ -88,14 +88,6 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
         })}
       </ul>
     );
-  } else if (data === undefined || data === false) {
-    const checkboxLabel =
-      uischema?.options?.text?.trim() || convertToSentenceCase(getLastSegmentFromPointer(uischema.scope));
-    reviewText = (
-      <ul>
-        <li>{`No (${checkboxLabel.trim()})`}</li>
-      </ul>
-    );
   }
 
   return (

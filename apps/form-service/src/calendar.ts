@@ -31,7 +31,7 @@ class CalendarServiceImpl implements CalendarService {
 
       if (intake === undefined) {
         const recordId = this.getRecordId(definition);
-        const requestUrl = new URL(`calendar/v1/calendars/${this.calendar}/events`, this.calendarApiUrl);
+        const requestUrl = new URL(`v1/calendars/${this.calendar}/events`, this.calendarApiUrl);
         let token = await this.tokenProvider.getAccessToken();
 
         const {
