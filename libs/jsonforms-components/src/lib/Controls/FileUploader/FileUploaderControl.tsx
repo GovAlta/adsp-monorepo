@@ -57,6 +57,8 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   const variant = uischema?.options?.variant || 'button';
   const noDownloadButton = uischema?.options?.format?.noDownloadButton;
+  const noDownloadButtonInReview = uischema?.options?.format?.review?.noDownloadButton;
+  const noDeleteButton = uischema?.options?.format?.review?.noDeleteButton;
   const multiFileUploader = variant === 'dragdrop';
   const [deleteHide, setDeleteHide] = useState(false);
   const fileListLength = (fileList && fileList[props.i18nKeyPrefix as string]?.length) || 0;
@@ -146,12 +148,14 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
         {readOnly ? (
           <AttachmentBorderDisabled>
             {getFileName(index)}
-            <GoAContextMenuIcon
-              testId="download-icon"
-              title="Download"
-              type="download"
-              onClick={() => downloadFile(getFile(index))}
-            />
+            {noDownloadButtonInReview !== true && (
+              <GoAContextMenuIcon
+                testId="download-icon"
+                title="Download"
+                type="download"
+                onClick={() => downloadFile(getFile(index))}
+              />
+            )}
           </AttachmentBorderDisabled>
         ) : (
           <AttachmentBorder>
@@ -166,14 +170,16 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
                 />
               )}
 
-              <GoAContextMenuIcon
-                data-testid="delete-icon"
-                title="Delete"
-                type="trash"
-                onClick={() => {
-                  setShowFileDeleteConfirmation(true);
-                }}
-              />
+              {noDeleteButton !== true && (
+                <GoAContextMenuIcon
+                  data-testid="delete-icon"
+                  title="Delete"
+                  type="trash"
+                  onClick={() => {
+                    setShowFileDeleteConfirmation(true);
+                  }}
+                />
+              )}
             </GoAContextMenu>
             <DeleteFileModal
               isOpen={showFileDeleteConfirmation}
