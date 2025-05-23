@@ -29,6 +29,6 @@ export interface NotificationType {
   events: NotificationTypeEvent[];
   channels: Channel[];
   addressPath?: string;
-  ccPath?: string[];
-  bccPath?: string[];
+  ccPath?: string;
+  bccPath?: string;
 }

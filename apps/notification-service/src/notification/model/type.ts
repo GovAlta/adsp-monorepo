@@ -253,8 +253,8 @@ export class NotificationTypeEntity implements NotificationType {
 export class DirectNotificationTypeEntity extends NotificationTypeEntity implements NotificationType {
   addressPath?: string;
   address?: string;
-  ccPath?: string[];
-  bccPath?: string[];
+  ccPath?: string;
+  bccPath?: string;
 
   constructor(type: NotificationType, tenantId?: AdspId) {
     super(type, tenantId);
