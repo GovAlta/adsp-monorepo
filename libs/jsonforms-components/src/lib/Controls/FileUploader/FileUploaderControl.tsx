@@ -55,7 +55,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   const propertyId = i18nKeyPrefix as string;
 
-  const variant = uischema?.options?.variant || 'butt
+  const variant = uischema?.options?.variant || 'button';
   const noDownloadButton = uischema?.options?.format?.noDownloadButton;
   const multiFileUploader = variant === 'dragdrop';
   const [deleteHide, setDeleteHide] = useState(false);
