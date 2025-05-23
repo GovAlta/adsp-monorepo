@@ -37,6 +37,8 @@ export const createEmailProvider = ({
           address: notification.from && notification.from.length > 0 ? notification.from : FROM_ADDRESS,
         },
         to: notification.to,
+        cc: notification?.cc || [],
+        bcc: notification?.bcc || [],
         subject: notification.message.subject,
         html: notification.message.body,
       });

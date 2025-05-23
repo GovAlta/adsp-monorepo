@@ -11,6 +11,8 @@ export interface NotificationItem {
   manageSubscribe?: boolean;
   address?: string;
   addressPath?: string;
+  bccPath?: string[];
+  ccPath?: string[];
 }
 
 export enum Channel {
