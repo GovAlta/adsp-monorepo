@@ -303,9 +303,9 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
       channel = Channel.sms;
     }
 
-    const address = (this.addressPath && getAtPath(event.payload, this.addressPath)) || this.address;
-    const cc = (this.ccPath && getAtPath(event.payload, this.ccPath)) || [];
-    const bcc = (this.bccPath && getAtPath(event.payload, this.bccPath)) || [];
+    const address = (this?.addressPath && getAtPath(event.payload, this.addressPath)) || this.address;
+    const cc = (this?.ccPath && getAtPath(event.payload, this.ccPath)) || [];
+    const bcc = (this?.bccPath && getAtPath(event.payload, this.bccPath)) || [];
 
     const notifications = [];
     if (eventNotification && channel && address && eventNotification.templates[channel]) {
