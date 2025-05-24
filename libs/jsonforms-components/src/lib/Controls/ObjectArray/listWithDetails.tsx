@@ -39,11 +39,6 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
     // eslint-disable-next-line
   }, [setOpen, path, rowData, rowData]);
 
-  // const deleteTitle =
-  //   props.translations !== null && props.translations.deleteDialogTitle !== undefined
-  //     ? props.translations.deleteDialogTitle
-  //     : '';
-
   return (
     <Visible visible={visible}>
       <ListWithDetailControl
