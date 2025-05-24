@@ -120,13 +120,14 @@ const getValidColumnProps = (scopedSchema: JsonSchema) => {
 
 export interface EmptyListProps {
   numColumns: number;
+  noDataMessage: string;
   translations: ArrayTranslations;
 }
 
-const EmptyList = ({ numColumns, translations }: EmptyListProps) => (
+const EmptyList = ({ numColumns, noDataMessage }: EmptyListProps) => (
   <GoAGrid minChildWidth="60ch">
     <TextCenter>
-      <b>{translations.noDataMessage}</b>
+      <b>{noDataMessage}</b>
     </TextCenter>
   </GoAGrid>
 );
@@ -432,10 +433,14 @@ const ObjectArrayList = ({
   }, [current, rightHeight, rightRef]);
 
   if (isEmptyList) {
-    if (uischema.options?.noDataMessage !== undefined) {
-      translations.noDataMessage = uischema.options?.noDataMessage;
-    }
-    return <EmptyList numColumns={getValidColumnProps(schema).length + 1} translations={translations} />;
+    const noDataMessge = uischema.options?.noDataMessage ?? 'No data';
+    return (
+      <EmptyList
+        noDataMessage={noDataMessge}
+        numColumns={getValidColumnProps(schema).length + 1}
+        translations={translations}
+      />
+    );
   }
 
   const appliedUiSchemaOptions = merge({}, config, uischema.options);
