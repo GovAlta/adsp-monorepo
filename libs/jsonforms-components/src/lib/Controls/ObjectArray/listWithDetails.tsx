@@ -53,7 +53,7 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
         open={open}
         onCancel={deleteCancel}
         onConfirm={deleteConfirm}
-        title={props.translations.deleteDialogTitle || ''}
+        title={'Delete confirmation'}
         message={`Are you sure you wish to delete ${name}`}
       />
     </Visible>

@@ -11,7 +11,7 @@ import Checkboxes from '../../Components/CheckboxGroup';
 type CheckboxGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
-  const { data, id, schema, uischema, path, handleChange, options, config, label } = props;
+  const { data, id, schema, uischema, path, handleChange, options, config, label, enabled } = props;
   const newSchema = schema as { items: { enum: string[] } };
   const enumData = schema?.enum || newSchema?.items?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
@@ -25,6 +25,7 @@ export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
         return (
           <GoACheckbox
             name={enumValue}
+            disabled={!enabled}
             checked={data ? data.includes(enumValue) : false}
             value={`${enumValue}`}
             {...appliedUiSchemaOptions}

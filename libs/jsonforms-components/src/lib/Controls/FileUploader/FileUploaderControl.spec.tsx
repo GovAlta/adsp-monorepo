@@ -177,4 +177,101 @@ describe('FileUploaderControl tests', () => {
 
     expect(mockDelete).toBeCalledTimes(1);
   });
+
+  it('replaces existing file when maximum is 1', async () => {
+    jest.useFakeTimers();
+    const uiSchema = {
+      ...fileUploaderUiSchema,
+      options: {
+        componentProps: {
+          maximum: 1,
+        },
+      },
+    };
+
+    const renderer = render(getForm(dataSchema, uiSchema));
+    await act(async () => {
+      const input = renderer.container.querySelector('goa-file-upload-input');
+      fireEvent(input!, new CustomEvent('_selectFile', { detail: {} }));
+      await jest.runAllTimers();
+    });
+
+    expect(mockDelete).toHaveBeenCalledTimes(1);
+    expect(mockUpload).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not upload if uploadTrigger is missing', () => {
+    const NoUploadContext = ContextProviderFactory();
+
+    const CustomForm = (
+      <NoUploadContext
+        fileManagement={{
+          fileList: fileList,
+          uploadFile: undefined,
+          downloadFile: mockDownload,
+          deleteFile: mockDelete,
+        }}
+      >
+        <JsonForms
+          data={{}}
+          schema={dataSchema}
+          uischema={fileUploaderUiSchema}
+          ajv={ajv}
+          renderers={GoARenderers}
+          cells={GoACells}
+        />
+      </NoUploadContext>
+    );
+
+    const { container } = render(CustomForm);
+    const input = container.querySelector('goa-file-upload-input');
+    fireEvent(input!, new CustomEvent('_selectFile', { detail: {} }));
+
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it('does not render help text when help is not defined', () => {
+    const { container } = render(getForm(dataSchema, fileUploaderUiSchema));
+    expect(container.innerHTML).not.toContain('Help text');
+  });
+
+  it('disables uploader when readonly is true', () => {
+    const uiSchema = {
+      ...fileUploaderUiSchema,
+      options: {
+        componentProps: {
+          readOnly: true,
+        },
+      },
+    };
+
+    const { container } = render(getForm(dataSchema, uiSchema));
+    const input = container.querySelector('goa-file-upload-input');
+    expect(input).not.toBeInTheDocument();
+  });
+
+  it('disables uploader when in stepper review mode', () => {
+    const uiSchema = {
+      ...fileUploaderUiSchema,
+      options: {},
+    };
+
+    const renderer = render(getForm(dataSchema, uiSchema, {}));
+    const readonlyBlock = renderer.container.querySelector('goa-icon-button[testId="download-icon"]');
+    expect(readonlyBlock).toBeInTheDocument();
+  });
+
+  it('shows loading modal when file is being uploaded', async () => {
+    jest.useFakeTimers();
+    const renderer = render(getForm(dataSchema, fileUploaderUiSchema));
+
+    await act(async () => {
+      const input = renderer.container.querySelector('goa-file-upload-input');
+      fireEvent(input!, new CustomEvent('_selectFile', { detail: {} }));
+      await jest.runAllTimers();
+    });
+
+    const modal = renderer.container.querySelector('goa-modal');
+    expect(modal).not.toBeNull();
+  });
 });

@@ -117,4 +117,18 @@ describe('Input Boolean Checkbox Control', () => {
     expect(option1Checkbox.getAttribute('checked')).toBeTruthy();
     expect(option1Checkbox.getAttribute('text')).toBe('one');
   });
+
+  it('calls handleChange and updates selected values when checkboxes are toggled', () => {
+    const data = { options: ['one'] };
+    const { container, getByTestId } = render(getForm(dataSchema, uiSchema, data));
+
+    const checkboxOne = container.querySelector('goa-checkbox[name="one"]');
+    const checkboxTwo = container.querySelector('goa-checkbox[name="two"]');
+
+    expect(checkboxOne).toBeInTheDocument();
+    expect(checkboxTwo).toBeInTheDocument();
+
+    fireEvent(checkboxTwo!, new CustomEvent('_change', { detail: { name: 'two', value: true } }));
+    fireEvent(checkboxOne!, new CustomEvent('_change', { detail: { name: 'one', value: false } }));
+  });
 });

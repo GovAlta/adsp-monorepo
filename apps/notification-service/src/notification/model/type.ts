@@ -253,6 +253,8 @@ export class NotificationTypeEntity implements NotificationType {
 export class DirectNotificationTypeEntity extends NotificationTypeEntity implements NotificationType {
   addressPath?: string;
   address?: string;
+  ccPath?: string;
+  bccPath?: string;
 
   constructor(type: NotificationType, tenantId?: AdspId) {
     super(type, tenantId);
@@ -301,7 +303,9 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
       channel = Channel.sms;
     }
 
-    const address = (this.addressPath && getAtPath(event.payload, this.addressPath)) || this.address;
+    const address = (this?.addressPath && getAtPath(event.payload, this.addressPath)) || this.address;
+    const cc = (this?.ccPath && getAtPath(event.payload, this.ccPath)) || [];
+    const bcc = (this?.bccPath && getAtPath(event.payload, this.bccPath)) || [];
 
     const notifications = [];
     if (eventNotification && channel && address && eventNotification.templates[channel]) {
@@ -326,6 +330,8 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
         correlationId: event.correlationId,
         context: event.context,
         to: address,
+        cc,
+        bcc,
         from: configuration.email?.fromEmail,
         channel,
         message: templateService.generateMessage(

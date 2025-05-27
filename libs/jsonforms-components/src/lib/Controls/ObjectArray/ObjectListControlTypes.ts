@@ -104,6 +104,7 @@ export interface NonEmptyRowProps {
 }
 export interface EmptyListProps {
   numColumns: number;
+  noDataMessage: string;
   translations: ArrayTranslations;
 }
 
