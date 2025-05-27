@@ -47,7 +47,10 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
       <Visible visible={visible}>
         <FormFieldWrapper>
           <GoAFormItem
-            requirement={required || getRequiredIfThen(props).length > 0 ? 'required' : undefined}
+            requirement={
+              uischema?.options?.componentProps?.requirement ??
+              (required || getRequiredIfThen(props).length > 0 ? 'required' : undefined)
+            }
             error={isVisited === true ? modifiedErrors : undefined}
             testId={`${isStepperReview === true && 'review-base-'}${path}`}
             label={props?.noLabel === true ? '' : labelToUpdate}
