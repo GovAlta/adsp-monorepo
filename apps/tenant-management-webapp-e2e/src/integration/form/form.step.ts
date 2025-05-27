@@ -247,7 +247,8 @@ When(
 Then('the user clicks Save button in form definition editor', function () {
   cy.wait(1000); // wait for save button to enable
   formObj.editorSaveButtonEnabled().shadow().find('button').click({ force: true });
-  cy.wait(8000);
+  // wait for circular progress component to disappear
+  formObj.formEditorCircularProgress().should('not.exist', { timeout: 10000 });
 });
 
 Then('the user {string} the form definition of {string}, {string}', function (action, name, description) {

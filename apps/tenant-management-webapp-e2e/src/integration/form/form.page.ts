@@ -283,5 +283,9 @@ class FormPage {
       '//div[text()="Preview" and contains(@class, "active")]/parent::div/following-sibling::div[@data-testid="preview-view-tab"]'
     );
   }
+
+  formEditorCircularProgress() {
+    return cy.xpath('//goa-circular-progress[@visible="true"]');
+  }
 }
 export default FormPage;
