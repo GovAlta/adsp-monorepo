@@ -979,7 +979,7 @@ When('the user views the link for managing email subscription', function () {
     .find('footer')
     .contains('Please do not reply to this email. Manage your subscription here.');
 
-  const urlSubscriptionLogin = Cypress.env('subscriptionUrl') + '/' + Cypress.env('tenantName') + '/login';
+  const urlSubscriptionLogin = Cypress.env('subscriptionAppUrl') + '/' + Cypress.env('tenantName') + '/login';
   cy.log(urlSubscriptionLogin);
   notificationsObj
     .templateModalPreviewPaneEmailBody()
@@ -1119,7 +1119,7 @@ Then(
   'the user should be able to view {string}, {string} and {string} as contact information in the subscription app',
   function (email: string, phone: string, instructions: string) {
     // Visit notification page of the realm
-    cy.visit(Cypress.env('subscriptionUrl') + '/' + Cypress.env('realm') + '/login?kc_idp_hint=');
+    cy.visit(Cypress.env('subscriptionAppUrl') + '/' + Cypress.env('realm') + '/login?kc_idp_hint=');
     cy.wait(4000); // Wait all the redirects to settle down
 
     // Verify the support info
