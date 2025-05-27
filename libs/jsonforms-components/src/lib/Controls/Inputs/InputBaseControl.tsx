@@ -49,7 +49,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
           <GoAFormItem
             requirement={
               uischema?.options?.componentProps?.requirement ??
-              (required || getRequiredIfThen(props).length > 0 ? 'required' : 'optional')
+              (required || getRequiredIfThen(props).length > 0 ? 'required' : undefined)
             }
             error={isVisited === true ? modifiedErrors : undefined}
             testId={`${isStepperReview === true && 'review-base-'}${path}`}
