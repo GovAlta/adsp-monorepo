@@ -33,7 +33,7 @@ module.exports = defineConfig({
     configurationServiceApiUrl: '',
     statusAppUrl: 'https://status.adsp-uat.alberta.ca',
     subscriptionAppUrl: 'https://subscription.adsp-uat.alberta.ca',
-    formServiceUrl: 'https://form-service.adsp-uat.alberta.ca',
+    formServiceUrl: 'https://form-service.adsp-uat.alberta.ca/',
     formAppUrl: 'https://form.adsp-uat.alberta.ca/',
     taskServiceApiUrl: '',
     valueServiceApiUrl: '',
