@@ -708,7 +708,7 @@ Then(
 // Task steps:
 Given('all existing tasks in {string} if any have been deleted', function (queue) {
   const getTasksRequestURL =
-    Cypress.env('taskApi') + '/task/v1/queues/' + Cypress.env('tenantName') + '/' + queue + '/tasks';
+    Cypress.env('taskServiceApiUrl') + '/task/v1/queues/' + Cypress.env('tenantName') + '/' + queue + '/tasks';
   cy.request({
     method: 'GET',
     url: getTasksRequestURL,
@@ -730,7 +730,7 @@ Given('all existing tasks in {string} if any have been deleted', function (queue
       );
       if (response.body.results[arrayIndex].status.includes('Pending')) {
         const cancelTasksRequestURL =
-          Cypress.env('taskApi') +
+          Cypress.env('taskServiceApiUrl') +
           '/task/v1/queues/' +
           Cypress.env('tenantName') +
           '/' +
@@ -797,7 +797,7 @@ Then('the user {string} the task of {string}, {string} on tasks page', function 
 Given('the user deletes any existing form from {string} for {string}', function (userAddressAs, formDefinitionId) {
   let formId = 'NoFormFound';
   const requestURLGetForms =
-    Cypress.env('formApi') + 'form/v1/forms?criteria={"definitionIdEquals":"' + formDefinitionId + '"}';
+    Cypress.env('formServiceUrl') + 'form/v1/forms?criteria={"definitionIdEquals":"' + formDefinitionId + '"}';
   cy.request({
     method: 'GET',
     url: requestURLGetForms,
@@ -823,7 +823,7 @@ Given('the user deletes any existing form from {string} for {string}', function 
     .then(() => {
       cy.log('Form id found: ' + formId);
       if (formId !== 'NoFormFound') {
-        const requestURLDeleteForm = Cypress.env('formApi') + 'form/v1/forms/' + formId;
+        const requestURLDeleteForm = Cypress.env('formServiceUrl') + 'form/v1/forms/' + formId;
         cy.request({
           method: 'DELETE',
           url: requestURLDeleteForm,

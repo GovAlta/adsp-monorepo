@@ -315,7 +315,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                     [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
                                   });
                                 }}
-                                aria-label={schemaName}
+                                ariaLabel={schemaName}
                                 width="100%"
                               />
                             ) : (
