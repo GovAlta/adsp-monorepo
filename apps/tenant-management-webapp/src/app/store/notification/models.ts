@@ -13,6 +13,9 @@ export interface NotificationItem {
   addressPath?: string;
   bccPath?: string;
   ccPath?: string;
+  subjectPath?: string;
+  titlePath?: string;
+  subTitlePath?: string;
 }
 
 export enum Channel {
