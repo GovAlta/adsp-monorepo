@@ -31,4 +31,7 @@ export interface NotificationType {
   addressPath?: string;
   ccPath?: string;
   bccPath?: string;
+  subjectPath?: string;
+  titlePath?: string;
+  subTitlePath?: string;
 }
