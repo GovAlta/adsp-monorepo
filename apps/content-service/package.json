@@ -14,7 +14,7 @@
     "@abgov/adsp-service-sdk": "^2.3.0",
     "@strapi/plugin-cloud": "5.2.0",
     "@strapi/plugin-users-permissions": "5.2.0",
-    "@strapi/strapi": "5.12.4",
+    "@strapi/strapi": "5.13.0",
     "better-sqlite3": "11.3.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
