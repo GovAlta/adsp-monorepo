@@ -255,6 +255,9 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
   address?: string;
   ccPath?: string;
   bccPath?: string;
+  subjectPath?: string;
+  titlePath?: string;
+  subTitlePath?: string;
 
   constructor(type: NotificationType, tenantId?: AdspId) {
     super(type, tenantId);
@@ -306,6 +309,9 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
     const address = (this?.addressPath && getAtPath(event.payload, this.addressPath)) || this.address;
     const cc = (this?.ccPath && getAtPath(event.payload, this.ccPath)) || [];
     const bcc = (this?.bccPath && getAtPath(event.payload, this.bccPath)) || [];
+    const titleInEvent = this?.titlePath && getAtPath(event.payload, this.titlePath);
+    const subTitleInEvent = this?.subTitlePath && getAtPath(event.payload, this.subTitlePath);
+    const subjectInEvent = this?.subjectPath && getAtPath(event.payload, this.subjectPath);
 
     const notifications = [];
     if (eventNotification && channel && address && eventNotification.templates[channel]) {
@@ -315,6 +321,15 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
       };
 
       const template = eventNotification.templates[channel];
+
+      const message = templateService.generateMessage(
+        this.getTemplate(channel, template, {
+          ...context,
+          title: titleInEvent || template?.title,
+          subtitle: subTitleInEvent || template?.subtitle,
+        }),
+        context
+      );
 
       notifications.push({
         tenantId: event.tenantId.toString(),
@@ -334,14 +349,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
         bcc,
         from: configuration.email?.fromEmail,
         channel,
-        message: templateService.generateMessage(
-          this.getTemplate(channel, template, {
-            ...context,
-            title: template?.title,
-            subtitle: template?.subtitle,
-          }),
-          context
-        ),
+        message: subjectInEvent ? { ...message, subject: subjectInEvent } : message,
       });
 
       logger.debug(`Generated direct notification for type ${this.id} on event ${event.namespace}:${event.name}.`, {

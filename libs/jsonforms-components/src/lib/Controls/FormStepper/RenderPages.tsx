@@ -24,8 +24,13 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
     formStepperCtx as JsonFormsStepperContextProps
   ).selectStepperState();
 
+  const hideSubmit = props.categoryProps.uischema.options?.hideSubmit ?? false;
   const submitFormFunction = enumerators?.submitFunction.get('submit-form');
   const submitForm = submitFormFunction && submitFormFunction();
+
+  const saveFormFunction = enumerators?.saveFunction.get('save-form');
+  const saveForm = saveFormFunction && saveFormFunction();
+
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSubmit = () => {
@@ -33,6 +38,12 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
       submitForm(data);
     } else {
       setIsOpen(true);
+    }
+  };
+
+  const handleSave = () => {
+    if (saveForm) {
+      saveForm(data);
     }
   };
 
@@ -83,7 +94,10 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                       <GoAButtonGroup alignment="start">
                         <GoAButton
                           type="submit"
-                          onClick={() => goToPage(activeId + 1)}
+                          onClick={() => {
+                            handleSave();
+                            goToPage(activeId + 1);
+                          }}
                           disabled={!(category.isValid && category.isCompleted)}
                           testId="pages-save-continue-btn"
                         >
@@ -122,9 +136,11 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                 <FormStepperPageReviewer {...{ ...props.categoryProps, navigationFunc: goToPage }} />
                 <PageRenderPadding>
                   <GoAButtonGroup alignment="end">
-                    <GoAButton type={'primary'} onClick={handleSubmit} disabled={!isValid} testId="pages-submit-btn">
-                      Submit
-                    </GoAButton>
+                    {!hideSubmit ? (
+                      <GoAButton type={'primary'} onClick={handleSubmit} disabled={!isValid} testId="pages-submit-btn">
+                        Submit
+                      </GoAButton>
+                    ) : null}
                   </GoAButtonGroup>
                 </PageRenderPadding>
               </div>
