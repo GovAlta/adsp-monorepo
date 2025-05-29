@@ -1232,3 +1232,8 @@ Then(
 Then('the user views form definition Preview pane', function () {
   formObj.formPreviewView().should('exist');
 });
+
+Then('the user views a callout with a message of {string}', function (message) {
+  cy.wait(2000); // wait for callout to appear
+  formObj.formSuccessCallout().shadow().find('h3').should('have.text', message);
+});

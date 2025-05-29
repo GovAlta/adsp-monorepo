@@ -864,7 +864,7 @@ When('the user enters {string} in a text field labelled {string}', function (tex
 });
 
 When('the user clicks submit button in the form', function () {
-  cy.wait(2000);
+  cy.wait(4000);
   commonObj.formAppFormSubmitButton().shadow().find('button').click({ force: true });
   cy.wait(5000);
 });
