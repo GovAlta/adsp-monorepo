@@ -82,6 +82,10 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
 
                     dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
                   }}
+                  onSave={({ data, errors }) => {
+                    console.log(`updating....`, data);
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
+                  }}
                   onSubmit={(form) => dispatch(submitForm(form.id))}
                 />
               )}

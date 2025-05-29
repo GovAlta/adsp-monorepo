@@ -72,6 +72,9 @@ const AnonymousFormComponent: FunctionComponent<FormProps> = ({ className }) => 
                   onChange={function ({ data, errors }: { data: unknown; errors?: ValidationError[] }) {
                     dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
                   }}
+                  onSave={({ data, errors }) => {
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
+                  }}
                   onSubmit={function () {
                     dispatch(submitAnonymousForm());
                   }}

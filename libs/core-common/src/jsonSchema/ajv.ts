@@ -5,13 +5,15 @@ import * as schemaMigration from 'json-schema-migrate';
 import { Logger } from 'winston';
 import { InvalidValueError } from '../errors';
 import { ValidationService } from './service';
-
+import addErrors from 'ajv-errors';
 export class AjvValidationService implements ValidationService {
-  protected ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
+  protected ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log', strictRequired: false, useDefaults: true });
   protected ajvErrors: string[] = [];
 
   constructor(private logger: Logger) {
     addFormats(this.ajv);
+    addErrors(this.ajv);
+
     this.ajv.addFormat('file-urn', {
       type: 'string',
       validate: (input) => {
@@ -51,6 +53,7 @@ export class AjvValidationService implements ValidationService {
     const result = this.ajv.validate(schemaKey, value);
     if (!result) {
       const errors = this.ajv.errorsText(this.ajv.errors);
+      console.log('errors', errors);
       throw new InvalidValueError(context, errors);
     }
   }
