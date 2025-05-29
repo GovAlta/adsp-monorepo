@@ -11,6 +11,7 @@ export interface enumerators {
   data: Map<string, () => any>;
   functions: Map<string, () => (file: File, propertyId: string) => void | undefined>;
   submitFunction: Map<string, () => (id: string) => void | undefined>;
+  saveFunction: Map<string, () => (id: string) => void | undefined>;
   addFormContextData: (key: string, data: Record<string, unknown> | unknown[]) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getFormContextData: (key: string) => Record<string, any>;
@@ -29,6 +30,8 @@ interface FileManagement {
 interface SubmitManagement {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   submitForm?: (any: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  saveForm?: (any: any) => void;
 }
 
 type Props = {
@@ -56,6 +59,12 @@ export class ContextProviderClass {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     () => (data: any) => void
   >();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  enumSaveFunctions: Map<string, () => ((data: any) => void) | undefined> = new Map<
+    string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    () => (data: any) => void
+  >();
 
   baseEnumerator: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,6 +72,8 @@ export class ContextProviderClass {
     functions: Map<string, () => ((file: File, propertyId: string) => void) | undefined>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submitFunction: Map<string, () => ((data: any) => void) | undefined>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    saveFunction: Map<string, () => ((data: any) => void) | undefined>;
     addFormContextData: (key: string, data: Record<string, unknown> | unknown[]) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getFormContextData: (key: string) => Record<string, any> | undefined;
@@ -104,6 +115,7 @@ export class ContextProviderClass {
       data: this.enumValues,
       functions: this.enumFunctions,
       submitFunction: this.enumSubmitFunctions,
+      saveFunction: this.enumSaveFunctions,
       addFormContextData: this.addFormContextData,
       getFormContextData: this.getFormContextData,
       getAllFormContextData: this.getAllFormContextData,
@@ -126,10 +138,13 @@ export class ContextProviderClass {
     }
 
     if (props.submit) {
-      const { submitForm } = props.submit;
+      const { submitForm, saveForm } = props.submit;
+
       const submitFunction = submitForm;
+      const saveFormFunction = saveForm;
 
       this.enumSubmitFunctions.set('submit-form', () => submitFunction);
+      this.enumSaveFunctions.set('save-form', () => saveFormFunction);
     }
 
     if (props.data) {

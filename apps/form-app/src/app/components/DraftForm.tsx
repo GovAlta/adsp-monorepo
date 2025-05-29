@@ -43,6 +43,7 @@ interface DraftFormProps {
   anonymousApply?: boolean;
   onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
   onSubmit: (form: Form) => void;
+  onSave: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
 }
 
 export const populateDropdown = (schema, enumerators) => {
@@ -97,10 +98,16 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
   anonymousApply,
   onChange,
   onSubmit,
+  onSave,
 }) => {
   const onSubmitFunction = () => {
     onSubmit(form);
   };
+
+  const onSaveFunction = () => {
+    onSave({ data });
+  };
+
   const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
 
   const dispatch = useDispatch<AppDispatch>();
@@ -170,6 +177,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
       <ContextProvider
         submit={{
           submitForm: onSubmitFunction,
+          saveForm: onSaveFunction,
         }}
         fileManagement={{
           fileList: metadata,

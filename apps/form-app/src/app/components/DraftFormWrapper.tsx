@@ -21,6 +21,7 @@ interface DraftFormProps {
   anonymousApply?: boolean;
   onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
   onSubmit: (form: Form) => void;
+  onSave?: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
 }
 
 export const populateDropdown = (schema, enumerators) => {
@@ -47,6 +48,7 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
   submitting,
   onChange,
   onSubmit,
+  onSave,
 }) => {
   const handleMouseEnter = () => {
     const focusedElement = document.activeElement as HTMLElement | null;
@@ -100,6 +102,7 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
           submitting={submitting}
           onChange={onChange}
           onSubmit={onSubmit}
+          onSave={onSave}
         />
         <ButtonGroup showSubmit={showSubmit} canSubmit={canSubmit} onSubmit={onSubmit} form={form} />
       </GridItem>

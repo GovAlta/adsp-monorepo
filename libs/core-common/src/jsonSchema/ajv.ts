@@ -1,17 +1,19 @@
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import addErrors from 'ajv-errors';
 import * as schemaMigration from 'json-schema-migrate';
 import { Logger } from 'winston';
 import { InvalidValueError } from '../errors';
 import { ValidationService } from './service';
-
 export class AjvValidationService implements ValidationService {
-  protected ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
+  protected ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log', strictRequired: false, useDefaults: true });
   protected ajvErrors: string[] = [];
 
   constructor(private logger: Logger) {
     addFormats(this.ajv);
+    addErrors(this.ajv);
+
     this.ajv.addFormat('file-urn', {
       type: 'string',
       validate: (input) => {
