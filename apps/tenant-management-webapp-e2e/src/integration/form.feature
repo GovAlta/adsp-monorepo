@@ -34,6 +34,7 @@ Feature: Form
     Then the user views a from draft of "autotest-submission-task"
     When the user enters "Joe" in a text field labelled "First name"
     And the user clicks submit button in the form
+    Then the user views a callout with a message of "We're processing your application"
     # Verify a task is created for form submission
     Given a tenant admin user is on task service overview page
     When the user selects "Tasks" tab for "Task"

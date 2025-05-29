@@ -107,7 +107,7 @@ class Common {
   }
 
   formAppFormSubmitButton() {
-    return cy.xpath('//goa-button[text()="Submit"]');
+    return cy.xpath('//goa-button[text()="Submit" and @disabled="false"]');
   }
 
   //Status app page objects

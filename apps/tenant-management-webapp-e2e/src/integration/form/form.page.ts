@@ -287,5 +287,9 @@ class FormPage {
   formEditorCircularProgress() {
     return cy.xpath('//goa-circular-progress[@visible="true"]');
   }
+
+  formSuccessCallout() {
+    return cy.xpath('//goa-callout[@type="success"]');
+  }
 }
 export default FormPage;

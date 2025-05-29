@@ -255,7 +255,7 @@ When(
   'a developer sends a value service get events request with {string}, {string} and {string}',
   function (requestEndpoint: string, requestType: string, interval) {
     const valueServiceGetEventEndPoint = requestEndpoint.replace('<interval>', interval as string);
-    const valueServiceGetEventURL = Cypress.env('valueApi') + valueServiceGetEventEndPoint;
+    const valueServiceGetEventURL = Cypress.env('valueServiceApiUrl') + valueServiceGetEventEndPoint;
     cy.request({
       method: requestType,
       url: valueServiceGetEventURL,
