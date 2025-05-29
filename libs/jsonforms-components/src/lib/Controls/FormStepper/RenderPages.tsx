@@ -24,6 +24,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
     formStepperCtx as JsonFormsStepperContextProps
   ).selectStepperState();
 
+  const hideSubmit = props.categoryProps.uischema.options?.hideSubmit ?? false;
   const submitFormFunction = enumerators?.submitFunction.get('submit-form');
   const submitForm = submitFormFunction && submitFormFunction();
 
@@ -135,9 +136,11 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                 <FormStepperPageReviewer {...{ ...props.categoryProps, navigationFunc: goToPage }} />
                 <PageRenderPadding>
                   <GoAButtonGroup alignment="end">
-                    <GoAButton type={'primary'} onClick={handleSubmit} disabled={!isValid} testId="pages-submit-btn">
-                      Submit
-                    </GoAButton>
+                    {!hideSubmit ? (
+                      <GoAButton type={'primary'} onClick={handleSubmit} disabled={!isValid} testId="pages-submit-btn">
+                        Submit
+                      </GoAButton>
+                    ) : null}
                   </GoAButtonGroup>
                 </PageRenderPadding>
               </div>
