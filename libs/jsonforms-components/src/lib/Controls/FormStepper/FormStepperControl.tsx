@@ -56,9 +56,8 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
 
   const { selectIsDisabled, goToPage } = formStepperCtx as JsonFormsStepperContextProps;
   const submitFormFunction = enumerators?.submitFunction.get('submit-form');
-  const saveFormFunction = enumerators?.saveFormFunction.get('save-form');
   const submitForm = submitFormFunction && submitFormFunction();
-  const saveForm = submitFormFunction && saveFormFunction();
+
   const optionProps = (uischema.options as FormStepperOptionProps) || {};
   const [isOpen, setIsOpen] = useState(false);
   const headersRef = useRef<HTMLElement[]>([]);
@@ -68,12 +67,6 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
       submitForm(data);
     } else {
       setIsOpen(true);
-    }
-  };
-
-  const handleSave = () => {
-    if (saveForm) {
-      saveForm(data);
     }
   };
 
