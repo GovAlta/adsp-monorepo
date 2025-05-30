@@ -42,7 +42,6 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   const width = uischema?.options?.componentProps?.width ?? '100%';
 
   const minDate = uischema?.options?.componentProps?.min;
-
   const maxDate = uischema?.options?.componentProps?.max;
 
   return (
