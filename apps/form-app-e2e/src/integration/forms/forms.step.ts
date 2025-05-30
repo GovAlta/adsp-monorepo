@@ -62,7 +62,7 @@ Then('the user views a from draft of {string}', function (formDefinition) {
 
 When('the user sends a delete form request', function () {
   expect(formId).not.equals(null);
-  const formDeleteRequestURL = Cypress.env('formServiceUrl') + 'form/v1/forms/' + formId;
+  const formDeleteRequestURL = Cypress.env('formServiceApiUrl') + '/form/v1/forms/' + formId;
   cy.request({
     method: 'DELETE',
     url: formDeleteRequestURL,
@@ -253,7 +253,7 @@ When('the user selects {string} radio button for the question of {string}', func
 Given('the user deletes any existing form from {string} for {string}', function (userAddressAs, formDefinitionId) {
   let formId = 'NoFormFound';
   const requestURLGetForms =
-    Cypress.env('formServiceUrl') + 'form/v1/forms?criteria={"definitionIdEquals":"' + formDefinitionId + '"}';
+    Cypress.env('formServiceApiUrl') + '/form/v1/forms?criteria={"definitionIdEquals":"' + formDefinitionId + '"}';
   cy.request({
     method: 'GET',
     url: requestURLGetForms,
@@ -279,7 +279,7 @@ Given('the user deletes any existing form from {string} for {string}', function 
     .then(() => {
       cy.log('Form id found: ' + formId);
       if (formId !== 'NoFormFound') {
-        const requestURLDeleteForm = Cypress.env('formServiceUrl') + 'form/v1/forms/' + formId;
+        const requestURLDeleteForm = Cypress.env('formServiceApiUrl') + '/form/v1/forms/' + formId;
         cy.request({
           method: 'DELETE',
           url: requestURLDeleteForm,

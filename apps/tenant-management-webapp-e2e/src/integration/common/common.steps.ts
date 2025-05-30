@@ -797,7 +797,7 @@ Then('the user {string} the task of {string}, {string} on tasks page', function 
 Given('the user deletes any existing form from {string} for {string}', function (userAddressAs, formDefinitionId) {
   let formId = 'NoFormFound';
   const requestURLGetForms =
-    Cypress.env('formServiceUrl') + 'form/v1/forms?criteria={"definitionIdEquals":"' + formDefinitionId + '"}';
+    Cypress.env('formServiceApiUrl') + '/form/v1/forms?criteria={"definitionIdEquals":"' + formDefinitionId + '"}';
   cy.request({
     method: 'GET',
     url: requestURLGetForms,
@@ -823,7 +823,7 @@ Given('the user deletes any existing form from {string} for {string}', function 
     .then(() => {
       cy.log('Form id found: ' + formId);
       if (formId !== 'NoFormFound') {
-        const requestURLDeleteForm = Cypress.env('formServiceUrl') + 'form/v1/forms/' + formId;
+        const requestURLDeleteForm = Cypress.env('formServiceApiUrl') + '/form/v1/forms/' + formId;
         cy.request({
           method: 'DELETE',
           url: requestURLDeleteForm,
@@ -847,7 +847,7 @@ When('the user is logged in to see {string} application', function (formDefiniti
       commonObj.formAppLoginButton().click();
     }
   });
-  cy.wait(6000); // Wait all the redirects to settle down
+  cy.wait(10000); // Wait all the redirects to settle down
 });
 
 Then('the user views a from draft of {string}', function (formDefinition) {

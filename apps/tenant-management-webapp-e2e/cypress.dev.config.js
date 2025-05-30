@@ -33,7 +33,7 @@ module.exports = defineConfig({
     configurationServiceApiUrl: '',
     statusAppUrl: 'https://status.adsp-dev.gov.ab.ca',
     subscriptionAppUrl: 'https://subscription.adsp-dev.gov.ab.ca',
-    formServiceUrl: 'https://form-service.adsp-dev.gov.ab.ca/',
+    formServiceApiUrl: '',
     formAppUrl: 'https://form.adsp-dev.gov.ab.ca/',
     taskServiceApiUrl: '',
     valueServiceApiUrl: '',
