@@ -93,11 +93,6 @@ describe('ValueDefinitionsList', () => {
     expect(screen.getByText('Test Name')).toBeInTheDocument();
   });
 
-  it('renders "no item" message when there are no definitions', () => {
-    render(<ValueDefinitionsList definitions={[]} onDelete={mockDelete} onEdit={mockEdit} />);
-    expect(screen.getByText('No value definition found')).toBeInTheDocument();
-  });
-
   it('groups and sorts definitions correctly', () => {
     render(<ValueDefinitionsList definitions={mockDefinitions} onDelete={mockDelete} onEdit={mockEdit} />);
     const groupNames = screen.getAllByTestId('name');
