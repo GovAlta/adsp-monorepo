@@ -46,7 +46,7 @@ export function* fetchCacheTargets(payload): SagaIterator {
       );
       yield put(getCacheTargetsSuccess({ tenant: targets, core: coreTargets }));
     } catch (err) {
-      yield put(ErrorNotification({ error: err }));
+      yield put(ErrorNotification({ message: 'Failed to fetch cache targets', error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -66,7 +66,7 @@ export function* updateCacheTargets({ definition }: UpdateCacheTargetAction): Sa
 
       yield put(updateCacheTargetSuccess(latest.configuration.targets));
     } catch (err) {
-      yield put(ErrorNotification({ error: err }));
+      yield put(ErrorNotification({ message: 'Failed to update cache targets', error: err }));
     }
   }
 }

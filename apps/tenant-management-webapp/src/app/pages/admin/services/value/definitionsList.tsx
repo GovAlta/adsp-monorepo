@@ -5,7 +5,6 @@ import DataTable from '@components/DataTable';
 import type { ValueDefinition } from '@store/value/models';
 
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { renderNoItem } from '@components/NoItem';
 
 import { EntryDetail, TableDiv } from '../styled-components';
 
@@ -92,7 +91,6 @@ export const ValueDefinitionsList: FunctionComponent<ValueDefinitionsComponentPr
 
   return (
     <div>
-      {(orderedGroupNames.length === 0 || !orderedGroupNames) && renderNoItem('value definition')}
       {orderedGroupNames.map((group) => (
         <TableDiv key={group}>
           <div className="group-name">{group}</div>
