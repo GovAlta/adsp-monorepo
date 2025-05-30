@@ -118,12 +118,11 @@ Cypress.Commands.add('getConfig', () => {
       name: 'valueServiceApiUrl: ',
       message: response.body.serviceUrls.valueServiceApiUrl,
     });
-    // formServiceUrl in config.json has a wrong value for form app instead of form service. The service URL will need to be hardcoded in the config files - CS-4238
-    // Cypress.env('formServiceUrl', response.body.serviceUrls.formServiceUrl);
-    // Cypress.log({
-    //   name: 'formServiceUrl: ',
-    //   message: response.body.serviceUrls.formServiceUrl,
-    // });
+    Cypress.env('formServiceApiUrl', response.body.serviceUrls.formServiceApiUrl);
+    Cypress.log({
+      name: 'formServiceApiUrl: ',
+      message: response.body.serviceUrls.formServiceApiUrl,
+    });
     Cypress.env('taskServiceApiUrl', response.body.serviceUrls.taskServiceApiUrl);
     Cypress.log({
       name: 'taskServiceApiUrl: ',
