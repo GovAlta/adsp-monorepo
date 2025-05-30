@@ -42,14 +42,8 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   const width = uischema?.options?.componentProps?.width ?? '100%';
 
   const minDate = uischema?.options?.componentProps?.min;
-  if (minDate && !isValidDateFormat(minDate)) {
-    return invalidDateFormat(uischema.scope, 'Min');
-  }
 
   const maxDate = uischema?.options?.componentProps?.max;
-  if (maxDate && !isValidDateFormat(maxDate)) {
-    return invalidDateFormat(uischema.scope, 'Max');
-  }
 
   return (
     <GoAInputDate
@@ -60,6 +54,8 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       disabled={!enabled}
       readonly={readOnly}
+      min={minDate && new Date(minDate)}
+      max={maxDate && new Date(maxDate)}
       onChange={(name: string, value: Date | string) => {
         if (isVisited === false && setIsVisited) {
           setIsVisited();
