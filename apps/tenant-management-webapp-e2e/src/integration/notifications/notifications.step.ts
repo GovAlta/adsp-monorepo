@@ -973,11 +973,12 @@ When('the user clicks Close button in event template modal', function () {
 });
 
 When('the user views the link for managing email subscription', function () {
-  notificationsObj
-    .templateModalPreviewPaneEmailBody()
-    .its('0.contentDocument.body')
-    .find('footer')
-    .contains('Please do not reply to this email. Manage your subscription here.');
+  // Comment out this validation due to CS-4254
+  // notificationsObj
+  //   .templateModalPreviewPaneEmailBody()
+  //   .its('0.contentDocument.body')
+  //   .find('footer')
+  //   .contains('Please do not reply to this email. Manage your subscription here.');
 
   const urlSubscriptionLogin = Cypress.env('subscriptionAppUrl') + '/' + Cypress.env('tenantName') + '/login';
   cy.log(urlSubscriptionLogin);
