@@ -33,14 +33,22 @@ export const schema = {
   },
   required: ['fullName', 'birthDate', 'mailingAddress', 'phoneNumber', 'email', 'isAttestationAccepted'],
 };
-
 export const uischema = {
   type: 'Categorization',
   elements: [
     {
       type: 'Category',
-      label: '',
+      label: 'Representative form',
       elements: [
+        {
+          type: 'HelpContent',
+          options: {
+            markdown: true,
+            help: [
+              'You should follow up on that Representative [form](https://govalta.github.io/adsp-monorepo/tutorials/form-service/form-service.html)',
+            ],
+          },
+        },
         {
           type: 'HorizontalLayout',
           elements: [
@@ -100,7 +108,6 @@ export const uischema = {
     },
   ],
 };
-
 export const data = {
   provideAddress: true,
   vegetarian: false,
