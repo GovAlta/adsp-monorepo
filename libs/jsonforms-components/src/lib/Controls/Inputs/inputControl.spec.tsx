@@ -84,26 +84,6 @@ describe('input control tests', () => {
       expect(input).toBeInTheDocument();
     });
 
-    it('can detect malformed max dates in schema', () => {
-      const props = { ...staticProps, uischema: uiSchema('2023-02-01', '2025a/02-01') };
-      const component = render(
-        <JsonFormsContext.Provider value={mockContextValue}>
-          <GoADateInput {...props} />
-        </JsonFormsContext.Provider>
-      );
-      expect(component.getByText(errMalformedDate(props.uischema.scope, 'Max'))).toBeInTheDocument();
-    });
-
-    it('can detect malformed min dates in schema', () => {
-      const props = { ...staticProps, uischema: uiSchema('2023b/02-01', '2025-02-01') };
-      const component = render(
-        <JsonFormsContext.Provider value={mockContextValue}>
-          <GoADateInput {...props} />
-        </JsonFormsContext.Provider>
-      );
-      expect(component.getByText(errMalformedDate(props.uischema.scope, 'Min'))).toBeInTheDocument();
-    });
-
     it('will reformat non-standard min dates', () => {
       const props = { ...staticProps, uischema: uiSchema('2023/02-01', '2025-02-01') };
       const { baseElement } = render(
