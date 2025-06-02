@@ -33,14 +33,24 @@ export const schema = {
   },
   required: ['fullName', 'birthDate', 'mailingAddress', 'phoneNumber', 'email', 'isAttestationAccepted'],
 };
-
 export const uischema = {
   type: 'Categorization',
   elements: [
     {
       type: 'Category',
-      label: '',
+      label: 'Representative form',
       elements: [
+        {
+          type: 'Callout',
+          options: {
+            componentProps: {
+              type: 'information',
+              markdown: true,
+              message:
+                'You should follow up on that Representative form. [here](https://govalta.github.io/adsp-monorepo/tutorials/form-service/building-forms.html)',
+            },
+          },
+        },
         {
           type: 'HorizontalLayout',
           elements: [
@@ -100,7 +110,6 @@ export const uischema = {
     },
   ],
 };
-
 export const data = {
   provideAddress: true,
   vegetarian: false,

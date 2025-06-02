@@ -3,6 +3,7 @@ import { ControlProps, RankedTester, rankWith, uiTypeIs } from '@jsonforms/core'
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoACallout, GoACalloutSize, GoACalloutType } from '@abgov/react-components';
 import { Visible } from '../util';
+import ReactMarkdown from 'react-markdown';
 
 export interface CalloutProps {
   size?: GoACalloutSize;
@@ -21,7 +22,7 @@ export const callout = (props: CalloutProps): JSX.Element => {
   const testid = componentProps.message?.replace(/\s/g, '');
   return (
     <GoACallout {...componentProps} data-testid={testid}>
-      {componentProps.message}
+      <ReactMarkdown>{componentProps.message || ''}</ReactMarkdown>
     </GoACallout>
   );
 };
