@@ -155,8 +155,7 @@ It's a bit of overkill, but for illustrative purposes we'll put the name and add
 
 Which yields:
 
-![](/adsp-monorepo/assets/form-service/tutorial-example
-.png){: width="400" }
+![](/adsp-monorepo/assets/form-service/tutorial-example.png){: width="400" }
 
 Notice that
 
