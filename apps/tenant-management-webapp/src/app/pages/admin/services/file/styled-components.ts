@@ -194,6 +194,8 @@ export const EditorPadding = styled.div`
   border: 0px solid grey;
   border-radius: 3px;
   padding: 0.15rem;
+  overflow-y: auto;
+  height: calc(100vh - 500px);
 
   .monaco-scrollable-element {
     margin-top: 5px !important;
