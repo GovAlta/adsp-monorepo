@@ -206,8 +206,8 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
           <NameDescriptionDataSchema>
             <FileTypeEditorTitle>File type</FileTypeEditorTitle>
             <hr className="hr-resize" />
+            <FileTypeConfigDefinition fileType={fileType ?? FileTypeDefault} />
             <EditorPadding>
-              <FileTypeConfigDefinition fileType={fileType ?? FileTypeDefault} />
               <MakePublicPadding>
                 <DropDownZIndex>
                   <GoAFormItem label="Select a security classification">
@@ -274,7 +274,6 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   </FileTypeEditorWarningCalloutWrapper>
                 )}
               </MakePublicPadding>
-
               <GoAFormItem label="">
                 <RetentionPolicyLabel>Retention policy</RetentionPolicyLabel>
                 <GoATooltip
@@ -332,7 +331,6 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                 width="265px"
               />
             </EditorPadding>
-
             <FinalButtonPadding>
               <hr className="hr-resize-bottom" />
               <br />
