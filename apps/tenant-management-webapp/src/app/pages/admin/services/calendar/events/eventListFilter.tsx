@@ -19,22 +19,21 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
   const criteria = useSelector((state: RootState) => state.calendarService?.eventSearchCriteria);
   const todayDate = new Date();
   const futureDate = new Date(todayDate);
-  futureDate.setDate(todayDate.getDate() + 7);
-  criteria.startDate = todayDate.toISOString();
-  criteria.endDate = futureDate.toISOString();
-  criteria.calendarName = calenderName;
 
   const dispatch = useDispatch();
   const [showDateError, setShowDateError] = useState<boolean>(false);
-  const [startDateValue, setStartDateValue] = useState(criteria.startDate);
-  const [endDateValue, setEndDateValue] = useState(criteria.endDate);
+  const [startDateValue, setStartDateValue] = useState(JSON.parse(JSON.stringify(criteria?.startDate)));
+  const [endDateValue, setEndDateValue] = useState(JSON.parse(JSON.stringify(criteria?.endDate)));
 
   useEffect(() => {
     if (calenderName !== null) {
-      setStartDateValue(criteria.startDate);
-      setEndDateValue(criteria.endDate);
+      setStartDateValue(JSON.parse(JSON.stringify(criteria.startDate)));
+      setEndDateValue(JSON.parse(JSON.stringify(criteria.endDate)));
     }
   }, [calenderName]);
+
+  const parsedStartDate = startDateValue && !isNaN(Date.parse(startDateValue)) ? new Date(startDateValue) : undefined;
+  const parsedEndDate = endDateValue && !isNaN(Date.parse(endDateValue)) ? new Date(endDateValue) : undefined;
 
   return (
     <EventFilterWrapper>
@@ -42,17 +41,23 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
         <GoAFormItem label="Start date">
           <GoAInputDate
             name="calendar-event-filter-start-date"
-            value={calenderName ? startDateValue : null}
+            value={calenderName ? parsedStartDate : null}
             disabled={calenderName === null}
             onChange={(name, value) => {
               if (!isSearchCriteriaValid(criteria)) {
                 setShowDateError(true);
               } else {
                 setShowDateError(false);
-                criteria.endDate = endDateValue;
-                criteria.startDate = new Date(value).toISOString();
-                setStartDateValue(criteria.startDate);
-                dispatch(UpdateSearchCriteriaAndFetchEvents(criteria));
+
+                const updatedCriteria = {
+                  ...criteria,
+                  endDate: endDateValue,
+                  startDate: new Date(value).toISOString(),
+                  calendarName: calenderName,
+                };
+
+                setStartDateValue(updatedCriteria.startDate);
+                dispatch(UpdateSearchCriteriaAndFetchEvents(updatedCriteria));
               }
             }}
           />
@@ -61,17 +66,22 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
         <GoAFormItem label="End date">
           <GoAInputDate
             name="calendar-event-filter-end-date"
-            value={calenderName ? endDateValue : null}
+            value={calenderName ? parsedEndDate : null}
             disabled={calenderName === null}
             onChange={(name, value) => {
               if (!isSearchCriteriaValid(criteria)) {
                 setShowDateError(true);
               } else {
                 setShowDateError(false);
-                criteria.startDate = startDateValue;
-                criteria.endDate = new Date(value).toISOString();
-                setEndDateValue(criteria.endDate);
-                dispatch(UpdateSearchCriteriaAndFetchEvents(criteria));
+
+                const updatedCriteria = {
+                  ...criteria,
+                  startDate: startDateValue,
+                  endDate: new Date(value).toISOString(),
+                  calendarName: calenderName,
+                };
+                setEndDateValue(updatedCriteria.endDate);
+                dispatch(UpdateSearchCriteriaAndFetchEvents(updatedCriteria));
               }
             }}
           />
@@ -80,9 +90,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
       {showDateError && (
         <>
           <GoABadge type="emergency" icon />
-          <CalendarEventFilterError>
-            Start after timestamp shall be after the end before timestamp.
-          </CalendarEventFilterError>
+          <CalendarEventFilterError>Start date must be before end date.</CalendarEventFilterError>
         </>
       )}
     </EventFilterWrapper>
