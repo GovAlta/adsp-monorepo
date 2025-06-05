@@ -56,11 +56,13 @@ export function resolveFeedbackContext(
 export function sendFeedback(logger: Logger, queueService: WorkQueueService<FeedbackWorkItem>): RequestHandler {
   return async function (req, res, next) {
     try {
+      logger.info(`sendFeedback  feedback for processing....`);
       const tenantId = req.tenant.id;
       const user = req.user;
       const { context, rating, comment, technicalIssue } = req.body as Feedback;
 
       const { sites } = await req.getConfiguration<FeedbackConfiguration, FeedbackConfiguration>(tenantId);
+      logger.info(`sites .... ${sites}`);
       const siteConfiguration = sites[context.site];
       if (!siteConfiguration) {
         throw new InvalidOperationError('Site configuration for feedback context not found.');
@@ -81,7 +83,7 @@ export function sendFeedback(logger: Logger, queueService: WorkQueueService<Feed
         comment,
         technicalIssue,
       };
-
+      logger.info(`feedback .... ${feedback}`);
       // Hash the content for duplicate detection later.
       // Perform this here so the impact is on the producer side of the job queue.
       const digest = hasha(JSON.stringify(feedback), { algorithm: 'sha256' });
