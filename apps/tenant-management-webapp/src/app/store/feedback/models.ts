@@ -16,14 +16,15 @@ export interface Value {
   rating: Rating;
   comment: string;
   technicalIssue: string;
+  ratingValue: number;
 }
 
 export enum Rating {
-  'terrible' = 0,
-  'bad' = 1,
-  'neutral' = 2,
-  'good' = 3,
-  'delightful' = 4,
+  'terrible' = 1,
+  'bad' = 2,
+  'neutral' = 3,
+  'good' = 4,
+  'delightful' = 5,
 }
 
 export interface Page {
