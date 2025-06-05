@@ -31,6 +31,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const deleteTrigger = deleteTriggerFunction && deleteTriggerFunction();
   const fileListValue = enumerators?.data.get('file-list');
   const [loadingFileName, setLoadingFileName] = useState<string | undefined>(undefined);
+  const [uploadError, setUploadError] = useState<string | undefined>(undefined);
 
   const countries = [
     'Argentina',
@@ -59,7 +60,6 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const noDownloadButton = uischema?.options?.format?.noDownloadButton;
   const noDownloadButtonInReview = uischema?.options?.format?.review?.noDownloadButton;
   const noDeleteButton = uischema?.options?.format?.review?.noDeleteButton;
-  const multiFileUploader = variant === 'dragdrop';
   const [deleteHide, setDeleteHide] = useState(false);
   const fileListLength = (fileList && fileList[props.i18nKeyPrefix as string]?.length) || 0;
 
@@ -69,17 +69,15 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   function uploadFile(file: File) {
     if (!uploadTrigger) return;
 
+    const maxFiles = uischema?.options?.componentProps?.maximum ?? 1;
+    const fileListLength = (fileList && fileList[propertyId]?.length) || 0;
+
     if (fileListLength >= maxFiles) {
-      if (!isMultiFile && maxFiles === 1) {
-        const existingFile = getFile(0);
-        if (existingFile) {
-          deleteTrigger(existingFile, propertyId);
-        }
-      } else {
-        return;
-      }
+      setUploadError(`You can only upload up to ${maxFiles} file${maxFiles > 1 ? 's' : ''}.`);
+      return;
     }
 
+    setUploadError(undefined);
     setLoadingFileName(file?.name);
     uploadTrigger(file, `${propertyId}.${fileListLength}`);
     setDeleteHide(false);
@@ -194,6 +192,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
                   handleChange(path, undefined);
                 };
                 setTimeout(handleFunction, DELAY_DELETE_TIMEOUT_MS);
+                setUploadError(undefined);
               }}
             />
           </AttachmentBorder>
@@ -205,11 +204,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   return (
     <Visible visible={visible}>
       <FileUploaderStyle className="FileUploader">
-        {required ? (
-          <GoAFormItem label={sentenceCaseLabel} requirement="required"></GoAFormItem>
-        ) : (
-          <div className="label">{sentenceCaseLabel}</div>
-        )}
+        <GoAFormItem label={sentenceCaseLabel} requirement={required ? 'required' : 'optional'} error={uploadError} />
         {!readOnly && (
           <div className="file-upload">
             <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} maxFileSize={maxFileSize} accept={accept} />
