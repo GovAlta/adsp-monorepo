@@ -18,13 +18,25 @@ export const schema = {
     },
     phoneNumber: {
       type: 'string',
+      minLength: 10,
       maxLength: 10,
-      description: 'Please enter your phone number (10 digits).',
+      pattern: '^[0-9]*$',
+      description: 'Please enter a 10-digit phone number.',
     },
     email: {
       type: 'string',
       format: 'email',
-      description: 'Please enter your email address.',
+      maxLength: 100,
+      pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
+      description: 'Please enter a valid email address (e.g., name@example.com).',
+      errorMessage: {
+        pattern: '(e.g., name@example.com).',
+        maxLength: 'Email must be less than 100 characters.',
+      },
+    },
+    comments: {
+      type: 'string',
+      description: 'Please provide any additional comments or information you would like to share.',
     },
     isAttestationAccepted: {
       type: 'boolean',
@@ -41,66 +53,81 @@ export const uischema = {
       label: 'Representative form',
       elements: [
         {
-          type: 'HelpContent',
-          options: {
-            markdown: true,
-            help: [
-              'You should follow up on that Representative [form](https://govalta.github.io/adsp-monorepo/tutorials/form-service/form-service.html)',
-            ],
-          },
-        },
-        {
-          type: 'HorizontalLayout',
-          elements: [
-            {
-              type: 'Control',
-              scope: '#/properties/fullName',
-            },
-          ],
-        },
-        {
-          type: 'HorizontalLayout',
-          elements: [
-            {
-              type: 'Control',
-              scope: '#/properties/birthDate',
-            },
-          ],
-        },
-        {
           type: 'VerticalLayout',
           elements: [
             {
-              type: 'Group',
-              label: 'Mailing address',
+              type: 'HelpContent',
+              options: {
+                markdown: true,
+                help: [
+                  '#### Need help understanding how forms work?',
+                  'Visit our [Form Service Guide](https://govalta.github.io/adsp-monorepo/tutorials/form-service/form-service.html) to learn more about configuring data schemas, UI layouts, validation rules, and more.',
+                ],
+              },
+            },
+            {
+              type: 'HorizontalLayout',
               elements: [
                 {
                   type: 'Control',
-                  scope: '#/properties/mailingAddress',
+                  scope: '#/properties/fullName',
+                },
+              ],
+            },
+            {
+              type: 'HorizontalLayout',
+              elements: [
+                {
+                  type: 'Control',
+                  scope: '#/properties/birthDate',
+                },
+              ],
+            },
+            {
+              type: 'HorizontalLayout',
+              elements: [
+                {
+                  type: 'Control',
+                  scope: '#/properties/phoneNumber',
+                },
+                {
+                  type: 'Control',
+                  scope: '#/properties/email',
+                },
+              ],
+            },
+            {
+              type: 'HorizontalLayout',
+              elements: [
+                {
+                  type: 'Control',
+                  scope: '#/properties/comments',
+                },
+              ],
+            },
+            {
+              type: 'HorizontalLayout',
+              elements: [
+                {
+                  type: 'Control',
+                  scope: '#/properties/isAttestationAccepted',
                 },
               ],
             },
           ],
         },
+      ],
+    },
+    {
+      type: 'Category',
+      label: 'Address Information',
+      elements: [
         {
-          type: 'HorizontalLayout',
+          type: 'VerticalLayout',
           elements: [
             {
               type: 'Control',
-              scope: '#/properties/phoneNumber',
-            },
-            {
-              type: 'Control',
-              scope: '#/properties/email',
-            },
-          ],
-        },
-        {
-          type: 'HorizontalLayout',
-          elements: [
-            {
-              type: 'Control',
-              scope: '#/properties/isAttestationAccepted',
+              scope: '#/properties/mailingAddress',
             },
           ],
         },
