@@ -335,10 +335,9 @@ Then('the user views optional comments text field', function () {
   feedbackObj.feedbackMainModalAdditionalCommentsTextField().should('be.visible');
 });
 
-Then('the user views a required technical issues area', function () {
+Then('the user views a technical issues area', function () {
   cy.viewport(1920, 1080);
   feedbackObj.feedbackMainModalTechnicalIssuesLabel().should('be.visible');
-  feedbackObj.feedbackMainModalTechnicalIssuesLabelRequiredOrOptional().invoke('text').should('contains', 'required');
   feedbackObj.feedbackMainModalTechnicalIssuesRadios().should('be.visible');
 });
 
