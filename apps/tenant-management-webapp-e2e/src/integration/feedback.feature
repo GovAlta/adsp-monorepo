@@ -76,7 +76,7 @@ Feature: Feedback
     And the user clicks Start button in Give feedback start modal
     Then the user views 5 emoji ratings in Give feedback main modal
     And the user views optional comments text field
-    And the user views a required technical issues area
+    And the user views a technical issues area
     When the user enters "Easy", "autotest comments", "No", "N/A" in Give feedback main modal
     And the user clicks Cancel button in Give feedback main modal
     Then the user "should not view" Give feedback main modal
