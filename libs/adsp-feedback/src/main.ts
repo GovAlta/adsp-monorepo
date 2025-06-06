@@ -1129,7 +1129,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                       <hr class="hr-width" />
                       <br />
                       <div class="radio-container">
-                        <label><b>Did you experience any technical issues?</b><span> (required)</span></label>
+                        <label><b>Did you experience any technical issues?</b></label>
                         <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
                           <div id="technicalIssueYes" class="radio-span">
                             <input

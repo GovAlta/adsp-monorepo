@@ -286,10 +286,9 @@ describe('event router', () => {
 
   describe('readValue', () => {
     it('can create handler', () => {
-      const handler = readValue(repositoryMock);
+      const handler = readValue(loggerMock, repositoryMock);
       expect(handler).toBeTruthy();
     });
-
     it('can read value', async () => {
       const req = {
         tenant: {
@@ -307,12 +306,11 @@ describe('event router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-
       const value = {};
       repositoryMock.readValues.mockResolvedValueOnce({
         results: [{ timestamp: new Date(), context: {}, correlationId: null, value }],
       });
-      const handler = readValue(repositoryMock);
+      const handler = readValue(loggerMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -322,7 +320,6 @@ describe('event router', () => {
         })
       );
     });
-
     it('can read value with criteria', async () => {
       const req = {
         tenant: {
@@ -346,12 +343,11 @@ describe('event router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-
       const value = {};
       repositoryMock.readValues.mockResolvedValueOnce({
         results: [{ timestamp: new Date(), context: {}, correlationId: null, value }],
       });
-      const handler = readValue(repositoryMock);
+      const handler = readValue(loggerMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.readValues).toHaveBeenCalledWith(
         12,
@@ -370,7 +366,6 @@ describe('event router', () => {
         })
       );
     });
-
     it('can call next with no tenant', async () => {
       const req = {
         user: {
@@ -385,13 +380,11 @@ describe('event router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-
-      const handler = readValue(repositoryMock);
+      const handler = readValue(loggerMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
-
     it('can call next with unauthorized user', async () => {
       const req = {
         tenant: {
@@ -409,8 +402,7 @@ describe('event router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-
-      const handler = readValue(repositoryMock);
+      const handler = readValue(loggerMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));

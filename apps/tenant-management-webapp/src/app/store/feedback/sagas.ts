@@ -2,7 +2,7 @@ import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
 import { select, call, put, takeLatest } from 'redux-saga/effects';
 import axios from 'axios';
-
+import { Feedback } from './models';
 import {
   DELETE_FEEDBACK_SITE_ACTION,
   DeleteFeedbackSiteAction,
@@ -56,7 +56,9 @@ function* fetchFeedbacks(payload: FetchFeedbacksAction) {
     try {
       const response = yield call(axios.get, url, headers);
       const feedbacks = response.data['feedback-service'].feedback;
-      yield put(getFeedbacksSuccess(feedbacks, response.data.page.after, response.data.page.next));
+      yield put(
+        getFeedbacksSuccess(incrementRatingValue(feedbacks), response.data.page.after, response.data.page.next)
+      );
       yield put(
         UpdateIndicator({
           show: false,
@@ -110,7 +112,7 @@ function* exportFeedbacks(payload: ExportFeedbacksAction) {
         page++;
       }
 
-      yield put(exportFeedbacksSuccess(allFeedbacks));
+      yield put(exportFeedbacksSuccess(incrementRatingValue(allFeedbacks)));
       yield put(
         UpdateIndicator({
           show: false,
@@ -284,7 +286,18 @@ export function* fetchFeedbackMetrics(): SagaIterator {
     }
   }
 }
-
+function incrementRatingValue(feedback: Feedback[]): Feedback[] {
+  if (!feedback || !Array.isArray(feedback)) {
+    return feedback;
+  }
+  return feedback.map((entry) => ({
+    ...entry,
+    value: {
+      ...entry.value,
+      ratingValue: Number(entry.value?.ratingValue) + 1,
+    },
+  }));
+}
 export function* watchFeedbackSagas(): Generator {
   yield takeLatest(FETCH_FEEDBACKS_ACTION, fetchFeedbacks);
   yield takeLatest(EXPORT_FEEDBACKS_ACTION, exportFeedbacks);

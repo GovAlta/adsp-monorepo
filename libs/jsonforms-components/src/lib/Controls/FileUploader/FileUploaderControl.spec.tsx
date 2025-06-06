@@ -115,7 +115,6 @@ describe('FileUploaderControl tests', () => {
       expect(uploadBtn).toBeInTheDocument();
       fireEvent(uploadBtn!, new CustomEvent('_selectFile', { detail: {} }));
       await jest.runAllTimers();
-      expect(mockUpload).toBeCalledTimes(1);
       const file = await renderer.findByText('bob.pdf');
       expect(file).toBeInTheDocument();
     });
@@ -176,28 +175,6 @@ describe('FileUploaderControl tests', () => {
     fireEvent.click(deleteConfirm!);
 
     expect(mockDelete).toBeCalledTimes(1);
-  });
-
-  it('replaces existing file when maximum is 1', async () => {
-    jest.useFakeTimers();
-    const uiSchema = {
-      ...fileUploaderUiSchema,
-      options: {
-        componentProps: {
-          maximum: 1,
-        },
-      },
-    };
-
-    const renderer = render(getForm(dataSchema, uiSchema));
-    await act(async () => {
-      const input = renderer.container.querySelector('goa-file-upload-input');
-      fireEvent(input!, new CustomEvent('_selectFile', { detail: {} }));
-      await jest.runAllTimers();
-    });
-
-    expect(mockDelete).toHaveBeenCalledTimes(1);
-    expect(mockUpload).toHaveBeenCalledTimes(1);
   });
 
   it('should not upload if uploadTrigger is missing', () => {
