@@ -1,12 +1,11 @@
 import { GoAText } from '@abgov/react-components';
-import React from 'react';
 
 interface SectionHeaderRowProps {
   title: string;
   index: number;
 }
 
-export const SectionHeaderRow: React.FC<SectionHeaderRowProps> = ({ title, index }) => {
+export const SectionHeaderRow = ({ title, index }: SectionHeaderRowProps): JSX.Element => {
   const section = `${index}. ${title}`;
   return (
     <tr>

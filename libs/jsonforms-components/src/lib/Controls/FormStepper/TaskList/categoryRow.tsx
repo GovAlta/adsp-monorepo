@@ -1,5 +1,5 @@
 import React from 'react';
-import { TocPageRef, CategoryStatus } from '../styled-components';
+import { TocPageRef, CategoryStatus, PageStepperRow } from '../styled-components';
 import { getCategoryStatusBadge } from '../CategoryStatus';
 import { CategoryState } from '../context';
 import { GoAText } from '@abgov/react-components';
@@ -12,8 +12,8 @@ interface CategoryRowProps {
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
 export const CategoryRow: React.FC<CategoryRowProps> = ({ category, index, onClick }) => {
-  return (
-    <tr>
+  return category.visible ? (
+    <PageStepperRow disabled={!category?.isEnabled}>
       <TocPageRef>
         <a
           data-testid={`page-ref-${index}`}
@@ -27,6 +27,6 @@ export const CategoryRow: React.FC<CategoryRowProps> = ({ category, index, onCli
         </a>
       </TocPageRef>
       <CategoryStatus>{getCategoryStatusBadge(category)}</CategoryStatus>
-    </tr>
-  );
+    </PageStepperRow>
+  ) : null;
 };
