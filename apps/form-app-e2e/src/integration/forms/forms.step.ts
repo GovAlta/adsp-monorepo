@@ -202,35 +202,32 @@ Then(
         });
     } else {
       formsObj
-        .formSummaryPageControlValue(sectionName)
+        .formSummaryPageControlValues(sectionName)
         .then((items) => {
+          cy.log('Items found: ' + items.length);
           for (let i = 0; i < items.length; i++) {
             cy.log(items[i].outerText);
             switch (requiredOrNot) {
               case 'required':
                 if (items[i].outerText == value) {
-                  formsObj.formSummaryPageControlLabel(sectionName).then((labels) => {
-                    if (
-                      labels[i].getAttribute('requirement') == 'required' &&
-                      labels[i].getAttribute('label')?.trim() == label
-                    ) {
-                      isFound = true;
-                      cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
-                    }
-                  });
+                  if (
+                    items[i].parentElement?.getAttribute('requirement') == 'required' &&
+                    items[i].parentElement?.getAttribute('label')?.trim() == label
+                  ) {
+                    isFound = true;
+                    cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
+                  }
                 }
                 break;
               case 'not required':
                 if (items[i].outerText == value) {
-                  formsObj.formSummaryPageControlLabel(sectionName).then((labels) => {
-                    if (
-                      labels[i].getAttribute('requirement') != 'required' &&
-                      labels[i].getAttribute('label')?.trim() == label
-                    ) {
-                      isFound = true;
-                      cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
-                    }
-                  });
+                  if (
+                    !items[i].parentElement?.hasAttribute('requirement') &&
+                    items[i].parentElement?.getAttribute('label')?.trim() == label
+                  ) {
+                    isFound = true;
+                    cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
+                  }
                 }
                 break;
               default:

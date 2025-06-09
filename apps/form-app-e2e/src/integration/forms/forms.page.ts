@@ -55,13 +55,7 @@ class FormsPage {
     return cy.xpath('//goa-callout[@type="success"]');
   }
 
-  formSummaryPageControlLabel(pageName) {
-    return cy.xpath(
-      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/parent::div/following-sibling::*//goa-form-item[@label]`
-    );
-  }
-
-  formSummaryPageControlValue(pageName) {
+  formSummaryPageControlValues(pageName) {
     return cy.xpath(
       `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/parent::div/following-sibling::*//*[contains(@data-testid, "review-control")]`
     );
