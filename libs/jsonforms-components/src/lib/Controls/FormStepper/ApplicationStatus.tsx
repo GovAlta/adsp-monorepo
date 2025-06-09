@@ -7,7 +7,8 @@ export const ApplicationStatus = (): JSX.Element => {
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const { selectNumberOfCompletedCategories } = formStepperCtx as JsonFormsStepperContextProps;
 
-  const { categories } = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
+  const { categories: allCategories } = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
+  const categories = allCategories.filter((c) => c?.visible === true);
   const total = categories.length;
   const completed = selectNumberOfCompletedCategories();
   const type = total === completed ? 'success' : 'important';

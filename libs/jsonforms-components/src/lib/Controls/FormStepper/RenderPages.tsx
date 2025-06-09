@@ -86,7 +86,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                     />
                     <PageRenderPadding>
                       <h3>
-                        Step {index + 1} of {categories.length}
+                        Step {index + 1} of {categories.filter((c) => c.visible).length}
                       </h3>
                       <RenderStepElements {...categoryProps} />
                     </PageRenderPadding>
@@ -96,7 +96,11 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                           type="submit"
                           onClick={() => {
                             handleSave();
-                            goToPage(activeId + 1);
+                            let nextId = activeId + 1;
+                            while (nextId < categories.length && categories[nextId].visible === false) {
+                              nextId = nextId + 1;
+                            }
+                            goToPage(nextId);
                           }}
                           disabled={!(category.isValid && category.isCompleted)}
                           testId="pages-save-continue-btn"

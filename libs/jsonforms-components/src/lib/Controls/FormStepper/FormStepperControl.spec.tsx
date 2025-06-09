@@ -124,6 +124,35 @@ const categorizationPages = {
   },
 };
 
+const categorizationPagesWithHide = {
+  type: 'Categorization',
+  label: 'Test Categorization',
+  elements: [
+    {
+      ...addressCategory,
+
+      rule: {
+        effect: 'HIDE',
+        condition: {
+          scope: '#/properties/name/properties/firstName-input',
+          schema: { const: 'Bob' },
+        },
+      },
+    },
+    nameCategory,
+  ],
+  options: {
+    variant: 'pages',
+    testId: 'pages-test',
+    showNavButtons: true,
+    nextButtonLabel: 'testNext',
+    nextButtonType: 'primary',
+    previousButtonLabel: 'testPrevious',
+    previousButtonType: 'primary',
+    componentProps: { controlledNav: true },
+  },
+};
+
 const formData = {
   name: { firstName: undefined, lastName: undefined },
   address: { street: undefined, city: undefined },
@@ -440,6 +469,21 @@ describe('Form Stepper Control', () => {
       expect(toc).toBeVisible();
       const pageLink = renderer.getByTestId('page-ref-0');
       expect(pageLink).toBeVisible();
+    });
+
+    it('will render hide category', async () => {
+      const newStepperProps = {
+        ...{ ...pagesBaseProps, uischema: categorizationPagesWithHide },
+        data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } },
+      };
+
+      newStepperProps.activeId = 2;
+      const { getByTestId } = render(
+        <JsonFormsStepperContextProvider
+          StepperProps={newStepperProps}
+          children={getForm(formData, categorizationPages)}
+        />
+      );
     });
   });
 

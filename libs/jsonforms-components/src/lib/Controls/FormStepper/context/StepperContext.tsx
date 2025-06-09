@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useMemo, useReducer, Dispatch, useEffect } from 'react';
 import { CategorizationStepperLayoutRendererProps } from '../types';
-import { Categorization, deriveLabelForUISchemaElement, isEnabled } from '@jsonforms/core';
+import { Categorization, deriveLabelForUISchemaElement, isEnabled, isVisible, UISchemaElement } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
 import { stepperReducer } from './reducer';
 import { StepperContextDataType, CategoryState } from './types';
@@ -52,7 +52,7 @@ const createStepperContextInitData = (
       uischema: c,
       showReviewPageLink: props.withBackReviewBtn || false,
       isEnabled: isEnabled(c, data, '', ajv),
-      visible,
+      visible: isVisible(c, data, '', ajv),
     };
   });
 
@@ -77,7 +77,7 @@ export const JsonFormsStepperContextProvider = ({
   StepperProps,
 }: JsonFormsStepperContextProviderProps): JSX.Element => {
   const ctx = useJsonForms();
-  const { schema, ajv } = StepperProps;
+  const { schema, ajv, data } = StepperProps;
   const [stepperState, dispatch] = useReducer(stepperReducer, createStepperContextInitData(StepperProps));
   const stepperDispatch = StepperProps?.customDispatch || dispatch;
 
@@ -86,7 +86,16 @@ export const JsonFormsStepperContextProvider = ({
       isProvided: true,
       stepperDispatch,
       selectStepperState: () => {
-        return stepperState;
+        return {
+          ...stepperState,
+          categories: stepperState.categories?.map((c) => {
+            return {
+              ...c,
+              visible: c?.uischema && isVisible(c.uischema, data, '', ajv),
+              isEnabled: c?.uischema && isEnabled(c.uischema, data, '', ajv),
+            };
+          }),
+        };
       },
       selectIsDisabled: () => {
         const category = stepperState.categories?.[stepperState.activeId];
@@ -94,7 +103,16 @@ export const JsonFormsStepperContextProvider = ({
       },
       selectNumberOfCompletedCategories: (): number => {
         return stepperState?.categories.reduce(
-          (acc, cat) => acc + (cat.isValid && cat.isCompleted && cat.isVisited ? 1 : 0),
+          (acc, cat) =>
+            acc +
+            (cat.isValid &&
+            cat.isCompleted &&
+            cat.isVisited &&
+            cat?.uischema &&
+            cat?.uischema &&
+            isVisible(cat.uischema, data, '', ajv)
+              ? 1
+              : 0),
           0
         );
       },
