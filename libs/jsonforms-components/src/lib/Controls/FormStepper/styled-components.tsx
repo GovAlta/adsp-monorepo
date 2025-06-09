@@ -128,3 +128,19 @@ export const CompletionStatus = styled.div`
   padding-left: var(--goa-space-xl);
   padding-bottom: var(--goa-space-xl);
 `;
+
+interface PageStepperRowProps {
+  disabled: boolean;
+}
+
+export const PageStepperRow = styled.tr<PageStepperRowProps>`
+  ${({ disabled }) =>
+    disabled
+      ? `
+           pointer-events: none;
+           opacity: 0.5;
+         `
+      : `
+           cursor: pointer;
+         `}
+`;
