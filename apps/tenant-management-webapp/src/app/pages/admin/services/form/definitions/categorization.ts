@@ -50,19 +50,32 @@ export const uischema = {
   elements: [
     {
       type: 'Category',
-      label: 'Representative form',
+      label: 'Personal Information',
       elements: [
         {
           type: 'VerticalLayout',
           elements: [
             {
               type: 'HelpContent',
+              label: 'Need help understanding how forms work?',
+              elements: [
+                {
+                  type: 'HelpContent',
+                  options: {
+                    markdown: true,
+                    help: [
+                      '- Configuring data schemas',
+                      '- Designing UI layouts',
+                      '- Setting validation rules',
+                      '- Managing conditional logic in forms',
+                      '- Click below to learn how to design and configure dynamic forms using the <a href="https://govalta.github.io/adsp-monorepo/tutorials/form-service/form-service.html" target="_blank" rel="noopener noreferrer">Form Service Guide</a>.',
+                    ],
+                  },
+                },
+              ],
               options: {
-                markdown: true,
-                help: [
-                  '#### Need help understanding how forms work?',
-                  'Visit our [Form Service Guide](https://govalta.github.io/adsp-monorepo/tutorials/form-service/form-service.html) to learn more about configuring data schemas, UI layouts, validation rules, and more.',
-                ],
+                variant: 'details',
+                help: '',
               },
             },
             {
