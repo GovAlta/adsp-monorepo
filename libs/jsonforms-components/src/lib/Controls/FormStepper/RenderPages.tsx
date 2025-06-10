@@ -86,7 +86,8 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                     />
                     <PageRenderPadding>
                       <h3>
-                        Step {index + 1} of {categories.filter((c) => c.visible).length}
+                        Step {index + 1 - categories.filter((c) => !c.visible && c.id < index).length} of{' '}
+                        {categories.filter((c) => c.visible).length}
                       </h3>
                       <RenderStepElements {...categoryProps} />
                     </PageRenderPadding>
