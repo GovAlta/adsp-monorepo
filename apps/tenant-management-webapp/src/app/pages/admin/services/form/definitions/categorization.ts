@@ -12,6 +12,17 @@ export const schema = {
       format: 'date',
       description: 'Please enter your birth date.',
     },
+    age: {
+      type: 'number',
+      multipleOf: 1,
+      minimum: 0,
+      description: '',
+    },
+    gender: {
+      type: 'string',
+      enum: ['Male', 'Female', 'Non-binary', 'Prefer not to say'],
+      description: 'Select your gender',
+    },
     mailingAddress: {
       type: 'object',
       $ref: 'https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressCanada',
@@ -34,35 +45,57 @@ export const schema = {
         maxLength: 'Email must be less than 100 characters.',
       },
     },
-    comments: {
+    attestationConfirmationRadio: {
       type: 'string',
-      description: 'Please provide any additional comments or information you would like to share.',
+      enum: ['Yes', 'No'],
+      description: 'Do you confirm and accept the declaration?',
     },
     isAttestationAccepted: {
       type: 'boolean',
       description: 'Please indicate your agreement with the terms and conditions.',
     },
   },
-  required: ['fullName', 'birthDate', 'mailingAddress', 'phoneNumber', 'email', 'isAttestationAccepted'],
+  required: [
+    'fullName',
+    'birthDate',
+    'mailingAddress',
+    'phoneNumber',
+    'email',
+    'isAttestationAccepted',
+    'attestationConfirmationRadio',
+  ],
 };
 export const uischema = {
   type: 'Categorization',
   elements: [
     {
       type: 'Category',
-      label: 'Representative form',
+      label: 'Personal Information',
       elements: [
         {
           type: 'VerticalLayout',
           elements: [
             {
               type: 'HelpContent',
+              label: 'Need help understanding how forms work?',
+              elements: [
+                {
+                  type: 'HelpContent',
+                  options: {
+                    markdown: true,
+                    help: [
+                      '- Configuring data schemas',
+                      '- Designing UI layouts',
+                      '- Setting validation rules',
+                      '- Managing conditional logic in forms',
+                      '- Click below to learn how to design and configure dynamic forms using the <a href="https://govalta.github.io/adsp-monorepo/tutorials/form-service/form-service.html" target="_blank" rel="noopener noreferrer">Form Service Guide</a>.',
+                    ],
+                  },
+                },
+              ],
               options: {
-                markdown: true,
-                help: [
-                  '#### Need help understanding how forms work?',
-                  'Visit our [Form Service Guide](https://govalta.github.io/adsp-monorepo/tutorials/form-service/form-service.html) to learn more about configuring data schemas, UI layouts, validation rules, and more.',
-                ],
+                variant: 'details',
+                help: '',
               },
             },
             {
@@ -72,6 +105,10 @@ export const uischema = {
                   type: 'Control',
                   scope: '#/properties/fullName',
                 },
+                {
+                  type: 'Control',
+                  scope: '#/properties/birthDate',
+                },
               ],
             },
             {
@@ -79,7 +116,13 @@ export const uischema = {
               elements: [
                 {
                   type: 'Control',
-                  scope: '#/properties/birthDate',
+                  scope: '#/properties/gender',
+                  label: 'Gender',
+                },
+                {
+                  type: 'Control',
+                  scope: '#/properties/age',
+                  label: 'Age',
                 },
               ],
             },
@@ -97,13 +140,12 @@ export const uischema = {
               ],
             },
             {
-              type: 'HorizontalLayout',
-              elements: [
-                {
-                  type: 'Control',
-                  scope: '#/properties/comments',
-                },
-              ],
+              type: 'Control',
+              scope: '#/properties/attestationConfirmationRadio',
+              label: 'I confirm and accept the declaration',
+              options: {
+                format: 'radio',
+              },
             },
             {
               type: 'HorizontalLayout',
