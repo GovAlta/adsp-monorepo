@@ -285,7 +285,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                           <td key={ix}>
                             <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
                               {renderCellColumn({
-                                data: currentData,
+                                data: currentData ? String(currentData) : undefined,
                                 error: error?.message,
                                 isRequired: required?.includes(tableKeys[element]) ?? false,
                                 errors: errors !== undefined ? errors : [],
