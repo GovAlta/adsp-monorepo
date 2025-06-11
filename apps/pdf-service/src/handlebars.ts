@@ -101,28 +101,6 @@ export const getAllRequiredFields = (schema: JsonSchema4 | JsonSchema7): string[
   return requiredFields;
 };
 
-const fileId = (value: string, fileServiceUrl: string) => {
-  let returnValue = '';
-
-  try {
-    if (typeof value === 'string' && value.slice(0, 4) === 'urn:') {
-      if (value.indexOf('urn:ads:platform:file-service') !== -1) {
-        returnValue = value.split('/')[value.split('/').length - 1];
-      } else {
-        return null;
-      }
-    } else if (validate(value)) {
-      returnValue = value;
-    } else {
-      return null;
-    }
-  } catch (err) {
-    console.error(err);
-  }
-
-  return `<a href="${fileServiceUrl}file/v1/files/${returnValue}/download?unsafe=true&embed=true">${returnValue}</a> `;
-};
-
 const valueMap = (value: string) => {
   const mapping = [
     { value: 'AB', label: 'Alberta' },
@@ -451,11 +429,22 @@ class HandlebarsTemplateService implements TemplateService {
     handlebars.registerHelper('value', function (element, data) {
       let value = getFormFieldValue(element.scope, data ? data : {});
 
-      if (typeof value === 'string' && value.slice(0, 4) === 'urn:') {
-        value = fileId(value, fileServiceUrl);
+      let urnCount = 0;
+
+      if (typeof value === 'string') {
+        const parts = value.split(';');
+        for (const part of parts) {
+          if (part.startsWith('urn:')) {
+            urnCount++;
+          }
+        }
       }
 
-      value = valueMap(value);
+      if (urnCount > 0) {
+        value = `${urnCount} file${urnCount > 1 && 's'} uploaded`;
+      } else {
+        value = valueMap(value);
+      }
 
       return value;
     });
