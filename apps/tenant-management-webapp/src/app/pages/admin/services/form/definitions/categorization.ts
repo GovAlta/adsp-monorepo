@@ -53,6 +53,12 @@ export const schema = {
     isAttestationAccepted: {
       type: 'boolean',
       description: 'Please indicate your agreement with the terms and conditions.',
+      anyOf: [
+        {
+          const: true,
+          title: 'You must accept the terms to continue.',
+        },
+      ],
     },
   },
   required: [
@@ -177,6 +183,7 @@ export const uischema = {
     },
   ],
 };
+
 export const data = {
   provideAddress: true,
   vegetarian: false,
