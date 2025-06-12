@@ -7,6 +7,8 @@ import closeOutlineSvg from './assets/close-outline.svg';
 import errorIconSvg from './assets/Error_Icon.svg';
 import greenCircleCheckmarkSvg from './assets/green-circle-checkmark.svg';
 import openLinkSvg from './assets/Open-Link.svg';
+import goaErrorIconSvg from './assets/goa-error-icon.svg';
+
 import { ratings } from './ratings';
 export class AdspFeedback implements AdspFeedbackApi {
   private tenant?: string;
@@ -24,7 +26,6 @@ export class AdspFeedback implements AdspFeedbackApi {
   private commentRef: Ref<HTMLTextAreaElement> = createRef();
   private sendButtonRef: Ref<HTMLButtonElement> = createRef();
   private startRef: Ref<HTMLFieldSetElement> = createRef();
-  private isTechnicalIssueRef: Ref<HTMLFieldSetElement> = createRef();
   private technicalCommentDivRef: Ref<HTMLFieldSetElement> = createRef();
   private technicalCommentRef: Ref<HTMLTextAreaElement> = createRef();
   private dimRef: Ref<HTMLTextAreaElement> = createRef();
@@ -36,8 +37,13 @@ export class AdspFeedback implements AdspFeedbackApi {
   private feedbackStartCloseImg: Ref<HTMLElement> = createRef();
   private feedbackFormCloseImg: Ref<HTMLElement> = createRef();
   private feedbackCloseErrorButton: Ref<HTMLButtonElement> = createRef();
-  private feedbackCloseSucessButton: Ref<HTMLButtonElement> = createRef();
+  private feedbackCloseSuccessButton: Ref<HTMLButtonElement> = createRef();
   private cancelButtonRef: Ref<HTMLButtonElement> = createRef();
+
+  private ratingErrorText: Ref<HTMLSpanElement> = createRef();
+  private issueSelectionErrorText: Ref<HTMLSpanElement> = createRef();
+  private technicalCommentErrorText: Ref<HTMLSpanElement> = createRef();
+
   private ratings = ratings;
 
   constructor() {
@@ -166,6 +172,15 @@ export class AdspFeedback implements AdspFeedbackApi {
 
   private onIssueChange(event: Event) {
     if (event.target instanceof HTMLInputElement && this.feedbackFormRef.value) {
+      if (this.ratingSelector.value) {
+        this.ratingSelector.value.classList.remove('error');
+      }
+      if (this.commentSelector.value) {
+        this.commentSelector.value.classList.remove('error');
+      }
+      if (this.issueSelectionErrorText.value) {
+        this.issueSelectionErrorText.value.style.visibility = 'hidden';
+      }
       if (event.target.value.toLowerCase() === 'yes') {
         if (this.ratingSelector.value) {
           this.ratingSelector.value.checked = true;
@@ -173,19 +188,12 @@ export class AdspFeedback implements AdspFeedbackApi {
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:block');
 
         this.technicalCommentRef.value?.focus();
-        if (this.technicalCommentRef.value?.value.length === 0) {
-          this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
-        } else {
-          this.sendButtonRef.value?.removeAttribute('disabled');
-        }
       } else {
         if (this.commentSelector.value) {
           this.commentSelector.value.checked = true;
         }
-        if (this.selectedRating > -1) {
-          this.sendButtonRef.value?.removeAttribute('disabled');
-        }
 
+        this.feedbackContentFormRef?.value?.setAttribute('style', 'padding-top:36px');
         this.technicalCommentDivRef?.value?.setAttribute('style', 'display:none');
         if (this.technicalCommentDivRef?.value) {
           this.technicalCommentDivRef?.value?.removeAttribute('value');
@@ -248,59 +256,130 @@ export class AdspFeedback implements AdspFeedbackApi {
     if (this.commentSelector.value) {
       this.commentSelector.value.checked = false;
     }
-    if (this.sendButtonRef) {
-      this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
+    if (this.ratingErrorText.value) {
+      this.ratingErrorText.value.style.visibility = 'hidden';
     }
+    if (this.issueSelectionErrorText.value) {
+      this.issueSelectionErrorText.value.style.visibility = 'hidden';
+    }
+    if (this.ratingSelector.value) {
+      this.ratingSelector.value.classList.remove('error');
+    }
+    if (this.commentSelector.value) {
+      this.commentSelector.value.classList.remove('error');
+    }
+    if (this.technicalCommentErrorText.value) {
+      this.technicalCommentErrorText.value.style.visibility = 'hidden';
+    }
+    this.feedbackContentFormRef?.value?.setAttribute('style', 'padding-top:36px');
+  }
+  private validateRadioSelection(): boolean {
+    const isYesChecked = this.ratingSelector.value && this.ratingSelector.value.checked;
+    const isNoChecked = this.commentSelector.value && this.commentSelector.value.checked;
+
+    if (!isYesChecked && !isNoChecked) {
+      this.issueSelectionErrorText.value && (this.issueSelectionErrorText.value.style.visibility = 'visible');
+      this.ratingSelector.value && this.ratingSelector.value.classList.add('error');
+      this.commentSelector.value && this.commentSelector.value.classList.add('error');
+      return false;
+    } else {
+      this.ratingSelector.value && this.ratingSelector.value.classList.remove('error');
+      this.commentSelector.value && this.commentSelector.value.classList.remove('error');
+      this.issueSelectionErrorText.value && (this.issueSelectionErrorText.value.style.visibility = 'hidden');
+      return true;
+    }
+  }
+  private validateRating(): boolean {
+    if (this.selectedRating === -1) {
+      if (this.ratingErrorText.value) {
+        this.ratingErrorText.value.style.visibility = 'visible';
+        this.errorsOnRating(true);
+      }
+      return false;
+    } else {
+      if (this.ratingErrorText.value) {
+        this.ratingErrorText.value.style.visibility = 'hidden';
+        this.errorsOnRating(false);
+      }
+      return true;
+    }
+  }
+
+  private validateTechnicalComment(): boolean {
+    const technicalIssueYesChecked = this.ratingSelector.value && this.ratingSelector.value.checked;
+    if (technicalIssueYesChecked) {
+      if (!this.technicalCommentRef.value || this.technicalCommentRef.value.value.length === 0) {
+        if (this.technicalCommentErrorText.value) this.technicalCommentErrorText.value.style.visibility = 'visible';
+        if (this.technicalCommentRef.value) {
+          this.technicalCommentRef.value.classList.add('error');
+        }
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private validateForm() {
+    let isValid = true;
+    if (!this.validateRating()) isValid = false;
+    if (!this.validateRadioSelection()) isValid = false;
+    if (!this.validateTechnicalComment()) isValid = false;
+    return isValid;
   }
 
   private async sendFeedback(event: Event) {
     event.preventDefault();
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    };
-    const token = this.getAccessToken ? await this.getAccessToken() : undefined;
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const context = await this.getContext();
-
-    const comment = this.commentRef.value?.value || undefined;
-    const technicalIssue = this.technicalCommentRef?.value?.value || undefined;
-
-    const rating = this.ratings[this.selectedRating].rate;
-    const request: Record<string, unknown> = { context, rating, comment, technicalIssue };
-    this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
-    if (this.tenant) {
-      request.tenant = this.tenant;
-    }
-
-    if (this.apiUrl) {
-      try {
-        const response = await fetch(this.apiUrl.href, {
-          headers,
-          method: 'POST',
-          body: JSON.stringify(request),
-        });
-        this.firstFocusableElement = this.feedbackFormCloseImg;
-        if (!response.ok) {
-          console.log(`Response received for sending feedback to API not 200: ${response.status}`);
-          this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
-
-          this.lastFocusableElement = this.feedbackCloseErrorButton;
-        } else {
-          this.feedbackFormRef.value?.setAttribute('data-completed', 'true');
-          this.lastFocusableElement = this.feedbackCloseSucessButton;
-        }
-      } catch (err) {
-        console.log(`Error encountered sending feedback to API: ${err}`);
-
-        this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
-        this.lastFocusableElement = this.feedbackCloseErrorButton;
+    const isValidForm = this.validateForm();
+    if (isValidForm) {
+      const headers: Record<string, string> = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      };
+      const token = this.getAccessToken ? await this.getAccessToken() : undefined;
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
-      this.feedbackFormRef.value?.scrollTo(0, 0);
-      this.feedbackFormClassRef?.value?.setAttribute('style', 'max-height:560px');
+
+      const context = await this.getContext();
+
+      const comment = this.commentRef.value?.value || undefined;
+      const technicalIssue = this.technicalCommentRef?.value?.value || undefined;
+
+      const rating = this.ratings[this.selectedRating].rate;
+      const request: Record<string, unknown> = { context, rating, comment, technicalIssue };
+
+      if (this.tenant) {
+        request.tenant = this.tenant;
+      }
+
+      if (this.apiUrl) {
+        try {
+          const response = await fetch(this.apiUrl.href, {
+            headers,
+            method: 'POST',
+            body: JSON.stringify(request),
+          });
+          this.firstFocusableElement = this.feedbackFormCloseImg;
+          if (!response.ok) {
+            console.log(`Response received for sending feedback to API not 200: ${response.status}`);
+            this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
+
+            this.lastFocusableElement = this.feedbackCloseErrorButton;
+          } else {
+            this.feedbackFormRef.value?.setAttribute('data-completed', 'true');
+            this.lastFocusableElement = this.feedbackCloseSuccessButton;
+          }
+        } catch (err) {
+          console.log(`Error encountered sending feedback to API: ${err}`);
+
+          this.feedbackFormRef?.value?.setAttribute('data-error', 'true');
+          this.lastFocusableElement = this.feedbackCloseErrorButton;
+        }
+        this.feedbackFormRef.value?.scrollTo(0, 0);
+        this.feedbackFormClassRef?.value?.setAttribute('style', 'max-height:560px');
+      }
+    } else {
+      this.feedbackContentFormRef?.value?.setAttribute('style', 'padding-top:0px');
     }
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -370,20 +449,39 @@ export class AdspFeedback implements AdspFeedbackApi {
       text.style.color = '#333333';
     }
   };
-
+  private errorsOnRating = (isError: boolean) => {
+    for (let i = 0; i < this.ratings.length; i++) {
+      const rating = this.ratings[i];
+      const images = document.querySelectorAll('.rating');
+      const image = images[i] as HTMLImageElement;
+      if (isError) {
+        image.src = rating.svgError;
+      } else {
+        if (this.selectedRating === i) {
+          image.src = rating.svgClick;
+        } else {
+          image.src = rating.svgDefault;
+        }
+      }
+    }
+  };
   private technicalCommentRefOnChange = () => {
     if (
       this.technicalCommentRef?.value &&
       this.technicalCommentRef?.value?.value.length > 0 &&
-      this.selectedRating > -1
+      this.technicalCommentErrorText.value
     ) {
-      this.sendButtonRef.value?.removeAttribute('disabled');
-    } else {
-      this.sendButtonRef.value?.setAttribute('disabled', 'disabled');
+      this.technicalCommentErrorText.value.style.visibility = 'hidden';
+      this.technicalCommentRef.value.classList.remove('error');
     }
   };
 
   private selectRating = (index: number) => {
+    this.errorsOnRating(false);
+    if (this.ratingErrorText.value) {
+      this.ratingErrorText.value.style.visibility = 'hidden';
+    }
+
     this.updateHover(index, false);
     const images = document.querySelectorAll('.rating');
     const ratingNew = this.ratings[index];
@@ -402,13 +500,6 @@ export class AdspFeedback implements AdspFeedbackApi {
     const texts = document.querySelectorAll('.ratingText');
     const text = texts[index] as HTMLImageElement;
     text.style.color = '#0081A2';
-
-    if (this.commentSelector.value && this.commentSelector.value.checked === true) {
-      this.sendButtonRef.value?.removeAttribute('disabled');
-    }
-    if (this.commentSelector.value?.checked === false && this.ratingSelector.value?.checked === true) {
-      this.sendButtonRef.value?.removeAttribute('disabled');
-    }
   };
 
   public openFeedbackForm() {
@@ -651,6 +742,10 @@ export class AdspFeedback implements AdspFeedbackApi {
           .adsp-fb .adsp-fb-form-comment textarea:focus {
             box-shadow: 0 0 0 3px var(--goa-color-interactive-focus);
           }
+          .adsp-fb .adsp-fb-form-comment textarea.error {
+            box-shadow: 0 0 0 var(--goa-border-width-m) red;
+            border: 1px solid red;
+          }
           .adsp-fb .adsp-fb-form-comment textarea::placeholder {
             text-align: right;
             position: absolute;
@@ -878,7 +973,10 @@ export class AdspFeedback implements AdspFeedbackApi {
           .radio:checked {
             border: 7px solid #0070c4;
           }
-
+          .radio.error {
+            border: 1px solid red;
+            box-shadow: 0 0 0 1px red;
+          }
           .radio-label {
             padding: 0 8px;
             font-weight: normal;
@@ -937,7 +1035,18 @@ export class AdspFeedback implements AdspFeedbackApi {
               color: #0070c4;
             }
           }
+          .inline-error {
+            display: flex;
+            visibility: hidden;
+            align-items: center;
+            color: red;
+            gap: 0.5rem;
+          }
 
+          .inline-error p {
+            margin: 0;
+            color: red;
+          }
           @media screen and (max-width: 767px) {
             .adsp-fb div.adsp-fb-form-container {
             }
@@ -1114,6 +1223,10 @@ export class AdspFeedback implements AdspFeedbackApi {
                       <div class="adsp-fb-form-rating" ${ref(this.ratingRef)}>
                         ${this.ratings.map((rating, index) => this.renderRating(rating, index))}
                       </div>
+                      <span class="inline-error" ${ref(this.ratingErrorText)} style="padding-top: 4px">
+                        <img src=${goaErrorIconSvg} alt="Error in rating" />
+                        <p>Select an option</p>
+                      </span>
                       <div class="adsp-fb-form-comment">
                         <label><b>Do you have any additional comments?</b> <span>(optional)</span></label>
                         <textarea
@@ -1130,7 +1243,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                       <br />
                       <div class="radio-container">
                         <label><b>Did you experience any technical issues?</b></label>
-                        <div class="radios" ${ref(this.isTechnicalIssueRef)} @change=${this.onIssueChange}>
+                        <div class="radios" @change=${this.onIssueChange}>
                           <div id="technicalIssueYes" class="radio-span">
                             <input
                               tabindex="0"
@@ -1165,6 +1278,10 @@ export class AdspFeedback implements AdspFeedbackApi {
                             <label for="no" class="radio-label"> No </label>
                           </div>
                         </div>
+                        <span class="inline-error" ${ref(this.issueSelectionErrorText)}>
+                          <img src=${goaErrorIconSvg} alt="Error in issue selection" />
+                          <p>Select an option</p></span
+                        >
                         <div ${ref(this.technicalCommentDivRef)} class="adsp-fb-form-comment">
                           <label
                             ><b
@@ -1178,6 +1295,10 @@ export class AdspFeedback implements AdspFeedbackApi {
                             @input=${this.technicalCommentRefOnChange}
                             aria-label="Technical comments textarea"
                           ></textarea>
+                          <span class="inline-error" ${ref(this.technicalCommentErrorText)}>
+                            <img src=${goaErrorIconSvg} alt="Error in technical comment" />
+                            <p>Please explain the issue you encountered in detail</p></span
+                          >
                           <span class="help-text"
                             >Do not include personal information like SIN, password, addresses, etc.</span
                           >
@@ -1205,7 +1326,6 @@ export class AdspFeedback implements AdspFeedbackApi {
                         class="adsp-fb-form-primary"
                         @click=${this.sendFeedback}
                         type="submit"
-                        disabled
                         tabindex="0"
                         aria-label="Submit feedback button"
                       >
@@ -1235,7 +1355,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                       <div class="adsp-fb adsp-fb-success-actions">
                         <button
                           @click=${this.closeAllFeedback}
-                          ${ref(this.feedbackCloseSucessButton)}
+                          ${ref(this.feedbackCloseSuccessButton)}
                           id="feedback-close-success"
                           class="adsp-fb-form-primary"
                           type="button"
