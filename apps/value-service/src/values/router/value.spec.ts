@@ -286,7 +286,7 @@ describe('event router', () => {
 
   describe('readValue', () => {
     it('can create handler', () => {
-      const handler = readValue(loggerMock, repositoryMock);
+      const handler = readValue(repositoryMock);
       expect(handler).toBeTruthy();
     });
     it('can read value', async () => {
@@ -310,7 +310,7 @@ describe('event router', () => {
       repositoryMock.readValues.mockResolvedValueOnce({
         results: [{ timestamp: new Date(), context: {}, correlationId: null, value }],
       });
-      const handler = readValue(loggerMock, repositoryMock);
+      const handler = readValue(repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -347,7 +347,7 @@ describe('event router', () => {
       repositoryMock.readValues.mockResolvedValueOnce({
         results: [{ timestamp: new Date(), context: {}, correlationId: null, value }],
       });
-      const handler = readValue(loggerMock, repositoryMock);
+      const handler = readValue(repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.readValues).toHaveBeenCalledWith(
         12,
@@ -380,7 +380,7 @@ describe('event router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = readValue(loggerMock, repositoryMock);
+      const handler = readValue(repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
@@ -402,7 +402,7 @@ describe('event router', () => {
         send: jest.fn(),
       };
       const next = jest.fn();
-      const handler = readValue(loggerMock, repositoryMock);
+      const handler = readValue(repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));

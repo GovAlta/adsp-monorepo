@@ -66,9 +66,8 @@ export const readValues: RequestHandler = async (req, res, next) => {
   }
 };
 
-export function readValue(logger: Logger, repository: ValuesRepository): RequestHandler {
+export function readValue(repository: ValuesRepository): RequestHandler {
   return async (req, res, next) => {
-    logger.info(`Processing read value...`);
     try {
       const tenant = req.tenant;
       const user = req.user;
@@ -258,7 +257,7 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
       const { namespace, name } = req.params;
       const tenantId: AdspId = req['tenantId'];
 
-      logger.info(`Processing write value ${namespace}:${name}...`, {
+      logger.debug(`Processing write value ${namespace}:${name}...`, {
         context: 'value-router',
         tenantId: tenantId?.toString(),
         user: `${user.name} (ID: ${user.id})`,
@@ -387,7 +386,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
         ['query']
       )
     ),
-    readValue(logger, repository)
+    readValue(repository)
   );
 
   valueRouter.get(
