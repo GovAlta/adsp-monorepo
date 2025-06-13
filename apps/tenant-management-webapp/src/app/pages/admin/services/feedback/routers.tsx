@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { FeedbackResults } from './feedback/FeedbackResults';
+import { FeedbackResults } from './feedback/feedbackResults';
 import { FeedbackTabs } from './feedbackTabs';
 
 export const Feedback = () => {
