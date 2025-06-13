@@ -1,5 +1,6 @@
 import Ajv, { ErrorObject } from 'ajv';
-import { toDataPath, getControlPath } from '@jsonforms/core';
+import { toDataPath, getControlPath, scopeEndIs } from '@jsonforms/core';
+import get from 'lodash/get';
 
 export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean => {
   return errorPaths.some((ePath) => {
@@ -67,4 +68,9 @@ export const getErrorsInScopes = (errors: ErrorObject[], scopes: string[]): Erro
 
     return dataPaths.includes(e.instancePath) || subErrorInParent(e, dataPaths);
   });
+};
+
+export const hasDataInScopes = (data: object, scopes: string[]) => {
+  const dataPaths = scopes.map((s) => toDataPath(s));
+  return dataPaths.map((p) => get(data, p)).some((data) => data !== undefined);
 };
