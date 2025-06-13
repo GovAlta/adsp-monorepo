@@ -153,8 +153,9 @@ export const uischema = {
             {
               type: 'Control',
               scope: '#/properties/isAttestationAccepted',
+              label: '',
               options: {
-                text: 'Is attestation accepted.',
+                text: 'Is attestation accepted',
               },
             },
           ],
