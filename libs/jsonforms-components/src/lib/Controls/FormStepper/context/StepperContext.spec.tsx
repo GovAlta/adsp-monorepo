@@ -7,7 +7,7 @@ import { StepperContextDataType } from './types';
 
 import Ajv, { ErrorObject } from 'ajv';
 import { stepperReducer } from './reducer';
-import { subErrorInParent } from './util';
+import { subErrorInParent, hasDataInScopes } from './util';
 
 describe('Test jsonforms stepper context', () => {
   const ajvInstance = new Ajv({ allErrors: true, verbose: true, strict: false });
@@ -287,5 +287,16 @@ describe('Test jsonforms stepper context', () => {
     const result = subErrorInParent(error, ['/Users']);
 
     expect(result).toBe(true);
+
+    expect(
+      hasDataInScopes(
+        {
+          whichOfThemApplies: ['Access to condominium documents or records'],
+        },
+        ['#/properties/whichOfThemApplies']
+      )
+    ).toBe(true);
+
+    expect(hasDataInScopes({}, ['#/properties/whichOfThemApplies'])).toBe(false);
   });
 });
