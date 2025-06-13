@@ -9,7 +9,7 @@ import { FeedbackSites } from './sites/sites';
 import { FeedbacksList } from './feedback/feedbacks';
 
 import AsideLinks from '@components/AsideLinks';
-export const Feedback: FunctionComponent = () => {
+export const FeedbackTabs: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const [activateEdit, setActiveEdit] = useState(false);
 
