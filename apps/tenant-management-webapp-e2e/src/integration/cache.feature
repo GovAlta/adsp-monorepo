@@ -11,7 +11,7 @@ Feature: Calendar
     And the user views the link of See the code for "cache-service"
     And the user views the link of "Get support" under Support
 
-  @TEST_CS-4059 @TEST_CS-4063 @TEST_CS-4083 @REQ_CS-3622 @REQ_CS-3623 @REQ_CS-3624
+  @TEST_CS-4059 @TEST_CS-4063 @TEST_CS-4083 @TEST_CS-4043 @REQ_CS-3621 @REQ_CS-3622 @REQ_CS-3623 @REQ_CS-3624
   Scenario: As a tenant admin, I can add, edit and delete a cache target
     Given a tenant admin user is on cache overview page
     # Add cache target
