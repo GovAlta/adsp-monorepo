@@ -49,7 +49,7 @@ export const TaskTableItem: FunctionComponent<TaskTableItemProps> = ({ id, task,
               testId="task-definition-edit"
               title="Edit"
               type="create"
-              onClick={() => onEditTask(task)}
+              onClick={() => onEditTask && onEditTask(task)}
             />
           </ActionIconsDiv>
         </td>
