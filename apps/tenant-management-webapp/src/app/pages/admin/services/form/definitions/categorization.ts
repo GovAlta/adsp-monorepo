@@ -16,7 +16,6 @@ export const schema = {
       type: 'number',
       multipleOf: 1,
       minimum: 0,
-      description: '',
     },
     gender: {
       type: 'string',
@@ -52,11 +51,9 @@ export const schema = {
     },
     isAttestationAccepted: {
       type: 'boolean',
-      description: 'Please indicate your agreement with the terms and conditions.',
       anyOf: [
         {
-          const: true,
-          title: 'You must accept the terms to continue.',
+          enum: [true],
         },
       ],
     },
@@ -154,13 +151,11 @@ export const uischema = {
               },
             },
             {
-              type: 'HorizontalLayout',
-              elements: [
-                {
-                  type: 'Control',
-                  scope: '#/properties/isAttestationAccepted',
-                },
-              ],
+              type: 'Control',
+              scope: '#/properties/isAttestationAccepted',
+              options: {
+                text: 'Is attestation accepted.',
+              },
             },
           ],
         },
