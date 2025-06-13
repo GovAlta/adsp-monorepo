@@ -40,7 +40,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
 
   useEffect(() => {
     setTask(initialValue);
-  }, [initialValue]);
+  }, [initialValue, type]);
 
   const descErrMessage = 'Description can not be over 180 characters';
 
@@ -178,11 +178,12 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
                 setTask({ ...task, priority: value });
               }
             }}
-            disabled={!isNew}
+            testId="task-modal-priority-radio-group"
+            aria-label="task-modal-priority-radio"
           >
-            <GoARadioItem name="priority" value="Normal" />
-            <GoARadioItem name="priority" value="High" />
-            <GoARadioItem name="priority" value="Urgent" />
+            <GoARadioItem name="priority" value="Normal" disabled={isNew} />
+            <GoARadioItem name="priority" value="High" disabled={isNew} />
+            <GoARadioItem name="priority" value="Urgent" disabled={isNew} />
           </GoARadioGroup>
         </GoAFormItem>
       </div>
