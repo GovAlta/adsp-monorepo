@@ -367,6 +367,7 @@ const LeftTab = ({
           {enabled ? (
             <Trash role="trash button">
               <GoAIconButton
+                disabled={!enabled}
                 icon="trash"
                 title={'trash button'}
                 testId="remove the details"
