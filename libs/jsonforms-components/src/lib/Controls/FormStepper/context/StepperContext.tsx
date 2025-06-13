@@ -6,7 +6,7 @@ import { stepperReducer } from './reducer';
 import { StepperContextDataType, CategoryState } from './types';
 import { JsonFormStepperDispatch } from './reducer';
 import { useJsonForms } from '@jsonforms/react';
-import { getIncompletePaths } from './util';
+import { getIncompletePaths, hasDataInScopes } from './util';
 
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
@@ -46,7 +46,7 @@ const createStepperContextInitData = (
       id,
       label: deriveLabelForUISchemaElement(c, t) as string,
       scopes,
-      isVisited: false,
+      isVisited: hasDataInScopes(data || {}, scopes),
       isCompleted: incompletePaths?.length === 0,
       isValid: incompletePaths?.length === 0,
       uischema: c,

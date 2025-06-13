@@ -204,7 +204,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   return (
     <Visible visible={visible}>
       <FileUploaderStyle className="FileUploader">
-        <GoAFormItem label={sentenceCaseLabel} requirement={required ? 'required' : 'optional'} error={uploadError} />
+        <GoAFormItem label={sentenceCaseLabel} requirement={required ? 'required' : undefined} error={uploadError} />
         {!readOnly && (
           <div className="file-upload">
             <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} maxFileSize={maxFileSize} accept={accept} />
