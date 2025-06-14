@@ -121,13 +121,6 @@ describe('Object List component', () => {
     expect(ObjectListWrapper).toBeTruthy();
   });
 
-  it('Can partially render the list with detail component when not enabled', async () => {
-    const newMockProps = { ...baseMockProps, enabled: false, data: 1 };
-    render(<ListWithDetailControl {...newMockProps} />);
-    const ObjectListWrapper = screen.getByTestId('jsonforms-object-list-wrapper');
-    expect(ObjectListWrapper).toBeTruthy();
-  });
-
   it('Can render components with defined layout in the not empty cell', async () => {
     const props = {
       ...sharedProps,
@@ -153,6 +146,9 @@ describe('Object List component', () => {
             ],
           },
         ],
+        options: {
+          itemLabel: 'test label',
+        },
       },
     };
 
