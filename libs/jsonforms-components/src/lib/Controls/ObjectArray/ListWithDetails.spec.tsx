@@ -146,9 +146,6 @@ describe('Object List component', () => {
             ],
           },
         ],
-        options: {
-          itemLabel: 'test label',
-        },
       },
     };
 
