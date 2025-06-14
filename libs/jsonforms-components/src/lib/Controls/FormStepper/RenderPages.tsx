@@ -14,7 +14,7 @@ export interface PageRenderingProps {
 }
 
 export const RenderPages = (props: PageRenderingProps): JSX.Element => {
-  const { data, schema, path, cells, renderers, visible } = props.categoryProps;
+  const { data, schema, path, cells, renderers, visible, enabled } = props.categoryProps;
   const enumerators = useContext(JsonFormContext);
 
   const formStepperCtx = useContext(JsonFormsStepperContext);
@@ -103,7 +103,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                             }
                             goToPage(nextId);
                           }}
-                          disabled={!(category.isValid && category.isCompleted)}
+                          disabled={!(category.isValid && category.isCompleted) || !enabled}
                           testId="pages-save-continue-btn"
                         >
                           Save and continue
