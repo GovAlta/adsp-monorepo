@@ -1,1 +1,1 @@
-export { Feedback } from './feedback';
+export { Feedback } from './routers';

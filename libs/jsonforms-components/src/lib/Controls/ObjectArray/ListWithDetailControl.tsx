@@ -320,11 +320,11 @@ const NonEmptyRowComponent = ({
 
   return (
     <div key={childPath}>
-      {enabled && isHorizontal ? (
+      {isHorizontal ? (
         <GoAGrid minChildWidth="30ch">
           {GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}
         </GoAGrid>
-      ) : enabled && !isHorizontal ? (
+      ) : !isHorizontal ? (
         <>{GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}</>
       ) : null}
     </div>
@@ -367,6 +367,7 @@ const LeftTab = ({
           {enabled ? (
             <Trash role="trash button">
               <GoAIconButton
+                disabled={!enabled}
                 icon="trash"
                 title={'trash button'}
                 testId="remove the details"
