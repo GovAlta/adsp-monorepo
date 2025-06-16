@@ -320,11 +320,11 @@ const NonEmptyRowComponent = ({
 
   return (
     <div key={childPath}>
-      {enabled && isHorizontal ? (
+      {isHorizontal ? (
         <GoAGrid minChildWidth="30ch">
           {GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}
         </GoAGrid>
-      ) : enabled && !isHorizontal ? (
+      ) : !isHorizontal ? (
         <>{GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}</>
       ) : null}
     </div>
