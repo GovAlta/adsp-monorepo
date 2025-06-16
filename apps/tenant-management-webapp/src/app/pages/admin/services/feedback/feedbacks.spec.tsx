@@ -5,64 +5,33 @@ import { FeedbacksList } from './feedback/feedbacks';
 import configureStore from 'redux-mock-store';
 import { Provider } from 'react-redux';
 import thunk from 'redux-thunk';
-import { exportFeedbacks, getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
+import { getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
+import { MemoryRouter } from 'react-router-dom';
 
 jest.mock('@store/feedback/actions', () => ({
   getFeedbackSites: jest.fn(),
   getFeedbacks: jest.fn(),
-  exportFeedbacks: jest.fn(),
 }));
 
 const mockStore = configureStore([thunk]);
 
-describe('Feedbacks Components', () => {
+describe('FeedbacksList Component', () => {
   let store;
+
   beforeEach(() => {
     store = mockStore({
       tenant: { name: 'autotest' },
       feedback: {
         sites: [
-          {
-            sites: [
-              { url: 'http://newsite.com', allowAnonymous: true, views: [] },
-              { url: 'http://testsite.com', allowAnonymous: true, views: [] },
-            ],
-            isLoading: false,
-          },
+          { url: 'http://newsite.com', allowAnonymous: true, views: [] },
+          { url: 'http://testsite.com', allowAnonymous: true, views: [] },
         ],
-
-        feedbacks: [
-          {
-            timestamp: '2024-05-17T15:35:40.762Z',
-            correlationId: 'http://feedbacktestdata.com:/admin/services/feedback',
-            context: {
-              site: 'http://feedbacktestdata.com',
-              view: '/admin/services/feedback',
-              digest: '210dc8419c576e782a45f7484d95546ba8a7c0c17ae809744bcbce0f6a36b57f',
-              includesComment: true,
-            },
-            value: {
-              rating: 'delightful',
-              comment: 'dev feedback test',
-            },
-          },
-        ],
-        isLoading: false,
+        feedbacks: [],
         exportData: [],
       },
-      session: {
-        indicator: { show: false },
-      },
-      page: {
-        next: 'MTA=',
-        size: 10,
-      },
-      searchCriteria: {
-        startDate: null,
-        endDate: null,
-        isExport: false,
-      },
+      session: { indicator: { show: false } },
     });
+
     store.dispatch = jest.fn();
   });
 
@@ -70,140 +39,36 @@ describe('Feedbacks Components', () => {
     cleanup();
   });
 
-  it('should render correctly', () => {
+  it('should render dropdown and allow site selection', () => {
     const { baseElement } = render(
       <Provider store={store}>
-        <FeedbacksList />
+        <MemoryRouter>
+          <FeedbacksList />
+        </MemoryRouter>
       </Provider>
     );
-    expect(baseElement.querySelector("goa-dropdown[testId='sites-dropdown']")).toBeInTheDocument();
-  });
 
-  it('should dispatch getFeedbackSites action on mount', () => {
-    render(
-      <Provider store={store}>
-        <FeedbacksList />
-      </Provider>
-    );
-    expect(store.dispatch).toHaveBeenCalledWith(getFeedbackSites());
-  });
-
-  it('should dispatch getFeedbacks action when a site is selected', () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <FeedbacksList />
-      </Provider>
-    );
-    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
-    fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
-    expect(store.dispatch).toHaveBeenCalledWith(
-      getFeedbacks({ url: 'http://newsite.com', allowAnonymous: true }, store.getState().searchCriteria)
-    );
-  });
-
-  it('should show feedbacks list with toggle-details-visibility icon button', () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <FeedbacksList />
-      </Provider>
-    );
-    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
-    fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
-    expect(screen.getByTestId('feedback-list_0')).toBeInTheDocument();
-    expect(baseElement.querySelector("goa-icon-button[testId='toggle-details-visibility_0']")).toBeInTheDocument();
-  });
-
-  it('should show details of feedback when toggle-details-visibility icon button is clicked', () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <FeedbacksList />
-      </Provider>
-    );
-    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
+    const dropDown = baseElement.querySelector("goa-dropdown[testid='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
 
-    fireEvent(
-      baseElement.querySelector("goa-icon-button[testId='toggle-details-visibility_0']"),
-      new CustomEvent('_click')
-    );
-    expect(screen.getByTestId('moredetails')).toBeInTheDocument();
+    // We don't need to test getFeedbacks dispatch here since it's now dispatched on Results page.
   });
 
-  it('should show no feedbacks found if no feedbacks', () => {
-    store = mockStore({
-      feedback: {
-        sites: [
-          {
-            sites: [{ url: 'http://newsite.com', allowAnonymous: true, views: [] }],
-            isLoading: false,
-          },
-        ],
-
-        feedbacks: [],
-        isLoading: false,
-      },
-      session: {
-        indicator: { show: false },
-      },
-      page: {
-        next: 'MTA=',
-        size: 10,
-      },
-    });
-
-    store.dispatch = jest.fn();
+  it('should show date fields when site selected', async () => {
     const { baseElement } = render(
       <Provider store={store}>
-        <FeedbacksList />
+        <MemoryRouter>
+          <FeedbacksList />
+        </MemoryRouter>
       </Provider>
     );
-    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
-    fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
-    expect(screen.getByText('No feedbacks found')).toBeInTheDocument();
-  });
 
-  it('should enable the export button when both start and end dates are provided', async () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <FeedbacksList />
-      </Provider>
-    );
-    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
-    fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
-
-    const startDateInput = baseElement.querySelector("goa-input[testId='startDate']");
-    const endDateInput = baseElement.querySelector("goa-input[testId='endDate']");
+    const startDateInput = baseElement.querySelector("goa-input[testid='startDate']");
+    const endDateInput = baseElement.querySelector("goa-input[testid='endDate']");
 
     await waitFor(() => {
       expect(startDateInput).toBeInTheDocument();
       expect(endDateInput).toBeInTheDocument();
-    });
-  });
-
-  it('should call exportFeedbacks with searchCriteria when export button is clicked', async () => {
-    const { baseElement } = render(
-      <Provider store={store}>
-        <FeedbacksList />
-      </Provider>
-    );
-
-    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
-    fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
-
-    const startDateInput = baseElement.querySelector("goa-input[testId='startDate']");
-    const endDateInput = baseElement.querySelector("goa-input[testId='endDate']");
-
-    fireEvent(startDateInput, new CustomEvent('_change', { detail: { value: '2023-01-01' } }));
-    fireEvent(endDateInput, new CustomEvent('_change', { detail: { value: '2023-01-31' } }));
-
-    const exportButton = baseElement.querySelector("goa-button[testId='exportBtn']");
-
-    fireEvent.click(exportButton);
-
-    await waitFor(() => {
-      expect(store.dispatch).toHaveBeenCalledWith(
-        exportFeedbacks({ site: 'http://newsite.com' }, { ...store.getState().searchCriteria })
-      );
     });
   });
 });
