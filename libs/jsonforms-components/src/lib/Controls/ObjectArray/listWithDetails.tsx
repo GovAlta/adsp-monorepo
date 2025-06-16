@@ -44,7 +44,7 @@ export const ListWithDetailsControl = (props: ArrayLayoutProps) => {
       <ListWithDetailControl
         {...props}
         openDeleteDialog={openDeleteDialog}
-        enabled={true}
+        enabled={props.enabled}
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
       />

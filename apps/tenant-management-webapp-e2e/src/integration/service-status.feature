@@ -36,9 +36,8 @@ Feature: Service status
       | Description        | Application | Start Date | Start Time | End Date | End Time | Description2            | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
       | Autotest-NewNotice | Autotest    | Today      | 02:00 pm   | Today    | 11:00 pm | Autotest-ModifiedNotice | File Service | Today        | 10:00 am     | Today      | 02:00 pm   |
 
-  # Ingore due to CS-4167
   # TEST DATA: "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-  @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression @ignore
+  @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression
   Scenario: As a tenant admin, I can publish and un-publish a notice, and see the notice published event
     Given a tenant admin user is on status notices page
     When the user clicks "Publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
@@ -227,9 +226,8 @@ Feature: Service status
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "autotest-status-change-event" in the application list
 
-  # Ignore due to CS-4167
   # TEST DATA: existing subscription of "autotest-DO-NOT-DELETE", "adsp5.t@gov.ab.ca" under "Application status update"
-  @TEST_CS-1282 @REQ_CS-905 @regression @ignore
+  @TEST_CS-1282 @REQ_CS-905 @regression
   Scenario: As an interested stakeholder, I can verify status notifications for a tenant, so that I know about service availability.
     Given a tenant admin user is on notification subscriptions page
     When the user types "adsp5.t@gov.ab.ca" in Search subscriber email field

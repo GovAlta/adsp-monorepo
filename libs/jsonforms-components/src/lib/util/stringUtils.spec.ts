@@ -1,7 +1,12 @@
 import '@testing-library/jest-dom';
 import { ControlElement, ControlProps, JsonSchema7 } from '@jsonforms/core';
 
-import { getRequiredIfThen } from './stringUtils';
+import {
+  capitalizeFirstLetter,
+  convertToReadableFormat,
+  getLastSegmentFromPointer,
+  getRequiredIfThen,
+} from './stringUtils';
 import { describe } from 'node:test';
 import { GoAInputTextProps } from '../Controls';
 
@@ -155,5 +160,19 @@ describe('stringUtils string tests', () => {
     const schema = schemaAllOfIfThenProps.rootSchema as JsonSchema7;
     const elseConditions = schema.allOf?.filter((y) => y.else !== undefined);
     expect(elseConditions && elseConditions.length > 0).toBe(true);
+  });
+
+  describe('string function test', () => {
+    it('capitalizeFirstLetter is null', () => {
+      const testValue: string = null;
+      const returnValue = capitalizeFirstLetter(testValue);
+      expect(returnValue).toBe('');
+    });
+
+    it('convertToReadableFormat is null', () => {
+      const testValue: string = null;
+      const returnValue = convertToReadableFormat(testValue);
+      expect(returnValue).toBe(null);
+    });
   });
 });

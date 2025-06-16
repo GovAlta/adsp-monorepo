@@ -65,9 +65,8 @@ Feature: Configuration-service
     When the user clicks info icon of "platform", "pdf-service" on configuration export page
     Then the user views the description of "Templates for PDF generation." for "platform", "pdf-service" on configuration export page
 
-  # Ignore due to CS-4167
   # TEST DATA: a configuration of autotest:test with revision 1 and 2 is created
-  @TEST_CS-997 @REQ_CS-1122 @regression @ignore
+  @TEST_CS-997 @REQ_CS-1122 @regression
   Scenario: As a developer, I can set an 'active' alias for a configuration key to a specific revision, so I can activate a specific revision
     When the user sends a request to set active revision to "2" for "test" under "autotest"
     And the user sends a request to set active revision to "1" for "test" under "autotest"
