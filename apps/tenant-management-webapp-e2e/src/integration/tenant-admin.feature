@@ -126,8 +126,7 @@ Feature: Tenant admin
     Then the user views a message stating the user needs administrator role for the tenant to access the app and that they can contact the tenant creator of "env{realmOwner}"
     Then the user should not have regular admin view
 
-  # Ignore due to CS-4167
-  @TEST_CS-715 @REQ_CS-254 @regression @ignore
+  @TEST_CS-715 @REQ_CS-254 @regression
   Scenario: As a tenant admin, I can search the event log, so I can find events of interest
     Given a tenant admin user is on tenant admin page
     # First create an event definition under events it will be used to verify the event log
