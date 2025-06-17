@@ -19,10 +19,10 @@ The feedback service gives you a simple means to collect information from end-us
 
 ## Learn More
 
-- Learn how to [integrate the service](/adsp-monorepo/tutorials/feedback-service/installation.html) with your application.
+- Learn how to [integrate the service](/adsp-monorepo/tutorials/feedback-service/installation.html) into your application.
 
-- Learn how the service keeps your application and feedback data [secure](/adsp-monorepo/tutorials/feedback-service/security.html).
+- Learn how to build [custom triggers](/adsp-monorepo/tutorials/feedback-service/triggering.html) for the feedback widget.
 
-- Learn how to [trigger the feedback widget](/adsp-monorepo/tutorials/feedback-service/triggering.html) from within your application
+- Learn how the service keeps your data [safe and secure](/adsp-monorepo/tutorials/feedback-service/security.html).
 
 - Learn how to [access the feedback](/adsp-monorepo/tutorials/feedback-service/accessing-data.html) submitted for your application.
