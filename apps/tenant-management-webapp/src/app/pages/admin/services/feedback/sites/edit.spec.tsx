@@ -15,6 +15,11 @@ const sitesStore = mockStore({
   session: {
     indicator: { show: false },
   },
+  form: {
+    formResourceTag: {
+      tags: [{ url: 'https://www.somewhere.com', label: 'atag', value: 'atag', _links: {} }],
+    },
+  },
 });
 
 describe('SiteAddEditForm', () => {
@@ -32,28 +37,32 @@ describe('SiteAddEditForm', () => {
 
   it('renders without errors', () => {
     const { baseElement } = render(
-      <SiteAddEditForm
-        initialValue={initialSite}
-        sites={sites}
-        onClose={onCloseMock}
-        onSave={onSaveMock}
-        open={true}
-        isEdit={false}
-      />
+      <Provider store={sitesStore}>
+        <SiteAddEditForm
+          initialValue={initialSite}
+          sites={sites}
+          onClose={onCloseMock}
+          onSave={onSaveMock}
+          open={true}
+          isEdit={false}
+        />
+      </Provider>
     );
 
     expect(baseElement.querySelector("goa-modal[testId='add-site-modal']")).toBeInTheDocument();
   });
   it('save button should be disabled', () => {
     const { baseElement } = render(
-      <SiteAddEditForm
-        initialValue={initialSite}
-        sites={sites}
-        onClose={onCloseMock}
-        onSave={onSaveMock}
-        open={true}
-        isEdit={false}
-      />
+      <Provider store={sitesStore}>
+        <SiteAddEditForm
+          initialValue={initialSite}
+          sites={sites}
+          onClose={onCloseMock}
+          onSave={onSaveMock}
+          open={true}
+          isEdit={false}
+        />
+      </Provider>
     );
     const saveBtn = baseElement.querySelector("goa-button[testId='site-register']");
     expect(saveBtn).toBeDisabled();
@@ -61,14 +70,16 @@ describe('SiteAddEditForm', () => {
 
   it('populates form fields based on initial values', () => {
     const { baseElement } = render(
-      <SiteAddEditForm
-        initialValue={initialSite}
-        sites={sites}
-        onClose={onCloseMock}
-        onSave={onSaveMock}
-        open={true}
-        isEdit={true}
-      />
+      <Provider store={sitesStore}>
+        <SiteAddEditForm
+          initialValue={initialSite}
+          sites={sites}
+          onClose={onCloseMock}
+          onSave={onSaveMock}
+          open={true}
+          isEdit={true}
+        />
+      </Provider>
     );
     const urlInput = baseElement.querySelector("goa-input[testId='feedback-url']");
     expect(urlInput).not.toBeNull();
@@ -135,14 +146,16 @@ describe('SiteAddEditForm', () => {
   });
   it('URL field should be disabled when editing site', () => {
     const { baseElement } = render(
-      <SiteAddEditForm
-        initialValue={initialSite}
-        sites={sites}
-        onClose={onCloseMock}
-        onSave={onSaveMock}
-        open={true}
-        isEdit={true}
-      />
+      <Provider store={sitesStore}>
+        <SiteAddEditForm
+          initialValue={initialSite}
+          sites={sites}
+          onClose={onCloseMock}
+          onSave={onSaveMock}
+          open={true}
+          isEdit={true}
+        />
+      </Provider>
     );
     const urlInput = baseElement.querySelector("goa-input[testId='feedback-url']");
     expect(urlInput).toBeDisabled();

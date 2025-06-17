@@ -1,9 +1,21 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 
 import type { FeedbackSite } from '@store/feedback/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal, GoACheckbox } from '@abgov/react-components';
+import { fetchAllTags } from '@store/form/action';
+import {
+  GoAButton,
+  GoAButtonGroup,
+  GoAInput,
+  GoAFormItem,
+  GoAModal,
+  GoACheckbox,
+  GoAFilterChip,
+} from '@abgov/react-components';
+import { GoADropdownOption, GoADropdown } from '@abgov/react-components-old';
+import { fetchResourceTypeAction } from '@store/directory/actions';
+import { RootState } from '@store/index';
 import { useValidators } from '@lib/validation/useValidators';
-
+import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import {
@@ -14,6 +26,7 @@ import {
   validationPattern,
 } from '@lib/validation/checkInput';
 import { CheckboxSpaceWrapper, HelpText } from '../styled-components';
+import { ChipsWrapper } from '../../events/stream/styleComponents';
 
 interface SiteFormProps {
   initialValue?: FeedbackSite;
@@ -36,6 +49,31 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
 }) => {
   const [site, setSite] = useState<FeedbackSite>(initialValue);
   const [urlError, setUrlError] = useState<string>('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(fetchResourceTypeAction());
+  }, [dispatch]);
+
+  const removeSelectedTag = (eventChip) => {
+    const updatedSelectedTags = selectedTags.filter((event) => event !== eventChip);
+    setSelectedTags(updatedSelectedTags);
+  };
+
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
+  const NO_TAG_FILTER = {
+    label: '<No tag filter>',
+    value: '',
+  };
+
+  const tags = useSelector((state: RootState) => state.form.formResourceTag.tags || []);
+
+  useEffect(() => {
+    dispatch(fetchAllTags());
+  }, [dispatch]);
 
   useEffect(() => {
     setSite(initialValue);
@@ -96,47 +134,81 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
           </GoAButtonGroup>
         }
       >
-        <GoAFormItem
-          label="Site URL"
-          requirement="required"
-          labelSize="regular"
-          testId="feedback-url-formItem"
-          error={errors?.['url'] || urlError}
-        >
-          <GoAInput
-            type="text"
-            name="url"
-            value={site.url}
-            width="100%"
-            testId="feedback-url"
-            aria-label="url"
-            disabled={isEdit}
-            onChange={(name, value) => {
-              validators.remove('url');
-              validators['url'].check(value);
-              setSite({ ...site, url: value });
-            }}
-            onBlur={() => {
-              validators.checkAll({ url: site.url });
-              setUrlError(errors?.['url'] || '');
-            }}
-          />
-        </GoAFormItem>
-        <CheckboxSpaceWrapper>
-          <GoACheckbox
-            text={'Allow anonymous feedback'}
-            testId="anonymous-feedback"
-            ariaLabel="Anonymous feedback"
-            onChange={(name, value) => {
-              setSite({ ...site, allowAnonymous: value });
-            }}
-            name={'isAnonymous'}
-            checked={site.allowAnonymous ?? false}
-          />
-        </CheckboxSpaceWrapper>
-        <HelpText>
-          <div>Enabling anonymous feedback may result in lower quality feedback.</div>
-        </HelpText>
+        <div style={{ height: '400px' }}>
+          <GoAFormItem
+            label="Site URL"
+            requirement="required"
+            labelSize="regular"
+            testId="feedback-url-formItem"
+            error={errors?.['url'] || urlError}
+          >
+            <GoAInput
+              type="text"
+              name="url"
+              value={site.url}
+              width="100%"
+              testId="feedback-url"
+              aria-label="url"
+              disabled={isEdit}
+              onChange={(name, value) => {
+                validators.remove('url');
+                validators['url'].check(value);
+                setSite({ ...site, url: value });
+              }}
+              onBlur={() => {
+                validators.checkAll({ url: site.url });
+                setUrlError(errors?.['url'] || '');
+              }}
+            />
+          </GoAFormItem>
+          <div className="mt-1">
+            <GoAFormItem label="Add tag(s)">
+              <GoADropdown
+                name="TagFilter"
+                selectedValues={site.tags}
+                multiSelect={true}
+                disabled={false}
+                onChange={(_, value) => {
+                  setSite({ ...site, tags: value });
+                }}
+              >
+                <GoADropdownOption value={NO_TAG_FILTER.value} label={NO_TAG_FILTER.label} />
+                {tags
+                  .sort((a, b) => a.label.localeCompare(b.label))
+                  .map((tag) => (
+                    <GoADropdownOption key={tag.urn} value={tag.value} label={tag.label} />
+                  ))}
+              </GoADropdown>
+              <div className="mt-1">
+                <ChipsWrapper>
+                  {(site.tags || []).map((tagChip) => {
+                    return (
+                      <div className="mr-1">
+                        <GoAFilterChip key={tagChip} content={tagChip} onClick={() => removeSelectedTag(tagChip)} />
+                      </div>
+                    );
+                  })}
+                </ChipsWrapper>
+              </div>
+            </GoAFormItem>
+          </div>
+
+          <CheckboxSpaceWrapper>
+            <GoACheckbox
+              text={'Allow anonymous feedback'}
+              testId="anonymous-feedback"
+              ariaLabel="Anonymous feedback"
+              onChange={(name, value) => {
+                setSite({ ...site, allowAnonymous: value });
+              }}
+              name={'isAnonymous'}
+              checked={site.allowAnonymous ?? false}
+            />
+          </CheckboxSpaceWrapper>
+          <HelpText>
+            <div>Enabling anonymous feedback may result in lower quality feedback.</div>
+          </HelpText>
+        </div>
       </GoAModal>
     </ModalOverwrite>
   );
@@ -145,5 +217,17 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
 const ModalOverwrite = styled.div`
   .modal {
     max-height: 100% !important;
+  }
+
+  .mt-1 {
+    margin-top: 1rem;
+  }
+
+  .mr-1 {
+    margin-right: 0.5rem;
+  }
+
+  ul {
+    padding-left: 0;
   }
 `;
