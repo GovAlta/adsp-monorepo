@@ -1,7 +1,9 @@
 import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import commonlib from '../common/common-library';
 import CalendarPage from './calendar.page';
+import common from '../common/common.page';
 
+const commonObj = new common();
 const calendarObj = new CalendarPage();
 
 Given('a tenant admin user is on calendar service overview page', function () {
@@ -660,4 +662,99 @@ Then('the user views the error message of {string} on dates in Add calendar even
     .find('.error-msg')
     .invoke('text')
     .should('contain', errorMsg);
+});
+
+Given('a tenant admin user is on Calendar service Calendars page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonlib.tenantAdminMenuItem('Calendar', 4000);
+  commonObj.serviceTab('Calendar', 'Calendars').click();
+  cy.wait(2000);
+});
+
+Then('the user views {string} core calendar under Core cenlendars', function (calendarName: string) {
+  calendarObj.coreCalendarsRecordWithNameOnly(calendarName).should('exist');
+});
+
+Then('the user views only view details action for core calendar records on Calendars page', function () {
+  calendarObj
+    .coreCalendarsRecordActions()
+    .find('goa-icon-button')
+    .should('have.length', 1)
+    .and('have.attr', 'icon', 'eye');
+});
+
+When('the user clicks eye icon for {string} core calendar', function (name) {
+  calendarObj.coreCalendarsRecordWithNameOnlyEyeIcon(name).shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views the calendar details modal for {string}', function (name) {
+  calendarObj.viewCalendarDetailsModal().should('exist');
+  calendarObj.viewCalendarDetailsModal().find('[slot="heading"]').invoke('text').should('eq', 'View calendar details');
+  calendarObj.viewCalendarDetailsModalNameField().invoke('attr', 'value').should('eq', name);
+});
+
+Then('the user views {string} tenant roles for read and modify in calendar details modal', function (tenantName) {
+  calendarObj
+    .viewCalendarDetailsModalRolesTableHeader(tenantName)
+    .find('[id^="Calendar-roles"]')
+    .invoke('text')
+    .should('eq', 'Roles');
+  calendarObj
+    .viewCalendarDetailsModalRolesTableHeader(tenantName)
+    .find('[id^="read-role"]')
+    .invoke('text')
+    .should('contain', 'Read');
+  calendarObj
+    .viewCalendarDetailsModalRolesTableHeader(tenantName)
+    .find('[id^="modify-role"]')
+    .invoke('text')
+    .should('contain', 'Modify');
+  calendarObj.viewCalendarDetailsModalRoles(tenantName).then((roles) => {
+    expect(roles.length).to.be.greaterThan(
+      0,
+      'There are no roles for tenant ' + tenantName + ' in calendar details modal'
+    );
+    roles.toArray().forEach((role) => {
+      cy.wrap(role).find('td').should('have.length', 3); // Each role should have 3 columns
+    });
+  });
+});
+
+Then('the user views {string} client roles for read and modify in calendar details modal', function (clientName) {
+  calendarObj
+    .viewCalendarDetailsModalRolesTableHeader(clientName)
+    .find('[id^="Calendar-roles"]')
+    .invoke('text')
+    .should('eq', 'Roles');
+  calendarObj
+    .viewCalendarDetailsModalRolesTableHeader(clientName)
+    .find('[id^="read-role"]')
+    .invoke('text')
+    .should('contain', 'Read');
+  calendarObj
+    .viewCalendarDetailsModalRolesTableHeader(clientName)
+    .find('[id^="modify-role"]')
+    .invoke('text')
+    .should('contain', 'Modify');
+  calendarObj.viewCalendarDetailsModalRoles(clientName).then((roles) => {
+    expect(roles.length).to.be.greaterThan(0, 'There are no roles for ' + clientName + ' in calendar details modal');
+    roles.toArray().forEach((role) => {
+      cy.wrap(role).find('td').should('have.length', 3); // Each role should have 3 columns
+    });
+  });
+});
+
+When('the user clicks Close button in View calendar details modal', function () {
+  calendarObj.viewCalendarDetailsModalCloseBtn().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views View calendar details modal is closed', function () {
+  calendarObj.viewCalendarDetailsModal().should('not.exist');
 });
