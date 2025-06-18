@@ -74,3 +74,30 @@ export const hasDataInScopes = (data: object, scopes: string[]) => {
   const dataPaths = scopes.map((s) => toDataPath(s));
   return dataPaths.map((p) => get(data, p)).some((data) => data !== undefined);
 };
+
+const getLocalStorageKeyPrefix = () => {
+  return window.location.href + '_' + new Date().toISOString().slice(0, 10);
+};
+
+export function isJson(str: string) {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
+export const saveIsVisitFromLocalStorage = (status: boolean[]) => {
+  const key = getLocalStorageKeyPrefix();
+  localStorage.setItem(key, JSON.stringify(status));
+};
+
+export const getIsVisitFromLocalStorage = (): boolean[] | undefined => {
+  const key = getLocalStorageKeyPrefix();
+  const value = localStorage.getItem(key);
+  if (value && isJson(value)) {
+    return JSON.parse(value);
+  }
+  return undefined;
+};
