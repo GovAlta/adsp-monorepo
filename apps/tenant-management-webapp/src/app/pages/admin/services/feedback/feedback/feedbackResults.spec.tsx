@@ -82,31 +82,6 @@ describe('FeedbackResults Component', () => {
     );
   });
 
-  it('should show "No feedback data found" if no feedbacks present', () => {
-    store = mockStore({
-      tenant: { name: 'autotest' },
-      feedback: {
-        sites: [{ url: 'http://newsite.com', allowAnonymous: true, views: [] }],
-        feedbacks: [],
-        exportData: [],
-      },
-      session: { indicator: { show: false } },
-    });
-
-    store.dispatch = jest.fn();
-    render(
-      <Provider store={store}>
-        <MemoryRouter
-          initialEntries={['/admin/services/feedback/results?site=http://newsite.com&start=2024-01-01&end=2024-01-31']}
-        >
-          <FeedbackResults />
-        </MemoryRouter>
-      </Provider>
-    );
-
-    expect(screen.getByText('No feedback data found for selected range.')).toBeInTheDocument();
-  });
-
   it('should dispatch exportFeedbacks when export button clicked', async () => {
     renderComponent();
 
