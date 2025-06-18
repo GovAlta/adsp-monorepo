@@ -1,12 +1,12 @@
 import { createContext, ReactNode, useMemo, useReducer, Dispatch, useEffect } from 'react';
 import { CategorizationStepperLayoutRendererProps } from '../types';
-import { Categorization, deriveLabelForUISchemaElement, isEnabled, isVisible, UISchemaElement } from '@jsonforms/core';
+import { Categorization, deriveLabelForUISchemaElement, isEnabled, isVisible } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
 import { stepperReducer } from './reducer';
 import { StepperContextDataType, CategoryState } from './types';
 import { JsonFormStepperDispatch } from './reducer';
 import { useJsonForms } from '@jsonforms/react';
-import { getIncompletePaths, hasDataInScopes } from './util';
+import { getIncompletePaths, getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage } from './util';
 
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
@@ -38,15 +38,19 @@ const createStepperContextInitData = (
   const categorization = uischema as Categorization;
   const valid = ajv.validate(schema, data || {});
   const isPage = uischema?.options?.variant === 'pages';
+  const isCacheStatus = uischema.options?.cacheStatus;
+  /* istanbul ignore next */
+  const cachedStatus = (isCacheStatus && getIsVisitFromLocalStorage()) || [];
   const categories = categorization.elements?.map((c, id) => {
     const scopes = pickPropertyValues(c, 'scope', 'ListWithDetail');
-    const incompletePaths = getIncompletePaths(ajv, scopes);
+    const incompletePaths = getIncompletePaths(ajv, scopes) || [];
 
     return {
       id,
       label: deriveLabelForUISchemaElement(c, t) as string,
       scopes,
-      isVisited: hasDataInScopes(data || {}, scopes),
+      /* istanbul ignore next */
+      isVisited: isCacheStatus ? cachedStatus.at(id) : false,
       isCompleted: incompletePaths?.length === 0,
       isValid: incompletePaths?.length === 0,
       uischema: c,
@@ -77,9 +81,11 @@ export const JsonFormsStepperContextProvider = ({
   StepperProps,
 }: JsonFormsStepperContextProviderProps): JSX.Element => {
   const ctx = useJsonForms();
-  const { schema, ajv, data } = StepperProps;
+  /* istanbul ignore next */
+  const { schema, ajv, data, uischema } = StepperProps;
   const [stepperState, dispatch] = useReducer(stepperReducer, createStepperContextInitData(StepperProps));
   const stepperDispatch = StepperProps?.customDispatch || dispatch;
+  const isCacheStatus = uischema.options?.cacheStatus;
 
   const context = useMemo(() => {
     return {
@@ -159,7 +165,21 @@ export const JsonFormsStepperContextProvider = ({
         });
       },
     };
-  }, [stepperDispatch, stepperState, ctx.core?.errors]);
+  }, [stepperDispatch, stepperState, ctx.core?.errors, ajv]);
+
+  /* istanbul ignore next */
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isCacheStatus) {
+        saveIsVisitFromLocalStorage(stepperState?.categories?.map((c) => c?.isVisited as boolean) || []);
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [stepperState]);
 
   useEffect(() => {
     if (context?.isProvided === true) {
