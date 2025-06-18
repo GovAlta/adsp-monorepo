@@ -141,3 +141,20 @@ export const FeedbackFilterError = styled.span`
   position: relative;
   top: -3px;
 `;
+
+export const NoResultsMessage = styled.div`
+  margin-top: var(--goa-space-xl);
+  padding: var(--goa-space-m);
+  background-color: var(--goa-color-greyscale-100);
+  border-radius: var(--goa-border-radius-m);
+  font-weight: bold;
+  color: var(--goa-color-text-default);
+`;
+
+export const FeedbackHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--goa-space-l);
+  margin-bottom: var(--goa-space-m);
+`;
