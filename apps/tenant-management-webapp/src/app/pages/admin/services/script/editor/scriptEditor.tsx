@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { FunctionComponent, useState, useEffect, useRef } from 'react';
 import {
   ScriptEditorContainer,
   EditScriptActions,
@@ -82,7 +82,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const [script, setScript] = useState<ScriptItem>(selectedScript);
   const [activeIndex] = useState<number>(0);
   const [customIndicator, setCustomIndicator] = useState<boolean>(false);
-
+  const scrollPaneRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
@@ -374,7 +374,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               </Tab>
               <Tab label="Roles" data-testid="script-roles-tab">
                 <MonacoDivTabBody data-testid="roles-editor-body">
-                  <ScrollPane style={{ height: monacoHeight }}>
+                  <ScrollPane style={{ height: monacoHeight }} ref={scrollPaneRef} className="roles-scroll-pane">
                     {Array.isArray(roles)
                       ? roles.map((r) => {
                           return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
