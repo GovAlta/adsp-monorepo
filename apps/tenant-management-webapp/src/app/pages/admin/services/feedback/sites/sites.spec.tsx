@@ -14,6 +14,11 @@ const store = mockStore({
   session: {
     indicator: { show: false },
   },
+  form: {
+    formResourceTag: {
+      tags: [{ url: 'https://www.somewhere.com', label: 'atag', value: 'atag', _links: {} }],
+    },
+  },
 });
 
 describe('FeedbackSites Component', () => {

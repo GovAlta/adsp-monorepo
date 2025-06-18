@@ -34,6 +34,7 @@ export interface Page {
 export interface FeedbackSite {
   url: string;
   allowAnonymous: boolean;
+  tags?: string[];
 }
 export interface SelectedSite {
   site: string;
@@ -76,4 +77,5 @@ export const getDefaultSearchCriteria = (): FeedbackSearchCriteria => {
 export const defaultFeedbackSite: FeedbackSite = {
   url: '',
   allowAnonymous: false,
+  tags: [],
 };
