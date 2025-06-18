@@ -101,6 +101,8 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                         }
                         ariaLabel={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                         onChange={() => {
+                          const scrollPane = document.querySelector('.roles-scroll-pane');
+                          const scrollTop = scrollPane ? scrollPane.scrollTop : 0;
                           if (checkedRole.selectedRoles?.includes(compositeRole)) {
                             const newRoles = checkedRole.selectedRoles.filter((readRole) => {
                               return readRole !== compositeRole;
@@ -114,6 +116,9 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                             setCheckedRoles(checkedRoles);
                             props.roleSelectFunc(newRoles, checkedRole.title);
                           }
+                          setTimeout(() => {
+                            if (scrollPane) scrollPane.scrollTop = scrollTop;
+                          }, 0);
                         }}
                       />
                     </td>

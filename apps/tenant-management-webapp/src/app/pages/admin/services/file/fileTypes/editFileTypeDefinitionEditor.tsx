@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   DropDownZIndex,
@@ -56,7 +56,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-
+  const scrollPaneRef = useRef<HTMLDivElement>(null);
   const fileTypeNames = useSelector(selectFileTyeNames);
   const [spinner, setSpinner] = useState<boolean>(false);
   const [customIndicator, setCustomIndicator] = useState<boolean>(false);
@@ -394,7 +394,7 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
           <FileTypePermissions>
             <FileTypesEditorTitle>Roles</FileTypesEditorTitle>
             <hr className="hr-resize" />
-            <ScrollPane>
+            <ScrollPane ref={scrollPaneRef} className="roles-scroll-pane">
               {elements.map((e, key) => {
                 return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
               })}
