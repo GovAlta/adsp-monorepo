@@ -37,8 +37,8 @@ export function* fetchCacheTargets(payload): SagaIterator {
         core: call(fetchCacheTargetsApi, token, coreUrl),
       });
 
-      const targets = tenant.latest.configuration?.targets;
-      const coreTargets = core.latest.configuration?.targets;
+      const targets = tenant.latest ? tenant.latest.configuration?.targets : {};
+      const coreTargets = core.latest ? core.latest.configuration?.targets : {};
       yield put(
         UpdateIndicator({
           show: false,
