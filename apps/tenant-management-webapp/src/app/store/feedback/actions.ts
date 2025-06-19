@@ -22,7 +22,6 @@ export interface FetchFeedbacksAction {
   feedback: FeedbackSite;
   searchCriteria: FeedbackSearchCriteria;
   next: string;
-  resolve?: (feedbacks: Feedback[]) => void;
 }
 export interface ExportFeedbacksAction {
   type: typeof EXPORT_FEEDBACKS_ACTION;
@@ -92,14 +91,12 @@ export type FeedbackActionTypes =
 export const getFeedbacks = (
   payload: FeedbackSite,
   searchCriteria: FeedbackSearchCriteria,
-  next?: string,
-  resolve?: (feedbacks: Feedback[]) => void
+  next?: string
 ): FetchFeedbacksAction => ({
   type: FETCH_FEEDBACKS_ACTION,
   feedback: payload,
   searchCriteria,
   next,
-  resolve,
 });
 export const exportFeedbacks = (
   payload: SelectedSite,

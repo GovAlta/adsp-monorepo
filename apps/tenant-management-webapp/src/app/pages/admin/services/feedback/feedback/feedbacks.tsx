@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
-import { getFeedbacks, getFeedbackSites } from '@store/feedback/actions';
-import { Feedback, FeedbackSearchCriteria, getDefaultSearchCriteria } from '@store/feedback/models';
+import { getFeedbackSites } from '@store/feedback/actions';
+import { FeedbackSearchCriteria, getDefaultSearchCriteria } from '@store/feedback/models';
 import {
   GoADropdown,
   GoADropdownItem,
@@ -13,7 +13,7 @@ import {
   GoAButton,
   GoASkeleton,
 } from '@abgov/react-components';
-import { ExportDates, FeedbackFilterError, NoResultsMessage } from '../styled-components';
+import { ExportDates, FeedbackFilterError } from '../styled-components';
 import { useNavigate } from 'react-router-dom';
 import { renderNoItem } from '@components/NoItem';
 
@@ -36,7 +36,6 @@ export const FeedbacksList = (): JSX.Element => {
   const [selectedSite, setSelectedSite] = useState('');
   const [searchCriteria, setSearchCriteria] = useState(getDefaultSearchCriteria());
   const [showDateError, setShowDateError] = useState(false);
-  const [noResults, setNoResults] = useState(false);
 
   useEffect(() => {
     dispatch(getFeedbackSites());
@@ -60,22 +59,12 @@ export const FeedbacksList = (): JSX.Element => {
     setShowDateError(!isSearchCriteriaValid(updatedCriteria));
   };
 
-  const handleGetFeedback = async () => {
-    const siteData = sites.find((s) => s.url === selectedSite);
-    if (!siteData) return;
-
-    const feedbacks = await new Promise<Feedback[]>((resolve) => {
-      dispatch(getFeedbacks(siteData, searchCriteria, '', resolve));
-    });
-
-    if (Array.isArray(feedbacks) && feedbacks.length > 0) {
-      navigate(
-        `/admin/services/feedback/results?site=${selectedSite}&start=${searchCriteria.startDate}&end=${searchCriteria.endDate}`
-      );
-    } else {
-      setNoResults(true);
-    }
+  const handleGetFeedback = () => {
+    navigate(
+      `/admin/services/feedback/results?site=${selectedSite}&start=${searchCriteria.startDate}&end=${searchCriteria.endDate}`
+    );
   };
+
   return (
     <section>
       {!sites && renderNoItem('feedback')}
@@ -89,10 +78,7 @@ export const FeedbacksList = (): JSX.Element => {
               <GoADropdown
                 name="Sites"
                 value={selectedSite}
-                onChange={(name, site: string) => {
-                  setSelectedSite(site);
-                  setNoResults(false);
-                }}
+                onChange={(name, site: string) => setSelectedSite(site)}
                 width="100%"
                 testId="sites-dropdown"
                 relative={true}
@@ -138,9 +124,6 @@ export const FeedbacksList = (): JSX.Element => {
           <GoAButton type="primary" onClick={handleGetFeedback} disabled={!selectedSite || showDateError}>
             Get Feedback
           </GoAButton>
-          {noResults && (
-            <NoResultsMessage>No feedback data found for the selected site and date range.</NoResultsMessage>
-          )}
         </div>
       )}
     </section>

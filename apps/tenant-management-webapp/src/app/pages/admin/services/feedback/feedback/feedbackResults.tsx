@@ -7,7 +7,6 @@ import { RootState } from '@store/index';
 import { getFeedbacks, exportFeedbacks } from '@store/feedback/actions';
 import { transformedData } from '../ratings';
 import { FeedbackListTable } from './feedbacksTable';
-import { FeedbackHeader } from '../styled-components';
 
 export const FeedbackResults = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -54,18 +53,21 @@ export const FeedbackResults = (): JSX.Element => {
         Back
       </GoAButton>
 
-      <FeedbackHeader>
-        <h2>Feedback Results</h2>
-        {feedbacks?.length > 0 && !indicator.show && (
-          <GoAButton type="primary" onClick={exportToCsv}>
-            Export CSV
-          </GoAButton>
-        )}
-      </FeedbackHeader>
+      <h3>Feedback Results</h3>
 
       {indicator.show && <GoACircularProgress visible size="small" />}
 
-      {!indicator.show && feedbacks?.length > 0 && <FeedbackListTable feedbacks={feedbacks} />}
+      {!indicator.show && feedbacks?.length > 0 && (
+        <>
+          <FeedbackListTable feedbacks={feedbacks} />
+          <br />
+          <GoAButton type="primary" onClick={exportToCsv}>
+            Export CSV
+          </GoAButton>
+        </>
+      )}
+
+      {!indicator.show && (!feedbacks || feedbacks.length === 0) && <p>No feedback data found for selected range.</p>}
     </section>
   );
 };

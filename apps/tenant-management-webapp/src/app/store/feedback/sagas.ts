@@ -64,9 +64,6 @@ function* fetchFeedbacks(payload: FetchFeedbacksAction) {
           show: false,
         })
       );
-      if (payload.resolve) {
-        payload.resolve(feedbacks);
-      }
     } catch (error) {
       yield put({ type: 'FETCH_FEEDBACKS_FAILURE', error });
       yield put(UpdateIndicator({ show: false }));
