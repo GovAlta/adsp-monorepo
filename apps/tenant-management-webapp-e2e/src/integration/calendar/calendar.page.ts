@@ -154,5 +154,63 @@ class CalendarPage {
   eventsTab() {
     return cy.xpath('//*[@data-testid="calendar-event-tab"]');
   }
+
+  coreCalendarsRecord(name, id, description) {
+    return cy.xpath(
+      `//h2[text()="Core calendars"]/following-sibling::*//table[@data-testid="calendar-table"]//tbody/tr/td[@headers="calendar-name" and text()="${name}"]/following-sibling::td[@headers="calendar-id" and text()="${id}"]/following-sibling::td[@headers="calendar-description" and text()="${description}"]/parent::tr`
+    );
+  }
+
+  coreCalendarsRecordWithNameOnly(name) {
+    return cy.xpath(
+      `//h2[text()="Core calendars"]/following-sibling::*//table[@data-testid="calendar-table"]//tbody/tr/td[@headers="calendar-name" and text()="${name}"]/parent::tr`
+    );
+  }
+
+  coreCalendarsRecordActions() {
+    return cy.xpath(
+      `//h2[text()="Core calendars"]/following-sibling::*//table[@data-testid="calendar-table"]//tbody/tr/td[@headers="calendar-actions"]`
+    );
+  }
+
+  coreCalendarsRecordEyeIcon(name, id, description) {
+    return cy.xpath(
+      `//h2[text()="Core calendars"]/following-sibling::*//table[@data-testid="calendar-table"]//tbody/tr/td[@headers="calendar-name" and text()="${name}"]/following-sibling::td[@headers="calendar-id" and text()="${id}"]/following-sibling::td[@headers="calendar-description" and text()="${description}"]/parent::tr/td[@headers="calendar-actions"]//goa-icon-button[@icon="eye"]`
+    );
+  }
+
+  coreCalendarsRecordWithNameOnlyEyeIcon(name) {
+    return cy.xpath(
+      `//h2[text()="Core calendars"]/following-sibling::*//table[@data-testid="calendar-table"]//tbody/tr/td[@headers="calendar-name" and text()="${name}"]/parent::tr/td[@headers="calendar-actions"]//goa-icon-button[@icon="eye"]`
+    );
+  }
+
+  viewCalendarDetailsModal() {
+    return cy.xpath('//goa-modal[@open="true" and @testid="add-calendar-modal"]');
+  }
+
+  viewCalendarDetailsModalCloseBtn() {
+    return cy.xpath(
+      '//goa-modal[@open="true" and @testid="add-calendar-modal"]//goa-button[@testid="calendar-modal-cancel"]'
+    );
+  }
+
+  viewCalendarDetailsModalNameField() {
+    return cy.xpath(
+      '//goa-modal[@open="true" and @testid="add-calendar-modal"]/goa-form-item[@label="Name"]/goa-input'
+    );
+  }
+
+  viewCalendarDetailsModalRolesTableHeader(name) {
+    return cy.xpath(
+      `//goa-modal[@open="true" and @testid="add-calendar-modal"]//h4/*[text()="${name}"]/parent::h4/following-sibling::goa-table[1]//thead/tr`
+    );
+  }
+
+  viewCalendarDetailsModalRoles(name) {
+    return cy.xpath(
+      `//goa-modal[@open="true" and @testid="add-calendar-modal"]//h4/*[text()="${name}"]/parent::h4/following-sibling::goa-table[1]//tbody/tr`
+    );
+  }
 }
 export default CalendarPage;
