@@ -8,6 +8,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { renderNoItem } from '@components/NoItem';
 import { TagBadgePadding, DetailsTagWrapper, DetailsTagHeading } from '../../form/styled-components';
 import { GoABadge } from '@abgov/react-components';
+import { showTaggingFeature } from '../overview';
 
 interface SiteProps {
   site: FeedbackSite;
@@ -38,7 +39,7 @@ const SiteComponent: FunctionComponent<SiteProps> = ({ site, onEdit, onDelete, s
               type="trash"
               onClick={() => onDelete(site)}
             />
-            {site.tags?.length > 0 && (
+            {showTaggingFeature && site.tags?.length > 0 && (
               <GoAContextMenuIcon
                 type={showDetails ? 'eye-off' : 'eye'}
                 title="Toggle details"

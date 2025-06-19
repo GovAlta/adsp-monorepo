@@ -17,6 +17,7 @@ import { RootState } from '@store/index';
 import { useValidators } from '@lib/validation/useValidators';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { showTaggingFeature } from '../overview';
 
 import {
   isNotEmptyCheck,
@@ -134,7 +135,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
           </GoAButtonGroup>
         }
       >
-        <div style={{ height: '400px' }}>
+        <div>
           <GoAFormItem
             label="Site URL"
             requirement="required"
@@ -161,37 +162,39 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
               }}
             />
           </GoAFormItem>
-          <div className="mt-1">
-            <GoAFormItem label="Add tag(s)">
-              <GoADropdown
-                name="TagFilter"
-                selectedValues={site.tags}
-                multiSelect={true}
-                disabled={false}
-                onChange={(_, value) => {
-                  setSite({ ...site, tags: value });
-                }}
-              >
-                <GoADropdownOption value={NO_TAG_FILTER.value} label={NO_TAG_FILTER.label} />
-                {tags
-                  .sort((a, b) => a.label.localeCompare(b.label))
-                  .map((tag) => (
-                    <GoADropdownOption key={tag.urn} value={tag.value} label={tag.label} />
-                  ))}
-              </GoADropdown>
-              <div className="mt-1">
-                <ChipsWrapper>
-                  {(site.tags || []).map((tagChip) => {
-                    return (
-                      <div className="mr-1">
-                        <GoAFilterChip key={tagChip} content={tagChip} onClick={() => removeSelectedTag(tagChip)} />
-                      </div>
-                    );
-                  })}
-                </ChipsWrapper>
-              </div>
-            </GoAFormItem>
-          </div>
+          {showTaggingFeature && (
+            <div className="mt-1">
+              <GoAFormItem label="Add tag(s)">
+                <GoADropdown
+                  name="TagFilter"
+                  selectedValues={site.tags}
+                  multiSelect={true}
+                  disabled={false}
+                  onChange={(_, value) => {
+                    setSite({ ...site, tags: value });
+                  }}
+                >
+                  <GoADropdownOption value={NO_TAG_FILTER.value} label={NO_TAG_FILTER.label} />
+                  {tags
+                    .sort((a, b) => a.label.localeCompare(b.label))
+                    .map((tag) => (
+                      <GoADropdownOption key={tag.urn} value={tag.value} label={tag.label} />
+                    ))}
+                </GoADropdown>
+                <div className="mt-1">
+                  <ChipsWrapper>
+                    {(site.tags || []).map((tagChip) => {
+                      return (
+                        <div className="mr-1">
+                          <GoAFilterChip key={tagChip} content={tagChip} onClick={() => removeSelectedTag(tagChip)} />
+                        </div>
+                      );
+                    })}
+                  </ChipsWrapper>
+                </div>
+              </GoAFormItem>
+            </div>
+          )}
 
           <CheckboxSpaceWrapper>
             <GoACheckbox
