@@ -13,6 +13,8 @@ interface OverviewProps {
   setActiveEdit: (boolean) => void;
 }
 
+export const showTaggingFeature = false;
+
 export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
   const { setActiveEdit, setActiveIndex } = props;
 
