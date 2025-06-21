@@ -295,6 +295,7 @@ export class AdspFeedback implements AdspFeedbackApi {
         this.ratingErrorText.value.style.visibility = 'visible';
         this.errorsOnRating(true);
       }
+
       return false;
     } else {
       if (this.ratingErrorText.value) {
@@ -329,6 +330,7 @@ export class AdspFeedback implements AdspFeedbackApi {
 
   private async sendFeedback(event: Event) {
     event.preventDefault();
+
     const isValidForm = this.validateForm();
     if (isValidForm) {
       const headers: Record<string, string> = {
@@ -380,6 +382,11 @@ export class AdspFeedback implements AdspFeedbackApi {
       }
     } else {
       this.feedbackContentFormRef?.value?.setAttribute('style', 'padding-top:0px');
+      if (!this.validateRating()) {
+        if (this.feedbackFormRef.value) {
+          this.feedbackContentFormRef.value?.scrollTo(0, 0);
+        }
+      }
     }
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

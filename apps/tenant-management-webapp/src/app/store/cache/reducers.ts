@@ -3,7 +3,6 @@ import {
   CacheActionTypes,
   UPDATE_CACHE_TARGETS_SUCCESS_ACTION,
 } from './action';
-import { merge } from 'lodash';
 
 import { CacheState } from './model';
 
