@@ -5,9 +5,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { FindSubscribers } from '@store/subscription/actions';
 import { SubscriberList } from './subscriberList';
 import { NextLoader } from './nextLoader';
-import { CheckSubscriberRoles } from '../subscription/checkSubscriberRoles';
 import { PageIndicator } from '@components/Indicator';
+import { GoACallout } from '@abgov/react-components';
 import { RootState } from '@store/index';
+import { useHasRole } from '../subscription/useHasRole';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
@@ -60,24 +61,36 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
     dispatch(FindSubscribers(criteriaInit));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const hasSubscriptionAdmin = useHasRole('subscription-admin');
+
+  if (!hasSubscriptionAdmin) {
+    return (
+      <GoACallout type="important" testId="check-role-callout">
+        <h3>Access to subscriptions requires admin roles</h3>
+        <p>
+          You require the <strong>subscription-admin</strong> role to access notifications. Contact your administrator
+          if you believe this is an error.
+        </p>
+      </GoACallout>
+    );
+  }
+
   return (
     <section>
-      <CheckSubscriberRoles>
-        <div data-testid="subscribers-list-title">
-          <SubscribersSearchForm
-            onSearch={searchFn2}
-            reset={resetState}
-            searchCriteria={criteriaState}
-            onUpdate={setCriteriaState}
-          />
+      <div data-testid="subscribers-list-title">
+        <SubscribersSearchForm
+          onSearch={searchFn2}
+          reset={resetState}
+          searchCriteria={criteriaState}
+          onUpdate={setCriteriaState}
+        />
 
-          <SubscriberList searchCriteria={criteriaState} />
-          {indicator.show === false && subscribers?.length > 0 && (
-            <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />
-          )}
-          {indicator.show && <PageIndicator />}
-        </div>
-      </CheckSubscriberRoles>
+        <SubscriberList searchCriteria={criteriaState} />
+        {indicator.show === false && subscribers?.length > 0 && (
+          <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />
+        )}
+        {indicator.show && <PageIndicator />}
+      </div>
     </section>
   );
 };
