@@ -13,6 +13,7 @@ import {
   GoADropdownItem,
   GoAFormItem,
   GoAInputDate,
+  GoAModal,
   GoASkeleton,
 } from '@abgov/react-components';
 import { LoadMoreWrapper } from '@components/styled-components';
@@ -20,23 +21,9 @@ import { FeedbackSearchCriteria, getDefaultSearchCriteria } from '@store/feedbac
 import { exportFeedbacks, getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
 import { ExportDates, FeedbackFilterError, ProgressWrapper } from '../styled-components';
 import { transformedData } from '../ratings';
+import { FullScreenModalWrapper } from '../styled-components';
 
-interface VisibleProps {
-  visible: boolean;
-}
-
-interface ExportObj {
-  timestamp?: string;
-  site?: string;
-  view?: string;
-  correlationId?: string;
-  rating?: string;
-  ratingValue?: string;
-  comment?: string;
-  technicalIssue?: string;
-}
-
-const Visible = styled.div<VisibleProps>`
+const Visible = styled.div<{ visible: boolean }>`
   visibility: ${(props) => (props.visible ? 'visible' : 'hidden')};
 `;
 
@@ -54,6 +41,7 @@ export const FeedbacksList = (): JSX.Element => {
   const [searchCriteria, setSearchCriteria] = useState(getDefaultSearchCriteria);
   const [isExport, setIsExport] = useState(false);
   const [showDateError, setShowDateError] = useState(false);
+  const [expandView, setExpandView] = useState(false);
 
   useEffect(() => {
     dispatch(getFeedbackSites());
@@ -87,19 +75,16 @@ export const FeedbacksList = (): JSX.Element => {
   };
 
   const flattenJSON = (data) => {
-    return data.map((obj): ExportObj => {
-      const flat: ExportObj = {
-        timestamp: obj.timestamp ? new Date(obj.timestamp).toLocaleString() : undefined,
-        site: obj.context?.site,
-        view: obj.context?.view,
-        correlationId: obj.context?.correlationId,
-        rating: obj.value?.rating,
-        ratingValue: obj.value?.ratingValue?.toString(),
-        comment: obj.value?.comment,
-        technicalIssue: obj.value?.technicalIssue,
-      };
-      return flat;
-    });
+    return data.map((obj) => ({
+      timestamp: obj.timestamp ? new Date(obj.timestamp).toLocaleString() : undefined,
+      site: obj.context?.site,
+      view: obj.context?.view,
+      correlationId: obj.context?.correlationId,
+      rating: obj.value?.rating,
+      ratingValue: obj.value?.ratingValue?.toString(),
+      comment: obj.value?.comment,
+      technicalIssue: obj.value?.technicalIssue,
+    }));
   };
 
   useEffect(() => {
@@ -107,64 +92,99 @@ export const FeedbacksList = (): JSX.Element => {
       const transformData = transformedData(exportData);
       const data = flattenJSON(transformData);
       const fileName = `${tenantName}-feedbacks`;
-      const exportType = exportFromJSON.types.csv;
-      exportFromJSON({ data, fileName, exportType });
+      exportFromJSON({ data, fileName, exportType: exportFromJSON.types.csv });
       setIsExport(false);
     }
   }, [exportData]);
 
+  const sharedFilterForm = (
+    <div>
+      <GoAFormItem label="Registered sites">
+        {indicator.show && Object.keys(sites).length === 0 && <GoASkeleton type="text" />}
+        <GoADropdown
+          name="Sites"
+          value={selectedSite}
+          onChange={(name, site: string) => setSelectedSite(site)}
+          width={expandView ? '60%' : '100%'}
+          testId="sites-dropdown"
+          relative={true}
+        >
+          {sites.map((item) => (
+            <GoADropdownItem key={item.url} label={item.url} value={item.url} />
+          ))}
+        </GoADropdown>
+      </GoAFormItem>
+      <ExportDates>
+        <GoAFormItem label="Start date">
+          <GoAInputDate
+            width="30ch"
+            name="feedback-filter-start-date"
+            value={selectedSite && searchCriteria.startDate}
+            disabled={!selectedSite}
+            onChange={(name, value) => {
+              const updated = { ...searchCriteria, startDate: new Date(value).toISOString() };
+              setSearchCriteria(updated);
+              setShowDateError(!isSearchCriteriaValid(updated));
+            }}
+          />
+        </GoAFormItem>
+
+        <GoAFormItem label="End date">
+          <GoAInputDate
+            width="30ch"
+            name="feedback-filter-end-date"
+            value={selectedSite && searchCriteria.endDate}
+            disabled={!selectedSite}
+            onChange={(name, value) => {
+              const updated = { ...searchCriteria, endDate: new Date(value).toISOString() };
+              setSearchCriteria(updated);
+              setShowDateError(!isSearchCriteriaValid(updated));
+            }}
+          />
+        </GoAFormItem>
+      </ExportDates>
+    </div>
+  );
+
   return (
     <section>
+      <GoAModal open={expandView} heading="Feedback Service" onClose={() => setExpandView(false)} maxWidth="100%">
+        <FullScreenModalWrapper>
+          <h2 style={{ margin: 0 }}>Feedback service</h2>
+          <GoAButton
+            type="tertiary"
+            leadingIcon="arrow-back"
+            size="compact"
+            mt="s"
+            mb="s"
+            onClick={() => setExpandView(false)}
+          >
+            Back to default view
+          </GoAButton>
+          {sharedFilterForm}
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <GoAButton
+              type="primary"
+              onClick={exportToCsv}
+              disabled={!selectedSite || showDateError || feedbacks.length === 0}
+            >
+              Export CSV
+            </GoAButton>
+            <GoAButton type="secondary" trailingIcon="contract" onClick={() => setExpandView(false)}>
+              Collapse view
+            </GoAButton>
+          </div>
+          {!indicator.show && feedbacks.length === 0 && renderNoItem('feedbacks')}
+          {feedbacks.length > 0 && <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={false} />}
+        </FullScreenModalWrapper>
+      </GoAModal>
+
       {!sites && renderNoItem('feedback')}
       {!indicator.show && sites && Object.keys(sites).length === 0 && renderNoItem('feedback')}
 
       {sites && Object.keys(sites).length > 0 && (
         <div>
-          <GoAFormItem label="Registered sites">
-            {indicator.show && Object.keys(sites).length === 0 && <GoASkeleton type="text" />}
-            <GoADropdown
-              name="Sites"
-              value={selectedSite}
-              onChange={(name, site: string) => setSelectedSite(site)}
-              width="100%"
-              testId="sites-dropdown"
-              relative={true}
-            >
-              {sites.map((item) => (
-                <GoADropdownItem key={item.url} label={item.url} value={item.url} />
-              ))}
-            </GoADropdown>
-          </GoAFormItem>
-
-          <ExportDates>
-            <GoAFormItem label="Start date">
-              <GoAInputDate
-                width="30ch"
-                name="feedback-filter-start-date"
-                value={selectedSite && searchCriteria.startDate}
-                disabled={!selectedSite}
-                onChange={(name, value) => {
-                  const updated = { ...searchCriteria, startDate: new Date(value).toISOString() };
-                  setSearchCriteria(updated);
-                  setShowDateError(!isSearchCriteriaValid(updated));
-                }}
-              />
-            </GoAFormItem>
-
-            <GoAFormItem label="End date">
-              <GoAInputDate
-                width="30ch"
-                name="feedback-filter-end-date"
-                value={selectedSite && searchCriteria.endDate}
-                disabled={!selectedSite}
-                onChange={(name, value) => {
-                  const updated = { ...searchCriteria, endDate: new Date(value).toISOString() };
-                  setSearchCriteria(updated);
-                  setShowDateError(!isSearchCriteriaValid(updated));
-                }}
-              />
-            </GoAFormItem>
-          </ExportDates>
+          {sharedFilterForm}
 
           {showDateError && (
             <div>
@@ -172,14 +192,18 @@ export const FeedbacksList = (): JSX.Element => {
               <FeedbackFilterError>Start date must be before End date.</FeedbackFilterError>
             </div>
           )}
-
-          <GoAButton
-            type="primary"
-            onClick={exportToCsv}
-            disabled={!selectedSite || showDateError || Object.keys(feedbacks).length === 0}
-          >
-            Export
-          </GoAButton>
+          <ExportDates>
+            <GoAButton
+              type="primary"
+              onClick={exportToCsv}
+              disabled={!selectedSite || showDateError || feedbacks.length === 0}
+            >
+              Export
+            </GoAButton>
+            <GoAButton type="secondary" trailingIcon="expand" onClick={() => setExpandView(true)}>
+              Expand View
+            </GoAButton>
+          </ExportDates>
         </div>
       )}
 
@@ -189,11 +213,11 @@ export const FeedbacksList = (): JSX.Element => {
         </ProgressWrapper>
       )}
 
-      {!indicator.show && selectedSite && Object.keys(feedbacks).length === 0 && renderNoItem('feedbacks')}
+      {!indicator.show && selectedSite && feedbacks.length === 0 && renderNoItem('feedbacks')}
 
-      {selectedSite && Object.keys(feedbacks).length > 0 && (
+      {selectedSite && feedbacks.length > 0 && (
         <Visible visible={true}>
-          <FeedbackListTable feedbacks={feedbacks} />
+          <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={true} />
           {next && (
             <LoadMoreWrapper>
               <GoAButton type="tertiary" onClick={onNext}>
