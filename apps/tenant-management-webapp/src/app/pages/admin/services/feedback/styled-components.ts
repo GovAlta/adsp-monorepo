@@ -158,3 +158,21 @@ export const FeedbackHeader = styled.div`
   margin-top: var(--goa-space-l);
   margin-bottom: var(--goa-space-m);
 `;
+
+export const FullScreenModalWrapper = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+
+  background: #fff;
+  padding: 2rem 3rem;
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+
+  box-sizing: border-box;
+  z-index: 1000;
+`;

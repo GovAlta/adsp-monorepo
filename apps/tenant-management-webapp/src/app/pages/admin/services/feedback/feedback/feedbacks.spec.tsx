@@ -159,6 +159,22 @@ describe('Feedbacks Components', () => {
     );
     const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
     fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
-    expect(screen.getByText('No feedbacks found')).toBeInTheDocument();
+    expect(screen.getAllByText('No feedbacks found')).toBeTruthy();
+  });
+
+  it('should open full screen modal when "Expand View" button is clicked', async () => {
+    const { getByText } = render(
+      <Provider store={store}>
+        <FeedbacksList />
+      </Provider>
+    );
+
+    const expandBtn = getByText('Expand View');
+    fireEvent.click(expandBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Feedback service')).toBeInTheDocument();
+      expect(screen.getByText('Collapse view')).toBeInTheDocument();
+    });
   });
 });

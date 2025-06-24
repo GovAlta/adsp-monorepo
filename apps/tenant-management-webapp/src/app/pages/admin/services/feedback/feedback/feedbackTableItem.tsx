@@ -9,11 +9,13 @@ import moment from 'moment';
 interface FeedbackTableItemProps {
   id: string;
   feedback: Feedback;
+  showDetailsToggle?: boolean;
 }
 
 export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
   id,
   feedback,
+  showDetailsToggle,
 }: FeedbackTableItemProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -39,14 +41,16 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
         </td>
         <td data-testid={`feedback-list-rating_${id}`}>{ratingValue}</td>
         <td data-testid={`feedback-list-action_${id}`}>
-          <ActionIconsDiv>
-            <GoAContextMenuIcon
-              title="Toggle details"
-              type={showDetails ? 'eye-off' : 'eye'}
-              onClick={() => setShowDetails(!showDetails)}
-              testId={`toggle-details-visibility_${id}`}
-            />
-          </ActionIconsDiv>
+          {showDetailsToggle && (
+            <ActionIconsDiv>
+              <GoAContextMenuIcon
+                title="Toggle details"
+                type={showDetails ? 'eye-off' : 'eye'}
+                onClick={() => setShowDetails(!showDetails)}
+                testId={`toggle-details-visibility_${id}`}
+              />
+            </ActionIconsDiv>
+          )}
         </td>
       </tr>
       {showDetails && (
