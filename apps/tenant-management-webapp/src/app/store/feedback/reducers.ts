@@ -8,6 +8,7 @@ import {
   UPDATE_FEEDBACK_SITE_SUCCESS_ACTION,
   EXPORT_FEEDBACKS_SUCCESS_ACTION,
   FETCH_FEEDBACK_METRICS_SUCCESS_ACTION,
+  FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_SUCCESS_ACTION,
 } from './actions';
 
 export const initialState: FeedbackState = {
@@ -65,9 +66,22 @@ function feedbackReducer(state: FeedbackState = initialState, action: FeedbackAc
     case FETCH_FEEDBACK_METRICS_SUCCESS_ACTION: {
       return {
         ...state,
-        metrics: action.metrics,
+        metrics: {
+          ...state.metrics,
+          ...action.metrics,
+        },
       };
     }
+    case FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_SUCCESS_ACTION: {
+      return {
+        ...state,
+        metrics: {
+          ...state.metrics,
+          ...action.metrics,
+        },
+      };
+    }
+
     default:
       return state;
   }
