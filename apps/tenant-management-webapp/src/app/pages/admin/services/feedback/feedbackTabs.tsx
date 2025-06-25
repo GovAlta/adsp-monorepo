@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { FeedbackOverview } from './overview';
 import { FeedbackSites } from './sites/sites';
 import { FeedbacksList } from './feedback/feedbacks';
+import { FeedbackGuidance } from './guidance';
 
 import AsideLinks from '@components/AsideLinks';
 export const FeedbackTabs: FunctionComponent = () => {
@@ -30,6 +31,9 @@ export const FeedbackTabs: FunctionComponent = () => {
           </Tab>
           <Tab label="Feedback" data-testid="feedbacks-tab">
             <FeedbacksList />
+          </Tab>
+          <Tab label="Guidance" data-testid="feedbacks-overview-tab">
+            <FeedbackGuidance setActiveEdit={setActiveEdit} />
           </Tab>
         </Tabs>
       </Main>
