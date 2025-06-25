@@ -1,10 +1,10 @@
 import { GoAButton, GoATable } from '@abgov/react-components';
-import { Categorization, isVisible, Layout, SchemaBasedCondition, Scoped } from '@jsonforms/core';
+import { Categorization, isVisible, Layout, SchemaBasedCondition, Scoped, UISchemaElement } from '@jsonforms/core';
 import { JsonFormsDispatch, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { useContext } from 'react';
 import { GoABaseTableReviewRenderers } from '../../../index';
 import { withAjvProps } from '../../util/layout';
-import { JsonFormsStepperContext } from './context';
+import { JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
 import {
   TableReviewCategoryLabel,
   TableReviewItem,
@@ -15,17 +15,17 @@ import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { getProperty } from './util/helpers';
 
 export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
-  const { uischema, data, schema, ajv, cells, enabled, navigationFunc } = props;
-  const categorization = uischema as Categorization;
-  const categories = categorization.elements.filter((category) => isVisible(category, data, '', ajv));
+  const { data, schema, ajv, cells, enabled, navigationFunc } = props;
   const rescopeMaps = ['#/properties/albertaAddress', '#/properties/canadianAddress', '#/properties/sin'];
   const formStepperCtx = useContext(JsonFormsStepperContext);
-
+  const categories = (formStepperCtx as JsonFormsStepperContextProps)
+    .selectStepperState()
+    .categories.filter((category) => isVisible(category?.uischema as UISchemaElement, data, '', ajv));
   return (
     <TableReviewItem>
       <h2>Review your answers</h2>
       {categories.map((category, index) => {
-        const categoryLabel = category.label || category.i18n || 'Unknown Category';
+        const categoryLabel = category.label || (category?.uischema && category?.uischema.i18n) || 'Unknown Category';
         return (
           <>
             <TableReviewPageTitleRow>
@@ -35,8 +35,8 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
                 testId={`page-review-change-${category.label}-btn`}
                 onClick={() => {
                   if (formStepperCtx) {
-                    formStepperCtx.toggleShowReviewLink(index);
-                    formStepperCtx.goToPage(index);
+                    formStepperCtx.toggleShowReviewLink(category?.id);
+                    formStepperCtx.goToPage(category?.id);
                   }
                 }}
               >
@@ -44,7 +44,7 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
               </GoAButton>
             </TableReviewPageTitleRow>
             <TableReviewItemSection key={index}>
-              {category.elements
+              {category.uischema?.elements
                 .filter((field) => {
                   // [TODO] we need to double check why we cannot hide the elements at the element level
                   const conditionProps = field.rule?.condition as SchemaBasedCondition;
