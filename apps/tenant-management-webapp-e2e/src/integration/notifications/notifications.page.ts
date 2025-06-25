@@ -330,6 +330,10 @@ class NotificationsPage {
     );
   }
 
+  subscribersNoSubscriberFound() {
+    return cy.xpath('//*[@data-testid="subscribers-list-title"]//b[text()="No subscriber found"]');
+  }
+
   subscriberDeleteConfirmationModalTitle() {
     return cy.xpath('//*[@testid="delete-confirmation"]/*[@slot="heading"]');
   }
