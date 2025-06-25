@@ -108,3 +108,26 @@ Feature: Calendar
         And the user views "urn:ads:autotest:autotest-service" client roles for read and modify in calendar details modal
         When the user clicks Close button in View calendar details modal
         Then the user views View calendar details modal is closed
+
+    @TEST_CS-4120 @REQ_CS-3587 @regression
+    Scenario: As a tenant admin, I can select a core calendar from the calendar list and add/edit/delete events for the core calendar
+        Given a tenant admin user is on calendar service overview page
+        When the user selects "Events" tab for "Calendar"
+        # Add an event
+        And the user selects "form-intake" in Select a calendar on Events page
+        And the user clicks Add Event button on events page
+        Then the user views Add calendar event modal
+        When the user enters "autotest-addCoreEvent", "autotest event desc", "yes", "no", "Today", "10:30 am", "Today", "10:30 pm" in calendar event modal
+        And the user clicks Save button in calendar event modal
+        Then the user "views" the event of "autotest-addCoreEvent", "Today, 10:30 AM", "Today, 10:30 PM"
+        # Edit event
+        When the user clicks "edit" icon of "autotest-addCoreEvent", "Today, 10:30 AM", "Today, 10:30 PM"
+        Then the user views Edit calendar event modal
+        When the user enters "autotest-editCoreEvent", "autotest event desc edited", "no", "yes", "Today", "10:30 am", "Today", "10:30 pm" in calendar event modal
+        And the user clicks Save button in calendar event modal
+        Then the user "views" the event of "autotest-editCoreEvent", "Today", "Today"
+        # Delete event
+        When the user clicks "delete" icon of "autotest-editCoreEvent", "Today", "Today"
+        Then the user views delete "calendar event" confirmation modal for "autotest-editCoreEvent"
+        When the user clicks Delete button in delete confirmation modal
+        Then the user "should not view" the event of "autotest-editCoreEvent", "Today", "Today"
