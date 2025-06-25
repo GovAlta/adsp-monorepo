@@ -1,6 +1,6 @@
 import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
-import { select, call, put, takeLatest } from 'redux-saga/effects';
+import { select, call, put, takeLatest, all } from 'redux-saga/effects';
 import axios from 'axios';
 import { Feedback } from './models';
 import {
@@ -20,6 +20,8 @@ import {
   EXPORT_FEEDBACKS_ACTION,
   FETCH_FEEDBACK_METRICS_ACTION,
   fetchFeedbackMetricsSuccess,
+  FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_ACTION,
+  fetchFeedbackMetricsMonthlyChangeSuccess,
 } from './actions';
 import { getAccessToken } from '@store/tenant/sagas';
 import { SagaIterator } from 'redux-saga';
@@ -289,6 +291,110 @@ export function* fetchFeedbackMetrics(): SagaIterator {
     }
   }
 }
+
+export function* fetchFeedbackMetricsMoM(): SagaIterator {
+  const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+
+  if (baseUrl && token) {
+    try {
+      const now = moment();
+      const startOfThisMonth = now.clone().startOf('month');
+      const startOfLastMonth = now.clone().subtract(1, 'month').startOf('month');
+      const endOfLastMonth = startOfThisMonth.clone().subtract(1, 'day').endOf('day');
+
+      const criteriaCurrent = JSON.stringify({
+        intervalMin: startOfThisMonth.toISOString(),
+        intervalMax: now.toISOString(),
+      });
+
+      const criteriaPrevious = JSON.stringify({
+        intervalMin: startOfLastMonth.toISOString(),
+        intervalMax: endOfLastMonth.toISOString(),
+      });
+
+      const [currentResp, previousResp]: [
+        { data: Record<string, MetricResponse> },
+        { data: Record<string, MetricResponse> }
+      ] = yield all([
+        call(axios.get, `${baseUrl}/value/v1/feedback-service/values/feedback/metrics?criteria=${criteriaCurrent}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        call(axios.get, `${baseUrl}/value/v1/feedback-service/values/feedback/metrics?criteria=${criteriaPrevious}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      const extractCounts = (data: Record<string, MetricResponse>) =>
+        Object.entries(data)
+          .filter(([name]) => name.split(':').length === 3 && name.endsWith(':count'))
+          .reduce((acc, [name, metric]) => {
+            acc[name.replace(':count', '')] = parseInt(metric?.values[0]?.sum || '0');
+            return acc;
+          }, {} as Record<string, number>);
+
+      const extractRatings = (data: Record<string, MetricResponse>) =>
+        Object.entries(data)
+          .filter(([name]) => name.split(':').length === 3 && name.endsWith(':rating'))
+          .reduce((acc, [name, metric]) => {
+            const rating = metric?.values[0]?.avg;
+            if (rating) {
+              acc.push([name.replace(':rating', ''), parseFloat(rating)]);
+            }
+            return acc;
+          }, [] as [string, number][]);
+
+      const getWeightedAverage = (ratings: [string, number][], counts: Record<string, number>) => {
+        const total = ratings.reduce((sum, [site, rating]) => sum + rating * (counts[site] || 0), 0);
+        const count = ratings.reduce((sum, [site]) => sum + (counts[site] || 0), 0);
+        return count > 0 ? Math.round((total * 10) / count) / 10 : null;
+      };
+
+      const getLowestRating = (ratings: [string, number][]) =>
+        ratings.length ? Math.min(...ratings.map(([, rating]) => rating)) : null;
+
+      // Extract and compute
+      const currentCounts = extractCounts(currentResp.data);
+      const previousCounts = extractCounts(previousResp.data);
+
+      const currentRatings = extractRatings(currentResp.data);
+      const previousRatings = extractRatings(previousResp.data);
+
+      const currentCountTotal = Object.values(currentCounts).reduce((a, b) => a + b, 0);
+      const previousCountTotal = Object.values(previousCounts).reduce((a, b) => a + b, 0);
+
+      const currentAvg = getWeightedAverage(currentRatings, currentCounts);
+      const previousAvg = getWeightedAverage(previousRatings, previousCounts);
+
+      const currentLowest = getLowestRating(currentRatings);
+      const previousLowest = getLowestRating(previousRatings);
+
+      const momCount =
+        previousCountTotal > 0 ? ((currentCountTotal - previousCountTotal) / previousCountTotal) * 100 : null;
+
+      const momAvg =
+        previousAvg && previousAvg > 0 && currentAvg != null ? ((currentAvg - previousAvg) / previousAvg) * 100 : null;
+
+      const momLowest =
+        previousLowest && previousLowest > 0 && currentLowest != null
+          ? ((currentLowest - previousLowest) / previousLowest) * 100
+          : null;
+
+      yield put(
+        fetchFeedbackMetricsMonthlyChangeSuccess({
+          momCountPercent: momCount,
+
+          momAvgRatingPercent: momAvg,
+
+          momLowestRatingPercent: momLowest,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
+
 function incrementRatingValue(feedback: Feedback[]): Feedback[] {
   if (!feedback || !Array.isArray(feedback)) {
     return feedback;
@@ -308,4 +414,5 @@ export function* watchFeedbackSagas(): Generator {
   yield takeLatest(UPDATE_FEEDBACK_SITE_ACTION, updateFeedbackSite);
   yield takeLatest(DELETE_FEEDBACK_SITE_ACTION, deleteFeedbackSite);
   yield takeLatest(FETCH_FEEDBACK_METRICS_ACTION, fetchFeedbackMetrics);
+  yield takeLatest(FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_ACTION, fetchFeedbackMetricsMoM);
 }

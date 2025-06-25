@@ -136,21 +136,22 @@ export const AddEditTargetCache = ({
                 setTarget({ ...target, urn: value });
               }}
             >
-              {tenantDirectory.map((directory) => (
-                <GoADropdownItem value={directory.urn} label={directory.urn} />
-              ))}
+              {tenantDirectory &&
+                tenantDirectory.map((directory) => <GoADropdownItem value={directory.urn} label={directory.urn} />)}
             </GoADropdown>
           </GoAFormItem>
 
-          <GoAFormItem label="Url" mb="5" mt="5">
-            <GoAInput
-              name="target-url"
-              testId="target-url"
-              width="100%"
-              disabled={true}
-              value={tenantDirectory.find((directory) => directory.urn === target.urn)?.url}
-            />
-          </GoAFormItem>
+          {tenantDirectory && (
+            <GoAFormItem label="Url" mb="5" mt="5">
+              <GoAInput
+                name="target-url"
+                testId="target-url"
+                width="100%"
+                disabled={true}
+                value={tenantDirectory.find((directory) => directory.urn === target.urn)?.url}
+              />
+            </GoAFormItem>
+          )}
 
           <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="TTL" mb="3" mt="3">
             <GoAInput

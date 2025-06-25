@@ -441,7 +441,7 @@ class HandlebarsTemplateService implements TemplateService {
       }
 
       if (urnCount > 0) {
-        value = `${urnCount} file${urnCount > 1 && 's'} uploaded`;
+        value = `${urnCount} file${urnCount > 1 ? 's' : ''} uploaded`;
       } else {
         value = valueMap(value);
       }

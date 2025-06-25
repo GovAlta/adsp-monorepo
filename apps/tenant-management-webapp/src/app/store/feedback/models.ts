@@ -44,6 +44,9 @@ export interface FeedbackMetrics {
   averageRating?: number;
   lowestSiteAverageRating?: number;
   feedbackCount?: number;
+  momCountPercent?: number | null;
+  momAvgRatingPercent?: number | null;
+  momLowestRatingPercent?: number | null;
 }
 
 export interface FeedbackState {
