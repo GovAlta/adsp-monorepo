@@ -642,9 +642,25 @@ Then(
         break;
       case 'should not view':
         if (phoneNumber == 'EMPTY') {
-          notificationsObj.subscriber(addressAs, email).should('not.exist');
+          //check for No subscriber found message
+          notificationsObj.subscribersNoSubscriberFound().then(($el) => {
+            if ($el.length > 0) {
+              cy.wrap($el).should('contain.text', 'No subscriber found');
+            } else {
+              cy.log('No subscriber found message is not displayed');
+              notificationsObj.subscriber(addressAs, email).should('not.exist');
+            }
+          });
         } else {
-          notificationsObj.subscriberWithPhoneNumber(addressAs, email, phoneNumberInDisplay).should('not.exist');
+          //check for No subscriber found message
+          notificationsObj.subscribersNoSubscriberFound().then(($el) => {
+            if ($el.length > 0) {
+              cy.wrap($el).should('contain.text', 'No subscriber found');
+            } else {
+              cy.log('No subscriber found message is not displayed');
+              notificationsObj.subscriberWithPhoneNumber(addressAs, email, phoneNumberInDisplay).should('not.exist');
+            }
+          });
         }
         break;
       default:
