@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GoAButton, GoAButtonGroup, GoAModal, GoATextArea, GoAInput, GoAFormItem } from '@abgov/react-components';
 import { CalendarItem } from '@store/calendar/models';
 import { useSelector, useDispatch } from 'react-redux';
@@ -30,12 +30,13 @@ export const CalendarModal = ({
   onSave,
   open,
 }: CalendarModalProps): JSX.Element => {
-  const isNew = !(calendarName?.length > 0);
+  const isNew = !((calendarName?.length ?? 0) > 0);
   const initialValue = useSelector((state: RootState) => selectCalendarsByName(state, calendarName));
 
   const [calendar, setCalendar] = useState<CalendarItem>(initialValue);
   const dispatch = useDispatch();
   const roles = useSelector(selectRoleList);
+  const scrollPaneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
@@ -82,7 +83,9 @@ export const CalendarModal = ({
       }
     }
     onSave(calendar);
-    onCancel();
+    if (onCancel) {
+      onCancel();
+    }
     validators.clear();
   };
   const ClientRole = ({ roleNames, clientId }) => {
@@ -116,7 +119,9 @@ export const CalendarModal = ({
   const handleCancelClick = () => {
     setCalendar(initialValue);
     validators.clear();
-    onCancel();
+    if (onCancel) {
+      onCancel();
+    }
   };
 
   return (
@@ -146,49 +151,58 @@ export const CalendarModal = ({
         </GoAButtonGroup>
       }
     >
-      <GoAFormItem error={errors?.['name']} label="Name">
-        <GoAInput
-          type="text"
-          name="name"
-          value={calendar?.displayName}
-          testId={`calendar-modal-name-input`}
-          aria-label="name"
-          disabled={!isNew || !tenantMode}
-          width="100%"
-          onChange={(name, value) => {
-            validateField('name', value);
-            const calendarId = toKebabName(value);
-            setCalendar({ ...calendar, name: calendarId, displayName: value });
-          }}
-          onBlur={() => validateField('name', calendar?.displayName || '')}
-        />
-      </GoAFormItem>
-      {tenantMode && (
-        <GoAFormItem label="Calendar ID">
-          <IdField>{calendar?.name}</IdField>
-        </GoAFormItem>
-      )}
-      {tenantMode && (
-        <GoAFormItem error={errors?.['description']} label="Description">
-          <GoATextArea
-            name="description"
-            value={calendar?.description}
-            testId={`calendar-modal-description-input`}
-            aria-label="description"
+      <div
+        ref={scrollPaneRef}
+        className="roles-scroll-pane"
+        style={{ overflowY: 'auto', maxHeight: '70vh', paddingRight: 0 }}
+      >
+        <GoAFormItem error={errors?.['name']} label="Name">
+          <GoAInput
+            type="text"
+            name="name"
+            value={calendar?.displayName}
+            testId={`calendar-modal-name-input`}
+            aria-label="name"
+            disabled={!isNew || !tenantMode}
             width="100%"
-            onKeyPress={(name, value, key) => {
-              validators.remove('description');
-              validators['description'].check(value);
-              setCalendar({ ...calendar, description: value });
+            onChange={(name, value) => {
+              validateField('name', value);
+              const calendarId = toKebabName(value);
+              setCalendar({ ...calendar, name: calendarId, displayName: value });
             }}
-            // eslint-disable-next-line
-            onChange={(name, value) => {}}
+            onBlur={() => validateField('name', calendar?.displayName || '')}
           />
         </GoAFormItem>
-      )}
-      {roles?.length !== 0 &&
-        roles.map((r) => <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />)}
-      {roles?.length === 0 && <TextGoASkeleton />}
+        {tenantMode && (
+          <GoAFormItem label="Calendar ID">
+            <IdField>{calendar?.name}</IdField>
+          </GoAFormItem>
+        )}
+        {tenantMode && (
+          <GoAFormItem error={errors?.['description']} label="Description">
+            <GoATextArea
+              name="description"
+              value={calendar?.description}
+              testId={`calendar-modal-description-input`}
+              aria-label="description"
+              width="100%"
+              onKeyPress={(name, value, key) => {
+                validators.remove('description');
+                validators['description'].check(value);
+                setCalendar({ ...calendar, description: value });
+              }}
+              // eslint-disable-next-line
+              onChange={(name, value) => {}}
+            />
+          </GoAFormItem>
+        )}
+
+        {Array.isArray(roles) &&
+          roles.length !== 0 &&
+          roles.map((r) => <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />)}
+
+        {Array.isArray(roles) && roles.length === 0 && <TextGoASkeleton />}
+      </div>
     </GoAModal>
   );
 };
