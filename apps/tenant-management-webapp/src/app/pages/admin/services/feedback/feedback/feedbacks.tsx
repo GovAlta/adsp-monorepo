@@ -8,6 +8,7 @@ import { renderNoItem } from '@components/NoItem';
 import {
   GoABadge,
   GoAButton,
+  GoAButtonGroup,
   GoACircularProgress,
   GoADropdown,
   GoADropdownItem,
@@ -162,7 +163,8 @@ export const FeedbacksList = (): JSX.Element => {
             Back to default view
           </GoAButton>
           {sharedFilterForm}
-          <div style={{ display: 'flex', gap: '1rem' }}>
+
+          <GoAButtonGroup alignment="start">
             <GoAButton
               type="primary"
               onClick={exportToCsv}
@@ -173,7 +175,8 @@ export const FeedbacksList = (): JSX.Element => {
             <GoAButton type="secondary" trailingIcon="contract" onClick={() => setExpandView(false)}>
               Collapse view
             </GoAButton>
-          </div>
+          </GoAButtonGroup>
+
           {!indicator.show && feedbacks.length === 0 && renderNoItem('feedbacks')}
           {feedbacks.length > 0 && <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={false} />}
         </FullScreenModalWrapper>
@@ -198,7 +201,7 @@ export const FeedbacksList = (): JSX.Element => {
               onClick={exportToCsv}
               disabled={!selectedSite || showDateError || feedbacks.length === 0}
             >
-              Export
+              Export CSV
             </GoAButton>
             <GoAButton type="secondary" trailingIcon="expand" onClick={() => setExpandView(true)}>
               Expand View

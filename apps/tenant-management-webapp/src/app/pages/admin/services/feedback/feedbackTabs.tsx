@@ -26,12 +26,13 @@ export const FeedbackTabs: FunctionComponent = () => {
           <Tab label="Overview" data-testid="feedbacks-overview-tab">
             <FeedbackOverview setActiveEdit={setActiveEdit} />
           </Tab>
-          <Tab label="Sites" data-testid="feedback-sites-tab">
-            <FeedbackSites activeEdit={activateEdit} />
-          </Tab>
           <Tab label="Feedback" data-testid="feedbacks-tab">
             <FeedbacksList />
           </Tab>
+          <Tab label="Sites" data-testid="feedback-sites-tab">
+            <FeedbackSites activeEdit={activateEdit} />
+          </Tab>
+
           <Tab label="Guidance" data-testid="feedbacks-overview-tab">
             <FeedbackGuidance setActiveEdit={setActiveEdit} />
           </Tab>

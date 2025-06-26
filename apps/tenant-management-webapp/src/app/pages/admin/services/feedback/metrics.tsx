@@ -4,24 +4,26 @@ import { Metrics } from './feedbackMetrics';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { NoPaddingH2 } from '@components/AppHeader';
 
 const Title = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: baseline;
 `;
-
+const WeekDiv = styled.div`
+  font-size: var(--fs-sm);
+  color: #5f5b5b;
+`;
 export const FeedbackMetrics: FunctionComponent = () => {
   const metrics = useSelector((state: RootState) => state.feedback.metrics);
 
   return (
     <section>
       <Title>
-        <NoPaddingH2>Summary</NoPaddingH2>
-        <p>for week of {moment().format('MMMM Do')}</p>
+        <h2>Summary</h2>
+        <WeekDiv>for week of {moment().format('MMMM Do')}</WeekDiv>
       </Title>
-      <hr />
+      <hr style={{ marginTop: 0 }} />
       <Metrics
         metrics={[
           {

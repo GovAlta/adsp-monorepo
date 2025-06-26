@@ -41,7 +41,7 @@ export const FeedbackListTable: FunctionComponent<FeedbackTableProps> = ({ feedb
                 <tr key={id}>
                   <td>{submissionDate}</td>
                   <td>{view}</td>
-                  <td>{ratingValue}</td>
+                  <td>{`${ratingValue} - ${feedback.value.rating}`}</td>
                   <td>{feedback.value.comment?.trim() || '-'}</td>
                   <td>{feedback.value.technicalIssue?.trim() || '-'}</td>
                 </tr>
