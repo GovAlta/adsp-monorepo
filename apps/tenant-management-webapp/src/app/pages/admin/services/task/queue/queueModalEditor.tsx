@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -51,7 +51,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 8 : height + 42;
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
-
+  const scrollPaneRef = useRef<HTMLDivElement>(null);
   const isEdit = !!id;
   const heightCover = {
     height: calcHeight - 550,
@@ -245,7 +245,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
           <TaskPermissions className="task-permissions-wrapper">
             <TaskEditorTitle>Queue permissions</TaskEditorTitle>
             <hr className="hr-resize" />
-            <ScrollPane>
+            <ScrollPane ref={scrollPaneRef} className="roles-scroll-pane">
               {tenantClients &&
                 elements.map((e, key) => {
                   return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;

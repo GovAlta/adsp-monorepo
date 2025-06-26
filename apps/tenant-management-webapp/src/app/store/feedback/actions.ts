@@ -17,11 +17,16 @@ export const DELETE_FEEDBACK_SITE_SUCCESS_ACTION = 'feedback/DELETE_FEEDBACK_SIT
 export const FETCH_FEEDBACK_METRICS_ACTION = 'feedback/FETCH_FEEDBACK_METRICS_ACTION';
 export const FETCH_FEEDBACK_METRICS_SUCCESS_ACTION = 'feedback/FETCH_FEEDBACK_METRICS_SUCCESS_ACTION';
 
+export const FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_ACTION = 'feedback/FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_ACTION';
+export const FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_SUCCESS_ACTION =
+  'feedback/FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_SUCCESS_ACTION';
+
 export interface FetchFeedbacksAction {
   type: typeof FETCH_FEEDBACKS_ACTION;
   feedback: FeedbackSite;
   searchCriteria: FeedbackSearchCriteria;
   next: string;
+  resolve?: (feedbacks: Feedback[]) => void;
 }
 export interface ExportFeedbacksAction {
   type: typeof EXPORT_FEEDBACKS_ACTION;
@@ -74,7 +79,14 @@ export interface FetchFeedbackMetricsSuccessAction {
   type: typeof FETCH_FEEDBACK_METRICS_SUCCESS_ACTION;
   metrics: FeedbackMetrics;
 }
+export interface FetchFeedbackMetricsMonthlyChangeAction {
+  type: typeof FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_ACTION;
+}
 
+export interface FetchFeedbackMetricsMonthlyChangeSuccessAction {
+  type: typeof FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_SUCCESS_ACTION;
+  metrics: FeedbackMetrics;
+}
 export type FeedbackActionTypes =
   | FetchFeedbacksAction
   | FetchFeedbacksSuccessAction
@@ -86,17 +98,21 @@ export type FeedbackActionTypes =
   | DeleteFeedbackSiteAction
   | DeleteFeedbackSiteSuccessAction
   | FetchFeedbackMetricsAction
-  | FetchFeedbackMetricsSuccessAction;
+  | FetchFeedbackMetricsSuccessAction
+  | FetchFeedbackMetricsMonthlyChangeAction
+  | FetchFeedbackMetricsMonthlyChangeSuccessAction;
 
 export const getFeedbacks = (
   payload: FeedbackSite,
   searchCriteria: FeedbackSearchCriteria,
-  next?: string
+  next?: string,
+  resolve?: (feedbacks: Feedback[]) => void
 ): FetchFeedbacksAction => ({
   type: FETCH_FEEDBACKS_ACTION,
   feedback: payload,
   searchCriteria,
   next,
+  resolve,
 });
 export const exportFeedbacks = (
   payload: SelectedSite,
@@ -151,5 +167,15 @@ export const fetchFeedbackMetrics = (): FetchFeedbackMetricsAction => ({
 
 export const fetchFeedbackMetricsSuccess = (metrics: FeedbackMetrics): FetchFeedbackMetricsSuccessAction => ({
   type: FETCH_FEEDBACK_METRICS_SUCCESS_ACTION,
+  metrics,
+});
+export const fetchFeedbackMetricsMonthlyChange = (): FetchFeedbackMetricsMonthlyChangeAction => ({
+  type: FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_ACTION,
+});
+
+export const fetchFeedbackMetricsMonthlyChangeSuccess = (
+  metrics: FeedbackMetrics
+): FetchFeedbackMetricsMonthlyChangeSuccessAction => ({
+  type: FETCH_FEEDBACK_METRICS_MONTHLY_CHANGE_SUCCESS_ACTION,
   metrics,
 });

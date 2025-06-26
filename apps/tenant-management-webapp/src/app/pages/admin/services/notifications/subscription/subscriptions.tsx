@@ -4,11 +4,12 @@ import { SubscriptionList } from './subscriptionList';
 import { GetAllTypeSubscriptions, DeleteSubscription } from '@store/subscription/actions';
 import type { Subscriber, SubscriberSearchCriteria, SubscriptionSearchCriteria } from '@store/subscription/models';
 import { SubscribersSearchForm } from '../subscribers/subscriberSearchForm';
-import { CheckSubscriberRoles } from './checkSubscriberRoles';
 import { DeleteModal } from '@components/DeleteModal';
 import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 import { Events } from '@store/subscription/models';
+import { GoACallout } from '@abgov/react-components';
+import { useHasRole } from '../subscription/useHasRole';
 
 export const Subscriptions: FunctionComponent = () => {
   const criteriaInit = {
@@ -47,45 +48,57 @@ export const Subscriptions: FunctionComponent = () => {
 
   const emailIndex = selectedSubscription?.channels?.findIndex((channel) => channel.channel === 'email');
 
+  const hasSubscriptionAdmin = useHasRole('subscription-admin');
+
+  if (!hasSubscriptionAdmin) {
+    return (
+      <GoACallout type="important" testId="check-role-callout">
+        <h3>Access to subscriptions requires admin roles</h3>
+        <p>
+          You require the <strong>subscription-admin</strong> role to access notifications. Contact your administrator
+          if you believe this is an error.
+        </p>
+      </GoACallout>
+    );
+  }
+
   return (
     <section>
-      <CheckSubscriberRoles>
-        <SubscribersSearchForm
-          onSearch={searchFn}
-          reset={resetState}
-          searchCriteria={criteriaState}
-          onUpdate={setCriteriaState}
-        />
-        {indicator.show && <PageIndicator />}
+      <SubscribersSearchForm
+        onSearch={searchFn}
+        reset={resetState}
+        searchCriteria={criteriaState}
+        onUpdate={setCriteriaState}
+      />
+      {indicator.show && <PageIndicator />}
 
-        {(indicator.show === false && loadingState === undefined) ||
-          (loadingState?.state === 'completed' && (
-            <SubscriptionList
-              onDelete={(sub: Subscriber, type: string) => {
-                setSelectedSubscription(sub);
-                setShowDeleteConfirmation(true);
-                setSelectedType(type);
-              }}
-              searchCriteria={criteriaState}
-            />
-          ))}
+      {(indicator.show === false && loadingState === undefined) ||
+        (loadingState?.state === 'completed' && (
+          <SubscriptionList
+            onDelete={(sub: Subscriber, type: string) => {
+              setSelectedSubscription(sub);
+              setShowDeleteConfirmation(true);
+              setSelectedType(type);
+            }}
+            searchCriteria={criteriaState}
+          />
+        ))}
 
-        {/* Delete confirmation */}
-        <DeleteModal
-          isOpen={showDeleteConfirmation}
-          title="Delete subscription"
-          content={
-            <div>
-              Are you sure you wish to delete <b>{selectedSubscription?.channels[emailIndex]?.address}</b>?
-            </div>
-          }
-          onCancel={() => setShowDeleteConfirmation(false)}
-          onDelete={() => {
-            setShowDeleteConfirmation(false);
-            dispatch(DeleteSubscription({ data: { type: selectedType, data: selectedSubscription } }));
-          }}
-        />
-      </CheckSubscriberRoles>
+      {/* Delete confirmation */}
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete subscription"
+        content={
+          <div>
+            Are you sure you wish to delete <b>{selectedSubscription?.channels[emailIndex]?.address}</b>?
+          </div>
+        }
+        onCancel={() => setShowDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowDeleteConfirmation(false);
+          dispatch(DeleteSubscription({ data: { type: selectedType, data: selectedSubscription } }));
+        }}
+      />
     </section>
   );
 };

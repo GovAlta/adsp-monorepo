@@ -34,6 +34,7 @@ export interface Page {
 export interface FeedbackSite {
   url: string;
   allowAnonymous: boolean;
+  tags?: string[];
 }
 export interface SelectedSite {
   site: string;
@@ -43,6 +44,9 @@ export interface FeedbackMetrics {
   averageRating?: number;
   lowestSiteAverageRating?: number;
   feedbackCount?: number;
+  momCountPercent?: number | null;
+  momAvgRatingPercent?: number | null;
+  momLowestRatingPercent?: number | null;
 }
 
 export interface FeedbackState {
@@ -76,4 +80,5 @@ export const getDefaultSearchCriteria = (): FeedbackSearchCriteria => {
 export const defaultFeedbackSite: FeedbackSite = {
   url: '',
   allowAnonymous: false,
+  tags: [],
 };

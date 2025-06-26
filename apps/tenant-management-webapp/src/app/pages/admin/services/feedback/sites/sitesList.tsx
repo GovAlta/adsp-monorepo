@@ -6,6 +6,9 @@ import type { FeedbackSite } from '@store/feedback/models';
 import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { renderNoItem } from '@components/NoItem';
+import { TagBadgePadding, DetailsTagWrapper, DetailsTagHeading } from '../../form/styled-components';
+import { GoABadge } from '@abgov/react-components';
+import { showTaggingFeature } from '../overview';
 
 interface SiteProps {
   site: FeedbackSite;
@@ -19,25 +22,54 @@ const SiteComponent: FunctionComponent<SiteProps> = ({ site, onEdit, onDelete, s
   const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <tr>
-      <td headers="Site" data-testid="site">
-        {site.url}
-      </td>
-      <td headers="Allow Anonymous" data-testid="allowAnonymous">
-        {site.allowAnonymous ? 'Yes' : 'No'}
-      </td>
-      <td>
-        <GoAContextMenu>
-          <GoAContextMenuIcon testId="site-edit" title="Edit" type="create" onClick={() => onEdit(site)} />
-          <GoAContextMenuIcon
-            testId={`site-delete-${siteindex}`}
-            title="Delete"
-            type="trash"
-            onClick={() => onDelete(site)}
-          />
-        </GoAContextMenu>
-      </td>
-    </tr>
+    <>
+      <tr>
+        <td headers="Site" data-testid="site">
+          {site.url}
+        </td>
+        <td headers="Allow Anonymous" data-testid="allowAnonymous">
+          {site.allowAnonymous ? 'Yes' : 'No'}
+        </td>
+        <td>
+          <GoAContextMenu>
+            <GoAContextMenuIcon testId="site-edit" title="Edit" type="create" onClick={() => onEdit(site)} />
+            <GoAContextMenuIcon
+              testId={`site-delete-${siteindex}`}
+              title="Delete"
+              type="trash"
+              onClick={() => onDelete(site)}
+            />
+            {showTaggingFeature && site.tags?.length > 0 && (
+              <GoAContextMenuIcon
+                type={showDetails ? 'eye-off' : 'eye'}
+                title="Toggle details"
+                onClick={() => setShowDetails(!showDetails)}
+                testId="toggle-details-visibility"
+              />
+            )}
+          </GoAContextMenu>
+        </td>
+      </tr>
+      {showDetails && (
+        <tr>
+          <td className="payload-details" headers="namespace name description payload" colSpan={5}>
+            {site && site.tags?.length > 0 && (
+              <>
+                <DetailsTagHeading>Tags</DetailsTagHeading>
+
+                <DetailsTagWrapper>
+                  {site.tags.map((tag) => (
+                    <TagBadgePadding>
+                      <GoABadge type={'midtone'} content={tag} testId={tag} mb="xs" mr="xs"></GoABadge>
+                    </TagBadgePadding>
+                  ))}
+                </DetailsTagWrapper>
+              </>
+            )}
+          </td>
+        </tr>
+      )}
+    </>
   );
 };
 

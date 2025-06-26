@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import { CommentTopicTypes } from '@store/comment/model';
 import { useValidators } from '@lib/validation/useValidators';
@@ -68,7 +68,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   const latestNotification = useSelector(
     (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
   );
-
+  const scrollPaneRef = useRef<HTMLDivElement>(null);
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 8 : height;
 
@@ -137,20 +137,11 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
         clientId={clientId}
         roleSelectFunc={(roles, type) => {
           if (type === applicantRoles.name) {
-            setTopicType({
-              ...topicType,
-              adminRoles: roles,
-            });
+            setTopicType((prev) => ({ ...prev, adminRoles: roles }));
           } else if (type === clerkRoles.name) {
-            setTopicType({
-              ...topicType,
-              commenterRoles: roles,
-            });
+            setTopicType((prev) => ({ ...prev, commenterRoles: roles }));
           } else {
-            setTopicType({
-              ...topicType,
-              readerRoles: roles,
-            });
+            setTopicType((prev) => ({ ...prev, readerRoles: roles }));
           }
         }}
         nameColumnWidth={40}
@@ -300,8 +291,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                         }
                       }
                       setCustomIndicator(true);
-
-                      dispatch(updateCommentTopicType(topicType));
+                      setInitialTopicType({ ...topicType });
+                      dispatch(updateCommentTopicType({ ...topicType }));
                     }
                   }}
                 >
@@ -327,7 +318,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
           <CommentPermissions>
             <CommentEditorTitle>Roles</CommentEditorTitle>
             <hr className="hr-resize" />
-            <ScrollPane>
+            <ScrollPane ref={scrollPaneRef} className="roles-scroll-pane">
               {elements.map((e, key) => {
                 return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
               })}

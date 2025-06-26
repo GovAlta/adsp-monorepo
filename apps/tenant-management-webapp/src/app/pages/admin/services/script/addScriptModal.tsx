@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   GoACheckbox,
   GoATextArea,
@@ -44,7 +44,7 @@ export const AddScriptModal = ({
   const scripts = useSelector((state: RootState) => {
     return state?.scriptService?.scripts;
   });
-
+  const scrollPaneRef = useRef<HTMLDivElement>(null);
   const roles = useSelector(selectRoleList);
   const scriptNames = scripts ? Object.keys(scripts) : [];
   const { errors, validators } = useValidators(
@@ -79,9 +79,13 @@ export const AddScriptModal = ({
 
     onSave(script);
     if (isNew) {
-      openEditorOnAdd(script);
+      if (openEditorOnAdd) {
+        openEditorOnAdd(script);
+      }
     } else {
-      onCancel();
+      if (onCancel) {
+        onCancel();
+      }
     }
     validators.clear();
   };
@@ -135,76 +139,82 @@ export const AddScriptModal = ({
         </GoAButtonGroup>
       }
     >
-      <GoAFormItem error={errors?.['name']} label="Name">
-        <GoAInput
-          type="text"
-          name="name"
-          value={script.name}
-          width="100%"
-          testId={`script-modal-name-input`}
-          aria-label="name"
-          onChange={(name, value) => {
-            const scriptId = toKebabName(value);
-            validators.remove('name');
-            const validations = {
-              name: value,
-            };
-            validations['duplicated'] = scriptId;
-            validators.checkAll(validations);
-            if (isNew) {
-              setScript({ ...script, name: value, id: scriptId });
-            } else {
-              setScript({ ...script, name: value });
-            }
-          }}
-          onBlur={() => {
-            validators.checkAll({ name: script.name });
-          }}
-        />
-      </GoAFormItem>
-      <GoAFormItem label="Script ID">
-        <IdField>{script.id}</IdField>
-      </GoAFormItem>
-      <GoAFormItem error={errors?.['description']} label="Description">
-        <GoATextArea
-          name="description"
-          value={script.description}
-          testId={`script-modal-description-input`}
-          aria-label="description"
-          width="100%"
-          // eslint-disable-next-line
-          onChange={() => {}}
-          onKeyPress={(name, value, key) => {
-            const description = value;
-            validators.remove('description');
-            validators['description'].check(description);
-            setScript({ ...script, description });
-          }}
-        />
-      </GoAFormItem>
-      <br />
-      {isNew && (
-        <GoACheckbox
-          checked={script.useServiceAccount}
-          name="script-use-service-account-checkbox"
-          testId="script-use-service-account-checkbox"
-          onChange={() => {
-            setScript({
-              ...script,
-              useServiceAccount: !script.useServiceAccount,
-            });
-          }}
-          text="Use service account"
-          ariaLabel={`script-use-service-account-checkbox`}
-        />
-      )}
-      {roles &&
-        isNew &&
-        roles.map((r) => {
-          return <RunnerRole roleNames={r?.roleNames} key={r?.clientId} clientId={r?.clientId} />;
-        })}
+      <div
+        ref={scrollPaneRef}
+        className="roles-scroll-pane"
+        style={{ overflowY: 'auto', maxHeight: '70vh', paddingRight: 0 }}
+      >
+        <GoAFormItem error={errors?.['name']} label="Name">
+          <GoAInput
+            type="text"
+            name="name"
+            value={script.name}
+            width="100%"
+            testId={`script-modal-name-input`}
+            aria-label="name"
+            onChange={(name, value) => {
+              const scriptId = toKebabName(value);
+              validators.remove('name');
+              const validations = {
+                name: value,
+              };
+              validations['duplicated'] = scriptId;
+              validators.checkAll(validations);
+              if (isNew) {
+                setScript({ ...script, name: value, id: scriptId });
+              } else {
+                setScript({ ...script, name: value });
+              }
+            }}
+            onBlur={() => {
+              validators.checkAll({ name: script.name });
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem label="Script ID">
+          <IdField>{script.id}</IdField>
+        </GoAFormItem>
+        <GoAFormItem error={errors?.['description']} label="Description">
+          <GoATextArea
+            name="description"
+            value={script.description}
+            testId={`script-modal-description-input`}
+            aria-label="description"
+            width="100%"
+            // eslint-disable-next-line
+            onChange={() => {}}
+            onKeyPress={(name, value, key) => {
+              const description = value;
+              validators.remove('description');
+              validators['description'].check(description);
+              setScript({ ...script, description });
+            }}
+          />
+        </GoAFormItem>
+        <br />
+        {isNew && (
+          <GoACheckbox
+            checked={script.useServiceAccount}
+            name="script-use-service-account-checkbox"
+            testId="script-use-service-account-checkbox"
+            onChange={() => {
+              setScript({
+                ...script,
+                useServiceAccount: !script.useServiceAccount,
+              });
+            }}
+            text="Use service account"
+            ariaLabel={`script-use-service-account-checkbox`}
+          />
+        )}
+        {Array.isArray(roles) &&
+          isNew &&
+          roles.map((r) => {
+            return <RunnerRole roleNames={r?.roleNames} key={r?.clientId} clientId={r?.clientId} />;
+          })}
 
-      {Object.entries(roles).length === 0 && <TextGoASkeleton key={1} lineCount={4}></TextGoASkeleton>}
+        {Object.entries(roles).length === 0 && <TextGoASkeleton key={1} lineCount={4}></TextGoASkeleton>}
+      </div>
     </GoAModal>
   );
 };
