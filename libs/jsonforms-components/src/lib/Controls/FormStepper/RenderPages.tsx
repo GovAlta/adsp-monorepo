@@ -94,7 +94,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                             }}
                             testId="back-button"
                           >
-                            Back
+                            Previous
                           </GoAButton>
                         </GoAButtonGroup>
 
@@ -114,18 +114,6 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                           >
                             Next
                           </GoAButton>
-                          {category.showReviewPageLink && (
-                            <GoAButton
-                              type="tertiary"
-                              onClick={() => {
-                                toggleShowReviewLink(activeId);
-                                goToPage(categories.length);
-                              }}
-                              testId="pages-to-review-page-btn"
-                            >
-                              Back to application overview
-                            </GoAButton>
-                          )}
                         </GoAButtonGroup>
                       </GoAGrid>
                     </PageRenderPadding>
@@ -147,7 +135,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                         }}
                         testId="back-button"
                       >
-                        Back
+                        Previous
                       </GoAButton>
                     </GoAButtonGroup>
 
