@@ -10,8 +10,10 @@ import {
   getWidgetScriptIntegrity,
   resolveFeedbackContext,
   sendFeedback,
+  readValues,
 } from './router';
 import { ServiceRoles } from './roles';
+import { ValueService } from './value';
 
 describe('router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -31,10 +33,17 @@ describe('router', () => {
     enqueue: jest.fn(),
   };
 
+  const valueServiceMock = {
+    writeValue: jest.fn(),
+    readValues: jest.fn(),
+  };
+
   beforeEach(() => {
     tenantServiceMock.getTenant.mockReset();
     tenantServiceMock.getTenantByName.mockReset();
     queueServiceMock.enqueue.mockReset();
+    valueServiceMock.writeValue.mockReset();
+    valueServiceMock.readValues.mockReset();
   });
 
   describe('createFeedbackRouter', () => {
@@ -43,6 +52,7 @@ describe('router', () => {
         logger: loggerMock,
         tenantService: tenantServiceMock as unknown as TenantService,
         queueService: queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
+        valueService: valueServiceMock,
       });
       expect(router).toBeTruthy();
     });
@@ -440,6 +450,58 @@ describe('router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.json).not.toHaveBeenCalledWith();
       expect(next).toHaveBeenCalledWith(expect.any(Error));
+    });
+  });
+
+  describe('getFeedback', () => {
+    it('can get feedback', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackProvider] },
+        query: { site: 'http://test.org', top: '10', after: '' },
+      };
+      const res = {
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = readValues(valueServiceMock as unknown as ValueService);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(valueServiceMock.readValues).toHaveBeenCalledWith(tenantId, 'http://test.org', 10, undefined);
+    });
+
+    it('calls next without site query parameter', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackProvider] },
+        query: { top: '10', after: '' },
+      };
+      const res = {
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = readValues(valueServiceMock as unknown as ValueService);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(valueServiceMock.readValues).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
+    it('calls next if no tenant', async () => {
+      const req = {
+        query: { top: '10', after: '' },
+      };
+      const res = {
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = readValues(valueServiceMock as unknown as ValueService);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(valueServiceMock.readValues).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
   });
 });

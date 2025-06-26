@@ -2,12 +2,12 @@ import { adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { Logger } from 'winston';
 import { createValueService } from './value';
-import { Rating } from './feedback';
+import { FeedbackEntry, Rating } from './feedback';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
-describe('value', () => {
+describe('Value Service', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
 
   const loggerMock = {
@@ -27,7 +27,47 @@ describe('value', () => {
 
   beforeEach(() => {
     axiosMock.post.mockReset();
+    axiosMock.get.mockReset();
   });
+
+  const getFeedbackEntries = (site: string = 'http://test.org') => {
+    return [
+      {
+        timestamp: '2025-06-27T17:12:02.893Z',
+        correlationId: 'this is a value.',
+        context: {
+          site: site,
+          view: '/',
+          digest: '123',
+          includesComment: true,
+          includesTechnicalIssue: false,
+        },
+        value: {
+          rating: 'yuck',
+          ratingValue: 0,
+          comment: 'This is bad.',
+          technicalIssue: 'This is broken',
+        },
+      },
+    ] as FeedbackEntry[];
+  };
+
+  const getNextPage = (size: number = 1) => {
+    return {
+      size: size,
+      next: 'MTA=',
+      after: 'MM3=',
+    };
+  };
+
+  const getFeedbackValue = (site: string = 'http://test.org') => {
+    return {
+      'feedback-service': {
+        feedback: getFeedbackEntries(site),
+        page: getNextPage(),
+      },
+    };
+  };
 
   describe('createValueService', () => {
     it('can create service', () => {
@@ -40,7 +80,7 @@ describe('value', () => {
     });
   });
 
-  describe('ValueService', () => {
+  describe('Write values', () => {
     it('can write value', async () => {
       const service = createValueService({
         logger: loggerMock,
@@ -118,6 +158,68 @@ describe('value', () => {
           params: expect.objectContaining({ tenantId: tenantId.toString() }),
         })
       );
+    });
+
+    it('can fail for request error', async () => {
+      const service = createValueService({
+        logger: loggerMock,
+        directory: directoryMock,
+        tokenProvider: tokenProviderMock,
+      });
+
+      const feedbackValue = {
+        timestamp: new Date(),
+        context: {
+          site: 'http://test.org',
+          view: '/',
+          correlationId: 'this is a value.',
+        },
+        digest: '123',
+        rating: 'good',
+        comment: 'This is ok.',
+      };
+      axiosMock.post.mockRejectedValueOnce(new Error('oh noes!'));
+      await expect(service.writeValue(tenantId, feedbackValue)).rejects.toThrow(Error);
+    });
+  });
+
+  describe('Read values', () => {
+    it('increments rating value', async () => {
+      const service = createValueService({
+        logger: loggerMock,
+        directory: directoryMock,
+        tokenProvider: tokenProviderMock,
+      });
+
+      const expected = getFeedbackValue();
+      axiosMock.get.mockResolvedValueOnce({ data: expected });
+      const actual = await service.readValues(tenantId, 'http://test.org', 50, undefined);
+      expect(axiosMock.get).toHaveBeenCalledWith(
+        expect.stringContaining('/v1/feedback-service/values/feedback'),
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+          params: expect.objectContaining({ tenantId: tenantId.toString() }),
+        })
+      );
+
+      const expectedFeedback = getFeedbackValue()['feedback-service'].feedback[0];
+      expect(actual['feedback-service'].feedback[0]).toMatchObject({
+        timestamp: expectedFeedback.timestamp,
+        correlationId: expectedFeedback.correlationId,
+        context: {
+          digest: expectedFeedback.context.digest,
+          includesComment: expectedFeedback.context.includesComment,
+          includesTechnicalIssue: expectedFeedback.context.includesTechnicalIssue,
+          site: expectedFeedback.context.site,
+          view: expectedFeedback.context.view,
+        },
+        value: {
+          rating: expectedFeedback.value.rating,
+          ratingValue: expectedFeedback.value.ratingValue + 1,
+          comment: expectedFeedback.value.comment,
+          technicalIssue: expectedFeedback.value.technicalIssue,
+        },
+      });
     });
 
     it('can fail for request error', async () => {

@@ -18,6 +18,7 @@ describe('job', () => {
 
   const valueServiceMock = {
     writeValue: jest.fn(),
+    readValues: jest.fn(),
   };
 
   const queueServiceMock = {
