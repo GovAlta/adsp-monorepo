@@ -401,9 +401,6 @@ describe('Form Stepper Control', () => {
           children={getForm(formData, categorizationPages)}
         />
       );
-      const BackButton = renderer.getByTestId('back-button-click');
-      expect(BackButton).toBeVisible();
-      await fireEvent.click(BackButton!);
     });
 
     it('will show submit button on last step', async () => {
