@@ -1,4 +1,4 @@
-import { Grid, GridItem } from '@core-services/app-common';
+import { GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
 import { GoABlock } from '@abgov/react-components';
@@ -62,6 +62,7 @@ const MetricGridItem = styled(GridItem)`
   }
   b {
     font-size: var(--fs-sm);
+    line-height: 1.5rem;
   }
 `;
 
@@ -72,7 +73,7 @@ const Count = styled.div`
 `;
 const MomDiv = styled.div`
   display: flex;
-  align-items: right;
+  align-items: center;
   min-width: 48px;
   justify-content: flex-end;
   font-size: var(--fs-sm);
@@ -83,19 +84,19 @@ export const Metrics: FunctionComponent<MetricsProps> = ({ metrics }: MetricsPro
   return (
     <GoABlock gap="s" direction="row">
       {metrics.map(({ id, name, value, mom }) => {
-        const ratingInfo = ratings.find((r) => r.value === value);
+        const ratingInfo = value !== undefined ? ratings.find((r) => r.value === Math.round(value)) : undefined;
 
         return (
           <MetricGridItem key={id} md={4}>
             <b>{name}</b>
             <span>Per week</span>
             <Count id={id}>
-              {id !== 'feedback-count' ? (
+              {id !== 'feedback-count' && value ? (
                 <>
                   <img
                     src={ratingInfo?.svgDefault}
                     alt={ratingInfo?.label}
-                    style={{ width: 16, height: 16, verticalAlign: 'middle', marginRight: 8 }}
+                    style={{ width: '16px', height: '16px', verticalAlign: 'middle', marginRight: '8px' }}
                   />
                   {`${ratingInfo?.value} - ${ratingInfo?.label}`}
                 </>
@@ -109,9 +110,9 @@ export const Metrics: FunctionComponent<MetricsProps> = ({ metrics }: MetricsPro
                   <img
                     src={mom > 0 ? greenArrow : redArrow}
                     alt={mom > 0 ? 'Up' : 'Down'}
-                    style={{ width: 18, height: 18, marginRight: 4 }}
+                    style={{ width: '18px', height: '18px', marginRight: '4px' }}
                   />
-                  {`${Math.abs(mom)} MoM`}%
+                  <span> {`${Math.abs(mom)} MoM`}%</span>
                 </>
               )}
             </MomDiv>

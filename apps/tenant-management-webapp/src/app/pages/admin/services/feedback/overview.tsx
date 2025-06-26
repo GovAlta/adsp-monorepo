@@ -15,7 +15,7 @@ interface OverviewProps {
 export const showTaggingFeature = false;
 
 export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
-  const { setActiveEdit, setActiveIndex } = props;
+  const { setActiveEdit } = props;
 
   useEffect(() => {
     document.body.style.overflow = 'unset';
