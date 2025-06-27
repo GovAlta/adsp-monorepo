@@ -37,9 +37,9 @@ export type FeedbackResponse = {
     feedback: FeedbackEntry[];
   };
   page: {
-    size: number;
-    next?: string;
     after?: string;
+    next?: string;
+    size: number;
   };
 };
 

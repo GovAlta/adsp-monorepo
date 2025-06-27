@@ -52,11 +52,12 @@ class ValueServiceImpl implements ValueService {
       const valueApiUrl = await this.directory.getServiceUrl(VALUE_API_ID);
       const token = await this.tokenProvider.getAccessToken();
       const path = 'v1/feedback-service/values/feedback';
-      const query = `${path}?top=${top}&after=${after}&context={"site":"${site}"}`;
-      const { data } = await axios.get<FeedbackResponse>(new URL(query, valueApiUrl).href, {
+      const query = encodeURIComponent(`top=${top}&after=${after}&context={"site":"${site}"}`);
+      const { data } = await axios.get(new URL(`${path}?${query}`, valueApiUrl).href, {
         headers: { Authorization: `Bearer ${token}` },
         params: { tenantId: tenantId.toString() },
       });
+      console.dir(data, { depth: 10 });
       return this.incrementRatingValues(data);
     } catch (err) {
       this.logger.warn(`Error encountered reading feedback values. ${err}`, {
