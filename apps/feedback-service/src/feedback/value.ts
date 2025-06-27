@@ -31,6 +31,37 @@ export interface FeedbackValue extends Feedback {
   digest: string;
 }
 
+// Returned by the value service.
+export type FeedbackResponse = {
+  'feedback-service': {
+    feedback: FeedbackEntry[];
+  };
+  page: {
+    size: number;
+    next?: string;
+    after?: string;
+  };
+};
+
+export type FeedbackEntry = {
+  timestamp: string;
+  correlationId: string;
+  context: {
+    site: string;
+    view: string;
+    digest: string;
+    includesComment: boolean;
+    includesTechnicalIssue: boolean;
+  };
+  value: {
+    rating: string;
+    comment: string;
+    ratingValue: number;
+    technicalIssue: string;
+  };
+};
+
 export interface ValueService {
   writeValue(tenantId: AdspId, value: FeedbackValue): Promise<void>;
+  readValues(tenantId: AdspId, site: string, top: number, after: string | undefined): Promise<FeedbackResponse>;
 }

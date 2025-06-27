@@ -15,6 +15,7 @@ import { FeedbackConfiguration } from './configuration';
 import { FeedbackWorkItem } from './job';
 import { ServiceRoles } from './roles';
 import { Feedback } from './types';
+import { ValueService } from './value';
 
 export function resolveFeedbackContext(
   tenantService: TenantService,
@@ -104,6 +105,26 @@ export function sendFeedback(logger: Logger, queueService: WorkQueueService<Feed
   };
 }
 
+export const readValues =
+  (valueService: ValueService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      if (!req.tenant) {
+        throw new InvalidOperationError('Tenant is required.');
+      }
+      const top = req.query?.top ? parseInt(req.query.top as string, 10) : 50;
+      const after = req.query?.after ? (req.query.after as string) : undefined;
+      const site = req.query?.site ? (req.query.site as string) : undefined;
+      if (!site) {
+        throw new InvalidOperationError('Site is required.');
+      }
+      const values = await valueService.readValues(req.tenant.id, site, top, after);
+      res.json(values);
+    } catch (err) {
+      next(err);
+    }
+  };
+
 interface WidgetInformation {
   script: string;
   length: number;
@@ -151,9 +172,10 @@ interface RouterProps {
   logger: Logger;
   tenantService: TenantService;
   queueService: WorkQueueService<FeedbackWorkItem>;
+  valueService: ValueService;
 }
 
-export async function createFeedbackRouter({ logger, tenantService, queueService }: RouterProps) {
+export async function createFeedbackRouter({ logger, tenantService, queueService, valueService }: RouterProps) {
   const rateLimitHandler = rateLimit({
     windowMs: 5 * 60 * 1000,
     limit: 5,
@@ -206,6 +228,8 @@ export async function createFeedbackRouter({ logger, tenantService, queueService
   router.get('/script/adspFeedback.js', downloadWidgetScript(loadWidgetInformation));
 
   router.get('/script/integrity', getWidgetScriptIntegrity(loadWidgetInformation));
+
+  router.get('/feedback', readValues(valueService));
 
   return router;
 }
