@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup, GoAModal, GoAGrid } from '@abgov/react-components';
 import { Visible } from '../../util';
 import { PageBorder, PageRenderPadding, PageRenderPaddingBottom } from './styled-components';
 import FormStepperPageReviewer from './PageStepperReviewControl';
@@ -76,14 +76,6 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                     key={`${category.label}`}
                     style={{ marginTop: '1.5rem' }}
                   >
-                    <BackButton
-                      testId="back-button"
-                      link={() => {
-                        validatePage(index);
-                        goToTableOfContext();
-                      }}
-                      text="Back"
-                    />
                     <PageRenderPadding>
                       <h3>
                         Step {index + 1 - categories.filter((c) => !c.visible && c.id < index).length} of{' '}
@@ -92,35 +84,38 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                       <RenderStepElements {...categoryProps} />
                     </PageRenderPadding>
                     <PageRenderPadding>
-                      <GoAButtonGroup alignment="start">
-                        <GoAButton
-                          type="submit"
-                          onClick={() => {
-                            handleSave();
-                            let nextId = activeId + 1;
-                            while (nextId < categories.length && categories[nextId].visible === false) {
-                              nextId = nextId + 1;
-                            }
-                            goToPage(nextId);
-                          }}
-                          disabled={!(category.isValid && category.isCompleted) || !enabled}
-                          testId="pages-save-continue-btn"
-                        >
-                          Save and continue
-                        </GoAButton>
-                        {category.showReviewPageLink && (
+                      <GoAGrid minChildWidth="100px" gap="2xs">
+                        <GoAButtonGroup alignment="start">
                           <GoAButton
-                            type="tertiary"
+                            type="secondary"
                             onClick={() => {
-                              toggleShowReviewLink(activeId);
-                              goToPage(categories.length);
+                              validatePage(index);
+                              goToTableOfContext();
                             }}
-                            testId="pages-to-review-page-btn"
+                            testId="back-button"
                           >
-                            Back to application overview
+                            Previous
                           </GoAButton>
-                        )}
-                      </GoAButtonGroup>
+                        </GoAButtonGroup>
+
+                        <GoAButtonGroup alignment="end">
+                          <GoAButton
+                            type="submit"
+                            onClick={() => {
+                              handleSave();
+                              let nextId = activeId + 1;
+                              while (nextId < categories.length && categories[nextId].visible === false) {
+                                nextId = nextId + 1;
+                              }
+                              goToPage(nextId);
+                            }}
+                            disabled={!(category.isValid && category.isCompleted) || !enabled}
+                            testId="pages-save-continue-btn"
+                          >
+                            Next
+                          </GoAButton>
+                        </GoAButtonGroup>
+                      </GoAGrid>
                     </PageRenderPadding>
                   </div>
                 );
@@ -129,24 +124,34 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
 
             {isOnReview && (
               <div data-testid="stepper-pages-review-page">
-                <PageRenderPaddingBottom>
-                  <BackButton
-                    testId="review-back-button"
-                    link={() => {
-                      goToTableOfContext();
-                    }}
-                    text="Back"
-                  />
-                </PageRenderPaddingBottom>
                 <FormStepperPageReviewer {...{ ...props.categoryProps, navigationFunc: goToPage }} />
                 <PageRenderPadding>
-                  <GoAButtonGroup alignment="end">
-                    {!hideSubmit ? (
-                      <GoAButton type={'primary'} onClick={handleSubmit} disabled={!isValid} testId="pages-submit-btn">
-                        Submit
+                  <GoAGrid minChildWidth="100px" gap="2xs">
+                    <GoAButtonGroup alignment="start">
+                      <GoAButton
+                        type="secondary"
+                        onClick={() => {
+                          goToTableOfContext();
+                        }}
+                        testId="back-button"
+                      >
+                        Previous
                       </GoAButton>
-                    ) : null}
-                  </GoAButtonGroup>
+                    </GoAButtonGroup>
+
+                    <GoAButtonGroup alignment="end">
+                      {!hideSubmit ? (
+                        <GoAButton
+                          type={'primary'}
+                          onClick={handleSubmit}
+                          disabled={!isValid}
+                          testId="pages-submit-btn"
+                        >
+                          Submit
+                        </GoAButton>
+                      ) : null}
+                    </GoAButtonGroup>
+                  </GoAGrid>
                 </PageRenderPadding>
               </div>
             )}
