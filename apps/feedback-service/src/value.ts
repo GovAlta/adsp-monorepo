@@ -52,12 +52,12 @@ class ValueServiceImpl implements ValueService {
       const valueApiUrl = await this.directory.getServiceUrl(VALUE_API_ID);
       const token = await this.tokenProvider.getAccessToken();
       const path = 'v1/feedback-service/values/feedback';
-      const query = encodeURIComponent(`top=${top}&after=${after}&context={"site":"${site}"}`);
-      const { data } = await axios.get(new URL(`${path}?${query}`, valueApiUrl).href, {
+      const url = this.composeUri(path, site, top, after);
+      const { data } = await axios.get(new URL(url, valueApiUrl).href, {
         headers: { Authorization: `Bearer ${token}` },
         params: { tenantId: tenantId.toString() },
       });
-      console.dir(data, { depth: 10 });
+      //      console.dir(data, { depth: 10 });
       return this.incrementRatingValues(data);
     } catch (err) {
       this.logger.warn(`Error encountered reading feedback values. ${err}`, {
@@ -67,6 +67,14 @@ class ValueServiceImpl implements ValueService {
       throw err;
     }
   }
+
+  composeUri = (path: string, site: string, top: number, after: string | undefined): string => {
+    let query = `top=${top}&context={"site":"${site}"}`;
+    if (after) {
+      query = `${query}&after=${encodeURIComponent(after)}`;
+    }
+    return `${path}?${query}`;
+  };
 
   incrementRatingValues = (feedbackResponse: FeedbackResponse): FeedbackResponse => {
     const { feedback } = feedbackResponse['feedback-service'];
