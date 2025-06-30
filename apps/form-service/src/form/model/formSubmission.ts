@@ -23,6 +23,7 @@ export class FormSubmissionEntity implements FormSubmission {
   disposition: FormDisposition;
   hash: string;
   securityClassification: SecurityClassificationType;
+  dryRun: boolean;
 
   get formSubmissionUrn() {
     const urn = `urn:ads:platform:form-service:v1:/forms/${this.formId}${this.id ? `/submissions/${this.id}` : ''}`;
@@ -53,6 +54,7 @@ export class FormSubmissionEntity implements FormSubmission {
         disposition: null,
         hash: form.hash,
         securityClassification: form.securityClassification,
+        dryRun: form.dryRun,
       },
       form.definition,
       form
@@ -84,6 +86,7 @@ export class FormSubmissionEntity implements FormSubmission {
     this.hash = formSubmission.hash;
     // This is for backwards compatibility, but security classification should be saved against the submission.
     this.securityClassification = formSubmission.securityClassification || form?.securityClassification;
+    this.dryRun = formSubmission.dryRun;
   }
 
   canRead(user: User): boolean {

@@ -169,6 +169,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       ),
       disposition: entity.disposition,
       hash: entity.hash,
+      dryRun: entity.form?.dryRun,
     };
   }
 
@@ -198,6 +199,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
         ),
         disposition: doc.disposition,
         hash: doc.hash,
+        dryRun: doc.dryRun,
       },
       definition,
       form

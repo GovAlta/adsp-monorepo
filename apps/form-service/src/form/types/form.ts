@@ -26,6 +26,7 @@ export interface Form {
   data: Record<string, unknown>;
   files: Record<string, AdspId>;
   securityClassification?: SecurityClassificationType;
+  dryRun: boolean;
 }
 
 export interface FormCriteria {

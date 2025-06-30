@@ -80,6 +80,7 @@ describe('pdf', () => {
     lastAccessed: new Date(),
     data: {},
     files: {},
+    dryRun: false,
   };
   const entity = new FormEntity(repositoryMock, tenantId, definition, null, formInfo);
 
@@ -102,6 +103,7 @@ describe('pdf', () => {
       date: new Date(),
     },
     hash: 'hashid',
+    dryRun: false,
   };
   const submissionEntity = new FormSubmissionEntity(formSubmissionMock, tenantId, formSubmissionInfo);
 

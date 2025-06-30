@@ -32,6 +32,7 @@ describe('FormSubmission', () => {
     dataSchema: null,
     dispositionStates: [{ id: 'rejected', name: 'rejected', description: 'err' }],
     queueTaskToProcess: { queueName: 'test', queueNameSpace: 'queue-namespace' } as QueueTaskToProcess,
+    dryRun: false,
   });
 
   const formSubmissionMock = {
@@ -70,6 +71,7 @@ describe('FormSubmission', () => {
       date: new Date(),
     },
     hash: 'hashid',
+    dryRun: false,
   };
 
   beforeEach(() => {

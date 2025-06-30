@@ -202,8 +202,8 @@ function getCorrelationId(form: ReturnType<typeof mapForm>) {
   return form?.urn;
 }
 
-export function formCreated(apiId: AdspId, user: User, form: FormEntity): DomainEvent {
-  const formResponse = mapForm(apiId, form);
+export function formCreated(apiId: AdspId, user: User, form: FormEntity, dryRun: boolean): DomainEvent {
+  const formResponse = mapForm(apiId, form, dryRun);
   return {
     name: FORM_CREATED,
     timestamp: form.created,
@@ -308,7 +308,8 @@ export function formSubmitted(
   apiId: AdspId,
   user: User,
   form: FormEntity,
-  submission?: FormSubmissionEntity
+  submission?: FormSubmissionEntity,
+  dryRun?: boolean
 ): DomainEvent {
   const formResponse = mapForm(apiId, form);
   return {
@@ -335,6 +336,7 @@ export function formSubmitted(
         id: user.id,
         name: user.name,
       },
+      dryRun: dryRun
     },
   };
 }

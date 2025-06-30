@@ -18,6 +18,7 @@ export interface FormDefinition {
   queueTaskToProcess?: QueueTaskToProcess;
   securityClassification?: SecurityClassificationType;
   scheduledIntakes?: boolean;
+  dryRun?: boolean;
 }
 
 export interface QueueTaskToProcess {

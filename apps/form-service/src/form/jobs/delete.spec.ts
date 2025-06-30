@@ -96,6 +96,7 @@ describe('delete', () => {
       submitted: null,
       lastAccessed: new Date(),
       status: FormStatus.Draft,
+      dryRun: false,
     }
   );
 

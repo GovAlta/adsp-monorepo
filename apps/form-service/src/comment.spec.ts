@@ -72,6 +72,7 @@ describe('comment', () => {
     lastAccessed: new Date(),
     data: {},
     files: {},
+    dryRun: false,
   });
 
   beforeEach(() => {
