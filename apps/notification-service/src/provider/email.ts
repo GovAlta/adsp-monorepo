@@ -41,6 +41,7 @@ export const createEmailProvider = ({
         bcc: notification?.bcc || [],
         subject: notification.message.subject,
         html: notification.message.body,
+        attachments: notification.attachments,
       });
     },
   };
