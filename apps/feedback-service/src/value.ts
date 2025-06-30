@@ -1,7 +1,15 @@
 import { AdspId, ServiceDirectory, TokenProvider, adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { Logger } from 'winston';
-import { FeedbackValue, FeedbackResponse, Rating, ValueService, FeedbackEntry, ReadQueryParameters } from './feedback';
+import {
+  FeedbackValue,
+  FeedbackResponse,
+  Rating,
+  ValueService,
+  FeedbackEntry,
+  ReadQueryParameters,
+  ValueResponse,
+} from './feedback';
 
 const VALUE_API_ID = adspId`urn:ads:platform:value-service:v1`;
 
@@ -57,7 +65,8 @@ class ValueServiceImpl implements ValueService {
         headers: { Authorization: `Bearer ${token}` },
         params: { tenantId: tenantId.toString() },
       });
-      return this.incrementRatingValues(data);
+      const result = this.incrementRatingValues(data);
+      return result as FeedbackResponse;
     } catch (err) {
       this.logger.warn(`Error encountered reading feedback values. ${err}`, {
         context: 'ValueService',
@@ -81,18 +90,16 @@ class ValueServiceImpl implements ValueService {
     return `${path}?${query}`;
   };
 
-  incrementRatingValues = (feedbackResponse: FeedbackResponse): FeedbackResponse => {
+  incrementRatingValues = (feedbackResponse: ValueResponse): FeedbackResponse => {
     const { feedback } = feedbackResponse['feedback-service'];
     return {
-      'feedback-service': {
-        feedback: feedback.map(this.incrementRatingValue),
-      },
+      feedback: feedback.map(this.incrementRatingValue),
       page: feedbackResponse.page,
     };
   };
 
   incrementRatingValue = (feedbackEntry: FeedbackEntry): FeedbackEntry => {
-    const entry = feedbackEntry;
+    const entry = { ...feedbackEntry, value: { ...feedbackEntry.value } };
     entry.value.ratingValue = entry.value.ratingValue + 1;
     return entry;
   };

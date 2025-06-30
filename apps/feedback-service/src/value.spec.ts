@@ -2,7 +2,7 @@ import { adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { Logger } from 'winston';
 import { createValueService } from './value';
-import { FeedbackEntry, Rating } from './feedback';
+import { FeedbackEntry, Rating, ValueResponse } from './feedback';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -64,9 +64,9 @@ describe('Value Service', () => {
     return {
       'feedback-service': {
         feedback: getFeedbackEntries(site),
-        page: getNextPage(),
       },
-    };
+      page: getNextPage(),
+    } as ValueResponse;
   };
 
   describe('createValueService', () => {
@@ -208,8 +208,8 @@ describe('Value Service', () => {
         })
       );
 
-      const expectedFeedback = getFeedbackValue()['feedback-service'].feedback[0];
-      expect(actual['feedback-service'].feedback[0]).toMatchObject({
+      const expectedFeedback = expected['feedback-service'].feedback[0];
+      expect(actual.feedback[0]).toMatchObject({
         timestamp: expectedFeedback.timestamp,
         correlationId: expectedFeedback.correlationId,
         context: {
