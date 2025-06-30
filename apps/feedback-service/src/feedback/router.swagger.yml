@@ -110,7 +110,6 @@ components:
         description: Return only "top" entries
         in: query
         required: false
-        default: 10
         example: 50
         schema:
           type: number
