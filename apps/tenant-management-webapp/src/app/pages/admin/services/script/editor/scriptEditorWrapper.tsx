@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { FunctionComponent, useState } from 'react';
 import { TabletMessage } from '@components/TabletMessage';
-import { ScriptEditor, ScriptEditorProps } from './scriptEditor';
+import { ScriptEditor } from './scriptEditor';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, isValidJSONCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { useDispatch, useSelector } from 'react-redux';
@@ -74,7 +74,7 @@ export const ScriptEditorWrapper: FunctionComponent<ScriptEditorWrapperProps> = 
     return () => {
       setOpenAddScript(false);
     };
-  }, [openAddScript, openAddScriptModal]);
+  }, [openAddScriptModal]);
 
   const { errors, validators } = useValidators(
     'name',
@@ -120,7 +120,6 @@ export const ScriptEditorWrapper: FunctionComponent<ScriptEditorWrapperProps> = 
     setTestInput(getDefaultTestInput());
     setSelectedScript(defaultScript);
     setActiveEdit(false);
-    setOpenAddScript(false);
 
     if (updateOpenAddScriptModal) {
       updateOpenAddScriptModal(false);

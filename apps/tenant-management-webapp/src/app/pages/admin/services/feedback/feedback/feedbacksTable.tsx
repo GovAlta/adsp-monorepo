@@ -5,7 +5,7 @@ import { TableDiv } from '../styled-components';
 import { Rating } from '@store/feedback/models';
 import moment from 'moment';
 import { FeedbackTableItem } from './feedbackTableItem';
-
+import { getRatingLabelByValue } from '../ratings';
 export interface FeedbackTableProps {
   feedbacks: Feedback[];
   showDetailsToggle?: boolean;
@@ -41,7 +41,7 @@ export const FeedbackListTable: FunctionComponent<FeedbackTableProps> = ({ feedb
                 <tr key={id}>
                   <td>{submissionDate}</td>
                   <td>{view}</td>
-                  <td>{`${ratingValue} - ${feedback.value.rating}`}</td>
+                  <td>{`${ratingValue} - ${getRatingLabelByValue(Number(ratingValue))}`}</td>
                   <td>{feedback.value.comment?.trim() || '-'}</td>
                   <td>{feedback.value.technicalIssue?.trim() || '-'}</td>
                 </tr>

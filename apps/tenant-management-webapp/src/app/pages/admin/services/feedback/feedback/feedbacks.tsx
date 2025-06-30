@@ -164,7 +164,7 @@ export const FeedbacksList = (): JSX.Element => {
           </GoAButton>
           {sharedFilterForm}
 
-          <GoAButtonGroup alignment="start">
+          <GoAButtonGroup alignment="start" gap="compact">
             <GoAButton
               type="primary"
               onClick={exportToCsv}
@@ -173,7 +173,7 @@ export const FeedbacksList = (): JSX.Element => {
               Export CSV
             </GoAButton>
             <GoAButton type="secondary" trailingIcon="contract" onClick={() => setExpandView(false)}>
-              Collapse view
+              Collapse View
             </GoAButton>
           </GoAButtonGroup>
 
@@ -195,7 +195,7 @@ export const FeedbacksList = (): JSX.Element => {
               <FeedbackFilterError>Start date must be before End date.</FeedbackFilterError>
             </div>
           )}
-          <ExportDates>
+          <GoAButtonGroup alignment="start" gap="compact">
             <GoAButton
               type="primary"
               onClick={exportToCsv}
@@ -206,7 +206,7 @@ export const FeedbacksList = (): JSX.Element => {
             <GoAButton type="secondary" trailingIcon="expand" onClick={() => setExpandView(true)}>
               Expand View
             </GoAButton>
-          </ExportDates>
+          </GoAButtonGroup>
         </div>
       )}
 

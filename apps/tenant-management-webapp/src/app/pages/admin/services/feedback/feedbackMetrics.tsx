@@ -2,14 +2,10 @@ import { GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
 import { GoABlock } from '@abgov/react-components';
-import difficultSvgDefault from '@assets/Difficult-Default.svg';
-import veryDifficultSvgDefault from '@assets/Very_Difficult-Default.svg';
-import neutralSvgDefault from '@assets/Neutral-Default.svg';
-import easySvgDefault from '@assets/Easy-Default.svg';
-import veryEasySvgDefault from '@assets/Very_Easy-Default.svg';
 import greenArrow from '@assets/green-arrow.svg';
 import redArrow from '@assets/red-arrow.svg';
-
+import natural from '@assets/neutral-icon.svg';
+import { ratings } from './ratings';
 interface Metric {
   id: string;
   name: string;
@@ -20,33 +16,6 @@ interface Metric {
 interface MetricsProps {
   metrics: Metric[];
 }
-const ratings = [
-  {
-    label: 'Very Difficult',
-    value: 1,
-    svgDefault: veryDifficultSvgDefault,
-  },
-  {
-    label: 'Difficult',
-    value: 2,
-    svgDefault: difficultSvgDefault,
-  },
-  {
-    label: 'Neutral',
-    value: 3,
-    svgDefault: neutralSvgDefault,
-  },
-  {
-    label: 'Easy',
-    value: 4,
-    svgDefault: easySvgDefault,
-  },
-  {
-    label: 'Very Easy',
-    value: 5,
-    svgDefault: veryEasySvgDefault,
-  },
-];
 
 const MetricGridItem = styled(GridItem)`
   border: 1px solid #ccc;
@@ -62,7 +31,7 @@ const MetricGridItem = styled(GridItem)`
   }
   b {
     font-size: var(--fs-sm);
-    line-height: 1.5rem;
+    line-height: 1.25rem;
   }
 `;
 
@@ -108,9 +77,9 @@ export const Metrics: FunctionComponent<MetricsProps> = ({ metrics }: MetricsPro
               {typeof mom === 'number' && (
                 <>
                   <img
-                    src={mom > 0 ? greenArrow : redArrow}
-                    alt={mom > 0 ? 'Up' : 'Down'}
-                    style={{ width: '18px', height: '18px', marginRight: '4px' }}
+                    src={mom > 0 ? greenArrow : mom < 0 ? redArrow : natural}
+                    alt={mom > 0 ? 'Up' : mom < 0 ? 'Down' : 'No change'}
+                    style={{ width: '14px', height: '14px', marginRight: '4px' }}
                   />
                   <span> {`${Math.abs(mom)} MoM`}%</span>
                 </>
