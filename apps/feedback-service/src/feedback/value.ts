@@ -31,11 +31,19 @@ export interface FeedbackValue extends Feedback {
   digest: string;
 }
 
-// Returned by the value service.
-export type FeedbackResponse = {
+export type ValueResponse = {
   'feedback-service': {
     feedback: FeedbackEntry[];
   };
+  page: {
+    after?: string;
+    next?: string;
+    size: number;
+  };
+};
+
+export type FeedbackResponse = {
+  feedback: FeedbackEntry[];
   page: {
     after?: string;
     next?: string;
