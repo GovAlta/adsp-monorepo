@@ -61,7 +61,14 @@ export type FeedbackEntry = {
   };
 };
 
+export type ReadQueryParameters = {
+  site: string;
+  top: number;
+  start?: string | undefined;
+  end?: string | undefined;
+  after?: string | undefined;
+};
 export interface ValueService {
   writeValue(tenantId: AdspId, value: FeedbackValue): Promise<void>;
-  readValues(tenantId: AdspId, site: string, top: number, after: string | undefined): Promise<FeedbackResponse>;
+  readValues(tenantId: AdspId, queryParameters: ReadQueryParameters): Promise<FeedbackResponse>;
 }

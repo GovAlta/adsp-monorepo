@@ -467,7 +467,10 @@ describe('router', () => {
 
       const handler = readValues(valueServiceMock as unknown as ValueService);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(valueServiceMock.readValues).toHaveBeenCalledWith(tenantId, 'http://test.org', 10, undefined);
+      expect(valueServiceMock.readValues).toHaveBeenCalledWith(tenantId, {
+        site: 'http://test.org',
+        top: 10,
+      });
     });
 
     it('calls next without site query parameter', async () => {
