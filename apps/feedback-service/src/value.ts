@@ -1,7 +1,7 @@
 import { AdspId, ServiceDirectory, TokenProvider, adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { Logger } from 'winston';
-import { FeedbackValue, FeedbackResponse, Rating, ValueService, FeedbackEntry } from './feedback';
+import { FeedbackValue, FeedbackResponse, Rating, ValueService, FeedbackEntry, ReadQueryParameters } from './feedback';
 
 const VALUE_API_ID = adspId`urn:ads:platform:value-service:v1`;
 
@@ -47,17 +47,16 @@ class ValueServiceImpl implements ValueService {
     }
   }
 
-  async readValues(tenantId: AdspId, site: string, top: number, after: string): Promise<FeedbackResponse> {
+  async readValues(tenantId: AdspId, queryParameters: ReadQueryParameters): Promise<FeedbackResponse> {
     try {
       const valueApiUrl = await this.directory.getServiceUrl(VALUE_API_ID);
       const token = await this.tokenProvider.getAccessToken();
       const path = 'v1/feedback-service/values/feedback';
-      const url = this.composeUri(path, site, top, after);
+      const url = this.composeUri(path, queryParameters);
       const { data } = await axios.get(new URL(url, valueApiUrl).href, {
         headers: { Authorization: `Bearer ${token}` },
         params: { tenantId: tenantId.toString() },
       });
-      //      console.dir(data, { depth: 10 });
       return this.incrementRatingValues(data);
     } catch (err) {
       this.logger.warn(`Error encountered reading feedback values. ${err}`, {
@@ -68,10 +67,16 @@ class ValueServiceImpl implements ValueService {
     }
   }
 
-  composeUri = (path: string, site: string, top: number, after: string | undefined): string => {
-    let query = `top=${top}&context={"site":"${site}"}`;
-    if (after) {
-      query = `${query}&after=${encodeURIComponent(after)}`;
+  composeUri = (path: string, queryParameters: ReadQueryParameters): string => {
+    let query = `top=${queryParameters.top}&context={"site":"${queryParameters.site}"}`;
+    if (queryParameters.after) {
+      query = `${query}&after=${encodeURIComponent(queryParameters.after)}`;
+    }
+    if (queryParameters.start) {
+      query = `${query}&timestampMin=${encodeURIComponent(queryParameters.start)}`;
+    }
+    if (queryParameters.end) {
+      query = `${query}&timestampMax=${encodeURIComponent(queryParameters.end)}`;
     }
     return `${path}?${query}`;
   };

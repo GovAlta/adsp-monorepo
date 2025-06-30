@@ -15,7 +15,7 @@ import { FeedbackConfiguration } from './configuration';
 import { FeedbackWorkItem } from './job';
 import { ServiceRoles } from './roles';
 import { Feedback } from './types';
-import { ValueService } from './value';
+import { ReadQueryParameters, ValueService } from './value';
 
 export function resolveFeedbackContext(
   tenantService: TenantService,
@@ -112,13 +112,17 @@ export const readValues =
       if (!req.tenant) {
         throw new InvalidOperationError('Tenant is required.');
       }
-      const top = req.query?.top ? parseInt(req.query.top as string, 10) : 50;
-      const after = req.query?.after ? (req.query.after as string) : undefined;
-      const site = req.query?.site ? (req.query.site as string) : undefined;
-      if (!site) {
+      if (!req.query?.site) {
         throw new InvalidOperationError('Site is required.');
       }
-      const values = await valueService.readValues(req.tenant.id, site, top, after);
+      const queryParameters: ReadQueryParameters = {
+        site: req.query.site as string,
+        top: req.query?.top ? parseInt(req.query.top as string, 10) : 10,
+        after: req.query?.after ? (req.query.after as string) : undefined,
+        start: req.query?.start ? (req.query.start as string) : undefined,
+        end: req.query?.end ? (req.query.end as string) : undefined,
+      };
+      const values = await valueService.readValues(req.tenant.id, queryParameters);
       res.json(values);
     } catch (err) {
       next(err);

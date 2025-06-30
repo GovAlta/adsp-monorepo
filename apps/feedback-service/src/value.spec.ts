@@ -193,7 +193,13 @@ describe('Value Service', () => {
 
       const expected = getFeedbackValue();
       axiosMock.get.mockResolvedValueOnce({ data: expected });
-      const actual = await service.readValues(tenantId, 'http://test.org', 50, undefined);
+      const actual = await service.readValues(tenantId, {
+        site: 'http://test.org',
+        top: 50,
+        start: '2025-05-27T17:12:02.893Z',
+        end: '2025-06-27T17:12:02.893Z',
+        after: 'MM3=',
+      });
       expect(axiosMock.get).toHaveBeenCalledWith(
         expect.stringContaining('/v1/feedback-service/values/feedback'),
         expect.objectContaining({
@@ -229,19 +235,13 @@ describe('Value Service', () => {
         tokenProvider: tokenProviderMock,
       });
 
-      const feedbackValue = {
-        timestamp: new Date(),
-        context: {
-          site: 'http://test.org',
-          view: '/',
-          correlationId: 'this is a value.',
-        },
-        digest: '123',
-        rating: 'good',
-        comment: 'This is ok.',
-      };
-      axiosMock.post.mockRejectedValueOnce(new Error('oh noes!'));
-      await expect(service.writeValue(tenantId, feedbackValue)).rejects.toThrow(Error);
+      axiosMock.get.mockRejectedValueOnce(new Error('oh noes!'));
+      await expect(
+        service.readValues(tenantId, {
+          site: 'http://test.org}',
+          top: 10,
+        })
+      ).rejects.toThrow(Error);
     });
   });
 });
