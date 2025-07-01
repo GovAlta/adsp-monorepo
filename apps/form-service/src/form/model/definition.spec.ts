@@ -344,6 +344,7 @@ describe('FormDefinitionEntity', () => {
         { ...user, roles: [FormServiceRoles.IntakeApp] },
         repositoryMock,
         notificationMock,
+        true,
         subscriber
       );
       expect(form).toBeTruthy();
@@ -352,7 +353,7 @@ describe('FormDefinitionEntity', () => {
 
     it('can set applicant userId for user applicant', async () => {
       notificationMock.subscribe.mockResolvedValueOnce(subscriber);
-      const form = await entity.createForm(user, repositoryMock, notificationMock, subscriber);
+      const form = await entity.createForm(user, repositoryMock, notificationMock, false, subscriber);
       expect(form).toBeTruthy();
       expect(notificationMock.subscribe).toHaveBeenCalledWith(
         entity.tenantId,
@@ -405,7 +406,7 @@ describe('FormDefinitionEntity', () => {
       });
 
       notificationMock.subscribe.mockResolvedValueOnce(subscriber);
-      const form = await entity.createForm(user, repositoryMock, notificationMock, subscriber);
+      const form = await entity.createForm(user, repositoryMock, notificationMock, false, subscriber);
       expect(form).toBeTruthy();
       expect(notificationMock.subscribe).toHaveBeenCalledWith(
         entity.tenantId,

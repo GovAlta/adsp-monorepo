@@ -433,13 +433,14 @@ export const submitForm = createAsyncThunk(
   'form/submit-form',
   async (formId: string, { getState, rejectWithValue }) => {
     try {
-      const { config } = getState() as AppState;
+      const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
 
+      const dryRun = user.user.roles?.includes('urn:ads:platform:form-service:form-tester');
       const token = await getAccessToken();
       const { data } = await axios.post<SerializableForm>(
         new URL(`/form/v1/forms/${formId}`, formServiceUrl).href,
-        { operation: 'submit' },
+        { operation: 'submit', dryRun },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -469,12 +470,15 @@ export const submitAnonymousForm = createAsyncThunk(
         token = await grecaptcha.execute(config.environment.recaptchaKey, { action: 'submit_form' });
       }
 
+      const dryRun = user.user.roles?.includes('urn:ads:platform:form-service:form-tester');
+
       const { data } = await axios.post<SerializableForm>(`/api/gateway/v1/forms`, {
         token,
         tenant: user.tenant.name,
         definitionId: form.selected,
         data: form.data,
         files: form.files,
+        dryRun: dryRun,
       });
 
       return data;

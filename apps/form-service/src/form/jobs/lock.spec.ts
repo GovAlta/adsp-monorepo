@@ -76,6 +76,7 @@ describe('lock', () => {
       submissionPdfTemplate: '',
       supportTopic: false,
       queueTaskToProcess: { queueName: 'test-queue', queueNameSpace: 'test-queuenamespace' },
+      dryRun: false,
     }),
     subscriber,
     {
@@ -92,6 +93,7 @@ describe('lock', () => {
       submitted: null,
       lastAccessed: new Date(),
       status: FormStatus.Draft,
+      dryRun: false,
     }
   );
 

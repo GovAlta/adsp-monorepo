@@ -29,6 +29,7 @@ export interface FormSubmission {
   disposition: FormDisposition;
   hash: string;
   securityClassification?: SecurityClassificationType;
+  dryRun: boolean;
 }
 
 export interface FormSubmissionCriteria {

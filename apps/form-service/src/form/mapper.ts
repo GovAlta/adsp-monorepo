@@ -58,6 +58,7 @@ export function mapForm(apiId: AdspId, entity: FormEntityWithJobId, includeData 
       submissions: entity.definition?.submissionRecords && { href: `${apiId}:/forms/${entity.id}/submissions` },
       collection: { href: `${apiId}:/forms` },
     },
+    dryRun: entity.dryRun,
   };
 }
 

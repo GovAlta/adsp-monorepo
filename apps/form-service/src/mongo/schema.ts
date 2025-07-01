@@ -64,6 +64,9 @@ export const formSchema = new Schema(
       type: String,
       index: true,
     },
+    dryRun: {
+      type: Boolean,
+    },
   },
   { _id: false }
 );
@@ -159,6 +162,9 @@ export const formSubmissionSchema = new Schema(
     },
     securityClassification: {
       type: String,
+    },
+    dryRun: {
+      type: Boolean,
     },
     disposition: { type: formDeposition, required: false },
     hash: String,

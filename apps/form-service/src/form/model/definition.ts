@@ -28,6 +28,7 @@ export class FormDefinitionEntity implements FormDefinition {
   queueTaskToProcess?: QueueTaskToProcess;
   securityClassification?: SecurityClassificationType;
   scheduledIntakes: boolean;
+  dryRun: boolean;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
 
@@ -74,9 +75,9 @@ export class FormDefinitionEntity implements FormDefinition {
     );
   }
 
-  public async canApply(user: User): Promise<boolean> {
+  public async canApply(user: User, dryRun?: boolean): Promise<boolean> {
     // If this form definition requires scheduled intakes, and there is no current intake, then return false.
-    if (this.scheduledIntakes && !isAllowedUser(user, this.tenantId, FormServiceRoles.Tester, true)) {
+    if (this.scheduledIntakes && !dryRun && !isAllowedUser(user, this.tenantId, FormServiceRoles.Tester, true)) {
       const intake = await this.calendarService.getScheduledIntake(this);
       if (!intake || intake.isUpcoming) {
         return false;
@@ -108,9 +109,10 @@ export class FormDefinitionEntity implements FormDefinition {
     user: User,
     repository: FormRepository,
     notificationService: NotificationService,
+    dryRun?: boolean,
     applicantInfo?: Omit<Subscriber, 'urn'>
   ): Promise<FormEntity> {
-    if (!(await this.canApply(user))) {
+    if (!(await this.canApply(user, dryRun))) {
       throw new UnauthorizedUserError('create form', user);
     }
 
@@ -134,7 +136,7 @@ export class FormDefinitionEntity implements FormDefinition {
       : null;
 
     const formDraftUrl = this.urlTemplate({ id });
-    const form = await FormEntity.create(user, repository, this, id, formDraftUrl, applicant);
+    const form = await FormEntity.create(user, repository, this, id, formDraftUrl, applicant, dryRun);
 
     return form;
   }
