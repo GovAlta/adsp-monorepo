@@ -14,6 +14,7 @@ import {
   GoABadgeType,
   GoAModal,
   GoAFormItem,
+  GoANotification,
 } from '@abgov/react-components';
 
 import ApplicationFormModal from '../form';
@@ -36,6 +37,10 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
   if (app.endpoint) {
     app.endpoint.statusEntries = entries;
   }
+
+  const { notices } = useSelector((state: RootState) => ({
+    notices: state.notice?.notices,
+  }));
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
@@ -167,7 +172,20 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         title="Delete application"
         content={
           <div>
-            Are you sure you wish to delete <b>{app.name}</b>?
+            <div>
+              Are you sure you wish to delete <b>{app.name}</b>?
+            </div>
+
+            <div>
+              {notices.filter((notice) => notice.tennantServRef.map((ref) => ref.id).includes(app.appKey)).length >
+                0 && (
+                <div style={{ marginTop: '1rem' }}>
+                  <GoANotification type="emergency">
+                    This application has attached notices, and deleting it will orphan them
+                  </GoANotification>
+                </div>
+              )}
+            </div>
           </div>
         }
         onCancel={cancelDelete}
