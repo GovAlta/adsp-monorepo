@@ -174,7 +174,7 @@ describe('Feedbacks Components', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Feedback service')).toBeInTheDocument();
-      expect(screen.getByText('Collapse view')).toBeInTheDocument();
+      expect(screen.getByText('Collapse View')).toBeInTheDocument();
     });
   });
 });
