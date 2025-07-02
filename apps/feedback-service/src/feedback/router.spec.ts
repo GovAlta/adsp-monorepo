@@ -457,7 +457,7 @@ describe('router', () => {
     it('can get feedback', async () => {
       const req = {
         tenant: { id: tenantId },
-        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackProvider] },
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
         query: { site: 'http://test.org', top: '10', after: '' },
       };
       const res = {
@@ -476,7 +476,7 @@ describe('router', () => {
     it('calls next without site query parameter', async () => {
       const req = {
         tenant: { id: tenantId },
-        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackProvider] },
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
         query: { top: '10', after: '' },
       };
       const res = {

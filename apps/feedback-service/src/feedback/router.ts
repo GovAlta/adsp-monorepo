@@ -1,4 +1,4 @@
-import { AdspId, TenantService, UnauthorizedUserError, isAllowedUser } from '@abgov/adsp-service-sdk';
+import { AdspId, Tenant, TenantService, UnauthorizedUserError, User, isAllowedUser } from '@abgov/adsp-service-sdk';
 import {
   InvalidOperationError,
   UnauthorizedError,
@@ -105,12 +105,19 @@ export function sendFeedback(logger: Logger, queueService: WorkQueueService<Feed
   };
 }
 
+const canRead = (user: User, tenant: Tenant, role: ServiceRoles) => {
+  return isAllowedUser(user, tenant.id, role, true);
+};
+
 export const readValues =
   (valueService: ValueService): RequestHandler =>
   async (req, res, next) => {
     try {
       if (!req.tenant) {
         throw new InvalidOperationError('Tenant is required.');
+      }
+      if (!canRead(req.user, req.tenant, ServiceRoles.FeedbackReader)) {
+        throw new UnauthorizedError('User is not authorized to read feedback.');
       }
       if (!req.query?.site) {
         throw new InvalidOperationError('Site is required.');
