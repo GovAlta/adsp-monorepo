@@ -87,6 +87,17 @@ export const FeedbacksList = (): JSX.Element => {
       technicalIssue: obj.value?.technicalIssue,
     }));
   };
+  const renderLoadMoreButton = () => {
+    return (
+      next && (
+        <LoadMoreWrapper>
+          <GoAButton type="tertiary" onClick={onNext}>
+            Load more
+          </GoAButton>
+        </LoadMoreWrapper>
+      )
+    );
+  };
 
   useEffect(() => {
     if (isExport) {
@@ -179,6 +190,7 @@ export const FeedbacksList = (): JSX.Element => {
 
           {!indicator.show && feedbacks.length === 0 && renderNoItem('feedbacks')}
           {feedbacks.length > 0 && <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={false} />}
+          {renderLoadMoreButton()}
         </FullScreenModalWrapper>
       </GoAModal>
 
@@ -221,13 +233,7 @@ export const FeedbacksList = (): JSX.Element => {
       {selectedSite && feedbacks.length > 0 && (
         <Visible visible={true}>
           <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={true} />
-          {next && (
-            <LoadMoreWrapper>
-              <GoAButton type="tertiary" onClick={onNext}>
-                Load more
-              </GoAButton>
-            </LoadMoreWrapper>
-          )}
+          {renderLoadMoreButton()}
         </Visible>
       )}
     </section>

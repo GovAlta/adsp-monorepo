@@ -67,7 +67,7 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
                 {submissionDate.formattedDateTime}
               </p>
               <h2>Rating</h2>
-              <span data-testid={`feedbackRating_${id}`}>{ratingValue}</span>
+              <span data-testid={`feedbackRating_${id}`}>{`${ratingValue} - ${feedback.value.rating}`}</span>
               {feedback.value.comment && (
                 <>
                   <h2>Comments</h2>
