@@ -7,6 +7,7 @@ jest.mock('axios');
 
 const repositoryMock = {
   findRecentByUrlAndApplicationId: jest.fn(),
+  findRecent: jest.fn(),
   deleteOldUrlStatus: jest.fn(),
   findEnabledApplications: jest.fn(),
   find: jest.fn(),
@@ -23,6 +24,7 @@ const endpointRepoMock: EndpointStatusEntryRepository = {
   save: jest.fn(),
   get: jest.fn(),
   findRecentByUrlAndApplicationId: jest.fn(),
+  findRecent: jest.fn(),
   deleteOldUrlStatus: jest.fn(),
 };
 

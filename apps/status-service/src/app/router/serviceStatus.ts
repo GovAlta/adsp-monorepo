@@ -298,6 +298,26 @@ export const getApplicationEntries =
     }
   };
 
+export const getAllApplicationEntries =
+  (logger: Logger, endpointStatusEntryRepository: EndpointStatusEntryRepository): RequestHandler =>
+  async (req, res, next) => {
+    const { tenantId } = req.user as User;
+    if (!tenantId) {
+      throw new UnauthorizedError('missing tenant id');
+    }
+
+    try {
+      const { ageInMinutes } = req.query;
+      const minutes = ageInMinutes ? parseInt(ageInMinutes as string) : 31;
+
+      const entries = await endpointStatusEntryRepository.findRecent(minutes);
+      res.send(entries.map(mapEndpointStatusEntry));
+    } catch (err) {
+      logger.error(`Failed: ${err.message}`);
+      next(err);
+    }
+  };
+
 function delay(time) {
   return new Promise((resolve) => setTimeout(resolve, time));
 }
@@ -412,6 +432,8 @@ export function createServiceStatusRouter({
     '/applications/:appKey/endpoint-status-entries',
     getApplicationEntries(logger, applicationRepo, endpointStatusEntryRepository)
   );
+
+  router.get('/applications/endpoint-status-entries', getAllApplicationEntries(logger, endpointStatusEntryRepository));
 
   router.get(
     '/webhook/:id/test/:eventName',

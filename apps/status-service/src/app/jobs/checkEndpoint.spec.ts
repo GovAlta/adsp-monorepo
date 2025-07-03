@@ -29,6 +29,7 @@ describe('checkEndpoint', () => {
 
   const endpointRepositoryMock = {
     findRecentByUrlAndApplicationId: jest.fn(),
+    findRecent: jest.fn(),
     deleteOldUrlStatus: jest.fn(),
     get: jest.fn(),
     find: jest.fn(),

@@ -10,4 +10,5 @@ export interface EndpointStatusEntry {
 export interface EndpointStatusEntryRepositoryOptions {
   limit: number;
   everyMilliseconds: number;
+  ageInMinutes: number;
 }

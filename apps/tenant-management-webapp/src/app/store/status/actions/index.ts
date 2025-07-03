@@ -31,6 +31,7 @@ export type ActionTypes =
   | fetch.FetchServiceStatusAppsSuccessAction
   | fetch.FetchServiceStatusAppHealthAction
   | fetch.FetchServiceStatusAppHealthSuccessAction
+  | fetch.FetchServiceAllStatusAppHealthSuccessAction
   | save.SaveApplicationSuccessAction
   | get.GetApplicationSuccessAction
   | destroy.DeleteApplicationSuccessAction

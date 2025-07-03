@@ -4,6 +4,7 @@ import type { User } from '@abgov/adsp-service-sdk';
 describe('EndpointStatusEntryEntity', () => {
   const repositoryMock = {
     findRecentByUrlAndApplicationId: jest.fn(),
+    findRecent: jest.fn(),
     deleteOldUrlStatus: jest.fn(),
     delete: jest.fn(),
     deleteAll: jest.fn(),
