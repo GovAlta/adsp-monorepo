@@ -26,6 +26,10 @@ export const schema = {
       type: 'object',
       $ref: 'https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressCanada',
     },
+    supportingDocuments: {
+      type: 'string',
+      format: 'file-urn',
+    },
     phoneNumber: {
       type: 'string',
       minLength: 10,
@@ -74,6 +78,10 @@ export const uischema = {
     {
       type: 'Category',
       label: 'Personal Information',
+      options: {
+        sectionTitle: 'User Profile',
+      },
+      title: 'User Profile',
       elements: [
         {
           type: 'VerticalLayout',
@@ -165,6 +173,10 @@ export const uischema = {
     {
       type: 'Category',
       label: 'Address Information',
+      options: {
+        sectionTitle: 'Location',
+      },
+      title: 'Location',
       elements: [
         {
           type: 'VerticalLayout',
@@ -177,7 +189,41 @@ export const uischema = {
         },
       ],
     },
+    {
+      type: 'Category',
+      label: 'Upload Information',
+      options: {
+        sectionTitle: 'Application data',
+      },
+      elements: [
+        {
+          type: 'HelpContent',
+          label: 'Supporting Documentation',
+          options: {
+            markdown: true,
+            help: [
+              'If applicable, attach images, videos, or documents to support your complaint.',
+              'We accept: PDF, Word, JPEG, MP4, MP3, CSV.',
+            ],
+          },
+        },
+        {
+          type: 'Control',
+          scope: '#/properties/supportingDocuments',
+          label: '',
+          options: {
+            variant: 'dragdrop',
+          },
+        },
+      ],
+    },
   ],
+  options: {
+    variant: 'stepper',
+    showNavButtons: true,
+    title: 'Default form Template',
+    subtitle: 'Essential input Types',
+  },
 };
 
 export const data = {
