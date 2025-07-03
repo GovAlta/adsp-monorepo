@@ -197,7 +197,7 @@ class CalendarPage {
 
   viewCalendarDetailsModalNameField() {
     return cy.xpath(
-      '//goa-modal[@open="true" and @testid="add-calendar-modal"]/goa-form-item[@label="Name"]/goa-input'
+      '//goa-modal[@open="true" and @testid="add-calendar-modal"]//goa-form-item[@label="Name"]/goa-input'
     );
   }
 
