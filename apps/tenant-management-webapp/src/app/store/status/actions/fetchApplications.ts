@@ -5,6 +5,8 @@ export const FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION = 'status/FETCH_SERVICE_ST
 
 export const FETCH_SERVICE_STATUS_APP_HEALTH_ACTION = 'status/FETCH_SERVICE_STATUS_APP_HEALTH';
 export const FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION = 'status/FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS';
+export const FETCH_SERVICE_ALL_STATUS_APP_HEALTH_SUCCESS_ACTION =
+  'status/FETCH_SERVICE_ALL_STATUS_APP_HEALTH_SUCCESS_ACTION';
 
 export interface FetchServiceStatusApps {
   type: typeof FETCH_SERVICE_STATUS_APPS_ACTION;
@@ -27,6 +29,12 @@ export interface FetchServiceStatusAppHealthSuccessAction {
   payload: {
     appKey: string;
     url: string;
+    entries: EndpointStatusEntry[];
+  };
+}
+export interface FetchServiceAllStatusAppHealthSuccessAction {
+  type: typeof FETCH_SERVICE_ALL_STATUS_APP_HEALTH_SUCCESS_ACTION;
+  payload: {
     entries: EndpointStatusEntry[];
   };
 }
@@ -54,6 +62,15 @@ export const fetchServiceStatusAppHealthSuccess = (
   payload: {
     appKey,
     url,
+    entries,
+  },
+});
+
+export const fetchServiceAllStatusAppHealthSuccess = (
+  entries: EndpointStatusEntry[]
+): FetchServiceAllStatusAppHealthSuccessAction => ({
+  type: FETCH_SERVICE_ALL_STATUS_APP_HEALTH_SUCCESS_ACTION,
+  payload: {
     entries,
   },
 });
