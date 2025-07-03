@@ -32,6 +32,7 @@ export class FormEntity implements Form {
   data: Record<string, unknown>;
   files: Record<string, AdspId>;
   securityClassification: SecurityClassificationType;
+  dryRun: boolean;
 
   static async create(
     user: User,
@@ -39,9 +40,10 @@ export class FormEntity implements Form {
     definition: FormDefinitionEntity,
     id: string,
     formDraftUrl: string,
-    applicant?: Subscriber
+    applicant?: Subscriber,
+    dryRun?: boolean
   ): Promise<FormEntity> {
-    if (!(await definition.canApply(user))) {
+    if (!(await definition.canApply(user, dryRun))) {
       throw new UnauthorizedUserError('create form', user);
     }
 
@@ -58,6 +60,7 @@ export class FormEntity implements Form {
       data: {},
       files: {},
       securityClassification: definition.securityClassification,
+      dryRun: dryRun,
     });
 
     return await repository.save(form);
@@ -86,6 +89,7 @@ export class FormEntity implements Form {
     this.files = form.files || {};
     // This is for backwards compatibility, but security classification should be saved against the form.
     this.securityClassification = form.securityClassification || definition?.securityClassification;
+    this.dryRun = form.dryRun;
   }
 
   /**
@@ -174,14 +178,19 @@ export class FormEntity implements Form {
     }
   }
 
-  async update(user: User, data?: Record<string, unknown>, files?: Record<string, AdspId>): Promise<FormEntity> {
+  async update(
+    user: User,
+    data?: Record<string, unknown>,
+    files?: Record<string, AdspId>,
+    dryRun?: boolean
+  ): Promise<FormEntity> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot update form not in draft.');
     }
 
     if (
       !isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || []) &&
-      !((await this.definition?.canApply(user)) && user.id === this.createdBy.id)
+      !((await this.definition?.canApply(user, dryRun)) && user.id === this.createdBy.id)
     ) {
       throw new UnauthorizedUserError('update form', user);
     }
@@ -251,7 +260,8 @@ export class FormEntity implements Form {
     user: User,
     queueTaskService: QueueTaskService,
     submissionRepository: FormSubmissionRepository,
-    pdfService: PdfService
+    pdfService: PdfService,
+    dryRun?: boolean
   ): Promise<[FormEntity, FormSubmissionEntity, string]> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');
@@ -259,7 +269,7 @@ export class FormEntity implements Form {
 
     if (
       !isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || []) &&
-      !((await this.definition?.canApply(user)) && user.id === this.createdBy.id)
+      !((await this.definition?.canApply(user, dryRun)) && user.id === this.createdBy.id)
     ) {
       throw new UnauthorizedUserError('submit form', user);
     }
@@ -271,6 +281,7 @@ export class FormEntity implements Form {
     this.securityClassification = this.definition?.securityClassification;
     // Hash the form data on submit for duplicate detection.
     this.hash = await hasha.async(JSON.stringify(this.data), { algorithm: 'sha1' });
+    this.dryRun = dryRun;
 
     const saved = await this.repository.save(this);
     let submission: FormSubmissionEntity = null;

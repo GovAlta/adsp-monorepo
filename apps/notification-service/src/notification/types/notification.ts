@@ -7,6 +7,14 @@ export interface NotificationContent {
   from?: string;
   bcc?: string[];
   cc?: string[];
+  attachments?: Attachment[];
+}
+
+export interface Attachment {
+  filename: string;
+  content: string;
+  encoding: string;
+  contentType: string;
 }
 
 export interface Notification extends NotificationContent {

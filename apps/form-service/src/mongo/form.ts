@@ -154,6 +154,7 @@ export class MongoFormRepository implements FormRepository {
         (fs, [key, f]) => ({ ...fs, [key.replace('.', ':')]: f?.toString() }),
         {}
       ),
+      dryRun: entity.dryRun,
     };
   }
 
@@ -191,6 +192,7 @@ export class MongoFormRepository implements FormRepository {
           (fs, [key, f]) => ({ ...fs, [key.replace(':', '.')]: f ? AdspId.parse(f) : null }),
           {}
         ),
+        dryRun: doc.dryRun,
       },
       doc.hash
     );

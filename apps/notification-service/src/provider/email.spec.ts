@@ -56,5 +56,31 @@ describe('createEmailProvider', () => {
       } as Notification);
       expect(transportMock.sendMail).toHaveBeenCalledTimes(1);
     });
+    it('can send notification with attachemnt', async () => {
+      const provider = createEmailProvider({
+        SMTP_HOST: 'smtp.gov.ab.ca',
+        SMTP_PORT: 25,
+        SMTP_USER: null,
+        SMTP_PASSWORD: null,
+        FROM_ADDRESS: 'noreply@gov.ab.ca',
+      });
+
+      await provider.send({
+        to: 'test@testco.org',
+        message: {
+          subject: '',
+          body: '',
+        },
+        attachments: [
+          {
+            filename: 'results.pdf',
+            content: 'JVBERi0xLjQKJdPr6eEKMSAwIGK..',
+            encoding: 'base64',
+            contentType: 'application/pdf',
+          },
+        ],
+      } as Notification);
+      expect(transportMock.sendMail).toHaveBeenCalledTimes(1);
+    });
   });
 });

@@ -166,6 +166,7 @@ describe('form router', () => {
     lastAccessed: new Date(),
     data: {},
     files: {},
+    dryRun: false,
   };
 
   const submittedFormInfo = {
@@ -181,6 +182,7 @@ describe('form router', () => {
     lastAccessed: new Date(),
     data: {},
     files: {},
+    dryRun: false,
   };
 
   const formSubmissionInfo: FormSubmission = {
@@ -202,6 +204,7 @@ describe('form router', () => {
       date: new Date(),
     },
     hash: 'hashid',
+    dryRun: false,
   };
 
   const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
@@ -1487,6 +1490,7 @@ describe('form router', () => {
         lastAccessed: new Date(),
         data: {},
         files: {},
+        dryRun: false,
       };
       const locked = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 

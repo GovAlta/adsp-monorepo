@@ -92,6 +92,7 @@ describe('FormEntity', () => {
       lastAccessed: new Date(),
       data: {},
       files: {},
+      dryRun: false,
     };
     const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
     expect(entity).toBeTruthy();
@@ -165,6 +166,7 @@ describe('FormEntity', () => {
       lastAccessed: new Date(),
       data: {},
       files: {},
+      dryRun: false,
     };
     const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
@@ -195,6 +197,7 @@ describe('FormEntity', () => {
       lastAccessed: new Date(),
       data: {},
       files: {},
+      dryRun: false,
     };
     const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
@@ -247,6 +250,7 @@ describe('FormEntity', () => {
       lastAccessed: new Date(),
       data: {},
       files: {},
+      dryRun: false,
     };
     const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
@@ -302,6 +306,7 @@ describe('FormEntity', () => {
       lastAccessed: new Date(),
       data: {},
       files: {},
+      dryRun: false,
     };
     const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
@@ -405,6 +410,7 @@ describe('FormEntity', () => {
       lastAccessed: new Date(),
       data: {},
       files: {},
+      dryRun: false,
     };
     const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
@@ -500,6 +506,7 @@ describe('FormEntity', () => {
       lastAccessed: new Date(),
       data: {},
       files: {},
+      dryRun: false,
     };
     const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
@@ -536,6 +543,7 @@ describe('FormEntity', () => {
       lastAccessed: new Date(),
       data: {},
       files: {},
+      dryRun: false,
     };
     const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
@@ -572,6 +580,7 @@ describe('FormEntity', () => {
       lastAccessed: new Date(),
       data: {},
       files: {},
+      dryRun: false,
     };
 
     it('can submit form', async () => {
@@ -719,6 +728,7 @@ describe('FormEntity', () => {
           lastAccessed: new Date(),
           data: {},
           files: {},
+          dryRun: false,
         }
       );
       const [submitted] = await entity.submit(
@@ -748,6 +758,7 @@ describe('FormEntity', () => {
       lastAccessed: new Date(),
       data: {},
       files: {},
+      dryRun: false,
     };
     it('can set to draft', async () => {
       const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, {
@@ -792,6 +803,7 @@ describe('FormEntity', () => {
       lastAccessed: new Date(),
       data: {},
       files: {},
+      dryRun: false,
     };
     const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
@@ -827,6 +839,7 @@ describe('FormEntity', () => {
       files: {
         test: adspId`urn:ads:platform:file-service:v1:/files/test`,
       },
+      dryRun: false,
     };
     const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 

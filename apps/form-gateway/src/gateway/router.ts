@@ -251,7 +251,7 @@ export function submitSimpleForm(
   const formsResourceUrl = new URL('v1/forms', formApiUrl);
   return async (req, res, next) => {
     try {
-      const { tenant: tenantName, definitionId, data, files } = req.body;
+      const { tenant: tenantName, definitionId, data, files, dryRun } = req.body;
 
       const tenant = await tenantService.getTenantByName(tenantName?.replace(/-/g, ' '));
       if (!tenant) {
@@ -266,7 +266,7 @@ export function submitSimpleForm(
       const token = await tokenProvider.getAccessToken();
       const { data: responseData } = await axios.post<{ id: string }>(
         formsResourceUrl.href,
-        { definitionId, data, files, submit: true },
+        { definitionId, data, files, submit: true, dryRun: dryRun },
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenant.id.toString() },

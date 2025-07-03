@@ -177,7 +177,7 @@ export class AdspFeedback implements AdspFeedbackApi {
         this.commentSelector.value.classList.remove('error');
       }
       if (this.issueSelectionErrorText.value) {
-        this.issueSelectionErrorText.value.style.visibility = 'hidden';
+        this.issueSelectionErrorText.value.classList.remove('visible');
       }
       if (event.target.value.toLowerCase() === 'yes') {
         if (this.ratingSelector.value) {
@@ -240,7 +240,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private selectedRating: number = -1;
 
   private reset() {
-    this.clearRating(this.selectedRating);
+    this.defaultRating();
     this.selectedRating = -1;
     if (this.commentRef.value) {
       this.commentRef.value.value = '';
@@ -255,10 +255,10 @@ export class AdspFeedback implements AdspFeedbackApi {
       this.commentSelector.value.checked = false;
     }
     if (this.ratingErrorText.value) {
-      this.ratingErrorText.value.style.visibility = 'hidden';
+      this.ratingErrorText.value.classList.remove('visible');
     }
     if (this.issueSelectionErrorText.value) {
-      this.issueSelectionErrorText.value.style.visibility = 'hidden';
+      this.issueSelectionErrorText.value.classList.remove('visible');
     }
     if (this.ratingSelector.value) {
       this.ratingSelector.value.classList.remove('error');
@@ -266,8 +266,11 @@ export class AdspFeedback implements AdspFeedbackApi {
     if (this.commentSelector.value) {
       this.commentSelector.value.classList.remove('error');
     }
+    if (this.technicalCommentRef) {
+      this.technicalCommentRef.value?.classList.remove('error');
+    }
     if (this.technicalCommentErrorText.value) {
-      this.technicalCommentErrorText.value.style.visibility = 'hidden';
+      this.technicalCommentErrorText.value.classList.remove('visible');
     }
     this.feedbackContentFormRef?.value?.setAttribute('style', 'padding-top:36px');
   }
@@ -276,28 +279,28 @@ export class AdspFeedback implements AdspFeedbackApi {
     const isNoChecked = this.commentSelector.value && this.commentSelector.value.checked;
 
     if (!isYesChecked && !isNoChecked) {
-      this.issueSelectionErrorText.value && (this.issueSelectionErrorText.value.style.visibility = 'visible');
+      this.issueSelectionErrorText.value && this.issueSelectionErrorText.value.classList.add('visible');
       this.ratingSelector.value && this.ratingSelector.value.classList.add('error');
       this.commentSelector.value && this.commentSelector.value.classList.add('error');
       return false;
     } else {
       this.ratingSelector.value && this.ratingSelector.value.classList.remove('error');
       this.commentSelector.value && this.commentSelector.value.classList.remove('error');
-      this.issueSelectionErrorText.value && (this.issueSelectionErrorText.value.style.visibility = 'hidden');
+      this.issueSelectionErrorText.value && this.issueSelectionErrorText.value.classList.remove('visible');
       return true;
     }
   }
   private validateRating(): boolean {
     if (this.selectedRating === -1) {
       if (this.ratingErrorText.value) {
-        this.ratingErrorText.value.style.visibility = 'visible';
+        this.ratingErrorText.value.classList.add('visible');
         this.errorsOnRating(true);
       }
 
       return false;
     } else {
       if (this.ratingErrorText.value) {
-        this.ratingErrorText.value.style.visibility = 'hidden';
+        this.ratingErrorText.value.classList.remove('visible');
         this.errorsOnRating(false);
       }
       return true;
@@ -308,7 +311,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     const technicalIssueYesChecked = this.ratingSelector.value && this.ratingSelector.value.checked;
     if (technicalIssueYesChecked) {
       if (!this.technicalCommentRef.value || this.technicalCommentRef.value.value.length === 0) {
-        if (this.technicalCommentErrorText.value) this.technicalCommentErrorText.value.style.visibility = 'visible';
+        if (this.technicalCommentErrorText.value) this.technicalCommentErrorText.value.classList.add('visible');
         if (this.technicalCommentRef.value) {
           this.technicalCommentRef.value.classList.add('error');
         }
@@ -452,6 +455,15 @@ export class AdspFeedback implements AdspFeedbackApi {
       text.style.color = '#333333';
     }
   };
+  private defaultRating = () => {
+    for (let i = 0; i < this.ratings.length; i++) {
+      const rating = this.ratings[i];
+      const images = document.querySelectorAll('.rating');
+      const image = images[i] as HTMLImageElement;
+
+      image.src = rating.svgDefault;
+    }
+  };
   private errorsOnRating = (isError: boolean) => {
     for (let i = 0; i < this.ratings.length; i++) {
       const rating = this.ratings[i];
@@ -474,7 +486,7 @@ export class AdspFeedback implements AdspFeedbackApi {
       this.technicalCommentRef?.value?.value.length > 0 &&
       this.technicalCommentErrorText.value
     ) {
-      this.technicalCommentErrorText.value.style.visibility = 'hidden';
+      this.technicalCommentErrorText.value.classList.remove('visible');
       this.technicalCommentRef.value.classList.remove('error');
     }
   };
@@ -482,7 +494,7 @@ export class AdspFeedback implements AdspFeedbackApi {
   private selectRating = (index: number) => {
     this.errorsOnRating(false);
     if (this.ratingErrorText.value) {
-      this.ratingErrorText.value.style.visibility = 'hidden';
+      this.ratingErrorText.value.classList.remove('visible');
     }
 
     this.updateHover(index, false);
@@ -1039,13 +1051,15 @@ export class AdspFeedback implements AdspFeedbackApi {
             }
           }
           .inline-error {
-            display: flex;
-            visibility: hidden;
+            display: none;
             align-items: center;
             color: red;
             gap: 0.5rem;
           }
-
+          .inline-error.visible {
+            display: flex;
+            visibility: visible;
+          }
           .inline-error p {
             margin: 0;
             color: red;

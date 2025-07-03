@@ -131,7 +131,7 @@ export const ExportDates = styled.div`
   display: flex;
   margin-top: var(--goa-space-l);
   margin-bottom: var(--goa-space-l);
-  gap: var(--goa-space-xl);
+  gap: var(--goa-space-m);
 `;
 export const FeedbackFilterError = styled.span`
   color: var(--goa-color-emergency-default);

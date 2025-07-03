@@ -65,6 +65,10 @@ const initializeApp = async (): Promise<express.Application> => {
           role: ServiceRoles.FeedbackProvider,
           description: 'Provider role that allows user to send feedback.',
         },
+        {
+          role: ServiceRoles.FeedbackReader,
+          description: 'Allows user to access feedback submitted by end-users.',
+        },
       ],
       values: [FeedbackValueDefinition, ServiceMetricsValueDefinition],
       clientSecret: environment.CLIENT_SECRET,

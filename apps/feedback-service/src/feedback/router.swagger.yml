@@ -1,3 +1,46 @@
+components:
+  schemas:
+    FeedbackEntry:
+      type: object
+      properties:
+        tenant:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+        context:
+          type: object
+          properties:
+            site:
+              type: string
+              example: 'https://adsp.alberta.ca'
+            view:
+              type: string
+            digest:
+              type: string
+            includesComment:
+              type: boolean
+            includesTechnicalIssue:
+              type: boolean
+          required: [site]
+        value:
+          type: object
+          properties:
+            rating:
+              type: string
+              enum: [terrible, bad, neutral, good, delightful]
+            comment:
+              type: string
+            ratingValue:
+              type: number
+              example: 5
+            technicalIssue:
+              type: string
+          required: [rating, comment, ratingValue]
+      required: [tenant, timestamp, context, value]
+
 /feedback/v1/feedback:
   post:
     tags:
@@ -37,6 +80,71 @@
         description: User not authorized to send feedback.
       429:
         description: Too many requests received from client.
+  get:
+    tags:
+      - Feedback
+    description: Retrieves feedback submitted by users over the specified time period
+    parameters:
+      - name: site
+        description: Name of site for which to retrieve feedback entries
+        in: query
+        required: true
+        example: 'https://adsp.alberta.ca'
+        schema:
+          type: string
+      - name: start
+        description: Return only feedback entered after the start data
+        in: query
+        required: false
+        schema:
+          type: string
+        example: '2023-01-01T00:00:00Z'
+      - name: end
+        description: Return only feedback entered before the end date
+        in: query
+        required: false
+        schema:
+          type: string
+        example: '2023-01-01T00:00:00Z'
+      - name: top
+        description: Return only "top" entries
+        in: query
+        required: false
+        example: 50
+        schema:
+          type: number
+      - name: after
+        description: Cursor for retrieving additional pages.
+        in: query
+        required: false
+        example: 'MTA='
+        schema:
+          type: string
+    responses:
+      200:
+        description: Feedback successfully retrieved.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                feedback:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/FeedbackEntry'
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number
+      400:
+        description: Request is not valid.
+      401:
+        description: User not authorized to request feedback entries.
 
 /feedback/v1/script/adspFeedback.js:
   get:

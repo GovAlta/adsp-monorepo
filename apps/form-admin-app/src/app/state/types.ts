@@ -80,6 +80,7 @@ export interface Form {
   data?: Record<string, unknown>;
   files?: Record<string, string>;
   submission?: FormSubmission;
+  dryRun?: boolean;
 }
 
 export interface FormDisposition {

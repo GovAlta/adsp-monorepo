@@ -8,6 +8,7 @@ import { renderNoItem } from '@components/NoItem';
 import {
   GoABadge,
   GoAButton,
+  GoAButtonGroup,
   GoACircularProgress,
   GoADropdown,
   GoADropdownItem,
@@ -86,6 +87,17 @@ export const FeedbacksList = (): JSX.Element => {
       technicalIssue: obj.value?.technicalIssue,
     }));
   };
+  const renderLoadMoreButton = () => {
+    return (
+      next && (
+        <LoadMoreWrapper>
+          <GoAButton type="tertiary" onClick={onNext}>
+            Load more
+          </GoAButton>
+        </LoadMoreWrapper>
+      )
+    );
+  };
 
   useEffect(() => {
     if (isExport) {
@@ -162,7 +174,8 @@ export const FeedbacksList = (): JSX.Element => {
             Back to default view
           </GoAButton>
           {sharedFilterForm}
-          <div style={{ display: 'flex', gap: '1rem' }}>
+
+          <GoAButtonGroup alignment="start" gap="compact">
             <GoAButton
               type="primary"
               onClick={exportToCsv}
@@ -171,11 +184,13 @@ export const FeedbacksList = (): JSX.Element => {
               Export CSV
             </GoAButton>
             <GoAButton type="secondary" trailingIcon="contract" onClick={() => setExpandView(false)}>
-              Collapse view
+              Collapse View
             </GoAButton>
-          </div>
+          </GoAButtonGroup>
+
           {!indicator.show && feedbacks.length === 0 && renderNoItem('feedbacks')}
           {feedbacks.length > 0 && <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={false} />}
+          {renderLoadMoreButton()}
         </FullScreenModalWrapper>
       </GoAModal>
 
@@ -192,18 +207,18 @@ export const FeedbacksList = (): JSX.Element => {
               <FeedbackFilterError>Start date must be before End date.</FeedbackFilterError>
             </div>
           )}
-          <ExportDates>
+          <GoAButtonGroup alignment="start" gap="compact">
             <GoAButton
               type="primary"
               onClick={exportToCsv}
               disabled={!selectedSite || showDateError || feedbacks.length === 0}
             >
-              Export
+              Export CSV
             </GoAButton>
             <GoAButton type="secondary" trailingIcon="expand" onClick={() => setExpandView(true)}>
               Expand View
             </GoAButton>
-          </ExportDates>
+          </GoAButtonGroup>
         </div>
       )}
 
@@ -218,13 +233,7 @@ export const FeedbacksList = (): JSX.Element => {
       {selectedSite && feedbacks.length > 0 && (
         <Visible visible={true}>
           <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={true} />
-          {next && (
-            <LoadMoreWrapper>
-              <GoAButton type="tertiary" onClick={onNext}>
-                Load more
-              </GoAButton>
-            </LoadMoreWrapper>
-          )}
+          {renderLoadMoreButton()}
         </Visible>
       )}
     </section>

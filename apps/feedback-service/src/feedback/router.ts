@@ -1,4 +1,4 @@
-import { AdspId, TenantService, UnauthorizedUserError, isAllowedUser } from '@abgov/adsp-service-sdk';
+import { AdspId, Tenant, TenantService, UnauthorizedUserError, User, isAllowedUser } from '@abgov/adsp-service-sdk';
 import {
   InvalidOperationError,
   UnauthorizedError,
@@ -15,6 +15,7 @@ import { FeedbackConfiguration } from './configuration';
 import { FeedbackWorkItem } from './job';
 import { ServiceRoles } from './roles';
 import { Feedback } from './types';
+import { ReadQueryParameters, ValueService } from './value';
 
 export function resolveFeedbackContext(
   tenantService: TenantService,
@@ -104,6 +105,37 @@ export function sendFeedback(logger: Logger, queueService: WorkQueueService<Feed
   };
 }
 
+const canRead = (user: User, tenant: Tenant, role: ServiceRoles) => {
+  return isAllowedUser(user, tenant.id, role, true);
+};
+
+export const readValues =
+  (valueService: ValueService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      if (!req.tenant) {
+        throw new InvalidOperationError('Tenant is required.');
+      }
+      if (!canRead(req.user, req.tenant, ServiceRoles.FeedbackReader)) {
+        throw new UnauthorizedError('User is not authorized to read feedback.');
+      }
+      if (!req.query?.site) {
+        throw new InvalidOperationError('Site is required.');
+      }
+      const queryParameters: ReadQueryParameters = {
+        site: req.query.site as string,
+        top: req.query?.top ? parseInt(req.query.top as string, 10) : 10,
+        after: req.query?.after ? (req.query.after as string) : undefined,
+        start: req.query?.start ? (req.query.start as string) : undefined,
+        end: req.query?.end ? (req.query.end as string) : undefined,
+      };
+      const values = await valueService.readValues(req.tenant.id, queryParameters);
+      res.json(values);
+    } catch (err) {
+      next(err);
+    }
+  };
+
 interface WidgetInformation {
   script: string;
   length: number;
@@ -151,9 +183,10 @@ interface RouterProps {
   logger: Logger;
   tenantService: TenantService;
   queueService: WorkQueueService<FeedbackWorkItem>;
+  valueService: ValueService;
 }
 
-export async function createFeedbackRouter({ logger, tenantService, queueService }: RouterProps) {
+export async function createFeedbackRouter({ logger, tenantService, queueService, valueService }: RouterProps) {
   const rateLimitHandler = rateLimit({
     windowMs: 5 * 60 * 1000,
     limit: 5,
@@ -206,6 +239,8 @@ export async function createFeedbackRouter({ logger, tenantService, queueService
   router.get('/script/adspFeedback.js', downloadWidgetScript(loadWidgetInformation));
 
   router.get('/script/integrity', getWidgetScriptIntegrity(loadWidgetInformation));
+
+  router.get('/feedback', readValues(valueService));
 
   return router;
 }

@@ -25,6 +25,7 @@ export interface FormDefinition {
   supportTopic: boolean;
   securityClassification?: SecurityClassification;
   resourceTags?: FormResourceTagResult[];
+  dryRun?: boolean;
 }
 
 export interface FormResourceTagResponse {

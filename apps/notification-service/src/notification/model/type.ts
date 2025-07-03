@@ -14,6 +14,7 @@ import {
   ServiceUserRoles,
   Subscriber,
   Template,
+  Attachment,
 } from '../types';
 import { SubscriberEntity } from './subscriber';
 import { SubscriptionEntity } from './subscription';
@@ -313,6 +314,8 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
     const subTitleInEvent = this?.subTitlePath && getAtPath(event.payload, this.subTitlePath);
     const subjectInEvent = this?.subjectPath && getAtPath(event.payload, this.subjectPath);
 
+    const attachments = event.payload?.attachments as Attachment[];
+
     const notifications = [];
     if (eventNotification && channel && address && eventNotification.templates[channel]) {
       const context = {
@@ -350,6 +353,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
         from: configuration.email?.fromEmail,
         channel,
         message: subjectInEvent ? { ...message, subject: subjectInEvent } : message,
+        attachments: attachments,
       });
 
       logger.debug(`Generated direct notification for type ${this.id} on event ${event.namespace}:${event.name}.`, {

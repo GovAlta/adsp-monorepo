@@ -329,7 +329,7 @@ export function createForm(
 
       const user = req.user;
       const tenantId = req.tenant?.id;
-      const { definitionId, applicant: applicantInfo, data, files: fileIds, submit } = req.body;
+      const { definitionId, applicant: applicantInfo, data, files: fileIds, submit, dryRun } = req.body;
 
       logger.debug(`Creating form of definition '${definitionId}'...`, {
         context: 'FormRouter',
@@ -342,9 +342,9 @@ export function createForm(
         throw new NotFoundError('form definition', definitionId);
       }
 
-      let form = await definition.createForm(user, repository, notificationService, applicantInfo);
+      let form = await definition.createForm(user, repository, notificationService, dryRun, applicantInfo);
       let formSubmission: FormSubmissionEntity = null;
-      let event = formCreated(apiId, user, form);
+      let event = formCreated(apiId, user, form, dryRun);
 
       // If data or files is set, then update the form.
       if (data || fileIds) {
@@ -352,7 +352,7 @@ export function createForm(
           ? Object.entries(fileIds).reduce((ids, [k, v]) => ({ ...ids, [k]: AdspId.parse(v as string) }), {})
           : null;
 
-        form = await form.update(user, data, files);
+        form = await form.update(user, data, files, dryRun);
       }
 
       let jobId = null;
@@ -362,22 +362,23 @@ export function createForm(
           user,
           queueTaskService,
           submissionRepository,
-          pdfService
+          pdfService,
+          dryRun
         );
         jobId = pdfJobId;
         form = submittedForm;
         formSubmission = submission;
         // The create event is replaced with the submitted even.
         // This means that create events won't capture every new form creation.
-        event = formSubmitted(apiId, user, form, submission);
+        event = formSubmitted(apiId, user, form, submission, dryRun);
       }
 
       const formWithJobId: FormEntityWithJobId = form;
       formWithJobId.jobId = jobId;
 
       const result = formSubmission?.id
-        ? mapFormWithFormSubmission(apiId, formWithJobId, formSubmission)
-        : mapForm(apiId, formWithJobId);
+        ? mapFormWithFormSubmission(apiId, formWithJobId, formSubmission, dryRun)
+        : mapForm(apiId, formWithJobId, false);
 
       res.send(result);
 
@@ -618,6 +619,8 @@ export function formOperation(
     try {
       const end = startBenchmark(req, 'operation-handler-time');
 
+      const { dryRun } = req.body;
+
       const user = req.user;
 
       const form: FormEntity = req[FORM];
@@ -651,12 +654,16 @@ export function formOperation(
             user,
             queueTaskService,
             submissionRepository,
-            pdfService
+            pdfService,
+            dryRun || false
           );
           result = submittedForm;
           result.jobId = jobId;
+          if (submission) {
+            submission.dryRun = dryRun || false;
+          }
           formSubmissionResult = submission;
-          event = formSubmitted(apiId, user, result, submission);
+          event = formSubmitted(apiId, user, result, submission, dryRun);
           break;
         }
         case SET_TO_DRAFT_FORM_OPERATION: {
