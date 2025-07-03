@@ -5,6 +5,7 @@ import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Feedback, Rating } from '@store/feedback/models';
 import { URL } from '../styled-components';
 import moment from 'moment';
+import { getRatingLabelByValue } from '../ratings';
 
 interface FeedbackTableItemProps {
   id: string;
@@ -67,7 +68,9 @@ export const FeedbackTableItem: FunctionComponent<FeedbackTableItemProps> = ({
                 {submissionDate.formattedDateTime}
               </p>
               <h2>Rating</h2>
-              <span data-testid={`feedbackRating_${id}`}>{`${ratingValue} - ${feedback.value.rating}`}</span>
+              <span data-testid={`feedbackRating_${id}`}>{`${ratingValue} - ${getRatingLabelByValue(
+                Number(ratingValue)
+              )}`}</span>
               {feedback.value.comment && (
                 <>
                   <h2>Comments</h2>
