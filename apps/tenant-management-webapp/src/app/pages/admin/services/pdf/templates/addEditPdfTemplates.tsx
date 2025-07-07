@@ -3,7 +3,8 @@ import { PdfTemplate } from '@store/pdf/model';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { PdfFormItem, HelpText, DescriptionItem, ErrorMsg, PopulateTemplateWrapper } from '../styled-components';
+import { PdfFormItem, DescriptionItem, ErrorMsg, PopulateTemplateWrapper } from '../styled-components';
+import { HelpText } from '../../styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import {

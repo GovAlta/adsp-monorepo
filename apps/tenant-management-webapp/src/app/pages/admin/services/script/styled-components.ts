@@ -181,8 +181,8 @@ export const EditModalStyle = styled.div`
     display: block;
     font-weight: bold;
     color: #333;
-    font-size: var(--fs-base);
-    line-height: calc(var(--fs-base) + 1rem);
+    font-size: var(--goa-font-size-4);
+    line-height: calc(var(--goa-font-size-4) + 1rem);
   }
 
   .hr-resize {
@@ -281,7 +281,7 @@ export const ResponseTableStyles = styled.div`
     top: 0;
     border-bottom: 2px solid var(--color-header-border);
     color: var(--color-th);
-    font-size: var(--fs-base);
+    font-size: var(--goa-font-size-4);
     font-weight: var(--fw-bold);
     padding: 0 var(--goa-space-m) var(--goa-space-xs) var(--goa-space-m);
     text-align: left;
@@ -381,7 +381,7 @@ export const TombStoneWrapper = styled.div`
 `;
 
 export const ScriptEditorTitle = styled.div`
-  font-size: var(--fs-xl);
+  font-size: var(--goa-font-size-7);
   line-height: var(--lh-lg);
   font-weight: var(--fw-regular);
   font-family: var(--goa-font-family-sans);
@@ -463,7 +463,7 @@ export const ScriptEventTriggerListDefinition = styled.div`
   }
 
   & .group-name {
-    font-size: var(--fs-lg);
+    font-size: var(--goa-font-size-5);
     font-weight: var(--fw-bold);
   }
 

@@ -138,7 +138,7 @@ export const TemplateEditorContainerPdf = styled.div`
   }
 
   .title {
-    font-size: var(--fs-base);
+    font-size: var(--goa-font-size-4);
     font-weight: var(--fw-bold);
     padding-bottom: 12px;
     padding-top: 8px;
@@ -440,7 +440,7 @@ export const PdfViewer = styled.div`
 `;
 
 export const PDFTitle = styled.div`
-  font-size: var(--fs-xl);
+  font-size: var(--goa-font-size-7);
   line-height: var(--lh-lg);
   font-weight: var(--fw-regular);
   font-family: var(--goa-font-family-sans);
@@ -480,15 +480,6 @@ export const PdfFormItem = styled.div`
   margin-right: 3px;
 `;
 
-export const HelpText = styled.div`
-  font-size: var(--fs-sm);
-  color: var(--color-gray-900);
-  line-height: calc(var(--fs-sm) + var(--goa-space-xs));
-  display: flex;
-  display-direction: row;
-  justify-content: space-between;
-  margin-top: 2px;
-`;
 export const DescriptionItem = styled.div`
   margin-left: 3px;
   margin-right: 3px;

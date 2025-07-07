@@ -19,7 +19,7 @@ import { getEventDefinitions } from '@store/event/actions';
 import { useValidators } from '@lib/validation/useValidators';
 import { renderNoItem } from '@components/NoItem';
 import styled from 'styled-components';
-
+import { HelpText } from '../../styled-components';
 import {
   characterCheck,
   validationPattern,
@@ -315,16 +315,6 @@ export default WebhookFormModal;
 
 export const IdField = styled.div`
   min-height: 1.6rem;
-`;
-
-export const HelpText = styled.div`
-  font-size: var(--fs-sm);
-  color: var(--color-gray-900);
-  line-height: calc(var(--fs-sm) + 0.5rem);
-  display: flex;
-  display-direction: row;
-  justify-content: space-between;
-  margin-top: 2px;
 `;
 
 export const ErrorMsg = styled.div`
