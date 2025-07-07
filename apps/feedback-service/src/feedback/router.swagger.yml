@@ -15,7 +15,7 @@ components:
           properties:
             site:
               type: string
-              example: 'https://adsp.alberta.ca'
+              example: https://adsp.alberta.ca
             view:
               type: string
             digest:
@@ -89,7 +89,7 @@ components:
         description: Name of site for which to retrieve feedback entries
         in: query
         required: true
-        example: 'https://adsp.alberta.ca'
+        example: https://adsp.alberta.ca
         schema:
           type: string
       - name: start
@@ -98,16 +98,16 @@ components:
         required: false
         schema:
           type: string
-        example: '2023-01-01T00:00:00Z'
+        example: 2023-01-01T00:00:00Z
       - name: end
         description: Return only feedback entered before the end date
         in: query
         required: false
         schema:
           type: string
-        example: '2023-01-01T00:00:00Z'
+        example: 2023-01-01T00:00:00Z
       - name: top
-        description: Return only "top" entries
+        description: Return only the first top entries
         in: query
         required: false
         example: 50
@@ -117,7 +117,7 @@ components:
         description: Cursor for retrieving additional pages.
         in: query
         required: false
-        example: 'MTA='
+        example: MTA=
         schema:
           type: string
     responses:
@@ -131,7 +131,7 @@ components:
                 feedback:
                   type: array
                   items:
-                    $ref: '#/components/schemas/FeedbackEntry'
+                    $ref: "#/components/schemas/FeedbackEntry"
                 page:
                   type: object
                   properties:
