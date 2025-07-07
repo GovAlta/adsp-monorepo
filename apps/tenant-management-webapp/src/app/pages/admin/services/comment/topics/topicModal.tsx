@@ -24,7 +24,8 @@ import {
 import { useValidators } from '@lib/validation/useValidators';
 import { RootState } from '@store/index';
 
-import { DescriptionItem, HelpText, ErrorMsg } from '../styled-components';
+import { DescriptionItem, ErrorMsg } from '../styled-components';
+import { HelpText } from '../../styled-components';
 interface TopicModalProps {
   type: string;
 

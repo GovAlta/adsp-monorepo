@@ -9,14 +9,14 @@ import {
   duplicateNameCheck,
   Validator,
 } from '@lib/validation/checkInput';
-import { FormFormItem, HelpText, DescriptionItem, ErrorMsg } from '../styled-components';
+import { FormFormItem, DescriptionItem, ErrorMsg } from '../styled-components';
 import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { uischema } from './categorization-stepper-nav-buttons';
 import { schema } from './categorization';
 import { selectDefaultFormUrl } from '@store/form/selectors';
-
+import { HelpText } from '../../styled-components';
 import {
   GoATextArea,
   GoAInput,

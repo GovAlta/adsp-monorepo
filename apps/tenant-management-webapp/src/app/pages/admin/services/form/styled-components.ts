@@ -171,7 +171,7 @@ export const ReviewPageTabWrapper = styled.div`
 `;
 
 export const FormEditorTitle = styled.div`
-  font-size: var(--fs-xl);
+  font-size: var(--goa-font-size-7);
   line-height: var(--lh-lg);
   font-weight: var(--fw-regular);
 `;
@@ -315,7 +315,7 @@ export const TemplateEditorContainerForm = styled.div`
   }
 
   .title {
-    font-size: var(--fs-base);
+    font-size: var(--goa-font-size-4);
     font-weight: var(--fw-bold);
     padding-bottom: 12px;
     padding-top: 8px;
@@ -529,15 +529,6 @@ export const FormFormItem = styled.div`
   margin-right: 3px;
 `;
 
-export const HelpText = styled.div`
-  font-size: var(--fs-sm);
-  color: var(--color-gray-900);
-  line-height: calc(var(--fs-sm) + 0.5rem);
-  display: flex;
-  display-direction: row;
-  justify-content: space-between;
-  margin-top: 2px;
-`;
 export const DescriptionItem = styled.div`
   margin-left: 3px;
   margin-right: 3px;

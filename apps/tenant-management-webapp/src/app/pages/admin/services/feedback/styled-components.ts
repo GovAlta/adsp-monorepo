@@ -58,13 +58,7 @@ export const CheckboxSpaceWrapper = styled.div`
   margin-left: var(--goa-space-3xs);
   margin-top: var(--goa-space-l);
 `;
-export const HelpText = styled.div`
-  font: var(--goa-typography-body-xs);
-  display: flex;
-  display-direction: row;
-  justify-content: space-between;
-  padding-left: var(--goa-space-xl);
-`;
+
 export const DeleteGap = styled.div`
   column-gap: 40px;
   padding-bottom: var(--goa-space-s);

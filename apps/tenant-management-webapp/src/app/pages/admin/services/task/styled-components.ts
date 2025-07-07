@@ -98,7 +98,7 @@ export const FinalButtonPadding = styled.div`
 `;
 
 export const TaskEditorTitle = styled.div`
-  font-size: var(--fs-xl);
+  font-size: var(--goa-font-size-7);
   line-height: var(--lh-lg);
   font-weight: var(--fw-regular);
 `;

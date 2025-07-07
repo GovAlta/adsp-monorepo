@@ -271,7 +271,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
 const GoAModalStyle = styled.div`
   max-width: 640px;
   .group-name {
-    font-size: var(--fs-lg);
+    font-size: var(--goa-font-size-5);
     font-weight: var(--fw-bold);
   }
 

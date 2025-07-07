@@ -112,7 +112,7 @@ const SitesListComponent: FunctionComponent<SitesListComponentProps> = ({ onEdit
 export const SitesList = styled(SitesListComponent)`
   display: flex-inline-table;
   & .group-name {
-    font-size: var(--fs-lg);
+    font-size: var(--goa-font-size-5);
     font-weight: var(--fw-bold);
   }
 

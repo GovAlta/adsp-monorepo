@@ -28,7 +28,7 @@ export const MaxHeight = styled.div<HeightProps>`
   max-height: ${(p) => p.height + 'px'};
 `;
 export const DescriptionText = styled.div`
-  font-size: var(--fs-base);
+  font-size: var(--goa-font-size-4);
   line-height: 28px;
   margin-bottom: 28px;
   margin-top: 14px;

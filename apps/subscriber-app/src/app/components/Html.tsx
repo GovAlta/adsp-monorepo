@@ -31,14 +31,14 @@ const Main = styled.main`
 
   /* Font sizes */
   h1 {
-    font-size: var(--fs-2xl);
+    font-size: var(--goa-font-size-9);
     font-weight: var(--fw-light);
   }
   h2 {
-    font-size: var(--fs-xl);
+    font-size: var(--goa-font-size-7);
   }
   h3 {
-    font-size: var(--fs-lg);
+    font-size: var(--goa-font-size-5);
   }
 
   /* Set top margin to subsequent headers */
@@ -55,7 +55,7 @@ const Main = styled.main`
   p {
     margin-top: 0 !important;
     margin-bottom: 1rem;
-    font-size: var(--fs-base);
+    font-size: var(--goa-font-size-4);
   }
 
   // default padding is way too much
@@ -128,13 +128,13 @@ const Aside = styled.aside`
 
   /* Font sizes */
   h1 {
-    font-size: calc(0.9 * var(--fs-2xl));
+    font-size: calc(0.9 * var(--goa-font-size-9));
   }
   h2 {
-    font-size: calc(0.9 * var(--fs-xl));
+    font-size: calc(0.9 * var(--goa-font-size-7));
   }
   h3 {
-    font-size: calc(0.9 * var(--fs-lg));
+    font-size: calc(0.9 * var(--goa-font-size-5));
   }
 
   p {

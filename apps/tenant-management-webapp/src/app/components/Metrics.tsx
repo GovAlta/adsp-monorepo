@@ -33,7 +33,7 @@ const MetricGridItem = styled(GridItem)`
 `;
 
 const Count = styled.div`
-  font-size: var(--fs-2xl);
+  font-size: var(--goa-font-size-9);
   font-weight: var(--fw-bold);
   padding-bottom: 1rem;
 `;

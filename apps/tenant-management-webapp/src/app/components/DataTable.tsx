@@ -46,7 +46,7 @@ const Table = styled.table`
   th {
     border-bottom: 2px solid var(--color-header-border);
     color: var(--color-th);
-    font-size: var(--fs-base);
+    font-size: var(--goa-font-size-4);
     font-weight: var(--fw-bold);
     padding: 0.5rem;
     text-align: left;

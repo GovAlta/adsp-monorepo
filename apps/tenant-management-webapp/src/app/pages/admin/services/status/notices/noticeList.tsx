@@ -27,7 +27,7 @@ const NoticeListFilterContainer = styled.div`
   margin-bottom: 0.5rem;
   .filter-header {
     padding: 1rem 2rem 1rem 0;
-    font-size: var(--fs-base);
+    font-size: var(--goa-font-size-4);
     text-align: left;
     display: flex;
   }

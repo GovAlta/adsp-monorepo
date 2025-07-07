@@ -254,7 +254,7 @@ export const SubscriptionList = styled(SubscriptionsListComponent)`
   display: table;
   & .group-name {
     text-transform: capitalize;
-    font-size: var(--fs-lg);
+    font-size: var(--goa-font-size-5);
     font-weight: var(--fw-bold);
   }
 

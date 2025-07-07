@@ -44,7 +44,7 @@ export const AppStatus = styled.div`
 `;
 
 export const AppName = styled.div`
-  font-size: var(--fs-lg);
+  font-size: var(--goa-font-size-5);
   font-weight: var(--fw-bold);
   margin-top: 1rem;
 `;

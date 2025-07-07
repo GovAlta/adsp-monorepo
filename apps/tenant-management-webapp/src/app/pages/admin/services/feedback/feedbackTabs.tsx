@@ -22,7 +22,7 @@ export const FeedbackTabs: FunctionComponent = () => {
     <Page>
       <Main>
         <h1 data-testid="feedback-title">Feedback service</h1>
-        <Tabs activeIndex={sites === 'true' ? 1 : 0} data-testid="feedbacks-tabs">
+        <Tabs activeIndex={sites === 'true' ? 2 : 0} data-testid="feedbacks-tabs">
           <Tab label="Overview" data-testid="feedbacks-overview-tab">
             <FeedbackOverview setActiveEdit={setActiveEdit} />
           </Tab>

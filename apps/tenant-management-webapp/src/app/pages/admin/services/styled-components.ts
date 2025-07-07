@@ -16,7 +16,7 @@ export const EntryDetail = styled.div`
 `;
 export const NameDiv = styled.div`
   margin-top: 1rem;
-  font-size: var(--fs-xl);
+  font-size: var(--goa-font-size-7);
   font-weight: var(--fw-bold);
   padding-left: 0.4rem;
   padding-bottom: 0.5rem;
@@ -90,4 +90,13 @@ export const ActionIconsDiv = styled.div`
   goa-icon-button {
     margin: 0 4px;
   }
+`;
+export const HelpText = styled.div`
+  font: var(--goa-typography-body-xs);
+  color: var(--color-gray-900);
+
+  display: flex;
+  display-direction: row;
+  justify-content: space-between;
+  margin-top: 2px;
 `;

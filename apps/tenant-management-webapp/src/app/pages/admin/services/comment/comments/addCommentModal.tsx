@@ -6,7 +6,9 @@ import { Comment, TopicItem, defaultComment } from '@store/comment/model';
 import { wordMaxLengthCheck, isNotEmptyCheck } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 
-import { DescriptionItem, HelpText, ErrorMsg } from '../styled-components';
+import { DescriptionItem, ErrorMsg } from '../styled-components';
+import { HelpText } from '../../styled-components';
+
 interface TopicModalProps {
   topic: TopicItem;
   selComment: Comment;
