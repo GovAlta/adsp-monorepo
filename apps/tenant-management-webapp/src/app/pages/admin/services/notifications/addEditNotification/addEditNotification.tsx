@@ -369,22 +369,50 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           </GoAFormItem>
         )}
         {isNotifyAddressSetting === NotificationType.CONTACT_EVENT_PAYLOAD && (
-          <GoAFormItem label="Notify contact in event payload at Json schema path">
-            <GoAInput
-              type="text"
-              name="addressPath"
-              value={type.addressPath}
-              testId={`address-notification-modal-input`}
-              aria-label="input-path-address"
-              width="60%"
-              onChange={(_, value) => {
-                setType({ ...type, addressPath: value });
-                if (value !== initialValue?.addressPath) {
-                  setAddressPathChanged(true);
-                }
-              }}
-            />
-          </GoAFormItem>
+          <div>
+            <GoAFormItem label="Notify contact in event payload at Json schema path">
+              <GoAInput
+                type="text"
+                name="addressPath"
+                value={type.addressPath}
+                testId={`address-notification-modal-input`}
+                aria-label="input-path-address"
+                width="60%"
+                onChange={(_, value) => {
+                  setType({ ...type, addressPath: value });
+                  if (value !== initialValue?.addressPath) {
+                    setAddressPathChanged(true);
+                  }
+                }}
+              />
+            </GoAFormItem>
+            <GoAFormItem label="bcc in event payload at Json schema path">
+              <GoAInput
+                type="text"
+                name="bcc"
+                value={type.bccPath}
+                testId={`address-notification-modal-input`}
+                aria-label="input-path-address"
+                width="60%"
+                onChange={(_, value) => {
+                  setType({ ...type, bccPath: value });
+                }}
+              />
+            </GoAFormItem>
+            <GoAFormItem label="cc in event payload at Json schema path">
+              <GoAInput
+                type="text"
+                name="cc"
+                value={type.ccPath}
+                testId={`address-notification-modal-input`}
+                aria-label="input-path-address"
+                width="60%"
+                onChange={(_, value) => {
+                  setType({ ...type, ccPath: value });
+                }}
+              />
+            </GoAFormItem>
+          </div>
         )}
         {tenantClients &&
           isNotifyAddressSetting === NotificationType.SUBSCRIBERS &&

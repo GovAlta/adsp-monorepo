@@ -203,6 +203,8 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
                 manageSubscribe: payload.manageSubscribe,
                 address: payload.address,
                 addressPath: payload.addressPath,
+                bccPath: payload.bccPath,
+                ccPath: payload.ccPath,
               },
             },
           },
