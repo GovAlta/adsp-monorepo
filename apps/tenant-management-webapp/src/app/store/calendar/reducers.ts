@@ -48,6 +48,9 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
       if (state.calendars[action.calendarName]) {
         state.calendars[action.calendarName].selectedCalendarEvents.push(action.payload);
       } else {
+        if (!state.coreCalendars[action.calendarName].selectedCalendarEvents) {
+          state.coreCalendars[action.calendarName].selectedCalendarEvents = [];
+        }
         state.coreCalendars[action.calendarName].selectedCalendarEvents.push(action.payload);
       }
 
@@ -85,11 +88,20 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
       }
 
       if (!state[currentCalendar][name]) {
-        state[currentCalendar][name] = {};
+        state[currentCalendar][name] = {
+          calendarEvents: {},
+        };
       }
 
       if (!action.after) {
+        if (events[0]) {
+          const currentId = events[0].name.substring(0, events[0].name.lastIndexOf('-'));
+          state[currentCalendar][name].calendarEvents ??= {};
+          state[currentCalendar][name].calendarEvents[currentId] = events;
+        }
+
         state[currentCalendar][name].selectedCalendarEvents = events;
+
         state[currentCalendar][name].nextEvents = action.nextEvents;
         return {
           ...state,
