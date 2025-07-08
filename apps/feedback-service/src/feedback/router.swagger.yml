@@ -40,6 +40,22 @@ components:
               type: string
           required: [rating, comment, ratingValue]
       required: [tenant, timestamp, context, value]
+    FeedbackResponse:
+      type: object
+      properties:
+        feedback:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackEntry'
+        page:
+          type: object
+          properties:
+            after:
+              type: string
+            next:
+              type: string
+            size:
+              type: number
 
 /feedback/v1/feedback:
   post:
@@ -126,21 +142,7 @@ components:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                feedback:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/FeedbackEntry'
-                page:
-                  type: object
-                  properties:
-                    after:
-                      type: string
-                    next:
-                      type: string
-                    size:
-                      type: number
+              $ref: '#/components/schemas/FeedbackResponse'
       400:
         description: Request is not valid.
       401:
@@ -155,7 +157,7 @@ components:
       200:
         description: Script successfully retrieved.
         content:
-          text/javascript: {}
+          application/javascript: {}
 
 /feedback/v1/script/integrity:
   get:
