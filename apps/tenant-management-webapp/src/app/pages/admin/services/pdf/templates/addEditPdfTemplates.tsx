@@ -3,8 +3,8 @@ import { PdfTemplate } from '@store/pdf/model';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { PdfFormItem, DescriptionItem, ErrorMsg, PopulateTemplateWrapper } from '../styled-components';
-import { HelpText } from '../../styled-components';
+import { PdfFormItem, DescriptionItem, PopulateTemplateWrapper } from '../styled-components';
+
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import {
@@ -14,9 +14,9 @@ import {
   GoAButtonGroup,
   GoAFormItem,
   GoAButton,
-  GoAIcon,
   GoACheckbox,
 } from '@abgov/react-components';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 interface AddEditPdfTemplateProps {
   open: boolean;
   isEdit: boolean;
@@ -181,18 +181,12 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             // eslint-disable-next-line
             onChange={(name, value) => {}}
           />
-
-          <HelpText>
-            {template.description.length <= 180 ? (
-              <div> {descErrMessage} </div>
-            ) : (
-              <ErrorMsg>
-                <GoAIcon type="warning" size="small" theme="filled" ariaLabel="warning" />
-                {`  ${errors?.['description']}`}
-              </ErrorMsg>
-            )}
-            <div>{`${template.description.length}/180`}</div>
-          </HelpText>
+          <HelpTextComponent
+            length={template?.description?.length || 0}
+            maxLength={180}
+            descErrMessage={descErrMessage}
+            errorMsg={errors?.['description']}
+          />
         </DescriptionItem>
       </GoAFormItem>
       {!isEdit && (
