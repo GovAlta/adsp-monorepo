@@ -6,7 +6,6 @@ import {
   GoADropdown,
   GoADropdownItem,
   GoAFormItem,
-  GoAIcon,
   GoAInput,
   GoAModal,
   GoASkeleton,
@@ -24,8 +23,8 @@ import {
 import { useValidators } from '@lib/validation/useValidators';
 import { RootState } from '@store/index';
 
-import { DescriptionItem, ErrorMsg } from '../styled-components';
-import { HelpText } from '../../styled-components';
+import { DescriptionItem } from '../styled-components';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 interface TopicModalProps {
   type: string;
 
@@ -210,18 +209,12 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
               // eslint-disable-next-line
               onChange={(name, value) => {}}
             />
-
-            <HelpText>
-              {topic?.description?.length <= 180 ? (
-                <div> {descErrMessage} </div>
-              ) : (
-                <ErrorMsg>
-                  <GoAIcon type="warning" size="small" theme="filled" ariaLabel="warning" />
-                  {`  ${errors?.['description']}`}
-                </ErrorMsg>
-              )}
-              <div>{`${topic?.description?.length}/180`}</div>
-            </HelpText>
+            <HelpTextComponent
+              length={topic?.description?.length || 0}
+              maxLength={180}
+              descErrMessage={descErrMessage}
+              errorMsg={errors?.['content']}
+            />
           </DescriptionItem>
         </GoAFormItem>
         <GoAFormItem label="Resource ID">

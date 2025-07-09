@@ -311,13 +311,6 @@ export const DescriptionItem = styled.div`
   margin-right: 0px;
 `;
 
-export const ErrorMsg = styled.div`
-  display: inline-flex;
-  color: var(--color-red);
-  pointer-events: none;
-  gap: 0.25rem;
-`;
-
 export const CommentsList = styled.div`
   border: 1px solid #adadad;
   height: 108px;

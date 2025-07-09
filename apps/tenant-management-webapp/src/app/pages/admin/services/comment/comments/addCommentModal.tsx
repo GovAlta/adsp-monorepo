@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAIcon, GoAModal, GoATextArea } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal, GoATextArea } from '@abgov/react-components';
 
 import { Comment, TopicItem, defaultComment } from '@store/comment/model';
 import { wordMaxLengthCheck, isNotEmptyCheck } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 
-import { DescriptionItem, ErrorMsg } from '../styled-components';
-import { HelpText } from '../../styled-components';
+import { DescriptionItem } from '../styled-components';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 
 interface TopicModalProps {
   topic: TopicItem;
@@ -93,18 +93,12 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
               // eslint-disable-next-line
               onChange={(name, value) => {}}
             />
-
-            <HelpText>
-              {comment?.content?.length <= 180 ? (
-                <div> {descErrMessage} </div>
-              ) : (
-                <ErrorMsg>
-                  <GoAIcon type="warning" size="small" theme="filled" ariaLabel="warning" />
-                  {`  ${errors?.['content']}`}
-                </ErrorMsg>
-              )}
-              <div>{`${comment?.content?.length}/180`}</div>
-            </HelpText>
+            <HelpTextComponent
+              length={comment?.content?.length || 0}
+              maxLength={180}
+              descErrMessage={descErrMessage}
+              errorMsg={errors?.['content']}
+            />
           </DescriptionItem>
         </GoAFormItem>
       </div>

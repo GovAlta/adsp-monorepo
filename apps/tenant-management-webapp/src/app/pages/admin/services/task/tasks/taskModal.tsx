@@ -4,7 +4,6 @@ import {
   GoAButton,
   GoAButtonGroup,
   GoAFormItem,
-  GoAIcon,
   GoAInput,
   GoAModal,
   GoARadioGroup,
@@ -16,7 +15,8 @@ import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
 import { badCharsCheck, wordMaxLengthCheck, isNotEmptyCheck, Validator } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 
-import { DescriptionItem, HelpText, ErrorMsg } from '../styled-components';
+import { DescriptionItem } from '../styled-components';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 interface TaskModalProps {
   initialValue?: QueueTaskDefinition;
   type: string;
@@ -153,18 +153,12 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
               // eslint-disable-next-line
               onChange={(name, value) => {}}
             />
-
-            <HelpText>
-              {task?.description?.length <= 180 ? (
-                <div> {descErrMessage} </div>
-              ) : (
-                <ErrorMsg>
-                  <GoAIcon type="warning" size="small" theme="filled" ariaLabel="warning" />
-                  {`  ${errors?.['description']}`}
-                </ErrorMsg>
-              )}
-              <div>{`${task?.description?.length}/180`}</div>
-            </HelpText>
+            <HelpTextComponent
+              length={task?.description?.length || 0}
+              maxLength={180}
+              descErrMessage={descErrMessage}
+              errorMsg={errors?.['description']}
+            />
           </DescriptionItem>
         </GoAFormItem>
         <GoAFormItem label="Priority" error={errors?.['priority']}>

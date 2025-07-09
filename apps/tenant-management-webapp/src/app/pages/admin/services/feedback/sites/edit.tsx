@@ -28,7 +28,7 @@ import {
 } from '@lib/validation/checkInput';
 import { CheckboxSpaceWrapper } from '../styled-components';
 import { ChipsWrapper } from '../../events/stream/styleComponents';
-import { HelpText } from '../../styled-components';
+import { HelpText } from '@components/styled-components';
 interface SiteFormProps {
   initialValue?: FeedbackSite;
   sites: FeedbackSite[];

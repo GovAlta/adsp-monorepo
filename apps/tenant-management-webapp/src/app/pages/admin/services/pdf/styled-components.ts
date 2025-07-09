@@ -485,13 +485,6 @@ export const DescriptionItem = styled.div`
   margin-right: 3px;
 `;
 
-export const ErrorMsg = styled.div`
-  display: inline-flex;
-  color: var(--color-red);
-  pointer-events: none;
-  gap: 0.25rem;
-`;
-
 export const Anchor = styled.div`
   color: #0070c4;
   text-decoration: underline;
