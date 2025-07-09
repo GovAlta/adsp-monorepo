@@ -16,6 +16,7 @@ import { FeedbackWorkItem } from './job';
 import { ServiceRoles } from './roles';
 import { Feedback } from './types';
 import { ReadQueryParameters, ValueService } from './value';
+import { count } from 'console';
 
 export function resolveFeedbackContext(
   tenantService: TenantService,
@@ -136,6 +137,20 @@ export const readValues =
     }
   };
 
+export const getSites = (): RequestHandler => async (req, res, next) => {
+  try {
+    if (!req.tenant) {
+      throw new InvalidOperationError('Tenant is required.');
+    }
+    if (!canRead(req.user, req.tenant, ServiceRoles.FeedbackReader)) {
+      throw new UnauthorizedError('User not authorized to read feedback.');
+    }
+    res.json({ count: 20, sites: [] });
+  } catch (err) {
+    next(err);
+  }
+};
+
 interface WidgetInformation {
   script: string;
   length: number;
@@ -241,6 +256,8 @@ export async function createFeedbackRouter({ logger, tenantService, queueService
   router.get('/script/integrity', getWidgetScriptIntegrity(loadWidgetInformation));
 
   router.get('/feedback', readValues(valueService));
+
+  router.get('/sites', getSites());
 
   return router;
 }
