@@ -6,7 +6,7 @@ import { ConfigState } from '@store/config/models';
 import { ResetModalState, UpdateLoadingState, UpdateIndicator } from '@store/session/actions';
 import { getAccessToken } from '@store/tenant/sagas';
 import axios from 'axios';
-import { put, select, call, fork } from 'redux-saga/effects';
+import { put, select, call } from 'redux-saga/effects';
 import { StatusApi, WebhookApi } from './api';
 import {
   SaveApplicationAction,
@@ -17,6 +17,7 @@ import {
   deleteApplicationSuccess,
   ToggleApplicationStatusAction,
   fetchServiceStatusAppHealthSuccess,
+  fetchServiceAllStatusAppHealthSuccess,
   fetchServiceStatusAppHealth,
   fetchStatusMetricsSucceeded,
   FETCH_STATUS_CONFIGURATION,
@@ -47,6 +48,16 @@ export function* fetchServiceStatusAppHealthEffect(api: StatusApi, application: 
   }
 }
 
+export function* fetchAllServiceStatusAppHealthEffect(api: StatusApi): SagaIterator {
+  try {
+    const entryMap: EndpointStatusEntry[] = yield call([api, api.getAllEndpointStatusEntries]);
+
+    yield put(fetchServiceAllStatusAppHealthSuccess(entryMap));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+  }
+}
+
 export function* fetchServiceStatusApps(): SagaIterator {
   const currentState: RootState = yield select();
 
@@ -64,11 +75,7 @@ export function* fetchServiceStatusApps(): SagaIterator {
     const api = new StatusApi(statusServiceUrl, token);
     const applications: ApplicationStatus[] = yield call([api, api.getApplications]);
 
-    for (const application of applications) {
-      if (application.endpoint?.url) {
-        yield fork(fetchServiceStatusAppHealthEffect, api, application);
-      }
-    }
+    yield call(fetchAllServiceStatusAppHealthEffect, api);
 
     yield put(fetchServiceStatusAppsSuccess(applications));
     yield put(

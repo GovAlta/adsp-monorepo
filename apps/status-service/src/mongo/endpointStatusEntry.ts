@@ -9,6 +9,7 @@ import { endpointStatusEntrySchema } from './schema';
 export const defaultStatusEntryOptions: EndpointStatusEntryRepositoryOptions = {
   limit: 200,
   everyMilliseconds: 60 * 1000,
+  ageInMinutes: 31,
 };
 
 export default class MongoEndpointStatusEntryRepository implements EndpointStatusEntryRepository {
@@ -31,6 +32,15 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
     top = this.opts.limit
   ): Promise<EndpointStatusEntryEntity[]> {
     const docs = await this.model.find({ url: url, applicationId: applicationId }).sort({ timestamp: -1 }).limit(top);
+
+    const entries = docs.map((doc) => this.fromDoc(doc));
+
+    return entries;
+  }
+
+  async findRecent(minutes = this.opts.ageInMinutes): Promise<EndpointStatusEntryEntity[]> {
+    const since = new Date(Date.now() - minutes * 60_000); // X minutes ago
+    const docs = await this.model.find({ timestamp: { $gte: since } }); // only docs newer than `since`.sort({ timestamp: -1 });
 
     const entries = docs.map((doc) => this.fromDoc(doc));
 

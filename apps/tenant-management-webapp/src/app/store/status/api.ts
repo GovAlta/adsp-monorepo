@@ -20,6 +20,11 @@ export class StatusApi {
     const res = await this.http.get(`/applications/${encodeURIComponent(appKey)}/endpoint-status-entries?top=${limit}`);
     return res.data;
   }
+  async getAllEndpointStatusEntries(): Promise<EndpointStatusEntry[]> {
+    const minutes = 30;
+    const res = await this.http.get(`/applications/endpoint-status-entries?ageInMinutes=${minutes}`);
+    return res.data;
+  }
 
   async saveApplication(props: ApplicationStatus): Promise<ApplicationStatus> {
     const res = await this.http.post(`/applications`, props);
