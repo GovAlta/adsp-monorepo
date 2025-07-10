@@ -436,7 +436,8 @@ export const submitForm = createAsyncThunk(
       const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
 
-      const dryRun = user.user.roles?.includes('urn:ads:platform:form-service:form-tester');
+      const roles = user?.user?.roles ?? [];
+      const dryRun = roles.includes('urn:ads:platform:form-service:form-tester');
       const token = await getAccessToken();
       const { data } = await axios.post<SerializableForm>(
         new URL(`/form/v1/forms/${formId}`, formServiceUrl).href,
@@ -470,7 +471,8 @@ export const submitAnonymousForm = createAsyncThunk(
         token = await grecaptcha.execute(config.environment.recaptchaKey, { action: 'submit_form' });
       }
 
-      const dryRun = user.user.roles?.includes('urn:ads:platform:form-service:form-tester');
+      const roles = user?.user?.roles ?? [];
+      const dryRun = roles.includes('urn:ads:platform:form-service:form-tester');
 
       const { data } = await axios.post<SerializableForm>(`/api/gateway/v1/forms`, {
         token,
