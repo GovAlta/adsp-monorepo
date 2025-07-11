@@ -82,7 +82,9 @@ export const createProcessEventJob =
             subscriptionRepository,
             configuration,
             event,
-            { tenant }
+            { tenant },
+            directory,
+            token
           );
 
           for (const notification of notifications) {

@@ -391,7 +391,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 type="text"
                 name="bcc"
                 value={type.bccPath}
-                testId={`address-notification-modal-input`}
+                testId={`bccPath-notification-modal-input`}
                 aria-label="input-path-address"
                 width="60%"
                 onChange={(_, value) => {
@@ -404,11 +404,24 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 type="text"
                 name="cc"
                 value={type.ccPath}
-                testId={`address-notification-modal-input`}
+                testId={`ccPath-notification-modal-input`}
                 aria-label="input-path-address"
                 width="60%"
                 onChange={(_, value) => {
                   setType({ ...type, ccPath: value });
+                }}
+              />
+            </GoAFormItem>
+            <GoAFormItem label="attachment in event payload at Json schema path">
+              <GoAInput
+                type="text"
+                name="attachment"
+                value={type.attachmentPath}
+                testId={`attachmentPath-notification-modal-input`}
+                aria-label="input-path-address"
+                width="60%"
+                onChange={(_, value) => {
+                  setType({ ...type, attachmentPath: value });
                 }}
               />
             </GoAFormItem>

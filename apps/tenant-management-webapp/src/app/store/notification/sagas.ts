@@ -205,6 +205,7 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
                 addressPath: payload.addressPath,
                 bccPath: payload.bccPath,
                 ccPath: payload.ccPath,
+                attachmentPath: payload.attachmentPath,
               },
             },
           },
