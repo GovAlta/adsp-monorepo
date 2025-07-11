@@ -9,6 +9,10 @@ metadata:
 labels:
   application: export-service
 parameters:
+  - name: APP_NAME
+    displayName: App Name
+    value: export-service
+    required: true
   - name: INFRA_NAMESPACE
     description: Name of the infrastructure project.
     displayName: Infra Namespace
@@ -44,10 +48,10 @@ objects:
     kind: Secret
     metadata:
       labels:
-        app: export-service
+        app: ${APP_NAME}
         component: database
         apply-init: "true"
-      name: export-service-redis
+      name: ${APP_NAME}-redis
     stringData:
       database-password: ${REDIS_PASSWORD}
   - apiVersion: v1
@@ -56,13 +60,13 @@ objects:
       annotations:
         template.openshift.io/expose-uri: redis://{.spec.clusterIP}:{.spec.ports[?(.name=="redis")].port}
       labels:
-        app: export-service
+        app: ${APP_NAME}
         component: database
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: export-service-redis
+      name: ${APP_NAME}-redis
     spec:
       ports:
         - name: redis
@@ -71,7 +75,7 @@ objects:
           protocol: TCP
           targetPort: 6379
       selector:
-        app: export-service
+        app: ${APP_NAME}
         component: database
       sessionAffinity: None
       type: ClusterIP
@@ -83,17 +87,17 @@ objects:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
       labels:
-        app: export-service
+        app: ${APP_NAME}
         component: database
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: export-service-redis
+      name: ${APP_NAME}-redis
     spec:
       replicas: 1
       selector:
-        app: export-service
+        app: ${APP_NAME}
         component: database
       strategy:
         type: Recreate
@@ -107,7 +111,7 @@ objects:
       template:
         metadata:
           labels:
-            app: export-service
+            app: ${APP_NAME}
             component: database
         spec:
           containers:
@@ -117,7 +121,7 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: export-service-redis
+                      name: ${APP_NAME}-redis
               image: " "
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -151,13 +155,13 @@ objects:
               terminationMessagePath: /dev/termination-log
               volumeMounts:
                 - mountPath: /var/lib/redis/data
-                  name: export-service-redis-data
+                  name: ${APP_NAME}-redis-data
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           volumes:
             - emptyDir:
                 medium: ""
-              name: export-service-redis-data
+              name: ${APP_NAME}-redis-data
       triggers:
         - imageChangeParams:
             automatic: true
@@ -180,17 +184,17 @@ objects:
     kind: ImageStream
     metadata:
       labels:
-        app: export-service
+        app: ${APP_NAME}
         component: api
         apply-infra: "true"
-      name: export-service
+      name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
     spec:
       tags:
         - name: ${BUILD_TAG}
           from:
             kind: DockerImage
-            name: ghcr.io/govalta/export-service:${BUILD_TAG}
+            name: ghcr.io/govalta/${APP_NAME}:${BUILD_TAG}
           referencePolicy:
             type: Local
 
@@ -199,20 +203,20 @@ objects:
     kind: Deployment
     metadata:
       labels:
-        app: export-service
+        app: ${APP_NAME}
         component: api
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: export-service
+      name: ${APP_NAME}
       annotations:
         image.openshift.io/triggers: |-
           [
             {
               "from": {
                 "kind": "ImageStreamTag",
-                "name": "export-service:${DEPLOY_TAG}",
+                "name": "${APP_NAME}:${DEPLOY_TAG}",
                 "namespace": "${INFRA_NAMESPACE}"
               },
               "fieldPath": "spec.template.spec.containers[0].image",
@@ -223,36 +227,36 @@ objects:
       replicas: 3
       selector:
         matchLabels:
-          app: export-service
+          app: ${APP_NAME}
           component: api
       template:
         metadata:
           labels:
-            app: export-service
+            app: ${APP_NAME}
             component: api
         spec:
           containers:
             - image: >-
-                image-registry.openshift-image-registry.svc:5000/adsp-build/export-service@${DEPLOY_TAG}
+                image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
               envFrom:
                 - configMapRef:
-                    name: export-service
+                    name: ${APP_NAME}
                 - configMapRef:
                     name: directory-overrides
                 - secretRef:
-                    name: export-service
+                    name: ${APP_NAME}
               env:
                 - name: PORT
                   value: "3333"
                 - name: REDIS_HOST
-                  value: export-service-redis
+                  value: ${APP_NAME}-redis
                 - name: REDIS_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: export-service-redis
+                      name: ${APP_NAME}-redis
               imagePullPolicy: IfNotPresent
-              name: export-service
+              name: ${APP_NAME}
               ports:
                 - containerPort: 3333
                   name: http
@@ -282,13 +286,13 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: export-service
+        app: ${APP_NAME}
         component: api
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: export-service
+      name: ${APP_NAME}
     spec:
       ports:
         - name: http
@@ -296,7 +300,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: export-service
+        app: ${APP_NAME}
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -304,13 +308,13 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: export-service
+        app: ${APP_NAME}
         component: api
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: export-service
+      name: ${APP_NAME}
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -319,6 +323,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: export-service
+        name: ${APP_NAME}
         weight: 100
       wildcardPolicy: None
