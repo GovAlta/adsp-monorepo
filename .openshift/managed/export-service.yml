@@ -52,6 +52,7 @@ objects:
         component: database
         apply-init: "true"
       name: ${APP_NAME}-redis
+      namespace: ${NAMESPACE}
     stringData:
       database-password: ${REDIS_PASSWORD}
   - apiVersion: v1
@@ -67,6 +68,7 @@ objects:
         apply-staging: "true"
         apply-prod: "true"
       name: ${APP_NAME}-redis
+      namespace: ${NAMESPACE}
     spec:
       ports:
         - name: redis
@@ -94,6 +96,7 @@ objects:
         apply-staging: "true"
         apply-prod: "true"
       name: ${APP_NAME}-redis
+      namespace: ${NAMESPACE}
     spec:
       replicas: 1
       selector:
@@ -210,6 +213,7 @@ objects:
         apply-staging: "true"
         apply-prod: "true"
       name: ${APP_NAME}
+      namespace: ${NAMESPACE}
       annotations:
         image.openshift.io/triggers: |-
           [
@@ -293,6 +297,7 @@ objects:
         apply-staging: "true"
         apply-prod: "true"
       name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       ports:
         - name: http
@@ -315,6 +320,7 @@ objects:
         apply-staging: "true"
         apply-prod: "true"
       name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       host: ${ROUTE_HOST}
       port:
