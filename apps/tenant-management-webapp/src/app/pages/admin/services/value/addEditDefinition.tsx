@@ -22,6 +22,7 @@ import {
   badCharsCheck,
 } from '@lib/validation/checkInput';
 import styled from 'styled-components';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 
 interface AddEditValueDefinitionProps {
   onSave: (definition: ValueDefinition) => void;
@@ -47,7 +48,7 @@ export const AddEditValueDefinition = ({
   const loadingIndicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-
+  const descErrMessage = 'Value description can not be over 180 characters';
   const namespaceCheck = (): Validator => {
     return (namespace: string) => {
       return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
@@ -189,6 +190,12 @@ export const AddEditValueDefinition = ({
             }}
             // eslint-disable-next-line
             onChange={(name, value) => {}}
+          />
+          <HelpTextComponent
+            length={definition?.description?.length || 0}
+            maxLength={180}
+            descErrMessage={descErrMessage}
+            errorMsg={errors?.['description']}
           />
         </GoAFormItem>
         <GoASpacer vSpacing="xs"></GoASpacer>

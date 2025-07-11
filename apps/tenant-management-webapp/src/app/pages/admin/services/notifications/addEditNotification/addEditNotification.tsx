@@ -30,6 +30,7 @@ import { RootState } from '@store/index';
 import { ConfigServiceRole } from '@store/access/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { areObjectsEqual } from '@lib/objectUtil';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
   onCancel?: () => void;
@@ -76,7 +77,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   const checkForContact = characterCheck(validationPattern.validContact);
   const [isNotifyAddressSetting, setIsNotifyAddressSetting] = useState(NotificationType.SUBSCRIBERS);
   const [addressPathChanged, setAddressPathChanged] = useState(false);
-
+  const descErrMessage = 'Notification type description can not be over 180 characters';
   useEffect(() => {
     setType(JSON.parse(JSON.stringify(initialValue)));
     setAddressPathChanged(false);
@@ -254,6 +255,12 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               }
             }}
             onChange={(name, value) => {}}
+          />
+          <HelpTextComponent
+            length={type?.description?.length || 0}
+            maxLength={180}
+            descErrMessage={descErrMessage}
+            errorMsg={errors?.['description']}
           />
         </GoAFormItem>
         {isNotifyAddressSetting === NotificationType.SUBSCRIBERS && (

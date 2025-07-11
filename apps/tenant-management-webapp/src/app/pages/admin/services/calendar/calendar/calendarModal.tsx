@@ -14,6 +14,7 @@ import { selectRoleList } from '@store/sharedSelectors/roles';
 import { selectCalendarsByName } from '@store/calendar/selectors';
 import { TextGoASkeleton } from '@core-services/app-common';
 import { areObjectsEqual } from '@lib/objectUtil';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 
 interface CalendarModalProps {
   calendarName: string | undefined;
@@ -37,7 +38,7 @@ export const CalendarModal = ({
   const dispatch = useDispatch();
   const roles = useSelector(selectRoleList);
   const scrollPaneRef = useRef<HTMLDivElement>(null);
-
+  const descErrMessage = 'Calendar description can not be over 180 characters';
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
@@ -193,6 +194,12 @@ export const CalendarModal = ({
               }}
               // eslint-disable-next-line
               onChange={(name, value) => {}}
+            />
+            <HelpTextComponent
+              length={calendar?.description?.length || 0}
+              maxLength={180}
+              descErrMessage={descErrMessage}
+              errorMsg={errors?.['description']}
             />
           </GoAFormItem>
         )}
