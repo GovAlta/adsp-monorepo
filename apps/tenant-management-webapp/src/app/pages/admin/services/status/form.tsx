@@ -20,7 +20,7 @@ import { RootState } from '@store/index';
 import { createSelector } from 'reselect';
 import { DropdownListContainer, DropdownList, IdField } from './styled-components';
 import { toKebabName } from '@lib/kebabName';
-
+import { HelpTextComponent } from '@components/HelpTextComponent';
 interface Props {
   isOpen: boolean;
   title: string;
@@ -78,7 +78,7 @@ export const ApplicationFormModal: FC<Props> = ({
   const [openDropdown, setOpenDropdown] = useState<boolean>(false);
   const [appName, setAppName] = useState('');
   const [appDescription, setAppDescription] = useState('');
-
+  const descErrMessage = 'Application description can not be over 180 characters';
   const isDuplicateAppName = (): Validator => {
     return (appName: string) => {
       const existingApp = applications.filter((app) => app.name === appName);
@@ -243,6 +243,12 @@ export const ApplicationFormModal: FC<Props> = ({
             setAppDescription(value);
           }}
           aria-label="description"
+        />
+        <HelpTextComponent
+          length={application?.description?.length || 0}
+          maxLength={180}
+          descErrMessage={descErrMessage}
+          errorMsg={errors?.['description']}
         />
       </GoAFormItem>
       <GoAFormItem error={errors?.['url']} label="URL">

@@ -25,7 +25,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { ResetModalState } from '@store/session/actions';
 import { selectModalStateByType } from '@store/session/selectors';
 import { selectRolesObject, constructRoleObjFromUrns, roleObjectToUrns } from '@store/sharedSelectors/roles';
-
+import { HelpTextComponent } from '@components/HelpTextComponent';
 interface AddEditStreamProps {
   onSave: (stream: Stream) => void;
   eventDefinitions: Record<string, EventDefinition>;
@@ -66,7 +66,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
   }, [stream?.events]);
 
   const eventOptions = eventDefinitions ? generateEventOptions(eventDefinitions) : undefined;
-
+  const descErrMessage = 'Event stream description can not be over 180 characters';
   const deleteEventChip = (eventChip) => {
     const updatedStreamEvents = streamEvents.filter((event) => event !== eventChip);
     setStream({
@@ -157,6 +157,12 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
             }}
             // eslint-disable-next-line
             onChange={(name, value) => {}}
+          />
+          <HelpTextComponent
+            length={stream?.description?.length || 0}
+            maxLength={180}
+            descErrMessage={descErrMessage}
+            errorMsg={errors?.['description']}
           />
         </GoAFormItem>
         <GoAFormItem label="Select events">

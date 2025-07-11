@@ -20,6 +20,7 @@ import { CalendarEvent } from '@store/calendar/models';
 import { CreateEventsByCalendar, UpdateEventsByCalendar } from '@store/calendar/actions';
 import { areObjectsEqual } from '@lib/objectUtil';
 import { getDateTime } from '@lib/timeUtil';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 
 interface EventAddEditModalProps {
   calendarName: string;
@@ -36,7 +37,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [endDateError, setEndDateError] = useState<string>('');
-
+  const descErrMessage = 'Calendar event description can not be over 180 characters';
   const isEdit = !!initCalendarEvent?.id;
 
   if (isEdit) {
@@ -181,6 +182,12 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           }}
           // eslint-disable-next-line
           onChange={(name, value) => {}}
+        />
+        <HelpTextComponent
+          length={calendarEvent?.description?.length || 0}
+          maxLength={180}
+          descErrMessage={descErrMessage}
+          errorMsg={errors?.['description']}
         />
       </GoAFormItem>
 
