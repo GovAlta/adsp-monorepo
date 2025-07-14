@@ -113,7 +113,9 @@ objects:
             component: api
         spec:
           containers:
-            - envFrom:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
+              envFrom:
                 - configMapRef:
                     name: ${APP_NAME}
                 - configMapRef:
