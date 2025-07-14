@@ -75,7 +75,7 @@ objects:
             type: Local
 
   # DeploymentConfig (and Service and Route) is created in each environment
-  - apiVersion: v1
+  - apiVersion: apps/v1
     kind: Deployment
     metadata:
       labels:
