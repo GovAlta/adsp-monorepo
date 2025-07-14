@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { FullNameDobReviewControl } from './FullNameDobReviewControl';
 import {
   ControlElement,
@@ -101,6 +102,57 @@ describe('FullNameDobControl', () => {
 
     expect(dobInput?.getAttribute('value')).toBe(defaultFormData.dateOfBirth);
     expect(lastNameFormItem?.getAttribute('requirement')).toBe('required');
+  });
+
+  it('displays required error message on blur when first name is empty', async () => {
+    const { baseElement } = render(
+      <FullNameDobControl
+        data={{ ...defaultFormData, firstName: '' }} // First name is empty
+        handleChange={mockHandleChange}
+        path="path-to-data"
+        schema={{
+          type: 'object',
+          properties: {
+            firstName: { type: 'string' },
+            middleName: { type: 'string' },
+            lastName: { type: 'string' },
+            dateOfBirth: { type: 'string' },
+          },
+          required: ['firstName', 'middleName', 'lastName', 'dateOfBirth'],
+        }}
+        uischema={{} as ControlElement}
+        label={''}
+        errors={''}
+        rootSchema={{}}
+        id={''}
+        enabled={true}
+        visible={true}
+      />
+    );
+
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
+    if (!firstNameInput) {
+      throw new Error('First name input not found');
+    }
+
+    // Simulate clearing the field and blurring
+    fireEvent(
+      firstNameInput,
+      new CustomEvent('_change', {
+        detail: { name: 'firstName', value: '' },
+      })
+    );
+    fireEvent(
+      firstNameInput,
+      new CustomEvent('_blur', {
+        detail: { name: 'firstName' },
+      })
+    );
+
+    await waitFor(() => {
+      const formItem = baseElement.querySelector("goa-form-item[testid='form-item-first-name']");
+      expect(formItem?.getAttribute('error')).toBe('First name is required');
+    });
   });
 
   it('calls handleChange on user input in first name', () => {
