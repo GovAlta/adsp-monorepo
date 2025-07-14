@@ -1,5 +1,5 @@
 import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { ICalCalendar } from 'ical-generator';
 import { DateTime } from 'luxon';
@@ -167,6 +167,9 @@ describe('calendar router', () => {
         user: {
           tenantId,
         },
+        tenant: {
+          id: tenantId,
+        },
         getConfiguration: jest.fn(),
         params: { name: 'test' },
         query: {},
@@ -188,6 +191,9 @@ describe('calendar router', () => {
 
     it('can call next with not found', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         getConfiguration: jest.fn(),
         params: { name: 'test' },
         query: {},
@@ -227,6 +233,24 @@ describe('calendar router', () => {
       expect(req.getConfiguration).toHaveBeenCalledWith(requestTenant);
       expect(req['calendar']).toMatchObject(calendar);
       expect(next).toHaveBeenCalledWith();
+      expect(res.send).not.toHaveBeenCalled();
+    });
+
+    it('can call next with invalid operation for no tenant', async () => {
+      const req = {
+        getConfiguration: jest.fn(),
+        params: { name: 'test' },
+        query: {},
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({});
+      const handler = getCalendar(tenantServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.send).not.toHaveBeenCalled();
     });
   });
