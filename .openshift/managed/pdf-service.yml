@@ -436,11 +436,19 @@ objects:
                 periodSeconds: 60
                 successThreshold: 1
                 failureThreshold: 5
+              volumeMounts:
+                - mountPath: /dev/shm
+                  name: dshm
           restartPolicy: Always
           terminationGracePeriodSeconds: 30
           dnsPolicy: ClusterFirst
           securityContext: {}
           schedulerName: default-scheduler
+          volumes:
+            - name: dshm
+              emptyDir:
+                medium: Memory
+                sizeLimit: 1Gi
       strategy:
         type: RollingUpdate
         rollingUpdate:
