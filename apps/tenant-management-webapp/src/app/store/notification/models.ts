@@ -13,6 +13,7 @@ export interface NotificationItem {
   addressPath?: string;
   bccPath?: string;
   ccPath?: string;
+  attachmentPath?: string;
   subjectPath?: string;
   titlePath?: string;
   subTitlePath?: string;

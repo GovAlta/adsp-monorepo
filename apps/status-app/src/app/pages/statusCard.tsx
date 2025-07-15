@@ -120,7 +120,7 @@ const ServiceStatusCss = styled.div`
   .status-button {
     padding: 0 6px;
     margin: 5px;
-    font-size: var(--fs-xs);
+    font-size: var(--goa-font-size-1);
     border-radius: 4px;
     line-height: 28px;
   }

@@ -86,8 +86,8 @@ const initializeApp = async (): Promise<express.Application> => {
           cacheProvider,
           {
             targets: {
-              ...config.targets,
-              ...coreConfig.targets,
+              ...config?.targets,
+              ...coreConfig?.targets,
             },
           },
           tenantId

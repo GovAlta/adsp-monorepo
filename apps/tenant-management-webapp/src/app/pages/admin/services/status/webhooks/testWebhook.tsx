@@ -132,7 +132,7 @@ export const TestWebhookModal = (): JSX.Element => {
 
 const GoAModalStyle = styled.div`
   .group-name {
-    font-size: var(--fs-lg);
+    font-size: var(--goa-font-size-5);
     font-weight: var(--fw-bold);
   }
 
@@ -156,16 +156,6 @@ const GoAModalStyle = styled.div`
 
 export const IdField = styled.div`
   min-height: 1.6rem;
-`;
-
-export const HelpText = styled.div`
-  font-size: var(--fs-sm);
-  color: var(--color-gray-900);
-  line-height: calc(var(--fs-sm) + 0.5rem);
-  display: flex;
-  display-direction: row;
-  justify-content: space-between;
-  margin-top: 2px;
 `;
 
 export const ErrorMsg = styled.div`

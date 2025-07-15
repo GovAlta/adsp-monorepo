@@ -63,6 +63,7 @@ const initializeApp = async (): Promise<express.Application> => {
         {
           role: CalendarServiceRoles.Admin,
           description: 'Administrator account for calendars.',
+          inTenantAdmin: true,
         },
       ],
       events: [CalendarEventCreatedDefinition, CalendarEventUpdatedDefinition, CalendarEventDeletedDefinition],

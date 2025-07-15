@@ -3,6 +3,7 @@ import {
   DELETE_APPLICATION_SUCCESS_ACTION,
   FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION,
   FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION,
+  FETCH_SERVICE_ALL_STATUS_APP_HEALTH_SUCCESS_ACTION,
   FETCH_STATUS_METRICS_SUCCESS_ACTION,
   SAVE_APPLICATION_SUCCESS_ACTION,
   SET_APPLICATION_SUCCESS_STATUS_ACTION,
@@ -16,6 +17,7 @@ import {
   TEST_WEBHOOK_SUCCESS_ACTION,
 } from './actions';
 import { ServiceStatus } from './models';
+import { EndpointStatusEntry } from './models';
 
 const initialState: ServiceStatus = {
   applications: [],
@@ -53,6 +55,30 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
           [action.payload.appKey]: { url: action.payload.url, entries: action.payload.entries || [] },
         },
       };
+    case FETCH_SERVICE_ALL_STATUS_APP_HEALTH_SUCCESS_ACTION: {
+      const { entries } = action.payload;
+
+      interface EndpointHealthMap {
+        [appId: string]: { url: string; entries: EndpointStatusEntry[] };
+      }
+
+      const endpointHealth = entries.reduce<EndpointHealthMap>((acc, entry) => {
+        const key = entry.applicationId; // or entry.appKey if you prefer
+
+        if (!acc[key]) {
+          acc[key] = { url: entry.url, entries: [] };
+        }
+
+        acc[key].entries.push(entry);
+
+        return acc;
+      }, {} as Record<string, { url: string; entries: EndpointStatusEntry[] }>);
+
+      return {
+        ...state,
+        endpointHealth: endpointHealth,
+      };
+    }
     case TEST_WEBHOOK_SUCCESS_ACTION: {
       return { ...state, testSuccess: state.testSuccess + 1 };
     }

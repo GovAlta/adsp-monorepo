@@ -16,6 +16,13 @@ describe('NotificationTypeEntity', () => {
     error: jest.fn(),
   } as unknown as Logger;
 
+  const directory = {
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('https://verify-service'))),
+    getResourceUrl: jest.fn(),
+  };
+
+  const token = 'test123123123';
+
   const repositoryMock = {
     saveSubscription: jest.fn((entity: SubscriptionEntity) => {
       return Promise.resolve(entity);
@@ -428,7 +435,9 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
+        directory,
+        token
       );
       expect(templateServiceMock.generateMessage).toHaveBeenCalledTimes(1);
       expect(notification.to).toBe('test@testco.org');
@@ -508,7 +517,9 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
+        directory,
+        token
       );
       expect(templateServiceMock.generateMessage).toHaveBeenCalledWith(
         expect.any(Object),
@@ -594,7 +605,9 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
+        directory,
+        token
       );
       expect(templateServiceMock.generateMessage).toHaveBeenCalledWith(
         expect.any(Object),
@@ -673,7 +686,9 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
+        directory,
+        token
       );
       expect(notifications.length).toBe(0);
     });
@@ -751,7 +766,9 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
+        directory,
+        token
       );
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
@@ -830,7 +847,9 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant: null,
-        }
+        },
+        directory,
+        token
       );
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
@@ -903,7 +922,9 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
+        directory,
+        token
       );
       expect(notifications.length).toBe(0);
     });
@@ -1221,6 +1242,13 @@ describe('DirectNotificationTypeEntity', () => {
   describe('generateNotifications', () => {
     const subscriberAppUrl = new URL('https://subscriptions');
 
+    const directory = {
+      getServiceUrl: jest.fn(() => Promise.resolve(new URL('https://verify-service'))),
+      getResourceUrl: jest.fn(),
+    };
+
+    const token = 'test123123123';
+
     const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
     const tenant = { id: tenantId, name: 'test', realm: 'test' };
 
@@ -1269,7 +1297,9 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
+        directory,
+        token
       );
 
       expect(result).toMatchObject({ tenantId: tenantId.toString(), message, to: event.payload.details.email });
@@ -1298,7 +1328,9 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
+        directory,
+        token
       );
 
       expect(results).toMatchObject(expect.arrayContaining([]));
@@ -1349,7 +1381,9 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
+        directory,
+        token
       );
 
       expect(results).toMatchObject(expect.arrayContaining([]));
@@ -1400,7 +1434,9 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
+        directory,
+        token
       );
 
       expect(result).toMatchObject({ tenantId: tenantId.toString(), message, to: entity.address });
@@ -1449,7 +1485,9 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
+        directory,
+        token
       );
 
       expect(results).toMatchObject(expect.arrayContaining([]));

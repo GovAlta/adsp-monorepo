@@ -1,4 +1,4 @@
-import { AdspId, Channel, isAllowedUser, User } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, Channel, isAllowedUser, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import { getTemplateBody } from '@core-services/notification-shared';
@@ -14,11 +14,11 @@ import {
   ServiceUserRoles,
   Subscriber,
   Template,
-  Attachment,
 } from '../types';
 import { SubscriberEntity } from './subscriber';
 import { SubscriptionEntity } from './subscription';
 import { NotificationConfiguration } from '../configuration';
+import axios from 'axios';
 
 function isValidSms(digits) {
   return /^\d{10}$/.test(digits);
@@ -91,7 +91,9 @@ export class NotificationTypeEntity implements NotificationType {
     subscriptionRepository: SubscriptionRepository,
     configuration: NotificationConfiguration,
     event: DomainEvent,
-    messageContext: Record<string, unknown>
+    messageContext: Record<string, unknown>,
+    directory: ServiceDirectory,
+    token: string
   ): Promise<Notification[]> {
     const notifications: Notification[] = [];
 
@@ -168,7 +170,7 @@ export class NotificationTypeEntity implements NotificationType {
     return new NotificationTypeEntity({ ...this, events }, customType.tenantId);
   }
 
-  private generateNotification(
+  protected generateNotification(
     logger: Logger,
     templateService: TemplateService,
     configurationService: NotificationConfiguration,
@@ -256,6 +258,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
   address?: string;
   ccPath?: string;
   bccPath?: string;
+  attachmentPath?: string;
   subjectPath?: string;
   titlePath?: string;
   subTitlePath?: string;
@@ -292,7 +295,9 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
     _subscriptionRepository: SubscriptionRepository,
     configuration: NotificationConfiguration,
     event: DomainEvent,
-    messageContext: Record<string, unknown>
+    messageContext: Record<string, unknown>,
+    directory: ServiceDirectory,
+    token: string
   ): Promise<Notification[]> {
     logger.debug(`Processing direct notification type ${this.id} for event ${event.namespace}:${event.name}...`, {
       context: 'NotificationType',
@@ -310,12 +315,42 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
     const address = (this?.addressPath && getAtPath(event.payload, this.addressPath)) || this.address;
     const cc = (this?.ccPath && getAtPath(event.payload, this.ccPath)) || [];
     const bcc = (this?.bccPath && getAtPath(event.payload, this.bccPath)) || [];
+    const attachmentsList = ((this?.attachmentPath && getAtPath(event.payload, this.attachmentPath)) || []) as [];
     const titleInEvent = this?.titlePath && getAtPath(event.payload, this.titlePath);
     const subTitleInEvent = this?.subTitlePath && getAtPath(event.payload, this.subTitlePath);
     const subjectInEvent = this?.subjectPath && getAtPath(event.payload, this.subjectPath);
 
-    const attachments = event.payload?.attachments as Attachment[];
+    const fileServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:file-service`);
 
+    const attachments = [];
+
+    if (attachmentsList.length > 0) {
+      for (const attachmentUUID of attachmentsList) {
+        const response = await axios.get(new URL(`file/v1/files/${attachmentUUID}`, fileServiceUrl).href, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const content = await axios.get(
+          new URL(`file/v1/files/${attachmentUUID}/download/?unsafe=true`, fileServiceUrl).href,
+          {
+            responseType: 'arraybuffer',
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        const data = response.data;
+        const base64Content = Buffer.from(content.data).toString('base64');
+
+        const attachmentDetails = {
+          filename: data.filename,
+          content: base64Content,
+          encoding: 'base64',
+          contentType: data.mimeType,
+        };
+
+        attachments.push(attachmentDetails);
+      }
+    }
     const notifications = [];
     if (eventNotification && channel && address && eventNotification.templates[channel]) {
       const context = {

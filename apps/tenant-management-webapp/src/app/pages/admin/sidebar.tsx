@@ -144,7 +144,7 @@ const Links = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: var(--fs-base);
+  font-size: var(--goa-font-size-4);
   font-weight: var(--fw-bold);
   padding: 0 0 0.5rem;
   display: none;

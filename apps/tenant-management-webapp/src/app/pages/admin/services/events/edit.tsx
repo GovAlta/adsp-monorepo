@@ -14,6 +14,7 @@ import {
 import { useValidators } from '@lib/validation/useValidators';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 import styled from 'styled-components';
 
 interface EventDefinitionFormProps {
@@ -47,6 +48,8 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
       return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
     };
   };
+  const descErrMessage = 'Event description can not be over 180 characters';
+
   useEffect(() => {
     setDefinition(initialValue);
   }, [initialValue]);
@@ -161,6 +164,12 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
             }}
             // eslint-disable-next-line
             onChange={(name, value) => {}}
+          />
+          <HelpTextComponent
+            length={definition?.description?.length || 0}
+            maxLength={180}
+            descErrMessage={descErrMessage}
+            errorMsg={errors?.['description']}
           />
         </GoAFormItem>
         <GoAFormItem error={errors?.['payloadSchema']} label="Payload schema">

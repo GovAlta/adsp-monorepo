@@ -23,6 +23,7 @@ import {
   badCharsCheck,
 } from '@lib/validation/checkInput';
 import styled from 'styled-components';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 
 interface AddEditConfigDefinitionProps {
   onSave: (definition: ConfigDefinition) => void;
@@ -54,7 +55,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
       return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
     };
   };
-
+  const descErrMessage = 'Configuration description can not be over 180 characters';
   const { errors, validators } = useValidators(
     'namespace',
     'namespace',
@@ -196,6 +197,12 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
             }}
             // eslint-disable-next-line
             onChange={(name, value) => {}}
+          />
+          <HelpTextComponent
+            length={definition?.description?.length || 0}
+            maxLength={180}
+            descErrMessage={descErrMessage}
+            errorMsg={errors?.['description']}
           />
         </GoAFormItem>
         <GoASpacer vSpacing="xs"></GoASpacer>

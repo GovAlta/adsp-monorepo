@@ -589,7 +589,7 @@ export class AdspFeedback implements AdspFeedbackApi {
             z-index: 999;
             font-family: acumin-pro-semi-condensed, helvetica-neue, arial, sans-serif;
             line-height: var(--goa-line-height-2);
-            font-size: var(--fs-base);
+            font-size: var(--goa-font-size-4);
           }
           .adsp-fb h3 {
             margin-top: 0px !important;

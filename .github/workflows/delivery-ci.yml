@@ -120,15 +120,15 @@ jobs:
           oc apply -f ${{ matrix.app }}.dev.json -l apply-dev=true,component!=database
       - name: Deploy Dev
         run: |
-          if oc get dc/${{ matrix.app }} ; then
-            oc rollout latest dc/${{ matrix.app }}
-            oc rollout status dc/${{ matrix.app }}
-          elif oc get deployment/${{ matrix.app }} ; then
+          if oc get deployment/${{ matrix.app }} ; then
             oc set triggers deployment/${{ matrix.app }} --auto
             oc rollout status deployment/${{ matrix.app }}
             oc set triggers deployment/${{ matrix.app }} --manual
+          elif oc get dc/${{ matrix.app }} ; then
+            oc rollout latest dc/${{ matrix.app }}
+            oc rollout status dc/${{ matrix.app }}
           else
-            echo 'No DeploymentConfig or Deployment found for ${{ matrix.app }}.'
+            echo 'No Deployment or DeploymentConfig found for ${{ matrix.app }}.'
           fi
 
   devSmokeTest:
@@ -194,15 +194,15 @@ jobs:
           oc apply -f ${{ matrix.app }}.uat.json -l apply-staging=true,component!=database
       - name: Deploy Staging
         run: |
-          if oc get dc/${{ matrix.app }} ; then
-            oc rollout latest dc/${{ matrix.app }}
-            oc rollout status dc/${{ matrix.app }}
-          elif oc get deployment/${{ matrix.app }} ; then
+          if oc get deployment/${{ matrix.app }} ; then
             oc set triggers deployment/${{ matrix.app }} --auto
             oc rollout status deployment/${{ matrix.app }}
             oc set triggers deployment/${{ matrix.app }} --manual
+          elif oc get dc/${{ matrix.app }} ; then
+            oc rollout latest dc/${{ matrix.app }}
+            oc rollout status dc/${{ matrix.app }}
           else
-            echo 'No DeploymentConfig or Deployment found for ${{ matrix.app }}.'
+            echo 'No Deployment or DeploymentConfig found for ${{ matrix.app }}.'
           fi
 
   stagingSmokeTest:

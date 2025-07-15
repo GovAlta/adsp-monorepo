@@ -1,5 +1,5 @@
 import { adspId, AdspId, EventService, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
-import { createValidationHandler, NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { checkSchema, param, query } from 'express-validator';
 import { ICalCalendar } from 'ical-generator';
@@ -87,6 +87,10 @@ export function getCalendar(tenantService: TenantService): RequestHandler {
       }
 
       const tenantId = req.tenant?.id;
+      if (!tenantId) {
+        throw new InvalidOperationError('Tenant context is required.');
+      }
+
       const calendars = await req.getConfiguration<CalendarServiceConfiguration, CalendarServiceConfiguration>(
         tenantId
       );

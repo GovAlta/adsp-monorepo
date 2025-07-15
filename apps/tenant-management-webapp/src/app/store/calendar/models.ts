@@ -9,6 +9,7 @@ export interface CalendarItem {
   readRoles: string[];
   updateRoles: string[];
   selectedCalendarEvents?: CalendarEvent[];
+  calendarEvents?: Record<string, CalendarEvent[]>;
   nextEvents?: string;
 }
 

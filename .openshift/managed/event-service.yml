@@ -185,7 +185,7 @@ objects:
               command:
                 - sh
                 - '-c'
-                - rm /var/lib/rabbitmq/.erlang.cookie
+                - rm -f /var/lib/rabbitmq/.erlang.cookie
               resources:
                 limits:
                   cpu: 200m

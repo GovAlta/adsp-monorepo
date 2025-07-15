@@ -60,7 +60,7 @@ hr {
 }
 
 em {
-  font-size: var(--fs-xs);
+  font-size: var(--goa-font-size-1);
   color: var(--color-gray-600);
 }
 
