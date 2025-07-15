@@ -341,16 +341,16 @@ When(
           formObj.definitionsAddTagsButton(rowNumber).shadow().find('button').click({ force: true });
           cy.wait(2000);
           break;
-        case 'Details':
+        case 'Eye':
           formObj.definitionsDetailsButton(rowNumber).invoke('attr', 'icon').should('contain', 'eye');
           formObj.definitionsDetailsButton(rowNumber).shadow().find('button').scrollIntoView().click({ force: true });
           break;
-        case 'Details off':
+        case 'Eye off':
           formObj.definitionsDetailsButton(rowNumber).invoke('attr', 'icon').should('contain', 'eye-off');
           formObj.definitionsDetailsButton(rowNumber).shadow().find('button').scrollIntoView().click({ force: true });
           break;
         default:
-          expect(button).to.be.oneOf(['Edit', 'Delete', 'Add tag', 'Details', 'Details off']);
+          expect(button).to.be.oneOf(['Edit', 'Delete', 'Add tag', 'Eye', 'Eye off']);
       }
     });
   }

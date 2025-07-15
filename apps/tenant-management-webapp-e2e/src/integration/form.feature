@@ -335,18 +335,18 @@ Feature: Form
     When the user clicks "Close" button in Add tags modal
     Then the user "should not view" the Add tags modal
     # View tags in details view
-    When the user clicks "Details" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-    And the user views "autotest-form-tags" as Definition ID and "autotest,mytag<$ph>" as Tags in the details view
-    When the user clicks "Details off" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    When the user clicks "Eye" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user views "autotest-form-tags" as Definition ID and "autotest,mytag<$ph>" as Tags in the details view
+    When the user clicks "Eye off" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
     Then the user should not view details view of "autotest-form-tags", "DO NOT DELETE" on form definitions page
     # Remove a tag
-    And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    When the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
     Then the user views Add tags modal for "autotest-form-tags"
     When the user clicks Remove button for the tag "mytag<$ph>" in Add tags modal
     Then the user "should not view" the tag "mytag<$ph>" under the tag input field in Add tags modal
     When the user clicks Remove button for the tag "autotest" in Add tags modal
     Then the user "should not view" the tag "autotest" under the tag input field in Add tags modal
     When the user clicks "Close" button in Add tags modal
-    And the user clicks "Details" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    And the user clicks "Eye" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
     Then the user should not view "mytag<$ph>" tag in the details view on form definitions page
     And the user should not view "autotest" tag in the details view on form definitions page
