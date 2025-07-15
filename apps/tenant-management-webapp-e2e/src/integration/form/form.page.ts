@@ -69,15 +69,27 @@ class FormPage {
     return cy.xpath('//table[@data-testid="form-definitions-table"]//tbody');
   }
 
-  definitionEditButton(rowNumber) {
+  definitionsEditButton(rowNumber) {
     return cy.xpath(
       `(//table[@data-testid="form-definitions-table"]//*[contains(@testid, "form-definition-edit")])[${rowNumber}]`
     );
   }
 
-  definitionDeleteButton(rowNumber) {
+  definitionsDeleteButton(rowNumber) {
     return cy.xpath(
       `(//table[@data-testid="form-definitions-table"]//*[contains(@testid, "form-definition-delete")])[${rowNumber}]`
+    );
+  }
+
+  definitionsAddTagsButton(rowNumber) {
+    return cy.xpath(
+      `(//table[@data-testid="form-definitions-table"]//*[contains(@testid, "form-definition-resource-tag-edit")])[${rowNumber}]`
+    );
+  }
+
+  definitionsDetailsButton(rowNumber) {
+    return cy.xpath(
+      `(//table[@data-testid="form-definitions-table"]//*[contains(@testid, "form-toggle-details-visibility")])[${rowNumber}]`
     );
   }
 
@@ -290,6 +302,62 @@ class FormPage {
 
   formSuccessCallout() {
     return cy.xpath('//goa-callout[@type="success"]');
+  }
+
+  definitionsAddTagsModal() {
+    return cy.xpath('//goa-modal[@open="true" and @testid="add-resource-tag-model"]');
+  }
+
+  definitionsAddTagsModalTitle() {
+    return cy.xpath('//goa-modal[@open="true" and @testid="add-resource-tag-model"]/div[@slot="heading"]');
+  }
+
+  definitionsAddTagsModalDesc() {
+    return cy.xpath('//goa-modal[@open="true" and @testid="add-resource-tag-model"]/div[contains(@class, "sc")]');
+  }
+
+  definitionsAddTagsModalTagField() {
+    return cy.xpath(
+      '//goa-modal[@open="true" and @testid="add-resource-tag-model"]//goa-input[@testid="add-resource-tag-name"]'
+    );
+  }
+
+  definitionsAddTagsModalFormItem() {
+    return cy.xpath('//goa-modal[@open="true" and @testid="add-resource-tag-model"]//goa-form-item');
+  }
+
+  definitionsAddTagsModalCloseBtn() {
+    return cy.xpath('//goa-modal[@open="true" and @testid="add-resource-tag-model"]//goa-button[text()="Close"]');
+  }
+
+  definitionsAddTagsModalCreateAndAddTagBtn() {
+    return cy.xpath(
+      '//goa-modal[@open="true" and @testid="add-resource-tag-model"]//goa-button[text()="Create and add tag"]'
+    );
+  }
+
+  definitionsAddTagsModalAddTagBtn() {
+    return cy.xpath('//goa-modal[@open="true" and @testid="add-resource-tag-model"]//goa-button[text()="Add tag"]');
+  }
+
+  definitionsAddTagsModalTagChips() {
+    return cy.xpath('//goa-modal[@open="true" and @testid="add-resource-tag-model"]//goa-filter-chip');
+  }
+
+  definitionsDetailsLoadingIndicator() {
+    return cy.xpath('//*[@data-testid="configuration-details"]//goa-circular-progress[@visible="true"]');
+  }
+
+  definitionsDetails() {
+    return cy.xpath('//*[@data-testid="configuration-details"]');
+  }
+
+  definitionsDetailsTags() {
+    return cy.xpath('//*[@data-testid="configuration-details"]//goa-badge');
+  }
+
+  definitionsDetailsDefinitionID() {
+    return cy.xpath('//*[@data-testid="configuration-details"]//div[text()="Definition ID"]/following-sibling::text()');
   }
 }
 export default FormPage;
