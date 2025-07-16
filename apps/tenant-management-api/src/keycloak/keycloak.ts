@@ -475,7 +475,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
 
     try {
       const { data } = await axios.get<IdentityProviderResponse>(fetchIdPUrl, { headers });
-      const defaultIdp = data.find((idp) => (idp.identityProvider = DEFAULT_IDP_NAME));
+      const defaultIdp = data.find((idp) => idp.identityProvider === DEFAULT_IDP_NAME);
       return defaultIdp !== undefined;
     } catch (err) {
       const errMessage = `Failed to check the ${DEFAULT_IDP_NAME} IdP in core for user ${userId} due to ${err.message}`;
