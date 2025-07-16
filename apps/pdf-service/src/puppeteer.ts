@@ -2,6 +2,10 @@ import * as puppeteer from 'puppeteer';
 import { Readable } from 'stream';
 import { PdfService, PdfServiceProps } from './pdf';
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 class PuppeteerPdfService implements PdfService {
   constructor(private browser: puppeteer.Browser) {}
 
@@ -10,7 +14,8 @@ class PuppeteerPdfService implements PdfService {
     try {
       page = await this.browser.newPage();
       await page.setJavaScriptEnabled(false);
-      await page.setContent(content, { waitUntil: 'load', timeout: 2 * 60 * 1000 });
+      await page.setContent(content, { waitUntil: 'networkidle0', timeout: 2 * 60 * 1000 });
+      await delay(500);
 
       let result: Buffer;
       if (header || footer) {
@@ -29,7 +34,6 @@ class PuppeteerPdfService implements PdfService {
       }
 
       return Readable.from(result);
-      
     } finally {
       if (page) {
         await page.close();
