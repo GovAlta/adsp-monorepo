@@ -24,10 +24,10 @@ readme = 'README.md'
 
   [tool.poetry.dependencies]
   python = ">=3.9,<3.12"
-  cachetools = "^5.5.0"
-  types-cachetools = "^5.5.0.20240820"
-  httpx = "^0.27.2"
-  more-itertools = "^10.5.0"
+  cachetools = "^6.1.0"
+  types-cachetools = "^6.0.0.20250525"
+  httpx = "^0.28.1"
+  more-itertools = "^10.7.0"
   urnparse = "^0.2.2"
 
     [tool.poetry.dependencies.pyjwt]
@@ -35,8 +35,8 @@ readme = 'README.md'
     version = "^2.10.1"
 
   [tool.poetry.group.dev.dependencies]
-  flake8 = "^7.2.0"
-  pytest = "^8.3.5"
+  flake8 = "^7.3.0"
+  pytest = "^8.4.1"
   pytest-coverage = "^0.0"
   pytest-html = "^4.1.1"
   black = "^25.1.0"

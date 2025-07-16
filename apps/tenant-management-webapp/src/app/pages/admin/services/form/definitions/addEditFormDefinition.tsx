@@ -9,7 +9,7 @@ import {
   duplicateNameCheck,
   Validator,
 } from '@lib/validation/checkInput';
-import { FormFormItem, HelpText, DescriptionItem, ErrorMsg } from '../styled-components';
+import { FormFormItem, DescriptionItem } from '../styled-components';
 import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
@@ -24,10 +24,9 @@ import {
   GoAButtonGroup,
   GoAFormItem,
   GoAButton,
-  GoAIcon,
   GoACheckbox,
 } from '@abgov/react-components';
-
+import { HelpTextComponent } from '@components/HelpTextComponent';
 interface AddEditFormDefinitionProps {
   open: boolean;
   isEdit: boolean;
@@ -243,17 +242,12 @@ export const AddEditFormDefinition = ({
                 }}
                 onChange={(name, value) => {}}
               />
-              <HelpText>
-                {definition.description.length <= 180 ? (
-                  <div> {descErrMessage} </div>
-                ) : (
-                  <ErrorMsg>
-                    <GoAIcon type="warning" size="small" theme="filled" title="warning" />
-                    {`  ${errors?.['description']}`}
-                  </ErrorMsg>
-                )}
-                <div>{`${definition.description.length}/180`}</div>
-              </HelpText>
+              <HelpTextComponent
+                length={definition?.description?.length || 0}
+                maxLength={180}
+                descErrMessage={descErrMessage}
+                errorMsg={errors?.['description']}
+              />
             </DescriptionItem>
           </GoAFormItem>
 

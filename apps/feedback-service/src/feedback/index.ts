@@ -5,7 +5,9 @@ import { FeedbackWorkItem, createFeedbackJobs } from './job';
 import { PiiService } from './pii';
 import { createFeedbackRouter } from './router';
 import { ValueService } from './value';
-import { TenantService } from '@abgov/adsp-service-sdk';
+import { ConfigurationService, TenantService } from '@abgov/adsp-service-sdk';
+import { Config } from 'winston/lib/winston/config';
+import { FeedbackSiteService } from './feedbackSiteService';
 
 export * from './configuration';
 export * from './job';
@@ -19,6 +21,7 @@ interface MiddlewareProps {
   piiService: PiiService;
   tenantService: TenantService;
   valueService: ValueService;
+  feedbackSiteService: FeedbackSiteService;
   queueService: WorkQueueService<FeedbackWorkItem>;
 }
 

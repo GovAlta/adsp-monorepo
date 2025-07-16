@@ -114,7 +114,7 @@ export const CommentEditor = styled.div`
 `;
 
 export const CommentEditorTitle = styled.div`
-  font-size: var(--fs-xl);
+  font-size: var(--goa-font-size-7);
   line-height: var(--lh-lg);
   font-weight: var(--fw-regular);
 `;
@@ -306,25 +306,9 @@ export const TableDiv = styled.div`
   }
 `;
 
-export const HelpText = styled.div`
-  font-size: var(--fs-sm);
-  color: var(--color-gray-900);
-  line-height: calc(var(--fs-sm) + 0.5rem);
-  display: flex;
-  display-direction: row;
-  justify-content: space-between;
-  margin-top: 2px;
-`;
 export const DescriptionItem = styled.div`
   margin-left: 0px;
   margin-right: 0px;
-`;
-
-export const ErrorMsg = styled.div`
-  display: inline-flex;
-  color: var(--color-red);
-  pointer-events: none;
-  gap: 0.25rem;
 `;
 
 export const CommentsList = styled.div`

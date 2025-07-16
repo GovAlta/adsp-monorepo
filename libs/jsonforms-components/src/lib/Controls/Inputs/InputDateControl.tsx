@@ -40,9 +40,22 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const width = uischema?.options?.componentProps?.width ?? '100%';
+  const allowPastDate = uischema?.options?.allowPastDate;
+  const allowFutureDate = uischema?.options?.allowFutureDate;
 
-  const minDate = uischema?.options?.componentProps?.min;
-  const maxDate = uischema?.options?.componentProps?.max;
+  let minDate = uischema?.options?.componentProps?.min;
+  let maxDate = uischema?.options?.componentProps?.max;
+
+  // Only apply if not both are true
+  if (allowPastDate && !allowFutureDate) {
+    // Only allow today and past dates
+    const today = new Date();
+    maxDate = today.toISOString().split('T')[0];
+  } else if (!allowPastDate && allowFutureDate) {
+    // Only allow today and future dates
+    const today = new Date();
+    minDate = today.toISOString().split('T')[0];
+  }
 
   return (
     <GoAInputDate

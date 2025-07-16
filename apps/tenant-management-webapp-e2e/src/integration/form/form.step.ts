@@ -5,7 +5,7 @@ import common from '../common/common.page';
 
 const commonObj = new common();
 const formObj = new FormPage();
-let replacementString;
+let replacementString = '';
 
 Given('a tenant admin user is on form service overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
@@ -288,23 +288,27 @@ function findDefinition(name, description) {
       formObj
         .definitionsTableBody()
         .find('tr')
+        .filter((index, el) => {
+          return Cypress.$(el).children().length === 3; // Only rows with 3 children
+        })
         .then((rows) => {
           rows.toArray().forEach((rowElement) => {
             let counter = 0;
-            // cy.log(rowElement.cells[0].innerHTML); // Print out the namespace cell innerHTML for debug purpose
-            if (rowElement.cells[0].innerHTML.includes(name)) {
+            const row = rowElement as HTMLTableRowElement;
+            // cy.log(row.cells[0].innerHTML); // Print out the namespace cell innerHTML for debug purpose
+            if (row.cells[0].innerHTML.includes(name)) {
               counter = counter + 1;
             }
-            // cy.log(rowElement.cells[1].innerHTML); // Print out the name cell innerHTML for debug purpose
-            if (rowElement.cells[1].innerHTML.includes(description)) {
+            // cy.log(row.cells[1].innerHTML); // Print out the name cell innerHTML for debug purpose
+            if (row.cells[1].innerHTML.includes(description)) {
               counter = counter + 1;
             }
             Cypress.log({
-              name: 'Number of matched items for row# ' + rowElement.rowIndex + ': ',
+              name: 'Number of matched items for row# ' + row.rowIndex + ': ',
               message: String(String(counter)),
             });
             if (counter == targetedNumber) {
-              rowNumber = rowElement.rowIndex;
+              rowNumber = row.rowIndex;
             }
           });
           Cypress.log({
@@ -326,15 +330,27 @@ When(
     findDefinition(name, description).then((rowNumber) => {
       switch (button) {
         case 'Edit':
-          formObj.definitionEditButton(rowNumber).shadow().find('button').click({ force: true });
+          formObj.definitionsEditButton(rowNumber).shadow().find('button').click({ force: true });
           cy.wait(2000);
           break;
         case 'Delete':
-          formObj.definitionDeleteButton(rowNumber).shadow().find('button').click({ force: true });
+          formObj.definitionsDeleteButton(rowNumber).shadow().find('button').click({ force: true });
           cy.wait(2000);
           break;
+        case 'Add tag':
+          formObj.definitionsAddTagsButton(rowNumber).shadow().find('button').click({ force: true });
+          cy.wait(2000);
+          break;
+        case 'Eye':
+          formObj.definitionsDetailsButton(rowNumber).invoke('attr', 'icon').should('contain', 'eye');
+          formObj.definitionsDetailsButton(rowNumber).shadow().find('button').scrollIntoView().click({ force: true });
+          break;
+        case 'Eye off':
+          formObj.definitionsDetailsButton(rowNumber).invoke('attr', 'icon').should('contain', 'eye-off');
+          formObj.definitionsDetailsButton(rowNumber).shadow().find('button').scrollIntoView().click({ force: true });
+          break;
         default:
-          expect(button).to.be.oneOf(['Edit', 'Delete']);
+          expect(button).to.be.oneOf(['Edit', 'Delete', 'Add tag', 'Eye', 'Eye off']);
       }
     });
   }
@@ -1237,3 +1253,225 @@ Then('the user views a callout with a message of {string}', function (message) {
   cy.wait(2000); // wait for callout to appear
   formObj.formSuccessCallout().shadow().find('h3').should('have.text', message);
 });
+
+Then('the user views Add tags modal for {string}', function (name) {
+  formObj.definitionsAddTagsModalTitle().invoke('text').should('eq', 'Add tags');
+  formObj.definitionsAddTagsModalDesc().invoke('text').should('contains', name);
+});
+
+When('the user enters {string} in the tag input field in Add tags modal', function (tagName: string) {
+  if (replacementString != '') {
+    tagName = commonlib.stringReplacement(tagName, replacementString);
+  } else {
+    const currentTime = new Date();
+    replacementString =
+      '-' +
+      ('0' + currentTime.getMonth()).substr(-2) +
+      ('0' + currentTime.getDate()).substr(-2) +
+      ('0' + currentTime.getHours()).substr(-2) +
+      ('0' + currentTime.getHours()).substr(-2) +
+      ('0' + currentTime.getSeconds()).substr(-2);
+    tagName = commonlib.stringReplacement(tagName, replacementString);
+  }
+  formObj.definitionsAddTagsModalTagField().shadow().find('input').clear().type(tagName, { force: true, delay: 200 });
+});
+
+Then('the user views the error message of {string} in Add tags modal', function (errorMsg) {
+  cy.wait(1000); // Wait for error message to show
+  formObj.definitionsAddTagsModalFormItem().invoke('attr', 'error').should('contain', errorMsg);
+});
+
+When('the user clicks {string} button in Add tags modal', function (button: string) {
+  switch (button.toLowerCase()) {
+    case 'create and add tag':
+      cy.wait(2000); // Wait for debounce to finish for the button to show correct text
+      formObj.definitionsAddTagsModalCreateAndAddTagBtn().shadow().find('button').click({ force: true });
+      break;
+    case 'add tag':
+      cy.wait(2000); // Wait for debounce to finish for the button to show correct text
+      formObj.definitionsAddTagsModalAddTagBtn().shadow().find('button').click({ force: true });
+      cy.wait(2000);
+      break;
+    case 'close':
+      formObj.definitionsAddTagsModalCloseBtn().shadow().find('button').click({ force: true });
+      cy.wait(2000);
+      break;
+    default:
+      expect(button).to.be.oneOf(['Create and add tag', 'Add tag', 'Close']);
+  }
+});
+
+Then('the user views the tag {string} under the tag input field in Add tags modal', function (tagName: string) {
+  tagName = commonlib.stringReplacement(tagName, replacementString);
+  formObj
+    .definitionsAddTagsModalTagChips()
+    .shadow()
+    .find('[class^="text"]')
+    .then((tags) => {
+      let tagFound = false;
+      for (let i = 0; i < tags.length; i++) {
+        cy.log(tags[i].outerText);
+        if (tags[i].outerText == tagName) {
+          tagFound = true;
+          break;
+        }
+      }
+      expect(tagFound).to.be.true;
+    });
+});
+
+Then('the user views Add tag button being disabled in Add tags modal', function () {
+  cy.wait(2000); // Wait for debounce to finish for the button to show correct text
+  formObj.definitionsAddTagsModalAddTagBtn().invoke('attr', 'disabled').should('eq', 'disabled');
+});
+
+Then('the user {string} the Add tags modal', function (viewOrNot) {
+  switch (viewOrNot) {
+    case 'views':
+      formObj.definitionsAddTagsModal().should('exist');
+      break;
+    case 'should not view':
+      formObj.definitionsAddTagsModal().should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+Then('the user views a loading indicator for form definition details', function () {
+  formObj.definitionsDetailsLoadingIndicator().should('exist');
+});
+
+Then(
+  'the user views {string} as Definition ID and {string} as Tags in the details view',
+  function (definitionID, tags: string) {
+    formObj.definitionsDetailsDefinitionID().invoke('text').should('contain', definitionID);
+    formObj.definitionsDetailsTags().then((elements) => {
+      if (tags.toLowerCase() == 'empty') {
+        expect(elements.length).to.eq(0);
+      } else {
+        const tagArray = tags.split(',');
+        expect(elements.length).to.eq(tagArray.length);
+        for (let i = 0; i < elements.length; i++) {
+          cy.wrap(elements[i])
+            .invoke('attr', 'content')
+            .should('contain', commonlib.stringReplacement(tagArray[i].trim(), replacementString));
+        }
+      }
+    });
+  }
+);
+
+When('the user clicks Remove button for the tag {string} in Add tags modal', function (tagName: string) {
+  tagName = commonlib.stringReplacement(tagName, replacementString);
+  formObj.definitionsAddTagsModalTagChips().then((chips) => {
+    for (let i = 0; i < chips.length; i++) {
+      if (chips[i].getAttribute('content') == tagName) {
+        cy.wrap(chips[i]).shadow().find('goa-icon').click({ force: true });
+      }
+    }
+  });
+});
+
+Then(
+  'the user {string} the tag {string} under the tag input field in Add tags modal',
+  function (viewOrNot, tagName: string) {
+    cy.wait(1000); // Wait for tag chips to update
+    tagName = commonlib.stringReplacement(tagName, replacementString);
+    switch (viewOrNot) {
+      case 'views':
+        formObj.definitionsAddTagsModalTagChips().then((tags) => {
+          let tagFound = false;
+          for (let i = 0; i < tags.length; i++) {
+            if (tags[i].getAttribute('content') == tagName) {
+              tagFound = true;
+              break;
+            }
+          }
+          expect(tagFound).to.be.true;
+        });
+        break;
+      case 'should not view':
+        formObj.definitionsAddTagsModal().then((modal) => {
+          let tagFound;
+          if (modal.find('goa-filter-chips').length == 0) {
+            tagFound = false;
+          } else {
+            formObj.definitionsAddTagsModalTagChips().then((tags) => {
+              tagFound = false;
+              for (let i = 0; i < tags.length; i++) {
+                if (tags[i].getAttribute('content') == tagName) {
+                  tagFound = true;
+                  break;
+                }
+              }
+            });
+          }
+          expect(tagFound).to.be.false;
+        });
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+Then('the user should not view {string} tag in the details view on form definitions page', function (tagName) {
+  formObj.definitionsDetails().then((details) => {
+    let tagFound;
+    if (details.find('goa-filter-chips').length == 0) {
+      tagFound = false;
+    } else {
+      formObj.definitionsDetailsTags().then((elements) => {
+        tagFound = false;
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].getAttribute('content') == commonlib.stringReplacement(tagName, replacementString)) {
+            tagFound = true;
+            break;
+          }
+        }
+      });
+    }
+    expect(tagFound).to.be.false;
+  });
+});
+
+When('the user deletes all tags for the form definition of {string}, {string}', function (name, description) {
+  name = commonlib.stringReplacement(name, replacementString);
+  findDefinition(name, description).then((rowNumber) => {
+    formObj.definitionsAddTagsButton(rowNumber).shadow().find('button').click({ force: true });
+    cy.wait(2000);
+    formObj.definitionsAddTagsModal().then((modal) => {
+      if (modal.find('goa-filter-chip').length == 0) {
+        cy.log('There are no tags to delete');
+        return;
+      } else {
+        formObj.definitionsAddTagsModalTagChips().then((chips) => {
+          for (let i = 0; i < chips.length; i++) {
+            cy.wrap(chips[i]).shadow().find('goa-icon').click({ force: true });
+            cy.log(chips[i].getAttribute('content') + ' tag removed');
+            cy.wait(1000); // Wait for tag chips to update
+          }
+        });
+      }
+    });
+  });
+  formObj.definitionsAddTagsModalCloseBtn().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then(
+  'the user should not view details view of {string}, {string} on form definitions page',
+  function (name, description) {
+    name = commonlib.stringReplacement(name, replacementString);
+    findDefinition(name, description).then((rowNumber) => {
+      formObj
+        .definitionsTableBody()
+        .find('tr')
+        .eq(Number(rowNumber))
+        .find('td')
+        .eq(0)
+        .should('have.attr', 'data-testid', 'form-definitions-name');
+    });
+  }
+);

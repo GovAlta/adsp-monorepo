@@ -10,7 +10,6 @@ import {
   GoACheckbox,
   GoAButtonGroup,
   GoATextArea,
-  GoAIcon,
   GoAInput,
   GoAFormItem,
   GoAModal,
@@ -31,6 +30,7 @@ import { RootState } from '@store/index';
 import { v4 as uuidv4 } from 'uuid';
 import { ResetModalState } from '@store/session/actions';
 import { PageIndicator } from '@components/Indicator';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 export const WebhookFormModal = (): JSX.Element => {
   const dispatch = useDispatch();
   const selectedWebhook = useSelector(selectWebhookInStatus);
@@ -260,17 +260,12 @@ export const WebhookFormModal = (): JSX.Element => {
               onChange={(name, value) => {}}
               aria-label="description"
             />
-            <HelpText>
-              {webhook?.description?.length <= 180 ? (
-                <div> {descErrMessage} </div>
-              ) : (
-                <ErrorMsg>
-                  <GoAIcon type="warning" size="small" theme="filled" ariaLabel="warning" />
-                  {`  ${errors?.['description']}`}
-                </ErrorMsg>
-              )}
-              <div>{`${webhook?.description?.length}/180`}</div>
-            </HelpText>
+            <HelpTextComponent
+              length={webhook?.description?.length || 0}
+              maxLength={180}
+              descErrMessage={descErrMessage}
+              errorMsg={errors?.['description']}
+            />
           </GoAFormItem>
           <GoAFormItem error={errors?.['events']} label="Events">
             {!orderedGroupNames && renderNoItem('event definition')}
@@ -315,25 +310,6 @@ export default WebhookFormModal;
 
 export const IdField = styled.div`
   min-height: 1.6rem;
-`;
-
-export const HelpText = styled.div`
-  font-size: var(--fs-sm);
-  color: var(--color-gray-900);
-  line-height: calc(var(--fs-sm) + 0.5rem);
-  display: flex;
-  display-direction: row;
-  justify-content: space-between;
-  margin-top: 2px;
-`;
-
-export const ErrorMsg = styled.div`
-   {
-    display: inline-flex;
-    color: var(--color-red);
-    pointer-events: none;
-    gap: 0.25rem;
-  }
 `;
 
 export const Events = styled.div`

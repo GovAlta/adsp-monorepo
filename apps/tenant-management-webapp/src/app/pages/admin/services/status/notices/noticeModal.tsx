@@ -16,6 +16,7 @@ import {
   GoAGrid,
 } from '@abgov/react-components';
 import { getTimeFromGMT, getDateTime } from '@lib/timeUtil';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 
 interface NoticeModalProps {
   title: string;
@@ -35,7 +36,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
   const [errors, setErrors] = useState({});
   const [isAllApplications, setIsAllApplications] = useState(false);
   const [selectedApplications, setSelectedApplications] = useState([]);
-
+  const descErrMessage = 'Notice description can not be over 180 characters';
   const { applications, notices } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
     notices: state.notice.notices,
@@ -168,6 +169,12 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           }}
           // eslint-disable-next-line
           onChange={(name, value) => {}}
+        />
+        <HelpTextComponent
+          length={message.length}
+          maxLength={180}
+          descErrMessage={descErrMessage}
+          errorMsg={errors?.['description']}
         />
       </GoAFormItem>
       <br />

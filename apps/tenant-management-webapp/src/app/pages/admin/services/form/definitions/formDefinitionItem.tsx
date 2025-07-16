@@ -19,6 +19,7 @@ import { isValidUrl } from '@lib/validation/urlUtil';
 import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
 import { GoABadge, GoACircularProgress } from '@abgov/react-components';
 import { EntryDetail } from '../../styled-components';
+import { UpdateSearchCriteriaAndFetchEvents, fetchCalendars } from '@store/calendar/actions';
 interface FormDefinitionItemProps {
   formDefinition: FormDefinition;
   baseResourceFormUrn: string;
@@ -26,21 +27,50 @@ interface FormDefinitionItemProps {
   onAddResourceTag?: (FormDefinition) => void;
 }
 
+const safeFormat = (input: unknown) => {
+  const date =
+    //eslint-disable-next-line
+    typeof input === 'object' && input && 'toDate' in input ? (input as any).toDate() : new Date(input as any);
+
+  //eslint-disable-next-line
+  if (isNaN(date as any)) return '—';
+
+  try {
+    return date.toLocaleString('en-US', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZoneName: 'short',
+    });
+  } catch {
+    // Fallback for runtimes without dateStyle/timeStyle
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    });
+  }
+};
+
 const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinition }) => {
   const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, formDefinition?.id));
+  const selectedCoreEvent = useSelector(
+    (state: RootState) =>
+      state.calendarService?.coreCalendars?.['form-intake']?.calendarEvents?.[formDefinition?.id] ?? null // fallback (optional)
+  );
 
   return (
     <>
       <DetailsTagDefinitionIdHeading>Definition ID</DetailsTagDefinitionIdHeading>
       {formDefinition.id}
-
       <DetailsTagHeading>Tags</DetailsTagHeading>
       {resourceTags === undefined && (
         <CenterPositionProgressIndicator>
           <GoACircularProgress visible={true} size="small" />
         </CenterPositionProgressIndicator>
       )}
-
       {resourceTags && resourceTags?.length > 0 && (
         <DetailsTagWrapper>
           {resourceTags
@@ -51,6 +81,50 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
               </TagBadgePadding>
             ))}
         </DetailsTagWrapper>
+      )}
+
+      <DetailsTagHeading>Intake Period(s)</DetailsTagHeading>
+
+      {selectedCoreEvent && selectedCoreEvent.length > 0 ? (
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Start time</th>
+              <th>End time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {selectedCoreEvent.map((coreEvent, index) => (
+              <tr key={index} style={{ margin: '20px 0' }}>
+                <td>{coreEvent?.name}</td>
+                <td>{safeFormat(coreEvent?.start)}</td>
+                <td>{safeFormat(coreEvent?.end)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p>No intake periods configured for this form</p>
+      )}
+
+      <div>
+        <DetailsTagHeading>Generate PDF on submit</DetailsTagHeading>
+        {formDefinition.submissionPdfTemplate ? 'true' : 'false'}
+      </div>
+
+      <div>
+        <DetailsTagHeading>Submission Record</DetailsTagHeading>
+        {formDefinition.submissionRecords ? 'true' : 'false'}
+      </div>
+
+      {formDefinition.dispositionStates.length > 0 && (
+        <div>
+          <DetailsTagHeading>Disposition States</DetailsTagHeading>
+          {formDefinition.dispositionStates.map((x) => (
+            <p>{x.name}</p>
+          ))}
+        </div>
       )}
     </>
   );
@@ -73,6 +147,10 @@ export const FormDefinitionItem = ({
   const formLink = useSelector((state: RootState) => selectFormAppLink(state, formDefinition?.id));
   const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, formDefinition?.id));
 
+  useEffect(() => {
+    dispatch(fetchCalendars());
+  }, []);
+
   return (
     <>
       <tr>
@@ -92,7 +170,14 @@ export const FormDefinitionItem = ({
                   if (baseResourceFormUrn && formDefinition.id.length > 0 && resourceTags === undefined) {
                     dispatch(fetchFormResourceTags(`${baseResourceFormUrn}/${formDefinition.id}`));
                   }
+                  dispatch(
+                    UpdateSearchCriteriaAndFetchEvents({
+                      recordId: `urn:ads:platform:configuration-service:v2:/configuration/form-service/${formDefinition.id}`,
+                      calendarName: 'form-intake',
+                    })
+                  );
                 }
+
                 setShowDetails(!showDetails);
               }}
               testId="form-toggle-details-visibility"

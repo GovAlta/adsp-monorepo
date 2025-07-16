@@ -34,7 +34,7 @@ export const ServiceRoleListContainer = styled.div`
   margin-bottom: 1.5rem;
   .title {
     font-weight: 700;
-    font-size: var(--fs-lg);
+    font-size: var(--goa-font-size-5);
   }
 `;
 

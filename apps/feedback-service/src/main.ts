@@ -19,6 +19,7 @@ import {
 } from './feedback';
 import { createPiiService } from './pii';
 import { createValueService } from './value';
+import { createFeedbackSiteService } from './feedback/feedbackSiteService';
 
 const logger = createLogger('feedback-service', environment.LOG_LEVEL);
 
@@ -42,6 +43,7 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationHandler,
     directory,
     tenantHandler,
+    configurationService,
     tenantService,
     tenantStrategy,
     tokenProvider,
@@ -104,7 +106,15 @@ const initializeApp = async (): Promise<express.Application> => {
   const queueService = await createFeedbackQueueService({ ...environment, logger });
   const piiService = createPiiService({ logger, directory, tokenProvider });
   const valueService = createValueService({ logger, directory, tokenProvider });
-  await applyFeedbackMiddleware(app, { logger, queueService, piiService, tenantService, valueService });
+  const feedbackSiteService = createFeedbackSiteService(tenantService, tokenProvider, configurationService);
+  await applyFeedbackMiddleware(app, {
+    logger,
+    queueService,
+    piiService,
+    tenantService,
+    valueService,
+    feedbackSiteService: feedbackSiteService,
+  });
 
   const swagger = JSON.parse(await readFile(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {

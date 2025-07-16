@@ -20,6 +20,7 @@ import { selectRoleList } from '@store/sharedSelectors/roles';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { TextGoASkeleton } from '@core-services/app-common';
+import { HelpTextComponent } from '@components/HelpTextComponent';
 
 interface AddScriptModalProps {
   initialValue?: ScriptItem;
@@ -44,6 +45,7 @@ export const AddScriptModal = ({
   const scripts = useSelector((state: RootState) => {
     return state?.scriptService?.scripts;
   });
+  const descErrMessage = 'Script description can not be over 180 characters';
   const scrollPaneRef = useRef<HTMLDivElement>(null);
   const roles = useSelector(selectRoleList);
   const scriptNames = scripts ? Object.keys(scripts) : [];
@@ -191,6 +193,12 @@ export const AddScriptModal = ({
               validators['description'].check(description);
               setScript({ ...script, description });
             }}
+          />
+          <HelpTextComponent
+            length={script?.description?.length || 0}
+            maxLength={180}
+            descErrMessage={descErrMessage}
+            errorMsg={errors?.['description']}
           />
         </GoAFormItem>
         <br />

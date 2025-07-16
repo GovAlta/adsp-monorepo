@@ -8,8 +8,9 @@ import { Template, baseTemplate } from '@store/notification/models';
 import { SaveFormModal } from '@components/saveModal';
 import { subjectEditorConfig, bodyEditorConfig } from './config';
 import { Tab, Tabs } from '@components/Tabs';
-import { GoAButton, GoAButtonGroup, GoABadge, GoAFormItem } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup, GoABadge, GoAFormItem, GoACheckbox } from '@abgov/react-components';
 import { areObjectsEqual } from '@lib/objectUtil';
+import emailWrapper from './templates/email-wrapper.hbs';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -90,6 +91,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   }, [monaco, eventSuggestion]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [saveModal, setSaveModal] = useState(false);
+  const [useDefaultTemplate, setUseDefaultTemplate] = useState(false);
 
   useEffect(() => {
     if (initialChannel) {
@@ -100,10 +102,15 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   useEffect(() => {
     if (modelOpen) {
       setActiveIndex(0);
+
+      const emailBody = templates?.email?.body || '';
+      const isDefaultTemplate = emailBody.trim() === emailWrapper.trim();
+
+      setUseDefaultTemplate(isDefaultTemplate);
     } else {
       setActiveIndex(-1);
     }
-  }, [modelOpen]);
+  }, [modelOpen, templates]);
 
   const switchTabPreview = (value) => {
     setPreview(value);
@@ -239,6 +246,25 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     />
                   </MonacoDivBody>
                 </GoAFormItem>
+                {item.name === 'email' && (
+                  <GoAFormItem label="">
+                    <GoACheckbox
+                      name={`use-default-template`}
+                      checked={useDefaultTemplate}
+                      data-testid="default-template-checkbox"
+                      description={"Using the default template will clear any body changes you've made."}
+                      onChange={(name, checked) => {
+                        setUseDefaultTemplate(checked);
+                        if (checked) {
+                          onBodyChange(emailWrapper, item.name);
+                        } else {
+                          onBodyChange('', item.name);
+                        }
+                      }}
+                      text={'Use default template to edit header and footer'}
+                    ></GoACheckbox>
+                  </GoAFormItem>
+                )}
               </>
             </Tab>
           ))}
