@@ -15,7 +15,8 @@ class PuppeteerPdfService implements PdfService {
       page = await this.browser.newPage();
       await page.setJavaScriptEnabled(false);
       await page.setContent(content, { waitUntil: 'networkidle0', timeout: 2 * 60 * 1000 });
-      await delay(500);
+      //just touching pdf service so I can update the memory limits and have it redeploy
+      await delay(499);
 
       let result: Buffer;
       if (header || footer) {
