@@ -3,6 +3,7 @@ import { Readable } from 'stream';
 import { PdfService, PdfServiceProps } from './pdf';
 
 
+
 class PuppeteerPdfService implements PdfService {
   constructor(private browser: puppeteer.Browser) {}
 
@@ -14,10 +15,12 @@ class PuppeteerPdfService implements PdfService {
       context = await this.browser.createBrowserContext();
       page = await context.newPage();
       await page.setJavaScriptEnabled(false);
+
       await page.setContent(content, {
         waitUntil: ['domcontentloaded', 'networkidle2'],
         timeout: 2 * 60 * 1000,
       });
+
 
 
 

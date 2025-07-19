@@ -158,3 +158,24 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/PingData'
+/status/v1/applications/endpoint-status-entries:
+  get:
+    tags: ['Application Monitoring']
+    description: Retrieves the raw results of the _pings_, gathered for every application.
+    parameters:
+      - name: timeInMinutes
+        description: Number of minutes to read data for, defaults to 30
+        in: query
+        required: false
+        schema:
+          type: number
+          example: 20
+    responses:
+      200:
+        description: Data retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PingData'

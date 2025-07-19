@@ -16,6 +16,7 @@ import { FeedbackWorkItem } from './job';
 import { ServiceRoles } from './roles';
 import { Feedback } from './types';
 import { ReadQueryParameters, ValueService } from './value';
+import { FeedbackSiteService } from './feedbackSiteService';
 
 export function resolveFeedbackContext(
   tenantService: TenantService,
@@ -136,6 +137,47 @@ export const readValues =
     }
   };
 
+export const getSites =
+  (feedbackSiteService: FeedbackSiteService, tenantService: TenantService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      if (!canRead(req.user, req.tenant, ServiceRoles.FeedbackReader)) {
+        throw new UnauthorizedError('User not authorized to read feedback.');
+      }
+      const tenantName = (req.query?.tenant as string) || null;
+      const doCount = req.query?.count === 'true';
+      if (tenantName && doCount) {
+        const tenant = await tenantService.getTenantByName(tenantName.replace('-', ' '));
+        if (tenant) {
+          const sites = await feedbackSiteService.countTenantSites([tenant.id]);
+          res.json(sites);
+          return;
+        } else {
+          throw new InvalidOperationError(`Tenant '${tenantName}' not found.`);
+        }
+      } else if (tenantName) {
+        const tenant = await tenantService.getTenantByName(tenantName.replace('-', ' '));
+        if (tenant) {
+          const sites = await feedbackSiteService.getTenantSites([tenant.id]);
+          res.json(sites);
+          return;
+        } else {
+          throw new InvalidOperationError(`Tenant '${tenantName}' not found.`);
+        }
+      } else if (doCount) {
+        const count = await feedbackSiteService.countAllSites();
+        res.json({ count });
+        return;
+      } else {
+        const sites = await feedbackSiteService.getAllSites();
+        res.json(sites);
+        return;
+      }
+    } catch (err) {
+      next(err);
+    }
+  };
+
 interface WidgetInformation {
   script: string;
   length: number;
@@ -184,9 +226,16 @@ interface RouterProps {
   tenantService: TenantService;
   queueService: WorkQueueService<FeedbackWorkItem>;
   valueService: ValueService;
+  feedbackSiteService: FeedbackSiteService;
 }
 
-export async function createFeedbackRouter({ logger, tenantService, queueService, valueService }: RouterProps) {
+export async function createFeedbackRouter({
+  logger,
+  tenantService,
+  queueService,
+  valueService,
+  feedbackSiteService,
+}: RouterProps) {
   const rateLimitHandler = rateLimit({
     windowMs: 5 * 60 * 1000,
     limit: 5,
@@ -241,6 +290,8 @@ export async function createFeedbackRouter({ logger, tenantService, queueService
   router.get('/script/integrity', getWidgetScriptIntegrity(loadWidgetInformation));
 
   router.get('/feedback', readValues(valueService));
+
+  router.get('/sites', getSites(feedbackSiteService, tenantService));
 
   return router;
 }

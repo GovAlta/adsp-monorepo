@@ -11,6 +11,7 @@ import {
   resolveFeedbackContext,
   sendFeedback,
   readValues,
+  getSites,
 } from './router';
 import { ServiceRoles } from './roles';
 import { ValueService } from './value';
@@ -27,6 +28,8 @@ describe('router', () => {
   const tenantServiceMock = {
     getTenant: jest.fn(),
     getTenantByName: jest.fn(),
+    getTenants: jest.fn(),
+    getTenantByRealm: jest.fn(),
   };
 
   const queueServiceMock = {
@@ -38,12 +41,23 @@ describe('router', () => {
     readValues: jest.fn(),
   };
 
+  const feedbackSiteServiceMock = {
+    getAllSites: jest.fn(),
+    countAllSites: jest.fn(),
+    getTenantSites: jest.fn(),
+    countTenantSites: jest.fn(),
+  };
+
   beforeEach(() => {
     tenantServiceMock.getTenant.mockReset();
     tenantServiceMock.getTenantByName.mockReset();
     queueServiceMock.enqueue.mockReset();
     valueServiceMock.writeValue.mockReset();
     valueServiceMock.readValues.mockReset();
+    feedbackSiteServiceMock.getAllSites.mockReset();
+    feedbackSiteServiceMock.countAllSites.mockReset();
+    feedbackSiteServiceMock.getTenantSites.mockReset();
+    feedbackSiteServiceMock.countTenantSites.mockReset();
   });
 
   describe('createFeedbackRouter', () => {
@@ -53,6 +67,7 @@ describe('router', () => {
         tenantService: tenantServiceMock as unknown as TenantService,
         queueService: queueServiceMock as unknown as WorkQueueService<FeedbackWorkItem>,
         valueService: valueServiceMock,
+        feedbackSiteService: feedbackSiteServiceMock,
       });
       expect(router).toBeTruthy();
     });
@@ -506,5 +521,74 @@ describe('router', () => {
       expect(res.json).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
+  });
+
+  describe('get feedback sites', () => {
+    it('can get feedback sites', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
+      };
+      const res = {
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = getSites(feedbackSiteServiceMock, tenantServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(feedbackSiteServiceMock.getAllSites).toHaveBeenCalledWith();
+    });
+
+    it('can get count for all sites', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
+        query: { count: 'true' },
+      };
+      const res = {
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = getSites(feedbackSiteServiceMock, tenantServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(feedbackSiteServiceMock.countAllSites).toHaveBeenCalledWith();
+    });
+  });
+
+  it('can get sites for a specific tenant', async () => {
+    const mockTenant = { id: 'urn:ads:automobiles:bobs-automobiles', name: 'bobs-automobiles' };
+    tenantServiceMock.getTenantByName.mockResolvedValueOnce(mockTenant);
+    const req = {
+      tenant: { id: tenantId },
+      user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
+      query: { tenant: 'bobs-automobiles' },
+    };
+    const res = {
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+
+    const handler = getSites(feedbackSiteServiceMock, tenantServiceMock);
+    await handler(req as unknown as Request, res as unknown as Response, next);
+    expect(feedbackSiteServiceMock.getTenantSites).toHaveBeenCalledWith([mockTenant.id]);
+  });
+
+  it('can get the count for a specific tenant', async () => {
+    const mockTenant = { id: 'urn:ads:automobiles:bobs-automobiles', name: 'bobs-automobiles' };
+    tenantServiceMock.getTenantByName.mockResolvedValueOnce(mockTenant);
+    const req = {
+      tenant: { id: tenantId },
+      user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
+      query: { tenant: 'bobs-automobiles', count: 'true' },
+    };
+    const res = {
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+
+    const handler = getSites(feedbackSiteServiceMock, tenantServiceMock);
+    await handler(req as unknown as Request, res as unknown as Response, next);
+    expect(feedbackSiteServiceMock.countTenantSites).toHaveBeenCalledWith([mockTenant.id]);
   });
 });
