@@ -2,47 +2,59 @@ import * as puppeteer from 'puppeteer';
 import { Readable } from 'stream';
 import { PdfService, PdfServiceProps } from './pdf';
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+
 
 class PuppeteerPdfService implements PdfService {
   constructor(private browser: puppeteer.Browser) {}
 
   async generatePdf({ content, header, footer }: PdfServiceProps): Promise<Readable> {
     let page: puppeteer.Page;
+    let context: puppeteer.BrowserContext | null = null;
     try {
-      page = await this.browser.newPage();
+
+      context = await this.browser.createBrowserContext();
+      page = await context.newPage();
       await page.setJavaScriptEnabled(false);
-      await page.setContent(content, { waitUntil: 'networkidle0', timeout: 2 * 60 * 1000 });
-      await delay(500);
+
+      await page.setContent(content, {
+        waitUntil: ['domcontentloaded', 'networkidle2'],
+        timeout: 2 * 60 * 1000,
+      });
+
+
+
 
       let result: Buffer;
       if (header || footer) {
         const headerTemplate = !header ? '' : header;
         const footerTemplate = !footer ? '' : footer;
 
-        result = await page.pdf({
-          headerTemplate,
-          footerTemplate,
-          printBackground: true,
-          displayHeaderFooter: true,
-          omitBackground: true,
-        });
+        result = Buffer.from(
+          await page.pdf({
+            headerTemplate,
+            footerTemplate,
+            printBackground: true,
+            displayHeaderFooter: true,
+            omitBackground: true,
+          })
+        );
       } else {
-        result = await page.pdf({ printBackground: true, omitBackground: true });
+        result = Buffer.from(await page.pdf({ printBackground: true, omitBackground: true }));
       }
 
       return Readable.from(result);
     } finally {
       if (page) {
         await page.close();
+         if (context) await context.close();
       }
     }
   }
 }
 
-export async function createPdfService(): Promise<PdfService> {
-  const browser = await puppeteer.launch({ headless: true, args: ['--disable-dev-shm-usage', '--no-sandbox'] });
+//eslint-disable-next-line
+export async function createPdfService(brow: any | null = null): Promise<PdfService> {
+  const browser =
+    (await puppeteer.launch({ headless: true, args: ['--disable-dev-shm-usage', '--no-sandbox'] })) || brow;
   return new PuppeteerPdfService(browser);
 }

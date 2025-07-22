@@ -9,6 +9,10 @@ metadata:
 labels:
   application: event-service
 parameters:
+  - name: APP_NAME
+    displayName: App Name
+    value: event-service
+    required: true
   - name: INFRA_NAMESPACE
     description: Name of the infrastructure project.
     displayName: Infra Namespace
@@ -48,17 +52,19 @@ objects:
   - apiVersion: v1
     kind: ServiceAccount
     metadata:
-      name: event-service-rabbitmq
+      name: ${APP_NAME}-rabbitmq
+      namespace: ${NAMESPACE}
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: queue
         apply-init: "true"
   - apiVersion: v1
     kind: RoleBinding
     metadata:
-      name: event-service-rabbitmq-view
+      name: ${APP_NAME}-rabbitmq-view
+      namespace: ${NAMESPACE}
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: queue
         apply-init: "true"
     roleRef:
@@ -66,7 +72,7 @@ objects:
       name: view
     subjects:
       - kind: ServiceAccount
-        name: event-service-rabbitmq
+        name: ${APP_NAME}-rabbitmq
   - apiVersion: v1
     kind: Secret
     stringData:
@@ -74,18 +80,20 @@ objects:
       password: ${RABBITMQ_PASS}
       cookie: ${RABBITMQ_ERLANG_COOKIE}
     metadata:
-      name: event-service-rabbitmq
+      name: ${APP_NAME}-
+      namespace: ${NAMESPACE}
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: queue
         apply-init: "true"
     type: Opaque
   - apiVersion: v1
     kind: ConfigMap
     metadata:
-      name: event-service-rabbitmq
+      name: ${APP_NAME}-rabbitmq
+      namespace: ${NAMESPACE}
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: queue
         apply-init: "true"
     data:
@@ -96,8 +104,8 @@ objects:
         cluster_formation.peer_discovery_backend = rabbit_peer_discovery_k8s
         cluster_formation.k8s.host = kubernetes.default.svc.cluster.local
         cluster_formation.k8s.address_type = hostname
-        cluster_formation.k8s.service_name = event-service-rabbitmq
-        cluster_formation.k8s.hostname_suffix = .event-service-rabbitmq.${NAMESPACE}.svc.cluster.local
+        cluster_formation.k8s.service_name = ${APP_NAME}-rabbitmq
+        cluster_formation.k8s.hostname_suffix = .${APP_NAME}-rabbitmq.${NAMESPACE}.svc.cluster.local
         cluster_formation.node_cleanup.interval = 10
         cluster_formation.node_cleanup.only_log_warning = true
         cluster_partition_handling = autoheal
@@ -117,9 +125,10 @@ objects:
   - apiVersion: v1
     kind: Service
     metadata:
-      name: event-service-rabbitmq-balancer
+      name: ${APP_NAME}-rabbitmq-balancer
+      namespace: ${NAMESPACE}
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: queue
         apply-init: "true"
     spec:
@@ -134,19 +143,20 @@ objects:
           port: 5672
           targetPort: 5672
       selector:
-        app: event-service
+        app: ${APP_NAME}
         component: queue
   - apiVersion: v1
     kind: Service
     metadata:
-      name: event-service-rabbitmq
+      name: ${APP_NAME}-rabbitmq
+      namespace: ${NAMESPACE}
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: queue
         apply-init: "true"
     spec:
       selector:
-        app: event-service
+        app: ${APP_NAME}
         component: queue
       clusterIP: None
       ports:
@@ -159,25 +169,26 @@ objects:
   - apiVersion: apps/v1
     kind: StatefulSet
     metadata:
-      name: event-service-rabbitmq
+      name: ${APP_NAME}-rabbitmq
+      namespace: ${NAMESPACE}
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: queue
         apply-init: "true"
     spec:
-      serviceName: event-service-rabbitmq
+      serviceName: ${APP_NAME}-rabbitmq
       replicas: 3
       selector:
         matchLabels:
-          app: event-service
+          app: ${APP_NAME}
           component: queue
       template:
         metadata:
           labels:
-            app: event-service
+            app: ${APP_NAME}
             component: queue
         spec:
-          serviceAccountName: event-service-rabbitmq
+          serviceAccountName: ${APP_NAME}-rabbitmq
           terminationGracePeriodSeconds: 30
           initContainers:
             - name: rm-erlang-cookie
@@ -194,7 +205,7 @@ objects:
                   cpu: 100m
                   memory: 200Mi
               volumeMounts:
-                - name: event-service-rabbitmq-storage
+                - name: ${APP_NAME}-rabbitmq-storage
                   mountPath: /var/lib/rabbitmq
               imagePullPolicy: IfNotPresent
           containers:
@@ -209,7 +220,7 @@ objects:
               volumeMounts:
                 - name: config-volume
                   mountPath: /etc/rabbitmq
-                - name: event-service-rabbitmq-storage
+                - name: ${APP_NAME}-rabbitmq-storage
                   mountPath: /var/lib/rabbitmq
               ports:
                 - name: http
@@ -237,20 +248,20 @@ objects:
                 - name: RABBITMQ_DEFAULT_USER
                   valueFrom:
                     secretKeyRef:
-                      name: event-service-rabbitmq
+                      name: ${APP_NAME}-rabbitmq
                       key: username
                 - name: RABBITMQ_DEFAULT_PASS
                   valueFrom:
                     secretKeyRef:
-                      name: event-service-rabbitmq
+                      name: ${APP_NAME}-rabbitmq
                       key: password
                 - name: RABBITMQ_ERLANG_COOKIE
                   valueFrom:
                     secretKeyRef:
-                      name: event-service-rabbitmq
+                      name: ${APP_NAME}-rabbitmq
                       key: cookie
                 - name: K8S_SERVICE_NAME
-                  value: event-service-rabbitmq
+                  value: ${APP_NAME}-rabbitmq
                 - name: POD_IP
                   valueFrom:
                     fieldRef:
@@ -266,7 +277,7 @@ objects:
                 - name: RABBITMQ_USE_LONGNAME
                   value: "true"
                 - name: RABBITMQ_NODENAME
-                  value: "rabbit@$(POD_NAME).event-service-rabbitmq.$(POD_NAMESPACE).svc.cluster.local"
+                  value: "rabbit@$(POD_NAME).${APP_NAME}-rabbitmq.$(POD_NAMESPACE).svc.cluster.local"
                 - name: RABBITMQ_CONFIG_FILE
                   value: /var/lib/rabbitmq/rabbitmq
               resources:
@@ -279,7 +290,7 @@ objects:
           volumes:
             - name: config-volume
               configMap:
-                name: event-service-rabbitmq
+                name: ${APP_NAME}-rabbitmq
                 items:
                   - key: rabbitmq.conf
                     path: rabbitmq.conf
@@ -287,9 +298,9 @@ objects:
                     path: enabled_plugins
       volumeClaimTemplates:
         - metadata:
-            name: event-service-rabbitmq-storage
+            name: ${APP_NAME}-rabbitmq-storage
             labels:
-              app: event-service
+              app: ${APP_NAME}
               component: queue
           spec:
             storageClassName: azure-disk
@@ -301,9 +312,10 @@ objects:
   - apiVersion: route.openshift.io/v1
     kind: Route
     metadata:
-      name: event-service-rabbitmq
+      name: ${APP_NAME}-rabbitmq
+      namespace: ${NAMESPACE}
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: queue
         apply-init: "true"
     spec:
@@ -313,7 +325,7 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: event-service-rabbitmq-balancer
+        name: ${APP_NAME}-rabbitmq-balancer
         weight: 100
       wildcardPolicy: None
 
@@ -325,72 +337,74 @@ objects:
     kind: ImageStream
     metadata:
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: api
         apply-infra: "true"
-      name: event-service
+      name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
     spec:
       tags:
         - name: ${BUILD_TAG}
           from:
             kind: DockerImage
-            name: ghcr.io/govalta/event-service:${BUILD_TAG}
+            name: ghcr.io/govalta/${APP_NAME}:${BUILD_TAG}
           referencePolicy:
             type: Local
 
   # DeploymentConfig (and Service and Route) is created in each environment of the
   # primary pipeline as well as branch deployment.
-  - apiVersion: v1
-    kind: DeploymentConfig
+  - apiVersion: apps/v1
+    kind: Deployment
     metadata:
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: api
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: event-service
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${APP_NAME}:${DEPLOY_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": false
+            }
+          ]
     spec:
       replicas: 3
-      revisionHistoryLimit: 3
       selector:
-        app: event-service
-        component: api
-      strategy:
-        type: Rolling
-        rollingParams:
-          timeoutSeconds: 600
-          maxUnavailable: 25%
-          maxSurge: 25%
-        activeDeadlineSeconds: 21600
-        resources:
-          limits:
-            cpu: 200m
-            memory: 200Mi
-          requests:
-            cpu: 20m
-            memory: 50Mi
+        matchLabels:
+          app: ${APP_NAME}
+          component: api
       template:
         metadata:
           labels:
-            app: event-service
+            app: ${APP_NAME}
             component: api
         spec:
           containers:
-            - envFrom:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
+              envFrom:
                 - configMapRef:
-                    name: event-service
+                    name: ${APP_NAME}
                 - configMapRef:
                     name: directory-overrides
                 - secretRef:
-                    name: event-service
+                    name: ${APP_NAME}
               env:
                 - name: PORT
                   value: "3333"
               imagePullPolicy: IfNotPresent
-              name: event-service
+              name: ${APP_NAME}
               ports:
                 - containerPort: 3333
                   name: http
@@ -428,34 +442,32 @@ objects:
           schedulerName: default-scheduler
           securityContext: {}
           terminationGracePeriodSeconds: 30
-      test: false
-      triggers:
-        - imageChangeParams:
-            containerNames:
-              - event-service
-            from:
-              kind: ImageStreamTag
-              name: event-service:${DEPLOY_TAG}
-              namespace: ${INFRA_NAMESPACE}
-          type: ImageChange
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 25%
+          maxSurge: 25%
+      revisionHistoryLimit: 10
+      progressDeadlineSeconds: 600
   - apiVersion: apps/v1
     kind: Deployment
     metadata:
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: job
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: event-service-job
+      name: ${APP_NAME}-job
+      namespace: ${NAMESPACE}
       annotations:
         image.openshift.io/triggers: |-
           [
             {
               "from": {
                 "kind": "ImageStreamTag",
-                "name": "event-service:${DEPLOY_TAG}",
+                "name": "${APP_NAME}:${DEPLOY_TAG}",
                 "namespace": "${INFRA_NAMESPACE}"
               },
               "fieldPath": "spec.template.spec.containers[0].image"
@@ -465,31 +477,31 @@ objects:
       replicas: 1
       selector:
         matchLabels:
-          app: event-service
+          app: ${APP_NAME}
           component: job
       template:
         metadata:
           labels:
-            app: event-service
+            app: ${APP_NAME}
             component: job
         spec:
           containers:
             - image: >-
-                image-registry.openshift-image-registry.svc:5000/adsp-build/event-service@${DEPLOY_TAG}
+                image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
               envFrom:
                 - configMapRef:
-                    name: event-service
+                    name: ${APP_NAME}
                 - configMapRef:
                     name: directory-overrides
                 - secretRef:
-                    name: event-service
+                    name: ${APP_NAME}
               env:
                 - name: PORT
                   value: "3333"
                 - name: AMQP_CONSUMER_PRIORITY
                   value: "1"
               imagePullPolicy: IfNotPresent
-              name: event-service
+              name: ${APP_NAME}
               ports:
                 - containerPort: 3333
                   name: http
@@ -539,13 +551,14 @@ objects:
     kind: Service
     metadata:
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: api
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: event-service
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       ports:
         - name: http
@@ -553,7 +566,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: event-service
+        app: ${APP_NAME}
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -561,13 +574,14 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: event-service
+        app: ${APP_NAME}
         component: api
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: event-service
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -576,6 +590,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: event-service
+        name: ${APP_NAME}
         weight: 100
       wildcardPolicy: None
