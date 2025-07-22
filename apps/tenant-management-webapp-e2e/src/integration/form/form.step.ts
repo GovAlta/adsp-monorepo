@@ -67,7 +67,7 @@ When('the user enters {string}, {string} in Add form definition modal', function
     .shadow()
     .find('input')
     .clear()
-    .type(nameAfterReplacement, { force: true, delay: 200 });
+    .type(nameAfterReplacement, { force: true, delay: 500 });
   formObj.addDefinitionDescriptionField().shadow().find('textarea').clear().type(description, { force: true });
 });
 
@@ -245,8 +245,9 @@ When(
 );
 
 Then('the user clicks Save button in form definition editor', function () {
-  cy.wait(1000); // wait for save button to enable
-  formObj.editorSaveButtonEnabled().shadow().find('button').click({ force: true });
+  cy.wait(2000); // wait for save button to enable
+  formObj.editorSaveButtonEnabled().shadow().find('button').scrollIntoView().click({ force: true });
+  cy.wait(2000);
   // wait for circular progress component to disappear
   formObj.formEditorCircularProgress().should('not.exist', { timeout: 10000 });
 });
@@ -1064,28 +1065,25 @@ Then(
 );
 
 When('the user enters {string} in a text field labelled {string} in preview pane', function (text: string, label) {
-  formObj.formPreviewTextField(label).shadow().find('input').clear().type(text, { force: true, delay: 400 });
+  formObj.formPreviewTextField(label).shadow().find('input').clear().wait(1000).type(text, { force: true, delay: 500 });
+  cy.wait(1000);
 });
 
 When('the user enters {string} in a date picker labelled {string} in preview pane', function (date: string, label) {
-  formObj
-    .formPreviewDateInput(label)
-    .shadow()
-    .find('input')
-    .clear()
-    .then(() => {
-      formObj.formPreviewDateInput(label).shadow().find('input').type(date, { force: true });
-    });
+  formObj.formPreviewDateInput(label).shadow().find('input').clear().wait(2000).type(date, { force: true });
+  cy.wait(1000);
 });
 
 When('the user enters {string} in a dropdown labelled {string} in preview pane', function (value: string, label) {
   formObj.formPreviewDropdown(label).find('goa-input').click({ force: true });
+  cy.wait(2000);
   formObj.formPreviewDropdown(label).find('div').contains(value).click({ force: true });
+  cy.wait(1000);
 });
 
 When('the user clicks Next button in the form in preview pane', function () {
   formObj.formPreviewNextButton().shadow().find('button').click({ force: true });
-  cy.wait(1000);
+  cy.wait(2000);
 });
 
 When('the user {string} a checkbox labelled {string} in preview pane', function (checkboxOperation, label) {
@@ -1141,7 +1139,8 @@ When(
       .shadow()
       .find('input')
       .clear()
-      .type(text, { force: true, delay: 400 });
+      .wait(1000)
+      .type(text, { force: true, delay: 500 });
   }
 );
 
@@ -1273,7 +1272,7 @@ When('the user enters {string} in the tag input field in Add tags modal', functi
       ('0' + currentTime.getSeconds()).substr(-2);
     tagName = commonlib.stringReplacement(tagName, replacementString);
   }
-  formObj.definitionsAddTagsModalTagField().shadow().find('input').clear().type(tagName, { force: true, delay: 200 });
+  formObj.definitionsAddTagsModalTagField().shadow().find('input').clear().type(tagName, { force: true, delay: 500 });
 });
 
 Then('the user views the error message of {string} in Add tags modal', function (errorMsg) {
@@ -1475,3 +1474,39 @@ Then(
     });
   }
 );
+
+When('the user deletes all disposition states if any', function () {
+  formObj.definitionEditorSubmissionConfigSubmission().then(($elm) => {
+    if ($elm.find('tbody').length > 0) {
+      formObj
+        .definitionEditorSubmissionConfigDispositionStateTableBody()
+        .then((tableBody) => {
+          if (tableBody.find('tr').length > 0) {
+            for (let i = 0; i < tableBody.find('tr').length; i++) {
+              formObj
+                .definitionEditorSubmissionConfigDispositionStateDeleteBtn(1)
+                .shadow()
+                .find('button')
+                .click({ force: true });
+              cy.wait(1000);
+              commonObj
+                .deleteConfirmationModalDeleteBtn()
+                .shadow()
+                .find('button')
+                .scrollIntoView()
+                .click({ force: true });
+              cy.wait(2000); // Wait for the record to be removed from the page
+            }
+          }
+        })
+        .then(() => {
+          formObj.editorSaveButtonEnabled().shadow().find('button').click({ force: true });
+          cy.wait(2000);
+          // wait for circular progress component to disappear
+          formObj.formEditorCircularProgress().should('not.exist', { timeout: 10000 });
+        });
+    } else {
+      cy.log('There are no disposition states to delete');
+    }
+  });
+});

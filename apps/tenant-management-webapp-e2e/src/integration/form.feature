@@ -145,9 +145,10 @@ Feature: Form
     When the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
     Then the user views form definition editor for "autotest-form-disposition-states", "DO NOT DELETE"
     When the user clicks "Lifecycle" tab in form definition editor
-    When the user "checks" the checkbox of Create submission records on submit
+    And the user deletes all disposition states if any
+    And the user "checks" the checkbox of Create submission records on submit
     # Add disposition states
-    When the user clicks the information icon button besides Disposition States
+    And the user clicks the information icon button besides Disposition States
     Then the user "views" the help tooltip text for Disposition States
     When the user adds a dispoistion state of "Approved", "The application is approved"
     Then the user "views" the disposition state of "Approved", "The application is approved"
