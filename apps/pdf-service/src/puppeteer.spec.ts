@@ -15,14 +15,14 @@ describe('puppeteer', () => {
   newPage: jest.fn().mockResolvedValue(pageMock),
   close: jest.fn(),
 };
-  const browserMock = { newPage: jest.fn(), createBrowserContext: jest.fn().mockResolvedValue(contextMock), };
+  const browserMock = { newPage: jest.fn(), createBrowserContext: jest.fn().mockResolvedValue(contextMock) } as unknown as puppeteer.Browser;
   beforeAll(() => {
     puppeteerMock.launch.mockResolvedValue(browserMock as unknown as puppeteer.Browser);
   });
 
   beforeEach(() => {
     puppeteerMock.launch.mockClear();
-    browserMock.newPage.mockClear();
+    contextMock.newPage.mockClear();
   });
 
   it('can create pdf service', async () => {
@@ -47,7 +47,7 @@ describe('puppeteer', () => {
       };
 
 
-      browserMock.newPage.mockResolvedValueOnce(pageMock);
+      contextMock.newPage.mockResolvedValueOnce(pageMock);
       const result = await service.generatePdf(template);
       expect(result).toBeTruthy();
       expect(pageMock.pdf).toHaveBeenCalled();
@@ -82,7 +82,7 @@ describe('puppeteer', () => {
           </div>`,
       };
 
-      browserMock.newPage.mockResolvedValueOnce(pageMock);
+      contextMock.newPage.mockResolvedValueOnce(pageMock);
       const result = await service.generatePdf(template);
       expect(result).toBeTruthy();
       expect(pageMock.pdf).toHaveBeenCalledWith(
@@ -116,7 +116,7 @@ describe('puppeteer', () => {
         </div>`,
       };
 
-      browserMock.newPage.mockResolvedValueOnce(pageMock);
+      contextMock.newPage.mockResolvedValueOnce(pageMock);
       const result = await service.generatePdf(template);
       expect(result).toBeTruthy();
       expect(pageMock.pdf).toHaveBeenCalledWith(
