@@ -6,6 +6,7 @@ import {
   createAmqpConfigUpdateService,
   createAmqpQueueService,
 } from '@core-services/core-common';
+import * as puppeteer from 'puppeteer';
 import { createFileService, createJobRepository, FileResult } from '@core-services/job-common';
 import * as express from 'express';
 import { readFile } from 'fs';
@@ -109,7 +110,24 @@ const initializeApp = async (): Promise<express.Application> => {
   );
 
   const templateService = createTemplateService(directory);
-  const pdfService = await createPdfService();
+
+
+
+  let browse: puppeteer.Browser | null = null;
+
+  async function getBrowser(): Promise<puppeteer.Browser> {
+    if (!browse) {
+      browse = await puppeteer.launch({
+        headless: true,
+        args: ['--disable-dev-shm-usage', '--no-sandbox'],
+      });
+    }
+    return browse;
+  }
+
+  const browser = await getBrowser();
+
+  const pdfService = await createPdfService(browser);
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);

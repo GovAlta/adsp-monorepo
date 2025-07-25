@@ -6,7 +6,7 @@ import { stepperReducer } from './reducer';
 import { StepperContextDataType, CategoryState } from './types';
 import { JsonFormStepperDispatch } from './reducer';
 import { useJsonForms } from '@jsonforms/react';
-import { getIncompletePaths, getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage } from './util';
+import { hasDataInScopes, getIncompletePaths, getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage } from './util';
 
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
@@ -34,25 +34,31 @@ export interface JsonFormsStepperContextProps {
 const createStepperContextInitData = (
   props: CategorizationStepperLayoutRendererProps & { activeId?: number } & { withBackReviewBtn?: boolean }
 ): StepperContextDataType => {
-  const { uischema, data, schema, ajv, t, visible, path } = props;
+  const { uischema, data, schema, ajv, t, path } = props;
   const categorization = uischema as Categorization;
   const valid = ajv.validate(schema, data || {});
   const isPage = uischema?.options?.variant === 'pages';
   const isCacheStatus = uischema.options?.cacheStatus;
   /* istanbul ignore next */
   const cachedStatus = (isCacheStatus && getIsVisitFromLocalStorage()) || [];
+  ajv.validate(schema, data);
+
   const categories = categorization.elements?.map((c, id) => {
     const scopes = pickPropertyValues(c, 'scope', 'ListWithDetail');
-    const incompletePaths = getIncompletePaths(ajv, scopes) || [];
+    const incompletePaths = getIncompletePaths(ajv, schema, data, scopes);
+    const hasAnyData = hasDataInScopes(data, scopes);
+    const isVisited = isCacheStatus ? cachedStatus.at(id) : hasAnyData;
+    const isCompleted = isVisited && incompletePaths.length === 0;
+    const isValid = isCompleted;
 
     return {
       id,
       label: deriveLabelForUISchemaElement(c, t) as string,
       scopes,
       /* istanbul ignore next */
-      isVisited: isCacheStatus ? cachedStatus.at(id) : false,
-      isCompleted: incompletePaths?.length === 0,
-      isValid: incompletePaths?.length === 0,
+      isVisited,
+      isCompleted,
+      isValid,
       uischema: c,
       showReviewPageLink: props.withBackReviewBtn || false,
       isEnabled: isEnabled(c, data, '', ajv),
@@ -137,7 +143,7 @@ export const JsonFormsStepperContextProvider = ({
       validatePage: (id: number) => {
         stepperDispatch({
           type: 'update/category',
-          payload: { errors: ctx?.core?.errors, id, ajv },
+          payload: { errors: ctx?.core?.errors, id, ajv, schema, data },
         });
       },
       goToPage: (id: number) => {
@@ -147,7 +153,7 @@ export const JsonFormsStepperContextProvider = ({
           for (let i = 0; i < id; i++) {
             stepperDispatch({
               type: 'update/category',
-              payload: { errors: ctx?.core?.errors, id: i, ajv },
+              payload: { errors: ctx?.core?.errors, id: i, ajv, schema, data },
             });
           }
         }
@@ -165,7 +171,7 @@ export const JsonFormsStepperContextProvider = ({
         });
       },
     };
-  }, [stepperDispatch, stepperState, ctx.core?.errors, ajv]);
+  }, [stepperDispatch, stepperState, ctx.core?.errors, ajv, schema, data]);
 
   /* istanbul ignore next */
   useEffect(() => {

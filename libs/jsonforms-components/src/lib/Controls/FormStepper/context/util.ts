@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Ajv, { ErrorObject } from 'ajv';
 import { toDataPath, getControlPath, scopeEndIs } from '@jsonforms/core';
 import get from 'lodash/get';
@@ -17,25 +18,40 @@ export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean
 function isNumber(value?: string): boolean {
   return value != null && value !== '' && !isNaN(Number(value.toString()));
 }
+export const getIncompletePaths = (ajv: Ajv, schema: any, data: any, scopes: string[]): string[] => {
+  const incomplete: string[] = [];
 
-export const getIncompletePaths = (ajv: Ajv, scopes: string[]): string[] => {
-  const requiredErrorPaths: string[] | undefined = ajv?.errors
-    ?.filter(
-      (e) =>
-        e.keyword === 'required' ||
-        e.keyword === 'minLength' ||
-        e.keyword === 'minItems' ||
-        e.keyword === 'errorMessage'
-    )
-    .map((e) => {
-      return getControlPath(e);
-    });
+  for (const scope of scopes) {
+    const path = toDataPath(scope);
+    const value = get(data, path);
 
-  const _scopes = scopes
-    .map((scope) => toDataPath(scope))
-    .filter((path) => requiredErrorPaths && isErrorPathIncluded(requiredErrorPaths, path));
+    const schemaPath = path.split('.');
+    let currentSchema: any = schema;
 
-  return _scopes;
+    for (const key of schemaPath) {
+      if (!currentSchema || !currentSchema.properties || !currentSchema.properties[key]) {
+        currentSchema = null;
+        break;
+      }
+      currentSchema = currentSchema.properties[key];
+    }
+
+    const isRequired =
+      schemaPath.length > 1
+        ? schema?.properties?.[schemaPath[0]]?.required?.includes(schemaPath[1])
+        : schema?.required?.includes(path);
+
+    const hasMinLength = currentSchema?.minLength !== undefined;
+
+    if (
+      (isRequired && (value === undefined || value === null || value === '')) ||
+      (hasMinLength && typeof value === 'string' && value.length < currentSchema.minLength)
+    ) {
+      incomplete.push(path);
+    }
+  }
+
+  return incomplete;
 };
 
 export const subErrorInParent = (error: ErrorObject, paths: string[]): boolean => {

@@ -46,15 +46,21 @@ class PuppeteerPdfService implements PdfService {
     } finally {
       if (page) {
         await page.close();
-         if (context) await context.close();
       }
+         if (context) await context.close();
+
     }
   }
 }
 
 //eslint-disable-next-line
-export async function createPdfService(brow: any | null = null): Promise<PdfService> {
+export async function createPdfService(brow: puppeteer.Browser | null = null): Promise<PdfService> {
   const browser =
-    (await puppeteer.launch({ headless: true, args: ['--disable-dev-shm-usage', '--no-sandbox'] })) || brow;
+    brow ??
+    (await puppeteer.launch({
+      headless: true,
+      args: ['--disable-dev-shm-usage', '--no-sandbox'],
+    }));
+
   return new PuppeteerPdfService(browser);
 }
