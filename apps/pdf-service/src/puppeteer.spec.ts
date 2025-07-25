@@ -5,24 +5,14 @@ jest.mock('puppeteer');
 const puppeteerMock = puppeteer as jest.Mocked<typeof puppeteer>;
 
 describe('puppeteer', () => {
-  const pageMock = {
-  setJavaScriptEnabled: jest.fn(),
-  setContent: jest.fn(),
-  pdf: jest.fn().mockResolvedValue(Buffer.from('result')),
-  close: jest.fn(),
-};
-  const contextMock = {
-  newPage: jest.fn().mockResolvedValue(pageMock),
-  close: jest.fn(),
-};
-  const browserMock = { newPage: jest.fn(), createBrowserContext: jest.fn().mockResolvedValue(contextMock) } as unknown as puppeteer.Browser;
+  const browserMock = { newPage: jest.fn() };
   beforeAll(() => {
     puppeteerMock.launch.mockResolvedValue(browserMock as unknown as puppeteer.Browser);
   });
 
   beforeEach(() => {
     puppeteerMock.launch.mockClear();
-    contextMock.newPage.mockClear();
+    browserMock.newPage.mockClear();
   });
 
   it('can create pdf service', async () => {
@@ -32,7 +22,7 @@ describe('puppeteer', () => {
 
   describe('PuppeteerPdfService', () => {
     it('can generate pdf without footer and header', async () => {
-      const service = await createPdfService(browserMock);
+      const service = await createPdfService();
       const template = {
         content: `<!doctype html>
         <html lang=en>
@@ -46,8 +36,13 @@ describe('puppeteer', () => {
         </html>`,
       };
 
-
-      contextMock.newPage.mockResolvedValueOnce(pageMock);
+      const pageMock = {
+        setJavaScriptEnabled: jest.fn(() => Promise.resolve()),
+        setContent: jest.fn(() => Promise.resolve()),
+        pdf: jest.fn(() => Promise.resolve(Buffer.from('result'))),
+        close: jest.fn(() => Promise.resolve()),
+      };
+      browserMock.newPage.mockResolvedValueOnce(pageMock);
       const result = await service.generatePdf(template);
       expect(result).toBeTruthy();
       expect(pageMock.pdf).toHaveBeenCalled();
@@ -55,7 +50,7 @@ describe('puppeteer', () => {
     });
 
     it('can generate pdf wit footer and header', async () => {
-      const service = await createPdfService(browserMock);
+      const service = await createPdfService();
       const template = {
         content: `<!doctype html>
         <html lang=en>
@@ -82,7 +77,13 @@ describe('puppeteer', () => {
           </div>`,
       };
 
-      contextMock.newPage.mockResolvedValueOnce(pageMock);
+      const pageMock = {
+        setJavaScriptEnabled: jest.fn(() => Promise.resolve()),
+        setContent: jest.fn(() => Promise.resolve()),
+        pdf: jest.fn(() => Promise.resolve(Buffer.from('result'))),
+        close: jest.fn(() => Promise.resolve()),
+      };
+      browserMock.newPage.mockResolvedValueOnce(pageMock);
       const result = await service.generatePdf(template);
       expect(result).toBeTruthy();
       expect(pageMock.pdf).toHaveBeenCalledWith(
@@ -116,7 +117,13 @@ describe('puppeteer', () => {
         </div>`,
       };
 
-      contextMock.newPage.mockResolvedValueOnce(pageMock);
+      const pageMock = {
+        setJavaScriptEnabled: jest.fn(() => Promise.resolve()),
+        setContent: jest.fn(() => Promise.resolve()),
+        pdf: jest.fn(() => Promise.resolve(Buffer.from('result'))),
+        close: jest.fn(() => Promise.resolve()),
+      };
+      browserMock.newPage.mockResolvedValueOnce(pageMock);
       const result = await service.generatePdf(template);
       expect(result).toBeTruthy();
       expect(pageMock.pdf).toHaveBeenCalledWith(

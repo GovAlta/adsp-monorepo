@@ -9,20 +9,11 @@ class PuppeteerPdfService implements PdfService {
 
   async generatePdf({ content, header, footer }: PdfServiceProps): Promise<Readable> {
     let page: puppeteer.Page;
-    let context: puppeteer.BrowserContext | null = null;
     try {
 
-      context = await this.browser.createBrowserContext();
-      page = await context.newPage();
+      page = await this.browser.newPage();
       await page.setJavaScriptEnabled(false);
-
-      await page.setContent(content, {
-        waitUntil: ['domcontentloaded', 'networkidle2'],
-        timeout: 2 * 60 * 1000,
-      });
-
-
-
+      await page.setContent(content, { waitUntil: 'networkidle0', timeout: 2 * 60 * 1000 });
 
       let result: Buffer;
       if (header || footer) {
@@ -47,8 +38,6 @@ class PuppeteerPdfService implements PdfService {
       if (page) {
         await page.close();
       }
-         if (context) await context.close();
-
     }
   }
 }
