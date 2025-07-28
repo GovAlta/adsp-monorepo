@@ -1,18 +1,39 @@
 import * as puppeteer from 'puppeteer';
-import { createPdfService } from './puppeteer';
+import { checkPDFSize, createPdfService } from './puppeteer';
+import { Logger } from 'winston';
 
 jest.mock('puppeteer');
 const puppeteerMock = puppeteer as jest.Mocked<typeof puppeteer>;
 
+const loggerMock = {
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+  log: jest.fn(),
+} as unknown as Logger;
+
 describe('puppeteer', () => {
-  const browserMock = { newPage: jest.fn() };
+  const pageMock = {
+    setJavaScriptEnabled: jest.fn(),
+    setContent: jest.fn(),
+    pdf: jest.fn().mockResolvedValue(Buffer.from('result')),
+    close: jest.fn(),
+  };
+  const contextMock = {
+    newPage: jest.fn().mockResolvedValue(pageMock),
+    close: jest.fn(),
+  };
+  const browserMock = {
+    newPage: jest.fn(),
+    createBrowserContext: jest.fn().mockResolvedValue(contextMock),
+  } as unknown as jest.Mocked<puppeteer.Browser>;
   beforeAll(() => {
     puppeteerMock.launch.mockResolvedValue(browserMock as unknown as puppeteer.Browser);
   });
 
   beforeEach(() => {
     puppeteerMock.launch.mockClear();
-    browserMock.newPage.mockClear();
   });
 
   it('can create pdf service', async () => {
@@ -36,14 +57,8 @@ describe('puppeteer', () => {
         </html>`,
       };
 
-      const pageMock = {
-        setJavaScriptEnabled: jest.fn(() => Promise.resolve()),
-        setContent: jest.fn(() => Promise.resolve()),
-        pdf: jest.fn(() => Promise.resolve(Buffer.from('result'))),
-        close: jest.fn(() => Promise.resolve()),
-      };
-      browserMock.newPage.mockResolvedValueOnce(pageMock);
-      const result = await service.generatePdf(template);
+      contextMock.newPage.mockResolvedValueOnce(pageMock);
+      const result = await service.generatePdf({ ...template, logger: loggerMock });
       expect(result).toBeTruthy();
       expect(pageMock.pdf).toHaveBeenCalled();
       expect(pageMock.close).toHaveBeenCalled();
@@ -77,14 +92,8 @@ describe('puppeteer', () => {
           </div>`,
       };
 
-      const pageMock = {
-        setJavaScriptEnabled: jest.fn(() => Promise.resolve()),
-        setContent: jest.fn(() => Promise.resolve()),
-        pdf: jest.fn(() => Promise.resolve(Buffer.from('result'))),
-        close: jest.fn(() => Promise.resolve()),
-      };
-      browserMock.newPage.mockResolvedValueOnce(pageMock);
-      const result = await service.generatePdf(template);
+      contextMock.newPage.mockResolvedValueOnce(pageMock);
+      const result = await service.generatePdf({ ...template, logger: loggerMock });
       expect(result).toBeTruthy();
       expect(pageMock.pdf).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -117,14 +126,8 @@ describe('puppeteer', () => {
         </div>`,
       };
 
-      const pageMock = {
-        setJavaScriptEnabled: jest.fn(() => Promise.resolve()),
-        setContent: jest.fn(() => Promise.resolve()),
-        pdf: jest.fn(() => Promise.resolve(Buffer.from('result'))),
-        close: jest.fn(() => Promise.resolve()),
-      };
-      browserMock.newPage.mockResolvedValueOnce(pageMock);
-      const result = await service.generatePdf(template);
+      contextMock.newPage.mockResolvedValueOnce(pageMock);
+      const result = await service.generatePdf({ ...template, logger: loggerMock });
       expect(result).toBeTruthy();
       expect(pageMock.pdf).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -134,6 +137,15 @@ describe('puppeteer', () => {
         })
       );
       expect(pageMock.close).toHaveBeenCalled();
+    });
+
+    it('will warn when content is large', async () => {
+      checkPDFSize(1_000_001, loggerMock);
+      expect(loggerMock.warn).toHaveBeenCalledWith('HTML content is large');
+    });
+
+    it('will throw when content is too large', () => {
+      expect(() => checkPDFSize(10_000_001, loggerMock)).toThrow('HTML content too large for PDF generation');
     });
   });
 });
