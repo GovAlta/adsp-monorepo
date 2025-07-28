@@ -20,23 +20,20 @@ class PuppeteerPdfService implements PdfService {
         const headerTemplate = !header ? '' : header;
         const footerTemplate = !footer ? '' : footer;
 
-        result = Buffer.from(
-          await page.pdf({
+        result = await page.pdf({
             headerTemplate,
             footerTemplate,
             printBackground: true,
             displayHeaderFooter: true,
             omitBackground: true,
-          })
-        );
+          });
       } else {
-        result = Buffer.from(await page.pdf({ printBackground: true, omitBackground: true }));
+        result = await page.pdf({ printBackground: true, omitBackground: true });
       }
-
       return Readable.from(result);
     } finally {
-      if (page) {
-        await page.close();
+      if (page && !page.isClosed()) {
+        await page.close().catch((err) => console.error('Error closing page', err));
       }
     }
   }
