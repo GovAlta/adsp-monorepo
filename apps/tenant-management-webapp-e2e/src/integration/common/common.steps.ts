@@ -528,6 +528,27 @@ When(
     // Verify the first toggle details icon is eye icon, not eye-off icon, and then click it
     tenantAdminObj.eventToggleDetailsIcons().first().invoke('attr', 'icon').should('eq', 'eye');
     tenantAdminObj.eventToggleDetailsIcons().first().shadow().find('button').click({ force: true });
+    cy.wait(1000);
+    // Sometimes, after clicking details eye icon, the details panel is automatically collapsed, so we need to click it again
+    let isEye = true;
+    for (let i = 0; i < 10; i++) {
+      tenantAdminObj
+        .eventToggleDetailsIcons()
+        .first()
+        .then(($element) => {
+          if ($element.attr('icon') == 'eye') {
+            cy.log('Clicking the first eye icon again to show event details');
+            tenantAdminObj.eventToggleDetailsIcons().first().shadow().find('button').click({ force: true });
+            cy.wait(1000);
+          } else {
+            cy.log('The first eye icon is showing eye-off, event details should be shown');
+            isEye = false;
+          }
+        });
+      if (!isEye) {
+        break;
+      }
+    }
   }
 );
 

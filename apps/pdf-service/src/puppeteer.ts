@@ -32,7 +32,7 @@ class PuppeteerPdfService implements PdfService {
       }
       return Readable.from(result);
     } finally {
-      if (page && !page.isClosed()) {
+      if (page) {
         await page.close().catch((err) => console.error('Error closing page', err));
       }
     }

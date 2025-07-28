@@ -10,7 +10,8 @@ export type StepperAction =
   | { type: 'page/next' }
   | { type: 'page/prev' }
   | { type: 'page/to/index'; payload: { id: number } }
-  | { type: 'update/category'; payload: { errors?: ErrorObject[]; id: number; ajv: Ajv } }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | { type: 'update/category'; payload: { errors?: ErrorObject[]; id: number; ajv: Ajv; schema: any; data: any } }
   | { type: 'validate/form'; payload: { errors?: ErrorObject[] } }
   | { type: 'toggle/category/review-link'; payload: { id: number } }
   | { type: 'update/uischema'; payload: { state: StepperContextDataType } };
@@ -73,14 +74,20 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
       }
     }
     case 'update/category': {
-      const { id, ajv, errors } = action.payload as { ajv: Ajv; id: number; errors: ErrorObject[] };
-      if (id === state.categories.length || id === state.categories.length + 1) {
+      const { id, ajv, errors = [], schema, data } = action.payload;
+      if (id >= state.categories.length) {
         return { ...state };
       }
-      /*
-        ctx.core.errors only includes required errors when the fields are touched. In this case, we still ajv to figure out the required errors at the very beginning.
-       */
-      const incompletePaths = getIncompletePaths(ajv, state.categories[id]?.scopes || []);
+
+      if (schema && typeof schema === 'object') {
+        try {
+          ajv.validate(schema, data);
+        } catch (err) {
+          console.warn('AJV validation error:', err);
+        }
+      }
+
+      const incompletePaths = getIncompletePaths(ajv, schema, data, state.categories[id]?.scopes || []);
       const errorsInCategory = getErrorsInScopes(errors, state.categories[id]?.scopes || []);
 
       if (state.categories[id]) {
@@ -92,14 +99,14 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
       return { ...state };
     }
     case 'validate/form': {
-      const { errors } = action.payload as { errors: ErrorObject[] };
+      const { errors = [] } = action.payload;
       state.isValid = errors.length === 0;
 
       return { ...state };
     }
 
     case 'toggle/category/review-link': {
-      const { id } = action.payload as { id: number };
+      const { id } = action.payload;
       state.categories[id].showReviewPageLink = !state.categories[id].showReviewPageLink;
       return { ...state };
     }
