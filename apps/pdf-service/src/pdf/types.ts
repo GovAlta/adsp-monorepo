@@ -1,5 +1,6 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Readable } from 'stream';
+import { Logger } from 'winston';
 
 export interface TemplateService {
   getTemplateFunction(template: string, channel?: string, tenantId?: AdspId): (context: unknown) => string;
@@ -9,6 +10,7 @@ export interface PdfServiceProps {
   content: string;
   footer?: string;
   header?: string;
+  logger: Logger;
 }
 
 export interface UserInfo {
@@ -17,7 +19,7 @@ export interface UserInfo {
 }
 
 export interface PdfService {
-  generatePdf({ content, footer, header }: PdfServiceProps): Promise<Readable>;
+  generatePdf({ content, footer, header, logger }: PdfServiceProps): Promise<Readable>;
 }
 
 export interface FileResult {
@@ -36,4 +38,5 @@ export interface PdfTemplate {
   header?: string;
   additionalStyles?: string;
   startWithDefault?: boolean;
+  logger: Logger;
 }
