@@ -29,8 +29,7 @@ class PuppeteerPdfService implements PdfService {
         throw new Error('HTML content too large for PDF generation');
       }
 
-      context = await this.browser.createBrowserContext();
-      page = await context.newPage();
+      page = await this.browser.newPage();
       await page.setJavaScriptEnabled(false);
       await page.setContent(content, { waitUntil: 'networkidle0', timeout: 2 * 60 * 1000 });
 

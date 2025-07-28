@@ -34,6 +34,7 @@ describe('puppeteer', () => {
 
   beforeEach(() => {
     puppeteerMock.launch.mockClear();
+    browserMock.newPage.mockClear();
   });
 
   it('can create pdf service', async () => {
