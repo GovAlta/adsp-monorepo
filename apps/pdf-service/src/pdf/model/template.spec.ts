@@ -1,11 +1,20 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { PdfTemplateEntity } from './template';
+import { Logger } from 'winston';
 
 describe('PdfTemplateEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const templateServiceMock = {
     getTemplateFunction: jest.fn(),
   };
+
+  const loggerMock = {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+    log: jest.fn(),
+  } as unknown as Logger;
 
   const pdfServiceMock = {
     generatePdf: jest.fn(),
@@ -17,6 +26,7 @@ describe('PdfTemplateEntity', () => {
       name: 'Test Template',
       description: null,
       template: 'template',
+      logger: loggerMock,
     });
     expect(entity).toBeTruthy();
   });
@@ -34,6 +44,7 @@ describe('PdfTemplateEntity', () => {
       name: 'Test Template',
       description: null,
       template: 'template',
+      logger: loggerMock,
     });
 
     const context = {};
@@ -45,6 +56,7 @@ describe('PdfTemplateEntity', () => {
       content: 'evaluated',
       footer: 'evaluated',
       header: 'evaluated',
+      logger: loggerMock,
     });
     expect(result).toBe(stream);
   });
@@ -64,6 +76,7 @@ describe('PdfTemplateEntity', () => {
       template: 'template',
       footer: 'footer',
       header: 'header',
+      logger: loggerMock,
     });
 
     const context = {};
@@ -75,6 +88,7 @@ describe('PdfTemplateEntity', () => {
       content: 'evaluated',
       footer: 'evaluated',
       header: 'evaluated',
+      logger: loggerMock,
     });
     expect(result).toBe(stream);
   });
@@ -88,6 +102,7 @@ describe('PdfTemplateEntity', () => {
       template: 'template',
       footer: 'footer',
       header: 'header',
+      logger: loggerMock,
     });
     expect(entity).toBeTruthy();
   });

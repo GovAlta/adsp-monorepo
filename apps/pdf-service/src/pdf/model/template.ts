@@ -1,6 +1,7 @@
 import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Readable } from 'stream';
 import { PdfService, PdfTemplate, TemplateService } from '../types';
+import { Logger } from 'winston';
 
 export class PdfTemplateEntity implements PdfTemplate {
   tenantId: AdspId;
@@ -16,6 +17,7 @@ export class PdfTemplateEntity implements PdfTemplate {
   additionalStyles?: string;
   startWithDefault?: boolean;
   additionalStylesWrapped?: string;
+  logger: Logger;
 
   private evaluateTemplate: (context: unknown) => string;
   private evaluateFooterTemplate: (context: unknown) => string;
@@ -24,7 +26,18 @@ export class PdfTemplateEntity implements PdfTemplate {
   constructor(
     templateService: TemplateService,
     private readonly pdfService: PdfService,
-    { tenantId, id, name, description, template, header, footer, additionalStyles, startWithDefault }: PdfTemplate
+    {
+      tenantId,
+      id,
+      name,
+      description,
+      template,
+      header,
+      footer,
+      additionalStyles,
+      startWithDefault,
+      logger,
+    }: PdfTemplate
   ) {
     this.tenantId = tenantId;
     this.id = id;
@@ -37,6 +50,7 @@ export class PdfTemplateEntity implements PdfTemplate {
     this.startWithDefault = startWithDefault;
 
     this.additionalStylesWrapped = '<style>' + additionalStyles + '</style>';
+    this.logger = logger;
   }
 
   private initializeTemplates() {
@@ -63,11 +77,13 @@ export class PdfTemplateEntity implements PdfTemplate {
     const content = this.evaluateTemplate(context);
     const footer = this.evaluateFooterTemplate(context);
     const header = this.evaluateHeaderTemplate(context);
+    const logger = this.logger;
 
     return this.pdfService.generatePdf({
       content,
       footer,
       header,
+      logger,
     });
   }
 }
