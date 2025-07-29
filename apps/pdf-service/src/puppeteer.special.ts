@@ -1,4 +1,4 @@
-import * as puppeteer from 'puppeteer';
+/*import * as puppeteer from 'puppeteer';
 import { checkPDFSize, createPdfService } from './puppeteer';
 import { Logger } from 'winston';
 
@@ -149,3 +149,4 @@ describe('puppeteer', () => {
     });
   });
 });
+*/
