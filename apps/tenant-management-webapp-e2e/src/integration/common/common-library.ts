@@ -6,15 +6,35 @@ export function tenantAdminDirectURLLogin(url, id, user, password) {
   const urlToTenantLogin = url + '/' + id + '/login?kc_idp_hint=';
   cy.visit(urlToTenantLogin);
   cy.wait(4000); // Wait all the redirects to settle down
-  cy.url().then(function (urlString) {
-    if (urlString.includes('openid-connect')) {
-      commonObj.usernameEmailField().type(user);
-      commonObj.passwordField().type(password);
-      commonObj.loginButton().click();
-      cy.wait(8000); // Wait all the redirects to settle down
-    }
-  });
-  cy.url().should('include', '/admin');
+  // cy.url().then(function (urlString) {
+  //   if (urlString.includes('openid-connect')) {
+  //     commonObj.usernameEmailField().type(user);
+  //     commonObj.passwordField().type(password);
+  //     commonObj.loginButton().click();
+  //     cy.wait(8000); // Wait all the redirects to settle down
+  //   }
+  // });
+  // Change to checking if the login controls are present instead of checking URL
+  commonObj
+    .applicationBody()
+    .then((pageBody) => {
+      if (
+        pageBody.find('input[name="username"]').length > 0 &&
+        pageBody.find('input[name="password"]').length > 0 &&
+        pageBody.find('input[name="login"]').length > 0
+      ) {
+        commonObj.usernameEmailField().type(user);
+        commonObj.passwordField().type(password);
+        commonObj.loginButton().click();
+      } else {
+        // If the login controls aren't found, we assume we are already logged in
+        cy.log('Already logged in, skipping login step.');
+      }
+    })
+    .then(() => {
+      cy.wait(8000);
+      cy.url().should('include', '/admin');
+    });
 }
 
 export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
