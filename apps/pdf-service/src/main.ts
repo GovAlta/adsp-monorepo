@@ -80,6 +80,7 @@ const initializeApp = async (): Promise<express.Application> => {
             [templateId]: new PdfTemplateEntity(templateService, pdfService, {
               ...template,
               tenantId,
+              logger,
             }),
           }),
           {}
@@ -110,8 +111,6 @@ const initializeApp = async (): Promise<express.Application> => {
   );
 
   const templateService = createTemplateService(directory);
-
-
 
   let browse: puppeteer.Browser | null = null;
 

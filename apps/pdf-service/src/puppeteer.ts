@@ -45,7 +45,7 @@ class PuppeteerPdfService implements PdfService {
       ]);
 
       const height = await page.evaluate(() => document.body.scrollHeight);
-      logger.info(`Page scroll height: ${height}`);
+      logger?.info(`Page scroll height: ${height}`);
 
       const pdfOptions: puppeteer.PDFOptions = {
         printBackground: true,
@@ -72,7 +72,7 @@ export async function timeIt<T>(logger: Logger, fn: () => Promise<T>): Promise<T
   const start = Date.now();
   const result = await fn();
   const duration = Date.now() - start;
-  logger.info(`PDF generated in ${duration}ms`);
+  logger?.info(`PDF generated in ${duration}ms`);
   return result;
 }
 
