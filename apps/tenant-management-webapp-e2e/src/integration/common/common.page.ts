@@ -138,5 +138,9 @@ class Common {
   applicationNames() {
     return cy.xpath('//div[@class="title-line"]/following-sibling::div/div//b');
   }
+
+  applicationBody() {
+    return cy.xpath('//html/body');
+  }
 }
 export default Common;
