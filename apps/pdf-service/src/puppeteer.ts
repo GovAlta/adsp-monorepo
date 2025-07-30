@@ -87,12 +87,13 @@ export const checkPDFSize = (length: number, logger?: Logger) => {
 
 //eslint-disable-next-line
 export async function createPdfService(brow: puppeteer.Browser | null = null): Promise<PdfService> {
+  const userDataDir = `/tmp/chrome-${Date.now()}`;
   const browser =
     brow ??
     (await puppeteer.launch({
       headless: true,
       protocolTimeout: 30_000,
-      args: ['--disable-dev-shm-usage', '--no-sandbox'],
+      args: ['--disable-dev-shm-usage', '--no-sandbox', `--user-data-dir=${userDataDir}`],
     }));
 
   return new PuppeteerPdfService(browser);
