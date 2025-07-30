@@ -27,6 +27,16 @@ class PuppeteerPdfService implements PdfService {
       context = await this.browser.createBrowserContext();
       page = await context.newPage();
       await page.setJavaScriptEnabled(false);
+      await page.setRequestInterception(true);
+      page.on('request', (req) => {
+        const url = req.url();
+        if (url.includes('use.typekit.net')) {
+          logger.warn(`🚫 Blocking font request: ${url}`);
+          req.abort();
+        } else {
+          req.continue();
+        }
+      });
       page.on('request', (req) => console.log(`Request: ${req.url()}`));
       page.on('response', (res) => console.log(`Response: ${res.url()} (${res.status()})`));
       page.on('requestfailed', (req) => console.warn(`Failed Request: ${req.url()} - ${req.failure()?.errorText}`));
