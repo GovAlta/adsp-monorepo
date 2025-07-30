@@ -14,7 +14,7 @@ Feature: Form app
   Scenario: As an authenticated user, I can log in to submit an application
     Given the user deletes any existing form from "Auto Test" for "autotest-testformapp"
     When an authenticated user is logged in to see "autotest-testformapp" application
-    Then the user views a from draft of "autotest-testformapp"
+    Then the user views a form draft of "autotest-testformapp"
     When the user enters "Joe" in a text field labelled "First name"
     And the user enters "Smith" in a text field labelled "Last name"
     And the user enters "1970-10-30" in a date picker labelled "Birthday"
@@ -41,3 +41,22 @@ Feature: Form app
     Then the user views a callout with a message of "We're processing your application"
     When the user sends a delete form request
     Then the new form is deleted
+
+  # TEST DATA: autotest-anonymous-submission is created as a form definition with anonymous enabled
+  @TEST_CS-3570 @TEST_CS-3571 @regression
+  Scenario: As an anonymous applicant, I can view and submit an anonymous application
+    Given an anonymous applicant goes to "autotest-anonymous-submission" application
+    Then the user views an anonymous form draft of "autotest-anonymous-submission"
+    When the user enters "Joe" in a text field labelled "First name"
+    And the user enters "Smith" in a text field labelled "Last name"
+    And the user enters "1970-10-30" in a date picker labelled "Birthday"
+    And the user enters "CA" in a dropdown labelled "Nationality"
+    And the user clicks Next button in the form
+    And the user selects "Not Married" radio button for the question of "Are you married?"
+    And the user clicks list with detail button labelled as "Add child" in the form
+    And the user enters "John" in list with detail element text field labelled "First name"
+    And the user enters "Smith" in list with detail element text field labelled "Last name"
+    And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
+    And the user clicks Next button in the form
+    When the user clicks submit button in the form
+    Then the user views a callout with a message of "We're processing your application"

@@ -51,12 +51,22 @@ When('an authenticated user is logged in to see {string} application', function 
   cy.wait(8000); // Wait all the redirects to settle down
 });
 
-Then('the user views a from draft of {string}', function (formDefinition) {
+Given('an anonymous applicant goes to {string} application', function (formDefinition) {
+  cy.visit('/' + Cypress.env('tenantName') + '/' + formDefinition);
+  cy.wait(8000); // Wait all the redirects to settle down
+});
+
+Then('the user views a form draft of {string}', function (formDefinition) {
   cy.url().should('include', formDefinition);
   cy.url().then((url) => {
     formId = url.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
     expect(formId).to.be.not.null;
   });
+  cy.viewport(1920, 1080);
+});
+
+Then('the user views an anonymous form draft of {string}', function (formDefinition) {
+  cy.url().should('include', formDefinition + '/draft');
   cy.viewport(1920, 1080);
 });
 
