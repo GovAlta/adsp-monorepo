@@ -21,6 +21,7 @@ import { CreateEventsByCalendar, UpdateEventsByCalendar } from '@store/calendar/
 import { areObjectsEqual } from '@lib/objectUtil';
 import { getDateTime } from '@lib/timeUtil';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import { readOnlyCalendars } from '.';
 
 interface EventAddEditModalProps {
   calendarName: string;
@@ -157,6 +158,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           value={calendarEvent?.name}
           testId={`calendar-event-modal-name-input`}
           aria-label="eventName"
+          disabled={readOnlyCalendars.includes(calendarName)}
           width="100%"
           onChange={(_, value) => {
             validators.remove('name');
@@ -174,6 +176,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           value={calendarEvent?.description}
           testId={`calendar-event-modal-description-input`}
           aria-label="description"
+          disabled={readOnlyCalendars.includes(calendarName)}
           width="100%"
           onKeyPress={(name, value, key) => {
             validators.remove('description');
@@ -195,6 +198,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
         name="isPublicCheckbox"
         checked={calendarEvent?.isPublic}
         text={'Is public '}
+        disabled={readOnlyCalendars.includes(calendarName)}
         onChange={(name, value) => {
           setCalendarEvent({ ...calendarEvent, isPublic: value });
         }}
@@ -204,6 +208,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
         name="isAllDayCheckbox"
         checked={calendarEvent?.isAllDay}
         text={'Is all day'}
+        disabled={readOnlyCalendars.includes(calendarName)}
         onChange={(name, value) => {
           setCalendarEvent({ ...calendarEvent, isAllDay: value });
         }}
@@ -234,6 +239,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             name="StartDate"
             value={calendarEvent?.start ? new Date(calendarEvent.start) : new Date()}
             width="100%"
+            disabled={readOnlyCalendars.includes(calendarName)}
             testId="calendar-event-modal-start-date-input"
             onChange={(name, value) => {
               setEndDateError('');
@@ -249,7 +255,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             step={1}
             width="100%"
             testId="calendar-event-modal-start-time-input"
-            disabled={calendarEvent?.isAllDay}
+            disabled={calendarEvent?.isAllDay || readOnlyCalendars.includes(calendarName)}
             onChange={(name, value) => {
               setEndDateError('');
               setStartTime(value);
@@ -262,6 +268,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             name="endDate"
             value={calendarEvent?.end ? new Date(calendarEvent?.end) : new Date()}
             width="100%"
+            disabled={readOnlyCalendars.includes(calendarName)}
             testId="calendar-event-modal-end-date-input"
             onChange={(name, value) => {
               setEndDateError('');
@@ -277,7 +284,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             value={endTime}
             step={1}
             width="100%"
-            disabled={calendarEvent?.isAllDay}
+            disabled={calendarEvent?.isAllDay || readOnlyCalendars.includes(calendarName)}
             testId="calendar-event-modal-end-time-input"
             onChange={(name, value) => {
               setEndDateError('');
