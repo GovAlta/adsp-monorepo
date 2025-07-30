@@ -58,5 +58,5 @@ Feature: Form app
     And the user enters "Smith" in list with detail element text field labelled "Last name"
     And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
     And the user clicks Next button in the form
-    When the user clicks submit button in the form
+    And the user clicks submit button in the form
     Then the user views a callout with a message of "We're processing your application"
