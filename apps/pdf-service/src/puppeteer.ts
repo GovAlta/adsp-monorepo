@@ -25,7 +25,10 @@ class PuppeteerPdfService implements PdfService {
       checkPDFSize(content.length, logger);
 
       context = await this.browser.createBrowserContext();
+      logger.info('📦 Context created');
+
       page = await context.newPage();
+      logger.info('📄 Page created');
       await page.setJavaScriptEnabled(false);
       await page.setRequestInterception(true);
       page.on('request', (req) => {
@@ -53,6 +56,7 @@ class PuppeteerPdfService implements PdfService {
           }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('setContent hard timeout')), CONTENT_TIMEOUT)),
       ]);
+      logger.info('📜 Content set, starting PDF...');
 
       const height = await page.evaluate(() => document.body.scrollHeight);
       logger?.info(`Page scroll height: ${height}`);
@@ -96,8 +100,9 @@ export const checkPDFSize = (length: number, logger?: Logger) => {
 };
 
 //eslint-disable-next-line
-export async function createPdfService(brow: puppeteer.Browser | null = null): Promise<PdfService> {
+export async function createPdfService(logger: Logger, brow: puppeteer.Browser | null = null): Promise<PdfService> {
   const userDataDir = `/tmp/chrome-${Date.now()}`;
+  logger.info('🚀 Launching Chromium...');
   const browser =
     brow ??
     (await puppeteer.launch({
@@ -105,6 +110,7 @@ export async function createPdfService(brow: puppeteer.Browser | null = null): P
       protocolTimeout: 30_000,
       args: ['--disable-dev-shm-usage', '--no-sandbox', `--user-data-dir=${userDataDir}`],
     }));
+  logger.info('✅ Chromium launched');
 
   return new PuppeteerPdfService(browser);
 }
