@@ -80,6 +80,7 @@ const initializeApp = async (): Promise<express.Application> => {
             [templateId]: new PdfTemplateEntity(templateService, pdfService, {
               ...template,
               tenantId,
+              logger,
             }),
           }),
           {}
@@ -111,8 +112,6 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const templateService = createTemplateService(directory);
 
-
-
   let browse: puppeteer.Browser | null = null;
 
   async function getBrowser(): Promise<puppeteer.Browser> {
@@ -127,7 +126,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const browser = await getBrowser();
 
-  const pdfService = await createPdfService(browser);
+  const pdfService = await createPdfService(logger, browser);
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
