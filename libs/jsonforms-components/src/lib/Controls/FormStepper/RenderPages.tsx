@@ -56,6 +56,14 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
       <Visible visible={visible}>
         <div id={`${path || `goa`}-form-pages`}>
           <PageBorder>
+            <BackButton
+              text="Back to tasks"
+              link={() => {
+                handleSave();
+                goToTableOfContext();
+              }}
+              testId="back-to-tasks"
+            />
             {categories?.map((category, index) => {
               const categoryProps: StepProps = {
                 category: category.uischema as CategorizationElement,
@@ -86,16 +94,24 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                     <PageRenderPadding>
                       <GoAGrid minChildWidth="100px" gap="2xs">
                         <GoAButtonGroup alignment="start">
-                          <GoAButton
-                            type="secondary"
-                            onClick={() => {
-                              validatePage(index);
-                              goToTableOfContext();
-                            }}
-                            testId="back-button"
-                          >
-                            Previous
-                          </GoAButton>
+                          {activeId > 0 && (
+                            <GoAButton
+                              type="secondary"
+                              onClick={() => {
+                                handleSave();
+                                let prevId = activeId - 1;
+                                while (prevId >= 0 && categories[prevId].visible === false) {
+                                  prevId = prevId - 1;
+                                }
+                                if (prevId >= 0) {
+                                  goToPage(prevId);
+                                }
+                              }}
+                              testId="pages-prev-btn"
+                            >
+                              Previous
+                            </GoAButton>
+                          )}{' '}
                         </GoAButtonGroup>
 
                         <GoAButtonGroup alignment="end">
@@ -127,18 +143,6 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                 <FormStepperPageReviewer {...{ ...props.categoryProps, navigationFunc: goToPage }} />
                 <PageRenderPadding>
                   <GoAGrid minChildWidth="100px" gap="2xs">
-                    <GoAButtonGroup alignment="start">
-                      <GoAButton
-                        type="secondary"
-                        onClick={() => {
-                          goToTableOfContext();
-                        }}
-                        testId="back-button"
-                      >
-                        Previous
-                      </GoAButton>
-                    </GoAButtonGroup>
-
                     <GoAButtonGroup alignment="end">
                       {!hideSubmit ? (
                         <GoAButton
