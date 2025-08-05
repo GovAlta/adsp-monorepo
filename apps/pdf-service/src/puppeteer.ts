@@ -20,6 +20,7 @@ class PuppeteerPdfService implements PdfService {
     let context: puppeteer.BrowserContext | null = null;
 
     try {
+      logger?.info('Now using improved pods');
       logger?.info('HTML size (bytes):', Buffer.byteLength(content, 'utf8'));
       logger?.info('Starts with:', content.slice(0, 100));
       checkPDFSize(content.length, logger);

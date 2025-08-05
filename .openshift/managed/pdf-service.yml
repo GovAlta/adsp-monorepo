@@ -222,11 +222,11 @@ objects:
         activeDeadlineSeconds: 21600
         resources:
           limits:
-            cpu: 400m
-            memory: 400Mi
+            cpu: 500m
+            memory: 1Gi
           requests:
-            cpu: 40m
-            memory: 100Mi
+            cpu: 250m
+            memory: 500Mi
       template:
         metadata:
           labels:
@@ -259,11 +259,11 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 300m
-                  memory: 500Mi
+                  cpu: 500m
+                  memory: 1Gi
                 requests:
-                  cpu: 200m
-                  memory: 300Mi
+                  cpu: 250m
+                  memory: 500Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
               readinessProbe:
@@ -286,11 +286,19 @@ objects:
                 periodSeconds: 60
                 successThreshold: 1
                 failureThreshold: 5
+              volumeMounts:
+                - mountPath: /dev/shm
+                  name: dshm
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler
           securityContext: {}
           terminationGracePeriodSeconds: 30
+          volumes:
+            - name: dshm
+              emptyDir:
+                medium: Memory
+                sizeLimit: 1Gi
       test: false
       triggers:
         - imageChangeParams:
@@ -409,11 +417,11 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 1
-                  memory: 2Gi
-                requests:
                   cpu: 500m
                   memory: 1Gi
+                requests:
+                  cpu: 250m
+                  memory: 500Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
               readinessProbe:
