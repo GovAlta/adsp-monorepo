@@ -246,25 +246,35 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     />
                   </MonacoDivBody>
                 </GoAFormItem>
-                {item.name === 'email' && (
-                  <GoAFormItem label="">
-                    <GoACheckbox
-                      name={`use-default-template`}
-                      checked={useDefaultTemplate}
-                      data-testid="default-template-checkbox"
-                      description={"Using the default template will clear any body changes you've made."}
-                      onChange={(name, checked) => {
-                        setUseDefaultTemplate(checked);
-                        if (checked) {
-                          onBodyChange(emailWrapper, item.name);
-                        } else {
-                          onBodyChange('', item.name);
-                        }
-                      }}
-                      text={'Use default template to edit header and footer'}
-                    ></GoACheckbox>
-                  </GoAFormItem>
-                )}
+                {item.name === 'email' &&
+                  (() => {
+                    const emailBody = templates[item.name]?.body ?? '';
+                    const isDefaultTemplate = emailBody.trim() === emailWrapper.trim();
+                    const isBodyNotEmpty = emailBody.trim().length > 0 && !isDefaultTemplate;
+
+                    return (
+                      <GoAFormItem label="">
+                        <GoACheckbox
+                          name={`use-default-template`}
+                          checked={useDefaultTemplate}
+                          data-testid="default-template-checkbox"
+                          description={
+                            isBodyNotEmpty ? 'Clear the current body in order to use the default template.' : ''
+                          }
+                          onChange={(name, checked) => {
+                            setUseDefaultTemplate(checked);
+                            if (checked) {
+                              onBodyChange(emailWrapper, item.name);
+                            } else {
+                              onBodyChange('', item.name);
+                            }
+                          }}
+                          text={'Use default template to edit header and footer'}
+                          disabled={isBodyNotEmpty}
+                        ></GoACheckbox>
+                      </GoAFormItem>
+                    );
+                  })()}
               </>
             </Tab>
           ))}
