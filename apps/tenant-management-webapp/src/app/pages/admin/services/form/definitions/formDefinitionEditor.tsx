@@ -7,11 +7,16 @@ import { TabletMessage } from '@components/TabletMessage';
 import { useDispatch, useSelector } from 'react-redux';
 import { openEditorForDefinition } from '@store/form/action';
 import { RootState } from '@store/index';
+import { initializeFormEditor  } from '@store/form/action';
+import {  modifiedDefinitionSelector } from '@store/form/selectors';
+import { rolesSelector } from '@store/access/selectors';
 
 export const FormDefinitionEditor = (): JSX.Element => {
   const navigate = useNavigate();
 
   const selectedId = useSelector((state: RootState) => state.form.editor.selectedId);
+  const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
+  const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch();
   useEffect(() => {
@@ -21,6 +26,14 @@ export const FormDefinitionEditor = (): JSX.Element => {
     }
   });
 
+  const queueTasks = useSelector((state: RootState) => state.task?.queues);
+  const definition = useSelector(modifiedDefinitionSelector);
+  const roles = useSelector(rolesSelector);
+
+  useEffect(() => {
+    dispatch(initializeFormEditor());
+  }, [dispatch]);
+
   return (
     <Modal data-testid="template-form">
       <ModalContent>
@@ -29,7 +42,18 @@ export const FormDefinitionEditor = (): JSX.Element => {
 
           <HideTablet>
             <FormTemplateEditorContainer>
-              <AddEditFormDefinitionEditor key={id} />
+              {definition?.id &&
+                realmRoles &&
+                queueTasks &&
+                fileTypes && (
+                  <AddEditFormDefinitionEditor
+                    key={id}
+                    definition={definition}
+                    roles={roles}
+                    queueTasks={queueTasks}
+                    fileTypes={fileTypes}
+                  />
+                )}
             </FormTemplateEditorContainer>
           </HideTablet>
         </OuterFormTemplateEditorContainer>
