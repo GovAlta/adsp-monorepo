@@ -46,6 +46,7 @@ const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.E
     </CalendarDropdownWrapper>
   );
 };
+export const readOnlyCalendars = ['form-intake']
 
 export const CalendarEvents = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -103,7 +104,7 @@ export const CalendarEvents = (): JSX.Element => {
           <GoAButton
             type="primary"
             testId="add-calendar-event-button"
-            disabled={!selectedCalendar}
+            disabled={!selectedCalendar ||  readOnlyCalendars.includes(selectedCalendar)}
             onClick={() => {
               dispatch(
                 UpdateModalState({

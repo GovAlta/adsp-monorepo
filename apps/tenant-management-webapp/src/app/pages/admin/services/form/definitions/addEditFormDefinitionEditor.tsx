@@ -562,18 +562,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   <div className="life-cycle-auto-scroll" style={{ height: EditorHeight + 7 }}>
                     <H3>Application</H3>
                     <div>
-                      <div style={{ marginBottom: '0.5rem' }}>
-                        <GoAButton
-                          type="primary"
-                          testId="set-intake-period"
-                          onClick={() => {
-                            setIntakePeriodModal(true);
-                          }}
-                        >
-                          Intake periods
-                        </GoAButton>
-                      </div>
-
                       <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
                         <FormFormItem>
                           <GoAInput
@@ -688,6 +676,19 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                           <GoAIcon type="information-circle" ariaLabel="scheduled-icon"></GoAIcon>
                         </GoATooltip>
                       </FlexRow>
+                      {definition.scheduledIntakes && (
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <GoAButton
+                            type="primary"
+                            testId="set-intake-period"
+                            onClick={() => {
+                              setIntakePeriodModal(true);
+                            }}
+                          >
+                            Intake periods
+                          </GoAButton>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <GoAFormItem error={''} label="Security classification">

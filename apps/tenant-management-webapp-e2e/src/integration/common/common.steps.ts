@@ -622,16 +622,28 @@ Then(
 
     if (orgStatus != '{original status}') {
       orgStatusValidationString = orgStatus;
+      if (orgStatusValidationString == 'reported issues') {
+        orgStatusValidationString = 'reported-issues';
+      }
     } else {
       cy.task('getOriginalAppStatus').then((appStatus) => {
         orgStatusValidationString = appStatus;
+        if (orgStatusValidationString == 'reported issues') {
+          orgStatusValidationString = 'reported-issues';
+        }
       });
     }
     if (newStatusInput != '{new status}') {
       newStatusValidationString = newStatusInput;
+      if (newStatusValidationString == 'reported issues') {
+        newStatusValidationString = 'reported-issues';
+      }
     } else {
       cy.task('getNewAppStatus').then((appStatus) => {
         newStatusValidationString = appStatus;
+        if (newStatusValidationString == 'reported issues') {
+          newStatusValidationString = 'reported-issues';
+        }
       });
     }
 
