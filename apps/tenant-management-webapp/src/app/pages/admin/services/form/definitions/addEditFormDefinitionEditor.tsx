@@ -15,7 +15,7 @@ import {
 } from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
@@ -34,15 +34,12 @@ import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { RootState } from '@store/index';
-import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';
-import { rolesSelector } from '@store/access/selectors';
+import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { SecurityClassification } from '@store/common/models';
-import { getConfigurationDefinitions } from '@store/configuration/action';
 import {
   UploadFileService,
   DownloadFileService,
   DeleteFileService,
-  FetchFileTypeService,
   ClearNewFileList,
 } from '@store/file/actions';
 import {
@@ -53,10 +50,8 @@ import {
   getFormDefinitions,
 } from '@store/form/action';
 import { Disposition, FormDefinition } from '@store/form/model';
-import { isFormUpdatedSelector, modifiedDefinitionSelector, schemaErrorSelector } from '@store/form/selectors';
+import { isFormUpdatedSelector, schemaErrorSelector } from '@store/form/selectors';
 import { ActionState } from '@store/session/models';
-import { FetchRealmRoles } from '@store/tenant/actions';
-import { getTaskQueues } from '@store/task/action';
 import {
   TextLoadingIndicator,
   FlexRow,
@@ -86,8 +81,7 @@ import { FormConfigDefinition } from './formConfigDefinition';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 import { RowFlex, QueueTaskDropdown, H3, BorderBottom, H3Inline, ToolTipAdjust } from './style-components';
-import { UpdateSearchCriteriaAndFetchEvents, fetchCalendars } from '@store/calendar/actions';
-
+import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
 import { CalendarEventDefault } from '@store/calendar/models';
 import { StartEndDateEditor } from './startEndDateEditor';
 export const ContextProvider = ContextProviderFactory();
@@ -159,7 +153,8 @@ const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdat
 
 const NO_TASK_CREATED_OPTION = `No task created`;
 
-export function AddEditFormDefinitionEditor(): JSX.Element {
+export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fileTypes }): JSX.Element {
+
   const fileList = useSelector((state: RootState) => {
     return state?.fileService.newFileList;
   });
@@ -167,8 +162,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const dispatch = useDispatch();
   const editorRefData = useRef(null);
   const editorRefUi = useRef(null);
-
-  const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
   const uploadFile = (file: File, propertyId: string) => {
     const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId.split('.')?.[0] };
@@ -181,57 +174,30 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
   const monaco = useMonaco();
 
-  const definition = useSelector(modifiedDefinitionSelector);
+  const {
+    loading: isLoading,
+    saving: isSaving,
+    uiSchemaDraft: tempUiSchema,
+    dataSchemaDraft: tempDataSchema,
+  } = useSelector((state: RootState) => state.form.editor);
+
   const setDefinition = (update: Partial<FormDefinition>) => dispatch(updateEditorFormDefinition(update));
-  const isLoading = useSelector((state: RootState) => state.form.editor.loading);
-  const isSaving = useSelector((state: RootState) => state.form.editor.saving);
   const formDefinitions = useSelector((state: RootState) => state.form.definitions);
-  const tempUiSchema = useSelector((state: RootState) => state.form.editor.uiSchemaDraft);
-  const tempDataSchema = useSelector((state: RootState) => state.form.editor.dataSchemaDraft);
   const schemaError = useSelector(schemaErrorSelector);
-  const { coreCalendars } = useSelector((state: RootState) => state.calendarService);
 
   const selectedCoreEvent = useSelector(
-    (state: RootState) =>
-      state.calendarService?.coreCalendars &&
-      state.calendarService?.coreCalendars['form-intake']?.selectedCalendarEvents
+    (state: RootState) => state.calendarService?.coreCalendars?.['form-intake']?.selectedCalendarEvents
   );
 
-  useEffect(() => {
-    dispatch(fetchCalendars());
-  }, []);
-
-  useEffect(() => {
-    dispatch(FetchRealmRoles());
-    dispatch(fetchKeycloakServiceRoles());
-    dispatch(getTaskQueues());
-    dispatch(getConfigurationDefinitions());
-    dispatch(FetchFileTypeService());
-    if (definition.id && coreCalendars) {
-      dispatch(
-        UpdateSearchCriteriaAndFetchEvents({
-          recordId: `urn:ads:platform:configuration-service:v2:/configuration/form-service/${definition.id}`,
-          calendarName: 'form-intake',
-        })
-      );
-    }
-  }, [dispatch, definition, coreCalendars]);
-
-  const isFormUpdated = useSelector(isFormUpdatedSelector);
-
-  const latestNotification = useSelector(
-    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+  const { isFormUpdated, latestNotification, isLoadingRoles, indicator, formServiceApiUrl } = useSelector(
+    (state: RootState) => ({
+      isFormUpdated: isFormUpdatedSelector(state),
+      latestNotification: state.notifications.notifications[state.notifications.notifications.length - 1],
+      isLoadingRoles: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] === ActionState.inProcess,
+      indicator: state.session?.indicator,
+      formServiceApiUrl: state.config?.serviceUrls?.formServiceApiUrl,
+    })
   );
-  const queueTasks = useSelector((state: RootState) => state.task?.queues || {});
-
-  const isLoadingRoles = useSelector(
-    (state: RootState) => state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] === ActionState.inProcess
-  );
-  const roles = useSelector(rolesSelector);
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-  const formServiceApiUrl = useSelector((state: RootState) => state.config?.serviceUrls?.formServiceApiUrl);
 
   const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
   const [uiEditorLocation, setUiEditorLocation] = useState<number>(0);
@@ -256,6 +222,17 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     dataSchemaJSON: null,
     dataSchemaJSONSchema: null,
   });
+
+  useEffect(() => {
+    if (intakePeriodModal) {
+      dispatch(
+        UpdateSearchCriteriaAndFetchEvents({
+          recordId: `urn:ads:platform:configuration-service:v2:/configuration/form-service/${definition.id}`,
+          calendarName: 'form-intake',
+        })
+      );
+    }
+  }, [intakePeriodModal]);
 
   const deleteFile = (file) => {
     dispatch(DeleteFileService(file?.id));

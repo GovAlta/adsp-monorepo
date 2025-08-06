@@ -14,7 +14,7 @@ import {
 import { TaskState } from './model';
 
 export const defaultState: TaskState = {
-  queues: {},
+  queues: null,
   tasks: null,
   nextEntries: null,
 };
@@ -74,7 +74,7 @@ export default function (state: TaskState = defaultState, action: TaskActionType
         ...state,
         tasks: updatedTasks,
       };
-     } 
+     }
      case DELETE_TASK_QUEUE_SUCCESS_ACTION:
       return {
         ...state,

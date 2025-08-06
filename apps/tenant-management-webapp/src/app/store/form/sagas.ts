@@ -7,7 +7,7 @@ import { UpdateIndicator } from '@store/session/actions';
 import { ErrorNotification } from '@store/notifications/actions';
 import { fetchServiceMetrics } from '@store/common';
 import { getAccessToken } from '@store/tenant/sagas';
-import { select, call, put, takeEvery, delay, takeLatest } from 'redux-saga/effects';
+import { select, call, put, takeEvery, delay, takeLatest, all } from 'redux-saga/effects';
 import { RootState } from '../index';
 import { io, Socket } from 'socket.io-client';
 import {
@@ -65,6 +65,7 @@ import {
   DeleteResourceTagsAction,
   deleteResourceSuccessTags,
   clearAllTags,
+  INITIALIZE_FORM_EDITOR
 } from './action';
 import {
   fetchFormDefinitionsApi,
@@ -85,6 +86,12 @@ import {
 } from '@store/directory/api';
 import { getResourcesByTag } from '../directory/api';
 import { toKebabName } from '@lib/kebabName';
+
+import { FetchRealmRoles } from '@store/tenant/actions';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
+import { getTaskQueues } from '@store/task/action';
+import { FetchFileTypeService } from '@store/file/actions';
+import { fetchCalendars } from '@store/calendar/actions';
 
 export function* fetchFormDefinitions(payload): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -575,7 +582,28 @@ export function* deleteResourceTags({ urn, formDefinitionId }: DeleteResourceTag
   }
 }
 
+function* initializeFormEditorSaga() {
+
+  const realmRoles = yield select((state) => state.tenant.realmRoles);
+  const keycloakRoles = yield select((state) => state.serviceRoles.keycloak);
+  const queueTasks = yield select((state: RootState) => state.task?.queues);
+  const fileTypes = yield select((state: RootState) => state.fileService.fileTypes);
+  try {
+    yield all([
+      ...(realmRoles == null ? [put(FetchRealmRoles())] : []),
+      ...(keycloakRoles == null ? [put(fetchKeycloakServiceRoles())] : []),
+      ...(queueTasks == null ? [put(getTaskQueues())] : []),
+      ...(fileTypes == null ? [put(FetchFileTypeService())] : []),
+      put(fetchCalendars()),
+    ]);
+  } catch (e) {
+    // handle error, e.g. dispatch failure action
+    console.error('Initialization failed', e);
+  }
+}
+
 export function* watchFormSagas(): Generator {
+  yield takeLatest(INITIALIZE_FORM_EDITOR, initializeFormEditorSaga);
   yield takeEvery(FETCH_FORM_DEFINITIONS_ACTION, fetchFormDefinitions);
   yield takeEvery(EXPORT_FORM_INFO_ACTION, exportFormInfo);
   yield takeEvery(UPDATE_FORM_DEFINITION_ACTION, updateFormDefinition);

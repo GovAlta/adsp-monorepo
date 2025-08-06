@@ -75,6 +75,7 @@ export const SET_SELECTED_TAG = 'form/resource/set-selected-tag';
 export const DELETE_RESOURCE_TAGS = 'form/resource/delete-resource-tags';
 
 export const DELETE_RESOURCE_TAGS_SUCCESS = 'form/resource/delete-resource-tags/success';
+export const INITIALIZE_FORM_EDITOR = 'form/initialize-form-editor';
 
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
@@ -225,6 +226,9 @@ export interface DeleteResourceSuccessTagsAction {
   type: typeof DELETE_RESOURCE_TAGS_SUCCESS;
   urn: string;
   formDefinitionId: string;
+}
+export interface InitializeFormEditorAction {
+  type: typeof INITIALIZE_FORM_EDITOR;
 }
 
 export type FormActionTypes =
@@ -593,4 +597,7 @@ export const deleteResourceSuccessTags = (urn: string, formDefinitionId: string)
   type: DELETE_RESOURCE_TAGS_SUCCESS,
   urn,
   formDefinitionId,
+});
+export const initializeFormEditor = (): InitializeFormEditorAction => ({
+  type: INITIALIZE_FORM_EDITOR,
 });
