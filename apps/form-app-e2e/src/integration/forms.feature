@@ -60,3 +60,21 @@ Feature: Form app
     And the user clicks Next button in the form
     And the user clicks submit button in the form
     Then the user views a callout with a message of "We're processing your application"
+
+  # TEST DATA: autotest-anonymous-submission is created as a form definition with anonymous enabled
+  @TEST_CS-3571 @TEST_CS-3571 @regression
+  Scenario: As an anonymous applicant, I can see validation errors on missing required fields and cannot submit the form without all required fields being set
+    Given an anonymous applicant goes to "autotest-anonymous-submission" application
+    Then the user views an anonymous form draft of "autotest-anonymous-submission"
+    When the user enters "Joe" in a text field labelled "First name"
+    And the user enters "1970-10-30" in a date picker labelled "Birthday"
+    And the user enters "CA" in a dropdown labelled "Nationality"
+    And the user clicks Next button in the form
+    And the user clicks list with detail button labelled as "Add child" in the form
+    And the user enters "John" in list with detail element text field labelled "First name"
+    And the user enters "Smith" in list with detail element text field labelled "Last name"
+    And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
+    And the user clicks Next button in the form
+    Then the user views "Last name is required" validation message under "Last name" field on summary page
+    And the user views "Are you married? is required" validation message under "Are you married?" field on summary page
+    And the user views the submit button is disabled on summary page

@@ -297,3 +297,19 @@ Given('the user deletes any existing form from {string} for {string}', function 
       }
     });
 });
+
+Then(
+  'the user views {string} validation message under {string} field on summary page',
+  function (errorMsg, textFieldLabel) {
+    formsObj
+      .formFieldFormItem(textFieldLabel)
+      .shadow()
+      .find('[class^="error-msg"]')
+      .invoke('text')
+      .should('contains', errorMsg);
+  }
+);
+
+Then('the user views the submit button is disabled on summary page', function () {
+  formsObj.formSubmitButton().shadow().find('button').should('be.disabled');
+});
