@@ -125,7 +125,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                               }
                               goToPage(nextId);
                             }}
-                            disabled={!(category.isValid && category.isCompleted) || !enabled}
+                            disabled={!enabled}
                             testId="pages-save-continue-btn"
                           >
                             Next

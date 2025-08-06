@@ -370,25 +370,6 @@ describe('Form Stepper Control', () => {
   });
 
   describe('page navigation', () => {
-    it('makes sure save and continue button is disabled if required field is not filled in', async () => {
-      const newStepperProps = {
-        ...stepperBasePropsNoDispatch,
-        data: {},
-      };
-      newStepperProps.activeId = 0;
-      const renderer = render(
-        <JsonFormsStepperContextProvider
-          StepperProps={newStepperProps}
-          children={getForm(formData, categorizationPages)}
-        />
-      );
-
-      window.HTMLElement.prototype.scrollIntoView = function () {};
-      const nextButton = renderer.baseElement.querySelector("goa-button[testId='pages-save-continue-btn']");
-      expect(nextButton).toBeInTheDocument();
-      expect(nextButton!.getAttribute('disabled')).toBe('true');
-    });
-
     it('will hide Prev Nav button on 1st step and show it on any subsequent steps', async () => {
       const newStepperProps = {
         ...stepperBaseProps,
