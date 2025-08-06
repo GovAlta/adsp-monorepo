@@ -43,7 +43,7 @@ Feature: Form app
     Then the new form is deleted
 
   # TEST DATA: autotest-anonymous-submission is created as a form definition with anonymous enabled
-  @TEST_CS-3570 @TEST_CS-3571 @regression
+  @TEST_CS-3570 @REQ_CS-3484 @REQ_CS-3485 @regression
   Scenario: As an anonymous applicant, I can view and submit an anonymous application
     Given an anonymous applicant goes to "autotest-anonymous-submission" application
     Then the user views an anonymous form draft of "autotest-anonymous-submission"
@@ -62,7 +62,7 @@ Feature: Form app
     Then the user views a callout with a message of "We're processing your application"
 
   # TEST DATA: autotest-anonymous-submission is created as a form definition with anonymous enabled
-  @TEST_CS-3571 @TEST_CS-3571 @regression
+  @TEST_CS-3571 @REQ_CS-3484 @REQ_CS-3485 @regression
   Scenario: As an anonymous applicant, I can see validation errors on missing required fields and cannot submit the form without all required fields being set
     Given an anonymous applicant goes to "autotest-anonymous-submission" application
     Then the user views an anonymous form draft of "autotest-anonymous-submission"
