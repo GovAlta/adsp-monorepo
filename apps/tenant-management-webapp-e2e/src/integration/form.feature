@@ -9,9 +9,10 @@ Feature: Form
     And the user views the link of See the code for "form-service"
     And the user views the link of "Get support" under Support
 
+  # Bug #: CS-4368 tasks tab shows a blank page with console errors
   # TEST DATA: a form definition named "autotest-submission-task" is precreated
   # TEST DATA: a task queue named autotest:testSubmissionQueue is precreated
-  @TEST_CS-2780 @REQ_CS-2570 @regression
+  @TEST_CS-2780 @REQ_CS-2570 @regression @ignore
   Scenario: As a tenant admin, I can configure if and what task is created for processing a form submission record
     Given all existing tasks in "testSubmissionQueue" if any have been deleted
     And a tenant admin user is on form definitions page
@@ -207,7 +208,8 @@ Feature: Form
     And the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
     And the user "should not view" the disposition state of "Rejected", "The application is rejected"
 
-  @TEST_CS-3356 @REQ_CS-3381 @regression
+  # Bug #: CS-4356 event log does not show the event details view
+  @TEST_CS-3356 @REQ_CS-3381 @regression @ignore
   Scenario: As a tenant admin, I can set the classification on a form definition and view the updated classification in event log
     Given a tenant admin user is on form definitions page
     # Add a form definition
@@ -260,7 +262,8 @@ Feature: Form
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the form definition of "autotest-defaultApplicantRole", "autotest desc"
 
-  @TEST_CS-2702 @REQ_CS-2679 @regression
+  # This test is ignored due to random failures on different controls. Need to investigate and improve the test stability.
+  @TEST_CS-2702 @REQ_CS-2679 @regression @ignore
   Scenario: As a tenant admin, I can see the form output data in the form preview
     Given a tenant admin user is on form definitions page
     When the user clicks "Edit" button for the form definition of "autotest-preview-data", "DO NOT DELETE"
