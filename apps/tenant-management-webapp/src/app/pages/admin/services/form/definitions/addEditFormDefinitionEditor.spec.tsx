@@ -15,8 +15,57 @@ jest.mock('react-router-dom', () => ({
   }),
   useRouteMatch: () => ({ url: '/form/edit/A-really-really-long-formservice' }),
 }));
+
+interface RootState {
+  fileService: {
+    fileType: {
+      id: string;
+      name: string;
+      updateRoles: string[];
+      readRoles: string[];
+      anonymousRead: boolean;
+      securityClassification: string;
+    }[];
+    newFileList: unknown;
+    metrics: {
+      filesUploaded: number;
+      fileLifetime: number;
+    };
+  };
+  task: {
+    queues: [
+      {
+        namespace: string;
+        name: string;
+        context: Record<string, string>;
+        assignerRoles: string[];
+        workerRoles: string[];
+      }
+    ];
+  };
+}
+
 describe('form Component', () => {
   const mockStore = configureStore([]);
+  const definition: FormDefinition = {
+    id: 'test-form',
+    name: 'test-form',
+    description: 'test form for unit testing',
+    dataSchema: null,
+    applicantRoles: [],
+    clerkRoles: [],
+    assessorRoles: [],
+    formDraftUrlTemplate: 'http://test.com',
+    anonymousApply: false,
+    uiSchema: null,
+    dispositionStates: null,
+    submissionRecords: true,
+    supportTopic: false,
+    queueTaskToProcess: { queueName: 'test-queue', queueNameSpace: 'queue-namespace' },
+    submissionPdfTemplate: null,
+    oneFormPerApplicant: true,
+    scheduledIntakes: false,
+  };
   const store = mockStore({
     calendarService: {
       calendars: {
@@ -50,7 +99,7 @@ describe('form Component', () => {
       },
     },
     task: {
-      queus: [
+      queues: [
         {
           namespace: '2',
           name: '2',
@@ -85,9 +134,27 @@ describe('form Component', () => {
     serviceRoles: {},
   });
   test('Save button does not route', async () => {
+    const state = store.getState() as RootState;
+    const roles = [
+      {
+        roleNames: ['auto-test-role3'],
+        clientId: '',
+      },
+      {
+        roleNames: ['form-app-load-test-role'],
+        clientId: 'form-app-load-test',
+      },
+    ];
+
     const { queryByTestId, baseElement } = render(
       <Provider store={store}>
-        <AddEditFormDefinitionEditor />
+        <AddEditFormDefinitionEditor
+          key={42}
+          definition={definition}
+          roles={roles}
+          queueTasks={state.task.queues}
+          fileTypes={state.fileService.fileType}
+        />
       </Provider>
     );
     const saveButton = baseElement.querySelector("goa-button[testId='definition-form-save']");
@@ -129,6 +196,8 @@ describe('Test AddEditFormDefinitionEditor', () => {
     supportTopic: false,
     queueTaskToProcess: { queueName: 'test-queue', queueNameSpace: 'queue-namespace' },
     submissionPdfTemplate: null,
+    oneFormPerApplicant: true,
+    scheduledIntakes: false,
   };
 
   it('can save new disposition state', () => {
