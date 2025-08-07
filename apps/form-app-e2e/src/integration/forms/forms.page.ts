@@ -71,6 +71,10 @@ class FormsPage {
   formRadioGroup(question) {
     return cy.xpath(`//goa-form-item[@label="${question}"]//goa-radio-group`);
   }
+
+  formFieldFormItem(label) {
+    return cy.xpath(`//h3[text()="Summary"]/following-sibling::div//goa-form-item[@label="${label}"]`);
+  }
 }
 
 export default FormsPage;
