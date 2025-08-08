@@ -42,8 +42,9 @@ Feature: Form app
     When the user sends a delete form request
     Then the new form is deleted
 
+  # Anonymous submission is pretected by reCAPTCHA and Cypress test will fail to pass CAPTCHA validation
   # TEST DATA: autotest-anonymous-submission is created as a form definition with anonymous enabled
-  @TEST_CS-3570 @REQ_CS-3484 @REQ_CS-3485 @regression
+  @TEST_CS-3570 @REQ_CS-3484 @REQ_CS-3485 @regression @ignore
   Scenario: As an anonymous applicant, I can view and submit an anonymous application
     Given an anonymous applicant goes to "autotest-anonymous-submission" application
     Then the user views an anonymous form draft of "autotest-anonymous-submission"
