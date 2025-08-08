@@ -109,7 +109,7 @@ export const ValueDefinitionsList: FunctionComponent<ValueDefinitionsComponentPr
                 .sort((a, b) => (a.name < b.name ? -1 : 1))
                 .map((definition) => (
                   <ValueComponent
-                    key={`${definition.namespace}:${definition.name}:${Math.random()}`}
+                    key={`${definition.namespace}:${definition.name}}`}
                     definition={definition}
                     onEdit={onEdit}
                     onDelete={onDelete}

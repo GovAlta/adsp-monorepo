@@ -122,7 +122,7 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
                   <ScriptEventTriggerDefinitionComponent
                     onEdit={onEdit}
                     onDelete={onDelete}
-                    key={`${triggerEvent.eventName}:${Math.random()}`}
+                    key={`${triggerEvent.eventName}}`}
                     triggerEvent={triggerEvent}
                   />
                 ))}
