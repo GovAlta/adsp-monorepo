@@ -114,7 +114,7 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
                   <EventDefinitionComponent
                     onEdit={onEdit}
                     onDelete={onDelete}
-                    key={`${definition.namespace}:${definition.name}:${Math.random()}`}
+                    key={`${definition.namespace}:${definition.name}}`}
                     definition={definition}
                   />
                 ))}
@@ -129,7 +129,7 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
 export const EventDefinitionsList = styled(EventDefinitionsListComponent)`
   display: flex-inline-table;
   & .group-name {
-    font-size: var(--goa-font-size-5);
+    font-size: var(--fs-lg);
     font-weight: var(--fw-bold);
   }
 

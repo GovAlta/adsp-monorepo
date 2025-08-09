@@ -142,7 +142,7 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
               {entries !== null &&
                 entries.map((entry) => (
                   <EventLogEntryComponent
-                    key={`${entry.timestamp}${entry.namespace}${entry.name}${Math.random()}`}
+                    key={`${entry.timestamp}-${entry.namespace}-${entry.name}`}
                     entry={entry}
                     correlationColors={colors}
                     addCorrelationColor={(id) => {
