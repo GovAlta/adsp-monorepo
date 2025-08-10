@@ -10,6 +10,8 @@ import {
   ADD_REGISTER_DATA_ERROR,
   ADD_DATALIST_ACTION,
   RegisterDataType,
+  UserContext,
+  USER_CONTEXT_DATA_URN,
 } from './actions';
 import { fetchRegister } from './util';
 
@@ -17,6 +19,7 @@ interface JsonFormsRegisterContextProps {
   registerDispatch: JsonFormRegisterDispatch;
   fetchRegisterByUrl: (registerConfig: RegisterConfig) => Promise<void>;
   selectRegisterData: (registerConfig: RegisterConfig) => RegisterDataType;
+  selectDefaultUserData: () => UserContext | undefined;
   fetchErrors: (registerConfig: RegisterConfig) => string;
   isProvided: boolean;
 }
@@ -54,6 +57,9 @@ export const JsonFormRegisterProvider = ({
         }
 
         return [];
+      },
+      selectDefaultUserData: (): UserContext | undefined => {
+        return registers.registerData?.find((r) => r.urn === USER_CONTEXT_DATA_URN)?.data as UserContext | undefined;
       },
       fetchErrors: (criteria: RegisterConfig): string => {
         if (criteria?.url) {
