@@ -1,6 +1,6 @@
 import React from 'react';
 import { TocPageRef, CategoryStatus } from '../styled-components';
-import { GoABadge } from '@abgov/react-components';
+import { GoAText } from '@abgov/react-components';
 
 interface SummaryRowProps {
   index: number;
@@ -12,7 +12,7 @@ interface SummaryRowProps {
 export const SummaryRow: React.FC<SummaryRowProps> = ({ index, isValid, onClick }) => {
   return (
     <tr>
-      <TocPageRef>
+      <GoAText size="heading-m" mt="none" mb="xl" ml="xl">
         <a
           data-testid={`page-ref-${index}`}
           href="#"
@@ -21,10 +21,9 @@ export const SummaryRow: React.FC<SummaryRowProps> = ({ index, isValid, onClick 
             onClick(index);
           }}
         >
-          <b>Summary</b>
+          Summary
         </a>
-      </TocPageRef>
-      <CategoryStatus></CategoryStatus>
+      </GoAText>
     </tr>
   );
 };
