@@ -62,6 +62,8 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
 
     return newOptions.filter((option) => option.value !== '');
   }, [registerData, options]);
+  
+  const width = uischema?.options?.componentProps?.width || '100%';
 
   useEffect(() => {
     if (registerConfig) {
@@ -78,6 +80,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
           items={mergedOptions as unknown as Item[]}
           enabled={enabled}
           selected={data}
+          width={width}
           key={`jsonforms-${label}-dropdown`}
           id={`jsonforms-${label}-dropdown`}
           label={label}
