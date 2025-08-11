@@ -177,14 +177,15 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
             </div>
 
             <div>
-              {notices.filter((notice) => notice.tennantServRef.map((ref) => ref.id).includes(app.appKey)).length >
-                0 && (
-                <div style={{ marginTop: '1rem' }}>
-                  <GoANotification type="emergency">
-                    This application has attached notices, and deleting it will orphan them
-                  </GoANotification>
-                </div>
-              )}
+              {notices &&
+                notices.filter((notice) => notice.tennantServRef.map((ref) => ref.id).includes(app.appKey)).length >
+                  0 && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <GoANotification type="emergency">
+                      This application has attached notices, and deleting it will orphan them
+                    </GoANotification>
+                  </div>
+                )}
             </div>
           </div>
         }
