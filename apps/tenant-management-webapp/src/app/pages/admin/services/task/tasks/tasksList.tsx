@@ -18,6 +18,7 @@ import { TaskModal } from './taskModal';
 import { ButtonPadding, ProgressWrapper } from '../styled-components';
 import { TaskListTable } from './tasksTable';
 import { LoadMoreWrapper } from '@components/styled-components';
+import { getSortedQueues } from '../taskUtil';
 
 interface VisibleProps {
   visible: boolean;
@@ -43,21 +44,7 @@ export const TasksList = (): JSX.Element => {
   const next = useSelector((state: RootState) => state.task.nextEntries);
 
   const taskQueues = useSelector((state: RootState) => {
-    const queues = state?.task?.queues ?? {};
-    return Object.entries(queues)
-      .sort(([key1, value1], [key2, value2]) => {
-        const [namespace1 = '', name1 = ''] = (key1 || '').split(':');
-        const [namespace2 = '', name2 = ''] = (key2 || '').split(':');
-        if (namespace1 === namespace2) {
-          return name1.localeCompare(name2);
-        } else {
-          return namespace1.localeCompare(namespace2);
-        }
-      })
-      .reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
-        tempObj[taskDefinitionId] = taskDefinitionData;
-        return tempObj;
-      }, {});
+    return getSortedQueues(state?.task?.queues);
   });
 
   useEffect(() => {
