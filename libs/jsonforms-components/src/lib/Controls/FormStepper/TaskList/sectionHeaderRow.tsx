@@ -1,4 +1,5 @@
 import { GoAText } from '@abgov/react-components';
+import { SectionHeaderRowTr } from '../styled-components';
 
 interface SectionHeaderRowProps {
   title: string;
@@ -8,12 +9,12 @@ interface SectionHeaderRowProps {
 export const SectionHeaderRow = ({ title, index }: SectionHeaderRowProps): JSX.Element => {
   const section = `${index}. ${title}`;
   return (
-    <tr>
+    <SectionHeaderRowTr>
       <td colSpan={2}>
         <GoAText size="heading-m" mt="none" mb="m" ml="m">
           {section}
         </GoAText>
       </td>
-    </tr>
+    </SectionHeaderRowTr>
   );
 };

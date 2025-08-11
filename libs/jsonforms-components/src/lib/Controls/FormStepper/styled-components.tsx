@@ -144,3 +144,15 @@ export const PageStepperRow = styled.tr<PageStepperRowProps>`
            cursor: pointer;
          `}
 `;
+
+export const SectionHeaderRowTr = styled.tr`
+  & > td {
+    border: 0 !important;
+    padding-top: var(--goa-space-l);
+    padding-bottom: var(--goa-space-s);
+  }
+
+  & + tr > td {
+    border-top: none !important;
+  }
+`;
