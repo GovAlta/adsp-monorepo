@@ -12,7 +12,7 @@ class PdfServiceImpl implements PdfService {
     let propertyName = dataSchema?.definitions && 'definitions';
     propertyName = dataSchema?.properties ? 'properties' : null;
 
-    const result = dataSchema;
+    const result = JSON.parse(JSON.stringify(dataSchema));
 
     for (const prop of Object.keys(properties)) {
       if (properties[prop].$ref) {
@@ -41,12 +41,12 @@ class PdfServiceImpl implements PdfService {
       }
     }
 
-    if (dataSchema?.allOf) {
+    if (result?.allOf) {
       if (!result[propertyName]) {
         result[propertyName] = {};
       }
       result[propertyName].allOf = await Promise.all(
-        dataSchema.allOf.map(async (item) => {
+        result.allOf.map(async (item) => {
           return await this.extractCurrentRefs(item);
         })
       );
