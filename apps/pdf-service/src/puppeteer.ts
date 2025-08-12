@@ -3,24 +3,85 @@ import { Readable } from 'stream';
 import { PdfService, PdfServiceProps } from './pdf';
 import { Semaphore } from 'await-semaphore';
 import { Logger } from 'winston';
+import { promises as fs } from 'fs';
 
 const MAX_HTML_SIZE = 5_000_000;
 const WARN_HTML_SIZE = 1_000_000;
-const MAX_PDF_CONCURRENCY = 4;
+const MAX_PDF_CONCURRENCY = 1;
 const CONTENT_TIMEOUT = 2 * 60 * 1000;
+
+const MAX_JOBS_BEFORE_RESTART = 25;
 
 const pdfLimiter = new Semaphore(MAX_PDF_CONCURRENCY);
 
 class PuppeteerPdfService implements PdfService {
-  constructor(private browser: puppeteer.Browser) {}
+  private jobCount = 0;
+  currentUserDataDir: string;
 
-  async generatePdf({ content, header, footer, logger }: PdfServiceProps): Promise<Readable> {
+  constructor(private logger: Logger, private browser: puppeteer.Browser) {
+    // Listen for crashes/disconnects
+    this.browser.on('disconnected', async () => {
+      this.logger.warn('Browser disconnected — restarting...');
+      await this.restartBrowser();
+    });
+  }
+
+  private async restartBrowser() {
+    try {
+      this.logger.info('Closing Browser...');
+      await this.browser.close();
+    } catch (e) {
+      this.logger.warn(`Failed to close browser: ${e}`);
+    }
+
+    // Clean up old temp dir
+    if (this.currentUserDataDir) {
+      try {
+        await fs.rm(this.currentUserDataDir, { recursive: true, force: true });
+        this.logger.info(`🧹 Deleted old temp dir: ${this.currentUserDataDir}`);
+      } catch (e) {
+        this.logger.warn(`Failed to delete temp dir ${this.currentUserDataDir}: ${e}`);
+      }
+    }
+
+    this.currentUserDataDir = `/tmp/chrome-${Date.now()}`;
+    this.logger.info('🚀 Launching new Chromium instance...');
+
+    this.browser = await puppeteer.launch({
+      headless: true,
+      protocolTimeout: 30_000,
+      args: ['--disable-dev-shm-usage', '--no-sandbox', `--user-data-dir=${this.currentUserDataDir}`],
+    });
+
+    this.jobCount = 0;
+    this.logger.info('✅ Chromium relaunched');
+  }
+
+  public async generatePdf(props: PdfServiceProps): Promise<Readable> {
+    try {
+      return await this._generatePdfOnce(props);
+    } catch (err) {
+      if (/Protocol error|Target closed/i.test((err as Error).message)) {
+        this.logger.warn('Browser crash detected — retrying with fresh browser...');
+        await this.restartBrowser();
+        return await this._generatePdfOnce(props);
+      }
+      throw err;
+    }
+  }
+
+  async _generatePdfOnce({ content, header, footer, logger }: PdfServiceProps): Promise<Readable> {
     const release = await pdfLimiter.acquire();
     let page: puppeteer.Page | null = null;
     let context: puppeteer.BrowserContext | null = null;
 
     try {
-      logger?.info('Now using improved pods');
+      this.jobCount++;
+      if (this.jobCount >= MAX_JOBS_BEFORE_RESTART) {
+        logger?.info(`♻ Restarting browser after ${this.jobCount} jobs...`);
+        await this.restartBrowser();
+      }
+
       logger?.info('HTML size (bytes):', Buffer.byteLength(content, 'utf8'));
       logger?.info('Starts with:', content.slice(0, 100));
       checkPDFSize(content.length, logger);
@@ -41,9 +102,7 @@ class PuppeteerPdfService implements PdfService {
           req.continue();
         }
       });
-      page.on('request', (req) => console.log(`Request: ${req.url()}`));
-      page.on('response', (res) => console.log(`Response: ${res.url()} (${res.status()})`));
-      page.on('requestfailed', (req) => console.warn(`Failed Request: ${req.url()} - ${req.failure()?.errorText}`));
+      page.on('requestfailed', (req) => logger.warn(`Failed Request: ${req.url()} - ${req.failure()?.errorText}`));
 
       await Promise.race([
         page
@@ -58,9 +117,6 @@ class PuppeteerPdfService implements PdfService {
         new Promise((_, reject) => setTimeout(() => reject(new Error('setContent hard timeout')), CONTENT_TIMEOUT)),
       ]);
       logger.info('📜 Content set, starting PDF...');
-
-      const height = await page.evaluate(() => document.body.scrollHeight);
-      logger?.info(`Page scroll height: ${height}`);
 
       const pdfOptions: puppeteer.PDFOptions = {
         printBackground: true,
@@ -113,5 +169,8 @@ export async function createPdfService(logger: Logger, brow: puppeteer.Browser |
     }));
   logger.info('✅ Chromium launched');
 
-  return new PuppeteerPdfService(browser);
+  const service = new PuppeteerPdfService(logger, browser);
+  (service as PuppeteerPdfService).currentUserDataDir = userDataDir; // track for cleanup
+
+  return service;
 }
