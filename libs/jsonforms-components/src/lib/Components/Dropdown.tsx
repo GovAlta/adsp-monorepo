@@ -28,7 +28,7 @@ export const isValidKey = (keyCode: string): boolean => {
 };
 
 export const Dropdown = (props: DropdownProps): JSX.Element => {
-  const { label, selected, onChange, optionListMaxHeight, isAutoCompletion, enabled, id } = props;
+  const { label, selected, onChange, optionListMaxHeight, isAutoCompletion, enabled, id, width } = props;
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string>(selected);
@@ -222,7 +222,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   };
 
   return (
-    <div data-testid={id} key={id}>
+    <div data-testid={id} key={id} style={{ width: width || '100%' }}>
       <GoADropdownTextbox
         isOpen={isOpen}
         onClick={(e: React.MouseEvent<HTMLDivElement>) => {
