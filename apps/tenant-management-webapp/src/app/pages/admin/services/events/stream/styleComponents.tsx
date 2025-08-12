@@ -5,6 +5,7 @@ export const ChipsWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
   padding-bottom: 1em;
+  padding-top: 0.5em;
 `;
 
 export const TableWrapper = styled.div`

@@ -9,7 +9,7 @@ import { QueueListTable } from './queueTable';
 import { QueueModal } from './queueModal';
 import { ProgressWrapper } from '../styled-components';
 import { DeleteConfirmationsView } from './deleteConfirmationsView';
-
+import { getSortedQueues } from '../taskUtil';
 interface AddEditQueueProps {
   openAddTask: boolean;
   setOpenAddTask: (val: boolean) => void;
@@ -32,16 +32,7 @@ export const QueuesList = ({ openAddTask }: AddEditQueueProps): JSX.Element => {
   });
 
   const taskQueues = useSelector((state: RootState) => {
-    return Object.entries(state?.task?.queues)
-      .sort((template1, template2) => {
-        return `${template1[1].namespace}:${template1[1].name}`.localeCompare(
-          `${template2[1].namespace}:${template2[1].name}`
-        );
-      })
-      .reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
-        tempObj[taskDefinitionId] = taskDefinitionData;
-        return tempObj;
-      }, {});
+    return getSortedQueues(state?.task?.queues);
   });
 
   useEffect(() => {
