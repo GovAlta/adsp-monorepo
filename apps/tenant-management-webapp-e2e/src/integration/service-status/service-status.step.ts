@@ -608,6 +608,7 @@ When('the user clicks Save button in Manual status change modal', function () {
 });
 
 Then('the user views the status of {string} changed to the first unused status', function (appName) {
+  cy.wait(2000); // Wait for the status to change after save
   statusObj
     .applicationCardStatusBadge(appName)
     .shadow()
