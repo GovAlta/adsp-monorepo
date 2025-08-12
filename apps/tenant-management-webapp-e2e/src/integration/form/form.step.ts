@@ -5,6 +5,7 @@ import common from '../common/common.page';
 
 const commonObj = new common();
 const formObj = new FormPage();
+let responseObj: Cypress.Response<any>;
 let replacementString = '';
 
 Given('a tenant admin user is on form service overview page', function () {
@@ -1509,4 +1510,24 @@ When('the user deletes all disposition states if any', function () {
       cy.log('There are no disposition states to delete');
     }
   });
+});
+
+Then('the user views all tags populated from the resource tags endpoint in alphabetical order', function () {
+  const requestURL = Cypress.env('directoryServiceApiUrl') + '/resource/v1/tags?top=200';
+  cy.request({
+    method: 'GET',
+    url: requestURL,
+    auth: {
+      bearer: Cypress.env('autotest-admin-token'),
+    },
+  }).then(function (response) {
+    responseObj = response;
+    const labels = responseObj.body.results.map((item) => item.label);
+    labels.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    cy.log(JSON.stringify(labels));
+  });
+
+  // const labels = responseObj.body.results.map((item) => item.label);
+  // // labels.sort((a, b) => a.localeCompare(b));
+  // cy.log(labels);
 });
