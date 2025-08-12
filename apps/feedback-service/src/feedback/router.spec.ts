@@ -519,7 +519,7 @@ describe('router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(valueServiceMock.readValues).not.toHaveBeenCalled();
       expect(res.json).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
     });
   });
 
