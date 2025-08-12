@@ -106,6 +106,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
           key={`jsonforms-${label}-dropdown`}
           id={`jsonforms-${label}-dropdown`}
           label={label || ''}
+          width={width}
           isAutoCompletion={autoCompletion}
           onChange={(value: string) => {
             handleChange(path, value);

@@ -12,6 +12,7 @@ export interface DropdownProps {
   onChange: (value: string) => void;
   isAutoCompletion?: boolean;
   id?: string;
+  width: string;
 }
 
 export interface GoADropdownTextboxProps {
