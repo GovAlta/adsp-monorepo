@@ -118,7 +118,7 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
         {formDefinition.submissionRecords ? 'true' : 'false'}
       </div>
 
-      {formDefinition.dispositionStates.length > 0 && (
+      {formDefinition.dispositionStates && formDefinition.dispositionStates.length > 0 && (
         <div>
           <DetailsTagHeading>Disposition States</DetailsTagHeading>
           {formDefinition.dispositionStates.map((x) => (
