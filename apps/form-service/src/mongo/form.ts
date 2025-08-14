@@ -155,6 +155,7 @@ export class MongoFormRepository implements FormRepository {
         {}
       ),
       dryRun: entity.dryRun,
+      registeredId: entity.registeredId,
     };
   }
 

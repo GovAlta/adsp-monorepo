@@ -37,6 +37,7 @@ export const configurationSchema = {
     supportTopic: { type: 'boolean' },
     submissionPdfTemplate: { type: 'string' },
     scheduledIntakes: { type: 'boolean' },
+    registeredId: { type: 'string' },
   },
   required: ['id', 'name', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
 };
