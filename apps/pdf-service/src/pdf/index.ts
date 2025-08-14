@@ -15,6 +15,7 @@ export * from './job';
 export * from './model';
 
 interface MiddlewareProps {
+  isJobPod: boolean;
   logger: Logger;
   serviceId: AdspId;
   tokenProvider: TokenProvider;
@@ -26,8 +27,10 @@ interface MiddlewareProps {
   directory: ServiceDirectory;
 }
 
-export function applyPdfMiddleware(app: Application, props: MiddlewareProps): Application {
-  createPdfJobs(props);
+export function applyPdfMiddleware(app: Application, { isJobPod, ...props }: MiddlewareProps): Application {
+  if (isJobPod) {
+    createPdfJobs(props);
+  }
 
   const router = createPdfRouter(props);
   app.use('/pdf/v1', router);
