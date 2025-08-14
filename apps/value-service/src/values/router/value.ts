@@ -83,7 +83,7 @@ export function readValue(repository: ValuesRepository): RequestHandler {
         url,
       } = req.query;
 
-      if (!tenant) {
+      if (!tenant && !user.isCore) {
         throw new InvalidOperationError('Tenant context is required for operation.');
       }
 
