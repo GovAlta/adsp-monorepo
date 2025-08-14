@@ -22,6 +22,7 @@ export function mapFormDefinition(entity: FormDefinition, revision: number, inta
     submissionRecords: entity.submissionRecords,
     scheduledIntakes: entity.scheduledIntakes,
     supportTopic: entity.supportTopic,
+    registeredId: entity.registeredId,
     intake,
   };
 }

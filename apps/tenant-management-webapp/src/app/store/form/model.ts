@@ -26,6 +26,7 @@ export interface FormDefinition {
   securityClassification?: SecurityClassification;
   resourceTags?: FormResourceTagResult[];
   dryRun?: boolean;
+  registeredId?: string;
 }
 
 export interface FormResourceTagResponse {
@@ -70,6 +71,7 @@ export const defaultFormDefinition: FormDefinition = {
   formDraftUrlTemplate: '',
   anonymousApply: false,
   oneFormPerApplicant: true,
+  registeredId: null,
   scheduledIntakes: false,
   dispositionStates: [],
   submissionRecords: false,
