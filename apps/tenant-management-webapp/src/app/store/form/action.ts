@@ -14,6 +14,10 @@ export const CLEAR_FORM_DEFINITIONS_ACTION = 'form/CLEAR_FORM_DEFINITIONS_ACTION
 export const FETCH_FORM_DEFINITIONS_ACTION = 'form/FETCH_FORM_DEFINITIONS_ACTION';
 export const FETCH_FORM_DEFINITIONS_SUCCESS_ACTION = 'form/FETCH_FORM_DEFINITIONS_SUCCESS_ACTION';
 
+export const FETCH_FORM_DEFINITIONS_REGISTER_ID_ACTION = 'form/FETCH_FORM_DEFINITIONS_REGISTER_ID_ACTION';
+export const FETCH_FORM_DEFINITIONS_REGISTER_ID_SUCCESS_ACTION =
+  'form/FETCH_FORM_DEFINITIONS_REGISTER_ID_SUCCESS_ACTION';
+
 export const UPDATE_FORM_DEFINITION_ACTION = 'form/UPDATE_FORM_DEFINITION_ACTION';
 export const UPDATE_FORM_DEFINITION_SUCCESS_ACTION = 'form/UPDATE_FORM_DEFINITION_SUCCESS_ACTION';
 
@@ -76,6 +80,7 @@ export const DELETE_RESOURCE_TAGS = 'form/resource/delete-resource-tags';
 
 export const DELETE_RESOURCE_TAGS_SUCCESS = 'form/resource/delete-resource-tags/success';
 export const INITIALIZE_FORM_EDITOR = 'form/initialize-form-editor';
+export const RESET_REGISTERED_ID_ACTION = 'form/reset-registered-id';
 
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
@@ -84,9 +89,20 @@ export interface FetchFormDefinitionsAction {
   type: typeof FETCH_FORM_DEFINITIONS_ACTION;
   next: string;
 }
+export interface FetchFormDefinitionsRegisterIdAction {
+  type: typeof FETCH_FORM_DEFINITIONS_REGISTER_ID_ACTION;
+  registeredId: string;
+}
 
 export interface FetchFormDefinitionsSuccessAction {
   type: typeof FETCH_FORM_DEFINITIONS_SUCCESS_ACTION;
+  payload: Record<string, FormDefinition>;
+  next: string;
+  after: string;
+}
+
+export interface FetchFormDefinitionsRegisterIdSuccessAction {
+  type: typeof FETCH_FORM_DEFINITIONS_REGISTER_ID_SUCCESS_ACTION;
   payload: Record<string, FormDefinition>;
   next: string;
   after: string;
@@ -230,10 +246,15 @@ export interface DeleteResourceSuccessTagsAction {
 export interface InitializeFormEditorAction {
   type: typeof INITIALIZE_FORM_EDITOR;
 }
+export interface ResetRegisteredIdAction {
+  type: typeof RESET_REGISTERED_ID_ACTION;
+}
 
 export type FormActionTypes =
+  | ResetRegisteredIdAction
   | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
+  | FetchFormDefinitionsRegisterIdSuccessAction
   | FetchFormDefinitionsAction
   | ExportFormInfoAction
   | ExportFormInfoSuccessAction
@@ -380,6 +401,10 @@ export const getFormDefinitions = (next?: string): FetchFormDefinitionsAction =>
   type: FETCH_FORM_DEFINITIONS_ACTION,
   next,
 });
+export const getFormDefinitionsRegisterId = (registeredId?: string): FetchFormDefinitionsRegisterIdAction => ({
+  type: FETCH_FORM_DEFINITIONS_REGISTER_ID_ACTION,
+  registeredId,
+});
 
 export const getFormDefinitionsSuccess = (
   results: Record<string, FormDefinition>,
@@ -387,6 +412,17 @@ export const getFormDefinitionsSuccess = (
   after: string
 ): FetchFormDefinitionsSuccessAction => ({
   type: FETCH_FORM_DEFINITIONS_SUCCESS_ACTION,
+  payload: results,
+  next,
+  after,
+});
+
+export const getFormDefinitionsRegisterIdSuccess = (
+  results: Record<string, FormDefinition>,
+  next: string,
+  after: string
+): FetchFormDefinitionsRegisterIdSuccessAction => ({
+  type: FETCH_FORM_DEFINITIONS_REGISTER_ID_SUCCESS_ACTION,
   payload: results,
   next,
   after,
@@ -575,6 +611,9 @@ export const fetchResourcesByTagSuccess = (
 ): FetchResourcesByTagSuccessAction => ({
   type: FETCH_RESOURCES_BY_TAG_SUCCESS,
   payload: { tag, resources, next, after },
+});
+export const resetRegisteredId = (): ResetRegisteredIdAction => ({
+  type: RESET_REGISTERED_ID_ACTION,
 });
 
 export const fetchResourcesByTagFailure = (error: string): FetchResourcesByTagFailureAction => ({
