@@ -16,6 +16,6 @@ em {
 }
 
 .help-content-markdown{
-  font-size: 18px !important;
-  line-height: 1.4 !important;
+  font-size: var(--goa-font-size-4) !important;
+  line-height: var(--goa-line-height-0.5) !important;
 }

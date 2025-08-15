@@ -129,7 +129,11 @@ export const HelpContentComponent = ({
 
   if (markdown) {
     return (
-      <Visible visible={visible}>{MarkdownComponent({ markdown: getMarkDownData(uischema?.options?.help) })}</Visible>
+      <Visible visible={visible}>
+        <div className="help-content-markdown">
+          {MarkdownComponent({ markdown: getMarkDownData(uischema?.options?.help) })}
+        </div>
+      </Visible>
     );
   }
   return (
