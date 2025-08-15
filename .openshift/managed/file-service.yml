@@ -74,13 +74,15 @@ objects:
       strategy:
         type: Docker
       source:
-        type: Git
-        git:
-          uri: "git@github.com:GovAlta/adsp-monorepo.git"
-          ref: main
-        contextDir: apps/${APP_NAME}/av-scanner
-        sourceSecret:
-          name: adsp-monorepo-github-deploy-key
+        type: Dockerfile
+        dockerfile: |
+          FROM clamav/clamav:stable_base
+
+          USER 0
+
+          RUN chmod -R 777 /var/log/clamav /var/lib/clamav
+
+          USER 10000:10000
       triggers:
         - type: ConfigChange
       runPolicy: Serial
@@ -142,7 +144,7 @@ objects:
             {
               "from": {
                 "kind": "ImageStreamTag",
-                "name": "file-av-scanner:latest",
+                "name": "file-av-scanner:${DEPLOY_TAG}",
                 "namespace": "${INFRA_NAMESPACE}"
               },
               "fieldPath": "spec.template.spec.containers[0].image"
@@ -166,6 +168,8 @@ objects:
                 claimName: file-av-db
           containers:
             - name: file-av-scanner
+              command:
+                - /init-unprivileged
               image: >-
                 image-registry.openshift-image-registry.svc:5000/adsp-build/file-av-scanner@latest
               ports:
@@ -191,10 +195,7 @@ objects:
           securityContext: {}
           schedulerName: default-scheduler
       strategy:
-        type: RollingUpdate
-        rollingUpdate:
-          maxUnavailable: 25%
-          maxSurge: 25%
+        type: Recreate
       revisionHistoryLimit: 10
       progressDeadlineSeconds: 600
 
