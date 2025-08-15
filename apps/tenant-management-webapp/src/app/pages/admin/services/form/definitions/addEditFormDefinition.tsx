@@ -81,6 +81,9 @@ export const AddEditFormDefinition = ({
     return state?.form?.definitions;
   });
   const definitionIds = Object.values(definitions).map((x) => x.name);
+  const registeredIds = Object.values(definitions)
+    .map((x) => x.registeredId)
+    .filter((item) => item != null);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -113,6 +116,7 @@ export const AddEditFormDefinition = ({
     isNotEmptyCheck('name')
   )
     .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
+    .add('duplicateRegisteredId', 'registeredId', duplicateNameCheck(registeredIds, 'Registered ID'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .add('formDraftUrlTemplate', 'formDraftUrlTemplate', checkFormDefaultUrl())
     .build();
@@ -278,7 +282,6 @@ export const AddEditFormDefinition = ({
                 testId="form-url-id"
                 disabled={!definition?.id?.length}
                 width="100%"
-                // eslint-disable-next-line
                 onChange={(name, value) => {
                   validators.remove('formDraftUrlTemplate');
                   const validations = {
@@ -306,6 +309,41 @@ export const AddEditFormDefinition = ({
               Populate form with a default multi-page form
             </GoACheckbox>
           )}
+          <GoAFormItem error={errors?.['registeredId']} label="Registered ID">
+            <GoAInput
+              type="text"
+              name="form-definition-registeredId"
+              value={definition.registeredId}
+              testId="form-definition-name"
+              aria-label="form-definition-name"
+              width="100%"
+              onChange={(name, value) => {
+                if (!value.trim()) {
+                  const updated = { ...definition };
+                  delete updated.registeredId;
+                  validators.remove('registeredId');
+                  setDefinition(updated);
+                } else {
+                  const validations = {
+                    registeredId: value,
+                  };
+
+                  validators.remove('registeredId');
+                  validations['duplicateRegisteredId'] = value;
+                  validators.checkAll({
+                    duplicateRegisteredId: value,
+                  });
+
+                  setDefinition({ ...definition, registeredId: value });
+                }
+              }}
+              onBlur={() => {
+                validators.checkAll({
+                  duplicateRegisteredId: definition.registeredId,
+                });
+              }}
+            />
+          </GoAFormItem>
         </>
       )}
     </GoAModal>

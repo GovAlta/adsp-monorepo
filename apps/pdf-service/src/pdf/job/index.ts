@@ -9,9 +9,11 @@ interface PdfJobProps extends GenerateJobProps {
 }
 
 export const createPdfJobs = (props: PdfJobProps): void => {
-  const scanJob = createGenerateJob(props);
+  const generateJob = createGenerateJob(props);
 
   props.queueService.getItems().subscribe(({ item, retryOnError, done }) => {
-    scanJob(item, retryOnError, done);
+    generateJob(item, retryOnError, done);
   });
+
+  props.logger.info('Initialized PDF generate job.', { context: 'JobsFactory' });
 };

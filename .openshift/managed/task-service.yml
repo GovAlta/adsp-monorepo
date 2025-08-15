@@ -9,6 +9,10 @@ metadata:
 labels:
   application: task-service
 parameters:
+  - name: APP_NAME
+    displayName: App Name
+    value: task-service
+    required: true
   - name: INFRA_NAMESPACE
     description: Name of the infrastructure project.
     displayName: Infra Namespace
@@ -31,172 +35,7 @@ parameters:
     description: Host for the route.
     displayName: Route Host
     value: ""
-  - name: DATABASE_NAME
-    displayName: "Database Name"
-    description: "Name of the database accessed."
-    value: postgres
-    required: true
-  - name: DATABASE_USER
-    displayName: "Database Connection User"
-    description: User for accessing the database.
-    value: postgres
-    required: true
-  - name: DATABASE_PASSWORD
-    description: Password for the PostgreSQL connection user.
-    displayName: PostgreSQL Connection Password
-    from: "[a-zA-Z0-9]{16}"
-    generate: expression
-    required: true
 objects:
-  # Postgres Objects
-  # NOTE: Secret will generate new values if updated, so this is only for branch deployments.
-  - apiVersion: v1
-    kind: Secret
-    metadata:
-      labels:
-        app: task-service
-        component: database
-        apply-init: "true"
-      name: task-service-postgres
-    stringData:
-      database-host: task-service-postgres
-      database-port: "5432"
-      database-name: ${DATABASE_NAME}
-      database-password: ${DATABASE_PASSWORD}
-      database-user: ${DATABASE_USER}
-      database-tls: "false"
-  # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
-  - apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app: task-service
-        component: database
-        apply-init: "true"
-      name: task-service-postgres
-    spec:
-      storageClassName: azure-disk
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 1Gi
-  - apiVersion: v1
-    kind: Service
-    metadata:
-      labels:
-        app: task-service
-        component: database
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
-      name: task-service-postgres
-    spec:
-      ports:
-        - name: postgresql
-          port: 5432
-          protocol: TCP
-          targetPort: 5432
-      selector:
-        app: task-service
-        component: database
-      sessionAffinity: None
-      type: ClusterIP
-    status:
-      loadBalancer: {}
-  - apiVersion: v1
-    kind: DeploymentConfig
-    metadata:
-      labels:
-        app: task-service
-        component: database
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
-      name: task-service-postgres
-    spec:
-      replicas: 1
-      selector:
-        app: task-service
-        component: database
-      strategy:
-        type: Recreate
-      template:
-        metadata:
-          labels:
-            app: task-service
-            component: database
-        spec:
-          containers:
-            - capabilities: {}
-              env:
-                - name: POSTGRESQL_USER
-                  valueFrom:
-                    secretKeyRef:
-                      key: database-user
-                      name: task-service-postgres
-                - name: POSTGRESQL_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      key: database-password
-                      name: task-service-postgres
-                - name: POSTGRESQL_DATABASE
-                  valueFrom:
-                    secretKeyRef:
-                      key: database-name
-                      name: task-service-postgres
-              image: " "
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                exec:
-                  command:
-                    - /usr/libexec/check-container
-                    - --live
-                initialDelaySeconds: 120
-                timeoutSeconds: 10
-              name: postgresql
-              ports:
-                - containerPort: 5432
-                  protocol: TCP
-              readinessProbe:
-                exec:
-                  command:
-                    - /usr/libexec/check-container
-                initialDelaySeconds: 5
-                timeoutSeconds: 1
-              resources:
-                limits:
-                  cpu: 200m
-                  memory: 500Mi
-                requests:
-                  cpu: 20m
-                  memory: 200Mi
-              securityContext:
-                capabilities: {}
-                privileged: false
-              terminationMessagePath: /dev/termination-log
-              volumeMounts:
-                - mountPath: /var/lib/pgsql/data
-                  name: task-service-postgres-data
-          dnsPolicy: ClusterFirst
-          restartPolicy: Always
-          volumes:
-            - name: task-service-postgres-data
-              persistentVolumeClaim:
-                claimName: task-service-postgres
-      triggers:
-        - imageChangeParams:
-            automatic: true
-            containerNames:
-              - postgresql
-            from:
-              kind: ImageStreamTag
-              name: postgresql:9.6
-              namespace: openshift
-          type: ImageChange
-
   # Service Objects
 
   # ImageStream is here for reference.
@@ -205,67 +44,68 @@ objects:
     kind: ImageStream
     metadata:
       labels:
-        app: task-service
+        app: ${APP_NAME}
         component: api
         apply-infra: "true"
-      name: task-service
+      name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
     spec:
       tags:
         - name: ${BUILD_TAG}
           from:
             kind: DockerImage
-            name: ghcr.io/govalta/task-service:${BUILD_TAG}
+            name: ghcr.io/govalta/${APP_NAME}:${BUILD_TAG}
           referencePolicy:
             type: Local
 
-  # DeploymentConfig (and Service and Route) is created in each environment of the
-  # primary pipline as well as branch deployment.
-  - apiVersion: v1
-    kind: DeploymentConfig
+  # DeploymentConfig (and Service and Route) is created in each environment
+  - apiVersion: apps/v1
+    kind: Deployment
     metadata:
       labels:
-        app: task-service
+        app: ${APP_NAME}
         component: api
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: task-service
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${APP_NAME}:${DEPLOY_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": true
+            }
+          ]
     spec:
       replicas: 3
-      revisionHistoryLimit: 3
       selector:
-        app: task-service
-        component: api
-      strategy:
-        type: Rolling
-        rollingParams:
-          timeoutSeconds: 600
-          maxUnavailable: 25%
-          maxSurge: 25%
-        activeDeadlineSeconds: 21600
-        resources:
-          limits:
-            cpu: 200m
-            memory: 200Mi
-          requests:
-            cpu: 20m
-            memory: 50Mi
+        matchLabels:
+          app: ${APP_NAME}
+          component: api
       template:
         metadata:
           labels:
-            app: task-service
+            app: ${APP_NAME}
             component: api
         spec:
           containers:
-            - envFrom:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
+              envFrom:
                 - configMapRef:
-                    name: task-service
+                    name: ${APP_NAME}
                 - configMapRef:
                     name: directory-overrides
                 - secretRef:
-                    name: task-service
+                    name: ${APP_NAME}
               env:
                 - name: PORT
                   value: "3333"
@@ -273,34 +113,34 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-host
-                      name: task-service-postgres
+                      name: ${APP_NAME}-postgres
                 - name: DB_PORT
                   valueFrom:
                     secretKeyRef:
                       key: database-port
-                      name: task-service-postgres
+                      name: ${APP_NAME}-postgres
                 - name: DB_USER
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: task-service-postgres
+                      name: ${APP_NAME}-postgres
                 - name: DB_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: task-service-postgres
+                      name: ${APP_NAME}-postgres
                 - name: DB_NAME
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: task-service-postgres
+                      name: ${APP_NAME}-postgres
                 - name: DB_TLS
                   valueFrom:
                     secretKeyRef:
                       key: database-tls
-                      name: task-service-postgres
+                      name: ${APP_NAME}-postgres
               imagePullPolicy: IfNotPresent
-              name: task-service
+              name: ${APP_NAME}
               ports:
                 - containerPort: 3333
                   name: http
@@ -339,27 +179,25 @@ objects:
           schedulerName: default-scheduler
           securityContext: {}
           terminationGracePeriodSeconds: 30
-      test: false
-      triggers:
-        - imageChangeParams:
-            containerNames:
-              - task-service
-            from:
-              kind: ImageStreamTag
-              name: task-service:${DEPLOY_TAG}
-              namespace: ${INFRA_NAMESPACE}
-          type: ImageChange
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 25%
+          maxSurge: 25%
+      revisionHistoryLimit: 10
+      progressDeadlineSeconds: 600
   - apiVersion: v1
     kind: Service
     metadata:
       labels:
-        app: task-service
+        app: ${APP_NAME}
         component: api
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: task-service
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       ports:
         - name: http
@@ -367,7 +205,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: task-service
+        app: ${APP_NAME}
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -375,13 +213,14 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: task-service
+        app: ${APP_NAME}
         component: api
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: task-service
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -390,6 +229,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: task-service
+        name: ${APP_NAME}
         weight: 100
       wildcardPolicy: None

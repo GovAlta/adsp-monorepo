@@ -27,6 +27,7 @@ export interface FormDefinition {
   resourceTags?: FormResourceTagResult[];
   dryRun?: boolean;
   ministry?: string;
+  registeredId?: string;
 }
 
 export interface FormResourceTagResponse {
@@ -71,6 +72,7 @@ export const defaultFormDefinition: FormDefinition = {
   formDraftUrlTemplate: '',
   anonymousApply: false,
   oneFormPerApplicant: true,
+  registeredId: null,
   scheduledIntakes: false,
   dispositionStates: [],
   submissionRecords: false,

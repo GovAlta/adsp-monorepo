@@ -19,6 +19,7 @@ export interface FormDefinition {
   securityClassification?: SecurityClassificationType;
   scheduledIntakes?: boolean;
   dryRun?: boolean;
+  registeredId?: string;
 }
 
 export interface QueueTaskToProcess {

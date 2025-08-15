@@ -29,6 +29,7 @@ export class FormDefinitionEntity implements FormDefinition {
   securityClassification?: SecurityClassificationType;
   scheduledIntakes: boolean;
   dryRun: boolean;
+  registeredId?: string;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
 
@@ -61,6 +62,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.validationService.setSchema(`${this.tenantId.resource}:${this.id}`, this.dataSchema);
     this.securityClassification = definition?.securityClassification;
     this.scheduledIntakes = definition?.scheduledIntakes || false;
+    this.registeredId = definition?.registeredId || null;
   }
 
   public canAccessDefinition(user: User): boolean {

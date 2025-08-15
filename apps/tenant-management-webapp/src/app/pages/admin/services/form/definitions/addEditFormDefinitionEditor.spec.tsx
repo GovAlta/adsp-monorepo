@@ -64,6 +64,7 @@ describe('form Component', () => {
     queueTaskToProcess: { queueName: 'test-queue', queueNameSpace: 'queue-namespace' },
     submissionPdfTemplate: null,
     oneFormPerApplicant: true,
+    registeredId: '123',
     scheduledIntakes: false,
   };
   const store = mockStore({
@@ -198,6 +199,7 @@ describe('Test AddEditFormDefinitionEditor', () => {
     submissionPdfTemplate: null,
     oneFormPerApplicant: true,
     scheduledIntakes: false,
+    registeredId: '123',
   };
 
   it('can save new disposition state', () => {
