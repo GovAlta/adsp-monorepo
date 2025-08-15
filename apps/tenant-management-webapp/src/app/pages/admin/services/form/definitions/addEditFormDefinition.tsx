@@ -160,6 +160,9 @@ export const AddEditFormDefinition = ({
                 if (definition?.formDraftUrlTemplate === '') {
                   definition.formDraftUrlTemplate = defaultFormUrl;
                 }
+                if (definition.registeredId === null) {
+                  delete definition.registeredId;
+                }
                 onSave(definition);
               }
             }}

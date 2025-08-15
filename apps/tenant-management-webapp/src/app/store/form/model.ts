@@ -127,6 +127,7 @@ export interface FormState {
   socket: Socket;
 
   formResourceTag: FormResourceTag;
+  registerIdDefinition: Record<string, FormDefinition>;
 }
 
 export interface FormResourceTag {
