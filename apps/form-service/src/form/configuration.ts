@@ -12,6 +12,9 @@ export const configurationSchema = {
     clerkRoles: { type: 'array', items: { type: 'string' } },
     dataSchema: { $ref: 'http://json-schema.org/draft-07/schema#' },
     uiSchema: { type: 'object' },
+    ministry: {
+      type: 'string',
+    },
     securityClassification: {
       type: 'string',
       enum: ['public', 'protected a', 'protected b', 'protected c'],
