@@ -26,6 +26,7 @@ export interface FormDefinition {
   securityClassification?: SecurityClassification;
   resourceTags?: FormResourceTagResult[];
   dryRun?: boolean;
+  ministry?: string;
   registeredId?: string;
 }
 

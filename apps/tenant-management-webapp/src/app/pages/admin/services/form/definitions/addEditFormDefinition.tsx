@@ -25,8 +25,11 @@ import {
   GoAFormItem,
   GoAButton,
   GoACheckbox,
+  GoADropdown,
+  GoADropdownItem,
 } from '@abgov/react-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import { ministryOptions } from './ministryOptions';
 interface AddEditFormDefinitionProps {
   open: boolean;
   isEdit: boolean;
@@ -253,6 +256,22 @@ export const AddEditFormDefinition = ({
                 errorMsg={errors?.['description']}
               />
             </DescriptionItem>
+          </GoAFormItem>
+          <GoAFormItem label="Ministry">
+            <FormFormItem>
+              <GoADropdown
+                value={definition?.ministry ?? ''}
+                onChange={(_, v) => {
+                  const value = Array.isArray(v) ? v[0] ?? '' : v;
+                  setDefinition({ ...definition, ministry: value });
+                }}
+                width="100%"
+              >
+                {ministryOptions.map((o) => (
+                  <GoADropdownItem key={o.value} value={o.value} label={o.label} />
+                ))}
+              </GoADropdown>
+            </FormFormItem>
           </GoAFormItem>
 
           <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
