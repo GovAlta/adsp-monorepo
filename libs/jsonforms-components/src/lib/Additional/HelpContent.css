@@ -14,3 +14,8 @@ em {
   font-size: var(--goa-typography-body-s) !important;
   color: var(--goa-color-text-default) !important;
 }
+
+.help-content-markdown{
+  font-size: var(--goa-font-size-4) !important;
+  line-height: var(--goa-line-height-0.5) !important;
+}
