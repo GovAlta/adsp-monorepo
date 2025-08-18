@@ -115,6 +115,9 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
               overviewRulerLanes: 0,
               hideCursorInOverviewRuler: true,
               wordWrap: 'on',
+              folding: true,
+              foldingStrategy: 'auto',
+              showFoldingControls: 'always',
             }}
           />
         </GoAFormItem>
