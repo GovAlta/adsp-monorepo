@@ -83,11 +83,22 @@ objects:
       type: ClusterIP
     status:
       loadBalancer: {}
-  - apiVersion: v1
-    kind: DeploymentConfig
+  - apiVersion: apps/v1
+    kind: Deployment
     metadata:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "redis:5-el8",
+                "namespace": "openshift"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image"
+            }
+          ]
       labels:
         app: ${APP_NAME}
         component: database
@@ -100,17 +111,9 @@ objects:
     spec:
       replicas: 1
       selector:
-        app: ${APP_NAME}
-        component: database
-      strategy:
-        type: Recreate
-        resources:
-          limits:
-            cpu: 200m
-            memory: 200Mi
-          requests:
-            cpu: 20m
-            memory: 50Mi
+        matchLabels:
+          app: ${APP_NAME}
+          component: database
       template:
         metadata:
           labels:
@@ -118,8 +121,7 @@ objects:
             component: database
         spec:
           containers:
-            - capabilities: {}
-              env:
+            - env:
                 - name: REDIS_PASSWORD
                   valueFrom:
                     secretKeyRef:
@@ -165,19 +167,8 @@ objects:
             - name: ${APP_NAME}-redis-data
               persistentVolumeClaim:
                 claimName: ${APP_NAME}-redis
-      triggers:
-        - imageChangeParams:
-            automatic: true
-            containerNames:
-              - redis
-            from:
-              kind: ImageStreamTag
-              name: "redis:5-el8"
-              namespace: openshift
-            lastTriggeredImage: ""
-          type: ImageChange
-        - type: ConfigChange
-    status: {}
+      strategy:
+        type: Recreate
 
   # Service Objects
 
