@@ -99,7 +99,7 @@ export function readValue(repository: ValuesRepository): RequestHandler {
         timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
         context: contextValue ? JSON.parse(contextValue as string) : null,
         correlationId: correlationId as string,
-        tenantId: tenant.id,
+        tenantId: tenant?.id,
         value: value as string,
         url: url as string,
       };
