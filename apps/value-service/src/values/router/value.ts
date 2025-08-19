@@ -87,7 +87,7 @@ export function readValue(repository: ValuesRepository): RequestHandler {
         throw new InvalidOperationError('Tenant context is required for operation.');
       }
 
-      if (!isAllowedUser(user, tenant.id, [ServiceUserRoles.Reader, ExportServiceRoles.ExportJob], true)) {
+      if (!isAllowedUser(user, tenant?.id, [ServiceUserRoles.Reader, ExportServiceRoles.ExportJob], true)) {
         throw new UnauthorizedUserError('read values', user);
       }
 
