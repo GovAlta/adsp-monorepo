@@ -28,6 +28,7 @@ export interface FormDefinition {
   dryRun?: boolean;
   ministry?: string;
   registeredId?: string;
+  programName?: string | null;
 }
 
 export interface FormResourceTagResponse {
@@ -80,6 +81,7 @@ export const defaultFormDefinition: FormDefinition = {
   queueTaskToProcess: { queueName: '', queueNameSpace: '' } as QueueTaskToProcess,
   supportTopic: false,
   securityClassification: SecurityClassification.ProtectedB,
+  programName: null,
 };
 export interface Stream {
   namespace: string;
