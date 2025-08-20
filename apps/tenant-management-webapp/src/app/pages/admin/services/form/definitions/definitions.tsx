@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   GoAButton,
   GoACircularProgress,
@@ -23,9 +24,10 @@ import {
   setSelectedTag,
   deleteResourceTags,
   resetRegisteredId,
+  getFormDefinitionsRegisterId,
 } from '@store/form/action';
 import { RootState } from '@store/index';
-import { ResourceTagFilterCriteria, ResourceTagResult, Service, Tag } from '@store/directory/models';
+import { ResourceTagFilterCriteria, ResourceTagResult, Service, Tag, ResourceTag } from '@store/directory/models';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
 import { Center, IndicatorWithDelay, PageIndicator } from '@components/Indicator';
@@ -36,8 +38,6 @@ import { LoadMoreWrapper } from './style-components';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
-import { ResourceTag } from '@store/directory/models';
-import { getFormDefinitionsRegisterId } from '@store/form/action';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -45,6 +45,13 @@ interface FormDefinitionsProps {
   showFormDefinitions: boolean;
   setOpenAddDefinition: (val: boolean) => void;
 }
+
+const titleCase = (s: string) =>
+  (s || '')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
 export const FormDefinitions = ({
   openAddDefinition,
@@ -69,6 +76,9 @@ export const FormDefinitions = ({
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
   const [registerIdSearch, setRegisterIdSearch] = useState('');
+  const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
+
+  const [ministryFilter, setMinistryFilter] = useState<string>('');
 
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
@@ -89,8 +99,6 @@ export const FormDefinitions = ({
   };
 
   const formDefinitions = useSelector(orderedFormDefinitions);
-
-  const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -204,6 +212,23 @@ export const FormDefinitions = ({
 
   const displayDefinitions = registerIdDefinition ? registerIdDefinition : selectedTag ? tagResources : formDefinitions;
 
+  const ministryOptions = useMemo(() => {
+    const set = new Set<string>();
+    Object.values(displayDefinitions || {}).forEach((d: any) => {
+      if (d?.ministry) set.add(d.ministry);
+    });
+    return Array.from(set).sort((a, b) => titleCase(a).localeCompare(titleCase(b)));
+  }, [displayDefinitions]);
+
+  const filteredDefinitions = useMemo(() => {
+    if (!ministryFilter) return displayDefinitions;
+    const entries = Object.entries(displayDefinitions || {});
+    return entries.reduce((obj, [id, def]: [string, any]) => {
+      if (def?.ministry === ministryFilter) obj[id] = def;
+      return obj;
+    }, {} as Record<string, any>);
+  }, [displayDefinitions, ministryFilter]);
+
   return (
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
@@ -233,6 +258,23 @@ export const FormDefinitions = ({
             .map((tag) => (
               <GoADropdownItem key={tag.urn} value={tag.value} label={tag.label} />
             ))}
+        </GoADropdown>
+      </GoAFormItem>
+
+      <GoAFormItem label="Filter by ministry">
+        <GoADropdown
+          name="MinistryFilter"
+          width="60ch"
+          value={ministryFilter}
+          onChange={(_, v) => {
+            const value = Array.isArray(v) ? v[0] ?? '' : v;
+            setMinistryFilter(value);
+          }}
+        >
+          <GoADropdownItem value="" label="<No Ministry Filter>" />
+          {ministryOptions.map((m) => (
+            <GoADropdownItem key={m} value={m} label={titleCase(m)} />
+          ))}
         </GoADropdown>
       </GoAFormItem>
 
@@ -295,10 +337,10 @@ export const FormDefinitions = ({
         ((!selectedTag && Object.keys(formDefinitions).length > 0) ||
           (selectedTag && Object.keys(tagResources ?? {}).length > 0)) && (
           <>
-            {Object.keys(displayDefinitions).length > 0 ? (
+            {Object.keys(filteredDefinitions || {}).length > 0 ? (
               <>
                 <FormDefinitionsTable
-                  definitions={displayDefinitions}
+                  definitions={filteredDefinitions}
                   baseResourceFormUrn={BASE_FORM_CONFIG_URN}
                   onDelete={(formDefinition) => {
                     setShowDeleteConfirmation(true);
@@ -309,7 +351,7 @@ export const FormDefinitions = ({
                     setCurrentDefinition(formDefinition);
                   }}
                 />
-                {getNextEntries() && (
+                {getNextEntries() && !ministryFilter && (
                   <LoadMoreWrapper>
                     <GoAButton
                       testId="form-event-load-more-btn"
@@ -327,6 +369,7 @@ export const FormDefinitions = ({
             )}
           </>
         )}
+
       {showAddRemoveResourceTagModal && (
         <AddRemoveResourceTagModal
           baseResourceFormUrn={BASE_FORM_CONFIG_URN}
