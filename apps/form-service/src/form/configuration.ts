@@ -20,6 +20,9 @@ export const configurationSchema = {
       enum: ['public', 'protected a', 'protected b', 'protected c'],
       default: 'protected a',
     },
+    programName: {
+      anyOf: [{ type: 'string', minLength: 1 }, { type: 'null' }],
+    },
     dispositionStates: {
       type: 'array',
       items: {

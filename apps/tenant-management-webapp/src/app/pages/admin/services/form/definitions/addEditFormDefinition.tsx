@@ -27,6 +27,8 @@ import {
   GoACheckbox,
   GoADropdown,
   GoADropdownItem,
+  GoAIconButton,
+  GoATooltip,
 } from '@abgov/react-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import { ministryOptions } from './ministryOptions';
@@ -121,6 +123,67 @@ export const AddEditFormDefinition = ({
     .add('formDraftUrlTemplate', 'formDraftUrlTemplate', checkFormDefaultUrl())
     .build();
 
+  const [programOptions, setProgramOptions] = useState<string[]>([
+    'Farmers Market',
+    'Food Safety Program',
+    'Liquor Licensing',
+    'Cannabis Licensing',
+    'Small Business Grants',
+  ]);
+
+  const [showAddProgram, setShowAddProgram] = useState(false);
+  const [newProgramName, setNewProgramName] = useState('');
+
+  const [showRemoveProgram, setShowRemoveProgram] = useState(false);
+  const [removeSelections, setRemoveSelections] = useState<Record<string, boolean>>({});
+
+  const [showEditProgram, setShowEditProgram] = useState(false);
+  const [editTarget, setEditTarget] = useState<string>('');
+  const [editProgramName, setEditProgramName] = useState<string>('');
+
+  const addProgram = () => {
+    const val = newProgramName.trim();
+    if (!val) return;
+    const exists = programOptions.some((p) => p.toLowerCase() === val.toLowerCase());
+    if (exists) return;
+    setProgramOptions([...programOptions, val].sort((a, b) => a.localeCompare(b)));
+    setNewProgramName('');
+    setShowAddProgram(false);
+  };
+
+  const removePrograms = () => {
+    const toRemove = Object.keys(removeSelections).filter((k) => removeSelections[k]);
+    if (toRemove.length === 0) {
+      setShowRemoveProgram(false);
+      return;
+    }
+    const updated = programOptions.filter((p) => !toRemove.includes(p));
+    setProgramOptions(updated);
+    if (definition?.programName && toRemove.includes(definition.programName)) {
+      setDefinition({ ...definition, programName: null });
+    }
+    setRemoveSelections({});
+    setShowRemoveProgram(false);
+  };
+
+  const startEditProgram = () => {
+    if (!editTarget) return;
+    const val = editProgramName.trim();
+    if (!val) return;
+    const exists = programOptions.some(
+      (p) => p.toLowerCase() === val.toLowerCase() && p.toLowerCase() !== editTarget.toLowerCase()
+    );
+    if (exists) return;
+
+    const updated = programOptions.map((p) => (p === editTarget ? val : p)).sort((a, b) => a.localeCompare(b));
+    setProgramOptions(updated);
+    if (definition?.programName === editTarget) {
+      setDefinition({ ...definition, programName: val });
+    }
+    setShowEditProgram(false);
+    setEditTarget('');
+    setEditProgramName('');
+  };
   return (
     <GoAModal
       testId="definition-form"
@@ -276,6 +339,68 @@ export const AddEditFormDefinition = ({
               </GoADropdown>
             </FormFormItem>
           </GoAFormItem>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <GoAFormItem label="Program (optional)">
+              <FormFormItem>
+                <GoADropdown
+                  value={definition?.programName ?? ''}
+                  onChange={(_, v: string) => {
+                    const value = Array.isArray(v) ? (v[0] as string) : v;
+                    setDefinition({ ...definition, programName: value || null });
+                  }}
+                  width="35ch"
+                >
+                  <GoADropdownItem value="" label="--Select--" />
+                  {programOptions.map((p) => (
+                    <GoADropdownItem key={p} value={p} label={p} />
+                  ))}
+                </GoADropdown>
+              </FormFormItem>
+            </GoAFormItem>
+
+            <div
+              style={{
+                display: 'flex',
+                gap: '0.4rem',
+                paddingLeft: '0.5rem',
+                marginTop: '15px',
+              }}
+            >
+              <GoATooltip content="Add a new program" position="top">
+                <GoAIconButton
+                  variant="color"
+                  size="medium"
+                  icon="add-circle"
+                  ariaLabel="Add program"
+                  onClick={() => setShowAddProgram(true)}
+                />
+              </GoATooltip>
+
+              <GoATooltip content="Remove existing program(s)" position="top">
+                <GoAIconButton
+                  variant="color"
+                  size="medium"
+                  icon="remove-circle"
+                  ariaLabel="Remove program(s)"
+                  onClick={() => setShowRemoveProgram(true)}
+                />
+              </GoATooltip>
+
+              <GoATooltip content="Edit a selected program" position="top">
+                <GoAIconButton
+                  variant="color"
+                  size="medium"
+                  icon="pencil"
+                  ariaLabel="Edit program"
+                  onClick={() => {
+                    setEditTarget(programOptions[0] || '');
+                    setEditProgramName(programOptions[0] || '');
+                    setShowEditProgram(true);
+                  }}
+                />
+              </GoATooltip>
+            </div>
+          </div>
 
           <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
             <FormFormItem>
@@ -347,6 +472,123 @@ export const AddEditFormDefinition = ({
               }}
             />
           </GoAFormItem>
+          <GoAModal
+            open={showAddProgram}
+            heading="Add program"
+            maxWidth="25%"
+            actions={
+              <GoAButtonGroup alignment="end">
+                <GoAButton
+                  type="secondary"
+                  onClick={() => {
+                    setShowAddProgram(false);
+                    setNewProgramName('');
+                  }}
+                >
+                  Cancel
+                </GoAButton>
+                <GoAButton type="primary" onClick={addProgram}>
+                  Add
+                </GoAButton>
+              </GoAButtonGroup>
+            }
+          >
+            <GoAFormItem label="Program name">
+              <GoAInput
+                name="new-program-name"
+                width="100%"
+                value={newProgramName}
+                onChange={(_, v) => setNewProgramName(v)}
+              />
+            </GoAFormItem>
+          </GoAModal>
+
+          <GoAModal
+            open={showRemoveProgram}
+            heading="Remove program(s)"
+            maxWidth="25%"
+            actions={
+              <GoAButtonGroup alignment="end">
+                <GoAButton
+                  type="secondary"
+                  onClick={() => {
+                    setRemoveSelections({});
+                    setShowRemoveProgram(false);
+                  }}
+                >
+                  Cancel
+                </GoAButton>
+                <GoAButton type="primary" onClick={removePrograms}>
+                  Remove
+                </GoAButton>
+              </GoAButtonGroup>
+            }
+          >
+            <div style={{ display: 'grid', gap: '0.25rem' }}>
+              {programOptions.length === 0 ? (
+                <div>No programs to remove.</div>
+              ) : (
+                programOptions.map((opt) => (
+                  <GoACheckbox
+                    key={opt}
+                    name={`rm-${opt}`}
+                    checked={!!removeSelections[opt]}
+                    onChange={(_, checked) => setRemoveSelections((prev) => ({ ...prev, [opt]: checked }))}
+                  >
+                    {opt}
+                  </GoACheckbox>
+                ))
+              )}
+            </div>
+          </GoAModal>
+
+          <GoAModal
+            open={showEditProgram}
+            heading="Edit program"
+            maxWidth="25%"
+            actions={
+              <GoAButtonGroup alignment="end">
+                <GoAButton
+                  type="secondary"
+                  onClick={() => {
+                    setShowEditProgram(false);
+                    setEditTarget('');
+                    setEditProgramName('');
+                  }}
+                >
+                  Cancel
+                </GoAButton>
+                <GoAButton type="primary" onClick={startEditProgram}>
+                  Save
+                </GoAButton>
+              </GoAButtonGroup>
+            }
+          >
+            <GoAFormItem label="Choose program">
+              <GoADropdown
+                value={editTarget}
+                onChange={(_, v: string) => {
+                  const value = Array.isArray(v) ? (v[0] as string) : v;
+                  setEditTarget(value);
+                  setEditProgramName(value);
+                }}
+                width="100%"
+              >
+                {programOptions.map((p) => (
+                  <GoADropdownItem key={p} value={p} label={p} />
+                ))}
+              </GoADropdown>
+            </GoAFormItem>
+
+            <GoAFormItem label="New name">
+              <GoAInput
+                name="edit-program-name"
+                width="100%"
+                value={editProgramName}
+                onChange={(_, v) => setEditProgramName(v)}
+              />
+            </GoAFormItem>
+          </GoAModal>
         </>
       )}
     </GoAModal>
