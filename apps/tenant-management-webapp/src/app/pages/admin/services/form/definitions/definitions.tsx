@@ -79,6 +79,7 @@ export const FormDefinitions = ({
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
 
   const [ministryFilter, setMinistryFilter] = useState<string>('');
+  const [programFilter, setProgramFilter] = useState<string>('');
 
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
@@ -95,7 +96,7 @@ export const FormDefinitions = ({
     return entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
       tempObj[formDefinitionId] = formDefinitionData;
       return tempObj;
-    }, {});
+    }, {} as Record<string, any>);
   };
 
   const formDefinitions = useSelector(orderedFormDefinitions);
@@ -212,6 +213,31 @@ export const FormDefinitions = ({
 
   const displayDefinitions = registerIdDefinition ? registerIdDefinition : selectedTag ? tagResources : formDefinitions;
 
+  const getProgramFromDef = (def: any): { id: string; label: string } => {
+    const id = def?.programId ?? def?.program?.id ?? def?.program ?? def?.programName ?? '';
+    const label =
+      def?.programName ??
+      def?.program?.name ??
+      (typeof def?.program === 'string' ? def.program : '') ??
+      (typeof id === 'string' ? id : '');
+    return { id: String(id ?? '').trim(), label: String(label ?? '').trim() };
+  };
+
+  const programOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    Object.values(displayDefinitions || {}).forEach((d: any) => {
+      const { id, label } = getProgramFromDef(d);
+      if (id) {
+        if (!seen.has(id) || (seen.get(id) || '').toLowerCase() === id.toLowerCase()) {
+          seen.set(id, label || id);
+        }
+      }
+    });
+    return Array.from(seen.entries())
+      .map(([id, label]) => ({ id, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [displayDefinitions]);
+
   const ministryOptions = useMemo(() => {
     const set = new Set<string>();
     Object.values(displayDefinitions || {}).forEach((d: any) => {
@@ -221,13 +247,18 @@ export const FormDefinitions = ({
   }, [displayDefinitions]);
 
   const filteredDefinitions = useMemo(() => {
-    if (!ministryFilter) return displayDefinitions;
+    if (!programFilter && !ministryFilter) return displayDefinitions;
     const entries = Object.entries(displayDefinitions || {});
     return entries.reduce((obj, [id, def]: [string, any]) => {
-      if (def?.ministry === ministryFilter) obj[id] = def;
+      if (ministryFilter && def?.ministry !== ministryFilter) return obj;
+      if (programFilter) {
+        const { id: progId } = getProgramFromDef(def);
+        if (!progId || progId !== programFilter) return obj;
+      }
+      obj[id] = def;
       return obj;
     }, {} as Record<string, any>);
-  }, [displayDefinitions, ministryFilter]);
+  }, [displayDefinitions, ministryFilter, programFilter]);
 
   return (
     <section>
@@ -258,6 +289,24 @@ export const FormDefinitions = ({
             .map((tag) => (
               <GoADropdownItem key={tag.urn} value={tag.value} label={tag.label} />
             ))}
+        </GoADropdown>
+      </GoAFormItem>
+
+      <GoAFormItem label="Filter by program">
+        <GoADropdown
+          name="ProgramFilter"
+          width="60ch"
+          value={programFilter}
+          onChange={(_, v) => {
+            const value = Array.isArray(v) ? v[0] ?? '' : v;
+            dispatch(resetRegisteredId());
+            setProgramFilter(value);
+          }}
+        >
+          <GoADropdownItem value="" label="<No Program Filter>" />
+          {programOptions.map((p) => (
+            <GoADropdownItem key={p.id} value={p.id} label={p.label || p.id} />
+          ))}
         </GoADropdown>
       </GoAFormItem>
 
