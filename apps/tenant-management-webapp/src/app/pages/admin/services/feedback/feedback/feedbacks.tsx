@@ -160,7 +160,7 @@ export const FeedbacksList = (): JSX.Element => {
 
   return (
     <section>
-      <GoAModal open={expandView} heading="Feedback Service" onClose={() => setExpandView(false)} maxWidth="100%">
+      {expandView && (
         <FullScreenModalWrapper>
           <h2 style={{ margin: 0 }}>Feedback service</h2>
           <GoAButton
@@ -184,7 +184,7 @@ export const FeedbacksList = (): JSX.Element => {
               Export CSV
             </GoAButton>
             <GoAButton type="secondary" trailingIcon="contract" onClick={() => setExpandView(false)}>
-              Collapse View
+              Collapse view
             </GoAButton>
           </GoAButtonGroup>
 
@@ -192,7 +192,7 @@ export const FeedbacksList = (): JSX.Element => {
           {feedbacks.length > 0 && <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={false} />}
           {renderLoadMoreButton()}
         </FullScreenModalWrapper>
-      </GoAModal>
+      )}
 
       {!sites && renderNoItem('feedback')}
       {!indicator.show && sites && Object.keys(sites).length === 0 && renderNoItem('feedback')}
@@ -215,8 +215,13 @@ export const FeedbacksList = (): JSX.Element => {
             >
               Export CSV
             </GoAButton>
-            <GoAButton type="secondary" trailingIcon="expand" onClick={() => setExpandView(true)}>
-              Expand View
+            <GoAButton
+              type="secondary"
+              trailingIcon="expand"
+              onClick={() => setExpandView(true)}
+              disabled={!selectedSite}
+            >
+              Expand view
             </GoAButton>
           </GoAButtonGroup>
         </div>
