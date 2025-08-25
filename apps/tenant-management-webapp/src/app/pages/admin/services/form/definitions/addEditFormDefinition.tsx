@@ -442,8 +442,8 @@ export const AddEditFormDefinition = ({
               type="text"
               name="form-definition-registeredId"
               value={definition.registeredId}
-              testId="form-definition-name"
-              aria-label="form-definition-name"
+              testId="form-definition-registeredId"
+              aria-label="form-definition-registeredId"
               width="100%"
               onChange={(name, value) => {
                 if (!value.trim()) {
