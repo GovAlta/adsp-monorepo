@@ -25,7 +25,7 @@ readme = 'README.md'
   [tool.poetry.dependencies]
   python = ">=3.9,<3.12"
   cachetools = "^6.1.0"
-  types-cachetools = "^6.0.0.20250525"
+  types-cachetools = "^6.1.0.20250717"
   httpx = "^0.28.1"
   more-itertools = "^10.7.0"
   urnparse = "^0.2.2"
