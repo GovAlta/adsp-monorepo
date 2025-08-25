@@ -1,0 +1,22 @@
+metrics/v1/metrics/{interval}:
+  get:
+    summary: Get metrics for interval
+    description: Retrieve metrics for a specific time interval.
+    parameters:
+      - in: path
+        name: interval
+        required: true
+        schema:
+          type: string
+        description: The time interval for which to retrieve metrics.
+    responses:
+      "200":
+        description: Metrics values.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Metrics"
+components:
+  schemas:
+    Metrics:
+      type: object
