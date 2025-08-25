@@ -20,6 +20,7 @@ export const environment = envalid.cleanEnv(
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3345 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    IS_JOB_POD: envalid.bool({ default: false }),
   },
   {
     reporter: ({ errors }) => {

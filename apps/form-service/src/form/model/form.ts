@@ -33,6 +33,7 @@ export class FormEntity implements Form {
   files: Record<string, AdspId>;
   securityClassification: SecurityClassificationType;
   dryRun: boolean;
+  registeredId?: string;
 
   static async create(
     user: User,
@@ -41,7 +42,8 @@ export class FormEntity implements Form {
     id: string,
     formDraftUrl: string,
     applicant?: Subscriber,
-    dryRun?: boolean
+    dryRun?: boolean,
+    registeredId?: string
   ): Promise<FormEntity> {
     if (!(await definition.canApply(user, dryRun))) {
       throw new UnauthorizedUserError('create form', user);
@@ -61,6 +63,7 @@ export class FormEntity implements Form {
       files: {},
       securityClassification: definition.securityClassification,
       dryRun: dryRun,
+      registeredId: registeredId,
     });
 
     return await repository.save(form);
@@ -90,6 +93,7 @@ export class FormEntity implements Form {
     // This is for backwards compatibility, but security classification should be saved against the form.
     this.securityClassification = form.securityClassification || definition?.securityClassification;
     this.dryRun = form.dryRun;
+    this.registeredId = form.registeredId;
   }
 
   /**

@@ -106,7 +106,7 @@ export function sendFeedback(logger: Logger, queueService: WorkQueueService<Feed
   };
 }
 
-const canRead = (user: User, tenant: Tenant, role: ServiceRoles) => {
+const canRead = (user: User, tenant?: Tenant, role?: ServiceRoles) => {
   return isAllowedUser(user, tenant?.id, role, true);
 };
 
@@ -115,19 +115,16 @@ export const readValues =
   async (req, res, next) => {
     try {
       if (!canRead(req.user, req.tenant, ServiceRoles.FeedbackReader)) {
-        throw new UnauthorizedError('User does not exist or is not authorized to read feedback.');
-      }
-      if (!req.query?.site) {
-        throw new InvalidOperationError('Site is required.');
+        throw new UnauthorizedError('User not authorized to read feedback');
       }
       const queryParameters: ReadQueryParameters = {
-        site: req.query.site as string,
+        site: req.query?.site ? (req.query?.site as string) : undefined,
         top: req.query?.top ? parseInt(req.query.top as string, 10) : 10,
         after: req.query?.after ? (req.query.after as string) : undefined,
         start: req.query?.start ? (req.query.start as string) : undefined,
         end: req.query?.end ? (req.query.end as string) : undefined,
       };
-      const values = await valueService.readValues(req.tenant.id, queryParameters);
+      const values = await valueService.readValues(req.tenant?.id, queryParameters);
       res.json(values);
     } catch (err) {
       next(err);

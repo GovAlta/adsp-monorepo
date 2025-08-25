@@ -9,6 +9,10 @@ metadata:
 labels:
   application: pdf-service
 parameters:
+  - name: APP_NAME
+    displayName: App Name
+    value: pdf-service
+    required: true
   - name: INFRA_NAMESPACE
     description: Name of the infrastructure project.
     displayName: Infra Namespace
@@ -44,10 +48,11 @@ objects:
     kind: Secret
     metadata:
       labels:
-        app: pdf-service
+        app: ${APP_NAME}
         component: database
         apply-init: "true"
-      name: pdf-service-redis
+      name: ${APP_NAME}-redis
+      namespace: ${NAMESPACE}
     stringData:
       database-password: ${REDIS_PASSWORD}
   - apiVersion: v1
@@ -56,13 +61,14 @@ objects:
       annotations:
         template.openshift.io/expose-uri: redis://{.spec.clusterIP}:{.spec.ports[?(.name=="redis")].port}
       labels:
-        app: pdf-service
+        app: ${APP_NAME}
         component: database
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: pdf-service-redis
+      name: ${APP_NAME}-redis
+      namespace: ${NAMESPACE}
     spec:
       ports:
         - name: redis
@@ -71,53 +77,56 @@ objects:
           protocol: TCP
           targetPort: 6379
       selector:
-        app: pdf-service
+        app: ${APP_NAME}
         component: database
       sessionAffinity: None
       type: ClusterIP
     status:
       loadBalancer: {}
-  - apiVersion: v1
-    kind: DeploymentConfig
+  - apiVersion: apps/v1
+    kind: Deployment
     metadata:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "redis:5-el8",
+                "namespace": "openshift"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image"
+            }
+          ]
       labels:
-        app: pdf-service
+        app: ${APP_NAME}
         component: database
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: pdf-service-redis
+      name: ${APP_NAME}-redis
+      namespace: ${NAMESPACE}
     spec:
       replicas: 1
       selector:
-        app: pdf-service
-        component: database
-      strategy:
-        type: Recreate
-        resources:
-          limits:
-            cpu: 200m
-            memory: 200Mi
-          requests:
-            cpu: 20m
-            memory: 50Mi
+        matchLabels:
+          app: ${APP_NAME}
+          component: database
       template:
         metadata:
           labels:
-            app: pdf-service
+            app: ${APP_NAME}
             component: database
         spec:
           containers:
-            - capabilities: {}
-              env:
+            - env:
                 - name: REDIS_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: pdf-service-redis
+                      name: ${APP_NAME}-redis
               image: " "
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -151,26 +160,15 @@ objects:
               terminationMessagePath: /dev/termination-log
               volumeMounts:
                 - mountPath: /var/lib/redis/data
-                  name: pdf-service-redis-data
+                  name: ${APP_NAME}-redis-data
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           volumes:
             - emptyDir:
                 medium: ""
-              name: pdf-service-redis-data
-      triggers:
-        - imageChangeParams:
-            automatic: true
-            containerNames:
-              - redis
-            from:
-              kind: ImageStreamTag
-              name: "redis:5-el8"
-              namespace: openshift
-            lastTriggeredImage: ""
-          type: ImageChange
-        - type: ConfigChange
-    status: {}
+              name: ${APP_NAME}-redis-data
+      strategy:
+        type: Recreate
 
   # Service Objects
 
@@ -180,79 +178,80 @@ objects:
     kind: ImageStream
     metadata:
       labels:
-        app: pdf-service
+        app: ${APP_NAME}
         component: api
         apply-infra: "true"
-      name: pdf-service
+      name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
     spec:
       tags:
         - name: ${BUILD_TAG}
           from:
             kind: DockerImage
-            name: ghcr.io/govalta/pdf-service:${BUILD_TAG}
+            name: ghcr.io/govalta/${APP_NAME}:${BUILD_TAG}
           referencePolicy:
             type: Local
 
-  # DeploymentConfig (and Service and Route) is created in each environment of the
-  # primary pipeline as well as branch deployment.
-  - apiVersion: v1
-    kind: DeploymentConfig
+  # DeploymentConfig (and Service and Route) is created in each environment
+  - apiVersion: apps/v1
+    kind: Deployment
     metadata:
       labels:
-        app: pdf-service
+        app: ${APP_NAME}
         component: api
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: pdf-service
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${APP_NAME}:${DEPLOY_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": true
+            }
+          ]
     spec:
       replicas: 3
-      revisionHistoryLimit: 3
       selector:
-        app: pdf-service
-        component: api
-      strategy:
-        type: Rolling
-        rollingParams:
-          timeoutSeconds: 600
-          maxUnavailable: 25%
-          maxSurge: 25%
-        activeDeadlineSeconds: 21600
-        resources:
-          limits:
-            cpu: 500m
-            memory: 1Gi
-          requests:
-            cpu: 250m
-            memory: 500Mi
+        matchLabels:
+          app: ${APP_NAME}
+          component: api
       template:
         metadata:
           labels:
-            app: pdf-service
+            app: ${APP_NAME}
             component: api
         spec:
           containers:
-            - envFrom:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
+              envFrom:
                 - configMapRef:
-                    name: pdf-service
+                    name: ${APP_NAME}
                 - configMapRef:
                     name: directory-overrides
                 - secretRef:
-                    name: pdf-service
+                    name: ${APP_NAME}
               env:
                 - name: PORT
                   value: "3333"
                 - name: REDIS_HOST
-                  value: pdf-service-redis
+                  value: ${APP_NAME}-redis
                 - name: REDIS_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: pdf-service-redis
+                      name: ${APP_NAME}-redis
               imagePullPolicy: IfNotPresent
-              name: pdf-service
+              name: ${APP_NAME}
               ports:
                 - containerPort: 3333
                   name: http
@@ -299,27 +298,25 @@ objects:
               emptyDir:
                 medium: Memory
                 sizeLimit: 1Gi
-      test: false
-      triggers:
-        - imageChangeParams:
-            containerNames:
-              - pdf-service
-            from:
-              kind: ImageStreamTag
-              name: pdf-service:${DEPLOY_TAG}
-              namespace: ${INFRA_NAMESPACE}
-          type: ImageChange
+        strategy:
+          type: RollingUpdate
+          rollingUpdate:
+            maxUnavailable: 25%
+            maxSurge: 25%
+        revisionHistoryLimit: 10
+        progressDeadlineSeconds: 600
   - apiVersion: v1
     kind: Service
     metadata:
       labels:
-        app: pdf-service
+        app: ${APP_NAME}
         component: api
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: pdf-service
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       ports:
         - name: http
@@ -327,7 +324,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: pdf-service
+        app: ${APP_NAME}
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -335,13 +332,14 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: pdf-service
+        app: ${APP_NAME}
         component: api
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: pdf-service
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -350,67 +348,70 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: pdf-service
+        name: ${APP_NAME}
         weight: 100
       wildcardPolicy: None
   # Dedicated job pod for generation so there is more work queue consumer capacity.
   - kind: Deployment
     apiVersion: apps/v1
     metadata:
-      name: pdf-service-job
+      name: ${APP_NAME}-job
+      namespace: ${NAMESPACE}
       annotations:
         image.openshift.io/triggers: |-
           [
             {
               "from": {
                 "kind": "ImageStreamTag",
-                "name": "pdf-service:${DEPLOY_TAG}",
+                "name": "${APP_NAME}:${DEPLOY_TAG}",
                 "namespace": "${INFRA_NAMESPACE}"
               },
               "fieldPath": "spec.template.spec.containers[0].image"
             }
           ]
       labels:
-        app: pdf-service
+        app: ${APP_NAME}
         component: job
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
     spec:
-      replicas: 1
+      replicas: 3
       selector:
         matchLabels:
-          app: pdf-service
+          app: ${APP_NAME}
           component: job
       template:
         metadata:
           labels:
-            app: pdf-service
+            app: ${APP_NAME}
             component: job
         spec:
           containers:
             - image: >-
-                image-registry.openshift-image-registry.svc:5000/adsp-build/pdf-service@${DEPLOY_TAG}
+                image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
               envFrom:
                 - configMapRef:
-                    name: pdf-service
+                    name: ${APP_NAME}
                 - configMapRef:
                     name: directory-overrides
                 - secretRef:
-                    name: pdf-service
+                    name: ${APP_NAME}
               env:
+                - name: IS_JOB_POD
+                  value: "true"
                 - name: PORT
                   value: "3333"
                 - name: REDIS_HOST
-                  value: pdf-service-redis
+                  value: ${APP_NAME}-redis
                 - name: REDIS_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: pdf-service-redis
+                      name: ${APP_NAME}-redis
               imagePullPolicy: IfNotPresent
-              name: pdf-service
+              name: ${APP_NAME}
               ports:
                 - containerPort: 3333
                   name: http

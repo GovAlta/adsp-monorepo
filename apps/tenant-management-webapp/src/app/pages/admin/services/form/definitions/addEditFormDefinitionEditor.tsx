@@ -36,12 +36,7 @@ import useWindowDimensions from '@lib/useWindowDimensions';
 import { RootState } from '@store/index';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { SecurityClassification } from '@store/common/models';
-import {
-  UploadFileService,
-  DownloadFileService,
-  DeleteFileService,
-  ClearNewFileList,
-} from '@store/file/actions';
+import { UploadFileService, DownloadFileService, DeleteFileService, ClearNewFileList } from '@store/file/actions';
 import {
   setDraftDataSchema,
   setDraftUISchema,
@@ -154,7 +149,6 @@ const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdat
 const NO_TASK_CREATED_OPTION = `No task created`;
 
 export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fileTypes }): JSX.Element {
-
   const fileList = useSelector((state: RootState) => {
     return state?.fileService.newFileList;
   });
@@ -433,6 +427,9 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                           top: 8,
                         },
                         minimap: { enabled: isUseMiniMap },
+                        folding: true,
+                        foldingStrategy: 'auto',
+                        showFoldingControls: 'always',
                       }}
                     />
                   </EditorPadding>
@@ -473,6 +470,9 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                           top: 8,
                         },
                         minimap: { enabled: isUseMiniMap },
+                        folding: true,
+                        foldingStrategy: 'auto',
+                        showFoldingControls: 'always',
                       }}
                     />
                   </EditorPadding>

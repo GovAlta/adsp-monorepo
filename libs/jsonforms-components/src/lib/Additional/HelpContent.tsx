@@ -90,7 +90,7 @@ export const HelpContentComponent = ({
     Array.isArray(help) ? (
       <ul>
         {help.map((line: string, index: number) => (
-          <li key={index}>{`${line}`}</li>
+          <li className="help-content-markdown" key={index}>{`${line}`}</li>
         ))}
       </ul>
     ) : (
@@ -129,13 +129,17 @@ export const HelpContentComponent = ({
 
   if (markdown) {
     return (
-      <Visible visible={visible}>{MarkdownComponent({ markdown: getMarkDownData(uischema?.options?.help) })}</Visible>
+      <Visible visible={visible}>
+        <div className="help-content-markdown">
+          {MarkdownComponent({ markdown: getMarkDownData(uischema?.options?.help) })}
+        </div>
+      </Visible>
     );
   }
   return (
     <Visible visible={visible}>
       <HelpContentDiv aria-label={uischema.options?.ariaLabel}>
-        <div className={marginClass}>
+        <div className={`help-content-markdown ${marginClass}`}>
           {label && showLabel && (!uischema.options?.variant || uischema.options?.variant === 'hyperlink') && (
             <div className={labelClass} data-testid={label}>
               {label}

@@ -1,7 +1,7 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: tenant-management-api
+  name: tenant-management-service
   annotations:
     tags: core-services, tenant-management
     template.openshift.io/provider-display-name: platform team
@@ -9,6 +9,10 @@ metadata:
 labels:
   application: tenant-management
 parameters:
+  - name: APP_NAME
+    displayName: App Name
+    value: tenant-management-api
+    required: true
   - name: INFRA_NAMESPACE
     description: Name of the infrastructure project.
     displayName: Infra Namespace
@@ -31,190 +35,7 @@ parameters:
     description: Host for the route.
     displayName: Route Host
     value: ""
-  - description: Username for MongoDB user that will be used for accessing the database.
-    displayName: MongoDB Connection Username
-    from: user[A-Z0-9]{3}
-    generate: expression
-    name: MONGODB_USER
-    required: true
-  - description: Password for the MongoDB connection user.
-    displayName: MongoDB Connection Password
-    from: "[a-zA-Z0-9]{16}"
-    generate: expression
-    name: MONGODB_PASSWORD
-    required: true
-  - description: Password for the database admin user.
-    displayName: MongoDB Admin Password
-    from: "[a-zA-Z0-9]{16}"
-    generate: expression
-    name: MONGODB_ADMIN_PASSWORD
-    required: true
 objects:
-  # MongoDB Objects
-  # NOTE: Secret will generate new values if updated, so this is only for branch deployments.
-  - apiVersion: v1
-    kind: Secret
-    metadata:
-      annotations:
-        template.openshift.io/expose-admin_password: "{.data['database-admin-password']}"
-        template.openshift.io/expose-database_name: "{.data['database-name']}"
-        template.openshift.io/expose-password: "{.data['database-password']}"
-        template.openshift.io/expose-username: "{.data['database-user']}"
-      labels:
-        app: tenant-management
-        component: database
-        apply-init: "true"
-      name: tenant-management-mongodb
-    stringData:
-      database-admin-password: ${MONGODB_ADMIN_PASSWORD}
-      database-name: tenantDb
-      database-password: ${MONGODB_PASSWORD}
-      database-user: ${MONGODB_USER}
-      database-uri: mongodb://tenant-management-mongodb:27017
-      database-tls: "false"
-  # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
-  - apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app: tenant-management
-        component: database
-        apply-init: "true"
-      name: tenant-management-mongodb
-    spec:
-      storageClassName: azure-disk
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 1Gi
-  - apiVersion: v1
-    kind: Service
-    metadata:
-      annotations:
-        template.openshift.io/expose-uri: mongodb://{.spec.clusterIP}:{.spec.ports[?(.name=="mongo")].port}
-      labels:
-        app: tenant-management
-        component: database
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
-      name: tenant-management-mongodb
-    spec:
-      ports:
-        - name: mongo
-          nodePort: 0
-          port: 27017
-          protocol: TCP
-          targetPort: 27017
-      selector:
-        app: tenant-management
-        component: database
-      sessionAffinity: None
-      type: ClusterIP
-    status:
-      loadBalancer: {}
-  - apiVersion: v1
-    kind: DeploymentConfig
-    metadata:
-      annotations:
-        template.alpha.openshift.io/wait-for-ready: "true"
-      labels:
-        app: tenant-management
-        component: database
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
-      name: tenant-management-mongodb
-    spec:
-      replicas: 1
-      selector:
-        app: tenant-management
-        component: database
-      strategy:
-        type: Recreate
-      template:
-        metadata:
-          labels:
-            app: tenant-management
-            component: database
-        spec:
-          containers:
-            - capabilities: {}
-              env:
-                - name: MONGODB_USER
-                  valueFrom:
-                    secretKeyRef:
-                      key: database-user
-                      name: tenant-management-mongodb
-                - name: MONGODB_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      key: database-password
-                      name: tenant-management-mongodb
-                - name: MONGODB_ADMIN_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      key: database-admin-password
-                      name: tenant-management-mongodb
-                - name: MONGODB_DATABASE
-                  valueFrom:
-                    secretKeyRef:
-                      key: database-name
-                      name: tenant-management-mongodb
-              image: " "
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                initialDelaySeconds: 30
-                tcpSocket:
-                  port: 27017
-                timeoutSeconds: 1
-              name: mongodb
-              ports:
-                - containerPort: 27017
-                  protocol: TCP
-              readinessProbe:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -i
-                    - -c
-                    - mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD
-                      --eval="quit()"
-                initialDelaySeconds: 3
-                timeoutSeconds: 1
-              resources:
-                limits:
-                  cpu: 200m
-                  memory: 500Mi
-                requests:
-                  cpu: 50m
-                  memory: 200Mi
-              securityContext:
-                capabilities: {}
-                privileged: false
-              terminationMessagePath: /dev/termination-log
-              volumeMounts:
-                - mountPath: /var/lib/mongodb/data
-                  name: tenant-management-data
-          dnsPolicy: ClusterFirst
-          restartPolicy: Always
-          volumes:
-            - name: tenant-management-data
-              persistentVolumeClaim:
-                claimName: tenant-management-mongodb
-      triggers:
-        - imageChangeParams:
-            automatic: true
-            containerNames:
-              - mongodb
-            from:
-              kind: ImageStreamTag
-              name: mongodb:latest
-              namespace: openshift
-          type: ImageChange
   # Tenant Management API Objects
 
   # ImageStream is here for reference.
@@ -226,21 +47,20 @@ objects:
         app: tenant-management
         component: api
         apply-infra: "true"
-      name: tenant-management-api
+      name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
     spec:
       tags:
         - name: ${BUILD_TAG}
           from:
             kind: DockerImage
-            name: ghcr.io/govalta/tenant-management-api:${BUILD_TAG}
+            name: ghcr.io/govalta/${APP_NAME}:${BUILD_TAG}
           referencePolicy:
             type: Local
 
-  # DeploymentConfig (and Service and Route) is created in each environment of the
-  # primary pipline as well as branch deployment.
-  - apiVersion: v1
-    kind: DeploymentConfig
+  # DeploymentConfig (and Service and Route) is created in each environment
+  - apiVersion: apps/v1
+    kind: Deployment
     metadata:
       labels:
         app: tenant-management
@@ -249,27 +69,27 @@ objects:
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: tenant-management-api
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${APP_NAME}:${DEPLOY_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": true
+            }
+          ]
     spec:
       replicas: 3
-      revisionHistoryLimit: 3
       selector:
-        app: tenant-management
-        component: api
-      strategy:
-        type: Rolling
-        rollingParams:
-          timeoutSeconds: 600
-          maxUnavailable: 25%
-          maxSurge: 25%
-        activeDeadlineSeconds: 21600
-        resources:
-          limits:
-            cpu: 200m
-            memory: 200Mi
-          requests:
-            cpu: 20m
-            memory: 50Mi
+        matchLabels:
+          app: tenant-management
+          component: api
       template:
         metadata:
           labels:
@@ -277,11 +97,13 @@ objects:
             component: api
         spec:
           containers:
-            - envFrom:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
+              envFrom:
                 - configMapRef:
-                    name: tenant-management-api
+                    name: ${APP_NAME}
                 - secretRef:
-                    name: tenant-management-api
+                    name: ${APP_NAME}
               env:
                 - name: PORT
                   value: "3333"
@@ -311,7 +133,7 @@ objects:
                       key: database-tls
                       name: tenant-management-mongodb
               imagePullPolicy: IfNotPresent
-              name: tenant-management-api
+              name: ${APP_NAME}
               ports:
                 - containerPort: 3333
                   name: http
@@ -350,16 +172,13 @@ objects:
           schedulerName: default-scheduler
           securityContext: {}
           terminationGracePeriodSeconds: 30
-      test: false
-      triggers:
-        - imageChangeParams:
-            containerNames:
-              - tenant-management-api
-            from:
-              kind: ImageStreamTag
-              name: tenant-management-api:${DEPLOY_TAG}
-              namespace: ${INFRA_NAMESPACE}
-          type: ImageChange
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 25%
+          maxSurge: 25%
+      revisionHistoryLimit: 10
+      progressDeadlineSeconds: 600
   - apiVersion: v1
     kind: Service
     metadata:
@@ -370,7 +189,8 @@ objects:
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: tenant-management-api
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       ports:
         - name: http
@@ -392,7 +212,8 @@ objects:
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: tenant-management-api
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -401,6 +222,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: tenant-management-api
+        name: ${APP_NAME}
         weight: 100
       wildcardPolicy: None

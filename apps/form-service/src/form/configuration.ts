@@ -12,10 +12,16 @@ export const configurationSchema = {
     clerkRoles: { type: 'array', items: { type: 'string' } },
     dataSchema: { $ref: 'http://json-schema.org/draft-07/schema#' },
     uiSchema: { type: 'object' },
+    ministry: {
+      type: 'string',
+    },
     securityClassification: {
       type: 'string',
       enum: ['public', 'protected a', 'protected b', 'protected c'],
       default: 'protected a',
+    },
+    programName: {
+      anyOf: [{ type: 'string', minLength: 1 }, { type: 'null' }],
     },
     dispositionStates: {
       type: 'array',
@@ -37,6 +43,7 @@ export const configurationSchema = {
     supportTopic: { type: 'boolean' },
     submissionPdfTemplate: { type: 'string' },
     scheduledIntakes: { type: 'boolean' },
+    registeredId: { type: 'string' },
   },
   required: ['id', 'name', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
 };

@@ -5,7 +5,7 @@ import { FeedbacksList } from './feedbacks';
 import configureStore from 'redux-mock-store';
 import { Provider } from 'react-redux';
 import thunk from 'redux-thunk';
-import { exportFeedbacks, getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
+import { getFeedbackSites, getFeedbacks } from '@store/feedback/actions';
 
 jest.mock('@store/feedback/actions', () => ({
   getFeedbackSites: jest.fn(),
@@ -37,6 +37,20 @@ describe('Feedbacks Components', () => {
             correlationId: 'http://feedbacktestdata.com:/admin/services/feedback',
             context: {
               site: 'http://feedbacktestdata.com',
+              view: '/admin/services/feedback',
+              digest: '210dc8419c576e782a45f7484d95546ba8a7c0c17ae809744bcbce0f6a36b57f',
+              includesComment: true,
+            },
+            value: {
+              rating: 'delightful',
+              comment: 'dev feedback test',
+            },
+          },
+          {
+            timestamp: '2024-05-17T15:35:40.762Z',
+            correlationId: 'http://newsite.com:/admin/services/feedback',
+            context: {
+              site: 'http://newsite.com',
               view: '/admin/services/feedback',
               digest: '210dc8419c576e782a45f7484d95546ba8a7c0c17ae809744bcbce0f6a36b57f',
               includesComment: true,
@@ -162,19 +176,40 @@ describe('Feedbacks Components', () => {
     expect(screen.getAllByText('No feedbacks found')).toBeTruthy();
   });
 
-  it('should open full screen modal when "Expand View" button is clicked', async () => {
-    const { getByText } = render(
+  it('should open full screen when "Expand View" button is clicked', async () => {
+    store = mockStore({
+      feedback: {
+        sites: [{ url: 'http://newsite.com', allowAnonymous: true, views: [] }],
+        feedbacks: [
+          {
+            timestamp: Date.now(),
+            context: { site: 'http://newsite.com', view: 'main', correlationId: 'abc' },
+            value: { rating: 'Easy', ratingValue: 4, comment: 'Great!', technicalIssue: '' },
+          },
+        ],
+        exportData: [],
+        nextEntries: null,
+        isLoading: false,
+      },
+      session: { indicator: { show: false } },
+      tenant: { name: 'test-tenant' },
+    });
+
+    store.dispatch = jest.fn();
+    const { getByText, baseElement } = render(
       <Provider store={store}>
         <FeedbacksList />
       </Provider>
     );
+    const dropDown = baseElement.querySelector("goa-dropdown[testId='sites-dropdown']");
+    fireEvent(dropDown, new CustomEvent('_change', { detail: { value: 'http://newsite.com' } }));
 
-    const expandBtn = getByText('Expand View');
-    fireEvent.click(expandBtn);
+    const expandBtn = getByText('Expand view');
 
+    fireEvent(expandBtn, new CustomEvent('_click'));
     await waitFor(() => {
+      expect(screen.getByText('Collapse view')).toBeInTheDocument();
       expect(screen.getByText('Feedback service')).toBeInTheDocument();
-      expect(screen.getByText('Collapse View')).toBeInTheDocument();
     });
   });
 });

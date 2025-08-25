@@ -1,5 +1,11 @@
 import React, { useEffect } from 'react';
-import { Modal, HideTablet, FormTemplateEditorContainer, OuterFormTemplateEditorContainer } from '../styled-components';
+import {
+  Modal,
+  HideTablet,
+  FormTemplateEditorContainer,
+  OuterFormTemplateEditorContainer,
+  FormEditor,
+} from '../styled-components';
 import { ModalContent } from '../../styled-components';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AddEditFormDefinitionEditor } from './addEditFormDefinitionEditor';
@@ -7,9 +13,10 @@ import { TabletMessage } from '@components/TabletMessage';
 import { useDispatch, useSelector } from 'react-redux';
 import { openEditorForDefinition } from '@store/form/action';
 import { RootState } from '@store/index';
-import { initializeFormEditor  } from '@store/form/action';
-import {  modifiedDefinitionSelector } from '@store/form/selectors';
+import { initializeFormEditor } from '@store/form/action';
+import { modifiedDefinitionSelector } from '@store/form/selectors';
 import { rolesSelector } from '@store/access/selectors';
+import { PageIndicator } from '@components/Indicator';
 
 export const FormDefinitionEditor = (): JSX.Element => {
   const navigate = useNavigate();
@@ -42,18 +49,19 @@ export const FormDefinitionEditor = (): JSX.Element => {
 
           <HideTablet>
             <FormTemplateEditorContainer>
-              {definition?.id &&
-                realmRoles &&
-                queueTasks &&
-                fileTypes && (
-                  <AddEditFormDefinitionEditor
-                    key={id}
-                    definition={definition}
-                    roles={roles}
-                    queueTasks={queueTasks}
-                    fileTypes={fileTypes}
-                  />
-                )}
+              {definition?.id && realmRoles && queueTasks && fileTypes ? (
+                <AddEditFormDefinitionEditor
+                  key={id}
+                  definition={definition}
+                  roles={roles}
+                  queueTasks={queueTasks}
+                  fileTypes={fileTypes}
+                />
+              ) : (
+                <FormEditor>
+                  <PageIndicator />
+                </FormEditor>
+              )}
             </FormTemplateEditorContainer>
           </HideTablet>
         </OuterFormTemplateEditorContainer>

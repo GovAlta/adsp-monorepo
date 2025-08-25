@@ -96,6 +96,9 @@ export const Form = () => {
             <GoAFormItem mr="xl" mb="s" label="Submitted on">
               {form.submitted && DateTime.fromISO(form.submitted).toFormat('LLL d, yyyy')}
             </GoAFormItem>
+            <GoAFormItem mr="s" mb="s" label="Dry run">
+              {form.dryRun ? "true" : "false"}
+            </GoAFormItem>
             {form.submitted && <PdfDownload urn={formUrn} />}
           </PropertiesContainer>
         )

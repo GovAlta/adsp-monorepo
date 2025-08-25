@@ -83,11 +83,11 @@ export function readValue(repository: ValuesRepository): RequestHandler {
         url,
       } = req.query;
 
-      if (!tenant) {
+      if (!tenant && !user.isCore) {
         throw new InvalidOperationError('Tenant context is required for operation.');
       }
 
-      if (!isAllowedUser(user, tenant.id, [ServiceUserRoles.Reader, ExportServiceRoles.ExportJob], true)) {
+      if (!isAllowedUser(user, tenant?.id, [ServiceUserRoles.Reader, ExportServiceRoles.ExportJob], true)) {
         throw new UnauthorizedUserError('read values', user);
       }
 
@@ -99,7 +99,7 @@ export function readValue(repository: ValuesRepository): RequestHandler {
         timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
         context: contextValue ? JSON.parse(contextValue as string) : null,
         correlationId: correlationId as string,
-        tenantId: tenant.id,
+        tenantId: tenant?.id,
         value: value as string,
         url: url as string,
       };

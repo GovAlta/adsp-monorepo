@@ -9,6 +9,10 @@ metadata:
 labels:
   application: tenant-management
 parameters:
+  - name: APP_NAME
+    displayName: App Name
+    value: tenant-management-webapp
+    required: true
   - name: INFRA_NAMESPACE
     description: Name of the infrastructure project.
     displayName: Infra Namespace
@@ -41,21 +45,20 @@ objects:
         app: tenant-management
         component: app
         apply-infra: "true"
-      name: tenant-management-webapp
+      name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
     spec:
       tags:
         - name: ${BUILD_TAG}
           from:
             kind: DockerImage
-            name: ghcr.io/govalta/tenant-management-webapp:${BUILD_TAG}
+            name: ghcr.io/govalta/${APP_NAME}:${BUILD_TAG}
           referencePolicy:
             type: Local
 
-  # DeploymentConfig (and Service and Route) is created in each environment of the
-  # primary pipline as well as branch deployment.
-  - apiVersion: v1
-    kind: DeploymentConfig
+  # DeploymentConfig (and Service and Route) is created in each environment
+  - apiVersion: apps/v1
+    kind: Deployment
     metadata:
       labels:
         app: tenant-management
@@ -64,26 +67,27 @@ objects:
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: tenant-management-webapp
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${APP_NAME}:${DEPLOY_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": true
+            }
+          ]
     spec:
       replicas: 3
       selector:
-        app: tenant-management
-        component: app
-      strategy:
-        type: Rolling
-        rollingParams:
-          timeoutSeconds: 600
-          maxUnavailable: 25%
-          maxSurge: 25%
-        activeDeadlineSeconds: 21600
-        resources:
-          limits:
-            cpu: 200m
-            memory: 200Mi
-          requests:
-            cpu: 20m
-            memory: 50Mi
+        matchLabels:
+          app: tenant-management
+          component: app
       template:
         metadata:
           labels:
@@ -91,11 +95,13 @@ objects:
             component: app
         spec:
           containers:
-            - env:
+            - image: >-
+                image-registry.openshift-image-registry.svc:5000/adsp-build/${APP_NAME}@${DEPLOY_TAG}
+              env:
                 - name: PORT
                   value: "8080"
               imagePullPolicy: IfNotPresent
-              name: tenant-management-webapp
+              name: ${APP_NAME}
               ports:
                 - containerPort: 8080
                   name: http
@@ -116,17 +122,15 @@ objects:
                 items:
                   - key: configuration
                     path: config.json
-                name: tenant-management-webapp
+                name: ${APP_NAME}
               name: config-volume
-      triggers:
-        - type: ImageChange
-          imageChangeParams:
-            containerNames:
-              - tenant-management-webapp
-            from:
-              kind: ImageStreamTag
-              name: tenant-management-webapp:${DEPLOY_TAG}
-              namespace: ${INFRA_NAMESPACE}
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 25%
+          maxSurge: 25%
+      revisionHistoryLimit: 10
+      progressDeadlineSeconds: 600
   - apiVersion: v1
     kind: Service
     metadata:
@@ -137,7 +141,8 @@ objects:
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: tenant-management-webapp
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       ports:
         - name: http
@@ -156,7 +161,8 @@ objects:
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: tenant-management-webapp
+      name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -165,6 +171,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: tenant-management-webapp
+        name: ${APP_NAME}
         weight: 100
       wildcardPolicy: None

@@ -188,6 +188,9 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               scrollBeyondLastLine: false,
               tabSize: 2,
               minimap: { enabled: false },
+              folding: true,
+              foldingStrategy: 'auto',
+              showFoldingControls: 'always',
             }}
           />
         </GoAFormItem>

@@ -3,22 +3,22 @@ kind: Template
 metadata:
   name: form-admin-app
   annotations:
-    tags: core-services, form
+    tags: core-services, form-admin-app
     template.openshift.io/provider-display-name: platform team
     description: Form Administration App
 labels:
-  application: form
+  application: form-admin-app
 parameters:
-  - name: INFRA_NAMESPACE
-    description: Name of the infrastructure project.
-    displayName: Infra Namespace
-    value: core-services-infra
-    required: true
   - name: APP_NAME
     required: true
     description: The application name of the service.
     displayName: application name
     value: form-admin-app
+  - name: INFRA_NAMESPACE
+    description: Name of the infrastructure project.
+    displayName: Infra Namespace
+    value: core-services-infra
+    required: true
   - name: NAMESPACE
     description: Namespace of the environment.
     displayName: Namespace
@@ -72,6 +72,7 @@ objects:
         apply-staging: "true"
         apply-prod: "true"
       name: ${APP_NAME}
+      namespace: ${NAMESPACE}
       annotations:
         image.openshift.io/triggers: |-
           [
@@ -143,6 +144,7 @@ objects:
         apply-staging: "true"
         apply-prod: "true"
       name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       ports:
         - name: http
@@ -162,6 +164,7 @@ objects:
         apply-staging: "true"
         apply-prod: "true"
       name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       host: ${ROUTE_HOST}
       port:

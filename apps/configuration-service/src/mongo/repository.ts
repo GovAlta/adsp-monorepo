@@ -46,6 +46,10 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       query.namespace = criteria.namespaceEquals;
     }
 
+    if (criteria.registeredIdEquals) {
+      query['configuration.registeredId'] = criteria.registeredIdEquals;
+    }
+
     if (criteria.nameContains) {
       query.name = {
         $regex: criteria.nameContains,

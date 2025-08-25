@@ -169,6 +169,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const fileService = createFileService({ logger, tokenProvider, directory });
 
   applyPdfMiddleware(app, {
+    isJobPod: environment.IS_JOB_POD,
     logger,
     serviceId,
     tokenProvider,
