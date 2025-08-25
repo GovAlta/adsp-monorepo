@@ -4,7 +4,7 @@ class FormPage {
   }
 
   addDefinitionModalTitle() {
-    return cy.xpath('//*[@testid="definition-form" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]/*[@slot="heading"]');
   }
 
   addDefinitionModalCancelButton() {
@@ -28,7 +28,9 @@ class FormPage {
   }
 
   addDefinitionModalSaveButton() {
-    return cy.xpath('//goa-button[text()="Save" and @disabled="false"]');
+    return cy.xpath(
+      '//goa-modal[@testid="definition-form" and @open="true"]/div[@slot="actions"]/goa-button-group/goa-button[text()="Save" and @disabled="false"]'
+    );
   }
 
   editorDefinitionNameValue() {
@@ -109,8 +111,9 @@ class FormPage {
     return cy.xpath('//goa-modal[@open="true" and @testid="definition-form"]/*[@slot="heading"]');
   }
 
+  // CS-4404: duplicated testid. [1] can be removed when fixed.
   definitionEditorEditDefinitionModalNameInput() {
-    return cy.xpath('//goa-input[@testid="form-definition-name"]');
+    return cy.xpath('(//goa-input[@testid="form-definition-name"])[1]');
   }
 
   definitionEditorEditDefinitionModalDescriptionField() {
@@ -118,7 +121,9 @@ class FormPage {
   }
 
   definitionEditorEditDefinitionModalSaveButton() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="definition-form"]//goa-button[text()="Save"]');
+    return cy.xpath(
+      '//goa-modal[@open="true" and @testid="definition-form"]/div[@slot="actions"]/goa-button-group/goa-button[text()="Save"]'
+    );
   }
 
   definitionEditorRolesTables() {
