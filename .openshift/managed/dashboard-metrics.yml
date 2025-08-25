@@ -288,6 +288,7 @@ objects:
         apply-staging: "true"
         apply-prod: "true"
       name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       ports:
         - name: http
@@ -310,6 +311,7 @@ objects:
         apply-staging: "true"
         apply-prod: "true"
       name: ${APP_NAME}
+      namespace: ${NAMESPACE}
     spec:
       host: ${ROUTE_HOST}
       port:
