@@ -88,7 +88,7 @@ jobs:
     needs: [affected, stagingRegression]
     strategy:
       fail-fast: true
-      max-parallel: 2
+      max-parallel: 4
       matrix:
         app: ${{ fromJson(needs.affected.outputs.affected_apps_array) }}
     environment:
