@@ -32,7 +32,7 @@ export function createGetEventMetrics(logger: Logger, directory: ServiceDirector
       const item = data[metric]?.values[0];
       logger.debug(
         `Fetched event metric ${metric} for tenant ${tenant.name} ${item ? 'with result' : 'without result'}.`,
-        { context: 'getEventMetrics', tenantId: tenant.id }
+        { context: 'getEventMetrics', tenantId: tenant.id.toString() }
       );
       return (
         item && {
@@ -47,7 +47,7 @@ export function createGetEventMetrics(logger: Logger, directory: ServiceDirector
     } catch (err) {
       logger.error(`Error fetching event metrics for tenant ${tenant.name}: ${err}`, {
         context: 'getEventMetrics',
-        tenantId: tenant.id,
+        tenantId: tenant.id.toString(),
       });
     }
   };
