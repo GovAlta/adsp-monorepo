@@ -104,7 +104,7 @@ components:
       - name: site
         description: Name of site for which to retrieve feedback entries
         in: query
-        required: true
+        required: false
         schema:
           type: string
           example: https://adsp.alberta.ca

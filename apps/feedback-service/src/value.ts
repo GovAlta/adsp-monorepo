@@ -63,7 +63,7 @@ class ValueServiceImpl implements ValueService {
       const url = this.composeUri(path, queryParameters);
       const { data } = await axios.get(new URL(url, valueApiUrl).href, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { tenantId: tenantId.toString() },
+        params: { tenantId: tenantId?.toString() },
       });
       const result = this.incrementRatingValues(data);
       return result as FeedbackResponse;
@@ -77,7 +77,10 @@ class ValueServiceImpl implements ValueService {
   }
 
   composeUri = (path: string, queryParameters: ReadQueryParameters): string => {
-    let query = `top=${queryParameters.top}&context={"site":"${queryParameters.site}"}`;
+    let query = `top=${queryParameters.top}`;
+    if (queryParameters.site) {
+      query = `${query}&context={"site":"${queryParameters.site}"}`;
+    }
     if (queryParameters.after) {
       query = `${query}&after=${encodeURIComponent(queryParameters.after)}`;
     }

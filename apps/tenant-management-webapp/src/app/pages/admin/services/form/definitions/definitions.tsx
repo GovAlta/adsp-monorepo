@@ -1,5 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { GoAButton, GoACircularProgress, GoADropdown, GoADropdownItem, GoAFormItem } from '@abgov/react-components';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  GoAButton,
+  GoACircularProgress,
+  GoADropdown,
+  GoADropdownItem,
+  GoAFormItem,
+  GoAInput,
+  GoAButtonGroup,
+} from '@abgov/react-components';
 
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -14,9 +23,11 @@ import {
   fetchResourcesByTag,
   setSelectedTag,
   deleteResourceTags,
+  resetRegisteredId,
+  getFormDefinitionsRegisterId,
 } from '@store/form/action';
 import { RootState } from '@store/index';
-import { ResourceTagFilterCriteria, ResourceTagResult, Service, Tag } from '@store/directory/models';
+import { ResourceTagFilterCriteria, ResourceTagResult, Service, Tag, ResourceTag } from '@store/directory/models';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
 import { Center, IndicatorWithDelay, PageIndicator } from '@components/Indicator';
@@ -27,7 +38,6 @@ import { LoadMoreWrapper } from './style-components';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
-import { ResourceTag } from '@store/directory/models';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -35,6 +45,13 @@ interface FormDefinitionsProps {
   showFormDefinitions: boolean;
   setOpenAddDefinition: (val: boolean) => void;
 }
+
+const titleCase = (s: string) =>
+  (s || '')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
 export const FormDefinitions = ({
   openAddDefinition,
@@ -56,15 +73,20 @@ export const FormDefinitions = ({
   const location = useLocation();
   const isNavigatedFromEdit = location.state?.isNavigatedFromEdit;
 
-  const [showDefsFromState, setShowDefsFromState] = useState(isNavigatedFromEdit);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
+  const [registerIdSearch, setRegisterIdSearch] = useState('');
+  const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
+
+  const [ministryFilter, setMinistryFilter] = useState<string>('');
+  const [programFilter, setProgramFilter] = useState<string>('');
 
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
   const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries) || null;
   const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
   const selectedTag = useSelector((state: RootState) => state.form?.formResourceTag?.selectedTag as Tag | null);
+  const registerIdDefinition = useSelector((state: RootState) => state.form?.registerIdDefinition);
 
   const tagResources = formResourceTag.tagResources;
 
@@ -74,12 +96,10 @@ export const FormDefinitions = ({
     return entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
       tempObj[formDefinitionId] = formDefinitionData;
       return tempObj;
-    }, {});
+    }, {} as Record<string, any>);
   };
 
   const formDefinitions = useSelector(orderedFormDefinitions);
-
-  const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -99,6 +119,10 @@ export const FormDefinitions = ({
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
+
+  const searchRegisterId = () => {
+    dispatch(getFormDefinitionsRegisterId(registerIdSearch));
+  };
 
   useEffect(() => {
     if (openAddDefinition) {
@@ -159,6 +183,7 @@ export const FormDefinitions = ({
   }, [indicator.show]);
 
   const getNextEntries = () => {
+    if (registerIdDefinition) return false;
     if (selectedTag) return tagNext;
     return next;
   };
@@ -186,6 +211,55 @@ export const FormDefinitions = ({
     return null;
   };
 
+  const displayDefinitions = registerIdDefinition ? registerIdDefinition : selectedTag ? tagResources : formDefinitions;
+
+  const getProgramFromDef = (def: any): { id: string; label: string } => {
+    const id = def?.programId ?? def?.program?.id ?? def?.program ?? def?.programName ?? '';
+    const label =
+      def?.programName ??
+      def?.program?.name ??
+      (typeof def?.program === 'string' ? def.program : '') ??
+      (typeof id === 'string' ? id : '');
+    return { id: String(id ?? '').trim(), label: String(label ?? '').trim() };
+  };
+
+  const programOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    Object.values(displayDefinitions || {}).forEach((d: any) => {
+      const { id, label } = getProgramFromDef(d);
+      if (id) {
+        if (!seen.has(id) || (seen.get(id) || '').toLowerCase() === id.toLowerCase()) {
+          seen.set(id, label || id);
+        }
+      }
+    });
+    return Array.from(seen.entries())
+      .map(([id, label]) => ({ id, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [displayDefinitions]);
+
+  const ministryOptions = useMemo(() => {
+    const set = new Set<string>();
+    Object.values(displayDefinitions || {}).forEach((d: any) => {
+      if (d?.ministry) set.add(d.ministry);
+    });
+    return Array.from(set).sort((a, b) => titleCase(a).localeCompare(titleCase(b)));
+  }, [displayDefinitions]);
+
+  const filteredDefinitions = useMemo(() => {
+    if (!programFilter && !ministryFilter) return displayDefinitions;
+    const entries = Object.entries(displayDefinitions || {});
+    return entries.reduce((obj, [id, def]: [string, any]) => {
+      if (ministryFilter && def?.ministry !== ministryFilter) return obj;
+      if (programFilter) {
+        const { id: progId } = getProgramFromDef(def);
+        if (!progId || progId !== programFilter) return obj;
+      }
+      obj[id] = def;
+      return obj;
+    }, {} as Record<string, any>);
+  }, [displayDefinitions, ministryFilter, programFilter]);
+
   return (
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
@@ -196,6 +270,7 @@ export const FormDefinitions = ({
           value={selectedTag?.value || ''}
           disabled={false}
           onChange={(_, value) => {
+            dispatch(resetRegisteredId());
             const selectedTagObj = tags.find((tag) => tag?.value === value);
             if (selectedTagObj) {
               dispatch(setSelectedTag(selectedTagObj));
@@ -217,11 +292,66 @@ export const FormDefinitions = ({
         </GoADropdown>
       </GoAFormItem>
 
+      <GoAFormItem label="Filter by program">
+        <GoADropdown
+          name="ProgramFilter"
+          width="60ch"
+          value={programFilter}
+          onChange={(_, v) => {
+            const value = Array.isArray(v) ? v[0] ?? '' : v;
+            dispatch(resetRegisteredId());
+            setProgramFilter(value);
+          }}
+        >
+          <GoADropdownItem value="" label="<No Program Filter>" />
+          {programOptions.map((p) => (
+            <GoADropdownItem key={p.id} value={p.id} label={p.label || p.id} />
+          ))}
+        </GoADropdown>
+      </GoAFormItem>
+
+      <GoAFormItem label="Filter by ministry">
+        <GoADropdown
+          name="MinistryFilter"
+          width="60ch"
+          value={ministryFilter}
+          onChange={(_, v) => {
+            const value = Array.isArray(v) ? v[0] ?? '' : v;
+            setMinistryFilter(value);
+          }}
+        >
+          <GoADropdownItem value="" label="<No Ministry Filter>" />
+          {ministryOptions.map((m) => (
+            <GoADropdownItem key={m} value={m} label={titleCase(m)} />
+          ))}
+        </GoADropdown>
+      </GoAFormItem>
+
+      <GoAFormItem label="Registered ID" mt="l">
+        <GoAButtonGroup alignment="start">
+          <GoAInput
+            type="text"
+            onChange={(_: string, value: string) => setRegisterIdSearch(value)}
+            value={registerIdSearch}
+            name="register Id Search"
+          />
+
+          <GoAButton type="primary" onClick={() => searchRegisterId()} disabled={registerIdSearch.length === 0}>
+            Search
+          </GoAButton>
+
+          <GoAButton type="secondary" onClick={() => dispatch(resetRegisteredId())} disabled={!registerIdDefinition}>
+            Reset
+          </GoAButton>
+        </GoAButtonGroup>
+      </GoAFormItem>
+
       <br />
       {showFormDefinitions && (
         <GoAButton
           testId="add-definition"
           onClick={() => {
+            dispatch(resetRegisteredId());
             setOpenAddFormDefinition(true);
           }}
           mb={'l'}
@@ -256,32 +386,39 @@ export const FormDefinitions = ({
         ((!selectedTag && Object.keys(formDefinitions).length > 0) ||
           (selectedTag && Object.keys(tagResources ?? {}).length > 0)) && (
           <>
-            <FormDefinitionsTable
-              definitions={selectedTag ? tagResources : formDefinitions}
-              baseResourceFormUrn={BASE_FORM_CONFIG_URN}
-              onDelete={(formDefinition) => {
-                setShowDeleteConfirmation(true);
-                setCurrentDefinition(formDefinition);
-              }}
-              onAddResourceTag={(formDefinition) => {
-                setShowAddRemoveResourceTagModal(true);
-                setCurrentDefinition(formDefinition);
-              }}
-            />
-            {getNextEntries() && (
-              <LoadMoreWrapper>
-                <GoAButton
-                  testId="form-event-load-more-btn"
-                  key="form-event-load-more-btn"
-                  type="tertiary"
-                  onClick={onNext}
-                >
-                  Load more
-                </GoAButton>
-              </LoadMoreWrapper>
+            {Object.keys(filteredDefinitions || {}).length > 0 ? (
+              <>
+                <FormDefinitionsTable
+                  definitions={filteredDefinitions}
+                  baseResourceFormUrn={BASE_FORM_CONFIG_URN}
+                  onDelete={(formDefinition) => {
+                    setShowDeleteConfirmation(true);
+                    setCurrentDefinition(formDefinition);
+                  }}
+                  onAddResourceTag={(formDefinition) => {
+                    setShowAddRemoveResourceTagModal(true);
+                    setCurrentDefinition(formDefinition);
+                  }}
+                />
+                {getNextEntries() && !ministryFilter && (
+                  <LoadMoreWrapper>
+                    <GoAButton
+                      testId="form-event-load-more-btn"
+                      key="form-event-load-more-btn"
+                      type="tertiary"
+                      onClick={onNext}
+                    >
+                      Load more
+                    </GoAButton>
+                  </LoadMoreWrapper>
+                )}
+              </>
+            ) : (
+              renderNoItem('form definition')
             )}
           </>
         )}
+
       {showAddRemoveResourceTagModal && (
         <AddRemoveResourceTagModal
           baseResourceFormUrn={BASE_FORM_CONFIG_URN}

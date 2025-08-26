@@ -488,24 +488,6 @@ describe('router', () => {
       });
     });
 
-    it('calls next without site query parameter', async () => {
-      const req = {
-        tenant: { id: tenantId },
-        user: { tenantId, id: 'tester', roles: [ServiceRoles.FeedbackReader] },
-        query: { top: '10', after: '' },
-      };
-      const res = {
-        json: jest.fn(),
-      };
-      const next = jest.fn();
-
-      const handler = readValues(valueServiceMock as unknown as ValueService);
-      await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(valueServiceMock.readValues).not.toHaveBeenCalled();
-      expect(res.json).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
-    });
-
     it('calls next if no tenant', async () => {
       const req = {
         query: { top: '10', after: '' },

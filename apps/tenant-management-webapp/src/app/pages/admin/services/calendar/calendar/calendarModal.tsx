@@ -155,7 +155,7 @@ export const CalendarModal = ({
       <div
         ref={scrollPaneRef}
         className="roles-scroll-pane"
-        style={{ overflowY: 'auto', maxHeight: '70vh', paddingRight: 0 }}
+        style={{ overflowY: 'auto', maxHeight: '70vh', padding: '0 3px 0 3px' }}
       >
         <GoAFormItem error={errors?.['name']} label="Name">
           <GoAInput

@@ -208,7 +208,7 @@ export function findConfiguration(apiId: AdspId, repository: ConfigurationReposi
       const user = req.user;
       const tenantId = req.tenant?.id;
       const { namespace } = req.params;
-      const { top: topValue, after, includeActive: includeActiveValue } = req.query;
+      const { top: topValue, after, includeActive: includeActiveValue, registeredId } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
       const includeActive = includeActiveValue === 'true';
 
@@ -225,7 +225,7 @@ export function findConfiguration(apiId: AdspId, repository: ConfigurationReposi
       }
 
       const { results: entities, page } = await repository.find(
-        { tenantIdEquals: tenantId, namespaceEquals: namespace },
+        { tenantIdEquals: tenantId, namespaceEquals: namespace, registeredIdEquals: registeredId as string },
         top,
         after as string
       );
@@ -584,7 +584,8 @@ export function createConfigurationRouter({
         .matches(/^[a-zA-Z0-9-_ ]{1,50}$/),
       query('top').optional().isInt({ min: 1, max: 1000 }),
       query('after').optional().isString(),
-      query('includeActive').optional().isBoolean()
+      query('includeActive').optional().isBoolean(),
+      query('registerIdEquals').optional().isBoolean()
     ),
     findConfiguration(apiId, configurationRepository)
   );

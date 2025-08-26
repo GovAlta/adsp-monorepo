@@ -47,6 +47,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantService,
     tenantStrategy,
     tokenProvider,
+    coreStrategy,
     healthCheck,
     metricsHandler,
     traceHandler,
@@ -80,6 +81,7 @@ const initializeApp = async (): Promise<express.Application> => {
     { logger }
   );
 
+  passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
   passport.use('anonymous', new AnonymousStrategy());
 
@@ -98,7 +100,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   app.use(
     '/feedback',
-    passport.authenticate(['tenant', 'anonymous'], { session: false }),
+    passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     tenantHandler,
     configurationHandler
   );

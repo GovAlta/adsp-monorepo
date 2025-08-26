@@ -4,4 +4,5 @@ export interface ConfigurationEntityCriteria {
   namespaceEquals?: string;
   nameContains?: string;
   tenantIdEquals?: AdspId;
+  registeredIdEquals?: string;
 }

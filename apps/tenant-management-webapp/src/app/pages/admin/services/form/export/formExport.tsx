@@ -258,6 +258,7 @@ export const FormExport = (): JSX.Element => {
               <GoARadioItem name="formatOptions" value="json"></GoARadioItem>
               <GoARadioItem name="formatOptions" value="csv"></GoARadioItem>
             </GoARadioGroup>
+            <br />
             {exportFormat === 'csv' && (
               <GoADetails heading="Columns configuration">
                 <div>
