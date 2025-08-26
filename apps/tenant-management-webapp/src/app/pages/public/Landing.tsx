@@ -43,7 +43,7 @@ const LandingPage = (): JSX.Element => {
   const dispatch = useDispatch();
   const yesterday = DateTime.now().toUTC().minus({ days: 1 }).startOf('day');
   useEffect(() => {
-    dispatch(fetchDashboardMetrics(yesterday) as any);
+    dispatch(fetchDashboardMetrics(yesterday));
   }, []);
 
   useEffect(() => {
