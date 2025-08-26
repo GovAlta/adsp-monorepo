@@ -1513,6 +1513,8 @@ When('the user deletes all disposition states if any', function () {
 });
 
 Then('the user views all tags populated from the resource tags endpoint in alphabetical order', function () {
+  let tag_labels;
+  // Get all tags from the resource tags endpoint
   const requestURL = Cypress.env('directoryServiceApiUrl') + '/resource/v1/tags?top=200';
   cy.request({
     method: 'GET',
@@ -1520,14 +1522,34 @@ Then('the user views all tags populated from the resource tags endpoint in alpha
     auth: {
       bearer: Cypress.env('autotest-admin-token'),
     },
-  }).then(function (response) {
-    responseObj = response;
-    const labels = responseObj.body.results.map((item) => item.label);
-    labels.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-    cy.log(JSON.stringify(labels));
-  });
+  })
+    .then(function (response) {
+      responseObj = response;
+      tag_labels = responseObj.body.results.map((item) => item.label);
+      tag_labels.sort((a, b) => a.localeCompare(b));
+    })
+    .then(() => {
+      // Compare with the tags in the filter by tag dropdown
+      formObj
+        .definitionsFilterByTagDropdown()
+        .find('goa-dropdown-item')
+        .then((dropdownitems) => {
+          const dropdown_labels = Array.from(dropdownitems).map((o) => o.getAttribute('label'));
+          dropdown_labels.shift();
+          expect(tag_labels).to.deep.equal(dropdown_labels);
+        });
+    });
+});
 
-  // const labels = responseObj.body.results.map((item) => item.label);
-  // // labels.sort((a, b) => a.localeCompare(b));
-  // cy.log(labels);
+When('the user selects {string} from the Filter by tag dropdown', function (tagName) {
+  tagName = commonlib.stringReplacement(tagName, replacementString);
+  formObj.definitionsFilterByTagDropdown().shadow().find('input').click({ force: true });
+  cy.wait(1000);
+  formObj.definitionsFilterByTagDropdown().shadow().find('li').contains(String(tagName)).click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views {string} in Filter by tag dropdown', function (tagName) {
+  tagName = commonlib.stringReplacement(tagName, replacementString);
+  formObj.definitionsFilterByTagDropdown().invoke('attr', 'value').should('eq', tagName);
 });

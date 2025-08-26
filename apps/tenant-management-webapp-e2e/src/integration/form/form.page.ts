@@ -359,5 +359,9 @@ class FormPage {
   definitionsDetailsDefinitionID() {
     return cy.xpath('//*[@data-testid="configuration-details"]//div[text()="Definition ID"]/following-sibling::text()');
   }
+
+  definitionsFilterByTagDropdown() {
+    return cy.xpath('//goa-dropdown[@name="TagFilter"]');
+  }
 }
 export default FormPage;
