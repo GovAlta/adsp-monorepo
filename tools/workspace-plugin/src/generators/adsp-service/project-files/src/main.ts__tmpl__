@@ -1,13 +1,13 @@
-import * as express from 'express';
-import { readFile } from 'fs';
-import { promisify } from 'util';
-import * as passport from 'passport';
-import * as compression from 'compression';
-import * as cors from 'cors';
-import * as helmet from 'helmet';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
+import * as compression from 'compression';
+import * as cors from 'cors';
+import * as express from 'express';
+import { readFile } from 'fs';
+import * as helmet from 'helmet';
+import * as passport from 'passport';
+import { promisify } from 'util';
 import { environment } from './environments/environment';
 
 const logger = createLogger('<%= projectName %>', environment.LOG_LEVEL);
