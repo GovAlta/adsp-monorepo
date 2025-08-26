@@ -22,6 +22,11 @@ export interface MetricValue {
 export type ChartInterval = '15 mins' | '1 hour' | '5 hours';
 
 export interface ServiceMetricsState {
+  dashboard: {
+    id: string;
+    name: string;
+    value: number;
+  }[];
   services: string[];
   criteria: {
     service: string;

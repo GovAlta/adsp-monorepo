@@ -5,10 +5,12 @@ import {
   ServiceMetricsActionTypes,
   SET_INTERVAL_CRITERIA_ACTION,
   SET_SERVICE_CRITERIA_ACTION,
+  FETCH_DASHBOARD_METRICS_SUCCESS_ACTION,
 } from './actions';
 import { ServiceMetricsState } from './models';
 
 const defaultState: ServiceMetricsState = {
+  dashboard: [],
   services: [],
   criteria: {
     service: null,
@@ -62,6 +64,11 @@ export default function (
         responseTimes: action.responseTimes,
         responseTimeComponents: action.responseTimeComponents,
         counts: action.counts,
+      };
+    case FETCH_DASHBOARD_METRICS_SUCCESS_ACTION:
+      return {
+        ...state,
+        dashboard: action.dashboard,
       };
     default:
       return state;

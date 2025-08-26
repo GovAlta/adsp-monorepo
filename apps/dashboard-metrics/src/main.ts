@@ -66,6 +66,9 @@ const initializeApp = async (): Promise<express.Application> => {
   } else {
     logger.warn('No Redis cache configured. Using in-memory cache for local development.');
     repository = {
+      isConnected() {
+        return true;
+      },
       writeMetrics: function (key: string, metrics: Record<string, unknown>): Promise<boolean> {
         cache[key] = metrics;
         return Promise.resolve(true);
@@ -92,7 +95,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
-    res.json(platform);
+    res.json({ ...platform, db: repository.isConnected() });
   });
 
   app.get('/', async (req, res) => {

@@ -1,5 +1,7 @@
+import { DateTime } from 'luxon';
 import React, { useState, createRef, useEffect } from 'react';
-import { GoAHeroBanner, GoAContainer } from '@abgov/react-components';
+import { useDispatch, useSelector } from 'react-redux';
+import { GoAHeroBanner, GoAContainer, GoABlock } from '@abgov/react-components';
 
 import bannerBackground from '@assets/BannerBackground.jpg';
 import Header from '@components/AppHeader';
@@ -30,11 +32,19 @@ import {
 } from './LandingComponents';
 
 import { LandingSample } from './LandingSample';
+import { fetchDashboardMetrics } from '../../store/metrics/actions';
+import { RootState } from '../../store';
 
 const LandingPage = (): JSX.Element => {
   const [rowOneMaxHeight, setRowOneMaxHeight] = useState<number>(0);
   const [rowTwoMaxHeight, setRowTwoMaxHeight] = useState<number>(0);
   const maxRowOneDiv = createRef();
+
+  const dispatch = useDispatch();
+  const yesterday = DateTime.now().toUTC().minus({ days: 1 }).startOf('day');
+  useEffect(() => {
+    dispatch(fetchDashboardMetrics(yesterday));
+  }, []);
 
   useEffect(() => {
     // file-service-description has longest content in the first row. Need to update, if this is not validated.
@@ -46,6 +56,9 @@ const LandingPage = (): JSX.Element => {
     }
     // Due to grid update, have to use ref here
   }, [maxRowOneDiv]);
+
+  const metrics = useSelector((state: RootState) => state.serviceMetrics.dashboard);
+
   return (
     <>
       <Header serviceName="" />
@@ -104,7 +117,7 @@ const LandingPage = (): JSX.Element => {
             <Container vs={3} hs={1}>
               <Grid>
                 <GridItem md={2} />
-                <GridItem md={7}>
+                <GridItem md={8}>
                   <Grid>
                     <GridItem md={3}>
                       <ClockImg src={ClockIcon} alt="" data-testid="landing-page-clock-img" />{' '}
@@ -112,15 +125,38 @@ const LandingPage = (): JSX.Element => {
                     <GridItem md={9}>
                       <h2>Built for teams to move faster</h2>
                       <p>
-                        The ADSP comes with services out of the box available to your team with code examples and
-                        sandbox environments. Grant your team access in a quick and secure way. Super easy to integrate,
-                        built to save time and effort, and help your team deliver faster.
+                        ADSP comes with services out of the box available to your team with code examples and sandbox
+                        environments. Grant your team access in a quick and secure way. Super easy to integrate, built
+                        to save time and effort, and help your team deliver faster.
                       </p>
                     </GridItem>
                   </Grid>
                 </GridItem>
 
-                <GridItem md={3} />
+                <GridItem md={2} />
+              </Grid>
+            </Container>
+            <Container vs={3} hs={1}>
+              <Grid>
+                <GridItem md={2} />
+                <GridItem md={8}>
+                  <h2>Capabilities proven in production</h2>
+                  <p>
+                    ADSP services are used by teams to deliver digital services today. Here's an overview for{' '}
+                    {yesterday.toFormat('MMMM dd')}:
+                  </p>
+                  <Grid>
+                    {metrics.map((metric) => (
+                      <GridItem md={3} hSpacing={0.5} key={metric.id}>
+                        <div>
+                          <h4>{metric.name}</h4>
+                          <p>{typeof metric.value === 'number' ? metric.value : '-'}</p>
+                        </div>
+                      </GridItem>
+                    ))}
+                  </Grid>
+                </GridItem>
+                <GridItem md={2} />
               </Grid>
             </Container>
           </GrayBox>
