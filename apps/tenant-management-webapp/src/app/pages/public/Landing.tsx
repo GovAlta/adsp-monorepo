@@ -150,7 +150,7 @@ const LandingPage = (): JSX.Element => {
                       <GridItem md={3} hSpacing={0.5} key={metric.id}>
                         <div>
                           <h4>{metric.name}</h4>
-                          <p>{typeof metric.value === 'number' ? metric.value : '-'}</p>
+                          <p>{typeof metric.value === 'number' ? metric.value.toLocaleString() : '-'}</p>
                         </div>
                       </GridItem>
                     ))}

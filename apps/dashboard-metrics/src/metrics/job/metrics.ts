@@ -25,7 +25,9 @@ export function createCollectMetricsJob(
       logins = 0,
       registrations = 0,
       notificationsSent = 0,
-      feedbackReceived = 0;
+      feedbackReceived = 0,
+      formsSubmitted = 0,
+      filesUploaded = 0;
     for (const tenant of tenants) {
       // Logins
       const { count: tenantLogins } = (await getEventMetrics(tenant, 'access-service:LOGIN:count', interval)) || {};
@@ -55,6 +57,16 @@ export function createCollectMetricsJob(
         (await getServiceMetrics(tenant, 'feedback-service', 'POST:/feedback/v1/feedback', interval)) || {};
       feedbackReceived += tenantFeedbackReceived ?? 0;
 
+      // Forms submitted
+      const { count: tenantFormsSubmitted } =
+        (await getEventMetrics(tenant, 'form-service:form-submitted:count', interval)) || {};
+      formsSubmitted += tenantFormsSubmitted ?? 0;
+
+      // Files uploaded
+      const { count: tenantFilesUploaded } =
+        (await getEventMetrics(tenant, 'file-service:file-uploaded:count', interval)) || {};
+      filesUploaded += tenantFilesUploaded ?? 0;
+
       tenantMetrics.push({
         id: tenant.id.resource,
         name: tenant.name,
@@ -63,7 +75,9 @@ export function createCollectMetricsJob(
         eventCount: tenantEventCount,
         pdfGenerated: tenantPdfGenerated,
         notificationsSent: tenantNotificationsSent,
-        feedbackSent: tenantFeedbackReceived,
+        feedbackReceived: tenantFeedbackReceived,
+        formsSubmitted: tenantFormsSubmitted,
+        filesUploaded: tenantFilesUploaded,
       });
     }
     const metrics = {
@@ -74,6 +88,8 @@ export function createCollectMetricsJob(
       registrations,
       notificationsSent,
       feedbackReceived,
+      formsSubmitted,
+      filesUploaded
     };
     await repository.writeMetrics(interval.toISO(), metrics);
 
