@@ -25,6 +25,17 @@
   },
   {
     "context": [
+      "/api/metrics/v1/metrics"
+    ],
+    "target": "https://dashboard-metrics-adsp-dev.apps.aro.gov.ab.ca",
+    "pathRewrite": {
+      "/api": ""
+    },
+    "secure": true,
+    "changeOrigin": true
+  },
+  {
+    "context": [
       "/api/token-handler/v1/clients"
     ],
     "target": "https://token-handler-adsp-dev.apps.aro.gov.ab.ca",
