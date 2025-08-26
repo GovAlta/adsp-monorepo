@@ -179,6 +179,15 @@ export class TimescaleValuesRepository implements ValuesRepository {
   ): Promise<Record<string, Metric> & { page: Page }> {
     const skip = decodeAfter(after);
 
+    // Default interval: last 1 month if not provided - prevents infinitely long search
+    if (!criteria.intervalMin && !criteria.intervalMax) {
+      const now = new Date();
+      criteria.intervalMax = now;
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(now.getMonth() - 1);
+      criteria.intervalMin = oneMonthAgo;
+    }
+
     let view = null;
     switch (criteria.interval) {
       case 'one_minute':
@@ -257,6 +266,15 @@ export class TimescaleValuesRepository implements ValuesRepository {
     criteria?: MetricCriteria
   ): Promise<Metric & { page: Page }> {
     const skip = decodeAfter(after);
+
+    // Default interval: last 1 month if not provided - prevents infinitely long search
+    if (!criteria.intervalMin && !criteria.intervalMax) {
+      const now = new Date();
+      criteria.intervalMax = now;
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(now.getMonth() - 1);
+      criteria.intervalMin = oneMonthAgo;
+    }
 
     let view = null;
     switch (criteria.interval) {
