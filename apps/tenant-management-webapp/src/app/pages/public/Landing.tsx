@@ -41,7 +41,7 @@ const LandingPage = (): JSX.Element => {
   const maxRowOneDiv = createRef();
 
   const dispatch = useDispatch();
-  const yesterday = DateTime.now().toUTC().minus({ days: 1 }).startOf('day');
+  const yesterday = DateTime.now().minus({ days: 1 }).toUTC().startOf('day');
   useEffect(() => {
     dispatch(fetchDashboardMetrics(yesterday));
   }, []);

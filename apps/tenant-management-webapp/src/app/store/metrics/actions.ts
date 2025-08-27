@@ -120,6 +120,7 @@ export const fetchDashboardMetricsSuccess = (data: {
   pdfGenerated: number;
   notificationsSent: number;
   feedbackReceived: number;
+  formsSubmitted: number;
 }): FetchDashboardMetricsSuccessAction => ({
   type: FETCH_DASHBOARD_METRICS_SUCCESS_ACTION,
   dashboard: [
@@ -130,5 +131,6 @@ export const fetchDashboardMetricsSuccess = (data: {
     { id: 'pdfsGenerated', name: 'PDFs generated', value: data.pdfGenerated },
     { id: 'notificationsSent', name: 'Notifications sent', value: data.notificationsSent },
     { id: 'feedbackReceived', name: 'Feedback received', value: data.feedbackReceived },
+    { id: 'formsSubmitted', name: 'Forms submitted', value: data.formsSubmitted },
   ],
 });
