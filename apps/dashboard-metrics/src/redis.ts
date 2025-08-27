@@ -32,7 +32,7 @@ export class RedisMetricsRepository implements MetricsRepository {
         if (err) {
           reject(err);
         } else {
-          resolve(JSON.parse(result || '{}'));
+          resolve(result ? JSON.parse(result) : null);
         }
       });
     });
