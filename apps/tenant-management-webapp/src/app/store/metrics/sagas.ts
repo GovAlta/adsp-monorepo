@@ -8,6 +8,9 @@ import {
   fetchServicesSuccess,
   FETCH_SERVICES_ACTION,
   FETCH_SERVICE_METRICS_ACTION,
+  fetchDashboardMetricsSuccess,
+  FETCH_DASHBOARD_METRICS_ACTION,
+  FetchDashboardMetricsAction,
 } from './actions';
 import { RootState } from '../index';
 import { ErrorNotification } from '../notifications/actions';
@@ -132,7 +135,19 @@ function* fetchServiceMetrics(action: FetchServiceMetricsAction): SagaIterator {
   }
 }
 
+function* fetchDashboardMetrics(action: FetchDashboardMetricsAction): SagaIterator {
+  const { interval } = action;
+
+  try {
+    const { data } = yield call(axios.get, `/api/metrics/v1/metrics/${interval.toISO()}`);
+    yield put(fetchDashboardMetricsSuccess(data));
+  } catch (err) {
+    // This is best effort; fine if it fails.
+  }
+}
+
 export function* watchServiceMetricsSagas(): Generator {
+  yield takeLatest(FETCH_DASHBOARD_METRICS_ACTION, fetchDashboardMetrics);
   yield takeLatest(FETCH_SERVICES_ACTION, fetchServices);
   yield takeLatest(FETCH_SERVICE_METRICS_ACTION, fetchServiceMetrics);
 }

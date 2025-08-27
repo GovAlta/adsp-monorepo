@@ -5,6 +5,10 @@ import { MetricsRepository } from './metrics';
 export class RedisMetricsRepository implements MetricsRepository {
   constructor(private readonly client: RedisClient) {}
 
+  isConnected(): boolean {
+    return this.client.connected;
+  }
+
   async writeMetrics(interval: string, metrics: Record<string, unknown>): Promise<boolean> {
     return new Promise((resolve, reject) => {
       this.client.setex(
@@ -28,7 +32,7 @@ export class RedisMetricsRepository implements MetricsRepository {
         if (err) {
           reject(err);
         } else {
-          resolve(JSON.parse(result || '{}'));
+          resolve(result ? JSON.parse(result) : null);
         }
       });
     });

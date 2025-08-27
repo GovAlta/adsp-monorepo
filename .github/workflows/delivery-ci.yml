@@ -95,7 +95,7 @@ jobs:
     needs: [build, buildContainers]
     strategy:
       fail-fast: true
-      max-parallel: 2
+      max-parallel: 4
       matrix:
         app: ${{ fromJson(needs.build.outputs.affected_apps_array) }}
     environment:
@@ -171,7 +171,7 @@ jobs:
     needs: [build, deployStagingApproval]
     strategy:
       fail-fast: true
-      max-parallel: 2
+      max-parallel: 4
       matrix:
         app: ${{ fromJson(needs.build.outputs.affected_apps_array) }}
     environment:

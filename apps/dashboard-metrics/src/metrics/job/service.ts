@@ -4,14 +4,16 @@ import { DateTime } from 'luxon';
 import { Logger } from 'winston';
 import { CACHE_SERVICE_ID, Metrics, MetricsResponse, VALUE_SERVICE_ID } from './types';
 
-export function createGetEventMetrics(logger: Logger, directory: ServiceDirectory, tokenProvider: TokenProvider) {
-  return async (tenant: Tenant, metric: string, date: DateTime): Promise<Metrics> => {
+export function createGetServiceMetrics(logger: Logger, directory: ServiceDirectory, tokenProvider: TokenProvider) {
+  return async (tenant: Tenant, service: string, request: string, date: DateTime): Promise<Metrics> => {
     try {
       const cacheServiceUrl = await directory.getServiceUrl(CACHE_SERVICE_ID);
       const eventMetricsUrl = new URL(
-        `v1/cache/${VALUE_SERVICE_ID}/event-service/values/event/metrics`,
+        `v1/cache/${VALUE_SERVICE_ID}/${service}/values/service-metrics/metrics`,
         cacheServiceUrl
       );
+      const metric = `${request}:count`;
+
       const token = await tokenProvider.getAccessToken();
 
       const { data } = await axios.get<MetricsResponse>(eventMetricsUrl.href, {
@@ -31,8 +33,8 @@ export function createGetEventMetrics(logger: Logger, directory: ServiceDirector
 
       const item = data[metric]?.values[0];
       logger.debug(
-        `Fetched event metric ${metric} for tenant ${tenant.name} ${item ? 'with result' : 'without result'}.`,
-        { context: 'getEventMetrics', tenantId: tenant.id.toString() }
+        `Fetched service metric ${metric} for tenant ${tenant.name} ${item ? 'with result' : 'without result'}.`,
+        { context: 'getServiceMetrics', tenantId: tenant.id }
       );
       return (
         item && {
@@ -45,9 +47,9 @@ export function createGetEventMetrics(logger: Logger, directory: ServiceDirector
         }
       );
     } catch (err) {
-      logger.error(`Error fetching event metrics for tenant ${tenant.name}: ${err}`, {
-        context: 'getEventMetrics',
-        tenantId: tenant.id.toString(),
+      logger.error(`Error fetching service metrics for tenant ${tenant.name}: ${err}`, {
+        context: 'getServiceMetrics',
+        tenantId: tenant.id,
       });
     }
   };

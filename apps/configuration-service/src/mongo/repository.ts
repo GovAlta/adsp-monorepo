@@ -199,8 +199,10 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .findOneAndUpdate(
           query,
           {
-            ...update,
-            configuration: renamePrefixProperties(revision.configuration, '$', this.META_PREFIX),
+            $set: {
+              ...update,
+              configuration: renamePrefixProperties(revision.configuration, '$', this.META_PREFIX),
+            }
           },
           { upsert: true, new: true, lean: true }
         )
