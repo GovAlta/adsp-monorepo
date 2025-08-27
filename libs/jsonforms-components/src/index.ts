@@ -52,6 +52,8 @@ import {
   AddressLoopUpControlTableReview,
   GoAInputBaseFullNameControlReview,
   GoAInputBaseFullNameDobControlReview,
+  GoAEmailControlTester,
+  GoAInputEmailControl
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -84,6 +86,7 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: GoATextControlTester, renderer: GoAInputTextControl },
   { tester: GoADateControlTester, renderer: GoAInputDateControl },
   { tester: GoADateTimeControlTester, renderer: GoAInputDateTimeControl },
+  { tester: GoAEmailControlTester, renderer: GoAInputEmailControl },
   { tester: GoATimeControlTester, renderer: GoAInputTimeControl },
   { tester: GoACalloutControlTester, renderer: GoACalloutControl },
   {
