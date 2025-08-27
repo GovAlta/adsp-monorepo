@@ -29,6 +29,7 @@ export interface FormDefinition {
   ministry?: string;
   registeredId?: string;
   programName?: string | null;
+  actsOfLegislation?: string[];
 }
 
 export interface FormResourceTagResponse {
@@ -82,6 +83,7 @@ export const defaultFormDefinition: FormDefinition = {
   supportTopic: false,
   securityClassification: SecurityClassification.ProtectedB,
   programName: null,
+  actsOfLegislation: [],
 };
 export interface Stream {
   namespace: string;
