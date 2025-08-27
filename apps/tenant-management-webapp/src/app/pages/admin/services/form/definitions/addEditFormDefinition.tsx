@@ -29,6 +29,7 @@ import {
   GoADropdownItem,
   GoAIconButton,
   GoATooltip,
+  GoAFilterChip,
 } from '@abgov/react-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import { ministryOptions } from './ministryOptions';
@@ -184,6 +185,29 @@ export const AddEditFormDefinition = ({
     setEditTarget('');
     setEditProgramName('');
   };
+
+  const [newAct, setNewAct] = useState<string>('');
+  const addAct = () => {
+    const val = newAct.trim();
+    if (!val) return;
+    const existing = (definition.actsOfLegislation ?? []).map((a) => a.toLowerCase());
+    if (existing.includes(val.toLowerCase())) {
+      setNewAct('');
+      return;
+    }
+    setDefinition({
+      ...definition,
+      actsOfLegislation: [...(definition.actsOfLegislation ?? []), val],
+    });
+    setNewAct('');
+  };
+  const removeAct = (act: string) => {
+    setDefinition({
+      ...definition,
+      actsOfLegislation: (definition.actsOfLegislation ?? []).filter((a) => a !== act),
+    });
+  };
+
   return (
     <GoAModal
       testId="definition-form"
@@ -229,7 +253,11 @@ export const AddEditFormDefinition = ({
                 if (definition.registeredId === null) {
                   delete definition.registeredId;
                 }
-                onSave(definition);
+                const cleanActs = Array.from(
+                  new Set((definition.actsOfLegislation ?? []).map((a) => a.trim()).filter(Boolean))
+                );
+
+                onSave({ ...definition, actsOfLegislation: cleanActs });
               }
             }}
           >
@@ -472,6 +500,42 @@ export const AddEditFormDefinition = ({
               }}
             />
           </GoAFormItem>
+
+          <GoAFormItem label="Acts of Legislation">
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
+              <GoAInput
+                name="new-act-input"
+                width="100%"
+                value={newAct}
+                placeholder="Type an Act"
+                onChange={(_, v) => setNewAct(v)}
+              />
+              <GoAButton type="secondary" onClick={addAct} disabled={!newAct.trim()}>
+                Add
+              </GoAButton>
+
+              {(definition.actsOfLegislation ?? []).length === 0 ? (
+                <div style={{ fontStyle: 'italic', color: '#666' }}>No Acts added.</div>
+              ) : (
+                <div>
+                  {(definition.actsOfLegislation ?? [])
+                    .slice()
+                    .sort((a, b) => a.localeCompare(b))
+                    .map((act) => (
+                      <GoAFilterChip
+                        key={act}
+                        content={act}
+                        testId={`act-chip-${act}`}
+                        mr="xs"
+                        mb="xs"
+                        onClick={() => removeAct(act)}
+                      />
+                    ))}
+                </div>
+              )}
+            </div>
+          </GoAFormItem>
+
           <GoAModal
             open={showAddProgram}
             heading="Add program"
