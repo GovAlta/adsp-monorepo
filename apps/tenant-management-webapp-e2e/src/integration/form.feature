@@ -357,11 +357,11 @@ Feature: Form
   @TEST_CS-3977 @REQ_CS-3590 @regression
   Scenario: As a tenant admin, I can find form definitions by tag, so I can find forms related to some context
     Given a tenant admin user is on form definitions page
-    Then the user views top 200 tags populated from the resource tags endpoint in alphabetical order in Filter by tag dropdown
-    When the user selects "autotest" from the Filter by tag dropdown
+    Then the user views top 200 tags populated from the resource tags endpoint in alphabetical order in Filter by tag dropdown on form definitions page
+    When the user selects "autotest" from the Filter by tag dropdown on form definitions page
     Then the user "views" the form definition of "autotest-form-existing-tag", "DO NOT DELETE"
     When the user clicks "Edit" button for the form definition of "autotest-form-existing-tag", "DO NOT DELETE"
     Then the user views form definition editor for "autotest-form-existing-tag", "DO NOT DELETE"
     When the user clicks Back button in form definition editor
-    Then the user views "autotest" in Filter by tag dropdown
+    Then the user views "autotest" in Filter by tag dropdown on form definitions page
     And the user "views" the form definition of "autotest-form-existing-tag", "DO NOT DELETE"

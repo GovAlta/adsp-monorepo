@@ -1513,7 +1513,7 @@ When('the user deletes all disposition states if any', function () {
 });
 
 Then(
-  'the user views top 200 tags populated from the resource tags endpoint in alphabetical order in Filter by tag dropdown',
+  'the user views top 200 tags populated from the resource tags endpoint in alphabetical order in Filter by tag dropdown on form definitions page',
   function () {
     let tag_labels;
     // Get all tags from the resource tags endpoint
@@ -1544,7 +1544,7 @@ Then(
   }
 );
 
-When('the user selects {string} from the Filter by tag dropdown', function (tagName) {
+When('the user selects {string} from the Filter by tag dropdown on form definitions page', function (tagName) {
   tagName = commonlib.stringReplacement(tagName, replacementString);
   formObj.definitionsFilterByTagDropdown().shadow().find('input').click({ force: true });
   cy.wait(1000);
@@ -1552,7 +1552,7 @@ When('the user selects {string} from the Filter by tag dropdown', function (tagN
   cy.wait(2000);
 });
 
-Then('the user views {string} in Filter by tag dropdown', function (tagName) {
+Then('the user views {string} in Filter by tag dropdown on form definitions page', function (tagName) {
   tagName = commonlib.stringReplacement(tagName, replacementString);
   formObj.definitionsFilterByTagDropdown().invoke('attr', 'value').should('eq', tagName);
 });
