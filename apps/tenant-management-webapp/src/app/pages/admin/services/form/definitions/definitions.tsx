@@ -400,7 +400,7 @@ export const FormDefinitions = ({
                     setCurrentDefinition(formDefinition);
                   }}
                 />
-                {getNextEntries() && !ministryFilter && (
+                {getNextEntries() && !ministryFilter && !programFilter && (
                   <LoadMoreWrapper>
                     <GoAButton
                       testId="form-event-load-more-btn"
