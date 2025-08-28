@@ -39,14 +39,9 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
   const primaryLabel = defaultSchema?.label || defaultLabel;
 
   const splintIndex = splitErrors.findIndex((e) => e === 'is a required property');
-  splitErrors[splintIndex] = `${primaryLabel} is a required property`;
+  splitErrors[splintIndex] = `${primaryLabel} is required`;
 
   const finalErrors = splitErrors.join('\n');
-
-  console.log(JSON.stringify(defaultSchema?.label) + '<efaultSchema?.label');
-  console.log(JSON.stringify(errors) + 'errors');
-  console.log(JSON.stringify(label) + '<label');
-  console.log(JSON.stringify(defaultLabel) + '<defaultLabel');
 
   return (
     <GoAFormItem
@@ -75,8 +70,6 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
           });
         }}
         onBlur={(name: string, value: Date | string) => {
-          console.log(JSON.stringify(name) + '<name');
-          console.log(JSON.stringify(value) + '<value');
           if (!isVisited) {
             setIsVisited(true);
           }
