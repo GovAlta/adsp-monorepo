@@ -509,7 +509,7 @@ When('the user clicks Load more button on event log page', function () {
       numOfRows = Number(elm.length);
     });
   tenantAdminObj.eventLoadMoreBtn().shadow().find('button').click({ force: true });
-  cy.wait(4000);
+  cy.wait(10000);
 });
 
 Then('the user views more events matching the search filter of {string}', function (namespaceName: string) {
