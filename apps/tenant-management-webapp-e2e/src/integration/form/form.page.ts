@@ -111,9 +111,8 @@ class FormPage {
     return cy.xpath('//goa-modal[@open="true" and @testid="definition-form"]/*[@slot="heading"]');
   }
 
-  // CS-4404: duplicated testid. [1] can be removed when fixed.
   definitionEditorEditDefinitionModalNameInput() {
-    return cy.xpath('(//goa-input[@testid="form-definition-name"])[1]');
+    return cy.xpath('//goa-input[@testid="form-definition-name"]');
   }
 
   definitionEditorEditDefinitionModalDescriptionField() {
