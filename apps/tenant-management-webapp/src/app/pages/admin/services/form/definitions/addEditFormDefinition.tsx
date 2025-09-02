@@ -207,6 +207,13 @@ export const AddEditFormDefinition = ({
       actsOfLegislation: (definition.actsOfLegislation ?? []).filter((a) => a !== act),
     });
   };
+  useEffect(() => {
+    if (!open) return;
+    const p = definition?.programName?.trim();
+    if (p && !programOptions.includes(p)) {
+      setProgramOptions((prev) => [...prev, p].sort((a, b) => a.localeCompare(b)));
+    }
+  }, [open, definition?.programName]);
 
   return (
     <GoAModal
@@ -421,8 +428,9 @@ export const AddEditFormDefinition = ({
                   icon="pencil"
                   ariaLabel="Edit program"
                   onClick={() => {
-                    setEditTarget(programOptions[0] || '');
-                    setEditProgramName(programOptions[0] || '');
+                    const current = definition?.programName || programOptions[0] || '';
+                    setEditTarget(current);
+                    setEditProgramName(current);
                     setShowEditProgram(true);
                   }}
                 />
