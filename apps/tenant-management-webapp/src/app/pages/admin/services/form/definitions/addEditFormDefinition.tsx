@@ -141,6 +141,8 @@ export const AddEditFormDefinition = ({
   const [showEditProgram, setShowEditProgram] = useState(false);
   const [editTarget, setEditTarget] = useState<string>('');
   const [editProgramName, setEditProgramName] = useState<string>('');
+  const [newAct, setNewAct] = useState<string>('');
+  const [actError, setActError] = useState<string | null>(null);
 
   const addProgram = () => {
     const val = newProgramName.trim();
@@ -186,20 +188,25 @@ export const AddEditFormDefinition = ({
     setEditProgramName('');
   };
 
-  const [newAct, setNewAct] = useState<string>('');
   const addAct = () => {
     const val = newAct.trim();
-    if (!val) return;
-    const existing = (definition.actsOfLegislation ?? []).map((a) => a.toLowerCase());
-    if (existing.includes(val.toLowerCase())) {
-      setNewAct('');
+    if (!val) {
+      setActError('Please enter an Act.');
       return;
     }
+
+    const existing = (definition.actsOfLegislation ?? []).map((a) => a.toLowerCase());
+    if (existing.includes(val.toLowerCase())) {
+      setActError(`Duplicate Act name ${val}. Must be unique.`);
+      return;
+    }
+
     setDefinition({
       ...definition,
       actsOfLegislation: [...(definition.actsOfLegislation ?? []), val],
     });
     setNewAct('');
+    setActError(null);
   };
   const removeAct = (act: string) => {
     setDefinition({
@@ -500,15 +507,19 @@ export const AddEditFormDefinition = ({
               }}
             />
           </GoAFormItem>
-
-          <GoAFormItem label="Acts of Legislation">
+          <br />
+          <GoAFormItem label="Acts of Legislation" error={actError ?? undefined}>
             <div style={{ display: 'grid', gap: '0.5rem' }}>
               <GoAInput
+                error={!!actError}
                 name="new-act-input"
                 width="100%"
                 value={newAct}
                 placeholder="Type an Act"
-                onChange={(_, v) => setNewAct(v)}
+                onChange={(_, v) => {
+                  setNewAct(v);
+                  if (actError) setActError(null);
+                }}
               />
               <GoAButton type="secondary" onClick={addAct} disabled={!newAct.trim()}>
                 Add
@@ -528,7 +539,12 @@ export const AddEditFormDefinition = ({
                         testId={`act-chip-${act}`}
                         mr="xs"
                         mb="xs"
-                        onClick={() => removeAct(act)}
+                        onClick={() =>
+                          setDefinition({
+                            ...definition,
+                            actsOfLegislation: (definition.actsOfLegislation ?? []).filter((a) => a !== act),
+                          })
+                        }
                       />
                     ))}
                 </div>
