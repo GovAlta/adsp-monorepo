@@ -80,6 +80,7 @@ export const FormDefinitions = ({
 
   const [ministryFilter, setMinistryFilter] = useState<string>('');
   const [programFilter, setProgramFilter] = useState<string>('');
+  const [filteredVisibleCount, setFilteredVisibleCount] = useState<number>(10);
 
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
@@ -260,6 +261,28 @@ export const FormDefinitions = ({
     }, {} as Record<string, any>);
   }, [displayDefinitions, ministryFilter, programFilter]);
 
+  useEffect(() => {
+    setFilteredVisibleCount(10);
+  }, [programFilter, ministryFilter]);
+
+  const filteredEntriesAll = useMemo(() => Object.entries(filteredDefinitions || {}), [filteredDefinitions]);
+
+  const limitedFilteredDefinitions = useMemo(() => {
+    if (!programFilter && !ministryFilter) return filteredDefinitions;
+    const entries = filteredEntriesAll;
+    if (entries.length <= filteredVisibleCount) return filteredDefinitions;
+    const sliced = entries.slice(0, filteredVisibleCount);
+    return sliced.reduce((obj, [id, def]) => {
+      obj[id] = def;
+      return obj;
+    }, {} as Record<string, any>);
+  }, [filteredDefinitions, filteredEntriesAll, programFilter, ministryFilter, filteredVisibleCount]);
+
+  const hasMoreFiltered = useMemo(() => {
+    if (!programFilter && !ministryFilter) return false;
+    return filteredEntriesAll.length > filteredVisibleCount;
+  }, [filteredEntriesAll, programFilter, ministryFilter, filteredVisibleCount]);
+
   return (
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
@@ -389,7 +412,7 @@ export const FormDefinitions = ({
             {Object.keys(filteredDefinitions || {}).length > 0 ? (
               <>
                 <FormDefinitionsTable
-                  definitions={filteredDefinitions}
+                  definitions={limitedFilteredDefinitions}
                   baseResourceFormUrn={BASE_FORM_CONFIG_URN}
                   onDelete={(formDefinition) => {
                     setShowDeleteConfirmation(true);
@@ -407,6 +430,18 @@ export const FormDefinitions = ({
                       key="form-event-load-more-btn"
                       type="tertiary"
                       onClick={onNext}
+                    >
+                      Load more
+                    </GoAButton>
+                  </LoadMoreWrapper>
+                )}
+                {(programFilter || ministryFilter) && hasMoreFiltered && (
+                  <LoadMoreWrapper>
+                    <GoAButton
+                      testId="form-filtered-load-more-btn"
+                      key="form-filtered-load-more-btn"
+                      type="tertiary"
+                      onClick={() => setFilteredVisibleCount((c) => c + 10)}
                     >
                       Load more
                     </GoAButton>
