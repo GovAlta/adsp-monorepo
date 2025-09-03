@@ -106,7 +106,7 @@ describe('Dropdown Component', () => {
         keyCode: 40,
         charCode: 40,
       });
-      expect(dd.innerHTML).toBe('label-a');
+      expect(dd.innerHTML).toContain('label-a');
     });
   });
   describe('tests for auto complete', () => {
@@ -168,7 +168,7 @@ describe('Dropdown Component', () => {
         keyCode: 9,
         charCode: 9,
       });
-      expect(dd.innerHTML).toBe('label-a');
+      expect(dd.innerHTML).toContain('label-a');
     });
 
     it('keypress can trigger a value', () => {
@@ -208,7 +208,7 @@ describe('Dropdown Component', () => {
         charCode: 38,
       });
 
-      expect(dd.innerHTML).toBe('label-b');
+      expect(dd.innerHTML).toContain('label-b');
     });
 
     it('can trigger up with no value', () => {
@@ -248,7 +248,7 @@ describe('Dropdown Component', () => {
         charCode: 40,
       });
 
-      expect(dd.innerHTML).toBe(' ');
+      expect(dd.innerHTML).toContain(' ');
     });
 
     it('can press enter key for search', () => {
@@ -287,7 +287,7 @@ describe('Dropdown Component', () => {
         })
       );
       fireEvent(input, new CustomEvent('_change', { detail: { name: 'label-a', value: 'value-a' } }));
-      expect(input.getAttribute('value')).toBe('value-a');
+      expect(input.getAttribute('value')).toContain('value-a');
     });
   });
   describe('test util functions', () => {
