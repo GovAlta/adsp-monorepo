@@ -264,7 +264,7 @@ export const FormDefinitions = ({
     <section>
       <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
 
-      <GoAFormItem label="Filter by tag">
+      <GoAFormItem label="Filter by tag" mb={'s'}>
         <GoADropdown
           name="TagFilter"
           value={selectedTag?.value || ''}
@@ -292,7 +292,7 @@ export const FormDefinitions = ({
         </GoADropdown>
       </GoAFormItem>
 
-      <GoAFormItem label="Filter by program">
+      <GoAFormItem label="Filter by program" mb={'s'}>
         <GoADropdown
           name="ProgramFilter"
           width="60ch"
@@ -310,7 +310,7 @@ export const FormDefinitions = ({
         </GoADropdown>
       </GoAFormItem>
 
-      <GoAFormItem label="Filter by ministry">
+      <GoAFormItem label="Filter by ministry" mb={'s'}>
         <GoADropdown
           name="MinistryFilter"
           width="60ch"
@@ -327,7 +327,7 @@ export const FormDefinitions = ({
         </GoADropdown>
       </GoAFormItem>
 
-      <GoAFormItem label="Registered ID" mt="l">
+      <GoAFormItem label="Registered ID" mt="s">
         <GoAButtonGroup alignment="start">
           <GoAInput
             type="text"

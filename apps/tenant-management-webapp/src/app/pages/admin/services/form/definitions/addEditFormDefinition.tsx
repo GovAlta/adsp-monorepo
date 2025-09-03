@@ -358,7 +358,27 @@ export const AddEditFormDefinition = ({
               />
             </DescriptionItem>
           </GoAFormItem>
-          <GoAFormItem label="Ministry">
+          <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL" mt={'s'}>
+            <FormFormItem>
+              <GoAInput
+                name="form-url-id"
+                value={definition?.formDraftUrlTemplate || defaultFormUrl}
+                testId="form-url-id"
+                disabled={!definition?.id?.length}
+                width="100%"
+                onChange={(name, value) => {
+                  validators.remove('formDraftUrlTemplate');
+                  const validations = {
+                    formDraftUrlTemplate: value,
+                  };
+                  validators.checkAll(validations);
+
+                  setDefinition({ ...definition, formDraftUrlTemplate: value });
+                }}
+              />
+            </FormFormItem>
+          </GoAFormItem>
+          <GoAFormItem label="Ministry" mt="s">
             <FormFormItem>
               <GoADropdown
                 value={definition?.ministry ?? ''}
@@ -437,27 +457,6 @@ export const AddEditFormDefinition = ({
             </div>
           </div>
 
-          <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
-            <FormFormItem>
-              <GoAInput
-                name="form-url-id"
-                value={definition?.formDraftUrlTemplate || defaultFormUrl}
-                testId="form-url-id"
-                disabled={!definition?.id?.length}
-                width="100%"
-                onChange={(name, value) => {
-                  validators.remove('formDraftUrlTemplate');
-                  const validations = {
-                    formDraftUrlTemplate: value,
-                  };
-                  validators.checkAll(validations);
-
-                  setDefinition({ ...definition, formDraftUrlTemplate: value });
-                }}
-              />
-            </FormFormItem>
-          </GoAFormItem>
-
           {!isEdit && (
             <GoACheckbox
               name={'populate-form'}
@@ -507,8 +506,7 @@ export const AddEditFormDefinition = ({
               }}
             />
           </GoAFormItem>
-          <br />
-          <GoAFormItem label="Acts of Legislation" error={actError ?? undefined}>
+          <GoAFormItem label="Acts of Legislation" mt={'l'} error={actError ?? undefined}>
             <div style={{ display: 'grid', gap: '0.5rem' }}>
               <GoAInput
                 error={!!actError}
