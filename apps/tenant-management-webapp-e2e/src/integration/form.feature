@@ -9,6 +9,18 @@ Feature: Form
     And the user views the link of See the code for "form-service"
     And the user views the link of "Get support" under Support
 
+  @TEST_CS-3977 @REQ_CS-3590 @regression
+  Scenario: As a tenant admin, I can find form definitions by tag, so I can find forms related to some context
+    Given a tenant admin user is on form definitions page
+    Then the user views top 200 tags populated from the resource tags endpoint in alphabetical order in Filter by tag dropdown on form definitions page
+    When the user selects "autotest" from the Filter by tag dropdown on form definitions page
+    Then the user "views" the form definition of "autotest-form-existing-tag", "DO NOT DELETE"
+    When the user clicks "Edit" button for the form definition of "autotest-form-existing-tag", "DO NOT DELETE"
+    Then the user views form definition editor for "autotest-form-existing-tag", "DO NOT DELETE"
+    When the user clicks Back button in form definition editor
+    Then the user views "autotest" in Filter by tag dropdown on form definitions page
+    And the user "views" the form definition of "autotest-form-existing-tag", "DO NOT DELETE"
+
   # Bug #: CS-4368 tasks tab shows a blank page with console errors
   # TEST DATA: a form definition named "autotest-submission-task" is precreated
   # TEST DATA: a task queue named autotest:testSubmissionQueue is precreated

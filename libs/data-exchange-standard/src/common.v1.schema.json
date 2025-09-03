@@ -18,10 +18,7 @@
           "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/personName"
         }
       },
-      "required": [
-        "firstName",
-        "lastName"
-      ],
+      "required": ["firstName", "lastName"],
       "errorMessage": {
         "properties": {
           "firstName": "Include period (.) if providing your initial",
@@ -51,11 +48,7 @@
           "format": "date"
         }
       },
-      "required": [
-        "firstName",
-        "lastName",
-        "dateOfBirth"
-      ],
+      "required": ["firstName", "lastName", "dateOfBirth"],
       "errorMessage": {
         "properties": {
           "firstName": "Include period (.) if providing your initial",
@@ -86,12 +79,7 @@
           "$ref": "#/definitions/personDependent/definitions/craDependentType"
         }
       },
-      "required": [
-        "firstName",
-        "lastName",
-        "dateOfBirth",
-        "dependentType"
-      ],
+      "required": ["firstName", "lastName", "dateOfBirth", "dependentType"],
       "errorMessage": {
         "properties": {
           "firstName": "Include period (.) if providing your initial",
@@ -142,11 +130,7 @@
           "const": "CA"
         }
       },
-      "required": [
-        "addressLine1",
-        "municipality",
-        "postalCode"
-      ],
+      "required": ["addressLine1", "municipality", "postalCode"],
       "errorMessage": {
         "properties": {
           "postalCode": "Must be in A0A 0A0 capital letters and numbers format"
@@ -170,21 +154,7 @@
         "subdivisionCode": {
           "title": "Province or territory",
           "description": "Two letter code for province or territory",
-          "enum": [
-            "AB",
-            "BC",
-            "MB",
-            "NB",
-            "NL",
-            "NT",
-            "NS",
-            "NU",
-            "ON",
-            "PE",
-            "QC",
-            "SK",
-            "YT"
-          ]
+          "enum": ["AB", "BC", "MB", "NB", "NL", "NT", "NS", "NU", "ON", "PE", "QC", "SK", "YT"]
         },
         "postalCode": {
           "$ref": "https://adsp.alberta.ca/standard.v1.schema.json#/definitions/postalCode/definitions/canadaPostalCode"
@@ -193,12 +163,7 @@
           "const": "CA"
         }
       },
-      "required": [
-        "addressLine1",
-        "municipality",
-        "subdivisionCode",
-        "postalCode"
-      ],
+      "required": ["addressLine1", "municipality", "subdivisionCode", "postalCode"],
       "errorMessage": {
         "properties": {
           "postalCode": "Must be in A0A 0A0 capital letters and numbers format"
@@ -235,11 +200,7 @@
           "errorMessage": "Must be a valid account number which is typically 7 or 12 digits and can include dashes and spaces."
         }
       },
-      "required": [
-        "institution",
-        "branch",
-        "account"
-      ]
+      "required": ["institution", "branch", "account"]
     },
     "bankAccountNumberString": {
       "$comment": "Bank account number for Canadian banks and credit unions as a single string value.",
@@ -256,6 +217,18 @@
       "type": "string",
       "pattern": "^\\d{3} \\d{3} \\d{3}$",
       "errorMessage": "Must be three groups of three digits."
+    },
+    "emailStandard": {
+      "type": "string",
+      "format": "email",
+      "label": "Email address",
+      "maxLength": 100,
+      "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{1,}$",
+      "description": "Please enter a valid email address (e.g., name@example.com).",
+      "errorMessage": {
+        "pattern": "(e.g., name@example.com).",
+        "maxLength": "Email must be less than 100 characters."
+      }
     }
   }
 }
