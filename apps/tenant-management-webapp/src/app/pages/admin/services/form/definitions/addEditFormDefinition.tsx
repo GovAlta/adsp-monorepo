@@ -12,10 +12,11 @@ import {
 import { FormFormItem, DescriptionItem } from '../styled-components';
 import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { uischema } from './categorization-stepper-nav-buttons';
 import { schema } from './categorization';
 import { selectDefaultFormUrl } from '@store/form/selectors';
+import { renameAct } from '@store/form/action';
 
 import {
   GoATextArea,
@@ -143,6 +144,12 @@ export const AddEditFormDefinition = ({
   const [editProgramName, setEditProgramName] = useState<string>('');
   const [newAct, setNewAct] = useState<string>('');
   const [actError, setActError] = useState<string | null>(null);
+  const [showEditAct, setShowEditAct] = useState(false);
+  const [editActTarget, setEditActTarget] = useState<string>('');
+  const [editActName, setEditActName] = useState<string>('');
+  const [editActError, setEditActError] = useState<string | null>(null);
+
+  const dispatch = useDispatch();
 
   const addProgram = () => {
     const val = newProgramName.trim();
@@ -539,19 +546,37 @@ export const AddEditFormDefinition = ({
                     .slice()
                     .sort((a, b) => a.localeCompare(b))
                     .map((act) => (
-                      <GoAFilterChip
+                      <span
                         key={act}
-                        content={act}
-                        testId={`act-chip-${act}`}
-                        mr="xs"
-                        mb="xs"
-                        onClick={() =>
-                          setDefinition({
-                            ...definition,
-                            actsOfLegislation: (definition.actsOfLegislation ?? []).filter((a) => a !== act),
-                          })
-                        }
-                      />
+                        style={{ display: 'inline-block', marginRight: '0.5rem', marginBottom: '0.5rem' }}
+                      >
+                        <GoAFilterChip
+                          content={act}
+                          testId={`act-chip-${act}`}
+                          onClick={() => {
+                            setDefinition({
+                              ...definition,
+                              actsOfLegislation: (definition.actsOfLegislation ?? []).filter((a) => a !== act),
+                            });
+                          }}
+                        />
+                        <span
+                          style={{
+                            position: 'relative',
+                            top: '-1.8rem',
+                            left: '0.5rem',
+                            display: 'inline-block',
+                            width: 'calc(100% - 1.5rem)',
+                            height: '1.5rem',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => {
+                            setEditActTarget(act);
+                            setEditActName(act);
+                            setShowEditAct(true);
+                          }}
+                        />
+                      </span>
                     ))}
                 </div>
               )}
@@ -672,6 +697,69 @@ export const AddEditFormDefinition = ({
                 width="100%"
                 value={editProgramName}
                 onChange={(_, v) => setEditProgramName(v)}
+              />
+            </GoAFormItem>
+          </GoAModal>
+          <GoAModal
+            open={showEditAct}
+            heading="Edit Act"
+            maxWidth="25%"
+            actions={
+              <GoAButtonGroup alignment="end">
+                <GoAButton
+                  type="secondary"
+                  onClick={() => {
+                    setShowEditAct(false);
+                    setEditActTarget('');
+                    setEditActName('');
+                    setEditActError(null);
+                  }}
+                >
+                  Cancel
+                </GoAButton>
+                <GoAButton
+                  type="primary"
+                  onClick={() => {
+                    const newName = editActName.trim();
+                    if (!newName) {
+                      setEditActError('Please enter an Act name.');
+                      return;
+                    }
+
+                    const existing = (definition.actsOfLegislation ?? []).map((a) => a.toLowerCase());
+
+                    if (
+                      existing.includes(newName.toLowerCase()) &&
+                      newName.toLowerCase() !== editActTarget.toLowerCase()
+                    ) {
+                      setEditActError(`Duplicate Act name ${newName}. Must be unique.`);
+                      return;
+                    }
+                    dispatch(renameAct(editActTarget, newName));
+                    const updatedActs = (definition.actsOfLegislation ?? []).map((a) =>
+                      a === editActTarget ? newName : a
+                    );
+                    setDefinition({ ...definition, actsOfLegislation: updatedActs });
+                    setShowEditAct(false);
+                    setEditActTarget('');
+                    setEditActName('');
+                    setEditActError(null);
+                  }}
+                >
+                  Save
+                </GoAButton>
+              </GoAButtonGroup>
+            }
+          >
+            <GoAFormItem label="New Act name" error={editActError ?? undefined}>
+              <GoAInput
+                name="edit-act-name"
+                width="100%"
+                value={editActName}
+                onChange={(_, v) => {
+                  setEditActName(v);
+                  if (editActError) setEditActError(null);
+                }}
               />
             </GoAFormItem>
           </GoAModal>
