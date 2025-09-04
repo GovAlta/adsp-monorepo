@@ -87,3 +87,7 @@ export const GoADropdownListOption = styled.div<GoADropdownListOptionProps>`
     color: ${(p) => (p.isSelected ? '#fff' : 'var(--goa-color-interactive-hover) !important')};
   }
 `;
+
+export const LabelItem = styled.span`
+  font: var(--goa-dropdown-typography);
+`;

@@ -18,6 +18,7 @@ import {
   GoADropdownListContainerWrapper,
   GoADropdownListOption,
   GoADropdownTextbox,
+  LabelItem,
 } from './styled-components';
 
 export const isValidKey = (keyCode: string): boolean => {
@@ -280,7 +281,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
                     updateDropDownData(item);
                   }}
                 >
-                  {item.label}
+                  <LabelItem>{item.label}</LabelItem>
                 </div>
               </GoADropdownListOption>
             );

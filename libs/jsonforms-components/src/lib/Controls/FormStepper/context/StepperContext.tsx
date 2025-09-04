@@ -192,8 +192,14 @@ export const JsonFormsStepperContextProvider = ({
       /* The block is used to cache the state for the tenant web app review editor  */
       stepperDispatch({
         type: 'update/uischema',
-        payload: { state: createStepperContextInitData({ ...StepperProps, activeId: stepperState?.activeId }) },
+        payload: {
+          state: createStepperContextInitData({
+            ...StepperProps,
+            activeId: Math.min(stepperState?.activeId, stepperState.maxReachedStep),
+          }),
+        },
       });
+
       if (stepperState.activeId !== stepperState.categories.length + 1) {
         context.goToPage(stepperState.maxReachedStep);
         context.goToPage(stepperState.activeId);

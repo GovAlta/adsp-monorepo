@@ -36,6 +36,7 @@ import {
   CLEAR_ALL_TAGS_ACTION,
   FETCH_FORM_DEFINITIONS_REGISTER_ID_SUCCESS_ACTION,
   RESET_REGISTERED_ID_ACTION,
+  RENAME_ACT_ACTION,
 } from './action';
 
 import { FormResourceTag, FormState } from './model';
@@ -410,6 +411,27 @@ export default function (state: FormState = defaultState, action: FormActionType
         },
       };
     }
+
+    case RENAME_ACT_ACTION: {
+      const { oldName, newName } = action;
+      const updatedDefinitions = { ...state.definitions };
+
+      Object.keys(updatedDefinitions).forEach((id) => {
+        const def = updatedDefinitions[id];
+        if (def.actsOfLegislation?.includes(oldName)) {
+          updatedDefinitions[id] = {
+            ...def,
+            actsOfLegislation: def.actsOfLegislation.map((a) => (a === oldName ? newName : a)),
+          };
+        }
+      });
+
+      return {
+        ...state,
+        definitions: updatedDefinitions,
+      };
+    }
+
     default:
       return state;
   }

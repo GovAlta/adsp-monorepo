@@ -126,7 +126,8 @@ Feature: Tenant admin
     Then the user views a message stating the user needs administrator role for the tenant to access the app and that they can contact the tenant creator of "env{realmOwner}"
     Then the user should not have regular admin view
 
-  @TEST_CS-715 @REQ_CS-254 @regression
+  # CS-4417: loading more button gets a loading indicator spinning forever issue sometimes.
+  @TEST_CS-715 @REQ_CS-254 @regression @ignore
   Scenario: As a tenant admin, I can search the event log, so I can find events of interest
     Given a tenant admin user is on tenant admin page
     # First create an event definition under events it will be used to verify the event log

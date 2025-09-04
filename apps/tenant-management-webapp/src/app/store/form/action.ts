@@ -81,6 +81,7 @@ export const DELETE_RESOURCE_TAGS = 'form/resource/delete-resource-tags';
 export const DELETE_RESOURCE_TAGS_SUCCESS = 'form/resource/delete-resource-tags/success';
 export const INITIALIZE_FORM_EDITOR = 'form/initialize-form-editor';
 export const RESET_REGISTERED_ID_ACTION = 'form/reset-registered-id';
+export const RENAME_ACT_ACTION = 'form/rename-act';
 
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
@@ -249,6 +250,11 @@ export interface InitializeFormEditorAction {
 export interface ResetRegisteredIdAction {
   type: typeof RESET_REGISTERED_ID_ACTION;
 }
+export interface RenameActAction {
+  type: typeof RENAME_ACT_ACTION;
+  oldName: string;
+  newName: string;
+}
 
 export type FormActionTypes =
   | ResetRegisteredIdAction
@@ -295,7 +301,8 @@ export type FormActionTypes =
   | SetSelectedTagAction
   | DeleteResourceTagsAction
   | DeleteResourceSuccessTagsAction
-  | ClearAllTagsAction;
+  | ClearAllTagsAction
+  | RenameActAction;
 
 export interface FetchAllTagsAction {
   type: typeof FETCH_ALL_TAGS_ACTION;
@@ -639,4 +646,9 @@ export const deleteResourceSuccessTags = (urn: string, formDefinitionId: string)
 });
 export const initializeFormEditor = (): InitializeFormEditorAction => ({
   type: INITIALIZE_FORM_EDITOR,
+});
+export const renameAct = (oldName: string, newName: string): RenameActAction => ({
+  type: RENAME_ACT_ACTION,
+  oldName,
+  newName,
 });
