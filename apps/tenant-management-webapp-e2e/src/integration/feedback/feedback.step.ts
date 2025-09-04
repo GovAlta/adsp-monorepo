@@ -455,10 +455,10 @@ When('the user selects the adsp site in Registered sites dropdown', function () 
   cy.wait(2000);
 });
 
-Then('the user views a feedback list with Submitted on, View, Rating, Action', function () {
+Then('the user views a feedback list with Date submitted, Page, Rating, Action', function () {
   feedbackObj.feedbackFeedbackTableHeaders().then((elements) => {
-    expect(elements[0].outerText).to.eq('Submitted on');
-    expect(elements[1].outerText).to.eq('View');
+    expect(elements[0].outerText).to.eq('Date submitted');
+    expect(elements[1].outerText).to.eq('Page');
     expect(elements[2].outerText).to.eq('Rating');
     expect(elements[3].outerText).to.eq('Action');
   });
