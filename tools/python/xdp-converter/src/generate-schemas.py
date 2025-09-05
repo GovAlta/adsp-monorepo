@@ -5,12 +5,12 @@ import os
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import traceback
-from rule_generator.normalize_rules import process_xdp_root_for_jsonforms_rules
+from rule_generator.normalize_rules import RulesParser
 from schema_generator.json_schema_generator import JsonSchemaGenerator
 from schema_generator.ui_schema_generator import UiSchemaGenerator
 import xml.etree.ElementTree as ET
 from xdp_parser.parse_xdp import parse_xdp
-from xdp_parser.xdp_utils import name_to_scope
+
 
 def discover_xdp_files(inputs):
     files = []
@@ -36,13 +36,17 @@ def discover_xdp_files(inputs):
             unique.append(fp)
     return unique
 
+
 def output_paths(input_file: Path, out_dir: Path):
     stem = input_file.stem
     schema_path = out_dir / f"{stem}.schema.json"
     ui_path = out_dir / f"{stem}.ui.json"
     return schema_path, ui_path
 
-def process_one(xdp_path: Path, out_dir: Path, overwrite: bool = False, quiet: bool = False):
+
+def process_one(
+    xdp_path: Path, out_dir: Path, overwrite: bool = False, quiet: bool = False
+):
     try:
         schema_out, ui_out = output_paths(xdp_path, out_dir)
 
@@ -53,7 +57,8 @@ def process_one(xdp_path: Path, out_dir: Path, overwrite: bool = False, quiet: b
             print(f"🧩 Parsing {xdp_path}…")
 
         tree = ET.parse(xdp_path)
-        jf_rules = process_xdp_root_for_jsonforms_rules(tree, name_to_scope)        
+        parser = RulesParser(tree.getroot())
+        jf_rules = parser.extract_rules()
         form_elements = parse_xdp(tree)
 
         json_generator = JsonSchemaGenerator()
@@ -74,6 +79,7 @@ def process_one(xdp_path: Path, out_dir: Path, overwrite: bool = False, quiet: b
         traceback.print_exc()
         return (xdp_path, False, str(e))
 
+
 def main():
     parser = argparse.ArgumentParser(
         prog="generate_schemas.py",
@@ -87,33 +93,31 @@ def main():
     python3 generate_schemas.py forms/ -o out/
     python3 generate_schemas.py "forms/**/*.xdp" -j 8 --overwrite
     """,
-        formatter_class=argparse.RawTextHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
         "inputs",
         nargs="+",
-        help="Input XDP files, directories, or glob patterns (e.g., forms/*.xdp)."
+        help="Input XDP files, directories, or glob patterns (e.g., forms/*.xdp).",
     )
     parser.add_argument(
-        "-o", "--out-dir",
+        "-o",
+        "--out-dir",
         default=".",
-        help="Directory to write outputs (default: current dir)."
+        help="Directory to write outputs (default: current dir).",
     )
     parser.add_argument(
-        "-j", "--jobs",
+        "-j",
+        "--jobs",
         type=int,
         default=os.cpu_count() or 4,
-        help="Parallel workers (default: number of CPUs)."
+        help="Parallel workers (default: number of CPUs).",
     )
     parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Overwrite existing output files."
+        "--overwrite", action="store_true", help="Overwrite existing output files."
     )
     parser.add_argument(
-        "-q", "--quiet",
-        action="store_true",
-        help="Reduce console output."
+        "-q", "--quiet", action="store_true", help="Reduce console output."
     )
 
     args = parser.parse_args()
@@ -159,6 +163,7 @@ def main():
         print(f"\nDone. ✅ {successes} ok, ⏭️ {skipped} skipped, ❌ {failures} failed.")
 
     sys.exit(0 if failures == 0 else 2)
+
 
 if __name__ == "__main__":
     main()

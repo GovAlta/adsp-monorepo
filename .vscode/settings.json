@@ -16,6 +16,9 @@
   "files.exclude": {
     "**/node_modules": true
   },
+  "python.analysis.extraPaths": [
+    "tools/python/xdp-converter/src"
+  ],
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },

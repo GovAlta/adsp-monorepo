@@ -17,7 +17,6 @@ class FormCategory(FormElement):
     def to_ui_schema(self, rules: Optional[dict] = None):
         ui_schema = {"type": "Category"}
         ui_schema["label"] = self.title
-        ui_schema["options"] = {"sectionTitle": self.title}
         ui_schema["elements"] = [FormGuidance(self.title).to_ui_schema()]
         for element in self.elements:
             ui_schema["elements"].append(element.to_ui_schema())
