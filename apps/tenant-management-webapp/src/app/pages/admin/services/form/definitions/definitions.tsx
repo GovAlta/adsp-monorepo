@@ -379,7 +379,7 @@ export const FormDefinitions = ({
         </GoADropdown>
       </GoAFormItem>
 
-      <GoAFormItem label="Registered ID" mt="s">
+      <GoAFormItem label="Registered ID" mb="s">
         <GoAButtonGroup alignment="start">
           <GoAInput
             type="text"
@@ -397,20 +397,19 @@ export const FormDefinitions = ({
           </GoAButton>
         </GoAButtonGroup>
       </GoAFormItem>
-      <GoAFormItem label="Search Acts of Legislation" mt={'s'}>
+      <GoAFormItem label="Search Acts of Legislation" mb={'l'}>
+        {/* please make sure the last filter or search should be l margin bottom */}
         <GoAInput
           type="search"
           name="ActsSearch"
           width="60ch"
           value={actSearch}
-          placeholder="e.g., Public Health Act"
           testId="acts-search"
           aria-label="Search Acts of Legislation"
           onChange={(_, v) => setActSearch(v)}
         />
       </GoAFormItem>
 
-      <br />
       {showFormDefinitions && (
         <GoAButton
           testId="add-definition"
