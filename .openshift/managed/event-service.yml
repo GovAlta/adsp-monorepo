@@ -175,6 +175,19 @@ objects:
         app: ${APP_NAME}
         component: queue
         apply-init: "true"
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "rabbitmq:4.1-management",
+                "namespace": "adsp-build"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": true
+            }
+          ]
     spec:
       serviceName: ${APP_NAME}-rabbitmq
       replicas: 3
