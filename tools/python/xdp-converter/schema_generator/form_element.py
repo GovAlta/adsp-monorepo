@@ -1,4 +1,6 @@
 from abc import abstractmethod
+from typing import Optional
+
 
 # Abstract form element, can be one of FormInput or Guidance
 class FormElement:
@@ -9,11 +11,11 @@ class FormElement:
     @abstractmethod
     def has_json_schema():
         pass
-    
+
     @abstractmethod
     def to_json_schema():
         pass
 
     @abstractmethod
-    def to_ui_schema():
+    def to_ui_schema(rules: Optional[dict] = None):
         pass

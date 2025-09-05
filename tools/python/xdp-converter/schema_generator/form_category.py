@@ -1,39 +1,43 @@
+from typing import Optional
 from schema_generator.form_element import FormElement
 from schema_generator.form_guidance import FormGuidance
 from collections import defaultdict
 
 from schema_generator.form_layout import FormLayout
 
+
 class FormCategory(FormElement):
-    def __init__(self, title, is_hidden, elements):
+    def __init__(self, name, title, elements):
         super().__init__("category")
+        self.name = name
         self.title = title
         self.elements = group_horizontally(elements)
         self.is_leaf = False
-        self.is_hidden = is_hidden
 
-    def to_ui_schema(self):
+    def to_ui_schema(self, rules: Optional[dict] = None):
         ui_schema = {"type": "Category"}
         ui_schema["label"] = self.title
         ui_schema["options"] = {"sectionTitle": self.title}
         ui_schema["elements"] = [FormGuidance(self.title).to_ui_schema()]
         for element in self.elements:
             ui_schema["elements"].append(element.to_ui_schema())
-        if self.is_hidden:
-            ui_schema["rule"] = add_show_me_rule()
+        if self.name in rules:
+            ui_schema["rule"] = rules[self.name]
         return ui_schema
-        
+
     def has_json_schema(self):
         return True
-    
+
     def to_json_schema(self):
         schemas = []
         for element in self.elements:
             if element.has_json_schema():
                 schemas.append(element.to_json_schema())
         return schemas
-    
+
+
 from collections import defaultdict
+
 
 def group_horizontally(formElements, tolerance_mm=1.0):
     rows = defaultdict(list)
@@ -55,13 +59,3 @@ def group_horizontally(formElements, tolerance_mm=1.0):
         return layouts
     else:
         return formElements
-
-def add_show_me_rule():
-    return {
-        "effect": "SHOW"
-        # ,
-        # "condition": {
-        #     "field": "presence",
-        #     "value": "hidden"
-        # }
-    }

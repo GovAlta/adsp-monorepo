@@ -5,20 +5,23 @@ from schema_generator.form_layout import FormLayout
 
 _left_margin = 6.376
 
+
 class UiSchemaGenerator:
     def __init__(self, inputs: List[FormElement], rules: Optional[dict] = None):
         self.inputs = inputs
         self.rules = rules
 
     def to_schema(self):
-        categorization = FormCategorization(self._group_horizontal_elements(self.inputs))
-        return categorization.to_ui_schema()
+        categorization = FormCategorization(
+            self._group_horizontal_elements(self.inputs)
+        )
+        return categorization.to_ui_schema(self.rules)
 
     def _group_horizontal_elements(self, inputs: List[FormElement]):
         rows = []
         current_row = []
-        for input in inputs: 
-            new_y = getattr(input, 'y', _left_margin)
+        for input in inputs:
+            new_y = getattr(input, "y", _left_margin)
             if self._is_on_left_margin(new_y):
                 self._add_row(current_row, rows)
                 current_row = []
@@ -36,5 +39,4 @@ class UiSchemaGenerator:
             rows.append(row[0])
 
     def _is_on_left_margin(self, y):
-        return abs(_left_margin - y) < 5 # on or near; < 5mm
-
+        return abs(_left_margin - y) < 5  # on or near; < 5mm

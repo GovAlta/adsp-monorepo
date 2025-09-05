@@ -1,17 +1,28 @@
 import re
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional, Tuple
+from xdp_parser.parse_selectors import build_choice_groups
+
 
 # ----------------- Data classes -----------------
 class Rule:
-    def __init__(self, effect: str, target: str, condition_value: str, driver: Optional[str] = None):
-        self.effect = effect            # "SHOW" | "HIDE"
-        self.target = target            # element being affected
-        self.condition_value = condition_value  # e.g., 'this.rawValue == 1', 'NOT(...)', 'ALWAYS'
-        self.driver = driver            # owner whose event/script this is under
+    def __init__(
+        self,
+        effect: str,
+        target: str,
+        condition_value: str,
+        driver: Optional[str] = None,
+    ):
+        self.effect = effect  # "SHOW" | "HIDE"
+        self.target = target  # element being affected
+        self.condition_value = (
+            condition_value  # e.g., 'this.rawValue == 1', 'NOT(...)', 'ALWAYS'
+        )
+        self.driver = driver  # owner whose event/script this is under
 
     def __repr__(self):
         return f"\nRule(effect={self.effect!r}, target={self.target!r}, condition_value={self.condition_value!r}, driver={self.driver!r})"
+
 
 class ElementRules:
     def __init__(self, element_name: str):
@@ -27,7 +38,7 @@ class ElementRules:
         self._seen.add(key)
         self.rules.append(rule)
         return True
-    
+
     def __repr__(self):
         return f"ElementRules({self.element_name!r}, rules={self.rules!r})"
 
@@ -36,49 +47,59 @@ class ElementRules:
 def _localname(tag: str) -> str:
     return tag.split("}", 1)[-1]
 
+
 def _node_name(el: Optional[ET.Element]) -> Optional[str]:
     if el is None:
         return None
     return el.attrib.get("name") or el.attrib.get("id") or _localname(el.tag)
 
+
 # presence mapping used later
-_INTERESTING_NODE_NAMES = {"field", "subform", "exclGroup", "draw", "area", "subformSet"}
+_INTERESTING_NODE_NAMES = {
+    "field",
+    "subform",
+    "exclGroup",
+    "draw",
+    "area",
+    "subformSet",
+}
 
 import re
 
 # Reuse your earlier regexes if you already have them:
 COND_EQ_ANY_LHS_RE = re.compile(
-    r'''^\s*\(*
+    r"""^\s*\(*
         (?P<lhs>(?:this|[A-Za-z_]\w*))\s*\.\s*rawValue\s*
         (?:==|===)\s*
         (?P<q>["'])?(?P<val>[^"']+)(?P=q)?
         \)*\s*;?\s*$
-    ''',
-    re.VERBOSE
+    """,
+    re.VERBOSE,
 )
 
 COND_NE_ANY_LHS_RE = re.compile(
-    r'''^\s*\(*
+    r"""^\s*\(*
         (?P<lhs>(?:this|[A-Za-z_]\w*))\s*\.\s*rawValue\s*
         !=\s*
         (?P<q>["'])?(?P<val>[^"']+)(?P=q)?
         \)*\s*;?\s*$
-    ''',
-    re.VERBOSE
+    """,
+    re.VERBOSE,
 )
 
-BANG_WRAP_RE = re.compile(r'^\s*!\s*\((?P<inner>.*)\)\s*$')
+BANG_WRAP_RE = re.compile(r"^\s*!\s*\((?P<inner>.*)\)\s*$")
+
 
 def _split_top_level(expr: str, sep: str):
     out, depth, start = [], 0, 0
     i = 0
     while i < len(expr):
         ch = expr[i]
-        if ch == '(':
+        if ch == "(":
             depth += 1
             i += 1
             continue
-        if ch == ')':
+        if ch == ")":
             depth -= 1
             i += 1
             continue
@@ -91,69 +112,129 @@ def _split_top_level(expr: str, sep: str):
     out.append(expr[start:])
     return [p.strip() for p in out if p.strip()]
 
+
 def _parse_atom(s: str):
-    s = s.strip().rstrip(';').strip()
+    s = s.strip().rstrip(";").strip()
     m = COND_EQ_ANY_LHS_RE.match(s)
     if m:
-        lhs = m.group("lhs"); raw = (m.group("val") or "").strip()
-        try: val = int(raw)
+        lhs = m.group("lhs")
+        raw = (m.group("val") or "").strip()
+        try:
+            val = int(raw)
         except ValueError:
-            try: val = float(raw)
-            except ValueError: val = raw
+            try:
+                val = float(raw)
+            except ValueError:
+                val = raw
         return ("ATOM", (lhs, val))
     m = COND_NE_ANY_LHS_RE.match(s)
     if m:
-        lhs = m.group("lhs"); raw = (m.group("val") or "").strip()
-        try: val = int(raw)
+        lhs = m.group("lhs")
+        raw = (m.group("val") or "").strip()
+        try:
+            val = int(raw)
         except ValueError:
-            try: val = float(raw)
-            except ValueError: val = raw
+            try:
+                val = float(raw)
+            except ValueError:
+                val = raw
         return ("NOT", ("ATOM", (lhs, val)))
     m = BANG_WRAP_RE.match(s)
     if m:
-        inner = m.group('inner')
+        inner = m.group("inner")
         node = _parse_bool_expr(inner)
         return ("NOT", node)
     return None  # unsupported leaf
+
 
 def _parse_bool_expr(expr: str):
     s = expr.strip()
     # OR at top level
     parts = _split_top_level(s, "||")
     if len(parts) > 1:
-        return ("OR", [ _parse_bool_expr(p) for p in parts ])
+        return ("OR", [_parse_bool_expr(p) for p in parts])
     # AND at top level
     parts = _split_top_level(s, "&&")
     if len(parts) > 1:
-        return ("AND", [ _parse_bool_expr(p) for p in parts ])
+        return ("AND", [_parse_bool_expr(p) for p in parts])
     # grouped
     if s.startswith("(") and s.endswith(")"):
         return _parse_bool_expr(s[1:-1])
     # leaf
     return _parse_atom(s)
 
-def _atom_schema(lhs: str, val):
-    # JSON Schema cross-field atom: driver == val
-    return {"required": [lhs], "properties": {lhs: {"const": val}}}
 
-def _ast_to_schema(node):
-    if node is None: return None
+# when converting a SINGLE atom (lhs == value)
+def _atom_schema(
+    lhs: str,
+    val,
+    *,
+    group_to_label: Dict[str, Dict[str, str]] | None,
+    member_to_group: Dict[str, str] | None,
+):
+    if member_to_group and lhs in member_to_group and str(val) == "1":
+        g = member_to_group[lhs]
+        label = group_to_label.get(g, {}).get(lhs, lhs)
+        return {"properties": {g: {"const": label}}}
+    # default checkbox atom:
+    return {"properties": {lhs: {"const": val}}}
+
+
+def _wrap_condition_schema(schema: dict) -> dict:
+    # JSONForms expects a condition object; when using root-level schema, scope = "#"
+    return {"scope": "#", "schema": schema}
+
+
+# update your AST → schema function to pass the maps
+def _ast_to_schema(node, *, group_to_label=None, member_to_group=None):
+    if node is None:
+        return None
     kind = node[0]
     if kind == "ATOM":
         lhs, val = node[1]
-        return _atom_schema(lhs, val)
+        return _atom_schema(
+            lhs, val, group_to_label=group_to_label, member_to_group=member_to_group
+        )
     if kind == "NOT":
-        child = _ast_to_schema(node[1])
+        child = _ast_to_schema(
+            node[1], group_to_label=group_to_label, member_to_group=member_to_group
+        )
         return {"not": child} if child else None
     if kind == "AND":
-        subs = [ _ast_to_schema(n) for n in node[1] ]
+        subs = [
+            _ast_to_schema(
+                n, group_to_label=group_to_label, member_to_group=member_to_group
+            )
+            for n in node[1]
+        ]
         subs = [s for s in subs if s]
         return {"allOf": subs} if subs else None
     if kind == "OR":
-        subs = [ _ast_to_schema(n) for n in node[1] ]
-        subs = [s for s in subs if s]
+        # When ORing atoms from the same group, coalesce into enum
+        subs = []
+        enums_by_group: Dict[str, Set[str]] = {}
+        for n in node[1]:
+            s = _ast_to_schema(
+                n, group_to_label=group_to_label, member_to_group=member_to_group
+            )
+            if not s:
+                continue
+            # try to detect {"properties":{G:{"const": label}}}
+            props = s.get("properties", {})
+            if len(props) == 1:
+                ((prop_name, prop_schema),) = props.items()
+                if "const" in prop_schema:
+                    enums_by_group.setdefault(prop_name, set()).add(
+                        prop_schema["const"]
+                    )
+                    continue
+            subs.append(s)
+        # turn grouped consts into enum schemas
+        for g, labels in enums_by_group.items():
+            subs.append({"properties": {g: {"enum": sorted(labels)}}})
         return {"anyOf": subs} if subs else None
     return None
+
 
 # ----------------- Build parent map & owner resolution -----------------
 def _build_parent_map(root: ET.Element) -> Dict[ET.Element, Optional[ET.Element]]:
@@ -163,13 +244,17 @@ def _build_parent_map(root: ET.Element) -> Dict[ET.Element, Optional[ET.Element]
             parent_map[child] = parent
     return parent_map
 
-def _nearest_event_ancestor(el: ET.Element, parent_map: Dict[ET.Element, Optional[ET.Element]]) -> Optional[ET.Element]:
+
+def _nearest_event_ancestor(
+    el: ET.Element, parent_map: Dict[ET.Element, Optional[ET.Element]]
+) -> Optional[ET.Element]:
     cur = el
     while cur is not None:
         if _localname(cur.tag).lower() == "event":
             return cur
         cur = parent_map.get(cur)
     return None
+
 
 def _iter_all_scripts_with_owner(root: ET.Element):
     """
@@ -195,7 +280,9 @@ def _iter_all_scripts_with_owner(root: ET.Element):
             continue
 
         ev = _nearest_event_ancestor(el, parent_map)
-        owner_el = parent_map.get(ev) if ev is not None else _nearest_interesting_ancestor(el)
+        owner_el = (
+            parent_map.get(ev) if ev is not None else _nearest_interesting_ancestor(el)
+        )
         owner_name = _node_name(owner_el)
 
         yield txt, owner_name
@@ -204,28 +291,48 @@ def _iter_all_scripts_with_owner(root: ET.Element):
 # ----------------- JS parsing (presence only) -----------------
 _JS_COMMENT_SLASHSLASH = re.compile(r"//[^\n\r]*")
 _JS_COMMENT_BLOCK = re.compile(r"/\*.*?\*/", re.DOTALL)
-_IF_ELSE_RE = re.compile(r"if\s*\((?P<cond>.*?)\)\s*\{(?P<if_body>.*?)\}\s*else\s*\{(?P<else_body>.*?)\}", re.DOTALL)
-_PRESENCE_SET_RE = re.compile(r"""(?P<name>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\s*\.presence\s*=\s*["'](?P<vis>visible|hidden)["']\s*;""", re.IGNORECASE)
+_IF_ELSE_RE = re.compile(
+    r"if\s*\((?P<cond>.*?)\)\s*\{(?P<if_body>.*?)\}\s*else\s*\{(?P<else_body>.*?)\}",
+    re.DOTALL,
+)
+_PRESENCE_SET_RE = re.compile(
+    r"""(?P<name>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\s*\.presence\s*=\s*["'](?P<vis>visible|hidden)["']\s*;""",
+    re.IGNORECASE,
+)
+
 
 def _strip_js_comments(js: str) -> str:
     js = _JS_COMMENT_BLOCK.sub("", js)
     js = _JS_COMMENT_SLASHSLASH.sub("", js)
     return js
 
+
 def _presence_to_effect(vis: str) -> str:
     return "SHOW" if vis.lower() == "visible" else "HIDE"
 
-def _add_presence_rules_from_body(body: str, cond_value: str, driver: Optional[str],
-                                  rules_map: Dict[str, ElementRules]):
+
+def _add_presence_rules_from_body(
+    body: str,
+    cond_value: str,
+    driver: Optional[str],
+    rules_map: Dict[str, ElementRules],
+):
     for pm in _PRESENCE_SET_RE.finditer(body):
         target = pm.group("name")
         vis = pm.group("vis")
         effect = _presence_to_effect(vis)
         if target not in rules_map:
             rules_map[target] = ElementRules(target)
-        rules_map[target].add_rule(Rule(effect=effect, target=target, condition_value=cond_value, driver=driver))
+        rules_map[target].add_rule(
+            Rule(
+                effect=effect, target=target, condition_value=cond_value, driver=driver
+            )
+        )
 
-def _collect_rules_from_script(js: str, driver: Optional[str], rules_map: Dict[str, ElementRules]):
+
+def _collect_rules_from_script(
+    js: str, driver: Optional[str], rules_map: Dict[str, ElementRules]
+):
     js_clean = _strip_js_comments(js)
     working = js_clean
 
@@ -240,9 +347,14 @@ def _collect_rules_from_script(js: str, driver: Optional[str], rules_map: Dict[s
         working = working[:start] + " " * (end - start) + working[end:]
 
     # unconditional presence (outside any if/else)
+
+
 #    _add_presence_rules_from_body(working, "ALWAYS", driver, rules_map)
 
-def parse_all_scripts_to_element_rules(xdp_fragment: str) -> Tuple[ET.Element, Dict[str, ElementRules]]:
+
+def parse_all_scripts_to_element_rules(
+    xdp_fragment: str,
+) -> Tuple[ET.Element, Dict[str, ElementRules]]:
     """
     Returns (root, rules_map) for presence-only rules gathered from all scripts.
     """
@@ -275,21 +387,27 @@ def build_presence_index(root: ET.Element) -> Dict[str, str]:
             idx[name] = "hidden" if pres in hiddenish else "visible"
     return idx
 
+
 # ----------------- Normalization (uses helpers explicitly) -----------------
 NOT_RE = re.compile(r"^\s*NOT\((.*)\)\s*$")
+
+
 def _split_not(cond: str) -> Tuple[str, bool]:
     m = NOT_RE.match(cond or "")
     if m:
         return m.group(1).strip(), True
     return (cond or "").strip(), False
 
+
 def _same_base_condition(a: str, b: str) -> bool:
     return _split_not(a)[0] == _split_not(b)[0]
+
 
 def _is_complement(a: str, b: str) -> bool:
     base_a, na = _split_not(a)
     base_b, nb = _split_not(b)
     return base_a == base_b and (na ^ nb)
+
 
 def normalize_rules(rules_map: Dict[str, ElementRules], get_default_presence) -> None:
     """
@@ -320,16 +438,32 @@ def normalize_rules(rules_map: Dict[str, ElementRules], get_default_presence) ->
             def _has_unconditional(eff_rules: List[Rule]) -> bool:
                 for i in range(len(eff_rules)):
                     for j in range(i + 1, len(eff_rules)):
-                        if _is_complement(eff_rules[i].condition_value, eff_rules[j].condition_value):
+                        if _is_complement(
+                            eff_rules[i].condition_value, eff_rules[j].condition_value
+                        ):
                             return True
                 return False
 
             # 1) EFFECT cond + EFFECT NOT(cond)  -> EFFECT ALWAYS
             if _has_unconditional(hide_rules) and not show_rules:
-                new_rules.append(Rule(effect="HIDE", target=target, condition_value="ALWAYS", driver=driver))
+                new_rules.append(
+                    Rule(
+                        effect="HIDE",
+                        target=target,
+                        condition_value="ALWAYS",
+                        driver=driver,
+                    )
+                )
                 continue
             if _has_unconditional(show_rules) and not hide_rules:
-                new_rules.append(Rule(effect="SHOW", target=target, condition_value="ALWAYS", driver=driver))
+                new_rules.append(
+                    Rule(
+                        effect="SHOW",
+                        target=target,
+                        condition_value="ALWAYS",
+                        driver=driver,
+                    )
+                )
                 continue
 
             # 2) Clean toggle compression, keep only the non-default branch
@@ -344,18 +478,46 @@ def normalize_rules(rules_map: Dict[str, ElementRules], get_default_presence) ->
                     # SHOW cond + HIDE NOT(cond)
                     if not na and nb:
                         if default_presence == "visible":
-                            new_rules.append(Rule(effect="SHOW", target=target, condition_value=base_ra, driver=driver))
+                            new_rules.append(
+                                Rule(
+                                    effect="SHOW",
+                                    target=target,
+                                    condition_value=base_ra,
+                                    driver=driver,
+                                )
+                            )
                         else:  # default hidden
-                            new_rules.append(Rule(effect="HIDE", target=target, condition_value=f"NOT({base_ra})", driver=driver))
+                            new_rules.append(
+                                Rule(
+                                    effect="HIDE",
+                                    target=target,
+                                    condition_value=f"NOT({base_ra})",
+                                    driver=driver,
+                                )
+                            )
                         kept = True
                         break
 
                     # HIDE cond + SHOW NOT(cond)
                     if not nb and na:
                         if default_presence == "visible":
-                            new_rules.append(Rule(effect="HIDE", target=target, condition_value=base_rb, driver=driver))
+                            new_rules.append(
+                                Rule(
+                                    effect="HIDE",
+                                    target=target,
+                                    condition_value=base_rb,
+                                    driver=driver,
+                                )
+                            )
                         else:  # default hidden
-                            new_rules.append(Rule(effect="SHOW", target=target, condition_value=f"NOT({base_rb})", driver=driver))
+                            new_rules.append(
+                                Rule(
+                                    effect="SHOW",
+                                    target=target,
+                                    condition_value=f"NOT({base_rb})",
+                                    driver=driver,
+                                )
+                            )
                         kept = True
                         break
                 if kept:
@@ -373,6 +535,7 @@ def normalize_rules(rules_map: Dict[str, ElementRules], get_default_presence) ->
                     new_rules.append(r)
 
         er.rules = new_rules
+
 
 def apply_unconditional_to_defaults(
     rules_map: Dict[str, ElementRules],
@@ -412,7 +575,7 @@ def apply_unconditional_to_defaults(
 
 # New: allows `this` or another identifier, optional quotes, optional semicolon, optional extra parens
 COND_EQ_RE = re.compile(
-    r'''^\s*
+    r"""^\s*
         \(*                                   # optional opening parens
         (?P<lhs>(?:this|[A-Za-z_]\w*))        # `this` or a simple identifier (e.g., chkAdditional)
         \s*\.\s*rawValue\s*
@@ -422,10 +585,14 @@ COND_EQ_RE = re.compile(
         (?P=q)?                               # optional matching closing quote
         \)*\s*                                # optional closing parens
         ;?\s*$                                # optional semicolon then end
-    ''',
-    re.VERBOSE
+    """,
+    re.VERBOSE,
 )
-def _to_jsonforms_condition(cond_str: str, driver: Optional[str], name_to_pointer) -> Optional[dict]:
+
+
+def _to_jsonforms_condition(
+    cond_str: str, driver: Optional[str], name_to_pointer
+) -> Optional[dict]:
     if cond_str == "ALWAYS":
         return None
 
@@ -438,7 +605,7 @@ def _to_jsonforms_condition(cond_str: str, driver: Optional[str], name_to_pointe
         # print("NO MATCH for condition:", cond_str)
         return None
 
-    lhs = m.group("lhs")                     # 'this' or a field name like 'chkAdditional'
+    lhs = m.group("lhs")  # 'this' or a field name like 'chkAdditional'
     raw = (m.group("val") or "").strip()
 
     # best-effort cast
@@ -465,97 +632,158 @@ def _to_jsonforms_condition(cond_str: str, driver: Optional[str], name_to_pointe
     base_cond = {"scope": scope, "schema": {"const": val}}
     return {"not": base_cond} if is_neg else base_cond
 
-def _to_jsonforms_condition_rich(cond_str: str, driver: Optional[str]) -> Optional[dict]:
+
+def _to_jsonforms_condition_rich(
+    cond_str: str, driver: Optional[str], *, group_to_label=None, member_to_group=None
+) -> Optional[dict]:
     if not cond_str or cond_str == "ALWAYS":
         return None
-    # Resolve `this` → driver for parsing
-    if driver:
-        cond_str = re.sub(r'\bthis\b', driver, cond_str)
-    ast = _parse_bool_expr(cond_str)
-    schema = _ast_to_schema(ast)
+    s = re.sub(r"\bthis\b", driver, cond_str) if driver else cond_str
+    ast = _parse_bool_expr(s)
+    schema = _ast_to_schema(
+        ast, group_to_label=group_to_label, member_to_group=member_to_group
+    )
     if not schema:
         return None
-    return {"schema": schema}
+    return {"scope": "#", "schema": schema}
+
+
+def _merge_conditions_anyof(
+    root: ET.ElementTree,
+    per_rules: List["Rule"],
+    name_to_pointer,
+    driver_fallback: Optional[str],
+) -> Optional[dict]:
+    if not per_rules:
+        return None
+
+    group_to_label, member_to_group = build_choice_groups(root)
+
+    # If there's only one, prefer the rich emitter
+    if len(per_rules) == 1:
+        r = per_rules[0]
+        cond = _to_jsonforms_condition_rich(
+            r.condition_value,
+            r.driver or driver_fallback,
+            group_to_label=group_to_label,
+            member_to_group=member_to_group,
+        )
+        if cond:
+            return cond
+        # Fallback: simple equality -> convert to atom schema at root
+        base = _to_jsonforms_condition(r.condition_value, r.driver, name_to_pointer)
+        if not base:
+            return None
+        scope = base.get("scope") or ""
+        # extract property name for atom
+        if "/properties/" in scope:
+            prop = scope.split("/properties/")[-1].split("/")[0]
+            atom = {"properties": {prop: base["schema"]}}
+            return _wrap_condition_schema(atom)
+        return None
+
+    # Many rules → OR them with anyOf at the root
+    subs: List[dict] = []
+    for rr in per_rules:
+        rich = _to_jsonforms_condition_rich(
+            rr.condition_value,
+            rr.driver or driver_fallback,
+            group_to_label=group_to_label,
+            member_to_group=member_to_group,
+        )
+        if rich and "schema" in rich:
+            subs.append(rich["schema"])
+            continue
+
+        # Fallback simple -> atom schema
+        base = _to_jsonforms_condition(rr.condition_value, rr.driver, name_to_pointer)
+        if not base:
+            continue
+        scope = base.get("scope") or ""
+        if "/properties/" in scope:
+            prop = scope.split("/properties/")[-1].split("/")[0]
+            subs.append({"properties": {prop: base["schema"]}})
+
+    if not subs:
+        return None
+    return _wrap_condition_schema({"anyOf": subs})
+
 
 def to_jsonforms_rules(
+    root: ET.Element,
     rules_map: Dict[str, "ElementRules"],
     name_to_pointer,
-    get_default_presence = lambda name: "visible",
-) -> Dict[str, List[dict]]:
-    out: Dict[str, List[dict]] = {}
+    get_default_presence=lambda name: "visible",
+) -> Dict[str, dict]:
+    """
+    Emit one rule object per target, using root-level schema conditions with scope "#".
+    Drop rules that restate the baseline presence.
+    """
+    out: Dict[str, dict] = {}
 
     for target, er in rules_map.items():
         baseline = (get_default_presence(target) or "visible").lower()
 
-        # 1) drop rules that restate baseline
+        # Filter out rules that restate baseline (SHOW when default visible; HIDE when default hidden)
         filtered = [
-            r for r in er.rules
-            if not ((baseline == "visible" and r.effect == "SHOW") or
-                    (baseline == "hidden"  and r.effect == "HIDE"))
+            r
+            for r in er.rules
+            if not (
+                (baseline == "visible" and r.effect == "SHOW")
+                or (baseline == "hidden" and r.effect == "HIDE")
+            )
         ]
         if not filtered:
             continue
 
-        # 2) group by effect
+        # Group by effect; after your normalize step we should usually have just one effect
         by_effect: Dict[str, List["Rule"]] = {}
         for r in filtered:
             by_effect.setdefault(r.effect, []).append(r)
 
-        merged_entries: List[dict] = []
+        # Prefer a single effect. If both exist (rare), pick the non-baseline effect.
+        effect = None
+        rules_for_effect: List["Rule"] = []
+        if "SHOW" in by_effect and "HIDE" not in by_effect:
+            effect, rules_for_effect = "SHOW", by_effect["SHOW"]
+        elif "HIDE" in by_effect and "SHOW" not in by_effect:
+            effect, rules_for_effect = "HIDE", by_effect["HIDE"]
+        else:
+            # both present; choose the one that differs from baseline
+            if baseline == "visible" and "HIDE" in by_effect:
+                effect, rules_for_effect = "HIDE", by_effect["HIDE"]
+            elif baseline == "hidden" and "SHOW" in by_effect:
+                effect, rules_for_effect = "SHOW", by_effect["SHOW"]
+            else:
+                # fallback: pick the one with more rules
+                picks = sorted(
+                    by_effect.items(), key=lambda kv: len(kv[1]), reverse=True
+                )
+                effect, rules_for_effect = picks[0]
 
-        for effect, rules in by_effect.items():
-            if not rules:
-                continue
+        cond = _merge_conditions_anyof(
+            root, rules_for_effect, name_to_pointer, driver_fallback=None
+        )
+        if not cond:
+            continue
 
-            if len(rules) == 1:
-                # Single rule → try rich parser (AND/OR). If it fails, fallback to simple.
-                r = rules[0]
-                cond = _to_jsonforms_condition_rich(r.condition_value, r.driver)
-                if not cond:
-                    # fallback to simple scoped style (your existing function)
-                    cond = _to_jsonforms_condition(r.condition_value, r.driver, name_to_pointer)
-                if not cond:
-                    continue
-                merged_entries.append({"effect": effect, "condition": cond})
-                continue
-
-            # Many rules for same effect → OR them with anyOf at the root
-            subs: List[dict] = []
-            for rr in rules:
-                # Prefer rich per-branch parse (handles negations), else fallback to scoped
-                sub = _to_jsonforms_condition_rich(rr.condition_value, rr.driver)
-                if sub and "schema" in sub:
-                    subschema = sub["schema"]
-                else:
-                    # fallback to a scoped condition -> convert into cross-field subschema
-                    base = _to_jsonforms_condition(rr.condition_value, rr.driver, name_to_pointer)
-                    if not base:
-                        continue
-                    # Convert {"scope":"#/properties/foo","schema":{"const":1}} => {"required":["foo"],"properties":{"foo":{"const":1}}}
-                    # Extract driver name from scope:
-                    scope = base.get("scope")
-                    if scope and "/properties/" in scope:
-                        prop = scope.split("/properties/")[-1].split("/")[0]
-                        subschema = {"required": [prop], "properties": {prop: base["schema"]}}
-                    else:
-                        continue
-                subs.append(subschema)
-
-            if not subs:
-                continue
-            cond = {"schema": {"anyOf": subs}}
-            merged_entries.append({"effect": effect, "condition": cond})
-
-        if merged_entries:
-            out[target] = merged_entries
+        # FINAL: single rule object
+        out[target] = {
+            "effect": effect,
+            "condition": cond,  # => {"scope":"#","schema":{...}}
+        }
 
     return out
+
 
 # --- assume: Rule, ElementRules, and all helpers from earlier are already defined ---
 # (build_presence_index, _iter_all_scripts_with_owner, _collect_rules_from_script,
 #  normalize_rules, to_jsonforms_rules, etc.)
 
-def parse_all_scripts_to_element_rules_from_root(root: ET.Element) -> Dict[str, ElementRules]:
+
+def parse_all_scripts_to_element_rules_from_root(
+    root: ET.Element,
+) -> Dict[str, ElementRules]:
     """
     Collect presence-only rules from every <script> in an existing ElementTree root.
     Returns: { target_name: ElementRules }
@@ -565,7 +793,10 @@ def parse_all_scripts_to_element_rules_from_root(root: ET.Element) -> Dict[str, 
         _collect_rules_from_script(script_txt, owner, rules_map)
     return rules_map
 
-def process_xdp_root_for_jsonforms_rules(root: ET.Element, name_to_pointer) -> Dict[str, List[dict]]:
+
+def process_xdp_root_for_jsonforms_rules(
+    root: ET.Element, name_to_pointer
+) -> Dict[str, List[dict]]:
     rules_map = parse_all_scripts_to_element_rules_from_root(root)
     presence_index = build_presence_index(root)
 
@@ -574,8 +805,7 @@ def process_xdp_root_for_jsonforms_rules(root: ET.Element, name_to_pointer) -> D
 
     get_default_presence = lambda name: presence_index.get(name, "visible")
     normalize_rules(rules_map, get_default_presence)
-    return to_jsonforms_rules(rules_map, name_to_pointer, get_default_presence)
-
+    return to_jsonforms_rules(root, rules_map, name_to_pointer, get_default_presence)
 
 
 # # (Optional) Backward-compatible wrapper if you still pass strings sometimes.

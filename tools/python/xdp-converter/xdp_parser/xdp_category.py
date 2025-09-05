@@ -2,21 +2,24 @@ from schema_generator.form_category import FormCategory
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_layout import XdpLayout
 
+
 class XdpCategory(XdpElement):
     def __init__(self, xdp_element, elements):
         super().__init__(xdp_element)
         self.elements = elements
-        self.hidden = xdp_element.attrib.get("presence") == "hidden"
 
     def to_form_element(self):
-        title = self.get_category_label(self.xdp_element) or self.xdp_element.attrib.get("name", "Untitled")
+        title = self.get_category_label(
+            self.xdp_element
+        ) or self.xdp_element.attrib.get("name", "Untitled")
         nodes = []
         for element in self.elements:
             fe = element.to_form_element()
             if fe:
                 nodes.append(fe)
-        return FormCategory(title, self.hidden, nodes)
-    
+        name = self.xdp_element.attrib.get("name", "Untitled")
+        return FormCategory(name, title, nodes)
+
     def get_category_label(self, category):
         # Handle namespace if present
         if category.tag.startswith("{"):
@@ -28,7 +31,9 @@ class XdpCategory(XdpElement):
 
         for draw in draws:
             # Look for direct <value> child
-            value_elem = draw.find("xfa:value", namespaces=ns) if ns else draw.find("value")
+            value_elem = (
+                draw.find("xfa:value", namespaces=ns) if ns else draw.find("value")
+            )
             if value_elem is not None:
                 # Check if it contains any <text> or has text content
                 has_text = any(child.tag.endswith("text") for child in value_elem)
@@ -58,4 +63,3 @@ class XdpCategory(XdpElement):
             return value_elem.text.strip()
 
         return None
-    

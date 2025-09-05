@@ -1,4 +1,6 @@
+from typing import Optional
 from schema_generator.form_element import FormElement
+
 
 class FormCategorization(FormElement):
     def __init__(self, elements):
@@ -6,17 +8,17 @@ class FormCategorization(FormElement):
         self.elements = elements
         self.is_leaf = False
 
-    def to_ui_schema(self):
+    def to_ui_schema(self, rules: Optional[dict] = None):
         ui_schema = {"type": "Categorization"}
-        ui_schema["options"] = {"variant":"pages"}
+        ui_schema["options"] = {"variant": "pages"}
         ui_schema["elements"] = []
         for element in self.elements:
-            ui_schema["elements"].append(element.to_ui_schema())
+            ui_schema["elements"].append(element.to_ui_schema(rules))
         return ui_schema
-        
+
     def has_json_schema(self):
         return True
-    
+
     def to_json_schema(self):
         schemas = []
         for element in self.elements:
