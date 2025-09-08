@@ -17,6 +17,7 @@ import {
   REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION,
   UPDATE_LATEST_REVISION_SUCCESS_ACTION,
   FETCH_REGISTER_DATA_SUCCESS_ACTION,
+  CLOSE_TEMPLATE_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -70,6 +71,12 @@ export default function (
         ].sort((a, b) => (a < b ? -1 : 1)),
         openEditor: action.currentId,
       };
+    case CLOSE_TEMPLATE_ACTION:
+      return {
+        ...state,
+        openEditor: null,
+      };
+
     case DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS:
       return {
         ...state,
