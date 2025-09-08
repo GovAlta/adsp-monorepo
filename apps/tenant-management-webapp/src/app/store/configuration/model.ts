@@ -25,6 +25,7 @@ export interface ConfigurationDefinitionState {
   nonAnonymous?: string[];
   dataList?: string[];
   serviceList: string[];
+  openEditor: string;
 }
 
 export interface ConfigDefinition {

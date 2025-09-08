@@ -99,12 +99,14 @@ export interface UpdateConfigurationDefinitionAction {
   type: typeof UPDATE_CONFIGURATION_DEFINITION_ACTION;
   definition: ConfigDefinition;
   isAddedFromOverviewPage: boolean;
+  openEditor?: boolean;
 }
 
 export interface UpdateConfigurationDefinitionSuccessAction {
   type: typeof UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION;
   payload: ServiceSchemas;
   isAddedFromOverviewPage: boolean;
+  currentId: string;
 }
 
 export interface SetConfigurationRevisionAction {
@@ -228,19 +230,23 @@ export const deleteConfigurationDefinitionSuccess = (
 
 export const updateConfigurationDefinition = (
   definition: ConfigDefinition,
-  isAddedFromOverviewPage: boolean
+  isAddedFromOverviewPage: boolean,
+  openEditor?: boolean
 ): UpdateConfigurationDefinitionAction => ({
   type: UPDATE_CONFIGURATION_DEFINITION_ACTION,
   definition,
   isAddedFromOverviewPage,
+  openEditor,
 });
 export const updateConfigurationDefinitionSuccess = (
   definition: ServiceSchemas,
-  isAddedFromOverviewPage: boolean
+  isAddedFromOverviewPage: boolean,
+  currentId: string
 ): UpdateConfigurationDefinitionSuccessAction => ({
   type: UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION,
   payload: definition,
   isAddedFromOverviewPage,
+  currentId,
 });
 export const getConfigurationDefinitions = (): FetchConfigurationDefinitionsAction => ({
   type: FETCH_CONFIGURATION_DEFINITIONS_ACTION,

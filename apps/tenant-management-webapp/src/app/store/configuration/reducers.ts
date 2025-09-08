@@ -35,6 +35,7 @@ const defaultState: ConfigurationDefinitionState = {
   serviceList: [],
   registers: [],
   nonAnonymous: [],
+  openEditor: null,
 };
 
 export default function (
@@ -67,6 +68,7 @@ export default function (
           ...Object.keys(state.coreConfigDefinitions.configuration || {}),
           ...Object.keys(action.payload.configuration || {}),
         ].sort((a, b) => (a < b ? -1 : 1)),
+        openEditor: action.currentId,
       };
     case DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS:
       return {

@@ -13,6 +13,7 @@ import {
 } from '@store/configuration/action';
 import { AddEditConfigDefinition } from './addEditDefinition';
 import { DeleteModal } from '@components/DeleteModal';
+import { useNavigate } from 'react-router-dom';
 import { NameDiv } from '../../styled-components';
 
 interface ParentCompProps {
@@ -40,6 +41,7 @@ const transformConfigDefinitions = (configDefinitions: Record<string, unknown>) 
 };
 
 export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdit }) => {
+  const navigate = useNavigate();
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
   const transformedCoreConfigDefinitions = transformConfigDefinitions(coreConfigDefinitions?.configuration || {});
   const coreTenant = 'Platform';
@@ -52,6 +54,14 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  const openConfigurationEditor = useSelector((state: RootState) => state.configuration.openEditor);
+
+  useEffect(() => {
+    if (openConfigurationEditor) {
+      navigate(`edit/${openConfigurationEditor}`);
+    }
+  }, [openConfigurationEditor]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = () => {
     setIsEdit(false);
@@ -94,7 +104,7 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
         initialValue={selectedDefinition}
         configurations={{ ...tenantConfigDefinitions?.configuration, ...coreConfigDefinitions?.configuration }}
         onSave={(definition) => {
-          dispatch(updateConfigurationDefinition(definition, false));
+          dispatch(updateConfigurationDefinition(definition, false, true));
         }}
       />
 
@@ -111,7 +121,7 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
             onEdit={(editDefinition) => {
               setSelectedDefinition({ ...editDefinition });
               setIsEdit(true);
-              setOpenAddDefinition(true);
+              navigate(`edit/${editDefinition.namespace}:${editDefinition.name}`);
             }}
             isTenantSpecificConfig={true}
             tenantName={tenantName}
