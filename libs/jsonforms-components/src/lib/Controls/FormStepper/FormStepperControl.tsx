@@ -141,6 +141,8 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
                       element.scrollIntoView();
                     }
 
+                    // switched from input to button - i'm writing this comment to trigger deployment
+
                     headersRef.current[activeId - 1] &&
                       headersRef.current[activeId - 1]
                         ?.querySelector('goa-form-step')
