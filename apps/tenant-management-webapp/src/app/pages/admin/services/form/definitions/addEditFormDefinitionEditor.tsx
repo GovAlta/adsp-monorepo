@@ -79,6 +79,10 @@ import { RowFlex, QueueTaskDropdown, H3, BorderBottom, H3Inline, ToolTipAdjust }
 import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
 import { CalendarEventDefault } from '@store/calendar/models';
 import { StartEndDateEditor } from './startEndDateEditor';
+import type * as monacoNS from 'monaco-editor';
+
+type IEditor = monacoNS.editor.IStandaloneCodeEditor;
+
 export const ContextProvider = ContextProviderFactory();
 
 const isUseMiniMap = window.screen.availWidth >= 1920;
@@ -167,6 +171,17 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
 
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
   const monaco = useMonaco();
+  const editorRef = useRef<monacoNS.editor.IStandaloneCodeEditor | null>(null);
+
+  /** Fold all regions. */
+  function foldAll(editor: IEditor) {
+    editor.trigger('folding-util', 'editor.foldAll', undefined);
+  }
+
+  /** Unfold all regions. */
+  function unfoldAll(editor: IEditor) {
+    editor.trigger('folding-util', 'editor.unfoldAll', undefined);
+  }
 
   const {
     loading: isLoading,
@@ -356,6 +371,11 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
     editor.onDidScrollChange((e) => {
       setUiEditorLocation(e.scrollTop);
     });
+  };
+  const getCurrentEditorRef = () => {
+    if (activeIndex === 0) return editorRefData.current; // Data schema tab
+    if (activeIndex === 1) return editorRefUi.current; // UI schema tab
+    return null;
   };
 
   return (
@@ -870,6 +890,31 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
             </Tabs>
 
             <FinalButtonPadding>
+              <GoAButtonGroup alignment="start">
+                <GoAButton
+                  type="tertiary"
+                  testId="collapse-all"
+                  onClick={() => {
+                    const editor = getCurrentEditorRef();
+                    if (editor) foldAll(editor);
+                  }}
+                  disabled={activeIndex > 1}
+                >
+                  Collapse all
+                </GoAButton>
+                <GoAButton
+                  testId="expand-all"
+                  type="tertiary"
+                  disabled={activeIndex > 1}
+                  onClick={() => {
+                    const editor = getCurrentEditorRef();
+                    if (editor) unfoldAll(editor);
+                  }}
+                >
+                  Expand all
+                </GoAButton>
+              </GoAButtonGroup>
+
               <GoAButtonGroup alignment="end">
                 <GoAButton
                   type="primary"

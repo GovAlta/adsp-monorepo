@@ -158,7 +158,7 @@ export const FullScreenModalWrapper = styled.div`
   top: 5.75rem;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 110vh;
 
   background: #fff;
   padding: 0.5rem 2rem;
