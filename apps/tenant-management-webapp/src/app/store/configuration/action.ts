@@ -52,11 +52,15 @@ export const RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION =
 
 export const FETCH_REGISTER_DATA_ACTION = 'configuration/FETCH_REGISTER_DATA';
 export const FETCH_REGISTER_DATA_SUCCESS_ACTION = 'configuration/FETCH_REGISTER_DATA_SUCCESS_ACTION';
+export const CLOSE_TEMPLATE_ACTION = 'configuration/CLOSE_TEMPLATE_ACTION';
 
 export const UPDATE_LATEST_REVISION_SUCCESS_ACTION = 'configuration/UPDATE_LATEST_REVISION_SUCCESS_ACTION';
 export interface DeleteConfigurationDefinitionAction {
   type: typeof DELETE_CONFIGURATION_DEFINITION_ACTION;
   definitionName: string;
+}
+export interface CloseTemplateAction {
+  type: typeof CLOSE_TEMPLATE_ACTION;
 }
 
 export interface DeleteConfigurationDefinitionSuccessAction {
@@ -201,7 +205,8 @@ export type ConfigurationDefinitionActionTypes =
   | FetchConfigurationActionRevisionAction
   | FetchRegisterDataAction
   | FetchRegisterDataSuccessAction
-  | FetchConfigurationActiveRevisionSuccessAction;
+  | FetchConfigurationActiveRevisionSuccessAction
+  | CloseTemplateAction;
 
 export type ServiceId = { namespace: string; service: string };
 export interface FetchConfigurationsAction {
@@ -337,6 +342,9 @@ export const resetReplaceConfigurationListAction = (): ResetReplaceConfiguration
 
 export const resetImportsListAction = (): ResetImportsListAction => ({
   type: RESET_IMPORTS_LIST_ACTION,
+});
+export const closeTemplate = (): CloseTemplateAction => ({
+  type: CLOSE_TEMPLATE_ACTION,
 });
 export const resetReplaceConfigurationListSuccessAction = (): ResetReplaceConfigurationListSuccessAction => ({
   type: RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION,

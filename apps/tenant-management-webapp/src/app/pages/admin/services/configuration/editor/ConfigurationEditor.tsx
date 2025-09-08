@@ -19,7 +19,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { CustomLoader } from '@components/CustomLoader';
 import { ConfigForm } from './ConfigForm';
 import { ConfigDefinition } from '@store/configuration/model';
-import { getConfigurationRevisions } from '@store/configuration/action';
+import { getConfigurationRevisions, closeTemplate } from '@store/configuration/action';
 
 interface TemplateEditorProps {
   configurationData: string;
@@ -250,6 +250,7 @@ export const ConfigurationEditor = ({ configurationData, dataError }: TemplateEd
                     } else {
                       cancel();
                     }
+                    dispatch(closeTemplate());
                   }}
                   testId="template-form-close"
                   type="secondary"

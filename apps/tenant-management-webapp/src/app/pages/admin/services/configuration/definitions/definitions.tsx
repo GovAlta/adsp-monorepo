@@ -44,7 +44,6 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
   const navigate = useNavigate();
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
   const transformedCoreConfigDefinitions = transformConfigDefinitions(coreConfigDefinitions?.configuration || {});
-  const coreTenant = 'Platform';
   const [selectedDefinition, setSelectedDefinition] = useState(defaultConfigDefinition);
   const [selectedDefinitionName, setSelectedDefinitionName] = useState('');
   const [openAddDefinition, setOpenAddDefinition] = useState(false);
@@ -78,7 +77,7 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
 
   useEffect(() => {
     if (activeEdit) {
-      reset();
+      // reset();
       setOpenAddDefinition(true);
     }
   }, [activeEdit]);
@@ -98,7 +97,7 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
       {/*Add/Edit definition */}
 
       <AddEditConfigDefinition
-        open={isEdit || openAddDefinition}
+        open={openAddDefinition}
         onClose={reset}
         isEdit={isEdit}
         initialValue={selectedDefinition}
