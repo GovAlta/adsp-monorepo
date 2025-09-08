@@ -26,6 +26,7 @@ import {
   fetchResourceTypeSuccessAction,
   updateResourceTypeSuccessAction,
   deleteResourceTypeSuccessAction,
+  fetchResourceTypeInCoreSuccessAction,
 } from './actions';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator, UpdateElementIndicator } from '@store/session/actions';
@@ -280,7 +281,10 @@ export function* fetchResourceTypes(): SagaIterator {
   if (configBaseUrl && token) {
     try {
       const url = `${configBaseUrl}/configuration/v2/configuration/platform/directory-service/latest`;
+      const urlInCore = `${configBaseUrl}/configuration/v2/configuration/platform/directory-service/latest?core`;
+
       const { resourceType } = yield call(fetchResourceTypeApi, token, url);
+      const resourceTypesInCore = yield call(fetchResourceTypeApi, token, urlInCore);
       yield put(
         UpdateIndicator({
           show: true,
@@ -293,6 +297,7 @@ export function* fetchResourceTypes(): SagaIterator {
         })
       );
       yield put(fetchResourceTypeSuccessAction(resourceType));
+      yield put(fetchResourceTypeInCoreSuccessAction(resourceTypesInCore));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(

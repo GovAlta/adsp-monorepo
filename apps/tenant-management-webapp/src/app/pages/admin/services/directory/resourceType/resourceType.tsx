@@ -20,6 +20,7 @@ export const ResourceTypePage = (): JSX.Element => {
   const [selectedType, setSelectedType] = useState<ResourceType>(defaultResourceType);
   const [urn, setUrn] = useState('');
   const resourceTypes = useSelector((state: RootState) => state.directory.resourceType);
+  const resourceTypesInCore = useSelector((state: RootState) => state.directory.resourceTypeInCore);
   const platformGroup: Record<string, ResourceType[]> = {};
   const othersGroup: Record<string, ResourceType[]> = {};
 
@@ -140,12 +141,7 @@ export const ResourceTypePage = (): JSX.Element => {
       {platformGroup && Object.keys(platformGroup)?.length > 0 && (
         <div>
           <h2>Core Resource Type</h2>
-          <GroupedResourceTypesTable
-            groupedResourceTypes={platformGroup}
-            resourceTypes={resourceTypes}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
+          <GroupedResourceTypesTable groupedResourceTypes={resourceTypesInCore} resourceTypes={resourceTypesInCore} />
         </div>
       )}
     </section>
@@ -155,8 +151,8 @@ export const ResourceTypePage = (): JSX.Element => {
 interface GroupedResourceTypesTableProps {
   groupedResourceTypes: Record<string, ResourceType[]>;
   resourceTypes: Record<string, ResourceType[]>;
-  onEdit: (urn: string, resource: ResourceType) => void;
-  onDelete: (urn: string, resource: ResourceType) => void;
+  onEdit?: (urn: string, resource: ResourceType) => void;
+  onDelete?: (urn: string, resource: ResourceType) => void;
 }
 
 const GroupedResourceTypesTable: React.FC<GroupedResourceTypesTableProps> = ({
