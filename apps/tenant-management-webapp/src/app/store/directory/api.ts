@@ -121,6 +121,13 @@ export const fetchResourceTypeApi = async (token: string, url: string): Promise<
   const res = await axios.get(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
+
+  if (url.endsWith('?core')) {
+    return Object.entries(res.data).reduce((acc, [resourceName, types]) => {
+      acc[resourceName] = (types as unknown as Record<'resourceTypes', Array<ResourceType>>).resourceTypes ?? [];
+      return acc;
+    }, {});
+  }
   return res.data;
 };
 

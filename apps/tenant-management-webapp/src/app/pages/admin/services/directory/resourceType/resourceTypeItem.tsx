@@ -6,8 +6,8 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 interface ResourceTypeProps {
   resourceType: ResourceType[];
   urn?: string;
-  onEdit: (urn: string, rt: ResourceType) => void;
-  onDelete: (urn: string, rt: ResourceType) => void;
+  onEdit?: (urn: string, rt: ResourceType) => void;
+  onDelete?: (urn: string, rt: ResourceType) => void;
 }
 
 export const ResourceTypeComponent: FunctionComponent<ResourceTypeProps> = ({
@@ -26,8 +26,8 @@ export const ResourceTypeComponent: FunctionComponent<ResourceTypeProps> = ({
 interface ResourceProps {
   urn?: string;
   resource: ResourceType;
-  onEdit: (urn: string, rt: ResourceType) => void;
-  onDelete: (urn: string, rt: ResourceType) => void;
+  onEdit?: (urn: string, rt: ResourceType) => void;
+  onDelete?: (urn: string, rt: ResourceType) => void;
 }
 
 const ResourceItem: FunctionComponent<ResourceProps> = ({ urn, resource, onEdit, onDelete }) => {
@@ -54,18 +54,22 @@ const ResourceItem: FunctionComponent<ResourceProps> = ({ urn, resource, onEdit,
                 testId="toggle-details-visibility"
               />
             </GoAContextMenu>
-            <GoAContextMenuIcon
-              type="create"
-              title="Edit"
-              testId={`edit-resource-type-${resource.type}`}
-              onClick={() => urn && onEdit(urn, resource)}
-            />
-            <GoAContextMenuIcon
-              type="trash"
-              title="Delete"
-              testId="delete-resource-type"
-              onClick={() => urn && onDelete(urn, resource)}
-            />
+            {onEdit && (
+              <GoAContextMenuIcon
+                type="create"
+                title="Edit"
+                testId={`edit-resource-type-${resource.type}`}
+                onClick={() => urn && onEdit(urn, resource)}
+              />
+            )}
+            {onDelete && (
+              <GoAContextMenuIcon
+                type="trash"
+                title="Delete"
+                testId="delete-resource-type"
+                onClick={() => urn && onDelete(urn, resource)}
+              />
+            )}
           </ActionIconsDiv>
         </td>
       </tr>
