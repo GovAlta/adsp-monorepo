@@ -25,6 +25,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   ).selectStepperState();
 
   const hideSubmit = props.categoryProps.uischema.options?.hideSubmit ?? false;
+  const toAppOverviewLabel = props.categoryProps.uischema.options?.toAppOverviewLabel ?? 'Back to application overview';
   const submitFormFunction = enumerators?.submitFunction.get('submit-form');
   const submitForm = submitFormFunction && submitFormFunction();
 
@@ -57,7 +58,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
         <div id={`${path || `goa`}-form-pages`}>
           <PageBorder>
             <BackButton
-              text="Back to tasks"
+              text={toAppOverviewLabel}
               link={() => {
                 handleSave();
                 goToTableOfContext();
