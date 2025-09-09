@@ -102,7 +102,7 @@ jobs:
           openshift_token: ${{ secrets.ARO_TOKEN }}
           namespace: adsp-build
           insecure_skip_tls_verify: true
-      - name: Build container
+      - name: Deploy to prod
         uses: ./.github/actions/deploy-app
         with:
           app: ${{ matrix.app }}
