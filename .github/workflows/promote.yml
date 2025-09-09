@@ -102,25 +102,12 @@ jobs:
           openshift_token: ${{ secrets.ARO_TOKEN }}
           namespace: adsp-build
           insecure_skip_tls_verify: true
-      - name: Tag Production
-        run: oc tag ${{ matrix.app }}:uat ${{ matrix.app }}:prod --reference-policy='local'
-      - run: oc project adsp-prod
-      - name: Apply Manifests
-        run: |
-          oc process -f .openshift/managed/${{ matrix.app }}.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-prod -p DEPLOY_TAG=prod > ${{ matrix.app }}.prod.json
-          oc apply -f ${{ matrix.app }}.prod.json -l apply-prod=true,component!=database
-      - name: Deploy Production
-        run: |
-          if oc get deployment/${{ matrix.app }} ; then
-            oc set triggers deployment/${{ matrix.app }} --auto
-            oc rollout status deployment/${{ matrix.app }}
-            oc set triggers deployment/${{ matrix.app }} --manual
-          elif oc get dc/${{ matrix.app }} ; then
-            oc rollout latest dc/${{ matrix.app }}
-            oc rollout status dc/${{ matrix.app }}
-          else
-            echo 'No Deployment or DeploymentConfig found for ${{ matrix.app }}.'
-          fi
+      - name: Build container
+        uses: ./.github/actions/deploy-app
+        with:
+          app: ${{ matrix.app }}
+          from: uat
+          to: prod
 
   smokeTestProd:
     runs-on: ubuntu-22.04

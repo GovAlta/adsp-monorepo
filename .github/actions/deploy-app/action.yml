@@ -1,0 +1,51 @@
+name: "Apply manifest and deploy application"
+description: "Applies the Kubernetes manifest and deploys the application to the specified environment."
+inputs:
+  app:
+    description: "Application to deploy."
+    required: true
+  to:
+    description: "Environment to deploy to (e.g., dev, uat, prod)."
+    required: true
+  from:
+    description: "Environment to deploy from (e.g., dev, uat, prod)."
+    default: "latest"
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - name: Import image
+      shell: bash
+      if: ${{ inputs.from == 'latest' }}
+      run: |
+        oc import-image ghcr.io/govalta/${{ inputs.app }}:latest --reference-policy='local' --confirm
+    - name: Tag ${{ inputs.to }}
+      shell: bash
+      run: |
+        oc tag ${{ inputs.app }}:${{ inputs.from }} ${{ inputs.app }}:${{ inputs.to }} --reference-policy='local'
+    - shell: bash
+      run: oc project adsp-${{ inputs.to }}
+    - name: Apply Manifests
+      shell: bash
+      run: |
+        oc process -f .openshift/managed/${{ inputs.app }}.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-${{ inputs.to }} -p DEPLOY_TAG=${{ inputs.to }} > ${{ inputs.app }}.${{ inputs.to }}.json
+        oc apply -f ${{ inputs.app }}.${{ inputs.to }}.json -l apply-${{ inputs.to }}=true,component!=database
+    - name: Deploy ${{ inputs.to }}
+      shell: bash
+      run: |
+        if oc get deployment/${{ inputs.app }} ; then
+          oc set triggers deployment/${{ inputs.app }} --auto
+          oc rollout status deployment/${{ inputs.app }}
+          oc set triggers deployment/${{ inputs.app }} --manual
+        elif oc get dc/${{ inputs.app }} ; then
+          oc rollout latest dc/${{ inputs.app }}
+          oc rollout status dc/${{ inputs.app }}
+        else
+          echo 'No Deployment or DeploymentConfig found for ${{ inputs.app }}.'
+        fi
+
+        if oc get deployment/${{ inputs.app }}-job ; then
+          oc set triggers deployment/${{ inputs.app }}-job --auto
+          oc rollout status deployment/${{ inputs.app }}-job
+          oc set triggers deployment/${{ inputs.app }}-job --manual
+        fi
