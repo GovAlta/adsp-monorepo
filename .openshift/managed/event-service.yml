@@ -175,6 +175,28 @@ objects:
         app: ${APP_NAME}
         component: queue
         apply-init: "true"
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "rabbitmq:4.1-management",
+                "namespace": "adsp-build"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": false
+            },
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "busybox:1.37",
+                "namespace": "adsp-build"
+              },
+              "fieldPath": "spec.template.spec.initContainers[0].image",
+              "paused": false
+            }
+          ]
     spec:
       serviceName: ${APP_NAME}-rabbitmq
       replicas: 3
@@ -192,7 +214,7 @@ objects:
           terminationGracePeriodSeconds: 30
           initContainers:
             - name: rm-erlang-cookie
-              image: 'busybox:1.37'
+              image: ''
               command:
                 - sh
                 - '-c'
@@ -215,7 +237,7 @@ objects:
               args:
                 - -c
                 - cp -v /etc/rabbitmq/rabbitmq.conf ${RABBITMQ_CONFIG_FILE}.conf; exec docker-entrypoint.sh rabbitmq-server
-              image: rabbitmq:4.0-management
+              image: ''
               imagePullPolicy: IfNotPresent
               volumeMounts:
                 - name: config-volume
@@ -470,7 +492,8 @@ objects:
                 "name": "${APP_NAME}:${DEPLOY_TAG}",
                 "namespace": "${INFRA_NAMESPACE}"
               },
-              "fieldPath": "spec.template.spec.containers[0].image"
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": true
             }
           ]
     spec:

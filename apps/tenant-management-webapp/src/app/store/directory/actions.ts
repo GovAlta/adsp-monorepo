@@ -18,6 +18,7 @@ export const FETCH_ENTRY_DETAIL_BY_URNS = 'directory/FETCH_ENTRY_DETAIL_BY_URNS_
 
 export const FETCH_RESOURCE_TYPE = 'directory/FETCH_RESOURCE_TYPE_ACTION';
 export const FETCH_RESOURCE_TYPE_SUCCESS = 'directory/FETCH_RESOURCE_TYPE_SUCCESS_ACTION';
+export const FETCH_RESOURCE_TYPE_IN_CORE_SUCCESS = 'directory/FETCH_RESOURCE_TYPE_IN_CORE_SUCCESS_ACTION';
 
 export const UPDATE_RESOURCE_TYPE = 'directory/UPDATE_RESOURCE_TYPE_ACTION';
 export const UPDATE_RESOURCE_TYPE_SUCCESS = 'directory/UPDATE_RESOURCE_TYPE_SUCCESS_ACTION';
@@ -42,6 +43,7 @@ export type ActionType =
   | DeleteEntrySuccessAction
   | FetchResourceTypeAction
   | FetchResourceTypeSuccessAction
+  | FetchResourceTypeInCoreSuccessAction
   | UpdateResourceTypeAction
   | UpdateResourceTypeSuccessAction
   | DeleteResourceTypeAction
@@ -86,6 +88,11 @@ export interface FetchResourceTypeAction {
 }
 export interface FetchResourceTypeSuccessAction {
   type: typeof FETCH_RESOURCE_TYPE_SUCCESS;
+  payload: Record<string, ResourceType[]>;
+}
+
+export interface FetchResourceTypeInCoreSuccessAction {
+  type: typeof FETCH_RESOURCE_TYPE_IN_CORE_SUCCESS;
   payload: Record<string, ResourceType[]>;
 }
 
@@ -188,6 +195,13 @@ export const fetchResourceTypeSuccessAction = (
   payload: Record<string, ResourceType[]>
 ): FetchResourceTypeSuccessAction => ({
   type: FETCH_RESOURCE_TYPE_SUCCESS,
+  payload,
+});
+
+export const fetchResourceTypeInCoreSuccessAction = (
+  payload: Record<string, ResourceType[]>
+): FetchResourceTypeInCoreSuccessAction => ({
+  type: FETCH_RESOURCE_TYPE_IN_CORE_SUCCESS,
   payload,
 });
 

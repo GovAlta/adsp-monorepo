@@ -5,37 +5,26 @@ import { ConfigurationOverview } from './overview';
 import { ConfigurationImport } from './import/import';
 import { ConfigurationExport } from './export/export';
 import { ConfigurationDefinitions } from './definitions/definitions';
-import { ConfigurationRevisions } from './revisions/revisions';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 import AsideLinks from '@components/AsideLinks';
 
 export const Configuration: FunctionComponent = () => {
-  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
-
-  const activateEdit = (edit: boolean) => {
-    setActiveIndex(1);
-    setActivateEditState(edit);
-  };
-
-  useEffect(() => {
-    if (activeIndex !== null) {
-      setActiveIndex(null);
-    }
-  }, [activeIndex]);
+  const searchParams = new URLSearchParams(document.location.search);
+  const templates = tenantName && searchParams.get('templates');
 
   return (
     <Page>
       <Main>
         <h1 data-testid="configuration-title">Configuration service</h1>
-        <Tabs activeIndex={activeIndex} data-testid="configuration-tabs">
+        <Tabs activeIndex={templates === 'true' ? 1 : 0} data-testid="configuration-tabs">
           <Tab label="Overview" data-testid="configuration-overview-tab">
-            <ConfigurationOverview setActiveEdit={activateEdit} setActiveIndex={setActiveIndex} />
+            <ConfigurationOverview setActiveEdit={setActivateEditState} />
           </Tab>
           <Tab label="Definitions" data-testid="configuration-definitions-tab">
             <ConfigurationDefinitions activeEdit={activateEditState} />
-          </Tab>
-          <Tab label="Revisions" data-testid="configuration-revisions-tab">
-            <ConfigurationRevisions />
           </Tab>
           <Tab label="Import" data-testid="configuration-import-tab">
             <ConfigurationImport />

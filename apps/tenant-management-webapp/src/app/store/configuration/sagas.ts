@@ -331,6 +331,7 @@ export function* fetchConfigurationActiveRevision(action: FetchConfigurationActi
 export function* updateConfigurationDefinition({
   definition,
   isAddedFromOverviewPage,
+  openEditor,
 }: UpdateConfigurationDefinitionAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
@@ -352,12 +353,14 @@ export function* updateConfigurationDefinition({
       } = yield call(axios.patch, `${baseUrl}/configuration/v2/configuration/platform/configuration-service`, body, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      const currentId = openEditor ? `${definition.namespace}:${definition.name}` : null;
       yield put(
         updateConfigurationDefinitionSuccess(
           {
             ...latest,
           },
-          isAddedFromOverviewPage
+          isAddedFromOverviewPage,
+          currentId
         )
       );
     } catch (err) {
@@ -509,6 +512,11 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           {
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           }
+        );
+        yield put(
+          UpdateIndicator({
+            show: false,
+          })
         );
         if (action.isImportConfiguration) {
           yield put(replaceConfigurationDataSuccessAction(revision));

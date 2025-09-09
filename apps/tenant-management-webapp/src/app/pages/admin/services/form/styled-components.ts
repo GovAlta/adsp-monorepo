@@ -54,7 +54,10 @@ export const CenterPositionProgressIndicator = styled.div`
 `;
 
 export const FinalButtonPadding = styled.div`
+  display: flex;
   padding-top: 20px;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 export const Edit = styled.div`

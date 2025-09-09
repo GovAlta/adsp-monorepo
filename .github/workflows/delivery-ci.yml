@@ -109,27 +109,12 @@ jobs:
           openshift_token: ${{ secrets.ARO_TOKEN }}
           namespace: adsp-build
           insecure_skip_tls_verify: true
-      - name: Tag Dev
-        run: |
-          oc import-image ghcr.io/govalta/${{ matrix.app }}:latest --reference-policy='local' --confirm
-          oc tag ${{ matrix.app }}:latest ${{ matrix.app }}:dev --reference-policy='local'
-      - run: oc project adsp-dev
-      - name: Apply Manifests
-        run: |
-          oc process -f .openshift/managed/${{ matrix.app }}.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-dev -p DEPLOY_TAG=dev > ${{ matrix.app }}.dev.json
-          oc apply -f ${{ matrix.app }}.dev.json -l apply-dev=true,component!=database
-      - name: Deploy Dev
-        run: |
-          if oc get deployment/${{ matrix.app }} ; then
-            oc set triggers deployment/${{ matrix.app }} --auto
-            oc rollout status deployment/${{ matrix.app }}
-            oc set triggers deployment/${{ matrix.app }} --manual
-          elif oc get dc/${{ matrix.app }} ; then
-            oc rollout latest dc/${{ matrix.app }}
-            oc rollout status dc/${{ matrix.app }}
-          else
-            echo 'No Deployment or DeploymentConfig found for ${{ matrix.app }}.'
-          fi
+      - name: Deploy to dev
+        uses: ./.github/actions/deploy-app
+        with:
+          app: ${{ matrix.app }}
+          from: latest
+          to: dev
 
   devSmokeTest:
     runs-on: ubuntu-22.04
@@ -185,25 +170,12 @@ jobs:
           openshift_token: ${{ secrets.ARO_TOKEN }}
           namespace: adsp-build
           insecure_skip_tls_verify: true
-      - name: Tag Staging
-        run: oc tag ${{ matrix.app }}:dev ${{ matrix.app }}:uat --reference-policy='local'
-      - run: oc project adsp-uat
-      - name: Apply Manifests
-        run: |
-          oc process -f .openshift/managed/${{ matrix.app }}.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-uat -p DEPLOY_TAG=uat > ${{ matrix.app }}.uat.json
-          oc apply -f ${{ matrix.app }}.uat.json -l apply-staging=true,component!=database
-      - name: Deploy Staging
-        run: |
-          if oc get deployment/${{ matrix.app }} ; then
-            oc set triggers deployment/${{ matrix.app }} --auto
-            oc rollout status deployment/${{ matrix.app }}
-            oc set triggers deployment/${{ matrix.app }} --manual
-          elif oc get dc/${{ matrix.app }} ; then
-            oc rollout latest dc/${{ matrix.app }}
-            oc rollout status dc/${{ matrix.app }}
-          else
-            echo 'No Deployment or DeploymentConfig found for ${{ matrix.app }}.'
-          fi
+      - name: Deploy to uat
+        uses: ./.github/actions/deploy-app
+        with:
+          app: ${{ matrix.app }}
+          from: dev
+          to: uat
 
   stagingSmokeTest:
     runs-on: ubuntu-22.04

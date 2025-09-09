@@ -5,6 +5,7 @@ export const AddModalType = 'directory-add-modal';
 export interface Directory {
   directory: Service[];
   resourceType: Record<string, ResourceType[]>;
+  resourceTypeInCore: Record<string, ResourceType[]>;
 }
 
 export interface Service {
@@ -43,6 +44,7 @@ export const defaultService: Service = {
 export const DIRECTORY_INIT: Directory = {
   directory: [],
   resourceType: {},
+  resourceTypeInCore: {},
 };
 
 export interface ResourceTag {

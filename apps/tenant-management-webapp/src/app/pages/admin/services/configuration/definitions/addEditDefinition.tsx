@@ -217,27 +217,6 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
           ariaLabel="anonymous-read"
           text="Allow anonymous access"
         />
-        <GoAFormItem error={errors?.['payloadSchema']} label="Payload schema">
-          <Editor
-            data-testid="form-schema"
-            height={200}
-            value={payloadSchema}
-            onChange={(value) => {
-              validators.remove('payloadSchema');
-              setPayloadSchema(value);
-            }}
-            language="json"
-            options={{
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              tabSize: 2,
-              minimap: { enabled: false },
-              folding: true,
-              foldingStrategy: 'auto',
-              showFoldingControls: 'always',
-            }}
-          />
-        </GoAFormItem>
       </GoAModal>
     </ModalOverwrite>
   );
