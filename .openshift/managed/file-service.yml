@@ -112,7 +112,7 @@ objects:
         app: ${APP_NAME}
         apply-dev: "true"
         apply-prod: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-test: "true"
         component: av
     spec:
@@ -136,7 +136,7 @@ objects:
         component: av
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       annotations:
         image.openshift.io/triggers: |-
@@ -248,7 +248,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
@@ -373,7 +373,7 @@ objects:
         component: job
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}-job
       namespace: ${NAMESPACE}
@@ -502,7 +502,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
@@ -525,7 +525,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
