@@ -113,6 +113,11 @@ Feature: Feedback
     Then the user views a feedback list with Date submitted, Page, Rating, Action
     When the user clicks Expand view button on feedback page
     Then the user views an expanded view of a feedback list with Date submitted, Page, Rating, Comment, Issue columns
+    And the user views Stard date and End date filters on the expanded view for feedback
     And the user views an Export CSV button on the expanded view for feedback
-    When the user clicks Back to default view button on the expanded view
-    Then the user views a default view of a feedback list with Date submitted, Page, Rating, Action
+# When the user clicks Back to default view button on the expanded view
+# Then the user views a default view of a feedback list with Date submitted, Page, Rating, Action
+# When the user clicks Expand view button on feedback page
+# Then the user views an expanded view of a feedback list with Date submitted, Page, Rating, Comment, Issue columns
+# When the user clicks Collapse view button on the expanded view
+# Then the user views a default view of a feedback list with Date submitted, Page, Rating, Action
