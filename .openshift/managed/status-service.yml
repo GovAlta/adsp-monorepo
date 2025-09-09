@@ -67,7 +67,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
@@ -172,7 +172,7 @@ objects:
         component: job
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}-job
       namespace: ${NAMESPACE}
@@ -185,7 +185,8 @@ objects:
                 "name": "${APP_NAME}:${DEPLOY_TAG}",
                 "namespace": "${INFRA_NAMESPACE}"
               },
-              "fieldPath": "spec.template.spec.containers[0].image"
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": true
             }
           ]
     spec:
@@ -272,7 +273,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
@@ -295,7 +296,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}

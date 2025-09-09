@@ -81,6 +81,7 @@ export const FormDefinitions = ({
   const [ministryFilter, setMinistryFilter] = useState<string>('');
   const [programFilter, setProgramFilter] = useState<string>('');
   const [filteredVisibleCount, setFilteredVisibleCount] = useState<number>(10);
+  const [actSearch, setActSearch] = useState<string>('');
 
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
@@ -117,6 +118,19 @@ export const FormDefinitions = ({
   const resourceConfiguration = useSelector(selectConfigurationHost);
   const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
   const dispatch = useDispatch();
+
+  const normalize = (s: string) =>
+    (s ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+  const defHasActMatch = (def: any, q: string) => {
+    if (!q) return true;
+    const acts: string[] = Array.isArray(def?.actsOfLegislation) ? def.actsOfLegislation : [];
+    const n = normalize(q);
+    return acts.some((a) => normalize(a).includes(n));
+  };
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
@@ -248,40 +262,55 @@ export const FormDefinitions = ({
   }, [displayDefinitions]);
 
   const filteredDefinitions = useMemo(() => {
-    if (!programFilter && !ministryFilter) return displayDefinitions;
     const entries = Object.entries(displayDefinitions || {});
+    const hasProgram = !!programFilter;
+    const hasMinistry = !!ministryFilter;
+    const hasActs = !!actSearch.trim();
+
+    if (!hasProgram && !hasMinistry && !hasActs) return displayDefinitions;
+
+    const q = actSearch.trim();
+
     return entries.reduce((obj, [id, def]: [string, any]) => {
-      if (ministryFilter && def?.ministry !== ministryFilter) return obj;
-      if (programFilter) {
+      if (hasMinistry && def?.ministry !== ministryFilter) return obj;
+
+      if (hasProgram) {
         const { id: progId } = getProgramFromDef(def);
         if (!progId || progId !== programFilter) return obj;
       }
+
+      if (hasActs && !defHasActMatch(def, q)) return obj;
+
       obj[id] = def;
       return obj;
     }, {} as Record<string, any>);
-  }, [displayDefinitions, ministryFilter, programFilter]);
+  }, [displayDefinitions, ministryFilter, programFilter, actSearch]);
 
   useEffect(() => {
     setFilteredVisibleCount(10);
-  }, [programFilter, ministryFilter]);
+  }, [programFilter, ministryFilter, actSearch]);
 
   const filteredEntriesAll = useMemo(() => Object.entries(filteredDefinitions || {}), [filteredDefinitions]);
 
   const limitedFilteredDefinitions = useMemo(() => {
-    if (!programFilter && !ministryFilter) return filteredDefinitions;
     const entries = filteredEntriesAll;
+    const anyFilter = !!programFilter || !!ministryFilter || !!actSearch.trim();
+
+    if (!anyFilter) return filteredDefinitions;
     if (entries.length <= filteredVisibleCount) return filteredDefinitions;
+
     const sliced = entries.slice(0, filteredVisibleCount);
     return sliced.reduce((obj, [id, def]) => {
       obj[id] = def;
       return obj;
     }, {} as Record<string, any>);
-  }, [filteredDefinitions, filteredEntriesAll, programFilter, ministryFilter, filteredVisibleCount]);
+  }, [filteredDefinitions, filteredEntriesAll, programFilter, ministryFilter, actSearch, filteredVisibleCount]);
 
   const hasMoreFiltered = useMemo(() => {
-    if (!programFilter && !ministryFilter) return false;
+    const anyFilter = !!programFilter || !!ministryFilter || !!actSearch.trim();
+    if (!anyFilter) return false;
     return filteredEntriesAll.length > filteredVisibleCount;
-  }, [filteredEntriesAll, programFilter, ministryFilter, filteredVisibleCount]);
+  }, [filteredEntriesAll, programFilter, ministryFilter, actSearch, filteredVisibleCount]);
 
   return (
     <section>
@@ -350,7 +379,7 @@ export const FormDefinitions = ({
         </GoADropdown>
       </GoAFormItem>
 
-      <GoAFormItem label="Registered ID" mt="s">
+      <GoAFormItem label="Registered ID" mb="s">
         <GoAButtonGroup alignment="start">
           <GoAInput
             type="text"
@@ -368,8 +397,19 @@ export const FormDefinitions = ({
           </GoAButton>
         </GoAButtonGroup>
       </GoAFormItem>
+      <GoAFormItem label="Search Acts of Legislation" mb={'l'}>
+        {/* please make sure the last filter or search should be l margin bottom */}
+        <GoAInput
+          type="search"
+          name="ActsSearch"
+          width="60ch"
+          value={actSearch}
+          testId="acts-search"
+          aria-label="Search Acts of Legislation"
+          onChange={(_, v) => setActSearch(v)}
+        />
+      </GoAFormItem>
 
-      <br />
       {showFormDefinitions && (
         <GoAButton
           testId="add-definition"
@@ -423,7 +463,7 @@ export const FormDefinitions = ({
                     setCurrentDefinition(formDefinition);
                   }}
                 />
-                {getNextEntries() && !ministryFilter && !programFilter && (
+                {getNextEntries() && !ministryFilter && !programFilter && !actSearch.trim() && (
                   <LoadMoreWrapper>
                     <GoAButton
                       testId="form-event-load-more-btn"
@@ -435,7 +475,7 @@ export const FormDefinitions = ({
                     </GoAButton>
                   </LoadMoreWrapper>
                 )}
-                {(programFilter || ministryFilter) && hasMoreFiltered && (
+                {(programFilter || ministryFilter || actSearch.trim()) && hasMoreFiltered && (
                   <LoadMoreWrapper>
                     <GoAButton
                       testId="form-filtered-load-more-btn"

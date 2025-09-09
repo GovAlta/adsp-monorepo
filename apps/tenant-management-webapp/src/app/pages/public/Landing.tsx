@@ -143,7 +143,7 @@ const LandingPage = (): JSX.Element => {
                   <h2>Capabilities proven in production</h2>
                   <p>
                     ADSP services are used by teams to deliver digital services today. Here's an overview for{' '}
-                    {yesterday.toFormat('MMMM dd')}:
+                    {yesterday.toFormat('MMMM d')}:
                   </p>
                   <Grid>
                     {metrics.map((metric) => (

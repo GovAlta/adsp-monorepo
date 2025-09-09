@@ -141,10 +141,12 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
                       element.scrollIntoView();
                     }
 
+                    // switched from input to button - i'm writing this comment to trigger deployment
+
                     headersRef.current[activeId - 1] &&
                       headersRef.current[activeId - 1]
-                        .querySelector('goa-form-step')
-                        ?.shadowRoot?.querySelector('input')
+                        ?.querySelector('goa-form-step')
+                        ?.shadowRoot?.querySelector('button')
                         ?.click();
                   }}
                   testId="prev-button"
@@ -163,8 +165,8 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
                   onClick={() => {
                     headersRef.current[activeId + 1] &&
                       headersRef.current[activeId + 1]
-                        .querySelector('goa-form-step')
-                        ?.shadowRoot?.querySelector('input')
+                        ?.querySelector('goa-form-step')
+                        ?.shadowRoot?.querySelector('button')
                         ?.click();
 
                     const element = document.getElementById(`${path || `goa`}-form-stepper`);

@@ -95,8 +95,9 @@ Feature: Configuration-service
   # When the user selects "Export" tab for "Configuration"
   # Then no critical or serious accessibility issues on "configuration export page"
 
+  # CS-4381: revisions tab has been moved to configuration editor. This test needs to be modified or a new test to be created for this.
   # TEST DATA: autotest:test configuration with some existing revisions
-  @TEST_CS-1871 @REQ_CS-1797 @TEST_CS-2231 @REQ_CS-1792 @TEST_2226 @REQ_CS-1791 @TEST_CS-1414 @REQ_CS-1790 @regression
+  @TEST_CS-1871 @REQ_CS-1797 @TEST_CS-2231 @REQ_CS-1792 @TEST_2226 @REQ_CS-1791 @TEST_CS-1414 @REQ_CS-1790 @regression @ignore
   Scenario: As a tenant admin, I can create, edit, view and set configuration revision
     Given a tenant admin user is on configuration revisions page
     # Create a new revision and view the new revision

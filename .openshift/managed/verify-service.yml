@@ -65,7 +65,7 @@ objects:
         component: database
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}-redis
       namespace: ${NAMESPACE}
@@ -104,7 +104,7 @@ objects:
         component: database
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}-redis
       namespace: ${NAMESPACE}
@@ -202,7 +202,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
@@ -304,7 +304,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
@@ -327,7 +327,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}

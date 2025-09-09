@@ -17,7 +17,7 @@ import { EventLog } from './event-log';
 import { ServiceMetrics } from './service-metrics';
 import { Events } from './services/events';
 import { Notifications } from './services/notifications';
-import { Configuration } from './services/configuration';
+import { ConfigurationRouter } from './services/configuration/routers';
 import { Calendar } from './services/calendar';
 import { PDFRouter } from './services/pdf';
 import { CommentRouter } from './services/comment';
@@ -54,7 +54,7 @@ const TenantManagement = (): JSX.Element => {
       case 'Comment':
         return <CommentRouter />;
       case 'Configuration':
-        return <Configuration />;
+        return <ConfigurationRouter />;
       case 'Directory':
         return <Directory />;
       case 'Event':

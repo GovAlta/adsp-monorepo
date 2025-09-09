@@ -9,6 +9,7 @@ import {
   FETCH_RESOURCE_TYPE_SUCCESS,
   UPDATE_RESOURCE_TYPE_SUCCESS,
   DELETE_RESOURCE_TYPE_SUCCESS,
+  FETCH_RESOURCE_TYPE_IN_CORE_SUCCESS,
 } from './actions';
 
 export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
@@ -65,6 +66,10 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
       }
       return { ...state, directory: [...directoryUpdateList] };
     }
+    case FETCH_RESOURCE_TYPE_IN_CORE_SUCCESS: {
+      return { ...state, resourceTypeInCore: action.payload };
+    }
+
     case UPDATE_RESOURCE_TYPE_SUCCESS:
     case FETCH_RESOURCE_TYPE_SUCCESS:
     case DELETE_RESOURCE_TYPE_SUCCESS: {
