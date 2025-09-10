@@ -228,6 +228,14 @@ class feedbackPage {
       '//goa-button[text()="Back to default view"]/following-sibling::goa-button-group/goa-button[text()="Export CSV"]'
     );
   }
+
+  feedbackFeedbackBackToDefaultViewButton() {
+    return cy.xpath('//goa-button[text()="Back to default view"]');
+  }
+
+  feedbackFeedbackCollapseViewButtonExpendedView() {
+    return cy.xpath('//goa-button[text()="Collapse view"]');
+  }
 }
 
 export default feedbackPage;

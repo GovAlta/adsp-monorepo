@@ -547,3 +547,13 @@ Then('the user views Stard date and End date filters on the expanded view for fe
 Then('the user views an Export CSV button on the expanded view for feedback', function () {
   feedbackObj.feedbackFeedbackExportCSVExpandedView().shadow().find('button').should('be.enabled');
 });
+
+When('the user clicks Back to default view button on the expanded view', function () {
+  feedbackObj.feedbackFeedbackBackToDefaultViewButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+When('the user clicks Collapse view button on the expanded view', function () {
+  feedbackObj.feedbackFeedbackCollapseViewButtonExpendedView().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
