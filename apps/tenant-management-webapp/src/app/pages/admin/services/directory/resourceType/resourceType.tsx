@@ -137,8 +137,8 @@ export const ResourceTypePage = (): JSX.Element => {
           />
         </div>
       )}
-      {Object.keys(platformGroup)?.length === 0 && renderNoItem('Core resource type')}
-      {platformGroup && Object.keys(platformGroup)?.length > 0 && (
+      {Object.keys(resourceTypesInCore)?.length === 0 && renderNoItem('Core resource types')}
+      {resourceTypesInCore && Object.keys(resourceTypesInCore)?.length > 0 && (
         <div>
           <h2>Core resource types</h2>
           <GroupedResourceTypesTable groupedResourceTypes={resourceTypesInCore} resourceTypes={resourceTypesInCore} />
