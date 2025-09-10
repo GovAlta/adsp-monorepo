@@ -214,10 +214,10 @@ objects:
           terminationGracePeriodSeconds: 30
           initContainers:
             - name: rm-erlang-cookie
-              image: ''
+              image: ""
               command:
                 - sh
-                - '-c'
+                - "-c"
                 - rm -f /var/lib/rabbitmq/.erlang.cookie
               resources:
                 limits:
@@ -237,7 +237,7 @@ objects:
               args:
                 - -c
                 - cp -v /etc/rabbitmq/rabbitmq.conf ${RABBITMQ_CONFIG_FILE}.conf; exec docker-entrypoint.sh rabbitmq-server
-              image: ''
+              image: ""
               imagePullPolicy: IfNotPresent
               volumeMounts:
                 - name: config-volume
@@ -383,7 +383,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
@@ -479,7 +479,7 @@ objects:
         component: job
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}-job
       namespace: ${NAMESPACE}
@@ -578,7 +578,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
@@ -601,7 +601,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: ${APP_NAME}
       namespace: ${NAMESPACE}

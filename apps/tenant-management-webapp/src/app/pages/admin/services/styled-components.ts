@@ -84,6 +84,7 @@ export const Buttons = styled.div`
 
 export const ActionIconsDiv = styled.div`
   width: 100%;
+  min-width: var(--goa-space-3xl);
   display: flex;
   flex-direction: row;
   justify-content: center;

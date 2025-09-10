@@ -63,7 +63,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: content-service
       annotations:
@@ -168,7 +168,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: content-service
     spec:
@@ -190,7 +190,7 @@ objects:
         component: api
         apply-dev: "true"
         apply-test: "true"
-        apply-staging: "true"
+        apply-uat: "true"
         apply-prod: "true"
       name: content-service
     spec:
