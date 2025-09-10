@@ -2,9 +2,33 @@ import styled from 'styled-components';
 
 export const NotificationBannerWrapper = styled.div`
   top: 0;
-  position: fixed;
+  position: absolute;
+  z-index: 9999999;
   left: 0;
   right: 0;
+`;
+
+export const EditActionLayout = styled.div`
+  bottom: var(--goa-space-3xl);
+`;
+
+export const EditTemplateActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  gap: var(--goa-space-m);
+  padding-left: var(--goa-space-2xs);
+  margin: 0 0 var(--goa-space-xl) 0;
+`;
+
+export const EditorLabelWrapper = styled.div`
+  display: block;
+  flex-direction: row;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 4.5rem;
 `;
 
 export const EditorLHSWrapper = styled.div`

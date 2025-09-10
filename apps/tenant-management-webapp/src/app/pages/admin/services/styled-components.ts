@@ -13,6 +13,17 @@ export const EntryDetail = styled.div`
   line-height: var(--goa-space-m);
   padding: var(--goa-space-m);
   text-align: left;
+
+  p {
+    font-size: var(--goa-font-size-1);
+
+    margin-top: 0px;
+    margin-bottom: 0px;
+
+    li {
+      margin-left: 12px;
+    }
+  }
 `;
 export const NameDiv = styled.div`
   margin-top: 1rem;
