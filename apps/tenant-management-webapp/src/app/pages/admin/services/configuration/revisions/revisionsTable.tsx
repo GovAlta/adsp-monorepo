@@ -85,16 +85,6 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
                 testId={`revision-add-${revision.configuration.namespace}-${revision.configuration.namespace}`}
               />
             )}
-            {!isCore && isLatest && (
-              <GoAContextMenuIcon
-                type="create"
-                title="Edit"
-                testId={`revision-edit-${revision.configuration.namespace}-${revision.configuration.namespace}`}
-                onClick={() => {
-                  editRevision(revision);
-                }}
-              />
-            )}
           </RowFlex>
         </td>
       </tr>
@@ -208,16 +198,11 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
                     editRevision={onEditRevision}
                   />
                 ))}
-              {!isCore && !indicator.show && revisions && revisions.length === 0 && (
-                <NoItemRevisionComponent
-                  service={service}
-                  onClick={() => {
-                    setShowEditRevision(true);
-                  }}
-                />
-              )}
             </tbody>
           </DataTable>
+          {!isCore && !indicator.show && revisions && revisions.length === 0 && (
+            <p> You must save valid configuration data in order to create a new revision</p>
+          )}
         </div>
       </Visible>
       {indicator.show && <PageIndicator />}
