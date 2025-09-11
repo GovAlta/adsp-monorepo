@@ -28,6 +28,7 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
   uischema,
 }: ObjectArrayToolbarProps) {
   const buttonPosition = uischema?.options?.addButtonPosition || 'left';
+  const buttonUIProps = uischema?.options?.addButtonUIProps || {};
   const arrayLabel = getLabelText(uischema.scope, label);
 
   return (
@@ -40,6 +41,7 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
           aria-label={`Add to button to ${label?.toLowerCase() || ''}`}
           onClick={addItem(path, createDefaultValue(schema, rootSchema))}
           type={uischema.options?.addButtonType ?? 'primary'}
+          {...buttonUIProps}
         >
           {uischema?.options?.addButtonText || capitalizeFirstLetter(`Add ${arrayLabel}`)}
         </GoAButton>

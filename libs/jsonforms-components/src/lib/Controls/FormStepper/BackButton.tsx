@@ -30,6 +30,7 @@ const BackButtonWrapper = styled.span`
   display: inline-block;
   color: #0070c4;
   cursor: pointer;
+  margin-bottom: var(--goa-space-m);
 
   on .goa-icon {
     display: inline-block !important;

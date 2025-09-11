@@ -156,3 +156,8 @@ export const SectionHeaderRowTr = styled.tr`
     border-top: none !important;
   }
 `;
+
+export const SummaryRowLink = styled.a`
+  position: relative;
+  top: var(--goa-space-xs);
+`;
