@@ -106,7 +106,7 @@ Feature: Feedback
     When the user clicks toggle details icon on the latest feedback
     Then the user views feedback details with timestamp, rating, comments, technical issues
 
-  @TEST_CS-4295 @REQ_CS-4265 @regression
+  @TEST_CS-4295 @REQ_CS-4265 @REQ_4304 @regression
   Scenario: As an admin user, I want to see all the feedback for my tenant in the Tenant Management App with a maximum view
     Given a tenant admin user is on Feedback service Feedback page
     When the user selects the adsp site in Registered sites dropdown
