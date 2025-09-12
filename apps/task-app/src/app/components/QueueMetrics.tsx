@@ -54,7 +54,7 @@ export const QueueMetrics: FunctionComponent<QueueMetricsProps> = ({ metrics, is
       <Metric
         metric={{
           name: 'Pending / In Progress',
-          value: `${metrics?.status.Pending} / ${metrics?.status['In Progress']}`,
+          value: `${metrics?.status.Pending || '-'} / ${metrics?.status['In Progress'] || '-'}`,
           unit: 'tasks',
         }}
       />
