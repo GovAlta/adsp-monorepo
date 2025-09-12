@@ -9,7 +9,7 @@ import {
 import { createValidationHandler, NotFoundError, decodeAfter } from '@core-services/core-common';
 import axios from 'axios';
 import { Request, RequestHandler, Response, Router } from 'express';
-import { checkSchema, param, query } from 'express-validator';
+import { body, checkSchema, param, query } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
 import { DateTime } from 'luxon';
 import { Logger } from 'winston';
@@ -19,7 +19,7 @@ import { mapTask } from '../mapper';
 import { TaskEntity, QueueEntity } from '../model';
 import { TaskRepository } from '../repository';
 import { Queue, TaskPriority, TaskServiceConfiguration, TaskStatus } from '../types';
-import { getTask, taskOperation, TASK_KEY, updateTask } from './task';
+import { getTask, taskOperation, TASK_KEY, updateTask, updateTaskData } from './task';
 import { UserInformation } from './types';
 
 interface QueueRouterProps {
@@ -527,6 +527,16 @@ export function createQueueRouter({
     getTask(repository),
     verifyQueuedTask,
     updateTask(apiId, logger, eventService)
+  );
+  router.patch(
+    '/queues/:namespace/:name/tasks/:id/data',
+    validateNamespaceNameAndTaskIdHandler,
+    createValidationHandler(
+      body().isObject()
+    ),
+    getTask(repository),
+    verifyQueuedTask,
+    updateTaskData(apiId, logger, eventService)
   );
   router.post(
     '/queues/:namespace/:name/tasks/:id',

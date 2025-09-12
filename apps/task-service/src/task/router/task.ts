@@ -7,12 +7,13 @@ import {
   decodeAfter,
 } from '@core-services/core-common';
 import { Request, RequestHandler, Response, Router } from 'express';
-import { checkSchema, param, query } from 'express-validator';
+import { body, checkSchema, param, query } from 'express-validator';
 import { Logger } from 'winston';
 import {
   taskAssigned,
   taskCancelled,
   taskCompleted,
+  taskDataUpdated,
   taskDeleted,
   taskPrioritySet,
   taskStarted,
@@ -124,6 +125,35 @@ export function updateTask(apiId: AdspId, logger: Logger, eventService: EventSer
       eventService.send(taskUpdated(apiId, user, updated, update));
 
       logger.info(`Updated task (ID: ${task.id}) in queue ${task.queue?.namespace}:${task.queue?.name}.`, {
+        context: 'TaskRouter',
+        tenantId: task.tenantId.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function updateTaskData(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const data = req.body;
+      const task: TaskEntity = req[TASK_KEY];
+
+      logger.debug(`Updating data for task (ID: ${task.id}) in queue ${task.queue?.namespace}:${task.queue?.name}...`, {
+        context: 'TaskRouter',
+        tenantId: task.tenantId.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+
+      const updated = await task.updateData(user, data);
+      res.send(mapTask(apiId, updated));
+
+      eventService.send(taskDataUpdated(apiId, user, updated, data));
+
+      logger.info(`Updated data for task (ID: ${task.id}) in queue ${task.queue?.namespace}:${task.queue?.name}.`, {
         context: 'TaskRouter',
         tenantId: task.tenantId.toString(),
         user: `${user.name} (ID: ${user.id})`,
@@ -273,6 +303,15 @@ export function createTaskRouter({ logger, apiId, taskRepository: repository, ev
     ),
     getTask(repository),
     updateTask(apiId, logger, eventService)
+  );
+  router.patch(
+    '/tasks/:id/data',
+    validateIdHandler,
+    createValidationHandler(
+      body().isObject()
+    ),
+    getTask(repository),
+    updateTaskData(apiId, logger, eventService)
   );
 
   router.post('/tasks/:id', validateIdHandler, getTask(repository), taskOperation(apiId, logger, eventService));

@@ -7,7 +7,7 @@ import { QueueEntity, TaskEntity } from '../model';
 import { DirectoryServiceRoles, TaskServiceRoles } from '../roles';
 import { getTasks, taskOperation, updateTask } from '../router';
 import { TaskPriority, TaskStatus } from '../types';
-import { createTaskRouter, deleteTask, getTask } from './task';
+import { createTaskRouter, deleteTask, getTask, updateTaskData } from './task';
 
 describe('task', () => {
   const apiId = adspId`urn:ads:platform:task-service:v1`;
@@ -45,17 +45,19 @@ describe('task', () => {
     'test-service:test': queue,
   };
 
-  const task = new TaskEntity(repositoryMock, queue, {
-    tenantId,
-    id: 'test',
-    name: 'test',
-    description: 'test',
-    status: TaskStatus.Pending,
-    priority: TaskPriority.Normal,
-    createdOn: new Date(),
-  });
+  let task: TaskEntity;
 
   beforeEach(() => {
+    task = new TaskEntity(repositoryMock, queue, {
+      tenantId,
+      id: 'test',
+      name: 'test',
+      description: 'test',
+      status: TaskStatus.Pending,
+      priority: TaskPriority.Normal,
+      createdOn: new Date(),
+    });
+
     getConfigurationMock.mockReset();
     repositoryMock.getTask.mockReset();
     repositoryMock.getTasks.mockReset();
@@ -392,6 +394,48 @@ describe('task', () => {
       const req = {
         user: { tenantId, id: 'user-1', roles: [] },
         body: { description: 'updated' },
+        task,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('updateTaskData', () => {
+    const handler = updateTaskData(apiId, loggerMock, eventServiceMock);
+    it('can create request handler', () => {
+      const result = updateTaskData(apiId, loggerMock, eventServiceMock);
+      expect(result).toBeTruthy();
+    });
+
+    it('can handle update data request', async () => {
+      const req = {
+        user: { tenantId, id: 'user-1', roles: ['task-worker'] },
+        body: { key1: 'value1', key2: 2 },
+        task: { ...task, updateData: jest.fn() },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.task.updateData.mockResolvedValueOnce({ ...req.task , data: req.body });
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ key1: 'value1', key2: 2 }) })
+      );
+      expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
+    });
+
+    it('can call next with unauthorized user error', async () => {
+      const req = {
+        user: { tenantId, id: 'user-1', roles: [] },
+        body: { key1: 'value1', key2: 2 },
         task,
       };
       const res = {
