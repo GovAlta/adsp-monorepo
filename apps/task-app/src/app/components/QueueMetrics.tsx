@@ -53,12 +53,12 @@ export const QueueMetrics: FunctionComponent<QueueMetricsProps> = ({ metrics, is
       </Metric>
       <Metric
         metric={{
-          name: 'Pending',
-          value: metrics?.status.Pending,
+          name: 'Pending / In Progress',
+          value: `${metrics?.status.Pending} / ${metrics?.status['In Progress']}`,
           unit: 'tasks',
         }}
       />
-      <svg
+      {/* <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 20 20"
         height="50px"
@@ -69,14 +69,14 @@ export const QueueMetrics: FunctionComponent<QueueMetricsProps> = ({ metrics, is
           fill="#f1f1f1"
           d="M13.919 6.908V2a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v15.908a2 2 0 0 0 2 2h9.919a2 2 0 0 0 2-2v-5h-6.87v-6z"
         />
-      </svg>
-      <Metric
+      </svg> */}
+      {/* <Metric
         metric={{
           name: 'In Progress',
           value: metrics?.status['In Progress'],
           unit: 'tasks',
         }}
-      />
+      /> */}
     </GoABlock>
   );
 };

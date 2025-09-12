@@ -98,11 +98,13 @@ export const TaskList = styled(TaskListComponent)`
   flex-direction: column;
 
   > div:first-child {
+    margin: var(--goa-space-s) var(--goa-space-l) 0 var(--goa-space-l);
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
 
-    > :first-child {
-      margin-right: var(--goa-space-4xl);
+    > :last-child {
+      margin-left: auto;
     }
   }
 `;

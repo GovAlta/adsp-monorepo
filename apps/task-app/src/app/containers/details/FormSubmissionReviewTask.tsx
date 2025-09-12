@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import { GoAReviewRenderers } from '@abgov/jsonforms-components';
 import {
   GoAButtonGroup,
   GoAButton,
@@ -7,15 +7,16 @@ import {
   GoADropdownItem,
   GoATextArea,
 } from '@abgov/react-components';
+import { AdspId } from '@core-services/app-common';
+import { JsonForms } from '@jsonforms/react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { TASK_STATUS, TaskDetailsProps } from './types';
-import { registerDetailsComponent } from './register';
-import { AppDispatch, formSelector, selectForm } from '../../state';
 import { useValidators } from '../../../lib/validations/useValidators';
 import { isNotEmptyCheck } from '../../../lib/validations/checkInput';
-import { AdspId } from '../../../lib/adspId';
-import { GoAReviewRenderers } from '@abgov/jsonforms-components';
-import { JsonForms } from '@jsonforms/react';
+import { AppDispatch, formSelector, selectForm } from '../../state';
+import { TASK_STATUS, TaskDetailsProps } from './types';
+import { registerDetailsComponent } from './register';
+
 import {
   ReviewContainer,
   ReviewContent,
