@@ -56,10 +56,11 @@ export const TaskHeader = styled(TaskHeaderComponent)`
   height: 55px;
   background: white;
   z-index: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 var(--goa-space-l);
   > span {
-    margin: auto 0 auto 0;
-  }
-  > :first-child {
     margin: auto 0 auto 5px;
   }
 
@@ -68,6 +69,6 @@ export const TaskHeader = styled(TaskHeaderComponent)`
   }
 
   > :last-child {
-    margin-left: var(--goa-space-xl);
+    margin-left: auto;
   }
 `;

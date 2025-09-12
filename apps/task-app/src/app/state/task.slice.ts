@@ -164,6 +164,7 @@ export const connectStream = createAsyncThunk(
     socket.on('task-service:task-assigned', onTaskUpdate);
     socket.on('task-service:task-priority-set', onTaskUpdate);
     socket.on('task-service:task-started', onTaskUpdate);
+    socket.on('task-service:task-data-updated', onTaskUpdate);
     socket.on('task-service:task-completed', onTaskUpdate);
     socket.on('task-service:task-cancelled', onTaskUpdate);
   }
@@ -408,6 +409,44 @@ export const startTask = createAsyncThunk(
   }
 );
 
+export const updateTaskData = createAsyncThunk(
+  'task/update-task-data',
+  async (
+    { taskId, data }: { taskId: string; data: Record<string, unknown> },
+    { dispatch, getState, rejectWithValue }
+  ) => {
+    const state = getState() as AppState;
+    const { directory } = state.config;
+    const { queue }: TaskState = state[TASK_FEATURE_KEY];
+
+    try {
+      if (state.task.tasks[taskId].status === 'Pending') {
+        await dispatch(startTask({ taskId }));
+      }
+
+      const accessToken = await getAccessToken();
+      const { data: result } = await axios.patch<SerializedTask>(
+        `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}/data`,
+        data,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      return result;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 export const completeTask = createAsyncThunk(
   'task/complete-task',
   async ({ taskId }: { taskId: string }, { getState, rejectWithValue }) => {
@@ -632,6 +671,19 @@ export const taskSlice = createSlice({
         };
       })
       .addCase(startTask.rejected, (state) => {
+        state.busy.executing = false;
+      })
+      .addCase(updateTaskData.pending, (state) => {
+        state.busy.executing = true;
+      })
+      .addCase(updateTaskData.fulfilled, (state, { payload }) => {
+        state.busy.executing = false;
+        state.tasks = {
+          ...state.tasks,
+          [payload.id]: payload,
+        };
+      })
+      .addCase(updateTaskData.rejected, (state) => {
         state.busy.executing = false;
       })
       .addCase(completeTask.pending, (state) => {
