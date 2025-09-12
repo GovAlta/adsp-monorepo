@@ -93,16 +93,31 @@ Feature: Feedback
     When the user re-load the page and wait "5" seconds
     Then the user "views" the Feedback badge
 
-  # The test needs an update due to UI changes done in CS-4265
   # TEST DATA: https://adsp- site should have more than 10 feedback records
-  @TEST_CS-3210 @REQ_CS-3021 @regression @ignore
+  @TEST_CS-3210 @REQ_CS-3021 @regression
   Scenario: As a tenant admin, I can see feedback sent regarding my sites, so I can review user experience and how to improve my site
     Given a tenant admin user is on Feedback service Feedback page
     Then the user views site URLs from sites page in Registered sites dropdown
     When the user selects the adsp site in Registered sites dropdown
-    Then the user views a feedback list with Submitted on, View, Rating, Action
+    Then the user views a feedback list with Date submitted, Page, Rating, Action
     And the user views a feedback list of 10 ordered from most recent to oldest
     When the user clicks Load more button on the page
     Then the user views more than 10 feedback records on feedback page
     When the user clicks toggle details icon on the latest feedback
     Then the user views feedback details with timestamp, rating, comments, technical issues
+
+  @TEST_CS-4295 @REQ_CS-4265 @REQ_4304 @regression
+  Scenario: As an admin user, I want to see all the feedback for my tenant in the Tenant Management App with a maximum view
+    Given a tenant admin user is on Feedback service Feedback page
+    When the user selects the adsp site in Registered sites dropdown
+    Then the user views a feedback list with Date submitted, Page, Rating, Action
+    When the user clicks Expand view button on feedback page
+    Then the user views an expanded view of a feedback list with Date submitted, Page, Rating, Comment, Issue columns
+    And the user views Stard date and End date filters on the expanded view for feedback
+    And the user views an Export CSV button on the expanded view for feedback
+    When the user clicks Back to default view button on the expanded view
+    Then the user views a feedback list with Date submitted, Page, Rating, Action
+    When the user clicks Expand view button on feedback page
+    Then the user views an expanded view of a feedback list with Date submitted, Page, Rating, Comment, Issue columns
+    When the user clicks Collapse view button on the expanded view
+    Then the user views a feedback list with Date submitted, Page, Rating, Action

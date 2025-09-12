@@ -189,6 +189,12 @@ class feedbackPage {
     return cy.xpath('//table[@data-testid="feedback-table"]/thead/tr/th');
   }
 
+  feedbackFeedbackTableHeadersExpandedView() {
+    return cy.xpath(
+      '//goa-button[text()="Back to default view"]/following-sibling::div//table[@data-testid="feedback-table"]/thead/tr/th'
+    );
+  }
+
   feedbackFeedbackTableSubmittedOnCells() {
     return cy.xpath('//table[@data-testid="feedback-table"]/tbody/tr/td[contains(@data-testid, "created-on")]');
   }
@@ -199,6 +205,36 @@ class feedbackPage {
 
   feedbackFeedbackTableItemDetails() {
     return cy.xpath('//div[@data-testid="moredetails"]');
+  }
+
+  feedbackFeedbackExpandViewButton() {
+    return cy.xpath('//goa-button[text()="Expand view"]');
+  }
+
+  feedbackFeedbackStartDateFilterExpandedView() {
+    return cy.xpath(
+      '//goa-button[text()="Back to default view"]/following-sibling::div//goa-input[@name="feedback-filter-start-date"]'
+    );
+  }
+
+  feedbackFeedbackEndDateFilterExpandedView() {
+    return cy.xpath(
+      '//goa-button[text()="Back to default view"]/following-sibling::div//goa-input[@name="feedback-filter-end-date"]'
+    );
+  }
+
+  feedbackFeedbackExportCSVExpandedView() {
+    return cy.xpath(
+      '//goa-button[text()="Back to default view"]/following-sibling::goa-button-group/goa-button[text()="Export CSV"]'
+    );
+  }
+
+  feedbackFeedbackBackToDefaultViewButton() {
+    return cy.xpath('//goa-button[text()="Back to default view"]');
+  }
+
+  feedbackFeedbackCollapseViewButtonExpendedView() {
+    return cy.xpath('//goa-button[text()="Collapse view"]');
   }
 }
 

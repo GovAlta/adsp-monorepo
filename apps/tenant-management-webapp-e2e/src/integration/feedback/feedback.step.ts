@@ -455,10 +455,10 @@ When('the user selects the adsp site in Registered sites dropdown', function () 
   cy.wait(2000);
 });
 
-Then('the user views a feedback list with Submitted on, View, Rating, Action', function () {
+Then('the user views a feedback list with Date submitted, Page, Rating, Action', function () {
   feedbackObj.feedbackFeedbackTableHeaders().then((elements) => {
-    expect(elements[0].outerText).to.eq('Submitted on');
-    expect(elements[1].outerText).to.eq('View');
+    expect(elements[0].outerText).to.eq('Date submitted');
+    expect(elements[1].outerText).to.eq('Page');
     expect(elements[2].outerText).to.eq('Rating');
     expect(elements[3].outerText).to.eq('Action');
   });
@@ -519,4 +519,41 @@ Then('the user views feedback details with timestamp, rating, comments, technica
         expect(elements[1].outerText).to.eq('Comments');
       }
     });
+});
+
+When('the user clicks Expand view button on feedback page', function () {
+  feedbackObj.feedbackFeedbackExpandViewButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then(
+  'the user views an expanded view of a feedback list with Date submitted, Page, Rating, Comment, Issue columns',
+  function () {
+    feedbackObj.feedbackFeedbackTableHeadersExpandedView().then((elements) => {
+      expect(elements[0].outerText).to.eq('Date submitted');
+      expect(elements[1].outerText).to.eq('Page');
+      expect(elements[2].outerText).to.eq('Rating');
+      expect(elements[3].outerText).to.eq('Comment');
+      expect(elements[4].outerText).to.eq('Issue');
+    });
+  }
+);
+
+Then('the user views Stard date and End date filters on the expanded view for feedback', function () {
+  feedbackObj.feedbackFeedbackStartDateFilterExpandedView().shadow().find('input').should('be.enabled');
+  feedbackObj.feedbackFeedbackEndDateFilterExpandedView().shadow().find('input').should('be.enabled');
+});
+
+Then('the user views an Export CSV button on the expanded view for feedback', function () {
+  feedbackObj.feedbackFeedbackExportCSVExpandedView().shadow().find('button').should('be.enabled');
+});
+
+When('the user clicks Back to default view button on the expanded view', function () {
+  feedbackObj.feedbackFeedbackBackToDefaultViewButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+When('the user clicks Collapse view button on the expanded view', function () {
+  feedbackObj.feedbackFeedbackCollapseViewButtonExpendedView().shadow().find('button').click({ force: true });
+  cy.wait(2000);
 });
