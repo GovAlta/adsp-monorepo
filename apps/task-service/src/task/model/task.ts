@@ -156,6 +156,19 @@ export class TaskEntity implements Task {
     return this.repository.save(this);
   }
 
+  updateData(user: User, data: Record<string, unknown>): Promise<TaskEntity> {
+    if (!this.canProgressTask(user)) {
+      throw new UnauthorizedUserError('update task data', user);
+    }
+
+    if (this.status !== TaskStatus.InProgress) {
+      throw new InvalidOperationError('Can only update tasks that are In Progress.');
+    }
+
+    this.data = data;
+    return this.repository.save(this);
+  }
+
   complete(user: User): Promise<TaskEntity> {
     if (!this.canProgressTask(user)) {
       throw new UnauthorizedUserError('complete task', user);

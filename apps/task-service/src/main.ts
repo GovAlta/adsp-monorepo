@@ -29,6 +29,7 @@ import {
   TaskStartedDefinition,
   TaskUpdatedDefinition,
   TaskDeletedDefinition,
+  TaskDataUpdatedDefinition,
 } from './task';
 import { createRepositories } from './postgres';
 import { createCommentService } from './comment';
@@ -92,6 +93,7 @@ const initializeApp = async (): Promise<express.Application> => {
         TaskPrioritySetDefinition,
         TaskAssignedDefinition,
         TaskStartedDefinition,
+        TaskDataUpdatedDefinition,
         TaskCompletedDefinition,
         TaskCancelledDefinition,
         TaskDeletedDefinition,
@@ -123,6 +125,10 @@ const initializeApp = async (): Promise<express.Application> => {
             {
               namespace: serviceId.service,
               name: TaskStartedDefinition.name,
+            },
+            {
+              namespace: serviceId.service,
+              name: TaskUDataUpdatedDefinition.name,
             },
             {
               namespace: serviceId.service,
