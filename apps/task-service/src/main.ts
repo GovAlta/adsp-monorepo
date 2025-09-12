@@ -128,7 +128,7 @@ const initializeApp = async (): Promise<express.Application> => {
             },
             {
               namespace: serviceId.service,
-              name: TaskUDataUpdatedDefinition.name,
+              name: TaskDataUpdatedDefinition.name,
             },
             {
               namespace: serviceId.service,
