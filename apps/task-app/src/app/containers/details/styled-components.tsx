@@ -36,15 +36,6 @@ export const ListWithDetailHeading = styled.h3`
   text-transform: capitalize;
 `;
 
-export const ReviewContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: var(--goa-space-l) !important;
-  height: 100%;
-  width: 100%;
-`;
-
 export const ReviewContent = styled.div`
   margin-top: var(--goa-space-l);
   overflow-y: auto;
@@ -56,11 +47,14 @@ export const ReviewContent = styled.div`
 `;
 
 export const ActionContainer = styled.div`
-  max-width: 600px;
   width: 100%;
-  flex-shrink: 0;
   background-color: #fff;
   gap: var(--goa-space-s);
+  display: flex;
+  flex-direction: column;
+  & > form {
+    margin: auto;
+  }
 `;
 
 export const ActionControl = styled.div`
