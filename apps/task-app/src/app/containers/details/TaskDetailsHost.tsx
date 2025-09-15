@@ -125,11 +125,12 @@ export const TaskDetailsHost = styled(TaskDetailsHostComponent)`
   z-index: 0;
   position: relative;
   display: none;
+  overflow: hidden;
   flex: 1;
 
   & > :first-child {
     flex: 1;
-    padding: var(--goa-space-xl);
+    padding: var(--goa-space-xl) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);
     padding-top: 0;
   }
 

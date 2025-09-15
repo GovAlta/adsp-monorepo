@@ -49,16 +49,12 @@ export const ReviewContent = styled.div`
 export const ActionContainer = styled.div`
   width: 100%;
   background-color: #fff;
-  gap: var(--goa-space-s);
+  gap: var(--goa-space-xs);
   display: flex;
   flex-direction: column;
   & > form {
     margin: auto;
   }
-`;
-
-export const ActionControl = styled.div`
-  padding-top: var(--goa-space-s);
 `;
 
 export const FormReviewContainer = styled.div`
