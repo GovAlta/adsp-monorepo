@@ -1,4 +1,3 @@
-import { GoABlock } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
 import { QueueMetrics as QueueMetricsValue } from '../state';
@@ -9,9 +8,21 @@ interface QueueMetricsProps {
   isLoading: boolean;
 }
 
+const QueueMetricsContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: var(--goa-space-xs);
+
+  & > * {
+    flex-grow: 0;
+  }
+`;
+
 export const QueueMetrics: FunctionComponent<QueueMetricsProps> = ({ metrics, isLoading }) => {
   return (
-    <GoABlock mt="m">
+    <QueueMetricsContainer>
       <Metric
         metric={{
           name: 'Priority',
@@ -77,7 +88,7 @@ export const QueueMetrics: FunctionComponent<QueueMetricsProps> = ({ metrics, is
           unit: 'tasks',
         }}
       /> */}
-    </GoABlock>
+    </QueueMetricsContainer>
   );
 };
 

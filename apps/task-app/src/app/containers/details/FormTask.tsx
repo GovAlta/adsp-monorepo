@@ -1,5 +1,5 @@
 import { GoARenderers } from '@abgov/jsonforms-components';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup, GoASkeleton } from '@abgov/react-components';
 import { AdspId } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -11,18 +11,20 @@ import {
   completeTask,
   formDefinitionSelector,
   loadDefinition,
-  Task,
   updateTaskData,
 } from '../../state';
 import { TASK_STATUS, TaskDetailsProps } from './types';
 import { registerDetailsComponent } from './register';
 
 interface TaskFormProps {
+  readonly: boolean;
   definitionId: string;
   data: Record<string, unknown>;
   onChangeData: (data: Record<string, unknown>) => void;
+  onChangeErrors: (errors: unknown[]) => void;
 }
-const TaskForm: FunctionComponent<TaskFormProps> = ({ definitionId, data, onChangeData }) => {
+
+const TaskForm: FunctionComponent<TaskFormProps> = ({ readonly, definitionId, data, onChangeData, onChangeErrors }) => {
   const dispatch = useDispatch<AppDispatch>();
   const definition = useSelector((state: AppState) => formDefinitionSelector(state, definitionId));
 
@@ -34,6 +36,7 @@ const TaskForm: FunctionComponent<TaskFormProps> = ({ definitionId, data, onChan
 
   return definition ? (
     <JsonForms
+      readonly={readonly}
       schema={definition.dataSchema}
       uischema={definition.uiSchema}
       data={data}
@@ -44,10 +47,11 @@ const TaskForm: FunctionComponent<TaskFormProps> = ({ definitionId, data, onChan
         if (errors.length === 0) {
           onChangeData(data);
         }
+        onChangeErrors(errors);
       }}
     />
   ) : (
-    <div>Loading form definition...</div>
+    <GoASkeleton type="card" />
   );
 };
 
@@ -61,10 +65,18 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
   }, [dispatch, definitionId]);
 
   const [data, setData] = useState(task.data);
+  const [hasErrors, setHasErrors] = useState(false);
 
   return (
     <TaskDetailsLayout>
-      <TaskForm key={definitionId} definitionId={definitionId} data={data} onChangeData={setData} />
+      <TaskForm
+        key={definitionId}
+        definitionId={definitionId}
+        readonly={task.status !== TASK_STATUS.IN_PROGRESS}
+        data={data}
+        onChangeData={setData}
+        onChangeErrors={(errors) => setHasErrors(errors.length > 0)}
+      />
       <GoAButtonGroup alignment="end" mt="xl">
         <GoAButton
           mr="l"
@@ -77,14 +89,17 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
         </GoAButton>
         <GoAButton
           type="secondary"
-          disabled={!user.isWorker || isExecuting}
+          disabled={!user.isWorker || isExecuting || task.status !== TASK_STATUS.IN_PROGRESS}
           onClick={() => dispatch(updateTaskData({ taskId: task.id, data }))}
         >
           Save
         </GoAButton>
         <GoAButton
-          disabled={!user.isWorker || isExecuting || task.status !== TASK_STATUS.IN_PROGRESS}
-          onClick={() => dispatch(completeTask({ taskId: task.id }))}
+          disabled={!user.isWorker || isExecuting || task.status !== TASK_STATUS.IN_PROGRESS || hasErrors}
+          onClick={async () => {
+            await dispatch(updateTaskData({ taskId: task.id, data }));
+            await dispatch(completeTask({ taskId: task.id }));
+          }}
         >
           Complete task
         </GoAButton>
