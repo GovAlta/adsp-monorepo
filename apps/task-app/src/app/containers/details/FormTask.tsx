@@ -4,7 +4,7 @@ import { AdspId } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import styled from 'styled-components';
+import { TaskDetailsLayout } from '../../components/TaskDetailsLayout';
 import {
   AppDispatch,
   AppState,
@@ -16,18 +16,6 @@ import {
 } from '../../state';
 import { TASK_STATUS, TaskDetailsProps } from './types';
 import { registerDetailsComponent } from './register';
-
-const FormTaskDiv = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin-top: var(--goa-space-l);
-  & > :first-child {
-    flex: 1;
-  }
-  & > :last-child {
-    flex: 0;
-  }
-`;
 
 interface TaskFormProps {
   definitionId: string;
@@ -75,7 +63,7 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
   const [data, setData] = useState(task.data);
 
   return (
-    <FormTaskDiv>
+    <TaskDetailsLayout>
       <TaskForm key={definitionId} definitionId={definitionId} data={data} onChangeData={setData} />
       <GoAButtonGroup alignment="end" mt="xl">
         <GoAButton
@@ -101,7 +89,7 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
           Complete task
         </GoAButton>
       </GoAButtonGroup>
-    </FormTaskDiv>
+    </TaskDetailsLayout>
   );
 };
 

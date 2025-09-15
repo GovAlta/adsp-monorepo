@@ -13,17 +13,12 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useValidators } from '../../../lib/validations/useValidators';
 import { isNotEmptyCheck } from '../../../lib/validations/checkInput';
+import { TaskDetailsLayout } from '../../components/TaskDetailsLayout';
 import { AppDispatch, formSelector, selectForm } from '../../state';
 import { TASK_STATUS, TaskDetailsProps } from './types';
 import { registerDetailsComponent } from './register';
 
-import {
-  ReviewContainer,
-  ReviewContent,
-  ActionContainer,
-  ActionControl,
-  FormReviewContainer,
-} from './styled-components';
+import { ReviewContent, ActionContainer, ActionControl, FormReviewContainer } from './styled-components';
 import { TaskCancelModal } from './TaskCancelModal';
 
 export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
@@ -143,7 +138,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   const renderButtonGroup = () => {
     return (
-      <GoAButtonGroup alignment="start">
+      <GoAButtonGroup alignment="end">
         {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
             <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
@@ -196,7 +191,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     );
   };
   return (
-    <ReviewContainer>
+    <TaskDetailsLayout>
       {definition && (
         <ActionContainer>
           <FormReviewContainer>
@@ -214,11 +209,13 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
       <ReviewContent>{renderTaskCancelModal()}</ReviewContent>
       <ActionContainer>
         <goa-divider mt="m" mb="none"></goa-divider>
-        <ActionControl>{renderDisposition()}</ActionControl>
-        <ActionControl>{renderReason()}</ActionControl>
+        <form>
+          <ActionControl>{renderDisposition()}</ActionControl>
+          <ActionControl>{renderReason()}</ActionControl>
+        </form>
         <ActionControl>{renderButtonGroup()}</ActionControl>
       </ActionContainer>
-    </ReviewContainer>
+    </TaskDetailsLayout>
   );
 };
 
