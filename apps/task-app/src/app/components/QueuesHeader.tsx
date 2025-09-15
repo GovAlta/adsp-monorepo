@@ -12,7 +12,7 @@ const QueuesHeaderComponent: FunctionComponent<QueuesHeaderProps> = ({ className
       <div className={className}>
         <span>Queues</span>
       </div>
-      <GoADivider ml="l" mb="m" mr="l" />
+      <GoADivider />
     </React.Fragment>
   );
 };
@@ -30,7 +30,7 @@ export const QueuesHeader = styled(QueuesHeaderComponent)`
   }
 
   > span:first-child {
-    margin-left: 20px;
+    margin-left: var(--goa-space-3xl);
     margin-right: auto;
   }
 `;

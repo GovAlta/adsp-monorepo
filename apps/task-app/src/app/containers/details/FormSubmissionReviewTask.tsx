@@ -138,12 +138,12 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   const renderButtonGroup = () => {
     return (
-      <GoAButtonGroup alignment="end" mt="none">
+      <GoAButtonGroup alignment="end" mt="m">
+        <GoAButton type="tertiary" onClick={onClose}>
+          Close
+        </GoAButton>
         {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
-            <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
-              Submit Decision
-            </GoAButton>
             <GoAButton
               type="secondary"
               disabled={!user.isWorker || isExecuting}
@@ -153,11 +153,11 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
             >
               Cancel Review
             </GoAButton>
+            <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
+              Submit Decision
+            </GoAButton>
           </>
         )}
-        <GoAButton type="tertiary" onClick={onClose}>
-          Back
-        </GoAButton>
         {task?.status === TASK_STATUS.PENDING && (
           <GoAButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
             Start review
@@ -193,22 +193,19 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   return (
     <TaskDetailsLayout>
       {definition && (
-        <ActionContainer>
-          <FormReviewContainer>
-            <JsonForms
-              readonly={true}
-              schema={definition?.dataSchema}
-              uischema={definition?.uiSchema}
-              data={currentForm?.formData}
-              validationMode="NoValidation"
-              renderers={GoAReviewRenderers}
-            />
-          </FormReviewContainer>
-        </ActionContainer>
+        <FormReviewContainer>
+          <JsonForms
+            readonly={true}
+            schema={definition?.dataSchema}
+            uischema={definition?.uiSchema}
+            data={currentForm?.formData}
+            validationMode="NoValidation"
+            renderers={GoAReviewRenderers}
+          />
+        </FormReviewContainer>
       )}
       <ReviewContent>{renderTaskCancelModal()}</ReviewContent>
       <ActionContainer>
-        <goa-divider mt="none" mb="none"></goa-divider>
         <form>
           {renderDisposition()}
           {renderReason()}

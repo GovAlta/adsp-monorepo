@@ -77,7 +77,7 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
         onChangeData={setData}
         onChangeErrors={(errors) => setHasErrors(errors.length > 0)}
       />
-      <GoAButtonGroup alignment="end" mt="xl">
+      <GoAButtonGroup alignment="end" mt="l">
         <GoAButton
           mr="l"
           type={

@@ -566,9 +566,6 @@ export const taskSlice = createSlice({
     setTaskToPrioritize: (state, { payload }: PayloadAction<string>) => {
       state.modal.taskToPrioritize = payload ? state.tasks[payload] : null;
     },
-    resetTask: (state) => {
-      state.results = [];
-    },
   },
   extraReducers: (builder) => {
     builder

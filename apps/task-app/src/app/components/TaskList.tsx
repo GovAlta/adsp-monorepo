@@ -54,12 +54,12 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
       <div>
         <GoATable mt="l" width="100%">
           <colgroup>
-            <col style={{ width: 80 }} />
-            <col style={{ width: 80 }} />
-            <col style={{ width: 200 }} />
-            <col style={{ width: 80 }} />
-            <col style={{ width: 80 }} />
-            <col style={{ width: 200 }} />
+            <col style={{ width: '5%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '40%' }} />
+            <col style={{ width: '5%' }} />
+            <col style={{ width: '5%' }} />
+            <col style={{ width: '35%' }} />
           </colgroup>
           <thead>
             <tr>
@@ -93,8 +93,7 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
 export const TaskList = styled(TaskListComponent)`
   z-index: 0;
   flex: 1;
-  overflow: hidden;
-  display: contents;
+  overflow: auto;
   flex-direction: column;
 
   > div {

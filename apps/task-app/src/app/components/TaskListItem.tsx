@@ -42,7 +42,7 @@ export const TaskListItem: FunctionComponent<TaskListItemProps> = ({
       <td>{task.status}</td>
       <td>{task.assignment?.assignedTo ? task.assignment.assignedTo.name : 'No one'}</td>
       <td>
-        <GoAButtonGroup alignment="end">
+        <GoAButtonGroup alignment="end" gap="compact">
           {user.isAssigner && (
             <>
               <GoAButton size="compact" type="secondary" onClick={() => onAssign(task)}>
