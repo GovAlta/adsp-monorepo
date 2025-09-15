@@ -48,22 +48,24 @@ export const ReviewContent = styled.div`
 
 export const ActionContainer = styled.div`
   width: 100%;
+  padding-top: var(--goa-space-l);
   background-color: #fff;
-  gap: var(--goa-space-xs);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
   & > form {
     margin: auto;
+  }
+  > :last-child {
+    margin-left: auto;
   }
 `;
 
 export const FormReviewContainer = styled.div`
   background-color: rgb(241, 241, 241);
-  margin-bottom: var(--goa-space-m);
-  padding-top: 0px !important;
-  padding: var(--goa-space-m);
+  padding: var(--goa-space-l) var(--goa-space-3xl);
   border: 1px solid rgb(220, 220, 220);
   border-radius: 5px;
-  max-height: 40vh;
   overflow: auto;
 `;

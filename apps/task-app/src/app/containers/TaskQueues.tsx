@@ -10,7 +10,6 @@ import {
   metricsLoadingSelector,
   queueMetricsSelector,
   queuesSelector,
-  taskActions,
 } from '../state';
 
 interface TaskQueuesProps {
@@ -21,7 +20,6 @@ export const TaskQueues: FunctionComponent<TaskQueuesProps> = ({ className }) =>
   const dispatch = useDispatch<AppDispatch>();
   useEffect(() => {
     dispatch(loadQueues());
-    dispatch(taskActions.resetTask());
   }, [dispatch]);
 
   const queues = useSelector(queuesSelector);
@@ -38,7 +36,6 @@ export const TaskQueues: FunctionComponent<TaskQueuesProps> = ({ className }) =>
         metrics={metrics}
         metricsLoading={metricsLoading}
         onOpenQueue={(queue) => {
-          dispatch(taskActions.resetTask());
           navigate(`${queue.namespace}/${queue.name}`);
         }}
       />
@@ -52,6 +49,6 @@ export default styled(TaskQueues)`
   position: absolute;
   top: 0;
   bottom: 0;
-  left: var(--goa-space-3xl);
-  right: var(--goa-space-3xl);
+  left: 0;
+  right: 0;
 `;

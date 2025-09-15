@@ -26,19 +26,20 @@ const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({
   return (
     <React.Fragment>
       <div className={className}>
-        {open ? (
-          <>
-            <Link to={`/${tenant.name}/${namespace}/${name}`} onClick={onClickTasks}>
-              Tasks ({namespace}:{name})
-            </Link>
-            <span> /</span>
-            <span> {open?.name}</span>
-          </>
-        ) : (
-          <span>
-            <a href={`/${tenant.name}`}>Queues</a> / {`Tasks ${namespace ? `(${namespace}:${name})` : ''}`}
-          </span>
-        )}
+        <span>
+          <Link to={`/${tenant.name}`}>Queues</Link> /{' '}
+          {open ? (
+            <>
+              <Link to={`/${tenant.name}/${namespace}/${name}`} onClick={onClickTasks}>
+                Tasks ({namespace}:{name})
+              </Link>
+              <span> /</span>
+              <span> {open?.name}</span>
+            </>
+          ) : (
+            `Tasks ${namespace ? `(${namespace}:${name})` : ''}`
+          )}
+        </span>
         <span>
           {isLive ? (
             <GoABadge mt="m" mb="s" type="success" content="Live" />
@@ -59,13 +60,9 @@ export const TaskHeader = styled(TaskHeaderComponent)`
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 0 var(--goa-space-l);
+  padding: 0 var(--goa-space-3xl);
   > span {
-    margin: auto 0 auto 5px;
-  }
-
-  > span:first-child {
-    margin-left: 14px;
+    margin: auto 0 auto 0;
   }
 
   > :last-child {
