@@ -109,6 +109,7 @@ export const TaskList = styled(TaskListComponent)`
 
     > :last-child {
       margin-left: auto;
+      flex-grow: 0;
     }
   }
 `;

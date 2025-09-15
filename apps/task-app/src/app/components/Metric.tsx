@@ -9,7 +9,7 @@ interface MetricProps {
 
 export const Metric: FunctionComponent<MetricProps> = ({ metric, children }) => {
   return (
-    <GoAContainer type="non-interactive" accent="thin">
+    <GoAContainer type="non-interactive" accent="thin" padding="compact">
       <label>{metric.name}</label>
       <div style={{ marginTop: 16 }}>
         {children || (

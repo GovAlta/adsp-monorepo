@@ -18,7 +18,7 @@ import { AppDispatch, formSelector, selectForm } from '../../state';
 import { TASK_STATUS, TaskDetailsProps } from './types';
 import { registerDetailsComponent } from './register';
 
-import { ReviewContent, ActionContainer, ActionControl, FormReviewContainer } from './styled-components';
+import { ReviewContent, ActionContainer, FormReviewContainer } from './styled-components';
 import { TaskCancelModal } from './TaskCancelModal';
 
 export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
@@ -115,7 +115,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const renderReason = () => {
     return (
       <div id="form-reason-block">
-        <GoAFormItem label="Reason" requirement="required" error={errors?.['dispositionReason']}>
+        <GoAFormItem label="Reason" requirement="required" error={errors?.['dispositionReason']} mt="m">
           <GoATextArea
             name="reason"
             value={dispositionReason}
@@ -138,7 +138,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   const renderButtonGroup = () => {
     return (
-      <GoAButtonGroup alignment="end">
+      <GoAButtonGroup alignment="end" mt="none">
         {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
             <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
@@ -208,12 +208,12 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
       )}
       <ReviewContent>{renderTaskCancelModal()}</ReviewContent>
       <ActionContainer>
-        <goa-divider mt="m" mb="none"></goa-divider>
+        <goa-divider mt="none" mb="none"></goa-divider>
         <form>
-          <ActionControl>{renderDisposition()}</ActionControl>
-          <ActionControl>{renderReason()}</ActionControl>
+          {renderDisposition()}
+          {renderReason()}
         </form>
-        <ActionControl>{renderButtonGroup()}</ActionControl>
+        {renderButtonGroup()}
       </ActionContainer>
     </TaskDetailsLayout>
   );
