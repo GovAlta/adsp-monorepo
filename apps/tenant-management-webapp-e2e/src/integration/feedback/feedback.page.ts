@@ -15,6 +15,16 @@ class feedbackPage {
     return cy.xpath('//*[@data-testid="feedbacks-overview-tab"]//h2[text()="Feedback widget"]/following-sibling::p');
   }
 
+  feedbackOverviewSummaryBlock() {
+    return cy.xpath(
+      '//div[@data-testid="feedbacks-overview-tab"]//h2[text()="Summary"]/parent::div/following-sibling::goa-block'
+    );
+  }
+
+  feedbackOverviewRegisterSiteButton() {
+    return cy.xpath('//div[@data-testid="feedbacks-overview-tab"]//goa-button[text()="Register site"]');
+  }
+
   feedbackSitesRegisterSiteButton() {
     return cy.xpath('//*[@data-testid="feedback-sites-tab"]//goa-button[@testid="add-site"]');
   }
