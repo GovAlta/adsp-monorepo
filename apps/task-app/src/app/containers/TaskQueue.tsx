@@ -20,6 +20,7 @@ import {
   metricsLoadingSelector,
   openTask,
   loadQueueMetrics,
+  AppState,
 } from '../state';
 import { TaskAssignmentModal } from '../components/TaskAssignmentModal';
 import { TaskPriorityModal } from '../components/TaskPriorityModal';
@@ -33,6 +34,8 @@ interface TaskQueueComponentProps {
 }
 
 const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ className }) => {
+  const params = useParams<{ tenant: string; namespace: string; name: string }>();
+
   const user = useSelector(queueUserSelector);
   const live = useSelector(liveSelector);
   const metrics = useSelector(metricsSelector);
@@ -40,12 +43,11 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
   const filter = useSelector(filterSelector);
   const busy = useSelector(busySelector);
   const modal = useSelector(modalSelector);
-  const tasks = useSelector(tasksSelector);
+  const tasks = useSelector((state: AppState) => tasksSelector(state, params.namespace, params.name));
   const open = useSelector(openTaskSelector);
   const workers = useSelector(queueWorkersSelector);
 
   const dispatch = useDispatch<AppDispatch>();
-  const params = useParams<{ tenant: string; namespace: string; name: string }>();
 
   useEffect(() => {
     dispatch(initializeQueue({ namespace: params.namespace, name: params.name }));
@@ -54,13 +56,6 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
   }, [dispatch, params]);
 
   const navigate = useNavigate();
-
-  const { tenant: tenantName } = useParams<{ tenant: string }>();
-  useEffect(() => {
-    if (tasks === null) {
-      navigate(`/${tenantName}`);
-    }
-  }, [navigate, tenantName, tasks]);
 
   return (
     <div className={className}>
@@ -86,6 +81,7 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
                 open={open}
                 selected={null}
                 user={user}
+                initializingUser={busy.initializingUser}
                 onSetFilter={(filter) => dispatch(taskActions.setFilter(filter))}
                 onSelect={() => {
                   // not used

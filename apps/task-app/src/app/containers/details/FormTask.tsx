@@ -5,14 +5,7 @@ import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { TaskDetailsLayout } from '../../components/TaskDetailsLayout';
-import {
-  AppDispatch,
-  AppState,
-  completeTask,
-  formDefinitionSelector,
-  loadDefinition,
-  updateTaskData,
-} from '../../state';
+import { AppDispatch, AppState, formDefinitionSelector, loadDefinition, updateTaskData } from '../../state';
 import { TASK_STATUS, TaskDetailsProps } from './types';
 import { registerDetailsComponent } from './register';
 
@@ -55,7 +48,7 @@ const TaskForm: FunctionComponent<TaskFormProps> = ({ readonly, definitionId, da
   );
 };
 
-const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting, onClose }) => {
+const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting, onClose, onComplete }) => {
   const dispatch = useDispatch<AppDispatch>();
   const adspId = AdspId.parse(task.recordId);
   const [_api, _config, _formService, definitionId] = adspId.resource.split('/');
@@ -72,7 +65,7 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
       <TaskForm
         key={definitionId}
         definitionId={definitionId}
-        readonly={task.status !== TASK_STATUS.IN_PROGRESS}
+        readonly={task.status === TASK_STATUS.COMPLETED || task.status === TASK_STATUS.CANCELLED}
         data={data}
         onChangeData={setData}
         onChangeErrors={(errors) => setHasErrors(errors.length > 0)}
@@ -89,7 +82,12 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
         </GoAButton>
         <GoAButton
           type="secondary"
-          disabled={!user.isWorker || isExecuting || task.status !== TASK_STATUS.IN_PROGRESS}
+          disabled={
+            !user.isWorker ||
+            isExecuting ||
+            task.status === TASK_STATUS.COMPLETED ||
+            task.status === TASK_STATUS.CANCELLED
+          }
           onClick={() => dispatch(updateTaskData({ taskId: task.id, data }))}
         >
           Save
@@ -98,7 +96,7 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
           disabled={!user.isWorker || isExecuting || task.status !== TASK_STATUS.IN_PROGRESS || hasErrors}
           onClick={async () => {
             await dispatch(updateTaskData({ taskId: task.id, data }));
-            await dispatch(completeTask({ taskId: task.id }));
+            onComplete();
           }}
         >
           Complete task
