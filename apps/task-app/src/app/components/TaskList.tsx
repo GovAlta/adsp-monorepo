@@ -14,6 +14,7 @@ interface TaskListProps {
   selected: Task;
   open: Task;
   user: TaskUser;
+  initializingUser: boolean;
   onSetFilter: (filter: TaskFilter) => void;
   onSelect: (task: Task) => void;
   onAssign: (task: Task) => void;
@@ -28,6 +29,7 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
   filter,
   tasks,
   user,
+  initializingUser,
   onSetFilter,
   onSelect,
   onAssign,
@@ -56,8 +58,8 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
           <colgroup>
             <col style={{ width: '5%' }} />
             <col style={{ width: '10%' }} />
-            <col style={{ width: '40%' }} />
-            <col style={{ width: '5%' }} />
+            <col style={{ width: '35%' }} />
+            <col style={{ width: '10%' }} />
             <col style={{ width: '5%' }} />
             <col style={{ width: '35%' }} />
           </colgroup>
@@ -77,6 +79,7 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
                 key={task.id}
                 task={task}
                 user={user}
+                initializingUser={initializingUser}
                 onSelect={onSelect}
                 onAssign={onAssign}
                 onSetPriority={onSetPriority}

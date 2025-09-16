@@ -51,6 +51,7 @@ export interface TaskState {
   opened: string;
   busy: {
     initializing: boolean;
+    initializingUser: boolean;
     loading: boolean;
     executing: boolean;
   };
@@ -91,8 +92,8 @@ export const initializeQueue = createAsyncThunk(
 
       // If the target queue is changing, then load additional information.
       if (task.queue?.namespace !== definition.namespace || task.queue?.name !== definition.name) {
-        dispatch(loadQueueTasks({ namespace, name }));
         dispatch(loadQueuePeople(definition));
+        dispatch(loadQueueTasks({ namespace, name }));
         dispatch(connectStream({ namespace, name }));
       }
 
@@ -535,6 +536,7 @@ export const initialTaskState: TaskState = {
   opened: null,
   busy: {
     initializing: true,
+    initializingUser: true,
     loading: false,
     executing: false,
   },
@@ -572,8 +574,9 @@ export const taskSlice = createSlice({
       .addCase(initializeQueue.pending, (state, { meta }) => {
         state.busy.initializing = true;
         if (meta.arg.namespace !== state.queue?.namespace || meta.arg.name !== state.queue.name) {
-          state.queue = null;
-          state.results = [];
+          state.queue = initialTaskState.queue;
+          state.user = initialTaskState.user;
+          state.results = initialTaskState.results;
         }
       })
       .addCase(initializeQueue.fulfilled, (state, { payload }) => {
@@ -585,10 +588,10 @@ export const taskSlice = createSlice({
         state.busy.initializing = false;
       })
       .addCase(loadQueuePeople.pending, (state) => {
-        state.busy.initializing = true;
+        state.busy.initializingUser = true;
       })
       .addCase(loadQueuePeople.fulfilled, (state, { payload }) => {
-        state.busy.initializing = false;
+        state.busy.initializingUser = false;
         state.people = [...payload.assigners, ...payload.workers].reduce(
           (people, person) => ({ ...people, [person.id]: person }),
           {}
@@ -598,7 +601,7 @@ export const taskSlice = createSlice({
         state.user = payload.user;
       })
       .addCase(loadQueuePeople.rejected, (state) => {
-        state.busy.initializing = false;
+        state.busy.initializingUser = false;
       })
       .addCase(loadQueueTasks.pending, (state) => {
         state.busy.loading = true;
@@ -737,8 +740,11 @@ export const tasksSelector = createSelector(
   (state: AppState) => state.task.results,
   (state: AppState) => state.task.tasks,
   filterSelector,
-  (userId, results, tasks, filter) => {
-    if (!results) {
+  (state: AppState) => state.task.queue,
+  (_: AppState, namespace: string) => namespace,
+  (_: AppState, __: string, name: string) => name,
+  (userId, results, tasks, filter, queue, namespace, name) => {
+    if (queue?.namespace !== namespace || queue?.name !== name || !results) {
       return null;
     }
 

@@ -13,7 +13,6 @@ import {
   selectedTopicSelector,
   startTask,
   topicsSelector,
-  updateFormDisposition,
 } from '../../state';
 
 import { getRegisteredDetailsComponents } from './register';
@@ -30,12 +29,6 @@ const Placeholder = lazy(() => import('./Placeholder'));
 interface TaskDetailsHostProps {
   className?: string;
   onClose: () => void;
-}
-export interface TaskCompleteProps {
-  formId: string;
-  submissionId: string;
-  dispositionReason: string;
-  dispositionStatus: string;
 }
 
 const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ className, onClose }) => {
@@ -66,19 +59,6 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
       }
     })?.detailsComponent || Placeholder;
 
-  const onCompleteTask = (data: TaskCompleteProps) => {
-    dispatch(
-      updateFormDisposition({
-        formId: data.formId,
-        submissionId: data.submissionId,
-        dispositionReason: data.dispositionReason,
-        dispositionStatus: data.dispositionStatus,
-      })
-    ).then(() => {
-      dispatch(completeTask({ taskId: open.id }));
-    });
-  };
-
   return (
     <div key={params.taskId} data-opened={!!open} className={className}>
       {open && (
@@ -89,7 +69,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
             isExecuting={busy.executing}
             onClose={onClose}
             onStart={() => dispatch(startTask({ taskId: open.id }))}
-            onComplete={(data) => onCompleteTask(data)}
+            onComplete={() => dispatch(completeTask({ taskId: open.id }))}
             onCancel={(reason) => dispatch(cancelTask({ taskId: open.id, reason }))}
           />
         </Suspense>

@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useValidators } from '../../../lib/validations/useValidators';
 import { isNotEmptyCheck } from '../../../lib/validations/checkInput';
 import { TaskDetailsLayout } from '../../components/TaskDetailsLayout';
-import { AppDispatch, formSelector, selectForm } from '../../state';
+import { AppDispatch, formLoadingSelector, formSelector, selectForm, updateFormDisposition } from '../../state';
 import { TASK_STATUS, TaskDetailsProps } from './types';
 import { registerDetailsComponent } from './register';
 
@@ -32,6 +32,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const form = useSelector(formSelector);
+  const isLoading = useSelector(formLoadingSelector);
   const adspId = AdspId.parse(task.recordId);
   const [_, _type, id, _submission, submissionId] = adspId.resource.split('/');
 
@@ -61,11 +62,6 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     .add('dispositionStatus', 'dispositionStatus', isNotEmptyCheck('Disposition'))
     .build();
 
-  const onCompleteValidationCheck = () => {
-    onComplete({ formId: form.selected, submissionId, dispositionStatus, dispositionReason });
-    validators.clear();
-  };
-
   const disableFormDispositionControls = () => {
     if (task.status === TASK_STATUS.PENDING) return true;
 
@@ -74,7 +70,6 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   const buttonDisabledForCompleteTask = () => {
     if (dispositionReason === '' || dispositionStatus === '') return true;
-
     if (dispositionReason !== '' && dispositionStatus === NO_DISPOSITION_SELECTED.label) return true;
     if (dispositionReason === '' && dispositionStatus !== NO_DISPOSITION_SELECTED.label) return true;
 
@@ -139,7 +134,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const renderButtonGroup = () => {
     return (
       <GoAButtonGroup alignment="end" mt="m">
-        <GoAButton type="tertiary" onClick={onClose}>
+        <GoAButton type="tertiary" mr="l" onClick={onClose}>
           Close
         </GoAButton>
         {task?.status === TASK_STATUS.IN_PROGRESS && (
@@ -151,10 +146,24 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
                 setShowTaskCancelConfirmation(true);
               }}
             >
-              Cancel Review
+              Cancel review
             </GoAButton>
-            <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
-              Submit Decision
+            <GoAButton
+              disabled={buttonDisabledForCompleteTask()}
+              onClick={async () => {
+                await dispatch(
+                  updateFormDisposition({
+                    formId: form.selected,
+                    submissionId: submissionId,
+                    dispositionReason: dispositionReason,
+                    dispositionStatus: dispositionStatus,
+                  })
+                );
+                validators.clear();
+                onComplete();
+              }}
+            >
+              Submit decision
             </GoAButton>
           </>
         )}

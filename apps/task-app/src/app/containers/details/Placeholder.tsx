@@ -50,7 +50,7 @@ const Placeholder: FunctionComponent<TaskDetailsProps> = ({
             <GoAButton type="secondary" disabled={disableTaskButtons()} onClick={() => onCancel(null)}>
               Cancel task
             </GoAButton>
-            <GoAButton disabled={disableTaskButtons()} onClick={() => onComplete(null)}>
+            <GoAButton disabled={disableTaskButtons()} onClick={() => onComplete()}>
               Complete task
             </GoAButton>
           </>
