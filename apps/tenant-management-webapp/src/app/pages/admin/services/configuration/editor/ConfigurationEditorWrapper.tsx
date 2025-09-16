@@ -29,8 +29,6 @@ export const ConfigurationEditorWrapper = (): JSX.Element => {
   );
 
   const isNotificationActive = latestNotification && !latestNotification.disabled;
-  const [configurationData, setConfigurationData] = useState('');
-  const [dataError, setDataError] = useState('');
 
   return (
     <>
@@ -44,16 +42,11 @@ export const ConfigurationEditorWrapper = (): JSX.Element => {
             <HideTablet>
               <TemplateEditorContainer>
                 <RightTemplateContainer>
-                  <ConfigurationEditor configurationData={configurationData} dataError={dataError} />
+                  <ConfigurationEditor />
                 </RightTemplateContainer>
 
                 <RightTemplateContainer>
-                  <ConfigurationData
-                    setDataError={setDataError}
-                    dataError={dataError}
-                    configurationData={configurationData}
-                    setConfigurationData={setConfigurationData}
-                  />
+                  <ConfigurationData />
                 </RightTemplateContainer>
               </TemplateEditorContainer>
             </HideTablet>

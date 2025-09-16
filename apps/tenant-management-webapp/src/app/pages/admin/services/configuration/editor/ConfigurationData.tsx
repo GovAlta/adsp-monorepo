@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { EditorLHSWrapper } from '../../pdf/styled-components';
-import { Title } from '../styled-components';
+import { Title, EditorLHSWrapper, EditTemplateActions, EditActionLayout } from '../styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 import MonacoEditor from '@monaco-editor/react';
-
+import { GoAButton, GoAFormItem, GoAButtonGroup } from '@abgov/react-components';
 import { jsonSchemaCheck } from '@lib/validation/checkInput';
 import { getConfigurationDefinitions } from '@store/configuration/action';
-import { GoAFormItem } from '@abgov/react-components';
 import { getConfigurationActive } from '@store/configuration/action';
 import { setPdfDisplayFileId } from '@store/pdf/action';
 import { RootState } from '@store/index';
@@ -16,23 +14,17 @@ import { useDebounce } from '@lib/useDebounce';
 import { CustomLoader } from '@components/CustomLoader';
 import { ConfigDefinition } from '@store/configuration/model';
 import { getConfigurationRevisions } from '@store/configuration/action';
+import { replaceConfigurationDataAction } from '@store/configuration/action';
 
-interface TemplateEditorProps {
-  //eslint-disable-next-line
-  setDataError?: (error: string) => void;
-  dataError?: string;
-  configurationData: string;
-  setConfigurationData: (data: string) => void;
-}
-
-export const ConfigurationData = ({
-  dataError,
-  setDataError,
-  configurationData,
-  setConfigurationData,
-}: TemplateEditorProps): JSX.Element => {
+export const ConfigurationData = (): JSX.Element => {
   const dispatch = useDispatch();
   const { id } = useParams<{ id: string }>();
+  const [namespace, name] = id.split(':') || [];
+
+  const [dataError, setDataError] = useState('');
+
+  const [configurationData, setConfigurationData] = useState('');
+  const [oldConfigurationData, setOldConfigurationData] = useState('');
 
   const [customIndicator, setCustomIndicator] = useState<boolean>(false);
   const [payloadSchema, setPayloadSchema] = useState<string>(null);
@@ -44,7 +36,25 @@ export const ConfigurationData = ({
     tenantConfigDefinitions?.configuration && (tenantConfigDefinitions.configuration[id] as ConfigDefinition);
 
   const invalidJsonMsg = `Please provide a valid json configuration`;
-  const errorMsg = `Configuration qqq does not match the definition schema `;
+  const errorMsg = `Configuration does not match the definition schema `;
+
+  // eslint-disable-next-line
+  const isConfigurationUpdated = (prev: any, next: any): boolean => {
+    return JSON.stringify(oldConfigurationData) !== JSON.stringify(configurationData);
+  };
+
+  const saveConfigurationTemplate = () => {
+    dispatch(
+      replaceConfigurationDataAction(
+        {
+          namespace: namespace,
+          name: name,
+          configuration: JSON.parse(configurationData),
+        },
+        false
+      )
+    );
+  };
 
   useEffect(() => {
     validateSchema(debouncedRenderConfiguration);
@@ -87,6 +97,7 @@ export const ConfigurationData = ({
   useEffect(() => {
     setCustomIndicator(false);
     setConfigurationData(JSON.stringify(configurationRevisions[id]?.revisions?.result[0]?.configuration, null, 2));
+    setOldConfigurationData(JSON.stringify(configurationRevisions[id]?.revisions?.result[0]?.configuration, null, 2));
   }, [JSON.stringify(configurationRevisions)]);
 
   const navigate = useNavigate();
@@ -96,20 +107,24 @@ export const ConfigurationData = ({
     navigate('/admin/services/configuration?templates=true');
   };
 
-  const monacoHeight = `calc(100vh - 156px${notifications.length > 0 ? ' - 80px' : ''})`;
+  const monacoHeight = `calc(100vh - 292px${notifications.length > 0 ? ' - 80px' : ''})`;
 
   const latestNotification = useSelector(
     (state: RootState) => state.notifications?.notifications[state.notifications?.notifications?.length - 1]
   );
-  const Height = latestNotification && !latestNotification.disabled ? 191 : 100;
+  const Height = latestNotification && !latestNotification.disabled ? 341 : 250;
 
   return (
     <>
-      <div style={{ height: '100%' }}>
+      <div>
         <EditorLHSWrapper>
           <section>
             {customIndicator && <CustomLoader />}
-            <Title>Configuration Data</Title>
+            <Title>Latest Revision Editor</Title>
+            <p>
+              Edit the latest configuration here using the defined schema. Previous revisions are read-only, but can be
+              activated.
+            </p>
             <hr />
             <div style={{ marginTop: '20px', height: `calc(100vh - ${Height}px)`, overflowY: 'auto' }}>
               <GoAFormItem label="">
@@ -137,6 +152,24 @@ export const ConfigurationData = ({
               </GoAFormItem>
             </div>
           </section>
+          <EditTemplateActions>
+            <hr className="styled-hr styled-hr-bottom" />
+            <EditActionLayout>
+              <GoAButtonGroup alignment="end">
+                <GoAButton
+                  disabled={!isConfigurationUpdated(tmpTemplate, configurationTemplate) || dataError.length > 0}
+                  onClick={() => {
+                    setCustomIndicator(true);
+                    saveConfigurationTemplate();
+                  }}
+                  type="primary"
+                  testId="template-form-save"
+                >
+                  Save
+                </GoAButton>
+              </GoAButtonGroup>
+            </EditActionLayout>
+          </EditTemplateActions>
         </EditorLHSWrapper>
       </div>
     </>

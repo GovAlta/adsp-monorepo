@@ -242,6 +242,14 @@ export const formSelector = createSelector(
   }
 );
 
+export const formDefinitionSelector = createSelector(
+  (state: AppState) => state.form,
+  (_: AppState, definitionId: string) => definitionId,
+  (form, definitionId) => {
+    return form.definitions[definitionId];
+  }
+)
+
 export const formLoadingSelector = createSelector(
   (state: AppState) => state.form.busy,
   (busy) => {

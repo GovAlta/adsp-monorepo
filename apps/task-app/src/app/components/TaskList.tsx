@@ -14,6 +14,7 @@ interface TaskListProps {
   selected: Task;
   open: Task;
   user: TaskUser;
+  initializingUser: boolean;
   onSetFilter: (filter: TaskFilter) => void;
   onSelect: (task: Task) => void;
   onAssign: (task: Task) => void;
@@ -28,6 +29,7 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
   filter,
   tasks,
   user,
+  initializingUser,
   onSetFilter,
   onSelect,
   onAssign,
@@ -54,12 +56,12 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
       <div>
         <GoATable mt="l" width="100%">
           <colgroup>
-            <col style={{ width: 80 }} />
-            <col style={{ width: 80 }} />
-            <col style={{ width: 200 }} />
-            <col style={{ width: 80 }} />
-            <col style={{ width: 80 }} />
-            <col style={{ width: 200 }} />
+            <col style={{ width: '5%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '35%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '5%' }} />
+            <col style={{ width: '35%' }} />
           </colgroup>
           <thead>
             <tr>
@@ -77,6 +79,7 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
                 key={task.id}
                 task={task}
                 user={user}
+                initializingUser={initializingUser}
                 onSelect={onSelect}
                 onAssign={onAssign}
                 onSetPriority={onSetPriority}
@@ -93,16 +96,22 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
 export const TaskList = styled(TaskListComponent)`
   z-index: 0;
   flex: 1;
-  overflow: hidden;
-  display: contents;
+  overflow: auto;
   flex-direction: column;
 
+  > div {
+    margin: 0 var(--goa-space-2xl) 0 var(--goa-space-2xl);
+  }
+
   > div:first-child {
+    margin-top: var(--goa-space-s);
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
 
-    > :first-child {
-      margin-right: var(--goa-space-4xl);
+    > :last-child {
+      margin-left: auto;
+      flex-grow: 0;
     }
   }
 `;

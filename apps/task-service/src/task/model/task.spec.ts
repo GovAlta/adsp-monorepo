@@ -442,6 +442,74 @@ describe('TaskEntity', () => {
     });
   });
 
+  describe('updateData', () => {
+    it('can update data for worker', async () => {
+      const user = { id: 'test', name: 'test-user', tenantId, roles: ['test-worker'] } as User;
+      const entity = await TaskEntity.create({ ...user, roles: [TaskServiceRoles.Admin] }, repositoryMock, queue, {
+        tenantId,
+        name: 'test',
+      });
+
+      const data = { a: 'a' };
+      await entity.start(user);
+      const result = await entity.updateData(user, data);
+      expect(result.data).toEqual(expect.objectContaining(data));
+    });
+
+    it('can update data for assigned worker', async () => {
+      const user = { id: 'test', name: 'test-user', tenantId, roles: ['test-worker'] } as User;
+      const entity = await TaskEntity.create({ ...user, roles: [TaskServiceRoles.Admin] }, repositoryMock, queue, {
+        tenantId,
+        name: 'test',
+      });
+
+      entity.assign({ ...user, roles: [TaskServiceRoles.Admin] }, { id: 'test', name: 'test', email: 'test@test.co' });
+      const data = { a: 'a' };
+      await entity.start(user);
+      const result = await entity.updateData(user, data);
+      expect(result.data).toEqual(expect.objectContaining(data));
+    });
+
+    it('can throw for unauthorized', async () => {
+      const user = { id: 'test', name: 'test-user', tenantId, roles: [] } as User;
+      const entity = await TaskEntity.create({ ...user, roles: [TaskServiceRoles.Admin] }, repositoryMock, queue, {
+        tenantId,
+        name: 'test',
+      });
+
+      await entity.start({ ...user, roles: ['test-worker'] });
+      expect(() => entity.updateData(user, { a: 'a' })).toThrow(
+        /User test-user \(ID: test\) not permitted to update task data./
+      );
+    });
+
+    it('can throw for update of task not in progress', async () => {
+      const user = { id: 'test', name: 'test-user', tenantId, roles: ['test-worker'] } as User;
+      const entity = await TaskEntity.create({ ...user, roles: [TaskServiceRoles.Admin] }, repositoryMock, queue, {
+        tenantId,
+        name: 'test',
+      });
+
+      expect(() => entity.updateData(user, { a: 'a' })).toThrow(/Can only update tasks that are In Progress./);
+    });
+
+    it('can throw for update of task assigned to other', async () => {
+      const user = { id: 'test', name: 'test', tenantId, roles: ['test-worker'] } as User;
+      const entity = await TaskEntity.create({ ...user, roles: [TaskServiceRoles.Admin] }, repositoryMock, queue, {
+        tenantId,
+        name: 'test',
+      });
+
+      entity.assign(
+        { ...user, roles: [TaskServiceRoles.Admin] },
+        { id: 'test-2', name: 'test-2', email: 'test-2@test.co' }
+      );
+      expect(() => entity.updateData(user, { a: 'a' })).toThrow(
+        /User test \(ID: test\) not permitted to update task data./
+      );
+    });
+  });
+
   describe('complete', () => {
     it('can complete task for worker', async () => {
       const user = { id: 'test', name: 'test-user', tenantId, roles: ['test-worker'] } as User;

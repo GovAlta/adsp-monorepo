@@ -51,6 +51,7 @@ export interface TaskState {
   opened: string;
   busy: {
     initializing: boolean;
+    initializingUser: boolean;
     loading: boolean;
     executing: boolean;
   };
@@ -91,8 +92,8 @@ export const initializeQueue = createAsyncThunk(
 
       // If the target queue is changing, then load additional information.
       if (task.queue?.namespace !== definition.namespace || task.queue?.name !== definition.name) {
-        dispatch(loadQueueTasks({ namespace, name }));
         dispatch(loadQueuePeople(definition));
+        dispatch(loadQueueTasks({ namespace, name }));
         dispatch(connectStream({ namespace, name }));
       }
 
@@ -164,6 +165,7 @@ export const connectStream = createAsyncThunk(
     socket.on('task-service:task-assigned', onTaskUpdate);
     socket.on('task-service:task-priority-set', onTaskUpdate);
     socket.on('task-service:task-started', onTaskUpdate);
+    socket.on('task-service:task-data-updated', onTaskUpdate);
     socket.on('task-service:task-completed', onTaskUpdate);
     socket.on('task-service:task-cancelled', onTaskUpdate);
   }
@@ -408,6 +410,44 @@ export const startTask = createAsyncThunk(
   }
 );
 
+export const updateTaskData = createAsyncThunk(
+  'task/update-task-data',
+  async (
+    { taskId, data }: { taskId: string; data: Record<string, unknown> },
+    { dispatch, getState, rejectWithValue }
+  ) => {
+    const state = getState() as AppState;
+    const { directory } = state.config;
+    const { queue }: TaskState = state[TASK_FEATURE_KEY];
+
+    try {
+      if (state.task.tasks[taskId].status === 'Pending') {
+        await dispatch(startTask({ taskId }));
+      }
+
+      const accessToken = await getAccessToken();
+      const { data: result } = await axios.patch<SerializedTask>(
+        `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}/data`,
+        data,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      return result;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 export const completeTask = createAsyncThunk(
   'task/complete-task',
   async ({ taskId }: { taskId: string }, { getState, rejectWithValue }) => {
@@ -496,6 +536,7 @@ export const initialTaskState: TaskState = {
   opened: null,
   busy: {
     initializing: true,
+    initializingUser: true,
     loading: false,
     executing: false,
   },
@@ -527,17 +568,15 @@ export const taskSlice = createSlice({
     setTaskToPrioritize: (state, { payload }: PayloadAction<string>) => {
       state.modal.taskToPrioritize = payload ? state.tasks[payload] : null;
     },
-    resetTask: (state) => {
-      state.results = [];
-    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(initializeQueue.pending, (state, { meta }) => {
         state.busy.initializing = true;
         if (meta.arg.namespace !== state.queue?.namespace || meta.arg.name !== state.queue.name) {
-          state.queue = null;
-          state.results = [];
+          state.queue = initialTaskState.queue;
+          state.user = initialTaskState.user;
+          state.results = initialTaskState.results;
         }
       })
       .addCase(initializeQueue.fulfilled, (state, { payload }) => {
@@ -549,10 +588,10 @@ export const taskSlice = createSlice({
         state.busy.initializing = false;
       })
       .addCase(loadQueuePeople.pending, (state) => {
-        state.busy.initializing = true;
+        state.busy.initializingUser = true;
       })
       .addCase(loadQueuePeople.fulfilled, (state, { payload }) => {
-        state.busy.initializing = false;
+        state.busy.initializingUser = false;
         state.people = [...payload.assigners, ...payload.workers].reduce(
           (people, person) => ({ ...people, [person.id]: person }),
           {}
@@ -562,7 +601,7 @@ export const taskSlice = createSlice({
         state.user = payload.user;
       })
       .addCase(loadQueuePeople.rejected, (state) => {
-        state.busy.initializing = false;
+        state.busy.initializingUser = false;
       })
       .addCase(loadQueueTasks.pending, (state) => {
         state.busy.loading = true;
@@ -634,6 +673,19 @@ export const taskSlice = createSlice({
       .addCase(startTask.rejected, (state) => {
         state.busy.executing = false;
       })
+      .addCase(updateTaskData.pending, (state) => {
+        state.busy.executing = true;
+      })
+      .addCase(updateTaskData.fulfilled, (state, { payload }) => {
+        state.busy.executing = false;
+        state.tasks = {
+          ...state.tasks,
+          [payload.id]: payload,
+        };
+      })
+      .addCase(updateTaskData.rejected, (state) => {
+        state.busy.executing = false;
+      })
       .addCase(completeTask.pending, (state) => {
         state.busy.executing = true;
       })
@@ -688,8 +740,11 @@ export const tasksSelector = createSelector(
   (state: AppState) => state.task.results,
   (state: AppState) => state.task.tasks,
   filterSelector,
-  (userId, results, tasks, filter) => {
-    if (!results) {
+  (state: AppState) => state.task.queue,
+  (_: AppState, namespace: string) => namespace,
+  (_: AppState, __: string, name: string) => name,
+  (userId, results, tasks, filter, queue, namespace, name) => {
+    if (queue?.namespace !== namespace || queue?.name !== name || !results) {
       return null;
     }
 

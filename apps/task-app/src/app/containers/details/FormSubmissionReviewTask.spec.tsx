@@ -439,7 +439,7 @@ describe('form submission review task', () => {
     expect(component.getByText('Personal Information')).toBeInTheDocument();
     expect(component.getByText('Address Information')).toBeInTheDocument();
     expect(component.getByText('Additional Information')).toBeInTheDocument();
-    expect(component.getByText('Back')).toBeInTheDocument();
+    expect(component.getByText('Close')).toBeInTheDocument();
 
     expect(component.getByText('Bob')).toBeInTheDocument();
     expect(component.getByText('Smith')).toBeInTheDocument();

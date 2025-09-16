@@ -137,7 +137,7 @@ export const queuesSelector = createSelector(
       .map((result) => queues[result])
       .filter((value) => !!value)
       .sort((a, b) => {
-        return a.displayName < b.displayName || a.namespace < b.namespace || a.name < b.name ? -1 : 1;
+        return a.namespace < b.namespace || a.name < b.name ? -1 : 1;
       })
 );
 

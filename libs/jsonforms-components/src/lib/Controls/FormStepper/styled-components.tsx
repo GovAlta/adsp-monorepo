@@ -3,10 +3,6 @@ import styled from 'styled-components';
 export const ReviewItem = styled.div`
   display: flex;
   flex-direction: column;
-  border: var(--goa-border-width-s) solid grey;
-  border-radius: var(--goa-border-radius-m);
-  margin: var(--goa-space-2xs);
-  padding: var(--goa-space-xs);
   div:empty {
     display: none;
   }
@@ -87,8 +83,8 @@ export const PageRenderPaddingBottom = styled.div`
   margin-bottom: var(--goa-space-2xl);
 `;
 
-export const PageBorder = styled.h3`
-  padding: var(--goa-space-3xl);
+export const PageBorder = styled.div`
+  padding: var(--goa-space-m) var(--goa-space-3xl);
 `;
 
 export const TableReviewItemSection = styled.div`
@@ -155,4 +151,9 @@ export const SectionHeaderRowTr = styled.tr`
   & + tr > td {
     border-top: none !important;
   }
+`;
+
+export const SummaryRowLink = styled.a`
+  position: relative;
+  top: var(--goa-space-xs);
 `;

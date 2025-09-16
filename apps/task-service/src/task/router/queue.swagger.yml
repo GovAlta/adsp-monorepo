@@ -436,6 +436,47 @@ components:
       404:
         description: Task not found.
 
+/task/v1/queues/{namespace}/{name}/tasks/{id}/data:
+  patch:
+    tags:
+      - Queue
+    description: Updates the data of a specified queued task.
+    parameters:
+      - name: namespace
+        description: Namespace of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        description: ID of the task.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            description: Data to set on the task.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      404:
+        description: Task not found.
+
 /task/v1/queues/{namespace}/{name}/assigners:
   get:
     tags:

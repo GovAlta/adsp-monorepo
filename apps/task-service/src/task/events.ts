@@ -71,6 +71,22 @@ export const TaskUpdatedDefinition: DomainEventDefinition = {
   },
 };
 
+const TASK_DATA_UPDATED = 'task-data-updated';
+export const TaskDataUpdatedDefinition: DomainEventDefinition = {
+  name: TASK_DATA_UPDATED,
+  description: "Signalled when a task's data is updated.",
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      task: taskSchema,
+      update: {
+        type: 'object',
+      },
+      updatedBy: userSchema,
+    },
+  },
+};
+
 const TASK_PRIORITY_SET = 'task-priority-set';
 export const TaskPrioritySetDefinition: DomainEventDefinition = {
   name: TASK_PRIORITY_SET,
@@ -234,6 +250,27 @@ export const taskUpdated = (apiId: AdspId, user: User, task: TaskEntity, update:
   return {
     tenantId: task.tenantId,
     name: TASK_UPDATED,
+    timestamp: new Date(),
+    correlationId: getCorrelationId(taskResponse),
+    context: mapContext(task),
+    payload: {
+      task: taskResponse,
+      update,
+      updatedBy: mapUser(user),
+    },
+  };
+};
+
+export const taskDataUpdated = (
+  apiId: AdspId,
+  user: User,
+  task: TaskEntity,
+  update: Record<string, unknown>
+): DomainEvent => {
+  const taskResponse = mapTask(apiId, task);
+  return {
+    tenantId: task.tenantId,
+    name: TASK_DATA_UPDATED,
     timestamp: new Date(),
     correlationId: getCorrelationId(taskResponse),
     context: mapContext(task),

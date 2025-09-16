@@ -47,7 +47,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
   return (
     <FormsLayout>
       <Band title={`Your ${definition?.name ? `${definition?.name} ` : ' '}forms`}>
-        Continue working on existing draft forms, or view forms you submitted in the past.
+        Continue working on draft forms or view forms you submitted in the past.
       </Band>
       <Container vs={3} hs={1}>
         <GoAButtonGroup alignment="end">
@@ -90,6 +90,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
                       (form.status === FormStatus.draft ? (
                         <GoAButton
                           type={form?.id === defaultForm?.id ? 'primary' : 'secondary'}
+                          size="compact"
                           onClick={() => navigate(`/${tenant.name}/${form.definition.id}/${form.id}`)}
                         >
                           Continue draft
@@ -97,6 +98,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
                       ) : (
                         <GoAButton
                           type="secondary"
+                          size="compact"
                           onClick={() => navigate(`/${tenant.name}/${form.definition.id}/${form.id}`)}
                         >
                           View submitted
