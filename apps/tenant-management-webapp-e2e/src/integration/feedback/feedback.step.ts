@@ -6,7 +6,7 @@ import common from '../common/common.page';
 const feedbackObj = new feedback();
 const commonObj = new common();
 
-Then('the user views {string} section on feedback overview page', function (sectionName) {
+Then('the user views {string} section on feedback guidance page', function (sectionName) {
   feedbackObj.feedbackOverviewTab().should('exist');
   switch (sectionName) {
     case 'description':
@@ -49,6 +49,14 @@ Given('a tenant admin user is on Feedback Sites page', function () {
   commonlib.tenantAdminMenuItem('Feedback', 4000);
   commonObj.serviceTab('Feedback', 'Sites').click();
   cy.wait(4000);
+});
+
+Then('the user views Site summary on feedback overview page', function () {
+  feedbackObj.feedbackOverviewSummaryBlock().should('exist');
+});
+
+Then('the user views Register site button on feedback overview page', function () {
+  feedbackObj.feedbackOverviewRegisterSiteButton().shadow().find('button').should('be.visible');
 });
 
 When('the user clicks Register site button on Sites page', function () {

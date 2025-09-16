@@ -1,13 +1,15 @@
 Feature: Feedback
 
-  @TEST_CS-3339 @REQ_CS-3019 @regression
-  Scenario: As a tenant admin, I can see feedback overview
+  @TEST_CS-3339 @TEST_CS-4311 @REQ_CS-3019 @REQ_CS-4305 @regression
+  Scenario: As a tenant admin, I can see feedback overview and guidance information for the feedback service
     Given a tenant admin user is on tenant admin page
     When the user selects the "Feedback" menu item
-    And the user selects "Guidance" tab for "Feedback"
-    Then the user views "description" section on feedback overview page
-    And the user views "Sites" section on feedback overview page
-    And the user views "Feedback widget" section on feedback overview page
+    Then the user views Site summary on feedback overview page
+    And the user views Register site button on feedback overview page
+    When the user selects "Guidance" tab for "Feedback"
+    Then the user views "description" section on feedback guidance page
+    And the user views "Sites" section on feedback guidance page
+    And the user views "Feedback widget" section on feedback guidance page
 
   @TEST_CS-3119 @TEST_CS-3169 @TEST_CS-3165 @REQ_CS-3020 @REQ_CS-3022 @REQ_CS-3023 @regression
   Scenario: As a tenant admin, I can add, edit and delete sites to the feedback service configuration
