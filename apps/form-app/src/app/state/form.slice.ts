@@ -305,9 +305,9 @@ export const loadForm = createAsyncThunk(
         );
       }
 
-      //Need to run a ajv validate here when we load the form to initalize data
-      //that are using the default keyword in the data schema.
-      if (loadedForm && loadedForm.definitions) {
+      // Need to run a ajv validate here when we load the form to initialize data
+      // that are using the default keyword in the data schema.
+      if (loadedForm?.definitions?.[form.definition.id]) {
         const currentDefinition = loadedForm.definitions[form.definition.id];
         ajv.validate(currentDefinition.dataSchema, data.data);
       }
