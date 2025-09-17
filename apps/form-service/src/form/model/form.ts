@@ -120,7 +120,9 @@ export class FormEntity implements Form {
         ...(this.definition?.clerkRoles || []),
         ...(this.definition?.assessorRoles || []),
       ]) ||
-      (isAllowedUser(user, this.tenantId, this.definition?.applicantRoles || []) && user.id === this.createdBy.id)
+      (isAllowedUser(user, this.tenantId, this.definition?.applicantRoles || []) &&
+        user.id === this.createdBy.id &&
+        this.status !== FormStatus.Archived)
     );
   }
 
