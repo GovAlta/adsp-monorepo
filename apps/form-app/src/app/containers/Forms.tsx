@@ -1,5 +1,13 @@
-import { GoAButton, GoAButtonGroup, GoATable } from '@abgov/react-components';
-import { Band, Container, RowLoadMore, RowSkeleton } from '@core-services/app-common';
+import {
+  GoABadge,
+  GoABlock,
+  GoAButton,
+  GoAButtonGroup,
+  GoAContainer,
+  GoADivider,
+  GoASkeleton,
+} from '@abgov/react-components';
+import { Container, RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
 import { FunctionComponent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +23,37 @@ import {
   FormDefinition,
   FormStatus,
   tenantSelector,
+  userSelector,
 } from '../state';
+import { SignInStartApplication } from '../components/SignInStartApplication';
+import { LoadingIndicator } from '../components/LoadingIndicator';
+
+const PageTitleDiv = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-top: var(--goa-space-xl);
+  margin-bottom: var(--goa-space-l);
+  & h2 {
+    margin-top: 0;
+  }
+`;
+
+const FormHeaderDiv = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+`;
+
+const FormDescriptionParagraph = styled.p`
+  color: var(--goa-color-text-secondary);
+  margin-top: var(--goa-space-xs);
+  margin-bottom: 0;
+`;
+
+const FormMetadataLabel = styled.label`
+  font-weight: bold;
+`;
 
 const FormsLayout = styled.div`
   position: absolute;
@@ -24,7 +62,21 @@ const FormsLayout = styled.div`
   left: 0;
   right: 0;
   overflow: auto;
+  & > * {
+    padding-bottom: var(--goa-space-xl);
+  }
 `;
+
+const FormStatusBadge: FunctionComponent<{ status: FormStatus }> = ({ status }) => {
+  switch (status) {
+    case FormStatus.draft:
+      return <GoABadge mt="xs" type="information" content={status} />;
+    case FormStatus.submitted:
+      return <GoABadge mt="xs" type="success" content={status} />;
+    default:
+      return <GoABadge mt="xs" type="light" content={status} />;
+  }
+};
 
 interface FormsProps {
   definition?: FormDefinition;
@@ -35,6 +87,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
   const navigate = useNavigate();
 
   const tenant = useSelector(tenantSelector);
+  const { initialized, user } = useSelector(userSelector);
   const busy = useSelector(busySelector);
   const { forms, next } = useSelector((state) => definitionFormsSelector(state, definition?.id));
   const { form: defaultForm } = useSelector(defaultUserFormSelector);
@@ -44,47 +97,46 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
     dispatch(findUserForms({ definitionId: definition?.id }));
   }, [dispatch, definition]);
 
-  return (
-    <FormsLayout>
-      <Band title={`Your ${definition?.name ? `${definition?.name} ` : ' '}forms`}>
-        Continue working on draft forms or view forms you submitted in the past.
-      </Band>
-      <Container vs={3} hs={1}>
-        <GoAButtonGroup alignment="end">
-          {definition && canCreateDraft && (
-            <GoAButton
-              mr="m"
-              disabled={busy.creating}
-              type={defaultForm?.status === FormStatus.draft ? 'secondary' : 'primary'}
-              onClick={async () => {
-                const form = await dispatch(createForm(definition.id)).unwrap();
-                if (form?.id) {
-                  navigate(`../${form.id}`);
-                }
-              }}
-            >
-              Start new draft
-            </GoAButton>
-          )}
-        </GoAButtonGroup>
-        <GoATable width="100%">
-          <thead>
-            <tr>
-              {!definition && <th>Form</th>}
-              <th>Created on</th>
-              <th>Submitted on</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {forms.map((form) => (
-              <tr key={form.id}>
-                {!definition && <td>{form.definition?.name}</td>}
-                <td>{form.created.toFormat('LLLL dd, yyyy')}</td>
-                <td>{form.submitted?.toFormat('LLLL dd, yyyy')}</td>
-                <td>{form.status}</td>
-                <td>
+  return initialized ? (
+    user ? (
+      <FormsLayout>
+        <Container vs={0} hs={1}>
+          <PageTitleDiv>
+            <div>
+              <h2>My applications</h2>
+              <p>
+                Below is a list of your draft and submitted applications. You can continue working on a draft
+                application or view a submitted one.
+              </p>
+            </div>
+            <GoAButtonGroup alignment="end">
+              {definition && canCreateDraft && (
+                <GoAButton
+                  mr="m"
+                  disabled={busy.creating}
+                  type={defaultForm?.status === FormStatus.draft ? 'secondary' : 'primary'}
+                  trailingIcon="add"
+                  onClick={async () => {
+                    const form = await dispatch(createForm(definition.id)).unwrap();
+                    if (form?.id) {
+                      navigate(`../${form.id}`);
+                    }
+                  }}
+                >
+                  New application
+                </GoAButton>
+              )}
+            </GoAButtonGroup>
+          </PageTitleDiv>
+          {forms
+            .filter((form) => !!form.definition)
+            .map((form) => (
+              <GoAContainer key={form.id} mb="m">
+                <FormHeaderDiv>
+                  <div>
+                    {form.definition.name}
+                    <FormDescriptionParagraph>{form.definition.description}</FormDescriptionParagraph>
+                  </div>
                   <GoAButtonGroup alignment="end">
                     {form.definition &&
                       (form.status === FormStatus.draft ? (
@@ -93,31 +145,57 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
                           size="compact"
                           onClick={() => navigate(`/${tenant.name}/${form.definition.id}/${form.id}`)}
                         >
-                          Continue draft
+                          Continue
                         </GoAButton>
                       ) : (
                         <GoAButton
-                          type="secondary"
+                          type="tertiary"
                           size="compact"
                           onClick={() => navigate(`/${tenant.name}/${form.definition.id}/${form.id}`)}
                         >
-                          View submitted
+                          View
                         </GoAButton>
                       ))}
                   </GoAButtonGroup>
-                </td>
-              </tr>
+                </FormHeaderDiv>
+                <GoADivider mt="m" />
+                <GoABlock gap="4xl" direction="row" mt="m">
+                  <div>
+                    <FormMetadataLabel>Status</FormMetadataLabel>
+                    <div>
+                      <FormStatusBadge status={form.status} />
+                    </div>
+                  </div>
+                  <div>
+                    <FormMetadataLabel>Created</FormMetadataLabel>
+                    <div>{form.created.toFormat('LLLL dd, yyyy')}</div>
+                  </div>
+                  <div>
+                    <FormMetadataLabel>Submitted</FormMetadataLabel>
+                    <div>{form.submitted?.toFormat('LLLL dd, yyyy') || 'Not submitted'}</div>
+                  </div>
+                </GoABlock>
+              </GoAContainer>
             ))}
-            <RowSkeleton columns={4 + (!definition ? 1 : 0)} show={busy.loading} />
-            <RowLoadMore
-              columns={4 + (!definition ? 1 : 0)}
-              next={next}
-              loading={busy.loading}
-              onLoadMore={(after) => dispatch(findUserForms({ definitionId: definition?.id, after }))}
-            />
-          </tbody>
-        </GoATable>
-      </Container>
-    </FormsLayout>
+          {busy.loading && <GoASkeleton type="card" size={1} lineCount={2} />}
+          <div>
+            <GoAButtonGroup alignment="center">
+              {next && !busy.loading && (
+                <GoAButton
+                  type="tertiary"
+                  onClick={() => dispatch(findUserForms({ definitionId: definition?.id, after: next }))}
+                >
+                  Load more
+                </GoAButton>
+              )}
+            </GoAButtonGroup>
+          </div>
+        </Container>
+      </FormsLayout>
+    ) : (
+      <SignInStartApplication />
+    )
+  ) : (
+    <LoadingIndicator isLoading={!initialized || busy.loading} />
   );
 };
