@@ -117,6 +117,20 @@ export const readValues =
       if (!canRead(req.user, req.tenant, ServiceRoles.FeedbackReader)) {
         throw new UnauthorizedError('User not authorized to read feedback');
       }
+      const user = req.user;
+      const isCoreUser = user.isCore;
+
+      const queryTenantId = req.query?.tenantId as string | undefined;
+
+      const tenantIdToUse = isCoreUser && queryTenantId ? queryTenantId : req.tenant?.id;
+
+      const tenantIdParam =
+        tenantIdToUse === undefined
+          ? undefined
+          : typeof tenantIdToUse === 'string'
+          ? AdspId.parse(tenantIdToUse)
+          : tenantIdToUse;
+
       const queryParameters: ReadQueryParameters = {
         site: req.query?.site ? (req.query?.site as string) : undefined,
         top: req.query?.top ? parseInt(req.query.top as string, 10) : 10,
@@ -124,7 +138,12 @@ export const readValues =
         start: req.query?.start ? (req.query.start as string) : undefined,
         end: req.query?.end ? (req.query.end as string) : undefined,
       };
-      const values = await valueService.readValues(req.tenant?.id, queryParameters);
+
+      const values =
+        isCoreUser && !queryTenantId
+          ? await valueService.readValues(undefined, queryParameters)
+          : await valueService.readValues(tenantIdParam, queryParameters);
+
       res.json(values);
     } catch (err) {
       next(err);

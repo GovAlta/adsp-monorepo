@@ -236,7 +236,7 @@ export const FeedbacksList = (): JSX.Element => {
       {!indicator.show && selectedSite && feedbacks.length === 0 && renderNoItem('feedbacks')}
 
       {selectedSite && feedbacks.length > 0 && (
-        <Visible visible={true}>
+        <Visible visible={!expandView}>
           <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={true} />
           {renderLoadMoreButton()}
         </Visible>

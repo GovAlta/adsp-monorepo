@@ -573,4 +573,85 @@ describe('router', () => {
     await handler(req as unknown as Request, res as unknown as Response, next);
     expect(feedbackSiteServiceMock.countTenantSites).toHaveBeenCalledWith([mockTenant.id]);
   });
+  describe('readValues tenantId query logic', () => {
+    const anotherTenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/another`;
+
+    it('returns feedback for specified tenantId if core user', async () => {
+      const req = {
+        tenant: { id: anotherTenantId },
+        user: {
+          roles: [ServiceRoles.FeedbackReader],
+          isCore: true,
+          tenantId,
+        },
+        query: { tenantId: anotherTenantId.toString(), site: 'http://test.org', top: '10', after: '' },
+      };
+      const res = { json: jest.fn() };
+      const next = jest.fn();
+
+      valueServiceMock.readValues.mockResolvedValueOnce(['feedback-for-another-tenant']);
+
+      const handler = readValues(valueServiceMock as unknown as ValueService);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(valueServiceMock.readValues).toHaveBeenCalledWith(
+        expect.objectContaining({ toString: expect.any(Function) }),
+        expect.objectContaining({
+          site: 'http://test.org',
+          top: 10,
+          after: undefined,
+          start: undefined,
+          end: undefined,
+        })
+      );
+      expect(res.json).toHaveBeenCalledWith(['feedback-for-another-tenant']);
+    });
+
+    it('returns feedback for all tenants if core user and no tenantId', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { id: 'core-user', roles: [ServiceRoles.FeedbackReader], isCore: true },
+        query: { site: 'http://test.org', top: '5' },
+      };
+      const res = { json: jest.fn() };
+      const next = jest.fn();
+
+      valueServiceMock.readValues.mockResolvedValueOnce(['feedback-for-all-tenants']);
+
+      const handler = readValues(valueServiceMock as unknown as ValueService);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(valueServiceMock.readValues).toHaveBeenCalledWith(undefined, {
+        site: 'http://test.org',
+        top: 5,
+      });
+      expect(res.json).toHaveBeenCalledWith(['feedback-for-all-tenants']);
+    });
+
+    it('ignores tenantId in query for non-core user', async () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: {
+          id: 'tenant-user',
+          roles: [ServiceRoles.FeedbackReader],
+          isCore: false,
+          tenantId,
+        },
+        query: { tenantId: anotherTenantId.toString(), site: 'http://test.org', top: '5' },
+      };
+      const res = { json: jest.fn() };
+      const next = jest.fn();
+
+      valueServiceMock.readValues.mockResolvedValueOnce(['feedback-for-current-tenant']);
+
+      const handler = readValues(valueServiceMock as unknown as ValueService);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(valueServiceMock.readValues).toHaveBeenCalledWith(tenantId, {
+        site: 'http://test.org',
+        top: 5,
+      });
+      expect(res.json).toHaveBeenCalledWith(['feedback-for-current-tenant']);
+    });
+  });
 });

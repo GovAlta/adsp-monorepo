@@ -5,8 +5,8 @@ import { FeedbackWorkItem, createFeedbackJobs } from './job';
 import { PiiService } from './pii';
 import { createFeedbackRouter } from './router';
 import { ValueService } from './value';
-import { ConfigurationService, TenantService } from '@abgov/adsp-service-sdk';
-import { Config } from 'winston/lib/winston/config';
+import { TenantService } from '@abgov/adsp-service-sdk';
+
 import { FeedbackSiteService } from './feedbackSiteService';
 
 export * from './configuration';
