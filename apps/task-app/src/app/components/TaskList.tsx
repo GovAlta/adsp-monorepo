@@ -70,7 +70,7 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
               <th>Task</th>
               <th>Status</th>
               <th>Assigned</th>
-              <th style={{ textAlign: 'center' }}>Actions</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>

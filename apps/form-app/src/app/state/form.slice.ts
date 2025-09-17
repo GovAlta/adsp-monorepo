@@ -36,7 +36,7 @@ interface SerializableFormDefinition {
 }
 
 interface SerializableForm {
-  definition: { id: string; name: string };
+  definition: { id: string; name: string; description: string };
   id: string;
   urn: string;
   status: 'draft' | 'locked' | 'submitted' | 'archived';
