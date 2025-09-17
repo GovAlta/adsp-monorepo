@@ -37,6 +37,7 @@ export function mapForm(apiId: AdspId, entity: FormEntityWithJobId, includeData 
       ? {
           id: entity.definition.id,
           name: entity.definition.name,
+          description: entity.definition.description,
         }
       : null,
     formDraftUrl: entity.formDraftUrl,

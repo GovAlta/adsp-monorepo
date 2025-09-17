@@ -206,6 +206,12 @@ describe('FormEntity', () => {
       expect(result).toBe(true);
     });
 
+    it('can return false for applicant on archived form', () => {
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, { ...formInfo, status: FormStatus.Archived });
+      const result = entity.canRead({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
+      expect(result).toBe(false);
+    });
+
     it('can return false for wrong applicant', () => {
       const result = entity.canRead({ tenantId, id: 'tester2', roles: ['test-applicant'] } as User);
       expect(result).toBe(false);
