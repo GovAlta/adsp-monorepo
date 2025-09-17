@@ -219,6 +219,7 @@
       "errorMessage": "Must be three groups of three digits."
     },
     "emailStandard": {
+      "deprecated": true,
       "type": "string",
       "format": "email",
       "label": "Email address",
@@ -228,6 +229,18 @@
       "errorMessage": {
         "pattern": "(e.g., name@example.com).",
         "maxLength": "Email must be less than 100 characters."
+      }
+    },
+    "email": {
+      "$comment": "Standard email address",
+      "title": "Email address",
+      "type": "string",
+      "format": "email",
+      "maxLength": 100,
+      "description": "a.n.other@example.com",
+      "errorMessage": {
+        "format": "Must be in a format like a.n.other@example.com",
+        "maxLength": "Must be less than 100 characters."
       }
     }
   }
