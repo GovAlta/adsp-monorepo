@@ -17,12 +17,10 @@ import { FormDefinition } from './FormDefinition';
 import { useFeedbackLinkHandler } from '../util/feedbackUtils';
 import { Forms } from './Forms';
 
-const AccountActionsSpan = styled.span`
-  .username {
-    @media (max-width: 639px) {
-      display: none;
-    }
-  }
+const AccountActionsDiv = styled.div`
+  align-content: center;
+  text-align: center;
+  padding: var(--goa-space-xs) 0;
 `;
 
 export const FormTenant = () => {
@@ -49,13 +47,12 @@ export const FormTenant = () => {
         <>
           <span style={{ display: 'none' }}></span>
           {userInitialized && (
-            <AccountActionsSpan>
+            <AccountActionsDiv>
               {user && (
                 <>
                   <span className="username">{user?.name}</span>
                   <GoAButton
-                    mt="s"
-                    mr="s"
+                    ml="s"
                     type="tertiary"
                     data-testid="form-sign-out"
                     onClick={() => {
@@ -70,7 +67,7 @@ export const FormTenant = () => {
                   </GoAButton>
                 </>
               )}
-            </AccountActionsSpan>
+            </AccountActionsDiv>
           )}
         </>
       </GoAAppHeader>
@@ -81,7 +78,7 @@ export const FormTenant = () => {
             <Routes>
               <Route path="/forms" element={<Forms />} />
               <Route path="/:definitionId/*" element={<FormDefinition />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="/" element={<Navigate to="forms" />} />
             </Routes>
           </section>
         )}
