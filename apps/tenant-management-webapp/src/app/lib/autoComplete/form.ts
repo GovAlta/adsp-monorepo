@@ -319,16 +319,19 @@ export class FormDataSchemaElementCompletionItemProvider extends JsonObjectCompl
     labelPath?: string
   ): EditorSuggestion[] {
     const suggestions: EditorSuggestion[] = [];
-    if (typeof schema?.definitions === 'object') {
-      for (const definition in schema.definitions) {
+    if (schema?.definitions && typeof schema.definitions === 'object') {
+      const definitions = schema.definitions;
+      for (const [definition, definitionSchema] of Object.entries(definitions)) {
         const currentPath = `${path}/definitions/${definition}`;
         const currentLabelPath = `${labelPath || path}/d.../${definition}`;
 
-        suggestions.push({
-          label: `Ref:"${currentLabelPath}"`,
-          insertText: `{ "$ref": "${currentPath}" }`,
-          path,
-        });
+        if (definitionSchema.deprecated !== true) {
+          suggestions.push({
+            label: `Ref:"${currentLabelPath}"`,
+            insertText: `{ "$ref": "${currentPath}" }`,
+            path,
+          });
+        }
       }
     }
 

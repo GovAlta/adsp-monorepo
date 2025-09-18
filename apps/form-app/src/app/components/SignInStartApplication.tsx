@@ -19,7 +19,7 @@ export const SignInStartApplication: FunctionComponent<SignInStartApplicationPro
   const location = useLocation();
   const tenant = useSelector(tenantSelector);
   const { definitionId } = useParams();
-  const { user, initialized } = useSelector(userSelector);
+  const { user } = useSelector(userSelector);
 
   const onSignInStartApplication = () => {
     dispatch(loginUser({ tenant, from: `${location.pathname}?autoCreate=true` }));

@@ -36,7 +36,7 @@ interface SerializableFormDefinition {
 }
 
 interface SerializableForm {
-  definition: { id: string; name: string };
+  definition: { id: string; name: string; description: string };
   id: string;
   urn: string;
   status: 'draft' | 'locked' | 'submitted' | 'archived';
@@ -684,8 +684,10 @@ export const definitionFormsSelector = createSelector(
 export const formSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.form.form,
-  ({ definition }, form) =>
-    definition && form && definition?.id === form?.definition.id
+  // Include optional formId parameter to avoid flash of incorrect form when switching between forms.
+  (_: AppState, formId?: string) => formId,
+  ({ definition }, form, formId) =>
+    definition && form && definition?.id === form?.definition.id && (!formId || form.id === formId)
       ? {
           ...form,
           status: FormStatus[form.status],
@@ -716,7 +718,8 @@ export const defaultUserFormSelector = createSelector(
     return {
       form,
       initialized,
-      empty: forms.length < 1,
+      // If there are multiple forms but none is the default, then it's ambiguous.
+      ambiguous: forms.length > 0 && !form,
     };
   }
 );

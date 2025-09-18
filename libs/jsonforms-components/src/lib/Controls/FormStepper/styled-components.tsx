@@ -8,11 +8,10 @@ export const ReviewItem = styled.div`
   }
 `;
 export const ReviewItemSection = styled.div`
-  background-color: #f1f1f1;
   margin-bottom: var(--goa-space-m);
-  padding: var(--goa-space-m);
-  border: 1px solid #dcdcdc;
-  border-radius: 5px;
+  padding: var(--goa-space-xl) var(--goa-space-2xl);
+  border: 1px solid var(--goa-color-greyscale-300);
+  border-radius: var(--goa-border-radius-xl);
 
   .element-style {
     max-width: 1600px;
@@ -94,9 +93,9 @@ export const TableReviewItemSection = styled.div`
 `;
 
 export const TableReviewItem = styled.div`
-  border: 1px solid #dcdcdc;
-  border-radius: 5px;
-  padding: var(--goa-space-2xl);
+  padding: var(--goa-space-xl) var(--goa-space-2xl);
+  border: 1px solid var(--goa-color-greyscale-300);
+  border-radius: var(--goa-border-radius-xl);
 `;
 
 export const TableReviewPageTitleRow = styled.div`
