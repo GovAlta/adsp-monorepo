@@ -75,6 +75,12 @@ class FormsPage {
   formFieldFormItem(label) {
     return cy.xpath(`//h3[text()="Summary"]/following-sibling::div//goa-form-item[@label="${label}"]`);
   }
+
+  formSummaryPagePDFDownloadLinkIcon() {
+    return cy.xpath(
+      '//div[@class="link"]/div[text()="Download PDF copy"]/following-sibling::goa-icon-button[@icon="download"]'
+    );
+  }
 }
 
 export default FormsPage;

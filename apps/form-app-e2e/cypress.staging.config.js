@@ -39,6 +39,7 @@ module.exports = defineConfig({
   fileServerFolder: '.',
   fixturesFolder: './src/fixtures',
   modifyObstructiveCode: false,
+  downloadsFolder: '../../dist/cypress/apps/form-app-e2e/downloads',
   video: false,
   videosFolder: '../../dist/cypress/apps/form-app-e2e/videos',
   screenshotsFolder: '../../dist/cypress/apps/form-app-e2e/screenshots',
