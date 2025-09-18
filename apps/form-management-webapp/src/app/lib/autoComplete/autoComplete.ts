@@ -88,7 +88,7 @@ export const buildSuggestions = (
     });
   }
 
-  text = text.replace('{', '').trim();
+  text = text.replace(/{/g, '').trim();
 
   if (text.length === 0) {
     results = suggestions;
