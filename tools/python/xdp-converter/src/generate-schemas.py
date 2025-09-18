@@ -59,12 +59,12 @@ def process_one(
         tree = ET.parse(xdp_path)
         parser = RulesParser(tree.getroot())
         jf_rules = parser.extract_rules()
-        form_elements = parse_xdp(tree)
+        categories = parse_xdp(tree)
 
         json_generator = JsonSchemaGenerator()
-        json_schema = json_generator.to_schema(form_elements)
+        json_schema = json_generator.to_schema(categories)
 
-        ui_generator = UiSchemaGenerator(form_elements, jf_rules)
+        ui_generator = UiSchemaGenerator(categories, jf_rules)
         ui_schema = ui_generator.to_schema()
 
         schema_out.parent.mkdir(parents=True, exist_ok=True)

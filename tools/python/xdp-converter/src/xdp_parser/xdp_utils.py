@@ -69,20 +69,3 @@ def node_name(el: Optional[ET.Element]) -> Optional[str]:
     if el is None:
         return None
     return el.attrib.get("name") or el.attrib.get("id") or tag_name(el.tag)
-
-
-def _parse_bool_expr(expr: str):
-    s = expr.strip()
-    # OR at top level
-    parts = _split_top_level(s, "||")
-    if len(parts) > 1:
-        return ("OR", [_parse_bool_expr(p) for p in parts])
-    # AND at top level
-    parts = _split_top_level(s, "&&")
-    if len(parts) > 1:
-        return ("AND", [_parse_bool_expr(p) for p in parts])
-    # grouped
-    if s.startswith("(") and s.endswith(")"):
-        return _parse_bool_expr(s[1:-1])
-    # leaf
-    return _parse_atom(s)

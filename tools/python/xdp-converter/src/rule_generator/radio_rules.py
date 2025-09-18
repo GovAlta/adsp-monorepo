@@ -11,7 +11,7 @@ class RadioRules:
         group_to_button_map: Dict[str, List[str]],
         button_to_group_map: Dict[str, str],
         get_default_presence,
-        debug: bool = True,
+        debug: bool = False,
     ):
         self.group_to_button_map = group_to_button_map
         self.button_to_group_map = button_to_group_map

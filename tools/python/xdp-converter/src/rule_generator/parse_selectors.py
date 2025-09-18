@@ -7,7 +7,7 @@ from xdp_parser.xdp_utils import tag_name
 
 
 class ParseSelectors:
-    def __init__(self, root: ET.Element, debug: bool = True):
+    def __init__(self, root: ET.Element, debug: bool = False):
         self.root = root
         self.debug = debug
 

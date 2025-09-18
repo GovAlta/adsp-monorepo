@@ -1,6 +1,6 @@
 from typing import Optional
 from schema_generator.form_element import FormElement
-from schema_generator.form_guidance import FormGuidance
+from schema_generator.section_title import SectionTitle
 from collections import defaultdict
 
 from schema_generator.form_layout import FormLayout
@@ -11,13 +11,13 @@ class FormCategory(FormElement):
         super().__init__("category")
         self.name = name
         self.title = title
-        self.elements = group_horizontally(elements)
+        self.elements = elements  # group_horizontally(elements)
         self.is_leaf = False
 
     def to_ui_schema(self, rules: Optional[dict] = None):
         ui_schema = {"type": "Category"}
         ui_schema["label"] = self.title
-        ui_schema["elements"] = [FormGuidance(self.title).to_ui_schema()]
+        ui_schema["elements"] = [SectionTitle(self.title).to_ui_schema()]
         for element in self.elements:
             ui_schema["elements"].append(element.to_ui_schema())
         if self.name in rules:

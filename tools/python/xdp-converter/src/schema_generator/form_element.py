@@ -7,6 +7,9 @@ class FormElement:
     def __init__(self, type: str):
         self.type = type
         self.is_leaf = True
+        self.y = 0
+        self.x = 0
+        self.name = None
 
     @abstractmethod
     def has_json_schema():
