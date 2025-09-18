@@ -7,7 +7,7 @@ import {
   GoADivider,
   GoASkeleton,
 } from '@abgov/react-components';
-import { Container, RowLoadMore, RowSkeleton } from '@core-services/app-common';
+import { Container } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
 import { FunctionComponent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -53,6 +53,12 @@ const FormDescriptionParagraph = styled.p`
 
 const FormMetadataLabel = styled.label`
   font-weight: bold;
+`;
+
+const FormLoadMoreDiv = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: var(--goa-space-l);
 `;
 
 const FormsLayout = styled.div`
@@ -178,18 +184,17 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
               </GoAContainer>
             ))}
           {busy.loading && <GoASkeleton type="card" size={1} lineCount={2} />}
-          <div>
-            <GoAButtonGroup alignment="center">
-              {next && !busy.loading && (
-                <GoAButton
-                  type="tertiary"
-                  onClick={() => dispatch(findUserForms({ definitionId: definition?.id, after: next }))}
-                >
-                  Load more
-                </GoAButton>
-              )}
-            </GoAButtonGroup>
-          </div>
+          <FormLoadMoreDiv>
+            {next && (
+              <GoAButton
+                type="tertiary"
+                disabled={busy.loading}
+                onClick={() => dispatch(findUserForms({ definitionId: definition?.id, after: next }))}
+              >
+                Load more
+              </GoAButton>
+            )}
+          </FormLoadMoreDiv>
         </Container>
       </FormsLayout>
     ) : (
