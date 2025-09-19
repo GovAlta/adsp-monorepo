@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { configureStore, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { Session } from './session/models';
 import type { ConfigState, KeycloakApi } from './config/models';

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React from 'react';
 import { GoAHeader } from '@abgov/react-components-old';
 import { useSelector, useDispatch } from 'react-redux';

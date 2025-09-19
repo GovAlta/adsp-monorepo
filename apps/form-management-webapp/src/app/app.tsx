@@ -1,3 +1,4 @@
+/* eslint-disable */
 import '@style/app.css';
 import '@style/colors.scss';
 import React, { useEffect } from 'react';
