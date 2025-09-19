@@ -10,7 +10,7 @@ Feature: Form app
     When a user goes to form app overview site
     Then no critical or serious accessibility issues on "form app overview" page
 
-  @TEST_CS-3110 @regression
+  @TEST_CS-3110 @TEST_CS-3459 @REQ_CS-2909 @regression
   Scenario: As an authenticated user, I can log in to submit an application
     Given the user deletes any existing form from "Auto Test" for "autotest-testformapp"
     When an authenticated user is logged in to see "autotest-testformapp" application
@@ -39,6 +39,8 @@ Feature: Form app
     # And the user views the summary of "Additional Information" with "2010-01-15" as "not required" "Dob:Dependant"
     When the user clicks submit button in the form
     Then the user views a callout with a message of "We're processing your application"
+    When the user clicks Download PDF copy link on form submission confirmation page
+    Then the user views the PDF copy of "autotest-testformapp.pdf" being downloaded
     When the user sends a delete form request
     Then the new form is deleted
 

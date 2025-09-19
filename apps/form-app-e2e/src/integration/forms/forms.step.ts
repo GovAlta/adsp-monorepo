@@ -313,3 +313,14 @@ Then(
 Then('the user views the submit button is disabled on summary page', function () {
   formsObj.formSubmitButton().shadow().find('button').should('be.disabled');
 });
+
+When('the user clicks Download PDF copy link on form submission confirmation page', function () {
+  cy.wait(3000); // Wait for the PDF generation to complete
+  formsObj.formSummaryPagePDFDownloadLinkIcon().shadow().find('button').click({ force: true });
+  cy.wait(3000);
+});
+
+Then('the user views the PDF copy of {string} being downloaded', function (pdfFileName) {
+  const downloadsFolder = Cypress.config('downloadsFolder');
+  cy.readFile(downloadsFolder + '/' + pdfFileName, { timeout: 15000 }).should('exist');
+});
