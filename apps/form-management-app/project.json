@@ -1,29 +1,29 @@
 {
-  "name": "form-management-webapp",
+  "name": "form-management-app",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/form-management-webapp/src",
+  "sourceRoot": "apps/form-management-app/src",
   "projectType": "application",
   "generators": {},
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
       "options": {
-        "outputPath": "dist/apps/form-management-webapp",
-        "index": "apps/form-management-webapp/src/index.html",
-        "main": "apps/form-management-webapp/src/main.tsx",
-        "polyfills": "apps/form-management-webapp/src/polyfills.ts",
-        "tsConfig": "apps/form-management-webapp/tsconfig.app.json",
+        "outputPath": "dist/apps/form-management-app",
+        "index": "apps/form-management-app/src/index.html",
+        "main": "apps/form-management-app/src/main.tsx",
+        "polyfills": "apps/form-management-app/src/polyfills.ts",
+        "tsConfig": "apps/form-management-app/tsconfig.app.json",
         "assets": [
-          "apps/form-management-webapp/src/favicon.ico",
-          "apps/form-management-webapp/src/assets",
+          "apps/form-management-app/src/favicon.ico",
+          "apps/form-management-app/src/assets",
           {
             "glob": "nginx.conf",
-            "input": "apps/form-management-webapp/",
+            "input": "apps/form-management-app/",
             "output": "./"
           },
           {
             "glob": "silent-check-sso.html",
-            "input": "apps/form-management-webapp/src/",
+            "input": "apps/form-management-app/src/",
             "output": "./"
           },
           {
@@ -34,19 +34,21 @@
         ],
         "scripts": [],
         "stylePreprocessorOptions": {
-          "includePaths": ["libs/stylesheets/scss/src/lib"]
+          "includePaths": [
+            "libs/stylesheets/scss/src/lib"
+          ]
         },
         "extractCss": true,
         "styles": [],
-        "webpackConfig": "apps/form-management-webapp/webpack.config.js",
+        "webpackConfig": "apps/form-management-app/webpack.config.js",
         "babelUpwardRootMode": true
       },
       "configurations": {
         "production": {
           "fileReplacements": [
             {
-              "replace": "apps/form-management-webapp/src/environments/environment.ts",
-              "with": "apps/form-management-webapp/src/environments/environment.prod.ts"
+              "replace": "apps/form-management-app/src/environments/environment.ts",
+              "with": "apps/form-management-app/src/environments/environment.prod.ts"
             }
           ],
           "optimization": true,
@@ -71,21 +73,23 @@
           "vendorChunk": true
         }
       },
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "defaultConfiguration": "production"
     },
     "serve": {
       "executor": "@nx/webpack:dev-server",
       "options": {
-        "buildTarget": "form-management-webapp:build",
-        "proxyConfig": "apps/form-management-webapp/proxy.conf.json"
+        "buildTarget": "form-management-app:build",
+        "proxyConfig": "apps/form-management-app/proxy.conf.json"
       },
       "configurations": {
         "production": {
-          "buildTarget": "form-management-webapp:build:production"
+          "buildTarget": "form-management-app:build:production"
         },
         "development": {
-          "buildTarget": "form-management-webapp:build:development"
+          "buildTarget": "form-management-app:build:development"
         }
       },
       "defaultConfiguration": "development"
@@ -96,9 +100,11 @@
     "test": {
       "executor": "@nx/jest:jest",
       "options": {
-        "jestConfig": "apps/form-management-webapp/jest.config.ts"
+        "jestConfig": "apps/form-management-app/jest.config.ts"
       },
-      "outputs": ["{workspaceRoot}/coverage/apps/form-management-webapp"]
+      "outputs": [
+        "{workspaceRoot}/coverage/apps/form-management-app"
+      ]
     }
   },
   "tags": []

@@ -2,14 +2,14 @@
 const { resolve } = require('path');
 
 export default {
-  displayName: 'form-management-webapp',
+  displayName: 'form-management-app',
   preset: '../../jest.preset.js',
   transform: {
     '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nx/react/plugins/jest',
     '^.+\\.[tj]sx?$': ['babel-jest', { cwd: __dirname, configFile: './babel-jest.config.json' }],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'html'],
-  coverageDirectory: '../../coverage/apps/form-management-webapp',
+  coverageDirectory: '../../coverage/apps/form-management-app',
 
   moduleNameMapper: {
     '^@components(.*)$': resolve(__dirname, './src/app/components/$1'),

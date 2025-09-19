@@ -1,11 +1,7 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: form-management-webapp
-  namespace: adsp-dev
-  uid: bbb0b807-5245-4281-a994-2c301cd46f81
-  resourceVersion: '56530941'
-  creationTimestamp: '2021-11-29T18:52:19Z'
+  name: form-management-app
   labels:
     app: form-management
     component: app

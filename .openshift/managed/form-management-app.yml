@@ -1,7 +1,7 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: form-management-webapp
+  name: form-management-app
   annotations:
     tags: form-management
     template.openshift.io/provider-display-name: platform team
@@ -11,7 +11,7 @@ labels:
 parameters:
   - name: APP_NAME
     displayName: App Name
-    value: form-management-webapp
+    value: form-management-app
     required: true
   - name: INFRA_NAMESPACE
     description: Name of the infrastructure project.
