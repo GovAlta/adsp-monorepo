@@ -7,7 +7,7 @@ The form admin app allows GoA staff to sign-up, provision within the platform.
 Start the service using:
 
 ```
-nx run form-management-webapp:serve
+nx run form-management-app:serve
 ```
 
 ### Test locally
