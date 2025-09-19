@@ -9,7 +9,7 @@ import {
 } from '@abgov/react-components';
 import { Container } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
-import { FunctionComponent, useEffect } from 'react';
+import { FunctionComponent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import {
@@ -19,7 +19,9 @@ import {
   createForm,
   defaultUserFormSelector,
   definitionFormsSelector,
+  deleteForm,
   findUserForms,
+  Form,
   FormDefinition,
   FormStatus,
   tenantSelector,
@@ -27,6 +29,7 @@ import {
 } from '../state';
 import { SignInStartApplication } from '../components/SignInStartApplication';
 import { LoadingIndicator } from '../components/LoadingIndicator';
+import { DeleteFormModal } from '../components/DeleteFormModal';
 
 const PageTitleDiv = styled.div`
   display: flex;
@@ -68,7 +71,8 @@ const FormsLayout = styled.div`
   left: 0;
   right: 0;
   overflow: auto;
-  & > * {
+  & > *:first-child {
+    max-width: 1024px;
     padding-bottom: var(--goa-space-xl);
   }
 `;
@@ -98,6 +102,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
   const { forms, next } = useSelector((state) => definitionFormsSelector(state, definition?.id));
   const { form: defaultForm } = useSelector(defaultUserFormSelector);
   const canCreateDraft = useSelector(canCreateDraftSelector);
+  const [formToDelete, setFormToDelete] = useState(null);
 
   useEffect(() => {
     dispatch(findUserForms({ definitionId: definition?.id }));
@@ -120,8 +125,8 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
                 <GoAButton
                   mr="m"
                   disabled={busy.creating}
-                  type={defaultForm?.status === FormStatus.draft ? 'secondary' : 'primary'}
-                  trailingIcon="add"
+                  type="tertiary"
+                  leadingIcon="add"
                   onClick={async () => {
                     const form = await dispatch(createForm(definition.id)).unwrap();
                     if (form?.id) {
@@ -146,13 +151,23 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
                   <GoAButtonGroup alignment="end">
                     {form.definition &&
                       (form.status === FormStatus.draft ? (
-                        <GoAButton
-                          type={form?.id === defaultForm?.id ? 'primary' : 'secondary'}
-                          size="compact"
-                          onClick={() => navigate(`/${tenant.name}/${form.definition.id}/${form.id}`)}
-                        >
-                          Continue
-                        </GoAButton>
+                        <>
+                          <GoAButton
+                            type="tertiary"
+                            size="compact"
+                            leadingIcon="trash"
+                            onClick={() => setFormToDelete(form)}
+                          >
+                            Delete
+                          </GoAButton>
+                          <GoAButton
+                            type={form?.id === defaultForm?.id ? 'primary' : 'secondary'}
+                            size="compact"
+                            onClick={() => navigate(`/${tenant.name}/${form.definition.id}/${form.id}`)}
+                          >
+                            Continue
+                          </GoAButton>
+                        </>
                       ) : (
                         <GoAButton
                           type="tertiary"
@@ -196,6 +211,16 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
             )}
           </FormLoadMoreDiv>
         </Container>
+        <DeleteFormModal
+          form={formToDelete}
+          open={!!formToDelete}
+          deleting={false}
+          onClose={() => setFormToDelete(null)}
+          onDelete={async (form) => {
+            await dispatch(deleteForm(form.id));
+            setFormToDelete(null);
+          }}
+        />
       </FormsLayout>
     ) : (
       <SignInStartApplication />
