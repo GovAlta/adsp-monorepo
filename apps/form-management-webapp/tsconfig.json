@@ -1,0 +1,55 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@assets/*": [
+        "assets/*"
+      ],
+      "@components/*": [
+        "app/components/*"
+      ],
+      "@icons/*": [
+        "assets/icons/*"
+      ],
+      "@lib/*": [
+        "app/lib/*"
+      ],
+      "@pages/*": [
+        "app/pages/*"
+      ],
+      "@store/*": [
+        "app/store/*"
+      ],
+      "@style/*": [
+        "../../../libs/stylesheets/scss/src/lib/*"
+      ],
+      "@core-services/notification-shared": [
+        "../../../libs/notification-shared/src/index.ts"
+      ],
+      "@abgov/jsonforms-components": [
+        "../../../libs/jsonforms-components/src/index.ts"
+      ],
+      "@core-services/app-common": [
+        "../../../libs/app-common/src/index.ts"
+      ],
+      "@abgov/data-exchange-standard": [
+        "../../../libs/data-exchange-standard/src/index.ts"
+      ]
+    }
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
+}

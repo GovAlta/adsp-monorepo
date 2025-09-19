@@ -1,0 +1,48 @@
+[
+  {
+    "context": [
+      "/config/*"
+    ],
+    "target": "https://adsp-dev.gov.ab.ca",
+    "secure": true,
+    "changeOrigin": true
+  },
+  {
+    "context": [
+      "/auth/*"
+    ],
+    "target": "https://access.adsp-dev.gov.ab.ca",
+    "secure": true,
+    "changeOrigin": true
+  },
+  {
+    "context": [
+      "/health"
+    ],
+    "target": "http://localhost:3333",
+    "secure": false,
+    "changeOrigin": true
+  },
+  {
+    "context": [
+      "/api/metrics/v1/metrics"
+    ],
+    "target": "https://dashboard-metrics-adsp-dev.apps.aro.gov.ab.ca",
+    "pathRewrite": {
+      "/api": ""
+    },
+    "secure": true,
+    "changeOrigin": true
+  },
+  {
+    "context": [
+      "/api/token-handler/v1/clients"
+    ],
+    "target": "https://token-handler-adsp-dev.apps.aro.gov.ab.ca",
+    "pathRewrite": {
+      "/api": ""
+    },
+    "secure": true,
+    "changeOrigin": true
+  }
+]
