@@ -565,6 +565,12 @@ export const PRE = styled.div`
   font-size: var(--goa-font-size-1);
   line-height: var(--goa-line-height-05);
   padding: var(--goa-space-m);
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-height: 60vh;
+  overflow: auto;
+  max-width: 100%;
 `;
 
 export const FormPreviewScrollPane = styled.div`
