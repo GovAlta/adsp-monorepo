@@ -21,6 +21,49 @@ Feature: Form
     Then the user views "autotest" in Filter by tag dropdown on form definitions page
     And the user "views" the form definition of "autotest-form-existing-tag", "DO NOT DELETE"
 
+  # TEST DATA: a form definition named "autotest-form-tags" is precreated; all tags in the form definition are deleted
+  @TEST_CS-3927 @REQ_CS-3589 @TEST_CS-3943 @REQ_CS-3591 @regression
+  Scenario: As a tenant admin, I can add, edit and delete tags for a form definition and view them in details view
+    Given a tenant admin user is on form definitions page
+    When the user deletes all tags for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    # Add a new tag
+    And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user views Add tags modal for "autotest-form-tags"
+    When the user enters "mytag$$$" in the tag input field in Add tags modal
+    Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -, [space]" in Add tags modal
+    When the user enters "   mytag<$ph>   " in the tag input field in Add tags modal
+    And the user clicks "Create and add tag" button in Add tags modal
+    And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user views the tag "mytag<$ph>" under the tag input field in Add tags modal
+    # Enter an existing tag
+    When the user enters "autotest" in the tag input field in Add tags modal
+    And the user clicks "Add tag" button in Add tags modal
+    And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user views the tag "autotest" under the tag input field in Add tags modal
+    # Enter a duplicate tag
+    When the user enters "autotest" in the tag input field in Add tags modal
+    Then the user views Add tag button being disabled in Add tags modal
+    When the user clicks "Close" button in Add tags modal
+    Then the user "should not view" the Add tags modal
+    # View tags in details view
+    When the user clicks "Eye" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user views "autotest-form-tags" as Definition ID and "autotest,mytag<$ph>" as Tags in the details view
+    When the user clicks "Eye off" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user should not view details view of "autotest-form-tags", "DO NOT DELETE" on form definitions page
+    # Remove a tag
+    When the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user views Add tags modal for "autotest-form-tags"
+    When the user clicks Remove button for the tag "mytag<$ph>" in Add tags modal
+    Then the user "should not view" the tag "mytag<$ph>" under the tag input field in Add tags modal
+    When the user clicks Remove button for the tag "autotest" in Add tags modal
+    Then the user "should not view" the tag "autotest" under the tag input field in Add tags modal
+    When the user clicks "Close" button in Add tags modal
+    And the user clicks "Eye" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user should not view "mytag<$ph>" tag in the details view on form definitions page
+    And the user should not view "autotest" tag in the details view on form definitions page
+    When the user sends a request to delete "mytag<$ph>" tag in directory service
+    Then the user should not get "mytag<$ph>" tag in the response when the user sends a request to get the tag
+
   # Bug #: CS-4368 tasks tab shows a blank page with console errors
   # TEST DATA: a form definition named "autotest-submission-task" is precreated
   # TEST DATA: a task queue named autotest:testSubmissionQueue is precreated
@@ -325,43 +368,3 @@ Feature: Form
     And the user views form data of "false" as "citizen" for "residencyOptions" object on data page
     And the user views form data of "Ben:Bond:2011-05-15" as "givenName:surname:dob" for "dependant" array on data page
 
-  # TEST DATA: a form definition named "autotest-form-tags" is precreated; all tags in the form definition are deleted
-  @TEST_CS-3927 @REQ_CS-3589 @TEST_CS-3943 @REQ_CS-3591 @regression
-  Scenario: As a tenant admin, I can add, edit and delete tags for a form definition and view them in details view
-    Given a tenant admin user is on form definitions page
-    When the user deletes all tags for the form definition of "autotest-form-tags", "DO NOT DELETE"
-    # Add a new tag
-    And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-    Then the user views Add tags modal for "autotest-form-tags"
-    When the user enters "mytag$$$" in the tag input field in Add tags modal
-    Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -, [space]" in Add tags modal
-    When the user enters "   mytag<$ph>   " in the tag input field in Add tags modal
-    And the user clicks "Create and add tag" button in Add tags modal
-    And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-    Then the user views the tag "mytag<$ph>" under the tag input field in Add tags modal
-    # Enter an existing tag
-    When the user enters "autotest" in the tag input field in Add tags modal
-    And the user clicks "Add tag" button in Add tags modal
-    And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-    Then the user views the tag "autotest" under the tag input field in Add tags modal
-    # Enter a duplicate tag
-    When the user enters "autotest" in the tag input field in Add tags modal
-    Then the user views Add tag button being disabled in Add tags modal
-    When the user clicks "Close" button in Add tags modal
-    Then the user "should not view" the Add tags modal
-    # View tags in details view
-    When the user clicks "Eye" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-    Then the user views "autotest-form-tags" as Definition ID and "autotest,mytag<$ph>" as Tags in the details view
-    When the user clicks "Eye off" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-    Then the user should not view details view of "autotest-form-tags", "DO NOT DELETE" on form definitions page
-    # Remove a tag
-    When the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-    Then the user views Add tags modal for "autotest-form-tags"
-    When the user clicks Remove button for the tag "mytag<$ph>" in Add tags modal
-    Then the user "should not view" the tag "mytag<$ph>" under the tag input field in Add tags modal
-    When the user clicks Remove button for the tag "autotest" in Add tags modal
-    Then the user "should not view" the tag "autotest" under the tag input field in Add tags modal
-    When the user clicks "Close" button in Add tags modal
-    And the user clicks "Eye" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-    Then the user should not view "mytag<$ph>" tag in the details view on form definitions page
-    And the user should not view "autotest" tag in the details view on form definitions page

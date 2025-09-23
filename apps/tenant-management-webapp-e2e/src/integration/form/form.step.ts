@@ -1556,3 +1556,37 @@ Then('the user views {string} in Filter by tag dropdown on form definitions page
   tagName = commonlib.stringReplacement(tagName, replacementString);
   formObj.definitionsFilterByTagDropdown().invoke('attr', 'value').should('eq', tagName);
 });
+
+When('the user sends a request to delete {string} tag in directory service', function (tagName) {
+  tagName = commonlib.stringReplacement(tagName, replacementString);
+  const requestURL = Cypress.env('directoryServiceApiUrl') + '/resource/v1/tags/' + tagName;
+  cy.request({
+    method: 'DELETE',
+    url: requestURL,
+    auth: {
+      bearer: Cypress.env('autotest-admin-token'),
+    },
+  }).then(function (response) {
+    responseObj = response;
+    expect(responseObj.status).to.eq(200);
+  });
+});
+
+Then(
+  'the user should not get {string} tag in the response when the user sends a request to get the tag',
+  function (tagName) {
+    tagName = commonlib.stringReplacement(tagName, replacementString);
+    const requestURL = Cypress.env('directoryServiceApiUrl') + '/resource/v1/tags/' + tagName;
+    cy.request({
+      method: 'GET',
+      url: requestURL,
+      failOnStatusCode: false,
+      auth: {
+        bearer: Cypress.env('autotest-admin-token'),
+      },
+    }).then(function (response) {
+      responseObj = response;
+      expect(responseObj.status).to.eq(404);
+    });
+  }
+);
