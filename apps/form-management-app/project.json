@@ -1,0 +1,111 @@
+{
+  "name": "form-management-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/form-management-app/src",
+  "projectType": "application",
+  "generators": {},
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "options": {
+        "outputPath": "dist/apps/form-management-app",
+        "index": "apps/form-management-app/src/index.html",
+        "main": "apps/form-management-app/src/main.tsx",
+        "polyfills": "apps/form-management-app/src/polyfills.ts",
+        "tsConfig": "apps/form-management-app/tsconfig.app.json",
+        "assets": [
+          "apps/form-management-app/src/favicon.ico",
+          "apps/form-management-app/src/assets",
+          {
+            "glob": "nginx.conf",
+            "input": "apps/form-management-app/",
+            "output": "./"
+          },
+          {
+            "glob": "silent-check-sso.html",
+            "input": "apps/form-management-app/src/",
+            "output": "./"
+          },
+          {
+            "glob": "*.schema.json",
+            "input": "libs/data-exchange-standard/src",
+            "output": "./"
+          }
+        ],
+        "scripts": [],
+        "stylePreprocessorOptions": {
+          "includePaths": [
+            "libs/stylesheets/scss/src/lib"
+          ]
+        },
+        "extractCss": true,
+        "styles": [],
+        "webpackConfig": "apps/form-management-app/webpack.config.js",
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/form-management-app/src/environments/environment.ts",
+              "with": "apps/form-management-app/src/environments/environment.prod.ts"
+            }
+          ],
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "extractCss": true,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false,
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "2mb",
+              "maximumError": "5mb"
+            }
+          ]
+        },
+        "development": {
+          "extractLicenses": false,
+          "optimization": false,
+          "sourceMap": true,
+          "vendorChunk": true
+        }
+      },
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@nx/webpack:dev-server",
+      "options": {
+        "buildTarget": "form-management-app:build",
+        "proxyConfig": "apps/form-management-app/proxy.conf.json"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "form-management-app:build:production"
+        },
+        "development": {
+          "buildTarget": "form-management-app:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "options": {
+        "jestConfig": "apps/form-management-app/jest.config.ts"
+      },
+      "outputs": [
+        "{workspaceRoot}/coverage/apps/form-management-app"
+      ]
+    }
+  },
+  "tags": []
+}

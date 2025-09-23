@@ -1,0 +1,44 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: form-management-app
+  labels:
+    app: form-management
+    component: app
+data:
+  configuration: |-
+    {
+      "keycloakApi": {
+        "realm": "core",
+        "url": "https://access.adsp-dev.gov.ab.ca/auth" ,
+        "clientId": "urn:ads:platform:tenant-admin-app"
+      },
+      "tenantApi": {
+        "host": "https://tenant-service.adsp-dev.gov.ab.ca"
+      },
+      "fileApi": {
+        "host": "https://file-service.adsp-dev.gov.ab.ca" ,
+        "endpoints": {
+          "fileAdmin": "/file/v1/files"
+        }
+      },
+      "serviceUrls": {
+        "eventServiceApiUrl": "https://event-service.adsp-dev.gov.ab.ca" ,
+        "notificationServiceUrl": "https://notification-service.adsp-dev.gov.ab.ca" ,
+        "keycloakUrl": "https://access.adsp-dev.gov.ab.ca" ,
+        "tenantManagementApi": "https://tenant-service.adsp-dev.gov.ab.ca" ,
+        "tenantManagementWebApp": "https://adsp-dev.gov.ab.ca" ,
+        "subscriberWebApp": "https://subscription.adsp-dev.gov.ab.ca" ,
+        "accessManagementApi": "https://access.adsp-dev.gov.ab.ca/auth" ,
+        "uiComponentUrl": "https://ui-components-ui-components-dev.os99.gov.ab.ca" ,
+        "fileApi": "https://file-service.adsp-dev.gov.ab.ca" ,
+        "serviceStatusApiUrl": "https://status-service.adsp-dev.gov.ab.ca",
+        "valueServiceApiUrl": "https://value-service.adsp-dev.gov.ab.ca",
+        "serviceStatusAppUrl": "https://status.adsp-dev.gov.ab.ca",
+        "docServiceApiUrl": "https://api.adsp-dev.gov.ab.ca",
+        "configurationServiceApiUrl": "https://configuration-service.adsp-dev.gov.ab.ca",
+        "directoryServiceApiUrl": "https://directory-service.adsp-dev.gov.ab.ca",
+        "taskServiceApiUrl": "https://task-service.adsp-dev.gov.ab.ca",
+        "taskWebApp": "https://task.adsp-dev.gov.ab.ca"
+      }
+    }

@@ -12,7 +12,7 @@ export const ApplicationStatus = (): JSX.Element => {
   const total = categories.length;
   const completed = selectNumberOfCompletedCategories();
   const type = total === completed ? 'success' : 'important';
-  const heading = total === completed ? 'Application complete' : 'Application incomplete';
+  const heading = total === completed ? 'Application completed' : 'Application incomplete';
   const message = `You have completed ${completed} of ${total} sections.`;
   return (
     <CompletionStatus>

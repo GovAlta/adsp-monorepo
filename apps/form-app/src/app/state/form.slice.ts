@@ -80,6 +80,7 @@ export interface FormState {
     creating: boolean;
     saving: boolean;
     submitting: boolean;
+    deleting: boolean;
   };
   initialized: {
     forms: boolean;
@@ -497,6 +498,35 @@ export const submitAnonymousForm = createAsyncThunk(
   }
 );
 
+export const deleteForm = createAsyncThunk(
+  'form/delete-form',
+  async (formId: string, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+
+      const token = await getAccessToken();
+      const { data } = await axios.delete<{ deleted: boolean }>(
+        new URL(`/form/v1/forms/${formId}`, formServiceUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      return !!data?.deleted;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 const initialFormState: FormState = {
   definitions: {},
   selected: null,
@@ -514,6 +544,7 @@ const initialFormState: FormState = {
     creating: false,
     saving: false,
     submitting: false,
+    deleting: false,
   },
   initialized: {
     forms: false,
@@ -623,6 +654,20 @@ export const formSlice = createSlice({
       })
       .addCase(submitAnonymousForm.rejected, (state) => {
         state.busy.submitting = false;
+      })
+      .addCase(deleteForm.pending, (state) => {
+        state.busy.deleting = true;
+      })
+      .addCase(deleteForm.fulfilled, (state, { payload, meta }) => {
+        state.busy.deleting = false;
+        if (payload) {
+          delete state.forms[meta.arg];
+          const index = state.results.findIndex((result) => result === meta.arg);
+          state.results = state.results.splice(index, 1);
+        }
+      })
+      .addCase(deleteForm.rejected, (state) => {
+        state.busy.deleting = false;
       });
   },
 });
