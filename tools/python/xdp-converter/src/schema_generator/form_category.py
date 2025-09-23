@@ -11,7 +11,7 @@ class FormCategory(FormElement):
         super().__init__("category")
         self.name = name
         self.title = title
-        self.elements = elements  # group_horizontally(elements)
+        self.elements = group_horizontally(elements)
         self.is_leaf = False
 
     def to_ui_schema(self, rules: Optional[dict] = None):

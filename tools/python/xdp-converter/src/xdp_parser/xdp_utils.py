@@ -69,3 +69,10 @@ def node_name(el: Optional[ET.Element]) -> Optional[str]:
     if el is None:
         return None
     return el.attrib.get("name") or el.attrib.get("id") or tag_name(el.tag)
+
+
+def strip_namespaces(elem):
+    for el in elem.iter():
+        if el.tag.startswith("{"):
+            el.tag = el.tag.split("}", 1)[1]  # keep localname only
+    return elem

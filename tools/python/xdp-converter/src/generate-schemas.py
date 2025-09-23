@@ -9,7 +9,9 @@ from rule_generator.normalize_rules import RulesParser
 from schema_generator.json_schema_generator import JsonSchemaGenerator
 from schema_generator.ui_schema_generator import UiSchemaGenerator
 import xml.etree.ElementTree as ET
+from xdp_parser.message_registry import HelpMessageRegistry
 from xdp_parser.parse_xdp import parse_xdp
+from xdp_parser.xdp_utils import strip_namespaces
 
 
 def discover_xdp_files(inputs):
@@ -56,9 +58,12 @@ def process_one(
         if not quiet:
             print(f"🧩 Parsing {xdp_path}…")
 
-        tree = ET.parse(xdp_path)
-        parser = RulesParser(tree.getroot())
-        jf_rules = parser.extract_rules()
+        tree = strip_namespaces(ET.parse(xdp_path))
+        print(tree)
+        rules_parser = RulesParser(tree.getroot())
+        jf_rules = rules_parser.extract_rules()
+        registry = HelpMessageRegistry()
+        registry.load_messages(tree.getroot())
         categories = parse_xdp(tree)
 
         json_generator = JsonSchemaGenerator()

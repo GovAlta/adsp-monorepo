@@ -1,4 +1,8 @@
 import re
+from schema_generator.annotated_control import AnnotatedControl
+from schema_generator.form_information import FormInformation
+from schema_generator.form_layout import FormLayout
+from xdp_parser.message_registry import HelpMessageRegistry
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_utils import strip_namespace
 
@@ -8,14 +12,47 @@ class XdpRadioSelector(XdpElement):
     def __init__(self, xdp_element, options):
         super().__init__(xdp_element)
         self.options = options
+        self.is_leaf = True
 
     def to_form_element(self):
+        if self.has_annotation():
+            return self._to_annotated_control()
+        else:
+            return self._to_simple_control()
+
+    def _to_simple_control(self):
         fe = super().to_form_element()
         fe.is_radio = True
         return fe
 
+    def _to_annotated_control(self):
+        radio_buttons = self._to_simple_control()
+        messages = self._to_help_messages()
+        control = AnnotatedControl([radio_buttons, messages])
+        control.enum = []
+        for option in self.options:
+            label, help_text = split_label_and_help(option)
+            control.enum.append(label)
+        return control
+
+    def _to_help_messages(self):
+        options = []
+        registry = HelpMessageRegistry()
+        for option in self.options:
+            if registry.hasAnnotation(option):
+                help_text = registry.getAnnotation(option)
+                info = FormInformation(self.get_name(), help_text, option, hidden=True)
+                options.append(info)
+        return FormLayout("VerticalLayout", options)
+
     def get_enumeration_values(self):
         return self.options
+
+    def has_annotation(self) -> bool:
+        for option in self.options:
+            if HelpMessageRegistry().hasAnnotation(option):
+                return True
+        return False
 
 
 def extract_radio_button_labels(subform_elem):

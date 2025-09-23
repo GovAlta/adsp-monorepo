@@ -6,10 +6,11 @@ from schema_generator.form_element import FormElement
 from schema_generator.form_input import FormInput
 from xdp_parser.xdp_utils import split_camel_case, strip_label_prefix
 
+
 class XdpElement(ABC):
     def __init__(self, xdp):
         self.xdp_element = xdp
-        
+
     @abstractmethod
     def to_form_element(self) -> FormElement:
         fe = FormInput(self.get_name(), self.get_type())
@@ -19,7 +20,7 @@ class XdpElement(ABC):
         fe.label = self.get_label()
         fe.format = self.get_format()
         return fe
-    
+
     def get_type(self):
         return "string"
 
@@ -33,8 +34,8 @@ class XdpElement(ABC):
             return 0.0
 
     def get_name(self):
-       return self.xdp_element.get("name", "")
-    
+        return self.xdp_element.get("name", "")
+
     def get_label(self):
         caption = get_caption_text(self.xdp_element)
         if caption:
@@ -47,14 +48,7 @@ class XdpElement(ABC):
         return None
 
     def get_enumeration_values(self):
-        uri = None
-        if self.xdp_element.tag.startswith("{"):
-            uri = self.xdp_element.tag.split("}")[0].strip("{")
-            ns = {"xfa": uri}
-            items_path = ".//xfa:items/xfa:text"
-            items = self.xdp_element.findall(items_path, namespaces=ns)
-        else:
-            items = self.xdp_element.findall(".//items/text")
+        items = self.xdp_element.findall(".//items/text")
         enum = [str(item.text) for item in items if item.text]
         if len(enum) > 0:
             deduped = [str(val) for val in remove_duplicates(enum)]
@@ -63,15 +57,18 @@ class XdpElement(ABC):
 
     def get_format(self):
         isDate = matches_prefix(self.get_name(), "dte")
-        if isDate: return "date"
+        if isDate:
+            return "date"
         return None
-    
+
+
 def matches_prefix(candidate: str, prefix: str) -> bool:
     if not candidate or not prefix:
         return False
     if len(prefix) > len(candidate):
         return False
-    return candidate[:len(prefix)] == prefix
+    return candidate[: len(prefix)] == prefix
+
 
 def get_caption_text(xdp_element):
     # Get namespace

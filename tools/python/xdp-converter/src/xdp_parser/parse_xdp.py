@@ -25,10 +25,10 @@ def parse_xdp(tree: ET.Element) -> List[FormElement]:
 def _find_xdp_elements(subform: ET.Element) -> List[XdpElement]:
     xdp_elements = []
     for xdp_element in subform.findall("./*"):
-        tag_no_ns = strip_namespace(xdp_element.tag)
-        if tag_no_ns == "field":
+        tag_name = strip_namespace(xdp_element.tag)
+        if tag_name == "field":
             xdp_elements.extend(_find_xdp_elements(xdp_element))
-        elif tag_no_ns == "subform":
+        elif tag_name == "subform":
             labels = extract_radio_button_labels(xdp_element)
             if labels:
                 xdp_elements.append(XdpRadioSelector(xdp_element, labels))
