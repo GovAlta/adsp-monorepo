@@ -214,7 +214,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
         <DeleteFormModal
           form={formToDelete}
           open={!!formToDelete}
-          deleting={false}
+          deleting={busy.deleting}
           onClose={() => setFormToDelete(null)}
           onDelete={async (form) => {
             await dispatch(deleteForm(form.id));

@@ -661,9 +661,9 @@ export const formSlice = createSlice({
       .addCase(deleteForm.fulfilled, (state, { payload, meta }) => {
         state.busy.deleting = false;
         if (payload) {
-          delete state.forms[meta.arg];
           const index = state.results.findIndex((result) => result === meta.arg);
-          state.results = state.results.splice(index, 1);
+          state.results.splice(index, 1);
+          delete state.forms[meta.arg];
         }
       })
       .addCase(deleteForm.rejected, (state) => {
