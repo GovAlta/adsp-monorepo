@@ -42,10 +42,11 @@ export const Login = () => {
   };
 
   const tenantLogin = async (realm: string, definitionId?: string) => {
-    let loginRedirectUrl = '/';
-
-    if (realm && definitionId) {
-      loginRedirectUrl = `${window.location.origin}/${loginRedirectUrl}/${realm}/${definitionId}?autoCreate=true`;
+    let loginRedirectUrl = window.location.origin;
+    if (definitionId) {
+      loginRedirectUrl = `${window.location.origin}/${realm}/${definitionId}?autoCreate=true`;
+    } else {
+      loginRedirectUrl = `${window.location.origin}/${realm}`;
     }
 
     const tenantApi = directory['urn:ads:platform:tenant-service'];

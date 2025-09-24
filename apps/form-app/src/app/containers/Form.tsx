@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   AppDispatch,
+  AppState,
   busySelector,
   canSubmitSelector,
   dataSelector,
@@ -34,7 +35,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { definition } = useSelector(definitionSelector);
-  const form = useSelector(formSelector);
+  const form = useSelector((state: AppState) => formSelector(state, formId));
   const data = useSelector(dataSelector);
   const files = useSelector(filesSelector);
   const busy = useSelector(busySelector);
@@ -59,7 +60,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
     <div key={formId}>
       {definition && !definition.anonymousApply && <LogoutModal />}
       <div className={className} data-show={showComments}>
-        <Container vs={1} hs={1} key={formId}>
+        <Container vs={1} hs={1}>
           {form && !fileBusy.loading && (
             <>
               {form.status === 'Submitted' && <SubmittedForm definition={definition} form={form} data={data} />}

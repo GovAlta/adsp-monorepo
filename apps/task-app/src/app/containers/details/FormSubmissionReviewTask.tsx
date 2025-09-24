@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import { GoAReviewRenderers } from '@abgov/jsonforms-components';
 import {
   GoAButtonGroup,
   GoAButton,
@@ -7,22 +7,18 @@ import {
   GoADropdownItem,
   GoATextArea,
 } from '@abgov/react-components';
+import { AdspId } from '@core-services/app-common';
+import { JsonForms } from '@jsonforms/react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { TASK_STATUS, TaskDetailsProps } from './types';
-import { registerDetailsComponent } from './register';
-import { AppDispatch, formSelector, selectForm } from '../../state';
 import { useValidators } from '../../../lib/validations/useValidators';
 import { isNotEmptyCheck } from '../../../lib/validations/checkInput';
-import { AdspId } from '../../../lib/adspId';
-import { GoAReviewRenderers } from '@abgov/jsonforms-components';
-import { JsonForms } from '@jsonforms/react';
-import {
-  ReviewContainer,
-  ReviewContent,
-  ActionContainer,
-  ActionControl,
-  FormReviewContainer,
-} from './styled-components';
+import { TaskDetailsLayout } from '../../components/TaskDetailsLayout';
+import { AppDispatch, formLoadingSelector, formSelector, selectForm, updateFormDisposition } from '../../state';
+import { TASK_STATUS, TaskDetailsProps } from './types';
+import { registerDetailsComponent } from './register';
+
+import { ReviewContent, ActionContainer, FormReviewContainer } from './styled-components';
 import { TaskCancelModal } from './TaskCancelModal';
 
 export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
@@ -36,6 +32,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const form = useSelector(formSelector);
+  const isLoading = useSelector(formLoadingSelector);
   const adspId = AdspId.parse(task.recordId);
   const [_, _type, id, _submission, submissionId] = adspId.resource.split('/');
 
@@ -65,11 +62,6 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     .add('dispositionStatus', 'dispositionStatus', isNotEmptyCheck('Disposition'))
     .build();
 
-  const onCompleteValidationCheck = () => {
-    onComplete({ formId: form.selected, submissionId, dispositionStatus, dispositionReason });
-    validators.clear();
-  };
-
   const disableFormDispositionControls = () => {
     if (task.status === TASK_STATUS.PENDING) return true;
 
@@ -78,7 +70,6 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   const buttonDisabledForCompleteTask = () => {
     if (dispositionReason === '' || dispositionStatus === '') return true;
-
     if (dispositionReason !== '' && dispositionStatus === NO_DISPOSITION_SELECTED.label) return true;
     if (dispositionReason === '' && dispositionStatus !== NO_DISPOSITION_SELECTED.label) return true;
 
@@ -119,7 +110,7 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const renderReason = () => {
     return (
       <div id="form-reason-block">
-        <GoAFormItem label="Reason" requirement="required" error={errors?.['dispositionReason']}>
+        <GoAFormItem label="Reason" requirement="required" error={errors?.['dispositionReason']} mt="m">
           <GoATextArea
             name="reason"
             value={dispositionReason}
@@ -142,12 +133,12 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
 
   const renderButtonGroup = () => {
     return (
-      <GoAButtonGroup alignment="start">
+      <GoAButtonGroup alignment="end" mt="m">
+        <GoAButton type="tertiary" mr="l" onClick={onClose}>
+          Close
+        </GoAButton>
         {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
-            <GoAButton disabled={buttonDisabledForCompleteTask()} onClick={() => onCompleteValidationCheck()}>
-              Submit Decision
-            </GoAButton>
             <GoAButton
               type="secondary"
               disabled={!user.isWorker || isExecuting}
@@ -155,13 +146,27 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
                 setShowTaskCancelConfirmation(true);
               }}
             >
-              Cancel Review
+              Cancel review
+            </GoAButton>
+            <GoAButton
+              disabled={buttonDisabledForCompleteTask()}
+              onClick={async () => {
+                await dispatch(
+                  updateFormDisposition({
+                    formId: form.selected,
+                    submissionId: submissionId,
+                    dispositionReason: dispositionReason,
+                    dispositionStatus: dispositionStatus,
+                  })
+                );
+                validators.clear();
+                onComplete();
+              }}
+            >
+              Submit decision
             </GoAButton>
           </>
         )}
-        <GoAButton type="tertiary" onClick={onClose}>
-          Back
-        </GoAButton>
         {task?.status === TASK_STATUS.PENDING && (
           <GoAButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
             Start review
@@ -195,29 +200,28 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
     );
   };
   return (
-    <ReviewContainer>
+    <TaskDetailsLayout>
       {definition && (
-        <ActionContainer>
-          <FormReviewContainer>
-            <JsonForms
-              readonly={true}
-              schema={definition?.dataSchema}
-              uischema={definition?.uiSchema}
-              data={currentForm?.formData}
-              validationMode="NoValidation"
-              renderers={GoAReviewRenderers}
-            />
-          </FormReviewContainer>
-        </ActionContainer>
+        <FormReviewContainer>
+          <JsonForms
+            readonly={true}
+            schema={definition?.dataSchema}
+            uischema={definition?.uiSchema}
+            data={currentForm?.formData}
+            validationMode="NoValidation"
+            renderers={GoAReviewRenderers}
+          />
+        </FormReviewContainer>
       )}
       <ReviewContent>{renderTaskCancelModal()}</ReviewContent>
       <ActionContainer>
-        <goa-divider mt="m" mb="none"></goa-divider>
-        <ActionControl>{renderDisposition()}</ActionControl>
-        <ActionControl>{renderReason()}</ActionControl>
-        <ActionControl>{renderButtonGroup()}</ActionControl>
+        <form>
+          {renderDisposition()}
+          {renderReason()}
+        </form>
+        {renderButtonGroup()}
       </ActionContainer>
-    </ReviewContainer>
+    </TaskDetailsLayout>
   );
 };
 

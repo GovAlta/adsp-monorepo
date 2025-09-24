@@ -7,4 +7,17 @@ export class AdspId {
   static isAdspId(urn: string): boolean {
     return typeof urn === 'string' && AdspIdPattern.test(urn);
   }
+
+  static parse(urn: string): AdspId {
+    const match = AdspIdPattern.exec(urn);
+    if (!match) {
+      throw new Error(`The provided value is not a valid AdspId: ${urn}`);
+    }
+
+    const { namespace, service, api, resource } = match.groups;
+
+    return new AdspId(namespace, service, api, resource);
+  }
+
+  constructor(public namespace: string, public service: string, public api: string, public resource: string) {}
 }

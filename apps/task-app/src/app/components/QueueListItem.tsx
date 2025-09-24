@@ -20,7 +20,7 @@ const QueueListItemComponent: FunctionComponent<QueueListItemProps> = ({
   onOpen,
 }) => {
   return (
-    <GoAContainer type="interactive" accent="thin">
+    <GoAContainer type="interactive" accent="thin" padding="compact">
       <div className={className}>
         <div>
           <h3>
@@ -35,11 +35,10 @@ const QueueListItemComponent: FunctionComponent<QueueListItemProps> = ({
             )}
           </h3>
           <div>
-            <GoAIconButton title="create" icon="create" size="large" onClick={() => onOpen(queue)} />
+            <GoAIconButton title="create" icon="open" size="large" onClick={() => onOpen(queue)} />
           </div>
         </div>
         <QueueMetrics metrics={metrics} isLoading={metricsLoading[`${queue.namespace}:${queue.name}`]} />
-        <div></div>
       </div>
     </GoAContainer>
   );

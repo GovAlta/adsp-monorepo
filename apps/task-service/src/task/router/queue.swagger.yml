@@ -439,8 +439,8 @@ components:
 /task/v1/queues/{namespace}/{name}/tasks/{id}/data:
   patch:
     tags:
-      - Task
-    description: Updates the data of a specified task.
+      - Queue
+    description: Updates the data of a specified queued task.
     parameters:
       - name: namespace
         description: Namespace of the queue.

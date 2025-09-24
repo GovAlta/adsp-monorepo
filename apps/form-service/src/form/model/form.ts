@@ -120,7 +120,9 @@ export class FormEntity implements Form {
         ...(this.definition?.clerkRoles || []),
         ...(this.definition?.assessorRoles || []),
       ]) ||
-      (isAllowedUser(user, this.tenantId, this.definition?.applicantRoles || []) && user.id === this.createdBy.id)
+      (isAllowedUser(user, this.tenantId, this.definition?.applicantRoles || []) &&
+        user.id === this.createdBy.id &&
+        this.status !== FormStatus.Archived)
     );
   }
 
@@ -323,7 +325,13 @@ export class FormEntity implements Form {
   }
 
   async delete(user: User, fileService: FileService, notificationService: NotificationService): Promise<boolean> {
-    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true)) {
+    // Clerks and applicants are permitted to delete draft forms.
+    if (
+      !isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true) &&
+      (this.status !== FormStatus.Draft ||
+        (!isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || []) &&
+          !((await this.definition?.canApply(user)) && user.id === this.createdBy.id)))
+    ) {
       throw new UnauthorizedUserError('delete form', user);
     }
 

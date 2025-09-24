@@ -36,7 +36,7 @@ interface SerializableFormDefinition {
 }
 
 interface SerializableForm {
-  definition: { id: string; name: string };
+  definition: { id: string; name: string; description: string };
   id: string;
   urn: string;
   status: 'draft' | 'locked' | 'submitted' | 'archived';
@@ -80,6 +80,7 @@ export interface FormState {
     creating: boolean;
     saving: boolean;
     submitting: boolean;
+    deleting: boolean;
   };
   initialized: {
     forms: boolean;
@@ -305,9 +306,9 @@ export const loadForm = createAsyncThunk(
         );
       }
 
-      //Need to run a ajv validate here when we load the form to initalize data
-      //that are using the default keyword in the data schema.
-      if (loadedForm && loadedForm.definitions) {
+      // Need to run a ajv validate here when we load the form to initialize data
+      // that are using the default keyword in the data schema.
+      if (loadedForm?.definitions?.[form.definition.id]) {
         const currentDefinition = loadedForm.definitions[form.definition.id];
         ajv.validate(currentDefinition.dataSchema, data.data);
       }
@@ -497,6 +498,35 @@ export const submitAnonymousForm = createAsyncThunk(
   }
 );
 
+export const deleteForm = createAsyncThunk(
+  'form/delete-form',
+  async (formId: string, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+
+      const token = await getAccessToken();
+      const { data } = await axios.delete<{ deleted: boolean }>(
+        new URL(`/form/v1/forms/${formId}`, formServiceUrl).href,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      return !!data?.deleted;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 const initialFormState: FormState = {
   definitions: {},
   selected: null,
@@ -514,6 +544,7 @@ const initialFormState: FormState = {
     creating: false,
     saving: false,
     submitting: false,
+    deleting: false,
   },
   initialized: {
     forms: false,
@@ -623,6 +654,20 @@ export const formSlice = createSlice({
       })
       .addCase(submitAnonymousForm.rejected, (state) => {
         state.busy.submitting = false;
+      })
+      .addCase(deleteForm.pending, (state) => {
+        state.busy.deleting = true;
+      })
+      .addCase(deleteForm.fulfilled, (state, { payload, meta }) => {
+        state.busy.deleting = false;
+        if (payload) {
+          const index = state.results.findIndex((result) => result === meta.arg);
+          state.results.splice(index, 1);
+          delete state.forms[meta.arg];
+        }
+      })
+      .addCase(deleteForm.rejected, (state) => {
+        state.busy.deleting = false;
       });
   },
 });
@@ -684,8 +729,10 @@ export const definitionFormsSelector = createSelector(
 export const formSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.form.form,
-  ({ definition }, form) =>
-    definition && form && definition?.id === form?.definition.id
+  // Include optional formId parameter to avoid flash of incorrect form when switching between forms.
+  (_: AppState, formId?: string) => formId,
+  ({ definition }, form, formId) =>
+    definition && form && definition?.id === form?.definition.id && (!formId || form.id === formId)
       ? {
           ...form,
           status: FormStatus[form.status],
@@ -716,7 +763,8 @@ export const defaultUserFormSelector = createSelector(
     return {
       form,
       initialized,
-      empty: forms.length < 1,
+      // If there are multiple forms but none is the default, then it's ambiguous.
+      ambiguous: forms.length > 0 && !form,
     };
   }
 );

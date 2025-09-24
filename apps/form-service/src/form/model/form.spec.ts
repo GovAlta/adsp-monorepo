@@ -206,6 +206,15 @@ describe('FormEntity', () => {
       expect(result).toBe(true);
     });
 
+    it('can return false for applicant on archived form', () => {
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, {
+        ...formInfo,
+        status: FormStatus.Archived,
+      });
+      const result = entity.canRead({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
+      expect(result).toBe(false);
+    });
+
     it('can return false for wrong applicant', () => {
       const result = entity.canRead({ tenantId, id: 'tester2', roles: ['test-applicant'] } as User);
       expect(result).toBe(false);
@@ -861,6 +870,52 @@ describe('FormEntity', () => {
       await expect(
         entity.delete({ tenantId, id: 'tester', roles: [] } as User, fileMock, notificationMock)
       ).rejects.toThrow(UnauthorizedUserError);
+    });
+
+    it('can delete draft form for applicant', async () => {
+      repositoryMock.delete.mockResolvedValueOnce(true);
+      fileMock.delete.mockResolvedValueOnce(true);
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, {
+        ...formInfo,
+        status: FormStatus.Draft,
+      });
+      const deleted = await entity.delete(
+        { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+        fileMock,
+        notificationMock
+      );
+      expect(deleted).toBe(true);
+      expect(fileMock.delete).toHaveBeenCalled();
+      expect(notificationMock.unsubscribe).toHaveBeenCalledWith(tenantId, entity.applicant.urn, entity.id);
+      expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
+    });
+
+    it('can throw for wrong applicant', async () => {
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, {
+        ...formInfo,
+        status: FormStatus.Draft,
+      });
+      await expect(
+        entity.delete({ tenantId, id: 'tester-2', roles: ['test-applicant'] } as User, fileMock, notificationMock)
+      ).rejects.toThrow(UnauthorizedUserError);
+    });
+
+    it('can delete draft form for clerk', async () => {
+      repositoryMock.delete.mockResolvedValueOnce(true);
+      fileMock.delete.mockResolvedValueOnce(true);
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, {
+        ...formInfo,
+        status: FormStatus.Draft,
+      });
+      const deleted = await entity.delete(
+        { tenantId, id: 'tester', roles: ['test-clerk'] } as User,
+        fileMock,
+        notificationMock
+      );
+      expect(deleted).toBe(true);
+      expect(fileMock.delete).toHaveBeenCalled();
+      expect(notificationMock.unsubscribe).toHaveBeenCalledWith(tenantId, entity.applicant.urn, entity.id);
+      expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
     });
   });
 });

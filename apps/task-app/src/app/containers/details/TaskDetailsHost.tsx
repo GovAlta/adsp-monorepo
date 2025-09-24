@@ -7,14 +7,12 @@ import {
   busySelector,
   cancelTask,
   completeTask,
-  formSelector,
   openTask,
   openTaskSelector,
   queueUserSelector,
   selectedTopicSelector,
   startTask,
   topicsSelector,
-  updateFormDisposition,
 } from '../../state';
 
 import { getRegisteredDetailsComponents } from './register';
@@ -22,6 +20,7 @@ import { getRegisteredDetailsComponents } from './register';
 // Built in task detail components are loaded via import here.
 // Custom ones will be imported via a script element with src to URL of bundle file.
 import './FileTask';
+import './FormTask';
 import './FormSubmissionReviewTask';
 
 // Lazy import detail containers for bundle code splitting and application load performance.
@@ -31,12 +30,6 @@ interface TaskDetailsHostProps {
   className?: string;
   onClose: () => void;
 }
-export interface TaskCompleteProps {
-  formId: string;
-  submissionId: string;
-  dispositionReason: string;
-  dispositionStatus: string;
-}
 
 const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ className, onClose }) => {
   const user = useSelector(queueUserSelector);
@@ -44,7 +37,6 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
   const busy = useSelector(busySelector);
   const topics = useSelector(topicsSelector);
   const topic = useSelector(selectedTopicSelector);
-  const form = useSelector(formSelector);
 
   const params = useParams<{ namespace: string; name: string; taskId: string }>();
   const dispatch = useDispatch<AppDispatch>();
@@ -67,19 +59,6 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
       }
     })?.detailsComponent || Placeholder;
 
-  const onCompleteTask = (data: TaskCompleteProps) => {
-    dispatch(
-      updateFormDisposition({
-        formId: data.formId,
-        submissionId: data.submissionId,
-        dispositionReason: data.dispositionReason,
-        dispositionStatus: data.dispositionStatus,
-      })
-    ).then(() => {
-      dispatch(completeTask({ taskId: open.id }));
-    });
-  };
-
   return (
     <div key={params.taskId} data-opened={!!open} className={className}>
       {open && (
@@ -90,7 +69,7 @@ const TaskDetailsHostComponent: FunctionComponent<TaskDetailsHostProps> = ({ cla
             isExecuting={busy.executing}
             onClose={onClose}
             onStart={() => dispatch(startTask({ taskId: open.id }))}
-            onComplete={(data) => onCompleteTask(data)}
+            onComplete={() => dispatch(completeTask({ taskId: open.id }))}
             onCancel={(reason) => dispatch(cancelTask({ taskId: open.id, reason }))}
           />
         </Suspense>
@@ -126,11 +105,11 @@ export const TaskDetailsHost = styled(TaskDetailsHostComponent)`
   z-index: 0;
   position: relative;
   display: none;
+  overflow: hidden;
   flex: 1;
 
   & > :first-child {
     flex: 1;
-    padding: var(--goa-space-l);
     padding-top: 0;
   }
 
@@ -146,10 +125,6 @@ export const TaskDetailsHost = styled(TaskDetailsHostComponent)`
 
   & > .commentsPane[data-show='true'] {
     display: block;
-  }
-
-  & > :last-child {
-    position: absolute;
   }
 
   &[data-opened='true'] {

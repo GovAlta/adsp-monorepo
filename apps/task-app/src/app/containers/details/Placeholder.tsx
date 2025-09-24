@@ -1,16 +1,7 @@
 import { GoACallout, GoADetails, GoAButtonGroup, GoAButton } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
-import styled from 'styled-components';
+import { TaskDetailsLayout } from '../../components/TaskDetailsLayout';
 import { TASK_STATUS, TaskDetailsProps } from './types';
-
-const PlaceholderDiv = styled.div`
-  display: flex;
-  flex-direction: column;
-
-  > *:first-child {
-    flex-grow: 1;
-  }
-`;
 
 const Placeholder: FunctionComponent<TaskDetailsProps> = ({
   user,
@@ -29,7 +20,7 @@ const Placeholder: FunctionComponent<TaskDetailsProps> = ({
   };
 
   return (
-    <PlaceholderDiv>
+    <TaskDetailsLayout>
       <div>
         <GoACallout type="information" heading="Task detail view">
           This is a placeholder for the task detail view. Replace with your own custom view for the specific type of
@@ -45,7 +36,7 @@ const Placeholder: FunctionComponent<TaskDetailsProps> = ({
           should complete the task.
         </GoADetails>
       </div>
-      <GoAButtonGroup alignment="start" mt="l">
+      <GoAButtonGroup alignment="end" mt="l">
         <GoAButton type="secondary" onClick={onClose}>
           Close
         </GoAButton>
@@ -59,13 +50,13 @@ const Placeholder: FunctionComponent<TaskDetailsProps> = ({
             <GoAButton type="secondary" disabled={disableTaskButtons()} onClick={() => onCancel(null)}>
               Cancel task
             </GoAButton>
-            <GoAButton disabled={disableTaskButtons()} onClick={() => onComplete(null)}>
+            <GoAButton disabled={disableTaskButtons()} onClick={() => onComplete()}>
               Complete task
             </GoAButton>
           </>
         )}
       </GoAButtonGroup>
-    </PlaceholderDiv>
+    </TaskDetailsLayout>
   );
 };
 

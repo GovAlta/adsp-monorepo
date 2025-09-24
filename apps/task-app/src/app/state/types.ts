@@ -34,6 +34,7 @@ export interface Task {
       name: string;
     };
   };
+  data: Record<string, unknown>;
 }
 export interface FormDisposition {
   id: string;

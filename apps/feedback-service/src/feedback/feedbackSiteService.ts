@@ -1,5 +1,4 @@
 import { AdspId, adspId, ConfigurationService, Tenant, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
-import { level } from 'winston';
 
 export interface Site {
   url: string;
