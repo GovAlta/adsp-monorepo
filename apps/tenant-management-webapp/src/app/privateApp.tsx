@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { Outlet } from 'react-router-dom';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
@@ -13,6 +14,7 @@ import { useTokenExpiryCount, useTokenWillExpiryCount } from '@lib/useTokenExpir
 import { CenterWidthPageLoader } from '@core-services/app-common';
 
 export function PrivateApp(): JSX.Element {
+  const location = useLocation();
   const [title, setTitle] = useState<string>('');
   const dispatch = useDispatch();
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
@@ -20,7 +22,7 @@ export function PrivateApp(): JSX.Element {
   useTokenExpiryCount();
   useTokenWillExpiryCount();
 
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = new URLSearchParams(location.search);
   const realmFromParams = urlParams.get('realm');
   const isHeadlessPage = urlParams.get('headless') === 'true';
   const realm = realmFromParams || localStorage.getItem('realm');

@@ -1,12 +1,17 @@
 import { createContext, ReactNode, useMemo, useReducer, Dispatch, useEffect } from 'react';
 import { CategorizationStepperLayoutRendererProps } from '../types';
-import { Categorization, deriveLabelForUISchemaElement, isEnabled, isVisible } from '@jsonforms/core';
+import { Categorization, JsonSchema7, deriveLabelForUISchemaElement, isEnabled, isVisible } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
 import { stepperReducer } from './reducer';
 import { StepperContextDataType, CategoryState } from './types';
 import { JsonFormStepperDispatch } from './reducer';
 import { useJsonForms } from '@jsonforms/react';
+
 import { hasDataInScopes, getIncompletePaths, getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage } from './util';
+import { getPageCompletionStatus } from './util';
+import { JSONSchema } from '@apidevtools/json-schema-ref-parser';
+import { JSONSchema7 } from 'json-schema';
+
 
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
@@ -39,6 +44,7 @@ const createStepperContextInitData = (
   const valid = ajv.validate(schema, data || {});
   const isPage = uischema?.options?.variant === 'pages';
   const isCacheStatus = uischema.options?.cacheStatus;
+    //const stepperDispatch = props?.customDispatch || dispatch;
   /* istanbul ignore next */
   const cachedStatus = (isCacheStatus && getIsVisitFromLocalStorage()) || [];
   ajv.validate(schema, data);
@@ -50,15 +56,16 @@ const createStepperContextInitData = (
     const isVisited = isCacheStatus ? cachedStatus.at(id) : hasAnyData;
     const isCompleted = isVisited && incompletePaths.length === 0;
     const isValid = isCompleted;
+    const result = getPageCompletionStatus(c as unknown as JSONSchema7, data, ajv.errors);
 
     return {
       id,
       label: deriveLabelForUISchemaElement(c, t) as string,
       scopes,
       /* istanbul ignore next */
-      isVisited,
-      isCompleted,
-      isValid,
+      isVisited: isVisited, //result.hasAnyData,
+      isCompleted: incompletePaths?.length === 0,
+      isValid: incompletePaths?.length === 0,
       uischema: c,
       showReviewPageLink: props.withBackReviewBtn || false,
       isEnabled: isEnabled(c, data, '', ajv),

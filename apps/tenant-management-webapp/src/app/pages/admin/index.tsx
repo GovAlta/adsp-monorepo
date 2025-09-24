@@ -21,7 +21,7 @@ import { ConfigurationRouter } from './services/configuration/routers';
 import { Calendar } from './services/calendar';
 import { PDFRouter } from './services/pdf';
 import { CommentRouter } from './services/comment';
-import { FormRouter } from './services/form';
+import { Form } from './services/form/form';
 import { FileRouter } from './services/file';
 import { ValueRouter } from './services/value';
 import { CacheRouter } from './services/cache';
@@ -62,7 +62,7 @@ const TenantManagement = (): JSX.Element => {
       case 'File':
         return <FileRouter />;
       case 'Form':
-        return <FormRouter />;
+        return <Form />;
       case 'Notification':
         return <Notifications />;
       case 'PDF':
@@ -95,7 +95,6 @@ const TenantManagement = (): JSX.Element => {
           }
         />
       </Routes>
-
       <Container hs={1}>
         <Routes>
           <Route index element={<Dashboard />} />

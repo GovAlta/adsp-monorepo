@@ -38,7 +38,7 @@ const AppRouters = () => {
         <Routes>
           <Route path="/" element={<LandingPage />} />
 
-          <Route path="/admin//*" element={<PrivateApp />}>
+          <Route path="/admin/*" element={<PrivateApp />}>
             <Route path="*" element={<Admin />} />
             <Route path="tenants" element={<TenantsRouter />} />
           </Route>
