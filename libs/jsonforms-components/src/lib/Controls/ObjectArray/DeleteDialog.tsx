@@ -1,4 +1,4 @@
-import React, { useEffect, memo } from 'react';
+import React, { useEffect } from 'react';
 import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
 import { DeleteDialogContent } from './styled-components';
 
@@ -17,7 +17,7 @@ export interface WithBasicDeleteDialogSupport {
   openDeleteDialog(data: number, name?: string): void;
 }
 
-export const DeleteDialog = memo(function DeleteDialog({
+export const DeleteDialog = React.memo(function DeleteDialog({
   open,
   onConfirm,
   onCancel,
