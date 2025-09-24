@@ -39,7 +39,9 @@ export function* getAccessToken(isForce = false): SagaIterator {
     } else {
       return credentials.token;
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error(JSON.stringify(e));
+  }
 }
 
 export function* fetchRealmRoles(): SagaIterator {

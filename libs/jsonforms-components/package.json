@@ -12,7 +12,8 @@
     "ajv": "^8.6.1",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",
-    "@mdx-js/mdx": "^3.1.0"
+    "@mdx-js/mdx": "^3.1.0",
+    "json-schema": "^0.4.0"
   },
   "dependencies": {
     "axios": "^1.6.7",

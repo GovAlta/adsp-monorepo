@@ -16,7 +16,7 @@ sagaMiddleware.run(safeWatchSagas);
 export function* safeWatchSagas() {
   try {
     yield* watchSagas();
-  } catch (error: any) {
+  } catch (error) {
     console.error('Unexpected saga error:', error);
     store.dispatch(ErrorNotification({ error }));
   }
