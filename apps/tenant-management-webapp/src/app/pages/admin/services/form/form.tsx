@@ -10,7 +10,7 @@ import BetaBadge from '@icons/beta-badge.svg';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import { selectFormAppHost } from '@store/form/selectors';
 
-import { FormEditorCommon } from '@form-editor-common';
+import { FormServiceCommon } from '@form-service-common';
 const HelpLink = (): JSX.Element => {
   const defaultFormUrl = useSelector((state: RootState) => selectFormAppHost(state));
   return (
@@ -37,7 +37,7 @@ export const Form: FunctionComponent = () => {
             <h1 data-testid="form-title">Form service</h1>
             <img src={BetaBadge} alt="Form Service" />
           </HeadingDiv>
-          <FormEditorCommon
+          <FormServiceCommon
             session={session}
             config={{
               tabs: {

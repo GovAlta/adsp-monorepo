@@ -1,1 +1,1 @@
-export * from './lib/form-editor-common';
+export * from './lib/form-service-common';

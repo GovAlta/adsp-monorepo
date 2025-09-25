@@ -3,7 +3,7 @@ import { ActionTypes } from './actions';
 
 export default function (state: ConfigState = CONFIG_INIT, action: ActionTypes): ConfigState {
   switch (action.type) {
-    case 'form-editor-common/config/fetch-config-success':
+    case 'form-service-common/config/fetch-config-success':
       return {
         ...state,
         ...action.payload,

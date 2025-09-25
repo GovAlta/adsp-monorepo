@@ -1,7 +1,7 @@
 {
-  "name": "form-editor-common",
+  "name": "form-service-common",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/form-editor-common/src",
+  "sourceRoot": "libs/form-service-common/src",
   "projectType": "library",
   "tags": [],
   "targets": {
@@ -12,7 +12,7 @@
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/form-editor-common/jest.config.ts"
+        "jestConfig": "libs/form-service-common/jest.config.ts"
       }
     }
   }

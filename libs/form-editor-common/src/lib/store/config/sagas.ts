@@ -64,7 +64,7 @@ export function* fetchConfigSaga(): SagaIterator {
       }
 
       const action: FetchConfigSuccessAction = {
-        type: 'form-editor-common/config/fetch-config-success',
+        type: 'form-service-common/config/fetch-config-success',
         payload: tenantWebConfig,
       };
       yield put(action);

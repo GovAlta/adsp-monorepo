@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
-import FormEditorCommon from './form-editor-common';
+import FormServiceCommon from './form-service-common';
 
 describe('FormEditorCommon', () => {
   it('should render successfully', () => {

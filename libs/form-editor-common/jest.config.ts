@@ -1,12 +1,12 @@
 // export default {
-//   displayName: 'form-editor-common',
+//   displayName: 'form-service-common',
 //   preset: '../../jest.preset.js',
 //   // transform: {
 //   //   '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],
 //   //   '^.+\\.jsx?$': 'babel-jest',
 //   // },
 //   // moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
-//   // coverageDirectory: '../../coverage/libs/form-editor-common',
+//   // coverageDirectory: '../../coverage/libs/form-service-common',
 
 //   // transformIgnorePatterns: ['node_modules/(?!(@mdx-js/mdx|@mdx-js/react)/)'],
 //   transform: {
@@ -22,7 +22,6 @@
 //   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
 //   testEnvironment: 'jsdom', // For React components
 // };
-
 
 /* eslint-disable */
 const { resolve } = require('path');

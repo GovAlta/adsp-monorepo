@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import {  Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { FormEditorCommonMain } from './form-editor-common-main';
+import { FormEditorCommonMain } from './form-service-common-main';
 import { FormDefinitionEditor } from './definitions/formDefinitionEditor';
 import { SetSession } from './store/session/actions';
 import { fetchConfig } from './store/config/actions';

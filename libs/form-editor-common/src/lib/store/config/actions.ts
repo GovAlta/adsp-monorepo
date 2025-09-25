@@ -1,7 +1,7 @@
 import { ConfigState } from './models';
 
-export const FETCH_CONFIG_ACTION = 'form-editor-common/config/fetch-config';
-export const FETCH_CONFIG_SUCCESS_ACTION = 'form-editor-common/config/fetch-config-success';
+export const FETCH_CONFIG_ACTION = 'form-service-common/config/fetch-config';
+export const FETCH_CONFIG_SUCCESS_ACTION = 'form-service-common/config/fetch-config-success';
 
 export interface FetchConfigAction {
   type: typeof FETCH_CONFIG_ACTION;
@@ -12,14 +12,13 @@ export interface FetchConfigSuccessAction {
   payload: ConfigState;
 }
 
-export type ActionTypes = FetchConfigAction | FetchConfigSuccessAction ;
+export type ActionTypes = FetchConfigAction | FetchConfigSuccessAction;
 
 export const fetchConfig = (): FetchConfigAction => ({
   type: FETCH_CONFIG_ACTION,
 });
 
 export const fetchConfigSuccess = (params: ConfigState): FetchConfigSuccessAction => ({
-  type: 'form-editor-common/config/fetch-config-success',
+  type: 'form-service-common/config/fetch-config-success',
   payload: params,
 });
-
