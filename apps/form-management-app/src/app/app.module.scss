@@ -1,0 +1,27 @@
+@import '../../../../libs/stylesheets/scss/src/lib/app.css';
+@import '../../../../libs/stylesheets/scss/src/lib/colors.scss';
+@import '../../../../libs/stylesheets/scss/src/lib/goa-core.scss';
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+
+  :global(#root) {
+    margin: 0;
+    height: 100%;
+  }
+}
+
+main {
+  flex: 1;
+  position: relative;
+}
+
+.app {
+  margin: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
