@@ -11,4 +11,4 @@ export const FormServiceCommon = ({ session, config }) => {
   );
 };
 
-export default FormEditorCommon;
+export default FormServiceCommon;

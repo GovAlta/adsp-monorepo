@@ -5,19 +5,19 @@ import FormOverview from './formOverview';
 
 import { FormDefinitions } from './definitions/definitions';
 import { Tab, Tabs } from './components/Tabs';
-import { fetchDirectory } from '../lib/store/directory/actions';
+import { fetchDirectory } from './store/directory/actions';
 import { useLocation } from 'react-router-dom';
 import { FormExport } from './export/formExport';
 
-export function FormEditorCommonMain({config}) {
-    const dispatch = useDispatch();
+export function FormEditorCommonMain({ config }) {
+  const dispatch = useDispatch();
   const tabs = config.tabs;
   const availableTabs = Object.keys(tabs).filter((tabKey) =>
     typeof tabs[tabKey] === 'boolean' ? tabs[tabKey] : tabs[tabKey].enabled
   );
 
-   const configDirectory = useSelector((state: RootState) => state.config);
-  
+  const configDirectory = useSelector((state: RootState) => state.config);
+
   if (availableTabs.length === 0) {
     throw new Error('At least one tab must be enabled');
   }

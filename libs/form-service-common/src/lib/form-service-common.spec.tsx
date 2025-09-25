@@ -7,7 +7,7 @@ describe('FormEditorCommon', () => {
   it('should render successfully', () => {
     const { baseElement } = render(
       <MemoryRouter>
-        <FormEditorCommon
+        <FormServiceCommon
           session={{}}
           config={{
             tabs: {
