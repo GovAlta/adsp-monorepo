@@ -218,19 +218,6 @@
       "pattern": "^\\d{3} \\d{3} \\d{3}$",
       "errorMessage": "Must be three groups of three digits."
     },
-    "emailStandard": {
-      "deprecated": true,
-      "type": "string",
-      "format": "email",
-      "label": "Email address",
-      "maxLength": 100,
-      "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{1,}$",
-      "description": "Please enter a valid email address (e.g., name@example.com).",
-      "errorMessage": {
-        "pattern": "(e.g., name@example.com).",
-        "maxLength": "Email must be less than 100 characters."
-      }
-    },
     "email": {
       "$comment": "Standard email address",
       "title": "Email address",
