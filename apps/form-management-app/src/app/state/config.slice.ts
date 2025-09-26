@@ -26,6 +26,8 @@ export const initializeConfig = createAsyncThunk('config/initialize', async () =
   try {
     const { data: envConfig } = await axios.get<Environment>('/config/config.json');
     environment = envConfig;
+
+    console.log('Loaded environment configuration', environment);
   } catch (error) {
     // Use the static imported environment if config.json not available.
   }
@@ -77,7 +79,15 @@ export const loadExtensions = createAsyncThunk(
           message: 'There are task extensions, but extensions are not enabled for the tenant.',
         } as FeedbackMessage);
       } else {
-        return data.configuration?.extensions || [];
+        return (
+          data.configuration?.extensions ||
+          [
+            // {
+            //   src: '{URL to extension script bundle}',
+            //   integrity: 'sha384-{digest value}',
+            // },
+          ]
+        );
       }
     } catch (err) {
       if (axios.isAxiosError(err)) {
