@@ -48,11 +48,27 @@ class XdpElement(ABC):
         return None
 
     def get_enumeration_values(self):
-        items = self.xdp_element.findall(".//items/text")
-        enum = [str(item.text) for item in items if item.text]
-        if len(enum) > 0:
-            deduped = [str(val) for val in remove_duplicates(enum)]
-            return deduped
+        """
+        Return de-duped human-readable choices from <items><text>...</text></items>,
+        ignoring any <items> blocks with presence="hidden".
+        """
+        enum_values = []
+
+        # Find all <items> under this field (assumes namespaces stripped; if not, use a ns map)
+        for items_el in self.xdp_element.findall(".//items"):
+            presence = (items_el.attrib.get("presence") or "").strip().lower()
+            if presence == "hidden":
+                continue  # skip saved-value list
+
+            # Collect the human-readable labels
+            for text_el in items_el.findall("./text"):
+                txt = "".join(text_el.itertext()).strip()
+                if txt:
+                    enum_values.append(txt)
+
+        if enum_values:
+            # keep your existing stable-order de-dupe
+            return [str(v) for v in remove_duplicates(enum_values)]
         return None
 
     def get_format(self):
@@ -71,14 +87,7 @@ def matches_prefix(candidate: str, prefix: str) -> bool:
 
 
 def get_caption_text(xdp_element):
-    # Get namespace
-    if xdp_element.tag.startswith("{"):
-        uri = xdp_element.tag.split("}")[0].strip("{")
-        ns = {"xfa": uri}
-        xpath = ".//xfa:caption/xfa:value"
-        caption_value_elem = xdp_element.find(xpath, namespaces=ns)
-    else:
-        caption_value_elem = xdp_element.find(".//caption/value")
+    caption_value_elem = xdp_element.find(".//caption/value")
 
     if caption_value_elem is not None:
         # Get all text content from the value and its children

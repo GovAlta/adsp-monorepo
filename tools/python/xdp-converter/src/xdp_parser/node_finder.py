@@ -9,7 +9,7 @@ class NodeFinder:
 
     def find_first_node(self, node_name: str) -> Optional[ET.Element]:
         """
-        Find the <variables> node under the XFA template, regardless of prefix/default NS.
+        Find the node under the XFA template, regardless of prefix/default NS.
         Tries prefix-aware XPath first; falls back to local-name scan.
         """
 

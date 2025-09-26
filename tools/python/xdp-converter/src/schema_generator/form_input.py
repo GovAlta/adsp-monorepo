@@ -20,8 +20,6 @@ class FormInput(FormElement):
     def to_json_schema(self):
         json_schema = {"type": self.input_type}
         if self.enum:
-            if self.is_radio:
-                print(f"FormInput.to_json_schema: Setting is_radio for {self.name}")
             json_schema["enum"] = self.enum
         if self.format:
             json_schema["format"] = self.format
