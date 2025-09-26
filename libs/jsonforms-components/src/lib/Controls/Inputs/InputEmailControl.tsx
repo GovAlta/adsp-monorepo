@@ -13,6 +13,7 @@ import { GoAInput, GoAFormItem } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { onChangeForInputControl, onBlurForTextControl } from '../../util/inputControlUtils';
+import { FormFieldWrapper } from './style-component';
 
 type GoAEmailControlProps = ControlProps & WithInputProps;
 type ExtendedJsonSchema = JsonSchema & {
@@ -44,43 +45,45 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
   const finalErrors = splitErrors.join('\n');
 
   return (
-    <GoAFormItem
-      error={isVisited && finalErrors}
-      testId="form-email-input-wrapper"
-      requirement={required ? 'required' : undefined}
-      label={primaryLabel}
-    >
-      <GoAInput
-        error={isVisited && finalErrors.length > 0}
-        type={'email'}
-        width={width}
-        name="Email address"
-        value={data}
-        testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-        disabled={!enabled}
-        readonly={readOnly}
-        onChange={(name: string, value: Date | string) => {
-          if (!isVisited) {
-            setIsVisited(true);
-          }
-          onChangeForInputControl({
-            name,
-            value,
-            controlProps: props as ControlProps,
-          });
-        }}
-        onBlur={(name: string, value: Date | string) => {
-          if (!isVisited) {
-            setIsVisited(true);
-          }
-          onBlurForTextControl({
-            name,
-            value,
-            controlProps: props as ControlProps,
-          });
-        }}
-      />
-    </GoAFormItem>
+    <FormFieldWrapper>
+      <GoAFormItem
+        error={isVisited && finalErrors}
+        testId="form-email-input-wrapper"
+        requirement={required ? 'required' : undefined}
+        label={primaryLabel}
+      >
+        <GoAInput
+          error={isVisited && finalErrors.length > 0}
+          type={'email'}
+          width={width}
+          name="Email address"
+          value={data}
+          testId={appliedUiSchemaOptions?.testId || `${id}-input`}
+          disabled={!enabled}
+          readonly={readOnly}
+          onChange={(name: string, value: Date | string) => {
+            if (!isVisited) {
+              setIsVisited(true);
+            }
+            onChangeForInputControl({
+              name,
+              value,
+              controlProps: props as ControlProps,
+            });
+          }}
+          onBlur={(name: string, value: Date | string) => {
+            if (!isVisited) {
+              setIsVisited(true);
+            }
+            onBlurForTextControl({
+              name,
+              value,
+              controlProps: props as ControlProps,
+            });
+          }}
+        />
+      </GoAFormItem>
+    </FormFieldWrapper>
   );
 };
 
