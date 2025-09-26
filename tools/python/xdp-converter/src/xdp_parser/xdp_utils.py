@@ -8,11 +8,11 @@ def strip_namespace(tag: str) -> str:
     return tag.split("}")[-1] if "}" in tag else tag
 
 
-_PREFIXES = ["txt", "btn", "chk", "dte", "lbl", "cbo"]
+_LABEL_PREFIXES = ["txt", "btn", "chk", "dte", "lbl", "cbo"]
 
 
 def strip_label_prefix(label: str) -> str:
-    for prefix in _PREFIXES:
+    for prefix in _LABEL_PREFIXES:
         if label.lower().startswith(prefix.lower()):
             return label[len(prefix) :]
     return label
@@ -86,7 +86,7 @@ def is_help_button(name: str) -> bool:
     return bool(re.match(r"^btn.*Help.*$", name))
 
 
-def _remove_duplicates(elems):
+def remove_duplicates(elems):
     seen = set()
     results = []
     for e in elems:

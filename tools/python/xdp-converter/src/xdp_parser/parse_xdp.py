@@ -6,7 +6,7 @@ from schema_generator.form_element import FormElement
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_factory import xdp_factory
 from xdp_parser.xdp_radio_selector import XdpRadioSelector, extract_radio_button_labels
-from xdp_parser.xdp_utils import _remove_duplicates
+from xdp_parser.xdp_utils import remove_duplicates
 
 
 def parse_xdp(tree: ET.Element) -> List[FormElement]:
@@ -115,7 +115,7 @@ def parse_category(category: ET.Element) -> List["XdpElement"]:
     labels = extract_radio_button_labels(category)
     if labels:
         out.append(XdpRadioSelector(category, labels))
-        return _remove_duplicates(out)
+        return remove_duplicates(out)
 
     for el, inside_excl in _collect_pruning_exclgroup(category):
         if el.tag == "exclGroup":
@@ -128,4 +128,4 @@ def parse_category(category: ET.Element) -> List["XdpElement"]:
             if xdp:
                 out.append(xdp)
 
-    return _remove_duplicates(out)
+    return remove_duplicates(out)

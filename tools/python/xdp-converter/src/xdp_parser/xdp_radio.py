@@ -10,8 +10,6 @@ class XdpRadio(XdpElement):
         options = []
 
         for field in self.xdp_element.findall(".//field"):
-            if field.get("name") == "SAOwned":
-                print("SAOwned to form element")
             caption = field.find(".//caption/value")
             label_text = None
 
