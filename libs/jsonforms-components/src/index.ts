@@ -53,7 +53,7 @@ import {
   GoAInputBaseFullNameControlReview,
   GoAInputBaseFullNameDobControlReview,
   GoAEmailControlTester,
-  GoAInputEmailControl
+  GoAInputEmailControl,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -72,6 +72,7 @@ import { HelpContent, HelpContentTester, HelpReviewContent } from './lib/Additio
 import GoAErrorControl, { GoAErrorControlTester } from './lib/ErrorHandling/GoAErrorControl';
 import GoACalloutControl, { GoACalloutControlTester, CalloutReviewControl } from './lib/Additional/GoACalloutControl';
 import { GoAGroupReviewControl, GoAGroupReviewLayoutTester } from './lib/layouts/GroupReviewControl';
+import { GoAComputedControlTester, GoAComputedControl } from './lib/Controls/Computed/ComputedControl';
 
 export * from './lib/Context';
 export * from './lib/common';
@@ -237,6 +238,7 @@ export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControl) },
   { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameControl) },
   { tester: FullNameDobTester, renderer: withJsonFormsControlProps(FullNameDobControl) },
+  { tester: GoAComputedControlTester, renderer: GoAComputedControl },
 ];
 
 export const GoACells: JsonFormsCellRendererRegistryEntry[] = [...InputCells];
