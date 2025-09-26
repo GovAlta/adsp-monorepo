@@ -16,37 +16,23 @@ import {
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { ClientRoleTable } from '@components/RoleTable';
-import { SaveFormModal } from '@components/saveModal';
-import { Tab, Tabs } from '@components/Tabs';
-import { PageIndicator } from '@components/Indicator';
-import DataTable from '@components/DataTable';
-import { DeleteModal } from '@components/DeleteModal';
-import { CustomLoader } from '@components/CustomLoader';
+import { ClientRoleTable } from '../components/RoleTable';
+import { SaveFormModal } from '../components/saveModal';
+import { Tab, Tabs } from '../components/Tabs';
+import { PageIndicator } from '../components/Indicator';
+import DataTable from '../components/DataTable';
+import { DeleteModal } from '../components/DeleteModal';
+import { CustomLoader } from '../components/CustomLoader';
 import {
   FormDataSchemaElementCompletionItemProvider,
   FormPropertyValueCompletionItemProvider,
   FormUISchemaElementCompletionItemProvider,
-} from '@lib/autoComplete';
-import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
-import { useValidators } from '@lib/validation/useValidators';
-import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
-import useWindowDimensions from '@lib/useWindowDimensions';
-import { RootState } from '@store/index';
-import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
-import { SecurityClassification } from '@store/common/models';
-import { UploadFileService, DownloadFileService, DeleteFileService, ClearNewFileList } from '@store/file/actions';
-import {
-  setDraftDataSchema,
-  setDraftUISchema,
-  updateFormDefinition,
-  updateEditorFormDefinition,
-  getFormDefinitions,
-} from '@store/form/action';
-import { Disposition, FormDefinition } from '@store/form/model';
-import { isFormUpdatedSelector, schemaErrorSelector } from '@store/form/selectors';
-import { ActionState } from '@store/session/models';
+} from '../components/autoComplete';
+import { isValidJSONSchemaCheck } from '../components/checkInput';
+import { useValidators } from '../components/useValidators';
+import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '../components/checkInput';
+import useWindowDimensions from '../components/useWindowDimensions';
+
 import {
   TextLoadingIndicator,
   FlexRow,
@@ -76,12 +62,19 @@ import { FormConfigDefinition } from './formConfigDefinition';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 import { RowFlex, QueueTaskDropdown, H3, BorderBottom, H3Inline, ToolTipAdjust } from './style-components';
-import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
-import { CalendarEventDefault } from '@store/calendar/models';
+import { Disposition, FormDefinition } from './model';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
+import { rename } from 'fs';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
+
+export enum SecurityClassification {
+  ProtectedA = 'protected a',
+  ProtectedB = 'protected b',
+  ProtectedC = 'protected c',
+  Public = 'public',
+}
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -152,21 +145,48 @@ const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdat
 
 const NO_TASK_CREATED_OPTION = `No task created`;
 
-export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fileTypes }): JSX.Element {
-  const fileList = useSelector((state: RootState) => {
-    return state?.fileService.newFileList;
-  });
-
-  const dispatch = useDispatch();
+export function FormEditorCommon({
+  definition,
+  roles,
+  queueTasks,
+  fileTypes,
+  isLoading,
+  isSaving,
+  tempUiSchema,
+  tempDataSchema,
+  setDefinition,
+  formDefinitions,
+  schemaError,
+  selectedCoreEvent,
+  isFormUpdated,
+  latestNotification,
+  isLoadingRoles,
+  fileList,
+  SecurityClassification,
+  indicator,
+  CalendarEventDefault,
+  formServiceApiUrl,
+  DeleteFileService,
+  updateFormDefinition,
+  UploadFileService,
+  DownloadFileService,
+  UpdateSearchCriteriaAndFetchEvents,
+  ClearNewFileList,
+  getFormDefinitions,
+  setDraftDataSchema,
+  setDraftUISchema,
+  dataSchema,
+  renameAct,
+}): JSX.Element {
   const editorRefData = useRef(null);
   const editorRefUi = useRef(null);
 
   const uploadFile = (file: File, propertyId: string) => {
     const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId.split('.')?.[0] };
-    dispatch(UploadFileService(fileInfo));
+    UploadFileService(fileInfo);
   };
   const downloadFile = (file) => {
-    dispatch(DownloadFileService(file));
+    DownloadFileService(file);
   };
 
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
@@ -182,31 +202,6 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
   function unfoldAll(editor: IEditor) {
     editor.trigger('folding-util', 'editor.unfoldAll', undefined);
   }
-
-  const {
-    loading: isLoading,
-    saving: isSaving,
-    uiSchemaDraft: tempUiSchema,
-    dataSchemaDraft: tempDataSchema,
-  } = useSelector((state: RootState) => state.form.editor);
-
-  const setDefinition = (update: Partial<FormDefinition>) => dispatch(updateEditorFormDefinition(update));
-  const formDefinitions = useSelector((state: RootState) => state.form.definitions);
-  const schemaError = useSelector(schemaErrorSelector);
-
-  const selectedCoreEvent = useSelector(
-    (state: RootState) => state.calendarService?.coreCalendars?.['form-intake']?.selectedCalendarEvents
-  );
-
-  const { isFormUpdated, latestNotification, isLoadingRoles, indicator, formServiceApiUrl } = useSelector(
-    (state: RootState) => ({
-      isFormUpdated: isFormUpdatedSelector(state),
-      latestNotification: state.notifications.notifications[state.notifications.notifications.length - 1],
-      isLoadingRoles: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] === ActionState.inProcess,
-      indicator: state.session?.indicator,
-      formServiceApiUrl: state.config?.serviceUrls?.formServiceApiUrl,
-    })
-  );
 
   const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
   const [uiEditorLocation, setUiEditorLocation] = useState<number>(0);
@@ -234,21 +229,19 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
 
   useEffect(() => {
     if (intakePeriodModal) {
-      dispatch(
-        UpdateSearchCriteriaAndFetchEvents({
-          recordId: `urn:ads:platform:configuration-service:v2:/configuration/form-service/${definition.id}`,
-          calendarName: 'form-intake',
-        })
-      );
+      UpdateSearchCriteriaAndFetchEvents({
+        recordId: `urn:ads:platform:configuration-service:v2:/configuration/form-service/${definition.id}`,
+        calendarName: 'form-intake',
+      });
     }
   }, [intakePeriodModal]);
 
   const deleteFile = (file) => {
-    dispatch(DeleteFileService(file?.id));
+    DeleteFileService(file?.id);
   };
 
   // Resolved data schema (with refs inlined) is used to generate suggestions.
-  const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema) as Record<string, unknown>;
+
   useEffect(() => {
     if (monaco) {
       const valueProvider = monaco.languages.registerCompletionItemProvider(
@@ -286,10 +279,10 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
 
   const navigate = useNavigate();
   const close = () => {
-    dispatch(ClearNewFileList());
+    ClearNewFileList();
     navigate('..?definitions=true', { state: { addOpenFormEditor: true, isNavigatedFromEdit: true } });
     if (Object.keys(formDefinitions).length === 0) {
-      dispatch(getFormDefinitions());
+      getFormDefinitions();
     }
   };
 
@@ -388,7 +381,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
           <NameDescriptionDataSchema>
             <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
             <hr className="hr-resize" />
-            {definition && <FormConfigDefinition definition={definition} />}
+            {definition && <FormConfigDefinition definition={definition} renameAct={renameAct} />}
 
             <Tabs
               activeIndex={activeIndex}
@@ -410,7 +403,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                       onMount={handleEditorDidMountData}
                       onChange={(value) => {
                         const jsonSchemaValidResult = JSONSchemaValidator(value);
-                        dispatch(setDraftDataSchema(value));
+                        setDraftDataSchema(value);
 
                         if (jsonSchemaValidResult === '') {
                           setEditorErrors({
@@ -478,7 +471,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                       }}
                       onMount={handleEditorDidMountUi}
                       onChange={(value) => {
-                        dispatch(setDraftUISchema(value));
+                        setDraftUISchema(value);
                       }}
                       language="json"
                       options={{
@@ -929,7 +922,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                   }
                   onClick={() => {
                     if (indicator.show !== true) {
-                      dispatch(updateFormDefinition(definition));
+                      updateFormDefinition(definition);
                     }
                   }}
                 >
@@ -999,7 +992,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
           close();
         }}
         onSave={() => {
-          dispatch(updateFormDefinition(definition));
+          updateFormDefinition(definition);
           setSaveModal({ visible: false });
           close();
         }}
@@ -1110,3 +1103,5 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
     </FormEditor>
   );
 }
+
+export default FormEditorCommon;

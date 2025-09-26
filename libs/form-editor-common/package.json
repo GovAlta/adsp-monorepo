@@ -1,0 +1,16 @@
+{
+  "name": "form-editor-common",
+  "type": "module",
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
+      "options": {
+        "jestConfig": "libs/jsonforms-components/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  }
+}
