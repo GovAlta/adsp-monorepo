@@ -1,15 +1,12 @@
 import React from 'react';
 import styled from 'styled-components';
-import Container from '@components/Container';
 
 const TenantManagement = (): JSX.Element => {
   return (
     <AdminLayout>
-      <Container>
-        <Main>
-          <h2>Welcome to Dashboard</h2>
-        </Main>
-      </Container>
+      <Main>
+        <h2>Welcome to Dashboard</h2>
+      </Main>
     </AdminLayout>
   );
 };

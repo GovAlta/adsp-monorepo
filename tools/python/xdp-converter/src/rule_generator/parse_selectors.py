@@ -11,51 +11,29 @@ class ParseSelectors:
         self.root = root
         self.debug = debug
 
-    # def build_radio_btn_groups(
-    #     self,
-    # ) -> Tuple[Dict[str, Dict[str, str]], Dict[str, str]]:
-    #     """
-    #     Return:
-    #     group_to_button_map: { btn_group_name: { btn: label } }
-    #     button_to_group_map: { btn: btn_group_name }
-    #     Combines true <exclGroup> groups and heuristic radio-like clusters.
-    #     """
-    #     group_to_button_map = self._find_excl_groups()
-
-    #     # add heuristic clusters where no explicit exclGroup is present for that container name
-    #     radio_clusters = self._find_radio_like_clusters()
-    #     for btn_group_name, button in radio_clusters.items():
-    #         group_to_button_map.setdefault(btn_group_name, button)
-
-    #     button_to_group_map: Dict[str, str] = {}
-    #     for btn_group_name, button in group_to_button_map.items():
-    #         for btn in button:
-    #             button_to_group_map[btn] = btn_group_name
-    #     return group_to_button_map, button_to_group_map
-
     def _find_excl_groups(self) -> Dict[str, Dict[str, str]]:
         """
         Return: { group_name: { member_field_name: label } } using <exclGroup>.
         """
-        out: Dict[str, Dict[str, str]] = {}
+        radio_btn_group: Dict[str, Dict[str, str]] = {}
         for ex in self.root.iter():
             if tag_name(ex.tag) != "exclGroup":
                 continue
-            gname = ex.attrib.get("name") or "radioGroup"
-            group: Dict[str, str] = {}
-            # iterate descendants; pick <field> elements
-            for fld in ex.iter():
-                if tag_name(fld.tag) != "field":
+            radio_name = ex.attrib.get("name") or "radioGroup"
+            options: Dict[str, str] = {}
+            # iterate descendants; <field> elements may contain an option
+            for field in ex.iter():
+                if tag_name(field.tag) != "field":
                     continue
-                fname = fld.attrib.get("name")
-                if not fname:
+                field_name = field.attrib.get("name")
+                if not field_name:
                     continue
-                label = gather_label_text(fld) or fname
-                group[fname] = label
+                label = gather_label_text(field) or field_name
+                options[field_name] = label
             # keep only if there are at least two options
-            if len(group) >= 2:
-                out[gname] = group
-        return out
+            if len(options) >= 2:
+                radio_btn_group[radio_name] = options
+        return radio_btn_group
 
     def _find_radio_like_clusters(self) -> Dict[str, Dict[str, str]]:
         """

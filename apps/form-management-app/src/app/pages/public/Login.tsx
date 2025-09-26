@@ -1,47 +1,45 @@
-/* eslint-disable */
 import React, { useEffect } from 'react';
-import { Page } from '@components/Html';
-import { useSelector } from 'react-redux';
-import { RootState } from '@store/index';
-import { getOrCreateKeycloakAuth, getIdpHint, LOGIN_TYPES } from '@lib/keycloak';
-import { useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { useParams, useNavigate } from 'react-router-dom';
+
+import {
+  AppDispatch,
+  configInitializedSelector,
+  initializeTenant,
+  loginUser,
+  tenantSelector,
+  feedbackSelector,
+} from '../../state';
 
 const LoginLanding = (): JSX.Element => {
-  const keycloakConfig = useSelector((state: RootState) => state.config.keycloakApi);
-  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
-  async function handleSignIn() {
-    if (!keycloakConfig?.url || !keycloakConfig?.clientId) return;
-    const realm = keycloakConfig?.realm || localStorage.getItem('realm') || 'core';
-    const auth = await getOrCreateKeycloakAuth(
-      { url: keycloakConfig.url, clientId: keycloakConfig.clientId } as any,
-      realm
-    );
-    const idpHint = getIdpHint();
-    await auth.loginByCore(LOGIN_TYPES.tenant, idpHint);
-  }
+  const { tenant: tenantName } = useParams<{ tenant: string }>();
 
-  // Auto-trigger only if ?kc_idp_hint is present (even if empty)
+  const tenant = useSelector(tenantSelector);
+  const feedback = useSelector(feedbackSelector);
+  const configInitialized = useSelector(configInitializedSelector);
+
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.has('kc_idp_hint')) {
-      handleSignIn();
+    if (configInitialized) {
+      dispatch(initializeTenant(tenantName));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search]);
+  }, [configInitialized, tenantName, dispatch]);
 
-  return (
-    <Page>
-      <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--goa-space-2xl, 48px)' }}>
-        <div style={{ maxWidth: 520, width: '100%' }}>
-          <h2 style={{ marginBottom: 'var(--goa-space-l, 24px)' }}>DCM Group</h2>
-          <p style={{ marginBottom: 'var(--goa-space-l, 24px)' }}>
-            Continue to the dashboard using your Government of Alberta credentials.
-          </p>
-        </div>
-      </div>
-    </Page>
-  );
+  useEffect(() => {
+    if (tenant) {
+      dispatch(loginUser({ tenant, from: `/${tenantName}` }));
+    }
+  }, [tenant, dispatch, tenantName]);
+
+  useEffect(() => {
+    if (feedback?.message.includes('not found')) {
+      navigate(`/overview`);
+    }
+  }, [feedback, navigate]);
+
+  return <div></div>;
 };
 
 export default LoginLanding;
