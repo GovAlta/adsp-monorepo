@@ -21,6 +21,8 @@ const LoginLanding = (): JSX.Element => {
   const feedback = useSelector(feedbackSelector);
   const configInitialized = useSelector(configInitializedSelector);
 
+  console.log(JSON.stringify(tenant) +" <tenant")
+
   useEffect(() => {
     if (configInitialized) {
       dispatch(initializeTenant(tenantName));

@@ -26,11 +26,16 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
   const type = decodeURIComponent(urlParams.get('type')) || LOGIN_TYPES.tenant;
   const idp = decodeURIComponent(urlParams.get('kc_idp_hint'));
 
+  console.log(tenantRealm + "<tenantRealm");
+
   useEffect(() => {
     (async () => {
+        console.log(JSON.stringify(keycloak.clientId) + '<keycloak');
+        console.log(JSON.stringify(keycloak.url) + '<keycloak');
       if (!keycloak?.url || !keycloak?.clientId) return;
       const auth = await getOrCreateKeycloakAuth({ url: keycloak.url, clientId: keycloak.clientId } as any, realm);
       const session = await auth.checkSSO();
+      console.log(JSON.stringify(session) +"<---session")
       if (session?.authenticated) {
         dispatch(setSession(session));
         // Route decisions based on previous logic

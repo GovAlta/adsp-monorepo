@@ -86,6 +86,7 @@ export async function getAccessToken(): Promise<string> {
       // If we're unable to update token, return no value and the request will fail on 401.
     }
   }
+  console.log(JSON.stringify(token) + "<token")
   return token;
 }
 

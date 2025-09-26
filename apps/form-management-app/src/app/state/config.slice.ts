@@ -63,6 +63,8 @@ export const loadExtensions = createAsyncThunk(
       const { config } = getState() as AppState;
       const configurationServiceUrl = config.directory[CONFIGURATION_SERVICE_ID];
 
+      console.log("ARE WE RUNNING THIS EVER")
+
       const accessToken = await getAccessToken();
       const { data } = await axios.get<{ configuration: { extensions: Extension[] } }>(
         new URL('/configuration/v2/configuration/platform/task-service/active', configurationServiceUrl).href,
