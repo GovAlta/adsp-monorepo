@@ -23,11 +23,10 @@ def xdp_factory(xdp: ET.Element) -> XdpElement | None:
         case "exclGroup":
             return XdpRadio(xdp)
         case "field":
-            if is_info_button(xdp):
-                # TODO create HelpContent ?
-                print("Found info button")
-            else:
+            if not is_info_button(xdp):
                 return XdpBasicInput(xdp)
+            # else:
+            # TODO create HelpContent ?
     return None
 
 

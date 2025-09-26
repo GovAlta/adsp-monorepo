@@ -71,61 +71,72 @@ def is_potential_category(cat: ET.Element) -> bool:
     return False
 
 
-# def parse_category(category: ET.Element) -> List[XdpElement]:
-#     category_elements = []
-#     # if the radio buttons have lots of help text surrounding them
-#     # they get embedded in a Subsection rather than an exclGroup
-#     # container.  Should they be treated as a category
-#     # in such a case?
-#     labels = extract_radio_button_labels(category)
-#     if labels:
-#         category_elements.append(XdpRadioSelector(category, labels))
-#         return category_elements
-#     else:
-#         ## Ack!  Is this right?  It finds fields in an excl group and
-#         ## processes them separately, as duplicate inputs.
-#         for element in category.findall(".//*"):
-#             # traceback.print_stack()
-#             # input elements are found in categories or exclGroups (radio buttons)
-#             if element.tag in ("field", "exclGroup"):
-#                 xdp = xdp_factory(element)
-#                 if xdp:
-#                     category_elements.append(xdp)
+import xml.etree.ElementTree as ET
+from typing import List
+
+# decide whether to keep the hidden subform visible to outer logic:
+# - True  -> yield the hidden subform node (so you can still attach rules), but don't descend
+# - False -> skip the hidden subform entirely (neither yield nor descend)
+YIELD_HIDDEN_SUBFORM_NODE = True
 
 
-#     return _remove_duplicates(category_elements)
-def _collect_pruning_exclgroup(root: ET.Element):
-    results = []
-    stack = [(root, False)]
-    while stack:
-        node, inside_excl = stack.pop()
-        for child in list(node):
-            if child.tag == "exclGroup":
-                results.append((child, True))
-                # do NOT push its children
-                continue
-            results.append((child, inside_excl))
-            stack.append((child, inside_excl))
-    return results
+def _is_hidden_subform(el: ET.Element) -> bool:
+    # presence="hidden" => treat as hidden
+    return el.tag == "subform" and (el.get("presence", "").lower() == "hidden")
+
+
+def _traverse_category(root: ET.Element):
+    """
+    Yield (element, inside_excl) for all descendants of `root`.
+      - On exclGroup: yield once with inside_excl=True, do NOT descend.
+      - On hidden subform: yield once (configurable), do NOT descend.
+      - Otherwise: yield and continue descending.
+    """
+    for child in list(root):
+        if child.tag == "exclGroup":
+            yield child, True
+            continue
+
+        if _is_hidden_subform(child):
+            if YIELD_HIDDEN_SUBFORM_NODE:
+                yield child, False
+            # in all cases: do NOT descend into hidden subform
+            continue
+
+        # normal element
+        yield child, False
+        yield from _traverse_category(child)
 
 
 def parse_category(category: ET.Element) -> List["XdpElement"]:
     out: List["XdpElement"] = []
 
+    # 1) Whole category acts like a radio wrapper? (e.g., a single exclGroup’s worth of radios)
     labels = extract_radio_button_labels(category)
     if labels:
         out.append(XdpRadioSelector(category, labels))
         return remove_duplicates(out)
 
-    for el, inside_excl in _collect_pruning_exclgroup(category):
+    # 2) Walk subtree with pruning
+    for el, inside_excl in _traverse_category(category):
         if el.tag == "exclGroup":
             labels = extract_radio_button_labels(el)
             xdp = XdpRadioSelector(el, labels) if labels else xdp_factory(el)
             if xdp:
                 out.append(xdp)
-        elif el.tag == "field" and not inside_excl:
+            # children were intentionally not traversed
+            continue
+
+        if el.tag == "field" and not inside_excl:
+            # ordinary field (not inside exclGroup, and not inside hidden subform due to pruning)
             xdp = xdp_factory(el)
             if xdp:
                 out.append(xdp)
+
+        # Optional: if you want to surface visible subforms as containers, handle here
+        # elif el.tag == "subform" and not _is_hidden_subform(el):
+        #     maybe_wrap = xdp_factory(el)
+        #     if maybe_wrap:
+        #         out.append(maybe_wrap)
 
     return remove_duplicates(out)
