@@ -386,7 +386,7 @@ describe('formatPostalCodeIfNeeded', () => {
     ['123 Main St', '123 Main St', 'none'],
     ['T3H 5Y1', 'T3H 5Y1', 'full'],
     [' t3h5y1 ', 'T3H 5Y1', 'full'],
-  ])('input "%s" (type %s) → "%s"', (input, expected, mockType) => {
+  ])('input "%s" (type %s) → "%s"', (input, expected) => {
     expect(formatPostalCodeIfNeeded(input)).toBe(expected);
   });
 });

@@ -5,3 +5,4 @@ export * from './ObjectArray';
 export * from './AddressLookup';
 export * from './FullName';
 export * from './FullNameDOB';
+export * from './Calculation';

@@ -53,7 +53,9 @@ import {
   GoAInputBaseFullNameControlReview,
   GoAInputBaseFullNameDobControlReview,
   GoAEmailControlTester,
-  GoAInputEmailControl
+  GoAInputEmailControl,
+  GoACalculationControlTester,
+  GoACalculationControl,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -237,6 +239,7 @@ export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControl) },
   { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameControl) },
   { tester: FullNameDobTester, renderer: withJsonFormsControlProps(FullNameDobControl) },
+  { tester: GoACalculationControlTester, renderer: GoACalculationControl },
 ];
 
 export const GoACells: JsonFormsCellRendererRegistryEntry[] = [...InputCells];
