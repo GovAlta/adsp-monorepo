@@ -1,7 +1,6 @@
 import xml.etree.ElementTree as ET
 
 from xdp_parser.message_parser import JSHelpMessageParser
-from xdp_parser.node_finder import NodeFinder
 
 
 #
