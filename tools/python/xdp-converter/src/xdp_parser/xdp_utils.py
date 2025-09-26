@@ -76,3 +76,25 @@ def strip_namespaces(elem):
         if el.tag.startswith("{"):
             el.tag = el.tag.split("}", 1)[1]  # keep localname only
     return elem
+
+
+def is_help_button(name: str) -> bool:
+    """
+    Returns True if the string matches the pattern: btn<anything>Help<anything>,
+    a heuristic to help recognize "information" buttons.
+    """
+    return bool(re.match(r"^btn.*Help.*$", name))
+
+
+def _remove_duplicates(elems):
+    seen = set()
+    results = []
+    for e in elems:
+        # XdpElement has get_name(); if not, fall back to None
+        name = getattr(e, "get_name", lambda: None)()
+        if name and name in seen:
+            continue
+        if name:
+            seen.add(name)
+        results.append(e)
+    return results
