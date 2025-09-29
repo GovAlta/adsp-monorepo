@@ -6,6 +6,7 @@ from schema_generator.form_element import FormElement
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_factory import xdp_factory
 from xdp_parser.xdp_radio_selector import XdpRadioSelector, extract_radio_button_labels
+from xdp_parser.xdp_subform import traverse_node
 from xdp_parser.xdp_utils import remove_duplicates
 
 
@@ -71,72 +72,29 @@ def is_potential_category(cat: ET.Element) -> bool:
     return False
 
 
-import xml.etree.ElementTree as ET
-from typing import List
+def parse_category(category: ET.Element) -> list["XdpElement"]:
+    nodes: list["XdpElement"] = []
 
-# decide whether to keep the hidden subform visible to outer logic:
-# - True  -> yield the hidden subform node (so you can still attach rules), but don't descend
-# - False -> skip the hidden subform entirely (neither yield nor descend)
-YIELD_HIDDEN_SUBFORM_NODE = True
-
-
-def _is_hidden_subform(el: ET.Element) -> bool:
-    # presence="hidden" => treat as hidden
-    return el.tag == "subform" and (el.get("presence", "").lower() == "hidden")
-
-
-def _traverse_category(root: ET.Element):
-    """
-    Yield (element, inside_excl) for all descendants of `root`.
-      - On exclGroup: yield once with inside_excl=True, do NOT descend.
-      - On hidden subform: yield once (configurable), do NOT descend.
-      - Otherwise: yield and continue descending.
-    """
-    for child in list(root):
-        if child.tag == "exclGroup":
-            yield child, True
-            continue
-
-        if _is_hidden_subform(child):
-            if YIELD_HIDDEN_SUBFORM_NODE:
-                yield child, False
-            # in all cases: do NOT descend into hidden subform
-            continue
-
-        # normal element
-        yield child, False
-        yield from _traverse_category(child)
-
-
-def parse_category(category: ET.Element) -> List["XdpElement"]:
-    out: List["XdpElement"] = []
-
-    # 1) Whole category acts like a radio wrapper? (e.g., a single exclGroup’s worth of radios)
+    # whole-category radio wrapper?
     labels = extract_radio_button_labels(category)
     if labels:
-        out.append(XdpRadioSelector(category, labels))
-        return remove_duplicates(out)
+        nodes.append(XdpRadioSelector(category, labels))
+        return remove_duplicates(nodes)
 
-    # 2) Walk subtree with pruning
-    for el, inside_excl in _traverse_category(category):
+    for el in category:
         if el.tag == "exclGroup":
-            labels = extract_radio_button_labels(el)
-            xdp = XdpRadioSelector(el, labels) if labels else xdp_factory(el)
-            if xdp:
-                out.append(xdp)
-            # children were intentionally not traversed
+            fe = xdp_factory(el)  # radio selector or None
+            if fe:
+                nodes.append(fe)
             continue
+        if el.tag == "field":
+            fe = xdp_factory(el)
+            if fe:
+                nodes.append(fe)
+        if el.tag == "subform":
+            print(f"category: {category.get('name')}, subform {el.get('name')}")
+            fe = xdp_factory(el)  # XdpGroup
+            if fe:
+                nodes.append(fe)
 
-        if el.tag == "field" and not inside_excl:
-            # ordinary field (not inside exclGroup, and not inside hidden subform due to pruning)
-            xdp = xdp_factory(el)
-            if xdp:
-                out.append(xdp)
-
-        # Optional: if you want to surface visible subforms as containers, handle here
-        # elif el.tag == "subform" and not _is_hidden_subform(el):
-        #     maybe_wrap = xdp_factory(el)
-        #     if maybe_wrap:
-        #         out.append(maybe_wrap)
-
-    return remove_duplicates(out)
+    return remove_duplicates(nodes)

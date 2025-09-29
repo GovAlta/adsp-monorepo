@@ -98,3 +98,11 @@ def remove_duplicates(elems):
             seen.add(name)
         results.append(e)
     return results
+
+
+def is_hidden(node):
+    return node.get("presence", "").lower() == "hidden"
+
+
+def is_subform(el: ET.Element) -> bool:
+    return el.tag == "subform"
