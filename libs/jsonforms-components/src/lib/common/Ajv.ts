@@ -10,7 +10,7 @@ export const createDefaultAjv = (...schemas: AnySchema[]) => {
   addFormats(ajv);
 
   ajv.addFormat('time', /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/);
-
+  ajv.addFormat('computed', /^[a-zA-Z0-9._-]+$/);
   ajv.addFormat('file-urn', {
     type: 'string',
     validate: (input) => {
