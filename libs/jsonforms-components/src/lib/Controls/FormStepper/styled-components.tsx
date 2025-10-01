@@ -112,16 +112,13 @@ export const TableReviewCategoryLabel = styled.h3`
 export const CategoryStatus = styled.td`
   width: var(--goa-space-xl);
   padding-right: var(--goa-space-xl);
-`;
-export const TocPageRef = styled.td`
-  padding-left: var(--goa-space-xl);
+  align-content: center;
 `;
 
 export const CompletionStatus = styled.div`
   padding: 0;
   margin: 0;
-  padding-left: var(--goa-space-xl);
-  padding-bottom: var(--goa-space-xl);
+  margin-bottom: 0 !important;
 `;
 
 interface PageStepperRowProps {
@@ -145,6 +142,7 @@ export const SectionHeaderRowTr = styled.tr`
     border: 0 !important;
     padding-top: var(--goa-space-l);
     padding-bottom: var(--goa-space-s);
+    padding-left: 0 !important;
   }
 
   & + tr > td {

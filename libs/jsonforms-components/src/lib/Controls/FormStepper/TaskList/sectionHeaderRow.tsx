@@ -11,7 +11,7 @@ export const SectionHeaderRow = ({ title, index }: SectionHeaderRowProps): JSX.E
   return (
     <SectionHeaderRowTr>
       <td colSpan={2}>
-        <GoAText size="heading-m" mt="none" mb="m" ml="m">
+        <GoAText size="heading-m" mt="xl" mb="m">
           {section}
         </GoAText>
       </td>
