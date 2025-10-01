@@ -217,7 +217,7 @@
     "@types/traceparent": "^1.0.1",
     "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "7.18.0",
-    "artillery": "^2.0.16",
+    "artillery": "^2.0.26",
     "axe-core": "^4.8.2",
     "axe-html-reporter": "^2.2.2",
     "axios-mock-adapter": "1.22.0",
