@@ -38,9 +38,10 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
         <GoAButton
           disabled={!enabled}
           testId={`object-array-toolbar-${label}`}
+          leadingIcon="add"
           aria-label={`Add to button to ${label?.toLowerCase() || ''}`}
           onClick={addItem(path, createDefaultValue(schema, rootSchema))}
-          type={uischema.options?.addButtonType ?? 'primary'}
+          type={uischema.options?.addButtonType ?? 'secondary'}
           {...buttonUIProps}
         >
           {uischema?.options?.addButtonText || capitalizeFirstLetter(`Add ${arrayLabel}`)}
