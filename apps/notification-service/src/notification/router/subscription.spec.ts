@@ -36,6 +36,14 @@ describe('subscription router', () => {
     warn: jest.fn(),
   } as unknown as Logger;
 
+  const templateServiceMock = {
+    generateMessage: jest.fn(),
+  };
+
+  const attachmentServiceMock = {
+    getAttachment: jest.fn(),
+  };
+
   const repositoryMock = {
     getSubscriber: jest.fn(),
     getSubscriptions: jest.fn(),
@@ -143,7 +151,14 @@ describe('subscription router', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce(
-        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+        new NotificationConfiguration(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          { test: notificationType },
+          {},
+          tenantId
+        )
       );
       await getNotificationTypes(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining(notificationType)]));
@@ -164,7 +179,14 @@ describe('subscription router', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce(
-        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+        new NotificationConfiguration(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          { test: notificationType },
+          {},
+          tenantId
+        )
       );
       await getNotificationType(req as unknown as Request, res as unknown as Response, next);
       expect(req['notificationType']).toMatchObject(notificationType);
@@ -184,7 +206,14 @@ describe('subscription router', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce(
-        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+        new NotificationConfiguration(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          { test: notificationType },
+          {},
+          tenantId
+        )
       );
       await getNotificationType(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
@@ -210,14 +239,27 @@ describe('subscription router', () => {
           id: tenantId,
         },
         query: {},
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
         getConfiguration: jest.fn(),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce(
-        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+        new NotificationConfiguration(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          { test: notificationType },
+          {},
+          tenantId
+        )
       );
       const result = { results: [], page: {} };
       repositoryMock.getSubscriptions.mockResolvedValueOnce(result);
@@ -241,13 +283,26 @@ describe('subscription router', () => {
           id: tenantId,
         },
         query: { top: '11', after: '123' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
         getConfiguration: jest.fn(),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const configuration = new NotificationConfiguration({ test: notificationType }, {}, tenantId);
+      const configuration = new NotificationConfiguration(
+        loggerMock,
+        templateServiceMock,
+        attachmentServiceMock,
+        { test: notificationType },
+        {},
+        tenantId
+      );
       req.getConfiguration.mockResolvedValueOnce(configuration);
       const result = { results: [], page: {} };
       repositoryMock.getSubscriptions.mockResolvedValueOnce(result);
@@ -277,7 +332,13 @@ describe('subscription router', () => {
           id: tenantId,
         },
         query: {},
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -306,7 +367,13 @@ describe('subscription router', () => {
         },
         query: {},
         body: { addressAs: 'tester' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -350,7 +417,13 @@ describe('subscription router', () => {
         },
         query: { userSub: 'true' },
         body: {},
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -399,7 +472,13 @@ describe('subscription router', () => {
         },
         query: { userSub: 'true' },
         body: {},
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -443,7 +522,13 @@ describe('subscription router', () => {
         },
         query: {},
         body: { id: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -495,7 +580,13 @@ describe('subscription router', () => {
         body: { criteria: { correlationId: 'test' } },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -539,7 +630,13 @@ describe('subscription router', () => {
         body: { criteria: { correlationId: '123', context: {} } },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -592,7 +689,13 @@ describe('subscription router', () => {
         body: { criteria: [{ correlationId: '123', context: {} }] },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -645,7 +748,13 @@ describe('subscription router', () => {
         body: { criteria: { correlationId: 'test' } },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
 
       const mockResponse = () => {
@@ -686,7 +795,13 @@ describe('subscription router', () => {
         },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -729,7 +844,13 @@ describe('subscription router', () => {
         },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -761,7 +882,13 @@ describe('subscription router', () => {
         },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -807,7 +934,13 @@ describe('subscription router', () => {
           criteria: JSON.stringify({ correlationId: 'test' }),
         },
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -856,7 +989,13 @@ describe('subscription router', () => {
           criteria: JSON.stringify({ correlationId: 'test' }),
         },
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -907,7 +1046,13 @@ describe('subscription router', () => {
         },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -959,7 +1104,13 @@ describe('subscription router', () => {
         },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -987,7 +1138,13 @@ describe('subscription router', () => {
         },
         query: { top: '11', after: '123' },
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -1019,7 +1176,13 @@ describe('subscription router', () => {
         },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -1203,7 +1366,13 @@ describe('subscription router', () => {
         },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -1230,7 +1399,13 @@ describe('subscription router', () => {
         },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -1256,7 +1431,13 @@ describe('subscription router', () => {
         },
         query: {},
         params: { subscriber: 'subscriber' },
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -1296,7 +1477,13 @@ describe('subscription router', () => {
         },
         query: {},
         params: {},
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -1323,7 +1510,13 @@ describe('subscription router', () => {
         },
         query: {},
         params: {},
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -1349,7 +1542,13 @@ describe('subscription router', () => {
         },
         query: {},
         params: {},
-        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          notificationType,
+          tenantId
+        ),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -1397,7 +1596,14 @@ describe('subscription router', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce(
-        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+        new NotificationConfiguration(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          { test: notificationType },
+          {},
+          tenantId
+        )
       );
 
       const subscription: Subscription = {
@@ -1411,7 +1617,13 @@ describe('subscription router', () => {
           new SubscriptionEntity(
             repositoryMock,
             subscription,
-            new NotificationTypeEntity(notificationType, tenantId),
+            new NotificationTypeEntity(
+              loggerMock,
+              templateServiceMock,
+              attachmentServiceMock,
+              notificationType,
+              tenantId
+            ),
             subscriber
           ),
         ],
@@ -1493,7 +1705,14 @@ describe('subscription router', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce(
-        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+        new NotificationConfiguration(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          { test: notificationType },
+          {},
+          tenantId
+        )
       );
 
       const subscription: Subscription = {
@@ -1507,7 +1726,13 @@ describe('subscription router', () => {
           new SubscriptionEntity(
             repositoryMock,
             subscription,
-            new NotificationTypeEntity(notificationType, tenantId),
+            new NotificationTypeEntity(
+              loggerMock,
+              templateServiceMock,
+              attachmentServiceMock,
+              notificationType,
+              tenantId
+            ),
             subscriber
           ),
         ],
@@ -1625,6 +1850,9 @@ describe('subscription router', () => {
         },
         getConfiguration: jest.fn(),
         notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
           {
             id: 'test',
             name: 'Test',
@@ -1636,7 +1864,6 @@ describe('subscription router', () => {
               {
                 namespace: 'mock-namespace',
                 name: 'mock-name',
-                customized: true,
                 templates: {
                   email: {
                     subject: 'mock-email-subject',
@@ -1677,6 +1904,9 @@ describe('subscription router', () => {
         },
         getConfiguration: jest.fn(),
         notificationType: new NotificationTypeEntity(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
           {
             id: 'test',
             name: 'Test',
@@ -1688,7 +1918,6 @@ describe('subscription router', () => {
               {
                 namespace: 'mock-namespace',
                 name: 'mock-name',
-                customized: true,
                 templates: {
                   email: {
                     subject: 'mock-email-subject',
@@ -2037,7 +2266,14 @@ describe('subscription router', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce(
-        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+        new NotificationConfiguration(
+          loggerMock,
+          templateServiceMock,
+          attachmentServiceMock,
+          { test: notificationType },
+          {},
+          tenantId
+        )
       );
 
       const result = { results: [], page: {} };
@@ -2068,7 +2304,14 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const configuration = new NotificationConfiguration({ test: notificationType }, {}, tenantId);
+      const configuration = new NotificationConfiguration(
+        loggerMock,
+        templateServiceMock,
+        attachmentServiceMock,
+        { test: notificationType },
+        {},
+        tenantId
+      );
       req.getConfiguration.mockResolvedValueOnce(configuration);
 
       const subscription = new SubscriptionEntity(

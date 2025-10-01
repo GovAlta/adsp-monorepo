@@ -12,7 +12,6 @@ import { v4 as uuid } from 'uuid';
 import { Logger } from 'winston';
 import type { Notification, NotificationWorkItem } from '../types';
 import type { SubscriptionRepository } from '../repository';
-import type { TemplateService } from '../template';
 import { NotificationConfiguration } from '../configuration';
 import { notificationsGenerated } from '../events';
 
@@ -24,7 +23,6 @@ interface ProcessEventJobProps {
   directory: ServiceDirectory;
   configurationService: ConfigurationService;
   eventService: EventService;
-  templateService: TemplateService;
   subscriptionRepository: SubscriptionRepository;
   queueService: WorkQueueService<NotificationWorkItem>;
 }
@@ -39,7 +37,6 @@ export const createProcessEventJob =
     directory,
     configurationService,
     eventService,
-    templateService,
     subscriptionRepository,
     queueService,
   }: ProcessEventJobProps) =>
@@ -77,14 +74,11 @@ export const createProcessEventJob =
         for (const type of types) {
           const notifications: Notification[] = await type.generateNotifications(
             logger,
-            templateService,
             subscriberAppUrl,
             subscriptionRepository,
             configuration,
             event,
-            { tenant },
-            directory,
-            token
+            { tenant }
           );
 
           for (const notification of notifications) {

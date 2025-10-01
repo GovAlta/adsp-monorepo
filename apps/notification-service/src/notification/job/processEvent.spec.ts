@@ -33,6 +33,10 @@ describe('createProcessEventJob', () => {
     generateMessage: jest.fn(),
   };
 
+  const attachmentServiceMock = {
+    getAttachment: jest.fn(),
+  };
+
   const tenantServiceMock = {
     getTenants: jest.fn(),
     getTenant: jest.fn((id) => Promise.resolve({ id, name: 'Test', realm: 'test' })),
@@ -64,7 +68,7 @@ describe('createProcessEventJob', () => {
       tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
       eventService: eventServiceMock,
-      templateService: templateServiceMock,
+
       tenantService: tenantServiceMock,
       directory: directoryMock,
       subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
@@ -81,7 +85,7 @@ describe('createProcessEventJob', () => {
         tokenProvider: tokenProviderMock,
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
-        templateService: templateServiceMock,
+
         tenantService: tenantServiceMock,
         directory: directoryMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
@@ -109,6 +113,9 @@ describe('createProcessEventJob', () => {
         ],
       };
       const configuration = new NotificationConfiguration(
+        logger,
+        templateServiceMock,
+        attachmentServiceMock,
         {
           test: type,
         },
@@ -168,7 +175,7 @@ describe('createProcessEventJob', () => {
         tokenProvider: tokenProviderMock,
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
-        templateService: templateServiceMock,
+
         tenantService: tenantServiceMock,
         directory: directoryMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
@@ -196,6 +203,9 @@ describe('createProcessEventJob', () => {
         ],
       };
       const configuration = new NotificationConfiguration(
+        logger,
+        templateServiceMock,
+        attachmentServiceMock,
         {
           test: type,
         },
@@ -279,7 +289,7 @@ describe('createProcessEventJob', () => {
         tokenProvider: tokenProviderMock,
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
-        templateService: templateServiceMock,
+
         tenantService: tenantServiceMock,
         directory: directoryMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
@@ -307,6 +317,9 @@ describe('createProcessEventJob', () => {
         ],
       };
       const configuration = new NotificationConfiguration(
+        logger,
+        templateServiceMock,
+        attachmentServiceMock,
         {
           test: type,
         },
@@ -344,7 +357,7 @@ describe('createProcessEventJob', () => {
         tokenProvider: tokenProviderMock,
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
-        templateService: templateServiceMock,
+
         tenantService: tenantServiceMock,
         directory: directoryMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
@@ -376,7 +389,7 @@ describe('createProcessEventJob', () => {
         tokenProvider: tokenProviderMock,
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
-        templateService: templateServiceMock,
+
         tenantService: tenantServiceMock,
         directory: directoryMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,

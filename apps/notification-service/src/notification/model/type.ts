@@ -1,8 +1,9 @@
-import { AdspId, adspId, Channel, isAllowedUser, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, Channel, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { get as getAtPath } from 'lodash';
+import { validate as validateUuid } from 'uuid';
 import { Logger } from 'winston';
 import { SubscriptionRepository } from '../repository';
 import { TemplateService } from '../template';
@@ -14,11 +15,12 @@ import {
   ServiceUserRoles,
   Subscriber,
   Template,
+  Attachment,
 } from '../types';
 import { SubscriberEntity } from './subscriber';
 import { SubscriptionEntity } from './subscription';
 import { NotificationConfiguration } from '../configuration';
-import axios from 'axios';
+import { FileAttachmentService } from '../file';
 
 function isValidSms(digits) {
   return /^\d{10}$/.test(digits);
@@ -36,7 +38,13 @@ export class NotificationTypeEntity implements NotificationType {
   channels: Channel[] = [];
   events: NotificationTypeEvent[] = [];
 
-  constructor(type: NotificationType, tenantId?: AdspId) {
+  constructor(
+    protected logger: Logger,
+    protected templateService: TemplateService,
+    protected fileService: FileAttachmentService,
+    type: NotificationType,
+    tenantId?: AdspId
+  ) {
     Object.assign(this, type);
     this.tenantId = tenantId;
   }
@@ -84,16 +92,50 @@ export class NotificationTypeEntity implements NotificationType {
     return repository.deleteSubscriptions(subscriber.tenantId, this.id, subscriber.id);
   }
 
+  protected async prepareAttachments(path: string, event: DomainEvent): Promise<Attachment[]> {
+    const attachmentValue = path ? getAtPath(event.payload, path) : undefined;
+
+    const attachmentReferences: string[] = [];
+    if (typeof attachmentValue === 'string') {
+      attachmentReferences.push(attachmentValue);
+    } else if (Array.isArray(attachmentValue)) {
+      attachmentReferences.push(...attachmentValue);
+    }
+
+    const attachments: Attachment[] = [];
+    for (const attachmentReference of attachmentReferences) {
+      let urn: AdspId;
+      if (typeof attachmentReference === 'string') {
+        if (AdspId.isAdspId(attachmentReference)) {
+          urn = AdspId.parse(attachmentReference);
+        } else if (validateUuid(attachmentReference)) {
+          urn = adspId`urn:ads:platform:file-service:v1:/files/${attachmentReference}`;
+        }
+      }
+
+      if (urn) {
+        try {
+          const attachment = await this.fileService.getAttachment(urn);
+          attachments.push(attachment);
+        } catch (e) {
+          this.logger.warn(`Failed to retrieve attachment ${urn}: ${e.message}`, {
+            context: 'NotificationType',
+            tenant: this.tenantId?.toString(),
+          });
+        }
+      }
+    }
+
+    return attachments;
+  }
+
   async generateNotifications(
     logger: Logger,
-    templateService: TemplateService,
     subscriberAppUrl: URL,
     subscriptionRepository: SubscriptionRepository,
     configuration: NotificationConfiguration,
     event: DomainEvent,
-    messageContext: Record<string, unknown>,
-    directory: ServiceDirectory,
-    token: string
+    messageContext: Record<string, unknown>
   ): Promise<Notification[]> {
     const notifications: Notification[] = [];
 
@@ -132,7 +174,6 @@ export class NotificationTypeEntity implements NotificationType {
         if (subscription.shouldSend(event)) {
           const notification = this.generateNotification(
             logger,
-            templateService,
             configuration,
             subscriberAppUrl,
             event,
@@ -167,12 +208,17 @@ export class NotificationTypeEntity implements NotificationType {
       return { ...event, templates };
     });
 
-    return new NotificationTypeEntity({ ...this, events }, customType.tenantId);
+    return new NotificationTypeEntity(
+      this.logger,
+      this.templateService,
+      this.fileService,
+      { ...this, events },
+      customType.tenantId
+    );
   }
 
   protected generateNotification(
     logger: Logger,
-    templateService: TemplateService,
     configurationService: NotificationConfiguration,
     subscriberAppUrl: URL,
     event: DomainEvent,
@@ -226,7 +272,7 @@ export class NotificationTypeEntity implements NotificationType {
         to: address,
         from: configurationService.email?.fromEmail,
         channel,
-        message: templateService.generateMessage(
+        message: this.templateService.generateMessage(
           this.getTemplate(channel, eventNotification.templates[channel], context),
           context
         ),
@@ -243,6 +289,7 @@ export class NotificationTypeEntity implements NotificationType {
     return effectiveTemplate;
   }
 }
+
 /**
  * Represents a notification type that generates notification based on trigger event without requiring a subscription.
  *
@@ -263,8 +310,14 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
   titlePath?: string;
   subTitlePath?: string;
 
-  constructor(type: NotificationType, tenantId?: AdspId) {
-    super(type, tenantId);
+  constructor(
+    logger: Logger,
+    templateService: TemplateService,
+    fileService: FileAttachmentService,
+    type: NotificationType,
+    tenantId?: AdspId
+  ) {
+    super(logger, templateService, fileService, type, tenantId);
 
     if (!this.addressPath && !this.address) {
       throw new InvalidOperationError('Direct notification type must include an addressPath or address.');
@@ -290,14 +343,11 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
 
   override async generateNotifications(
     logger: Logger,
-    templateService: TemplateService,
     _subscriberAppUrl: URL,
     _subscriptionRepository: SubscriptionRepository,
     configuration: NotificationConfiguration,
     event: DomainEvent,
-    messageContext: Record<string, unknown>,
-    directory: ServiceDirectory,
-    token: string
+    messageContext: Record<string, unknown>
   ): Promise<Notification[]> {
     logger.debug(`Processing direct notification type ${this.id} for event ${event.namespace}:${event.name}...`, {
       context: 'NotificationType',
@@ -315,42 +365,12 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
     const address = (this?.addressPath && getAtPath(event.payload, this.addressPath)) || this.address;
     const cc = (this?.ccPath && getAtPath(event.payload, this.ccPath)) || [];
     const bcc = (this?.bccPath && getAtPath(event.payload, this.bccPath)) || [];
-    const attachmentsList = ((this?.attachmentPath && getAtPath(event.payload, this.attachmentPath)) || []) as [];
     const titleInEvent = this?.titlePath && getAtPath(event.payload, this.titlePath);
     const subTitleInEvent = this?.subTitlePath && getAtPath(event.payload, this.subTitlePath);
     const subjectInEvent = this?.subjectPath && getAtPath(event.payload, this.subjectPath);
 
-    const fileServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:file-service`);
+    const attachments = await this.prepareAttachments(this.attachmentPath, event);
 
-    const attachments = [];
-
-    if (attachmentsList.length > 0) {
-      for (const attachmentUUID of attachmentsList) {
-        const response = await axios.get(new URL(`file/v1/files/${attachmentUUID}`, fileServiceUrl).href, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const content = await axios.get(
-          new URL(`file/v1/files/${attachmentUUID}/download/?unsafe=true`, fileServiceUrl).href,
-          {
-            responseType: 'arraybuffer',
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        const data = response.data;
-        const base64Content = Buffer.from(content.data).toString('base64');
-
-        const attachmentDetails = {
-          filename: data.filename,
-          content: base64Content,
-          encoding: 'base64',
-          contentType: data.mimeType,
-        };
-
-        attachments.push(attachmentDetails);
-      }
-    }
     const notifications = [];
     if (eventNotification && channel && address && eventNotification.templates[channel]) {
       const context = {
@@ -360,7 +380,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
 
       const template = eventNotification.templates[channel];
 
-      const message = templateService.generateMessage(
+      const message = this.templateService.generateMessage(
         this.getTemplate(channel, template, {
           ...context,
           title: titleInEvent || template?.title,
@@ -388,7 +408,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
         from: configuration.email?.fromEmail,
         channel,
         message: subjectInEvent ? { ...message, subject: subjectInEvent } : message,
-        attachments: attachments,
+        attachments,
       });
 
       logger.debug(`Generated direct notification for type ${this.id} on event ${event.namespace}:${event.name}.`, {

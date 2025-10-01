@@ -1,10 +1,26 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { DomainEvent } from '@core-services/core-common';
+import { Logger } from 'winston';
 import { NotificationConfiguration } from './configuration';
 import { Channel } from '../types';
 
 describe('NotificationConfiguration', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+
+  const logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  } as unknown as Logger;
+
+  const templateServiceMock = {
+    generateMessage: jest.fn(),
+  };
+
+  const attachmentServiceMock = {
+    getAttachment: jest.fn(),
+  };
 
   const type = {
     id: 'test',
@@ -88,12 +104,12 @@ describe('NotificationConfiguration', () => {
   };
 
   it('can be created with empty configurations', () => {
-    const configuration = new NotificationConfiguration({}, {}, tenantId);
+    const configuration = new NotificationConfiguration(logger, templateServiceMock, attachmentServiceMock, {}, {}, tenantId);
     expect(configuration).toBeTruthy();
   });
 
   it('assigns core types when tenant types are not provided', () => {
-    const configuration = new NotificationConfiguration({}, { base: baseType }, tenantId);
+    const configuration = new NotificationConfiguration(logger, templateServiceMock, attachmentServiceMock, {}, { base: baseType }, tenantId);
     const types = configuration.getNotificationTypes();
     expect(types.length).toBe(1);
     expect(types[0].id).toBe('base');
@@ -102,6 +118,9 @@ describe('NotificationConfiguration', () => {
 
   describe('getNotificationType', () => {
     const configuration = new NotificationConfiguration(
+      logger,
+      templateServiceMock,
+      attachmentServiceMock,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       { contact: {} as any, base: baseOverride, test: type, direct },
       { base: baseType },
@@ -147,6 +166,9 @@ describe('NotificationConfiguration', () => {
 
   describe('getNotificationTypes', () => {
     const configuration = new NotificationConfiguration(
+      logger,
+      templateServiceMock,
+      attachmentServiceMock,
       { base: baseOverride, test: type, direct },
       { base: baseType },
       tenantId
@@ -177,6 +199,10 @@ describe('NotificationConfiguration', () => {
 
   describe('getEventNotificationTypes', () => {
     const configuration = new NotificationConfiguration(
+      logger,
+      templateServiceMock,
+      attachmentServiceMock,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       { base: baseOverride, test: type, direct },
       { base: baseType },
       tenantId

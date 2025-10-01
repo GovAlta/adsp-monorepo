@@ -94,5 +94,30 @@ describe('createSendNotificationJob', () => {
         }
       );
     });
+
+    it('can send event on no more retries', async () => {
+      const job = createSendNotificationJob({ logger, eventService, providers: { [Channel.email]: providerMock } });
+
+      const error = new Error('Something is wrong.');
+      providerMock.send.mockRejectedValue(error);
+      await job(
+        {
+          generationId: 'test',
+          tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
+          to: 'test@test.co',
+          type: { id: 'test', name: 'test' },
+          event: { namespace: 'test', name: 'test', timestamp: new Date() },
+          message: { subject: 'testing', body: '123' },
+          channel: Channel.email,
+          subscriber: { id: 'test', userId: 'test', addressAs: 'Testy McTester' },
+        },
+        false,
+        (err) => {
+          expect(err).toBe(error);
+          expect(providerMock.send).toHaveBeenCalledTimes(1);
+        }
+      );
+      expect(eventService.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'notification-send-failed' }));
+    });
   });
 });

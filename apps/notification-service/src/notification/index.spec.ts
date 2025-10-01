@@ -11,7 +11,6 @@ import {
 import { assertAuthenticatedHandler, DomainEventSubscriberService, WorkQueueService } from '@core-services/core-common';
 import { createJobs } from './job';
 import { createSubscriptionRouter } from './router';
-import { TemplateService } from './template';
 import { NotificationWorkItem, Providers } from './types';
 import { applyNotificationMiddleware } from './index';
 import { SubscriptionRepository, Repositories } from './repository';
@@ -28,7 +27,6 @@ describe('applyNotificationMiddleware', () => {
   let configurationService: ConfigurationService;
   let directory: ServiceDirectory;
   let eventService: EventService;
-  let templateService: TemplateService;
   let tenantService: TenantService;
   let eventSubscriber: DomainEventSubscriberService;
   let queueService: WorkQueueService<NotificationWorkItem>;
@@ -47,7 +45,6 @@ describe('applyNotificationMiddleware', () => {
     configurationService = {} as ConfigurationService;
     directory = {} as ServiceDirectory;
     eventService = {} as EventService;
-    templateService = {} as TemplateService;
     tenantService = {} as TenantService;
     eventSubscriber = {
       getItems: jest.fn().mockReturnValue([]),
@@ -72,7 +69,6 @@ describe('applyNotificationMiddleware', () => {
       configurationService,
       directory,
       eventService,
-      templateService,
       tenantService,
       eventSubscriber,
       queueService,
@@ -89,7 +85,6 @@ describe('applyNotificationMiddleware', () => {
       configurationService,
       directory,
       eventService,
-      templateService,
       tenantService,
       events: [],
       queueService,
@@ -109,7 +104,6 @@ describe('applyNotificationMiddleware', () => {
       configurationService,
       directory,
       eventService,
-      templateService,
       tenantService,
       eventSubscriber,
       queueService,
@@ -138,7 +132,6 @@ describe('applyNotificationMiddleware', () => {
       configurationService,
       directory,
       eventService,
-      templateService,
       tenantService,
       eventSubscriber,
       queueService,

@@ -22,6 +22,7 @@ export * from './model';
 export * from './template';
 export * from './events';
 export * from './configuration';
+export * from './file';
 export * from './verify';
 
 interface NotificationMiddlewareProps extends Repositories {
@@ -32,7 +33,6 @@ interface NotificationMiddlewareProps extends Repositories {
   tenantService: TenantService;
   directory: ServiceDirectory;
   eventService: EventService;
-  templateService: TemplateService;
   eventSubscriber: DomainEventSubscriberService;
   queueService: WorkQueueService<NotificationWorkItem>;
   verifyService: VerifyService;
@@ -49,7 +49,6 @@ export const applyNotificationMiddleware = (
     directory,
     eventService,
     subscriptionRepository,
-    templateService,
     tenantService,
     eventSubscriber,
     queueService,
@@ -64,7 +63,6 @@ export const applyNotificationMiddleware = (
     configurationService,
     directory,
     eventService,
-    templateService,
     tenantService,
     events: eventSubscriber.getItems(),
     queueService,
