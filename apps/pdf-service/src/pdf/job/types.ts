@@ -4,6 +4,7 @@ export interface PdfServiceWorkItem {
   jobId: string;
   tenantId: string;
   templateId: string;
+  context: Record<string, unknown>;
   data: DataContent;
   fileType: string;
   filename: string;
