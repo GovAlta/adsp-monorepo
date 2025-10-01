@@ -76,9 +76,14 @@ components:
           description: An arbitrary identifier that can be used by your application to cross reference the PDF document being generated.
           type: string
           example: user-jane-doe
+        context:
+          description: The context in which the PDF is being generated. This is an arbitrary JSON object that can include any relevant information about the generation request.
+          example: { "requestId": "12345", "source": "user-action" }
+          type: object
         data:
           description: The variable (Handlebars) assignments to be applied to the template when generating a PDF.  This is an arbitrary JSON object, but its properties must match those expected by the template.
           example: { "user": { "name": "Jane Doe" } }
+          type: object
         filename:
           description: The name of the file that will be given to the generated PDF document.  It must be unique within your tenant.
           type: string

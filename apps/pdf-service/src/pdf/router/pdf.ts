@@ -85,7 +85,7 @@ export function generatePdf(
       const user = req.user;
       const allowCore = true;
       const tenantId = req.tenant?.id || (req.query.tenantId && adspId`${req.query.tenantId}`);
-      const { templateId, fileType, filename, recordId, data } = req.body;
+      const { templateId, fileType, filename, recordId, data, context } = req.body;
       const template: PdfTemplateEntity = req[TEMPLATE];
       logger.info(`Start to process the template: ${templateId}`);
 
@@ -102,6 +102,7 @@ export function generatePdf(
 
       const job = await repository.create(user, tenantId);
       logger.info(`Successfully created the job ${job.id}.`);
+
       await queueService.enqueue({
         timestamp: new Date(),
         work: 'generate',
@@ -111,6 +112,7 @@ export function generatePdf(
         templateId,
         filename,
         recordId: recordId || job.id,
+        context: context || {},
         data: data || {},
         requestedBy: {
           id: user.id,
@@ -119,7 +121,7 @@ export function generatePdf(
       });
       logger.info(`Successfully sent the job ${job.id} to work queue.`);
 
-      eventService.send(pdfGenerationQueued(tenantId, job.id, templateId, { id: user.id, name: user.name }));
+      eventService.send(pdfGenerationQueued(tenantId, job.id, templateId, context, { id: user.id, name: user.name }));
       logger.info(`Successfully sent the job ${job.id} generation message to the event queue.`);
 
       res.send(mapJob(serviceId, job));
@@ -177,7 +179,8 @@ export function createPdfRouter({
       body('data').optional().isObject(),
       body('filename').isString().isLength({ min: 1, max: 60 }),
       body('fileType').optional().isString().isLength({ min: 1, max: 50 }),
-      body('recordId').optional().isString()
+      body('recordId').optional().isString(),
+      body('context').optional().isObject()
     ),
     getTemplate('body'),
     generatePdf(serviceId, repository, eventService, fileService, queueService, logger)
