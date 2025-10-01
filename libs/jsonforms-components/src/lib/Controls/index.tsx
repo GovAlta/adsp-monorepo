@@ -6,3 +6,4 @@ export * from './AddressLookup';
 export * from './FullName';
 export * from './FullNameDOB';
 export * from './PhoneNumber';
+export * from './Calculation';

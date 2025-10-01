@@ -21,6 +21,10 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
   const testid = 'table-of-contents';
   const sectioned = getCategorySections(categories);
 
+  const showInTaskListList = categories.map((cat) => {
+    return cat?.uischema?.options?.showInTaskList || cat?.uischema?.options?.showInTaskList === undefined;
+  });
+
   let globalIndex = 0;
   let sectionIndex = 1;
 
@@ -43,14 +47,36 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
           <tbody>
             {sectioned.map(({ sectionTitle, categories: group }) => (
               <>
-                {sectionTitle && (
+                {sectionTitle && showInTaskListList[globalIndex] && (
                   <SectionHeaderRow key={`section-${sectionTitle}`} title={sectionTitle} index={sectionIndex++} />
                 )}
                 {group.map((category) => {
+                  const showGroupTaskListList = categories.map((cat) => {
+                    return (
+                      cat?.uischema?.options?.showInTaskList || cat?.uischema?.options?.showInTaskList === undefined
+                    );
+                  });
+
+                  const showCurrent = showInTaskListList[globalIndex];
                   const index = globalIndex++;
-                  return (
-                    <CategoryRow key={`cat-${category.label}`} category={category} index={index} onClick={onClick} />
-                  );
+
+                  const modifyCategory = JSON.parse(JSON.stringify(category));
+                  modifyCategory.isCompleted = group.length === group.filter((category) => category.isCompleted).length;
+                  let currentCategory = category;
+                  if (showGroupTaskListList.length > showGroupTaskListList.filter((item) => item === true).length) {
+                    currentCategory = modifyCategory;
+                  }
+
+                  if (showCurrent) {
+                    return (
+                      <CategoryRow
+                        key={`cat-${category.label}`}
+                        category={currentCategory}
+                        index={index}
+                        onClick={onClick}
+                      />
+                    );
+                  }
                 })}
               </>
             ))}

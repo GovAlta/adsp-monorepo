@@ -28,7 +28,17 @@ export function createGenerateJob({
   eventService,
 }: GenerateJobProps) {
   return async (
-    { tenantId: tenantIdValue, jobId, fileType, filename, recordId, templateId, data, requestedBy }: PdfServiceWorkItem,
+    {
+      tenantId: tenantIdValue,
+      jobId,
+      fileType,
+      filename,
+      recordId,
+      templateId,
+      context,
+      data,
+      requestedBy,
+    }: PdfServiceWorkItem,
     retryOnError: boolean,
     done: (err?: Error) => void
   ): Promise<void> => {
@@ -62,7 +72,7 @@ export function createGenerateJob({
 
       const result = await fileService.upload(tenantId, fileType, recordId, pdfFilename, pdf);
 
-      eventService.send(pdfGenerated(tenantId, jobId, templateId, result, requestedBy));
+      eventService.send(pdfGenerated(tenantId, jobId, templateId, context, result, requestedBy));
 
       logger.info(`Generated PDF (ID: ${jobId}) file ${pdfFilename} and uploaded to file service at: ${result.urn}`, {
         context,
@@ -74,7 +84,7 @@ export function createGenerateJob({
     } catch (err) {
       if (!retryOnError) {
         await repository.update(jobId, 'failed');
-        eventService.send(pdfGenerationFailed(tenantId, jobId, templateId, requestedBy, { error: err.toString() }));
+        eventService.send(pdfGenerationFailed(tenantId, jobId, templateId, context, requestedBy, { error: err.toString() }));
         logger.error(`Generation of PDF (ID: ${jobId}) failed with error. ${err}`);
       }
 
