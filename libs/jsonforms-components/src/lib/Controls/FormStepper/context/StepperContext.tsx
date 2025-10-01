@@ -121,6 +121,7 @@ export const JsonFormsStepperContextProvider = ({
             cat.isCompleted &&
             cat.isVisited &&
             cat?.uischema &&
+            (cat?.uischema?.options?.showInTaskList || cat?.uischema?.options?.showInTaskList === undefined) &&
             cat?.uischema &&
             isVisible(cat.uischema, data, '', ajv)
               ? 1
