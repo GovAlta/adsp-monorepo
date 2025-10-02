@@ -1,25 +1,25 @@
 config:
   environments:
     alpha:
-      target: "https://access-uat.alpha.alberta.ca"
+      target: 'https://access-uat.alpha.alberta.ca'
     live:
-      target: "https://access-uat.alberta.ca"
+      target: 'https://access.adsp-dev.gov.ab.ca'
   defaults:
     headers:
-      Content-Type: "application/json"
-      Accept: "application/json"
+      Content-Type: 'application/json'
+      Accept: 'application/json'
   payload:
-    - path: "../artillery.{{ $environment }}.csv"
+    - path: '../artillery.{{ $environment }}.csv'
       skipHeader: true
       fields:
-        - "keycloak_url"
-        - "tenant_realm_id"
-        - "client_id"
-        - "client_secret"
-        - "username"
-        - "password"
-        - "user_id"
-        - "role_client_id"
+        - 'keycloak_url'
+        - 'tenant_realm_id'
+        - 'client_id'
+        - 'client_secret'
+        - 'username'
+        - 'password'
+        - 'user_id'
+        - 'role_client_id'
   phases:
     - name: warm up
       duration: 60
@@ -29,23 +29,23 @@ config:
       arrivalCount: 950
 before:
   flow:
-    - log: "Current environment is set to: {{ $environment }}"
-    - log: "Getting the access token (tenant: {{ tenant_realm_id }}) for user {{ username }}"
+    - log: 'Current environment is set to: {{ $environment }}'
+    - log: 'Getting the access token (tenant: {{ tenant_realm_id }}) for user {{ username }}'
     - post:
-        url: "{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token"
+        url: '{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token'
         headers:
-          Content-Type: "application/x-www-form-urlencoded"
-          Accept: "application/json"
+          Content-Type: 'application/x-www-form-urlencoded'
+          Accept: 'application/json'
         form:
           {
-            grant_type: "password",
-            client_id: "{{ client_id }}",
-            client_secret: "{{ client_secret }}",
-            username: "{{ username }}",
-            password: "{{ password }}",
+            grant_type: 'password',
+            client_id: '{{ client_id }}',
+            client_secret: '{{ client_secret }}',
+            username: '{{ username }}',
+            password: '{{ password }}',
           }
         capture:
-          - json: "$.access_token"
+          - json: '$.access_token'
             as: token
     # - log: "token: {{ token }}"
 scenarios:
@@ -53,36 +53,36 @@ scenarios:
     weight: 0
     flow:
       - post:
-          url: "/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token"
+          url: '/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token'
           headers:
-            Content-Type: "application/x-www-form-urlencoded"
-            Accept: "application/json"
+            Content-Type: 'application/x-www-form-urlencoded'
+            Accept: 'application/json'
           form:
             {
-              grant_type: "client_credential",
-              client_id: "{{ client_id }}",
-              client_secret: "{{ client_secret }}",
-              username: "{{ username }}",
-              password: "{{ password }}",
-              scope: "profile",
+              grant_type: 'client_credential',
+              client_id: '{{ client_id }}',
+              client_secret: '{{ client_secret }}',
+              username: '{{ username }}',
+              password: '{{ password }}',
+              scope: 'profile',
             }
           capture:
-            - json: "$.access_token"
+            - json: '$.access_token'
               as: token
   - name: get landing page
     weight: 0
     flow:
       - get:
-          url: "/"
+          url: '/'
   - name: get login page
     weight: 0
     flow:
       - get:
-          url: "/auth/admin/core/console"
+          url: '/auth/admin/core/console'
   - name: get user client roles
     weight: 2
     flow:
       - get:
-          url: "/auth/admin/realms/core/users/{{ user_id }}/role-mappings/clients/{{ role_client_id }}"
+          url: '/auth/admin/realms/core/users/{{ user_id }}/role-mappings/clients/{{ role_client_id }}'
           headers:
-            authorization: "Bearer {{ token }}"
+            authorization: 'Bearer {{ token }}'
