@@ -229,6 +229,36 @@
         "format": "Must be in a format like a.n.other@example.com",
         "maxLength": "Must be less than 100 characters."
       }
+    },
+    "phoneNumber": {
+      "$comment": "North American phone number.",
+      "title": "Phone number",
+      "description": "(000) 000-0000",
+      "type": "string",
+      "pattern": "^\\(?\\d{3}\\)?[- ]?\\d{3}[- ]?\\d{4}$",
+      "errorMessage": "Must be a valid 10-digit phone number in format (000) 000-0000"
+    },
+    "phoneNumberWithType": {
+      "$comment": "Phone number with type classification.",
+      "title": "Phone number",
+      "type": "object",
+      "properties": {
+        "number": {
+          "$ref": "#/definitions/phoneNumber"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "Mobile",
+            "Landline"
+          ],
+          "title": "Phone type"
+        }
+      },
+      "required": [
+        "number",
+        "type"
+      ]
     }
   }
 }

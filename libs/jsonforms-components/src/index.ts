@@ -54,6 +54,11 @@ import {
   GoAInputBaseFullNameDobControlReview,
   GoAEmailControlTester,
   GoAInputEmailControl,
+  PhoneNumberTester,
+  PhoneNumberReviewControl,
+  PhoneNumberControl,
+  PhoneNumberWithTypeTester,
+  PhoneNumberWithTypeControl,
   GoACalculationControlTester,
   GoACalculationControl,
 } from './lib/Controls';
@@ -74,6 +79,7 @@ import { HelpContent, HelpContentTester, HelpReviewContent } from './lib/Additio
 import GoAErrorControl, { GoAErrorControlTester } from './lib/ErrorHandling/GoAErrorControl';
 import GoACalloutControl, { GoACalloutControlTester, CalloutReviewControl } from './lib/Additional/GoACalloutControl';
 import { GoAGroupReviewControl, GoAGroupReviewLayoutTester } from './lib/layouts/GroupReviewControl';
+import { PhoneNumberWithTypeReviewControl } from './lib/Controls/PhoneNumber/PhoneNumberWithTypeReviewControl';
 
 export * from './lib/Context';
 export * from './lib/common';
@@ -229,6 +235,8 @@ export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameReviewControl) },
   { tester: FullNameDobTester, renderer: withJsonFormsControlProps(FullNameDobReviewControl) },
   { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControlReview) },
+  { tester: PhoneNumberTester, renderer: withJsonFormsControlProps(PhoneNumberReviewControl) },
+  { tester: PhoneNumberWithTypeTester, renderer: withJsonFormsControlProps(PhoneNumberWithTypeReviewControl) },
 ];
 
 export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
@@ -239,6 +247,8 @@ export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControl) },
   { tester: FullNameTester, renderer: withJsonFormsControlProps(FullNameControl) },
   { tester: FullNameDobTester, renderer: withJsonFormsControlProps(FullNameDobControl) },
+  { tester: PhoneNumberTester, renderer: withJsonFormsControlProps(PhoneNumberControl) },
+  { tester: PhoneNumberWithTypeTester, renderer: withJsonFormsControlProps(PhoneNumberWithTypeControl) },
   { tester: GoACalculationControlTester, renderer: GoACalculationControl },
 ];
 
