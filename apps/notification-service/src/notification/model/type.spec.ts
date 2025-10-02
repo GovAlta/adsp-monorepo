@@ -40,7 +40,7 @@ describe('NotificationTypeEntity', () => {
     repositoryMock.deleteSubscriptions.mockClear();
     repositoryMock.getSubscriptions.mockClear();
     templateServiceMock.generateMessage.mockClear();
-    attachmentServiceMock.getAttachment.mockClear();
+    attachmentServiceMock.getAttachment.mockReset();
   });
 
   it('can be created', () => {
@@ -482,6 +482,46 @@ describe('NotificationTypeEntity', () => {
       expect(notification.message).toBe(message);
     });
 
+    it('can handle missing event configuration', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const tenant = { id: tenantId, name: 'test', realm: 'test' };
+      const entity = new NotificationTypeEntity(
+        logger,
+        templateServiceMock,
+        attachmentServiceMock,
+        {
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: false,
+          subscriberRoles: [],
+          channels: [Channel.email],
+          events: [],
+        },
+        tenantId
+      );
+
+      const event: DomainEvent = {
+        tenantId,
+        namespace: 'test-service',
+        name: 'test-started',
+        timestamp: new Date(),
+        payload: {},
+        traceparent: '123',
+      };
+      const results = await entity.generateNotifications(
+        logger,
+        subscriberAppUrl,
+        repositoryMock as unknown as SubscriptionRepository,
+        configurationMock as NotificationConfiguration,
+        event,
+        {
+          tenant,
+        }
+      );
+      expect(results).toEqual(expect.arrayContaining([]));
+    });
+
     it('can generate notifications with title and subtitle', async () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
       const tenant = { id: tenantId, name: 'test', realm: 'test' };
@@ -656,6 +696,94 @@ describe('NotificationTypeEntity', () => {
       expect(notification.to).toBe('123456789');
       expect(notification.channel).toBe(Channel.sms);
       expect(notification.message).toBe(message);
+    });
+
+    it('can generate notifications with attachments', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const tenant = { id: tenantId, name: 'test', realm: 'test' };
+      const entity = new NotificationTypeEntity(
+        logger,
+        templateServiceMock,
+        attachmentServiceMock,
+        {
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: false,
+          subscriberRoles: [],
+          channels: [Channel.email],
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+              templates: {
+                [Channel.email]: {
+                  subject: '',
+                  body: '',
+                },
+              },
+              attachments: ['file', 'urn:ads:platform:file-service:v2:/files/321'],
+            },
+          ],
+        },
+        tenantId
+      );
+
+      const attachment1 = {},
+        attachment2 = {};
+      attachmentServiceMock.getAttachment.mockResolvedValueOnce(attachment1).mockResolvedValueOnce(attachment2);
+
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
+        tenantId,
+        addressAs: 'Tester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'test@testco.org',
+            verified: false,
+          },
+        ],
+      });
+
+      const subscription = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: {} },
+        entity,
+        subscriber
+      );
+      repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [subscription, subscription], page: {} });
+
+      const message = {
+        subject: 'test',
+        body: 'test content',
+      };
+      templateServiceMock.generateMessage.mockReturnValueOnce(message);
+
+      const event: DomainEvent = {
+        tenantId,
+        namespace: 'test-service',
+        name: 'test-started',
+        timestamp: new Date(),
+        payload: {
+          file: 'urn:ads:platform:file-service:v2:/files/123',
+        },
+        traceparent: '123',
+      };
+      const [notification] = await entity.generateNotifications(
+        logger,
+        subscriberAppUrl,
+        repositoryMock as unknown as SubscriptionRepository,
+        configurationMock as NotificationConfiguration,
+        event,
+        {
+          tenant,
+        }
+      );
+      expect(templateServiceMock.generateMessage).toHaveBeenCalledTimes(2);
+      // This is called once per attachment, doesn't increase for additional subscriptions.
+      expect(attachmentServiceMock.getAttachment).toHaveBeenCalledTimes(2);
+      expect(notification.to).toBe('test@testco.org');
+      expect(notification.attachments).toEqual(expect.arrayContaining([attachment1, attachment2]));
     });
 
     it('can return no notification for no channel match', async () => {
@@ -1354,7 +1482,12 @@ describe('DirectNotificationTypeEntity', () => {
         { tenant }
       );
 
-      expect(result).toMatchObject({ tenantId: tenantId.toString(), message, to: event.payload.details.email });
+      expect(result).toMatchObject({
+        tenantId: tenantId.toString(),
+        message,
+        to: event.payload.details.email,
+        channel: Channel.email,
+      });
     });
 
     it('can generate notification with attachment', async () => {
@@ -1543,6 +1676,185 @@ describe('DirectNotificationTypeEntity', () => {
       expect(attachmentServiceMock.getAttachment).toHaveBeenCalledWith(expect.any(AdspId));
     });
 
+    it('can generate notification with a static attachment', async () => {
+      const fileUrn = 'urn:ads:platform:file-service:v1:/files/123';
+      const event = {
+        tenantId,
+        namespace: 'test-service',
+        name: 'test-started',
+        timestamp: new Date(),
+        payload: { details: { email: 'tester@test.co' } },
+        traceparent: '123',
+      };
+
+      const message = {
+        subject: 'test',
+        body: 'test content',
+      };
+      templateServiceMock.generateMessage.mockReturnValueOnce(message);
+      const attachment = {};
+      attachmentServiceMock.getAttachment.mockResolvedValueOnce(attachment);
+
+      const entity = new DirectNotificationTypeEntity(
+        logger,
+        templateServiceMock,
+        attachmentServiceMock,
+        {
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: false,
+          addressPath: 'details.email',
+          subscriberRoles: [],
+          channels: [Channel.email],
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+              templates: {
+                [Channel.email]: { subject: '', body: '' },
+              },
+            },
+          ],
+          attachmentPath: fileUrn,
+        },
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      );
+      const [result] = await entity.generateNotifications(
+        logger as Logger,
+        subscriberAppUrl,
+        repositoryMock as unknown as SubscriptionRepository,
+        configurationMock as NotificationConfiguration,
+        event,
+        { tenant }
+      );
+
+      expect(result).toMatchObject({
+        tenantId: tenantId.toString(),
+        message,
+        to: event.payload.details.email,
+        attachments: expect.arrayContaining([attachment]),
+      });
+      expect(attachmentServiceMock.getAttachment).toHaveBeenCalledWith(expect.any(AdspId));
+    });
+
+    it('can generate notification with attachment configured per event', async () => {
+      const fileUrn = 'urn:ads:platform:file-service:v1:/files/123';
+      const event = {
+        tenantId,
+        namespace: 'test-service',
+        name: 'test-started',
+        timestamp: new Date(),
+        payload: { details: { email: 'tester@test.co' }, file: fileUrn },
+        traceparent: '123',
+      };
+
+      const message = {
+        subject: 'test',
+        body: 'test content',
+      };
+      templateServiceMock.generateMessage.mockReturnValueOnce(message);
+      const attachment = {};
+      attachmentServiceMock.getAttachment.mockResolvedValueOnce(attachment);
+
+      const entity = new DirectNotificationTypeEntity(
+        logger,
+        templateServiceMock,
+        attachmentServiceMock,
+        {
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: false,
+          addressPath: 'details.email',
+          subscriberRoles: [],
+          channels: [Channel.email],
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+              templates: {
+                [Channel.email]: { subject: '', body: '' },
+              },
+              attachments: 'file',
+            },
+          ],
+        },
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      );
+      const [result] = await entity.generateNotifications(
+        logger as Logger,
+        subscriberAppUrl,
+        repositoryMock as unknown as SubscriptionRepository,
+        configurationMock as NotificationConfiguration,
+        event,
+        { tenant }
+      );
+
+      expect(result).toMatchObject({
+        tenantId: tenantId.toString(),
+        message,
+        to: event.payload.details.email,
+        attachments: expect.arrayContaining([attachment]),
+      });
+      expect(attachmentServiceMock.getAttachment).toHaveBeenCalledWith(expect.any(AdspId));
+    });
+
+    it('can log and throw attachment error', async () => {
+      const fileUrn = 'urn:ads:platform:file-service:v1:/files/123';
+      const event = {
+        tenantId,
+        namespace: 'test-service',
+        name: 'test-started',
+        timestamp: new Date(),
+        payload: { details: { email: 'tester@test.co' }, file: fileUrn },
+        traceparent: '123',
+      };
+
+      const message = {
+        subject: 'test',
+        body: 'test content',
+      };
+      templateServiceMock.generateMessage.mockReturnValueOnce(message);
+      attachmentServiceMock.getAttachment.mockRejectedValueOnce(new Error('Test error'));
+
+      const entity = new DirectNotificationTypeEntity(
+        logger,
+        templateServiceMock,
+        attachmentServiceMock,
+        {
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: false,
+          addressPath: 'details.email',
+          subscriberRoles: [],
+          channels: [Channel.email],
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+              templates: {
+                [Channel.email]: { subject: '', body: '' },
+              },
+            },
+          ],
+          attachmentPath: 'file',
+        },
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      );
+      await expect(
+        entity.generateNotifications(
+          logger as Logger,
+          subscriberAppUrl,
+          repositoryMock as unknown as SubscriptionRepository,
+          configurationMock as NotificationConfiguration,
+          event,
+          { tenant }
+        )
+      ).rejects.toThrow('Test error');
+    });
+
     it('can handle missing address value', async () => {
       const event = {
         tenantId,
@@ -1726,6 +2038,64 @@ describe('DirectNotificationTypeEntity', () => {
       );
 
       expect(results).toMatchObject(expect.arrayContaining([]));
+    });
+
+    it('can generate direct notification to SMS', async () => {
+      const event = {
+        tenantId,
+        namespace: 'test-service',
+        name: 'test-started',
+        timestamp: new Date(),
+        payload: { details: { phoneNumber: '7800032345' } },
+        traceparent: '123',
+      };
+
+      const message = {
+        subject: 'test',
+        body: 'test content',
+      };
+      templateServiceMock.generateMessage.mockReturnValueOnce(message);
+
+      const entity = new DirectNotificationTypeEntity(
+        logger,
+        templateServiceMock,
+        attachmentServiceMock,
+        {
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: false,
+          addressPath: 'details.phoneNumber',
+          subscriberRoles: [],
+          channels: [Channel.email, Channel.sms],
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+              templates: {
+                [Channel.email]: { subject: '', body: '' },
+                [Channel.sms]: { subject: '', body: '' },
+              },
+            },
+          ],
+        },
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      );
+      const [result] = await entity.generateNotifications(
+        logger as Logger,
+        subscriberAppUrl,
+        repositoryMock as unknown as SubscriptionRepository,
+        configurationMock as NotificationConfiguration,
+        event,
+        { tenant }
+      );
+
+      expect(result).toMatchObject({
+        tenantId: tenantId.toString(),
+        message,
+        to: event.payload.details.phoneNumber,
+        channel: Channel.sms,
+      });
     });
   });
 });

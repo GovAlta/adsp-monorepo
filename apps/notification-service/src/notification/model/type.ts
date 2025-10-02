@@ -22,8 +22,8 @@ import { SubscriptionEntity } from './subscription';
 import { NotificationConfiguration } from '../configuration';
 import { FileAttachmentService } from '../file';
 
-function isValidSms(digits) {
-  return /^\d{10}$/.test(digits);
+function isValidSms(digits: unknown): boolean {
+  return typeof digits === 'string' && /^\d{10}$/.test(digits);
 }
 
 export class NotificationTypeEntity implements NotificationType {
@@ -92,40 +92,59 @@ export class NotificationTypeEntity implements NotificationType {
     return repository.deleteSubscriptions(subscriber.tenantId, this.id, subscriber.id);
   }
 
-  protected async prepareAttachments(path: string, event: DomainEvent): Promise<Attachment[]> {
-    const attachmentValue = path ? getAtPath(event.payload, path) : undefined;
-
-    const attachmentReferences: string[] = [];
-    if (typeof attachmentValue === 'string') {
-      attachmentReferences.push(attachmentValue);
-    } else if (Array.isArray(attachmentValue)) {
-      attachmentReferences.push(...attachmentValue);
-    }
-
+  protected async prepareAttachments(configuredAttachments: string[], event: DomainEvent): Promise<Attachment[]> {
     const attachments: Attachment[] = [];
-    for (const attachmentReference of attachmentReferences) {
-      let urn: AdspId;
-      if (typeof attachmentReference === 'string') {
-        if (AdspId.isAdspId(attachmentReference)) {
-          urn = AdspId.parse(attachmentReference);
-        } else if (validateUuid(attachmentReference)) {
-          urn = adspId`urn:ads:platform:file-service:v1:/files/${attachmentReference}`;
-        }
+    for (const configuredAttachment of configuredAttachments) {
+      let attachmentValue: unknown;
+      // If the configured value is an AdspId, use it directly.
+      // This is for the use case where the attachment pre-defined file; for example, a user guide.
+      if (AdspId.isAdspId(configuredAttachment)) {
+        attachmentValue = configuredAttachment;
+      } else if (typeof configuredAttachment === 'string') {
+        attachmentValue = getAtPath(event.payload, configuredAttachment);
       }
 
-      if (urn) {
-        try {
-          const attachment = await this.fileService.getAttachment(urn);
-          attachments.push(attachment);
-        } catch (e) {
-          this.logger.warn(`Failed to retrieve attachment ${urn}: ${e.message}`, {
-            context: 'NotificationType',
-            tenant: this.tenantId?.toString(),
-          });
+      const attachmentReferences: string[] = [];
+      if (typeof attachmentValue === 'string') {
+        attachmentReferences.push(attachmentValue);
+      } else if (Array.isArray(attachmentValue)) {
+        attachmentReferences.push(...attachmentValue);
+      }
+
+      for (const attachmentReference of attachmentReferences) {
+        let urn: AdspId;
+        if (typeof attachmentReference === 'string') {
+          if (AdspId.isAdspId(attachmentReference)) {
+            urn = AdspId.parse(attachmentReference);
+          } else if (validateUuid(attachmentReference)) {
+            urn = adspId`urn:ads:platform:file-service:v1:/files/${attachmentReference}`;
+          }
+        }
+
+        if (urn) {
+          try {
+            const attachment = await this.fileService.getAttachment(urn);
+            attachments.push(attachment);
+          } catch (e) {
+            this.logger.error(`Failed to retrieve attachment ${urn}: ${e.message}`, {
+              context: 'NotificationType',
+              tenant: this.tenantId?.toString(),
+            });
+            throw e;
+          }
         }
       }
     }
 
+    if (attachments.length > 0) {
+      this.logger.debug(
+        `Resolved ${attachments.length} attachments for type ${this.id} on event ${event.namespace}:${event.name}.`,
+        {
+          context: 'NotificationType',
+          tenant: event.tenantId?.toString(),
+        }
+      );
+    }
     return attachments;
   }
 
@@ -138,62 +157,82 @@ export class NotificationTypeEntity implements NotificationType {
     messageContext: Record<string, unknown>
   ): Promise<Notification[]> {
     const notifications: Notification[] = [];
+    const eventNotification = this.events.find((e) => e.namespace === event.namespace && e.name === event.name);
+    if (eventNotification) {
+      // Attachments are resolved once per notification generation, not per subscription.
+      // This means that all notifications generated for the same event will have the same attachments.
+      let attachments: Attachment[] = [];
+      if (eventNotification.attachments) {
+        attachments = await this.prepareAttachments(
+          typeof eventNotification.attachments === 'string'
+            ? [eventNotification.attachments]
+            : eventNotification.attachments || [],
+          event
+        );
+      }
 
-    // Page through all subscriptions and generate notifications.
-    let after: string = null;
-    let pageNumber = 1,
-      count = 0;
-    do {
-      logger.debug(
-        `Processing page ${pageNumber} of subscriptions of type ${this.id} for event ${event.namespace}:${event.name}...`,
-        {
-          context: 'NotificationType',
-          tenant: event.tenantId?.toString(),
-        }
-      );
+      // Page through all subscriptions and generate notifications.
+      let after: string = null;
+      let pageNumber = 1,
+        count = 0;
+      do {
+        logger.debug(
+          `Processing page ${pageNumber} of subscriptions of type ${this.id} for event ${event.namespace}:${event.name}...`,
+          {
+            context: 'NotificationType',
+            tenant: event.tenantId?.toString(),
+          }
+        );
 
-      const { results: subscriptions, page } = await subscriptionRepository.getSubscriptions(
-        configuration,
-        event.tenantId,
-        1000,
-        after,
-        {
-          typeIdEquals: this.id,
-          // Include event correlationId and context to filter out subscriptions with criteria that don't match.
-          // NOTE: This means that the effective evaluation of whether a subscription results in a notification is based on:
-          // 1. the repository query for retrieving subscriptions; and
-          // 2. the shouldSend() method of the subscription entity.
-          subscriptionMatch: {
-            correlationId: event.correlationId,
-            context: event.context,
-          },
-        }
-      );
+        const { results: subscriptions, page } = await subscriptionRepository.getSubscriptions(
+          configuration,
+          event.tenantId,
+          1000,
+          after,
+          {
+            typeIdEquals: this.id,
+            // Include event correlationId and context to filter out subscriptions with criteria that don't match.
+            // NOTE: This means that the effective evaluation of whether a subscription results in a notification is based on:
+            // 1. the repository query for retrieving subscriptions; and
+            // 2. the shouldSend() method of the subscription entity.
+            subscriptionMatch: {
+              correlationId: event.correlationId,
+              context: event.context,
+            },
+          }
+        );
 
-      for (const subscription of subscriptions) {
-        if (subscription.shouldSend(event)) {
-          const notification = this.generateNotification(
-            logger,
-            configuration,
-            subscriberAppUrl,
-            event,
-            subscription,
-            messageContext
-          );
-          if (notification) {
-            notifications.push(notification);
+        for (const subscription of subscriptions) {
+          if (subscription.shouldSend(event)) {
+            const notification = this.generateNotification(
+              logger,
+              configuration,
+              subscriberAppUrl,
+              eventNotification,
+              event,
+              subscription,
+              messageContext
+            );
+            if (notification) {
+              notifications.push({ ...notification, attachments });
+            }
           }
         }
-      }
-      after = page.next;
-      pageNumber++;
-      count += page.size;
-    } while (after);
+        after = page.next;
+        pageNumber++;
+        count += page.size;
+      } while (after);
 
-    logger.debug(`Processed ${count} subscriptions of type ${this.id} for event ${event.namespace}:${event.name}.`, {
-      context: 'NotificationType',
-      tenant: event.tenantId?.toString(),
-    });
+      logger.debug(`Processed ${count} subscriptions of type ${this.id} for event ${event.namespace}:${event.name}.`, {
+        context: 'NotificationType',
+        tenant: event.tenantId?.toString(),
+      });
+    } else {
+      logger.warn(`No event configuration for type ${this.id} for event ${event.namespace}:${event.name}.`, {
+        context: 'NotificationType',
+        tenant: event.tenantId?.toString(),
+      });
+    }
 
     return notifications;
   }
@@ -221,14 +260,12 @@ export class NotificationTypeEntity implements NotificationType {
     logger: Logger,
     configurationService: NotificationConfiguration,
     subscriberAppUrl: URL,
+    eventNotification: NotificationTypeEvent,
     event: DomainEvent,
     subscription: SubscriptionEntity,
     messageContext: Record<string, unknown>
   ): Notification {
-    const eventNotification = this.events.find((e) => e.namespace === event.namespace && e.name === event.name);
-
-    const { address, channel } =
-      (eventNotification && subscription.getSubscriberChannel(this, eventNotification)) || {};
+    const { address, channel } = subscription.getSubscriberChannel(this, eventNotification) || {};
 
     if (!address) {
       logger.warn(
@@ -341,6 +378,18 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
     throw new InvalidOperationError('Direct notification types cannot be subscribed to.');
   }
 
+  private getEffectiveChannel(address: string): Channel {
+    let channel: Channel;
+    // Address can now be a phone number
+    if (this.channels.includes(Channel.sms) && isValidSms(address)) {
+      channel = Channel.sms;
+    } else if (this.channels.includes(Channel.email)) {
+      channel = Channel.email;
+    }
+
+    return channel;
+  }
+
   override async generateNotifications(
     logger: Logger,
     _subscriberAppUrl: URL,
@@ -356,23 +405,27 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
 
     const eventNotification = this.events.find((e) => e.namespace === event.namespace && e.name === event.name);
 
-    // Address can now be a phone number
-    let [channel] = this.channels;
-    if (isValidSms(this.address) && this.channels.includes(Channel.sms)) {
-      channel = Channel.sms;
-    }
-
     const address = (this?.addressPath && getAtPath(event.payload, this.addressPath)) || this.address;
-    const cc = (this?.ccPath && getAtPath(event.payload, this.ccPath)) || [];
-    const bcc = (this?.bccPath && getAtPath(event.payload, this.bccPath)) || [];
-    const titleInEvent = this?.titlePath && getAtPath(event.payload, this.titlePath);
-    const subTitleInEvent = this?.subTitlePath && getAtPath(event.payload, this.subTitlePath);
-    const subjectInEvent = this?.subjectPath && getAtPath(event.payload, this.subjectPath);
-
-    const attachments = await this.prepareAttachments(this.attachmentPath, event);
+    const channel = this.getEffectiveChannel(address as string);
 
     const notifications = [];
-    if (eventNotification && channel && address && eventNotification.templates[channel]) {
+    if (eventNotification && address && channel && eventNotification.templates[channel]) {
+      const cc = (this?.ccPath && getAtPath(event.payload, this.ccPath)) || [];
+      const bcc = (this?.bccPath && getAtPath(event.payload, this.bccPath)) || [];
+      const titleInEvent = this?.titlePath && getAtPath(event.payload, this.titlePath);
+      const subTitleInEvent = this?.subTitlePath && getAtPath(event.payload, this.subTitlePath);
+      const subjectInEvent = this?.subjectPath && getAtPath(event.payload, this.subjectPath);
+
+      const configuredAttachments =
+        typeof eventNotification.attachments === 'string'
+          ? [eventNotification.attachments]
+          : eventNotification.attachments || [];
+
+      if (this.attachmentPath) {
+        configuredAttachments.push(this.attachmentPath);
+      }
+
+      const attachments = await this.prepareAttachments(configuredAttachments, event);
       const context = {
         ...messageContext,
         event,
