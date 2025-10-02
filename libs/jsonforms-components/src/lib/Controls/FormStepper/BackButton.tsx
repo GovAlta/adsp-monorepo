@@ -26,11 +26,6 @@ const BackButtonWrapper = styled.span`
 
   .back-link {
     margin-top: var(--goa-space-m);
-    color: #0070c4;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    text-decoration-color: currentColor;
-    display: inline-block;
   }
   display: inline-block;
   color: #0070c4;
