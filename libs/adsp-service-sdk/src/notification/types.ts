@@ -16,7 +16,7 @@ export interface NotificationTypeEvent {
   namespace: string;
   name: string;
   templates: Partial<Record<Channel, Template>>;
-  customized?: boolean;
+  attachments?: string | string[];
 }
 
 export interface NotificationType {
