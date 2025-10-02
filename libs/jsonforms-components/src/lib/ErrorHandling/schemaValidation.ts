@@ -1,7 +1,6 @@
 import { JsonSchema, UISchemaElement, hasType, isCategorization, isControl, isLayout } from '@jsonforms/core';
 import {
   hasElements,
-  hasVariant,
   isControlWithNoScope,
   isEmptyElements,
   isEmptyObject,
