@@ -135,6 +135,16 @@ export class NotificationTypeEntity implements NotificationType {
         }
       }
     }
+
+    if (attachments.length > 0) {
+      this.logger.debug(
+        `Resolved ${attachments.length} attachments for type ${this.id} on event ${event.namespace}:${event.name}.`,
+        {
+          context: 'NotificationType',
+          tenant: event.tenantId?.toString(),
+        }
+      );
+    }
     return attachments;
   }
 
