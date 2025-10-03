@@ -76,6 +76,27 @@ export const NotificationsGeneratedDefinition: DomainEventDefinition = {
   },
 };
 
+const NOTIFICATION_GENERATION_FAILED = 'notification-generation-failed';
+export const NotificationGenerationFailedDefinition: DomainEventDefinition = {
+  name: NOTIFICATION_GENERATION_FAILED,
+  description: 'Signalled when there is an error in generation of notifications for an event',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      type,
+      event: {
+        type: 'object',
+        properties: {
+          namespace: { type: 'string' },
+          name: { type: 'string' },
+          timestamp: { type: 'string', format: 'date-time' },
+        },
+      },
+      error: { type: 'string' },
+    },
+  },
+};
+
 const NOTIFICATION_SENT = 'notification-sent';
 export const NotificationSentDefinition: DomainEventDefinition = {
   name: NOTIFICATION_SENT,
@@ -308,6 +329,34 @@ export const notificationsGenerated = (
       timestamp,
     },
     generatedCount: count,
+  },
+});
+
+export const notificationGenerationFailed = (
+  generationId: string,
+  { correlationId = null, tenantId, context = {}, namespace, name, timestamp }: ProcessedEvent,
+  type: NotificationType,
+  error: string
+): DomainEvent => ({
+  name: NOTIFICATION_GENERATION_FAILED,
+  timestamp: new Date(),
+  correlationId: correlationId || generationId,
+  tenantId,
+  context: {
+    ...context,
+    generationId,
+  },
+  payload: {
+    type: {
+      id: type.id,
+      name: type.name,
+    },
+    event: {
+      namespace,
+      name,
+      timestamp,
+    },
+    error,
   },
 });
 
