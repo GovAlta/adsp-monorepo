@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GoAButton, GoAIconButton, GoACallout } from '@abgov/react-components';
-import _ from 'underscore';
-import {
-  generatePdf,
-  updatePdfResponse,
-  showCurrentFilePdf,
-  setPdfDisplayFileId,
-  getCorePdfTemplates,
-  updateTempTemplate,
-} from '@store/pdf/action';
+import { generatePdf, getCorePdfTemplates, updateTempTemplate } from '@store/pdf/action';
 
 import {
   SpinnerPadding,
@@ -21,14 +13,21 @@ import {
   ButtonIconPaddingThree,
 } from '../styled-components';
 
-import { RootState } from '@store/index';
-import { useSelector, useDispatch } from 'react-redux';
-import { DownloadFileService } from '@store/file/actions';
-import { streamPdfSocket } from '@store/pdf/action';
 import { useParams } from 'react-router-dom';
-import { PageIndicator } from '@components/Indicator';
+import { PageIndicator } from '../components/Indicator';
 
-import { FetchFileService } from '@store/file/actions';
+export interface FileItem {
+  id?: string;
+  filename?: string;
+  size?: number;
+  fileURN?: string;
+  urn: string;
+  typeName?: string;
+  recordId?: string;
+  created?: string;
+  lastAccessed?: string;
+  propertyId?: string;
+}
 
 const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
   const byteCharacters = atob(b64Data);
@@ -56,47 +55,48 @@ const getFileName = (formName) =>
     .toJSON()
     .slice(0, 19)
     .replace(/:/g, '-')}.pdf`;
-const hasFormName = (jobFileName, formName) => {
-  const partFormName = formName.length >= 10 ? formName.substr(0, 10) : formName;
-  return jobFileName.indexOf(partFormName) !== -1;
-};
-export const PDFPreviewTemplateCore = (formName) => {
-  const { id } = useParams<{ id: string }>();
-  const fileList = useSelector((state: RootState) => state?.fileService?.fileList);
 
-  const pdfTemplate = useSelector(
-    (state: RootState) => state.pdf?.corePdfTemplates['submitted-form'] || state?.pdf?.pdfTemplates[id]
-  );
-  const jobList = useSelector((state: RootState) =>
-    state?.pdf?.jobs.filter((job) => job.templateId === pdfTemplate.id && hasFormName(job.filename, formName.formName))
-  );
+export const PDFPreviewTemplateCore = ({
+  FetchFileService,
+  streamPdfSocket,
+  updatePdfResponse,
+  showCurrentFilePdf,
+  setPdfDisplayFileId,
+  fileList,
+  pdfTemplate,
+  jobList,
+  indicator,
+  socketChannel,
+  reloadFile,
+  currentId,
+  files,
+}) => {
+  const { id } = useParams<{ id: string }>();
+  const [windowSize, setWindowSize] = useState(window.innerHeight);
+
+  console.log(JSON.stringify(files) + '><files');
+  console.log(JSON.stringify(currentId) + '><currentId');
+  console.log(JSON.stringify(reloadFile) + '><reloadFile');
+  console.log(JSON.stringify(socketChannel) + '><socketChannel');
+  console.log(JSON.stringify(indicator) + '><indicator');
+  console.log(JSON.stringify(jobList) + '><jobList');
+  console.log(JSON.stringify(pdfTemplate) + '><pdfTemplate');
+  console.log(JSON.stringify(fileList) + '><fileList');
+
   const pdfGenerationError = jobList?.[0]?.payload?.error;
   const hasError = pdfGenerationError && pdfGenerationError.length > 0;
 
-  const dispatch = useDispatch();
-
-  const [windowSize, setWindowSize] = useState(window.innerHeight);
-
-  const indicator = useSelector((state: RootState) => state?.session?.indicator, _.isEqual);
-
-  const socketChannel = useSelector((state: RootState) => {
-    return state?.pdf.socketChannel;
-  });
-  const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
-  const currentId = useSelector((state: RootState) => state?.pdf?.currentId);
-  const files = useSelector((state: RootState) => state?.pdf.files);
-
   useEffect(() => {
     if (reloadFile && reloadFile[pdfTemplate.id]) {
-      dispatch(FetchFileService(reloadFile[pdfTemplate.id]));
+      FetchFileService(reloadFile[pdfTemplate.id]);
     }
   }, [reloadFile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!socketChannel) {
-      dispatch(streamPdfSocket(false));
+      streamPdfSocket(false);
     }
-  }, [socketChannel, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [socketChannel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handleWindowResize = () => {
@@ -111,15 +111,16 @@ export const PDFPreviewTemplateCore = (formName) => {
   });
 
   useEffect(() => {
-    dispatch(updatePdfResponse({ fileList: fileList }));
+    console.log(JSON.stringify(fileList) + '<fileList--');
+    updatePdfResponse(fileList);
     const currentFile = fileList.find((file) => jobList.map((job) => job.id).includes(file.recordId));
 
     if (currentFile) {
-      dispatch(showCurrentFilePdf(currentFile?.id));
+      showCurrentFilePdf(currentFile?.id);
     } else {
-      dispatch(setPdfDisplayFileId(null));
+      setPdfDisplayFileId(null);
     }
-  }, [dispatch, fileList]);
+  }, [fileList]);
 
   const PdfPreview = () => {
     const blob = files[currentId] && base64toBlob(files[currentId], 'application/pdf');
@@ -159,26 +160,33 @@ export const PDFPreviewTemplateCore = (formName) => {
   );
 };
 
-export const PreviewTop = ({ title, form, data, currentTab }) => {
+export const PreviewTop = ({
+  title,
+  form,
+  data,
+  currentTab,
+  pdfTemplate,
+  fileList,
+  pdfList,
+  currentId,
+  files,
+  DownloadFileService,
+  getCorePdfTemplates,
+  updateTempTemplate,
+  generatePdf,
+}) => {
   const onDownloadFile = async (file) => {
-    file && dispatch(DownloadFileService(file));
+    file && DownloadFileService(file);
   };
 
-  const pdfTemplate = useSelector((state: RootState) => state.pdf?.corePdfTemplates['submitted-form']);
-  const fileList = useSelector((state: RootState) => state?.fileService?.fileList);
-  const pdfList = useSelector((state: RootState) => state.pdf.jobs, _.isEqual);
-
-  const currentId = useSelector((state: RootState) => state?.pdf?.currentId);
-  const files = useSelector((state: RootState) => state?.pdf.files);
-
   const pdfPreviewTab = 2;
-  const dispatch = useDispatch();
+ 
   useEffect(() => {
-    dispatch(getCorePdfTemplates());
+    getCorePdfTemplates();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    dispatch(updateTempTemplate(pdfTemplate));
+    updateTempTemplate(pdfTemplate);
   }, [pdfTemplate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const generateTemplate = () => {
@@ -190,7 +198,7 @@ export const PreviewTop = ({ title, form, data, currentTab }) => {
       inputData: data,
     };
 
-    dispatch(generatePdf(payload));
+   generatePdf(payload);
   };
 
   return (

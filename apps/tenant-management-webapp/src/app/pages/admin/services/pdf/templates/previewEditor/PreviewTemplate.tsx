@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GoAButton, GoAIconButton, GoACallout } from '@abgov/react-components';
-import _ from 'underscore';
+
+import { isEqual } from 'underscore';
 import { generatePdf, updatePdfResponse, showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
 
 import {
@@ -77,7 +78,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
 
   const dispatch = useDispatch();
 
-  const indicator = useSelector((state: RootState) => state?.session?.indicator, _.isEqual);
+  const indicator = useSelector((state: RootState) => state?.session?.indicator, isEqual);
 
   const files = useSelector((state: RootState) => state?.pdf.files);
 
@@ -104,7 +105,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
     };
   });
 
-  const pdfList = useSelector((state: RootState) => state.pdf.jobs, _.isEqual);
+  const pdfList = useSelector((state: RootState) => state.pdf.jobs, isEqual);
   const onDownloadFile = async (file) => {
     file && dispatch(DownloadFileService(file));
   };

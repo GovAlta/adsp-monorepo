@@ -1,6 +1,5 @@
 {
   "name": "form-editor-common",
-  "type": "module",
   "targets": {
     "test": {
       "executor": "@nx/jest:jest",

@@ -5,6 +5,7 @@
       "jest",
       "node"
     ],
+    "allowJs": true,
     "composite": true,
     "declaration": true,
     "declarationMap": true,

@@ -1,20 +1,33 @@
 import React, { FunctionComponent, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { GoAButton, GoAFormItem, GoAInputDate, GoAInputTime, GoAButtonGroup, GoAGrid } from '@abgov/react-components';
-import { UpdateEventsByCalendar, CreateEventsByCalendar } from '@store/calendar/actions';
-
-import { CalendarEvent, EventDeleteModalType } from '@store/calendar/models';
-
-import { getDateTime } from '@lib/timeUtil';
+import { getDateTime } from '../components/timeUtil';
 import { Margin } from '../styled-components';
 
-import { DeleteCalendarEvent } from '@store/calendar/actions';
+export interface Attendee {
+  id: number;
+  name: string;
+  email: string;
+}
+export interface CalendarEvent {
+  id?: number;
+  name: string;
+  description?: string | null;
+  start: string;
+  end: string;
+  isPublic: boolean;
+  isAllDay?: boolean;
+  attendees?: Attendee[];
+  recordId?: string;
+}
 
 export interface startEndProps {
   event: CalendarEvent;
   formId?: string;
   closeIntake?: () => void;
   newEvent: boolean;
+  DeleteCalendarEvent: (eventId: string) => void;
+  UpdateEventsByCalendar: (eventId: string, event: CalendarEvent) => void;
+  CreateEventsByCalendar: (event: CalendarEvent) => void;
 }
 
 const setTimeString = (dateString, timeString?) => {
@@ -27,10 +40,17 @@ const setTimeString = (dateString, timeString?) => {
   return dateDate.toISOString();
 };
 
-export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, formId, closeIntake, newEvent }) => {
+export const StartEndDateEditor: FunctionComponent<startEndProps> = ({
+  event,
+  formId,
+  closeIntake,
+  newEvent,
+  DeleteCalendarEvent,
+  UpdateEventsByCalendar, 
+  CreateEventsByCalendar
+}) => {
   const [edit, setEdit] = useState<boolean>(newEvent);
   const [deleteConfirm, setDeleteConfirm] = useState<boolean>(false);
-  const dispatch = useDispatch();
 
   const [startTime, setStartTime] = useState<string>(new Date(event.start)?.toTimeString().split(' ')[0]);
   const [endTime, setEndTime] = useState<string>(new Date(event.end)?.toTimeString().split(' ')[0]);
@@ -127,8 +147,7 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
                   testId="delete-confirm"
                   onClick={() => {
                     setDeleteConfirm(false);
-
-                    dispatch(DeleteCalendarEvent(`${event?.id}`, 'form-intake'));
+                    DeleteCalendarEvent(`${event?.id}`);
                   }}
                 >
                   Confirm Delete
@@ -165,10 +184,10 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
                   event.recordId = formId;
 
                   if (event?.id) {
-                    dispatch(UpdateEventsByCalendar('form-intake', event?.id.toString(), event));
+                    UpdateEventsByCalendar(event?.id.toString(), event);
                   } else {
                     event.name = `${formId}-${String(Math.floor(Date.now() / 1000))}`;
-                    dispatch(CreateEventsByCalendar('form-intake', event));
+                    CreateEventsByCalendar(event);
                   }
                   closeIntake();
                 }

@@ -123,9 +123,17 @@ interface ClientRoleProps {
   anonymousRead: boolean;
   onUpdateRoles: (roles: string[], type: string) => void;
   configuration: Record<string, string[]>;
+  REALM_ROLE_KEY: string;
 }
 
-const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdateRoles }: ClientRoleProps) => {
+const ClientRole = ({
+  roleNames,
+  clientId,
+  anonymousRead,
+  configuration,
+  onUpdateRoles,
+  REALM_ROLE_KEY,
+}: ClientRoleProps) => {
   return (
     <ClientRoleTable
       roles={roleNames}
@@ -139,6 +147,7 @@ const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdat
         { title: types[1].name, selectedRoles: configuration[types[1].type] },
         { title: types[2].name, selectedRoles: configuration[types[2].type] },
       ]}
+      REALM_ROLE_KEY={REALM_ROLE_KEY}
     />
   );
 };
@@ -161,7 +170,7 @@ export function FormEditorCommon({
   isFormUpdated,
   latestNotification,
   isLoadingRoles,
-  fileList,
+  newFileList,
   SecurityClassification,
   indicator,
   CalendarEventDefault,
@@ -177,6 +186,28 @@ export function FormEditorCommon({
   setDraftUISchema,
   dataSchema,
   renameAct,
+  definitions,
+  defaultFormUrl,
+  DeleteCalendarEvent,
+  UpdateEventsByCalendar,
+  CreateEventsByCalendar,
+  FetchFileService,
+  streamPdfSocket,
+  updatePdfResponse,
+  showCurrentFilePdf,
+  setPdfDisplayFileId,
+  fileList,
+  pdfTemplate,
+  jobList,
+  socketChannel,
+  reloadFile,
+  currentId,
+  files,
+  pdfList,
+  getCorePdfTemplates,
+  updateTempTemplate,
+  generatePdf,
+  REALM_ROLE_KEY,
 }): JSX.Element {
   const editorRefData = useRef(null);
   const editorRefUi = useRef(null);
@@ -381,7 +412,16 @@ export function FormEditorCommon({
           <NameDescriptionDataSchema>
             <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
             <hr className="hr-resize" />
-            {definition && <FormConfigDefinition definition={definition} renameAct={renameAct} />}
+            {definition && (
+              <FormConfigDefinition
+                definition={definition}
+                renameAct={renameAct}
+                updateFormDefinition={(definition) => updateFormDefinition(definition)}
+                definitions={definitions}
+                indicator={indicator}
+                defaultFormUrl={defaultFormUrl}
+              />
+            )}
 
             <Tabs
               activeIndex={activeIndex}
@@ -538,6 +578,7 @@ export function FormEditorCommon({
                                   });
                                 }
                               }}
+                              REALM_ROLE_KEY={REALM_ROLE_KEY}
                             />
                           )
                         );
@@ -953,7 +994,7 @@ export function FormEditorCommon({
                 <FormPreviewScrollPane>
                   <ContextProvider
                     fileManagement={{
-                      fileList: fileList,
+                      fileList: newFileList,
                       uploadFile: uploadFile,
                       downloadFile: downloadFile,
                       deleteFile: deleteFile,
@@ -976,10 +1017,41 @@ export function FormEditorCommon({
               </Tab>
               {definition?.submissionPdfTemplate ? (
                 <Tab
-                  label={<PreviewTop title="PDF Preview" form={definition} data={data} currentTab={currentTab} />}
+                  label={
+                    <PreviewTop
+                      title="PDF Preview"
+                      form={definition}
+                      data={data}
+                      currentTab={currentTab}
+                      pdfTemplate={pdfTemplate}
+                      fileList={fileList}
+                      pdfList={pdfList}
+                      currentId={currentId}
+                      files={files}
+                      DownloadFileService={DownloadFileService}
+                      getCorePdfTemplates={getCorePdfTemplates}
+                      updateTempTemplate={updateTempTemplate}
+                      generatePdf={generatePdf}
+                    />
+                  }
                   data-testid="data-view"
                 >
-                  <PDFPreviewTemplateCore formName={definition.name} />
+                  <pre>{JSON.stringify(definition.name)}</pre>x
+                  <PDFPreviewTemplateCore
+                    FetchFileService={FetchFileService}
+                    streamPdfSocket={streamPdfSocket}
+                    updatePdfResponse={updatePdfResponse}
+                    showCurrentFilePdf={showCurrentFilePdf}
+                    setPdfDisplayFileId={setPdfDisplayFileId}
+                    fileList={fileList}
+                    pdfTemplate={pdfTemplate}
+                    jobList={jobList}
+                    indicator={indicator}
+                    socketChannel={socketChannel}
+                    reloadFile={reloadFile}
+                    currentId={currentId}
+                    files={files}
+                  />
                 </Tab>
               ) : null}
             </Tabs>
@@ -1061,7 +1133,14 @@ export function FormEditorCommon({
               ? selectedCoreEvent.map((coreEvent) => {
                   return (
                     <GoAAccordion heading={coreEvent.name} open={false}>
-                      <StartEndDateEditor event={coreEvent} newEvent={false} closeIntake={() => null} />
+                      <StartEndDateEditor
+                        event={coreEvent}
+                        newEvent={false}
+                        closeIntake={() => null}
+                        DeleteCalendarEvent={DeleteCalendarEvent}
+                        UpdateEventsByCalendar={UpdateEventsByCalendar}
+                        CreateEventsByCalendar={CreateEventsByCalendar}
+                      />
                     </GoAAccordion>
                   );
                 })
@@ -1075,6 +1154,9 @@ export function FormEditorCommon({
                     event={CalendarEventDefault}
                     closeIntake={() => setShowNew(false)}
                     newEvent={true}
+                    DeleteCalendarEvent={DeleteCalendarEvent}
+                    UpdateEventsByCalendar={UpdateEventsByCalendar}
+                    CreateEventsByCalendar={CreateEventsByCalendar}
                   />
                 </GoAContainer>
               </Margin>

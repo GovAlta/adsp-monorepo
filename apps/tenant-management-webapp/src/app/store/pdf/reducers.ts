@@ -97,6 +97,8 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
     case UPDATE_PDF_RESPONSE_ACTION: {
       const jobs = JSON.parse(JSON.stringify(state.jobs));
 
+      console.log(JSON.stringify(action.payload) + ' <<--action payload');
+
       jobs.forEach((job, index) => {
         if (action.payload.fileList.map((file) => file.recordId).includes(job.id)) {
           jobs[index].fileWasGenerated = true;

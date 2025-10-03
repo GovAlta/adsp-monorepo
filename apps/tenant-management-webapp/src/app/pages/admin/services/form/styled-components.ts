@@ -3,6 +3,13 @@ import styled from 'styled-components';
 export const DisplayFlex = styled.div`
   display: flex;
 `;
+export const IndicatorBox = styled.div`
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+`;
 
 export const PopulateTemplateWrapper = styled.div`
   display: flex;

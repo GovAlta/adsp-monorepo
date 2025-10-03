@@ -3,7 +3,8 @@ import { GoACheckbox, GoATable } from '@abgov/react-components';
 import { MarginAdjustment, PaddingRem } from './styled-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { REALM_ROLE_KEY } from '@store/sharedSelectors/roles';
+import { v4 as uuidV4 } from 'uuid';
+
 
 /**
  * A React component for creating roles table
@@ -36,6 +37,7 @@ interface ClientRoleTableProps {
   clientId?: string;
   nameColumnWidth?: number;
   disabled?: boolean;
+  REALM_ROLE_KEY?: string;
 }
 
 function capitalizeFirstLetter(string) {
@@ -55,7 +57,11 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   };
 
   const getClientId = () => {
-    return props.clientId && props.clientId !== REALM_ROLE_KEY ? <PaddingRem>{props.clientId}</PaddingRem> : tenantName;
+    return props.clientId && props.clientId !== props.REALM_ROLE_KEY ? (
+      <PaddingRem>{props.clientId}</PaddingRem>
+    ) : (
+      tenantName
+    );
   };
 
   return (

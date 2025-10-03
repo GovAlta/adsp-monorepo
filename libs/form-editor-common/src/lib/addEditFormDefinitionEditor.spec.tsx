@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react';
 import { AddEditFormDefinitionEditor, onSaveDispositionForModal } from './addEditFormDefinitionEditor';
-import { Disposition, FormDefinition } from '@store/form/model';
+import { Disposition, FormDefinition } from './model';
 import { Provider } from 'react-redux';
 import { SESSION_INIT } from '@store/session/models';
 import configureStore from 'redux-mock-store';

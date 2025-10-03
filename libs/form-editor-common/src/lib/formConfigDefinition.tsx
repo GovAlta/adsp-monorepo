@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
-import { FormDefinition } from '@store/form/model';
-
+import { FormDefinition } from './model';
 import { GoAIconButton } from '@abgov/react-components';
-
-import { updateFormDefinition } from '@store/form/action';
-
 import { Edit, ConfigFormWrapper, Anchor } from '../styled-components';
 import { AddEditFormDefinition } from './addEditFormDefinition';
-import { useDispatch } from 'react-redux';
 
 interface PDFConfigFormProps {
   definition: FormDefinition;
   renameAct: (editActTarget: any, newName: any) => void;
+  updateFormDefinition: (definition: FormDefinition) => void;
+  definitions: Record<string,FormDefinition>;
+  indicator: any;
+  defaultFormUrl: string;
 }
-export const FormConfigDefinition = ({ definition, renameAct }: PDFConfigFormProps) => {
+export const FormConfigDefinition = ({
+  definition,
+  renameAct,
+  updateFormDefinition,
+  definitions,
+  indicator,
+  defaultFormUrl,
+}: PDFConfigFormProps) => {
   const { id, name, description } = definition;
   const [openEditFormTemplate, setOpenEditFormTemplate] = useState(false);
 
-  const dispatch = useDispatch();
   return (
     <ConfigFormWrapper data-testid="form-config-form">
       <div className="nameColumn">
@@ -88,10 +93,13 @@ export const FormConfigDefinition = ({ definition, renameAct }: PDFConfigFormPro
           onClose={() => setOpenEditFormTemplate(false)}
           initialValue={definition}
           onSave={(definition) => {
-            dispatch(updateFormDefinition(definition));
+            updateFormDefinition(definition);
             setOpenEditFormTemplate(false);
           }}
           renameAct={renameAct}
+          definitions={definitions}
+          indicator={indicator}
+          defaultFormUrl={defaultFormUrl}
         />
       )}
     </ConfigFormWrapper>

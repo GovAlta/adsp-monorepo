@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { FormDefinition } from './model';
-import { toKebabName } from '@lib/kebabName';
-import { useValidators } from '@lib/validation/useValidators';
+import { toKebabName } from '../components/kebabName';
+import { useValidators } from '../components/useValidators';
 import {
   isNotEmptyCheck,
   wordMaxLengthCheck,
   badCharsCheck,
   duplicateNameCheck,
   Validator,
-} from '@lib/validation/checkInput';
+} from '../components/checkInput';
 import { FormFormItem, DescriptionItem } from '../styled-components';
-import { PageIndicator } from '@components/Indicator';
-import { RootState } from '@store/index';
-import { useSelector, useDispatch } from 'react-redux';
+import { PageIndicator } from '../components/Indicator';
 import { uischema } from './categorization-stepper-nav-buttons';
 import { schema } from './categorization';
-import { selectDefaultFormUrl } from '@store/form/selectors';
 
 
 import {
@@ -32,7 +29,7 @@ import {
   GoATooltip,
   GoAFilterChip,
 } from '@abgov/react-components';
-import { HelpTextComponent } from '@components/HelpTextComponent';
+import { HelpTextComponent } from '../components/HelpTextComponent'
 import { ministryOptions } from './ministryOptions';
 interface AddEditFormDefinitionProps {
   open: boolean;
@@ -40,7 +37,10 @@ interface AddEditFormDefinitionProps {
   initialValue?: FormDefinition;
   onClose: () => void;
   onSave: (definition: FormDefinition) => void;
-  renameAct: (editActTarget:any, newName:any) => void ;
+  renameAct: (editActTarget: any, newName: any) => void;
+  definitions: Record<string,FormDefinition>
+  indicator: any
+  defaultFormUrl: string
 }
 
 function isValidUrl(string) {
@@ -78,25 +78,20 @@ export const AddEditFormDefinition = ({
   open,
   onSave,
   renameAct,
+  definitions,
+  indicator,
+  defaultFormUrl,
 }: AddEditFormDefinitionProps): JSX.Element => {
   const [definition, setDefinition] = useState<FormDefinition>(initialValue);
   const [multiForm, setMultiForm] = useState<boolean>(false);
   const [spinner, setSpinner] = useState<boolean>(false);
 
-  const definitions = useSelector((state: RootState) => {
-    return state?.form?.definitions;
-  });
   const definitionIds = Object.values(definitions).map((x) => x.name);
   const registeredIds = Object.values(definitions)
     .map((x) => x.registeredId)
     .filter((item) => item != null);
 
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
   const descErrMessage = 'Description can not be over 180 characters';
-
-  const defaultFormUrl = useSelector((state: RootState) => selectDefaultFormUrl(state, definition?.id || null));
 
   useEffect(() => {
     if (spinner && Object.keys(definitions).length > 0 && !isEdit) {
@@ -150,8 +145,6 @@ export const AddEditFormDefinition = ({
   const [editActTarget, setEditActTarget] = useState<string>('');
   const [editActName, setEditActName] = useState<string>('');
   const [editActError, setEditActError] = useState<string | null>(null);
-
-  const dispatch = useDispatch();
 
   const addProgram = () => {
     const val = newProgramName.trim();

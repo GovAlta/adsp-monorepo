@@ -5,6 +5,7 @@ import {
   FormTemplateEditorContainer,
   OuterFormTemplateEditorContainer,
   FormEditor,
+  IndicatorBox,
 } from '../styled-components';
 import { ModalContent } from '../../styled-components';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -16,6 +17,7 @@ import { initializeFormEditor } from '@store/form/action';
 import { modifiedDefinitionSelector } from '@store/form/selectors';
 import { rolesSelector } from '@store/access/selectors';
 import { PageIndicator } from '@components/Indicator';
+import { REALM_ROLE_KEY } from '@store/sharedSelectors/roles';
 import {
   setDraftDataSchema,
   setDraftUISchema,
@@ -23,6 +25,7 @@ import {
   updateEditorFormDefinition,
   getFormDefinitions,
 } from '@store/form/action';
+import _ from 'underscore';
 import { isFormUpdatedSelector, schemaErrorSelector } from '@store/form/selectors';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { FormEditorCommon } from '../../../../../../../../../libs/form-editor-common/src';
@@ -33,6 +36,18 @@ import { CalendarEventDefault } from '@store/calendar/models';
 import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
 import { ActionState } from '@store/session/models';
 import { renameAct } from '@store/form/action';
+import { selectDefaultFormUrl } from '@store/form/selectors';
+import { UpdateEventsByCalendar, CreateEventsByCalendar } from '@store/calendar/actions';
+import { CalendarEvent } from '../../../../../store/calendar/models';
+import { DeleteCalendarEvent } from '@store/calendar/actions';
+import { FetchFileService } from '@store/file/actions';
+import { streamPdfSocket } from '@store/pdf/action';
+import { updatePdfResponse, showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
+import { FileItem } from '@store/file/models';
+import { updateTempTemplate } from '../../../../../store/pdf/action';
+import { generatePdf } from '../../../../../store/pdf/action';
+import { getCorePdfTemplates } from '../../../../../store/pdf/action';
+import { GoACircularProgress } from '@abgov/react-components';
 
 export const FormDefinitionEditor = (): JSX.Element => {
   const navigate = useNavigate();
@@ -84,14 +99,46 @@ export const FormDefinitionEditor = (): JSX.Element => {
 
   const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema) as Record<string, unknown>;
 
-  const fileList = useSelector((state: RootState) => {
+  const fileList = useSelector((state: RootState) => state?.fileService?.fileList);
+
+  const hasFormName = (jobFileName, formName) => {
+    console.log(JSON.stringify(jobFileName) + '>jopbFineNme');
+    console.log(JSON.stringify(formName) + '>formName');
+    const partFormName = formName.length >= 10 ? formName.substr(0, 10) : formName;
+    return jobFileName.indexOf(partFormName) !== -1;
+  };
+
+  const pdfTemplate = useSelector(
+    (state: RootState) => state.pdf?.corePdfTemplates['submitted-form'] || state?.pdf?.pdfTemplates[id]
+  );
+
+  const jobList = useSelector((state: RootState) =>
+    state?.pdf?.jobs.filter((job) => job.templateId === pdfTemplate.id && hasFormName(job.filename, definition?.name))
+  );
+
+  const socketChannel = useSelector((state: RootState) => {
+    return state?.pdf.socketChannel;
+  });
+  const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
+  const currentId = useSelector((state: RootState) => state?.pdf?.currentId);
+  const files = useSelector((state: RootState) => state?.pdf.files);
+  const pdf = useSelector((state: RootState) => state?.pdf);
+  const state0 = useSelector((state: RootState) => state);
+
+  console.log(JSON.stringify(pdf) + '<pdf--------');
+  console.log(JSON.stringify(state0) + '<state--------');
+
+  const newFileList = useSelector((state: RootState) => {
     return state?.fileService.newFileList;
   });
+
+  const pdfList = useSelector((state: RootState) => state.pdf.jobs, _.isEqual);
 
   const DeleteFileServiceDispatch = (fileId: string) => {
     dispatch(DeleteFileService(fileId));
   };
   const updateFormDefinitionDispatch = (definition: any) => {
+    console.log(JSON.stringify(definition) + '<definition--------');
     dispatch(updateFormDefinition(definition));
   };
   const UploadFileServiceDispatch = (value: any) => {
@@ -119,6 +166,47 @@ export const FormDefinitionEditor = (): JSX.Element => {
     dispatch(renameAct(editActTarget, newName));
   };
 
+  const UpdateEventsByCalendarDispatch = (eventId: string, event: CalendarEvent) => {
+    dispatch(UpdateEventsByCalendar('form-intake', eventId, event));
+  };
+  const CreateEventsByCalendarDispatch = (event: CalendarEvent) => {
+    dispatch(CreateEventsByCalendar('form-intake', event));
+  };
+  const DeleteCalendarEventDispatch = (eventId: string) => {
+    dispatch(DeleteCalendarEvent(eventId, 'form-intake'));
+  };
+  const updatePdfResponseDispatch = (fileList: FileItem[]) => {
+    dispatch(updatePdfResponse({ fileList: fileList }));
+  };
+  const showCurrentFilePdfDispatch = (currentFileId: string) => {
+    dispatch(showCurrentFilePdf(currentFileId));
+  };
+  const setPdfDisplayFileIdDispatch = (fileId: string) => {
+    dispatch(setPdfDisplayFileId(fileId));
+  };
+  const streamPdfSocketDispatch = (disconnect: false) => {
+    dispatch(streamPdfSocket(disconnect));
+  };
+  const FetchFileServiceDispatch = (fieldId: string) => {
+    dispatch(FetchFileService(fieldId));
+  };
+
+  const updateTempTemplateDispatch = (pdfTemplate: any) => {
+    dispatch(updateTempTemplate(pdfTemplate));
+  };
+  const generatePdfDispatch = (payload: any) => {
+    dispatch(generatePdf(payload));
+  };
+  const getCorePdfTemplatesDispatch = () => {
+    dispatch(getCorePdfTemplates());
+  };
+
+  const defaultFormUrl = useSelector((state: RootState) => selectDefaultFormUrl(state, definition?.id || null));
+
+  const definitions = useSelector((state: RootState) => {
+    return state?.form?.definitions;
+  });
+
   return (
     <Modal data-testid="template-form">
       <ModalContent>
@@ -145,7 +233,7 @@ export const FormDefinitionEditor = (): JSX.Element => {
                   isFormUpdated={isFormUpdated}
                   latestNotification={latestNotification}
                   isLoadingRoles={isLoadingRoles}
-                  fileList={fileList}
+                  newFileList={newFileList}
                   SecurityClassification={SecurityClassification}
                   indicator={indicator}
                   CalendarEventDefault={CalendarEventDefault}
@@ -161,11 +249,33 @@ export const FormDefinitionEditor = (): JSX.Element => {
                   UpdateSearchCriteriaAndFetchEvents={UpdateSearchCriteriaAndFetchEventsDispatch}
                   dataSchema={dataSchema}
                   renameAct={renameActDispatch}
+                  definitions={definitions}
+                  defaultFormUrl={defaultFormUrl}
+                  DeleteCalendarEvent={DeleteCalendarEventDispatch}
+                  CreateEventsByCalendar={CreateEventsByCalendarDispatch}
+                  UpdateEventsByCalendar={UpdateEventsByCalendarDispatch}
+                  streamPdfSocket={streamPdfSocketDispatch}
+                  showCurrentFilePdf={showCurrentFilePdfDispatch}
+                  setPdfDisplayFileId={setPdfDisplayFileIdDispatch}
+                  updatePdfResponse={updatePdfResponseDispatch}
+                  FetchFileService={FetchFileServiceDispatch}
+                  fileList={fileList}
+                  pdfTemplate={pdfTemplate}
+                  jobList={jobList}
+                  socketChannel={socketChannel}
+                  reloadFile={reloadFile}
+                  currentId={currentId}
+                  files={files}
+                  pdfList={pdfList}
+                  updateTempTemplate={updateTempTemplateDispatch}
+                  generatePdf={generatePdfDispatch}
+                  getCorePdfTemplates={getCorePdfTemplatesDispatch}
+                  REALM_ROLE_KEY={REALM_ROLE_KEY}
                 />
               ) : (
-                <FormEditor>
-                  <PageIndicator />
-                </FormEditor>
+                <IndicatorBox>
+                  <GoACircularProgress visible={true} message="Loading..." size="large" />
+                </IndicatorBox>
               )}
             </FormTemplateEditorContainer>
           </HideTablet>
