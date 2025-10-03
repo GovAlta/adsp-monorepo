@@ -50,18 +50,25 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
                 {sectionTitle && showInTaskListList[globalIndex] && (
                   <SectionHeaderRow key={`section-${sectionTitle}`} title={sectionTitle} index={sectionIndex++} />
                 )}
-                {group.map((category) => {
-                  const showGroupTaskListList = categories.map((cat) => {
-                    return (
-                      cat?.uischema?.options?.showInTaskList || cat?.uischema?.options?.showInTaskList === undefined
-                    );
-                  });
+                {group.map((category, groupIndex) => {
+                  //eslint-disable-next-line
+                  const shouldShow = (cat: any) => cat?.uischema?.options?.showInTaskList !== false;
 
+                  let leftIndex = groupIndex;
+                  while (leftIndex > 0 && !shouldShow(group[leftIndex - 1])) {
+                    leftIndex--;
+                  }
+                  let rightIndex = groupIndex;
+                  while (rightIndex < group.length - 1 && !shouldShow(group[rightIndex + 1])) {
+                    rightIndex++;
+                  }
+                  const currentLocalGroup = group.slice(leftIndex, rightIndex + 1);
+                  const showGroupTaskListList = categories.map((cat) => shouldShow(cat));
                   const showCurrent = showInTaskListList[globalIndex];
                   const index = globalIndex++;
-
                   const modifyCategory = JSON.parse(JSON.stringify(category));
-                  modifyCategory.isCompleted = group.length === group.filter((category) => category.isCompleted).length;
+                  modifyCategory.isCompleted =
+                    currentLocalGroup.length === currentLocalGroup.filter((category) => category.isCompleted).length;
                   let currentCategory = category;
                   if (showGroupTaskListList.length > showGroupTaskListList.filter((item) => item === true).length) {
                     currentCategory = modifyCategory;
