@@ -88,8 +88,8 @@ describe('createJobs', () => {
     expect(events.subscribe).toHaveBeenCalledWith(expect.any(Function));
     const subscribeCallback = (events.subscribe as jest.Mock).mock.calls[0][0];
     const doneFn = jest.fn();
-    subscribeCallback({ item: {}, done: doneFn });
-    expect(processEventJob).toHaveBeenCalledWith({}, doneFn);
+    subscribeCallback({ item: {}, retryOnError: true, done: doneFn });
+    expect(processEventJob).toHaveBeenCalledWith({}, true, doneFn);
   });
 
   it('should create and subscribe to sendNotificationJob', () => {

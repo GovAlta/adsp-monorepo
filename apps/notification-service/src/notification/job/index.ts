@@ -60,7 +60,7 @@ export const createJobs = ({
     queueService,
   });
 
-  events.subscribe(({ item, done }) => processEventJob(item, done));
+  events.subscribe(({ item, retryOnError, done }) => processEventJob(item, retryOnError, done));
 
   queueService.getItems().subscribe(({ item, retryOnError, done }) => sendNotificationJob(item, retryOnError, done));
 };

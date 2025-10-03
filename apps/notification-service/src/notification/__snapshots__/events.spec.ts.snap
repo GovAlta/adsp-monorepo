@@ -1,5 +1,29 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`events notificationGenerationFailed should generate notification-generation-failed event correctly 1`] = `
+{
+  "context": {
+    "generationId": "123",
+  },
+  "correlationId": "123",
+  "name": "notification-generation-failed",
+  "payload": {
+    "error": "Oh noes!",
+    "event": {
+      "name": "test-event",
+      "namespace": "test-namespace",
+      "timestamp": "2024-07-11T12:00:00Z",
+    },
+    "type": {
+      "id": "1",
+      "name": "test-type",
+    },
+  },
+  "tenantId": undefined,
+  "timestamp": Any<Date>,
+}
+`;
+
 exports[`events notificationSendFailed should generate notification-send-failed event correctly 1`] = `
 {
   "context": {

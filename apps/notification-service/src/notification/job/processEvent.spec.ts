@@ -158,6 +158,7 @@ describe('createProcessEventJob', () => {
           payload: {},
           traceparent: '123',
         },
+        true,
         (err) => {
           expect(err).toBeFalsy();
         }
@@ -268,6 +269,7 @@ describe('createProcessEventJob', () => {
           payload: {},
           traceparent: '123',
         },
+        true,
         (err) => {
           expect(err).toBeFalsy();
         }
@@ -343,6 +345,7 @@ describe('createProcessEventJob', () => {
           payload: { tenantId, typeId: 'test', subscriberId: 'test' },
           traceparent: '123',
         },
+        true,
         (err) => {
           expect(err).toBeFalsy();
           done();
@@ -375,6 +378,7 @@ describe('createProcessEventJob', () => {
           payload: {},
           traceparent: '123',
         },
+        true,
         (err) => {
           expect(err).toBeTruthy();
           done();
@@ -405,6 +409,7 @@ describe('createProcessEventJob', () => {
           payload: { tenantId, typeId: 'test', subscriberId: 'test' },
           traceparent: '123',
         },
+        true,
         (err) => {
           expect(err).toBeFalsy();
           expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
