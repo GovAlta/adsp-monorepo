@@ -99,9 +99,7 @@ export const createProcessEventJob =
               }
             );
           } catch (err) {
-            if (!retryOnError) {
-              eventService.send(notificationGenerationFailed(generationId, event, type, err.message));
-            }
+            eventService.send(notificationGenerationFailed(generationId, event, type, err.message));
           }
         }
       }
