@@ -30,7 +30,7 @@ const AsideLinks = ({ serviceName, noDocsLink = false, feedbackTutorialLink }: A
     return `https://github.com/GovAlta/adsp-monorepo/tree/main/apps/${serviceName}-service`;
   };
   return (
-    <>
+    <div style={{ zIndex: -1, position: 'relative' }}>
       <GapAdjustment>Helpful links</GapAdjustment>
       <HyperLinkColor>
         <ExternalLink testId="code-link" link={getSupportCodeLink()} text="See the code" />
@@ -50,7 +50,7 @@ const AsideLinks = ({ serviceName, noDocsLink = false, feedbackTutorialLink }: A
         </HyperLinkColor>
       )}
       <SupportLinks />
-    </>
+    </div>
   );
 };
 
