@@ -24,7 +24,7 @@ readme = "README.md"
 
   [tool.poetry.dependencies]
   python = ">=3.9,<3.12"
-  flask = "^3.1.1"
+  flask = "^3.1.2"
 
     [tool.poetry.dependencies.adsp-py-common]
     path = "../adsp-py-common"
