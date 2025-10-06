@@ -36,11 +36,11 @@ readme = 'README.md'
 
   [tool.poetry.group.dev.dependencies]
   flake8 = "^7.3.0"
-  pytest = "^8.4.1"
+  pytest = "^8.4.2"
   pytest-coverage = "^0.0"
   pytest-html = "^4.1.1"
-  black = "^25.1.0"
-  tox = "^4.28.0"
+  black = "^25.9.0"
+  tox = "^4.30.3"
 
 [build-system]
 requires = ["poetry-core==1.1.0"]
