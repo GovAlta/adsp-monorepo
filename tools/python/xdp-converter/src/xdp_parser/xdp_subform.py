@@ -42,29 +42,6 @@ def get_subform_label(subform) -> str | None:
     return None
 
 
-def traverse_node(node: ET.Element):
-    """
-    Yield (element, inside_excl) for all descendants of `root`.
-      - On exclGroup: yield once with inside_excl=True, do NOT descend.
-      - On hidden subform: yield once (configurable), do NOT descend.
-      - Otherwise: yield and continue descending.
-    """
-
-    for child in list(node):
-        if child.tag == "exclGroup":
-            yield child, True
-            continue
-
-        if is_subform(node) and is_hidden(node):
-            # TODO handle this - descend AND create a rule that hides the subform.
-            print(f"     subform {child.get('name') } is being ignored")
-            continue
-
-        # normal element
-        yield child, False
-        yield from traverse_node(child)
-
-
 def text_of_value(draw_el: ET.Element) -> str:
     """
     Extract text from a <value> under <draw>, looking for any <text> child first,

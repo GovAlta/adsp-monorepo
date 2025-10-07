@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 from schema_generator.form_element import FormElement
-from schema_generator.form_group import FormGroup
+from schema_generator.form_layout import FormGroup
 from xdp_parser.xdp_element import XdpElement
 
 

@@ -7,7 +7,6 @@ class FormInput(FormElement):
         super().__init__("control")
         self.name: str = name
         self.input_type: str = input_type
-        self.label: str = strip_label_prefix(name)
         self.format: str = None
         self.enum: list[str] = None
         self.x: float = None
@@ -27,8 +26,7 @@ class FormInput(FormElement):
 
     def to_ui_schema(self):
         control = {"type": "Control", "scope": f"#/properties/{self.name}"}
-        if self.label:
-            control["label"] = self.label
+        control["label"] = strip_label_prefix(self.label)
         if self.is_radio:
             control["options"] = {"format": "radio"}
         return control

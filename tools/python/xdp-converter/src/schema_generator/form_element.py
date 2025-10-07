@@ -10,9 +10,15 @@ class FormElement:
         self.y = 0
         self.x = 0
         self.name = None
+        self.is_radio = False
+        self.label = None
+        self.format = None
+        self.enum = None
+        self.children = None
+        self.can_group_horizontally = True
 
     @abstractmethod
-    def has_json_schema():
+    def has_json_schema(self):
         pass
 
     @abstractmethod
@@ -20,5 +26,5 @@ class FormElement:
         pass
 
     @abstractmethod
-    def to_ui_schema(rules: Optional[dict] = None):
+    def to_ui_schema(self, rules: Optional[dict] = None):
         pass

@@ -8,8 +8,9 @@ from xdp_parser.xdp_utils import split_camel_case, strip_label_prefix
 
 
 class XdpElement(ABC):
-    def __init__(self, xdp):
+    def __init__(self, xdp, labels=None):
         self.xdp_element = xdp
+        self.labels = labels
 
     @abstractmethod
     def to_form_element(self) -> FormElement:
@@ -37,15 +38,14 @@ class XdpElement(ABC):
         return self.xdp_element.get("name", "")
 
     def get_label(self):
-        caption = get_caption_text(self.xdp_element)
-        if caption:
-            return caption
-
-        label = strip_label_prefix(self.get_name())
-        if label:
-            return split_camel_case(label)
-
-        return None
+        label = None
+        if self.labels:
+            label = self.labels.get(self.get_name())
+        if not label:
+            label = strip_label_prefix(self.get_name())
+            if label:
+                label = split_camel_case(label)
+        return label
 
     def get_enumeration_values(self):
         """

@@ -1,8 +1,7 @@
 from typing import Optional
 from schema_generator.form_element import FormElement
+from schema_generator.form_layout import group_horizontally
 from schema_generator.section_title import SectionTitle
-from collections import defaultdict
-from schema_generator.form_layout import FormLayout
 
 
 class FormCategory(FormElement):
@@ -32,36 +31,3 @@ class FormCategory(FormElement):
             if element.has_json_schema():
                 schemas.append(element.to_json_schema())
         return schemas
-
-
-def group_horizontally(elements, tolerance_mm=1.0, max_per_row=4):
-    if not elements:
-        return []
-
-    rows = []
-    current_row = [elements[0]]
-    y_last = float(elements[0].y)
-
-    for element in elements[1:]:
-        y = float(element.y)
-        # If within tolerance and row not full, add to current row
-        if abs(y_last - y) <= tolerance_mm and len(current_row) < max_per_row:
-            current_row.append(element)
-        else:
-            rows.append(current_row)
-            current_row = [element]
-            y_last = y
-
-    # Append the last row
-    if current_row:
-        rows.append(current_row)
-
-    # Group rows: if more than one element, wrap in FormLayout
-    groups = []
-    for row in rows:
-        if len(row) > 1:
-            groups.append(FormLayout("HorizontalLayout", row))
-        else:
-            groups.extend(row)  # single element, just add it
-
-    return groups

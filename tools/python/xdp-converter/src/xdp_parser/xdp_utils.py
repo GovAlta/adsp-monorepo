@@ -8,7 +8,7 @@ def strip_namespace(tag: str) -> str:
     return tag.split("}")[-1] if "}" in tag else tag
 
 
-_LABEL_PREFIXES = ["txt", "btn", "chk", "dte", "lbl", "cbo"]
+_LABEL_PREFIXES = ["txt", "btn", "chk", "dte", "lbl", "cbo", "rb"]
 
 
 def strip_label_prefix(label: str) -> str:
