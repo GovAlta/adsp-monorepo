@@ -250,10 +250,7 @@ export function* fetchRegisterData(): SagaIterator {
           return (
             _c?.configurationSchema?.type === 'array' &&
             _c.anonymousRead === true &&
-            (_c?.configurationSchema?.items?.type === 'string' ||
-              (_c?.configurationSchema?.items?.type === 'object' &&
-                _c?.configurationSchema?.items?.properties?.label?.type === 'string' &&
-                _c?.configurationSchema?.items?.properties?.value?.type === 'string'))
+            (_c?.configurationSchema?.items?.type === 'string' || _c?.configurationSchema?.items?.type === 'object')
           );
         })
         // eslint-disable-next-line
@@ -266,10 +263,7 @@ export function* fetchRegisterData(): SagaIterator {
         const _c = config as any;
         return (
           _c?.configurationSchema?.type === 'array' &&
-          (_c?.configurationSchema?.items?.type === 'string' ||
-            (_c?.configurationSchema?.items?.type === 'object' &&
-              _c?.configurationSchema?.items?.properties?.label?.type === 'string' &&
-              _c?.configurationSchema?.items?.properties?.value?.type === 'string'))
+          (_c?.configurationSchema?.items?.type === 'string' || _c?.configurationSchema?.items?.type === 'object')
         );
       });
 
