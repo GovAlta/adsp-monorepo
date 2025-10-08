@@ -33,8 +33,10 @@ export const createErrorHandler =
           res.statusCode ? `(status: ${res.statusCode})` : ''
         }. ${err}`
       );
-      if (!res.statusCode) {
+      if (!res.headersSent) {
         res.sendStatus(500);
+      } else {
+        res.end();
       }
     }
   };
