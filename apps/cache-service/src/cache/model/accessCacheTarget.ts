@@ -75,7 +75,7 @@ export class AccessCacheTarget extends CacheTarget {
         const { resourceType, resourcePath: upstreamResourcePath } = event.payload;
         if (upstreamResourcePath) {
           const resourcePath = path.join(this.basePath, upstreamResourcePath);
-          this.logger.debug(
+          this.logger.info(
             `Invalidating cache entry for path '${resourcePath}' on admin event ${namespace}:${name}...`,
             {
               context: 'AccessCacheTarget',
