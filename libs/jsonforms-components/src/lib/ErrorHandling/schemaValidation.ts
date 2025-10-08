@@ -20,6 +20,7 @@ export const errMalformedScope = (scope: string): string => `Scope ${scope} must
 export const errUnknownScope = (scope: string): string => `Failed to render: unknown scope ${scope}`;
 export const errMissingType = 'UI schema element must have a type';
 export const errUnknownType = (type: string) => `Unknown schema type: ${type}. (Names are case sensitive)`;
+export const errMissingRegister = 'Register configuration is missing in the UISchema options';
 
 export const getUISchemaErrors = (uiSchema: UISchemaElement, schema: JsonSchema): string | null => {
   // Sometimes the UISchema is null.  Ignore those cases, as all checks are done on the UIschema.
@@ -30,6 +31,15 @@ export const getUISchemaErrors = (uiSchema: UISchemaElement, schema: JsonSchema)
   // silently ignore empty objects
   if (isEmptyObject(uiSchema)) {
     return '';
+  }
+
+  if (
+    isControl(uiSchema) &&
+    schema?.type === 'object' &&
+    uiSchema?.options?.format === 'enum' &&
+    uiSchema?.options?.register === undefined
+  ) {
+    return errMissingRegister;
   }
 
   // Check control elements
