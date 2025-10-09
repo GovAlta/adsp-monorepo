@@ -277,13 +277,20 @@ describe('FormEntity', () => {
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 
-    it('can throw for non-draft form', async () => {
+    it('can access non-draft form', async () => {
       const nonDraft = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
-      nonDraft.status = FormStatus.Archived;
+      nonDraft.status = FormStatus.Submitted;
       const code = '123';
-      await expect(
-        nonDraft.accessByCode({ tenantId, id: 'tester', roles: ['intake-application'] } as User, notificationMock, code)
-      ).rejects.toThrow(InvalidOperationError);
+      notificationMock.verifyCode.mockResolvedValueOnce(true);
+      const before = nonDraft.lastAccessed;
+      const result = await nonDraft.accessByCode(
+        { tenantId, id: 'tester', roles: ['intake-application'] } as User,
+        notificationMock,
+        code
+      );
+      expect(notificationMock.verifyCode).toHaveBeenCalledWith(tenantId, subscriber, code);
+      expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
+      expect(repositoryMock.save).toHaveBeenCalledWith(nonDraft);
     });
 
     it('can throw for non-intake application', async () => {
