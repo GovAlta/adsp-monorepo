@@ -226,7 +226,7 @@ describe('notification', () => {
             operation: 'send-code',
             channel: subscriber.channels[0].channel,
             address: subscriber.channels[0].address,
-            reason: 'Enter this code to access your draft form.',
+            reason: 'Enter this code to access your form.',
           }),
           expect.any(Object)
         );

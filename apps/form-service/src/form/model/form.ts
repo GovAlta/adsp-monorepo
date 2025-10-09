@@ -148,10 +148,6 @@ export class FormEntity implements Form {
   }
 
   async accessByCode(user: User, notificationService: NotificationService, code: string): Promise<FormEntity> {
-    if (this.status !== FormStatus.Draft) {
-      throw new InvalidOperationError('Only draft forms can be accessed by verify code.');
-    }
-
     // When access by code, the user needs to be an intake application.
     if (!isAllowedUser(user, this.tenantId, FormServiceRoles.IntakeApp, true)) {
       throw new UnauthorizedUserError('access form', user);
