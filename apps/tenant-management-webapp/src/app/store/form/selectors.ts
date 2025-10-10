@@ -1,6 +1,6 @@
 import { selectDirectoryByServiceName } from '@store/directory/selectors';
 import { RootState } from '@store/index';
-import { toKebabName } from '@lib/kebabName';
+import { replaceSpaceWithDash } from '@lib/kebabName';
 import { createSelector } from 'reselect';
 
 const PUBLIC_FORM_APP = 'form-app';
@@ -15,7 +15,7 @@ export const selectFormAppLink = createSelector(
   selectFormAppHost,
   (_, formId: string | null) => formId,
   (state, appFormHost, formId) => {
-    const tenantName = toKebabName(state.name);
+    const tenantName = replaceSpaceWithDash(state.name);
     return `${appFormHost}/${tenantName}/${formId}`;
   }
 );
@@ -33,7 +33,7 @@ export const selectDefaultFormUrl = createSelector(
   selectFormAppHost,
   (_, formId: string | null) => formId,
   (state, appFormHost, formId) => {
-    const tenantName = toKebabName(state.name);
+    const tenantName = replaceSpaceWithDash(state.name);
     if (formId === null) {
       return `${appFormHost}/${tenantName}/{{formId}}`;
     }
