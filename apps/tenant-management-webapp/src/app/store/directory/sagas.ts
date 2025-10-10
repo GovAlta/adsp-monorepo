@@ -32,7 +32,7 @@ import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator, UpdateElementIndicator } from '@store/session/actions';
 import { adspId } from '@lib/adspId';
 import { Service } from './models';
-import { toKebabName } from '@lib/kebabName';
+import { toKebabName, replaceSpaceWithDash } from '@lib/kebabName';
 import { getAccessToken } from '@store/tenant/sagas';
 import { fetchResourceTypeApi } from './api';
 export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
@@ -63,7 +63,7 @@ export function* fetchDirectory(_action: FetchDirectoryAction): SagaIterator {
       if (tenantName !== 'Platform') {
         const { data: tenantDirectory } = yield call(
           axios.get,
-          `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/entries`,
+          `${directoryBaseUrl}/directory/v2/namespaces/${replaceSpaceWithDash(tenantName)}/entries`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -94,7 +94,7 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
   const token = yield call(getAccessToken);
   const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
   const tenantName: string = state.tenant.name;
-  const servicesUrl = `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services`;
+  const servicesUrl = `${directoryBaseUrl}/directory/v2/namespaces/${replaceSpaceWithDash(tenantName)}/services`;
   try {
     const sendEntry = { url: action.data.url } as Service;
     let url: string = null;
@@ -133,7 +133,7 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
   const token = yield call(getAccessToken);
   const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
   const tenantName: string = state.tenant.name;
-  const servicesUrl = `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services/${
+  const servicesUrl = `${directoryBaseUrl}/directory/v2/namespaces/${replaceSpaceWithDash(tenantName)}/services/${
     action.data.service
   }`;
 
@@ -167,7 +167,7 @@ export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
   const token = yield call(getAccessToken);
   const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
   const tenantName: string = state.tenant.name;
-  const servicesUrl = `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services/${
+  const servicesUrl = `${directoryBaseUrl}/directory/v2/namespaces/${replaceSpaceWithDash(tenantName)}/services/${
     action.data.service
   }`;
   const url = action.data.api ? `${servicesUrl}/apis/${action.data.api}` : servicesUrl;
@@ -199,7 +199,7 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
   try {
     const { data } = yield call(
       axios.get,
-      `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(action.data.namespace)}/services/${
+      `${directoryBaseUrl}/directory/v2/namespaces/${replaceSpaceWithDash(action.data.namespace)}/services/${
         action.data.service
       }`,
       {
@@ -252,7 +252,9 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
             // fetch metadata from remote only when it does not exist
             const { data: result } = yield call(
               axios.get,
-              `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services/${_service.service}`,
+              `${directoryBaseUrl}/directory/v2/namespaces/${replaceSpaceWithDash(tenantName)}/services/${
+                _service.service
+              }`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }
