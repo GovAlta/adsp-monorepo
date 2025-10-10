@@ -20,6 +20,7 @@ import MonacoEditor from '@monaco-editor/react';
 import { scriptEditorConfig } from './config';
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, isNotEmptyCheck, isValidJSONCheck } from '@lib/validation/checkInput';
+import { externalEventSuggestionList } from '@store/event/selectors';
 
 interface TriggerEventModalProps {
   initialScript: ScriptItem;
@@ -86,7 +87,9 @@ export const TriggerEventModal = ({
     return `${ev.namespace}:${ev.name}`;
   });
 
-  const filteredEventNames = [...new Set(filterArray(eventNames, eventTriggerNames || []))] as string[];
+  const filteredEventNames = [
+    ...new Set([...filterArray(eventNames, eventTriggerNames || []), ...externalEventSuggestionList]),
+  ] as string[];
 
   const getCriteriaContext = () => {
     if (

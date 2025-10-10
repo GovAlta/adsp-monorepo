@@ -122,7 +122,7 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
                   <ScriptEventTriggerDefinitionComponent
                     onEdit={onEdit}
                     onDelete={onDelete}
-                    key={`${triggerEvent.eventName}}`}
+                    key={`${triggerEvent.namespace}:${triggerEvent.name}`}
                     triggerEvent={triggerEvent}
                   />
                 ))}
@@ -149,6 +149,7 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
   };
 
   const onEdit = (triggerEvent: ScriptItemTriggerEvent) => {
+    console.log(triggerEvent);
     setOpenAddTriggerEvent(true);
     setIsNewScriptTriggerEvent(false);
     setSelectedTriggerEvent(triggerEvent);
