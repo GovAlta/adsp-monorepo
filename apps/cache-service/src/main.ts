@@ -105,8 +105,8 @@ const initializeApp = async (): Promise<express.Application> => {
           configuration: {
             targets: {
               [accessApiId.toString()]: {
-                // TTL of 0 for no expiry.
-                ttl: 0,
+                // TTL of 2592000 seconds (30 days).
+                ttl: 2592000,
               },
             },
           },
