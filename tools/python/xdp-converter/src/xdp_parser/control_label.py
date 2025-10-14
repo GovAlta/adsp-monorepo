@@ -12,13 +12,19 @@ class ControlLabels:
     def get(self, target):
         return self.labels.get(target)
 
+    def getAnnotation(self, key: str) -> str:
+        """Fetch help message for a control name."""
+        return self.labels.get(key)
+
+    def hasAnnotation(self, key: str) -> bool:
+        """Check if a help message exists for a control name."""
+        return key in self.labels
+
     def _find_control_labels(self, container_node):
         """
         Build { control_name: label } for every visible <field>/<exclGroup> under container_node.
         Priority: traversal → inline caption → control name.
         """
-        if container_node.get("name") == "DropDownList1":
-            print("############ found dropdownlist1")
 
         # 1) Traversal-based labels (strongest)
         # Scan any node under container that has <traversal><traverse ref="...">
@@ -53,8 +59,8 @@ class ControlLabels:
             if not label_txt:
                 continue
 
-            for tv in traversal.findall("{*}traverse"):
-                ref = (tv.attrib.get("ref") or "").strip()
+            for traverse in traversal.findall("{*}traverse"):
+                ref = (traverse.attrib.get("ref") or "").strip()
                 target_name = _last_segment_name_from_ref(ref)
                 if not target_name:
                     continue

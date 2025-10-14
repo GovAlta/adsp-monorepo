@@ -9,8 +9,8 @@ from rule_generator.normalize_rules import RulesParser
 from schema_generator.json_schema_generator import JsonSchemaGenerator
 from schema_generator.ui_schema_generator import UiSchemaGenerator
 import xml.etree.ElementTree as ET
-from xdp_parser.message_registry import HelpMessageRegistry
-from xdp_parser.parse_xdp import parse_xdp
+from xdp_parser.message_parser import JSHelpMessageParser
+from xdp_parser.parse_xdp import XdpParser
 from xdp_parser.xdp_utils import strip_namespaces
 
 
@@ -59,12 +59,15 @@ def process_one(
             print(f"🧩 Parsing {xdp_path}…")
 
         tree = strip_namespaces(ET.parse(xdp_path))
-        print(tree)
         rules_parser = RulesParser(tree.getroot())
         jf_rules = rules_parser.extract_rules()
-        registry = HelpMessageRegistry()
-        registry.load_messages(tree.getroot())
-        categories = parse_xdp(tree)
+
+        message_parser = JSHelpMessageParser(tree)
+        help_text = message_parser.get_messages()
+
+        parser = XdpParser()
+        parser.configure(tree.getroot(), {}, help_text)
+        categories = parser.parse_xdp()
 
         json_generator = JsonSchemaGenerator()
         json_schema = json_generator.to_schema(categories)
