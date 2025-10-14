@@ -18,6 +18,9 @@ export class AdspFeedback implements AdspFeedbackApi {
   private getAccessToken?: () => Promise<string>;
   private getContext: () => Promise<FeedbackContext>;
 
+  private readonly MAX_CHAR_LIMIT = 1000;
+  private readonly CHAR_LIMIT_WARNING = 'Please limit your text to 1000 characters.';
+
   private feedbackBadgeRef: Ref<HTMLDivElement> = createRef();
   private feedbackFormRef: Ref<HTMLDivElement> = createRef();
   private feedbackFormClassRef: Ref<HTMLDivElement> = createRef();
@@ -43,6 +46,10 @@ export class AdspFeedback implements AdspFeedbackApi {
   private ratingErrorText: Ref<HTMLSpanElement> = createRef();
   private issueSelectionErrorText: Ref<HTMLSpanElement> = createRef();
   private technicalCommentErrorText: Ref<HTMLSpanElement> = createRef();
+  private commentCharCountRef: Ref<HTMLSpanElement> = createRef();
+  private commentWarningRef: Ref<HTMLSpanElement> = createRef();
+  private techCharCountRef: Ref<HTMLSpanElement> = createRef();
+  private techWarningRef: Ref<HTMLSpanElement> = createRef();
 
   private ratings = ratings;
 
@@ -490,6 +497,32 @@ export class AdspFeedback implements AdspFeedbackApi {
       this.technicalCommentRef.value.classList.remove('error');
     }
   };
+
+  private handleTextInput = (
+    inputRef: Ref<HTMLTextAreaElement>,
+    countRef: Ref<HTMLSpanElement>,
+    warningRef: Ref<HTMLSpanElement>
+  ) => {
+    const el = inputRef.value;
+    if (!el) return;
+
+    const len = el.value.length;
+    if (len > this.MAX_CHAR_LIMIT) {
+      el.value = el.value.substring(0, this.MAX_CHAR_LIMIT);
+      warningRef.value!.textContent = this.CHAR_LIMIT_WARNING;
+      warningRef.value!.classList.add('visible');
+    } else {
+      warningRef.value!.classList.remove('visible');
+    }
+
+    countRef.value!.textContent = `${len} / ${this.MAX_CHAR_LIMIT}`;
+  };
+
+  private handleCommentInput = () =>
+    this.handleTextInput(this.commentRef, this.commentCharCountRef, this.commentWarningRef);
+
+  private handleTechnicalCommentInput = () =>
+    this.handleTextInput(this.technicalCommentRef, this.techCharCountRef, this.techWarningRef);
 
   private selectRating = (index: number) => {
     this.errorsOnRating(false);
@@ -1151,6 +1184,26 @@ export class AdspFeedback implements AdspFeedbackApi {
               top: 16px;
             }
           }
+
+          .char-count {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            text-align: right;
+            margin-top: 4px;
+          }
+
+          .char-warning {
+            display: none;
+            font-size: 14px;
+            color: red;
+            text-align: right;
+            margin-top: 4px;
+          }
+
+          .char-warning.visible {
+            display: block;
+          }
         </style>`,
         head
       );
@@ -1249,9 +1302,13 @@ export class AdspFeedback implements AdspFeedbackApi {
                         <textarea
                           id="comment"
                           ${ref(this.commentRef)}
+                          @input=${this.handleCommentInput}
                           placeholder=""
                           aria-label="Comments textarea"
                         ></textarea>
+
+                        <span ${ref(this.commentCharCountRef)} class="char-count"></span>
+                        <span ${ref(this.commentWarningRef)} class="char-warning"></span>
                         <span class="help-text"
                           >Do not include personal information like SIN, password, addresses, etc.</span
                         >
@@ -1309,9 +1366,12 @@ export class AdspFeedback implements AdspFeedbackApi {
                           <textarea
                             ${ref(this.technicalCommentRef)}
                             id="technicalComment"
-                            @input=${this.technicalCommentRefOnChange}
+                            @input=${this.handleTechnicalCommentInput}
                             aria-label="Technical comments textarea"
                           ></textarea>
+
+                          <span ${ref(this.techCharCountRef)} class="char-count"></span>
+                          <span ${ref(this.techWarningRef)} class="char-warning"></span>
                           <span class="inline-error" ${ref(this.technicalCommentErrorText)}>
                             <img src=${goaErrorIconSvg} alt="Error in technical comment" />
                             <p>Please explain the issue you encountered in detail</p></span
