@@ -8,13 +8,17 @@ import { TaskList, TocProps } from './TaskList/TaskList';
 import { RenderPages } from './RenderPages';
 
 /* --- helpers: JSON-pointer + "has data" (ignores schema defaults) --- */
-function getByJsonPointer(obj: any, pointer: string): any {
-  if (!obj || !pointer || pointer[0] !== '#') return undefined;
+type AnyRecord = Record<string, unknown>;
+const isRecord = (v: unknown): v is AnyRecord => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+function getByJsonPointer(obj: unknown, pointer: string): unknown {
+  if (!isRecord(obj) || !pointer || pointer[0] !== '#') return undefined;
   const parts = pointer.replace(/^#\//, '').split('/').filter(Boolean);
-  let cur: any = obj;
-  for (let i = 0; i < parts.length; i++) {
-    if (parts[i] === 'properties') continue;
-    cur = cur?.[parts[i]];
+  let cur: unknown = obj;
+  for (const part of parts) {
+    if (part === 'properties') continue;
+    if (!isRecord(cur)) return undefined;
+    cur = cur[part];
     if (cur === undefined) return undefined;
   }
   return cur;
@@ -24,13 +28,17 @@ function getByJsonPointer(obj: any, pointer: string): any {
 const IGNORE_DEFAULT_KEYS = new Set(['country', 'countryCode']);
 
 /** Return true only if value is user-provided/meaningful (not just defaults). */
-function hasDataValue(v: any, key?: string): boolean {
+function hasDataValue(v: unknown, key?: string): boolean {
   if (key && IGNORE_DEFAULT_KEYS.has(key)) return false;
   if (v === undefined || v === null) return false;
-  if (typeof v === 'string') return v.trim().length > 0;
-  if (typeof v === 'number' || typeof v === 'boolean') return true;
+
+  const t = typeof v;
+  if (t === 'string') return (v as string).trim().length > 0;
+  if (t === 'number' || t === 'boolean') return true;
+
   if (Array.isArray(v)) return v.length > 0;
-  if (typeof v === 'object') {
+
+  if (isRecord(v)) {
     for (const k of Object.keys(v)) {
       if (hasDataValue(v[k], k)) return true;
     }
@@ -38,9 +46,14 @@ function hasDataValue(v: any, key?: string): boolean {
   }
   return false;
 }
+function getCategoryScopes(cat: unknown): string[] {
+  if (!isRecord(cat)) return [];
+  const scopes = cat.scopes as unknown;
+  return Array.isArray(scopes) && scopes.every((s) => typeof s === 'string') ? (scopes as string[]) : [];
+}
 
 /** A page "has data" only if at least one scoped value is user-provided. */
-function hasDataInScopes(data: any, scopes?: string[]): boolean {
+function hasDataInScopes(data: unknown, scopes?: string[]): boolean {
   if (!Array.isArray(scopes) || scopes.length === 0) return false;
   return scopes.some((s) => hasDataValue(getByJsonPointer(data, s)));
 }
@@ -71,14 +84,14 @@ export const FormPageStepper = (props: CategorizationStepperLayoutRendererProps)
 export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): JSX.Element => {
   const data = props.data;
 
-  const formStepperCtx = useContext(JsonFormsStepperContext);
-  const { validatePage, goToPage } = formStepperCtx as JsonFormsStepperContextProps;
+  const formStepperCtx = useContext(JsonFormsStepperContext) as JsonFormsStepperContextProps;
+  const { validatePage, goToPage } = formStepperCtx;
 
-  const { categories, activeId } = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
+  const { categories, activeId } = formStepperCtx.selectStepperState();
 
   useEffect(() => {
     validatePage(activeId);
-  }, [data]);
+  }, [data, activeId, validatePage]);
 
   const handleGoToPage = (index: number) => {
     goToPage(index);
@@ -86,9 +99,9 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
 
   if (categories.length + 1 === activeId) {
     const patchedCategories = categories.map((c) => {
-      const hasData = hasDataInScopes(data, (c as any).scopes);
-      if (hasData) return c;
-      return { ...c, isVisited: false, isCompleted: false, isValid: false };
+      const scopes = getCategoryScopes(c);
+      const hasData = hasDataInScopes(data, scopes);
+      return hasData ? c : { ...c, isVisited: false, isCompleted: false, isValid: false };
     });
 
     const visibleCats = patchedCategories.filter((c) => c.visible);
