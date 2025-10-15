@@ -22,7 +22,7 @@ export const CategoryRow: React.FC<CategoryRowProps> = ({ category, index, onCli
         if (category?.isEnabled) onClick(index);
       }}
       onKeyDown={(e) => e.key === 'Enter' && onClick(index)}
-      data-testid={`page-row-${index}`}
+      data-testid={`page-ref-${index}`}
     >
       <td>{category.label}</td>
       <CategoryStatus>{getCategoryStatusBadge(category)}</CategoryStatus>
