@@ -13,19 +13,18 @@ interface CategoryRowProps {
 /* eslint-disable jsx-a11y/anchor-is-valid */
 export const CategoryRow: React.FC<CategoryRowProps> = ({ category, index, onClick }) => {
   return category.visible ? (
-    <PageStepperRow disabled={!category?.isEnabled}>
-      <td>
-        <a
-          data-testid={`page-ref-${index}`}
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            onClick(index);
-          }}
-        >
-          {category.label}
-        </a>
-      </td>
+    <PageStepperRow
+      disabled={!category?.isEnabled}
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        e.preventDefault();
+        if (category?.isEnabled) onClick(index);
+      }}
+      onKeyDown={(e) => e.key === 'Enter' && onClick(index)}
+      data-testid={`page-row-${index}`}
+    >
+      <td>{category.label}</td>
       <CategoryStatus>{getCategoryStatusBadge(category)}</CategoryStatus>
     </PageStepperRow>
   ) : null;
