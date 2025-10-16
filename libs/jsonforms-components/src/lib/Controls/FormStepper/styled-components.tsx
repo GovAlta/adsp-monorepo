@@ -129,12 +129,21 @@ export const PageStepperRow = styled.tr<PageStepperRowProps>`
   ${({ disabled }) =>
     disabled
       ? `
-           pointer-events: none;
-           opacity: 0.5;
-         `
+          pointer-events: none;
+          opacity: 0.5;
+          cursor: not-allowed;
+        `
       : `
-           cursor: pointer;
-         `}
+          cursor: pointer;
+
+          &:hover td {
+            background-color: var(--goa-color-greyscale-100);
+          }
+
+          td {
+            transition: background-color 0.2s ease-in-out;
+          }
+        `}
 `;
 
 export const SectionHeaderRowTr = styled.tr`

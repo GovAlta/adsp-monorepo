@@ -523,4 +523,87 @@ describe('FullName Dob ReviewControl', () => {
       expect(dobReview).toHaveValue('');
     });
   });
+
+  it('displays error when firstName is undefined', () => {
+    const propsWithUndefinedFirstName = {
+      ...defaultReviewProps,
+      data: {
+        ...defaultReviewProps.data,
+        firstName: undefined,
+      },
+      id: 'test-undefined-firstname',
+    };
+
+    const { container } = render(<FullNameDobReviewControl {...propsWithUndefinedFirstName} />);
+
+    const firstNameFormItem = container.querySelector('goa-form-item[label="First name"]');
+    expect(firstNameFormItem?.getAttribute('error')).toBe('First name is required');
+  });
+
+  it('displays error when lastName is undefined', () => {
+    const propsWithUndefinedLastName = {
+      ...defaultReviewProps,
+      data: {
+        ...defaultReviewProps.data,
+        lastName: undefined,
+      },
+      id: 'test-undefined-lastname',
+    };
+
+    const { container } = render(<FullNameDobReviewControl {...propsWithUndefinedLastName} />);
+
+    const lastNameFormItem = container.querySelector('goa-form-item[label="Last name"]');
+    expect(lastNameFormItem?.getAttribute('error')).toBe('Last name is required');
+  });
+
+  it('displays error when dateOfBirth is undefined', () => {
+    const propsWithUndefinedDob = {
+      ...defaultReviewProps,
+      data: {
+        ...defaultReviewProps.data,
+        dateOfBirth: undefined,
+      },
+      id: 'test-undefined-dob',
+    };
+
+    const { container } = render(<FullNameDobReviewControl {...propsWithUndefinedDob} />);
+
+    const dobFormItem = container.querySelector('goa-form-item[label="Date of birth"]');
+    expect(dobFormItem?.getAttribute('error')).toBe('Date of birth is required');
+  });
+
+  it('displays multiple errors when multiple fields are undefined', () => {
+    const propsWithMultipleUndefined = {
+      ...defaultReviewProps,
+      data: {
+        firstName: undefined,
+        middleName: 'A.',
+        lastName: undefined,
+        dateOfBirth: undefined,
+      },
+      id: 'test-multiple-undefined',
+    };
+
+    const { container } = render(<FullNameDobReviewControl {...propsWithMultipleUndefined} />);
+
+    const firstNameFormItem = container.querySelector('goa-form-item[label="First name"]');
+    const lastNameFormItem = container.querySelector('goa-form-item[label="Last name"]');
+    const dobFormItem = container.querySelector('goa-form-item[label="Date of birth"]');
+
+    expect(firstNameFormItem?.getAttribute('error')).toBe('First name is required');
+    expect(lastNameFormItem?.getAttribute('error')).toBe('Last name is required');
+    expect(dobFormItem?.getAttribute('error')).toBe('Date of birth is required');
+  });
+
+  it('does not display errors when all required fields have values', () => {
+    const { container } = render(<FullNameDobReviewControl {...defaultReviewProps} />);
+
+    const firstNameFormItem = container.querySelector('goa-form-item[label="First name"]');
+    const lastNameFormItem = container.querySelector('goa-form-item[label="Last name"]');
+    const dobFormItem = container.querySelector('goa-form-item[label="Date of birth"]');
+
+    expect(firstNameFormItem?.getAttribute('error')).toBe('');
+    expect(lastNameFormItem?.getAttribute('error')).toBe('');
+    expect(dobFormItem?.getAttribute('error')).toBe('');
+  });
 });
