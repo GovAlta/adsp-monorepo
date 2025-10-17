@@ -44,6 +44,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
             value={calenderName ? parsedStartDate : null}
             disabled={calenderName === null}
             onChange={(name, value) => {
+              criteria.startDate = new Date(value).toISOString();
               if (!isSearchCriteriaValid(criteria)) {
                 setShowDateError(true);
               } else {
