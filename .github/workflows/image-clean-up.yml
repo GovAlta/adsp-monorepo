@@ -2,7 +2,7 @@ name: Image Clean Up
 
 on:
   schedule:
-    - cron: '15 7 * * *'
+    - cron: "15 7 * * *"
 
   workflow_dispatch:
 
@@ -16,11 +16,11 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 24
+          cache: "npm"
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9'
+          dotnet-version: "9"
       - run: npm ci
       - shell: bash
         run: echo "ALL_APPS=$(npx nx show projects --type=app | tr "\n" ", ")" >> $GITHUB_ENV
