@@ -294,6 +294,8 @@
   },
   "overrides": {
     "@nx/devkit": "19.8.14",
+    "@opentelemetry/api": "1.9.0",
+    "ai": "^5.0.0",
     "got": "11.8.5",
     "jsonpath-plus": "^10.0.0",
     "nx": "19.8.14",
