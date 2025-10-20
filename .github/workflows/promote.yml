@@ -20,17 +20,17 @@ jobs:
       affected_apps: ${{ steps.set_outputs.outputs.affected_apps }}
       affected_apps_array: ${{ steps.set_outputs.outputs.affected_apps_array }}
     env:
-      AFFECTED_APPS: ''
+      AFFECTED_APPS: ""
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9'
+          dotnet-version: "9"
       - uses: actions/cache@v4
         with:
           path: ~/.npm
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - uses: actions/cache@v4
         with:
           path: ~/.npm
@@ -75,7 +75,7 @@ jobs:
         with:
           app: ${{ matrix.app }}
           environment: staging
-          tags: '@regression and not @ignore'
+          tags: "@regression and not @ignore"
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
@@ -121,7 +121,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - uses: actions/cache@v4
         with:
           path: ~/.npm
@@ -131,7 +131,7 @@ jobs:
         with:
           app: ${{ matrix.app }}
           environment: prod
-          tags: '@smoke-test and not @ignore'
+          tags: "@smoke-test and not @ignore"
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
