@@ -1,5 +1,5 @@
 import React from 'react';
-import { ControlElement, createDefaultValue, JsonSchema, ArrayTranslations } from '@jsonforms/core';
+import { ControlElement, createDefaultValue, JsonSchema } from '@jsonforms/core';
 import { GoAButton } from '@abgov/react-components';
 import { capitalizeFirstLetter, getLabelText } from '../../util';
 
@@ -12,7 +12,6 @@ export interface ObjectArrayToolbarProps {
   schema: JsonSchema;
   rootSchema: JsonSchema;
   enabled: boolean;
-  translations: ArrayTranslations;
   // eslint-disable-next-line
   addItem(path: string, value: any): () => void;
 }
@@ -23,7 +22,6 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
   addItem,
   schema,
   enabled,
-  translations,
   rootSchema,
   uischema,
 }: ObjectArrayToolbarProps) {

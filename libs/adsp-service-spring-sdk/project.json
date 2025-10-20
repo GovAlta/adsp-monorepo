@@ -30,6 +30,13 @@
       "options": {
         "root": "libs/adsp-service-spring-sdk"
       }
+    },
+    "release": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx semantic-release -e ./.releaserc.json",
+        "cwd": "libs/adsp-service-spring-sdk"
+      }
     }
   },
   "tags": []

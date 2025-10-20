@@ -135,7 +135,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@abgov/maven-semantic-release": "^1.1.3",
+    "@abgov/maven-semantic-release": "^2.0.0",
     "@abgov/nx-adsp": "^9.0.0",
     "@abgov/nx-oc": "^9.0.0",
     "@abgov/nx-release": "^9.0.0",
