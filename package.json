@@ -172,7 +172,7 @@
     "@nx/webpack": "19.8.14",
     "@nx/workspace": "19.8.14",
     "@nxlv/python": "^17.0.0",
-    "@nxrocks/nx-spring-boot": "^9.3.0",
+    "@nxrocks/nx-spring-boot": "^10.0.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.7",
     "@redux-devtools/extension": "^3.2.2",
     "@reduxjs/toolkit": "1.9.0",
