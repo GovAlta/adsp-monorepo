@@ -1,17 +1,18 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import FormOverview from './formOverview';
-import { RootState } from '@store/index';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { AppDispatch, RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
-import { FormDefinitions } from './definitions/definitions';
 import { Tab, Tabs } from '@components/Tabs';
 import AsideLinks from '@components/AsideLinks';
-import { HeadingDiv } from './styled-components';
 import BetaBadge from '@icons/beta-badge.svg';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import { selectFormAppHost } from '@store/form/selectors';
-import { useLocation } from 'react-router-dom';
 import { FormExport } from './export/formExport';
+import FormOverview from './formOverview';
+import { FormDefinitions } from './definitions/definitions';
+import { HeadingDiv } from './styled-components';
+
 const HelpLink = (): JSX.Element => {
   const defaultFormUrl = useSelector((state: RootState) => selectFormAppHost(state));
   return (
@@ -32,6 +33,8 @@ export const Form: FunctionComponent = () => {
   const location = useLocation();
   const isNavigatedFromEdit = location.state?.isNavigatedFromEdit;
   const [isNavigatedFromEditor, setIsNavigatedFromEditor] = useState(isNavigatedFromEdit);
+
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     if (isNavigatedFromEditor) {

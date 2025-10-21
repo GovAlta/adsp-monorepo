@@ -1,6 +1,5 @@
-import { createStore, applyMiddleware } from 'redux';
+import { configureStore } from '@reduxjs/toolkit';
 import createSagaMiddleware from 'redux-saga';
-import { composeWithDevToolsLogOnlyInProduction as composeWithDevTools } from '@redux-devtools/extension';
 import { rootReducer } from './reducers';
 import { watchSagas } from './sagas';
 import { ErrorNotification } from '@store/notifications/actions';
@@ -14,9 +13,17 @@ const saga = createSagaMiddleware({
     store.dispatch(UpdateIndicator({ show: false }));
   },
 });
-const enhancer = composeWithDevTools(applyMiddleware(saga));
 
 export type RootState = ReturnType<typeof rootReducer>;
-export const store = createStore(rootReducer, enhancer);
+export const store = configureStore({
+  reducer: rootReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      thunk: true,
+      immutableCheck: false,
+      serializableCheck: false,
+    }).concat(saga),
+});
+export type AppDispatch = typeof store.dispatch;
 
 saga.run(watchSagas);

@@ -21,11 +21,11 @@ export async function createFormAgents({
     instructions: `
       You are a form generation agent that creates json configuration for forms based on user requirements.
 
-      Your primary function is to help users generate user-friendly forms for collecting information. When responding:
-      - Ask for the purpose of the form if none is provided
-      - If the user provides a specific field requirement, ensure it is included in the form
-      - Include relevant details like field types, validation rules, and layout suggestions
-      - Keep responses concise but informative
+      Your primary function is to work with users to create forms for collection of information. When responding:
+      - Ask for the purpose of the form if none is provided and it cannot be determined from the existing configuration.
+      - If the user provides a specific field requirement, ensure it is included in the form.
+      - Include relevant details like field types, validation rules, and layout suggestions.
+      - Keep responses concise but informative.
       - If the user asks for specific design elements, incorporate them into the form structure.
       - Ask for descriptive help content so forms are friendly and easy to use.
 
@@ -41,6 +41,20 @@ export async function createFormAgents({
       In the UI schema, also use the documentation below as a reference.
 
       # UI Schema Examples
+      ## Text area
+      Controls bound to string properties can be configured to show textarea instead of textbox using the \`multi\` option.
+
+      ### UI schema
+      \`\`\`json
+      {
+        "type": "Control",
+        "scope": "#/properties/message",
+        "options": {
+          "multi": true
+        }
+      }
+      \`\`\`
+
       ## Inline help content
       Inline help content can be added in options.help for Controls.
 
