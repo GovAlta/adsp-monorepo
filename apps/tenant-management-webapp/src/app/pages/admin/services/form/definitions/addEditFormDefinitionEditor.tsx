@@ -12,6 +12,7 @@ import {
   GoAModal,
   GoAAccordion,
   GoAContainer,
+  GoABadge,
 } from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { useState, useEffect, useRef } from 'react';
@@ -33,7 +34,7 @@ import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import useWindowDimensions from '@lib/useWindowDimensions';
-import { RootState } from '@store/index';
+import { AppDispatch, RootState } from '@store/index';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { SecurityClassification } from '@store/common/models';
 import { UploadFileService, DownloadFileService, DeleteFileService, ClearNewFileList } from '@store/file/actions';
@@ -80,6 +81,10 @@ import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
 import { CalendarEventDefault } from '@store/calendar/models';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
+import { DefinitionAgentChat } from './DefinitionAgentChat';
+import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
+import { startThread } from '@store/agent/actions';
+import { v4 as uuid } from 'uuid';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -157,7 +162,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
     return state?.fileService.newFileList;
   });
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const editorRefData = useRef(null);
   const editorRefUi = useRef(null);
 
@@ -378,6 +383,16 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
     return null;
   };
 
+  const agentConnected = useSelector(agentConnectedSelector);
+  const [threadId] = useState(uuid());
+
+  const thread = useSelector((state: RootState) => threadSelector(state, threadId));
+  useEffect(() => {
+    if (!thread) {
+      dispatch(startThread('formGenerationAgent', threadId));
+    }
+  }, [dispatch, thread]);
+
   return (
     <FormEditor>
       {isLoading ? (
@@ -498,6 +513,20 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                   </EditorPadding>
                 </GoAFormItem>
               </Tab>
+              {agentConnected && (
+                <Tab
+                  label={
+                    <span>
+                      AI
+                      <GoABadge type="important" ml="xs" mt="2xs" content="Alpha" icon={false} />
+                    </span>
+                  }
+                  data-testid="form-editor-agent-tab"
+                  isTightContent={true}
+                >
+                  <DefinitionAgentChat definitionId={definition.id} threadId={threadId} height={EditorHeight} />
+                </Tab>
+              )}
               <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
                 <BorderBottom>
                   <AddToggleButtonPadding>

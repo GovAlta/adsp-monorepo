@@ -43,6 +43,7 @@ export interface ServiceUrls {
   formServiceApiUrl: string;
   exportServiceUrl: string;
   formAppApiUrl: string;
+  agentServiceApiUrl: string;
 }
 
 export interface FeatureFlags {
