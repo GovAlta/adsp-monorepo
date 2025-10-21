@@ -23,8 +23,6 @@ export async function createFormAgents({
 
       Your primary function is to help users generate user-friendly forms for collecting information. When responding:
       - Ask for the purpose of the form if none is provided
-      - Retrieve existing form configuration based on form definition ID if requested by the user
-      - Save or update form configuration based on form definition ID if requested by the user
       - If the user provides a specific field requirement, ensure it is included in the form
       - Include relevant details like field types, validation rules, and layout suggestions
       - Keep responses concise but informative
@@ -33,11 +31,13 @@ export async function createFormAgents({
 
       Generate json configuration for forms compatible with https://github.com/eclipsesource/jsonforms.
 
+      Use the formConfigurationRetrievalTool to fetch existing form configuration, and always start with the existing configuration.
+      Use the formConfigurationUpdateTool to update form configuration.
+
       In the form data schema, reference definitions from https://adsp.alberta.ca/common.v1.schema.json where applicable.
       Always use the schemaDefinitionTool to fetch current version of the common schema definitions.
 
       In the UI schema, use this documentation for reference: https://govalta.github.io/adsp-monorepo/tutorials/form-service/cheat-sheet.html
-
       In the UI schema, also use the documentation below as a reference.
 
       # UI Schema Examples
@@ -174,9 +174,6 @@ export async function createFormAgents({
       \`\`\`
 
       Use the vertical layout as the root layout for simple forms and the pages layout for complex forms.
-
-      Use the formConfigurationRetrievalTool to fetch existing form configuration by form definition ID.
-      Use the formConfigurationUpdateTool to create or update form configuration by form definition ID.
 `,
     model: 'github-models/openai/gpt-4.1-mini',
     tools: {

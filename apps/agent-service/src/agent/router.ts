@@ -1,6 +1,7 @@
 import { isAllowedUser, Tenant, TenantService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import type { Mastra } from '@mastra/core';
+import { RuntimeContext } from '@mastra/core/runtime-context';
 import { Request, Router } from 'express';
 import { Namespace as IoNamespace, Socket } from 'socket.io';
 import { v4 as uuid } from 'uuid';
@@ -26,7 +27,7 @@ export function onIoConnection(mastra: Mastra, logger: Logger) {
           if (typeof payload !== 'object') {
             throw new InvalidOperationError('payload for message must be a JSON object.');
           } else {
-            const { agent, threadId: threadIdValue, messageId: messageIdValue, content } = payload;
+            const { agent, threadId: threadIdValue, messageId: messageIdValue, content, context } = payload;
             const threadId = threadIdValue || uuid();
             const messageId = messageIdValue || uuid();
 
@@ -35,9 +36,19 @@ export function onIoConnection(mastra: Mastra, logger: Logger) {
               throw new NotFoundError('agent', agent);
             }
 
+            // TODO: form definition ID is specific to the form agent and should be abstracted away.
+            const runtimeContext = new RuntimeContext<{ tenant: Tenant; formDefinitionId: string }>();
+            runtimeContext.set('tenant', tenant);
+            runtimeContext.set('formDefinitionId', context?.formDefinitionId);
+
             const result = await aiAgent.stream(
               { role: 'user', content },
-              { format: 'mastra', memory: { thread: threadId, resource: resourceId } }
+              {
+                format: 'mastra',
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                runtimeContext: runtimeContext as any,
+                memory: { thread: threadId, resource: resourceId },
+              }
             );
             const replyId = uuid();
             for await (const content of result.textStream) {
@@ -69,6 +80,30 @@ export function onIoConnection(mastra: Mastra, logger: Logger) {
   };
 }
 
+function tenantHandler(tenantService: TenantService) {
+  return async (socket, next) => {
+    const tenantName = socket.nsp.name?.replace(/^\//, '');
+    const req = socket.request as Request;
+    const user = req.user;
+    req.query = socket.handshake.query;
+
+    let tenant: Tenant;
+    if (!user || user.isCore) {
+      tenant = await tenantService.getTenantByName(tenantName);
+    } else {
+      tenant = await tenantService.getTenant(user.tenantId);
+    }
+
+    if (!tenant) {
+      next(new InvalidOperationError('Tenant context is required.'));
+    } else {
+      req['tenant'] = tenant;
+
+      next();
+    }
+  };
+}
+
 interface AgentRouterProps {
   logger: Logger;
   tenantService: TenantService;
@@ -91,27 +126,7 @@ export function createAgentRouter(
   });
 
   for (const io of ios) {
-    io.use(async (socket, next) => {
-      const tenantName = socket.nsp.name?.replace(/^\//, '');
-      const req = socket.request as Request;
-      const user = req.user;
-      req.query = socket.handshake.query;
-
-      let tenant: Tenant;
-      if (!user || user.isCore) {
-        tenant = await tenantService.getTenantByName(tenantName);
-      } else {
-        tenant = await tenantService.getTenant(user.tenantId);
-      }
-
-      if (!tenant) {
-        next(new InvalidOperationError('Tenant context is required.'));
-      } else {
-        req['tenant'] = tenant;
-        next();
-      }
-    });
-
+    io.use(tenantHandler(tenantService));
     io.on('connection', onIoConnection(mastra, logger));
   }
 
