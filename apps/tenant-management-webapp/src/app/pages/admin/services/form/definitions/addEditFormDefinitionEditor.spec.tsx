@@ -133,6 +133,13 @@ describe('form Component', () => {
       editor: {},
     },
     serviceRoles: {},
+    agent: {
+      connected: false,
+      threads: {},
+      threadMessages: {},
+      messages: {},
+      busy: {},
+    },
   });
   test('Save button does not route', async () => {
     const state = store.getState() as RootState;
