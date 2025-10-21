@@ -76,15 +76,6 @@ export const JsonFormRegisterProvider = ({
               return 'The element does not exist';
             }
           }
-          if (registers?.nonAnonymous) {
-            const matchFound = registers?.nonAnonymous.some((nonAnon) => {
-              if (criteria?.urn?.toString().includes(nonAnon)) {
-                return true;
-              }
-              return false;
-            });
-            return matchFound ? 'The element does not allow anonymous reading' : '';
-          }
         }
         return '';
       },
