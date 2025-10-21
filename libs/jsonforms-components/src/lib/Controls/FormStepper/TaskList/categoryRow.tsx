@@ -1,5 +1,5 @@
 import React from 'react';
-import { CategoryStatus, PageStepperRow } from '../styled-components';
+import { CategoryStatus, PageStepperRow, SummaryTd } from '../styled-components';
 import { getCategoryStatusBadge } from '../CategoryStatus';
 import { CategoryState } from '../context';
 import { GoAText } from '@abgov/react-components';
@@ -16,6 +16,7 @@ export const CategoryRow: React.FC<CategoryRowProps> = ({ category, index, onCli
     <PageStepperRow
       disabled={!category?.isEnabled}
       role="button"
+      key={`task-list-${index}-stepper-row`}
       tabIndex={0}
       onClick={(e) => {
         e.preventDefault();
@@ -24,7 +25,7 @@ export const CategoryRow: React.FC<CategoryRowProps> = ({ category, index, onCli
       onKeyDown={(e) => e.key === 'Enter' && onClick(index)}
       data-testid={`page-ref-${index}`}
     >
-      <td>{category.label}</td>
+      <td key={`task-list-${index}-stepper-row-label`}>{category.label}</td>
       <CategoryStatus>{getCategoryStatusBadge(category)}</CategoryStatus>
     </PageStepperRow>
   ) : null;
