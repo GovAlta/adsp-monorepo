@@ -3,7 +3,7 @@ from xdp_parser.xdp_utils import strip_label_prefix
 
 
 class FormInput(FormElement):
-    def __init__(self, name: str, input_type: str = "string"):
+    def __init__(self, name: str, input_type: str, label: str):
         super().__init__("control")
         self.name: str = name
         self.input_type: str = input_type
@@ -12,6 +12,7 @@ class FormInput(FormElement):
         self.x: float = None
         self.y: float = None
         self.is_radio = False
+        self.label: str = label
 
     def has_json_schema(self):
         return True

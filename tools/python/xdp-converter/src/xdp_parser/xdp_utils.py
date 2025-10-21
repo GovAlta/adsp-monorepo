@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
 
@@ -106,3 +106,40 @@ def is_hidden(node):
 
 def is_subform(el: ET.Element) -> bool:
     return el.tag == "subform"
+
+
+def is_button(field: ET.Element) -> bool:
+    # XFA button: <field><ui><button/></ui></field>
+    return field.find("./ui/button") is not None
+
+
+def non_button_inputs(sf: ET.Element) -> List[ET.Element]:
+    return [f for f in sf.findall("./field") if not is_button(f)]
+
+
+def has_repeater_occur(subform: ET.Element) -> bool:
+    occur = subform.find("./occur")
+    if occur is None:
+        return False
+    maxv = (occur.attrib.get("max") or "").strip().lower()
+    if not maxv or maxv == "1":
+        return False
+    if maxv in ("-1", "unbounded"):
+        return True
+    try:
+        return int(maxv) > 1
+    except ValueError:
+        return True
+
+
+def build_parent_map(root) -> Dict[ET.Element, Optional[ET.Element]]:
+    parent_map: Dict[ET.Element, Optional[ET.Element]] = {root: None}
+    for parent in root.iter():
+        for child in parent:
+            parent_map[child] = parent
+    return parent_map
+
+
+def presence_hidden(node: ET.Element) -> bool:
+    presence = (node.attrib.get("presence") or "").lower()
+    return presence in {"hidden", "invisible"}

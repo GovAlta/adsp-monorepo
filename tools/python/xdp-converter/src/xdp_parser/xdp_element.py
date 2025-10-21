@@ -14,7 +14,7 @@ class XdpElement(ABC):
 
     @abstractmethod
     def to_form_element(self) -> FormElement:
-        fe = FormInput(self.get_name(), self.get_type())
+        fe = FormInput(self.get_name(), self.get_type(), self.get_label())
         fe.x = self.extract_coordinate("x")
         fe.y = self.extract_coordinate("y")
         fe.enum = self.get_enumeration_values()

@@ -3,17 +3,18 @@ import contextlib
 from typing import List, Dict, Optional
 from threading import RLock
 
-from xdp_parser.control_label import ControlLabels, inline_caption
-from xdp_parser.message_parser import JSHelpMessageParser
+from xdp_parser.control_labels import ControlLabels, inline_caption
+from xdp_parser.help_text_registry import HelpTextRegistry
+from xdp_parser.orphaned_list_controls import is_list_control_container
 from xdp_parser.parsing_helpers import (
-    _iter_leaf_field_nodes,
-    extract_radio_button_labels,
-    is_add_remove_controls_subform,
+    find_input_fields,
     is_object_array,
 )
 from xdp_parser.xdp_basic_input import XdpBasicInput
 from xdp_parser.xdp_category import XdpCategory
 from xdp_parser.xdp_element import XdpElement
+from xdp_parser.xdp_radio_selector import XdpRadioSelector, extract_radio_button_labels
+from xdp_parser.xdp_utils import remove_duplicates
 from xdp_parser.xdp_group import XdpGroup
 from xdp_parser.xdp_object_array import XdpObjectArray
 from xdp_parser.xdp_radio import XdpRadio
@@ -152,7 +153,7 @@ class XdpParser:
         xdp_controls: list["XdpElement"] = []
         control_labels = ControlLabels(subform)
 
-        if is_add_remove_controls_subform(subform, self.root, self.parent_map):
+        if is_list_control_container(subform, self.root, self.parent_map):
             # Ignore controls-only subform
             return []
 
@@ -161,7 +162,7 @@ class XdpParser:
         if radio_labels:
             xdp_controls.append(
                 XdpRadioSelector(
-                    subform, radio_labels, JSHelpMessageParser(control_labels)
+                    subform, radio_labels, HelpTextRegistry(control_labels)
                 )
             )
             return remove_duplicates(xdp_controls)
@@ -184,9 +185,9 @@ class XdpParser:
         name = lwd_element.attrib.get("name") or "Items"
 
         columns: List["XdpElement"] = []
-        for field_node in _iter_leaf_field_nodes(lwd_element, max_depth=max_depth):
+        for field in find_input_fields(lwd_element, max_depth=max_depth):
             try:
-                col = self.extract_control(field_node, self.control_labels)
+                col = self.extract_control(field, self.control_labels)
                 if col is None:
                     continue
                 # If your XdpElement has is_leaf, prefer real inputs only
@@ -226,11 +227,13 @@ class XdpParser:
             elif nested_controls and len(nested_controls) == 1:
                 return nested_controls[0]
 
-    def is_potential_container(self, xdp: ET.Element) -> bool:
-        if not is_subform(xdp):
+    def is_potential_container(self, would_be_container: ET.Element) -> bool:
+        if not is_subform(would_be_container):
             return False
-        # Must have at least one child that potentially has input elements
-        for element in xdp:
+        if is_list_control_container(would_be_container, self.root, self.parent_map):
+            return False
+        for element in would_be_container:
+            # There must be at least one child that has potential inputs
             if element.tag in ["field", "exclGroup", "subform"]:
                 return True
         return False

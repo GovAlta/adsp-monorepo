@@ -1,7 +1,7 @@
 from typing import List
 from schema_generator.form_element import FormElement
 from schema_generator.form_object_array import FormObjectArray
-from xdp_parser.control_label import ControlLabels
+from xdp_parser.control_labels import ControlLabels
 from xdp_parser.xdp_element import XdpElement
 
 
