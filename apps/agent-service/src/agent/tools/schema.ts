@@ -1,8 +1,12 @@
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 import { createTool } from '@mastra/core';
-import axios from 'axios';
 import * as z from 'zod';
 
 export async function createSchemaTools() {
+  const schemas = {
+    [standardV1JsonSchema.$id]: standardV1JsonSchema,
+    [commonV1JsonSchema.$id]: commonV1JsonSchema,
+  };
   const schemaDefinitionTool = createTool({
     id: 'get-schema-definition',
     description: 'Get the JSON schema definitions for common fields like email, full name, and address.',
@@ -13,8 +17,7 @@ export async function createSchemaTools() {
       jsonSchema: z.object({}),
     }),
     execute: async ({ context }) => {
-      const { data } = await axios.get(context.url);
-      return { jsonSchema: data };
+      return { jsonSchema: schemas[context.url] };
     },
   });
   return { schemaDefinitionTool };

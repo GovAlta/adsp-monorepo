@@ -1,4 +1,4 @@
-import { adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { adspId, ServiceDirectory, Tenant, TokenProvider } from '@abgov/adsp-service-sdk';
 import { createTool } from '@mastra/core';
 import axios from 'axios';
 import type { Logger } from 'winston';
@@ -16,9 +16,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
   const formConfigurationRetrievalTool = createTool({
     id: 'get-form-configuration',
     description: 'Retrieve the JSON form configuration for a given form definition ID.',
-    inputSchema: z.object({
-      formDefinitionId: z.string().describe('The unique identifier for the form definition.'),
-    }),
+    inputSchema: z.object({}),
     outputSchema: z.object({
       dataSchema: z.object({}),
       uiSchema: z.object({}),
@@ -26,8 +24,9 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       applicantRoles: z.array(z.string()),
       assessorRoles: z.array(z.string()),
     }),
-    execute: async ({ context }) => {
-      const { formDefinitionId } = context;
+    execute: async ({ runtimeContext }) => {
+      const tenant = runtimeContext.get('tenant') as Tenant;
+      const formDefinitionId = runtimeContext.get('formDefinitionId') as string;
 
       const formDefinitionUrl = new URL(
         `v2/configuration/form-service/${formDefinitionId}/latest`,
@@ -35,6 +34,9 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       );
 
       const { data } = await axios.get(formDefinitionUrl.href, {
+        params: {
+          tenantId: tenant?.id?.toString(),
+        },
         headers: {
           Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
         },
@@ -47,7 +49,6 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
     id: 'update-form-configuration',
     description: 'Update the JSON form configuration for a given form definition ID.',
     inputSchema: z.object({
-      formDefinitionId: z.string().describe('The unique identifier for the form definition.'),
       formDefinitionName: z.string().describe('The name of the form definition.'),
       dataSchema: z.string().describe('The data schema for the form.'),
       uiSchema: z.string().describe('The UI schema for the form.'),
@@ -59,17 +60,11 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       dataSchema: z.object({}),
       uiSchema: z.object({}),
     }),
-    execute: async ({ context }) => {
-      const {
-        formDefinitionId,
-        formDefinitionName,
-        dataSchema,
-        uiSchema,
-        anonymousApply,
-        applicantRoles,
-        assessorRoles,
-      } = context;
+    execute: async ({ context, runtimeContext }) => {
+      const { formDefinitionName, dataSchema, uiSchema, anonymousApply, applicantRoles, assessorRoles } = context;
 
+      const tenant = runtimeContext.get('tenant') as Tenant;
+      const formDefinitionId = runtimeContext.get('formDefinitionId') as string;
       const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
       const formDefinitionUrl = new URL(`v2/configuration/form-service/${formDefinitionId}`, configurationServiceUrl);
 
@@ -88,6 +83,9 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
           },
         },
         {
+          params: {
+            tenantId: tenant?.id?.toString(),
+          },
           headers: {
             Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
           },
