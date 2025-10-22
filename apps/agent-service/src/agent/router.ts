@@ -21,6 +21,12 @@ export function onIoConnection(mastra: Mastra, logger: Logger) {
         throw new UnauthorizedUserError('use agent', user);
       }
 
+      logger.info(`User ${user?.name} (ID: ${user?.id}) connected.`, {
+        context: 'AgentRouter',
+        tenant: tenant?.id?.toString(),
+        user: `${user?.name} (ID: ${user?.id})`,
+      });
+
       socket.send(`Connected as user ${user?.name} (ID: ${user?.id}) for tenant ${tenant.name}...`);
       socket.on('message', async (payload) => {
         try {
@@ -36,8 +42,14 @@ export function onIoConnection(mastra: Mastra, logger: Logger) {
               throw new NotFoundError('agent', agent);
             }
 
+            logger.info(`User ${user?.name} (ID: ${user?.id}) messaged agent ${agent}.`, {
+              context: 'AgentRouter',
+              tenant: tenant?.id?.toString(),
+              user: `${user?.name} (ID: ${user?.id})`,
+            });
+
             // TODO: form definition ID is specific to the form agent and should be abstracted away.
-            const runtimeContext = new RuntimeContext<{ tenant: Tenant; formDefinitionId: string }>();
+            const runtimeContext = new RuntimeContext<Record<string, unknown>>();
             runtimeContext.set('tenant', tenant);
             runtimeContext.set('formDefinitionId', context?.formDefinitionId);
 
@@ -45,8 +57,7 @@ export function onIoConnection(mastra: Mastra, logger: Logger) {
               { role: 'user', content },
               {
                 format: 'mastra',
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                runtimeContext: runtimeContext as any,
+                runtimeContext: runtimeContext as RuntimeContext<unknown>,
                 memory: { thread: threadId, resource: resourceId },
               }
             );

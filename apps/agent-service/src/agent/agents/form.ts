@@ -1,20 +1,22 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
+import type { FormConfigurationRetrievalTool, formConfigurationUpdateTool } from '../tools/formConfiguration';
+import type { SchemaDefinitionTool } from '../tools/schema';
+import { FileDownloadTool } from '../tools/file';
 
 interface FormAgentsProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  schemaDefinitionTool: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  formConfigurationRetrievalTool: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  formConfigurationUpdateTool: any;
+  schemaDefinitionTool: SchemaDefinitionTool;
+  formConfigurationRetrievalTool: FormConfigurationRetrievalTool;
+  formConfigurationUpdateTool: formConfigurationUpdateTool;
+  fileDownloadTool: FileDownloadTool;
 }
 
 export async function createFormAgents({
   schemaDefinitionTool,
   formConfigurationRetrievalTool,
   formConfigurationUpdateTool,
+  fileDownloadTool,
 }: FormAgentsProps) {
   const formGenerationAgent = new Agent({
     name: 'Form Generation Agent',
@@ -188,12 +190,18 @@ export async function createFormAgents({
       \`\`\`
 
       Use the vertical layout as the root layout for simple forms and the pages layout for complex forms.
+
+      User may provide a procedure manual or help guide for the program by sending a file ID or URN;
+      file ID is expected to be a UUID, and URN is expected to be in the format urn:ads:platform:file-service:v1:/files/<file ID>.
+
+      Use the fileDownloadTool to download a file.
 `,
     model: 'github-models/openai/gpt-4.1-mini',
     tools: {
       schemaDefinitionTool,
       formConfigurationRetrievalTool,
       formConfigurationUpdateTool,
+      fileDownloadTool,
     },
     memory: new Memory({
       storage: new LibSQLStore({
@@ -201,5 +209,29 @@ export async function createFormAgents({
       }),
     }),
   });
-  return { formGenerationAgent };
+
+  const pdfFormAnalysisAgent = new Agent({
+    name: 'PDF Form Analysis Agent',
+    instructions: `
+      You are a PDF form analysis agent that reviews PDF forms to determine its purpose and identify all sections and fields in the form.
+
+      Your primary function is to analyze PDF forms to extract its purpose and fields, and answer user questions regarding the form. When responding:
+      - Summarize the purpose and fields of the form in plain language in a structured format.
+      - Ask for file ID or URN if not provided. ID is expected to be a UUID, and URN is expected to be in the format urn:ads:platform:file-service:v1:/files/<file ID>.
+      - Provided file is expected to be either a PDF form or a screenshot of a PDF form.
+      - Keep responses concise but informative.
+
+      Use the fileDownloadTool to download the file.
+`,
+    model: 'github-models/openai/gpt-4.1',
+    tools: {
+      fileDownloadTool,
+    },
+    memory: new Memory({
+      storage: new LibSQLStore({
+        url: ':memory:',
+      }),
+    }),
+  });
+  return { formGenerationAgent, pdfFormAnalysisAgent };
 }
