@@ -1,9 +1,11 @@
+import re
 import xml.etree.ElementTree as ET
 import contextlib
 from typing import List, Dict, Optional
 from threading import RLock
 
 from xdp_parser.control_labels import ControlLabels, inline_caption
+from xdp_parser.control_helpers import is_checkbox, is_radio_button
 from xdp_parser.help_text_registry import HelpTextRegistry
 from xdp_parser.orphaned_list_controls import is_list_control_container
 from xdp_parser.parsing_helpers import (
@@ -12,6 +14,7 @@ from xdp_parser.parsing_helpers import (
 )
 from xdp_parser.xdp_basic_input import XdpBasicInput
 from xdp_parser.xdp_category import XdpCategory
+from xdp_parser.xdp_checkbox import XdpCheckbox
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_radio_selector import XdpRadioSelector, extract_radio_button_labels
 from xdp_parser.xdp_utils import remove_duplicates
@@ -173,19 +176,49 @@ class XdpParser:
             xdp_controls.append(table)
             return remove_duplicates(xdp_controls)
 
-        for form_element in subform:
-            control = self.extract_control(form_element)
+        elements = list(subform)
+        i = 0
+        while i < len(elements):
+            elem = elements[i]
+
+            # --- handle consecutive checkboxes as a group ---
+            if is_checkbox(elem):
+                group = [elem]
+                while (
+                    i + 1 < len(elements)
+                    and is_checkbox(elements[i + 1])
+                    and self._are_related_checkboxes(elem, elements[i + 1])
+                ):
+                    group.append(elements[i + 1])
+                    i += 1
+
+                if len(group) == 1:
+                    # Single independent checkbox
+                    control = self.extract_control(group[0], control_labels)
+                    if control:
+                        xdp_controls.append(XdpCheckbox(group[0], control_labels))
+                else:
+                    # Grouped checkboxes
+                    label = self.control_labels.get(subform.get("name") or "")
+                    print(f"found checkbox group: {label}")
+                #                    xdp_controls.append(XdpCheckboxGroup(subform, group, label))
+                i += 1
+                continue
+
+            control = self.extract_control(elem, control_labels)
             if control:
                 xdp_controls.append(control)
+
+            i += 1
         return remove_duplicates(xdp_controls)
 
     def parse_object_array(
-        self, lwd_element: ET.Element, max_depth: int = 1
+        self, array_element: ET.Element, max_depth: int = 2
     ) -> XdpObjectArray:
-        name = lwd_element.attrib.get("name") or "Items"
+        name = array_element.attrib.get("name") or "Items"
 
         columns: List["XdpElement"] = []
-        for field in find_input_fields(lwd_element, max_depth=max_depth):
+        for field in find_input_fields(array_element, max_depth=max_depth):
             try:
                 col = self.extract_control(field, self.control_labels)
                 if col is None:
@@ -204,23 +237,25 @@ class XdpParser:
             placeholder = ET.Element("field", {"name": "value"})
             cols_caption = ET.SubElement(placeholder, "caption")
             ET.SubElement(cols_caption, "value").text = "Value"
-            maybe = self.extract_control(placeholder)
+            maybe = self.extract_control(placeholder.self.control_labels)
             if maybe:
                 columns.append(maybe)
 
-        return XdpObjectArray(lwd_element, name, columns, self.control_labels)
+        return XdpObjectArray(array_element, name, columns, self.control_labels)
 
-    def extract_control(self, form_element: ET.Element) -> XdpElement | None:
-        if form_element.tag == "exclGroup":
-            return XdpRadio(form_element, self.control_labels)
+    def extract_control(
+        self, form_element: ET.Element, control_labels: Dict[str, str]
+    ) -> XdpElement | None:
+        if is_radio_button(form_element):
+            return XdpRadio(form_element, control_labels)
         elif form_element.tag == "field":
             if not self.is_info_button(form_element) and not is_hidden(form_element):
                 # TODO handle the above cases
-                return XdpBasicInput(form_element, self.control_labels)
+                return XdpBasicInput(form_element, control_labels)
         elif self.is_potential_container(form_element):
             nested_controls = self.parse_subform(form_element)
             if nested_controls and len(nested_controls) > 1:
-                label = self.control_labels.get(form_element.get("name") or "")
+                label = control_labels.get(form_element.get("name") or "")
                 if not label:
                     label = inline_caption(form_element)
                 return XdpGroup(form_element, nested_controls, label)
@@ -266,4 +301,32 @@ class XdpParser:
         if caption.text and caption.text.strip() == "i":
             return True
 
+        return False
+
+    @staticmethod
+    def _are_related_checkboxes(prev_field: ET.Element, curr_field: ET.Element) -> bool:
+        """Return True if two checkboxes likely belong to the same group."""
+
+        def name_stem(name: str) -> str:
+            n = name.lower()
+            n = re.sub(r"[_\-]?\d+$", "", n)
+            n = re.sub(r"(yes|no|true|false|y|n)$", "", n)
+            return n
+
+        def bind_prefix(bind: str) -> str:
+            return bind.split(".", 1)[0].lower() if bind else ""
+
+        # Same bind prefix or same name stem → probably related
+        if (
+            bind_prefix(prev_field.attrib.get("bind", ""))
+            == bind_prefix(curr_field.attrib.get("bind", ""))
+            != ""
+        ):
+            return True
+        if (
+            name_stem(prev_field.attrib.get("name", ""))
+            == name_stem(curr_field.attrib.get("name", ""))
+            != ""
+        ):
+            return True
         return False

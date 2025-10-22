@@ -36,9 +36,9 @@ class ControlLabels:
         for name, node in self.controls_by_name.items():
             if name in self.mapping:
                 continue
-            cap = inline_caption(node)
-            if cap:
-                self.mapping[name] = cap
+            caption = inline_caption(node)
+            if caption:
+                self.mapping[name] = caption
 
         # 3) Control-name fallback
         for name in self.controls_by_name.keys():
@@ -49,13 +49,13 @@ class ControlLabels:
         return self.mapping
 
     def _find_traversal_hints(self, container_node):
-        for container in container_node.iter():
-            traversal = container.find("{*}traversal")
+        for element in container_node.iter():
+            traversal = element.find("{*}traversal")
             if traversal is None:
                 continue
 
             # candidate label text must be non-empty
-            label_txt = _label_text_from_node(container)
+            label_txt = _label_text_from_node(element)
             if not label_txt:
                 continue
 

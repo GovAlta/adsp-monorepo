@@ -267,3 +267,46 @@ def split_label_and_help(label_text, min_space_count=2):
         return parts[0].strip(), parts[1].strip()
     else:
         return label_text.strip(), ""
+
+
+# def find_checkboxes(subform: ET.Element) -> List[List[ET.Element]]:
+#     """
+#     Finds checkboxes and groups them into logical sets based on binding, name pattern,
+#     or layout proximity.
+#     Returns: list of lists of related checkbox fields.
+#     """
+#     groups = []
+#     visited = set()
+
+#     fields = [f for f in subform.findall(".//field") if is_checkbox(f)]
+#     for _, field in enumerate(fields):
+#         if field in visited:
+#             continue
+
+#         name = field.attrib.get("name", "")
+#         bind = field.attrib.get("bind", "")
+#         parent = (
+#             field.getparent()
+#         )  # if using lxml; for ElementTree, track parent manually
+
+#         # Find potential siblings
+#         siblings = [
+#             f
+#             for f in fields
+#             if f is not field
+#             and (
+#                 (bind and f.attrib.get("bind", "").startswith(bind.split(".")[0]))
+#                 or (name[:3] == "chk" and f.attrib.get("name", "").startswith(name[:3]))
+#                 or (parent is not None and f.getparent() is parent)
+#             )
+#         ]
+
+#         if siblings:
+#             group = [field] + siblings
+#             for f in group:
+#                 visited.add(f)
+#             groups.append(group)
+#         else:
+#             groups.append([field])  # independent
+
+#     return groups

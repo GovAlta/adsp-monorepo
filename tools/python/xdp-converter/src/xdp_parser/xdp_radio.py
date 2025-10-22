@@ -1,5 +1,5 @@
-import re
 from xdp_parser.xdp_element import XdpElement
+from xdp_parser.xdp_utils import get_field_caption
 
 
 class XdpRadio(XdpElement):
@@ -10,23 +10,7 @@ class XdpRadio(XdpElement):
         options = []
 
         for field in self.xdp_element.findall(".//field"):
-            caption = field.find(".//caption/value")
-            button_text = None
-
-            if caption is not None:
-                # Case 1: plain <text> node
-                text_node = caption.find("text")
-                if text_node is not None and text_node.text:
-                    button_text = text_node.text.strip()
-
-                # Case 2: <exData> node with HTML
-                if button_text is None:
-                    exdata = caption.find("exData")
-                    if exdata is not None:
-                        raw_text = "".join(exdata.itertext())
-                        # Collapse whitespace and trim
-                        button_text = re.sub(r"\s+", " ", raw_text).strip()
-
+            button_text = get_field_caption(field)
             if button_text:
                 options.append(button_text)
 

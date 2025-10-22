@@ -143,3 +143,20 @@ def build_parent_map(root) -> Dict[ET.Element, Optional[ET.Element]]:
 def presence_hidden(node: ET.Element) -> bool:
     presence = (node.attrib.get("presence") or "").lower()
     return presence in {"hidden", "invisible"}
+
+
+def get_field_caption(field: ET.Element) -> Optional[ET.Element]:
+    caption = field.find(".//caption/value")
+    if caption is not None:
+        # Case 1: plain <text> node
+        text_node = caption.find("text")
+        if text_node is not None and text_node.text:
+            return text_node.text.strip()
+
+        # Case 2: <exData> node with HTML
+        exdata = caption.find("exData")
+        if exdata is not None:
+            raw_text = "".join(exdata.itertext())
+            # Collapse whitespace and trim
+            return re.sub(r"\s+", " ", raw_text).strip()
+    return None
