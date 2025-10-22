@@ -1,5 +1,5 @@
 import { GoAFormItem, GoASkeleton, GoATextArea } from '@abgov/react-components';
-import { forwardRef, FunctionComponent, useEffect, useRef, useState } from 'react';
+import { FunctionComponent, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 interface Message {
@@ -14,15 +14,13 @@ interface MessageItemProps {
   className?: string;
   message: Message;
 }
-const MessageItem = styled(
-  forwardRef<HTMLDivElement, MessageItemProps>(({ className, message }: MessageItemProps, ref) => {
-    return (
-      <div className={className} data-from={message.from} ref={ref}>
-        <p data-from={message.from}>{message.content}</p>
-      </div>
-    );
-  })
-)`
+const MessageItem = styled(({ className, message }: MessageItemProps) => {
+  return (
+    <div className={className} data-from={message.from}>
+      <p data-from={message.from}>{message.content}</p>
+    </div>
+  );
+})`
   &[data-from='agent'] {
     text-align: left;
   }
@@ -38,12 +36,15 @@ const ContainerDiv = styled.div`
   & > :first-child {
     overflow: auto;
     flex: 1;
+    > :last-child {
+      padding-top: var(--goa-space-l);
+    }
   }
   & > :last-child {
     flex: 0;
   }
   & p {
-    margin: var(--goa-space-m) var(--goa-space-xs);
+    margin: var(--goa-space-m) var(--goa-space-xs) var(--goa-space-l) var(--goa-space-xs);
   }
   & p[data-from='user'] {
     margin-left: var(--goa-space-l);
@@ -73,12 +74,11 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({ threadId, context
     <ContainerDiv>
       <div>
         <MessageItem message={{ from: 'agent', content: 'How can I help you?' }} />
-        {messages.map((message, index) => (
-          <MessageItem key={message.id} message={message} ref={index === messages.length - 1 ? latestRef : null} />
+        {messages.map((message) => (
+          <MessageItem key={message.id} message={message} />
         ))}
-        {messages[messages.length - 1]?.from === 'user' && (
-          <GoASkeleton type="text" lineCount={3} />
-        )}
+        {messages[messages.length - 1]?.from === 'user' && <GoASkeleton type="text" mb="l" mr="4xl" />}
+        <div ref={latestRef}></div>
       </div>
       <form
         onKeyDown={(event) => {
