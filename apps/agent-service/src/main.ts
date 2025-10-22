@@ -52,12 +52,17 @@ const initializeApp = async (): Promise<Server> => {
           description: 'Role for users with access to agents.',
           inTenantAdmin: true,
         },
+        {
+          role: ServiceRoles.AgentTool,
+          description:
+            'Agent tool role assigned to agent service service account. Used to grant resource access to agent tools.',
+        },
       ],
       events: [],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
-      additionalExtractors: [fromSocketHandshake]
+      additionalExtractors: [fromSocketHandshake],
     },
     { logger }
   );

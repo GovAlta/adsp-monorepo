@@ -91,10 +91,20 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
           },
         }
       );
-      logger.info(`Form configuration update status: ${status}`);
+      logger.info(`Form configuration update status: ${status}`, {
+        context: 'formConfigurationUpdateTool',
+        tenant: tenant?.id?.toString(),
+      });
       return data;
     },
   });
 
   return { formConfigurationRetrievalTool, formConfigurationUpdateTool };
 }
+
+export type FormConfigurationRetrievalTool = Awaited<
+  ReturnType<typeof createFormConfigurationTools>
+>['formConfigurationRetrievalTool'];
+export type formConfigurationUpdateTool = Awaited<
+  ReturnType<typeof createFormConfigurationTools>
+>['formConfigurationUpdateTool'];

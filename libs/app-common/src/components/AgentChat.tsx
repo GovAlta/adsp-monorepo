@@ -1,6 +1,5 @@
-import { GoAFormItem, GoATextArea } from '@abgov/react-components';
-import { min } from 'moment';
-import { forwardRef, FunctionComponent, Ref, RefObject, useEffect, useRef, useState } from 'react';
+import { GoAFormItem, GoASkeleton, GoATextArea } from '@abgov/react-components';
+import { forwardRef, FunctionComponent, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 interface Message {
@@ -78,7 +77,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({ threadId, context
           <MessageItem key={message.id} message={message} ref={index === messages.length - 1 ? latestRef : null} />
         ))}
         {messages[messages.length - 1]?.from === 'user' && (
-          <MessageItem message={{ from: 'agent', content: 'Beep boop *robot noises*' }} />
+          <GoASkeleton type="text" lineCount={3} />
         )}
       </div>
       <form

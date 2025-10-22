@@ -22,3 +22,5 @@ export async function createSchemaTools() {
   });
   return { schemaDefinitionTool };
 }
+
+export type SchemaDefinitionTool = Awaited<ReturnType<typeof createSchemaTools>>['schemaDefinitionTool'];

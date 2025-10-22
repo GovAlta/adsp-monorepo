@@ -20,18 +20,20 @@ export async function applyAgentMiddleware(
   ios: IoNamespace[],
   { logger, directory, tokenProvider, tenantService }: AgentMiddlewareProps
 ) {
-  const { schemaDefinitionTool, formConfigurationRetrievalTool, formConfigurationUpdateTool } = await createTools({
-    logger,
-    directory,
-    tokenProvider,
-  });
-  const { formGenerationAgent } = await createFormAgents({
+  const { schemaDefinitionTool, formConfigurationRetrievalTool, formConfigurationUpdateTool, fileDownloadTool } =
+    await createTools({
+      logger,
+      directory,
+      tokenProvider,
+    });
+  const { formGenerationAgent, pdfFormAnalysisAgent } = await createFormAgents({
     schemaDefinitionTool,
     formConfigurationRetrievalTool,
     formConfigurationUpdateTool,
+    fileDownloadTool,
   });
   const mastra = new Mastra({
-    agents: { formGenerationAgent },
+    agents: { formGenerationAgent, pdfFormAnalysisAgent },
   });
 
   const router = createAgentRouter(mastra, ios, { logger, tenantService });

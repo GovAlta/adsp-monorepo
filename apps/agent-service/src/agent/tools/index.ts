@@ -2,6 +2,7 @@ import { ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { createFormConfigurationTools } from './formConfiguration';
 import { createSchemaTools } from './schema';
+import { createFileTools } from './file';
 
 interface ToolsProps {
   logger: Logger;
@@ -18,5 +19,7 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
 
   const { schemaDefinitionTool } = await createSchemaTools();
 
-  return { schemaDefinitionTool, formConfigurationRetrievalTool, formConfigurationUpdateTool };
+  const { fileDownloadTool } = await createFileTools({ logger, directory, tokenProvider });
+
+  return { schemaDefinitionTool, formConfigurationRetrievalTool, formConfigurationUpdateTool, fileDownloadTool };
 }

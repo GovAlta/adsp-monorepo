@@ -2,6 +2,7 @@ import { Dispatch } from 'redux';
 import { io, Socket } from 'socket.io-client';
 import { v4 as uuid } from 'uuid';
 import { RootState } from '../index';
+import { ErrorNotification } from '@store/notifications/actions';
 
 export const CONNECT_AGENT_ACTION = 'agent/CONNECT_AGENT';
 export const CONNECT_AGENT_SUCCESS_ACTION = 'agent/CONNECT_AGENT_SUCCESS';
@@ -94,6 +95,9 @@ export function connectAgent() {
       const { threadId, messageId, content, done } = message;
       dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, content: content || '', done });
     });
+    socket.on('error', (err) => {
+      dispatch(ErrorNotification({ message: err }));
+    })
   };
 }
 
