@@ -4,6 +4,7 @@ import { LibSQLStore } from '@mastra/libsql';
 import type { FormConfigurationRetrievalTool, formConfigurationUpdateTool } from '../tools/formConfiguration';
 import type { SchemaDefinitionTool } from '../tools/schema';
 import { FileDownloadTool } from '../tools/file';
+import { environment } from '../../environments/environment';
 
 interface FormAgentsProps {
   schemaDefinitionTool: SchemaDefinitionTool;
@@ -33,8 +34,10 @@ export async function createFormAgents({
 
       Generate json configuration for forms compatible with https://github.com/eclipsesource/jsonforms.
 
-      Use the formConfigurationRetrievalTool to fetch existing form configuration, and always start with the existing configuration.
+      Use the formConfigurationRetrievalTool to fetch existing form configuration.
       Use the formConfigurationUpdateTool to update form configuration.
+
+      Always fetch the existing form configuration to start.
 
       In the form data schema, reference definitions from https://adsp.alberta.ca/common.v1.schema.json where applicable.
       Always use the schemaDefinitionTool to fetch current version of the common schema definitions.
@@ -196,7 +199,7 @@ export async function createFormAgents({
 
       Use the fileDownloadTool to download a file.
 `,
-    model: 'github-models/openai/gpt-4.1-mini',
+    model: environment.MODEL,
     tools: {
       schemaDefinitionTool,
       formConfigurationRetrievalTool,
@@ -223,7 +226,7 @@ export async function createFormAgents({
 
       Use the fileDownloadTool to download the file.
 `,
-    model: 'github-models/openai/gpt-4.1',
+    model: environment.MODEL,
     tools: {
       fileDownloadTool,
     },

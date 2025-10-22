@@ -37,6 +37,11 @@ export async function createFileTools({ directory, tokenProvider, logger }: File
         responseType: 'arraybuffer',
       });
 
+      logger.info(`File downloaded by agent: ${fileId}`, {
+        context: 'fileDownloadTool',
+        tenant: tenant?.id?.toString(),
+      });
+
       return { content: data };
     },
   });
