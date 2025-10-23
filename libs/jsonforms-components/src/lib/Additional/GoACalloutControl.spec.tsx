@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { JsonFormsProps, UISchemaElement } from '@jsonforms/core';
 import GoACalloutControl from './GoACalloutControl';
@@ -56,6 +56,24 @@ describe('callout control', () => {
       const { getByText } = render(<GoACalloutControl {...props} />);
       const component = getByText(message);
       expect(component.getAttribute('size')).toBe('large');
+    });
+
+    it('will hide the component when visible is false', () => {
+      const message = 'woof';
+      const props = { ...staticProps, uischema: uiSchema(message, 'information', 'large') };
+      const { getByText } = render(<GoACalloutControl {...{ ...props, visible: false }} />);
+      const component = getByText(message);
+      expect(component).not.toBeVisible();
+    });
+
+    it('will render without componentProps', () => {
+      const message = 'woof';
+      const props = { ...staticProps, uischema: uiSchema(message, 'information', 'large') };
+      props.uischema.options = undefined;
+
+      const { getByText } = render(<GoACalloutControl {...{ ...props, visible: false }} />);
+      const component = getByText('unknown');
+      expect(component.getAttribute('size')).toBe('medium');
     });
   });
 });
