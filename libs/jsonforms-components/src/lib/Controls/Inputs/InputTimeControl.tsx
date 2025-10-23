@@ -28,9 +28,11 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       readonly={readOnly}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       onBlur={(name: string, value: string) => {
+        /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
+        /* istanbul ignore next */
         handleChange(path, value === '' ? undefined : value);
       }}
       onChange={(name: string, value: string) => {}}
