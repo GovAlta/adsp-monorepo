@@ -1,0 +1,14 @@
+/agent/v1/agents:
+  get:
+    tags:
+      - Agent
+    description: Gets all agent names.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              - type: array
+                items:
+                  type: string

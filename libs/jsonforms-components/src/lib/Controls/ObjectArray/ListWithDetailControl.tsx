@@ -543,7 +543,6 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
       visible,
       enabled,
       cells,
-      translations,
       data,
       config,
       ...additionalProps
@@ -576,7 +575,6 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
             schema={schema}
             rootSchema={rootSchema}
             enabled={enabled}
-            translations={translations}
           />
         </ToolBarHeader>
         <div>
@@ -586,7 +584,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
             uischema={uischema}
             enabled={enabled}
             openDeleteDialog={openDeleteDialog}
-            translations={translations}
+            translations={{}}
             data={data}
             cells={cells}
             config={config}

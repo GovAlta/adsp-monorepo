@@ -24,15 +24,6 @@ function addProjectFiles(host: Tree, options: NormalizedSchema) {
   generateFiles(host, path.join(__dirname, 'project-files'), options.projectRoot, templateOptions);
 }
 
-function updateRealm(host: Tree, options: NormalizedSchema): string {
-  const realmFilePath = path.join(host.root, '.compose/realms/import.json');
-  const [master, core] = readJsonFile(realmFilePath);
-  const secret = addService(core, options.projectName);
-
-  writeJsonFile(realmFilePath, [master, core]);
-  return secret;
-}
-
 function addOpenShiftFiles(host: Tree, options: NormalizedSchema) {
   const templateOptions = {
     ...options,
@@ -73,7 +64,6 @@ export default async function (host: Tree, { name, displayName, port }: Schema) 
   host.write(`${projectRoot}/src/${api}/.gitkeep`, '');
 
   addProjectFiles(host, options);
-  updateRealm(host, options);
   addOpenShiftFiles(host, options);
 
   const configuration = readProjectConfiguration(host, projectName);

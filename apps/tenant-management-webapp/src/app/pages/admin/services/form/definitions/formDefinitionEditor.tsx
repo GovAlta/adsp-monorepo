@@ -12,11 +12,12 @@ import { AddEditFormDefinitionEditor } from './addEditFormDefinitionEditor';
 import { TabletMessage } from '@components/TabletMessage';
 import { useDispatch, useSelector } from 'react-redux';
 import { openEditorForDefinition } from '@store/form/action';
-import { RootState } from '@store/index';
+import { AppDispatch, RootState } from '@store/index';
 import { initializeFormEditor } from '@store/form/action';
 import { modifiedDefinitionSelector } from '@store/form/selectors';
 import { rolesSelector } from '@store/access/selectors';
 import { PageIndicator } from '@components/Indicator';
+import { connectAgent, disconnectAgent } from '@store/agent/actions';
 
 export const FormDefinitionEditor = (): JSX.Element => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ export const FormDefinitionEditor = (): JSX.Element => {
   const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
   const { id } = useParams<{ id: string }>();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   useEffect(() => {
     // This is to handle deep linking to the editor for a specific definition.
     if (id !== selectedId) {
@@ -39,6 +40,13 @@ export const FormDefinitionEditor = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(initializeFormEditor());
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(connectAgent());
+    return () => {
+      dispatch(disconnectAgent());
+    };
   }, [dispatch]);
 
   return (
