@@ -11,10 +11,12 @@ export default {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'html'],
   coverageDirectory: '../../coverage/apps/status-app',
-
   moduleNameMapper: {
     '^@components(.*)$': resolve(__dirname, './src/app/components/$1'),
     '^@pages(.*)$': resolve(__dirname, './src/app/pages/$1'),
     '^@store(.*)$': resolve(__dirname, './src/app/store/$1'),
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!react-markdown)',
+  ],
 };

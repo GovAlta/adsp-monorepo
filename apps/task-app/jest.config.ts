@@ -12,4 +12,7 @@ export default {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../coverage/apps/task-app',
+  transformIgnorePatterns: [
+    'node_modules/(?!react-markdown)',
+  ],
 };
