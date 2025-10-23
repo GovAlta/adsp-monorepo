@@ -1,5 +1,5 @@
 import React from 'react';
-import { SummaryRowLink } from '../styled-components';
+import { SummaryRowLink, SummaryTd } from '../styled-components';
 import { GoAText } from '@abgov/react-components';
 
 interface SummaryRowProps {

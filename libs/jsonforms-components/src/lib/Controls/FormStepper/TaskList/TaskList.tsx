@@ -1,3 +1,4 @@
+import React from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { GoATable, GoAText } from '@abgov/react-components';
 import { PageBorder } from '../styled-components';
@@ -45,8 +46,8 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
 
         <GoATable width="100%">
           <tbody>
-            {sectioned.map(({ sectionTitle, categories: group }) => (
-              <>
+            {sectioned.map(({ sectionTitle, categories: group }, index) => (
+              <React.Fragment key={index}>
                 {sectionTitle && showInTaskListList[globalIndex] && (
                   <SectionHeaderRow key={`section-${sectionTitle}`} title={sectionTitle} index={sectionIndex++} />
                 )}
@@ -77,7 +78,7 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
                   if (showCurrent) {
                     return (
                       <CategoryRow
-                        key={`cat-${category.label}`}
+                        key={`cat-${category.label}-${index}`}
                         category={currentCategory}
                         index={index}
                         onClick={onClick}
@@ -85,10 +86,10 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
                     );
                   }
                 })}
-              </>
+              </React.Fragment>
             ))}
 
-            <SummaryRow index={globalIndex} isValid={isValid} onClick={onClick} />
+            <SummaryRow index={globalIndex} isValid={isValid} onClick={onClick} key="task-list-table-summary" />
           </tbody>
         </GoATable>
       </div>
