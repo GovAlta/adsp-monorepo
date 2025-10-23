@@ -41,6 +41,10 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
           Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
         },
       });
+      logger.info(`Form configuration for definition with ID ${formDefinitionId} retrieved.`, {
+        context: 'formConfigurationUpdateTool',
+        tenant: tenant?.id?.toString(),
+      });
       return data;
     },
   });
