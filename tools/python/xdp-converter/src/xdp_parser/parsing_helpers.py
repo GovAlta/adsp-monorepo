@@ -269,44 +269,52 @@ def split_label_and_help(label_text, min_space_count=2):
         return label_text.strip(), ""
 
 
-# def find_checkboxes(subform: ET.Element) -> List[List[ET.Element]]:
-#     """
-#     Finds checkboxes and groups them into logical sets based on binding, name pattern,
-#     or layout proximity.
-#     Returns: list of lists of related checkbox fields.
-#     """
-#     groups = []
-#     visited = set()
+def get_help_text(draw_node):
+    # Must be a <draw> with a text block (not a field)
+    if draw_node.tag != "draw":
+        return None
+    if draw_node.find(".//ui/textEdit") is None:
+        return None
 
-#     fields = [f for f in subform.findall(".//field") if is_checkbox(f)]
-#     for _, field in enumerate(fields):
-#         if field in visited:
-#             continue
+    # Must contain HTML text
+    exdata = draw_node.find(".//value/exData[@contentType='text/html']")
+    if exdata is None:
+        return None
 
-#         name = field.attrib.get("name", "")
-#         bind = field.attrib.get("bind", "")
-#         parent = (
-#             field.getparent()
-#         )  # if using lxml; for ElementTree, track parent manually
+    # Ignore nodes that participate in data binding or scripting
+    if any(draw_node.findall(f".//{tag}") for tag in ("bind", "calculate", "event")):
+        return None
 
-#         # Find potential siblings
-#         siblings = [
-#             f
-#             for f in fields
-#             if f is not field
-#             and (
-#                 (bind and f.attrib.get("bind", "").startswith(bind.split(".")[0]))
-#                 or (name[:3] == "chk" and f.attrib.get("name", "").startswith(name[:3]))
-#                 or (parent is not None and f.getparent() is parent)
-#             )
-#         ]
+    # Extract and normalize text
+    text = " ".join(exdata.itertext()).strip()
+    if len(text) < 50:
+        return None  # too short to be instructional
 
-#         if siblings:
-#             group = [field] + siblings
-#             for f in group:
-#                 visited.add(f)
-#             groups.append(group)
-#         else:
-#             groups.append([field])  # independent
+    name = draw_node.get("name", "").lower()
+    width = float(draw_node.get("w", "0").replace("mm", "") or 0)
+    text_lower = text.lower()
 
-#     return groups
+    # Name hint (labels, info, notes)
+    name_hint = any(prefix in name for prefix in ("lbl", "info", "note", "instr"))
+
+    # Keyword hint (common in help text)
+    keywords = [
+        "please",
+        "information",
+        "contact",
+        "fax",
+        "mail",
+        "submit",
+        "application",
+        "call",
+        "phone",
+        "provided",
+        "eligibility",
+    ]
+    keyword_hint = any(word in text_lower for word in keywords)
+
+    # Heuristic threshold: wide + long text or a strong hint
+    if width > 150 or name_hint or keyword_hint:
+        return text
+
+    return None

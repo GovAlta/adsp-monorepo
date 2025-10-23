@@ -78,6 +78,18 @@ def strip_namespaces(elem):
     return elem
 
 
+def strip_units(value: str) -> Optional[float]:
+    if not value:
+        return None
+    return (
+        value.replace("mm", "")
+        .replace("pt", "")
+        .replace("in", "")
+        .replace("cm", "")
+        .strip()
+    )
+
+
 def is_help_button(name: str) -> bool:
     """
     Returns True if the string matches the pattern: btn<anything>Help<anything>,

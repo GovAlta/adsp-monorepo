@@ -4,6 +4,7 @@ import contextlib
 from typing import List, Dict, Optional
 from threading import RLock
 
+from xdp_parser.XdpHelpText import XdpHelpText
 from xdp_parser.control_labels import ControlLabels, inline_caption
 from xdp_parser.control_helpers import is_checkbox, is_radio_button
 from xdp_parser.help_text_registry import HelpTextRegistry
@@ -157,22 +158,11 @@ class XdpParser:
         control_labels = ControlLabels(subform)
 
         if is_list_control_container(subform, self.root, self.parent_map):
-            # Ignore controls-only subform
             return []
 
-        # Is the subform a radio button collection?
-        radio_labels = extract_radio_button_labels(subform)
-        if radio_labels:
-            xdp_controls.append(
-                XdpRadioSelector(
-                    subform, radio_labels, HelpTextRegistry(control_labels)
-                )
-            )
-            return remove_duplicates(xdp_controls)
-
-        # Is the subform a list with detail?
+        # --- handle list-with-detail ---
         if is_object_array(subform):
-            table = self.parse_object_array(subform)
+            table = self.parse_object_array(subform, control_labels)
             xdp_controls.append(table)
             return remove_duplicates(xdp_controls)
 
@@ -181,46 +171,67 @@ class XdpParser:
         while i < len(elements):
             elem = elements[i]
 
-            # --- handle consecutive checkboxes as a group ---
-            if is_checkbox(elem):
-                group = [elem]
-                while (
-                    i + 1 < len(elements)
-                    and is_checkbox(elements[i + 1])
-                    and self._are_related_checkboxes(elem, elements[i + 1])
-                ):
-                    group.append(elements[i + 1])
-                    i += 1
+            # Help content
+            help_content = XdpHelpText.get_help_text(elem)
+            if help_content:
+                xdp_controls.append(XdpHelpText(help_content))
 
-                if len(group) == 1:
-                    # Single independent checkbox
-                    control = self.extract_control(group[0], control_labels)
-                    if control:
-                        xdp_controls.append(XdpCheckbox(group[0], control_labels))
-                else:
-                    # Grouped checkboxes
-                    label = self.control_labels.get(subform.get("name") or "")
-                    print(f"found checkbox group: {label}")
-                #                    xdp_controls.append(XdpCheckboxGroup(subform, group, label))
+            # ✅ NEW: Handle radio button groups (<exclGroup>)
+            if elem.tag == "exclGroup":
+                #                radios = self._handle_radio_buttons(elem, control_labels)
+                xdp_controls.append(XdpRadio(elem, control_labels))
                 i += 1
                 continue
 
+            # Checkboxes
+            if is_checkbox(elem):
+                controls, i = self._handle_grouped_controls(
+                    elements,
+                    i,
+                    control_labels,
+                    is_checkbox,
+                    self._are_related_checkboxes,
+                    self._build_checkbox_controls,
+                )
+                xdp_controls.extend(controls)
+                continue
+
+            # (Optional) keep individual radio detection if needed for legacy forms
+            if is_radio_button(elem):
+                controls, i = self._handle_grouped_controls(
+                    elements,
+                    i,
+                    control_labels,
+                    is_radio_button,
+                    self._are_related_checkboxes,
+                    lambda group, labels: self._build_radio_controls(
+                        subform, group, labels
+                    ),
+                )
+                xdp_controls.extend(controls)
+                continue
+
+            # Everything else
             control = self.extract_control(elem, control_labels)
             if control:
                 xdp_controls.append(control)
 
             i += 1
+
         return remove_duplicates(xdp_controls)
 
     def parse_object_array(
-        self, array_element: ET.Element, max_depth: int = 2
+        self,
+        array_element: ET.Element,
+        control_labels: Dict[str, str],
+        max_depth: int = 2,
     ) -> XdpObjectArray:
         name = array_element.attrib.get("name") or "Items"
 
         columns: List["XdpElement"] = []
         for field in find_input_fields(array_element, max_depth=max_depth):
             try:
-                col = self.extract_control(field, self.control_labels)
+                col = self.extract_control(field, control_labels)
                 if col is None:
                     continue
                 # If your XdpElement has is_leaf, prefer real inputs only
@@ -237,11 +248,11 @@ class XdpParser:
             placeholder = ET.Element("field", {"name": "value"})
             cols_caption = ET.SubElement(placeholder, "caption")
             ET.SubElement(cols_caption, "value").text = "Value"
-            maybe = self.extract_control(placeholder.self.control_labels)
-            if maybe:
-                columns.append(maybe)
+            control = self.extract_control(placeholder, control_labels)
+            if control:
+                columns.append(control)
 
-        return XdpObjectArray(array_element, name, columns, self.control_labels)
+        return XdpObjectArray(array_element, name, columns, control_labels)
 
     def extract_control(
         self, form_element: ET.Element, control_labels: Dict[str, str]
@@ -330,3 +341,101 @@ class XdpParser:
         ):
             return True
         return False
+
+    def _handle_checkboxes(
+        self, elements: list[ET.Element], i: int, control_labels: ControlLabels
+    ) -> tuple[list["XdpElement"], int]:
+        """Handle consecutive checkbox elements starting at index i."""
+        elem = elements[i]
+        group = [elem]
+
+        # Group consecutive related checkboxes
+        while (
+            i + 1 < len(elements)
+            and is_checkbox(elements[i + 1])
+            and self._are_related_checkboxes(elem, elements[i + 1])
+        ):
+            group.append(elements[i + 1])
+            i += 1
+
+        controls: list[XdpElement] = []
+
+        if len(group) == 1:
+            # Single checkbox
+            control = self.extract_control(group[0], control_labels)
+            if control:
+                controls.append(XdpCheckbox(group[0], control_labels))
+        else:
+            # Grouped checkboxes
+            label = control_labels.get(elem.get("name") or "")
+            print(f"found checkbox group: {label}")
+            # controls.append(XdpCheckboxGroup(subform, group, label))
+
+        return controls, i + 1
+
+    def _handle_radio_buttons(
+        self, subform: ET.Element, control_labels: ControlLabels
+    ) -> list["XdpElement"]:
+        """Detect and build a radio button group control for the given subform."""
+        radio_labels = extract_radio_button_labels(subform)
+        if not radio_labels:
+            return []
+
+        return [
+            XdpRadioSelector(
+                subform,
+                radio_labels,
+                HelpTextRegistry(control_labels),
+            )
+        ]
+
+    def _handle_grouped_controls(
+        self,
+        elements: list[ET.Element],
+        i: int,
+        control_labels: ControlLabels,
+        is_fn,
+        are_related_fn,
+        builder_fn,
+    ) -> tuple[list["XdpElement"], int]:
+        """Generic handler for grouped controls like checkboxes or radios."""
+        elem = elements[i]
+        group = [elem]
+
+        # Gather consecutive related elements
+        while (
+            i + 1 < len(elements)
+            and is_fn(elements[i + 1])
+            and are_related_fn(elem, elements[i + 1])
+        ):
+            group.append(elements[i + 1])
+            i += 1
+
+        controls = builder_fn(group, control_labels)
+        return controls, i + 1
+
+    def _build_checkbox_controls(self, group, control_labels):
+        """Construct one or more checkbox controls from the given group."""
+        controls = []
+        if len(group) == 1:
+            control = self.extract_control(group[0], control_labels)
+            if control:
+                controls.append(XdpCheckbox(group[0], control_labels))
+        else:
+            label = control_labels.get(group[0].get("name") or "")
+            print(f"found checkbox group: {label}")
+            # controls.append(XdpCheckboxGroup(subform, group, label))
+        return controls
+
+    def _build_radio_controls(self, subform, group, control_labels):
+        """Construct a radio button selector control for the subform."""
+        radio_labels = extract_radio_button_labels(subform)
+        if not radio_labels:
+            return []
+        return [
+            XdpRadioSelector(
+                subform,
+                radio_labels,
+                HelpTextRegistry(control_labels),
+            )
+        ]

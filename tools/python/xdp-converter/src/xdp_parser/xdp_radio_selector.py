@@ -4,6 +4,7 @@ from schema_generator.form_information import FormInformation
 from schema_generator.form_layout import FormLayout
 from xdp_parser.control_labels import ControlLabels
 from xdp_parser.help_text_registry import HelpTextRegistry
+from xdp_parser.parsing_helpers import split_label_and_help
 from xdp_parser.xdp_element import XdpElement
 
 
