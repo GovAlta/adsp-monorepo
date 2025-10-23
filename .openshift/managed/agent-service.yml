@@ -103,6 +103,8 @@ objects:
               envFrom:
                 - configMapRef:
                     name: ${APP_NAME}
+                - configMapRef:
+                    name: directory-overrides
                 - secretRef:
                     name: ${APP_NAME}
               env:
@@ -132,7 +134,6 @@ objects:
         rollingUpdate:
           maxUnavailable: 25%
           maxSurge: 25%
-      revisionHistoryLimit: 10
       progressDeadlineSeconds: 600
   - apiVersion: v1
     kind: Service

@@ -1,5 +1,6 @@
 import { GoAFormItem, GoASkeleton, GoATextArea } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useRef, useState } from 'react';
+import Markdown from 'react-markdown';
 import styled from 'styled-components';
 
 interface Message {
@@ -17,7 +18,9 @@ interface MessageItemProps {
 const MessageItem = styled(({ className, message }: MessageItemProps) => {
   return (
     <div className={className} data-from={message.from}>
-      <p data-from={message.from}>{message.content}</p>
+      <Markdown className="content" data-from={message.from}>
+        {message.content}
+      </Markdown>
     </div>
   );
 })`
@@ -43,13 +46,13 @@ const ContainerDiv = styled.div`
   & > :last-child {
     flex: 0;
   }
-  & p {
+  & .content {
     margin: var(--goa-space-m) var(--goa-space-xs) var(--goa-space-l) var(--goa-space-xs);
   }
-  & p[data-from='user'] {
+  & .content[data-from='user'] {
     margin-left: var(--goa-space-l);
   }
-  & p[data-from='agent'] {
+  & .content[data-from='agent'] {
     margin-right: var(--goa-space-l);
   }
 `;
