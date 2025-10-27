@@ -1,5 +1,4 @@
 from schema_generator.form_layout import FormLayout
-from xdp_parser.xdp_utils import strip_label_prefix
 
 
 # An annotated control represents a selector that has different "help" messages

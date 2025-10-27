@@ -9,8 +9,9 @@ from xdp_parser.xdp_utils import node_name, strip_not, tag_name
 
 
 class RulesParser:
-    def __init__(self, root: ET.Element):
+    def __init__(self, root: ET.Element, parent_map: Dict[ET.Element, ET.Element]):
         self.root = root
+        self.parent_map = parent_map
         parser = ParseSelectors(root)
         self.group_to_button_map, self.button_to_group_map = parser.build_choice_groups(
             root
@@ -225,14 +226,13 @@ class RulesParser:
         Owner/driver is the parent of the nearest <event> ancestor.
         Fallback: nearest interesting ancestor if no <event> exists.
         """
-        parent_map = self._build_parent_map()
 
         def _nearest_interesting_ancestor(el: ET.Element) -> Optional[ET.Element]:
             cur = el
             while cur is not None:
                 if tag_name(cur.tag) in _INTERESTING_NODE_NAMES:
                     return cur
-                cur = parent_map.get(cur)
+                cur = self.parent_map.get(cur)
             return None
 
         for el in self.root.iter():
@@ -242,22 +242,15 @@ class RulesParser:
             if not txt:
                 continue
 
-            ev = self._nearest_event_ancestor(el, parent_map)
+            ev = self._nearest_event_ancestor(el, self.parent_map)
             owner_el = (
-                parent_map.get(ev)
+                self.parent_map.get(ev)
                 if ev is not None
                 else _nearest_interesting_ancestor(el)
             )
             owner_name = node_name(owner_el)
 
             yield txt, owner_name
-
-    def _build_parent_map(self) -> Dict[ET.Element, Optional[ET.Element]]:
-        parent_map: Dict[ET.Element, Optional[ET.Element]] = {self.root: None}
-        for parent in self.root.iter():
-            for child in parent:
-                parent_map[child] = parent
-        return parent_map
 
     def _nearest_event_ancestor(
         self, el: ET.Element, parent_map: Dict[ET.Element, Optional[ET.Element]]

@@ -5,7 +5,13 @@ from typing import Dict, List, Optional, Tuple
 from xdp_parser.node_finder import NodeFinder
 
 
-class JSHelpMessageParser:
+##
+# Find help messages that are defined in javascript within the XDP file
+# (used for popup tooltips), by finding the <variables> nodes and checking the
+# <script> nodes within.
+# e.g., look for -> var messages = { key: "value", "key2": 'value2' };
+##
+class JSHelpTextParser:
     HELP_OBJECT_NAME = "messages"
 
     def __init__(self, root: ET.Element):
@@ -20,7 +26,6 @@ class JSHelpMessageParser:
             var messages = { key: "value", "key2": 'value2' };
         """
         if self.variables is None:
-            print("No <variables> element found.")
             return {}
 
         js = self._gather_js_text()
@@ -214,7 +219,7 @@ class JSHelpMessageParser:
     def _parse_key(key_part: str) -> Optional[str]:
         """Handle "quoted", 'quoted', or unquoted identifiers (take last segment after dots)."""
         if len(key_part) >= 2 and key_part[0] in "'\"" and key_part[-1] == key_part[0]:
-            return JSHelpMessageParser._unescape_js_string(key_part[1:-1])
+            return JSHelpTextParser._unescape_js_string(key_part[1:-1])
         # Unquoted: allow a.b.c (take final identifier)
         key = key_part.split(".")[-1].strip()
         return key or None
@@ -226,12 +231,12 @@ class JSHelpMessageParser:
         otherwise return raw text.
         """
         if len(val_part) >= 2 and val_part[0] in "'\"" and val_part[-1] == val_part[0]:
-            return JSHelpMessageParser._unescape_js_string(val_part[1:-1])
+            return JSHelpTextParser._unescape_js_string(val_part[1:-1])
 
         m = re.search(r'("([^"\\]|\\.)*"|\'([^\'\\]|\\.)*\')', val_part)
         if m:
             lit = m.group(0)
-            return JSHelpMessageParser._unescape_js_string(lit[1:-1])
+            return JSHelpTextParser._unescape_js_string(lit[1:-1])
         return val_part
 
     @staticmethod
