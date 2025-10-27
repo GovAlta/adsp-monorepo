@@ -29,7 +29,7 @@ class XdpRadioSelector(XdpElement):
 
     def _to_annotated_control(self):
         radio_buttons = self._to_simple_control()
-        control = AnnotatedControl([radio_buttons, self.messages])
+        control = AnnotatedControl([radio_buttons, self._to_help_messages()])
         control.enum = []
         for option in self.options:
             label, _ = split_label_and_help(option)
@@ -40,8 +40,8 @@ class XdpRadioSelector(XdpElement):
         options = []
         registry = HelpTextRegistry()
         for option in self.options:
-            if self.messages.hasAnnotation(option):
-                help_text = self.messages.getAnnotation(option)
+            if registry.hasAnnotation(option):
+                help_text = registry.getAnnotation(option)
                 info = FormInformation(self.get_name(), help_text, option, hidden=True)
                 options.append(info)
         return FormLayout("VerticalLayout", options)

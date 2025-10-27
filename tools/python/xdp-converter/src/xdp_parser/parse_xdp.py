@@ -22,7 +22,6 @@ from xdp_parser.xdp_utils import remove_duplicates
 from xdp_parser.xdp_group import XdpGroup
 from xdp_parser.xdp_object_array import XdpObjectArray
 from xdp_parser.xdp_radio import XdpRadio
-from xdp_parser.xdp_radio_selector import XdpRadioSelector
 from xdp_parser.xdp_utils import is_hidden, is_subform, remove_duplicates
 from schema_generator.form_element import FormElement
 from dataclasses import dataclass
@@ -166,6 +165,12 @@ class XdpParser:
             xdp_controls.append(table)
             return remove_duplicates(xdp_controls)
 
+        # --- Handle implicit radio groups (subform full of round checkButtons)
+        radio_options = self._handle_radio_buttons(subform, control_labels)
+        if radio_options is not None:
+            xdp_controls.append(radio_options)
+            return remove_duplicates(xdp_controls)
+
         elements = list(subform)
         i = 0
         while i < len(elements):
@@ -176,9 +181,8 @@ class XdpParser:
             if help_content:
                 xdp_controls.append(XdpHelpText(help_content))
 
-            # ✅ NEW: Handle radio button groups (<exclGroup>)
+            # Handle radio button groups (<exclGroup>)
             if elem.tag == "exclGroup":
-                #                radios = self._handle_radio_buttons(elem, control_labels)
                 xdp_controls.append(XdpRadio(elem, control_labels))
                 i += 1
                 continue
@@ -379,15 +383,13 @@ class XdpParser:
         """Detect and build a radio button group control for the given subform."""
         radio_labels = extract_radio_button_labels(subform)
         if not radio_labels:
-            return []
+            return None
 
-        return [
-            XdpRadioSelector(
-                subform,
-                radio_labels,
-                HelpTextRegistry(control_labels),
-            )
-        ]
+        return XdpRadioSelector(
+            subform,
+            radio_labels,
+            control_labels,
+        )
 
     def _handle_grouped_controls(
         self,
