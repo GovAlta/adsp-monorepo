@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ET
-from xdp_parser.xdp_utils import is_hidden, is_subform, tag_name
+from xdp_parser.xdp_utils import tag_name
 
 
 def get_subform_label(subform) -> str | None:

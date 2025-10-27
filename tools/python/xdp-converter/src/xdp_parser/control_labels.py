@@ -12,14 +12,6 @@ class ControlLabels:
     def get(self, target):
         return self.labels.get(target)
 
-    def getAnnotation(self, key: str) -> str:
-        """Fetch help message for a control name."""
-        return self.labels.get(key)
-
-    def hasAnnotation(self, key: str) -> bool:
-        """Check if a help message exists for a control name."""
-        return key in self.labels
-
     def _find_control_labels(self, container_node):
         """
         Build { control_name: label } for every visible <field>/<exclGroup> under container_node.

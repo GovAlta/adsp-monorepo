@@ -15,7 +15,7 @@ class SectionTitle(FormElement):
         if self.help:
             ui_schema["options"] = {
                 "markdown": "true",
-                "help": f"## {split_camel_case(self.help)}",
+                "help": f"## {self.help}",
             }
         return ui_schema
 

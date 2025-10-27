@@ -156,6 +156,8 @@ class XdpParser:
         xdp_controls: list["XdpElement"] = []
         control_labels = ControlLabels(subform)
 
+        # if container is just for list controls (Add, Remove), skip it
+        # because they are already part of the JSON Form controls.
         if is_list_control_container(subform, self.root, self.parent_map):
             return []
 
@@ -170,6 +172,10 @@ class XdpParser:
         if radio_options is not None:
             xdp_controls.append(radio_options)
             return remove_duplicates(xdp_controls)
+
+        # TODO : handle other special containers here (e.g., repeating sections)
+        if is_hidden(subform):
+            return []
 
         elements = list(subform)
         i = 0
@@ -270,7 +276,7 @@ class XdpParser:
         elif self.is_potential_container(form_element):
             nested_controls = self.parse_subform(form_element)
             if nested_controls and len(nested_controls) > 1:
-                label = control_labels.get(form_element.get("name") or "")
+                label = form_element.get("name") or ""
                 if not label:
                     label = inline_caption(form_element)
                 return XdpGroup(form_element, nested_controls, label)

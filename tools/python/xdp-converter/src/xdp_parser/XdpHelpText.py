@@ -1,6 +1,6 @@
 from schema_generator.form_help_text import FormHelpText
 from xdp_parser.xdp_element import XdpElement
-from xdp_parser.xdp_subform import get_subform_label
+from xdp_parser.subform_label import get_subform_label
 from xdp_parser.xdp_utils import strip_units
 
 
