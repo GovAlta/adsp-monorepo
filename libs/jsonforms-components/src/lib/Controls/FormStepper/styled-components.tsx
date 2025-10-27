@@ -163,3 +163,7 @@ export const SummaryRowLink = styled.a`
   position: relative;
   top: var(--goa-space-xs);
 `;
+
+export const SummaryTd = styled.td`
+  border: 0 !important;
+`;

@@ -1,6 +1,7 @@
 from typing import List
 
 from schema_generator.form_element import FormElement
+from schema_generator.form_object_array import FormObjectArray
 
 
 class JsonSchemaGenerator:
@@ -22,5 +23,6 @@ class JsonSchemaGenerator:
                 # if element.name not in required:
                 #     required.append(element.name)
         else:
+            # This is a layout: get props for its children
             for e in element.elements:
                 self.get_properties(e, properties, required)

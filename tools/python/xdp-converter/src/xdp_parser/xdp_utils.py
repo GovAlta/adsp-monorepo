@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
 
@@ -8,11 +8,11 @@ def strip_namespace(tag: str) -> str:
     return tag.split("}")[-1] if "}" in tag else tag
 
 
-_PREFIXES = ["txt", "btn", "chk", "dte", "lbl", "cbo"]
+_LABEL_PREFIXES = ["txt", "btn", "chk", "dte", "lbl", "cbo", "rb"]
 
 
 def strip_label_prefix(label: str) -> str:
-    for prefix in _PREFIXES:
+    for prefix in _LABEL_PREFIXES:
         if label.lower().startswith(prefix.lower()):
             return label[len(prefix) :]
     return label
@@ -78,6 +78,18 @@ def strip_namespaces(elem):
     return elem
 
 
+def strip_units(value: str) -> Optional[float]:
+    if not value:
+        return None
+    return (
+        value.replace("mm", "")
+        .replace("pt", "")
+        .replace("in", "")
+        .replace("cm", "")
+        .strip()
+    )
+
+
 def is_help_button(name: str) -> bool:
     """
     Returns True if the string matches the pattern: btn<anything>Help<anything>,
@@ -86,7 +98,7 @@ def is_help_button(name: str) -> bool:
     return bool(re.match(r"^btn.*Help.*$", name))
 
 
-def _remove_duplicates(elems):
+def remove_duplicates(elems):
     seen = set()
     results = []
     for e in elems:
@@ -98,3 +110,65 @@ def _remove_duplicates(elems):
             seen.add(name)
         results.append(e)
     return results
+
+
+def is_hidden(node):
+    return node.get("presence", "").lower() == "hidden"
+
+
+def is_subform(el: ET.Element) -> bool:
+    return el.tag == "subform"
+
+
+def is_button(field: ET.Element) -> bool:
+    # XFA button: <field><ui><button/></ui></field>
+    return field.find("./ui/button") is not None
+
+
+def non_button_inputs(sf: ET.Element) -> List[ET.Element]:
+    return [f for f in sf.findall("./field") if not is_button(f)]
+
+
+def has_repeater_occur(subform: ET.Element) -> bool:
+    occur = subform.find("./occur")
+    if occur is None:
+        return False
+    maxv = (occur.attrib.get("max") or "").strip().lower()
+    if not maxv or maxv == "1":
+        return False
+    if maxv in ("-1", "unbounded"):
+        return True
+    try:
+        return int(maxv) > 1
+    except ValueError:
+        return True
+
+
+def build_parent_map(root) -> Dict[ET.Element, Optional[ET.Element]]:
+    parent_map: Dict[ET.Element, Optional[ET.Element]] = {root: None}
+    for parent in root.iter():
+        for child in parent:
+            parent_map[child] = parent
+    return parent_map
+
+
+def presence_hidden(node: ET.Element) -> bool:
+    presence = (node.attrib.get("presence") or "").lower()
+    return presence in {"hidden", "invisible"}
+
+
+def get_field_caption(field: ET.Element) -> Optional[ET.Element]:
+    caption = field.find(".//caption/value")
+    if caption is not None:
+        # Case 1: plain <text> node
+        text_node = caption.find("text")
+        if text_node is not None and text_node.text:
+            return text_node.text.strip()
+
+        # Case 2: <exData> node with HTML
+        exdata = caption.find("exData")
+        if exdata is not None:
+            raw_text = "".join(exdata.itertext())
+            # Collapse whitespace and trim
+            return re.sub(r"\s+", " ", raw_text).strip()
+    return None
