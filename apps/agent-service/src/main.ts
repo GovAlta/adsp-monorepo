@@ -12,7 +12,13 @@ import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import { Server as IoServer, Socket } from 'socket.io';
 import { promisify } from 'util';
 import { environment } from './environments/environment';
-import { applyAgentMiddleware, ServiceRoles } from './agent';
+import {
+  AgentConfigurations,
+  AgentServiceConfiguration,
+  applyAgentMiddleware,
+  configurationSchema,
+  ServiceRoles,
+} from './agent';
 import { fromSocketHandshake, REQ_SOCKET_PROP } from './socket';
 
 const logger = createLogger('agent-service', environment.LOG_LEVEL);
@@ -59,6 +65,12 @@ const initializeApp = async (): Promise<Server> => {
         },
       ],
       events: [],
+      configuration: {
+        schema: configurationSchema,
+        description: 'Configuration of agents.',
+      },
+      combineConfiguration: (tenant: AgentConfigurations, core: AgentConfigurations, tenantId) =>
+        new AgentServiceConfiguration(logger, directory, tokenProvider, tenantId, tenant, core),
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -114,7 +126,7 @@ const initializeApp = async (): Promise<Server> => {
   // Connections on namespace correspond to tenants.
   const io = ioServer.of(/^\/[a-zA-Z0-9- ]+$/);
   io.use(wrapForIo(passport.initialize()));
-  io.use(wrapForIo(passport.authenticate(['core', 'tenant', 'anonymous'], { session: false })));
+  io.use(wrapForIo(passport.authenticate(['core', 'tenant'], { session: false })));
   io.use(wrapForIo(configurationHandler));
 
   await applyAgentMiddleware(app, [defaultIo, io], { logger, directory, tokenProvider, tenantService });

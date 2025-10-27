@@ -1,4 +1,4 @@
-import { adspId, ServiceDirectory, Tenant, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { createTool } from '@mastra/core';
 import axios from 'axios';
 import type { Logger } from 'winston';
@@ -25,7 +25,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       assessorRoles: z.array(z.string()),
     }),
     execute: async ({ runtimeContext }) => {
-      const tenant = runtimeContext.get('tenant') as Tenant;
+      const tenantId = runtimeContext.get('tenantId') as AdspId;
       const formDefinitionId = runtimeContext.get('formDefinitionId') as string;
 
       const formDefinitionUrl = new URL(
@@ -35,7 +35,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
 
       const { data } = await axios.get(formDefinitionUrl.href, {
         params: {
-          tenantId: tenant?.id?.toString(),
+          tenantId: tenantId?.toString(),
         },
         headers: {
           Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
@@ -43,7 +43,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       });
       logger.info(`Form configuration for definition with ID ${formDefinitionId} retrieved.`, {
         context: 'formConfigurationUpdateTool',
-        tenant: tenant?.id?.toString(),
+        tenant: tenantId?.toString(),
       });
       return data;
     },
@@ -67,7 +67,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
     execute: async ({ context, runtimeContext }) => {
       const { formDefinitionName, dataSchema, uiSchema, anonymousApply, applicantRoles, assessorRoles } = context;
 
-      const tenant = runtimeContext.get('tenant') as Tenant;
+      const tenantId = runtimeContext.get('tenantId') as AdspId;
       const formDefinitionId = runtimeContext.get('formDefinitionId') as string;
       const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
       const formDefinitionUrl = new URL(`v2/configuration/form-service/${formDefinitionId}`, configurationServiceUrl);
@@ -88,7 +88,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
         },
         {
           params: {
-            tenantId: tenant?.id?.toString(),
+            tenantId: tenantId?.toString(),
           },
           headers: {
             Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
@@ -97,7 +97,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       );
       logger.info(`Form configuration update status: ${status}`, {
         context: 'formConfigurationUpdateTool',
-        tenant: tenant?.id?.toString(),
+        tenant: tenantId?.toString(),
       });
       return data;
     },
