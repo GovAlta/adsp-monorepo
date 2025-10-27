@@ -198,7 +198,7 @@ export async function createFormAgents({
       file ID is expected to be a UUID, and URN is expected to be in the format urn:ads:platform:file-service:v1:/files/<file ID>.
 
       Use the fileDownloadTool to download a file.
-`,
+      `,
     model: environment.MODEL,
     tools: {
       schemaDefinitionTool,

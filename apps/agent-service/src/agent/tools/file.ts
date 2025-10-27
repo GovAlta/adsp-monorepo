@@ -1,4 +1,4 @@
-import { adspId, ServiceDirectory, Tenant, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { createTool } from '@mastra/core';
 import axios from 'axios';
 import type { Logger } from 'winston';
@@ -20,16 +20,28 @@ export async function createFileTools({ directory, tokenProvider, logger }: File
       fileId: z.string(),
     }),
     outputSchema: z.object({
-      content: z.instanceof(ArrayBuffer),
+      type: z.string(),
+      data: z.instanceof(Uint8Array),
+      mediaType: z.string(),
     }),
     execute: async ({ context, runtimeContext }) => {
-      const tenant = runtimeContext.get('tenant') as Tenant;
+      const tenantId = runtimeContext.get('tenantId') as AdspId;
       const { fileId } = context;
+
+      const fileUrl = new URL(`v1/files/${fileId}`, fileApiUrl);
+      const { data: metadata } = await axios.get(fileUrl.href, {
+        params: {
+          tenantId: tenantId?.toString(),
+        },
+        headers: {
+          Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
+        },
+      });
 
       const fileDownloadUrl = new URL(`v1/files/${fileId}/download`, fileApiUrl);
       const { data } = await axios.get(fileDownloadUrl.href, {
         params: {
-          tenantId: tenant?.id?.toString(),
+          tenantId: tenantId?.toString(),
         },
         headers: {
           Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
@@ -39,10 +51,13 @@ export async function createFileTools({ directory, tokenProvider, logger }: File
 
       logger.info(`File downloaded by agent: ${fileId}`, {
         context: 'fileDownloadTool',
-        tenant: tenant?.id?.toString(),
+        tenant: tenantId?.toString(),
       });
 
-      return { content: data };
+      return {
+        data: new Uint8Array(data),
+        mediaType: metadata.mimeType,
+      };
     },
   });
 
