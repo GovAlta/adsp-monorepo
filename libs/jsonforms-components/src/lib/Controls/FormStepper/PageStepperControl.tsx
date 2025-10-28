@@ -52,7 +52,6 @@ function getCategoryScopes(cat: unknown): string[] {
   return Array.isArray(scopes) && scopes.every((s) => typeof s === 'string') ? (scopes as string[]) : [];
 }
 
-/** A page "has data" only if at least one scoped value is user-provided. */
 function hasDataInScopes(data: unknown, scopes?: string[]): boolean {
   if (!Array.isArray(scopes) || scopes.length === 0) return false;
   return scopes.some((s) => hasDataValue(getByJsonPointer(data, s)));
@@ -122,6 +121,4 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
 export const FormStepperPagesControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormPageStepper)));
 
 export default FormPageStepper;
-
-// exported for unit testing helpers
 export { getByJsonPointer, hasDataValue, getCategoryScopes, hasDataInScopes };
