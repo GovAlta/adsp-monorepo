@@ -1,9 +1,9 @@
-from schema_generator.form_category import FormCategory
+from schema_generator.form_section import FormSection
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.subform_label import get_subform_label
 
 
-class XdpCategory(XdpElement):
+class XdpSection(XdpElement):
     def __init__(self, xdp_element, elements):
         super().__init__(xdp_element)
         self.elements = elements
@@ -18,4 +18,4 @@ class XdpCategory(XdpElement):
             if fe:
                 nodes.append(fe)
         name = self.xdp_element.attrib.get("name", "Untitled")
-        return FormCategory(name, title, nodes)
+        return FormSection(name, title, nodes)

@@ -76,12 +76,12 @@ def process_one(
 
         parser = XdpParser()
         parser.configure(tree.getroot(), parent_map, help_text)
-        categories = parser.parse_xdp()
+        input_groups = parser.parse_xdp()
 
         json_generator = JsonSchemaGenerator()
-        json_schema = json_generator.to_schema(categories)
+        json_schema = json_generator.to_schema(input_groups)
 
-        ui_generator = UiSchemaGenerator(categories, jf_rules)
+        ui_generator = UiSchemaGenerator(input_groups, jf_rules)
         ui_schema = ui_generator.to_schema()
 
         schema_out.parent.mkdir(parents=True, exist_ok=True)

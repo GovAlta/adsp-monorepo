@@ -14,7 +14,7 @@ from xdp_parser.parsing_helpers import (
     is_object_array,
 )
 from xdp_parser.xdp_basic_input import XdpBasicInput
-from xdp_parser.xdp_category import XdpCategory
+from xdp_parser.xdp_section import XdpSection
 from xdp_parser.xdp_checkbox import XdpCheckbox
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_radio_selector import XdpRadioSelector, extract_radio_button_labels
@@ -105,21 +105,18 @@ class XdpParser:
         return self.state.control_labels
 
     def parse_xdp(self) -> List[FormElement]:
-        categorization = self.find_categorization()
-        categories = self.parse_categorization(categorization)
+        form_root = self.find_form_root()
+        subforms = self.find_top_subforms(form_root)
         form_elements: List[FormElement] = []
-        for category in categories:
-            fields = self.parse_subform(category)
-            # No fields => nothing to input => no category.
-            # Should we be looking for a category (page) that just contains help text
-            # as well?
+        for subform in subforms:
+            fields = self.parse_subform(subform)
             if fields:
-                form_elements.append(XdpCategory(category, fields).to_form_element())
+                form_elements.append(XdpSection(subform, fields).to_form_element())
         return form_elements
 
-    def find_categorization(self):
+    def find_form_root(self):
         """
-        Finds the <template>/<subform>/<subform> node which contains the categories.
+        Finds the <template>/<subform>/<subform> node containing the form elements.
         """
         root = self.root
 
@@ -141,16 +138,16 @@ class XdpParser:
 
         return subform2
 
-    def parse_categorization(self, categorization):
+    def find_top_subforms(self, form_root: ET.Element):
         """
         Returns a list of first-level <subform> elements;
-        These elements contain a logical set of inputs grouped as a category.
+        These elements contain a logical set of input groups.
         """
-        categories = []
-        for category in categorization:
-            if self.is_potential_container(category):
-                categories.append(category)
-        return categories
+        input_groups = []
+        for input_group in form_root:
+            if self.is_potential_container(input_group):
+                input_groups.append(input_group)
+        return input_groups
 
     def parse_subform(self, subform: ET.Element) -> list["XdpElement"]:
         xdp_controls: list["XdpElement"] = []
