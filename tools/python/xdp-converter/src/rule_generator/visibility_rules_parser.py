@@ -8,7 +8,7 @@ from rule_generator.element_rules import ElementRules, Rule
 from xdp_parser.xdp_utils import node_name, strip_not, tag_name
 
 
-class RulesParser:
+class VisibilityRulesParser:
     def __init__(self, root: ET.Element, parent_map: Dict[ET.Element, ET.Element]):
         self.root = root
         self.parent_map = parent_map

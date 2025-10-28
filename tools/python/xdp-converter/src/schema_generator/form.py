@@ -8,11 +8,11 @@ class Form(FormElement):
         self.sections = sections
         self.is_leaf = False
 
-    def to_ui_schema(self, rules: Optional[dict] = None):
+    def to_ui_schema(self, visibility_rules: Optional[dict] = None):
         ui_schema = {"type": "VerticalLayout"}
         ui_schema["elements"] = []
-        for group in self.sections:
-            ui_schema["elements"].append(group.to_ui_schema(rules))
+        for section in self.sections:
+            ui_schema["elements"].append(section.to_ui_schema(visibility_rules))
         return ui_schema
 
     def has_json_schema(self):
