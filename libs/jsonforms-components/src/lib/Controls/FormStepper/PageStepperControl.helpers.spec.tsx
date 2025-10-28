@@ -9,7 +9,16 @@ describe('PageStepperControl helper functions', () => {
     });
 
     it('retrieves nested values and skips "properties" parts', () => {
-      const data = { name: { first: 'Alice', nested: { x: 1 } }, tags: [1, 2] } as any;
+      interface TestData {
+        name: {
+          first: string;
+          nested: {
+            x: number;
+          };
+        };
+        tags: number[];
+      }
+      const data: TestData = { name: { first: 'Alice', nested: { x: 1 } }, tags: [1, 2] };
       expect(getByJsonPointer(data, '#/properties/name/properties/first')).toBe('Alice');
       expect(getByJsonPointer(data, '#/name/first')).toBe('Alice');
       expect(getByJsonPointer(data, '#/properties/name/properties/nested/properties/x')).toBe(1);
@@ -48,7 +57,15 @@ describe('PageStepperControl helper functions', () => {
 
   describe('hasDataInScopes', () => {
     it('returns false for empty scopes and true when a pointer has data', () => {
-      const data = { a: 1, b: '', nested: { s: 'x' }, tags: [] } as any;
+      interface ScopeTestData {
+        a: number;
+        b: string;
+        nested: {
+          s: string;
+        };
+        tags: unknown[];
+      }
+      const data: ScopeTestData = { a: 1, b: '', nested: { s: 'x' }, tags: [] };
       expect(hasDataInScopes(data, [])).toBe(false);
       expect(hasDataInScopes(data, undefined)).toBe(false);
       expect(hasDataInScopes(data, ['#/a'])).toBe(true);

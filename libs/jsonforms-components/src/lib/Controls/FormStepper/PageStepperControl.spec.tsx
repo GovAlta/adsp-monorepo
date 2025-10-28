@@ -1,16 +1,15 @@
 import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
 import { Category, UISchemaElement } from '@jsonforms/core';
-
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext } from './context';
 import { FormStepperOptionProps } from './FormStepperControl';
-
-// import the component after mocking its dependent modules
 import PageStepperControl, { FormPagesView } from './PageStepperControl';
+interface ExtendedFormStepperOptionProps extends FormStepperOptionProps {
+  showNavButtons?: boolean;
+}
 
 /**
  * Mocks
@@ -18,63 +17,79 @@ import PageStepperControl, { FormPagesView } from './PageStepperControl';
  * - RenderPages is a named export in the source file; ensure we mock the named export `RenderPages`.
  * - TaskList is a named export from ./TaskList/TaskList and must be mocked to avoid importing UI primitives.
  */
+interface CategoryProps {
+  isFirstPage?: boolean;
+  isLastPage?: boolean;
+  showNavButtons?: boolean;
+  disableNext?: boolean;
+  onSubmit?: () => void;
+}
+
+interface TaskListProps {
+  categories: Array<{
+    id: number;
+    isVisited?: boolean;
+  }>;
+}
+
+interface ButtonProps {
+  ref?: React.RefObject<HTMLElement>;
+  testid?: string;
+  disabled?: boolean;
+  type?: string;
+  children: React.ReactNode;
+}
+
+type GoAButton = React.ComponentType<ButtonProps>;
+
 jest.mock('./RenderPages', () => {
-  const React = require('react');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires -- required so mock factory can be self-contained for Jest
+  const React = require('react') as typeof import('react');
   return {
     __esModule: true,
-    RenderPages: ({ categoryProps }: any) => {
-      const { isFirstPage, isLastPage, showNavButtons = true, disableNext = false, onSubmit } = categoryProps || {};
-      const React = require('react');
-      const prevRef = React.useRef(null);
-      const nextRef = React.useRef(null);
-      const submitRef = React.useRef(null);
-
-      React.useEffect(() => {
-        const submitEl = submitRef.current;
-        const handler = () => {
-          if (typeof onSubmit === 'function') onSubmit();
-        };
-        if (submitEl) {
-          submitEl.addEventListener('_click', handler);
-        }
-        return () => {
-          if (submitEl) submitEl.removeEventListener('_click', handler);
-        };
-      }, [onSubmit]);
-
-      return (
-        <div>
-          {showNavButtons && !isFirstPage ? (
-            <goa-button ref={prevRef} testId="pages-prev-btn">
-              Previous
-            </goa-button>
-          ) : null}
-          {showNavButtons && !isLastPage ? (
-            <goa-button
-              ref={nextRef}
-              type="submit"
-              disabled={disableNext ? 'true' : undefined}
-              testId="pages-save-continue-btn"
-            >
-              Next
-            </goa-button>
-          ) : null}
-          {isLastPage ? (
-            <goa-button ref={submitRef} testId="pages-submit-btn">
-              Submit
-            </goa-button>
-          ) : null}
-        </div>
+    RenderPages: function ({ categoryProps }: { categoryProps?: CategoryProps }) {
+      const ref = React.createRef();
+      const submitHandler = () => {
+        if (categoryProps && typeof categoryProps.onSubmit === 'function') categoryProps.onSubmit();
+      };
+      return React.createElement(
+        'div',
+        null,
+        categoryProps?.showNavButtons && !categoryProps?.isFirstPage
+          ? React.createElement('goa-button', { ref, testid: 'pages-prev-btn' }, 'Previous')
+          : null,
+        categoryProps?.showNavButtons && !categoryProps?.isLastPage
+          ? React.createElement(
+              'goa-button',
+              { ref, type: 'submit', disabled: categoryProps?.disableNext, testid: 'pages-save-continue-btn' },
+              'Next'
+            )
+          : null,
+        categoryProps?.isLastPage
+          ? React.createElement(
+              'goa-button',
+              {
+                ref: (el: HTMLElement | null) => {
+                  if (el && !el.hasAttribute('__submit-listener')) {
+                    el.addEventListener('_click', submitHandler as EventListener);
+                    // mark that we've attached the listener so repeated ref calls don't add duplicates
+                    el.setAttribute('__submit-listener', 'true');
+                  }
+                },
+                testid: 'pages-submit-btn',
+              },
+              'Submit'
+            )
+          : null
       );
     },
   };
 });
 
 jest.mock('./TaskList/TaskList', () => {
-  const React = require('react');
   return {
     __esModule: true,
-    TaskList: (props: any) => <div data-testid="mock-tasklist">{JSON.stringify(props)}</div>,
+    TaskList: (props: TaskListProps) => <div data-testid="mock-tasklist">{JSON.stringify(props)}</div>,
   };
 });
 
@@ -84,7 +99,7 @@ console.error = (message?: unknown, ...rest: unknown[]) => {
   if (typeof message === 'string' && message.match('is an invalid form step status')) {
     return;
   }
-  originalConsoleError(message as any, ...rest);
+  originalConsoleError(message as string | Error, ...rest);
 };
 
 const nameSchema = {
@@ -181,12 +196,47 @@ const mockDispatch = jest.fn();
  * Renders JsonForms to hydrate context (so validation, enumerators, etc. exist),
  * then renders <PageStepperControl /> with overrides you want to test.
  */
-function renderWithStepper(stepperOverrides: Partial<any> = {}, pageControlOverrides: Partial<any> = {}) {
+interface StepperProps {
+  uischema: UISchemaElement;
+  schema: typeof dataSchema;
+  enabled: boolean;
+  direction: 'column' | 'row';
+  visible: boolean;
+  path: string;
+  ajv: Ajv;
+  t: jest.Mock;
+  locale: string;
+  activeId: number;
+  customDispatch: jest.Mock;
+  data: typeof formData;
+}
+
+interface PageControlProps {
+  totalPages: number;
+  pageIndex: number;
+  isFirstPage: boolean;
+  isLastPage: boolean;
+  variant: string;
+  showNavButtons: boolean;
+  nextButtonLabel: string;
+  previousButtonLabel: string;
+  nextButtonType: string;
+  previousButtonType: string;
+  disableNext: boolean;
+  disablePrev: boolean;
+  isReviewPage: boolean;
+  onSubmit?: () => void;
+}
+
+function renderWithStepper(
+  stepperOverrides: Partial<StepperProps> = {},
+  pageControlOverrides: Partial<PageControlProps> = {}
+) {
   const baseStepperProps = {
     uischema: categorizationPages as UISchemaElement,
     schema: dataSchema,
     enabled: true,
-    direction: 'column',
+    direction: 'column' as const,
     visible: true,
     path: 'test-path',
     ajv: new Ajv({ allErrors: true, verbose: true }),
@@ -196,7 +246,6 @@ function renderWithStepper(stepperOverrides: Partial<any> = {}, pageControlOverr
     customDispatch: mockDispatch,
     data: formData,
   };
-
   const StepperProps = { ...baseStepperProps, ...stepperOverrides };
 
   const totalPages = (categorizationPages.elements || []).length;
@@ -212,11 +261,11 @@ function renderWithStepper(stepperOverrides: Partial<any> = {}, pageControlOverr
     isFirstPage,
     isLastPage,
     variant: 'pages',
-    showNavButtons: opts.showNavButtons !== false,
+    showNavButtons: (opts as ExtendedFormStepperOptionProps).showNavButtons !== false,
     nextButtonLabel: opts.nextButtonLabel || 'Next',
     previousButtonLabel: opts.previousButtonLabel || 'Previous',
-    nextButtonType: (opts.nextButtonType as any) || 'primary',
-    previousButtonType: (opts.previousButtonType as any) || 'primary',
+    nextButtonType: opts.nextButtonType || 'primary',
+    previousButtonType: opts.previousButtonType || 'primary',
     disableNext: false,
     disablePrev: false,
     isReviewPage: false,
@@ -235,7 +284,18 @@ function renderWithStepper(stepperOverrides: Partial<any> = {}, pageControlOverr
         ajv={StepperProps.ajv}
         renderers={[]}
       />
-      <PageStepperControl {...pageProps} />
+      <PageStepperControl
+        {...pageProps}
+        direction="column"
+        uischema={categorizationPages as UISchemaElement}
+        schema={dataSchema}
+        enabled={true}
+        visible={true}
+        path=""
+        ajv={new Ajv()}
+        t={jest.fn()}
+        locale="en"
+      />
     </JsonFormsStepperContextProvider>
   );
 }
@@ -287,12 +347,57 @@ describe('PageStepperControl', () => {
     };
 
     const ctx = {
-      selectStepperState: () => ({ categories, activeId: categories.length + 1 }),
+      selectStepperState: () => ({
+        categories: categories.map((c) => ({
+          ...c,
+          label: 'Test Category',
+          uischema: { type: 'Category', label: 'Test', elements: [] } as Category,
+        })),
+        activeId: categories.length + 1,
+        hasNextButton: true,
+        hasPrevButton: true,
+        path: '',
+        isOnReview: false,
+        isValid: true,
+        maxReachedStep: categories.length,
+      }),
       validatePage: jest.fn(),
       goToPage: jest.fn(),
-    } as any;
+      stepperDispatch: jest.fn(),
+      selectIsDisabled: () => false,
+      selectIsActive: () => true,
+      selectPath: () => '',
+      selectData: () => ({}),
+      selectCategories: () => [],
+      selectValidationMode: () => 'ValidateAndShow',
+      handleChange: () => undefined,
+      getControlProps: () => ({}),
+      selectCategory: () => ({
+        id: 0,
+        label: 'Test Category',
+        scopes: ['#/test'],
+        visible: true,
+        isValid: true,
+        isCompleted: true,
+        uischema: { type: 'Category', label: 'Test', elements: [] } as Category,
+      }),
+      goToTableOfContext: () => undefined,
+      toggleShowReviewLink: () => undefined,
+      selectNumberOfCompletedCategories: () => 0,
+    };
 
-    const props = { data, uischema: { options: { title: 'X' } } } as any;
+    const props = {
+      data,
+      uischema: { type: 'Category', label: 'Test Category', options: { title: 'X' }, elements: [] } as Category,
+      enabled: true,
+      path: '',
+      schema: dataSchema,
+      direction: 'column' as const,
+      visible: true,
+      ajv: new Ajv({ allErrors: true, verbose: true }),
+      t: jest.fn(),
+      locale: 'en',
+    };
 
     render(
       <JsonFormsStepperContext.Provider value={ctx}>
@@ -307,12 +412,16 @@ describe('PageStepperControl', () => {
     const passed = JSON.parse(raw);
 
     // the tags array is empty -> should be marked as not visited/completed
-    const cat1 = passed.categories.find((c: any) => c.id === 1);
+    interface CategoryType {
+      id: number;
+      isVisited?: boolean;
+    }
+    const cat1 = passed.categories.find((c: CategoryType) => c.id === 1);
     expect(cat1).toBeDefined();
     expect(cat1.isVisited).toBe(false);
 
     // flag=false (boolean) counts as data -> should remain visited
-    const cat2 = passed.categories.find((c: any) => c.id === 2);
+    const cat2 = passed.categories.find((c: CategoryType) => c.id === 2);
     expect(cat2).toBeDefined();
     // either remains true or is present
     expect(cat2.isVisited).not.toBe(false);
