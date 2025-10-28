@@ -122,3 +122,6 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
 export const FormStepperPagesControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormPageStepper)));
 
 export default FormPageStepper;
+
+// exported for unit testing helpers
+export { getByJsonPointer, hasDataValue, getCategoryScopes, hasDataInScopes };
