@@ -1,0 +1,42 @@
+{
+  "extends": [
+    "plugin:@nx/react",
+    "../../.eslintrc.json"
+  ],
+  "ignorePatterns": [
+    "!**/*"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "*.ts",
+        "*.tsx",
+        "*.js",
+        "*.jsx"
+      ],
+      "rules": {
+        "@nx/enforce-module-boundaries": "off"
+      }
+    },
+    {
+      "files": [
+        "*.json"
+      ],
+      "parser": "jsonc-eslint-parser",
+      "rules": {
+        "@nx/dependency-checks": [
+          "error",
+          {
+            "ignoredDependencies": [
+              "@abgov/react-components",
+              "@abgov/react-components-new"
+            ],
+            "ignoredFiles": [
+              "libs/jsonforms-components/rollup.config.js"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

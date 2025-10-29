@@ -5,8 +5,8 @@ import {
   FormTemplateEditorContainer,
   OuterFormTemplateEditorContainer,
   FormEditor,
+  ModalContent,
 } from '../styled-components';
-import { ModalContent } from '../../styled-components';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AddEditFormDefinitionEditor } from './addEditFormDefinitionEditor';
 import { TabletMessage } from '@components/TabletMessage';
