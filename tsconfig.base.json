@@ -67,9 +67,6 @@
       "@lib/*": [
         "apps/tenant-management-webapp/src/app/lib/*"
       ],
-      "@icons/*": [
-        "apps/tenant-management-webapp/src/app/icons/*"
-      ],
       "@pages/*": [
         "apps/tenant-management-webapp/src/app/pages/*"
       ]
