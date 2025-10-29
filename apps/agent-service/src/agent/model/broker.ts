@@ -1,10 +1,10 @@
 import { isAllowedUser, UnauthorizedUserError, type AdspId, type User } from '@abgov/adsp-service-sdk';
-import type { Metric } from '@mastra/core';
+import type { CoreUserMessage, Metric } from '@mastra/core';
 import type { Agent, ToolsInput } from '@mastra/core/agent';
-import type { MessageListInput } from '@mastra/core/dist/agent/message-list';
 import { RuntimeContext } from '@mastra/core/runtime-context';
 import { Logger } from 'winston';
 import { AgentConfiguration } from '../configuration';
+import { BrokerInputProcessor } from '../types';
 
 export class AgentBroker<
   TAgentId extends string = string,
@@ -19,13 +19,19 @@ export class AgentBroker<
   constructor(
     private logger: Logger,
     private tenantId: AdspId,
+    private inputProcessors: BrokerInputProcessor[],
     private agent: Agent<TAgentId, TTools, TMetrics>,
     { userRoles }: Partial<AgentConfiguration>
   ) {
     this.userRoles = userRoles || [];
   }
 
-  public stream(user: User, threadId: string, input: MessageListInput, context: Record<string, unknown> = {}) {
+  public async stream(
+    user: User,
+    threadId: string,
+    input: CoreUserMessage | CoreUserMessage[],
+    context: Record<string, unknown> = {}
+  ) {
     if (this.userRoles.length > 0 && !isAllowedUser(user, this.tenantId, this.userRoles)) {
       throw new UnauthorizedUserError('use agent', user);
     }
@@ -35,6 +41,12 @@ export class AgentBroker<
 
     for (const [key, value] of Object.entries(context || {})) {
       runtimeContext.set(key, value);
+    }
+
+    // This is necessarily because normal Mastra input processors run after message normalization.
+    // For example, assets already downloaded, so we cannot use an input processor to download files with a credential.
+    for (const inputProcessor of this.inputProcessors) {
+      await inputProcessor.processInput(runtimeContext, input);
     }
 
     return this.agent.stream(input, {

@@ -3,6 +3,7 @@ import { createTool } from '@mastra/core';
 import axios from 'axios';
 import type { Logger } from 'winston';
 import z from 'zod';
+import { createFileServiceClient } from '../clients';
 
 interface FileToolsProps {
   directory: ServiceDirectory;
@@ -11,8 +12,9 @@ interface FileToolsProps {
 }
 
 export async function createFileTools({ directory, tokenProvider, logger }: FileToolsProps) {
-  const fileApiUrl = await directory.getServiceUrl(adspId`urn:ads:platform:file-service:v1`);
+  const fileServiceClient = createFileServiceClient({ logger, directory, tokenProvider });
 
+  // Note that this tool only works for text content.
   const fileDownloadTool = createTool({
     id: 'download-file',
     description: 'Downloads a file from the file service based on a file ID.',
@@ -20,43 +22,25 @@ export async function createFileTools({ directory, tokenProvider, logger }: File
       fileId: z.string(),
     }),
     outputSchema: z.object({
-      type: z.string(),
-      data: z.instanceof(Uint8Array),
-      mediaType: z.string(),
+      content: z.string(),
     }),
     execute: async ({ context, runtimeContext }) => {
       const tenantId = runtimeContext.get('tenantId') as AdspId;
       const { fileId } = context;
 
-      const fileUrl = new URL(`v1/files/${fileId}`, fileApiUrl);
-      const { data: metadata } = await axios.get(fileUrl.href, {
-        params: {
-          tenantId: tenantId?.toString(),
-        },
-        headers: {
-          Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
-        },
-      });
-
-      const fileDownloadUrl = new URL(`v1/files/${fileId}/download`, fileApiUrl);
-      const { data } = await axios.get(fileDownloadUrl.href, {
-        params: {
-          tenantId: tenantId?.toString(),
-        },
-        headers: {
-          Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
-        },
-        responseType: 'arraybuffer',
-      });
+      const { data } = await fileServiceClient.getFileAndMetadata(
+        tenantId,
+        adspId`urn:ads:platform:file-service:v1:/files/${fileId}`
+      );
 
       logger.info(`File downloaded by agent: ${fileId}`, {
         context: 'fileDownloadTool',
         tenant: tenantId?.toString(),
       });
 
+      const decoder = new TextDecoder('utf-8');
       return {
-        data: new Uint8Array(data),
-        mediaType: metadata.mimeType,
+        content: decoder.decode(data),
       };
     },
   });

@@ -1,11 +1,13 @@
 import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
+import { RuntimeContext } from '@mastra/core/runtime-context';
 import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
 import { createFormAgents } from '../agents/form';
 import { AgentBroker } from '../model';
 import { createTools } from '../tools';
+import { createBrokerInputProcessors, createInputProcessors } from '../processors';
 
 export interface AgentConfiguration {
   name: string;
@@ -37,7 +39,9 @@ export class AgentServiceConfiguration {
           directory: this.directory,
           tokenProvider: this.tokenProvider,
         });
+
       const { formGenerationAgent, pdfFormAnalysisAgent } = await createFormAgents({
+        logger: this.logger,
         schemaDefinitionTool,
         formConfigurationRetrievalTool,
         formConfigurationUpdateTool,
@@ -54,6 +58,11 @@ export class AgentServiceConfiguration {
                 instructions: configuration.instructions,
                 model: environment.MODEL,
                 tools: {},
+                inputProcessors: ({ runtimeContext }) =>
+                  createInputProcessors({
+                    logger: this.logger,
+                    runtimeContext: runtimeContext as RuntimeContext<Record<string, unknown>>,
+                  }),
               }),
             }),
             {} as Record<string, Agent>
@@ -63,10 +72,15 @@ export class AgentServiceConfiguration {
         },
       });
 
+      const inputProcessors = createBrokerInputProcessors({
+        logger: this.logger,
+        directory: this.directory,
+        tokenProvider: this.tokenProvider,
+      });
       this.brokers = Object.entries(this.mastra.getAgents()).reduce(
         (brokers, [key, agent]) => ({
           ...brokers,
-          [key]: new AgentBroker(this.logger, tenantId, agent, configuration[key] || {}),
+          [key]: new AgentBroker(this.logger, tenantId, inputProcessors, agent, configuration[key] || {}),
         }),
         {}
       );

@@ -634,6 +634,7 @@ export function* refreshDefinition(): SagaIterator {
 
     if (editorSelectedId && baseUrl && token) {
       const definition = yield call(fetchFormDefinitionApi, token, baseUrl, editorSelectedId);
+      yield put(updateFormDefinitionSuccess(definition));
       yield put(openEditorForDefinitionSuccess(definition, false));
     }
   } catch (err) {
