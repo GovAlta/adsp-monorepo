@@ -1,12 +1,16 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
+import { Logger } from 'winston';
+import { environment } from '../../environments/environment';
 import type { FormConfigurationRetrievalTool, formConfigurationUpdateTool } from '../tools/formConfiguration';
 import type { SchemaDefinitionTool } from '../tools/schema';
 import { FileDownloadTool } from '../tools/file';
-import { environment } from '../../environments/environment';
+import { createInputProcessors } from '../processors';
+import { RuntimeContext } from '@mastra/core/runtime-context';
 
 interface FormAgentsProps {
+  logger: Logger;
   schemaDefinitionTool: SchemaDefinitionTool;
   formConfigurationRetrievalTool: FormConfigurationRetrievalTool;
   formConfigurationUpdateTool: formConfigurationUpdateTool;
@@ -14,6 +18,7 @@ interface FormAgentsProps {
 }
 
 export async function createFormAgents({
+  logger,
   schemaDefinitionTool,
   formConfigurationRetrievalTool,
   formConfigurationUpdateTool,
@@ -200,6 +205,11 @@ export async function createFormAgents({
       Use the fileDownloadTool to download a file.
       `,
     model: environment.MODEL,
+    inputProcessors: ({ runtimeContext }) =>
+      createInputProcessors({
+        logger,
+        runtimeContext: runtimeContext as RuntimeContext<Record<string, unknown>>,
+      }),
     tools: {
       schemaDefinitionTool,
       formConfigurationRetrievalTool,
@@ -220,16 +230,17 @@ export async function createFormAgents({
 
       Your primary function is to analyze PDF forms to extract its purpose and fields, and answer user questions regarding the form. When responding:
       - Summarize the purpose and fields of the form in plain language in a structured format.
-      - Ask for file ID or URN if not provided. ID is expected to be a UUID, and URN is expected to be in the format urn:ads:platform:file-service:v1:/files/<file ID>.
       - Provided file is expected to be either a PDF form or a screenshot of a PDF form.
       - Keep responses concise but informative.
 
-      Use the fileDownloadTool to download the file.
 `,
     model: environment.MODEL,
-    tools: {
-      fileDownloadTool,
-    },
+    inputProcessors: ({ runtimeContext }) =>
+      createInputProcessors({
+        logger,
+        runtimeContext: runtimeContext as RuntimeContext<Record<string, unknown>>,
+      }),
+    tools: {},
     memory: new Memory({
       storage: new LibSQLStore({
         url: ':memory:',

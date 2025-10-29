@@ -52,7 +52,15 @@ export function onIoConnection(logger: Logger) {
             // runtimeContext.set('tenant', tenant);
             // runtimeContext.set('formDefinitionId', context?.formDefinitionId);
 
-            const result = await aiAgent.stream(user, threadId, { role: 'user', content }, context);
+            const result = await aiAgent.stream(
+              user,
+              threadId,
+              {
+                role: 'user',
+                content,
+              },
+              context
+            );
             const replyId = uuid();
             for await (const content of result.textStream) {
               socket.emit('stream', {
