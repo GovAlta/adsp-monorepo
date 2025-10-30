@@ -11,16 +11,36 @@ class XdpElement(ABC):
     def __init__(self, xdp, labels=None):
         self.xdp_element = xdp
         self.labels = labels
+        # TODO make this go away.
+        from xdp_parser.parse_xdp import XdpParser
+
+        self.parent_map = XdpParser().parent_map
+
+    def get_full_path(self) -> str:
+        """
+        Build a fully qualified path for this element using parent_map.
+        Example: form1.Page1.Section4.Alternate.cboEnvDecalPack
+        """
+        parts = []
+        node = self.xdp_element
+        while node is not None:
+            name = node.attrib.get("name")
+            if name:
+                parts.insert(0, name)
+            node = self.parent_map.get(node) if self.parent_map else None
+
+        return ".".join(parts)
+
+    @property
+    def full_path(self) -> str:
+        """Cached version for quick repeated access."""
+        if not hasattr(self, "_full_path_cache"):
+            self._full_path_cache = self.get_full_path()
+        return self._full_path_cache
 
     @abstractmethod
     def to_form_element(self) -> FormElement:
-        fe = FormInput(self.get_name(), self.get_type(), self.get_label())
-        fe.x = self.extract_coordinate("x")
-        fe.y = self.extract_coordinate("y")
-        fe.enum = self.get_enumeration_values()
-        fe.label = self.get_label()
-        fe.format = self.get_format()
-        return fe
+        pass
 
     def get_type(self):
         return "string"

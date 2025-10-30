@@ -21,4 +21,4 @@ class XdpGroup(XdpElement):
             fe = element.to_form_element()
             if fe:
                 group_elements.append(fe)
-        return FormGroup(self.label, group_elements)
+        return FormGroup(self.get_name(), self.full_path, self.label, group_elements)

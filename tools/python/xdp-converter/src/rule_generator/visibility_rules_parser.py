@@ -1,7 +1,8 @@
 import re
 import xml.etree.ElementTree as ET
+import json
 from typing import Dict, List, Optional, Tuple
-from rule_generator.radio_rules import RadioRules
+from rule_generator.presence_event_scanner import PresenceEventScanner
 from rule_generator.regular_expressions import COND_EQ_ANY_LHS_RE
 from rule_generator.parse_selectors import ParseSelectors
 from rule_generator.element_rules import ElementRules, Rule
@@ -13,9 +14,11 @@ class VisibilityRulesParser:
         self.root = root
         self.parent_map = parent_map
         parser = ParseSelectors(root)
-        self.group_to_button_map, self.button_to_group_map = parser.build_choice_groups(
-            root
+        self.target_to_trigger_map, self.trigger_to_target_map = (
+            parser.build_choice_groups(root)
         )
+        self.presence_event_scanner = PresenceEventScanner(root)
+        self.presence_event_rules = self.presence_event_scanner.scan()
 
     def extract_rules(self) -> Dict[str, List[dict]]:
         rules_map = self._parse_all_scripts_to_element_rules_from_root()
@@ -26,10 +29,28 @@ class VisibilityRulesParser:
 
         get_default_presence = lambda name: presence_index.get(name, "visible")
         self._normalize_rules(rules_map, get_default_presence)
-        rules_engine = RadioRules(
-            self.group_to_button_map, self.button_to_group_map, get_default_presence
+
+        # 2. Merge in newly discovered presence rules (new method)
+        for target, er in self.presence_event_rules.items():
+            # Skip unqualified duplicates if a scoped version already exists
+            if "." not in target and any(k.endswith(f".{target}") for k in rules_map):
+                continue
+
+            if target not in rules_map:
+                rules_map[target] = er
+            else:
+                for rule in er.rules:
+                    rules_map[target].add_rule(rule)
+
+        # Combine both
+        engine = VisibilityRulesEngine(
+            self.target_to_trigger_map,
+            self.trigger_to_target_map,
+            get_default_presence,
         )
-        return rules_engine.to_jsonforms_rules(rules_map)
+
+        final_rules = engine.to_jsonforms_rules(rules_map)
+        return final_rules
 
     def _build_presence_index(self) -> Dict[str, str]:
         """
@@ -55,7 +76,7 @@ class VisibilityRulesParser:
         """
         rules_map: Dict[str, ElementRules] = {}
         for script_txt, owner in self._find_all_scripts_and_owner():
-            _collect_rules_from_script(script_txt, owner, rules_map)
+            self._collect_rules_from_script(script_txt, owner, rules_map)
         return rules_map
 
     def _apply_unconditional_to_defaults(
@@ -249,7 +270,7 @@ class VisibilityRulesParser:
                 else _nearest_interesting_ancestor(el)
             )
             owner_name = node_name(owner_el)
-
+            #            print("SCRIPT OWNER:", owner_name)
             yield txt, owner_name
 
     def _nearest_event_ancestor(
@@ -260,6 +281,123 @@ class VisibilityRulesParser:
             if tag_name(cur.tag).lower() == "event":
                 return cur
             cur = parent_map.get(cur)
+        return None
+
+    def _add_presence_rules_from_body(
+        self,
+        body: str,
+        cond_value: str,
+        driver: Optional[str],
+        rules_map: Dict[str, ElementRules],
+        parent_map: Optional[Dict[ET.Element, ET.Element]] = None,
+        root: Optional[ET.Element] = None,
+    ):
+        """
+        Parse a JavaScript block for .presence assignments and add them as rules.
+        Uses driver's subtree to qualify relative names.
+        """
+        #        print(f"SCAN BODY for driver={driver!r}")
+
+        for pm in _PRESENCE_SET_RE.finditer(body):
+            target = pm.group("name")  # e.g. "Alternate" or "Section4.Alternate"
+            vis = pm.group("vis")
+            effect = _presence_to_effect(vis)
+
+            # --- Resolve node within driver's context only ---
+            target_node = self._find_node_by_name(
+                target.split(".")[-1], context_driver=driver
+            )
+
+            # Derive full path
+            full_path = target
+            if target_node is not None and parent_map is not None:
+                parts = []
+                node = target_node
+                while node is not None:
+                    nm = node.attrib.get("name")
+                    if nm:
+                        parts.insert(0, nm)
+                    node = parent_map.get(node)
+                full_path = ".".join(parts)
+
+            # --- Fallback: prefix with driver's context path if still unqualified ---
+            if full_path == target and driver and parent_map is not None:
+                driver_node = self._find_node_by_name(driver)
+                if driver_node is not None:
+                    ctx_parts = []
+                    node = parent_map.get(driver_node)
+                    while node is not None:
+                        nm = node.attrib.get("name")
+                        if nm:
+                            ctx_parts.insert(0, nm)
+                        node = parent_map.get(node)
+                    if ctx_parts:
+                        full_path = f"{'.'.join(ctx_parts)}.{target}"
+
+            # --- Skip unresolved or obviously unqualified targets ---
+            if target_node is None and "." not in full_path:
+                # print(f"⚠️  Skipping unresolved target: {target} (driver={driver})")
+                continue
+
+            # --- Store rule ---
+            er = rules_map.setdefault(full_path, ElementRules(full_path))
+            er.add_rule(
+                Rule(
+                    effect=effect,
+                    target=full_path,
+                    condition_value=cond_value,
+                    driver=driver,
+                )
+            )
+
+    #            print(f"  Added rule for: {full_path} ({effect})")
+
+    def _collect_rules_from_script(
+        self, js: str, driver: Optional[str], rules_map: Dict[str, ElementRules]
+    ):
+        js_clean = _strip_js_comments(js)
+        working = js_clean
+
+        for m in _IF_ELSE_RE.finditer(js_clean):
+            cond = m.group("cond").strip()
+            if_body = m.group("if_body")
+            else_body = m.group("else_body")
+            self._add_presence_rules_from_body(
+                if_body, cond, driver, rules_map, self.parent_map, self.root
+            )
+            self._add_presence_rules_from_body(
+                else_body, f"NOT({cond})", driver, rules_map, self.parent_map, self.root
+            )
+            # remove this matched block from working so we can scan for unconditional presence
+            start, end = m.span()
+            working = working[:start] + " " * (end - start) + working[end:]
+
+    def _find_node_by_name(
+        self, name: str, *, context_driver: Optional[str] = None
+    ) -> Optional[ET.Element]:
+        """
+        Find an element by its name attribute.
+        If `context_driver` is provided, search is limited to the driver's subtree first,
+        then falls back to global search.
+        """
+        # First, locate the driver's element (if given)
+        search_root = self.root
+        if context_driver:
+            for el in self.root.iter():
+                if el.attrib.get("name") == context_driver:
+                    search_root = el
+                    break
+
+        # Look for the target within that subtree
+        for el in search_root.iter():
+            if el.attrib.get("name") == name:
+                return el
+
+        # Fallback: global search (just in case the driver context failed)
+        for el in self.root.iter():
+            if el.attrib.get("name") == name:
+                return el
+
         return None
 
 
@@ -281,9 +419,13 @@ _IF_ELSE_RE = re.compile(
     r"if\s*\((?P<cond>.*?)\)\s*\{(?P<if_body>.*?)\}\s*else\s*\{(?P<else_body>.*?)\}",
     re.DOTALL,
 )
+
 _PRESENCE_SET_RE = re.compile(
-    r"""(?P<name>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\s*\.presence\s*=\s*["'](?P<vis>visible|hidden)["']\s*;""",
-    re.IGNORECASE,
+    r"""(?P<name>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)
+        \s*\.presence\s*=\s*["'](?P<vis>visible|hidden)["']
+        (?:\s*;|\s*(?=[}\n]))   # allow semicolon OR brace OR newline
+    """,
+    re.IGNORECASE | re.VERBOSE,
 )
 
 
@@ -297,50 +439,10 @@ def _presence_to_effect(vis: str) -> str:
     return "SHOW" if vis.lower() == "visible" else "HIDE"
 
 
-def _add_presence_rules_from_body(
-    body: str,
-    cond_value: str,
-    driver: Optional[str],
-    rules_map: Dict[str, ElementRules],
-):
-    for pm in _PRESENCE_SET_RE.finditer(body):
-        target = pm.group("name")
-        vis = pm.group("vis")
-        effect = _presence_to_effect(vis)
-        if target not in rules_map:
-            rules_map[target] = ElementRules(target)
-        rules_map[target].add_rule(
-            Rule(
-                effect=effect, target=target, condition_value=cond_value, driver=driver
-            )
-        )
-
-
-def _collect_rules_from_script(
-    js: str, driver: Optional[str], rules_map: Dict[str, ElementRules]
-):
-    js_clean = _strip_js_comments(js)
-    working = js_clean
-
-    for m in _IF_ELSE_RE.finditer(js_clean):
-        cond = m.group("cond").strip()
-        if_body = m.group("if_body")
-        else_body = m.group("else_body")
-        _add_presence_rules_from_body(if_body, cond, driver, rules_map)
-        _add_presence_rules_from_body(else_body, f"NOT({cond})", driver, rules_map)
-        # remove this matched block from working so we can scan for unconditional presence
-        start, end = m.span()
-        working = working[:start] + " " * (end - start) + working[end:]
-
-
 def _is_complement(a: str, b: str) -> bool:
     base_a, na = strip_not(a)
     base_b, nb = strip_not(b)
     return base_a == base_b and (na ^ nb)
-
-
-def _build_rule(schema: dict) -> dict:
-    return {"scope": "#", "schema": schema}
 
 
 def _extract_atom_lhs_const(cond_str: str):
@@ -416,9 +518,134 @@ def _radio_collapse_for_target_full(
 
     group, label = picked
     baseline = (get_default_presence(target) or "visible").lower()
-    atom = {"properties": {group: {"const": label}}}
+
+    # JSONForms-friendly: scope points directly to the radio group field
+    scope = f"#/properties/{group}"
+    schema = {"const": label}
 
     if baseline == "hidden":
-        return {"effect": "SHOW", "condition": {"scope": "#", "schema": atom}}
+        return {"effect": "SHOW", "condition": {"scope": scope, "schema": schema}}
     else:
-        return {"effect": "HIDE", "condition": {"scope": "#", "schema": {"not": atom}}}
+        return {
+            "effect": "HIDE",
+            "condition": {"scope": scope, "schema": {"not": schema}},
+        }
+
+
+def _clean_js_condition_value(value: str):
+    """
+    Remove Adobe JS fragments like 'this.rawValue == ...'
+    and convert string numerics to int when appropriate.
+    """
+    if isinstance(value, str):
+        m = re.match(r"^\s*this\.rawValue\s*==\s*(.*)", value)
+        if m:
+            value = m.group(1).strip()
+        # remove stray quotes
+        value = value.strip("\"'")
+        # try numeric cast
+        if re.fullmatch(r"\d+", value):
+            return int(value)
+    return value
+
+
+class VisibilityRulesEngine:
+    def __init__(self, group_to_label, member_to_group, get_default_presence):
+        self.group_to_label = group_to_label
+        self.member_to_group = member_to_group
+        self.get_default_presence = get_default_presence
+
+    def to_jsonforms_rules(
+        self, rules_map: Dict[str, "ElementRules"]
+    ) -> Dict[str, dict]:
+        """
+        Generate unified JSONForms-compatible visibility rules for all controls.
+        Supports radio-driven and generic multi-field conditions.
+        """
+        result = {}
+
+        for name, er in rules_map.items():
+            # --- Try radio collapse first ---
+            radio_rule = _radio_collapse_for_target_full(
+                name,
+                er.rules,
+                group_to_label=self.group_to_label,
+                member_to_group=self.member_to_group,
+                get_default_presence=self.get_default_presence,
+            )
+
+            if radio_rule:
+                result[name] = {"rule": radio_rule}
+                continue
+
+            # --- Build generic rule list ---
+            rule_list = []
+            for r in er.rules:
+                clean_value = _clean_js_condition_value(r.condition_value)
+                rule_list.append(
+                    {
+                        "effect": r.effect.upper(),
+                        "driver": r.driver,
+                        "condition": {
+                            "scope": f"#/properties/{r.driver}",
+                            "schema": {"const": clean_value},
+                        },
+                    }
+                )
+
+            if not rule_list:
+                continue
+
+            # --- Deduplicate & handle contradictions ---
+            normalized: Dict[str, dict] = {}
+            contradictions = []
+
+            for r in rule_list:
+                cond_key = json.dumps(r["condition"], sort_keys=True)
+                eff = r["effect"].lower()
+
+                if cond_key in normalized:
+                    prev_eff = normalized[cond_key]["effect"].lower()
+                    if prev_eff != eff:
+                        contradictions.append((name, r["condition"]))
+                        normalized.pop(cond_key, None)
+                        continue
+                    continue
+                normalized[cond_key] = r
+
+            if contradictions:
+                print(
+                    f"⚠️  Contradictory rules for {name}: {len(contradictions)} dropped"
+                )
+
+            rule_list = list(normalized.values())
+            if not rule_list:
+                continue
+
+            # --- Multi-driver case → build properties schema ---
+            drivers = {r["driver"] for r in rule_list if r.get("driver")}
+            if len(drivers) > 1:
+                properties = {}
+                for r in rule_list:
+                    drv = r["driver"]
+                    if not drv:
+                        continue
+                    const_val = r["condition"]["schema"].get("const")
+                    properties[drv] = {"const": const_val}
+                result[name] = {
+                    "rule": {
+                        "effect": "SHOW",
+                        "condition": {
+                            "scope": "#/properties",
+                            "schema": {"properties": properties},
+                        },
+                    }
+                }
+                continue
+
+            # --- Single-rule case ---
+            if len(rule_list) == 1:
+                result[name] = {"rule": rule_list[0]}
+            else:
+                result[name] = {"rule": rule_list}
+        return result

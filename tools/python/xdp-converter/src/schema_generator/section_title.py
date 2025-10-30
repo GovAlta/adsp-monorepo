@@ -4,11 +4,11 @@ import re
 
 class SectionTitle(FormElement):
     def __init__(self, text):
-        super().__init__("guidance")
+        super().__init__("guidance", None, None)
         self.help = text
         self.label = None
 
-    def to_ui_schema(self):
+    def build_ui_schema(self):
         ui_schema = {"type": "HelpContent"}
         if self.label:
             ui_schema["label"] = f"{self.label}"

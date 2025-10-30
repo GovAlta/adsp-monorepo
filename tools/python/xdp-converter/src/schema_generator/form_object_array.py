@@ -5,8 +5,8 @@ from xdp_parser.xdp_element import XdpElement
 
 
 class FormObjectArray(FormElement):
-    def __init__(self, name: str, columns: List[XdpElement]):
-        super().__init__("list_with_detail")
+    def __init__(self, name: str, qualified_name, columns: List[XdpElement]):
+        super().__init__("object_array", name, qualified_name)
         self.name = name
         # treating this as a leaf node, as it will translate into a single JSON object
         self.is_leaf = True
@@ -25,7 +25,7 @@ class FormObjectArray(FormElement):
         return {"type": "array", "items": item_props}
         # return {self.name: {"type": "array", "items": items}}
 
-    def to_ui_schema(self, rules: Optional[dict] = None):
+    def build_ui_schema(self):
         control = {"type": "Control", "scope": f"#/properties/{self.name}"}
         control["label"] = self.label if self.label else self.name
         return control

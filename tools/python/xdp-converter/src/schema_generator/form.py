@@ -1,18 +1,17 @@
-from typing import Optional
 from schema_generator.form_element import FormElement
 
 
 class Form(FormElement):
     def __init__(self, sections):
-        super().__init__("form")
+        super().__init__("form", None, None)
         self.sections = sections
         self.is_leaf = False
 
-    def to_ui_schema(self, visibility_rules: Optional[dict] = None):
+    def build_ui_schema(self):
         ui_schema = {"type": "VerticalLayout"}
         ui_schema["elements"] = []
         for section in self.sections:
-            ui_schema["elements"].append(section.to_ui_schema(visibility_rules))
+            ui_schema["elements"].append(section.to_ui_schema())
         return ui_schema
 
     def has_json_schema(self):

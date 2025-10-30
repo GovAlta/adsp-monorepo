@@ -1,15 +1,15 @@
-from abc import abstractmethod
-from typing import Optional
+from abc import ABC, abstractmethod
 
 
 # Abstract form element, can be one of FormInput or Guidance
-class FormElement:
-    def __init__(self, type: str):
+class FormElement(ABC):
+    def __init__(self, type: str, name, qualified_name):
         self.type = type
+        self.name = name
+        self.qualified_name = qualified_name
         self.is_leaf = True
         self.y = 0
         self.x = 0
-        self.name = None
         self.is_radio = False
         self.label = None
         self.format = None
@@ -26,5 +26,15 @@ class FormElement:
         pass
 
     @abstractmethod
-    def to_ui_schema(self, rules: Optional[dict] = None):
+    def build_ui_schema():
         pass
+
+    def to_ui_schema(self):
+        # TODO make this go away by passing in rules from outside.
+        from xdp_parser.parse_xdp import XdpParser
+
+        schema = self.build_ui_schema()
+        rules = XdpParser().visibility_rules
+        if self.qualified_name != None and self.qualified_name in rules:
+            schema["rule"] = rules[self.qualified_name]["rule"]
+        return schema

@@ -15,5 +15,5 @@ class AnnotatedControl(FormLayout):
     def to_json_schema(self):
         return super().to_json_schema()
 
-    def to_ui_schema(self):
-        return super().to_ui_schema()
+    def build_ui_schema(self):
+        return super().build_ui_schema()

@@ -32,6 +32,7 @@ class ParserState:
     root: ET.Element
     parent_map: Dict[ET.Element, ET.Element]
     control_labels: Dict[str, str]
+    visibility_rules: Dict[str, List[dict]]
 
 
 class XdpParser:
@@ -56,11 +57,15 @@ class XdpParser:
         root: ET.Element,
         parent_map: Dict[ET.Element, ET.Element],
         control_labels: Dict[str, str],
+        visibility_rules: Dict[str, List[dict]],
     ) -> None:
         """Set or replace the parser's working context."""
         with self._lock:
             self._state = ParserState(
-                root=root, parent_map=parent_map, control_labels=control_labels
+                root=root,
+                parent_map=parent_map,
+                control_labels=control_labels,
+                visibility_rules=visibility_rules,
             )
 
     def clear(self) -> None:
@@ -74,11 +79,14 @@ class XdpParser:
         root: ET.Element,
         parent_map: Dict[ET.Element, ET.Element],
         control_labels: Dict[str, str],
+        visibility_rules: Dict[str, List[dict]],
     ):
         """Temporarily switch source—great for batch processing loops."""
         with self._lock:
             prev = self._state
-            self._state = ParserState(root, parent_map, control_labels)
+            self._state = ParserState(
+                root, parent_map, control_labels, visibility_rules
+            )
         try:
             yield self
         finally:
@@ -103,6 +111,10 @@ class XdpParser:
     @property
     def control_labels(self) -> Dict[str, str]:
         return self.state.control_labels
+
+    @property
+    def visibility_rules(self) -> Dict[str, List[dict]]:
+        return self.state.visibility_rules
 
     def parse_xdp(self) -> List[FormElement]:
         form_root = self.find_form_root()
@@ -169,10 +181,6 @@ class XdpParser:
         if radio_options is not None:
             xdp_controls.append(radio_options)
             return remove_duplicates(xdp_controls)
-
-        # TODO : handle other special containers here (e.g., repeating sections)
-        if is_hidden(subform):
-            return []
 
         elements = list(subform)
         i = 0

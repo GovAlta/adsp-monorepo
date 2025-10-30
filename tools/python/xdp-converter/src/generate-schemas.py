@@ -73,15 +73,16 @@ def process_one(
         # look for help messages defined in javascript -> <variables><script> nodes
         help_text_parser = JSHelpTextParser(tree)
         help_text = help_text_parser.get_messages()
+        print(f"Help text keys: {help_text.keys()}")
 
         parser = XdpParser()
-        parser.configure(tree.getroot(), parent_map, help_text)
+        parser.configure(tree.getroot(), parent_map, help_text, visibility_rules)
         input_groups = parser.parse_xdp()
 
         json_generator = JsonSchemaGenerator()
         json_schema = json_generator.to_schema(input_groups)
 
-        ui_generator = UiSchemaGenerator(input_groups, visibility_rules)
+        ui_generator = UiSchemaGenerator(input_groups)
         ui_schema = ui_generator.to_schema()
 
         schema_out.parent.mkdir(parents=True, exist_ok=True)
