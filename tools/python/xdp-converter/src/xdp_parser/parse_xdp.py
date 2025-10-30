@@ -7,6 +7,7 @@ from threading import RLock
 from xdp_parser.XdpHelpText import XdpHelpText
 from xdp_parser.control_labels import ControlLabels, inline_caption
 from xdp_parser.control_helpers import is_checkbox, is_radio_button
+from xdp_parser.form_diagnostics import FormDiagnostics
 from xdp_parser.help_text_registry import HelpTextRegistry
 from xdp_parser.orphaned_list_controls import is_list_control_container
 from xdp_parser.parsing_helpers import (
@@ -14,7 +15,7 @@ from xdp_parser.parsing_helpers import (
     is_object_array,
 )
 from xdp_parser.xdp_basic_input import XdpBasicInput
-from xdp_parser.xdp_category import XdpCategory
+from xdp_parser.xdp_section import XdpSection
 from xdp_parser.xdp_checkbox import XdpCheckbox
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_radio_selector import XdpRadioSelector, extract_radio_button_labels
@@ -32,6 +33,7 @@ class ParserState:
     root: ET.Element
     parent_map: Dict[ET.Element, ET.Element]
     control_labels: Dict[str, str]
+    visibility_rules: Dict[str, List[dict]]
 
 
 class XdpParser:
@@ -56,11 +58,15 @@ class XdpParser:
         root: ET.Element,
         parent_map: Dict[ET.Element, ET.Element],
         control_labels: Dict[str, str],
+        visibility_rules: Dict[str, List[dict]],
     ) -> None:
         """Set or replace the parser's working context."""
         with self._lock:
             self._state = ParserState(
-                root=root, parent_map=parent_map, control_labels=control_labels
+                root=root,
+                parent_map=parent_map,
+                control_labels=control_labels,
+                visibility_rules=visibility_rules,
             )
 
     def clear(self) -> None:
@@ -74,11 +80,14 @@ class XdpParser:
         root: ET.Element,
         parent_map: Dict[ET.Element, ET.Element],
         control_labels: Dict[str, str],
+        visibility_rules: Dict[str, List[dict]],
     ):
         """Temporarily switch source—great for batch processing loops."""
         with self._lock:
             prev = self._state
-            self._state = ParserState(root, parent_map, control_labels)
+            self._state = ParserState(
+                root, parent_map, control_labels, visibility_rules
+            )
         try:
             yield self
         finally:
@@ -104,22 +113,23 @@ class XdpParser:
     def control_labels(self) -> Dict[str, str]:
         return self.state.control_labels
 
+    @property
+    def visibility_rules(self) -> Dict[str, List[dict]]:
+        return self.state.visibility_rules
+
     def parse_xdp(self) -> List[FormElement]:
-        categorization = self.find_categorization()
-        categories = self.parse_categorization(categorization)
+        form_root = self.find_form_root()
+        subforms = self.find_top_subforms(form_root)
         form_elements: List[FormElement] = []
-        for category in categories:
-            fields = self.parse_subform(category)
-            # No fields => nothing to input => no category.
-            # Should we be looking for a category (page) that just contains help text
-            # as well?
+        for subform in subforms:
+            fields = self.parse_subform(subform)
             if fields:
-                form_elements.append(XdpCategory(category, fields).to_form_element())
+                form_elements.append(XdpSection(subform, fields).to_form_element())
         return form_elements
 
-    def find_categorization(self):
+    def find_form_root(self):
         """
-        Finds the <template>/<subform>/<subform> node which contains the categories.
+        Finds the <template>/<subform>/<subform> node containing the form elements.
         """
         root = self.root
 
@@ -141,21 +151,23 @@ class XdpParser:
 
         return subform2
 
-    def parse_categorization(self, categorization):
+    def find_top_subforms(self, form_root: ET.Element):
         """
         Returns a list of first-level <subform> elements;
-        These elements contain a logical set of inputs grouped as a category.
+        These elements contain a logical set of input groups.
         """
-        categories = []
-        for category in categorization:
-            if self.is_potential_container(category):
-                categories.append(category)
-        return categories
+        input_groups = []
+        for input_group in form_root:
+            if self.is_potential_container(input_group):
+                input_groups.append(input_group)
+        return input_groups
 
     def parse_subform(self, subform: ET.Element) -> list["XdpElement"]:
         xdp_controls: list["XdpElement"] = []
         control_labels = ControlLabels(subform)
 
+        # if container is just for list controls (Add, Remove), skip it
+        # because they are already part of the JSON Form controls.
         if is_list_control_container(subform, self.root, self.parent_map):
             return []
 
@@ -270,7 +282,7 @@ class XdpParser:
         elif self.is_potential_container(form_element):
             nested_controls = self.parse_subform(form_element)
             if nested_controls and len(nested_controls) > 1:
-                label = control_labels.get(form_element.get("name") or "")
+                label = form_element.get("name") or ""
                 if not label:
                     label = inline_caption(form_element)
                 return XdpGroup(form_element, nested_controls, label)
@@ -441,3 +453,6 @@ class XdpParser:
                 HelpTextRegistry(control_labels),
             )
         ]
+
+    def diagnose(self):
+        FormDiagnostics(self.root, self.visibility_rules).diagnose()

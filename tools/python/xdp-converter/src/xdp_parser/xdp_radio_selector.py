@@ -1,6 +1,6 @@
-import re
 from schema_generator.annotated_control import AnnotatedControl
 from schema_generator.form_information import FormInformation
+from schema_generator.form_input import FormInput
 from schema_generator.form_layout import FormLayout
 from xdp_parser.control_labels import ControlLabels
 from xdp_parser.help_text_registry import HelpTextRegistry
@@ -23,7 +23,13 @@ class XdpRadioSelector(XdpElement):
             return self._to_simple_control()
 
     def _to_simple_control(self):
-        fe = super().to_form_element()
+        fe = FormInput(
+            self.xdp_element.get("name", ""),
+            self.full_path,
+            self.get_type(),
+            self.get_label(),
+        )
+        fe.enum = self.options
         fe.is_radio = True
         return fe
 

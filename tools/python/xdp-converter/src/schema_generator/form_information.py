@@ -4,14 +4,14 @@ import re
 
 class FormInformation(FormElement):
     def __init__(self, element_name, text, option, style="", hidden=False):
-        super().__init__("information")
+        super().__init__("information", None, None)
         self.help = text
         self.element_name = element_name
         self.style = style
         self.hidden = hidden
         self.option = option
 
-    def to_ui_schema(self):
+    def build_ui_schema(self):
         if not self.help:
             return None
         ui_schema = {"type": "HelpContent"}

@@ -7,4 +7,6 @@ class XdpCheckbox(XdpElement):
         super().__init__(xdp, labels)
 
     def to_form_element(self):
-        return FormCheckbox(self.get_name(), "boolean", self.get_label())
+        return FormCheckbox(
+            self.get_name(), self.full_path, "boolean", self.get_label()
+        )

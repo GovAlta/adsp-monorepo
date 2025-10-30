@@ -5,21 +5,17 @@ from schema_generator.html_to_markdown import html_to_markdown
 
 class FormHelpText(FormElement):
     def __init__(self, exdata):
-        super().__init__("information")
+        super().__init__("information", None, None)
         self.help = html_to_markdown(exdata)
 
-    def to_ui_schema(self):
+    def build_ui_schema(self):
         if not self.help:
             return None
         ui_schema = {"type": "HelpContent"}
-        # if self.label:
-        #     ui_schema["label"] = f"{self.label}"
         ui_schema["options"] = {
             "markdown": "true",
             "help": self.help,
         }
-        # if self.hidden:
-        #     ui_schema["rule"] = self._add_rule(self.element_name, self.option)
         return ui_schema
 
     def has_json_schema(self):

@@ -1,3 +1,4 @@
+from schema_generator.form_input import FormInput
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_utils import get_field_caption
 
@@ -15,7 +16,9 @@ class XdpRadio(XdpElement):
                 options.append(button_text)
 
         if options:
-            fe = super().to_form_element()
+            fe = FormInput(
+                self.get_name(), self.full_path, self.get_type(), self.get_label()
+            )
             fe.enum = options
             fe.is_radio = True
             return fe

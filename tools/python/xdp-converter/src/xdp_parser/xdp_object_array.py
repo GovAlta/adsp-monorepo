@@ -21,5 +21,5 @@ class XdpObjectArray(XdpElement):
             if fe:
                 children.append(fe)
         if children:
-            return FormObjectArray(self.name, children)
+            return FormObjectArray(self.name, self.full_path, children)
         return None

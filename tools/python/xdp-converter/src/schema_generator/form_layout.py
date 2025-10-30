@@ -4,12 +4,12 @@ from schema_generator.form_object_array import FormObjectArray
 
 class FormLayout(FormElement):
     def __init__(self, type, elements):
-        super().__init__("layout")
+        super().__init__("layout", None, None)
         self.type = type
         self.elements = elements
         self.is_leaf = False
 
-    def to_ui_schema(self):
+    def build_ui_schema(self):
         ui_schema = {"type": self.type}
         ui_schema["elements"] = []
         for element in self.elements:
@@ -28,14 +28,14 @@ class FormLayout(FormElement):
 
 
 class FormGroup(FormElement):
-    def __init__(self, label, elements):
-        super().__init__("group")
+    def __init__(self, name, qualified_name, label, elements):
+        super().__init__("group", name, qualified_name)
         self.elements = group_horizontally(elements)
         self.label = label
         self.is_leaf = False
         self.can_group_horizontally = False
 
-    def to_ui_schema(self):
+    def build_ui_schema(self):
         ui_schema = {"type": "Group"}
         if self.label:
             ui_schema["label"] = self.label
