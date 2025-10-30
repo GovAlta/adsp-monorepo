@@ -10,7 +10,7 @@ export const PhoneGrid = styled.div`
   grid-template-columns: 1fr 2fr;
   gap: 0.2rem;
   align-items: start;
-  margin-bottom: 1rem; /* Add this line */
+  margin-bottom: var(--goa-space-l) !important;
 
   goa-form-item {
     margin-right: 0 !important;
