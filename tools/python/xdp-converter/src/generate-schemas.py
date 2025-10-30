@@ -73,7 +73,6 @@ def process_one(
         # look for help messages defined in javascript -> <variables><script> nodes
         help_text_parser = JSHelpTextParser(tree)
         help_text = help_text_parser.get_messages()
-        print(f"Help text keys: {help_text.keys()}")
 
         parser = XdpParser()
         parser.configure(tree.getroot(), parent_map, help_text, visibility_rules)
@@ -178,6 +177,7 @@ def main():
                     print(f"❌ {xdp_short}: {err}", file=sys.stderr)
 
     if not args.quiet:
+        XdpParser().diagnose()
         print(f"\nDone. ✅ {successes} ok, ⏭️ {skipped} skipped, ❌ {failures} failed.")
 
     sys.exit(0 if failures == 0 else 2)

@@ -7,6 +7,7 @@ from threading import RLock
 from xdp_parser.XdpHelpText import XdpHelpText
 from xdp_parser.control_labels import ControlLabels, inline_caption
 from xdp_parser.control_helpers import is_checkbox, is_radio_button
+from xdp_parser.form_diagnostics import FormDiagnostics
 from xdp_parser.help_text_registry import HelpTextRegistry
 from xdp_parser.orphaned_list_controls import is_list_control_container
 from xdp_parser.parsing_helpers import (
@@ -452,3 +453,6 @@ class XdpParser:
                 HelpTextRegistry(control_labels),
             )
         ]
+
+    def diagnose(self):
+        FormDiagnostics(self.root, self.visibility_rules).diagnose()

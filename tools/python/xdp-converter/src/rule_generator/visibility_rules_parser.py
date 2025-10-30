@@ -243,9 +243,10 @@ class VisibilityRulesParser:
 
     def _find_all_scripts_and_owner(self):
         """
-        Yield (script_text, owner_name) for every <script>.
-        Owner/driver is the parent of the nearest <event> ancestor.
-        Fallback: nearest interesting ancestor if no <event> exists.
+        Yield (script_text, owner_name) for every <script> block.
+
+        - Walks up the tree to find the nearest <event> and its parent (usually a field or subform)
+        - Ignores 'event__...' pseudo-names, returning the actual field/subform name instead
         """
 
         def _nearest_interesting_ancestor(el: ET.Element) -> Optional[ET.Element]:
@@ -259,6 +260,7 @@ class VisibilityRulesParser:
         for el in self.root.iter():
             if tag_name(el.tag).lower() != "script":
                 continue
+
             txt = (el.text or "").strip()
             if not txt:
                 continue
@@ -269,8 +271,18 @@ class VisibilityRulesParser:
                 if ev is not None
                 else _nearest_interesting_ancestor(el)
             )
+
             owner_name = node_name(owner_el)
-            #            print("SCRIPT OWNER:", owner_name)
+
+            # 🧹 Clean up event name pseudo-fields like "event__exit"
+            if owner_name and owner_name.startswith("event__"):
+                # climb one level higher to get the real field/subform
+                owner_name = node_name(self.parent_map.get(owner_el))
+
+            # Defensive fallback
+            if not owner_name:
+                owner_name = "unknown_owner"
+
             yield txt, owner_name
 
     def _nearest_event_ancestor(
