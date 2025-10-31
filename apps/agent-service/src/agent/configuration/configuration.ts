@@ -2,17 +2,21 @@ import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk
 import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
 import { RuntimeContext } from '@mastra/core/runtime-context';
+import { Memory } from '@mastra/memory';
+import { LibSQLStore } from '@mastra/libsql';
 import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
-import { createFormAgents } from '../agents/form';
 import { AgentBroker } from '../model';
 import { createTools } from '../tools';
 import { createBrokerInputProcessors, createInputProcessors } from '../processors';
+
+type ToolConfiguration = string | { type: string };
 
 export interface AgentConfiguration {
   name: string;
   instructions: string;
   userRoles: string[];
+  tools: ToolConfiguration[];
 }
 export type AgentConfigurations = Record<string, AgentConfiguration>;
 
@@ -33,19 +37,10 @@ export class AgentServiceConfiguration {
 
   private async initializeBrokers(tenantId: AdspId, configuration: AgentConfigurations) {
     try {
-      const { schemaDefinitionTool, formConfigurationRetrievalTool, formConfigurationUpdateTool, fileDownloadTool } =
-        await createTools({
-          logger: this.logger,
-          directory: this.directory,
-          tokenProvider: this.tokenProvider,
-        });
-
-      const { formGenerationAgent, pdfFormAnalysisAgent } = await createFormAgents({
+      const availableTools = await createTools({
         logger: this.logger,
-        schemaDefinitionTool,
-        formConfigurationRetrievalTool,
-        formConfigurationUpdateTool,
-        fileDownloadTool,
+        directory: this.directory,
+        tokenProvider: this.tokenProvider,
       });
 
       this.mastra = new Mastra({
@@ -57,7 +52,18 @@ export class AgentServiceConfiguration {
                 name: configuration.name,
                 instructions: configuration.instructions,
                 model: environment.MODEL,
-                tools: {},
+                tools:
+                  configuration.tools?.reduce((tools, toolConfig) => {
+                    if (typeof toolConfig === 'string' && availableTools[toolConfig]) {
+                      tools[toolConfig] = availableTools[toolConfig];
+                    }
+                    return tools;
+                  }, {}) || {},
+                memory: new Memory({
+                  storage: new LibSQLStore({
+                    url: ':memory:',
+                  }),
+                }),
                 inputProcessors: ({ runtimeContext }) =>
                   createInputProcessors({
                     logger: this.logger,
@@ -67,8 +73,6 @@ export class AgentServiceConfiguration {
             }),
             {} as Record<string, Agent>
           ),
-          formGenerationAgent,
-          pdfFormAnalysisAgent,
         },
       });
 

@@ -17,3 +17,16 @@ export const messagesSelector = createSelector(
     return messageIds.map((messageId) => messages[messageId]);
   }
 );
+
+export const agentsSelector = createSelector(
+  (state: RootState) => state.agent.agents,
+  (_: RootState, core: boolean) => core,
+  (agents, core) => Object.values(agents).filter((agent) => !!agent.core === core)
+);
+
+export const agentNamesSelector = createSelector(
+  (state: RootState) => state.agent.agents,
+  (agents) => Object.values(agents).map(({ name }) => name)
+);
+
+export const editorSelector = (state: RootState) => state.agent.editor;

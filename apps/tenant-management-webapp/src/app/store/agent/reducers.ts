@@ -1,12 +1,20 @@
+import { v4 as uuid } from 'uuid';
 import {
   AGENT_RESPONSE_ACTION,
   AgentActionTypes,
   CONNECT_AGENT_ACTION,
   CONNECT_AGENT_SUCCESS_ACTION,
+  DELETE_AGENT_SUCCESS_ACTION,
   DISCONNECT_AGENT_ACTION,
   DISCONNECT_AGENT_SUCCESS_ACTION,
+  EDIT_AGENT_ACTION,
+  GET_AGENTS_ACTION,
+  GET_AGENTS_SUCCESS_ACTION,
   MESSAGE_AGENT_ACTION,
+  START_EDIT_AGENT_ACTION,
   START_THREAD_ACTION,
+  UPDATE_AGENT_ACTION,
+  UPDATE_AGENT_SUCCESS_ACTION,
 } from './actions';
 import { AgentState } from './model';
 
@@ -15,9 +23,17 @@ const defaultState: AgentState = {
   threads: {},
   threadMessages: {},
   messages: {},
+  agents: {},
+  editor: {
+    agent: null,
+    threadId: null,
+    hasChanges: false,
+  },
   busy: {
     connecting: false,
     disconnecting: false,
+    loading: false,
+    saving: false,
   },
 };
 
@@ -94,6 +110,64 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
         };
       }
       return { ...state, threadMessages, messages };
+    }
+    case GET_AGENTS_ACTION:
+      return { ...state, busy: { ...state.busy, loading: true } };
+    case GET_AGENTS_SUCCESS_ACTION:
+      return {
+        ...state,
+        agents: action.agents.reduce((agents, agent) => ({ ...agents, [agent.id]: agent }), {}),
+        busy: { ...state.busy, loading: false },
+      };
+    case UPDATE_AGENT_ACTION:
+      return {
+        ...state,
+        busy: { ...state.busy, saving: true },
+      };
+    case UPDATE_AGENT_SUCCESS_ACTION:
+      return {
+        ...state,
+        agents: { ...state.agents, [action.agent.id]: action.agent },
+        busy: { ...state.busy, saving: false },
+        editor:
+          state.editor.agent?.id === action.agent.id
+            ? {
+                ...state.editor,
+                agent: action.agent,
+                threadId: uuid(),
+                hasChanges: false,
+              }
+            : state.editor,
+      };
+    case DELETE_AGENT_SUCCESS_ACTION: {
+      const agents = state.agents;
+      delete agents[action.id];
+      return {
+        ...state,
+        agents,
+      };
+    }
+    case START_EDIT_AGENT_ACTION: {
+      return {
+        ...state,
+        editor: {
+          ...state.editor,
+          agent: action.agent,
+          threadId: uuid(),
+          hasChanges: false,
+        },
+      };
+    }
+    case EDIT_AGENT_ACTION: {
+      return {
+        ...state,
+        editor: {
+          ...state.editor,
+          agent: action.agent,
+          threadId: uuid(),
+          hasChanges: true,
+        },
+      };
     }
     default:
       return state;

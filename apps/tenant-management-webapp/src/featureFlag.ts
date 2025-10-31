@@ -7,6 +7,13 @@ const completeServiceVariables = [
     beta: false,
   },
   {
+    name: 'Agent',
+    link: 'services/agent',
+    description:
+      'The agent services provides configurable AI agents.',
+    beta: true,
+  },
+  {
     name: 'Cache',
     link: 'services/cache',
     description:
@@ -129,6 +136,7 @@ export const defaultFeaturesVisible = {
   Task: false,
   Value: true,
   Cache: true,
+  Agent: false,
 };
 
 export const serviceVariables = (featuresVisible = {}) => {
