@@ -25,6 +25,7 @@ import { FormRouter } from './services/form';
 import { FileRouter } from './services/file';
 import { ValueRouter } from './services/value';
 import { CacheRouter } from './services/cache';
+import { AgentRouter } from './services/agent';
 import { serviceVariables } from '../../../featureFlag';
 
 import { ScriptRouter } from './services/script';
@@ -47,6 +48,8 @@ const TenantManagement = (): JSX.Element => {
     switch (serviceName) {
       case 'Access':
         return <AccessPage />;
+      case 'Agent':
+        return <AgentRouter />;
       case 'Cache':
         return <CacheRouter />;
       case 'Calendar':

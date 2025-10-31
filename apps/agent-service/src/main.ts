@@ -17,6 +17,7 @@ import {
   AgentServiceConfiguration,
   applyAgentMiddleware,
   configurationSchema,
+  CoreAgents,
   ServiceRoles,
 } from './agent';
 import { fromSocketHandshake, REQ_SOCKET_PROP } from './socket';
@@ -69,12 +70,15 @@ const initializeApp = async (): Promise<Server> => {
         schema: configurationSchema,
         description: 'Configuration of agents.',
       },
+      useLongConfigurationCacheTTL: true,
+      enableConfigurationInvalidation: true,
       combineConfiguration: (tenant: AgentConfigurations, core: AgentConfigurations, tenantId) =>
         new AgentServiceConfiguration(logger, directory, tokenProvider, tenantId, tenant, core),
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
       additionalExtractors: [fromSocketHandshake],
+      serviceConfigurations: [{ serviceId, configuration: CoreAgents }],
     },
     { logger }
   );

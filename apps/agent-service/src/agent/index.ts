@@ -4,6 +4,7 @@ import { Namespace as IoNamespace } from 'socket.io';
 import { Logger } from 'winston';
 import { createAgentRouter } from './router';
 
+export * from './agents';
 export * from './configuration';
 export * from './roles';
 

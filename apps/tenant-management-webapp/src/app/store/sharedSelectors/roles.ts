@@ -99,7 +99,7 @@ export const selectRoleList = createSelector(
   tenantRolesAndClients,
   (state: RootState) => state.tenant.name,
   (mergedRoles, tenantName) => {
-    const roles = [];
+    const roles: { clientId: string; roleNames: string[] }[] = [];
     const { realmRoles, tenantClients } = mergedRoles;
     if (realmRoles?.length > 0) {
       roles.push({

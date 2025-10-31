@@ -69,11 +69,13 @@ interface TabProps {
   testId?: string;
   style?: React.CSSProperties;
   isTightContent?: boolean;
+  className?: string;
 }
 
 function Tab(props: TabProps & { children: ReactNode }): JSX.Element {
   return (
     <TabContent
+      className={props.className}
       data-testid={`${props.testId ? props.testId : props['data-testid']}`}
       isDenseContent={props?.isTightContent}
     >
@@ -103,7 +105,7 @@ function TabItem(props: TabItemProps & { children: ReactNode }) {
   return (
     <SCTab
       data-testid={props?.testId}
-      className={props.active && 'active'}
+      className={props.active ? 'active' : undefined}
       style={props.style}
       onClick={() => selectTab()}
     >

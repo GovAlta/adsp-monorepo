@@ -1,4 +1,9 @@
+import { Dispatch } from '@reduxjs/toolkit';
 import { Tenant, Role } from './models';
+import { RootState } from '../index';
+import { Credentials, Session } from '@store/session/models';
+import { getOrCreateKeycloakAuth, KeycloakAuth } from '@lib/keycloak';
+import { CredentialRefresh, SetSessionExpired } from '@store/session/actions';
 
 export const FETCH_TENANT = 'FETCH_TENANT';
 export const SELECT_TENANT = 'SELECT_TENANT';
@@ -266,3 +271,43 @@ export const FetchUserIdByEmail = (email: string): FetchUserIdByEmailAction => (
   type: 'FETCH_USER_INFO_BY_EMAIL',
   email,
 });
+
+export function getAccessToken(isForce = false) {
+  return async (dispatch: Dispatch, getState: () => RootState) => {
+    const realmInSession = localStorage.getItem('realm');
+
+    try {
+      // Check if credentials still present or if logout has occurred.
+      const state = getState();
+      const credentials: Credentials = state.session.credentials;
+      const isExpired = state.session.isExpired;
+
+      // Check if token is within 1 min of expiry.
+      if (credentials.tokenExp - Date.now() / 1000 < 60 || isForce) {
+        const keycloakConfig = state.config.keycloakApi;
+        const realm = state.tenant.realm;
+
+        const keycloakAuth: KeycloakAuth = await getOrCreateKeycloakAuth(keycloakConfig, realm);
+        const session: Session = await keycloakAuth.refreshToken();
+        if (isExpired === true) {
+          dispatch(SetSessionExpired(false));
+        }
+        if (session) {
+          const { credentials } = session;
+          dispatch(CredentialRefresh(credentials));
+
+          return credentials.token;
+        }
+      } else {
+        return credentials.token;
+      }
+    } catch (e) {
+      // Failure to get the access token results in a logout.
+      if (realmInSession) {
+        dispatch(SetSessionExpired(true));
+      } else {
+        dispatch(TenantLogout());
+      }
+    }
+  };
+}
