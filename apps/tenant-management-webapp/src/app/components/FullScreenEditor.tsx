@@ -56,6 +56,8 @@ const OuterEditorContainer = styled.div<{ $previewWidth: string }>`
       flex: 1;
       flex-direction: column;
       .editorMain {
+        display: flex;
+        flex-direction: column;
         flex: 1;
         min-height: 0;
         overflow: hidden;

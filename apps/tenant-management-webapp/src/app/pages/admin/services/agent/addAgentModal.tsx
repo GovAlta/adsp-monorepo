@@ -134,7 +134,7 @@ export const AddAgentModal: FunctionComponent<AddAgentModalProps> = ({ onCancel,
           }}
           nameColumnWidth={80}
           service="Agent"
-          checkedRoles={[{ title: 'use', selectedRoles: agent?.userRoles }]}
+          checkedRoles={[{ title: 'Use agent', selectedRoles: agent?.userRoles }]}
         />
       ))}
       {roles?.length === 0 && <TextGoASkeleton />}
