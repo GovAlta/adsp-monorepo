@@ -117,15 +117,20 @@ class VisibilityRulesParser:
         """
         Normalize per (target, driver, base_condition):
         - EFFECT cond + EFFECT NOT(cond)   -> EFFECT ALWAYS
-        - SHOW cond + HIDE NOT(cond)       -> keep only non-default branch
-        - HIDE cond + SHOW NOT(cond)       -> keep only non-default branch
+        - SHOW cond + HIDE NOT(cond)       -> keep only the non-default branch
+        - HIDE cond + SHOW NOT(cond)       -> keep only the non-default branch
         - Dedup remaining rules
         get_default_presence(name) must return 'visible' | 'hidden' (default to 'visible' if unknown).
         """
         for target, er in rules_map.items():
             default_presence = (get_default_presence(target) or "visible").lower()
 
-            # bucket by (driver, base_condition)
+            # 🧹 1. Clean up all condition values (remove quotes, cast numerics)
+            for r in er.rules:
+                if isinstance(r.condition_value, str):
+                    r.condition_value = _clean_js_condition_value(r.condition_value)
+
+            # 🧮 2. Bucket rules by (driver, base_condition)
             buckets: Dict[Tuple[Optional[str], str], List[Rule]] = {}
             for r in er.rules:
                 base, _ = strip_not(r.condition_value)
@@ -134,44 +139,54 @@ class VisibilityRulesParser:
 
             new_rules: List[Rule] = []
 
+            # 🧩 3. Compare and normalize
             for (driver, base), rules in buckets.items():
                 show_rules = [r for r in rules if r.effect == "SHOW"]
                 hide_rules = [r for r in rules if r.effect == "HIDE"]
 
-                # Helper: do we have a complement pair within a list?
-                def _has_unconditional(eff_rules: List[Rule]) -> bool:
-                    for i in range(len(eff_rules)):
-                        for j in range(i + 1, len(eff_rules)):
-                            if _is_complement(
-                                eff_rules[i].condition_value,
-                                eff_rules[j].condition_value,
-                            ):
-                                return True
-                    return False
+                # Helper: detect complements
+                def _is_complement(a, b):
+                    base_a, na = strip_not(a)
+                    base_b, nb = strip_not(b)
 
-                # 1) EFFECT cond + EFFECT NOT(cond)  -> EFFECT ALWAYS
-                if _has_unconditional(hide_rules) and not show_rules:
-                    new_rules.append(
-                        Rule(
-                            effect="HIDE",
-                            target=target,
-                            condition_value="ALWAYS",
-                            driver=driver,
-                        )
+                    # Normalize numerics and strip quotes
+                    def _norm(v):
+                        if isinstance(v, (int, float)):
+                            return v
+                        if isinstance(v, str):
+                            v = v.strip("\"' ")
+                            try:
+                                return int(v)
+                            except ValueError:
+                                return v
+                        return v
+
+                    base_a, base_b = _norm(base_a), _norm(base_b)
+                    return base_a == base_b and (na ^ nb)
+
+                # 1️⃣ EFFECT cond + EFFECT NOT(cond) -> EFFECT ALWAYS
+                if (
+                    any(
+                        _is_complement(a.condition_value, b.condition_value)
+                        for a in hide_rules
+                        for b in hide_rules
                     )
+                    and not show_rules
+                ):
+                    new_rules.append(Rule("HIDE", target, "ALWAYS", driver))
                     continue
-                if _has_unconditional(show_rules) and not hide_rules:
-                    new_rules.append(
-                        Rule(
-                            effect="SHOW",
-                            target=target,
-                            condition_value="ALWAYS",
-                            driver=driver,
-                        )
+                if (
+                    any(
+                        _is_complement(a.condition_value, b.condition_value)
+                        for a in show_rules
+                        for b in show_rules
                     )
+                    and not hide_rules
+                ):
+                    new_rules.append(Rule("SHOW", target, "ALWAYS", driver))
                     continue
 
-                # 2) Clean toggle compression, keep only the non-default branch
+                # 2️⃣ SHOW cond + HIDE NOT(cond)
                 kept = False
                 for ra in show_rules:
                     for rb in hide_rules:
@@ -183,22 +198,10 @@ class VisibilityRulesParser:
                         # SHOW cond + HIDE NOT(cond)
                         if not na and nb:
                             if default_presence == "visible":
+                                new_rules.append(Rule("SHOW", target, base_ra, driver))
+                            else:
                                 new_rules.append(
-                                    Rule(
-                                        effect="SHOW",
-                                        target=target,
-                                        condition_value=base_ra,
-                                        driver=driver,
-                                    )
-                                )
-                            else:  # default hidden
-                                new_rules.append(
-                                    Rule(
-                                        effect="HIDE",
-                                        target=target,
-                                        condition_value=f"NOT({base_ra})",
-                                        driver=driver,
-                                    )
+                                    Rule("HIDE", target, f"NOT({base_ra})", driver)
                                 )
                             kept = True
                             break
@@ -206,22 +209,10 @@ class VisibilityRulesParser:
                         # HIDE cond + SHOW NOT(cond)
                         if not nb and na:
                             if default_presence == "visible":
+                                new_rules.append(Rule("HIDE", target, base_rb, driver))
+                            else:
                                 new_rules.append(
-                                    Rule(
-                                        effect="HIDE",
-                                        target=target,
-                                        condition_value=base_rb,
-                                        driver=driver,
-                                    )
-                                )
-                            else:  # default hidden
-                                new_rules.append(
-                                    Rule(
-                                        effect="SHOW",
-                                        target=target,
-                                        condition_value=f"NOT({base_rb})",
-                                        driver=driver,
-                                    )
+                                    Rule("SHOW", target, f"NOT({base_rb})", driver)
                                 )
                             kept = True
                             break
@@ -231,10 +222,15 @@ class VisibilityRulesParser:
                 if kept:
                     continue
 
-                # 3) Fallback: keep unique remaining (effect, condition_value)
+                # 3️⃣ Fallback: deduplicate (effect, normalized_condition)
                 seen = set()
                 for r in rules:
-                    k = (r.effect, r.condition_value)
+                    cond_norm = (
+                        _clean_js_condition_value(r.condition_value)
+                        if isinstance(r.condition_value, str)
+                        else r.condition_value
+                    )
+                    k = (r.effect, cond_norm)
                     if k not in seen:
                         seen.add(k)
                         new_rules.append(r)
@@ -302,14 +298,14 @@ class VisibilityRulesParser:
         driver: Optional[str],
         rules_map: Dict[str, ElementRules],
         parent_map: Optional[Dict[ET.Element, ET.Element]] = None,
-        root: Optional[ET.Element] = None,
     ):
         """
         Parse a JavaScript block for .presence assignments and add them as rules.
         Uses driver's subtree to qualify relative names.
+        Also attempts to infer the actual driver if the condition references another field.
         """
         for pm in _PRESENCE_SET_RE.finditer(body):
-            target = pm.group("name")  # e.g. "Alternate" or "Section4.Alternate"
+            target = pm.group("name")  # e.g. "Adult" or "Section4.Alternate"
             vis = pm.group("vis")
             effect = _presence_to_effect(vis)
 
@@ -346,18 +342,25 @@ class VisibilityRulesParser:
 
             # --- Skip unresolved or obviously unqualified targets ---
             if target_node is None and "." not in full_path:
-                # print(f"⚠️  Skipping unresolved target: {target} (driver={driver})")
                 continue
 
-            # --- Store rule ---
-            er = rules_map.setdefault(full_path, ElementRules(full_path))
+            # --- Clean condition ---
             cleaned_cond = _clean_js_condition_value(cond_value)
+
+            # --- Try to infer driver if condition references another field ---
+            inferred_driver = driver
+            lhs, _ = _extract_atom_lhs_const(cleaned_cond)
+            if lhs and lhs != driver and not lhs.lower().startswith("page"):
+                inferred_driver = lhs
+
+            # --- Store the rule ---
+            er = rules_map.setdefault(full_path, ElementRules(full_path))
             er.add_rule(
                 Rule(
                     effect=effect,
                     target=full_path,
                     condition_value=cleaned_cond,
-                    driver=driver,
+                    driver=inferred_driver,  # ✅ now actually used
                 )
             )
 
@@ -365,21 +368,56 @@ class VisibilityRulesParser:
         self, js: str, driver: Optional[str], rules_map: Dict[str, ElementRules]
     ):
         js_clean = _strip_js_comments(js)
-        working = js_clean
 
+        # 1) Handle chains of: if (...) { ... } [else if (...) { ... }]* [else { ... }]?
+        chain_re = re.compile(
+            r"(?:^|\s)(if|else\s+if)\s*\((?P<cond>.*?)\)\s*\{(?P<body>.*?)\}",
+            re.DOTALL | re.IGNORECASE,
+        )
+        matches = list(chain_re.finditer(js_clean))
+        if matches:
+            seen_conds = []
+            for m in matches:
+                cond = m.group("cond").strip()
+                body = m.group("body")
+                # add rules for each explicit branch
+                self._add_presence_rules_from_body(
+                    body, cond, driver, rules_map, self.parent_map
+                )
+                seen_conds.append(cond)
+
+            # Optional: capture a trailing plain 'else { ... }'
+            # NOTE: building condition = NOT( cond1 OR cond2 ... ) would require your bool parser.
+            # If you want to skip else, comment this block out.
+            tail = js_clean[matches[-1].end() :]
+            else_m = re.search(
+                r"\belse\s*\{(?P<body>.*?)\}", tail, re.DOTALL | re.IGNORECASE
+            )
+            if else_m:
+                else_body = else_m.group("body")
+                # Minimal version: record as NOT of the last condition (better than nothing)
+                # Safer version would be NOT( cond1 OR cond2 ... ) using your parser.
+                last_cond = seen_conds[-1]
+                self._add_presence_rules_from_body(
+                    else_body,
+                    f"NOT({last_cond})",
+                    driver,
+                    rules_map,
+                    self.parent_map,
+                )
+            return  # we’re done; no need to run the simple if/else regex
+
+        # 2) Fallback: the original simple if/else (kept for backward compatibility)
         for m in _IF_ELSE_RE.finditer(js_clean):
             cond = _clean_js_condition_value(m.group("cond").strip())
             if_body = m.group("if_body")
             else_body = m.group("else_body")
             self._add_presence_rules_from_body(
-                if_body, cond, driver, rules_map, self.parent_map, self.root
+                if_body, cond, driver, rules_map, self.parent_map
             )
             self._add_presence_rules_from_body(
-                else_body, f"NOT({cond})", driver, rules_map, self.parent_map, self.root
+                else_body, f"NOT({cond})", driver, rules_map, self.parent_map
             )
-            # remove this matched block from working so we can scan for unconditional presence
-            start, end = m.span()
-            working = working[:start] + " " * (end - start) + working[end:]
 
     def _find_node_by_name(
         self, name: str, *, context_driver: Optional[str] = None
@@ -579,6 +617,13 @@ class VisibilityRulesEngine:
         self.member_to_group = member_to_group
         self.get_default_presence = get_default_presence
 
+
+class VisibilityRulesEngine:
+    def __init__(self, group_to_label, member_to_group, get_default_presence):
+        self.group_to_label = group_to_label
+        self.member_to_group = member_to_group
+        self.get_default_presence = get_default_presence
+
     def to_jsonforms_rules(
         self, rules_map: Dict[str, "ElementRules"]
     ) -> Dict[str, dict]:
@@ -597,7 +642,6 @@ class VisibilityRulesEngine:
                 member_to_group=self.member_to_group,
                 get_default_presence=self.get_default_presence,
             )
-
             if radio_rule:
                 result[name] = {"rule": radio_rule}
                 continue
@@ -605,13 +649,17 @@ class VisibilityRulesEngine:
             # --- Build generic rule list ---
             rule_list = []
             for r in er.rules:
+                drv = r.driver
+                if not _is_valid_driver(drv):
+                    continue
+
                 clean_value = _clean_js_condition_value(r.condition_value)
                 rule_list.append(
                     {
                         "effect": r.effect.upper(),
-                        "driver": r.driver,
+                        "driver": drv,
                         "condition": {
-                            "scope": f"#/properties/{r.driver}",
+                            "scope": f"#/properties/{drv}",
                             "schema": {"const": clean_value},
                         },
                     }
@@ -623,7 +671,6 @@ class VisibilityRulesEngine:
             # --- Deduplicate & handle contradictions ---
             normalized: Dict[str, dict] = {}
             contradictions = []
-
             for r in rule_list:
                 cond_key = json.dumps(r["condition"], sort_keys=True)
                 eff = r["effect"].lower()
@@ -637,22 +684,41 @@ class VisibilityRulesEngine:
                     continue
                 normalized[cond_key] = r
 
-            if contradictions:
-                print(
-                    f"⚠️  Contradictory rules for {name}: {len(contradictions)} dropped"
-                )
-
             rule_list = list(normalized.values())
             if not rule_list:
                 continue
 
-            # --- Multi-driver case → build properties schema ---
-            drivers = {r["driver"] for r in rule_list if r.get("driver")}
+            # --- Collapse complementary SHOW/HIDE pairs (same driver + same condition)
+            collapsed_rules = []
+            used = set()
+            for i, ra in enumerate(rule_list):
+                if i in used:
+                    continue
+                paired = False
+                for j, rb in enumerate(rule_list[i + 1 :], start=i + 1):
+                    if j in used:
+                        continue
+                    same_driver = ra["driver"] == rb["driver"]
+                    same_const = ra["condition"]["schema"].get("const") == rb[
+                        "condition"
+                    ]["schema"].get("const")
+                    opposite = ra["effect"] != rb["effect"]
+                    if same_driver and same_const and opposite:
+                        collapsed_rules.append(ra if ra["effect"] == "SHOW" else rb)
+                        used.update({i, j})
+                        paired = True
+                        break
+                if not paired:
+                    collapsed_rules.append(ra)
+            rule_list = collapsed_rules
+
+            # --- Multi-driver case → combined properties schema
+            drivers = {r["driver"] for r in rule_list if _is_valid_driver(r["driver"])}
             if len(drivers) > 1:
                 properties = {}
                 for r in rule_list:
                     drv = r["driver"]
-                    if not drv:
+                    if not _is_valid_driver(drv):
                         continue
                     const_val = r["condition"]["schema"].get("const")
                     properties[drv] = {"const": const_val}
@@ -667,9 +733,40 @@ class VisibilityRulesEngine:
                 }
                 continue
 
-            # --- Single-rule case ---
+            # --- Single-driver case (typical for radio-driven sections)
+            if len(rule_list) > 1:
+                # If all rules share the same driver, prefer the SHOW branch
+                drv = rule_list[0]["driver"]
+                if all(r["driver"] == drv for r in rule_list):
+                    show_rule = next(
+                        (r for r in rule_list if r["effect"] == "SHOW"), rule_list[0]
+                    )
+                    result[name] = {"rule": show_rule}
+                    continue
+
+            # --- Default: pass through
             if len(rule_list) == 1:
                 result[name] = {"rule": rule_list[0]}
             else:
                 result[name] = {"rule": rule_list}
         return result
+
+
+def _is_valid_driver(name: Optional[str]) -> bool:
+    """
+    Returns True if 'name' looks like a valid field/control identifier
+    (and not a subform, page, or pseudo-node).
+    """
+    if not name:
+        return False
+
+    n = name.lower()
+    invalid_prefixes = ("page", "form", "header", "event__", "properties")
+    if n.startswith(invalid_prefixes):
+        return False
+
+    # reject purely numeric or reserved pseudo tokens
+    if n in {"this", "xfa", "unknown_owner"}:
+        return False
+
+    return True
