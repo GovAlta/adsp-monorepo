@@ -2,6 +2,7 @@ import { createSelectorCreator, defaultMemoize, createSelector } from 'reselect'
 import { RootState } from '@store/index';
 import { isEqual } from 'lodash';
 import { v4 as uuidV4 } from 'uuid';
+import * as _ from 'lodash';
 
 // Might need to move the type definition to another file later
 export type RoleObject = Record<string, string[]>;
@@ -120,5 +121,43 @@ export const selectRoleList = createSelector(
     }
 
     return roles;
+  }
+);
+
+export const filteredRoleListSelector = createSelector(
+  selectRoleList,
+  (state: RootState, selectedRolesPath: string) => _.get(state, selectedRolesPath, []),
+  (_: RootState, _rolesPath: string, showSelected: boolean) => showSelected,
+  ([tenantRoles, ...clientsRoles], selectedRoles, showSelected) => {
+    if (showSelected) {
+      const filtered = [],
+        filteredTenantRoles = [];
+      for (const roleName of tenantRoles.roleNames) {
+        if (selectedRoles.includes(roleName)) {
+          filteredTenantRoles.push(roleName);
+        }
+        if (filteredTenantRoles.length) {
+          filtered.push({ ...tenantRoles, roleNames: filteredTenantRoles });
+        }
+      }
+
+      for (const clientRoles of clientsRoles) {
+        const filteredRoles = [];
+        for (const roleName of clientRoles.roleNames) {
+          const qualifiedRole = `${clientRoles.clientId}:${roleName}`;
+          if (selectedRoles.includes(qualifiedRole)) {
+            filteredRoles.push(roleName);
+          }
+        }
+
+        if (filteredRoles.length) {
+          filtered.push({ ...clientRoles, roleNames: filteredRoles });
+        }
+      }
+
+      return filtered;
+    } else {
+      return clientsRoles;
+    }
   }
 );

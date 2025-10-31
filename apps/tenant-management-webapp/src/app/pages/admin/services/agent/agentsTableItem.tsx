@@ -1,7 +1,19 @@
 import { Fragment, FunctionComponent, useState } from 'react';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { AgentConfiguration } from '@store/agent/model';
+import styled from 'styled-components';
 import { IconDiv } from '../task/styled-components';
+
+const DetailsPre = styled.pre`
+  background: #f3f3f3;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: var(--goa-font-size-1);
+  line-height: var(--goa-space-m);
+  padding: var(--goa-space-m);
+  text-align: left;
+  margin: 0;
+`;
 
 interface AgentTableItemProps {
   agent: AgentConfiguration;
@@ -59,7 +71,7 @@ export const AgentTableItem: FunctionComponent<AgentTableItemProps> = ({ agent, 
               padding: '0px',
             }}
           >
-            <pre>{JSON.stringify(agent, null, 2)}</pre>
+            <DetailsPre>{JSON.stringify(agent, null, 2)}</DetailsPre>
           </td>
         </tr>
       )}

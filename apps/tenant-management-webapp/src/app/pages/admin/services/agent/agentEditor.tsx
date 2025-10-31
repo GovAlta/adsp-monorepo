@@ -10,6 +10,8 @@ import { PageIndicator } from '@components/Indicator';
 import { Tab, Tabs } from '@components/Tabs';
 import { ClientRoleTable } from '@components/RoleTable';
 import { AppDispatch, RootState } from '@store/index';
+import { FetchRealmRoles } from '@store/tenant/actions';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { editorSelector, messagesSelector } from '@store/agent/selectors';
 import {
   connectAgent,
@@ -20,20 +22,28 @@ import {
   startThread,
   updateAgent,
 } from '@store/agent/actions';
-import { selectRoleList } from '@store/sharedSelectors/roles';
+import { filteredRoleListSelector } from '@store/sharedSelectors/roles';
 
 export const AgentEditor: FunctionComponent = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const indicator = useSelector((state: RootState) => state?.session?.indicator);
-
-  const roles = useSelector(selectRoleList);
-  const { agent, hasChanges, threadId } = useSelector(editorSelector);
-  const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
 
   const [showSelectedRoles, setShowSelectedRoles] = useState(false);
 
+  const indicator = useSelector((state: RootState) => state?.session?.indicator);
+  const { agent, hasChanges, threadId } = useSelector(editorSelector);
+  const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
+
+  const filteredRoles = useSelector((state: RootState) =>
+    filteredRoleListSelector(state, 'agent.editor.agent.userRoles', showSelectedRoles)
+  );
+
   const dispatch = useDispatch<AppDispatch>();
+  useEffect(() => {
+    dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
+  }, [dispatch]);
+
   useEffect(() => {
     dispatch(connectAgent());
     return () => {
@@ -78,10 +88,7 @@ export const AgentEditor: FunctionComponent = () => {
                 />
               </GoAButtonGroup>
               <div style={{ overflow: 'auto' }}>
-                {roles?.map(({ clientId, roleNames }, key) => {
-                  // const rolesMap = getFilteredRoles(e.roleNames, e.clientId, {
-                  //   userRoles: agent?.applicantRoles,
-                  // });
+                {filteredRoles?.map(({ clientId, roleNames }) => {
                   return (
                     <ClientRoleTable
                       key={clientId}
@@ -90,7 +97,7 @@ export const AgentEditor: FunctionComponent = () => {
                       roleSelectFunc={(roles: string[]) => dispatch(editAgent({ ...agent, userRoles: roles }))}
                       nameColumnWidth={80}
                       service="Agent"
-                      checkedRoles={[{ title: 'use', selectedRoles: agent?.userRoles }]}
+                      checkedRoles={[{ title: 'Use agent', selectedRoles: agent?.userRoles }]}
                     />
                   );
                 })}
@@ -99,7 +106,12 @@ export const AgentEditor: FunctionComponent = () => {
           </Tabs>
           <hr />
           <GoAButtonGroup alignment="start" mt="m" mb="xl">
-            <GoAButton disabled={!hasChanges} onClick={() => dispatch(updateAgent(agent))} type="primary" testId="template-form-save">
+            <GoAButton
+              disabled={!hasChanges}
+              onClick={() => dispatch(updateAgent(agent))}
+              type="primary"
+              testId="template-form-save"
+            >
               Save
             </GoAButton>
             <GoAButton onClick={() => navigate('..')} testId="template-form-close" type="secondary">
