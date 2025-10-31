@@ -39,7 +39,7 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
         }}
         mb="l"
       >
-        Add Agent
+        Add agent
       </GoAButton>
       {tenantAgents.length === 0 ? (
         renderNoItem('tenant agents')

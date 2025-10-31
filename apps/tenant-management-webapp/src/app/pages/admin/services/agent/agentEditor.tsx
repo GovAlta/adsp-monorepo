@@ -23,6 +23,13 @@ import {
   updateAgent,
 } from '@store/agent/actions';
 import { filteredRoleListSelector } from '@store/sharedSelectors/roles';
+import styled from 'styled-components';
+
+const ChatContainerDiv = styled.div`
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+`;
 
 export const AgentEditor: FunctionComponent = () => {
   const { id } = useParams();
@@ -124,12 +131,14 @@ export const AgentEditor: FunctionComponent = () => {
         <>
           <h2>Preview</h2>
           <hr />
-          <AgentChat
-            threadId={threadId}
-            context={{}}
-            messages={messages}
-            onSend={(threadId, context, content) => dispatch(messageAgent(threadId, context, content))}
-          />
+          <ChatContainerDiv>
+            <AgentChat
+              threadId={threadId}
+              context={{}}
+              messages={messages}
+              onSend={(threadId, context, content) => dispatch(messageAgent(threadId, context, content))}
+            />
+          </ChatContainerDiv>
         </>
       }
     />

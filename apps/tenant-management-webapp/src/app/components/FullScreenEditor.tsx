@@ -1,54 +1,38 @@
-import { RootState } from '@store/index';
 import { FunctionComponent, ReactNode } from 'react';
-import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { NotificationBanner } from 'app/notificationBanner';
 import { TabletMessage } from './TabletMessage';
 
-const NotificationBannerWrapper = styled.div`
+const Modal = styled.div`
+  position: fixed;
+  z-index: 10000;
   top: 0;
-  position: absolute;
-  z-index: 9999999;
+  bottom: 0;
   left: 0;
   right: 0;
-`;
-
-const Modal = styled.div<{ isNotificationActive: boolean }>`
-  display: block;
-  position: fixed;
-  left: 0;
-  z-index: 10000;
-  width: 100%;
-  top: ${(props) => (props.isNotificationActive ? `93px` : `0px`)};
-`;
-
-const ModalContent = styled.div`
   background: var(--goa-color-greyscale-white);
-  margin-top: -24px;
-  padding-top: 24px;
-`;
-
-const HideTablet = styled.div`
-  @media (max-height: 629px) {
-    display: none;
-  }
-
-  @media (max-width: 1439px) {
-    display: none;
-  }
+  display: flex;
+  flex-direction: column;
 `;
 
 const OuterEditorContainer = styled.div<{ $previewWidth: string }>`
+  flex: 1;
   width: 100%;
-  height: 100vh;
   overflow: hidden;
+  position: relative;
   & .editor {
+    @media (max-height: 629px) {
+      display: none;
+    }
+    @media (max-width: 1439px) {
+      display: none;
+    }
     display: flex;
     margin-top: 0px;
     padding-top: var(--goa-space-xs);
     padding-left: var(--goa-space-xl);
+    height: 100%;
     width: 100%;
-    height: 100vh;
     overflow: hidden;
     box-sizing: border-box;
     > section {
@@ -80,9 +64,6 @@ const OuterEditorContainer = styled.div<{ $previewWidth: string }>`
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    &:hover {
-      overflow: auto;
-    }
   }
 `;
 
@@ -99,30 +80,16 @@ export const FullScreenEditor: FunctionComponent<FullScreenEditorProps> = ({
   previewWidth,
   onGoBack,
 }) => {
-  const latestNotification = useSelector(
-    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
-  );
-
-  const isNotificationActive = latestNotification && !latestNotification.disabled;
-
   return (
-    <>
-      <NotificationBannerWrapper>
-        <NotificationBanner />
-      </NotificationBannerWrapper>
-      <Modal data-testid="template-form" isNotificationActive={isNotificationActive}>
-        <ModalContent>
-          <OuterEditorContainer $previewWidth={previewWidth}>
-            <TabletMessage goBack={onGoBack} />
-            <HideTablet>
-              <div className="editor">
-                {editor}
-                <div className="preview">{preview}</div>
-              </div>
-            </HideTablet>
-          </OuterEditorContainer>
-        </ModalContent>
-      </Modal>
-    </>
+    <Modal>
+      <NotificationBanner />
+      <OuterEditorContainer $previewWidth={previewWidth}>
+        <TabletMessage goBack={onGoBack} />
+        <div className="editor">
+          {editor}
+          <div className="preview">{preview}</div>
+        </div>
+      </OuterEditorContainer>
+    </Modal>
   );
 };
