@@ -6,7 +6,7 @@ from rule_generator.presence_event_scanner import PresenceEventScanner
 from rule_generator.regular_expressions import COND_EQ_ANY_LHS_RE
 from rule_generator.parse_selectors import ParseSelectors
 from rule_generator.element_rules import ElementRules, Rule
-from xdp_parser.xdp_utils import node_name, strip_not, tag_name
+from xdp_parser.xdp_utils import node_name, string_to_number, strip_not, tag_name
 
 
 class VisibilityRulesParser:
@@ -308,8 +308,6 @@ class VisibilityRulesParser:
         Parse a JavaScript block for .presence assignments and add them as rules.
         Uses driver's subtree to qualify relative names.
         """
-        #        print(f"SCAN BODY for driver={driver!r}")
-
         for pm in _PRESENCE_SET_RE.finditer(body):
             target = pm.group("name")  # e.g. "Alternate" or "Section4.Alternate"
             vis = pm.group("vis")
@@ -353,16 +351,15 @@ class VisibilityRulesParser:
 
             # --- Store rule ---
             er = rules_map.setdefault(full_path, ElementRules(full_path))
+            cleaned_cond = _clean_js_condition_value(cond_value)
             er.add_rule(
                 Rule(
                     effect=effect,
                     target=full_path,
-                    condition_value=cond_value,
+                    condition_value=cleaned_cond,
                     driver=driver,
                 )
             )
-
-    #            print(f"  Added rule for: {full_path} ({effect})")
 
     def _collect_rules_from_script(
         self, js: str, driver: Optional[str], rules_map: Dict[str, ElementRules]
@@ -371,7 +368,7 @@ class VisibilityRulesParser:
         working = js_clean
 
         for m in _IF_ELSE_RE.finditer(js_clean):
-            cond = m.group("cond").strip()
+            cond = _clean_js_condition_value(m.group("cond").strip())
             if_body = m.group("if_body")
             else_body = m.group("else_body")
             self._add_presence_rules_from_body(
@@ -546,19 +543,34 @@ def _radio_collapse_for_target_full(
 
 def _clean_js_condition_value(value: str):
     """
-    Remove Adobe JS fragments like 'this.rawValue == ...'
-    and convert string numerics to int when appropriate.
+    Remove Adobe JS fragments like 'this.rawValue == ...' or 'SomeField.rawValue == ...'
+    and normalize the condition value for JSONForms.
+    (Always returns a string so upstream regex operations stay safe.)
     """
-    if isinstance(value, str):
-        m = re.match(r"^\s*this\.rawValue\s*==\s*(.*)", value)
-        if m:
-            value = m.group(1).strip()
-        # remove stray quotes
-        value = value.strip("\"'")
-        # try numeric cast
-        if re.fullmatch(r"\d+", value):
-            return int(value)
-    return value
+    if not isinstance(value, str):
+        return value
+
+    # Remove leading "this.rawValue ==" pattern
+    m = re.match(r"^\s*this\.rawValue\s*==\s*(.*)", value)
+    if m:
+        value = m.group(1).strip()
+
+    # Remove any ".rawValue" fragments within the expression
+    value = re.sub(r"\.rawValue\b", "", value)
+
+    # Trim stray quotes
+    value = value.strip("\"' ")
+
+    # Try to extract numeric constant from simple equality expressions like "Field == 123"
+    m = re.match(r"^[A-Za-z_][\w\.]*\s*==\s*(\d+)$", value)
+    if m:
+        return m.group(1)  # keep as string
+
+    # If the whole thing is numeric, keep as string
+    if re.fullmatch(r"\d+", value):
+        return value
+
+    return string_to_number(value)
 
 
 class VisibilityRulesEngine:

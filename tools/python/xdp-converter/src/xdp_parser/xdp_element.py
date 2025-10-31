@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from importlib.resources.readers import remove_duplicates
 
 from schema_generator.form_element import FormElement
-from schema_generator.form_input import FormInput
 from xdp_parser.xdp_utils import split_camel_case, strip_label_prefix
 
 

@@ -91,6 +91,8 @@ def process_one(
         with ui_out.open("w", encoding="utf-8") as f:
             json.dump(ui_schema, f, indent=4, ensure_ascii=False)
 
+        XdpParser().diagnose()
+
         return (xdp_path, True, None)
     except Exception as e:
         traceback.print_exc()
@@ -177,7 +179,6 @@ def main():
                     print(f"❌ {xdp_short}: {err}", file=sys.stderr)
 
     if not args.quiet:
-        XdpParser().diagnose()
         print(f"\nDone. ✅ {successes} ok, ⏭️ {skipped} skipped, ❌ {failures} failed.")
 
     sys.exit(0 if failures == 0 else 2)
