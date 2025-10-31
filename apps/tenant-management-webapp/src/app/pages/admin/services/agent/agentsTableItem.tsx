@@ -12,6 +12,7 @@ const DetailsPre = styled.pre`
   line-height: var(--goa-space-m);
   padding: var(--goa-space-m);
   text-align: left;
+  margin: 0;
 `;
 
 interface AgentTableItemProps {
@@ -22,7 +23,7 @@ interface AgentTableItemProps {
 
 export const AgentTableItem: FunctionComponent<AgentTableItemProps> = ({ agent, onEditAgent, onDeleteAgent }) => {
   const [showDetails, setShowDetails] = useState(false);
-  
+
   return (
     <Fragment>
       <tr>
