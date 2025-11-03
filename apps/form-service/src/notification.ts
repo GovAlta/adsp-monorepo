@@ -169,7 +169,7 @@ class NotificationServiceImpl implements NotificationService {
           operation: 'send-code',
           channel: channel.channel,
           address: channel.address,
-          reason: 'Enter this code to access your draft form.',
+          reason: 'Enter this code to access your form.',
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );

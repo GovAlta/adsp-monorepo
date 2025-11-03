@@ -66,7 +66,6 @@ describe('createJobs', () => {
       directory,
       configurationService,
       eventService,
-      templateService,
       events,
       queueService,
       subscriptionRepository,
@@ -81,7 +80,6 @@ describe('createJobs', () => {
       directory,
       configurationService,
       eventService,
-      templateService,
       subscriptionRepository,
       queueService,
     });
@@ -90,8 +88,8 @@ describe('createJobs', () => {
     expect(events.subscribe).toHaveBeenCalledWith(expect.any(Function));
     const subscribeCallback = (events.subscribe as jest.Mock).mock.calls[0][0];
     const doneFn = jest.fn();
-    subscribeCallback({ item: {}, done: doneFn });
-    expect(processEventJob).toHaveBeenCalledWith({}, doneFn);
+    subscribeCallback({ item: {}, retryOnError: true, done: doneFn });
+    expect(processEventJob).toHaveBeenCalledWith({}, true, doneFn);
   });
 
   it('should create and subscribe to sendNotificationJob', () => {
@@ -103,7 +101,6 @@ describe('createJobs', () => {
       directory,
       configurationService,
       eventService,
-      templateService,
       events,
       queueService,
       subscriptionRepository,
@@ -117,7 +114,6 @@ describe('createJobs', () => {
     });
 
     const sendNotificationJob = (createSendNotificationJob as jest.Mock).mock.results[0].value;
-    console.log('sdfsdfsdfsdf', sendNotificationJob);
     expect(queueService.getItems).toHaveBeenCalled();
     const queueItemsObservable = queueService.getItems() as unknown as {
       subscribe: jest.Mock;

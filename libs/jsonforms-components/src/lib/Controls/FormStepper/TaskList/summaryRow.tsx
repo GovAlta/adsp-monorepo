@@ -1,5 +1,5 @@
 import React from 'react';
-import { SummaryRowLink } from '../styled-components';
+import { SummaryRowLink, SummaryTd } from '../styled-components';
 import { GoAText } from '@abgov/react-components';
 
 interface SummaryRowProps {
@@ -12,7 +12,7 @@ interface SummaryRowProps {
 export const SummaryRow: React.FC<SummaryRowProps> = ({ index, isValid, onClick }) => {
   return (
     <tr>
-      <GoAText size="heading-m" mt="none" mb="xl" ml="xl">
+      <GoAText size="heading-m" mt="xl" mb="xl">
         <SummaryRowLink
           data-testid={`page-ref-${index}`}
           href="#"

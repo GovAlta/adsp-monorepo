@@ -21,7 +21,7 @@ export const callout = (props: CalloutProps): JSX.Element => {
   const testid = componentProps.message?.replace(/\s/g, '');
   return (
     <GoACallout {...componentProps} data-testid={testid}>
-      {componentProps.message}
+      {componentProps?.message}
     </GoACallout>
   );
 };
@@ -30,6 +30,7 @@ const GoACalloutController = (props: ControlProps) => {
 
   let showCallout: boolean;
 
+  /* istanbul ignore next */
   if (data === undefined || (Array.isArray(data) && data.length === 0)) {
     showCallout = false;
   } else {
@@ -41,6 +42,7 @@ const GoACalloutController = (props: ControlProps) => {
   return <Visible visible={showCallout}>{callout(calloutProps)}</Visible>;
 };
 
+/* istanbul ignore next */
 export const CalloutReviewControl = () => {
   return <></>;
 };

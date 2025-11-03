@@ -255,7 +255,7 @@ export class CacheTarget implements Target {
       );
 
       if (invalidationEvent) {
-        this.logger.debug(`Invalidating cache on event ${namespace}:${name}...`, {
+        this.logger.info(`Invalidating cache on event ${namespace}:${name}...`, {
           context: 'CacheTarget',
           tenant: this.tenantId.toString(),
         });
@@ -282,7 +282,7 @@ export class CacheTarget implements Target {
                 tenant: this.tenantId.toString(),
               });
             } else {
-              this.logger.debug(`No entries invalidated for path '${cachedPath}' on event ${namespace}:${name}.`, {
+              this.logger.info(`No entries invalidated for path '${cachedPath}' on event ${namespace}:${name}.`, {
                 context: 'CacheTarget',
                 tenant: this.tenantId.toString(),
               });

@@ -112,16 +112,13 @@ export const TableReviewCategoryLabel = styled.h3`
 export const CategoryStatus = styled.td`
   width: var(--goa-space-xl);
   padding-right: var(--goa-space-xl);
-`;
-export const TocPageRef = styled.td`
-  padding-left: var(--goa-space-xl);
+  align-content: center;
 `;
 
 export const CompletionStatus = styled.div`
   padding: 0;
   margin: 0;
-  padding-left: var(--goa-space-xl);
-  padding-bottom: var(--goa-space-xl);
+  margin-bottom: 0 !important;
 `;
 
 interface PageStepperRowProps {
@@ -132,12 +129,21 @@ export const PageStepperRow = styled.tr<PageStepperRowProps>`
   ${({ disabled }) =>
     disabled
       ? `
-           pointer-events: none;
-           opacity: 0.5;
-         `
+          pointer-events: none;
+          opacity: 0.5;
+          cursor: not-allowed;
+        `
       : `
-           cursor: pointer;
-         `}
+          cursor: pointer;
+
+          &:hover td {
+            background-color: var(--goa-color-greyscale-100);
+          }
+
+          td {
+            transition: background-color 0.2s ease-in-out;
+          }
+        `}
 `;
 
 export const SectionHeaderRowTr = styled.tr`
@@ -145,6 +151,7 @@ export const SectionHeaderRowTr = styled.tr`
     border: 0 !important;
     padding-top: var(--goa-space-l);
     padding-bottom: var(--goa-space-s);
+    padding-left: 0 !important;
   }
 
   & + tr > td {
@@ -155,4 +162,8 @@ export const SectionHeaderRowTr = styled.tr`
 export const SummaryRowLink = styled.a`
   position: relative;
   top: var(--goa-space-xs);
+`;
+
+export const SummaryTd = styled.td`
+  border: 0 !important;
 `;

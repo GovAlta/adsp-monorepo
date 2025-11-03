@@ -57,15 +57,24 @@ const AppRouters = () => {
   );
 };
 
+const AppDiv = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: auto;
+`;
+
 export const App = (): JSX.Element => {
   return (
-    <div style={{ overflowX: 'hidden', minHeight: '100vh' }}>
+    <AppDiv>
       <ThemeProvider theme={theme}>
         <Provider store={store}>
           <AppWithAuthContext />
         </Provider>
       </ThemeProvider>
-    </div>
+    </AppDiv>
   );
 };
 

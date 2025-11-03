@@ -1,14 +1,12 @@
-from typing import List, Optional
-from schema_generator.form_categorization import FormCategorization
+from typing import Dict, List, Optional
+from schema_generator.form import Form
 from schema_generator.form_element import FormElement
-from schema_generator.form_layout import FormLayout
 
 
 class UiSchemaGenerator:
-    def __init__(self, categories: List[FormElement], rules: Optional[dict] = None):
-        self.categories = categories
-        self.rules = rules
+    def __init__(self, sections: List[FormElement]):
+        self.sections = sections
 
     def to_schema(self):
-        categorization = FormCategorization(self.categories)
-        return categorization.to_ui_schema(self.rules)
+        the_form = Form(self.sections)
+        return the_form.to_ui_schema()

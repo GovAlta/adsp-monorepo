@@ -326,7 +326,7 @@ class HandlebarsTemplateService implements TemplateService {
         }
 
         const validDataSchema = dataSchema || dataSchemaAgain;
-        const items = validDataSchema?.properties[scopeName].items?.properties;
+        const items = validDataSchema?.properties[scopeName]?.items?.properties;
         const dataArray = context[scopeName];
 
         for (let i = 0, j = dataArray.length; i < j; i++) {

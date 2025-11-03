@@ -59,6 +59,30 @@ describe('AddressInputs', () => {
     expect(mockHandleInputChange).toBeCalledTimes(1);
     expect(mockHandleInputChange).toHaveBeenCalledWith('addressLine2', 'Suite 5');
   });
+
+  it('calls handleInputChange on user input in postalCode', () => {
+    const { baseElement } = render(
+      <AddressInputs
+        address={defaultAddress}
+        handleOnBlur={mockHandleInputBlur}
+        handleInputChange={mockHandleInputChange}
+      />
+    );
+
+    const postcodeElement = baseElement.querySelector("goa-input[testid='address-form-postal-code']");
+
+    postcodeElement?.setAttribute('value', 'T4V 5S8');
+    fireEvent(
+      postcodeElement,
+      new CustomEvent('_change', {
+        detail: { name: 'postalCode', value: 'T4V 5S8' },
+      })
+    );
+
+    expect(postcodeElement?.getAttribute('value')).toBe('T4V 5S8');
+    expect(mockHandleInputChange).toHaveBeenCalledWith('postalCode', 'T4V 5S8');
+  });
+
   it('calls handleInputChange on user input in city', () => {
     const { baseElement } = render(
       <AddressInputs

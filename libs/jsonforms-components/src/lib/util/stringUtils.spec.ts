@@ -1,12 +1,7 @@
 import '@testing-library/jest-dom';
 import { ControlElement, ControlProps, JsonSchema7 } from '@jsonforms/core';
 
-import {
-  capitalizeFirstLetter,
-  convertToReadableFormat,
-  getLastSegmentFromPointer,
-  getRequiredIfThen,
-} from './stringUtils';
+import { capitalizeFirstLetter, convertToReadableFormat, getRequiredIfThen } from './stringUtils';
 import { describe } from 'node:test';
 import { GoAInputTextProps } from '../Controls';
 

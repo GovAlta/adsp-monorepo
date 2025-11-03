@@ -6,7 +6,10 @@
     "sourceType": "module"
   },
   "ignorePatterns": [],
-  "plugins": ["@typescript-eslint", "@nx"],
+  "plugins": [
+    "@typescript-eslint",
+    "@nx"
+  ],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
@@ -32,7 +35,9 @@
         "depConstraints": [
           {
             "sourceTag": "*",
-            "onlyDependOnLibsWithTags": ["*"]
+            "onlyDependOnLibsWithTags": [
+              "*"
+            ]
           }
         ]
       }
@@ -40,7 +45,10 @@
   },
   "overrides": [
     {
-      "files": ["*.ts", "*.tsx"],
+      "files": [
+        "*.ts",
+        "*.tsx"
+      ],
       "parserOptions": {
         "project": "./tsconfig.base.json"
       }
@@ -51,9 +59,12 @@
       "rules": {}
     },
     {
-      "files": ["*.tsx"],
+      "files": [
+        "*.tsx"
+      ],
       "rules": {
-        "@typescript-eslint/no-unused-vars": "off"
+        "@typescript-eslint/no-unused-vars": "off",
+        "@nx/enforce-module-boundaries": "off"
       },
       "parserOptions": {
         "project": "./tsconfig.base.json"

@@ -7,6 +7,56 @@ import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStep
 import { TaskList, TocProps } from './TaskList/TaskList';
 import { RenderPages } from './RenderPages';
 
+/* --- helpers: JSON-pointer + "has data" (ignores schema defaults) --- */
+type AnyRecord = Record<string, unknown>;
+const isRecord = (v: unknown): v is AnyRecord => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+function getByJsonPointer(obj: unknown, pointer: string): unknown {
+  if (!isRecord(obj) || !pointer || pointer[0] !== '#') return undefined;
+  const parts = pointer.replace(/^#\//, '').split('/').filter(Boolean);
+  let cur: unknown = obj;
+  for (const part of parts) {
+    if (part === 'properties') continue;
+    if (!isRecord(cur)) return undefined;
+    cur = cur[part];
+    if (cur === undefined) return undefined;
+  }
+  return cur;
+}
+
+/** Keys that commonly come from schema defaults and shouldn't count as "user data" */
+const IGNORE_DEFAULT_KEYS = new Set(['country', 'countryCode']);
+
+/** Return true only if value is user-provided/meaningful (not just defaults). */
+function hasDataValue(v: unknown, key?: string): boolean {
+  if (key && IGNORE_DEFAULT_KEYS.has(key)) return false;
+  if (v === undefined || v === null) return false;
+
+  const t = typeof v;
+  if (t === 'string') return (v as string).trim().length > 0;
+  if (t === 'number' || t === 'boolean') return true;
+
+  if (Array.isArray(v)) return v.length > 0;
+
+  if (isRecord(v)) {
+    for (const k of Object.keys(v)) {
+      if (hasDataValue(v[k], k)) return true;
+    }
+    return false;
+  }
+  return false;
+}
+function getCategoryScopes(cat: unknown): string[] {
+  if (!isRecord(cat)) return [];
+  const scopes = cat.scopes as unknown;
+  return Array.isArray(scopes) && scopes.every((s) => typeof s === 'string') ? (scopes as string[]) : [];
+}
+
+function hasDataInScopes(data: unknown, scopes?: string[]): boolean {
+  if (!Array.isArray(scopes) || scopes.length === 0) return false;
+  return scopes.some((s) => hasDataValue(getByJsonPointer(data, s)));
+}
+
 export interface FormPageOptionProps {
   nextButtonLabel?: string;
   nextButtonType?: GoAButtonType;
@@ -23,39 +73,52 @@ export const FormPageStepper = (props: CategorizationStepperLayoutRendererProps)
   if (formStepperCtx?.isProvided === true) {
     return <FormPagesView {...props} />;
   }
-  return <JsonFormsStepperContextProvider StepperProps={{ ...props }} children={<FormPagesView {...props} />} />;
+  return (
+    <JsonFormsStepperContextProvider StepperProps={{ ...props }}>
+      <FormPagesView {...props} />
+    </JsonFormsStepperContextProvider>
+  );
 };
 
 export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): JSX.Element => {
   const data = props.data;
 
-  const formStepperCtx = useContext(JsonFormsStepperContext);
-  const { validatePage, goToPage, selectNumberOfCompletedCategories } = formStepperCtx as JsonFormsStepperContextProps;
+  const formStepperCtx = useContext(JsonFormsStepperContext) as JsonFormsStepperContextProps;
+  const { validatePage, goToPage } = formStepperCtx;
 
-  const { categories, activeId } = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
+  const { categories, activeId } = formStepperCtx.selectStepperState();
 
   useEffect(() => {
     validatePage(activeId);
-  }, [data]);
+  }, [data, activeId, validatePage]);
 
   const handleGoToPage = (index: number) => {
     goToPage(index);
   };
 
   if (categories.length + 1 === activeId) {
+    const patchedCategories = categories.map((c) => {
+      const scopes = getCategoryScopes(c);
+      const hasData = hasDataInScopes(data, scopes);
+      return hasData ? c : { ...c, isVisited: false, isCompleted: false, isValid: false };
+    });
+
+    const visibleCats = patchedCategories.filter((c) => c.visible);
+    const completedCount = visibleCats.filter((c) => c.isValid && c.isCompleted).length;
+
     const tocProps: TocProps = {
-      categories,
+      categories: patchedCategories,
       onClick: handleGoToPage,
       title: props.uischema?.options?.title,
       subtitle: props.uischema?.options?.subtitle,
-      isValid: selectNumberOfCompletedCategories() === categories.length,
+      isValid: completedCount === visibleCats.length,
     };
     return <TaskList {...tocProps} />;
-  } else {
-    return <RenderPages categoryProps={props}></RenderPages>;
   }
+  return <RenderPages categoryProps={props} />;
 };
 
 export const FormStepperPagesControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormPageStepper)));
 
 export default FormPageStepper;
+export { getByJsonPointer, hasDataValue, getCategoryScopes, hasDataInScopes };

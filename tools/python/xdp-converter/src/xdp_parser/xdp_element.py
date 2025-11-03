@@ -8,18 +8,39 @@ from xdp_parser.xdp_utils import split_camel_case, strip_label_prefix
 
 
 class XdpElement(ABC):
-    def __init__(self, xdp):
+    def __init__(self, xdp, labels=None):
         self.xdp_element = xdp
+        self.labels = labels
+        # TODO make this go away.
+        from xdp_parser.parse_xdp import XdpParser
+
+        self.parent_map = XdpParser().parent_map
+
+    def get_full_path(self) -> str:
+        """
+        Build a fully qualified path for this element using parent_map.
+        Example: form1.Page1.Section4.Alternate.cboEnvDecalPack
+        """
+        parts = []
+        node = self.xdp_element
+        while node is not None:
+            name = node.attrib.get("name")
+            if name:
+                parts.insert(0, name)
+            node = self.parent_map.get(node) if self.parent_map else None
+
+        return ".".join(parts)
+
+    @property
+    def full_path(self) -> str:
+        """Cached version for quick repeated access."""
+        if not hasattr(self, "_full_path_cache"):
+            self._full_path_cache = self.get_full_path()
+        return self._full_path_cache
 
     @abstractmethod
     def to_form_element(self) -> FormElement:
-        fe = FormInput(self.get_name(), self.get_type())
-        fe.x = self.extract_coordinate("x")
-        fe.y = self.extract_coordinate("y")
-        fe.enum = self.get_enumeration_values()
-        fe.label = self.get_label()
-        fe.format = self.get_format()
-        return fe
+        pass
 
     def get_type(self):
         return "string"
@@ -37,22 +58,37 @@ class XdpElement(ABC):
         return self.xdp_element.get("name", "")
 
     def get_label(self):
-        caption = get_caption_text(self.xdp_element)
-        if caption:
-            return caption
-
-        label = strip_label_prefix(self.get_name())
-        if label:
-            return split_camel_case(label)
-
-        return None
+        label = None
+        if self.labels:
+            label = self.labels.get(self.get_name())
+        if not label:
+            label = strip_label_prefix(self.get_name())
+            if label:
+                label = split_camel_case(label)
+        return label
 
     def get_enumeration_values(self):
-        items = self.xdp_element.findall(".//items/text")
-        enum = [str(item.text) for item in items if item.text]
-        if len(enum) > 0:
-            deduped = [str(val) for val in remove_duplicates(enum)]
-            return deduped
+        """
+        Return de-duped human-readable choices from <items><text>...</text></items>,
+        ignoring any <items> blocks with presence="hidden".
+        """
+        enum_values = []
+
+        # Find all <items> under this field (assumes namespaces stripped; if not, use a ns map)
+        for items_el in self.xdp_element.findall(".//items"):
+            presence = (items_el.attrib.get("presence") or "").strip().lower()
+            if presence == "hidden":
+                continue  # skip saved-value list
+
+            # Collect the human-readable labels
+            for text_el in items_el.findall("./text"):
+                txt = "".join(text_el.itertext()).strip()
+                if txt:
+                    enum_values.append(txt)
+
+        if enum_values:
+            # keep your existing stable-order de-dupe
+            return [str(v) for v in remove_duplicates(enum_values)]
         return None
 
     def get_format(self):
@@ -71,14 +107,7 @@ def matches_prefix(candidate: str, prefix: str) -> bool:
 
 
 def get_caption_text(xdp_element):
-    # Get namespace
-    if xdp_element.tag.startswith("{"):
-        uri = xdp_element.tag.split("}")[0].strip("{")
-        ns = {"xfa": uri}
-        xpath = ".//xfa:caption/xfa:value"
-        caption_value_elem = xdp_element.find(xpath, namespaces=ns)
-    else:
-        caption_value_elem = xdp_element.find(".//caption/value")
+    caption_value_elem = xdp_element.find(".//caption/value")
 
     if caption_value_elem is not None:
         # Get all text content from the value and its children

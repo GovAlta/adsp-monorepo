@@ -5,8 +5,24 @@ import { SubscriberEntity } from './subscriber';
 import { SubscriptionEntity } from './subscription';
 import { NotificationTypeEntity } from './type';
 import { InvalidOperationError } from '@core-services/core-common';
+import { Logger } from 'winston';
 
 describe('SubscriptionEntity', () => {
+  const logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  } as unknown as Logger;
+
+  const templateServiceMock = {
+    generateMessage: jest.fn(),
+  };
+
+  const attachmentServiceMock = {
+    getAttachment: jest.fn(),
+  };
+
   const repositoryMock = {
     saveSubscription: jest.fn((entity: SubscriptionEntity) => Promise.resolve(entity)),
     deleteSubscriptions: jest.fn(() => Promise.resolve(true)),
@@ -14,6 +30,9 @@ describe('SubscriptionEntity', () => {
 
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const type = new NotificationTypeEntity(
+    logger,
+    templateServiceMock,
+    attachmentServiceMock,
     {
       id: 'test',
       name: 'test type',

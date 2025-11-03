@@ -97,6 +97,7 @@ describe('generate', () => {
         fileType: GENERATED_PDF,
         recordId: 'my-domain-record-1',
         data: {},
+        context: {},
         filename: 'test.pdf',
         requestedBy: {
           id: 'tester',
@@ -137,6 +138,7 @@ describe('generate', () => {
             id: '262f0da7-f375-493a-bd96-c6035ca16bf7',
           },
         },
+        context: {},
         filename: 'test.pdf',
         requestedBy: {
           id: 'tester',
@@ -232,6 +234,7 @@ describe('generate', () => {
             },
           },
         },
+        context: {},
         filename: 'test.pdf',
         requestedBy: {
           id: 'tester',
@@ -272,6 +275,7 @@ describe('generate', () => {
         fileType: GENERATED_PDF,
         recordId: 'my-domain-record-1',
         data: {},
+        context: {},
         filename: 'test.pdf',
         requestedBy: {
           id: 'tester',
@@ -297,6 +301,7 @@ describe('generate', () => {
         fileType: GENERATED_PDF,
         recordId: 'my-domain-record-1',
         data: {},
+        context: {},
         filename: 'test.pdf',
         requestedBy: {
           id: 'tester',
@@ -335,6 +340,7 @@ describe('generate', () => {
         fileType: GENERATED_PDF,
         recordId: 'my-domain-record-1',
         data: {},
+        context: {},
         filename: 'test.pdf',
         requestedBy: {
           id: 'tester',

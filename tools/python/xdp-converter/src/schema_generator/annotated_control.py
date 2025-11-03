@@ -1,5 +1,4 @@
 from schema_generator.form_layout import FormLayout
-from xdp_parser.xdp_utils import strip_label_prefix
 
 
 # An annotated control represents a selector that has different "help" messages
@@ -16,5 +15,5 @@ class AnnotatedControl(FormLayout):
     def to_json_schema(self):
         return super().to_json_schema()
 
-    def to_ui_schema(self):
-        return super().to_ui_schema()
+    def build_ui_schema(self):
+        return super().build_ui_schema()

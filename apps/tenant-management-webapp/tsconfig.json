@@ -39,6 +39,9 @@
       ],
       "@abgov/data-exchange-standard": [
         "../../../libs/data-exchange-standard/src/index.ts"
+      ],
+      "@form-editor-common": [
+        "../../../libs/form-editor-common/src/index.ts"
       ]
     }
   },

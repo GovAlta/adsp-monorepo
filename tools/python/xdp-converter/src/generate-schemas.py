@@ -5,13 +5,14 @@ import os
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import traceback
-from rule_generator.normalize_rules import RulesParser
+from rule_generator.visibility_rules_parser import VisibilityRulesParser
 from schema_generator.json_schema_generator import JsonSchemaGenerator
 from schema_generator.ui_schema_generator import UiSchemaGenerator
 import xml.etree.ElementTree as ET
-from xdp_parser.message_registry import HelpMessageRegistry
-from xdp_parser.parse_xdp import parse_xdp
-from xdp_parser.xdp_utils import strip_namespaces
+from xdp_parser.help_text_parser import JSHelpTextParser
+from xdp_parser.help_text_registry import HelpTextRegistry
+from xdp_parser.parse_xdp import XdpParser
+from xdp_parser.xdp_utils import build_parent_map, strip_namespaces
 
 
 def discover_xdp_files(inputs):
@@ -59,17 +60,28 @@ def process_one(
             print(f"🧩 Parsing {xdp_path}…")
 
         tree = strip_namespaces(ET.parse(xdp_path))
-        print(tree)
-        rules_parser = RulesParser(tree.getroot())
-        jf_rules = rules_parser.extract_rules()
-        registry = HelpMessageRegistry()
+
+        # Hide/show rules derived from <script> nodes
+        parent_map = build_parent_map(tree.getroot())
+        rules_parser = VisibilityRulesParser(tree.getroot(), parent_map)
+        visibility_rules = rules_parser.extract_rules()
+
+        # HelpTextRegistry is a singleton. Load messages once per run.
+        registry = HelpTextRegistry()
         registry.load_messages(tree.getroot())
-        categories = parse_xdp(tree)
+
+        # look for help messages defined in javascript -> <variables><script> nodes
+        help_text_parser = JSHelpTextParser(tree)
+        help_text = help_text_parser.get_messages()
+
+        parser = XdpParser()
+        parser.configure(tree.getroot(), parent_map, help_text, visibility_rules)
+        input_groups = parser.parse_xdp()
 
         json_generator = JsonSchemaGenerator()
-        json_schema = json_generator.to_schema(categories)
+        json_schema = json_generator.to_schema(input_groups)
 
-        ui_generator = UiSchemaGenerator(categories, jf_rules)
+        ui_generator = UiSchemaGenerator(input_groups)
         ui_schema = ui_generator.to_schema()
 
         schema_out.parent.mkdir(parents=True, exist_ok=True)
@@ -165,6 +177,7 @@ def main():
                     print(f"❌ {xdp_short}: {err}", file=sys.stderr)
 
     if not args.quiet:
+        XdpParser().diagnose()
         print(f"\nDone. ✅ {successes} ok, ⏭️ {skipped} skipped, ❌ {failures} failed.")
 
     sys.exit(0 if failures == 0 else 2)

@@ -112,6 +112,20 @@ describe('input number controls', () => {
       expect(blurred).toBe(true);
     });
 
+    it('can trigger time onBlur event when isVisible is false', async () => {
+      const props = { ...staticProps };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoATimeInput {...{ ...props, isVisited: false }} />
+        </JsonFormsContext.Provider>
+      );
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+
+      const blurred = fireEvent.blur(input);
+
+      expect(blurred).toBe(true);
+    });
+
     it('can trigger on Blur event with value', async () => {
       const props = {
         ...staticProps,

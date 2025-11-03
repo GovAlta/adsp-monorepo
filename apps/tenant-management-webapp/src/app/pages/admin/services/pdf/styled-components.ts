@@ -64,22 +64,6 @@ export const FlexRow = styled.div`
   flex-direction: row;
   padding-top: var(--goa-space-m);
 `;
-export const PDFTemplateEditorContainer = styled.div`
-  display: flex;
-  flex: auto;
-  margin-top: 0px;
-  padding-left: var(--goa-space-xl);
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-  box-sizing: border-box;
-`;
-
-export const OuterPDFTemplateEditorContainer = styled.div`
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-`;
 
 export const EditorLHSWrapper = styled.div`
   display: flex;
@@ -153,20 +137,6 @@ export const TemplateEditorContainerPdf = styled.div`
       padding: 2px 0 2px 3px;
     }
   }
-`;
-export const Modal = styled.div<{ isNotificationActive: boolean }>`
-  display: block;
-  position: fixed;
-  left: 0;
-  z-index: 10000;
-  width: 100%;
-  top: ${(props) => (props.isNotificationActive ? `93px` : `0px`)};
-`;
-
-export const ModalContent = styled.div`
-  background: var(--goa-color-greyscale-white);
-  margin-top: -24px;
-  padding-top: 24px;
 `;
 
 export const PreviewTemplateContainer = styled.div`

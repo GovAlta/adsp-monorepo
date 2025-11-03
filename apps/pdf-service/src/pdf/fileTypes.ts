@@ -7,8 +7,11 @@ export const GeneratedPdfType: FileType = {
   name: 'Generated PDF',
   anonymousRead: false,
   securityClassification: SecurityClassifications.ProtectedA,
-  readRoles: [`urn:ads:platform:pdf-service:${ServiceRoles.PdfGenerator}`],
-  updateRoles: [`urn:ads:platform:tenant-service:platform-service`],
+  readRoles: [
+    `urn:ads:platform:pdf-service:${ServiceRoles.PdfGenerator}`,
+    'urn:ads:platform:tenant-service:platform-service',
+  ],
+  updateRoles: ['urn:ads:platform:tenant-service:platform-service'],
   rules: {
     retention: {
       active: true,

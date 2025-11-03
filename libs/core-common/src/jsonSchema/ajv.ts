@@ -28,6 +28,7 @@ export class AjvValidationService implements ValidationService {
       },
     });
     this.ajv.addFormat('time', /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/);
+    this.ajv.addFormat('computed', /^[a-zA-Z0-9._-]+$/);
     this.ajv.addSchema(standardV1JsonSchema);
     this.ajv.addSchema(commonV1JsonSchema);
   }

@@ -486,7 +486,6 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
     visible,
     enabled,
     cells,
-    translations,
     data,
     config,
     isStepperReview,
@@ -645,7 +644,6 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
             schema={schema}
             rootSchema={rootSchema}
             enabled={enabled}
-            translations={translations}
           />
         )}
       </ToolBarHeader>
@@ -656,7 +654,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
           uischema={uischema}
           enabled={enabled}
           openDeleteDialog={openDeleteDialog}
-          translations={translations}
+          translations={{}}
           count={registers.categories[path]?.count || Object.keys(data || []).length}
           data={data || registers.categories[path]?.data}
           cells={cells}

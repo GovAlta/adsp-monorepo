@@ -106,12 +106,13 @@ export const pdfGenerationQueued = (
   tenantId: AdspId,
   jobId: string,
   templateId: string,
+  context: Record<string, unknown>,
   requestedBy: { id: string; name: string }
 ): DomainEvent => ({
   name: PDF_GENERATION_QUEUED,
   tenantId,
   correlationId: jobId,
-  context: { jobId, templateId },
+  context: { ...context, jobId, templateId },
   timestamp: new Date(),
   payload: {
     jobId,
@@ -124,13 +125,14 @@ export const pdfGenerated = (
   tenantId: AdspId,
   jobId: string,
   templateId: string,
+  context: Record<string, unknown>,
   file: FileResult,
   requestedBy: { id: string; name: string }
 ): DomainEvent => ({
   name: PDF_GENERATED,
   tenantId,
   correlationId: jobId,
-  context: { jobId, templateId },
+  context: { ...context, jobId, templateId },
   timestamp: new Date(),
   payload: {
     jobId,
@@ -148,13 +150,14 @@ export const pdfGenerationFailed = (
   tenantId: AdspId,
   jobId: string,
   templateId: string,
+  context: Record<string, unknown>,
   requestedBy: { id: string; name: string },
   payload: { [key: string]: string }
 ): DomainEvent => ({
   name: PDF_GENERATION_FAILED,
   tenantId,
   correlationId: jobId,
-  context: { jobId, templateId },
+  context: { ...context, jobId, templateId },
   timestamp: new Date(),
   payload: {
     jobId,

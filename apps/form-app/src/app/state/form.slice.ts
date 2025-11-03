@@ -137,6 +137,7 @@ export const loadDefinition = createAsyncThunk(
       const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
       const cacheServiceUrl = config.directory[CACHE_SERVICE_ID];
+      const token = await getAccessToken();
 
       const tenantId = user.tenant.id;
       const headers: Record<string, string> = {};
@@ -179,6 +180,7 @@ export const loadDefinition = createAsyncThunk(
             try {
               const { data } = await axios.get(`${baseCacheServiceUrl}/active`, {
                 params: { tenantId, orLatest: true },
+                headers: { Authorization: `Bearer ${token}` },
               });
               if (!_.isEmpty(data?.configuration) && _.isArray(data?.configuration)) {
                 registerData.push({
@@ -661,9 +663,9 @@ export const formSlice = createSlice({
       .addCase(deleteForm.fulfilled, (state, { payload, meta }) => {
         state.busy.deleting = false;
         if (payload) {
-          delete state.forms[meta.arg];
           const index = state.results.findIndex((result) => result === meta.arg);
-          state.results = state.results.splice(index, 1);
+          state.results.splice(index, 1);
+          delete state.forms[meta.arg];
         }
       })
       .addCase(deleteForm.rejected, (state) => {

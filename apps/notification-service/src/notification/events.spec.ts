@@ -5,6 +5,7 @@ import {
   notificationSent,
   notificationSendFailed,
   NotificationsGeneratedDefinition,
+  NotificationGenerationFailedDefinition,
   NotificationSentDefinition,
   NotificationSendFailedDefinition,
   SubscriberCreatedDefinition,
@@ -12,6 +13,7 @@ import {
   SubscriberDeletedDefinition,
   SubscriptionSetDefinition,
   SubscriptionDeletedDefinition,
+  notificationGenerationFailed,
 } from './events';
 import { Logger } from 'winston';
 
@@ -44,6 +46,30 @@ describe('events', () => {
       const count = 5;
 
       const result = notificationsGenerated(generationId, event as any, type as any, count);
+      expect(result).toMatchSnapshot({ timestamp: expect.any(Date) });
+    });
+  });
+
+  describe('notificationGenerationFailed', () => {
+    it('is valid json schema', () => {
+      const service = new AjvValidationService(logger as unknown as Logger);
+      service.setSchema('payload', { $ref: 'http://json-schema.org/draft-07/schema#' });
+      service.validate('test', 'payload', NotificationGenerationFailedDefinition.payloadSchema);
+    });
+
+    it('should generate notification-generation-failed event correctly', () => {
+      const generationId = '123';
+      const event = {
+        namespace: 'test-namespace',
+        name: 'test-event',
+        timestamp: '2024-07-11T12:00:00Z',
+      };
+      const type = {
+        id: '1',
+        name: 'test-type',
+      };
+
+      const result = notificationGenerationFailed(generationId, event as any, type as any, 'Oh noes!');
       expect(result).toMatchSnapshot({ timestamp: expect.any(Date) });
     });
   });

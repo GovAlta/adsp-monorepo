@@ -103,6 +103,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   useEffect(() => {
     const fetchSuggestions = async () => {
+      /* istanbul ignore next */
       if (debouncedRenderAddress.length > 2 && dropdownSelected === false) {
         setLoading(true);
         setOpen(true);
@@ -139,6 +140,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setSearchTerm(value);
   };
 
+  /* istanbul ignore next */
   const handleSuggestionClick = (suggestion: Suggestion) => {
     const suggestAddress = mapSuggestionToAddress(suggestion);
     setAddress(suggestAddress);

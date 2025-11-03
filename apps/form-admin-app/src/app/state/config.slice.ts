@@ -77,15 +77,7 @@ export const loadExtensions = createAsyncThunk(
           message: 'There are task extensions, but extensions are not enabled for the tenant.',
         } as FeedbackMessage);
       } else {
-        return (
-          data.configuration?.extensions ||
-          [
-            // {
-            //   src: '{URL to extension script bundle}',
-            //   integrity: 'sha384-{digest value}',
-            // },
-          ]
-        );
+        return data.configuration?.extensions || [];
       }
     } catch (err) {
       if (axios.isAxiosError(err)) {

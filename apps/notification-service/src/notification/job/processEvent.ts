@@ -12,9 +12,8 @@ import { v4 as uuid } from 'uuid';
 import { Logger } from 'winston';
 import type { Notification, NotificationWorkItem } from '../types';
 import type { SubscriptionRepository } from '../repository';
-import type { TemplateService } from '../template';
 import { NotificationConfiguration } from '../configuration';
-import { notificationsGenerated } from '../events';
+import { notificationGenerationFailed, notificationsGenerated } from '../events';
 
 interface ProcessEventJobProps {
   logger: Logger;
@@ -24,7 +23,6 @@ interface ProcessEventJobProps {
   directory: ServiceDirectory;
   configurationService: ConfigurationService;
   eventService: EventService;
-  templateService: TemplateService;
   subscriptionRepository: SubscriptionRepository;
   queueService: WorkQueueService<NotificationWorkItem>;
 }
@@ -39,11 +37,10 @@ export const createProcessEventJob =
     directory,
     configurationService,
     eventService,
-    templateService,
     subscriptionRepository,
     queueService,
   }: ProcessEventJobProps) =>
-  async (event: DomainEvent, done: (err?: unknown) => void): Promise<void> => {
+  async (event: DomainEvent, retryOnError: boolean, done: (err?: unknown) => void): Promise<void> => {
     const { tenantId, namespace, name } = event;
     logger.debug(`Processing event ${namespace}:${name} for tenant ${tenantId}...`);
 
@@ -75,34 +72,35 @@ export const createProcessEventJob =
         const subscriberAppUrl = await directory.getServiceUrl(adspId`urn:ads:platform:subscriber-app`);
 
         for (const type of types) {
-          const notifications: Notification[] = await type.generateNotifications(
-            logger,
-            templateService,
-            subscriberAppUrl,
-            subscriptionRepository,
-            configuration,
-            event,
-            { tenant },
-            directory,
-            token
-          );
+          try {
+            const notifications: Notification[] = await type.generateNotifications(
+              logger,
+              subscriberAppUrl,
+              subscriptionRepository,
+              configuration,
+              event,
+              { tenant }
+            );
 
-          for (const notification of notifications) {
-            queueService.enqueue({ generationId, ...notification });
-          }
-
-          if (notifications.length > 0) {
-            eventService.send(notificationsGenerated(generationId, event, type, notifications.length));
-          }
-
-          count += notifications.length;
-          logger.debug(
-            `Generated ${notifications.length} notifications of type ${type.name} (ID: ${type.id}) for ${namespace}:${name} for tenant ${tenantId}.`,
-            {
-              ...LOG_CONTEXT,
-              tenant: tenantId?.toString(),
+            for (const notification of notifications) {
+              queueService.enqueue({ generationId, ...notification });
             }
-          );
+
+            if (notifications.length > 0) {
+              eventService.send(notificationsGenerated(generationId, event, type, notifications.length));
+            }
+
+            count += notifications.length;
+            logger.debug(
+              `Generated ${notifications.length} notifications of type ${type.name} (ID: ${type.id}) for ${namespace}:${name} for tenant ${tenantId}.`,
+              {
+                ...LOG_CONTEXT,
+                tenant: tenantId?.toString(),
+              }
+            );
+          } catch (err) {
+            eventService.send(notificationGenerationFailed(generationId, event, type, err.message));
+          }
         }
       }
 

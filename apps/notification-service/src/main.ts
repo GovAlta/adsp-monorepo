@@ -1,4 +1,10 @@
-import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition, User } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  initializePlatform,
+  instrumentAxios,
+  ServiceMetricsValueDefinition,
+  User,
+} from '@abgov/adsp-service-sdk';
 import {
   createLogger,
   createAmqpEventService,
@@ -18,6 +24,7 @@ import {
   applyNotificationMiddleware,
   configurationSchema,
   NotificationConfiguration,
+  NotificationGenerationFailedDefinition,
   NotificationSendFailedDefinition,
   NotificationSentDefinition,
   NotificationsGeneratedDefinition,
@@ -34,6 +41,7 @@ import { createRepositories } from './mongo';
 import { initializeProviders } from './provider';
 import { createTemplateService } from './handlebars';
 import { createVerifyService } from './verify';
+import { createFileService } from './file';
 
 const logger = createLogger('notification-service', environment.LOG_LEVEL || 'info');
 
@@ -83,11 +91,12 @@ async function initializeApp() {
         tenantConfig: Record<string, NotificationType>,
         coreConfig: Record<string, NotificationType>,
         tenantId: AdspId
-      ) => new NotificationConfiguration(tenantConfig, coreConfig, tenantId),
+      ) => new NotificationConfiguration(logger, templateService, fileService, tenantConfig, coreConfig, tenantId),
       events: [
         NotificationsGeneratedDefinition,
         NotificationSentDefinition,
         NotificationSendFailedDefinition,
+        NotificationGenerationFailedDefinition,
         SubscriberCreatedDefinition,
         SubscriberUpdatedDefinition,
         SubscriberDeletedDefinition,
@@ -163,7 +172,7 @@ async function initializeApp() {
   });
 
   const templateService = createTemplateService();
-
+  const fileService = createFileService(directory, tokenProvider);
   const providers = initializeProviders(logger, app, botRepository, environment);
 
   const verifyService = createVerifyService({
@@ -181,7 +190,6 @@ async function initializeApp() {
     configurationService,
     directory,
     eventService,
-    templateService,
     tenantService,
     eventSubscriber,
     queueService,

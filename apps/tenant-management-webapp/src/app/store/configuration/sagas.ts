@@ -239,6 +239,8 @@ export function* fetchRegisterData(): SagaIterator {
       (state: RootState) => state?.configuration?.tenantConfigDefinitions?.configuration || {}
     );
 
+    const token: string = yield call(getAccessToken);
+
     const tenantConfigs = Object.entries(tenantConfigDefinition);
 
     const registerConfigs =
@@ -249,11 +251,7 @@ export function* fetchRegisterData(): SagaIterator {
           const _c = config as any;
           return (
             _c?.configurationSchema?.type === 'array' &&
-            _c.anonymousRead === true &&
-            (_c?.configurationSchema?.items?.type === 'string' ||
-              (_c?.configurationSchema?.items?.type === 'object' &&
-                _c?.configurationSchema?.items?.properties?.label?.type === 'string' &&
-                _c?.configurationSchema?.items?.properties?.value?.type === 'string'))
+            (_c?.configurationSchema?.items?.type === 'string' || _c?.configurationSchema?.items?.type === 'object')
           );
         })
         // eslint-disable-next-line
@@ -266,10 +264,7 @@ export function* fetchRegisterData(): SagaIterator {
         const _c = config as any;
         return (
           _c?.configurationSchema?.type === 'array' &&
-          (_c?.configurationSchema?.items?.type === 'string' ||
-            (_c?.configurationSchema?.items?.type === 'object' &&
-              _c?.configurationSchema?.items?.properties?.label?.type === 'string' &&
-              _c?.configurationSchema?.items?.properties?.value?.type === 'string'))
+          (_c?.configurationSchema?.items?.type === 'string' || _c?.configurationSchema?.items?.type === 'object')
         );
       });
 
@@ -291,7 +286,10 @@ export function* fetchRegisterData(): SagaIterator {
       try {
         const [namespace, service] = registerConfig.split(':');
         const url = `${configBaseUrl}/configuration/v2/configuration/${namespace}/${service}/active`;
-        const { data } = yield call(axios.get, url, { params: { orLatest: true, tenant: tenantId } });
+        const { data } = yield call(axios.get, url, {
+          params: { orLatest: true, tenant: tenantId },
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         if (data?.configuration && data?.configuration) {
           registerData.push({

@@ -23,7 +23,6 @@ interface JobProps {
   directory: ServiceDirectory;
   configurationService: ConfigurationService;
   eventService: EventService;
-  templateService: TemplateService;
   events: Subscribable<DomainEventWorkItem>;
   queueService: WorkQueueService<NotificationWorkItem>;
   subscriptionRepository: SubscriptionRepository;
@@ -38,7 +37,6 @@ export const createJobs = ({
   directory,
   configurationService,
   eventService,
-  templateService,
   events,
   queueService,
   subscriptionRepository,
@@ -58,12 +56,11 @@ export const createJobs = ({
     directory,
     configurationService,
     eventService,
-    templateService,
     subscriptionRepository,
     queueService,
   });
 
-  events.subscribe(({ item, done }) => processEventJob(item, done));
+  events.subscribe(({ item, retryOnError, done }) => processEventJob(item, retryOnError, done));
 
   queueService.getItems().subscribe(({ item, retryOnError, done }) => sendNotificationJob(item, retryOnError, done));
 };

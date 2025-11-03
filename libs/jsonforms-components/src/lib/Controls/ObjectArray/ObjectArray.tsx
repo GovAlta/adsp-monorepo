@@ -30,7 +30,7 @@ export const ArrayControlBase = (props: ControlProps) => {
   const { visible } = props;
   return (
     <Visible visible={visible}>
-      <ArrayControl {...props} addItem={() => () => {}} translations={{}} />
+      <ArrayControl arraySchema={{}} {...props} addItem={() => () => { } } />
     </Visible>
   );
 };
@@ -40,7 +40,7 @@ export const ArrayControlReview = (props: ControlProps) => {
 
   return (
     <Visible visible={visible}>
-      <ObjectArrayControl {...props} addItem={() => () => {}} translations={{}} isStepperReview={true} enabled={true} />
+      <ObjectArrayControl arraySchema={{}} {...props} addItem={() => () => { } } isStepperReview={true} enabled={true} />
     </Visible>
   );
 };

@@ -1,85 +1,34 @@
-/* eslint-disable */
-import '@style/app.css';
-import '@style/colors.scss';
-import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useParams } from 'react-router-dom';
-import { Provider, useDispatch } from 'react-redux';
-import Login from '@pages/public/Login';
-import LoginRedirect from '@pages/public/LoginRedirect';
-import LogoutRedirect from '@pages/public/LogoutRedirect';
-import Admin from '@pages/admin';
-import { store, setConfig } from '@store/index';
-import { PrivateApp } from './privateApp';
-import PublicApp from './publicApp';
+import '@abgov/web-components/index.css';
+import { AuthCallback } from '@core-services/app-common';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 
-const FetchConfigOnce: React.FC = () => {
-  const dispatch = useDispatch();
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch('/config/config.json?v=2');
-        if (res.ok) {
-          const data = await res.json();
-          // If your config.json already has { keycloakApi: { url, realm, clientId } } then this is enough.
-          dispatch(setConfig({ keycloakApi: data.keycloakApi } as any));
-        }
-      } catch {
-        // ignore; runtime env may inject config differently
-      }
-    })();
-  }, [dispatch]);
-  return null;
-};
+import styles from './app.module.scss';
+import { Landing } from './components/Landing';
+import Login from './pages/public/Login';
+import TenantManagement from './pages/admin/index';
 
-const PrefixRedirect: React.FC = () => {
-  const { prefix } = useParams();
-  return <Navigate to={`/${prefix}/login${window.location.search}`} replace />;
-};
+declare global {
+  interface Window {
+    adspFeedback: {
+      initialize: (options: { tenant: string }) => void;
+      openFeedbackForm: () => void;
+    };
+  }
+}
 
-const App = (): JSX.Element => {
+export function App() {
   return (
-    <div style={{ overflowX: 'hidden', minHeight: '100vh' }}>
-      <Provider store={store}>
-        <FetchConfigOnce />
+    <div className={styles.app}>
+      <Router>
         <Routes>
-          <Route path="/" element={<PublicApp />}>
-            <Route index element={<Login />} />
-          </Route>
-
-          <Route path="/login" element={<PublicApp />}>
-            <Route index element={<Login />} />
-          </Route>
-          <Route path="/login-redirect" element={<PublicApp />}>
-            <Route index element={<LoginRedirect />} />
-          </Route>
-          <Route path="/logout-redirect" element={<PublicApp />}>
-            <Route index element={<LogoutRedirect />} />
-          </Route>
-
-          <Route path="/:prefix" element={<PublicApp />}>
-            <Route index element={<PrefixRedirect />} />
-          </Route>
-          <Route path="/:prefix/login" element={<PublicApp />}>
-            <Route index element={<Login />} />
-          </Route>
-          <Route path="/:prefix/login-redirect" element={<PublicApp />}>
-            <Route index element={<LoginRedirect />} />
-          </Route>
-          <Route path="/:prefix/logout-redirect" element={<PublicApp />}>
-            <Route index element={<LogoutRedirect />} />
-          </Route>
-
-          <Route element={<PrivateApp />}>
-            <Route path="/admin/*" element={<Admin />} />
-          </Route>
-
-          <Route path="*" element={<PublicApp />}>
-            <Route index element={<Login />} />
-          </Route>
+          <Route index element={<Navigate to="/overview" />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="overview" element={<Landing />} />
+          <Route path="/:tenant/*" element={<TenantManagement />} />
+          <Route path="/:tenant/login" element={<Login />} />
         </Routes>
-      </Provider>
+      </Router>
     </div>
   );
-};
-
+}
 export default App;

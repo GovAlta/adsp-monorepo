@@ -24,22 +24,22 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 24
+          cache: "npm"
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9'
+          dotnet-version: "9"
       - uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: "17"
           distribution: temurin
           cache: maven
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - uses: snok/install-poetry@v1
         with:
-          version: '1.6.1'
+          version: "1.6.1"
       - run: npm ci
       - name: Get last successful commit
         id: last_successful_commit
@@ -128,14 +128,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 24
+          cache: "npm"
       - name: E2E Test
         uses: ./.github/actions/nx-cypress-e2e
         with:
           app: ${{ matrix.app }}
           environment: dev
-          tags: '@smoke-test and not @ignore'
+          tags: "@smoke-test and not @ignore"
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
@@ -189,14 +189,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 24
+          cache: "npm"
       - name: E2E Test
         uses: ./.github/actions/nx-cypress-e2e
         with:
           app: ${{ matrix.app }}
           environment: staging
-          tags: '@smoke-test and not @ignore'
+          tags: "@smoke-test and not @ignore"
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}

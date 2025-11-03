@@ -24,7 +24,7 @@ export interface Errors {
   message: string;
 }
 
-export type RegisterDataType = string[] | LabelValueRegisterData[];
+export type RegisterDataType = string[] | LabelValueRegisterData[] | Record<string, unknown>[];
 export interface RegisterConfigData extends RegisterConfig {
   data?: RegisterDataType;
   errors?: Record<string, Errors>;

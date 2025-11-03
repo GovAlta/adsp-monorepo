@@ -94,6 +94,7 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { getTaskQueues } from '@store/task/action';
 import { FetchFileTypeService } from '@store/file/actions';
 import { fetchCalendars } from '@store/calendar/actions';
+import { AGENT_RESPONSE_ACTION, AgentResponseAction } from '../agent/actions';
 
 export function* fetchFormDefinitions(payload): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -625,6 +626,32 @@ export function* deleteResourceTags({ urn, formDefinitionId }: DeleteResourceTag
   }
 }
 
+export function* refreshDefinition(): SagaIterator {
+  try {
+    const editorSelectedId: string = yield select((state: RootState) => state.form.editor.selectedId);
+    const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+    const token: string = yield call(getAccessToken);
+
+    if (editorSelectedId && baseUrl && token) {
+      const definition = yield call(fetchFormDefinitionApi, token, baseUrl, editorSelectedId);
+      yield put(updateFormDefinitionSuccess(definition));
+      yield put(openEditorForDefinitionSuccess(definition, false));
+    }
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+  }
+}
+
+export function* refreshDefinitionOnAgentResponse({ threadId, done }: AgentResponseAction): SagaIterator {
+  if (done) {
+    const threads = yield select((state: RootState) => state.agent.threads);
+    const thread = threads[threadId];
+    if (thread?.agent === 'formGenerationAgent') {
+      yield call(refreshDefinition);
+    }
+  }
+}
+
 function* initializeFormEditorSaga() {
   const realmRoles = yield select((state) => state.tenant.realmRoles);
   const keycloakRoles = yield select((state) => state.serviceRoles.keycloak);
@@ -666,4 +693,5 @@ export function* watchFormSagas(): Generator {
   yield takeEvery(FETCH_FORM_TAG_BY_TAG_NAME_ACTION, fetchFormTagByTagName);
   yield takeEvery(FETCH_ALL_TAGS_ACTION, fetchAllTags);
   yield takeLatest(FETCH_RESOURCES_BY_TAG_ACTION, fetchResourcesByTag);
+  yield takeLatest(AGENT_RESPONSE_ACTION, refreshDefinitionOnAgentResponse);
 }

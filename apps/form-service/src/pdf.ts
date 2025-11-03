@@ -1,7 +1,7 @@
 import { adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { Logger } from 'winston';
-import { FormEntity, FormSubmissionEntity, PdfService } from './form';
+import { FormEntity, FormStatusSubmittedDefinition, FormSubmissionEntity, PdfService } from './form';
 
 class PdfServiceImpl implements PdfService {
   constructor(private logger: Logger, private directory: ServiceDirectory, private tokenProvider: TokenProvider) {}
@@ -88,7 +88,12 @@ class PdfServiceImpl implements PdfService {
         templateId: form.definition.submissionPdfTemplate,
         data: pdfData,
         filename: `${form.definition.submissionPdfTemplate}-${form.definition.id}.pdf`,
-        recordId: recordId,
+        recordId,
+        context: {
+          trigger: `form-service:${FormStatusSubmittedDefinition.name}`,
+          formDefinitionId: form.definition.id,
+          formId: form.id,
+        },
       };
 
       const baseUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:pdf-service`);
