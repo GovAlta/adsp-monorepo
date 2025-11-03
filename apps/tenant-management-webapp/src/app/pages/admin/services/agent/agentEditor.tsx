@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoACheckbox } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup, GoACallout, GoACheckbox } from '@abgov/react-components';
 import { AgentChat } from '@core-services/app-common';
 import MonacoEditor from '@monaco-editor/react';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -133,6 +133,11 @@ export const AgentEditor: FunctionComponent = () => {
         <>
           <h2>Preview</h2>
           <hr />
+          {hasChanges && (
+            <GoACallout type="information" size="medium" mb="none">
+              You have unsaved changes. The agent behavior is based on the saved configuration.
+            </GoACallout>
+          )}
           <ChatContainerDiv>
             <AgentChat
               disabled={!connected}
