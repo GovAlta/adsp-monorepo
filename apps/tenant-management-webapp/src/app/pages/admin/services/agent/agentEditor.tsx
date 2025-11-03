@@ -12,7 +12,7 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { AppDispatch, RootState } from '@store/index';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
-import { editorSelector, messagesSelector } from '@store/agent/selectors';
+import { agentConnectedSelector, editorSelector, messagesSelector } from '@store/agent/selectors';
 import {
   connectAgent,
   disconnectAgent,
@@ -38,6 +38,7 @@ export const AgentEditor: FunctionComponent = () => {
   const [showSelectedRoles, setShowSelectedRoles] = useState(false);
 
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
+  const connected = useSelector(agentConnectedSelector);
   const { agent, hasChanges, threadId } = useSelector(editorSelector);
   const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
 
@@ -52,18 +53,19 @@ export const AgentEditor: FunctionComponent = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(connectAgent());
-    return () => {
-      dispatch(disconnectAgent());
-    };
-  }, [dispatch]);
-
-  useEffect(() => {
     dispatch(startEditAgent(id));
   }, [dispatch, id]);
 
   useEffect(() => {
-    dispatch(startThread(id, threadId));
+    // TODO: This is a kludge to delay connecting since configuration takes time to propagate.
+    setTimeout(async () => {
+      await dispatch(connectAgent());
+      dispatch(startThread(id, threadId));
+    }, 5000);
+
+    return () => {
+      dispatch(disconnectAgent());
+    };
   }, [dispatch, id, threadId]);
 
   return (
@@ -133,6 +135,7 @@ export const AgentEditor: FunctionComponent = () => {
           <hr />
           <ChatContainerDiv>
             <AgentChat
+              disabled={!connected}
               threadId={threadId}
               context={{}}
               messages={messages}
