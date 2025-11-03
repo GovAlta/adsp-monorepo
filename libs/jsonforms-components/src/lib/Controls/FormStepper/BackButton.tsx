@@ -26,9 +26,14 @@ const BackButtonWrapper = styled.span`
 
   .back-link {
     margin-top: var(--goa-space-m);
+    color: var(--goa-color-interactive-default);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: currentColor;
+    display: inline-block;
   }
   display: inline-block;
-  color: #0070c4;
+  color: var(--goa-color-interactive-default);
   cursor: pointer;
   margin-bottom: var(--goa-space-m);
 
@@ -37,7 +42,7 @@ const BackButtonWrapper = styled.span`
     position: relative;
     top: 3px;
     right: 2px;
-    color: #0070c4;
+    color: var(--goa-color-interactive-default);
     margin-left: 4px;
   }
 `;
