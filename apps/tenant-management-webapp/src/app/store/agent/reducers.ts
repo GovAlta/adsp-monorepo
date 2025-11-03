@@ -164,7 +164,6 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
         editor: {
           ...state.editor,
           agent: action.agent,
-          threadId: uuid(),
           hasChanges: true,
         },
       };
