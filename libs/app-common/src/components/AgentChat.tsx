@@ -93,7 +93,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({ disabled, threadI
           }
         }}
       >
-        <GoAFormItem>
+        <GoAFormItem ml="xs" mr="xs">
           <GoATextArea
             disabled={disabled}
             name="draft"

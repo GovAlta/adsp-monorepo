@@ -4,7 +4,7 @@ import { Tab, Tabs } from '@components/Tabs';
 import { CommentOverview } from './overview';
 import { TopicsList } from './topics/topicsList';
 import { CommentTopicTypes } from './topicTypes/topicTypes';
-import { HeadingDiv } from './styled-components';
+import { HeadingDiv } from '../styled-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import BetaBadge from '@icons/beta-badge.svg';

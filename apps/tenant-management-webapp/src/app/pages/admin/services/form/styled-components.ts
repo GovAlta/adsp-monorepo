@@ -549,15 +549,6 @@ export const TextLoadingIndicator = styled.div`
   }
 `;
 
-export const HeadingDiv = styled.div`
-  display: flex;
-  column-gap: 0.6rem;
-
-  img {
-    margin-bottom: 4px;
-  }
-`;
-
 export const PRE = styled.div`
   background: #f3f3f3;
   white-space: pre-wrap;
