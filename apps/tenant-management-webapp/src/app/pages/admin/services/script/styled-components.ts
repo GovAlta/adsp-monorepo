@@ -18,14 +18,6 @@ export const TableDiv = styled.div`
   }
 `;
 
-export const HeadingDiv = styled.div`
-  display: flex;
-  column-gap: 0.6rem;
-
-  img {
-    margin-bottom: 4px;
-  }
-`;
 export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
   body {
     overflow:  ${(props) => (props.hideOverflow ? `hidden` : `auto`)};
