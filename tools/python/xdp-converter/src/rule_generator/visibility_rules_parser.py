@@ -14,8 +14,8 @@ class VisibilityRulesParser:
         self.root = root
         self.parent_map = parent_map
         parser = ParseSelectors(root)
-        self.target_to_trigger_map, self.trigger_to_target_map = (
-            parser.build_choice_groups(root)
+        self.radio_group_members, self.radio_member_to_group = (
+            parser.build_radio_button_mappings(root)
         )
         self.presence_event_scanner = PresenceEventScanner(root)
         self.presence_event_rules = self.presence_event_scanner.scan()
@@ -44,8 +44,8 @@ class VisibilityRulesParser:
 
         # Combine both
         engine = VisibilityRulesEngine(
-            self.target_to_trigger_map,
-            self.trigger_to_target_map,
+            self.radio_group_members,
+            self.radio_member_to_group,
             get_default_presence,
         )
 
@@ -128,7 +128,12 @@ class VisibilityRulesParser:
             # 🧹 1. Clean up all condition values (remove quotes, cast numerics)
             for r in er.rules:
                 if isinstance(r.condition_value, str):
-                    r.condition_value = _clean_js_condition_value(r.condition_value)
+                    r.condition_value = _clean_js_condition_value(
+                        r.condition_value,
+                        r.driver,
+                        self.radio_group_members,
+                        self.radio_member_to_group,
+                    )
 
             # 🧮 2. Bucket rules by (driver, base_condition)
             buckets: Dict[Tuple[Optional[str], str], List[Rule]] = {}
@@ -226,7 +231,12 @@ class VisibilityRulesParser:
                 seen = set()
                 for r in rules:
                     cond_norm = (
-                        _clean_js_condition_value(r.condition_value)
+                        _clean_js_condition_value(
+                            r.condition_value,
+                            r.driver,
+                            self.radio_group_members,
+                            self.radio_member_to_group,
+                        )
                         if isinstance(r.condition_value, str)
                         else r.condition_value
                     )
@@ -344,23 +354,29 @@ class VisibilityRulesParser:
             if target_node is None and "." not in full_path:
                 continue
 
-            # --- Clean condition ---
-            cleaned_cond = _clean_js_condition_value(cond_value)
-
-            # --- Try to infer driver if condition references another field ---
+            # --- First, infer real driver from the RAW condition (handles NOT(...)) ---
             inferred_driver = driver
-            lhs, _ = _extract_atom_lhs_const(cleaned_cond)
+            raw_base, _ = strip_not(cond_value)
+            lhs, _ = _extract_atom_lhs_const(raw_base)  # uses the updated regex
             if lhs and lhs != driver and not lhs.lower().startswith("page"):
-                inferred_driver = lhs
+                inferred_driver = lhs.split(".")[-1]  # drop "Header." etc.
 
-            # --- Store the rule ---
+            # --- Now clean using the *inferred* driver ---
+            cleaned_cond = _clean_js_condition_value(
+                cond_value,
+                inferred_driver,
+                self.radio_group_members,
+                self.radio_member_to_group,
+            )
+
+            # --- Store rule with the *inferred* driver ---
             er = rules_map.setdefault(full_path, ElementRules(full_path))
             er.add_rule(
                 Rule(
                     effect=effect,
                     target=full_path,
                     condition_value=cleaned_cond,
-                    driver=inferred_driver,  # ✅ now actually used
+                    driver=inferred_driver,
                 )
             )
 
@@ -409,7 +425,12 @@ class VisibilityRulesParser:
 
         # 2) Fallback: the original simple if/else (kept for backward compatibility)
         for m in _IF_ELSE_RE.finditer(js_clean):
-            cond = _clean_js_condition_value(m.group("cond").strip())
+            cond = _clean_js_condition_value(
+                m.group("cond").strip(),
+                driver,
+                self.radio_group_members,
+                self.radio_member_to_group,
+            )
             if_body = m.group("if_body")
             else_body = m.group("else_body")
             self._add_presence_rules_from_body(
@@ -486,12 +507,6 @@ def _presence_to_effect(vis: str) -> str:
     return "SHOW" if vis.lower() == "visible" else "HIDE"
 
 
-def _is_complement(a: str, b: str) -> bool:
-    base_a, na = strip_not(a)
-    base_b, nb = strip_not(b)
-    return base_a == base_b and (na ^ nb)
-
-
 def _extract_atom_lhs_const(cond_str: str):
     base, _ = strip_not(cond_str)
     m = COND_EQ_ANY_LHS_RE.match(base)
@@ -509,9 +524,8 @@ def _extract_atom_lhs_const(cond_str: str):
 
 def _infer_target_radio_value_from_rules(
     rules: list["Rule"],
-    *,
-    group_to_label: dict[str, dict[str, str]],
-    member_to_group: dict[str, str],
+    radio_group_members: dict[str, dict[str, str]],
+    radio_member_to_group: dict[str, str],
 ) -> tuple[str, str] | None:
     """
     Try to determine (group_name, label_value) that this target corresponds to.
@@ -529,9 +543,9 @@ def _infer_target_radio_value_from_rules(
         driver = r.driver or lhs
         if not driver:
             continue
-        if driver in member_to_group and str(const) == "1":
-            g = member_to_group[driver]
-            label = group_to_label.get(g, {}).get(driver)
+        if driver in radio_member_to_group and str(const) == "1":
+            g = radio_member_to_group[driver]
+            label = radio_group_members.get(g, {}).get(driver)
             if label:
                 return g, label
 
@@ -546,8 +560,8 @@ def _radio_collapse_for_target_full(
     target: str,
     original_rules: list["Rule"],
     *,
-    group_to_label: dict[str, dict[str, str]],
-    member_to_group: dict[str, str],
+    radio_group_members: dict[str, dict[str, str]],
+    radio_member_to_group: dict[str, str],
     get_default_presence,
 ) -> dict | None:
     """
@@ -557,8 +571,8 @@ def _radio_collapse_for_target_full(
     # Try direct SHOW detection first
     picked = _infer_target_radio_value_from_rules(
         original_rules,
-        group_to_label=group_to_label,
-        member_to_group=member_to_group,
+        radio_group_members,
+        radio_member_to_group,
     )
     if not picked:
         return None  # we’ll still have a later simplification from anyOf if needed
@@ -579,49 +593,111 @@ def _radio_collapse_for_target_full(
         }
 
 
-def _clean_js_condition_value(value: str):
+def _clean_js_condition_value(
+    value: str,
+    driver: str,
+    radio_group_members: dict[str, dict[str, str]],
+    radio_member_to_group: dict[str, str],
+):
     """
-    Remove Adobe JS fragments like 'this.rawValue == ...' or 'SomeField.rawValue == ...'
-    and normalize the condition value for JSONForms.
-    (Always returns a string so upstream regex operations stay safe.)
+    Normalize Adobe JS condition values to JSONForms-compatible constants.
+
+    Handles:
+      • this.rawValue == ...
+      • Field.rawValue == ...
+      • plain numeric constants
+      • maps numeric radio values to human-readable enum labels
     """
+
+    # 🧹 1. Skip non-strings
     if not isinstance(value, str):
         return value
 
-    # Remove leading "this.rawValue ==" pattern
-    m = re.match(r"^\s*this\.rawValue\s*==\s*(.*)", value)
-    if m:
-        value = m.group(1).strip()
-
-    # Remove any ".rawValue" fragments within the expression
+    # 2. Strip JS syntactic noise
+    value = value.strip()
+    value = re.sub(r"^\s*this\.rawValue\s*==\s*", "", value)
     value = re.sub(r"\.rawValue\b", "", value)
+    value = value.strip("\"' ;")
 
-    # Trim stray quotes
-    value = value.strip("\"' ")
-
-    # Try to extract numeric constant from simple equality expressions like "Field == 123"
+    # 3. Extract numeric RHS in expressions like "Field == 2"
     m = re.match(r"^[A-Za-z_][\w\.]*\s*==\s*(\d+)$", value)
     if m:
-        return m.group(1)  # keep as string
+        const_val = m.group(1)
+        mapped = _map_numeric_to_enum(
+            driver, const_val, radio_group_members, radio_member_to_group
+        )
+        return mapped
 
-    # If the whole thing is numeric, keep as string
+    # 4. Simple numeric literal (e.g. "2")
     if re.fullmatch(r"\d+", value):
-        return value
+        mapped = _map_numeric_to_enum(
+            driver, value, radio_group_members, radio_member_to_group
+        )
+        return mapped
 
-    return string_to_number(value)
+    # 5. Quoted string constants like "Yes" or 'Adult Health'
+    if re.fullmatch(r"['\"].+['\"]", value):
+        return value.strip("\"'")
+
+    # 🧩 6. Fallback: leave expression as-is (e.g. NOT(rbApplicant == 2))
+    return value
+
+
+def _map_numeric_to_enum(
+    driver: str,
+    const_val: str,
+    radio_group_members: dict[str, dict[str, str]],
+    radio_member_to_group: dict[str, str],
+) -> str:
+    """
+    Convert numeric radio values (1, 2, ...) to their human-readable labels.
+    Handles both driver-as-group and driver-as-member cases.
+    """
+    if not driver:
+        return const_val
+
+    base_driver = driver.split(".")[-1]
+
+    # Case 1: driver itself is the group (e.g. rbApplicant)
+    if base_driver in radio_group_members:
+        labels_dict = radio_group_members[base_driver]
+    else:
+        # Case 2: driver is a member, find its group
+        grp = radio_member_to_group.get(base_driver)
+        if not grp:
+            return const_val
+        labels_dict = radio_group_members.get(grp, {})
+
+    if not labels_dict:
+        return const_val
+
+    labels = list(labels_dict.values())
+
+    try:
+        idx = int(const_val)
+        idx -= 1  # 1-based indexing
+        if 0 <= idx < len(labels):
+            label = labels[idx]
+            return label
+    except ValueError:
+        pass
+
+    return const_val
 
 
 class VisibilityRulesEngine:
-    def __init__(self, group_to_label, member_to_group, get_default_presence):
-        self.group_to_label = group_to_label
-        self.member_to_group = member_to_group
+    def __init__(
+        self, radio_group_members, radio_member_to_group, get_default_presence
+    ):
+        self.radio_group_members = radio_group_members
+        self.radio_member_to_group = radio_member_to_group
         self.get_default_presence = get_default_presence
 
 
 class VisibilityRulesEngine:
-    def __init__(self, group_to_label, member_to_group, get_default_presence):
-        self.group_to_label = group_to_label
-        self.member_to_group = member_to_group
+    def __init__(self, radio_group_members, member_to_group, get_default_presence):
+        self.radio_group_members = radio_group_members
+        self.radio_member_to_group = member_to_group
         self.get_default_presence = get_default_presence
 
     def to_jsonforms_rules(
@@ -638,8 +714,8 @@ class VisibilityRulesEngine:
             radio_rule = _radio_collapse_for_target_full(
                 name,
                 er.rules,
-                group_to_label=self.group_to_label,
-                member_to_group=self.member_to_group,
+                radio_group_members=self.radio_group_members,
+                radio_member_to_group=self.radio_member_to_group,
                 get_default_presence=self.get_default_presence,
             )
             if radio_rule:
@@ -653,7 +729,12 @@ class VisibilityRulesEngine:
                 if not _is_valid_driver(drv):
                     continue
 
-                clean_value = _clean_js_condition_value(r.condition_value)
+                clean_value = _clean_js_condition_value(
+                    r.condition_value,
+                    r.driver,
+                    self.radio_group_members,
+                    self.radio_member_to_group,
+                )
                 rule_list.append(
                     {
                         "effect": r.effect.upper(),

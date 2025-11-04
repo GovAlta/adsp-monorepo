@@ -1,66 +1,55 @@
 from schema_generator.form_help_text import FormHelpText
 from xdp_parser.xdp_element import XdpElement
-from xdp_parser.subform_label import get_subform_label
-from xdp_parser.xdp_utils import strip_units
+import xml.etree.ElementTree as ET
 
 
 class XdpHelpText(XdpElement):
-    def __init__(self, xdp_element):
-        super().__init__(xdp_element)
+    def __init__(self, help_content):
+        if isinstance(help_content, str):
+            el = ET.Element("draw")
+            el.text = help_content
+            xdp = el
+        else:
+            xdp = help_content
+        super().__init__(xdp)
 
     def to_form_element(self):
         return FormHelpText(self.xdp_element)
 
     @staticmethod
-    def get_help_text(draw_node):
-        MIN_SIZE = 30
-        # Must be a <draw> with a text block (not a field)
-        if draw_node.tag != "draw":
-            return None
-        if draw_node.find(".//ui/textEdit") is None:
-            return None
+    def get_help_text(node):
+        """
+        Extract help or guidance text from a <draw> element or similar container.
+        Accepts both plain <value><text> and HTML <exData> forms.
+        Returns raw text string (not XML node).
+        """
+        MIN_SIZE = 20
 
-        # Must contain HTML text
-        exdata = draw_node.find(".//value/exData[@contentType='text/html']")
-        if exdata is None:
-            return None
-
-        # Ignore nodes that participate in data binding or scripting
-        if any(
-            draw_node.findall(f".//{tag}") for tag in ("bind", "calculate", "event")
-        ):
+        # 1️⃣ Accept <draw> nodes (most guidance) and any node with obvious text blocks
+        tag = node.tag.lower()
+        if tag not in {"draw", "exdata", "assist"}:
             return None
 
-        # Extract and normalize text
-        text = " ".join(exdata.itertext()).strip()
-        if len(text) < MIN_SIZE:
-            return None  # too short to be instructional
+        # 2️⃣ Ignore bind/calculate/event scripts
+        if any(node.findall(f".//{tag}") for tag in ("bind", "calculate", "event")):
+            return None
 
-        name = draw_node.get("name", "").lower()
-        width = float(strip_units(draw_node.get("w", "0")) or 0)
-        text_lower = text.lower()
+        # 3️⃣ Try HTML help text first (<exData contentType='text/html'>)
+        exdata = node.find(".//value/exData[@contentType='text/html']")
+        if exdata is not None:
+            text = " ".join(exdata.itertext()).strip()
+            if len(text) >= MIN_SIZE:
+                return text
 
-        # Name hint (labels, info, notes)
-        name_hint = any(prefix in name for prefix in ("lbl", "info", "note", "instr"))
+        # 4️⃣ Fallback: plain text <value><text>
+        text_node = node.find(".//value/text")
+        if text_node is not None and text_node.text:
+            text = text_node.text.strip()
+            if len(text) >= MIN_SIZE:
+                return text
 
-        # Keyword hint (common in help text)
-        keywords = [
-            "please",
-            "information",
-            "contact",
-            "fax",
-            "mail",
-            "submit",
-            "application",
-            "call",
-            "phone",
-            "provided",
-            "eligibility",
-        ]
-        keyword_hint = any(word in text_lower for word in keywords)
-
-        # Heuristic threshold: wide + long text or a strong hint
-        if width > 150 or name_hint or keyword_hint:
-            return exdata
+        # 5️⃣ Fallback: inline text directly in the <draw> (rare)
+        if node.text and len(node.text.strip()) >= MIN_SIZE:
+            return node.text.strip()
 
         return None

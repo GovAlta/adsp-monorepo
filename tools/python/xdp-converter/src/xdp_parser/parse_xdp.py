@@ -4,6 +4,7 @@ import contextlib
 from typing import List, Dict, Optional
 from threading import RLock
 
+from schema_generator.html_to_markdown import html_to_markdown
 from xdp_parser.XdpHelpText import XdpHelpText
 from xdp_parser.control_labels import ControlLabels, inline_caption
 from xdp_parser.control_helpers import is_checkbox, is_radio_button
@@ -19,7 +20,7 @@ from xdp_parser.xdp_section import XdpSection
 from xdp_parser.xdp_checkbox import XdpCheckbox
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_radio_selector import XdpRadioSelector, extract_radio_button_labels
-from xdp_parser.xdp_utils import remove_duplicates
+from xdp_parser.xdp_utils import remove_duplicates, tag_name
 from xdp_parser.xdp_group import XdpGroup
 from xdp_parser.xdp_object_array import XdpObjectArray
 from xdp_parser.xdp_radio import XdpRadio
@@ -233,8 +234,24 @@ class XdpParser:
                 xdp_controls.append(control)
 
             i += 1
-
+        # --- If no controls were found but the subform has help text, treat it as a guidance block ---
+        if not xdp_controls:
+            help_blocks = self.grab_help_text(subform)
+            if help_blocks:
+                xdp_controls.extend(help_blocks)
         return remove_duplicates(xdp_controls)
+
+    def grab_help_text(self, subform: ET.Element) -> list["XdpHelpText"]:
+        """
+        Collect all help text blocks (e.g. <draw>, <exData>, <value>/<text>)
+        within the subform or its descendants.
+        """
+        help_content: list[XdpHelpText] = []
+        for elem in subform.iter():  # full depth search
+            help_text = XdpHelpText.get_help_text(elem)
+            if help_text:
+                help_content.append(XdpHelpText(help_text))
+        return help_content
 
     def parse_object_array(
         self,
@@ -294,11 +311,14 @@ class XdpParser:
             return False
         if is_list_control_container(would_be_container, self.root, self.parent_map):
             return False
-        for element in would_be_container:
-            # There must be at least one child that has potential inputs
-            if element.tag in ["field", "exclGroup", "subform"]:
-                return True
-        return False
+
+        has_input = any(
+            tag_name(el.tag) in {"field", "exclGroup", "subform"}
+            for el in would_be_container.iter()
+        )
+        has_guidance = bool(self.grab_help_text(would_be_container))
+
+        return has_input or has_guidance
 
     def is_info_button(self, field: ET.Element) -> bool:
         """

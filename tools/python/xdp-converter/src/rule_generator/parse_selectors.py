@@ -93,84 +93,54 @@ class ParseSelectors:
         # also accept fields with round/circle checkButton (radio-like)
         return self._is_round_checkbutton(fld)
 
-    def build_choice_groups(self, root: ET.Element):
-        group_to_label: dict[str, dict[str, str]] = {}
+    def build_radio_button_mappings(self, root):
+        """
+        Build mappings for radio button relationships in an XDP form.
 
-        # 1) explicit exclGroup
-        for ex in root.iter():
-            if tag_name(ex.tag) != "exclGroup":
-                continue
-            gname = ex.attrib.get("name") or "RadioGroup"
-            group: dict[str, str] = {}
-            for fld in ex.iter():
-                if tag_name(fld.tag) != "field":
-                    continue
-                if not self._looks_like_option_field(fld):
-                    continue
-                fname = fld.attrib.get("name")
-                if not fname:
-                    continue
-                label = gather_label_text(fld, search_root=root) or fname
-                group[fname] = label
-            if len(group) >= 2:
-                group_to_label[gname] = group
+        Returns:
+            (radio_group_members, radio_member_to_group)
 
-        # 2) heuristic clusters by subform
-        for sub in root.iter():
-            if tag_name(sub.tag) != "subform":
-                continue
-            # collect option-like fields directly under/within this subform
-            fields = [
-                f
-                for f in sub.iter()
-                if tag_name(f.tag) == "field" and self._looks_like_option_field(f)
-            ]
-            if len(fields) < 2:
+        radio_group_members:
+            dict[str, dict[str, str]]  →  radio group → { member field name → display label }
+            e.g. { "rbApplicant": { "rbAdult": "Adult Health", "rbChild": "Child Health" } }
+
+        radio_member_to_group:
+            dict[str, str]  →  individual radio field → its parent group name
+            e.g. { "rbAdult": "rbApplicant", "rbChild": "rbApplicant" }
+        """
+        radio_group_members: dict[str, dict[str, str]] = {}
+        radio_member_to_group: dict[str, str] = {}
+
+        # Find all <exclGroup> nodes (radio button groups)
+        for excl_group in root.findall(".//exclGroup"):
+            group_name = excl_group.attrib.get("name")
+            if not group_name:
                 continue
 
-            # radio-like if at least two are round OR scripts uncheck others
-            round_count = sum(1 for f in fields if self._is_round_checkbutton(f))
-            scripts_text = "\n".join(self._iter_scripts_in(sub))
-            uncheck_targets = _collect_uncheck_targets(scripts_text)
-            names = [f.attrib.get("name") for f in fields if f.attrib.get("name")]
-            radioish = round_count >= 2 or (
-                len(set(names).intersection(uncheck_targets)) >= 1
-            )
+            group_members: dict[str, str] = {}
 
-            if not radioish:
-                continue
-
-            gname = sub.attrib.get("name") or "RadioGroup"
-            if gname in group_to_label:
-                continue  # prefer explicit
-
-            grp: dict[str, str] = {}
-            for f in fields:
-                fname = f.attrib.get("name")
-                if not fname:
+            # Each <field> inside the group is a radio option
+            for field in excl_group.findall(".//field"):
+                field_name = field.attrib.get("name")
+                if not field_name:
                     continue
-                lbl = gather_label_text(f, search_root=root) or fname
-                grp[fname] = lbl
-            if len(grp) >= 2:
-                group_to_label[gname] = grp
 
-        # create reverse map
-        member_to_group: dict[str, str] = {}
-        for g, mapping in group_to_label.items():
-            for member in mapping:
-                member_to_group[member] = g
+                # Extract the visible caption text
+                caption_node = field.find(".//caption/value/text")
+                label = ""
+                if caption_node is not None and caption_node.text:
+                    label = caption_node.text.strip()
+                else:
+                    # Fallback: use the name if no caption found
+                    label = field_name
 
-        if self.debug:
-            print(
-                "[radio] groups:",
-                {g: list(m.keys()) for g, m in group_to_label.items()},
-            )
-            print(
-                "[radio] member_to_group keys:",
-                sorted(member_to_group.keys())[:20],
-                "…",
-            )
-        return group_to_label, member_to_group
+                group_members[field_name] = label
+                radio_member_to_group[field_name] = group_name
+
+            # Store mapping for this group
+            if group_members:
+                radio_group_members[group_name] = group_members
+        return radio_group_members, radio_member_to_group
 
     def _is_round_checkbutton(self, fld: ET.Element) -> bool:
         # look for a descendant <checkButton> and read its shape

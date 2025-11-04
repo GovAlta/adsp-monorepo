@@ -1,16 +1,21 @@
 import re
 
 
+# rule_generator/regular_expressions.py
 COND_EQ_ANY_LHS_RE = re.compile(
     r"""^\s*\(*
-        (?P<lhs>(?:this|[A-Za-z_]\w*))\s*\.\s*rawValue\s*
+        (?P<lhs>
+            (?:this|[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)   # dotted path allowed
+        )
+        (?:\s*\.\s*rawValue\s*)?                        # .rawValue optional
         (?:==|===)\s*
-        (?P<q>["'])?(?P<val>[^"']+)(?P=q)?
+        (?P<q>["'])?
+        (?P<val>[^"'()\s]+)
+        (?P=q)?
         \)*\s*;?\s*$
     """,
     re.VERBOSE,
 )
-
 COND_NE_ANY_LHS_RE = re.compile(
     r"""^\s*\(*
         (?P<lhs>(?:this|[A-Za-z_]\w*))\s*\.\s*rawValue\s*
