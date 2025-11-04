@@ -6,9 +6,11 @@ import BetaBadge from '@icons/beta-badge.svg';
 import { Agents } from './agents';
 import { AgentOverview } from './overview';
 import { HeadingDiv } from '../styled-components';
+import { useParams } from 'react-router-dom';
 
 export const Agent: FunctionComponent = () => {
-  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const { tab } = useParams();
+  const [activeIndex, setActiveIndex] = useState<number>(tab === 'agents' ? 1 : 0);
   const [openAddAgent, setOpenAddAgent] = useState<boolean>(false);
 
   return (
