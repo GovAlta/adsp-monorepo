@@ -7,10 +7,24 @@ import { LibSQLStore } from '@mastra/libsql';
 import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
 import { AgentBroker } from '../model';
-import { createTools } from '../tools';
+import { createApiRequestTool, createTools } from '../tools';
 import { createBrokerInputProcessors, createInputProcessors } from '../processors';
 
-type ToolConfiguration = string | { type: string };
+interface TypedToolConfiguration {
+  id: string;
+  type: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+  outputSchema: Record<string, unknown>;
+}
+
+export interface ApiRequestToolConfiguration extends TypedToolConfiguration {
+  type: 'api';
+  method: 'GET' | 'POST' | 'PUT';
+  resource: string;
+  userContext?: boolean;
+}
+type ToolConfiguration = string | ApiRequestToolConfiguration;
 
 export interface AgentConfiguration {
   name: string;
@@ -56,6 +70,20 @@ export class AgentServiceConfiguration {
                   configuration.tools?.reduce((tools, toolConfig) => {
                     if (typeof toolConfig === 'string' && availableTools[toolConfig]) {
                       tools[toolConfig] = availableTools[toolConfig];
+                    } else if (typeof toolConfig === 'object') {
+                      switch (toolConfig.type) {
+                        case 'api': {
+                          tools[toolConfig.id] = createApiRequestTool(
+                            {
+                              logger: this.logger,
+                              directory: this.directory,
+                              tokenProvider: this.tokenProvider,
+                            },
+                            toolConfig
+                          );
+                          break;
+                        }
+                      }
                     }
                     return tools;
                   }, {}) || {},

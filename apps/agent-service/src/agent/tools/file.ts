@@ -1,6 +1,5 @@
 import { AdspId, adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { createTool } from '@mastra/core';
-import axios from 'axios';
 import type { Logger } from 'winston';
 import z from 'zod';
 import { createFileServiceClient } from '../clients';

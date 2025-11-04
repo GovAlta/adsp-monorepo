@@ -2,6 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../index';
 
 export const agentConnectedSelector = (state: RootState) => state.agent.connected;
+export const busySelector = (state: RootState) => state.agent.busy;
 export const threadSelector = createSelector(
   (state: RootState) => state.agent.threads,
   (_: RootState, threadId: string) => threadId,
