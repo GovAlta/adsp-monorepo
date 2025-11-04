@@ -35,7 +35,7 @@ class valuePage {
 
   valueDefinitionsDefinitionModalSchema() {
     return cy.xpath(
-      '//goa-modal[@testid="definition-value" and @open="true"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea'
+      '//goa-modal[@testid="definition-value" and @open="true"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/preceding-sibling::div[@class="native-edit-context"]'
     );
   }
 

@@ -84,7 +84,7 @@ Then(
           .focus()
           .type('{ctrl}a', { force: true })
           .wait(1000)
-          .clear({ force: true });
+          .type('{backspace}', { force: true });
       }
       cy.wait(1000);
       valueObj
