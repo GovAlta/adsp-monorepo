@@ -38,6 +38,7 @@ export class AgentBroker<
 
     const runtimeContext = new RuntimeContext<Record<string, unknown>>();
     runtimeContext.set('tenantId', this.tenantId);
+    runtimeContext.set('user', user);
 
     for (const [key, value] of Object.entries(context || {})) {
       runtimeContext.set(key, value);

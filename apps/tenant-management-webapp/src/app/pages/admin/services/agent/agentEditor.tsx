@@ -12,7 +12,7 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { AppDispatch, RootState } from '@store/index';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
-import { agentConnectedSelector, editorSelector, messagesSelector } from '@store/agent/selectors';
+import { agentConnectedSelector, busySelector, editorSelector, messagesSelector } from '@store/agent/selectors';
 import {
   connectAgent,
   disconnectAgent,
@@ -39,6 +39,7 @@ export const AgentEditor: FunctionComponent = () => {
 
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
   const connected = useSelector(agentConnectedSelector);
+  const { saving } = useSelector(busySelector);
   const { agent, hasChanges, threadId } = useSelector(editorSelector);
   const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
 
@@ -116,7 +117,7 @@ export const AgentEditor: FunctionComponent = () => {
           <hr />
           <GoAButtonGroup alignment="start" mt="m" mb="xl">
             <GoAButton
-              disabled={!hasChanges}
+              disabled={saving || !hasChanges}
               onClick={() => dispatch(updateAgent(agent))}
               type="primary"
               testId="agent-form-save"
