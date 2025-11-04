@@ -58,12 +58,13 @@ const ContainerDiv = styled.div`
 `;
 
 interface AgentChatProps {
+  disabled?: boolean;
   threadId: string;
   context: Record<string, unknown>;
   messages: Message[];
   onSend: (threadId: string, context: Record<string, unknown>, content: string) => void;
 }
-export const AgentChat: FunctionComponent<AgentChatProps> = ({ threadId, context, messages, onSend }) => {
+export const AgentChat: FunctionComponent<AgentChatProps> = ({ disabled, threadId, context, messages, onSend }) => {
   const [draft, setDraft] = useState('');
   const latestRef = useRef<HTMLDivElement | null>(null);
 
@@ -92,8 +93,14 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({ threadId, context
           }
         }}
       >
-        <GoAFormItem>
-          <GoATextArea name="draft" width="100%" value={draft} onChange={(_, value) => setDraft(value)} />
+        <GoAFormItem ml="xs" mr="xs">
+          <GoATextArea
+            disabled={disabled}
+            name="draft"
+            width="100%"
+            value={draft}
+            onChange={(_, value) => setDraft(value)}
+          />
         </GoAFormItem>
       </form>
     </ContainerDiv>

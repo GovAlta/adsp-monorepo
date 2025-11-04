@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoACheckbox } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup, GoACallout, GoACheckbox } from '@abgov/react-components';
 import { AgentChat } from '@core-services/app-common';
 import MonacoEditor from '@monaco-editor/react';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -12,7 +12,7 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { AppDispatch, RootState } from '@store/index';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
-import { editorSelector, messagesSelector } from '@store/agent/selectors';
+import { agentConnectedSelector, editorSelector, messagesSelector } from '@store/agent/selectors';
 import {
   connectAgent,
   disconnectAgent,
@@ -38,6 +38,7 @@ export const AgentEditor: FunctionComponent = () => {
   const [showSelectedRoles, setShowSelectedRoles] = useState(false);
 
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
+  const connected = useSelector(agentConnectedSelector);
   const { agent, hasChanges, threadId } = useSelector(editorSelector);
   const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
 
@@ -52,18 +53,19 @@ export const AgentEditor: FunctionComponent = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(connectAgent());
-    return () => {
-      dispatch(disconnectAgent());
-    };
-  }, [dispatch]);
-
-  useEffect(() => {
     dispatch(startEditAgent(id));
   }, [dispatch, id]);
 
   useEffect(() => {
-    dispatch(startThread(id, threadId));
+    // TODO: This is a kludge to delay connecting since configuration takes time to propagate.
+    setTimeout(async () => {
+      await dispatch(connectAgent());
+      dispatch(startThread(id, threadId));
+    }, 5000);
+
+    return () => {
+      dispatch(disconnectAgent());
+    };
   }, [dispatch, id, threadId]);
 
   return (
@@ -117,11 +119,11 @@ export const AgentEditor: FunctionComponent = () => {
               disabled={!hasChanges}
               onClick={() => dispatch(updateAgent(agent))}
               type="primary"
-              testId="template-form-save"
+              testId="agent-form-save"
             >
               Save
             </GoAButton>
-            <GoAButton onClick={() => navigate('..')} testId="template-form-close" type="secondary">
+            <GoAButton onClick={() => navigate('../agents')} testId="agent-form-close" type="secondary">
               Back
             </GoAButton>
           </GoAButtonGroup>
@@ -131,8 +133,14 @@ export const AgentEditor: FunctionComponent = () => {
         <>
           <h2>Preview</h2>
           <hr />
+          {hasChanges && (
+            <GoACallout type="information" size="medium" mb="none">
+              You have unsaved changes. The agent behavior is based on the saved configuration.
+            </GoACallout>
+          )}
           <ChatContainerDiv>
             <AgentChat
+              disabled={!connected}
               threadId={threadId}
               context={{}}
               messages={messages}

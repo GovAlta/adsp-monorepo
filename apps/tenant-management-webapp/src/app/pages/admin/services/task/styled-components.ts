@@ -35,15 +35,6 @@ export const TableDiv = styled.div`
   }
 `;
 
-export const HeadingDiv = styled.div`
-  display: flex;
-  column-gap: 0.6rem;
-
-  img {
-    margin-bottom: 4px;
-  }
-`;
-
 export const FormFormItem = styled.div`
   margin-bottom: 1.5rem;
   margin-left: 3px;

@@ -229,15 +229,6 @@ export const TextLoadingIndicator = styled.div`
   }
 `;
 
-export const HeadingDiv = styled.div`
-  display: flex;
-  column-gap: 0.6rem;
-
-  img {
-    margin-bottom: 4px;
-  }
-`;
-
 export const MoreDetails = styled.div`
   background-color: var(--goa-color-greyscale-100);
   padding: var(--goa-space-s) var(--goa-space-l) var(--goa-space-l) var(--goa-space-l);

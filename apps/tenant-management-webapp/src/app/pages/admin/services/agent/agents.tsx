@@ -22,6 +22,7 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
   const dispatch = useDispatch<AppDispatch>();
   useEffect(() => {
     dispatch(getAgents());
+    navigate('../agents', { replace: true });
   }, [dispatch]);
 
   const tenantAgents = useSelector((state: RootState) => agentsSelector(state, false));
@@ -47,7 +48,7 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
         <AgentsTable
           agents={tenantAgents}
           onDeleteAgent={(agent) => setShowDeleteConfirmation(agent)}
-          onEditAgent={(agent) => navigate(`edit/${agent.id}`)}
+          onEditAgent={(agent) => navigate(`../edit/${agent.id}`)}
         />
       )}
 

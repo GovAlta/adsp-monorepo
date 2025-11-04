@@ -5,7 +5,7 @@ import { CalendarsView } from './calendar/calendarsView';
 import React, { useState } from 'react';
 
 import BetaBadge from '@icons/beta-badge.svg';
-import { HeadingDiv } from './styled-components';
+import { HeadingDiv } from '../styled-components';
 import AsideLinks from '@components/AsideLinks';
 import { CalendarEvents } from './events';
 

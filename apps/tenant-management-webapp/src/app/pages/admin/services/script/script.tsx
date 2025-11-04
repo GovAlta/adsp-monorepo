@@ -4,7 +4,7 @@ import BetaBadge from '@icons/beta-badge.svg';
 import { useState } from 'react';
 import { ScriptOverview } from './overview';
 import { ScriptsView } from './scriptsView';
-import { HeadingDiv } from './styled-components';
+import { HeadingDiv } from '../styled-components';
 
 import AsideLinks from '@components/AsideLinks';
 

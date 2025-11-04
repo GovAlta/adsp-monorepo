@@ -5,20 +5,21 @@ import { Tab, Tabs } from '@components/Tabs';
 import BetaBadge from '@icons/beta-badge.svg';
 import { Agents } from './agents';
 import { AgentOverview } from './overview';
+import { HeadingDiv } from '../styled-components';
+import { useParams } from 'react-router-dom';
 
 export const Agent: FunctionComponent = () => {
-  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const { tab } = useParams();
+  const [activeIndex, setActiveIndex] = useState<number>(tab === 'agents' ? 1 : 0);
   const [openAddAgent, setOpenAddAgent] = useState<boolean>(false);
 
   return (
     <Page>
       <Main>
-        <div>
-          <h1 data-testid="cache-title">
-            Agent service
-            <img src={BetaBadge} alt="Beta" />
-          </h1>
-        </div>
+        <HeadingDiv>
+          <h1 data-testid="agent-title">Agent service</h1>
+          <img src={BetaBadge} alt="Beta" />
+        </HeadingDiv>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview" data-testid="agent-service-overview-tab">
             <AgentOverview setActiveIndex={setActiveIndex} setOpenAddAgent={setOpenAddAgent} />

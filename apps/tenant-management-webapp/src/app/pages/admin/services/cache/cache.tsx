@@ -2,7 +2,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import BetaBadge from '@icons/beta-badge.svg';
-import { HeadingDiv } from '../form/styled-components';
+import { HeadingDiv } from '../styled-components';
 import { CacheOverview } from './cacheOverview';
 import { Targets } from './targets';
 import AsideLinks from '@components/AsideLinks';
