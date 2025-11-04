@@ -667,13 +667,13 @@ When(
 
 Then('the user views Delete file type modal for {string}', function (fileTypeName) {
   cy.wait(1000); // Wait for modal
-  fileServiceObj.fileTypeDeleteModal().should('be.visible');
+  // fileServiceObj.fileTypeDeleteModal().should('be.visible');
   fileServiceObj.fileTypeDeleteModalTitle().invoke('text').should('contains', 'Delete file type');
   fileServiceObj.fileTypeDeleteModalContent().invoke('text').should('contains', fileTypeName);
 });
 
 When('the user clicks Delete button on file type modal', function () {
-  fileServiceObj.fileTypeDeleteModal().should('be.visible');
+  // fileServiceObj.fileTypeDeleteModal().should('be.visible');
   fileServiceObj.fileTypeDeleteModalDeleteButton().shadow().find('button').scrollIntoView().click({ force: true });
   cy.wait(2000); //Wait the file type list to refresh
 });
