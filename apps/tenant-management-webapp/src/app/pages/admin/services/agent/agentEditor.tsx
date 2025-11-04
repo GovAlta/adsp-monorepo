@@ -119,11 +119,11 @@ export const AgentEditor: FunctionComponent = () => {
               disabled={!hasChanges}
               onClick={() => dispatch(updateAgent(agent))}
               type="primary"
-              testId="template-form-save"
+              testId="agent-form-save"
             >
               Save
             </GoAButton>
-            <GoAButton onClick={() => navigate('..')} testId="template-form-close" type="secondary">
+            <GoAButton onClick={() => navigate('../agents')} testId="agent-form-close" type="secondary">
               Back
             </GoAButton>
           </GoAButtonGroup>
