@@ -505,11 +505,10 @@ export const loadForm = createAsyncThunk(
           });
         }
 
-        for (const urns of Object.values(dataFiles)) {
-          urns.split(';').map(async (urn) => {
-            await dispatch(loadFileMetadata(urn as string));
-          });
-        }
+        const fileLoadPromises = Object.values(dataFiles).flatMap((urns) =>
+          urns.split(';').map((urn) => dispatch(loadFileMetadata(urn as string)))
+        );
+        await Promise.all(fileLoadPromises);
       }
       const formSubmissionUrn = `urn:ads:platform:form-service:v1:/forms/${data.id}${
         data.submission ? `/submissions/${data.submission ? data.submission.id : ''}` : ''
