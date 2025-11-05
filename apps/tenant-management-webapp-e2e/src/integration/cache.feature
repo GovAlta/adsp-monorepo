@@ -1,5 +1,5 @@
 @cache
-Feature: Calendar
+Feature: Cache
 
   @TEST_CS-4036 @REQ_CS-3620 @regression
   Scenario: As a tenant admin, I can see the cache service overview in tenant admin view
