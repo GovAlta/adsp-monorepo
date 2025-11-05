@@ -54,7 +54,9 @@ class Common {
   }
 
   seeTheCodeIcon() {
-    return cy.xpath('//*[contains(text(), "Helpful links")]/following-sibling::*//*[@testid="open-icon"]');
+    return cy.xpath(
+      '//*[contains(text(), "Helpful links")]/following-sibling::*//a[contains(text(), "See the code")]//*[@testid="open-icon"]'
+    );
   }
 
   supportLink(link) {
