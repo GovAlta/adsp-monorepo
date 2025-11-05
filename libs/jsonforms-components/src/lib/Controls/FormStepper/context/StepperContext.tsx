@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useMemo, useReducer, Dispatch, useEffect } from 'react';
+import { createContext, ReactNode, useMemo, useReducer, Dispatch, useEffect, useCallback } from 'react';
 import { CategorizationStepperLayoutRendererProps } from '../types';
 import { Categorization, deriveLabelForUISchemaElement, isEnabled, isVisible } from '@jsonforms/core';
 import { pickPropertyValues } from '../util/helpers';
@@ -93,6 +93,17 @@ export const JsonFormsStepperContextProvider = ({
   const stepperDispatch = StepperProps?.customDispatch || dispatch;
   const isCacheStatus = uischema.options?.cacheStatus;
 
+  //prevents infinite loop refresh
+  const doValidatePage = useCallback(
+    (id: number) => {
+      stepperDispatch({
+        type: 'update/category',
+        payload: { errors: ctx?.core?.errors, id, ajv, schema, data },
+      });
+    },
+    [stepperDispatch, ctx?.core?.errors, ajv, schema, data]
+  );
+
   const context = useMemo(() => {
     return {
       isProvided: true,
@@ -141,22 +152,16 @@ export const JsonFormsStepperContextProvider = ({
       goToTableOfContext: () => {
         stepperDispatch({ type: 'page/to/index', payload: { id: stepperState.categories.length + 1 } });
       },
-      validatePage: (id: number) => {
-        stepperDispatch({
-          type: 'update/category',
-          payload: { errors: ctx?.core?.errors, id, ajv, schema, data },
-        });
-      },
+
+      validatePage: doValidatePage,
       goToPage: (id: number) => {
         ajv.validate(schema, ctx.core?.data || {});
-
-        if (stepperState.isOnReview !== true) {
-          for (let i = 0; i < id; i++) {
-            stepperDispatch({
-              type: 'update/category',
-              payload: { errors: ctx?.core?.errors, id: i, ajv, schema, data },
-            });
-          }
+        // Only update the current category
+        if (!stepperState.isOnReview && id < stepperState.categories.length) {
+          stepperDispatch({
+            type: 'update/category',
+            payload: { errors: ctx?.core?.errors, id, ajv, schema, data },
+          });
         }
 
         stepperDispatch({

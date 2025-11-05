@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Ajv, { ErrorObject } from 'ajv';
-import { toDataPath, getControlPath, scopeEndIs } from '@jsonforms/core';
+import { toDataPath } from '@jsonforms/core';
 import get from 'lodash/get';
 
 export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean => {
@@ -80,8 +80,11 @@ export const subErrorInParent = (error: ErrorObject, paths: string[]): boolean =
 export const getErrorsInScopes = (errors: ErrorObject[], scopes: string[]): ErrorObject[] => {
   return errors.filter((e) => {
     // transfer scope #properties/value to data path /value
-    const dataPaths = scopes.map((s) => '/' + toDataPath(s));
-
+    const dataPaths = scopes.map((s) => {
+      const dot = toDataPath(s);
+      const slash = '/' + dot.replace(/\./g, '/');
+      return slash;
+    });
     return dataPaths.includes(e.instancePath) || subErrorInParent(e, dataPaths);
   });
 };

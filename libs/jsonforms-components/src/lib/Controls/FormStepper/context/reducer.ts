@@ -24,95 +24,110 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
     case 'update/uischema': {
       return { ...action.payload.state };
     }
+
     case 'page/next': {
-      state.activeId += 1;
-      if (activeId === lastId) {
-        state.isOnReview = true;
-        state.hasNextButton = false;
-        state.hasPrevButton = false;
-      } else {
-        state.hasNextButton = true;
-        state.hasPrevButton = true;
-        state.isOnReview = false;
-      }
+      const newActive = activeId + 1;
 
-      state.categories[activeId].isVisited = true;
+      const newCategories = categories.map((c, idx) => (idx === activeId ? { ...c, isVisited: true } : c));
 
-      return { ...state };
+      const isOnReview = newActive === lastId + 1;
+
+      return {
+        ...state,
+        activeId: newActive,
+        categories: newCategories,
+        isOnReview,
+        hasNextButton: !isOnReview,
+        hasPrevButton: newActive !== 0,
+      };
     }
+
     case 'page/prev': {
-      state.categories[activeId].isVisited = true;
+      const newActive = Math.max(0, activeId - 1);
 
-      if (activeId > 0) {
-        state.activeId -= 1;
-        state.hasPrevButton = state.activeId !== 0;
-        state.hasNextButton = true;
-        state.isOnReview = false;
-      }
+      const newCategories = categories.map((c, idx) => (idx === activeId ? { ...c, isVisited: true } : c));
 
-      return { ...state };
+      return {
+        ...state,
+        activeId: newActive,
+        categories: newCategories,
+        isOnReview: false,
+        hasNextButton: true,
+        hasPrevButton: newActive !== 0,
+      };
     }
 
     case 'page/to/index': {
       const { id } = action.payload;
-      state.activeId = id;
+      const newActive = id;
 
-      if (id === lastId + 1) {
-        state.isOnReview = true;
-        state.hasNextButton = false;
-        state.hasPrevButton = true;
-        return { ...state };
-      } else {
-        if (state.categories[id]) {
-          state.categories[id].isVisited = true;
-        }
-        state.hasNextButton = id <= lastId;
-        state.hasPrevButton = id !== 0;
-        state.isOnReview = false;
-        state.maxReachedStep = Math.max(state.maxReachedStep, activeId);
-        return { ...state };
-      }
+      const newCategories = categories.map((c, idx) => (idx === id ? { ...c, isVisited: true } : c));
+
+      const isOnReview = newActive === lastId + 1;
+
+      return {
+        ...state,
+        activeId: newActive,
+        categories: newCategories,
+        isOnReview,
+        hasNextButton: !isOnReview,
+        hasPrevButton: newActive !== 0,
+        maxReachedStep: Math.max(state.maxReachedStep, activeId),
+      };
     }
+
     case 'update/category': {
       const { id, ajv, errors = [], schema, data } = action.payload;
-      if (id >= state.categories.length) {
-        return { ...state };
+      if (id >= categories.length) return state;
+
+      try {
+        ajv.validate(schema, data);
+      } catch (err) {
+        console.warn('AJV validation error:', err);
       }
 
-      if (schema && typeof schema === 'object') {
-        try {
-          ajv.validate(schema, data);
-        } catch (err) {
-          console.warn('AJV validation error:', err);
-        }
-      }
+      const incompletePaths = getIncompletePaths(ajv, schema, data, categories[id]?.scopes || []);
+      const errorsInCategory = getErrorsInScopes(errors, categories[id]?.scopes || []);
 
-      const incompletePaths = getIncompletePaths(ajv, schema, data, state.categories[id]?.scopes || []);
-      const errorsInCategory = getErrorsInScopes(errors, state.categories[id]?.scopes || []);
+      const newCategories = categories.map((cat, idx) =>
+        idx === id
+          ? {
+              ...cat,
+              isCompleted: incompletePaths.length === 0,
+              isValid: errorsInCategory.length === 0,
+              isVisited: true,
+            }
+          : cat
+      );
 
-      if (state.categories[id]) {
-        state.categories[id].isCompleted = incompletePaths?.length === 0;
-        state.categories[id].isValid = errorsInCategory.length === 0;
-        state.categories[id].isVisited = true;
-      }
-
-      return { ...state };
+      return {
+        ...state,
+        categories: newCategories,
+      };
     }
+
     case 'validate/form': {
       const { errors = [] } = action.payload;
-      state.isValid = errors.length === 0;
-
-      return { ...state };
+      return {
+        ...state,
+        isValid: errors.length === 0,
+      };
     }
 
     case 'toggle/category/review-link': {
       const { id } = action.payload;
-      state.categories[id].showReviewPageLink = !state.categories[id].showReviewPageLink;
-      return { ...state };
+
+      const newCategories = categories.map((cat, idx) =>
+        idx === id ? { ...cat, showReviewPageLink: !cat.showReviewPageLink } : cat
+      );
+
+      return {
+        ...state,
+        categories: newCategories,
+      };
     }
+
     default:
       return state;
   }
-
-  return state;
 };

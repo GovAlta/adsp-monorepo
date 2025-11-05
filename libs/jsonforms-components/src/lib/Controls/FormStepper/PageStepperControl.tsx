@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useMemo } from 'react';
 import { GoAButtonType } from '@abgov/react-components';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
@@ -67,14 +67,21 @@ export interface FormPageOptionProps {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const FormPageStepper = (props: CategorizationStepperLayoutRendererProps) => {
   const formStepperCtx = useContext(JsonFormsStepperContext);
+  const memoStepperProps = useMemo(
+    () => ({
+      ...props, // this ensures direction, enabled, visible, locale, t come through
+    }),
+    [props]
+  );
   /**
    * StepperCtx can only be provided once to prevent issues from categorization in categorization
    *  */
   if (formStepperCtx?.isProvided === true) {
     return <FormPagesView {...props} />;
   }
+
   return (
-    <JsonFormsStepperContextProvider StepperProps={{ ...props }}>
+    <JsonFormsStepperContextProvider StepperProps={memoStepperProps}>
       <FormPagesView {...props} />
     </JsonFormsStepperContextProvider>
   );
