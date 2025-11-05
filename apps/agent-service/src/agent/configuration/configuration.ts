@@ -21,7 +21,8 @@ interface TypedToolConfiguration {
 export interface ApiRequestToolConfiguration extends TypedToolConfiguration {
   type: 'api';
   method: 'GET' | 'POST' | 'PUT';
-  resource: string;
+  api: string;
+  path: string;
   userContext?: boolean;
 }
 type ToolConfiguration = string | ApiRequestToolConfiguration;

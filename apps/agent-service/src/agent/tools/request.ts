@@ -1,7 +1,8 @@
-import { AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { createTool } from '@mastra/core';
 import axios from 'axios';
+import { parseTemplate } from 'url-template';
 import { Logger } from 'winston';
 import { ApiRequestToolConfiguration } from '../configuration';
 
@@ -12,12 +13,14 @@ interface ApiToolProps {
 }
 export function createApiRequestTool(
   { logger, directory, tokenProvider }: ApiToolProps,
-  { id, description, resource, method, inputSchema, outputSchema, userContext }: ApiRequestToolConfiguration
+  { id, description, api, path, method, inputSchema, outputSchema, userContext }: ApiRequestToolConfiguration
 ) {
-  let resourceId: AdspId;
-  if (!AdspId.isAdspId(resource) || (resourceId = AdspId.parse(resource)).type !== 'resource') {
-    throw new InvalidOperationError('Configured resource value must be an ADSP URN for an API resource.');
+  let apiId: AdspId;
+  if (!AdspId.isAdspId(api) || (apiId = AdspId.parse(api)).type !== 'api') {
+    throw new InvalidOperationError('Configured api value must be an ADSP URN for an API.');
   }
+
+  const pathTemplate = parseTemplate(path);
 
   return createTool({
     id,
@@ -31,12 +34,14 @@ export function createApiRequestTool(
       const tenantId = runtimeContext.get('tenantId') as AdspId;
       const user = runtimeContext.get('user') as User;
 
-      logger.debug(`Tool '${id}' ${method} request to ${resourceId} with context ${JSON.stringify(context)}...`, {
+      logger.debug(`Tool '${id}' ${method} request to ${apiId}:${path}...`, {
         context: 'ApiRequestTool',
         tenant: tenantId.toString(),
         user: `${user.name} (ID: ${user.id})`,
       });
 
+      const { tenantId: _t, user: _u, ...additionalContext } = runtimeContext.toJSON();
+      const resourceId = adspId`${api}:${pathTemplate.expand({ ...context, ...additionalContext })}`;
       const resourceUrl = await directory.getResourceUrl(resourceId);
 
       const params = {
