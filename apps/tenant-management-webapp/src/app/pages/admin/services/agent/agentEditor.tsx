@@ -1,12 +1,12 @@
-import { GoAButton, GoAButtonGroup, GoACallout, GoACheckbox } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup, GoACallout, GoACheckbox, GoAIconButton, GoATable } from '@abgov/react-components';
 import { AgentChat } from '@core-services/app-common';
 import MonacoEditor from '@monaco-editor/react';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
+import { DeleteModal } from '@components/DeleteModal';
 import { EditorConfigurationForm } from '@components/EditorConfigurationForm';
 import { FullScreenEditor } from '@components/FullScreenEditor';
-import { PageIndicator } from '@components/Indicator';
 import { Tab, Tabs } from '@components/Tabs';
 import { ClientRoleTable } from '@components/RoleTable';
 import { AppDispatch, RootState } from '@store/index';
@@ -22,8 +22,11 @@ import {
   startThread,
   updateAgent,
 } from '@store/agent/actions';
+import { ApiToolConfiguration } from '@store/agent/model';
+import { fetchDirectory } from '@store/directory/actions';
 import { filteredRoleListSelector } from '@store/sharedSelectors/roles';
 import styled from 'styled-components';
+import { AddEditToolModal } from './addEditToolModal';
 
 const ChatContainerDiv = styled.div`
   flex: 1;
@@ -31,13 +34,24 @@ const ChatContainerDiv = styled.div`
   overflow: hidden;
 `;
 
+const defaultToolValue: ApiToolConfiguration = {
+  id: '',
+  description: '',
+  inputSchema: { type: 'object' },
+  outputSchema: { type: 'object' },
+  method: 'GET',
+  api: '',
+  path: '',
+};
+
 export const AgentEditor: FunctionComponent = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [showSelectedRoles, setShowSelectedRoles] = useState(false);
+  const [toolToDelete, setToolToDelete] = useState<{ id: string; index: number } | null>(null);
+  const [toolToEdit, setToolToEdit] = useState<ApiToolConfiguration | null>(null);
 
-  const indicator = useSelector((state: RootState) => state?.session?.indicator);
   const connected = useSelector(agentConnectedSelector);
   const { saving } = useSelector(busySelector);
   const { agent, hasChanges, threadId } = useSelector(editorSelector);
@@ -51,6 +65,7 @@ export const AgentEditor: FunctionComponent = () => {
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
+    dispatch(fetchDirectory());
   }, [dispatch]);
 
   useEffect(() => {
@@ -74,7 +89,6 @@ export const AgentEditor: FunctionComponent = () => {
       onGoBack={() => navigate('/admin/services/agent')}
       editor={
         <section>
-          {indicator.show && <PageIndicator />}
           <h2>Agent editor</h2>
           <hr />
           <EditorConfigurationForm resource={agent} canEdit={false} onEdit={() => {}} />
@@ -88,8 +102,58 @@ export const AgentEditor: FunctionComponent = () => {
                 onChange={(value) => dispatch(editAgent({ ...agent, instructions: value }))}
               />
             </Tab>
+            <Tab testId="agent-edit-tools" label="Tools" className="editorMain">
+              <GoAButtonGroup alignment="start" mt="s">
+                <GoAButton type="tertiary" size="compact" onClick={() => setToolToEdit({ ...defaultToolValue })}>
+                  Add API tool
+                </GoAButton>
+              </GoAButtonGroup>
+              <GoATable>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agent?.tools?.map((tool, index) =>
+                    typeof tool === 'string' ? (
+                      <tr key={tool}>
+                        <td>{tool}</td>
+                        <td></td>
+                        <td>
+                          <GoAButtonGroup alignment="end" gap="compact">
+                            <GoAIconButton
+                              icon="trash"
+                              size="small"
+                              onClick={() => setToolToDelete({ id: tool, index })}
+                            />
+                          </GoAButtonGroup>
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr key={tool.id}>
+                        <td>{tool.id}</td>
+                        <td>{tool.description}</td>
+                        <td>
+                          <GoAButtonGroup alignment="end" gap="compact">
+                            <GoAIconButton icon="create" size="small" onClick={() => setToolToEdit(tool)} />
+                            <GoAIconButton
+                              icon="trash"
+                              size="small"
+                              onClick={() => setToolToDelete({ id: tool.id, index })}
+                            />
+                          </GoAButtonGroup>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </GoATable>
+            </Tab>
             <Tab testId="agent-edit-roles" label="Roles" className="editorMain">
-              <GoAButtonGroup alignment="start">
+              <GoAButtonGroup alignment="start" mt="s">
                 <GoACheckbox
                   name="showSelectedRoles"
                   text="Show selected roles"
@@ -128,6 +192,40 @@ export const AgentEditor: FunctionComponent = () => {
               Back
             </GoAButton>
           </GoAButtonGroup>
+          <DeleteModal
+            isOpen={toolToDelete !== null}
+            title="Delete tool"
+            content={
+              <div>
+                Are you sure you wish to delete <b>{toolToDelete?.id}</b>?
+              </div>
+            }
+            onCancel={() => setToolToDelete(null)}
+            onDelete={() => {
+              if (toolToDelete) {
+                const tools = [...agent.tools];
+                tools.splice(toolToDelete.index);
+                dispatch(editAgent({ ...agent, tools }));
+                setToolToDelete(null);
+              }
+            }}
+          />
+          <AddEditToolModal
+            tool={toolToEdit}
+            open={!!toolToEdit}
+            onCancel={() => setToolToEdit(null)}
+            onOK={(update) => {
+              const tools = [...agent.tools];
+              const index = tools.findIndex((tool) => typeof tool === 'object' && tool.id === update.id);
+              if (index > -1) {
+                tools.splice(index, 1, update);
+              } else {
+                tools.push(update);
+              }
+              dispatch(editAgent({ ...agent, tools }));
+              setToolToEdit(null);
+            }}
+          />
         </section>
       }
       preview={
