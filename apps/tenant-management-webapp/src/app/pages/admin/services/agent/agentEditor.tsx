@@ -18,11 +18,13 @@ import {
   disconnectAgent,
   editAgent,
   messageAgent,
+  newPreviewThread,
   startEditAgent,
   startThread,
   updateAgent,
 } from '@store/agent/actions';
 import { ApiToolConfiguration } from '@store/agent/model';
+import { connectConfigurationUpdates, disconnectConfigurationUpdates } from '@store/configuration/action';
 import { fetchDirectory } from '@store/directory/actions';
 import { filteredRoleListSelector } from '@store/sharedSelectors/roles';
 import styled from 'styled-components';
@@ -54,7 +56,7 @@ export const AgentEditor: FunctionComponent = () => {
 
   const connected = useSelector(agentConnectedSelector);
   const { saving } = useSelector(busySelector);
-  const { agent, hasChanges, threadId } = useSelector(editorSelector);
+  const { agent, hasChanges, stalePreview, threadId } = useSelector(editorSelector);
   const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
 
   const filteredRoles = useSelector((state: RootState) =>
@@ -73,11 +75,21 @@ export const AgentEditor: FunctionComponent = () => {
   }, [dispatch, id]);
 
   useEffect(() => {
-    // TODO: This is a kludge to delay connecting since configuration takes time to propagate.
-    setTimeout(async () => {
-      await dispatch(connectAgent());
-      dispatch(startThread(id, threadId));
-    }, 5000);
+    dispatch(
+      connectConfigurationUpdates(({ namespace, name }) => {
+        if (namespace === 'platform' && name === 'agent-service') {
+          dispatch(newPreviewThread());
+        }
+      })
+    );
+
+    return () => {
+      dispatch(disconnectConfigurationUpdates());
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(connectAgent()).then(() => dispatch(startThread(id, threadId)));
 
     return () => {
       dispatch(disconnectAgent());
@@ -232,9 +244,9 @@ export const AgentEditor: FunctionComponent = () => {
         <>
           <h2>Preview</h2>
           <hr />
-          {hasChanges && (
+          {stalePreview && (
             <GoACallout type="information" size="medium" mb="none">
-              You have unsaved changes. The agent behavior is based on the saved configuration.
+              You have unsaved or recently saved changes. Preview will reset after agent update.
             </GoACallout>
           )}
           <ChatContainerDiv>

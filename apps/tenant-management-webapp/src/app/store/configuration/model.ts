@@ -26,6 +26,7 @@ export interface ConfigurationDefinitionState {
   dataList?: string[];
   serviceList: string[];
   openEditor: string;
+  connectedForUpdates: boolean;
 }
 
 export interface ConfigDefinition {
