@@ -18,6 +18,8 @@ import {
   UPDATE_LATEST_REVISION_SUCCESS_ACTION,
   FETCH_REGISTER_DATA_SUCCESS_ACTION,
   CLOSE_TEMPLATE_ACTION,
+  CONNECT_CONFIGURATION_UPDATES_ACTION,
+  DISCONNECT_CONFIGURATION_UPDATES_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -37,6 +39,7 @@ const defaultState: ConfigurationDefinitionState = {
   registers: [],
   nonAnonymous: [],
   openEditor: null,
+  connectedForUpdates: false,
 };
 
 export default function (
@@ -217,6 +220,16 @@ export default function (
         ...state,
       };
     }
+    case CONNECT_CONFIGURATION_UPDATES_ACTION:
+      return {
+        ...state,
+        connectedForUpdates: true,
+      };
+    case DISCONNECT_CONFIGURATION_UPDATES_ACTION:
+      return {
+        ...state,
+        connectedForUpdates: false,
+      };
     default:
       return state;
   }

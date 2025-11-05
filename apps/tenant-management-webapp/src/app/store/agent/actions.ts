@@ -28,6 +28,8 @@ export const DELETE_AGENT_SUCCESS_ACTION = 'agent/DELETE_AGENT_SUCCESS';
 export const EDIT_AGENT_ACTION = 'agent/EDIT_AGENT';
 export const START_EDIT_AGENT_ACTION = 'agent/START_EDIT_AGENT';
 
+export const NEW_PREVIEW_THREAD_ACTION = 'agent/NEW_EDITOR_PREVIEW_THREAD';
+
 export interface ConnectAgentAction {
   type: typeof CONNECT_AGENT_ACTION;
 }
@@ -105,6 +107,11 @@ export interface EditAgentAction {
   agent: AgentConfiguration;
 }
 
+export interface NewPreviewThreadAction {
+  type: typeof NEW_PREVIEW_THREAD_ACTION;
+  threadId: string;
+}
+
 export type AgentActionTypes =
   | ConnectAgentAction
   | ConnectAgentSuccessAction
@@ -120,7 +127,8 @@ export type AgentActionTypes =
   | DeleteAgentAction
   | DeleteAgentSuccessAction
   | StartEditAgentAction
-  | EditAgentAction;
+  | EditAgentAction
+  | NewPreviewThreadAction;
 
 // wrapping function for socket.on
 let socket: Socket;
@@ -293,6 +301,13 @@ export function deleteAgent(id: string) {
   };
 }
 
+export function newPreviewThread(): NewPreviewThreadAction {
+  return {
+    type: NEW_PREVIEW_THREAD_ACTION,
+    threadId: uuid(),
+  }
+}
+
 export function startEditAgent(id: string) {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     const { agent } = getState();
@@ -307,6 +322,7 @@ export function startEditAgent(id: string) {
 
     if (toEdit) {
       dispatch({ type: START_EDIT_AGENT_ACTION, agent: toEdit });
+      dispatch(newPreviewThread());
     }
   };
 }

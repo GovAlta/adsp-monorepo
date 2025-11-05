@@ -42,6 +42,7 @@ export interface AgentState {
     agent: AgentConfiguration;
     threadId: string;
     hasChanges: boolean;
+    stalePreview: boolean;
   };
   busy: {
     connecting: boolean;
