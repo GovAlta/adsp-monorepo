@@ -101,7 +101,7 @@ class KeycloakAuthImpl implements KeycloakAuth {
   }
 
   public getExpiryTime() {
-    return this.keycloak.refreshTokenParsed.exp;
+    return this.keycloak.refreshTokenParsed?.exp;
   }
 
   async loginByTenant(idp: string) {

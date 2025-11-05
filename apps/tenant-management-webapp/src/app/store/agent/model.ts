@@ -11,12 +11,25 @@ interface Thread {
   agent: string;
 }
 
+export interface ApiToolConfiguration {
+  id: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+  outputSchema: Record<string, unknown>;
+  method: string;
+  api: string;
+  path: string;
+  userContext?: boolean;
+}
+
+type ToolConfiguration = string | ApiToolConfiguration;
 export interface AgentConfiguration {
   core?: boolean;
   id: string;
   name: string;
   instructions: string;
   userRoles: string[];
+  tools: ToolConfiguration[];
 }
 
 export interface AgentState {
