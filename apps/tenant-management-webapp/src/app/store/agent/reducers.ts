@@ -24,6 +24,32 @@ const defaultState: AgentState = {
   threads: {},
   threadMessages: {},
   messages: {},
+  availableTools: [
+    {
+      id: 'fileDownloadTool',
+      description:
+        'Tool for downloading files from the file service using a UUID or ADSP URN.' +
+        ' Note that binary files generally cannot be processed by models.',
+    },
+    {
+      id: 'schemaDefinitionTool',
+      description:
+        'Tool for getting ADSP JSON schemas https://adsp.alberta.ca/standard.v1.schema.json' +
+        ' and https://adsp.alberta.ca/common.v1.schema.json',
+    },
+    {
+      id: 'formConfigurationRetrievalTool',
+      description:
+        'Tool for getting Form Definition configuration. Note that formDefinitionId is ' +
+        'passed via the runtime context rather than via the input.',
+    },
+    {
+      id: 'formConfigurationUpdateTool',
+      description:
+        'Tool for updating Form Definition configuration. Note that formDefinitionId is ' +
+        'passed via the runtime context rather than via the input.',
+    },
+  ],
   agents: {},
   editor: {
     agent: null,

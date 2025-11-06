@@ -1,11 +1,12 @@
 import { isAllowedUser, Tenant, TenantService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { Request, Router } from 'express';
+import { Request, RequestHandler, Router } from 'express';
 import { Namespace as IoNamespace, Socket } from 'socket.io';
 import { v4 as uuid } from 'uuid';
 import { Logger } from 'winston';
 import { ServiceRoles } from './roles';
 import { AgentServiceConfiguration } from './configuration';
+import { AgentBroker } from './model';
 
 export function onIoConnection(logger: Logger) {
   return async (socket: Socket): Promise<void> => {
@@ -122,6 +123,56 @@ function tenantHandler(tenantService: TenantService) {
   };
 }
 
+const AGENT_KEY = 'agent';
+export const getAgents: RequestHandler = async function (req, res, next) {
+  try {
+    const configuration = await req.getServiceConfiguration<AgentServiceConfiguration, AgentServiceConfiguration>();
+    const agents = configuration.getAgents();
+    res.send({ agents });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getAgent: RequestHandler = async function (req, res, next) {
+  try {
+    const { agentId } = req.params;
+    const configuration = await req.getServiceConfiguration<AgentServiceConfiguration, AgentServiceConfiguration>();
+    const agent = configuration.getAgent(agentId);
+    if (!agent) {
+      throw new NotFoundError('Agent', agentId);
+    }
+
+    req[AGENT_KEY] = agent;
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const messageAgent: RequestHandler = async function (req, res, next) {
+  try {
+    const user = req.user;
+    const input = Array.isArray(req.body) ? req.body : [req.body];
+    // NOTE: Currently this can't persist between messages due to horizontal scaling of pods
+    // Need to share agent memory via persistent storage for a thread across requests.
+    const threadId = uuid();
+
+    const agent = req[AGENT_KEY] as AgentBroker;
+    const result = await agent.generate(
+      user,
+      threadId,
+      input.map(({ content }) => ({ content, role: 'user' }))
+    );
+    res.send({
+      agent: agent.Agent.id,
+      content: result.text,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 interface AgentRouterProps {
   logger: Logger;
   tenantService: TenantService;
@@ -130,14 +181,16 @@ interface AgentRouterProps {
 export function createAgentRouter(ios: IoNamespace[], { logger, tenantService }: AgentRouterProps): Router {
   const router = Router();
 
-  router.get('/agents', async (req, res, next) => {
-    try {
-      const configuration = await req.getServiceConfiguration<AgentServiceConfiguration, AgentServiceConfiguration>();
-      const agents = configuration.getAgents();
-      res.send({ agents });
-    } catch (err) {
-      next(err);
-    }
+  router.get('/agents', getAgents);
+
+  router.get('/agents/:agentId', getAgent, messageAgent);
+
+  router.post('/agents/:agentId', getAgent, async (req, res) => {
+    const agent = req[AGENT_KEY] as AgentBroker;
+    res.send({
+      id: agent.Agent.id,
+      name: agent.Agent.name,
+    });
   });
 
   for (const io of ios) {
