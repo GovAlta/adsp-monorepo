@@ -1,7 +1,7 @@
 import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { createTool } from '@mastra/core';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { parseTemplate } from 'url-template';
 import { Logger } from 'winston';
 import { ApiRequestToolConfiguration } from '../configuration';
@@ -40,37 +40,51 @@ export function createApiRequestTool(
         user: `${user.name} (ID: ${user.id})`,
       });
 
-      const { tenantId: _t, user: _u, ...additionalContext } = runtimeContext.toJSON();
-      const resourceId = adspId`${api}:${pathTemplate.expand({ ...context, ...additionalContext })}`;
-      const resourceUrl = await directory.getResourceUrl(resourceId);
+      try {
+        const { tenantId: _t, user: _u, ...additionalContext } = runtimeContext.toJSON();
+        const resourceId = adspId`${api}:${pathTemplate.expand({ ...context, ...additionalContext })}`;
+        const resourceUrl = await directory.getResourceUrl(resourceId);
 
-      const params = {
-        ...(method === 'GET' ? context : {}),
-        tenantId: tenantId.toString(),
-      };
+        const params = {
+          ...(method === 'GET' ? context : {}),
+          tenantId: tenantId.toString(),
+        };
 
-      const requestData = {
-        ...(method !== 'GET' ? context : {}),
-      };
+        const requestData = {
+          ...(method !== 'GET' ? context : {}),
+        };
 
-      const token = userContext ? user.token.bearer : await tokenProvider.getAccessToken();
-      const { data } = await axios.request({
-        method,
-        url: resourceUrl.href,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        data: requestData,
-        params,
-      });
+        const token = userContext ? user.token.bearer : await tokenProvider.getAccessToken();
+        const { data } = await axios.request({
+          method,
+          url: resourceUrl.href,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          data: requestData,
+          params,
+        });
 
-      logger.info(`Tool '${id}' executed ${method} request to ${resourceUrl}.`, {
-        context: 'ApiRequestTool',
-        tenant: tenantId.toString(),
-        user: `${user.name} (ID: ${user.id})`,
-      });
+        logger.info(`Tool '${id}' executed ${method} request to ${resourceUrl}.`, {
+          context: 'ApiRequestTool',
+          tenant: tenantId.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        });
 
-      return data;
+        return data;
+      } catch (err) {
+        logger.warn(
+          `Error encountered for tool '${id}' ${method} request to ${apiId}:${path}: ${
+            isAxiosError(err) && typeof err.response?.data === 'object' ? JSON.stringify(err.response.data) : err
+          }`,
+          {
+            context: 'ApiRequestTool',
+            tenant: tenantId.toString(),
+            user: `${user.name} (ID: ${user.id})`,
+          }
+        );
+        throw err;
+      }
     },
   });
 }

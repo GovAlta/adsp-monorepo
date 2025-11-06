@@ -11,9 +11,13 @@ interface Thread {
   agent: string;
 }
 
-export interface ApiToolConfiguration {
+export interface ToolDescription {
   id: string;
   description: string;
+}
+
+export interface ApiToolConfiguration extends ToolDescription {
+  type: 'api';
   inputSchema: Record<string, unknown>;
   outputSchema: Record<string, unknown>;
   method: string;
@@ -38,6 +42,7 @@ export interface AgentState {
   threadMessages: Record<string, string[]>;
   messages: Record<string, Message>;
   agents: Record<string, AgentConfiguration>;
+  availableTools: ToolDescription[];
   editor: {
     agent: AgentConfiguration;
     threadId: string;
