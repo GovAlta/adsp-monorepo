@@ -242,7 +242,11 @@ export const ConfigurationUpdatesStream: Stream = {
   id: 'configuration-updates',
   name: 'Configuration updates',
   description: 'Provides configuration update events for cache invalidation.',
-  subscriberRoles: [`urn:ads:platform:configuration-service:${ConfigurationServiceRoles.ConfiguredService}`],
+  subscriberRoles: [
+    `urn:ads:platform:configuration-service:${ConfigurationServiceRoles.Reader}`,
+    `urn:ads:platform:configuration-service:${ConfigurationServiceRoles.ConfiguredService}`,
+    `urn:ads:platform:configuration-service:${ConfigurationServiceRoles.ConfigurationAdmin}`,
+  ],
   publicSubscribe: false,
   events: [
     {

@@ -11,6 +11,7 @@ import {
   GET_AGENTS_ACTION,
   GET_AGENTS_SUCCESS_ACTION,
   MESSAGE_AGENT_ACTION,
+  NEW_PREVIEW_THREAD_ACTION,
   START_EDIT_AGENT_ACTION,
   START_THREAD_ACTION,
   UPDATE_AGENT_ACTION,
@@ -28,6 +29,7 @@ const defaultState: AgentState = {
     agent: null,
     threadId: null,
     hasChanges: false,
+    stalePreview: false,
   },
   busy: {
     connecting: false,
@@ -134,7 +136,6 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
             ? {
                 ...state.editor,
                 agent: action.agent,
-                threadId: uuid(),
                 hasChanges: false,
               }
             : state.editor,
@@ -153,7 +154,6 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
         editor: {
           ...state.editor,
           agent: action.agent,
-          threadId: uuid(),
           hasChanges: false,
         },
       };
@@ -164,7 +164,18 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
         editor: {
           ...state.editor,
           agent: action.agent,
+          stalePreview: true,
           hasChanges: true,
+        },
+      };
+    }
+    case NEW_PREVIEW_THREAD_ACTION: {
+      return {
+        ...state,
+        editor: {
+          ...state.editor,
+          threadId: action.threadId,
+          stalePreview: false,
         },
       };
     }

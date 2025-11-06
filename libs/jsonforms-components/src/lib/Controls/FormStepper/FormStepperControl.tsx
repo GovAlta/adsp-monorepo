@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
+import React, { useContext, useState, useEffect, useRef, useMemo } from 'react';
 import {
   GoAFormStepper,
   GoAFormStep,
@@ -33,6 +33,12 @@ const summaryLabel = 'Summary';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const FormStepper = (props: CategorizationStepperLayoutRendererProps) => {
   const formStepperCtx = useContext(JsonFormsStepperContext);
+  const memoStepperProps = useMemo(
+    () => ({
+      ...props, // this ensures direction, enabled, visible, locale, t come through
+    }),
+    [props]
+  );
   /**
    * StepperCtx can only be provided once to prevent issues from categorization in categorization
    *  */
@@ -41,7 +47,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps) => 
   if (formStepperCtx?.isProvided === true) {
     return <FormStepperView {...props} />;
   }
-  return <JsonFormsStepperContextProvider StepperProps={{ ...props }} children={<FormStepperView {...props} />} />;
+  return <JsonFormsStepperContextProvider StepperProps={memoStepperProps} children={<FormStepperView {...props} />} />;
 };
 
 export const FormStepperView = (props: CategorizationStepperLayoutRendererProps): JSX.Element => {

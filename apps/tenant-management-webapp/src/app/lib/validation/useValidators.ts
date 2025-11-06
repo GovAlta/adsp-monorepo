@@ -123,7 +123,7 @@ class ValidatorCollectionImpl implements ValidatorCollection {
     const entries = Object.entries(inputs);
     const errCopy = { ...this.errors };
     entries.forEach(([name, input]) => {
-      if ((this[name]?.field && input, this[name].validators)) {
+      if (this[name]?.field && input && this[name]?.validators) {
         const err = checkInput(input, this[name].validators);
         if (err) {
           errCopy[this[name].field] =

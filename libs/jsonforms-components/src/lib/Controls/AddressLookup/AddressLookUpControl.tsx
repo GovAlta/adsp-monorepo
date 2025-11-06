@@ -98,6 +98,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   };
 
   useEffect(() => {
+    if (!debouncedRenderAddress) return;
     handleInputChange('addressLine1', debouncedRenderAddress);
   }, [debouncedRenderAddress]); // eslint-disable-line react-hooks/exhaustive-deps
 

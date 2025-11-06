@@ -1,3 +1,8 @@
+import { RegisterData } from '@abgov/jsonforms-components';
+import { ErrorNotification } from '@store/notifications/actions';
+import { getAccessToken } from '@store/tenant/actions';
+import { io, Socket } from 'socket.io-client';
+import { AppDispatch, RootState } from '../index';
 import {
   ServiceConfigurationTypes,
   ConfigDefinition,
@@ -6,7 +11,6 @@ import {
   ReplaceConfiguration,
   Revision,
 } from './model';
-import { RegisterData } from '@abgov/jsonforms-components';
 
 export const DELETE_CONFIGURATION_DEFINITION_ACTION = 'configuration/DELETE_CONFIGURATION_DEFINITION_ACTION';
 export const DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS =
@@ -55,6 +59,13 @@ export const FETCH_REGISTER_DATA_SUCCESS_ACTION = 'configuration/FETCH_REGISTER_
 export const CLOSE_TEMPLATE_ACTION = 'configuration/CLOSE_TEMPLATE_ACTION';
 
 export const UPDATE_LATEST_REVISION_SUCCESS_ACTION = 'configuration/UPDATE_LATEST_REVISION_SUCCESS_ACTION';
+
+export const CONNECT_CONFIGURATION_UPDATES_ACTION = 'configuration/CONNECT_CONFIGURATION_UPDATES';
+export const CONNECT_CONFIGURATION_UPDATES_SUCCESS_ACTION = 'configuration/CONNECT_CONFIGURATION_UPDATES_SUCCESS';
+export const DISCONNECT_CONFIGURATION_UPDATES_ACTION = 'configuration/DISCONNECT_CONFIGURATION_UPDATES';
+export const DISCONNECT_CONFIGURATION_UPDATES_SUCCESS_ACTION = 'configuration/DISCONNECT_CONFIGURATION_UPDATES_SUCCESS';
+export const CONFIGURATION_UPDATES_EVENT_ACTION = 'configuration/CONFIGURATION_UPDATES_EVENT_ACTION';
+
 export interface DeleteConfigurationDefinitionAction {
   type: typeof DELETE_CONFIGURATION_DEFINITION_ACTION;
   definitionName: string;
@@ -181,6 +192,29 @@ export interface FetchRegisterDataSuccessAction {
   anonymousRead: string[];
 }
 
+export interface ConnectConfigurationUpdatesAction {
+  type: typeof CONNECT_CONFIGURATION_UPDATES_ACTION;
+}
+
+export interface ConnectConfigurationUpdatesSuccessAction {
+  type: typeof CONNECT_CONFIGURATION_UPDATES_SUCCESS_ACTION;
+}
+
+export interface DisconnectConfigurationUpdatesAction {
+  type: typeof DISCONNECT_CONFIGURATION_UPDATES_ACTION;
+}
+
+export interface DisconnectConfigurationUpdatesSuccessAction {
+  type: typeof DISCONNECT_CONFIGURATION_UPDATES_SUCCESS_ACTION;
+}
+
+export interface ConfigurationUpdatesEventAction {
+  type: typeof CONFIGURATION_UPDATES_EVENT_ACTION;
+  namespace: string;
+  name: string;
+  payload: Record<string, unknown>;
+}
+
 export type ConfigurationDefinitionActionTypes =
   | FetchConfigurationDefinitionsAction
   | FetchConfigurationDefinitionsSuccessAction
@@ -206,7 +240,12 @@ export type ConfigurationDefinitionActionTypes =
   | FetchRegisterDataAction
   | FetchRegisterDataSuccessAction
   | FetchConfigurationActiveRevisionSuccessAction
-  | CloseTemplateAction;
+  | CloseTemplateAction
+  | ConnectConfigurationUpdatesAction
+  | ConnectConfigurationUpdatesSuccessAction
+  | DisconnectConfigurationUpdatesAction
+  | DisconnectConfigurationUpdatesSuccessAction
+  | ConfigurationUpdatesEventAction;
 
 export type ServiceId = { namespace: string; service: string };
 export interface FetchConfigurationsAction {
@@ -398,3 +437,71 @@ export const getRegisterDataSuccessAction = (
 export const getRegisterDataAction = (): FetchRegisterDataAction => ({
   type: FETCH_REGISTER_DATA_ACTION,
 });
+
+export const configurationUpdateEvent = (
+  namespace: string,
+  name: string,
+  payload: Record<string, unknown>
+): ConfigurationUpdatesEventAction => ({
+  type: CONFIGURATION_UPDATES_EVENT_ACTION,
+  namespace,
+  name,
+  payload,
+});
+
+let socket: Socket;
+export function connectConfigurationUpdates(onUpdate?: (action: ConfigurationUpdatesEventAction) => void) {
+  return async (dispatch: AppDispatch, getState: () => RootState) => {
+    dispatch({ type: CONNECT_CONFIGURATION_UPDATES_ACTION });
+
+    if (socket?.connected) {
+      socket.disconnect();
+    }
+
+    const { config } = getState();
+
+    socket = io(config.serviceUrls?.pushServiceApiUrl, {
+      query: {
+        stream: 'configuration-updates',
+      },
+      withCredentials: true,
+      auth: async (cb) => {
+        try {
+          const token = await dispatch(getAccessToken());
+          cb({ token });
+        } catch (err) {
+          // Token retrieval failed and connection (using auth result) will also fail after.
+          cb(null as unknown as object);
+        }
+      },
+    });
+
+    socket.on('connect', () => {
+      dispatch({ type: CONNECT_CONFIGURATION_UPDATES_SUCCESS_ACTION });
+    });
+    socket.on('disconnect', () => {
+      dispatch({ type: DISCONNECT_CONFIGURATION_UPDATES_SUCCESS_ACTION });
+    });
+    socket.on('configuration-service:configuration-updated', ({ payload }: { payload: Record<string, unknown> }) => {
+      const { namespace, name } = payload;
+      const action = configurationUpdateEvent(namespace as string, name as string, payload);
+      dispatch(action);
+      if (onUpdate) {
+        onUpdate(action);
+      }
+    });
+    socket.on('error', (err) => {
+      dispatch(ErrorNotification({ message: err }));
+    });
+  };
+}
+
+export function disconnectConfigurationUpdates() {
+  return async (dispatch: AppDispatch) => {
+    dispatch({ type: DISCONNECT_CONFIGURATION_UPDATES_ACTION });
+
+    if (socket?.connected) {
+      socket.disconnect();
+    }
+  };
+}
