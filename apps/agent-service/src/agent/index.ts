@@ -15,7 +15,7 @@ interface AgentMiddlewareProps {
   tokenProvider: TokenProvider;
   tenantService: TenantService;
 }
-export async function applyAgentMiddleware(
+export function applyAgentMiddleware(
   app: Application,
   ios: IoNamespace[],
   { logger, tenantService }: AgentMiddlewareProps
