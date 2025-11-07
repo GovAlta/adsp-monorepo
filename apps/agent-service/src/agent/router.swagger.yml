@@ -1,3 +1,57 @@
+components:
+  schemas:
+    TextPart:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [text]
+        text:
+          type: string
+      required: [type, text]
+    ImagePart:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [image]
+        image:
+          type: string
+        mediaType:
+          type: string
+      required: [type, image]
+    FilePart:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [file]
+        filename:
+          type: string
+        data:
+          type: string
+        mediaType:
+          type: string
+      required: [type, data, mediaType]
+    UserMessage:
+      type: object
+      properties:
+        content:
+          oneOf:
+            - type: array
+              items:
+                oneOf:
+                  - $ref: "#/components/schemas/TextPart"
+                  - $ref: "#/components/schemas/ImagePart"
+                  - $ref: "#/components/schemas/FilePart"
+                discriminator:
+                  propertyName: type
+                  mapping:
+                    text: "#/components/schemas/TextPart"
+                    image: "#/components/schemas/ImagePart"
+                    file: "#/components/schemas/FilePart"
+            - type: string
+
 /agent/v1/agents:
   get:
     tags:
@@ -9,6 +63,62 @@
         content:
           application/json:
             schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+
+/agent/v1/agents/{agentId}:
+  parameters:
+    - name: agentId
+      description: ID of the agent.
+      example: userGuideAgent
+      in: path
+      required: true
+      schema:
+        type: string
+  get:
+    tags:
+      - Agent
+    description: Gets a specified agent.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+  post:
+    tags:
+      - Agent
+    description: Sends a generate request to an agent.
+    requestBody:
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/UserMessage"
               - type: array
                 items:
+                  $ref: "#/components/schemas/UserMessage"
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                content:
                   type: string

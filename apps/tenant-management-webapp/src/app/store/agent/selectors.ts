@@ -31,3 +31,5 @@ export const agentNamesSelector = createSelector(
 );
 
 export const editorSelector = (state: RootState) => state.agent.editor;
+
+export const availableToolsSelector = (state: RootState) => state.agent.availableTools;

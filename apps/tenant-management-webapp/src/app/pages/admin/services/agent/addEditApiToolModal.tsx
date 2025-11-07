@@ -23,14 +23,14 @@ import { ApiToolConfiguration } from '@store/agent/model';
 import { selectSortedDirectory } from '@store/directory/selectors';
 import { useSelector } from 'react-redux';
 
-interface AddEditToolModalProps {
+interface AddEditApiToolModalProps {
   tool: ApiToolConfiguration;
   onCancel: () => void;
   onOK: (tool: ApiToolConfiguration) => void;
   open: boolean;
 }
 
-export const AddEditToolModal: FunctionComponent<AddEditToolModalProps> = ({
+export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = ({
   tool: initialValue,
   onCancel,
   onOK,
@@ -69,12 +69,12 @@ export const AddEditToolModal: FunctionComponent<AddEditToolModalProps> = ({
     <GoAModal
       testId="add-edit-tool-modal"
       open={open}
-      heading={`${initialValue?.id ? 'Edit' : 'Add'} tool`}
+      heading={`${initialValue?.id ? 'Edit' : 'Add'} API tool`}
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
-            testId="tool-modal-cancel"
+            testId="api-tool-modal-cancel"
             onClick={() => {
               onCancel();
               validators.clear();
@@ -85,7 +85,7 @@ export const AddEditToolModal: FunctionComponent<AddEditToolModalProps> = ({
 
           <GoAButton
             type="primary"
-            testId="tool-modal-save"
+            testId="api-tool-modal-save"
             disabled={!tool.id || validators.haveErrors()}
             onClick={() => {
               if (!validators.checkAll({ ...tool, inputSchema, outputSchema })) {
@@ -111,7 +111,7 @@ export const AddEditToolModal: FunctionComponent<AddEditToolModalProps> = ({
             type="text"
             name="id"
             value={tool.id}
-            testId="tool-modal-id-input"
+            testId="api-tool-modal-id-input"
             aria-label="id"
             width="100%"
             onChange={(_, value) => {
@@ -125,7 +125,7 @@ export const AddEditToolModal: FunctionComponent<AddEditToolModalProps> = ({
           <GoATextArea
             name="description"
             value={tool.description}
-            testId="tool-modal-description-input"
+            testId="api-tool-modal-description-input"
             aria-label="description"
             width="100%"
             onChange={(_, value) => {
@@ -143,7 +143,7 @@ export const AddEditToolModal: FunctionComponent<AddEditToolModalProps> = ({
         </GoAFormItem>
         <GoAFormItem label="Method" mb="m">
           <GoADropdown
-            testId="tool-modal-method-input"
+            testId="api-tool-modal-method-input"
             ariaLabel="method"
             value={tool.method}
             onChange={(_, value) => setTool({ ...tool, method: value as string })}
@@ -159,7 +159,7 @@ export const AddEditToolModal: FunctionComponent<AddEditToolModalProps> = ({
             value={tool.api}
             aria-label="api"
             width="100%"
-            testId="tool-modal-api-input"
+            testId="api-tool-modal-api-input"
             onChange={(_, value) => {
               validators.remove('api');
               validators['api'].check(value);
@@ -184,7 +184,7 @@ export const AddEditToolModal: FunctionComponent<AddEditToolModalProps> = ({
             type="text"
             name="path"
             value={tool.path}
-            testId="tool-modal-path-input"
+            testId="api-tool-modal-path-input"
             aria-label="path"
             width="100%"
             onChange={(_, value) => {

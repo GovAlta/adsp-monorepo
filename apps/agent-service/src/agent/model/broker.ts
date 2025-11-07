@@ -26,12 +26,11 @@ export class AgentBroker<
     this.userRoles = userRoles || [];
   }
 
-  public async stream(
+  private async prepareAgentRequest(
     user: User,
-    threadId: string,
     input: CoreUserMessage | CoreUserMessage[],
     context: Record<string, unknown> = {}
-  ) {
+  ): Promise<RuntimeContext<Record<string, unknown>>> {
     if (this.userRoles.length > 0 && !isAllowedUser(user, this.tenantId, this.userRoles)) {
       throw new UnauthorizedUserError('use agent', user);
     }
@@ -50,7 +49,39 @@ export class AgentBroker<
       await inputProcessor.processInput(runtimeContext, input);
     }
 
+    return runtimeContext;
+  }
+
+  public async stream(
+    user: User,
+    threadId: string,
+    input: CoreUserMessage | CoreUserMessage[],
+    context: Record<string, unknown> = {}
+  ) {
+    const runtimeContext = await this.prepareAgentRequest(user, input, context);
+
     return this.agent.stream(input, {
+      format: 'mastra',
+      runtimeContext: runtimeContext as RuntimeContext<unknown>,
+      memory: { thread: threadId, resource: user.id },
+      onStepFinish: ({ finishReason, usage }) => {
+        this.logger.debug(
+          `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage.totalTokens} tokens.`,
+          { context: 'AgentBroker', tenant: this.tenantId?.toString() }
+        );
+      },
+    });
+  }
+
+  public async generate(
+    user: User,
+    threadId: string,
+    input: CoreUserMessage | CoreUserMessage[],
+    context: Record<string, unknown> = {}
+  ) {
+    const runtimeContext = await this.prepareAgentRequest(user, input, context);
+
+    return this.agent.generate(input, {
       format: 'mastra',
       runtimeContext: runtimeContext as RuntimeContext<unknown>,
       memory: { thread: threadId, resource: user.id },

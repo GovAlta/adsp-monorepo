@@ -1,4 +1,5 @@
 import { ServiceDirectory, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { assertAuthenticatedHandler } from '@core-services/core-common';
 import { Application } from 'express';
 import { Namespace as IoNamespace } from 'socket.io';
 import { Logger } from 'winston';
@@ -20,5 +21,5 @@ export async function applyAgentMiddleware(
   { logger, tenantService }: AgentMiddlewareProps
 ) {
   const router = createAgentRouter(ios, { logger, tenantService });
-  app.use('/agent/v1', router);
+  app.use('/agent/v1', assertAuthenticatedHandler, router);
 }
