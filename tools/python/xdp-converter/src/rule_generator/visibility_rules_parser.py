@@ -201,16 +201,30 @@ class VisibilityRulesParser:
                         base_rb, nb = strip_not(rb.condition_value)
 
                         # SHOW cond + HIDE NOT(cond)
-                        if not na and nb:
+                        if _same_driver_pair(ra, rb) and _complement_str(
+                            ra.condition_value, rb.condition_value
+                        ):
+                            # Prefer SHOW for defaults-visible UIs; otherwise keep both, we’ll collapse later
                             if default_presence == "visible":
-                                new_rules.append(Rule("SHOW", target, base_ra, driver))
+                                new_rules.append(
+                                    Rule(
+                                        "SHOW",
+                                        target,
+                                        strip_not(ra.condition_value)[0],
+                                        ra.driver,
+                                    )
+                                )
                             else:
                                 new_rules.append(
-                                    Rule("HIDE", target, f"NOT({base_ra})", driver)
+                                    Rule(
+                                        "HIDE",
+                                        target,
+                                        strip_not(rb.condition_value)[0],
+                                        rb.driver,
+                                    )
                                 )
                             kept = True
                             break
-
                         # HIDE cond + SHOW NOT(cond)
                         if not nb and na:
                             if default_presence == "visible":
@@ -320,9 +334,7 @@ class VisibilityRulesParser:
             effect = _presence_to_effect(vis)
 
             # --- Resolve node within driver's context only ---
-            target_node = self._find_node_by_name(
-                target.split(".")[-1], context_driver=driver
-            )
+            target_node = self._find_node_by_name(_last(target), context_driver=driver)
 
             # Derive full path
             full_path = target
@@ -354,14 +366,15 @@ class VisibilityRulesParser:
             if target_node is None and "." not in full_path:
                 continue
 
-            # --- First, infer real driver from the RAW condition (handles NOT(...)) ---
-            inferred_driver = driver
-            raw_base, _ = strip_not(cond_value)
-            lhs, _ = _extract_atom_lhs_const(raw_base)  # uses the updated regex
-            if lhs and lhs != driver and not lhs.lower().startswith("page"):
-                inferred_driver = lhs.split(".")[-1]  # drop "Header." etc.
+            # --- Infer driver directly from LHS of condition ---
+            lhs, _ = _extract_atom_lhs_const(cond_value)
+            inferred_driver = lhs or driver
+            if inferred_driver and inferred_driver.lower().startswith(
+                ("page", "this", "xfa")
+            ):
+                inferred_driver = driver  # fallback if pseudo field
 
-            # --- Now clean using the *inferred* driver ---
+            # --- Clean condition using the inferred driver ---
             cleaned_cond = _clean_js_condition_value(
                 cond_value,
                 inferred_driver,
@@ -369,7 +382,7 @@ class VisibilityRulesParser:
                 self.radio_member_to_group,
             )
 
-            # --- Store rule with the *inferred* driver ---
+            # --- Store rule ---
             er = rules_map.setdefault(full_path, ElementRules(full_path))
             er.add_rule(
                 Rule(
@@ -508,17 +521,30 @@ def _presence_to_effect(vis: str) -> str:
 
 
 def _extract_atom_lhs_const(cond_str: str):
+    """
+    Extracts the LHS (driver) and RHS (constant) from a JS equality like
+    Section2.rawValue == "Additional" or this.rawValue == 1
+    Handles NOT(...) and extra parentheses gracefully.
+    """
     base, _ = strip_not(cond_str)
-    m = COND_EQ_ANY_LHS_RE.match(base)
+    # Broader regex: allow nested parentheses, optional NOT(), and .rawValue omitted
+    m = re.search(
+        r"(?P<lhs>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\s*(?:\.rawValue)?\s*(?:==|===)\s*(?P<val>.+)",
+        base,
+    )
     if not m:
         return None, None
-    lhs = m.group("lhs")
-    raw = (m.group("val") or "").strip()
-    for caster in (int, float):
-        try:
-            return lhs, caster(raw)
-        except Exception:
-            pass
+
+    lhs = m.group("lhs").split(".")[-1]  # strip "Header." etc.
+    raw = (m.group("val") or "").strip().strip(";")
+    raw = raw.strip("\"'")
+
+    # Numeric auto-conversion
+    if re.fullmatch(r"\d+", raw):
+        return lhs, int(raw)
+    if re.fullmatch(r"\d+\.\d+", raw):
+        return lhs, float(raw)
+
     return lhs, raw
 
 
@@ -528,31 +554,48 @@ def _infer_target_radio_value_from_rules(
     radio_member_to_group: dict[str, str],
 ) -> tuple[str, str] | None:
     """
-    Try to determine (group_name, label_value) that this target corresponds to.
-    Strategy:
-      A) Prefer any SHOW rule like (member == 1)
-      B) Otherwise, if we see a merged HIDE-anyOf over the group that covers domain-1,
-         infer the missing value.
-    Returns None if we can’t decide.
+    Decide whether a target is driven by a radio button group.
+
+    Returns (group_name, label_value) only if we positively match a radio member
+    and can resolve its label.  Otherwise returns None, so that the caller
+    falls back to generic rule processing.
     """
-    # A) Any SHOW (member == 1) -> direct mapping
     for r in rules:
         if r.effect != "SHOW":
             continue
+
         lhs, const = _extract_atom_lhs_const(r.condition_value)
         driver = r.driver or lhs
         if not driver:
             continue
-        if driver in radio_member_to_group and str(const) == "1":
-            g = radio_member_to_group[driver]
-            label = radio_group_members.get(g, {}).get(driver)
-            if label:
-                return g, label
 
-    # B) Look for an already-merged HIDE anyOf over the group (we’ll get it later,
-    #    but sometimes you already have a merged rule in rules_map)
-    #    If your pipeline never stores merged conditions back in rules_map, skip this and
-    #    infer in the emitter from the merged anyOf (see _simplify step below).
+        # ✅ Only proceed if the driver is known to belong to a radio group
+        if driver not in radio_member_to_group:
+            continue
+
+        group = radio_member_to_group[driver]
+        labels = radio_group_members.get(group, {})
+
+        # Try to match either numeric or string constants
+        if isinstance(const, (int, float)) or (
+            isinstance(const, str) and const.isdigit()
+        ):
+            const = str(int(const))
+            # 1-based indexing typical for Adobe radios
+            keys = list(labels.keys())
+            try:
+                idx = int(const) - 1
+                if 0 <= idx < len(keys):
+                    label = labels[keys[idx]]
+                    return group, label
+            except Exception:
+                pass
+        else:
+            # Match directly against the label text itself
+            if const in labels.values():
+                return group, const
+
+    # ❌ Nothing matched → not a radio case, let the caller handle normally
     return None
 
 
@@ -600,47 +643,55 @@ def _clean_js_condition_value(
     radio_member_to_group: dict[str, str],
 ):
     """
-    Normalize Adobe JS condition values to JSONForms-compatible constants.
+    Normalize JavaScript-style visibility conditions for JSONForms.
 
-    Handles:
-      • this.rawValue == ...
-      • Field.rawValue == ...
-      • plain numeric constants
-      • maps numeric radio values to human-readable enum labels
+    - Removes .rawValue and 'this.' prefixes
+    - Converts numeric indices to radio labels when possible
+    - Treats 'this == ...' and similar self-referential conditions as unconditional
+    - Returns a clean constant or 'ALWAYS'
     """
-
-    # 🧹 1. Skip non-strings
     if not isinstance(value, str):
         return value
 
-    # 2. Strip JS syntactic noise
-    value = value.strip()
-    value = re.sub(r"^\s*this\.rawValue\s*==\s*", "", value)
-    value = re.sub(r"\.rawValue\b", "", value)
-    value = value.strip("\"' ;")
+    # Remove leading "this.rawValue ==" pattern
+    m = re.match(r"^\s*this\.rawValue\s*==\s*(.*)", value)
+    if m:
+        value = m.group(1).strip()
 
-    # 3. Extract numeric RHS in expressions like "Field == 2"
+    # Remove any ".rawValue" fragments within the expression
+    value = re.sub(r"\.rawValue\b", "", value)
+
+    # Remove wrapping parentheses and excess quotes
+    value = value.strip().strip("\"'() ")
+
+    # 🚫 Ignore meaningless self-references like "this == 1" or "NOT(this == 1)"
+    if re.search(r"\bthis\s*==", value, re.IGNORECASE):
+        return "ALWAYS"
+
+    # Handle negations (we just normalize; NOT(...) logic handled elsewhere)
+    value = re.sub(r"^NOT\s*\((.*?)\)$", r"NOT(\1)", value, flags=re.IGNORECASE)
+
+    # Try to extract numeric constant from simple equality expressions like "Field == 123"
     m = re.match(r"^[A-Za-z_][\w\.]*\s*==\s*(\d+)$", value)
     if m:
-        const_val = m.group(1)
-        mapped = _map_numeric_to_enum(
-            driver, const_val, radio_group_members, radio_member_to_group
-        )
-        return mapped
+        value = m.group(1)  # capture numeric part only
 
-    # 4. Simple numeric literal (e.g. "2")
+    # If the whole thing is numeric, return it as string
     if re.fullmatch(r"\d+", value):
-        mapped = _map_numeric_to_enum(
-            driver, value, radio_group_members, radio_member_to_group
-        )
+        value = value
+
+    # Map numeric to enum label if applicable (for radio groups)
+    mapped = _map_numeric_to_enum(
+        driver, value, radio_group_members, radio_member_to_group
+    )
+    if mapped != value:
         return mapped
 
-    # 5. Quoted string constants like "Yes" or 'Adult Health'
-    if re.fullmatch(r"['\"].+['\"]", value):
-        return value.strip("\"'")
+    # Clean up stray semicolons or quotes
+    value = value.strip(";\"' ")
 
-    # 🧩 6. Fallback: leave expression as-is (e.g. NOT(rbApplicant == 2))
-    return value
+    # Fallback: return as-is unless obviously empty
+    return value or "ALWAYS"
 
 
 def _map_numeric_to_enum(
@@ -726,7 +777,7 @@ class VisibilityRulesEngine:
             rule_list = []
             for r in er.rules:
                 drv = r.driver
-                if not _is_valid_driver(drv):
+                if not _is_valid_driver(drv, self.radio_group_members):
                     continue
 
                 clean_value = _clean_js_condition_value(
@@ -796,13 +847,36 @@ class VisibilityRulesEngine:
             # --- Multi-driver case → combined properties schema
             drivers = {r["driver"] for r in rule_list if _is_valid_driver(r["driver"])}
             if len(drivers) > 1:
+                # Detect whether these drivers form a checkbox cluster (same prefix)
+                prefixes = {
+                    re.sub(r"\d+$", "", d)[:6] for d in drivers
+                }  # crude prefix similarity
+                is_same_cluster = len(prefixes) == 1
+
+                if not is_same_cluster:
+                    # 🚫 Don't merge across unrelated drivers
+                    for r in rule_list:
+                        result[name] = {"rule": r}
+                    continue
+
                 properties = {}
                 for r in rule_list:
                     drv = r["driver"]
-                    if not _is_valid_driver(drv):
-                        continue
                     const_val = r["condition"]["schema"].get("const")
+
+                    if (
+                        not _is_valid_driver(drv)
+                        or not const_val
+                        or "this ==" in str(const_val)
+                        or str(const_val).upper() == "ALWAYS"
+                    ):
+                        continue
+
                     properties[drv] = {"const": const_val}
+
+                if not properties:
+                    continue
+
                 result[name] = {
                     "rule": {
                         "effect": "SHOW",
@@ -813,7 +887,6 @@ class VisibilityRulesEngine:
                     }
                 }
                 continue
-
             # --- Single-driver case (typical for radio-driven sections)
             if len(rule_list) > 1:
                 # If all rules share the same driver, prefer the SHOW branch
@@ -833,21 +906,36 @@ class VisibilityRulesEngine:
         return result
 
 
-def _is_valid_driver(name: Optional[str]) -> bool:
-    """
-    Returns True if 'name' looks like a valid field/control identifier
-    (and not a subform, page, or pseudo-node).
-    """
+def _is_valid_driver(
+    name: Optional[str], radio_group_members: dict[str, dict[str, str]] = None
+) -> bool:
     if not name:
         return False
-
     n = name.lower()
     invalid_prefixes = ("page", "form", "header", "event__", "properties")
     if n.startswith(invalid_prefixes):
         return False
-
-    # reject purely numeric or reserved pseudo tokens
     if n in {"this", "xfa", "unknown_owner"}:
         return False
-
+    # If it’s a known radio group, it’s valid even if it “looks like” a container name
+    if radio_group_members and name in radio_group_members:
+        return True
     return True
+
+
+def _last(name: str | None) -> str | None:
+    if not name:
+        return name
+    # tolerate both dot- and slash-separated paths just in case
+    return re.split(r"[./]", name)[-1]
+
+
+def _same_driver_pair(a: Rule, b: Rule) -> bool:
+    return a.driver == b.driver
+
+
+def _complement_str(a: str, b: str) -> bool:
+    base_a, na = strip_not(a)
+    base_b, nb = strip_not(b)
+    # compare normalized bases as strings
+    return (base_a == base_b) and (na ^ nb)

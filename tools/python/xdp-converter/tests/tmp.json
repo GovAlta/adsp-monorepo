@@ -1,0 +1,17 @@
+{
+  "Adult": {
+    "rule": { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child" } } }
+  },
+  "Child": {
+    "rule": { "effect": "SHOW", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child" } } }
+  },
+  "AAHB": {
+    "rule": { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child" } } }
+  },
+  "Applicant.Canadian": {
+    "rule": { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child" } } }
+  },
+  "Partner.Canadian": {
+    "rule": { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child" } } }
+  }
+}
