@@ -150,29 +150,44 @@ export const getAgent: RequestHandler = async function (req, res, next) {
   }
 };
 
-export const messageAgent: RequestHandler = async function (req, res, next) {
-  try {
-    const user = req.user;
-    const input = Array.isArray(req.body) ? req.body : [req.body];
-    // NOTE: Currently this can't persist between messages due to horizontal scaling of pods
-    // Need to share agent memory via persistent storage for a thread across requests.
-    const threadId = uuid();
+export function messageAgent(logger: Logger): RequestHandler {
+  return async function (req, res, next) {
+    try {
+      const tenant = req.tenant;
+      const user = req.user;
+      const input = Array.isArray(req.body) ? req.body : [req.body];
+      const agent = req[AGENT_KEY] as AgentBroker;
 
-    const agent = req[AGENT_KEY] as AgentBroker;
-    const result = await agent.generate(
-      user,
-      threadId,
-      input.map(({ content }) => ({ content, role: 'user' }))
-    );
-    res.send({
-      agent: agent.Agent.id,
-      content: result.text,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
+      logger.debug(`User ${user.name} (ID: ${user.id}) messaging agent ${agent}...`, {
+        context: 'AgentRouter',
+        tenant: tenant?.id?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
 
+      // NOTE: Currently this can't persist between messages due to horizontal scaling of pods
+      // Need to share agent memory via persistent storage for a thread across requests.
+      const threadId = uuid();
+      const result = await agent.generate(
+        user,
+        threadId,
+        input.map(({ content }) => ({ content, role: 'user' }))
+      );
+
+      logger.info(`Agent ${agent} responded to user ${user.name} (ID: ${user.id}) message.`, {
+        context: 'AgentRouter',
+        tenant: tenant?.id?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+
+      res.send({
+        agent: agent.Agent.id,
+        content: result.text,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 interface AgentRouterProps {
   logger: Logger;
   tenantService: TenantService;
@@ -183,15 +198,15 @@ export function createAgentRouter(ios: IoNamespace[], { logger, tenantService }:
 
   router.get('/agents', getAgents);
 
-  router.get('/agents/:agentId', getAgent, messageAgent);
-
-  router.post('/agents/:agentId', getAgent, async (req, res) => {
+  router.get('/agents/:agentId', getAgent, async (req, res) => {
     const agent = req[AGENT_KEY] as AgentBroker;
     res.send({
-      id: agent.Agent.id,
+      id: req.params.agentId,
       name: agent.Agent.name,
     });
   });
+
+  router.post('/agents/:agentId', getAgent, messageAgent(logger));
 
   for (const io of ios) {
     io.use(tenantHandler(tenantService));
