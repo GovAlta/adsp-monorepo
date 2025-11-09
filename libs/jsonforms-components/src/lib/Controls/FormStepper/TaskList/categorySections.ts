@@ -1,6 +1,6 @@
 import { CategoriesState, CategoryState } from '../context';
 
-interface SectionMap {
+export interface SectionMap {
   sectionTitle: string;
   categories: CategoryState[];
 }

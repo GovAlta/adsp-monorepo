@@ -7,6 +7,63 @@ export const ReviewItem = styled.div`
     display: none;
   }
 `;
+
+export const CompletionStatus = styled.div`
+  padding: 0;
+  margin: 0;
+  padding-top: var(--goa-space-xl);
+
+  display: flex;
+  flex-direction: column;
+`;
+
+export const Bar = styled.div`
+  display: flex;
+  flex-direction: row;
+
+  .progress-container {
+    align-items: flex-start;
+    width: 100%;
+
+    height: 4px;
+    background-color: #e0e0e0;
+    border-radius: 4;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+  }
+
+  .progress-bar {
+    width: 60%;
+    height: 100%;
+    background-color: #004abf;
+    border-radius: 4;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    box-sizing: border-box;
+  }
+
+  .progress-text {
+    color: #666666;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: -14px;
+    margin-left: 5px;
+  }
+`;
+export const Percentage = styled.div``;
+export const BadgeWrapper = styled.div`
+  margin-left: 10px;
+  margin-top: 7px;
+`;
+
+export const CompletionTextHeader = styled.h3`
+  display: flex;
+`;
 export const ReviewItemSection = styled.div`
   margin-bottom: var(--goa-space-m);
   padding: var(--goa-space-xl) var(--goa-space-2xl);
@@ -115,10 +172,8 @@ export const CategoryStatus = styled.td`
   align-content: center;
 `;
 
-export const CompletionStatus = styled.div`
-  padding: 0;
-  margin: 0;
-  margin-bottom: 0 !important;
+export const Center = styled.div`
+  padding-top: 5px;
 `;
 
 interface PageStepperRowProps {

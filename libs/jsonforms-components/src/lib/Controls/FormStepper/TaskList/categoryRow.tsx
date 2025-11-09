@@ -1,5 +1,5 @@
 import React from 'react';
-import { CategoryStatus, PageStepperRow, SummaryTd } from '../styled-components';
+import { CategoryStatus, PageStepperRow, Center } from '../styled-components';
 import { getCategoryStatusBadge } from '../CategoryStatus';
 import { CategoryState } from '../context';
 import { GoAText } from '@abgov/react-components';
@@ -26,7 +26,9 @@ export const CategoryRow: React.FC<CategoryRowProps> = ({ category, index, onCli
       data-testid={`page-ref-${index}`}
     >
       <td key={`task-list-${index}-stepper-row-label`}>{category.label}</td>
-      <CategoryStatus>{getCategoryStatusBadge(category)}</CategoryStatus>
+      <CategoryStatus>
+        <Center>{getCategoryStatusBadge(category)}</Center>
+      </CategoryStatus>
     </PageStepperRow>
   ) : null;
 };

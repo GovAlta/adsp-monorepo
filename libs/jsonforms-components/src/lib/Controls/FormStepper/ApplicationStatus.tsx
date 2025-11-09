@@ -1,27 +1,39 @@
-import React, { useContext } from 'react';
-import { GoACallout } from '@abgov/react-components';
-import { JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
-import { CompletionStatus } from './styled-components';
+import React from 'react';
+import { GoABadge } from '@abgov/react-components';
+import { CompletionStatus, BadgeWrapper, CompletionTextHeader, Bar } from './styled-components';
 
-export const ApplicationStatus = (): JSX.Element => {
-  const formStepperCtx = useContext(JsonFormsStepperContext);
-  const { selectNumberOfCompletedCategories } = formStepperCtx as JsonFormsStepperContextProps;
+export const ApplicationStatus = ({
+  completedGroups,
+  totalGroups,
+}: {
+  completedGroups: number;
+  totalGroups: number;
+}): JSX.Element => {
+  const completed = completedGroups;
+  const badge =
+    totalGroups === completed ? (
+      <GoABadge type="success" content="Complete"></GoABadge>
+    ) : (
+      <GoABadge type="information" content="Incomplete"></GoABadge>
+    );
+  const mainHeading = 'Application Progress';
+  const progressPercentageAccurate = (100 * completed) / totalGroups;
 
-  const { categories: allCategories } = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
-  const categories = allCategories.filter(
-    (c) =>
-      c?.visible === true && (c.uischema?.options?.showInTaskList || c?.uischema?.options?.showInTaskList === undefined)
-  );
-  const total = categories.length;
-  const completed = selectNumberOfCompletedCategories();
-  const type = total === completed ? 'success' : 'important';
-  const heading = total === completed ? 'Application completed' : 'Application incomplete';
-  const message = `You have completed ${completed} of ${total} sections.`;
   return (
     <CompletionStatus>
-      <GoACallout type={type} heading={heading} size="medium" maxWidth={'50%'}>
-        {message}
-      </GoACallout>
+      <CompletionTextHeader>
+        {mainHeading}
+        <BadgeWrapper>{badge}</BadgeWrapper>
+      </CompletionTextHeader>
+      <div>
+        {completed}/{totalGroups} items completed
+      </div>
+      <Bar>
+        <div className="progress-container">
+          <div className="progress-bar" style={{ width: `${progressPercentageAccurate}%` }}></div>
+        </div>
+        <span className="progress-text">{Math.round(progressPercentageAccurate)}%</span>
+      </Bar>
     </CompletionStatus>
   );
 };
