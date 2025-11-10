@@ -216,11 +216,12 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
             <thead>
               <tr key={0}>
                 {Object.entries(tableKeys).map(([value, index]) => {
+                  const currentProperty = properties[value];
                   if (!isInReview) {
                     return (
                       <th key={index}>
                         <p>
-                          {convertToSentenceCase(index)}
+                          {currentProperty?.title || convertToSentenceCase(index)}
                           {required?.includes(value) && <RequiredSpan>(required)</RequiredSpan>}
                         </p>
                       </th>
@@ -229,7 +230,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                   return (
                     <TableTHHeader key={index}>
                       <p>
-                        {`${convertToSentenceCase(index)}`}
+                        {`${currentProperty?.title || convertToSentenceCase(index)}`}
                         {required?.includes(value) && (
                           <RequiredSpan>
                             <br /> (required)

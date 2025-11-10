@@ -24,6 +24,7 @@ export interface DataProperty {
   required?: string[];
   enum: string[];
   items?: Record<string, unknown>;
+  title?: string;
 }
 
 export interface DataObject {
