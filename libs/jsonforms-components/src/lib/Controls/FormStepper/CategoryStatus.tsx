@@ -18,5 +18,9 @@ export const getCategoryStatus = (category: CategoryState): string => {
 export const getCategoryStatusBadge = (category: CategoryState): JSX.Element => {
   const status = getCategoryStatus(category);
   const badgeType = status === PageStatus.Complete ? 'success' : 'information';
-  return <GoABadge type={badgeType} content={status} ariaLabel={status}></GoABadge>;
+  return (
+    // <div style={{ paddingTop: '5px' }}>
+      <GoABadge type={badgeType} content={status} ariaLabel={status}></GoABadge>
+    // </div>
+  );
 };
