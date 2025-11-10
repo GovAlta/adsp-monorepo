@@ -1,6 +1,6 @@
 import React from 'react';
 import { GoABadge } from '@abgov/react-components';
-import { CompletionStatus, BadgeWrapper, CompletionTextHeader, Bar } from './styled-components';
+import { CompletionStatus, BadgeWrapper, CompletionTextHeader, Bar, BarTop } from './styled-components';
 
 export const ApplicationStatus = ({
   completedGroups,
@@ -25,14 +25,16 @@ export const ApplicationStatus = ({
         {mainHeading}
         <BadgeWrapper>{badge}</BadgeWrapper>
       </CompletionTextHeader>
-      <div>
-        {completed}/{totalGroups} items completed
-      </div>
+      <BarTop>
+        <div>
+          {completed} out of {totalGroups} items completed
+        </div>
+        <div className="progress-text">{Math.round(progressPercentageAccurate)}%</div>
+      </BarTop>
       <Bar>
         <div className="progress-container">
           <div className="progress-bar" style={{ width: `${progressPercentageAccurate}%` }}></div>
         </div>
-        <span className="progress-text">{Math.round(progressPercentageAccurate)}%</span>
       </Bar>
     </CompletionStatus>
   );

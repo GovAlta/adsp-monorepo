@@ -17,6 +17,15 @@ export const CompletionStatus = styled.div`
   flex-direction: column;
 `;
 
+export const BarTop = styled.div`
+  display: flex;
+
+
+  .progress-text {
+    margin-left: auto;
+  }
+`;
+
 export const Bar = styled.div`
   display: flex;
   flex-direction: row;
@@ -47,13 +56,7 @@ export const Bar = styled.div`
     box-sizing: border-box;
   }
 
-  .progress-text {
-    color: #666666;
-    font-size: 14px;
-    font-weight: 500;
-    margin-top: -14px;
-    margin-left: 5px;
-  }
+
 `;
 export const Percentage = styled.div``;
 export const BadgeWrapper = styled.div`
