@@ -1,5 +1,5 @@
 import React from 'react';
-import { CategoryStatus, PageStepperRow, SummaryTd } from '../styled-components';
+import { CategoryStatus, PageStepperRow } from '../styled-components';
 import { getCategoryStatusBadge } from '../CategoryStatus';
 import { CategoryState } from '../context';
 import { GoAText } from '@abgov/react-components';
