@@ -224,4 +224,5 @@ export const SummaryRowLink = styled.a`
 
 export const SummaryTd = styled.td`
   border: 0 !important;
+  padding: 0 !important;
 `;
