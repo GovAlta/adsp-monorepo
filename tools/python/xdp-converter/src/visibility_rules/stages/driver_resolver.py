@@ -31,10 +31,8 @@ class DriverResolver:
                 refs = self.RAWVAL_RE.findall(cond_text)
                 if refs:
                     driver = refs[0]  # use the first one
-                    print(f"  [DEBUG] Found explicit driver ref → {driver}")
                 else:
                     driver = "this"
-                    print(f"  [DEBUG] No explicit driver ref; defaulting to 'this'")
 
                 # 2️⃣ Resolve 'this' contextually
                 if driver.lower() == "this":
@@ -52,9 +50,6 @@ class DriverResolver:
                             name = candidate.get("name", "")
                             if name and name in raw.xpath:
                                 parent = candidate
-                                print(
-                                    f"  [DEBUG] Fallback matched parent '{name}' for xpath {raw.xpath}"
-                                )
                                 break
                     # Walk upward until we hit a field or exclGroup
                     while parent is not None:
@@ -65,8 +60,6 @@ class DriverResolver:
                             driver = parent.get("name")
                             break
                         parent = parent_map.get(parent)
-
-                    print(f"  [DEBUG] resolved 'this' contextually → {driver}")
 
                 # 3️⃣ Extract operator/value from the expression
                 operator = self._extract_operator(cond_text)
@@ -213,5 +206,4 @@ class DriverResolver:
             print(f"  [WARN] resorting to 'this' for rule {raw.target}")
             field_name = "this"
 
-        print(f"  [DEBUG] resolved 'this' to '{field_name}' for rule {raw.target}")
         return field_name

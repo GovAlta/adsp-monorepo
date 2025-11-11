@@ -82,26 +82,28 @@ def inline_caption(node):
     return ""
 
 
+prefixes = (
+    "lbl",
+    "label",
+    "txt",
+    "cbo",
+    "drp",
+    "num",
+    "chk",
+    "rb",
+    "rad",
+    "fld",
+    "ctl",
+    "ctrl",
+    "lst",
+    "ddl",
+)
+
+
 def _control_name(name):
     # strip common UI/control prefixes
     raw = name or ""
     # remove leading known prefixes once (case-insensitive)
-    prefixes = (
-        "lbl",
-        "label",
-        "txt",
-        "cbo",
-        "drp",
-        "num",
-        "chk",
-        "rb",
-        "rad",
-        "fld",
-        "ctl",
-        "ctrl",
-        "lst",
-        "ddl",
-    )
     low = raw.lower()
     for p in prefixes:
         if low.startswith(p):

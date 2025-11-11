@@ -41,15 +41,8 @@ def parse_js_visibility_script(js_code: str) -> list[IfBlock]:
         )
 
         blocks.append(IfBlock(block_type, cond.strip("() ") if cond else None, body))
-        print(
-            f"  [DEBUG] Found block: {block_type.upper()} cond=({cond}) len={len(body)}"
-        )
 
     if not blocks:
         blocks.append(IfBlock("if", None, code))
-        print(
-            f"  [DEBUG] No IF/ELSE found; treated whole script as unconditional block."
-        )
 
-    print(f"[DEBUG] parse_js_visibility_script extracted {len(blocks)} blocks.")
     return blocks

@@ -1,10 +1,17 @@
 from schema_generator.form_element import FormElement
-from xdp_parser.xdp_utils import strip_label_prefix
+from xdp_parser.parse_context import ParseContext
 
 
 class FormCheckbox(FormElement):
-    def __init__(self, name: str, qualified_name: str, input_type: str, label: str):
-        super().__init__("control", name, qualified_name)
+    def __init__(
+        self,
+        name: str,
+        qualified_name: str,
+        input_type: str,
+        label: str,
+        context: ParseContext,
+    ):
+        super().__init__("control", name, qualified_name, context)
         self.input_type: str = input_type
         self.format: str = None
         self.desc: str = label

@@ -28,6 +28,7 @@ class XdpRadioSelector(XdpElement):
             self.full_path,
             self.get_type(),
             self.get_label(),
+            self.context,
         )
         fe.enum = self.options
         fe.is_radio = True
@@ -35,7 +36,9 @@ class XdpRadioSelector(XdpElement):
 
     def _to_annotated_control(self):
         radio_buttons = self._to_simple_control()
-        control = AnnotatedControl([radio_buttons, self._to_help_messages()])
+        control = AnnotatedControl(
+            [radio_buttons, self._to_help_messages()], self.context
+        )
         control.enum = []
         for option in self.options:
             label, _ = split_label_and_help(option)
@@ -48,9 +51,15 @@ class XdpRadioSelector(XdpElement):
         for option in self.options:
             if registry.hasAnnotation(option):
                 help_text = registry.getAnnotation(option)
-                info = FormInformation(self.get_name(), help_text, option, hidden=True)
+                info = FormInformation(
+                    self.get_name(),
+                    help_text,
+                    option,
+                    hidden=True,
+                    context=self.context,
+                )
                 options.append(info)
-        return FormLayout("VerticalLayout", options)
+        return FormLayout("VerticalLayout", options, self.context)
 
     def get_enumeration_values(self):
         return self.options

@@ -1,6 +1,7 @@
 from schema_generator.form_element import FormElement
 from schema_generator.form_layout import group_horizontally
 from schema_generator.section_title import SectionTitle
+from xdp_parser.parse_context import ParseContext
 
 
 ##
@@ -9,8 +10,8 @@ from schema_generator.section_title import SectionTitle
 # . such as a Category within a Categorization.
 ##
 class FormSection(FormElement):
-    def __init__(self, name, qualified_name, title, elements):
-        super().__init__("section", name, qualified_name)
+    def __init__(self, name, qualified_name, title, elements, context: ParseContext):
+        super().__init__("section", name, qualified_name, context)
         self.title = title
         # May need to remove the horizontal grouping if that
         # works better for the AIM refinement algorithms

@@ -1,9 +1,10 @@
 from schema_generator.form_element import FormElement
+from xdp_parser.parse_context import ParseContext
 
 
 class Form(FormElement):
-    def __init__(self, sections):
-        super().__init__("form", None, None)
+    def __init__(self, sections, context: ParseContext):
+        super().__init__("form", None, None, context)
         self.sections = sections
         self.is_leaf = False
 

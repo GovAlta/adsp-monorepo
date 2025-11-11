@@ -26,9 +26,6 @@ class RuleConsolidator:
             merged_rule.conditions = merged_conditions
             consolidated.append(merged_rule)
 
-            for c in merged_conditions:
-                print(f"         • {c.driver} {c.operator} {c.value}")
-
         print(
             f"[RuleConsolidator] Consolidated {len(consolidated)} merged rules total.\n"
         )

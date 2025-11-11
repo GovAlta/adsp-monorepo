@@ -1,17 +1,32 @@
 {
-  "Adult": {
-    "rule": { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child" } } }
+  "form1.Page1.Adult": {
+    "rules": [
+      { "effect": "SHOW", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Adult Health" } } },
+      { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Adult Health" } } }
+    ]
   },
-  "Child": {
-    "rule": { "effect": "SHOW", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child" } } }
+  "form1.Page1.Child": {
+    "rules": [
+      { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child Health" } } },
+      { "effect": "SHOW", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child Health" } } }
+    ]
   },
-  "AAHB": {
-    "rule": { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child" } } }
+  "form1.Page1.AAHB": {
+    "rules": [
+      { "effect": "SHOW", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Adult Health" } } },
+      { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child Health" } } }
+    ]
   },
   "Applicant.Canadian": {
-    "rule": { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child" } } }
+    "rules": [
+      { "effect": "SHOW", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Adult Health" } } },
+      { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child Health" } } }
+    ]
   },
   "Partner.Canadian": {
-    "rule": { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child" } } }
+    "rules": [
+      { "effect": "SHOW", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Adult Health" } } },
+      { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child Health" } } }
+    ]
   }
 }

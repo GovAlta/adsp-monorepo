@@ -34,4 +34,4 @@ class VisibilityRulesPipeline:
             print(f"[{stage.__class__.__name__}] Done.\n")
 
         print("[VisibilityRulesPipeline] Pipeline complete.")
-        return context.get("output", None)
+        return context

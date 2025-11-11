@@ -3,8 +3,8 @@ import re
 
 
 class FormInformation(FormElement):
-    def __init__(self, element_name, text, option, style="", hidden=False):
-        super().__init__("information", None, None)
+    def __init__(self, element_name, text, option, context, style="", hidden=False):
+        super().__init__("information", None, None, context)
         self.help = text
         self.element_name = element_name
         self.style = style
