@@ -15,6 +15,8 @@ export interface TocProps {
   title?: string;
   subtitle?: string;
   isValid: boolean;
+  hideSummary: boolean;
+
 }
 
 function mergeOrphanSections(sections: SectionMap[]): SectionMap[] {
@@ -64,7 +66,7 @@ function updateCompletion(group: CategoryState[], index: number): CategoryState 
   return { ...category, isCompleted: newIsCompleted };
 }
 
-export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subtitle, isValid }) => {
+export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subtitle, isValid, hideSummary }) => {
   const testid = 'table-of-contents';
 
   // Merge and expand sections
@@ -133,19 +135,14 @@ export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subti
                 })}
               </React.Fragment>
             ))}
-
-            <SummaryRow index={globalIndex} isValid={isValid} onClick={onClick} key="task-list-table-summary" />
+            {!hideSummary ? (
+              <SummaryRow index={globalIndex} isValid={isValid} onClick={onClick} key="task-list-table-summary" />
+            ) : null}
           </tbody>
         </GoATable>
       </div>
     </PageBorder>
   );
 };
-
-export const MemoizedCategoryRow = React.memo(CategoryRow);
-export const MemoizedSectionHeaderRow = React.memo(
-  SectionHeaderRow,
-  (prev, next) => prev.title === next.title && prev.index === next.index
-);
 
 export const TableOfContentsTester: RankedTester = rankWith(1, uiTypeIs('TaskSection'));
