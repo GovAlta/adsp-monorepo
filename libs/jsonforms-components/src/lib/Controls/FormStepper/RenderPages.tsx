@@ -26,6 +26,8 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
 
   const hideSubmit = props.categoryProps.uischema.options?.hideSubmit ?? false;
   const toAppOverviewLabel = props.categoryProps.uischema.options?.toAppOverviewLabel ?? 'Back to application overview';
+  const submissionLabel = props.categoryProps.uischema.options?.submissionLabel ?? 'Next';
+  const hideSummary = props.categoryProps.uischema.options?.hideSummary ;
   const submitFormFunction = enumerators?.submitFunction.get('submit-form');
   const submitForm = submitFormFunction && submitFormFunction();
 
@@ -79,6 +81,9 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
               };
 
               if (index === activeId && !isOnReview) {
+                const currentStep = index + 1 - categories.filter((c) => !c.visible && c.id < index).length;
+                const totalSteps = categories.filter((c) => c.visible).length
+
                 return (
                   <div
                     data-testid={`step_${index}-content-pages`}
@@ -87,8 +92,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                   >
                     <PageRenderPadding>
                       <h3>
-                        Step {index + 1 - categories.filter((c) => !c.visible && c.id < index).length} of{' '}
-                        {categories.filter((c) => c.visible).length}
+                        Step {currentStep} of {totalSteps}
                       </h3>
                       <RenderStepElements {...categoryProps} />
                     </PageRenderPadding>
@@ -124,12 +128,14 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                               while (nextId < categories.length && categories[nextId].visible === false) {
                                 nextId = nextId + 1;
                               }
-                              goToPage(nextId);
+                              if (!(currentStep === totalSteps && hideSummary)) {
+                                goToPage(nextId);
+                              }
                             }}
                             disabled={!enabled}
                             testId="pages-save-continue-btn"
                           >
-                            Next
+                            {currentStep === totalSteps ? submissionLabel : "Next"}
                           </GoAButton>
                         </GoAButtonGroup>
                       </GoAGrid>
