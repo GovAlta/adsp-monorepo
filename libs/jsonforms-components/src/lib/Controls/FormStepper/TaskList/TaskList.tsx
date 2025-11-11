@@ -1,16 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { GoATable, GoAText } from '@abgov/react-components';
 import { PageBorder } from '../styled-components';
-import { CategoriesState } from '../context';
+import { CategoriesState, CategoryState } from '../context';
 import { ApplicationStatus } from '../ApplicationStatus';
-import { getCategorySections } from './categorySections';
+import { getCategorySections, SectionMap } from './categorySections';
 import { SectionHeaderRow } from './sectionHeaderRow';
 import { CategoryRow } from './categoryRow';
 import { SummaryRow } from './summaryRow';
-import { getCategoryStatus } from '../CategoryStatus';
-import { SectionMap } from './categorySections';
-import { CategoryState } from '../context';
 
 export interface TocProps {
   categories: CategoriesState;
@@ -20,10 +17,10 @@ export interface TocProps {
   isValid: boolean;
 }
 
-function mergeOrphanSections(sections: SectionMap[]) {
-  const result = [];
+function mergeOrphanSections(sections: SectionMap[]): SectionMap[] {
+  const result: SectionMap[] = [];
   for (const section of sections) {
-    const hasValidTitle = section.sectionTitle && section.sectionTitle.trim() !== '';
+    const hasValidTitle = section.sectionTitle?.trim() !== '';
     if (hasValidTitle) {
       result.push({ ...section, categories: [...section.categories] });
     } else {
@@ -37,72 +34,65 @@ function mergeOrphanSections(sections: SectionMap[]) {
   return result;
 }
 
-function expandSections(inputArray: SectionMap[]) {
-  if (!inputArray || inputArray.length === 0) return [];
-  const originalSection = inputArray[0];
-  const categories = originalSection.categories || [];
-  return categories.map((category, index) => ({
-    sectionTitle: `${category.label} Section`,
-    categories: [category]
+function expandSections(inputArray: SectionMap[]): SectionMap[] {
+  if (!inputArray?.length) return [];
+  const original = inputArray[0];
+  const categories = original.categories || [];
+  return categories.map((cat) => ({
+    sectionTitle: `${cat.label} Section`,
+    categories: [cat],
   }));
 }
 
-/* eslint-disable jsx-a11y/anchor-is-valid */
-export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocProps): JSX.Element => {
-  const testid = 'table-of-contents';
-  const sectioned = getCategorySections(categories);
-  const [completedGroups, setCompletedGroups] = useState(0);
-  const [total, setTotal] = useState(sectioned.filter((s) => s.categories && s.sectionTitle).length);
 
-  const shouldShow = (cat: CategoryState) => cat?.uischema?.options?.showInTaskList !== false;
+const shouldShow = (cat: CategoryState) => cat?.uischema?.options?.showInTaskList !== false;
 
-  const updateCompletion = (group: CategoryState[], category: CategoryState, groupIndex: number) : CategoryState => {
-    let leftIndex = groupIndex;
-    while (leftIndex > 0 && !shouldShow(group[leftIndex - 1])) {
-      leftIndex--;
-    }
-    let rightIndex = groupIndex;
-    while (rightIndex < group.length - 1 && !shouldShow(group[rightIndex + 1])) {
-      rightIndex++;
-    }
-    const currentLocalGroup = group.slice(leftIndex, rightIndex + 1);
-    const modifyCategory = JSON.parse(JSON.stringify(category));
-    modifyCategory.isCompleted = currentLocalGroup.length === currentLocalGroup.filter((cat) => cat.isCompleted).length;
-    return modifyCategory;
+function updateCompletion(group: CategoryState[], index: number): CategoryState {
+  const category = group[index];
+  if (!shouldShow(category)) return category;
+
+  let endIndex = index;
+  while (endIndex + 1 < group.length && !shouldShow(group[endIndex + 1])) {
+    endIndex++;
   }
 
-  const showInTaskListList = categories.map((cat) => {
-    return cat?.uischema?.options?.showInTaskList || cat?.uischema?.options?.showInTaskList === undefined;
-  });
+  const relevant = group.slice(index, endIndex + 1); // current + subsequent hidden
+  const newIsCompleted = relevant.every((cat) => cat.isCompleted);
+
+  if (category.isCompleted === newIsCompleted) return category;
+
+  return { ...category, isCompleted: newIsCompleted };
+}
+
+export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subtitle, isValid }) => {
+  const testid = 'table-of-contents';
+
+  // Merge and expand sections
+  const mergedSections = useMemo(() => {
+    let sections = mergeOrphanSections(getCategorySections(categories));
+    if (sections.length === 1) {
+      sections = expandSections(sections);
+    }
+    return sections;
+  }, [categories]);
+
+  // Derived values
+  const totalGroups = useMemo(
+    () => mergedSections.filter((section) => section.categories.some(shouldShow)).length,
+    [mergedSections]
+  );
+
+  const completedGroups = useMemo(
+    () =>
+      mergedSections.filter((section) => {
+        const visibleCats = section.categories.filter(shouldShow);
+        return visibleCats.length > 0 && visibleCats.every((cat) => cat.isCompleted);
+      }).length,
+    [mergedSections]
+  );
 
   let globalIndex = 0;
   let sectionIndex = 1;
-
-  useEffect(() => {
-    let count = 0;
-    let mergedSections = mergeOrphanSections(sectioned) as SectionMap[];
-    if (mergedSections.length === 1) {
-      mergedSections = expandSections(mergedSections);
-      setTotal(mergedSections.length)
-    }
-
-    mergedSections.forEach(({ categories: group }) => {
-      let countInGroup = 0;
-
-      group.forEach((category, groupIndex) => {
-        const modifyCategory = updateCompletion(group, category, groupIndex);;
-        if (getCategoryStatus(modifyCategory) === 'Completed') {
-          countInGroup++;
-        }
-      });
-
-      if (countInGroup === group.length) {
-        count++;
-      }
-    });
-
-    setCompletedGroups(count);
-  }, [categories, sectioned]); // re-run whenever categories change
 
   return (
     <PageBorder>
@@ -117,43 +107,29 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
             {subtitle}
           </GoAText>
         )}
-        <ApplicationStatus
-          completedGroups={completedGroups}
-          totalGroups={total}
-        />
+        <ApplicationStatus completedGroups={completedGroups} totalGroups={totalGroups} />
 
         <GoATable width="100%">
           <tbody>
-            {sectioned.map(({ sectionTitle, categories: group }, index) => (
+            {mergedSections.map(({ sectionTitle, categories: group }, index) => (
               <React.Fragment key={index}>
-             
-                {sectionTitle && showInTaskListList[globalIndex] && (
+                {sectionTitle && group.some(shouldShow) && (
                   <SectionHeaderRow key={`section-${sectionTitle}`} title={sectionTitle} index={sectionIndex++} />
                 )}
                 {group.map((category, groupIndex) => {
-                  const showCurrent = showInTaskListList[globalIndex];      
-                  const idx = globalIndex++; // renamed from `index` to avoid shadowing
+                  const showCurrent = shouldShow(category);
+                  const idx = globalIndex++;
 
-                  let currentCategory = category;
-                  const modifyCategory = updateCompletion(group, category, groupIndex);
+                  const currentCategory = showCurrent ? updateCompletion(group, groupIndex) : category;
 
-                   const showGroupTaskListList = categories.map((cat) => shouldShow(cat));
-                   if (showGroupTaskListList.length > showGroupTaskListList.filter((item) => item === true).length) {
-                     currentCategory = modifyCategory;
-                   }
-
-                  if (showCurrent) {
-                    return (
-                      <CategoryRow
-                        key={`cat-${category.label}-${idx}`}
-                        category={currentCategory}
-                        index={idx}
-                        onClick={onClick}
-                      />
-                    );
-                  }
-
-                  return null;
+                  return showCurrent ? (
+                    <CategoryRow
+                      key={`cat-${category.label}-${idx}`}
+                      category={currentCategory}
+                      index={idx}
+                      onClick={onClick}
+                    />
+                  ) : null;
                 })}
               </React.Fragment>
             ))}
@@ -164,6 +140,12 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
       </div>
     </PageBorder>
   );
-};;
+};
+
+export const MemoizedCategoryRow = React.memo(CategoryRow);
+export const MemoizedSectionHeaderRow = React.memo(
+  SectionHeaderRow,
+  (prev, next) => prev.title === next.title && prev.index === next.index
+);
 
 export const TableOfContentsTester: RankedTester = rankWith(1, uiTypeIs('TaskSection'));
