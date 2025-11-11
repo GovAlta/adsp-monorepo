@@ -18,6 +18,8 @@ export interface TocProps {
   title?: string;
   subtitle?: string;
   isValid: boolean;
+  hideSummary: boolean;
+
 }
 
 function mergeOrphanSections(sections: SectionMap[]) {
@@ -48,7 +50,14 @@ function expandSections(inputArray: SectionMap[]) {
 }
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
-export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocProps): JSX.Element => {
+export const TaskList = ({
+  categories,
+  onClick,
+  title,
+  subtitle,
+  isValid,
+  hideSummary,
+}: TocProps): JSX.Element => {
   const testid = 'table-of-contents';
   const sectioned = getCategorySections(categories);
   const [completedGroups, setCompletedGroups] = useState(0);
@@ -56,7 +65,7 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
 
   const shouldShow = (cat: CategoryState) => cat?.uischema?.options?.showInTaskList !== false;
 
-  const updateCompletion = (group: CategoryState[], category: CategoryState, groupIndex: number) : CategoryState => {
+  const updateCompletion = (group: CategoryState[], category: CategoryState, groupIndex: number): CategoryState => {
     let leftIndex = groupIndex;
     while (leftIndex > 0 && !shouldShow(group[leftIndex - 1])) {
       leftIndex--;
@@ -69,7 +78,7 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
     const modifyCategory = JSON.parse(JSON.stringify(category));
     modifyCategory.isCompleted = currentLocalGroup.length === currentLocalGroup.filter((cat) => cat.isCompleted).length;
     return modifyCategory;
-  }
+  };
 
   const showInTaskListList = categories.map((cat) => {
     return cat?.uischema?.options?.showInTaskList || cat?.uischema?.options?.showInTaskList === undefined;
@@ -83,14 +92,14 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
     let mergedSections = mergeOrphanSections(sectioned) as SectionMap[];
     if (mergedSections.length === 1) {
       mergedSections = expandSections(mergedSections);
-      setTotal(mergedSections.length)
+      setTotal(mergedSections.length);
     }
 
     mergedSections.forEach(({ categories: group }) => {
       let countInGroup = 0;
 
       group.forEach((category, groupIndex) => {
-        const modifyCategory = updateCompletion(group, category, groupIndex);;
+        const modifyCategory = updateCompletion(group, category, groupIndex);
         if (getCategoryStatus(modifyCategory) === 'Completed') {
           countInGroup++;
         }
@@ -117,30 +126,26 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
             {subtitle}
           </GoAText>
         )}
-        <ApplicationStatus
-          completedGroups={completedGroups}
-          totalGroups={total}
-        />
+        <ApplicationStatus completedGroups={completedGroups} totalGroups={total} />
 
         <GoATable width="100%">
           <tbody>
             {sectioned.map(({ sectionTitle, categories: group }, index) => (
               <React.Fragment key={index}>
-             
                 {sectionTitle && showInTaskListList[globalIndex] && (
                   <SectionHeaderRow key={`section-${sectionTitle}`} title={sectionTitle} index={sectionIndex++} />
                 )}
                 {group.map((category, groupIndex) => {
-                  const showCurrent = showInTaskListList[globalIndex];      
+                  const showCurrent = showInTaskListList[globalIndex];
                   const idx = globalIndex++; // renamed from `index` to avoid shadowing
 
                   let currentCategory = category;
                   const modifyCategory = updateCompletion(group, category, groupIndex);
 
-                   const showGroupTaskListList = categories.map((cat) => shouldShow(cat));
-                   if (showGroupTaskListList.length > showGroupTaskListList.filter((item) => item === true).length) {
-                     currentCategory = modifyCategory;
-                   }
+                  const showGroupTaskListList = categories.map((cat) => shouldShow(cat));
+                  if (showGroupTaskListList.length > showGroupTaskListList.filter((item) => item === true).length) {
+                    currentCategory = modifyCategory;
+                  }
 
                   if (showCurrent) {
                     return (
@@ -157,8 +162,9 @@ export const TaskList = ({ categories, onClick, title, subtitle, isValid }: TocP
                 })}
               </React.Fragment>
             ))}
-
-            <SummaryRow index={globalIndex} isValid={isValid} onClick={onClick} key="task-list-table-summary" />
+            {!hideSummary ? (
+              <SummaryRow index={globalIndex} isValid={isValid} onClick={onClick} key="task-list-table-summary" />
+            ) : null}
           </tbody>
         </GoATable>
       </div>
