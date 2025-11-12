@@ -1,6 +1,8 @@
 import {
   GoACallout,
   GoAContainer,
+  GoADropdown,
+  GoADropdownItem,
   GoAFormItem,
   GoAGrid,
   GoAIcon,
@@ -303,7 +305,35 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       return (
                         <td key={ix}>
                           <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
-                            {dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
+                            {dataObject.enum ? (
+                              <GoADropdown
+                                id={schemaName}
+                                name={schemaName}
+                                value={currentData != null ? String(currentData) : ''}
+                                testId={`#/properties/${schemaName}-select-${i}`}
+                                onChange={(name: string, value: string | string[]) => {
+                                  const selectedValue = Array.isArray(value) ? value[0] : value;
+                                  const coerced =
+                                    dataObject.type === 'number' && selectedValue !== ''
+                                      ? Number(selectedValue)
+                                      : selectedValue;
+                                  handleChange(rowPath, { [num]: { [schemaName]: coerced } });
+                                }}
+                                width="100%"
+                                ariaLabel={schemaName}
+                                error={!!error?.message}
+                              >
+                                {!required?.includes(schemaName) && (
+                                  <GoADropdownItem
+                                    value=""
+                                    label={`-- Select ${convertToSentenceCase(schemaName)} --`}
+                                  />
+                                )}
+                                {dataObject.enum.map((opt: string | number) => (
+                                  <GoADropdownItem key={String(opt)} value={String(opt)} label={String(opt)} />
+                                ))}
+                              </GoADropdown>
+                            ) : dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
                               <GoAInput
                                 error={error?.message.length > 0}
                                 type={dataObject.type === 'number' ? 'number' : 'text'}
@@ -326,7 +356,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                 testId="form-support-callout"
                                 heading="Not supported"
                               >
-                                Only string and number are supported inside arrays
+                                Only string, number, and enum are supported inside arrays
                               </GoACallout>
                             )}
                           </GoAFormItem>
