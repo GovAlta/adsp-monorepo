@@ -65,7 +65,7 @@ import { RowFlex, QueueTaskDropdown, H3, BorderBottom, H3Inline, ToolTipAdjust }
 import { Disposition, FormDefinition } from './model';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
-import { rename } from 'fs';
+
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -208,6 +208,10 @@ export function FormEditorCommon({
   updateTempTemplate,
   generatePdf,
   REALM_ROLE_KEY,
+  error,
+  registerData,
+  nonAnonymous,
+  dataList,
 }): JSX.Element {
   const editorRefData = useRef(null);
   const editorRefUi = useRef(null);
@@ -1003,6 +1007,12 @@ export function FormEditorCommon({
                   >
                     <GoAFormItem error={schemaError} label="">
                       <JSONFormPreviewer
+                        dataSchema={tempDataSchema}
+                        uiSchema={tempUiSchema}
+                        error={error}
+                        registerData={registerData}
+                        nonAnonymous={nonAnonymous}
+                        dataList={dataList}
                         onChange={({ data }) => {
                           setData(data);
                         }}

@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { Disposition } from '@store/form/model';
-import { GoAContextMenuIcon } from '@components/ContextMenu';
+import { GoAContextMenuIcon } from '../components/ContextMenu';
 import { Anchor, RowFlex } from './style-components';
 import { EmptyBoxSpace, Flex, ActionSpace } from './style-components';
 

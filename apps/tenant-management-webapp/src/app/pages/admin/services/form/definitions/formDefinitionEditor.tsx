@@ -18,6 +18,7 @@ import { modifiedDefinitionSelector } from '@store/form/selectors';
 import { rolesSelector } from '@store/access/selectors';
 import { PageIndicator } from '@components/Indicator';
 import { REALM_ROLE_KEY } from '@store/sharedSelectors/roles';
+import { selectRegisterData } from '@store/configuration/selectors';
 import {
   setDraftDataSchema,
   setDraftUISchema,
@@ -125,8 +126,14 @@ export const FormDefinitionEditor = (): JSX.Element => {
   const pdf = useSelector((state: RootState) => state?.pdf);
   const state0 = useSelector((state: RootState) => state);
 
+  const error = useSelector(schemaErrorSelector);
+
+  const registerData = useSelector(selectRegisterData);
+  const nonAnonymous = useSelector((state: RootState) => state.configuration?.nonAnonymous);
+  const dataList = useSelector((state: RootState) => state.configuration?.dataList);
+
   console.log(JSON.stringify(pdf) + '<pdf--------');
-  console.log(JSON.stringify(state0) + '<state--------');
+  // console.log(JSON.stringify(state0) + '<state--------');
 
   const newFileList = useSelector((state: RootState) => {
     return state?.fileService.newFileList;
@@ -271,6 +278,10 @@ export const FormDefinitionEditor = (): JSX.Element => {
                   generatePdf={generatePdfDispatch}
                   getCorePdfTemplates={getCorePdfTemplatesDispatch}
                   REALM_ROLE_KEY={REALM_ROLE_KEY}
+                  error={error}
+                  registerData={registerData}
+                  nonAnonymous={nonAnonymous}
+                  dataList={dataList}
                 />
               ) : (
                 <IndicatorBox>

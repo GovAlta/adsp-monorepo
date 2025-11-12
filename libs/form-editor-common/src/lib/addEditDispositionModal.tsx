@@ -1,10 +1,8 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
-import { toKebabName } from '@lib/kebabName';
-import { useValidators } from '@lib/validation/useValidators';
-import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
+import { toKebabName } from '../components/kebabName';
+import { useValidators } from '../components/useValidators';
+import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '../components/checkInput';
 import { DispositionFormItem, DescriptionItem } from '../styled-components';
-import { RootState } from '@store/index';
-import { useSelector } from 'react-redux';
 import { GoATextArea, GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components';
 import { Disposition } from '@store/form/model';
 interface AddEditDispositionModalProps {
@@ -27,12 +25,12 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
   const [template, setTemplate] = useState<Disposition>(initialValue);
 
   const templateIds = (existingDispositions || []).map((disposition) => disposition.name);
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
+  // const indicator = useSelector((state: RootState) => {
+  //   return state?.session?.indicator;
+  // });
 
   // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
+  // useEffect(() => {}, [indicator]);
 
   useEffect(() => {
     setTemplate(initialValue);

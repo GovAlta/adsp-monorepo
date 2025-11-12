@@ -1,4 +1,6 @@
 import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+import addErrors from 'ajv-errors';
 
 export interface ValidInput {
   pattern: RegExp;
@@ -9,6 +11,8 @@ export const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
 
 ajv.addFormat('time', /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/);
 ajv.addFormat('file-urn', /urn:[^:]+:[^:]+:[^:]+:[^:]+/);
+addFormats(ajv);
+addErrors(ajv);
 
 /**
  * Given a list of validators and name of the input field, report on its cleanliness

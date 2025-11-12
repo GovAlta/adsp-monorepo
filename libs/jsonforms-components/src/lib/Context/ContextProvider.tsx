@@ -20,14 +20,14 @@ export interface enumerators {
   formUrl: string;
 }
 
-interface FileManagement {
+export interface FileManagement {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fileList?: any;
   uploadFile?: (file: File, propertyId: string) => void;
   downloadFile?: (file: File) => void;
   deleteFile?: (file: File) => void;
 }
-interface SubmitManagement {
+export interface SubmitManagement {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   submitForm?: (any: any) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
