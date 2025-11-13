@@ -54,10 +54,21 @@ const CreateRealm = (): JSX.Element => {
   }, [userInfo, dispatch]);
 
   const ErrorMessage = (props) => {
-    const message = `${props.email} has already created a tenant. Currently only one tenant is allowed per person.`;
+    const Message = () => {
+      return (
+        <>
+          {props.email} has already created a tenant. Currently, one GoA staff is only allowed to create one tenant
+          through ADSP website. If you need to create another tenant using the same email, please send your request to{' '}
+          <a href="mailto:adsp@gov.ab.ca">adsp@gov.ab.ca</a> or #adsp-connections on slack.
+        </>
+      );
+    };
+
     return (
       <div>
-        <GoANotification type="information">{message}</GoANotification>
+        <GoANotification type="information">
+          <Message />
+        </GoANotification>
         <br />
         <GoAButton
           onClick={() => {

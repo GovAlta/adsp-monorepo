@@ -89,10 +89,14 @@ export function* isTenantAdmin(action: CheckIsTenantAdminAction): SagaIterator {
   const email = action.payload;
 
   try {
-    const response = yield call([api, api.fetchTenantByEmail], email);
-    yield put(UpdateTenantAdminInfo(true, response.name, response.realm));
+    const tenants = yield call([api, api.fetchTenantsByEmail], email);
+
+    if (tenants) {
+      const adminInTenants = tenants.map((tenant) => ({ name: tenant.name, realm: tenant.realm }));
+      yield put(UpdateTenantAdminInfo(true, adminInTenants[0].name, adminInTenants[0].realm, adminInTenants));
+    }
   } catch (e) {
-    yield put(UpdateTenantAdminInfo(false, TENANT_INIT.name, TENANT_INIT.realm));
+    yield put(UpdateTenantAdminInfo(false, TENANT_INIT.name, TENANT_INIT.realm, []));
   }
 }
 
