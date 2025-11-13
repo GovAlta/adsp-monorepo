@@ -130,8 +130,8 @@ export class AgentServiceConfiguration {
   }
 
   public getAgents() {
-    return Object.values(this.brokers).map((broker) => ({
-      id: broker.Agent.id,
+    return Object.entries(this.brokers).map(([key, broker]) => ({
+      id: key,
       name: broker.Agent.name,
     }));
   }

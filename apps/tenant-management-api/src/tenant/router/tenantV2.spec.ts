@@ -546,7 +546,7 @@ describe('createTenantV2Router', () => {
       expect(next).toBeCalledWith(expect.any(InvalidOperationError));
     });
 
-    it('can call next with invalid operation for admin with existing realm', async () => {
+    it('can create multiple tenants by tenant admin', async () => {
       const req = {
         body: {
           name: tenant.name,
@@ -568,7 +568,6 @@ describe('createTenantV2Router', () => {
 
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
-      expect(next).toBeCalledWith(expect.any(InvalidOperationError));
     });
   });
 });

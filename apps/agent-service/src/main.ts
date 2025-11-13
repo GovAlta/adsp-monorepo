@@ -1,4 +1,4 @@
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, instrumentAxios, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, UnauthorizedError } from '@core-services/core-common';
 import * as compression from 'compression';
@@ -37,6 +37,8 @@ const initializeApp = async (): Promise<Server> => {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
 
+  instrumentAxios(logger);
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
@@ -46,11 +48,16 @@ const initializeApp = async (): Promise<Server> => {
     tokenProvider,
     tenantService,
     configurationHandler,
+    metricsHandler,
+    tenantHandler,
     healthCheck,
     traceHandler,
   } = await initializePlatform(
     {
       serviceId,
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
       displayName: 'Agent service',
       description: 'Service for AI agents.',
       roles: [
@@ -66,6 +73,7 @@ const initializeApp = async (): Promise<Server> => {
         },
       ],
       events: [],
+      values: [ServiceMetricsValueDefinition],
       configuration: {
         schema: configurationSchema,
         description: 'Configuration of agents.',
@@ -74,9 +82,6 @@ const initializeApp = async (): Promise<Server> => {
       enableConfigurationInvalidation: true,
       combineConfiguration: (tenant: AgentConfigurations, core: AgentConfigurations, tenantId) =>
         new AgentServiceConfiguration(logger, directory, tokenProvider, tenantId, tenant, core),
-      clientSecret: environment.CLIENT_SECRET,
-      accessServiceUrl,
-      directoryUrl: new URL(environment.DIRECTORY_URL),
       additionalExtractors: [fromSocketHandshake],
       serviceConfigurations: [{ serviceId, configuration: CoreAgents }],
     },
@@ -96,8 +101,6 @@ const initializeApp = async (): Promise<Server> => {
 
   app.use(passport.initialize());
   app.use(traceHandler);
-
-  app.use('/agent', passport.authenticate(['core', 'tenant'], { session: false }));
 
   const ioServer = new IoServer(server, {
     serveClient: false,
@@ -133,7 +136,15 @@ const initializeApp = async (): Promise<Server> => {
   io.use(wrapForIo(passport.authenticate(['core', 'tenant'], { session: false })));
   io.use(wrapForIo(configurationHandler));
 
-  await applyAgentMiddleware(app, [defaultIo, io], { logger, directory, tokenProvider, tenantService });
+  app.use(
+    '/agent',
+    metricsHandler,
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
+
+  applyAgentMiddleware(app, [defaultIo, io], { logger, directory, tokenProvider, tenantService });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {

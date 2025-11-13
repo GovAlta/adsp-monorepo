@@ -187,7 +187,10 @@ export function createTenant(
 
       // check for duplicates of name or admin email.
       await validateName(logger, tenantRepository, name);
-      await validateEmailInDB(logger, tenantRepository, email);
+
+      if (!user.roles.includes(TenantServiceRoles.TenantServiceAdmin)) {
+        await validateEmailInDB(logger, tenantRepository, email);
+      }
 
       if (existingRealm) {
         if (!adminEmail) {
