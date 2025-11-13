@@ -51,7 +51,7 @@ Feature: PDF service
     When the user clicks "Edit" icon of "autotest-accessibility-test", "autotest-accessibility-test" and "DO-NOT-DELETE" on PDF templates page
     Then the user views the PDF template editor screen
     Then the user views "autotest-accessibility-test", "autotest-accessibility-test" and "DO-NOT-DELETE" in PDF template editor
-    And no critical or serious accessibility issues for "PDF template modal" on "PDF templates page"
+    And no critical or serious accessibility issues on "PDF template editor page"
 
   @TEST_CS-2063 @regression
   Scenario: As a tenant admin, I can edit templates in header, footer,body and CSS section, and generate pdf files.
