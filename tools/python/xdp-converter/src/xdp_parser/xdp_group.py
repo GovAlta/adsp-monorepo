@@ -15,7 +15,7 @@ class XdpGroup(XdpElement):
     ):
         super().__init__(subform, context=context)
         self.elements = elements
-        self.label = label or subform.get("name") or ""
+        self.label = label  # or subform.get("name") or ""
 
     def to_form_element(self) -> FormElement:
         group_elements = []

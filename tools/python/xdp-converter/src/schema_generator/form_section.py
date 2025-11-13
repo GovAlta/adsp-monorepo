@@ -21,9 +21,12 @@ class FormSection(FormElement):
     def build_ui_schema(self):
         ui_schema = {"type": "VerticalLayout"}
         ui_schema["label"] = self.title
+        print(f"[DEBUG] Building UI schema for section: {self.title}")
         ui_schema["elements"] = [SectionTitle(self.title).to_ui_schema()]
         for element in self.elements:
-            ui_schema["elements"].append(element.to_ui_schema())
+            child_schema = element.to_ui_schema()
+            if child_schema is not None:
+                ui_schema["elements"].append(child_schema)
         return ui_schema
 
     def has_json_schema(self):

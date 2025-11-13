@@ -45,7 +45,6 @@ class FormElement(ABC):
             if suffix not in checked:
                 checked.add(suffix)
                 if suffix in rules:
-                    print(f"  [DEBUG] Matched visibility rule for {suffix}")
                     return rules[suffix]
 
         # --- Then, try progressive parent paths (from deepest to shallow)
@@ -54,7 +53,6 @@ class FormElement(ABC):
             if parent not in checked:
                 checked.add(parent)
                 if parent in rules:
-                    print(f"  [DEBUG] Matched visibility rule for parent {parent}")
                     return rules[parent]
 
         return None

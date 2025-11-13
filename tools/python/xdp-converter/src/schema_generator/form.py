@@ -12,7 +12,9 @@ class Form(FormElement):
         ui_schema = {"type": "VerticalLayout"}
         ui_schema["elements"] = []
         for section in self.sections:
-            ui_schema["elements"].append(section.to_ui_schema())
+            child = section.to_ui_schema()
+            if child:
+                ui_schema["elements"].append(child)
         return ui_schema
 
     def has_json_schema(self):

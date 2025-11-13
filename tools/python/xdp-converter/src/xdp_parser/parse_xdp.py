@@ -68,7 +68,7 @@ class XdpParser:
     # ----------------------------------------------------------------------
     def parse_subform(self, subform: ET.Element) -> List:
         controls = []
-        control_labels = ControlLabels(subform)
+        control_labels = ControlLabels(subform, self.context)
 
         # Skip list-control containers (Add/Remove) — already modelled elsewhere
         if is_list_control_container(
@@ -108,6 +108,18 @@ class XdpParser:
             if is_radio_button(elem):
                 control = self.factory.handle_radio(elem, control_labels)
                 if control:
+                    # name = elem.get("name") or ""
+                    # if name in (
+                    #     "rbCoverYes_No",
+                    #     "rbStatusYes_No",
+                    #     "rbCanadaYes_No",
+                    #     "rbApplicant",
+                    # ):
+                    #     print(
+                    #         f"[FACTORY] label resolution for {name!r}: "
+                    #         f"from_ControlLabels={label_from_labels!r}, inline={inline!r}, fallback={fallback!r}"
+                    #     )
+
                     controls.append(control)
                 i += 1
                 continue

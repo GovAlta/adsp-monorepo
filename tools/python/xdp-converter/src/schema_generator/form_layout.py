@@ -1,4 +1,6 @@
+import re
 from schema_generator.form_element import FormElement
+from xdp_parser.control_labels import _control_name, inline_caption
 from xdp_parser.parse_context import ParseContext
 
 
@@ -13,7 +15,9 @@ class FormLayout(FormElement):
         ui_schema = {"type": self.type}
         ui_schema["elements"] = []
         for element in self.elements:
-            ui_schema["elements"].append(element.to_ui_schema())
+            child = element.to_ui_schema()
+            if child:
+                ui_schema["elements"].append(child)
         return ui_schema
 
     def has_json_schema(self):
@@ -36,12 +40,45 @@ class FormGroup(FormElement):
         self.can_group_horizontally = False
 
     def build_ui_schema(self):
-        ui_schema = {"type": "Group"}
+        # Build children first
+        rendered_children = []
+        for element in self.elements:
+            child = element.to_ui_schema()
+            if child is not None:
+                rendered_children.append(child)
+
+        # If group has no children → prune
+        if not rendered_children:
+            return None
+
+        # COLLAPSE RULE #1:
+        # If group has no label AND only one child group, collapse it
+        if not self.label and len(rendered_children) == 1:
+            only = rendered_children[0]
+            if isinstance(only, dict) and only.get("type") == "Group":
+                return only
+
+        # Collapse layouts that have no label AND all children are HelpContent.
+        if (
+            not self.label
+            and rendered_children
+            and all(
+                isinstance(child, dict) and child.get("type") == "HelpContent"
+                for child in rendered_children
+            )
+        ):
+            return {
+                "type": "VerticalLayout",
+                "elements": rendered_children,
+            }
+        # Build normal group UI
+        ui_schema = {
+            "type": "Group",
+            "elements": rendered_children,
+        }
         if self.label:
             ui_schema["label"] = self.label
-        ui_schema["elements"] = []
-        for element in self.elements:
-            ui_schema["elements"].append(element.to_ui_schema())
+
         return ui_schema
 
     def has_json_schema(self):

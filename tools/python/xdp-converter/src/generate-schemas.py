@@ -90,7 +90,6 @@ def process_one(
         visibility_rules = pipeline.run(rule_context).get(
             "jsonforms_visibility_rules", {}
         )
-        print(f"  [DEBUG] visibility rules  {visibility_rules} ")
 
         # --- 5. Load help text (unchanged) ---
         registry = HelpTextRegistry()

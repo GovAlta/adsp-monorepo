@@ -3,6 +3,7 @@ from typing import Any, Optional
 
 from xdp_parser.control_labels import ControlLabels
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
+from xdp_parser.group_labels import find_group_label
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_object_array import XdpObjectArray
@@ -58,7 +59,12 @@ class XdpElementFactory(AbstractXdpFactory):
         return XdpBasicInput(field, labels, context=self.context)
 
     def handle_group(self, container: ET.Element, children: list, label: str) -> Any:
-        return XdpGroup(container, children, self.context, label)
+        # If container has no meaningful children, skip it
+        if not children:
+            return None
+        # Replace label with a smart one
+        smart_label = find_group_label(children)
+        return XdpGroup(container, children, self.context, smart_label)
 
     def handle_help_text(self, elem: ET.Element, help_text: str) -> Any:
         return XdpHelpText(help_text, self.context)

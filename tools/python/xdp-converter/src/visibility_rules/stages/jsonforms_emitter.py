@@ -32,9 +32,6 @@ class JsonFormsEmitter:
                 mapped_value = self.resolve_enum_value(driver, const_value, enum_maps)
                 schema = {"const": mapped_value}
                 scope = f"#/properties/{driver}"
-                print(
-                    f"  [DEBUG] enum resolved (force-map): {driver} {const_value} → {mapped_value}"
-                )
 
             elif len(rule.conditions) == 1:
                 cond = rule.conditions[0]
@@ -71,8 +68,6 @@ class JsonFormsEmitter:
                 emitted[qualified_target] = {"rules": [rule_entry]}
             else:
                 emitted[qualified_target]["rules"].append(rule_entry)
-
-            print(f"  [DEBUG] Attached rule to {qualified_target}")
 
         # Post-process: collapse per-target rules into a single JSONForms "rule" object
         for key, entry in list(emitted.items()):
@@ -121,7 +116,6 @@ class JsonFormsEmitter:
         enum_map = enum_maps.get(driver)
         if enum_map and value_key in enum_map:
             mapped = enum_map[value_key]
-            print(f"  [DEBUG] enum resolved (exact): {driver} {value_key} → {mapped}")
             return mapped
 
         if "." in driver:
@@ -129,9 +123,6 @@ class JsonFormsEmitter:
             enum_map = enum_maps.get(last)
             if enum_map and value_key in enum_map:
                 mapped = enum_map[value_key]
-                print(
-                    f"  [DEBUG] enum resolved (fallback): {driver} → {last} {value_key} → {mapped}"
-                )
                 return mapped
 
         return raw_value
