@@ -117,20 +117,24 @@ class ControlLabels:
             return None
 
         # scan backwards for a <draw> that looks like a label
+        # scan backwards for a <draw> that looks like a label
         for prev in reversed(children[:index]):
-            tag = (
-                prev.tag.split("}", 1)[-1].lower()
-                if "}" in prev.tag
-                else prev.tag.lower()
-            )
-            if tag == "draw":
+            ptag = prev.tag.split("}", 1)[-1].lower()
+
+            # NEW RULE: stop if we hit another control before a draw
+            if ptag in {"field", "exclgroup"}:
+                # This means the preceding <draw> belongs to that field, not us
+                break
+
+            if ptag == "draw":
                 nm = prev.get("name", "")
                 txt = _label_text_from_node(prev)
                 nm_low = nm.lower()
+
+                # strict prefix match
                 if nm_low.startswith("lbl") or nm_low.startswith("label"):
                     if txt and txt.strip():
                         return txt.strip()
-
         return None
 
 

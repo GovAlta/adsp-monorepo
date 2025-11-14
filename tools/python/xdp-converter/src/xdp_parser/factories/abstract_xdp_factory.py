@@ -10,7 +10,7 @@ class AbstractXdpFactory(ABC):
 
     @abstractmethod
     def handle_object_array(
-        self, container: ET.Element, labels: ControlLabels
+        self, container: ET.Element, labels: ControlLabels, row_fields: list
     ) -> Any: ...
 
     @abstractmethod

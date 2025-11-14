@@ -22,12 +22,14 @@ class XdpElementFactory(AbstractXdpFactory):
     def __init__(self, context: ParseContext):
         super().__init__(context)
 
-    def handle_object_array(self, container: ET.Element, labels: ControlLabels) -> Any:
+    def handle_object_array(
+        self, container: ET.Element, labels: ControlLabels, row_fields: list
+    ) -> Any:
         # The XdpParser will gather columns; here we wrap the container.
         return XdpObjectArray(
             container,
             container.get("name") or "Items",
-            [],
+            row_fields,
             labels,
             context=self.context,
         )

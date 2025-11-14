@@ -5,7 +5,8 @@ from xdp_parser.control_helpers import is_checkbox, is_radio_button
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
 from xdp_parser.orphaned_list_controls import is_list_control_container
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.parsing_helpers import is_object_array
+from xdp_parser.parsing_helpers import find_input_fields, is_object_array
+from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_utils import remove_duplicates, is_hidden, is_subform, tag_name
 from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_radio_selector import extract_radio_button_labels
@@ -74,7 +75,12 @@ class XdpParser:
 
         # --- Handle object array (list-with-detail) ---
         if is_object_array(subform):
-            control = self.factory.handle_object_array(subform, self.control_labels)
+            # Extract child input controls (columns)
+            row_fields = list(self.find_simple_controls(subform))
+
+            control = self.factory.handle_object_array(
+                subform, self.control_labels, row_fields
+            )
             if control:
                 controls.append(control)
             return remove_duplicates(controls)
@@ -87,8 +93,13 @@ class XdpParser:
                 controls.append(control)
             return remove_duplicates(controls)
 
-        # --- Traverse child elements ---
-        elements = list(subform)
+        form_elements = self.find_simple_controls(subform)
+        controls.extend(form_elements)
+        return controls
+
+    def find_simple_controls(self, node: ET.Element) -> List[XdpElement]:
+        controls = []
+        elements = list(node)
         i = 0
         while i < len(elements):
             elem = elements[i]
@@ -144,7 +155,7 @@ class XdpParser:
 
             i += 1
 
-        return remove_duplicates(controls)
+        return controls
 
     # ----------------------------------------------------------------------
     # Form structure helpers
