@@ -26,6 +26,8 @@ class FormInput(FormElement):
 
     def to_json_schema(self):
         json_schema = {"type": self.input_type}
+        if self.label:
+            json_schema["title"] = strip_label_prefix(self.label)
         if self.enum:
             json_schema["enum"] = self.enum
         if self.format:
