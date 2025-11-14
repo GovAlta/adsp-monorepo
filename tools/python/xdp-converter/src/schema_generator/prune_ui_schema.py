@@ -1,71 +1,50 @@
-def prune_ui_schema(node: dict):
-    """
-    Recursively prunes nodes:
-      - removes groups without rules containing only a single element
-      - removes groups consisting solely of HelpContent
-      - removes wrapper layout nodes with a single child (e.g. VerticalLayout)
-    """
+def prune_ui_schema(schema: dict):
+    if not isinstance(schema, dict):
+        return schema
 
-    elements = node.get("elements")
-    if not elements:
-        return node
+    elements = schema.get("elements")
+    if isinstance(elements, list):
+        # Recurse first
+        for i, child in enumerate(elements):
+            if isinstance(child, dict):
+                elements[i] = prune_ui_schema(child)
 
-    # recurse first
-    for i, child in enumerate(elements):
-        if isinstance(child, dict) and "elements" in child:
-            elements[i] = prune_ui_schema(child)
+        # Then apply dedupe at this level
+        _remove_duplicate_help(elements)
 
-    # apply duplicate-help removal
-    _remove_duplicate_help(elements)
-
-    # if this node is a Group with no rule:
-    is_group = node.get("type") == "Group"
-    has_rule = "rule" in node
-
-    if is_group and not has_rule:
-        # case 1: only 1 element → lift it
-        if len(elements) == 1:
-            return elements[0]
-
-        # case 2: all HelpContent → lift them out (return VerticalLayout)
-        if all(e.get("type") == "HelpContent" for e in elements):
-            return {"type": "VerticalLayout", "elements": elements}
-
-    # flatten nested layouts like VerticalLayout(Group(X)) → X
-    if node.get("type") in ("Group", "VerticalLayout", "HorizontalLayout"):
-        if len(elements) == 1 and isinstance(elements[0], dict):
-            only = elements[0]
-            # Only flatten if the wrapper has no rule
-            if "rule" not in node:
-                return only
-
-    return node
+    return schema
 
 
-def _remove_duplicate_help(elements: list):
-    """
-    Removes HelpContent entries that appear immediately before a Control
-    where the help text matches the control's label exactly.
-    """
+def _remove_duplicate_help(elements):
     i = 0
     while i < len(elements) - 1:
         cur = elements[i]
         nxt = elements[i + 1]
 
-        # detect help + control
-        if cur.get("type") == "HelpContent" and nxt.get("type") == "Control":
-            help_text = cur.get("options", {}).get("help", "")
-            ctrl_label = nxt.get("label", "")
-
-            if _norm(help_text) == _norm(ctrl_label):
-                # remove redundant help
-                elements.pop(i)
-                continue  # re-check same index with new successor
-
+        if _is_help(cur) and _is_control(nxt):
+            if _same_normalized_help_and_label(cur, nxt):
+                del elements[i]
+                continue
         i += 1
 
 
-def _norm(txt: str) -> str:
-    if not txt:
-        return ""
-    return " ".join(txt.split()).strip()
+def _is_help(elem):
+    return isinstance(elem, dict) and elem.get("type") == "HelpContent"
+
+
+def _is_control(elem):
+    return isinstance(elem, dict) and elem.get("type") == "Control"
+
+
+def _same_normalized_help_and_label(help_elem, control_elem):
+    help_list = help_elem.get("options", {}).get("help", [])
+    if isinstance(help_list, list) and help_list:
+        help_text = help_list[0]
+    else:
+        help_text = help_list or ""
+
+    return _norm(help_text) == _norm(control_elem.get("label", ""))
+
+
+def _norm(text):
+    return " ".join(str(text).split()).strip().lower()

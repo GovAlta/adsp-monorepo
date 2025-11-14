@@ -64,6 +64,10 @@ class XdpElementFactory(AbstractXdpFactory):
         # If container has no meaningful children, skip it
         if not children:
             return None
+
+        if len(children) == 1:
+            return children[0]
+
         # Replace label with a smart one
         smart_label = find_group_label(children)
         return XdpGroup(container, children, self.context, smart_label)
