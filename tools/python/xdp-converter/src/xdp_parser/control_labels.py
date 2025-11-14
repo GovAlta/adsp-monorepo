@@ -152,6 +152,10 @@ class ControlLabels:
 
 
 def inline_caption(node):
+    # If this is an exclGroup, ignore child captions entirely.
+    tag = node.tag.split("}", 1)[-1].lower()
+    if tag == "exclgroup":
+        return ""
     t = node.find(".//{*}caption/{*}value/{*}text")
     if t is not None and (t.text or "").strip():
         return t.text.strip()

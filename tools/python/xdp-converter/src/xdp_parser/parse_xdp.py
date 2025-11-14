@@ -16,16 +16,12 @@ class XdpParser:
     Central traversal engine for XDP trees.
     Delegates element creation to a pluggable factory
     that implements AbstractXdpFactory.
-
-    This version is visibility-rule aware:
-    - We no longer blanket-skip hidden fields. Instead, we include hidden
-      fields that have visibility rules targeting them and let the rule
-      engine decide whether they render.
     """
 
     def __init__(self, factory: AbstractXdpFactory, context: ParseContext):
         self.factory = factory
         self.context = context
+        self.control_labels = None
 
     # ----------------------------------------------------------------------
     # Entry point
@@ -42,6 +38,7 @@ class XdpParser:
 
         form_root = self.find_form_root(self.context.get("root"))
         subforms = self.find_top_subforms(form_root)
+        self.control_labels = ControlLabels(form_root, self.context)
 
         all_elements = []
         for subform in subforms:
@@ -68,7 +65,6 @@ class XdpParser:
     # ----------------------------------------------------------------------
     def parse_subform(self, subform: ET.Element) -> List:
         controls = []
-        control_labels = ControlLabels(subform, self.context)
 
         # Skip list-control containers (Add/Remove) — already modelled elsewhere
         if is_list_control_container(
@@ -78,7 +74,7 @@ class XdpParser:
 
         # --- Handle object array (list-with-detail) ---
         if is_object_array(subform):
-            control = self.factory.handle_object_array(subform, control_labels)
+            control = self.factory.handle_object_array(subform, self.control_labels)
             if control:
                 controls.append(control)
             return remove_duplicates(controls)
@@ -86,7 +82,7 @@ class XdpParser:
         # --- Handle implicit radio group (subform full of radio-style checkButtons) ---
         radio_labels = extract_radio_button_labels(subform)
         if radio_labels:
-            control = self.factory.handle_radio(subform, control_labels)
+            control = self.factory.handle_radio(subform, self.control_labels)
             if control:
                 controls.append(control)
             return remove_duplicates(controls)
@@ -106,27 +102,15 @@ class XdpParser:
 
             # Explicit or implicit radio groups (exclGroup or radio-like fields)
             if is_radio_button(elem):
-                control = self.factory.handle_radio(elem, control_labels)
+                control = self.factory.handle_radio(elem, self.control_labels)
                 if control:
-                    # name = elem.get("name") or ""
-                    # if name in (
-                    #     "rbCoverYes_No",
-                    #     "rbStatusYes_No",
-                    #     "rbCanadaYes_No",
-                    #     "rbApplicant",
-                    # ):
-                    #     print(
-                    #         f"[FACTORY] label resolution for {name!r}: "
-                    #         f"from_ControlLabels={label_from_labels!r}, inline={inline!r}, fallback={fallback!r}"
-                    #     )
-
                     controls.append(control)
                 i += 1
                 continue
 
             # Checkboxes
             if is_checkbox(elem):
-                control = self.factory.handle_checkbox(elem, control_labels)
+                control = self.factory.handle_checkbox(elem, self.control_labels)
                 if control:
                     controls.append(control)
                 i += 1
@@ -141,7 +125,7 @@ class XdpParser:
                     i += 1
                     continue
 
-                control = self.factory.handle_basic_input(elem, control_labels)
+                control = self.factory.handle_basic_input(elem, self.control_labels)
                 if control:
                     controls.append(control)
                 i += 1
