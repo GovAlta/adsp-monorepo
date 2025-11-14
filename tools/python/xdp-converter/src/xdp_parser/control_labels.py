@@ -59,10 +59,6 @@ class ControlLabels:
             "rbStatusYes_No",
             "rbCanadaYes_No",
         ]
-        print("[CTRL] Final label mapping for radios:")
-        for key in interesting_keys:
-            print(f"  [CTRL] {key!r} -> {self.mapping.get(key)!r}")
-        print()
 
         return self.mapping
 
@@ -109,18 +105,15 @@ class ControlLabels:
         using parent_map (since ElementTree lacks getparent()).
         """
         name = node.attrib.get("name", "")
-        print(f"[CTRL] _preceding_draw_label for node={name!r}")
 
         parent = self.context.parent_map.get(node)
         if parent is None:
-            print(f"[CTRL]   no parent in parent_map for {name!r}")
             return None
 
         children = list(parent)
         try:
             index = children.index(node)
         except ValueError:
-            print(f"[CTRL]   node {name!r} not found among parent's children")
             return None
 
         # scan backwards for a <draw> that looks like a label
@@ -133,16 +126,11 @@ class ControlLabels:
             if tag == "draw":
                 nm = prev.get("name", "")
                 txt = _label_text_from_node(prev)
-                print(f"[CTRL]   found preceding <draw> name={nm!r} text={txt!r}")
                 nm_low = nm.lower()
                 if nm_low.startswith("lbl") or nm_low.startswith("label"):
                     if txt and txt.strip():
-                        print(
-                            f"[CTRL]   USING preceding-draw label {txt!r} for {name!r}"
-                        )
                         return txt.strip()
 
-        print(f"[CTRL]   no usable preceding <draw> for {name!r}")
         return None
 
 
@@ -279,16 +267,6 @@ def _control_index_by_name(container, parent_map):
         name = element.attrib.get("name")
         if name and name not in idx:
             idx[name] = element
-    print("[CTRL] Controls discovered:")
-    for k, v in idx.items():
-        print(
-            "   ",
-            k,
-            "tag=",
-            v.tag,
-            "parent=",
-            parent_map.get(v).tag if parent_map.get(v) else None,
-        )
     return idx
 
 

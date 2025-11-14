@@ -33,9 +33,6 @@ class VisibilityScriptExtractor:
             event_elem = parent_map.get(script_elem)
             event_name = event_elem.get("name") if event_elem is not None else "unknown"
             if event_name == "event__initialize":
-                print(
-                    f"  [DEBUG] Skipping initialize event for script at {self._get_xpath(script_elem, parent_map)}"
-                )
                 continue
 
             # Extract parent <event> info if available
