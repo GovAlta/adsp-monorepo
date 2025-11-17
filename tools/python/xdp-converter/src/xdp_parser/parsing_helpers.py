@@ -7,20 +7,14 @@ from xdp_parser.xdp_utils import has_repeater_occur, is_button, presence_hidden
 
 def is_object_array(node):
     if node.find("./occur") is not None:
-        print(f"Node {node.attrib.get('name')} has <occur>")
         return True
 
     # Existing fallback
     if has_repeater_occur(node):
-        print(f"[DEBUG] Node {node.attrib.get('name')} has repeater occur")
         return True
 
     fields = _leaf_fields_excluding_buttons(node)
     has_buttons = any(_is_add_remove_button(f) for f in node.findall(".//field"))
-    if has_buttons and len(fields) >= 1:
-        print(
-            f"[DEBUG] {node.attrib.get('name')} has_buttons: {has_buttons} with {len(fields)}"
-        )
     return has_buttons and len(fields) >= 1
 
 

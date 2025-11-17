@@ -3,9 +3,9 @@ from typing import List
 from xdp_parser.control_labels import ControlLabels, inline_caption
 from xdp_parser.control_helpers import is_checkbox, is_radio_button
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
-from xdp_parser.orphaned_list_controls import is_list_control_container
+from xdp_parser.orphaned_list_controls import is_add_remove_container
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.parsing_helpers import find_input_fields, is_object_array
+from xdp_parser.parsing_helpers import is_object_array
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_utils import remove_duplicates, is_hidden, is_subform, tag_name
 from xdp_parser.xdp_help_text import XdpHelpText
@@ -68,7 +68,7 @@ class XdpParser:
         controls = []
 
         # Skip list-control containers (Add/Remove) — already modelled elsewhere
-        if is_list_control_container(
+        if is_add_remove_container(
             subform, self.context.get("root"), self.context.get("parent_map")
         ):
             return []

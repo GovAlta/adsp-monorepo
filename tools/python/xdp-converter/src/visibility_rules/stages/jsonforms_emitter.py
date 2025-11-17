@@ -84,7 +84,6 @@ class JsonFormsEmitter:
         """Return a fully qualified XDP path name for the given target."""
         target_node = self._find_node_by_name(target, xdp_root)
         if not target_node:
-            print(f"  [WARN] Could not find node for {target}; using fallback name")
             return target
 
         parts = []
