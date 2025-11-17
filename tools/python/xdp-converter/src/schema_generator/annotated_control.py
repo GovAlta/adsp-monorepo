@@ -1,4 +1,5 @@
 from schema_generator.form_layout import FormLayout
+from xdp_parser.parse_context import ParseContext
 
 
 # An annotated control represents a selector that has different "help" messages
@@ -6,8 +7,8 @@ from schema_generator.form_layout import FormLayout
 # on the left and the selected help message on the right.
 class AnnotatedControl(FormLayout):
 
-    def __init__(self, elements):
-        super().__init__("HorizontalLayout", elements)
+    def __init__(self, elements, context: ParseContext):
+        super().__init__("HorizontalLayout", elements, context)
 
     def has_json_schema(self):
         return True

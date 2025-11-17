@@ -1,10 +1,12 @@
 from schema_generator.form_element import FormElement
 import re
 
+from xdp_parser.parse_context import ParseContext
+
 
 class SectionTitle(FormElement):
-    def __init__(self, text):
-        super().__init__("guidance", None, None)
+    def __init__(self, text, context: ParseContext):
+        super().__init__("guidance", None, None, context)
         self.help = text
         self.label = None
 

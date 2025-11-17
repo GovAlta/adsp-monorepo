@@ -1,0 +1,32 @@
+{
+  "form1.Page1.Adult": {
+    "rules": [
+      { "effect": "SHOW", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Adult Health" } } },
+      { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Adult Health" } } }
+    ]
+  },
+  "form1.Page1.Child": {
+    "rules": [
+      { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child Health" } } },
+      { "effect": "SHOW", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child Health" } } }
+    ]
+  },
+  "form1.Page1.AAHB": {
+    "rules": [
+      { "effect": "SHOW", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Adult Health" } } },
+      { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child Health" } } }
+    ]
+  },
+  "Applicant.Canadian": {
+    "rules": [
+      { "effect": "SHOW", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Adult Health" } } },
+      { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child Health" } } }
+    ]
+  },
+  "Partner.Canadian": {
+    "rules": [
+      { "effect": "SHOW", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Adult Health" } } },
+      { "effect": "HIDE", "condition": { "scope": "#/properties/rbApplicant", "schema": { "const": "Child Health" } } }
+    ]
+  }
+}

@@ -1,11 +1,12 @@
 from schema_generator.form_input import FormInput
+from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_utils import get_field_caption
 
 
 class XdpRadio(XdpElement):
-    def __init__(self, xdp, labels):
-        super().__init__(xdp, labels)
+    def __init__(self, xdp, labels, context: ParseContext):
+        super().__init__(xdp, labels, context)
 
     def to_form_element(self):
         options = []
@@ -17,7 +18,11 @@ class XdpRadio(XdpElement):
 
         if options:
             fe = FormInput(
-                self.get_name(), self.full_path, self.get_type(), self.get_label()
+                self.get_name(),
+                self.full_path,
+                self.get_type(),
+                self.get_label(),
+                self.context,
             )
             fe.enum = options
             fe.is_radio = True

@@ -1,10 +1,18 @@
 from schema_generator.form_element import FormElement
+from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_utils import strip_label_prefix
 
 
 class FormInput(FormElement):
-    def __init__(self, name: str, qualified_name, input_type: str, label: str):
-        super().__init__("control", name, qualified_name)
+    def __init__(
+        self,
+        name: str,
+        qualified_name,
+        input_type: str,
+        label: str,
+        context: ParseContext,
+    ):
+        super().__init__("control", name, qualified_name, context)
         self.input_type: str = input_type
         self.format: str = None
         self.enum: list[str] = None
@@ -18,6 +26,8 @@ class FormInput(FormElement):
 
     def to_json_schema(self):
         json_schema = {"type": self.input_type}
+        if self.label:
+            json_schema["title"] = strip_label_prefix(self.label)
         if self.enum:
             json_schema["enum"] = self.enum
         if self.format:
