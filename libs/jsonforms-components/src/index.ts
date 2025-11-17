@@ -253,3 +253,6 @@ export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
 ];
 
 export const GoACells: JsonFormsCellRendererRegistryEntry[] = [...InputCells];
+// …existing exports
+export * from './lib/Controls/FormStepper/util/HistoryBridge';
+export * from './lib/Controls/FormStepper/context/StepperContext';

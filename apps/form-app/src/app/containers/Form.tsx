@@ -1,72 +1,144 @@
-import { GoAIconButton } from '@abgov/react-components';
-import { Container } from '@core-services/app-common';
-import { FunctionComponent, useEffect, useState } from 'react';
+// apps/form-app/src/app/containers/Form.tsx
+import React, { FunctionComponent, useEffect, useMemo, useState } from 'react';
+import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import styled from 'styled-components';
+
 import {
   AppDispatch,
   AppState,
-  busySelector,
-  canSubmitSelector,
-  dataSelector,
   definitionSelector,
-  fileBusySelector,
-  filesSelector,
   formSelector,
-  loadForm,
-  selectTopic,
+  dataSelector,
+  filesSelector,
+  busySelector,
   selectedTopicSelector,
+  canSubmitSelector,
   showSubmitSelector,
   submitForm,
   updateForm,
+  loadForm,
 } from '../state';
-import { DraftFormWrapper } from '../components/DraftFormWrapper';
+
 import { LogoutModal } from '../components/LogoutModal';
 import { SubmittedForm } from '../components/SubmittedForm';
-import CommentsViewer from './CommentsViewer';
+import { CommentsViewer } from './CommentsViewer';
+import { DraftFormWrapper } from '../components/DraftFormWrapper';
 
+// ---------- styled ----------
+const Page = styled.div<{ 'data-show': boolean }>`
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
+
+  .commentsPane {
+    position: sticky;
+    top: 24px;
+    height: calc(100vh - 48px);
+    overflow: auto;
+  }
+
+  &[data-show='false'] .commentsPane {
+    display: none;
+  }
+`;
+
+const Container = styled.div<{ vs?: number; hs?: number }>`
+  padding: 16px;
+`;
+
+// ---------- helpers ----------
+/**
+ * Option A: clone definition and add uiSchema.options.historySync
+ * basePath example: `/${tenant}/${definitionId}/${formId}`
+ */
+function withHistorySync<T extends { uiSchema?: any }>(definition: T | undefined, basePath: string | undefined) {
+  if (!definition || !definition.uiSchema || !basePath) return definition;
+  const currentOpts = (definition.uiSchema.options ?? {}) as Record<string, unknown>;
+  const next = {
+    ...definition,
+    uiSchema: {
+      ...definition.uiSchema,
+      options: {
+        ...currentOpts,
+        historySync: {
+          enabled: true,
+          basePath,
+          strategy: 'path', // keep path strategy
+          includeReview: true,
+          mode: 'replace', // avoid growing history stack on each step
+        },
+      },
+    },
+  };
+  return next as T;
+}
+
+// ---------- component ----------
 interface FormProps {
   className?: string;
 }
 
 const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
-  const { formId } = useParams();
+  const { tenant, definitionId, formId, stepSlug, pageSlug } = useParams<{
+    tenant: string;
+    definitionId: string;
+    formId: string;
+    stepSlug?: string;
+    pageSlug?: string;
+  }>();
+
   const dispatch = useDispatch<AppDispatch>();
 
+  // Base path used by History API adapter (no trailing slash)
+  const basePath = useMemo(() => {
+    const p = `/${tenant}/${definitionId}/${formId}`;
+    return p.endsWith('/') ? p.slice(0, -1) : p;
+  }, [tenant, definitionId, formId]);
+
+  // State from store
   const { definition } = useSelector(definitionSelector);
   const form = useSelector((state: AppState) => formSelector(state, formId));
   const data = useSelector(dataSelector);
   const files = useSelector(filesSelector);
   const busy = useSelector(busySelector);
-  const fileBusy = useSelector(fileBusySelector);
   const topic = useSelector(selectedTopicSelector);
   const canSubmit = useSelector(canSubmitSelector);
   const showSubmit = useSelector(showSubmitSelector);
 
-  useEffect(() => {
-    if (document.body.style.overflow === 'hidden') {
-      document.body.style.overflow = 'unset';
-    }
-  });
+  // Add historySync to uiSchema (Option A)
+  const definitionWithHistory = useMemo(() => withHistorySync(definition, basePath), [definition, basePath]);
 
+  // Load form on mount / formId change
   useEffect(() => {
-    dispatch(loadForm(formId));
+    if (formId) {
+      dispatch(loadForm(formId));
+    }
   }, [dispatch, formId]);
+
+  // Debug prints to confirm routing params/basePath
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[FORM] params', { tenant, definitionId, formId, stepSlug, pageSlug });
+    // eslint-disable-next-line no-console
+    console.log('[FORM] basePath', basePath);
+  }, [tenant, definitionId, formId, stepSlug, pageSlug, basePath]);
 
   const [showComments, setShowComments] = useState(false);
 
   return (
     <div key={formId}>
       {definition && !definition.anonymousApply && <LogoutModal />}
-      <div className={className} data-show={showComments}>
+
+      <Page className={className} data-show={showComments}>
         <Container vs={1} hs={1}>
-          {form && !fileBusy.loading && (
+          {form && !busy.loading && (
             <>
-              {form.status === 'Submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
-              {form.status === 'Draft' && (
+              {form.status === 'Submitted' ? (
+                <SubmittedForm definition={definitionWithHistory ?? definition} form={form} data={data} />
+              ) : (
                 <DraftFormWrapper
-                  definition={definition}
+                  definition={definitionWithHistory ?? definition}
                   form={form}
                   data={data}
                   canSubmit={canSubmit}
@@ -74,44 +146,32 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
                   saving={busy.saving}
                   submitting={busy.submitting}
                   onChange={({ data, errors }) => {
+                    // tolerate enum display mismatches
                     if (
-                      errors[0]?.message === 'should be equal to one of the allowed values' &&
-                      errors[0]?.schemaPath.includes('enum')
+                      errors?.[0]?.message === 'should be equal to one of the allowed values' &&
+                      errors?.[0]?.schemaPath?.includes('enum')
                     ) {
-                      errors = null;
+                      errors = null as any;
                     }
-
-                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
                   }}
                   onSave={({ data, errors }) => {
-                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors }));
                   }}
-                  onSubmit={(form) => dispatch(submitForm(form.id))}
+                  onSubmit={(f) => dispatch(submitForm(f.id))}
                 />
               )}
             </>
           )}
         </Container>
+
         <div className="commentsPane">
           <CommentsViewer />
         </div>
-        {topic ? (
-          <GoAIconButton
-            disabled={!form}
-            icon={showComments ? 'help-circle' : 'help-circle'}
-            size="large"
-            title="Comments help"
-            onClick={() => {
-              setShowComments(!showComments);
-              if (topic?.resourceId !== form?.urn) {
-                dispatch(selectTopic({ resourceId: form.urn }));
-              }
-            }}
-          />
-        ) : (
-          <span></span>
-        )}
-      </div>
+
+        {/* Toggle comments via icon button elsewhere in your layout if needed */}
+        {topic ? <span /> : <span />}
+      </Page>
     </div>
   );
 };

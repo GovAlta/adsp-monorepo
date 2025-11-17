@@ -25,7 +25,7 @@ export const JsonFormsRegisterContext = createContext<JsonFormsRegisterContextPr
 
 interface JsonFormsRegisterProviderProps {
   children: ReactNode;
-  defaultRegisters: { registerData: RegisterData; dataList: string[]; nonAnonymous: string[] } | undefined;
+  defaultRegisters?: { registerData: RegisterData; dataList: string[]; nonAnonymous: string[] } | undefined;
 }
 
 export const JsonFormRegisterProvider = ({

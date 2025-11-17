@@ -6,6 +6,7 @@ import { CategorizationStepperLayoutRendererProps } from './types';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
 import { TaskList, TocProps } from './TaskList/TaskList';
 import { RenderPages } from './RenderPages';
+import { HistoryBridge } from './util/HistoryBridge'; // ✅ NEW
 
 /* --- helpers: JSON-pointer + "has data" (ignores schema defaults) --- */
 type AnyRecord = Record<string, unknown>;
@@ -46,6 +47,7 @@ function hasDataValue(v: unknown, key?: string): boolean {
   }
   return false;
 }
+
 function getCategoryScopes(cat: unknown): string[] {
   if (!isRecord(cat)) return [];
   const scopes = cat.scopes as unknown;
@@ -73,9 +75,10 @@ export const FormPageStepper = (props: CategorizationStepperLayoutRendererProps)
     }),
     [props]
   );
+
   /**
    * StepperCtx can only be provided once to prevent issues from categorization in categorization
-   *  */
+   */
   if (formStepperCtx?.isProvided === true) {
     return <FormPagesView {...props} />;
   }
@@ -92,8 +95,10 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
 
   const formStepperCtx = useContext(JsonFormsStepperContext) as JsonFormsStepperContextProps;
   const { validatePage, goToPage } = formStepperCtx;
-
   const { categories, activeId } = formStepperCtx.selectStepperState();
+
+  // 🔗 read historySync options from uischema (same pattern as FormStepper)
+  const historySync = (props.uischema?.options as any)?.historySync || {};
 
   useEffect(() => {
     validatePage(activeId);
@@ -102,6 +107,13 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
   const handleGoToPage = (index: number) => {
     goToPage(index);
   };
+
+  // Debug (optional)
+  // console.log('[PAGES VIEW] render', {
+  //   activeId,
+  //   categories: categories.map((c) => c.label),
+  //   historySync,
+  // });
 
   if (categories.length + 1 === activeId) {
     const patchedCategories = categories.map((c) => {
@@ -120,9 +132,35 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
       subtitle: props.uischema?.options?.subtitle,
       isValid: completedCount === visibleCats.length,
     };
-    return <TaskList {...tocProps} />;
+
+    return (
+      <>
+        {/* ✅ HistoryBridge also active on the TOC page */}
+        <HistoryBridge
+          enabled={Boolean(historySync.enabled)}
+          basePath={historySync.basePath}
+          strategy={historySync.strategy ?? 'path'}
+          includeReview={historySync.includeReview ?? true}
+          mode={historySync.mode ?? 'replace'}
+        />
+        <TaskList {...tocProps} />
+      </>
+    );
   }
-  return <RenderPages categoryProps={props} />;
+
+  return (
+    <>
+      {/* ✅ HistoryBridge active on normal pages */}
+      <HistoryBridge
+        enabled={Boolean(historySync.enabled)}
+        basePath={historySync.basePath}
+        strategy={historySync.strategy ?? 'path'}
+        includeReview={historySync.includeReview ?? true}
+        mode={historySync.mode ?? 'replace'}
+      />
+      <RenderPages categoryProps={props} />
+    </>
+  );
 };
 
 export const FormStepperPagesControl = withAjvProps(withTranslateProps(withJsonFormsLayoutProps(FormPageStepper)));

@@ -252,6 +252,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                     }}
                     relative={true}
                     width="25rem"
+                    ariaLabel="securityClassifications"
                   >
                     <GoADropdownItem value={SecurityClassification.public} label="Public" />
                     <GoADropdownItem value={SecurityClassification.protectedA} label="Protected A" />

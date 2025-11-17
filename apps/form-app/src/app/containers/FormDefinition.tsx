@@ -97,7 +97,13 @@ export const FormDefinition: FunctionComponent = () => {
           <ScheduledIntake definition={definition}>
             <Routes>
               <Route path="/draft" element={<AnonymousForm />} />
-              <Route path="/forms" element={<Forms definition={definition} />} />{' '}
+              <Route path="/forms" element={<Forms definition={definition} />} />
+
+              {/* NEW: accept step/page after formId */}
+              <Route path="/:formId/:stepSlug/:pageSlug" element={<Form />} />
+              <Route path="/:formId/:stepSlug" element={<Form />} />
+
+              {/* existing */}
               <Route path="/:formId" element={<Form />} />
               <Route path="/" element={<FormDefinitionStart definition={definition} user={user} />} />
               <Route path="*" element={<Navigate to="/" />} />

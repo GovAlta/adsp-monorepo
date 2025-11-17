@@ -1,15 +1,17 @@
+// apps/form-app/src/app/components/DraftFormWrapper.tsx
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
 import { GoAButton, GoAButtonGroup, GoACallout } from '@abgov/react-components';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { DateTime } from 'luxon';
-import { FunctionComponent } from 'react';
+import React, { FunctionComponent } from 'react';
 import { Form, FormDefinition, ValidationError } from '../state';
 import { DraftForm } from './DraftForm';
 
 export const ContextProvider = ContextProviderFactory();
 
 export type JsonSchema = JsonSchema4 | JsonSchema7;
+
 interface DraftFormProps {
   definition: FormDefinition;
   form: Form;
@@ -19,21 +21,22 @@ interface DraftFormProps {
   saving: boolean;
   submitting: boolean;
   anonymousApply?: boolean;
+  /** Optional: base path you pass into uiSchema.options.historySync in Form.tsx.
+   *  Not used here; history sync lives inside the Stepper control. */
+  historySyncBasePath?: string;
   onChange: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
   onSubmit: (form: Form) => void;
   onSave?: ({ data, errors }: { data: unknown; errors?: ValidationError[] }) => void;
 }
 
-export const populateDropdown = (schema, enumerators) => {
+export const populateDropdown = (schema: any, enumerators: any) => {
   const newSchema = JSON.parse(JSON.stringify(schema));
-
   Object.keys(newSchema.properties || {}).forEach((propertyName) => {
     const property = newSchema.properties || {};
     if (property[propertyName]?.enum?.length === 1 && property[propertyName]?.enum[0] === '') {
       property[propertyName].enum = enumerators?.getFormContextData(propertyName) as string[];
     }
   });
-
   return newSchema as JsonSchema;
 };
 
@@ -52,10 +55,20 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
 }) => {
   const handleMouseEnter = () => {
     const focusedElement = document.activeElement as HTMLElement | null;
-    focusedElement.blur();
+    focusedElement?.blur?.();
   };
 
-  const ButtonGroup = ({ showSubmit, canSubmit, onSubmit, form }): JSX.Element => {
+  const ButtonGroup = ({
+    showSubmit,
+    canSubmit,
+    onSubmit,
+    form,
+  }: {
+    showSubmit: boolean;
+    canSubmit: boolean;
+    onSubmit: (form: Form) => void;
+    form: Form;
+  }): JSX.Element => {
     return (
       <GoAButtonGroup alignment="end">
         {showSubmit && (
@@ -66,9 +79,7 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
               disabled={!canSubmit}
               type="submit"
               data-testid="form-submit"
-              onClick={() => {
-                onSubmit(form);
-              }}
+              onClick={() => onSubmit(form)}
             >
               Submit
             </GoAButton>
@@ -85,25 +96,29 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
     <Grid>
       <GridItem md={1} />
       <GridItem md={10}>
-        {daysTilIntakeEnd <= 5 && (
+        {typeof daysTilIntakeEnd === 'number' && daysTilIntakeEnd <= 5 && (
           <GoACallout type="information" heading="Intake closing soon">
             Intake is closing in {daysTilIntakeEnd} days. Please complete and submit your form before{' '}
             {definition.intake.end.toFormat('LLLL d, yyyy')} to apply.
           </GoACallout>
         )}
-        <DraftForm
-          definition={definition}
-          form={form}
-          data={data}
-          anonymousApply={anonymousApply}
-          canSubmit={canSubmit}
-          showSubmit={showSubmit}
-          saving={saving}
-          submitting={submitting}
-          onChange={onChange}
-          onSubmit={onSubmit}
-          onSave={onSave}
-        />
+
+        <ContextProvider>
+          <DraftForm
+            definition={definition}
+            form={form}
+            data={data}
+            anonymousApply={anonymousApply}
+            canSubmit={canSubmit}
+            showSubmit={showSubmit}
+            saving={saving}
+            submitting={submitting}
+            onChange={onChange}
+            onSubmit={onSubmit}
+            onSave={onSave}
+          />
+        </ContextProvider>
+
         <ButtonGroup showSubmit={showSubmit} canSubmit={canSubmit} onSubmit={onSubmit} form={form} />
       </GridItem>
       <GridItem md={1} />
