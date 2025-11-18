@@ -31,6 +31,7 @@ export interface AgentConfiguration {
   core?: boolean;
   id: string;
   name: string;
+  description: string;
   instructions: string;
   userRoles: string[];
   tools: ToolConfiguration[];

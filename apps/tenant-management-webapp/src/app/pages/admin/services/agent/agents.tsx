@@ -8,7 +8,7 @@ import { AppDispatch, RootState } from '@store/index';
 import { agentsSelector } from '@store/agent/selectors';
 import { deleteAgent, getAgents, updateAgent } from '@store/agent/actions';
 import { AgentsTable } from './agentsTable';
-import { AddAgentModal } from './addAgentModal';
+import { AddEditAgentModal } from './addEditAgentModal';
 import { AgentConfiguration } from '@store/agent/model';
 import { useNavigate } from 'react-router-dom';
 
@@ -60,7 +60,7 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
           <AgentsTable agents={coreAgents} />
         </>
       )}
-      <AddAgentModal
+      <AddEditAgentModal
         open={openAddAgent}
         onCancel={() => {
           setOpenAddAgent(false);

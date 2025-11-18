@@ -36,6 +36,7 @@ import { filteredRoleListSelector } from '@store/sharedSelectors/roles';
 import styled from 'styled-components';
 import { AddEditApiToolModal } from './addEditApiToolModal';
 import { AddBuiltInToolModal } from './addBuiltInToolModal';
+import { AddEditAgentModal } from './addEditAgentModal';
 
 const ChatContainerDiv = styled.div`
   flex: 1;
@@ -59,6 +60,7 @@ export const AgentEditor: FunctionComponent = () => {
   const navigate = useNavigate();
 
   const [showSelectedRoles, setShowSelectedRoles] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [toolToDelete, setToolToDelete] = useState<{ id: string; index: number } | null>(null);
   const [toolToEdit, setToolToEdit] = useState<ApiToolConfiguration | null>(null);
   const [showBuiltInToolModal, setShowBuiltInToolModal] = useState(false);
@@ -113,7 +115,7 @@ export const AgentEditor: FunctionComponent = () => {
         <section>
           <h2>Agent editor</h2>
           <hr />
-          <EditorConfigurationForm resource={agent} canEdit={false} onEdit={() => {}} />
+          <EditorConfigurationForm resource={agent} canEdit={true} onEdit={() => setShowEditModal(true)} />
           <Tabs activeIndex={0}>
             <Tab testId="agent-edit-instructions" label="Instructions" className="editorMain">
               <MonacoEditor
@@ -240,6 +242,15 @@ export const AgentEditor: FunctionComponent = () => {
                 dispatch(editAgent({ ...agent, tools }));
                 setToolToDelete(null);
               }
+            }}
+          />
+          <AddEditAgentModal
+            agent={agent}
+            open={showEditModal}
+            onCancel={() => setShowEditModal(false)}
+            onSave={(updated) => {
+              dispatch(editAgent({ ...agent, ...updated }));
+              setShowEditModal(false);
             }}
           />
           <AddEditApiToolModal

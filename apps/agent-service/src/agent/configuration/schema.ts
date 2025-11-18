@@ -7,6 +7,9 @@ export const configurationSchema = {
         name: {
           type: 'string',
         },
+        description: {
+          type: 'string',
+        },
         instructions: {
           type: 'string',
         },
