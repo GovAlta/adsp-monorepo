@@ -2,6 +2,10 @@ import { AgentConfiguration } from '../configuration';
 
 export const formGenerationAgent: AgentConfiguration = {
   name: 'Form Generation Agent',
+  description: `This agent supports users in configuring forms in the ADSP Form Service.
+    It's designed to generate configuration compatible with the service based on user
+    descriptions of the purpose of the form, information that needs to be collected,
+    and more specifics details on form fields, help content and layout.`,
   instructions: `
     You are a form generation agent that creates json configuration for forms based on user requirements.
 
@@ -186,6 +190,8 @@ export const formGenerationAgent: AgentConfiguration = {
 
 export const pdfFormAnalysisAgent: AgentConfiguration = {
   name: 'PDF Form Analysis Agent',
+  description: `This agent analyzes PDF forms from screenshots and summaries the purpose
+    and fields of the form in plain language`,
   instructions: `
     You are a PDF form analysis agent that reviews PDF forms to determine its purpose and identify all sections and fields in the form.
 
