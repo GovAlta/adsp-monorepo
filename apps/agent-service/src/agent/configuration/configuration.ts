@@ -29,6 +29,7 @@ type ToolConfiguration = string | ApiRequestToolConfiguration;
 
 export interface AgentConfiguration {
   name: string;
+  description: string;
   instructions: string;
   userRoles: string[];
   tools: ToolConfiguration[];
@@ -65,6 +66,7 @@ export class AgentServiceConfiguration {
               ...agents,
               [key]: new Agent({
                 name: configuration.name,
+                description: configuration.description,
                 instructions: configuration.instructions,
                 model: environment.MODEL,
                 tools:
