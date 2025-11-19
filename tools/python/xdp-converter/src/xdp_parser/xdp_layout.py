@@ -15,5 +15,5 @@ class XdpLayout(XdpElement):
             if fe:
                 nodes.append(fe)
         if nodes:
-            return FormLayout(self.layoutType, nodes)
+            return FormLayout(self.layoutType, nodes, self.context)
         return None

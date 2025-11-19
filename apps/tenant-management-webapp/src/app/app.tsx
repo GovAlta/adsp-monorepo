@@ -24,6 +24,7 @@ import styled from 'styled-components';
 import { GoAHeader } from '@abgov/react-components-old';
 import '@abgov/web-components/index.css';
 import { useScripts } from '@core-services/app-common';
+import { SelectTenant } from '@pages/public/SelectTenant';
 
 const AppRouters = () => {
   return (
@@ -49,6 +50,7 @@ const AppRouters = () => {
             <Route path="login-redirect" element={<LoginRedirect />} />
             <Route path="login-error" element={<SignInError />} />
             <Route path="logout-redirect" element={<LogoutRedirect />} />
+            <Route path="select-tenant" element={<SelectTenant />} />
             <Route path="tenant/creation" element={<CreateTenant />} />
           </Route>
         </Routes>

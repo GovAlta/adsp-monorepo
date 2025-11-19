@@ -1,5 +1,5 @@
 import { Dispatch } from '@reduxjs/toolkit';
-import { Tenant, Role } from './models';
+import { Tenant, Role, TenantBasicInfo } from './models';
 import { RootState } from '../index';
 import { Credentials, Session } from '@store/session/models';
 import { getOrCreateKeycloakAuth, KeycloakAuth } from '@lib/keycloak';
@@ -72,6 +72,7 @@ interface UpdateTenantAdminInfoAction {
     isTenantAdmin: boolean;
     name: string;
     realm: string;
+    adminInTenants: TenantBasicInfo[];
   };
 }
 
@@ -223,13 +224,15 @@ export const KeycloakCheckSSOWithLogout = (realm: string): KeycloakCheckSSOWithL
 export const UpdateTenantAdminInfo = (
   isAdmin: boolean,
   tenantName: string,
-  tenantRealm: string
+  tenantRealm: string,
+  adminInTenants: TenantBasicInfo[]
 ): UpdateTenantAdminInfoAction => ({
   type: 'UPDATE_TENANT_ADMIN_INFO',
   payload: {
     isTenantAdmin: isAdmin,
     name: tenantName,
     realm: tenantRealm,
+    adminInTenants,
   },
 });
 

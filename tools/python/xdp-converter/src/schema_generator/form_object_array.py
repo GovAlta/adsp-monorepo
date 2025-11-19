@@ -1,12 +1,19 @@
 from typing import List, Optional
 
 from schema_generator.form_element import FormElement
+from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_element import XdpElement
 
 
 class FormObjectArray(FormElement):
-    def __init__(self, name: str, qualified_name, columns: List[XdpElement]):
-        super().__init__("object_array", name, qualified_name)
+    def __init__(
+        self,
+        name: str,
+        qualified_name,
+        columns: List[XdpElement],
+        context: ParseContext,
+    ):
+        super().__init__("object_array", name, qualified_name, context)
         self.name = name
         # treating this as a leaf node, as it will translate into a single JSON object
         self.is_leaf = True

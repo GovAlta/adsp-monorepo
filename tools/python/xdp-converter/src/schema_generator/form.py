@@ -1,9 +1,10 @@
 from schema_generator.form_element import FormElement
+from xdp_parser.parse_context import ParseContext
 
 
 class Form(FormElement):
-    def __init__(self, sections):
-        super().__init__("form", None, None)
+    def __init__(self, sections, context: ParseContext):
+        super().__init__("form", None, None, context)
         self.sections = sections
         self.is_leaf = False
 
@@ -11,7 +12,9 @@ class Form(FormElement):
         ui_schema = {"type": "VerticalLayout"}
         ui_schema["elements"] = []
         for section in self.sections:
-            ui_schema["elements"].append(section.to_ui_schema())
+            child = section.to_ui_schema()
+            if child:
+                ui_schema["elements"].append(child)
         return ui_schema
 
     def has_json_schema(self):

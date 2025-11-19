@@ -44,13 +44,15 @@ export class TenantApi {
   async fetchTenantByRealm(realm: string): Promise<Tenant> {
     const url = '/api/tenant/v2/tenants';
     const { data } = await this.http.get<TenantsResponse>(url, { params: { realm } });
+
     return data.results[0];
   }
 
-  async fetchTenantByEmail(adminEmail: string): Promise<Tenant> {
+  async fetchTenantsByEmail(adminEmail: string): Promise<Tenant[]> {
     const url = '/api/tenant/v2/tenants';
     const { data } = await this.http.get<TenantsResponse>(url, { params: { adminEmail } });
-    return data.results[0];
+
+    return data.results;
   }
 }
 

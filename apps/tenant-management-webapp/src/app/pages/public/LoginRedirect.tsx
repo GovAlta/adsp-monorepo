@@ -14,10 +14,11 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { isTenantAdmin, tenantRealm, isAuthenticated } = useSelector((state: RootState) => ({
+  const { isTenantAdmin, tenantRealm, isAuthenticated, adminInTenants } = useSelector((state: RootState) => ({
     isTenantAdmin: state.tenant.isTenantAdmin,
     tenantRealm: state.tenant.realm,
     isAuthenticated: state.session?.authenticated ?? false,
+    adminInTenants: state.tenant.adminInTenants,
   }));
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,9 +39,13 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
     }
 
     if (type === LOGIN_TYPES.tenantAdmin) {
-      if (isTenantAdmin) {
+      if (isTenantAdmin && adminInTenants?.length === 1) {
         const searchQuery = skipSSO ? (idpFromUrl ? `?kc_idp_hint=${idpFromUrl}` : '?kc_idp_hint=') : '';
         navigate(`/${tenantRealm}/login${searchQuery}`);
+      }
+
+      if (isTenantAdmin && adminInTenants && adminInTenants.length > 1) {
+        navigate('/select-tenant');
       }
 
       if (isTenantAdmin === false) {
