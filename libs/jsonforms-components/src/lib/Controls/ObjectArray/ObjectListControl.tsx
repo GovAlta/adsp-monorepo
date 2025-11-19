@@ -641,28 +641,29 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   return (
     <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
       <ToolBarHeader>
-        {isInReview &&
-        listTitle &&
-        isListWithDetail &&
-        additionalProps.required &&
-        (data === null || data === undefined) ? (
-          <b>
-            <ListWithDetailWarningIconDiv>
-              <GoAIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoAIcon>
-              {listTitle} is required.
-            </ListWithDetailWarningIconDiv>
-          </b>
+        {isInReview ? (
+          listTitle ? (
+            isListWithDetail && additionalProps.required && (data === null || data === undefined) ? (
+              <b>
+                <ListWithDetailWarningIconDiv>
+                  <GoAIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs" />
+                  {listTitle} is required.
+                </ListWithDetailWarningIconDiv>
+              </b>
+            ) : (
+              <b>
+                {listTitle} <span>{additionalProps.required && '(required)'}</span>
+                {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
+              </b>
+            )
+          ) : null
         ) : (
-          <b>
-            {listTitle} <span>{additionalProps.required && '(required)'}</span>
-            {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
-          </b>
-        )}
-
-        {!isInReview && listTitle && (
-          <ObjectArrayTitle>
-            {listTitle} <span>{additionalProps.required && '(required)'}</span>
-          </ObjectArrayTitle>
+          listTitle && (
+            <ObjectArrayTitle>
+              {listTitle} <span>{additionalProps.required && '(required)'}</span>
+              {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
+            </ObjectArrayTitle>
+          )
         )}
         {!isInReview && (
           <ObjectArrayToolBar
