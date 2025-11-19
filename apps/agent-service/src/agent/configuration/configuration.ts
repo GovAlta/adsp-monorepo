@@ -62,21 +62,23 @@ export class AgentServiceConfiguration {
 
       this.mastra = new Mastra({
         agents: {
-          ...Object.entries(configuration).reduce(
-            (agents, [key, configuration]) => ({
-              ...agents,
-              [key]: new Agent({
-                name: configuration.name,
-                description: configuration.description,
-                instructions: configuration.instructions,
-                model: environment.MODEL,
-                agents: ({ mastra }) => {
-                  return new Promise((resolve) => {
-                    const agents = {};
+          ...Object.entries(configuration)
+            .sort(([_xk, x], [_yk, y]) => (x?.agents?.length || 0) - (y?.agents?.length || 0)) // Sort the agents with agents to later.
+            .reduce((agents, [key, configuration]) => {
+              return {
+                ...agents,
+                [key]: new Agent({
+                  name: configuration.name,
+                  description: configuration.description,
+                  instructions: configuration.instructions,
+                  model: environment.MODEL,
+                  agents: () => {
+                    const toolAgents = {};
                     for (const agent of configuration.agents || []) {
-                      try {
-                        agents[agent] = mastra.getAgent(agent);
-                      } catch (err) {
+                      const toolAgent = agents[agent];
+                      if (toolAgent) {
+                        toolAgents[agent] = toolAgent;
+                      } else {
                         this.logger.warn(
                           `Agent '${agent}' not found and cannot be provided to agent '${configuration.name}'.`,
                           {
@@ -86,44 +88,43 @@ export class AgentServiceConfiguration {
                         );
                       }
                     }
-                    resolve(agents);
-                  });
-                },
-                tools:
-                  configuration.tools?.reduce((tools, toolConfig) => {
-                    if (typeof toolConfig === 'string' && availableTools[toolConfig]) {
-                      tools[toolConfig] = availableTools[toolConfig];
-                    } else if (typeof toolConfig === 'object') {
-                      switch (toolConfig.type) {
-                        case 'api': {
-                          tools[toolConfig.id] = createApiRequestTool(
-                            {
-                              logger: this.logger,
-                              directory: this.directory,
-                              tokenProvider: this.tokenProvider,
-                            },
-                            toolConfig
-                          );
-                          break;
+
+                    return toolAgents;
+                  },
+                  tools:
+                    configuration.tools?.reduce((tools, toolConfig) => {
+                      if (typeof toolConfig === 'string' && availableTools[toolConfig]) {
+                        tools[toolConfig] = availableTools[toolConfig];
+                      } else if (typeof toolConfig === 'object') {
+                        switch (toolConfig.type) {
+                          case 'api': {
+                            tools[toolConfig.id] = createApiRequestTool(
+                              {
+                                logger: this.logger,
+                                directory: this.directory,
+                                tokenProvider: this.tokenProvider,
+                              },
+                              toolConfig
+                            );
+                            break;
+                          }
                         }
                       }
-                    }
-                    return tools;
-                  }, {}) || {},
-                memory: new Memory({
-                  storage: new LibSQLStore({
-                    url: ':memory:',
+                      return tools;
+                    }, {}) || {},
+                  memory: new Memory({
+                    storage: new LibSQLStore({
+                      url: ':memory:',
+                    }),
                   }),
+                  inputProcessors: ({ runtimeContext }) =>
+                    createInputProcessors({
+                      logger: this.logger,
+                      runtimeContext: runtimeContext as RuntimeContext<Record<string, unknown>>,
+                    }),
                 }),
-                inputProcessors: ({ runtimeContext }) =>
-                  createInputProcessors({
-                    logger: this.logger,
-                    runtimeContext: runtimeContext as RuntimeContext<Record<string, unknown>>,
-                  }),
-              }),
-            }),
-            {} as Record<string, Agent>
-          ),
+              };
+            }, {} as Record<string, Agent>),
         },
       });
 
