@@ -1,6 +1,7 @@
 import re
 from common.rule_model import RawRule, VisibilityRule, VisibilityCondition
 from common.condition_parser import ConditionParser
+from constants import CTX_PARENT_MAP, CTX_RAW_RULES, CTX_RESOLVED_RULES
 
 
 class DriverResolver:
@@ -14,10 +15,10 @@ class DriverResolver:
 
     def process(self, context):
         print("\n[DriverResolver] Starting...")
-        raw_rules = context.get("raw_visibility_rules", [])
+
+        raw_rules = context.get(CTX_RAW_RULES, [])
         resolved_rules = []
-        parent_map = context.get("parent_map")
-        xdp_root = context.get("xdp_root")
+        parent_map = context.get(CTX_PARENT_MAP, {})
 
         for raw in raw_rules:
             resolved_conditions = []
@@ -27,41 +28,33 @@ class DriverResolver:
                 if not cond_text:
                     continue
 
-                # 1️⃣ Find all "something.rawValue" references
+                # 1️⃣ Extract something.rawValue
                 refs = self.RAWVAL_RE.findall(cond_text)
                 if refs:
-                    driver = refs[0]  # use the first one
+                    driver = refs[0]
                 else:
                     driver = "this"
 
-                # 2️⃣ Resolve 'this' contextually
+                # 2️⃣ Resolve 'this'
                 if driver.lower() == "this":
-                    # Try to locate the element node for context
                     elem = getattr(raw, "element", None)
-                    parent = (
-                        parent_map.get(elem)
-                        if elem is not None and parent_map
-                        else None
-                    )
+                    parent = parent_map.get(elem) if elem is not None else None
 
-                    # Fallback: if no element reference, walk up via xpath text (best effort)
-                    if parent is None and parent_map and raw.xpath:
-                        for candidate in parent_map.keys():
-                            name = candidate.get("name", "")
-                            if name and name in raw.xpath:
-                                parent = candidate
-                                break
                     # Walk upward until we hit a field or exclGroup
                     while parent is not None:
-                        if parent.tag.endswith("field") and parent.get("name"):
-                            driver = parent.get("name")
-                            break
-                        if parent.tag.endswith("exclGroup") and parent.get("name"):
-                            driver = parent.get("name")
-                            break
+                        tag = parent.tag.split("}")[-1]
+                        if tag in ("field", "exclGroup"):
+                            name = parent.get("name")
+                            if name:
+                                driver = name
+                                break
                         parent = parent_map.get(parent)
 
-                # 3️⃣ Extract operator/value from the expression
+                # 3️⃣ Simplified prefix removal (fix for Section2.*, Form1.*, etc)
+                if "." in driver:
+                    driver = driver.split(".")[-1]
+
+                # 4️⃣ Extract operator and value
                 operator = self._extract_operator(cond_text)
                 value = self._extract_value(cond_text)
 
@@ -80,8 +73,8 @@ class DriverResolver:
                     )
                 )
 
-        context["resolved_visibility_rules"] = resolved_rules
-        print(f"[DriverResolver] Resolved {len(resolved_rules)} driver relationships.")
+        context[CTX_RESOLVED_RULES] = resolved_rules
+        print(f"[DriverResolver] Resolved {resolved_rules} driver relationships.")
         print("[DriverResolver] Done.\n")
         return context
 
@@ -138,32 +131,20 @@ class DriverResolver:
     # ---------------------------------------------------------------------
     def _resolve_driver_in_context(self, driver: str, raw: RawRule, context) -> str:
         """
-        Handle 'this' → actual field name,
-        and drop ghost prefixes like 'Header' or 'Partner'
-        that aren’t true <field> elements.
+        Normalize 'this', drop any prefix scopes (Section2.*, Parent.Subform.*, etc),
+        and return the real field name.
         """
-        xdp_root = context.get("xdp_root")
-        if not xdp_root or not driver:
-            return driver
 
-        # --- A) Resolve 'this' ---
+        # Normalize purely syntactic artefacts
+        driver = self._normalize_driver_name(driver)
+
+        # Resolve 'this' if necessary (DriverResolver.process already handles this)
         if driver == "this":
-            driver = self._resolve_this_driver(raw, context)
+            return "this"
 
-        # --- B) Drop ghost prefixes ---
+        # Drop any prefixes (Section2.cboMinistry -> cboMinistry)
         if "." in driver:
-            parts = driver.split(".")
-            for i in range(len(parts)):
-                candidate = ".".join(parts[i:])
-                field_match = xdp_root.find(f".//field[@name='{candidate}']")
-                if field_match is not None:
-                    return candidate
-            # No field found — fallback to last segment
-            last = parts[-1]
-            return last
-
-        if driver == "this":
-            print(f"  [ERROR] could not resolve 'this' for rule {raw.target}")
+            driver = driver.split(".")[-1]
 
         return driver
 

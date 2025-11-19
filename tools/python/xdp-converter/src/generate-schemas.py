@@ -6,6 +6,13 @@ import os
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import traceback
+from constants import (
+    CTX_ENUM_MAP,
+    CTX_LABEL_TO_ENUM,
+    CTX_PARENT_MAP,
+    CTX_RADIO_GROUPS,
+    CTX_XDP_ROOT,
+)
 from schema_generator.json_schema_generator import JsonSchemaGenerator
 from schema_generator.ui_schema_generator import UiSchemaGenerator
 import xml.etree.ElementTree as ET
@@ -82,14 +89,18 @@ def process_one(
 
         pipeline = VisibilityRulesPipeline()
         rule_context = {
-            "xdp_root": root,
-            "enum_map": traversal.factory.enum_maps,
-            "parent_map": parent_map,
-            "label_to_enum": enum_factory.label_to_enum,
+            CTX_XDP_ROOT: root,
+            CTX_ENUM_MAP: traversal.factory.enum_maps,
+            CTX_PARENT_MAP: parent_map,
+            CTX_LABEL_TO_ENUM: enum_factory.label_to_enum,
+            CTX_RADIO_GROUPS: enum_context.visibility_rules,  # <-- FIX
         }
         visibility_rules = pipeline.run(rule_context).get(
             "jsonforms_visibility_rules", {}
         )
+        print("==== RADIO GROUPS DETECTED ====")
+        for group, fields in enum_context.visibility_rules.items():
+            print(f"{group}: {fields}")
 
         # --- 5. Load help text (unchanged) ---
         registry = HelpTextRegistry()

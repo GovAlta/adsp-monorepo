@@ -1,0 +1,8 @@
+CTX_RAW_RULES = "raw_visibility_rules"
+CTX_RESOLVED_RULES = "resolved_visibility_rules"
+CTX_FINAL_RULES = "rules"
+CTX_RADIO_GROUPS = "visibility_rules"
+CTX_ENUM_MAP = "enum_map"
+CTX_PARENT_MAP = "parent_map"
+CTX_LABEL_TO_ENUM = "label_to_enum"
+CTX_XDP_ROOT = "xdp_root"

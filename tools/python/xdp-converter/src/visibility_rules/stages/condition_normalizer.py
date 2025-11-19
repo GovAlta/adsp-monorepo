@@ -1,4 +1,5 @@
 from common.rule_model import VisibilityCondition, VisibilityRule
+from constants import CTX_FINAL_RULES, CTX_RESOLVED_RULES
 
 
 class ConditionNormalizer:
@@ -11,9 +12,7 @@ class ConditionNormalizer:
     def process(self, context):
         print("\n[ConditionNormalizer] Starting...")
 
-        resolved_rules: list[VisibilityRule] = context.get(
-            "resolved_visibility_rules", []
-        )
+        resolved_rules: list[VisibilityRule] = context.get(CTX_RESOLVED_RULES, [])
         normalized_rules: list[VisibilityRule] = []
 
         if not resolved_rules:
@@ -70,7 +69,7 @@ class ConditionNormalizer:
             else:
                 print(f"  [WARN] No valid conditions found for {rule.target}")
 
-        context["normalized_visibility_rules"] = normalized_rules
+        context[CTX_FINAL_RULES] = normalized_rules
         print(f"[ConditionNormalizer] Normalized {len(normalized_rules)} rules total.")
         print("[ConditionNormalizer] Done.\n")
 

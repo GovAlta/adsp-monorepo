@@ -1,3 +1,5 @@
+from visibility_rules.stages.radio_group_collapser import RadioGroupCollapser
+from visibility_rules.stages.value_resolver import ValueResolver
 from visibility_rules.stages.visibility_script_extractor import (
     VisibilityScriptExtractor,
 )
@@ -16,6 +18,8 @@ class VisibilityRulesPipeline:
         self.stages = [
             VisibilityScriptExtractor(),
             DriverResolver(),
+            ValueResolver(),
+            RadioGroupCollapser(),
             ConditionNormalizer(),
             RuleConsolidator(),
             JsonFormsEmitter(),

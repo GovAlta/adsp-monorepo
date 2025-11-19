@@ -1,3 +1,12 @@
+from constants import (
+    CTX_ENUM_MAP,
+    CTX_FINAL_RULES,
+    CTX_LABEL_TO_ENUM,
+    CTX_PARENT_MAP,
+    CTX_XDP_ROOT,
+)
+
+
 class JsonFormsEmitter:
     """
     Converts normalized visibility rules into JSONForms-compatible
@@ -14,11 +23,11 @@ class JsonFormsEmitter:
     def process(self, context):
         print("\n[JsonFormsEmitter] Starting...")
 
-        normalized_rules = context.get("normalized_visibility_rules", [])
-        enum_maps = context.get("enum_map", {})
-        label_to_enum = context.get("label_to_enum", {})
-        parent_map = context.get("parent_map")
-        xdp_root = context.get("xdp_root")
+        normalized_rules = context.get(CTX_FINAL_RULES, [])
+        enum_maps = context.get(CTX_ENUM_MAP, {})
+        label_to_enum = context.get(CTX_LABEL_TO_ENUM, {})
+        parent_map = context.get(CTX_PARENT_MAP, {})
+        xdp_root = context.get(CTX_XDP_ROOT, None)
 
         emitted = {}
 

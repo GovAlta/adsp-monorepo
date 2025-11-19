@@ -26,20 +26,55 @@ class EnumMapFactory(AbstractXdpFactory):
         return None
 
     def handle_radio(self, elem: ET.Element, labels):
+        """
+        Handle both real radio groups (exclGroup)
+        and faux-radio-groups implemented as a subform of checkboxes.
+        Produces:
+        1. An enum_map for the entire group (e.g., Section2)
+        2. Stores the field order for later collapsing (visibility_rules)
+        """
         name = elem.attrib.get("name")
         if not name:
             return None
 
+        # Collect ONLY the actual choice fields (skip help buttons)
+        fields = []
         values = []
+
         for field_el in elem.findall("./field"):
+            field_name = field_el.attrib.get("name")
+            if not field_name:
+                continue
+
+            # Skip <button> UI elements (help buttons)
+            if field_el.find(".//ui/button") is not None:
+                continue
+
+            # This is one of the real selectable options
+            fields.append(field_name)
+
+            # Caption text = label
             caption_el = field_el.find(".//caption/value/text")
             if caption_el is not None and caption_el.text:
                 values.append(caption_el.text.strip())
+            else:
+                values.append(field_name)  # fallback
 
-        if values:
-            self.enum_maps[name] = {str(i + 1): v for i, v in enumerate(values)}
-            for i, v in enumerate(values):
-                self.label_to_enum[v.strip()] = (name, str(i + 1))
+        # If nothing valid found, bail out
+        if not fields or not values:
+            return None
+
+        # 1️⃣ Build enum map for the group
+        self.enum_maps[name] = {str(i + 1): v for i, v in enumerate(values)}
+
+        # For reverse lookup convenience
+        for i, v in enumerate(values):
+            self.label_to_enum[v.strip()] = (name, str(i + 1))
+
+        # 2️⃣ Store the field order for RadioGroupCollapser
+        self.context.visibility_rules[name] = fields
+
+        # (Factory handler pattern: returning None means "no UI control emitted")
         return None
 
     # other handle_* remain no-ops
