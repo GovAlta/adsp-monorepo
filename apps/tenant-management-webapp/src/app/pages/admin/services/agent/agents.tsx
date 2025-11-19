@@ -67,6 +67,7 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
         }}
         onSave={(agent) => {
           dispatch(updateAgent(agent));
+          setOpenAddAgent(false);
         }}
       />
       <DeleteModal

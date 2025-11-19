@@ -43,9 +43,7 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
   }, [dispatch]);
 
   useEffect(() => {
-    if (initialValue) {
-      setAgent(initialValue);
-    }
+    setAgent(initialValue || defaultValue);
   }, [initialValue]);
 
   const agentNames = useSelector(agentNamesSelector);
@@ -89,7 +87,7 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
             testId="agent-modal-cancel"
             onClick={() => {
               onCancel();
-              setAgent(initialValue);
+              setAgent(initialValue || defaultValue);
             }}
           >
             Cancel
@@ -110,10 +108,6 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
               }
 
               onSave(agent);
-              if (onCancel) {
-                onCancel();
-                setAgent(initialValue);
-              }
               validators.clear();
             }}
           >
@@ -129,7 +123,7 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
             type="text"
             name="name"
             value={agent.name}
-            testId={`agent-modal-name-input`}
+            testId="agent-modal-name-input"
             aria-label="name"
             width="100%"
             onChange={(_, value) => {

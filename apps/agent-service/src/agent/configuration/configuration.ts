@@ -71,21 +71,23 @@ export class AgentServiceConfiguration {
                 instructions: configuration.instructions,
                 model: environment.MODEL,
                 agents: ({ mastra }) => {
-                  const agents = {};
-                  for (const agent of configuration.agents || []) {
-                    try {
-                      agents[agent] = mastra.getAgent(agent);
-                    } catch (err) {
-                      this.logger.warn(
-                        `Agent '${agent}' not found and cannot be provided to agent '${configuration.name}'.`,
-                        {
-                          context: 'AgentServiceConfiguration',
-                          tenant: tenantId?.toString(),
-                        }
-                      );
+                  return new Promise((resolve) => {
+                    const agents = {};
+                    for (const agent of configuration.agents || []) {
+                      try {
+                        agents[agent] = mastra.getAgent(agent);
+                      } catch (err) {
+                        this.logger.warn(
+                          `Agent '${agent}' not found and cannot be provided to agent '${configuration.name}'.`,
+                          {
+                            context: 'AgentServiceConfiguration',
+                            tenant: tenantId?.toString(),
+                          }
+                        );
+                      }
                     }
-                  }
-                  return agents;
+                    resolve(agents);
+                  });
                 },
                 tools:
                   configuration.tools?.reduce((tools, toolConfig) => {
