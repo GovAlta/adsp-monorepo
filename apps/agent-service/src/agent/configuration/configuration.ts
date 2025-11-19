@@ -1,6 +1,7 @@
 import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
+import { MastraError } from '@mastra/core/dist/error';
 import { RuntimeContext } from '@mastra/core/runtime-context';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
@@ -29,10 +30,11 @@ type ToolConfiguration = string | ApiRequestToolConfiguration;
 
 export interface AgentConfiguration {
   name: string;
-  description: string;
+  description?: string;
   instructions: string;
-  userRoles: string[];
-  tools: ToolConfiguration[];
+  userRoles?: string[];
+  agents?: string[];
+  tools?: ToolConfiguration[];
 }
 export type AgentConfigurations = Record<string, AgentConfiguration>;
 
@@ -69,6 +71,27 @@ export class AgentServiceConfiguration {
                 description: configuration.description,
                 instructions: configuration.instructions,
                 model: environment.MODEL,
+                agents: ({ mastra }) => {
+                  const agents = {};
+                  for (const agent of configuration.agents || []) {
+                    try {
+                      agents[agent] = mastra.getAgent(agent);
+                    } catch (err) {
+                      if (err instanceof MastraError) {
+                        this.logger.warn(
+                          `Agent '${agent}' not found and cannot be provided to agent '${configuration.name}'.`,
+                          {
+                            context: 'AgentServiceConfiguration',
+                            tenant: tenantId?.toString(),
+                          }
+                        );
+                      } else {
+                        throw err;
+                      }
+                    }
+                  }
+                  return agents;
+                },
                 tools:
                   configuration.tools?.reduce((tools, toolConfig) => {
                     if (typeof toolConfig === 'string' && availableTools[toolConfig]) {

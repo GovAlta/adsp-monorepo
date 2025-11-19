@@ -17,6 +17,10 @@ export const configurationSchema = {
           type: 'array',
           items: { type: 'string' },
         },
+        agents: {
+          type: 'array',
+          items: { type: 'string' },
+        },
         tools: {
           type: 'array',
           items: {
