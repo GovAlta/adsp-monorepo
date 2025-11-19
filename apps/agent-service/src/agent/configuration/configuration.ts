@@ -1,7 +1,6 @@
 import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
-import { MastraError } from '@mastra/core/dist/error';
 import { RuntimeContext } from '@mastra/core/runtime-context';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
@@ -77,17 +76,13 @@ export class AgentServiceConfiguration {
                     try {
                       agents[agent] = mastra.getAgent(agent);
                     } catch (err) {
-                      if (err instanceof MastraError) {
-                        this.logger.warn(
-                          `Agent '${agent}' not found and cannot be provided to agent '${configuration.name}'.`,
-                          {
-                            context: 'AgentServiceConfiguration',
-                            tenant: tenantId?.toString(),
-                          }
-                        );
-                      } else {
-                        throw err;
-                      }
+                      this.logger.warn(
+                        `Agent '${agent}' not found and cannot be provided to agent '${configuration.name}'.`,
+                        {
+                          context: 'AgentServiceConfiguration',
+                          tenant: tenantId?.toString(),
+                        }
+                      );
                     }
                   }
                   return agents;
