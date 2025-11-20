@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace Adsp.Sdk.Events;
+
 public class FullDomainEvent<TPayload> : DomainEvent<TPayload> where TPayload : class
 {
   [JsonPropertyName("tenantId")]

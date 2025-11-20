@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Adsp.Sdk.Access;
+
 internal static class AccessExtensions
 {
   private static readonly JsonSerializerOptions JsonSerializerOptions = new()

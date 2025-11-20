@@ -7,6 +7,7 @@ using Adsp.Sdk.Tenancy;
 using Microsoft.AspNetCore.Builder;
 
 namespace Adsp.Sdk;
+
 public static class AdspBuilderExtensions
 {
   /// <summary>
