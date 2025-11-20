@@ -63,32 +63,28 @@ export const FlexTabs = styled.div`
 
 export const FlexForm = styled.div`
   flex-direction: column;
-  margin: 1.5rem 0;
   flex: 3;
 `;
 
-export const TabName = styled.div`
-  margin: 1rem 0 1rem 1rem;
-  font-weight: 400;
-`;
 export const TabData = styled.div`
   margin: 1rem 0 1rem 1rem;
   font-weight: 400;
-
-  
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 export const Trash = styled.div`
-  margin: 0.9rem 1.25rem 0.6rem 0.75rem;
+  margin: 0.9rem 0.4rem 0.6rem 0.75rem;
   margin-left: auto;
 `;
 
 export const ListContainer = styled.div`
-  padding: 0 1.5rem 0 0;
+  padding: 0 0 0 0;
+`;
+
+export const IconPadding = styled.div`
+  padding: 0.9rem 0.5rem 0 0;
 `;
 
 export const UpdateListContainer = styled.div`

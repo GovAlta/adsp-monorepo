@@ -30,13 +30,13 @@ import {
   RowFlex,
   FlexTabs,
   FlexForm,
-  TabName,
   Trash,
   ListContainer,
   RowFlexMenu,
   MarginTop,
   UpdateListContainer,
   TabData,
+  IconPadding,
 } from './styled-components';
 import { Visible } from '../../util';
 import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
@@ -303,6 +303,7 @@ interface NonEmptyRowProps {
   path: string;
   translations: ArrayTranslations;
   uischema: ControlElement;
+  listTitle?: string;
 }
 interface MainRowProps {
   childPath: string;
@@ -385,38 +386,29 @@ const MainTab = ({
           }}
         >
           <RowFlexMenu tabIndex={0}>
-            {/* <TabName></TabName> */}
             <TabData>
-              {name}
-              {Object.keys(rowData ?? {}).length > 0 && ':'} {Object.values(rowData).join(', ')}
+              {Object.keys(rowData ?? {}).length === 0 && 'No data'} {Object.values(rowData).join(', ')}
             </TabData>
             {enabled ? (
-              <Trash role="trash button">
+              <Trash>
                 <GoAIconButton
                   disabled={!enabled}
                   icon="trash"
-                  title={'trash button'}
+                  title={`remove this ${name}`}
                   testId="remove the details"
                   onClick={() => openDeleteDialog(childPath, rowIndex, name)}
                 ></GoAIconButton>
               </Trash>
             ) : null}
-
-            <button
-              onClick={() => setCurrentListPage(currentTab + 1)}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                margin: '0 16px 0 0',
-                color: 'blue',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                font: 'inherit',
-              }}
-            >
-              Edit
-            </button>
+            <IconPadding>
+              <GoAIconButton
+                disabled={!enabled}
+                icon="create"
+                title={'edit button'}
+                testId="edit button"
+                onClick={() => setCurrentListPage(currentTab + 1)}
+              ></GoAIconButton>
+            </IconPadding>
           </RowFlexMenu>
         </SideMenuItem>
       </GoAFormItem>
@@ -439,6 +431,7 @@ interface TableRowsProp {
   setCurrentIndex: (index: number) => void;
   setCurrentListPage: (index: number) => void;
   currentListPage: number;
+  listTitle?: string;
   errors: string;
 }
 const ObjectArrayList = ({
@@ -455,7 +448,8 @@ const ObjectArrayList = ({
   setCurrentIndex,
   setCurrentListPage,
   currentListPage,
-  errors
+  listTitle,
+  errors,
 }: TableRowsProp & WithDeleteDialogSupport) => {
   const isEmptyList = data === 0;
   const rightRef = useRef(null);
@@ -535,9 +529,7 @@ const ObjectArrayList = ({
         {currentListPage > 0 && (
           <UpdateListContainer>
             <FlexForm ref={rightRef} tabIndex={-1}>
-              <ObjectArrayTitle>
-                {pluralize.singular(nameTitle)} {currentIndex + 1}
-              </ObjectArrayTitle>
+              <ObjectArrayTitle>{pluralize.singular(listTitle || '')}</ObjectArrayTitle>
 
               <NonEmptyList
                 key={Paths.compose(path, `${currentIndex}`)}
@@ -562,7 +554,7 @@ const ObjectArrayList = ({
               }}
               testId="next-list-button"
             >
-              Save and continue
+              Continue
             </GoAButton>
           </UpdateListContainer>
         )}
@@ -684,6 +676,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
             }}
             errors={errors}
             currentListPage={this.state.currentListPage}
+            listTitle={listTitle}
             {...additionalProps}
           />
         </div>
