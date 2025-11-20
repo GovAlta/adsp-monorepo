@@ -8,8 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace Adsp.Sdk.Access;
 internal static class AccessExtensions
 {
-  private static readonly JsonSerializerOptions JsonSerializerOptions = new()
-  { PropertyNameCaseInsensitive = true };
+  private static readonly JsonSerializerOptions JsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
 
   internal static TokenValidatedContext AddAdspContext(this TokenValidatedContext context, AdspId serviceId, bool isCore, Tenant? tenant)
   {
@@ -164,40 +163,40 @@ internal static class AccessExtensions
     }
 
     builder.AddJwtBearer(authenticationScheme, jwt =>
+    {
+      jwt.TokenValidationParameters = new TokenValidationParameters
       {
-        jwt.TokenValidationParameters = new TokenValidationParameters
+        IssuerValidator = (issuer, token, parameters) =>
         {
-          IssuerValidator = (issuer, token, parameters) =>
-          {
-            var tenant = issuerCache.GetTenantByIssuer(issuer).Result;
-            return tenant != null ? issuer : null;
-          },
-          IssuerSigningKeyResolver = (token, securityToken, kid, validationParameters) =>
-          {
-            var keys = new List<SecurityKey>();
-            var signingKey = keyProvider.ResolveSigningKey(securityToken.Issuer, kid).Result;
-            if (signingKey != null)
-            {
-              keys.Add(signingKey);
-            }
-
-            return keys;
-          },
-        };
-
-        jwt.Audience = $"{options.ServiceId}";
-        jwt.Events = new JwtBearerEvents
+          var tenant = issuerCache.GetTenantByIssuer(issuer).Result;
+          return tenant != null ? issuer : null;
+        },
+        IssuerSigningKeyResolver = (token, securityToken, kid, validationParameters) =>
         {
-          OnTokenValidated = async (TokenValidatedContext context) =>
+          var keys = new List<SecurityKey>();
+          var signingKey = keyProvider.ResolveSigningKey(securityToken.Issuer, kid).Result;
+          if (signingKey != null)
           {
-            var tenant = await issuerCache.GetTenantByIssuer(context.SecurityToken.Issuer);
-            if (tenant?.Id != null)
-            {
-              context.AddAdspContext(options.ServiceId, false, tenant);
-            }
+            keys.Add(signingKey);
           }
-        };
-      });
+
+          return keys;
+        },
+      };
+
+      jwt.Audience = $"{options.ServiceId}";
+      jwt.Events = new JwtBearerEvents
+      {
+        OnTokenValidated = async (TokenValidatedContext context) =>
+        {
+          var tenant = await issuerCache.GetTenantByIssuer(context.SecurityToken.Issuer);
+          if (tenant?.Id != null)
+          {
+            context.AddAdspContext(options.ServiceId, false, tenant);
+          }
+        }
+      };
+    });
 
     return builder;
   }
