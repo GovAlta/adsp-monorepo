@@ -394,7 +394,7 @@ const MainTab = ({
                 <GoAIconButton
                   disabled={!enabled}
                   icon="trash"
-                  title={`remove this ${name}`}
+                  title={'remove'}
                   testId="remove the details"
                   onClick={() => openDeleteDialog(childPath, rowIndex, name)}
                 ></GoAIconButton>
@@ -404,7 +404,7 @@ const MainTab = ({
               <GoAIconButton
                 disabled={!enabled}
                 icon="create"
-                title={'edit button'}
+                title={'edit'}
                 testId="edit button"
                 onClick={() => setCurrentListPage(currentTab + 1)}
               ></GoAIconButton>
