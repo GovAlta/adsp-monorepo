@@ -5,6 +5,7 @@ using NJsonSchema;
 using NJsonSchema.Generation;
 
 namespace Adsp.Sdk;
+
 public abstract class ValueDefinition
 {
   protected static readonly SystemTextJsonSchemaGeneratorSettings SchemaSettings = new()

@@ -1,5 +1,6 @@
 
 namespace Adsp.Sdk;
+
 public class ServiceMetrics : ValueDefinition<IDictionary<string, decimal>>
 {
   public static readonly ValueDefinition Definition = new ServiceMetrics();

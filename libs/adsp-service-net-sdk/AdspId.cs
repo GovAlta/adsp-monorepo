@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Adsp.Sdk.Utils;
 
 namespace Adsp.Sdk;
+
 [JsonConverter(typeof(AdspIdJsonConverter))]
 public class AdspId : IEquatable<AdspId>
 {

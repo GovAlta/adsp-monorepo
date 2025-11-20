@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 
 namespace Adsp.Sdk.Metrics;
+
 internal sealed class MetricsValue
 {
   [JsonPropertyName("timestamp")]

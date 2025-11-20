@@ -10,6 +10,7 @@ using System.Text;
 using RestSharp;
 
 namespace Adsp.Sdk.Access.Tests;
+
 public class TenantKeyProviderTests
 {
 

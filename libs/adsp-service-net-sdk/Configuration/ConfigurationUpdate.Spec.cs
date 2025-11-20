@@ -2,6 +2,7 @@ using FluentAssertions;
 using Xunit;
 
 namespace Adsp.Sdk.Configuration;
+
 public class ConfigurationUpdateTests
 {
   [Fact]

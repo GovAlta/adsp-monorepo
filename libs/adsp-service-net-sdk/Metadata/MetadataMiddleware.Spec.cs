@@ -7,6 +7,7 @@ using Moq;
 using Xunit;
 
 namespace Adsp.Sdk.Metadata;
+
 public class MetadataMiddlewareTests
 {
 

@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Adsp.Sdk.Configuration;
+
 internal static class RegistrationExtensions
 {
   private const string ConfigurationUpdatesStreamId = "configuration-updates";

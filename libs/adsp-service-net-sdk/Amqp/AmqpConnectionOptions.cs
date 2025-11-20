@@ -1,4 +1,5 @@
 namespace Adsp.Sdk.Amqp;
+
 public class AmqpConnectionOptions
 {
   public string? Hostname { get; set; }

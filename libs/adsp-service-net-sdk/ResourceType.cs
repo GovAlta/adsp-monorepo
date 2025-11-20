@@ -1,4 +1,5 @@
 namespace Adsp.Sdk;
+
 public enum ResourceType
 {
   Namespace,

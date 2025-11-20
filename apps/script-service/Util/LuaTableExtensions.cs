@@ -3,6 +3,7 @@ using Adsp.Platform.ScriptService.Services.Platform;
 using System.Globalization;
 
 namespace Adsp.Platform.ScriptService.Services.Util;
+
 internal static class LuaTableExtensions
 {
   public static IDictionary<string, object> ToDictionary(this LuaTable? table)

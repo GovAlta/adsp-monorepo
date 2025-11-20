@@ -1,6 +1,7 @@
 using System.Diagnostics;
 
 namespace Adsp.Sdk.Metrics;
+
 internal sealed class MetricsContext
 {
   private const string ResponseTimeMetric = "response-time";

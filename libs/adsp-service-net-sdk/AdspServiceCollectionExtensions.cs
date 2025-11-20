@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Adsp.Sdk;
+
 public static class AdspServiceCollectionExtensions
 {
   private static IServiceCollection AddAdspSdkServices(this IServiceCollection services, Action<AdspOptions>? configureOptions = null)

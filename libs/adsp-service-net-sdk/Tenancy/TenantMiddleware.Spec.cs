@@ -8,6 +8,7 @@ using Moq;
 using Xunit;
 
 namespace Adsp.Sdk.Tenancy;
+
 public class TenantMiddlewareTests
 {
   [Fact]

@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 
 namespace Adsp.Sdk.Registration;
+
 internal sealed class ConfigurationUpdate<T>
 {
   [JsonPropertyName("operation")]

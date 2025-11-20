@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Adsp.Sdk.Util;
+
 public class DictionaryJsonConverter : JsonConverter<IDictionary<string, object?>>
 {
   private static readonly Type DictionaryType = typeof(IDictionary<string, object?>);

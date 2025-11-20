@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 
 namespace Adsp.Sdk.Amqp;
+
 public static class AmqpExtensions
 {
   /// <summary>

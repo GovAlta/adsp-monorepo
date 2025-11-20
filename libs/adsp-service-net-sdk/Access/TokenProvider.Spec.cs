@@ -7,6 +7,7 @@ using RichardSzalay.MockHttp;
 using Xunit;
 
 namespace Adsp.Sdk.Access;
+
 public class TokenProviderTests
 {
   [Fact]

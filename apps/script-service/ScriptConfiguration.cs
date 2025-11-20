@@ -4,6 +4,7 @@ using Adsp.Sdk.Amqp;
 using Adsp.Sdk.Events;
 
 namespace Adsp.Platform.ScriptService;
+
 internal sealed class ScriptConfiguration
 {
   private readonly IDictionary<string, ScriptDefinition> _definitions = new Dictionary<string, ScriptDefinition>();
