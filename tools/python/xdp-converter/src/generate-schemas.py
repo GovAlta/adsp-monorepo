@@ -1,18 +1,23 @@
 import argparse
 import json
+from multiprocessing import context
 import sys
 import os
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import traceback
-from rule_generator.visibility_rules_parser import VisibilityRulesParser
 from schema_generator.json_schema_generator import JsonSchemaGenerator
 from schema_generator.ui_schema_generator import UiSchemaGenerator
 import xml.etree.ElementTree as ET
+from xdp_parser import control_labels
+from xdp_parser.factories.enum_map_factory import EnumMapFactory
+from xdp_parser.factories.xdp_element_factory import XdpElementFactory
 from xdp_parser.help_text_parser import JSHelpTextParser
 from xdp_parser.help_text_registry import HelpTextRegistry
+from xdp_parser.parse_context import ParseContext
 from xdp_parser.parse_xdp import XdpParser
 from xdp_parser.xdp_utils import build_parent_map, strip_namespaces
+from visibility_rules.pipeline import VisibilityRulesPipeline
 
 
 def discover_xdp_files(inputs):
@@ -59,31 +64,60 @@ def process_one(
         if not quiet:
             print(f"🧩 Parsing {xdp_path}…")
 
+        # --- 1. Parse XDP and strip namespaces ---
         tree = strip_namespaces(ET.parse(xdp_path))
+        root = tree.getroot()
 
-        # Hide/show rules derived from <script> nodes
-        parent_map = build_parent_map(tree.getroot())
-        rules_parser = VisibilityRulesParser(tree.getroot(), parent_map)
-        visibility_rules = rules_parser.extract_rules()
+        # --- 2. Build parent map ---
+        parent_map = build_parent_map(root)
 
-        # HelpTextRegistry is a singleton. Load messages once per run.
+        # --- 3. Extract enum maps ---
+        print(f"  [DEBUG] Extracting enum maps from XDP…")
+        enum_context = ParseContext(
+            root=root, parent_map=parent_map, visibility_rules={}
+        )
+        enum_factory = EnumMapFactory(enum_context)
+        traversal = XdpParser(enum_factory, enum_context)
+        traversal.parse_xdp()
+
+        pipeline = VisibilityRulesPipeline()
+        rule_context = {
+            "xdp_root": root,
+            "enum_map": traversal.factory.enum_maps,
+            "parent_map": parent_map,
+            "label_to_enum": enum_factory.label_to_enum,
+        }
+        visibility_rules = pipeline.run(rule_context).get(
+            "jsonforms_visibility_rules", {}
+        )
+
+        # --- 5. Load help text (unchanged) ---
         registry = HelpTextRegistry()
-        registry.load_messages(tree.getroot())
+        registry.load_messages(root)
 
-        # look for help messages defined in javascript -> <variables><script> nodes
         help_text_parser = JSHelpTextParser(tree)
         help_text = help_text_parser.get_messages()
 
-        parser = XdpParser()
-        parser.configure(tree.getroot(), parent_map, help_text, visibility_rules)
+        # --- 6. Parse XDP into form elements (unchanged) ---
+        context = ParseContext(
+            root=root,
+            parent_map=parent_map,
+            visibility_rules=visibility_rules,
+            help_text=help_text,
+        )
+        parser = XdpParser(XdpElementFactory(context), context)
         input_groups = parser.parse_xdp()
 
+        # --- 7. Generate schemas (unchanged) ---
+        print(f"  [DEBUG] Generating JSON schema from input groups.")
         json_generator = JsonSchemaGenerator()
         json_schema = json_generator.to_schema(input_groups)
 
-        ui_generator = UiSchemaGenerator(input_groups)
+        ui_generator = UiSchemaGenerator(input_groups, context)
+        print(f"##################.   Generating UI schema from input groups.")
         ui_schema = ui_generator.to_schema()
 
+        # --- 8. Write output files ---
         schema_out.parent.mkdir(parents=True, exist_ok=True)
         with schema_out.open("w", encoding="utf-8") as f:
             json.dump(json_schema, f, indent=4, ensure_ascii=False)
@@ -91,7 +125,11 @@ def process_one(
         with ui_out.open("w", encoding="utf-8") as f:
             json.dump(ui_schema, f, indent=4, ensure_ascii=False)
 
+        # --- 9. Diagnostics (unchanged) ---
+        # XdpParser().diagnose()
+
         return (xdp_path, True, None)
+
     except Exception as e:
         traceback.print_exc()
         return (xdp_path, False, str(e))
@@ -177,7 +215,6 @@ def main():
                     print(f"❌ {xdp_short}: {err}", file=sys.stderr)
 
     if not args.quiet:
-        XdpParser().diagnose()
         print(f"\nDone. ✅ {successes} ok, ⏭️ {skipped} skipped, ❌ {failures} failed.")
 
     sys.exit(0 if failures == 0 else 2)

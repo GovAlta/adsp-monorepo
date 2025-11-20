@@ -17,4 +17,4 @@ class XdpSection(XdpElement):
             fe = element.to_form_element()
             if fe:
                 nodes.append(fe)
-        return FormSection(self.get_name(), self.full_path, title, nodes)
+        return FormSection(self.get_name(), self.full_path, title, nodes, self.context)

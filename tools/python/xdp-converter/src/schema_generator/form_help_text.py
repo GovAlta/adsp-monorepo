@@ -1,12 +1,20 @@
 import re
 from schema_generator.form_element import FormElement
 from schema_generator.html_to_markdown import html_to_markdown
+from xdp_parser.parse_context import ParseContext
 
 
 class FormHelpText(FormElement):
-    def __init__(self, exdata):
-        super().__init__("information", None, None)
-        self.help = html_to_markdown(exdata)
+    def __init__(self, exdata, context: ParseContext):
+        super().__init__("information", None, None, context)
+        self.can_group_horizontally = False
+        # 🧩 Handle either plain text or ElementTree nodes
+        if isinstance(exdata, str):
+            self.help = exdata
+        elif hasattr(exdata, "text") and exdata.text:
+            self.help = exdata.text
+        else:
+            self.help = html_to_markdown(exdata)
 
     def build_ui_schema(self):
         if not self.help:

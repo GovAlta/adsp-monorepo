@@ -984,8 +984,7 @@ Then('the user views the email body {string}', function (emailBody) {
 });
 
 When('the user clicks Close button in event template modal', function () {
-  cy.scrollTo('bottom');
-  notificationsObj.editTemplateModalCloseBtn().shadow().find('button').click({ force: true });
+  notificationsObj.editTemplateModalCloseBtn().scrollIntoView().shadow().find('button').click({ force: true });
 });
 
 When('the user views the link for managing email subscription', function () {

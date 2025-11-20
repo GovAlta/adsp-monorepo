@@ -33,3 +33,17 @@ export const agentNamesSelector = createSelector(
 export const editorSelector = (state: RootState) => state.agent.editor;
 
 export const availableToolsSelector = (state: RootState) => state.agent.availableTools;
+
+export const availableAgentsSelector = createSelector(
+  editorSelector,
+  (state: RootState) => state.agent.agents,
+  ({ agent }, availableAgents) =>
+    Object.values(availableAgents).filter((candidate) => candidate.id !== agent?.id && !candidate.agents?.length)
+);
+
+export const agentAgentsSelector = createSelector(
+  editorSelector,
+  availableAgentsSelector,
+  ({ agent }, availableAgents) =>
+    agent?.agents?.map((agent) => availableAgents.find(({ id }) => id === agent)).filter((agent) => !!agent) || []
+);

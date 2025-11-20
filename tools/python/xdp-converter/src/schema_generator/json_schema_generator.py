@@ -1,7 +1,6 @@
 from typing import List
 
 from schema_generator.form_element import FormElement
-from schema_generator.form_object_array import FormObjectArray
 
 
 class JsonSchemaGenerator:

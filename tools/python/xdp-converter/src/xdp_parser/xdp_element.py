@@ -3,18 +3,16 @@ from abc import ABC, abstractmethod
 from importlib.resources.readers import remove_duplicates
 
 from schema_generator.form_element import FormElement
-from schema_generator.form_input import FormInput
+from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_utils import split_camel_case, strip_label_prefix
 
 
 class XdpElement(ABC):
-    def __init__(self, xdp, labels=None):
+    def __init__(self, xdp, labels=None, context: ParseContext = None):
         self.xdp_element = xdp
         self.labels = labels
-        # TODO make this go away.
-        from xdp_parser.parse_xdp import XdpParser
-
-        self.parent_map = XdpParser().parent_map
+        self.context = context or {}
+        self.parent_map = context.get("parent_map", {}) if context else {}
 
     def get_full_path(self) -> str:
         """

@@ -7,10 +7,17 @@ export const configurationSchema = {
         name: {
           type: 'string',
         },
+        description: {
+          type: 'string',
+        },
         instructions: {
           type: 'string',
         },
         userRoles: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+        agents: {
           type: 'array',
           items: { type: 'string' },
         },
