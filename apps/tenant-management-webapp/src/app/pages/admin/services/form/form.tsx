@@ -10,7 +10,7 @@ import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import { selectFormAppHost } from '@store/form/selectors';
 import { FormExport } from './export/formExport';
 import FormOverview from './formOverview';
-import { FormDefinitions } from '@form-editor-common';
+import { FormDefinitions } from './definitions/definitions';
 import { HeadingDiv } from '../styled-components';
 
 const HelpLink = (): JSX.Element => {
