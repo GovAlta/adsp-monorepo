@@ -80,8 +80,7 @@ export const FormDefinitionEditor = (): JSX.Element => {
     dataSchemaDraft: tempDataSchema,
   } = useSelector((state: RootState) => state.form.editor);
 
-  const setDefinition = (update: Partial<FormDefinition>) => dispatch(updateEditorFormDefinition(update));
-  const formDefinitions = useSelector((state: RootState) => state.form.definitions);
+  const setDefinitionDispatch = (update: Partial<FormDefinition>) => dispatch(updateEditorFormDefinition(update));
   const schemaError = useSelector(schemaErrorSelector);
 
   const selectedCoreEvent = useSelector(
@@ -99,12 +98,9 @@ export const FormDefinitionEditor = (): JSX.Element => {
   );
 
   const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema) as Record<string, unknown>;
-
   const fileList = useSelector((state: RootState) => state?.fileService?.fileList);
 
   const hasFormName = (jobFileName, formName) => {
-    console.log(JSON.stringify(jobFileName) + '>jopbFineNme');
-    console.log(JSON.stringify(formName) + '>formName');
     const partFormName = formName.length >= 10 ? formName.substr(0, 10) : formName;
     return jobFileName.indexOf(partFormName) !== -1;
   };
@@ -116,34 +112,16 @@ export const FormDefinitionEditor = (): JSX.Element => {
   const jobList = useSelector((state: RootState) =>
     state?.pdf?.jobs.filter((job) => job.templateId === pdfTemplate.id && hasFormName(job.filename, definition?.name))
   );
-
-  const socketChannel = useSelector((state: RootState) => {
-    return state?.pdf.socketChannel;
-  });
+  const socketChannel = useSelector((state: RootState) => state?.pdf.socketChannel);
   const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
   const currentId = useSelector((state: RootState) => state?.pdf?.currentId);
   const files = useSelector((state: RootState) => state?.pdf.files);
-  const pdf = useSelector((state: RootState) => state?.pdf);
-  const state0 = useSelector((state: RootState) => state);
-
-  const error = useSelector(schemaErrorSelector);
-
   const registerData = useSelector(selectRegisterData);
   const nonAnonymous = useSelector((state: RootState) => state.configuration?.nonAnonymous);
   const dataList = useSelector((state: RootState) => state.configuration?.dataList);
 
-  console.log(JSON.stringify(pdf) + '<pdf--------');
-  // console.log(JSON.stringify(state0) + '<state--------');
-
-  const newFileList = useSelector((state: RootState) => {
-    return state?.fileService.newFileList;
-  });
-
-   const { tenantName } = useSelector((state: RootState) => {
-     return {
-       tenantName: state.tenant.name,
-     };
-   });
+  const newFileList = useSelector((state: RootState) => state?.fileService.newFileList);
+  const tenantName = useSelector((state: RootState) => state.tenant.name);
 
   const pdfList = useSelector((state: RootState) => state.pdf.jobs, _.isEqual);
 
@@ -225,10 +203,6 @@ export const FormDefinitionEditor = (): JSX.Element => {
       <ModalContent>
         <OuterFormTemplateEditorContainer>
           <TabletMessage goBack={() => navigate('/admin/services/form?definitions=true')} />
-
-          {/* <pre>{JSON.stringify(dataSchema,null,2)}</pre>
-          <pre>{JSON.stringify(tempDataSchema,null,2)}</pre> */}
-
           <HideTablet>
             <FormTemplateEditorContainer>
               {definition?.id && realmRoles && queueTasks && fileTypes ? (
@@ -240,10 +214,9 @@ export const FormDefinitionEditor = (): JSX.Element => {
                   fileTypes={fileTypes}
                   isLoading={isLoading}
                   isSaving={isSaving}
+                  indicator={indicator}
                   tempUiSchema={tempUiSchema}
                   tempDataSchema={tempDataSchema}
-                  setDefinition={setDefinition}
-                  formDefinitions={formDefinitions}
                   schemaError={schemaError}
                   selectedCoreEvent={selectedCoreEvent}
                   isFormUpdated={isFormUpdated}
@@ -251,9 +224,25 @@ export const FormDefinitionEditor = (): JSX.Element => {
                   isLoadingRoles={isLoadingRoles}
                   newFileList={newFileList}
                   SecurityClassification={SecurityClassification}
-                  indicator={indicator}
                   CalendarEventDefault={CalendarEventDefault}
                   formServiceApiUrl={formServiceApiUrl}
+                  fileList={fileList}
+                  pdfTemplate={pdfTemplate}
+                  jobList={jobList}
+                  socketChannel={socketChannel}
+                  reloadFile={reloadFile}
+                  currentId={currentId}
+                  files={files}
+                  pdfList={pdfList}
+                  REALM_ROLE_KEY={REALM_ROLE_KEY}
+                  registerData={registerData}
+                  nonAnonymous={nonAnonymous}
+                  dataList={dataList}
+                  tenantName={tenantName}
+                  dataSchema={dataSchema}
+                  definitions={definitions}
+                  defaultFormUrl={defaultFormUrl}
+                  setDefinition={setDefinitionDispatch}
                   DeleteFileService={DeleteFileServiceDispatch}
                   updateFormDefinition={updateFormDefinitionDispatch}
                   UploadFileService={UploadFileServiceDispatch}
@@ -263,10 +252,7 @@ export const FormDefinitionEditor = (): JSX.Element => {
                   setDraftDataSchema={setDraftDataSchemaDispatch}
                   setDraftUISchema={setDraftUISchemaDispatch}
                   UpdateSearchCriteriaAndFetchEvents={UpdateSearchCriteriaAndFetchEventsDispatch}
-                  dataSchema={dataSchema}
                   renameAct={renameActDispatch}
-                  definitions={definitions}
-                  defaultFormUrl={defaultFormUrl}
                   DeleteCalendarEvent={DeleteCalendarEventDispatch}
                   CreateEventsByCalendar={CreateEventsByCalendarDispatch}
                   UpdateEventsByCalendar={UpdateEventsByCalendarDispatch}
@@ -275,23 +261,9 @@ export const FormDefinitionEditor = (): JSX.Element => {
                   setPdfDisplayFileId={setPdfDisplayFileIdDispatch}
                   updatePdfResponse={updatePdfResponseDispatch}
                   FetchFileService={FetchFileServiceDispatch}
-                  fileList={fileList}
-                  pdfTemplate={pdfTemplate}
-                  jobList={jobList}
-                  socketChannel={socketChannel}
-                  reloadFile={reloadFile}
-                  currentId={currentId}
-                  files={files}
-                  pdfList={pdfList}
                   updateTempTemplate={updateTempTemplateDispatch}
                   generatePdf={generatePdfDispatch}
                   getCorePdfTemplates={getCorePdfTemplatesDispatch}
-                  REALM_ROLE_KEY={REALM_ROLE_KEY}
-                  error={error}
-                  registerData={registerData}
-                  nonAnonymous={nonAnonymous}
-                  dataList={dataList}
-                  tenantName={tenantName}
                 />
               ) : (
                 <IndicatorBox>

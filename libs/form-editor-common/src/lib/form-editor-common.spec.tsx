@@ -356,7 +356,6 @@ describe('FormEditorCommon', () => {
         tempUiSchema={JSON.stringify(tempUiSchema)}
         tempDataSchema={JSON.stringify(tempDataSchema)}
         setDefinition={setDefinition}
-        formDefinitions={{}}
         schemaError={null}
         selectedCoreEvent={undefined}
         isFormUpdated={false}
@@ -400,11 +399,10 @@ describe('FormEditorCommon', () => {
         generatePdf={generatePdfDispatch}
         getCorePdfTemplates={getCorePdfTemplatesDispatch}
         REALM_ROLE_KEY={0}
-        error={null}
         registerData={null}
         nonAnonymous={false}
         dataList={{}}
-        tenantName={"tenantName"}
+        tenantName={'tenantName'}
       />
     );
     expect(baseElement).toBeTruthy();

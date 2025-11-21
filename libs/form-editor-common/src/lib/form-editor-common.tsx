@@ -66,7 +66,6 @@ import { Disposition, FormDefinition } from './model';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
 
-
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
 export enum SecurityClassification {
@@ -167,7 +166,6 @@ export function FormEditorCommon({
   tempUiSchema,
   tempDataSchema,
   setDefinition,
-  formDefinitions,
   schemaError,
   selectedCoreEvent,
   isFormUpdated,
@@ -211,7 +209,6 @@ export function FormEditorCommon({
   updateTempTemplate,
   generatePdf,
   REALM_ROLE_KEY,
-  error,
   registerData,
   nonAnonymous,
   dataList,
@@ -320,7 +317,7 @@ export function FormEditorCommon({
   const close = () => {
     ClearNewFileList();
     navigate('..?definitions=true', { state: { addOpenFormEditor: true, isNavigatedFromEdit: true } });
-    if (Object.keys(formDefinitions).length === 0) {
+    if (Object.keys(definitions).length === 0) {
       getFormDefinitions();
     }
   };
@@ -1014,7 +1011,7 @@ export function FormEditorCommon({
                       <JSONFormPreviewer
                         dataSchema={dataSchema}
                         uiSchema={tempUiSchema}
-                        error={error}
+                        error={schemaError}
                         registerData={registerData}
                         nonAnonymous={nonAnonymous}
                         dataList={dataList}
