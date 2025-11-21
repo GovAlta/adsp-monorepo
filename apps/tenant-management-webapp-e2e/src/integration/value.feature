@@ -6,7 +6,8 @@ Feature: Value
     When the user selects the "Value" menu item
     Then the user views the "Value service" overview content "The value service provides"
 
-  @TEST_CS-3340 @TEST_CS-3387 @3489 @TEST_CS-3434 @REQ_CS-250 @REQ_CS-2899 @REQ_CS-3465 @REQ_CS-3434 @regression
+  # CS-4536 Monaco editor bug to be resolved before enabling the test again
+  @TEST_CS-3340 @TEST_CS-3387 @3489 @TEST_CS-3434 @REQ_CS-250 @REQ_CS-2899 @REQ_CS-3465 @REQ_CS-3434 @regression @ignore
   Scenario: As a tenant admin, I can add, edit and delete value definitions
     Given a tenant admin user is on value overview page
     # Add value definition
