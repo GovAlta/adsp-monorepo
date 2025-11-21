@@ -1,7 +1,8 @@
 @script
 Feature: Script
 
-  @TEST_CS-1741 @REQ_CS-1656 @REQ_CS-1657 @REQ_CS-1658 @regression
+  # CS-4536 Monaco editor bug to be resolved before enabling the test again
+  @TEST_CS-1741 @REQ_CS-1656 @REQ_CS-1657 @REQ_CS-1658 @regression @ignore
   Scenario: As a tenant admin, I can add, edit and delete a script
     Given a tenant admin user is on script service overview page
     When the user clicks Add script button
