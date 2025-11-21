@@ -139,6 +139,12 @@ export const FormDefinitionEditor = (): JSX.Element => {
     return state?.fileService.newFileList;
   });
 
+   const { tenantName } = useSelector((state: RootState) => {
+     return {
+       tenantName: state.tenant.name,
+     };
+   });
+
   const pdfList = useSelector((state: RootState) => state.pdf.jobs, _.isEqual);
 
   const DeleteFileServiceDispatch = (fileId: string) => {
@@ -220,6 +226,9 @@ export const FormDefinitionEditor = (): JSX.Element => {
         <OuterFormTemplateEditorContainer>
           <TabletMessage goBack={() => navigate('/admin/services/form?definitions=true')} />
 
+          {/* <pre>{JSON.stringify(dataSchema,null,2)}</pre>
+          <pre>{JSON.stringify(tempDataSchema,null,2)}</pre> */}
+
           <HideTablet>
             <FormTemplateEditorContainer>
               {definition?.id && realmRoles && queueTasks && fileTypes ? (
@@ -282,6 +291,7 @@ export const FormDefinitionEditor = (): JSX.Element => {
                   registerData={registerData}
                   nonAnonymous={nonAnonymous}
                   dataList={dataList}
+                  tenantName={tenantName}
                 />
               ) : (
                 <IndicatorBox>

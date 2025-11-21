@@ -130,7 +130,7 @@ export const PDFPreviewTemplateCore = ({
       <>
         {indicator?.show && (
           <SpinnerPadding>
-            <PageIndicator />
+            <PageIndicator indicator={indicator} />
           </SpinnerPadding>
         )}
         {!indicator?.show && !hasError && blobUrl && (

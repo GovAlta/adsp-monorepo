@@ -27,10 +27,6 @@ export const JSONFormPreviewer = ({
   nonAnonymous,
   dataList
 }: JSONFormPreviewerProps): JSX.Element => {
-
-  console.log(JSON.stringify(uiSchema) + "<uiSChema -----------")
-  console.log(JSON.stringify(dataSchema) + '<dataSchema -----------');
-
   // Resolved data schema (with refs inlined) is used with JsonForms since it doesn't handle remote refs.
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
@@ -45,14 +41,14 @@ export const JSONFormPreviewer = ({
         defaultRegisters={{ registerData: registerData, dataList: dataList, nonAnonymous: nonAnonymous }}
       >
         <JsonForms
-          // ajv={ajv}
+          ajv={ajv}
           renderers={GoARenderers}
           cells={GoACells}
           onChange={onChange}
           data={data}
           validationMode={'ValidateAndShow'}
           //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
-          schema={{ ...JSON.parse(dataSchema) }}
+          schema={dataSchema}
           uischema={{ ...JSON.parse(uiSchema) }}
         />
       </JsonFormRegisterProvider>

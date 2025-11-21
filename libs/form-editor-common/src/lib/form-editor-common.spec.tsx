@@ -400,6 +400,11 @@ describe('FormEditorCommon', () => {
         generatePdf={generatePdfDispatch}
         getCorePdfTemplates={getCorePdfTemplatesDispatch}
         REALM_ROLE_KEY={0}
+        error={null}
+        registerData={null}
+        nonAnonymous={false}
+        dataList={{}}
+        tenantName={"tenantName"}
       />
     );
     expect(baseElement).toBeTruthy();

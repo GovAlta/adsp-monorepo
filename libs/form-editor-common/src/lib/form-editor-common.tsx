@@ -124,6 +124,7 @@ interface ClientRoleProps {
   onUpdateRoles: (roles: string[], type: string) => void;
   configuration: Record<string, string[]>;
   REALM_ROLE_KEY: string;
+  tenantName: string;
 }
 
 const ClientRole = ({
@@ -133,6 +134,7 @@ const ClientRole = ({
   configuration,
   onUpdateRoles,
   REALM_ROLE_KEY,
+  tenantName,
 }: ClientRoleProps) => {
   return (
     <ClientRoleTable
@@ -148,6 +150,7 @@ const ClientRole = ({
         { title: types[2].name, selectedRoles: configuration[types[2].type] },
       ]}
       REALM_ROLE_KEY={REALM_ROLE_KEY}
+      tenantName={tenantName}
     />
   );
 };
@@ -212,6 +215,7 @@ export function FormEditorCommon({
   registerData,
   nonAnonymous,
   dataList,
+  tenantName,
 }): JSX.Element {
   const editorRefData = useRef(null);
   const editorRefUi = useRef(null);
@@ -409,7 +413,7 @@ export function FormEditorCommon({
   return (
     <FormEditor>
       {isLoading ? (
-        <PageIndicator />
+        <PageIndicator indicator={indicator} />
       ) : (
         <FlexRow>
           {isSaving && <CustomLoader />}
@@ -583,6 +587,7 @@ export function FormEditorCommon({
                                 }
                               }}
                               REALM_ROLE_KEY={REALM_ROLE_KEY}
+                              tenantName={tenantName}
                             />
                           )
                         );
@@ -1007,7 +1012,7 @@ export function FormEditorCommon({
                   >
                     <GoAFormItem error={schemaError} label="">
                       <JSONFormPreviewer
-                        dataSchema={tempDataSchema}
+                        dataSchema={dataSchema}
                         uiSchema={tempUiSchema}
                         error={error}
                         registerData={registerData}
@@ -1107,6 +1112,7 @@ export function FormEditorCommon({
           setDefinition({ dispositionStates });
           setSelectedDeleteDispositionIndex(null);
         }}
+        indicator={indicator}
       />
 
       <AddEditDispositionModal

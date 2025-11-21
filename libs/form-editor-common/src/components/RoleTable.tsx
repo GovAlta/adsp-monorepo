@@ -1,10 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { GoACheckbox, GoATable } from '@abgov/react-components';
 import { MarginAdjustment, PaddingRem } from './styled-components';
-import { useSelector } from 'react-redux';
-import { RootState } from '@store/index';
-import { v4 as uuidV4 } from 'uuid';
-
 
 /**
  * A React component for creating roles table
@@ -38,6 +34,7 @@ interface ClientRoleTableProps {
   nameColumnWidth?: number;
   disabled?: boolean;
   REALM_ROLE_KEY?: string;
+  tenantName: string;
 }
 
 function capitalizeFirstLetter(string) {
@@ -45,11 +42,9 @@ function capitalizeFirstLetter(string) {
 }
 
 export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
-  const { tenantName } = useSelector((state: RootState) => {
-    return {
-      tenantName: state.tenant.name,
-    };
-  });
+
+  const { tenantName } = props;
+ 
   const [checkedRoles, setCheckedRoles] = useState(props.checkedRoles);
   const service = props.service;
   const nameColumnStyle = {

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { PageLoader } from '@core-services/app-common';
-import { RootState } from '@store/index';
-import { useSelector } from 'react-redux';
 import { CircularProgressVariant } from '@abgov/react-components';
 
 interface IndicatorProps {
@@ -34,24 +32,7 @@ export const Center = styled.div`
   justify-content: center;
 `;
 
-export const useActionStateCheck = (actionName: string, stateToCheck = 'completed') => {
-  const loadingState = useSelector((state: RootState) => {
-    return state?.session?.loadingStates.find((state) => state.name === actionName);
-  });
-
-  if (loadingState === undefined) {
-    return false;
-  }
-
-  return loadingState.state === stateToCheck;
-};
-
-export const PageIndicator = (variant): JSX.Element => {
-  // Using redux in component shall be limited.
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-
+export const PageIndicator = (variant, indicator): JSX.Element => {
   const props = {
     ...indicator,
     pageLock: false,

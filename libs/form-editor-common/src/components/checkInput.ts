@@ -1,18 +1,22 @@
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
-import addErrors from 'ajv-errors';
+import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
+import { createDefaultAjv } from '@abgov/jsonforms-components';
 
 export interface ValidInput {
   pattern: RegExp;
   onFailureMessage: string;
 }
+export const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 
-export const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log' });
+ajv.addKeyword({
+  keyword: 'isNotEmpty',
+  validate: function (_schema, data: string) {
+    return typeof data === 'string' && data.trim() !== '';
+  },
+  // This will get checked again in our GoA JsonForm controls to render user friendly error message
+  errors: true,
+});
 
-ajv.addFormat('time', /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/);
-ajv.addFormat('file-urn', /urn:[^:]+:[^:]+:[^:]+:[^:]+/);
-addFormats(ajv);
-addErrors(ajv);
+
 
 /**
  * Given a list of validators and name of the input field, report on its cleanliness
@@ -36,7 +40,7 @@ export const checkInput = (input: unknown, validators: Validator[], action?: Val
 
 /* Some common character cleansing patterns */
 export const validationPattern = {
-  mixedKebabCase: {
+   mixedKebabCase: {
     pattern: new RegExp(/^[a-zA-Z0-9-_]+$/),
     onFailureMessage: 'Allowed characters are: a-z, A-Z, 0-9, -, _',
   },
@@ -47,6 +51,10 @@ export const validationPattern = {
   lowerKebabCase: { pattern: new RegExp(/^[a-z0-9-]+$/), onFailureMessage: 'Allowed characters are: a-z, 0-9, -' },
   upperKebabCase: { pattern: new RegExp(/^[A-Z0-9-]+$/), onFailureMessage: 'Allowed characters are: A-Z, 0-9, -' },
   validURL: { pattern: new RegExp(/^(http|https):\/\/[^ "]+$/), onFailureMessage: 'Please enter a valid URL' },
+  validURLOnlyDomain: {
+    pattern: new RegExp(/^((http|https):\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})([^/\s]*)?$/),
+    onFailureMessage: 'Please enter a valid URL',
+  },
   validEmail: {
     pattern: new RegExp(/^\w+(?:[.-]\w+)*@\w+(?:[.-]\w+)*(?:\.\w{2,3})+$/),
     onFailureMessage: 'Please enter a valid email address',
@@ -54,6 +62,10 @@ export const validationPattern = {
   validSms: {
     pattern: new RegExp(/^\d{10}$/),
     onFailureMessage: 'Please enter a valid 10 digit phone number ie. 7801234567',
+  },
+  validContact: {
+    pattern: new RegExp(/^(?:\w+(?:[.-]\w+)*@\w+(?:[.-]\w+)*(?:\.\w{2,3})|\d{10})$/),
+    onFailureMessage: 'Please enter a valid email address or 10 digit phone number (e.g., 7801234567)',
   },
 };
 

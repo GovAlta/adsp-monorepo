@@ -23,14 +23,7 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
   existingDispositions,
 }) => {
   const [template, setTemplate] = useState<Disposition>(initialValue);
-
   const templateIds = (existingDispositions || []).map((disposition) => disposition.name);
-  // const indicator = useSelector((state: RootState) => {
-  //   return state?.session?.indicator;
-  // });
-
-  // eslint-disable-next-line
-  // useEffect(() => {}, [indicator]);
 
   useEffect(() => {
     setTemplate(initialValue);

@@ -283,7 +283,7 @@ export const AddEditFormDefinition = ({
       }
     >
       {spinner ? (
-        <PageIndicator />
+        <PageIndicator indicator={indicator} />
       ) : (
         <>
           <FormFormItem>

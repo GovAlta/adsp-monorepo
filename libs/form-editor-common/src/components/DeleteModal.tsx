@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
 import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
-import { useSelector } from 'react-redux';
-import { RootState } from '@store/index';
 import { PageIndicator } from './Indicator';
 import { CenterPosition } from './styled-components';
 
@@ -11,13 +9,10 @@ interface deleteModalProps {
   isOpen: boolean;
   onDelete: () => void;
   onCancel: () => void;
+  indicator: any;
 }
 
-export const DeleteModal = ({ isOpen, title, content, onDelete, onCancel }: deleteModalProps) => {
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-
+export const DeleteModal = ({ isOpen, title, content, onDelete, onCancel, indicator }: deleteModalProps) => {
   useEffect(() => {
     if (isOpen) {
       const deletBtn = document.querySelector('[data-testId="delete-confirm"]') as HTMLButtonElement;
@@ -48,7 +43,7 @@ export const DeleteModal = ({ isOpen, title, content, onDelete, onCancel }: dele
     >
       {indicator && indicator.show && (
         <CenterPosition>
-          <PageIndicator variant="fullscreen" />
+          <PageIndicator variant="fullscreen" indicator={indicator} />
         </CenterPosition>
       )}
       {content}
