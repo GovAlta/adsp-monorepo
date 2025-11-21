@@ -18,7 +18,7 @@ import { selectFormAppLink, selectFormResourceTags } from '@store/form/selectors
 import { isValidUrl } from '@lib/validation/urlUtil';
 import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
 import { GoABadge, GoACircularProgress } from '@abgov/react-components';
-import { EntryDetail } from '../styled-components';
+import { EntryDetail } from '../../styled-components';
 import { UpdateSearchCriteriaAndFetchEvents, fetchCalendars } from '@store/calendar/actions';
 interface FormDefinitionItemProps {
   formDefinition: FormDefinition;

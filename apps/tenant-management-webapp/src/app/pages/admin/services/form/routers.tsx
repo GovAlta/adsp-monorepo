@@ -1,7 +1,7 @@
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Form } from './form';
-import { FormDefinitionEditor } from '@form-editor-common';
+import { FormDefinitionEditor } from './definitions/formDefinitionEditor';
 
 export const FormRouter = () => {
   return (
