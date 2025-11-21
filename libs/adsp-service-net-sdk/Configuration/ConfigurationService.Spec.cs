@@ -10,6 +10,7 @@ using Xunit;
 using Newtonsoft.Json.Linq;
 
 namespace Adsp.Sdk.Configuration;
+
 public class ConfigurationServiceTests
 {
   [Fact]

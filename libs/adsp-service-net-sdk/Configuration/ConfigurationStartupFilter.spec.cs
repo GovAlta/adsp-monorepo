@@ -5,6 +5,7 @@ using Xunit;
 using Microsoft.AspNetCore.Builder;
 
 namespace Adsp.Sdk.Configuration;
+
 public class ConfigurationStartupFilterTests
 {
   [Fact]

@@ -4,6 +4,7 @@ using Adsp.Sdk;
 
 //script definitions
 namespace Adsp.Platform.ScriptService.Model;
+
 public class ScriptDefinition
 {
   [JsonPropertyName("id")]
