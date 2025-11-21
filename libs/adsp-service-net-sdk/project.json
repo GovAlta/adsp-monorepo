@@ -18,10 +18,7 @@
       }
     },
     "lint": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "dotnet format ./libs/adsp-service-net-sdk/adsp-service-net-sdk.csproj --verbosity diag"
-      }
+      "executor": "@nx-dotnet/core:format"
     },
     "test": {
       "executor": "@nx-dotnet/core:test",
