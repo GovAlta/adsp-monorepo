@@ -136,7 +136,7 @@
   },
   "devDependencies": {
     "@abgov/maven-semantic-release": "^2.0.0",
-    "@abgov/nx-adsp": "^9.0.0",
+    "@abgov/nx-adsp": "^10.0.0",
     "@abgov/nx-oc": "^9.0.0",
     "@abgov/nx-release": "^9.0.0",
     "@abgov/react-components": "npm:@abgov/react-components@5.4.1",
