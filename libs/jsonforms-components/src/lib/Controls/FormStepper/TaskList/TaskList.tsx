@@ -16,7 +16,6 @@ export interface TocProps {
   subtitle?: string;
   isValid: boolean;
   hideSummary: boolean;
-
 }
 
 function mergeOrphanSections(sections: SectionMap[]): SectionMap[] {
@@ -45,7 +44,6 @@ function expandSections(inputArray: SectionMap[]): SectionMap[] {
     categories: [cat],
   }));
 }
-
 
 const shouldShow = (cat: CategoryState) => cat?.uischema?.options?.showInTaskList !== false;
 
@@ -78,18 +76,17 @@ export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subti
     return sections;
   }, [categories]);
 
-  // Derived values
-  const totalGroups = useMemo(
-    () => mergedSections.filter((section) => section.categories.some(shouldShow)).length,
+  const totalPages = useMemo(
+    () => mergedSections.reduce((count, section) => count + section.categories.filter(shouldShow).length, 0),
     [mergedSections]
   );
 
-  const completedGroups = useMemo(
+  const completedPages = useMemo(
     () =>
-      mergedSections.filter((section) => {
-        const visibleCats = section.categories.filter(shouldShow);
-        return visibleCats.length > 0 && visibleCats.every((cat) => cat.isCompleted);
-      }).length,
+      mergedSections.reduce(
+        (count, section) => count + section.categories.filter((cat) => shouldShow(cat) && cat.isCompleted).length,
+        0
+      ),
     [mergedSections]
   );
 
@@ -109,7 +106,7 @@ export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subti
             {subtitle}
           </GoAText>
         )}
-        <ApplicationStatus completedGroups={completedGroups} totalGroups={totalGroups} />
+        <ApplicationStatus completedGroups={completedPages} totalGroups={totalPages} />
 
         <GoATable width="100%">
           <tbody>
