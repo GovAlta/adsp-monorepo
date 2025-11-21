@@ -2,6 +2,7 @@ using FluentAssertions;
 using Xunit;
 
 namespace Adsp.Sdk;
+
 public class AdspIdTests
 {
   [Fact]

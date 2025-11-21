@@ -1,6 +1,7 @@
 using System.Security.Principal;
 
 namespace Adsp.Sdk;
+
 public class User : UserIdentifier
 {
   private readonly bool _isCore;

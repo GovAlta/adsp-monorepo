@@ -52,7 +52,10 @@
     <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
     <PackageReference Include="RestSharp" Version="112.1.0" />
     <PackageReference Include="SocketIOClient" Version="3.1.2" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="System.Reactive.Linq" Version="6.0.1" />
+    <PackageReference Include="System.Text.Json" Version="10.0.0" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
 
   <Target Name="CheckNxModuleBoundaries" BeforeTargets="Build">

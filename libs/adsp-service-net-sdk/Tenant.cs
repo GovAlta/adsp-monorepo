@@ -1,4 +1,5 @@
 namespace Adsp.Sdk;
+
 public class Tenant
 {
   public AdspId? Id { get; set; }

@@ -1,4 +1,5 @@
 namespace Adsp.Sdk;
+
 public class AdspOptions : ServiceRegistration
 {
   /// <summary>

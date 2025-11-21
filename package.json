@@ -33,8 +33,7 @@
     "tmw-e2e:regression-test": "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --env.'TAGS'='@regression' --baseUrl=https://tenant-management-webapp-test.os99.int.alberta.ca",
     "tmw-e2e:html-report": "node .\\apps\\tenant-management-webapp-e2e\\src\\support\\multiple-cucumber-html-reporter.js",
     "workspace-generator": "nx workspace-generator",
-    "prepare": "nx g @nx-dotnet/core:restore",
-    "postinstall": "npm --prefix apps/content-service ci"
+    "prepare": "nx g @nx-dotnet/core:restore"
   },
   "private": true,
   "dependencies": {

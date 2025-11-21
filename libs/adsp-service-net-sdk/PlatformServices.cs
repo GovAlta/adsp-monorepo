@@ -1,4 +1,5 @@
 namespace Adsp.Sdk;
+
 public static class AdspPlatformServices
 {
   public static readonly AdspId TenantServiceId = AdspId.Parse("urn:ads:platform:tenant-service");
