@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 
@@ -21,20 +21,35 @@ const LoginLanding = (): JSX.Element => {
   const feedback = useSelector(feedbackSelector);
   const configInitialized = useSelector(configInitializedSelector);
 
+  // Prevent duplicated calls
+  const didInitTenant = useRef(false);
+  const didLogin = useRef(false);
+
+  // STEP 1: Load tenant once config is ready
   useEffect(() => {
-    if (configInitialized) {
+    if (!configInitialized) return;
+
+    if (!didInitTenant.current) {
+      didInitTenant.current = true;
+      console.log('Initializing tenant:', tenantName);
       dispatch(initializeTenant(tenantName));
     }
   }, [configInitialized, tenantName, dispatch]);
 
+  // STEP 2: Log user in once tenant is loaded
   useEffect(() => {
-    if (tenant) {
+    if (!tenant) return;
+
+    if (!didLogin.current) {
+      didLogin.current = true;
+      console.log('Calling loginUser with tenant:', tenant);
       dispatch(loginUser({ tenant, from: `/${tenantName}` }));
     }
-  }, [tenant, dispatch, tenantName]);
+  }, [tenant, tenantName, dispatch]);
 
+  // STEP 3: Tenant not found -> navigate away
   useEffect(() => {
-    if (feedback?.message.includes('not found')) {
+    if (feedback?.message?.includes('not found')) {
       navigate(`/overview`);
     }
   }, [feedback, navigate]);

@@ -1,8 +1,9 @@
-import { Session } from '@store/session/models';
+import { Session } from './models';
+
 import Keycloak, { KeycloakConfig, KeycloakInitOptions } from 'keycloak-js';
 
 const LOGOUT_REDIRECT = '/logout-redirect';
-const LOGIN_REDIRECT = '/login-redirect';
+const LOGIN_REDIRECT = '/autotest/login';
 
 export const MAX_ALLOWED_IDLE_IN_MINUTE = 28;
 export const REFRESH_TOKEN_EXPIRY_IN_MINUTE = 30;
@@ -15,16 +16,24 @@ export enum LOGIN_TYPES {
 
 export let authInstance: KeycloakAuthImpl = null;
 export const getOrCreateKeycloakAuth = async (config: KeycloakConfig, realm: string): Promise<KeycloakAuth> => {
+  console.log("a")
   if (!realm) {
     throw new Error('Realm value not set on keycloak retrieval.');
   }
+
+  console.log("b")
 
   // Lazy create singleton and reinitialize if realm changes
   if (!authInstance) {
     authInstance = new KeycloakAuthImpl(config);
   }
-  await authInstance.initialize(realm);
 
+    console.log("c")
+    console.log(JSON.stringify(config)+ "<config-0000000000")
+    console.log(JSON.stringify(realm))
+    console.log(JSON.stringify(authInstance))
+  await authInstance.initialize(realm);
+   console.log("d")
   return authInstance;
 };
 
@@ -63,6 +72,7 @@ class KeycloakAuthImpl implements KeycloakAuth {
 
   public async initialize(realm: string) {
     if (realm !== this.keycloak?.realm) {
+      console.log(JSON.stringify({ ...this.config, realm }) + "<{ ...this.config, realm }")
       this.keycloak = new Keycloak({ ...this.config, realm });
       await this.keycloak.init({ ...this.config, onLoad: 'check-sso' });
     }

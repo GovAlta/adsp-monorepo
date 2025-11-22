@@ -97,6 +97,7 @@ export const initializeTenant = createAsyncThunk(
         message: `Tenant "${name}" not found.`,
       } as FeedbackMessage);
     } else {
+      console.log('we are initializing - form');
       dispatch(initializeUser(tenant));
       return tenant;
     }
@@ -108,7 +109,12 @@ export const initializeUser = createAsyncThunk(
   async (tenant: Tenant, { getState, dispatch }) => {
     const { config } = getState() as AppState;
 
+        console.log(JSON.stringify(config) + "<-client")
+
     const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
+
+
+    console.log(JSON.stringify(client) + "<-client22")
     if (client.tokenParsed) {
       return {
         id: client.tokenParsed.sub,
@@ -131,15 +137,21 @@ export const initializeUser = createAsyncThunk(
 export const loginUserWithIDP = createAsyncThunk(
   'user/login-idp',
   async ({ realm, idpFromUrl, from }: { realm: string; idpFromUrl: string; from: string }, { getState, dispatch }) => {
+
     const { config } = getState() as AppState;
 
+           console.log(JSON.stringify(config) + "<-configconfigconfig")
+
     const client = await initializeKeycloakClient(dispatch, realm, config);
+               console.log(JSON.stringify(client) + "<-clientclient")
     Promise.all([
       client.login({
         idpHint: idpFromUrl,
         redirectUri: from === '/' ? new URL(`/auth/callback?from=${'/'}`, window.location.href).href : from,
       }),
     ]);
+
+
 
     // Client login causes redirect, so this code and the thunk fulfilled reducer are de facto not executed.
     return await client.loadUserProfile();
@@ -149,9 +161,14 @@ export const loginUserWithIDP = createAsyncThunk(
 export const loginUser = createAsyncThunk(
   'user/login',
   async ({ tenant, from }: { tenant: Tenant; from: string }, { getState, dispatch }) => {
+
     const { config } = getState() as AppState;
 
+           console.log(JSON.stringify(config) + "<-config")
+
     const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
+  console.log(JSON.stringify(client) + "<-client")
+
     await client.login({
       redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
     });
@@ -193,6 +210,8 @@ const userSlice = createSlice({
         state.tenant = payload;
       })
       .addCase(initializeUser.fulfilled, (state, { payload }) => {
+        console.log("do we never get here or do we");
+         console.log(JSON.stringify(payload) + "<-payload")
         state.user = payload;
         state.initialized = true;
       })
@@ -200,6 +219,7 @@ const userSlice = createSlice({
         state.user = null;
       })
       .addCase(loginUserWithIDP.fulfilled, (state, { payload }) => {
+           console.log(JSON.stringify(payload) + "<-payload qqq")
         state.user = payload as typeof state.user;
       })
       .addMatcher(isRejectedWithValue(), (state, { payload }) => {

@@ -31,12 +31,16 @@ export interface UserState {
 
 let client: Keycloak;
 async function initializeKeycloakClient(dispatch: Dispatch, realm: string, config: ConfigState) {
+  console.log(JSON.stringify(config) + 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
+  console.log(JSON.stringify(realm) + '<-realm');
   if (client?.realm !== realm) {
     client = new Keycloak({
       url: `${config.environment.access.url}/auth`,
       clientId: config.environment.access.client_id,
       realm,
     });
+
+    console.log(JSON.stringify(client) + '<-client');
 
     try {
       await client.init({
@@ -51,9 +55,12 @@ async function initializeKeycloakClient(dispatch: Dispatch, realm: string, confi
         updateSessionTimeout(dispatch);
       };
     } catch (err) {
+      console.log(JSON.stringify(err) + '<Err');
       // Keycloak client throws undefined in certain cases.
     }
   }
+
+  console.log(JSON.stringify(client) + '<-client2');
 
   return client;
 }
@@ -95,7 +102,7 @@ export const initializeTenant = createAsyncThunk(
     const { config } = getState() as AppState;
     const url = config.directory['urn:ads:platform:tenant-service'];
 
-    console.log(url);
+    console.log(url + '<url-=------------');
     if (!url) {
       return null;
     }
@@ -107,6 +114,8 @@ export const initializeTenant = createAsyncThunk(
     });
 
     const tenant = data?.results?.[0];
+
+    console.log(JSON.stringify(tenant) + '<tenant-=------------');
     if (!tenant) {
       return rejectWithValue({
         id: uuidv4(),
@@ -114,6 +123,7 @@ export const initializeTenant = createAsyncThunk(
         message: `Tenant "${name}" not found.`,
       } as FeedbackMessage);
     } else {
+      console.log('we are initializing');
       dispatch(initializeUser(tenant));
       return tenant;
     }
@@ -125,7 +135,14 @@ export const initializeUser = createAsyncThunk(
   async (tenant: Tenant, { getState, dispatch }) => {
     const { config } = getState() as AppState;
 
+    console.log('we are initializing again');
+    console.log(JSON.stringify(config) + '<config-=------------');
+    console.log(JSON.stringify(tenant.realm) + '<tenant.realm-=------------');
+
     const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
+
+    console.log(JSON.stringify(client) + '<client-=------------');
+    console.log(JSON.stringify(client.tokenParsed) + '<client.tokenParsed-=------------');
     if (client.tokenParsed) {
       updateSessionTimeout(dispatch);
 
@@ -167,11 +184,21 @@ export const loginUser = createAsyncThunk(
     const { config } = getState() as AppState;
     const idpHint = getIdpHint();
 
+    console.log(JSON.stringify(idpHint) + '<idpHint');
+    console.log(JSON.stringify(config) + '<config');
+    console.log(JSON.stringify(tenant.realm) + '< tenant.realm');
+
     const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
-    await client.login({
-      idpHint,
-      redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
-    });
+
+    console.log(JSON.stringify(client) + '< clientclient----');
+    Promise.all([
+      client.login({
+        idpHint,
+        redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
+      }),
+    ]);
+
+    console.log(JSON.stringify(client) + '< clientclient- 222222222---');
 
     // Client login causes redirect, so this code and the thunk fulfilled reducer are de facto not executed.
     return await client.loadUserProfile();
@@ -222,11 +249,19 @@ const userSlice = createSlice({
         state.tenant = payload;
       })
       .addCase(initializeUser.fulfilled, (state, { payload }) => {
+        console.log('do we never get here or do we');
+        console.log(JSON.stringify(payload) + '<-payloadxxxxxxxx');
+
         state.user = payload;
         state.initialized = true;
       })
+      .addCase(initializeUser.rejected, (state, { payload }) => {
+        console.log('do we never get here or do we');
+        console.log(JSON.stringify(payload) + '<-payloadxxxxxxxx rejected');
+      })
       .addCase(loginUser.fulfilled, (state, { payload }) => {
-        state.user = payload as typeof state.user;
+        console.log(JSON.stringify(payload) + '<payload');
+        //  state.user = payload as unknown //as typeof state.user;
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;

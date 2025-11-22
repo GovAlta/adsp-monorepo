@@ -1,23 +1,18 @@
 import React from 'react';
 import styled from 'styled-components';
+import Dashboard from './dashboard';
+import {EditorWrapper }  from './Editor';
+import { Route, Routes } from 'react-router-dom';
 
 const TenantManagement = (): JSX.Element => {
   return (
-    <AdminLayout>
-      <Main>
-        <h2>Welcome to Dashboard</h2>
-      </Main>
-    </AdminLayout>
+    <div>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/edit/:id" element={<EditorWrapper />} />
+      </Routes>
+    </div>
   );
 };
 
 export default TenantManagement;
-
-const AdminLayout = styled.div`
-  display: flex;
-`;
-
-const Main = styled.div`
-  flex: 1 1 auto;
-  padding: var(--goa-space-l, 24px) 0;
-`;

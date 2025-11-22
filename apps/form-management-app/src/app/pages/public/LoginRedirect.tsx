@@ -1,7 +1,8 @@
 /* eslint-disable */
 import React, { useEffect } from 'react';
-import { Page } from '@components/Html';
-import { RootState, setSession } from '@store/index';
+
+
+import { AppState } from 'app/state';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { LOGIN_TYPES, getOrCreateKeycloakAuth } from '@lib/keycloak';
@@ -14,25 +15,51 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { tenantRealm, isAuthenticated, keycloak } = useSelector((state: RootState) => ({
-    tenantRealm: state.session.realm,
-    isAuthenticated: state.session?.authenticated ?? false,
-    keycloak: state.config?.keycloakApi,
+  console.log("CALLBACK PAGE")
+
+  const config = useSelector((state: AppState) => ({
+    keycloak: state.config,
   }));
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  console.log(JSON.stringify(config) + "<config  --------")
+  //console.log(JSON.stringify(session) + '<session  --------');
+
+  // const { keycloak } = useSelector((state: AppState) => ({
+
+  //   keycloak: state.config?.keycloakApi,
+  // }));
+
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
   const urlParams = new URLSearchParams(window.location.search);
-  const realm = decodeURIComponent(urlParams.get('realm')) || 'core';
+  const realm = 'b6aff762-20f8-4c5d-88d3-c38ae16d1937';  //decodeURIComponent(urlParams.get('realm')) || 'core';
   const type = decodeURIComponent(urlParams.get('type')) || LOGIN_TYPES.tenant;
   const idp = decodeURIComponent(urlParams.get('kc_idp_hint'));
 
+    console.log(JSON.stringify(urlParams) + '<urlParams  --------');
+    console.log(JSON.stringify(realm) + '<realm  --------');
+    console.log(JSON.stringify(type) + '<type  --------');
+    console.log(JSON.stringify(idp) + '<idp  --------');
+
+
   useEffect(() => {
     (async () => {
-      if (!keycloak?.url || !keycloak?.clientId) return;
-      const auth = await getOrCreateKeycloakAuth({ url: keycloak.url, clientId: keycloak.clientId } as any, realm);
+      console.log(JSON.stringify("callaback"))
+
+      const keycloakData = config.keycloak.environment.access;
+        console.log(JSON.stringify(keycloakData?.url) + '<keycloak?.url');
+        console.log(JSON.stringify(keycloakData?.client_id) + '<keycloak?.clientId');
+      if (!keycloakData) return;
+      const auth = await getOrCreateKeycloakAuth(
+        { url: keycloakData.url, clientId: keycloakData.client_id } as any,
+        realm
+      );
+
+         console.log(JSON.stringify(auth) + '<auth');
       const session = await auth.checkSSO();
+           console.log(JSON.stringify(session) + '<sessionsessionsessionxxxxxxxxxxxx');
       if (session?.authenticated) {
-        dispatch(setSession(session));
+         console.log(JSON.stringify(session) + '<sessionsessionsessionsession');
+        //dispatch(setSession(session));
         // Route decisions based on previous logic
         if (type === LOGIN_TYPES.tenant) {
           const skipSSO = urlParams.get('skipSSO') === 'true';
@@ -47,9 +74,9 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
         navigate('/login');
       }
     })();
-  }, [navigate, dispatch, urlParams, realm, type, keycloak]);
+  }, [navigate, dispatch, urlParams, realm, type]);
 
-  return <Page></Page>;
+  return <div></div>;
 };
 
 export default LoginRedirect;

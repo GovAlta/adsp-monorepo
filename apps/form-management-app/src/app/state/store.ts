@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { CONFIG_FEATURE_KEY, configReducer } from './config.slice';
+import { FORM_FEATURE_KEY, formReducer } from './form.slice';
 import { FEEDBACK_FEATURE_KEY, feedbackReducer } from './feedback.slice';
 import { USER_FEATURE_KEY, userReducer } from './user.slice';
 
@@ -8,6 +9,7 @@ export const store = configureStore({
     [CONFIG_FEATURE_KEY]: configReducer,
     [USER_FEATURE_KEY]: userReducer,
     [FEEDBACK_FEATURE_KEY]: feedbackReducer,
+    [FORM_FEATURE_KEY]: formReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
   // Optional Redux store enhancers
