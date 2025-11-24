@@ -1,40 +1,35 @@
-/* eslint-disable */
 import React from 'react';
-import { GoAHeader } from '@abgov/react-components-old';
-import { useSelector, useDispatch } from 'react-redux';
-import styled from 'styled-components';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAAppHeader, GoAMicrositeHeader } from '@abgov/react-components';
 import { LOGIN_TYPES, getOrCreateKeycloakAuth, getIdpHint, authInstance } from '@lib/keycloak';
-import { selectUserName, selectUserEmail, selectIsAuthenticated } from '@store/session/selectors';
+import { UserInfo, Tenant } from '../../models';
+import styles from './AppHeader.module.scss';
 
 interface HeaderMenuProps {
   hasLoginLink: boolean;
   admin: boolean;
+  userInfo: UserInfo;
+  tenant?: Tenant;
 }
+
 interface HeaderProps {
   serviceName?: string;
   hasLoginLink?: boolean;
   admin?: boolean;
+  userInfo: UserInfo;
+  tenant?: Tenant;
 }
-const SignoutBadgeWrapper = styled.div`
-  display: inline-block;
-  position: relative;
-`;
 
-const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
-  const authenticated = useSelector(selectIsAuthenticated);
-  const userName = useSelector(selectUserName);
-  const userEmail = useSelector(selectUserEmail);
-  const displayName = userName || userEmail || '';
+const ActionsMenu = ({ hasLoginLink, admin, userInfo, tenant }: HeaderMenuProps): JSX.Element => {
+  const { authenticated, displayName } = userInfo;
 
   return (
-    <Actions>
-      {props.hasLoginLink ? (
+    <div className={styles.actions}>
+      {hasLoginLink ? (
         <div className="desktop">
           {/* For admin pages, only logout is required */}
-          {(authenticated || props.admin) && (
+          {(authenticated || admin) && (
             <div className="desktop">
-              {displayName && <SignoutBadgeWrapper>{displayName}</SignoutBadgeWrapper>}
+              {displayName && <div className={styles.signoutBadgeWrapper}>{displayName}</div>}
               <GoAButton
                 type="tertiary"
                 testId="sign-out-btn"
@@ -65,7 +60,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
             </div>
           )}
 
-          {!authenticated && !props.admin && (
+          {!authenticated && !admin && (
             <GoAButton
               type="tertiary"
               testId="sign-ing-btn"
@@ -93,53 +88,31 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
           )}
         </div>
       ) : null}
-    </Actions>
+    </div>
   );
 };
 
-function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }: HeaderProps): JSX.Element {
+function AppHeader({
+  serviceName = '',
+  hasLoginLink = true,
+  admin = false,
+  userInfo,
+  tenant,
+}: HeaderProps): JSX.Element {
   return (
-    <HeaderContainer>
-      <GoAHeader serviceHome="/" serviceLevel="live" serviceName={serviceName}>
-        <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
-      </GoAHeader>
-    </HeaderContainer>
+    <div className={styles.headerContainer}>
+      <GoAMicrositeHeader type="alpha"></GoAMicrositeHeader>
+      <GoAAppHeader url="/" heading={serviceName}>
+        <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} userInfo={userInfo} tenant={tenant} />
+      </GoAAppHeader>
+    </div>
   );
 }
 
 export default AppHeader;
 
-// =================
-// Styled Components
-// =================
-
-interface MenuState {
-  state: 'open' | 'closed';
-}
-
-const HeaderContainer = styled.div`
-  position: relative;
-  border-bottom: 1px solid #dcdcdc;
-`;
-
-const Actions = styled.div`
-  display: flex;
-
-  > .desktop {
-    display: none;
-  }
-
-  @media (min-width: 768px) {
-    .mobile {
-      display: none;
-    }
-    .desktop {
-      display: flex;
-    }
-  }
-`;
-
-export const NoPaddingH2 = styled.h2`
-  margin-top: var(--goa-space-s) !important;
-  padding-left: 0rem !important;
-`;
+// Export the NoPaddingH2 component for backward compatibility
+export const NoPaddingH2: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = '',
+}) => <h2 className={`${styles.noPaddingH2} ${className}`}>{children}</h2>;

@@ -1,23 +1,25 @@
 import React from 'react';
-import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 
 const TenantManagement = (): JSX.Element => {
   return (
-    <AdminLayout>
-      <Main>
-        <h2>Welcome to Dashboard</h2>
-      </Main>
-    </AdminLayout>
+    <div>
+      <h1>Form Management Dashboard</h1>
+      <nav>
+        <ul>
+          <li>
+            <Link to="./forms">Form Definitions</Link>
+          </li>
+          <li>
+            <Link to="./editor/new">Form Editor</Link>
+          </li>
+          <li>
+            <Link to="./preview/sample">Form Preview</Link>
+          </li>
+        </ul>
+      </nav>
+    </div>
   );
 };
 
 export default TenantManagement;
-
-const AdminLayout = styled.div`
-  display: flex;
-`;
-
-const Main = styled.div`
-  flex: 1 1 auto;
-  padding: var(--goa-space-l, 24px) 0;
-`;

@@ -8,6 +8,27 @@ export const CALENDAR_SERVICE_ID = 'urn:ads:platform:calendar-service';
 export const DIRECTORY_SERVICE_ID = 'urn:ads:platform:directory-service';
 export const CACHE_SERVICE_ID = 'urn:ads:platform:cache-service';
 
+export interface Session {
+  authenticated: boolean;
+  clientId: string;
+  realm: string;
+  userInfo: {
+    sub: string;
+    email: string;
+    name: string;
+    preferredUsername: string;
+    emailVerified: boolean;
+  };
+  realmAccess: any;
+  resourceAccess: any;
+  credentials: {
+    token: string;
+    tokenExp: number;
+    refreshToken: string;
+    refreshTokenExp: number;
+  };
+}
+
 export interface PagedResults<T> {
   results: T[];
   page: {
