@@ -19,8 +19,14 @@ export interface Session {
     preferredUsername: string;
     emailVerified: boolean;
   };
-  realmAccess: any;
-  resourceAccess: any;
+  realmAccess?: {
+    roles?: string[];
+  };
+  resourceAccess?: {
+    [key: string]: {
+      roles?: string[];
+    };
+  };
   credentials: {
     token: string;
     tokenExp: number;

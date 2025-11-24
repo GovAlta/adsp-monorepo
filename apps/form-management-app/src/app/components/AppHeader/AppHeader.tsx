@@ -39,12 +39,20 @@ const ActionsMenu = ({ hasLoginLink, admin, userInfo, tenant }: HeaderMenuProps)
                       if (authInstance) {
                         await authInstance.logout();
                       } else {
-                        const state = (window as any).__APP_STORE__?.getState?.();
+                        const state = (
+                          window as { __APP_STORE__?: { getState?: () => unknown } }
+                        ).__APP_STORE__?.getState?.() as
+                          | {
+                              config?: { keycloakApi?: { url: string; clientId: string; realm?: string } };
+                              session?: { realm?: string };
+                            }
+                          | undefined;
                         const kc = state?.config?.keycloakApi;
                         if (kc) {
+                          const realm = state?.session?.realm || kc.realm || 'core';
                           const auth = await getOrCreateKeycloakAuth(
-                            { url: kc.url, clientId: kc.clientId } as any,
-                            state?.session?.realm || kc.realm || 'core'
+                            { url: kc.url, clientId: kc.clientId, realm },
+                            realm
                           );
                           await auth.logout();
                         }
@@ -68,13 +76,18 @@ const ActionsMenu = ({ hasLoginLink, admin, userInfo, tenant }: HeaderMenuProps)
                 const idpHint = getIdpHint();
                 (async () => {
                   try {
-                    const state = (window as any).__APP_STORE__?.getState?.();
+                    const state = (
+                      window as { __APP_STORE__?: { getState?: () => unknown } }
+                    ).__APP_STORE__?.getState?.() as
+                      | {
+                          config?: { keycloakApi?: { url: string; clientId: string; realm?: string } };
+                          session?: { realm?: string };
+                        }
+                      | undefined;
                     const kc = state?.config?.keycloakApi;
                     if (kc) {
-                      const auth = await getOrCreateKeycloakAuth(
-                        { url: kc.url, clientId: kc.clientId } as any,
-                        state?.session?.realm || kc.realm || 'core'
-                      );
+                      const realm = state?.session?.realm || kc.realm || 'core';
+                      const auth = await getOrCreateKeycloakAuth({ url: kc.url, clientId: kc.clientId, realm }, realm);
                       await auth.loginByCore(LOGIN_TYPES.tenant, getIdpHint());
                     }
                   } catch (e) {
