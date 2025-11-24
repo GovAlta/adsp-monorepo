@@ -34,7 +34,7 @@ export const PageReviewValueCol = styled.td`
 
 //Check and unchecked are different heights otherwise
 export const CheckboxWrapper = styled.div`
-  height: 28px;
+  min-height: 28px;
 `;
 export const H4Large = styled.h4`
   margin: 0 0 0.25rem 0;
