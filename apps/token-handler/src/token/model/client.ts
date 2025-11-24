@@ -1,8 +1,7 @@
 import { AdspId, LimitToOne, ServiceDirectory, Tenant } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import axios, { isAxiosError } from 'axios';
-import { Request } from 'express';
-import { RequestHandler } from 'express-serve-static-core';
+import { Request, RequestHandler } from 'express';
 import jwtDecode from 'jwt-decode';
 import { PassportStatic, Strategy } from 'passport';
 import { Strategy as OidcStrategy } from 'passport-openidconnect';

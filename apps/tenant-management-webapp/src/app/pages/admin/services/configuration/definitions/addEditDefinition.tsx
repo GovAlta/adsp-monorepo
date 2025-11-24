@@ -209,9 +209,9 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
         <GoACheckbox
           name="anonymousRead"
           key="anonymousRead"
-          checked={definition.anonymousRead ?? false}
+          checked={!!definition?.anonymousRead}
           onChange={(name, value) => {
-            setDefinition({ ...definition, anonymousRead: !definition.anonymousRead ?? false });
+            setDefinition({ ...definition, anonymousRead: !definition?.anonymousRead });
           }}
           testId={'anonymousRead'}
           ariaLabel="anonymous-read"

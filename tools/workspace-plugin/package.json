@@ -2,9 +2,9 @@
   "name": "workspace-plugin",
   "version": "0.0.1",
   "dependencies": {
-    "@nx/devkit": "^19.0.0",
-    "@nx/express": "^19.0.0",
-    "@nx/eslint": "^19.0.0",
+    "@nx/devkit": "^20.8.3",
+    "@nx/express": "^20.8.3",
+    "@nx/eslint": "^20.8.3",
     "tslib": "^2.3.0",
     "uuid": "^9.0.0"
   },

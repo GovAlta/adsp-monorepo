@@ -1,4 +1,4 @@
-import type { Subscribable } from 'rxjs';
+import type { Observable } from 'rxjs';
 import type { Logger } from 'winston';
 import { AdspId, adspId, ConfigurationService } from '@abgov/adsp-service-sdk';
 import type { ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
@@ -11,7 +11,7 @@ export interface JobProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
-  events: Subscribable<DomainEventWorkItem>;
+  events: Observable<DomainEventWorkItem>;
 }
 
 export const createJobs = async ({
