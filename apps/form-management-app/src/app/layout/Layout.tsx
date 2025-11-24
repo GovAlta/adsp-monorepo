@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { useSelector } from 'react-redux';
-import { selectIsAuthenticated, selectUserName, selectUserEmail, selectTenant } from '../state/selectors';
+import { selectIsAuthenticated, selectUserName, selectUserEmail, selectTenant } from '../state/user/selectors';
 import { UserInfo, Tenant } from '../models';
 import AppHeader from '../components/AppHeader/AppHeader';
 import styles from './Layout.module.scss';

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { environment as envStatic } from '../../environments/environment';
 import { AppState } from './store';
-import { getAccessToken } from './user.slice';
+import { getAccessToken } from './user/user.slice';
 import { FeedbackMessage } from './types';
 
 export const CONFIG_FEATURE_KEY = 'config';
