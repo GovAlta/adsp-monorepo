@@ -1,0 +1,13 @@
+/* Layout component styles */
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1;
+  margin-left: var(--goa-space-3xl);
+  margin-right: var(--goa-space-3xl);
+  padding: var(--goa-space-m) 0;
+}

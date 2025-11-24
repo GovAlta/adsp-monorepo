@@ -22,7 +22,7 @@ const LoginLanding = (): JSX.Element => {
   const configInitialized = useSelector(configInitializedSelector);
 
   useEffect(() => {
-    if (configInitialized) {
+    if (configInitialized && tenantName) {
       dispatch(initializeTenant(tenantName));
     }
   }, [configInitialized, tenantName, dispatch]);
@@ -35,7 +35,8 @@ const LoginLanding = (): JSX.Element => {
 
   useEffect(() => {
     if (feedback?.message.includes('not found')) {
-      navigate(`/overview`);
+      // Handle tenant not found case - could redirect to error page or home
+      console.warn('Tenant not found');
     }
   }, [feedback, navigate]);
 

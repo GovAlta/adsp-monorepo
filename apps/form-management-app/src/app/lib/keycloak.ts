@@ -1,4 +1,4 @@
-import { Session } from '@store/session/models';
+import { Session } from '../state/types';
 import Keycloak, { KeycloakConfig, KeycloakInitOptions } from 'keycloak-js';
 
 const LOGOUT_REDIRECT = '/logout-redirect';

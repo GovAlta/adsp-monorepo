@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { CONFIG_FEATURE_KEY, configReducer } from './config.slice';
 import { FEEDBACK_FEATURE_KEY, feedbackReducer } from './feedback.slice';
-import { USER_FEATURE_KEY, userReducer } from './user.slice';
+import { USER_FEATURE_KEY, userReducer } from './user/user.slice';
 
 export const store = configureStore({
   reducer: {

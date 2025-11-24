@@ -3,18 +3,13 @@ import axios from 'axios';
 import Keycloak from 'keycloak-js';
 import { DateTime } from 'luxon';
 import { v4 as uuidv4 } from 'uuid';
-import { ConfigState } from './config.slice';
-import { AppState } from './store';
-import { isAxiosErrorPayload } from './util';
-import { FeedbackMessage } from './types';
+import { Tenant } from '../../models';
+import { ConfigState } from '../config.slice';
+import { AppState } from '../store';
+import { isAxiosErrorPayload } from '../util';
+import { FeedbackMessage } from '../types';
 
 export const USER_FEATURE_KEY = 'user';
-
-interface Tenant {
-  id: string;
-  name: string;
-  realm: string;
-}
 
 export interface UserState {
   tenant: Tenant;
