@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.6</version>
+		<version>4.0.0</version>
 		<relativePath />
 		<!-- lookup parent from repository -->
 	</parent>
@@ -69,7 +69,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.19.0</version>
+			<version>3.20.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springdoc</groupId>
@@ -123,7 +123,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.4.2</version>
+				<version>3.5.0</version>
 				<configuration>
 					<outputDirectory>../../dist/libs/adsp-service-spring-sdk</outputDirectory>
 				</configuration>
@@ -152,7 +152,7 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.13</version>
+				<version>0.8.14</version>
 				<executions>
 					<execution>
 						<goals>
