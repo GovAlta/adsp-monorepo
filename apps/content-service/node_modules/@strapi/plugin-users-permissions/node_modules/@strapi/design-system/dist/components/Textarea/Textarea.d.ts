@@ -1,0 +1,11 @@
+import * as React from 'react';
+import { BoxProps } from '../../primitives/Box';
+import { Field } from '../Field';
+interface TextareaProps extends Omit<BoxProps<'textarea'>, 'children'>, Pick<Field.InputProps, 'hasError' | 'id' | 'name' | 'required'> {
+    value?: string;
+    'aria-describedby'?: string;
+}
+declare const Textarea: React.ForwardRefExoticComponent<Omit<TextareaProps, "ref"> & React.RefAttributes<HTMLTextAreaElement>>;
+export { Textarea };
+export type { TextareaProps };
+//# sourceMappingURL=Textarea.d.ts.map

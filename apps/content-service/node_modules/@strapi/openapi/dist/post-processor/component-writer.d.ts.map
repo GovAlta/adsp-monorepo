@@ -1,0 +1,1 @@
+{"version":3,"file":"component-writer.d.ts","sourceRoot":"","sources":["../../src/post-processor/component-writer.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,UAAU,CAAC;AAEhD,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,SAAS,CAAC;AAE7C,qBAAa,gBAAiB,YAAW,aAAa;IACpD,WAAW,CAAC,OAAO,EAAE,eAAe,GAAG,IAAI;CAS5C"}

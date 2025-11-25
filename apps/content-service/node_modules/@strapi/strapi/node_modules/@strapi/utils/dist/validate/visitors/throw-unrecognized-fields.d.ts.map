@@ -1,0 +1,1 @@
+{"version":3,"file":"throw-unrecognized-fields.d.ts","sourceRoot":"","sources":["../../../src/validate/visitors/throw-unrecognized-fields.ts"],"names":[],"mappings":"AASA,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,uBAAuB,CAAC;AAUrD,QAAA,MAAM,uBAAuB,EAAE,OA0C9B,CAAC;AAEF,eAAe,uBAAuB,CAAC"}

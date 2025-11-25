@@ -1,0 +1,1 @@
+{"version":3,"file":"sanitizers.d.ts","sourceRoot":"","sources":["../../src/registries/sanitizers.ts"],"names":[],"mappings":"AAAA,OAAU,EAAE,YAAY,EAAE,MAAM,QAAQ,CAAC;AAEzC,KAAK,SAAS,GAAG,CAAC,KAAK,EAAE,OAAO,KAAK,OAAO,CAAC;AAE7C,QAAA,MAAM,kBAAkB;cAIV,YAAY,GAAG,SAAS,EAAE;cAI1B,YAAY,aAAa,SAAS;cAKlC,YAAY;cAKZ,YAAY;CAIzB,CAAC;AAEF,eAAe,kBAAkB,CAAC"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"email.d.ts","sourceRoot":"","sources":["../../../../server/src/services/email.ts"],"names":[],"mappings":"AAGA,OAAO,KAAK,EACV,WAAW,EACX,YAAY,EACZ,aAAa,EACb,iBAAiB,EACjB,WAAW,EACZ,MAAM,UAAU,CAAC;AA+ClB,QAAA,MAAM,YAAY;+BA3Cc,WAAW;oBAEd,WAAW;uCAUxB,YAAY,iBACX,aAAa,QACtB,iBAAiB;CAiCvB,CAAC;AAEH,eAAe,YAAY,CAAC"}

@@ -1,0 +1,144 @@
+'use strict';
+
+var fp = require('lodash/fp');
+var factory = require('./factory.js');
+
+const ORDERS = {
+    asc: 'asc',
+    desc: 'desc'
+};
+const ORDER_VALUES = Object.values(ORDERS);
+const isSortOrder = (value)=>ORDER_VALUES.includes(value.toLowerCase());
+const isStringArray = (value)=>Array.isArray(value) && value.every(fp.isString);
+const isObjectArray = (value)=>Array.isArray(value) && value.every(fp.isObject);
+const isNestedSorts = (value)=>fp.isString(value) && value.split(',').length > 1;
+const isObj = (value)=>fp.isObject(value);
+const sort = factory().intercept(// String with chained sorts (foo,bar,foobar) => split, map(recurse), then recompose
+isNestedSorts, async (visitor, options, sort, { recurse })=>{
+    return Promise.all(sort.split(',').map(fp.trim).map((nestedSort)=>recurse(visitor, options, nestedSort))).then((res)=>res.filter((part)=>!fp.isEmpty(part)).join(','));
+}).intercept(// Array of strings ['foo', 'foo,bar'] => map(recurse), then filter out empty items
+isStringArray, async (visitor, options, sort, { recurse })=>{
+    return Promise.all(sort.map((nestedSort)=>recurse(visitor, options, nestedSort))).then((res)=>res.filter((nestedSort)=>!fp.isEmpty(nestedSort)));
+}).intercept(// Array of objects [{ foo: 'asc' }, { bar: 'desc', baz: 'asc' }] => map(recurse), then filter out empty items
+isObjectArray, async (visitor, options, sort, { recurse })=>{
+    return Promise.all(sort.map((nestedSort)=>recurse(visitor, options, nestedSort))).then((res)=>res.filter((nestedSort)=>!fp.isEmpty(nestedSort)));
+})// Parse string values
+.parse(fp.isString, ()=>{
+    const tokenize = fp.pipe(fp.split('.'), fp.map(fp.split(':')), fp.flatten);
+    const recompose = (parts)=>{
+        if (parts.length === 0) {
+            return undefined;
+        }
+        return parts.reduce((acc, part)=>{
+            if (fp.isEmpty(part)) {
+                return acc;
+            }
+            if (acc === '') {
+                return part;
+            }
+            return isSortOrder(part) ? `${acc}:${part}` : `${acc}.${part}`;
+        }, '');
+    };
+    return {
+        transform: fp.trim,
+        remove (key, data) {
+            const [root] = tokenize(data);
+            return root === key ? undefined : data;
+        },
+        set (key, value, data) {
+            const [root] = tokenize(data);
+            if (root !== key) {
+                return data;
+            }
+            return fp.isNil(value) ? root : `${root}.${value}`;
+        },
+        keys (data) {
+            const v = fp.first(tokenize(data));
+            return v ? [
+                v
+            ] : [];
+        },
+        get (key, data) {
+            const [root, ...rest] = tokenize(data);
+            return key === root ? recompose(rest) : undefined;
+        }
+    };
+})// Parse object values
+.parse(isObj, ()=>({
+        transform: fp.cloneDeep,
+        remove (key, data) {
+            // eslint-disable-next-line no-unused-vars
+            const { [key]: ignored, ...rest } = data;
+            return rest;
+        },
+        set (key, value, data) {
+            return {
+                ...data,
+                [key]: value
+            };
+        },
+        keys (data) {
+            return Object.keys(data);
+        },
+        get (key, data) {
+            return data[key];
+        }
+    }))// Handle deep sort on relation
+.onRelation(async ({ key, value, attribute, visitor, path, getModel, schema }, { set, recurse })=>{
+    const isMorphRelation = attribute.relation.toLowerCase().startsWith('morph');
+    if (isMorphRelation) {
+        return;
+    }
+    const parent = {
+        key,
+        path,
+        schema,
+        attribute
+    };
+    const targetSchemaUID = attribute.target;
+    const targetSchema = getModel(targetSchemaUID);
+    const newValue = await recurse(visitor, {
+        schema: targetSchema,
+        path,
+        getModel,
+        parent
+    }, value);
+    set(key, newValue);
+})// Handle deep sort on media
+.onMedia(async ({ key, path, schema, attribute, visitor, value, getModel }, { recurse, set })=>{
+    const parent = {
+        key,
+        path,
+        schema,
+        attribute
+    };
+    const targetSchemaUID = 'plugin::upload.file';
+    const targetSchema = getModel(targetSchemaUID);
+    const newValue = await recurse(visitor, {
+        schema: targetSchema,
+        path,
+        getModel,
+        parent
+    }, value);
+    set(key, newValue);
+})// Handle deep sort on components
+.onComponent(async ({ key, value, visitor, path, schema, attribute, getModel }, { recurse, set })=>{
+    const parent = {
+        key,
+        path,
+        schema,
+        attribute
+    };
+    const targetSchema = getModel(attribute.component);
+    const newValue = await recurse(visitor, {
+        schema: targetSchema,
+        path,
+        getModel,
+        parent
+    }, value);
+    set(key, newValue);
+});
+var traverseQuerySort = fp.curry(sort.traverse);
+
+module.exports = traverseQuerySort;
+//# sourceMappingURL=query-sort.js.map

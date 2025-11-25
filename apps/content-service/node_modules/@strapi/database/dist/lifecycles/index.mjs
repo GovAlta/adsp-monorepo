@@ -1,0 +1,71 @@
+import { strict } from 'assert';
+import { isValidSubscriber } from './subscribers/index.mjs';
+import { timestampsLifecyclesSubscriber } from './subscribers/timestamps.mjs';
+import { modelsLifecyclesSubscriber } from './subscribers/models-lifecycles.mjs';
+
+const createLifecyclesProvider = (db)=>{
+    let subscribers = [
+        timestampsLifecyclesSubscriber,
+        modelsLifecyclesSubscriber
+    ];
+    let isLifecycleHooksDisabled = false;
+    return {
+        subscribe (subscriber) {
+            strict(isValidSubscriber(subscriber), 'Invalid subscriber. Expected function or object');
+            subscribers.push(subscriber);
+            return ()=>subscribers.splice(subscribers.indexOf(subscriber), 1);
+        },
+        clear () {
+            subscribers = [];
+        },
+        disable () {
+            isLifecycleHooksDisabled = true;
+        },
+        enable () {
+            isLifecycleHooksDisabled = false;
+        },
+        createEvent (action, uid, properties, state) {
+            const model = db.metadata.get(uid);
+            return {
+                action,
+                model,
+                state,
+                ...properties
+            };
+        },
+        /**
+     * @param {string} action
+     * @param {string} uid
+     * @param {{ params?: any, result?: any }} properties
+     * @param {Map<any, any>} states
+     */ async run (action, uid, properties, states = new Map()) {
+            if (isLifecycleHooksDisabled) return states;
+            for(let i = 0; i < subscribers.length; i += 1){
+                const subscriber = subscribers[i];
+                if (typeof subscriber === 'function') {
+                    const state = states.get(subscriber) || {};
+                    const event = this.createEvent(action, uid, properties, state);
+                    await subscriber(event);
+                    if (event.state) {
+                        states.set(subscriber, event.state || state);
+                    }
+                    continue;
+                }
+                const hasAction = action in subscriber;
+                const hasModel = !subscriber.models || subscriber.models.includes(uid);
+                if (hasAction && hasModel) {
+                    const state = states.get(subscriber) || {};
+                    const event = this.createEvent(action, uid, properties, state);
+                    await subscriber[action]?.(event);
+                    if (event.state) {
+                        states.set(subscriber, event.state);
+                    }
+                }
+            }
+            return states;
+        }
+    };
+};
+
+export { createLifecyclesProvider };
+//# sourceMappingURL=index.mjs.map

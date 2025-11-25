@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sources":["../../../../../../ee/server/src/routes/index.ts"],"sourcesContent":["import sso from './sso';\nimport licenseLimit from './license-limit';\n\nexport default {\n  sso,\n  'license-limit': licenseLimit,\n};\n"],"names":["sso","licenseLimit"],"mappings":";;;;;AAGA,aAAe;AACbA,IAAAA,GAAAA;IACA,eAAiBC,EAAAA;AACnB,CAAE;;;;"}

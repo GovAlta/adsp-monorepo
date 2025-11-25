@@ -1,0 +1,1 @@
+{"version":3,"file":"index.mjs","sources":["../../../server/src/policies/index.ts"],"sourcesContent":["import hasPermissions from './hasPermissions';\n\nexport default {\n  hasPermissions,\n};\n"],"names":["hasPermissions"],"mappings":";;AAEA,eAAe;AACbA,IAAAA;AACF,CAAE;;;;"}

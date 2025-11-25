@@ -1,0 +1,1 @@
+{"version":3,"file":"init.js","sources":["../../../../admin/src/pages/SettingsPage/init.ts"],"sourcesContent":["import type { InitialState } from './reducer';\n\nexport const init = (initialState: InitialState) => {\n  return initialState;\n};\n"],"names":["init","initialState"],"mappings":";;AAEO,MAAMA,OAAO,CAACC,YAAAA,GAAAA;IACnB,OAAOA,YAAAA;AACT;;;;"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"route-serialization.d.ts","sourceRoot":"","sources":["../src/route-serialization.ts"],"names":[],"mappings":"AASA,eAAO,MAAM,6BAA6B,mCAIvC,OAAO,MAAM,EAAE,OAAO,CAAC,4BAAoC,CAAC;AAE/D,eAAO,MAAM,mCAAmC,WAAY,OAAO,EAAE,KAAG,OAAO,MAAM,EAAE,OAAO,CAAC,EAGxD,CAAC;AAExC,eAAO,MAAM,iCAAiC,QACvC,OAAO,MAAM,EAAE,OAAO,EAAE,CAAC,KAC7B,OAAO,MAAM,EAAE,OAAO,CAOtB,CAAC"}

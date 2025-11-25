@@ -1,0 +1,1 @@
+{"version":3,"file":"collections.js","sources":["../../../admin/src/constants/collections.ts"],"sourcesContent":["const SINGLE_TYPES = 'single-types';\nconst COLLECTION_TYPES = 'collection-types';\n\nexport { SINGLE_TYPES, COLLECTION_TYPES };\n"],"names":["SINGLE_TYPES","COLLECTION_TYPES"],"mappings":";;AAAA,MAAMA,YAAe,GAAA;AACrB,MAAMC,gBAAmB,GAAA;;;;;"}

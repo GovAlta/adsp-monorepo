@@ -1,0 +1,1 @@
+{"version":3,"file":"favicon.d.ts","sourceRoot":"","sources":["../../src/middlewares/favicon.ts"],"names":[],"mappings":";AAEA,OAAO,UAAU,MAAM,aAAa,CAAC;AACrC,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,eAAe,CAAC;AAE1C,MAAM,MAAM,MAAM,GAAG,WAAW,CAAC,UAAU,CAAC,OAAO,UAAU,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC;AAOnE,eAAO,MAAM,OAAO,EAAE,IAAI,CAAC,iBAAiB,CAAC,MAAM,CAgBlD,CAAC"}

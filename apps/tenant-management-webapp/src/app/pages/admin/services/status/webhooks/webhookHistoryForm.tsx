@@ -27,6 +27,7 @@ const statusBadge = (value: string) => {
         content={value === 'OK' ? 'Success' : 'Failure'}
         data-testid="webhook-status-badge"
         type={value === 'OK' ? 'success' : 'emergency'}
+        icon={false}
       />
     </PaddingRight>
   );

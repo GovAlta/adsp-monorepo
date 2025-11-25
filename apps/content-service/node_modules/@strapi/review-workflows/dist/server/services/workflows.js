@@ -1,0 +1,279 @@
+'use strict';
+
+var fp = require('lodash/fp');
+var utils = require('@strapi/utils');
+var workflows$1 = require('../constants/workflows.js');
+var index = require('../utils/index.js');
+var reviewWorkflows = require('../utils/review-workflows.js');
+var workflowContentTypes = require('./workflow-content-types.js');
+
+const processFilters = ({ strapi }, filters = {})=>{
+    const processedFilters = {
+        ...filters
+    };
+    if (fp.isString(filters.contentTypes)) {
+        processedFilters.contentTypes = reviewWorkflows.getWorkflowContentTypeFilter({
+            strapi
+        }, filters.contentTypes);
+    }
+    return processedFilters;
+};
+// TODO: How can we improve this? Maybe using traversePopulate?
+const processPopulate = (populate)=>{
+    // If it does not exist or it's not an object (like an array) return the default populate
+    if (!populate) {
+        return workflows$1.WORKFLOW_POPULATE;
+    }
+    return populate;
+};
+var workflows = (({ strapi })=>{
+    const workflowsContentTypes = workflowContentTypes({
+        strapi
+    });
+    const workflowValidator = index.getService('validation', {
+        strapi
+    });
+    const metrics = index.getService('workflow-metrics', {
+        strapi
+    });
+    return {
+        /**
+     * Returns all the workflows matching the user-defined filters.
+     * @param {object} opts - Options for the query.
+     * @param {object} opts.filters - Filters object.
+     * @returns {Promise<object[]>} - List of workflows that match the user's filters.
+     */ async find (opts = {}) {
+            const filters = processFilters({
+                strapi
+            }, opts.filters);
+            const populate = processPopulate(opts.populate);
+            const query = strapi.get('query-params').transform(workflows$1.WORKFLOW_MODEL_UID, {
+                ...opts,
+                filters,
+                populate
+            });
+            return strapi.db.query(workflows$1.WORKFLOW_MODEL_UID).findMany(query);
+        },
+        /**
+     * Returns the workflow with the specified ID.
+     * @param {string} id - ID of the requested workflow.
+     * @param {object} opts - Options for the query.
+     * @returns {Promise<object>} - Workflow object matching the requested ID.
+     */ findById (id, opts = {}) {
+            const populate = processPopulate(opts.populate);
+            const query = strapi.get('query-params').transform(workflows$1.WORKFLOW_MODEL_UID, {
+                populate
+            });
+            return strapi.db.query(workflows$1.WORKFLOW_MODEL_UID).findOne({
+                ...query,
+                where: {
+                    id
+                }
+            });
+        },
+        /**
+     * Creates a new workflow.
+     * @param {object} opts - Options for creating the new workflow.
+     * @returns {Promise<object>} - Workflow object that was just created.
+     * @throws {ValidationError} - If the workflow has no stages.
+     */ async create (opts) {
+            let createOpts = {
+                ...opts,
+                populate: workflows$1.WORKFLOW_POPULATE
+            };
+            workflowValidator.validateWorkflowStages(opts.data.stages);
+            await workflowValidator.validateWorkflowCount(1);
+            return strapi.db.transaction(async ()=>{
+                // Create stages
+                const stages = await index.getService('stages', {
+                    strapi
+                }).createMany(opts.data.stages);
+                const mapIds = fp.map(fp.get('id'));
+                createOpts = fp.set('data.stages', mapIds(stages), createOpts);
+                if (opts.data.stageRequiredToPublishName) {
+                    const stageRequiredToPublish = stages.find((stage)=>stage.name === opts.data.stageRequiredToPublishName);
+                    if (!stageRequiredToPublish) {
+                        throw new utils.errors.ApplicationError('Stage required to publish does not exist');
+                    }
+                    createOpts = fp.set('data.stageRequiredToPublish', stageRequiredToPublish.id, createOpts);
+                }
+                // Update (un)assigned Content Types
+                if (opts.data.contentTypes) {
+                    await workflowsContentTypes.migrate({
+                        destContentTypes: opts.data.contentTypes,
+                        stageId: stages[0].id
+                    });
+                }
+                // Create Workflow
+                const createdWorkflow = await strapi.db.query(workflows$1.WORKFLOW_MODEL_UID).create(strapi.get('query-params').transform(workflows$1.WORKFLOW_MODEL_UID, createOpts));
+                metrics.sendDidCreateWorkflow(createdWorkflow.id, !!opts.data.stageRequiredToPublishName);
+                if (opts.data.stageRequiredToPublishName) {
+                    await strapi.plugin('content-releases').service('release-action').validateActionsByContentTypes(opts.data.contentTypes);
+                }
+                return createdWorkflow;
+            });
+        },
+        /**
+     * Updates an existing workflow.
+     * @param {object} workflow - The existing workflow to update.
+     * @param {object} opts - Options for updating the workflow.
+     * @returns {Promise<object>} - Workflow object that was just updated.
+     * @throws {ApplicationError} - If the supplied stage ID does not belong to the workflow.
+     */ async update (workflow, opts) {
+            const stageService = index.getService('stages', {
+                strapi
+            });
+            let updateOpts = {
+                ...opts,
+                populate: {
+                    ...workflows$1.WORKFLOW_POPULATE
+                }
+            };
+            let updatedStages = [];
+            let updatedStageIds;
+            await workflowValidator.validateWorkflowCount();
+            return strapi.db.transaction(async ()=>{
+                // Update stages
+                if (opts.data.stages) {
+                    workflowValidator.validateWorkflowStages(opts.data.stages);
+                    opts.data.stages.forEach((stage)=>this.assertStageBelongsToWorkflow(stage.id, workflow));
+                    updatedStages = await stageService.replaceStages(workflow.stages, opts.data.stages, workflow.contentTypes);
+                    updatedStageIds = updatedStages.map((stage)=>stage.id);
+                    updateOpts = fp.set('data.stages', updatedStageIds, updateOpts);
+                }
+                if (opts.data.stageRequiredToPublishName !== undefined) {
+                    const stages = updatedStages ?? workflow.stages;
+                    if (opts.data.stageRequiredToPublishName === null) {
+                        updateOpts = fp.set('data.stageRequiredToPublish', null, updateOpts);
+                    } else {
+                        const stageRequiredToPublish = stages.find((stage)=>stage.name === opts.data.stageRequiredToPublishName);
+                        if (!stageRequiredToPublish) {
+                            throw new utils.errors.ApplicationError('Stage required to publish does not exist');
+                        }
+                        updateOpts = fp.set('data.stageRequiredToPublish', stageRequiredToPublish.id, updateOpts);
+                    }
+                }
+                // Update (un)assigned Content Types
+                if (opts.data.contentTypes) {
+                    await workflowsContentTypes.migrate({
+                        srcContentTypes: workflow.contentTypes,
+                        destContentTypes: opts.data.contentTypes,
+                        stageId: updatedStageIds ? updatedStageIds[0] : workflow.stages[0].id
+                    });
+                }
+                metrics.sendDidEditWorkflow(workflow.id, !!opts.data.stageRequiredToPublishName);
+                const query = strapi.get('query-params').transform(workflows$1.WORKFLOW_MODEL_UID, updateOpts);
+                // Update Workflow
+                const updatedWorkflow = await strapi.db.query(workflows$1.WORKFLOW_MODEL_UID).update({
+                    ...query,
+                    where: {
+                        id: workflow.id
+                    }
+                });
+                await strapi.plugin('content-releases').service('release-action').validateActionsByContentTypes([
+                    ...workflow.contentTypes,
+                    ...opts.data.contentTypes || []
+                ]);
+                return updatedWorkflow;
+            });
+        },
+        /**
+     * Deletes an existing workflow.
+     * Also deletes all the workflow stages and migrate all assigned the content types.
+     * @param {*} workflow
+     * @param {*} opts
+     * @returns
+     */ async delete (workflow, opts) {
+            const stageService = index.getService('stages', {
+                strapi
+            });
+            const workflowCount = await this.count();
+            if (workflowCount <= 1) {
+                throw new utils.errors.ApplicationError('Can not delete the last workflow');
+            }
+            return strapi.db.transaction(async ()=>{
+                // Delete stages
+                await stageService.deleteMany(workflow.stages);
+                // Unassign all content types, this will migrate the content types to null
+                await workflowsContentTypes.migrate({
+                    srcContentTypes: workflow.contentTypes,
+                    destContentTypes: []
+                });
+                const query = strapi.get('query-params').transform(workflows$1.WORKFLOW_MODEL_UID, opts);
+                // Delete Workflow
+                const deletedWorkflow = await strapi.db.query(workflows$1.WORKFLOW_MODEL_UID).delete({
+                    ...query,
+                    where: {
+                        id: workflow.id
+                    }
+                });
+                await strapi.plugin('content-releases').service('release-action').validateActionsByContentTypes(workflow.contentTypes);
+                return deletedWorkflow;
+            });
+        },
+        /**
+     * Returns the total count of workflows.
+     * @returns {Promise<number>} - Total count of workflows.
+     */ count () {
+            return strapi.db.query(workflows$1.WORKFLOW_MODEL_UID).count();
+        },
+        /**
+     * Finds the assigned workflow for a given content type ID.
+     * @param {string} uid - Content type ID to find the assigned workflow for.
+     * @param {object} opts - Options for the query.
+     * @returns {Promise<object|null>} - Assigned workflow object if found, or null.
+     */ async getAssignedWorkflow (uid, opts = {}) {
+            const workflows = await this._getAssignedWorkflows(uid, opts);
+            return workflows.length > 0 ? workflows[0] : null;
+        },
+        /**
+     * Finds all the assigned workflows for a given content type ID.
+     * Normally, there should only be one workflow assigned to a content type.
+     * However, edge cases can occur where a content type is assigned to multiple workflows.
+     * @param {string} uid - Content type ID to find the assigned workflows for.
+     * @param {object} opts - Options for the query.
+     * @returns {Promise<object[]>} - List of assigned workflow objects.
+     */ async _getAssignedWorkflows (uid, opts = {}) {
+            return this.find({
+                ...opts,
+                filters: {
+                    contentTypes: reviewWorkflows.getWorkflowContentTypeFilter({
+                        strapi
+                    }, uid)
+                }
+            });
+        },
+        /**
+     * Asserts that a content type has an assigned workflow.
+     * @param {string} uid - Content type ID to verify the assignment of.
+     * @returns {Promise<object>} - Workflow object associated with the content type ID.
+     * @throws {ApplicationError} - If no assigned workflow is found for the content type ID.
+     */ async assertContentTypeBelongsToWorkflow (uid) {
+            const workflow = await this.getAssignedWorkflow(uid, {
+                populate: 'stages'
+            });
+            if (!workflow) {
+                throw new utils.errors.ApplicationError(`Review workflows is not activated on Content Type ${uid}.`);
+            }
+            return workflow;
+        },
+        /**
+     * Asserts that a stage belongs to a given workflow.
+     * @param {string} stageId - ID of stage to check.
+     * @param {object} workflow - Workflow object to check against.
+     * @returns
+     * @throws {ApplicationError} - If the stage does not belong to the specified workflow.
+     */ assertStageBelongsToWorkflow (stageId, workflow) {
+            if (!stageId) {
+                return;
+            }
+            const belongs = workflow.stages.some((stage)=>stage.id === stageId);
+            if (!belongs) {
+                throw new utils.errors.ApplicationError(`Stage does not belong to workflow "${workflow.name}"`);
+            }
+        }
+    };
+});
+
+module.exports = workflows;
+//# sourceMappingURL=workflows.js.map

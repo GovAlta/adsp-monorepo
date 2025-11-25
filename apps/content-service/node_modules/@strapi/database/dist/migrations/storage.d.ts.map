@@ -1,0 +1,1 @@
+{"version":3,"file":"storage.d.ts","sourceRoot":"","sources":["../../src/migrations/storage.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,QAAQ,EAAE,MAAM,IAAI,CAAC;AAEnC,MAAM,WAAW,OAAO;IACtB,EAAE,EAAE,QAAQ,CAAC;IACb,SAAS,EAAE,MAAM,CAAC;CACnB;AAED,eAAO,MAAM,aAAa,SAAU,OAAO;2BAcV;QAAE,IAAI,EAAE,MAAM,CAAA;KAAE;6BAUd;QAAE,IAAI,EAAE,MAAM,CAAA;KAAE;;CAelD,CAAC"}

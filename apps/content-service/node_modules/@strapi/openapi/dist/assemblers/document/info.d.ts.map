@@ -1,0 +1,1 @@
+{"version":3,"file":"info.d.ts","sourceRoot":"","sources":["../../../src/assemblers/document/info.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,aAAa,CAAC;AAInD,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,IAAI,CAAC;AASpC,qBAAa,qBAAsB,YAAW,SAAS,CAAC,QAAQ;IAC9D,QAAQ,CAAC,OAAO,EAAE,eAAe,GAAG,IAAI;IAgBxC,OAAO,CAAC,MAAM;IAId,OAAO,CAAC,YAAY;CAGrB"}

@@ -1,0 +1,176 @@
+'use strict';
+
+var jsxRuntime = require('react/jsx-runtime');
+require('react');
+var designSystem = require('@strapi/design-system');
+var Icons = require('@strapi/icons');
+var Symbols = require('@strapi/icons/symbols');
+
+function _interopNamespaceDefault(e) {
+  var n = Object.create(null);
+  if (e) {
+    Object.keys(e).forEach(function (k) {
+      if (k !== 'default') {
+        var d = Object.getOwnPropertyDescriptor(e, k);
+        Object.defineProperty(n, k, d.get ? d : {
+          enumerable: true,
+          get: function () { return e[k]; }
+        });
+      }
+    });
+  }
+  n.default = e;
+  return Object.freeze(n);
+}
+
+var Icons__namespace = /*#__PURE__*/_interopNamespaceDefault(Icons);
+var Symbols__namespace = /*#__PURE__*/_interopNamespaceDefault(Symbols);
+
+const ComponentIcon = ({ showBackground = true, icon = 'dashboard', ...props })=>{
+    const Icon = COMPONENT_ICONS[icon] || COMPONENT_ICONS.dashboard;
+    return /*#__PURE__*/ jsxRuntime.jsx(designSystem.Flex, {
+        alignItems: "center",
+        background: showBackground ? 'neutral200' : undefined,
+        justifyContent: "center",
+        height: 8,
+        width: 8,
+        color: "neutral600",
+        borderRadius: showBackground ? '50%' : 0,
+        ...props,
+        children: /*#__PURE__*/ jsxRuntime.jsx(Icon, {
+            height: "2rem",
+            width: "2rem"
+        })
+    });
+};
+const COMPONENT_ICONS = {
+    alien: Icons__namespace.Alien,
+    apps: Icons__namespace.GridNine,
+    archive: Icons__namespace.Archive,
+    arrowDown: Icons__namespace.ArrowDown,
+    arrowLeft: Icons__namespace.ArrowLeft,
+    arrowRight: Icons__namespace.ArrowRight,
+    arrowUp: Icons__namespace.ArrowUp,
+    attachment: Icons__namespace.Paperclip,
+    bell: Icons__namespace.Bell,
+    bold: Icons__namespace.Bold,
+    book: Icons__namespace.Book,
+    briefcase: Icons__namespace.Briefcase,
+    brush: Icons__namespace.PaintBrush,
+    bulletList: Icons__namespace.BulletList,
+    calendar: Icons__namespace.Calendar,
+    car: Icons__namespace.Car,
+    cast: Icons__namespace.Cast,
+    chartBubble: Icons__namespace.ChartBubble,
+    chartCircle: Icons__namespace.ChartCircle,
+    chartPie: Icons__namespace.ChartPie,
+    check: Icons__namespace.Check,
+    clock: Icons__namespace.Clock,
+    cloud: Icons__namespace.Cloud,
+    code: Icons__namespace.Code,
+    cog: Icons__namespace.Cog,
+    collapse: Icons__namespace.Collapse,
+    command: Icons__namespace.Command,
+    connector: Icons__namespace.Faders,
+    crop: Icons__namespace.Crop,
+    crown: Icons__namespace.Crown,
+    cup: Icons__namespace.Coffee,
+    cursor: Icons__namespace.Cursor,
+    dashboard: Icons__namespace.SquaresFour,
+    database: Icons__namespace.Database,
+    discuss: Icons__namespace.Discuss,
+    doctor: Icons__namespace.Stethoscope,
+    earth: Icons__namespace.Earth,
+    emotionHappy: Icons__namespace.EmotionHappy,
+    emotionUnhappy: Icons__namespace.EmotionUnhappy,
+    envelop: Icons__namespace.Mail,
+    exit: Icons__namespace.SignOut,
+    expand: Icons__namespace.Expand,
+    eye: Icons__namespace.Eye,
+    feather: Icons__namespace.Feather,
+    file: Icons__namespace.File,
+    fileError: Icons__namespace.FileError,
+    filePdf: Icons__namespace.FilePdf,
+    filter: Icons__namespace.Filter,
+    folder: Icons__namespace.Folder,
+    gate: Icons__namespace.CastleTurret,
+    gift: Icons__namespace.Gift,
+    globe: Icons__namespace.Globe,
+    grid: Icons__namespace.GridFour,
+    handHeart: Icons__namespace.HandHeart,
+    hashtag: Icons__namespace.Hashtag,
+    headphone: Icons__namespace.Headphones,
+    heart: Icons__namespace.Heart,
+    house: Icons__namespace.House,
+    information: Icons__namespace.Information,
+    italic: Icons__namespace.Italic,
+    key: Icons__namespace.Key,
+    landscape: Icons__namespace.Images,
+    layer: Icons__namespace.ListPlus,
+    layout: Icons__namespace.Layout,
+    lightbulb: Icons__namespace.Lightbulb,
+    link: Icons__namespace.Link,
+    lock: Icons__namespace.Lock,
+    magic: Icons__namespace.Magic,
+    manyToMany: Icons__namespace.ManyToMany,
+    manyToOne: Icons__namespace.ManyToOne,
+    manyWays: Icons__namespace.ManyWays,
+    medium: Symbols__namespace.Medium,
+    message: Icons__namespace.Message,
+    microphone: Icons__namespace.Microphone,
+    monitor: Icons__namespace.Monitor,
+    moon: Icons__namespace.Moon,
+    music: Icons__namespace.MusicNotes,
+    oneToMany: Icons__namespace.OneToMany,
+    oneToOne: Icons__namespace.OneToOne,
+    oneWay: Icons__namespace.OneWay,
+    paint: Icons__namespace.PaintBrush,
+    paintBrush: Icons__namespace.PaintBrush,
+    paperPlane: Icons__namespace.PaperPlane,
+    pencil: Icons__namespace.Pencil,
+    phone: Icons__namespace.Phone,
+    picture: Icons__namespace.Image,
+    pin: Icons__namespace.Pin,
+    pinMap: Icons__namespace.PinMap,
+    plane: Icons__namespace.Plane,
+    play: Icons__namespace.Play,
+    plus: Icons__namespace.Plus,
+    priceTag: Icons__namespace.PriceTag,
+    puzzle: Icons__namespace.PuzzlePiece,
+    question: Icons__namespace.Question,
+    quote: Icons__namespace.Quotes,
+    refresh: Icons__namespace.ArrowClockwise,
+    restaurant: Icons__namespace.Restaurant,
+    rocket: Icons__namespace.Rocket,
+    rotate: Icons__namespace.ArrowsCounterClockwise,
+    scissors: Icons__namespace.Scissors,
+    search: Icons__namespace.Search,
+    seed: Icons__namespace.Plant,
+    server: Icons__namespace.Server,
+    shield: Icons__namespace.Shield,
+    shirt: Icons__namespace.Shirt,
+    shoppingCart: Icons__namespace.ShoppingCart,
+    slideshow: Icons__namespace.PresentationChart,
+    stack: Icons__namespace.Stack,
+    star: Icons__namespace.Star,
+    store: Icons__namespace.Store,
+    strikeThrough: Icons__namespace.StrikeThrough,
+    sun: Icons__namespace.Sun,
+    television: Icons__namespace.Television,
+    thumbDown: Icons__namespace.ThumbDown,
+    thumbUp: Icons__namespace.ThumbUp,
+    train: Icons__namespace.Train,
+    twitter: Symbols__namespace.X,
+    typhoon: Icons__namespace.Typhoon,
+    underline: Icons__namespace.Underline,
+    user: Icons__namespace.User,
+    volumeMute: Icons__namespace.VolumeMute,
+    volumeUp: Icons__namespace.VolumeUp,
+    walk: Icons__namespace.Walk,
+    wheelchair: Icons__namespace.Wheelchair,
+    write: Icons__namespace.Feather
+};
+
+exports.COMPONENT_ICONS = COMPONENT_ICONS;
+exports.ComponentIcon = ComponentIcon;
+//# sourceMappingURL=ComponentIcon.js.map

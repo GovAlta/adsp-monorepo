@@ -1,0 +1,1 @@
+{"version":3,"file":"query-builders.d.ts","sourceRoot":"","sources":["../../../../../../server/src/services/permission/permissions-manager/query-builders.ts"],"names":[],"mappings":"AA0BA,QAAA,MAAM,cAAc,YAAa,OAAO,UAAU,OAAO,SAAS,OAAO,8DAGxE,CAAC;AAEF,QAAA,MAAM,gBAAgB,cAAe,OAAO,YAE3C,CAAC;AAkCF,OAAO,EAAE,cAAc,EAAE,gBAAgB,EAAE,CAAC"}

@@ -1,0 +1,125 @@
+'use strict';
+
+var strapiUtils = require('@strapi/utils');
+
+const hasDraftAndPublish = (uid)=>{
+    const model = strapi.getModel(uid);
+    return strapiUtils.contentTypes.hasDraftAndPublish(model);
+};
+/**
+ * TODO: Find a better way to encode keys than this
+ * This converts an object into a string by joining its keys and values,
+ * so it can be used as a key in a Map.
+ *
+ * @example
+ * const obj = { a: 1, b: 2 };
+ * const key = encodeKey(obj);
+ *      ^ "a:::1&&b:::2"
+ */ const encodeKey = (obj)=>{
+    // Ignore status field for models without draft and publish
+    if (!hasDraftAndPublish(obj.uid)) {
+        delete obj.status;
+    }
+    // Sort keys to always keep the same order when encoding
+    const keys = Object.keys(obj).sort();
+    return keys.map((key)=>`${key}:::${obj[key]}`).join('&&');
+};
+/**
+ * Holds a registry of document ids and their corresponding entity ids.
+ */ const createIdMap = ({ strapi: strapi1 })=>{
+    const loadedIds = new Map();
+    const toLoadIds = new Map();
+    return {
+        loadedIds,
+        toLoadIds,
+        /**
+     * Register a new document id and its corresponding entity id.
+     */ add (keyFields) {
+            const key = encodeKey({
+                status: 'published',
+                locale: null,
+                ...keyFields
+            });
+            // If the id is already loaded, do nothing
+            if (loadedIds.has(key)) return;
+            // If the id is already in the toLoadIds, do nothing
+            if (toLoadIds.has(key)) return;
+            // Add the id to the toLoadIds
+            toLoadIds.set(key, keyFields);
+        },
+        /**
+     * Load all ids from the registry.
+     */ async load () {
+            // Document Id to Entry Id queries are batched by its uid and locale
+            // TODO: Add publication state too
+            const loadIdValues = Array.from(toLoadIds.values());
+            // 1. Group ids to query together
+            const idsByUidAndLocale = loadIdValues.reduce((acc, { documentId, ...rest })=>{
+                const key = encodeKey(rest);
+                const ids = acc[key] || {
+                    ...rest,
+                    documentIds: []
+                };
+                ids.documentIds.push(documentId);
+                return {
+                    ...acc,
+                    [key]: ids
+                };
+            }, {});
+            // 2. Query ids
+            await strapiUtils.async.map(Object.values(idsByUidAndLocale), async ({ uid, locale, documentIds, status })=>{
+                const findParams = {
+                    select: [
+                        'id',
+                        'documentId',
+                        'locale',
+                        'publishedAt'
+                    ],
+                    where: {
+                        documentId: {
+                            $in: documentIds
+                        },
+                        locale: locale || null
+                    }
+                };
+                if (hasDraftAndPublish(uid)) {
+                    findParams.where.publishedAt = status === 'draft' ? null : {
+                        $ne: null
+                    };
+                }
+                const result = await strapi1?.db?.query(uid).findMany(findParams);
+                // 3. Store result in loadedIds
+                result?.forEach(({ documentId, id, locale, publishedAt })=>{
+                    const key = encodeKey({
+                        documentId,
+                        uid,
+                        locale,
+                        status: publishedAt ? 'published' : 'draft'
+                    });
+                    loadedIds.set(key, id);
+                });
+            });
+            // 4. Clear toLoadIds
+            toLoadIds.clear();
+        },
+        /**
+     * Get the entity id for a given document id.
+     */ get (keys) {
+            const key = encodeKey({
+                status: 'published',
+                locale: null,
+                ...keys
+            });
+            return loadedIds.get(key);
+        },
+        /**
+     * Clear the registry.
+     */ clear () {
+            loadedIds.clear();
+            toLoadIds.clear();
+        }
+    };
+};
+
+exports.createIdMap = createIdMap;
+//# sourceMappingURL=id-map.js.map

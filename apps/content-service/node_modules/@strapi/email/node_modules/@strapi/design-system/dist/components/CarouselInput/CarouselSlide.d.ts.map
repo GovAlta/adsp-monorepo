@@ -1,0 +1,1 @@
+{"version":3,"file":"CarouselSlide.d.ts","sourceRoot":"","sources":["../../../src/components/CarouselInput/CarouselSlide.tsx"],"names":[],"mappings":";AAEA,OAAO,EAAuB,SAAS,EAAE,MAAM,uBAAuB,CAAC;AACvE,MAAM,WAAW,kBAAmB,SAAQ,SAAS;IACnD,QAAQ,EAAE,KAAK,CAAC,SAAS,CAAC;IAC1B,KAAK,EAAE,MAAM,CAAC;IACd,QAAQ,CAAC,EAAE,OAAO,CAAC;CACpB;AAMD,eAAO,MAAM,aAAa,4CAAqD,kBAAkB,4CAchG,CAAC"}

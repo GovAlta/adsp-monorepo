@@ -1,0 +1,1 @@
+{"version":3,"file":"factory.js","sources":["../../../src/utils/timer/factory.ts"],"sourcesContent":["import { Timer } from './timer';\n\nexport class TimerFactory {\n  create() {\n    return new Timer();\n  }\n}\n"],"names":["TimerFactory","create","Timer"],"mappings":";;;;AAEO,MAAMA,YAAAA,CAAAA;IACXC,MAAS,GAAA;AACP,QAAA,OAAO,IAAIC,WAAAA,EAAAA;AACb;AACF;;;;"}

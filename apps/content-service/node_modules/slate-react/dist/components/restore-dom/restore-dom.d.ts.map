@@ -1,0 +1,1 @@
+{"version":3,"file":"restore-dom.d.ts","sourceRoot":"","sources":["../../packages/slate-react/src/components/restore-dom/restore-dom.tsx"],"names":[],"mappings":"AAAA,OAAc,EAAa,aAAa,EAAe,SAAS,EAAE,MAAM,OAAO,CAAA;AAe/E,aAAK,eAAe,GAAG;IACrB,iBAAiB,EAAE,SAAS,CAAC,OAAO,CAAC,CAAA;IACrC,IAAI,EAAE,SAAS,CAAC,cAAc,CAAC,CAAA;CAChC,CAAA;AAwDD,eAAO,MAAM,UAAU,EAAE,aAAa,CAAC,eAAe,CAEjB,CAAA"}

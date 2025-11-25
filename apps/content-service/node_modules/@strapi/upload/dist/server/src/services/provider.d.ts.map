@@ -1,0 +1,1 @@
+{"version":3,"file":"provider.d.ts","sourceRoot":"","sources":["../../../../server/src/services/provider.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,eAAe,CAAC;AAE1C,OAAO,EAAU,cAAc,EAAE,MAAM,UAAU,CAAC;qCAEtB;IAAE,MAAM,EAAE,KAAK,MAAM,CAAA;CAAE;wBACvB,cAAc;iBAKrB,cAAc;;AANnC,wBA2BG"}

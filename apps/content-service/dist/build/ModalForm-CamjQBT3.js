@@ -1,0 +1,1 @@
+const e={...window.strapi.features.isEnabled(window.strapi.features.SSO)?{useSSORegistration:!0}:{}},s=[...window.strapi.features.isEnabled(window.strapi.features.SSO)?[[{label:{id:"Settings.permissions.users.form.sso",defaultMessage:"Connect with SSO"},name:"useSSORegistration",type:"boolean",size:6}]]:[]];export{e as FORM_INITIAL_VALUES,s as ROLE_LAYOUT};

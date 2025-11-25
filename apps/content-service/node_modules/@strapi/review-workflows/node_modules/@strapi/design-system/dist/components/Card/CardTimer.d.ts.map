@@ -1,0 +1,1 @@
+{"version":3,"file":"CardTimer.d.ts","sourceRoot":"","sources":["../../../src/components/Card/CardTimer.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,KAAK,MAAM,OAAO,CAAC;AAE/B,OAAO,EAAO,QAAQ,EAAE,MAAM,sBAAsB,CAAC;AAGrD,MAAM,WAAW,cAAe,SAAQ,QAAQ;IAC9C,QAAQ,EAAE,KAAK,CAAC,SAAS,CAAC;CAC3B;AAED,eAAO,MAAM,SAAS,2BAA4B,cAAc,4CAgB/D,CAAC"}

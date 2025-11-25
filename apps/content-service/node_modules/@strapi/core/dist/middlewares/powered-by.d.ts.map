@@ -1,0 +1,1 @@
+{"version":3,"file":"powered-by.d.ts","sourceRoot":"","sources":["../../src/middlewares/powered-by.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,eAAe,CAAC;AAE1C,MAAM,WAAW,MAAM;IACrB,SAAS,EAAE,MAAM,CAAC;CACnB;AAMD,eAAO,MAAM,SAAS,EAAE,IAAI,CAAC,iBAAiB,CAAC,OAAO,CAAC,MAAM,CAAC,CAQ7D,CAAC"}

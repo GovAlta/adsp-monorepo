@@ -1,0 +1,88 @@
+{
+  "name": "grant",
+  "version": "5.4.24",
+  "description": "OAuth Proxy",
+  "keywords": [
+    "oauth",
+    "oauth2",
+    "openid",
+    "openid-connect",
+    "authentication",
+    "authorization",
+    "proxy",
+    "middleware",
+    "lambda",
+    "express",
+    "koa",
+    "hapi",
+    "fastify",
+    "aws",
+    "azure",
+    "google-cloud",
+    "vercel"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/simov/grant",
+  "author": "Simeon Velichkov <simeonvelichkov@gmail.com> (https://simov.github.io)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simov/grant.git"
+  },
+  "dependencies": {
+    "qs": "^6.14.0",
+    "request-compose": "^2.1.7",
+    "request-oauth": "^1.0.1"
+  },
+  "optionalDependencies": {
+    "cookie": "^0.7.2",
+    "cookie-signature": "^1.2.2",
+    "jwk-to-pem": "^2.0.7",
+    "jws": "^4.0.0"
+  },
+  "devDependencies": {
+    "@curveball/bodyparser": "0.4.6",
+    "@curveball/core": "0.14.2",
+    "@curveball/router": "0.2.4",
+    "@curveball/session": "0.5.0",
+    "@fastify/cookie": "^9.4.0",
+    "@fastify/formbody": "^7.4.0",
+    "@fastify/session": "^10.9.0",
+    "@hapi/hapi": "^21.3.10",
+    "@hapi/yar": "^11.0.2",
+    "body-parser": "^1.20.3",
+    "cookie-session": "^2.1.0",
+    "express": "^4.21.0",
+    "express-session": "^1.18.0",
+    "fastify": "^4.28.1",
+    "grant-profile": "^1.0.2",
+    "koa": "^2.15.3",
+    "koa-bodyparser": "^4.4.1",
+    "koa-mount": "^4.0.0",
+    "koa-qs": "^3.0.0",
+    "koa-session": "^6.4.0",
+    "mocha": "^10.7.3",
+    "nyc": "^17.0.0",
+    "request-cookie": "^1.0.1",
+    "request-logs": "^2.1.5"
+  },
+  "main": "./grant.js",
+  "files": [
+    "config/",
+    "lib/",
+    "grant.js",
+    "grant.d.ts",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "package.json"
+  ],
+  "types": "grant.d.ts",
+  "scripts": {
+    "test": "npm run test:ci",
+    "test:ci": "npx mocha --recursive",
+    "test:cov": "npx nyc --reporter=lcov --reporter=text-summary mocha -- --recursive"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}

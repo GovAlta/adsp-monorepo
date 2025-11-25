@@ -1,0 +1,38 @@
+{
+  "name": "typedoc-github-wiki-theme",
+  "version": "1.1.0",
+  "description": "An extension of the default theme from typedoc-plugin-markdown to create a compatible file structure for Github Wiki pages.",
+  "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
+  "bugs": {
+    "url": "https://github.com/tgreyuk/typedoc-plugin-markdown/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tgreyuk/typedoc-plugin-markdown.git",
+    "directory": "packages/typedoc-github-wiki-theme"
+  },
+  "homepage": "https://github.com/tgreyuk/typedoc-plugin-markdown/tree/master/packages/typedoc-github-wiki-theme",
+  "scripts": {
+    "lint": "eslint ./src --ext .ts",
+    "prepublishOnly": "yarn run lint && yarn run build",
+    "build": "rm -rf ./dist && tsc",
+    "demo": "rm -rf ./demo && yarn run build && typedoc --plugin typedoc-plugin-markdown --plugin typedoc-github-wiki-theme --options ../../stub-project/typedoc-options.json --out ./demo"
+  },
+  "author": "Thomas Grey",
+  "license": "MIT",
+  "peerDependencies": {
+    "typedoc": ">=0.24.0",
+    "typedoc-plugin-markdown": ">=3.15.0"
+  },
+  "devDependencies": {
+    "typedoc-plugin-markdown": "^3.15.0"
+  },
+  "keywords": [
+    "typedoc",
+    "typedoc-theme",
+    "githubwiki"
+  ]
+}

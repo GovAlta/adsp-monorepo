@@ -1,0 +1,25 @@
+{
+    "name": "@types/fined",
+    "version": "1.1.5",
+    "description": "TypeScript definitions for fined",
+    "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/fined",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "BendingBender",
+            "githubUsername": "BendingBender",
+            "url": "https://github.com/BendingBender"
+        }
+    ],
+    "main": "",
+    "types": "index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "directory": "types/fined"
+    },
+    "scripts": {},
+    "dependencies": {},
+    "typesPublisherContentHash": "921aa375a533fd592929c04e5eebdd9c9f27470d51235aaf9df31fcb1735e82f",
+    "typeScriptVersion": "4.5"
+}

@@ -87,6 +87,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               content={'Draft'}
               type="information"
               testId="notice-card-mode"
+              icon={false}
             />
           )}
           {props.mode === 'published' && (
@@ -96,6 +97,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               data-testid="notice-card-mode"
               type="success"
               testId="notice-card-mode"
+              icon={false}
             />
           )}
           {props.mode === 'archived' && (
@@ -105,6 +107,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               data-testid="notice-card-mode"
               testId="notice-card-mode"
               type="midtone"
+              icon={false}
             />
           )}
           {props.mode !== 'archived' && (
@@ -124,6 +127,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
                 content={'Orphaned'}
                 data-testid="notice-card-orphaned"
                 type="information"
+                icon={false}
               />
             </OrphanedBadge>
           )}

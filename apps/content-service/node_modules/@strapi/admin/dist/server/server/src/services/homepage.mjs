@@ -1,0 +1,79 @@
+import { getService } from '../utils/index.mjs';
+import { HomepageLayoutSchema, HomepageLayoutWriteSchema } from '../controllers/validation/schema.mjs';
+
+const DEFAULT_WIDTH = 6;
+const keyFor = (userId)=>`homepage-layout:${userId}`;
+const isContentTypeVisible = (model)=>model?.pluginOptions?.['content-type-builder']?.visible !== false;
+const homepageService = ({ strapi })=>{
+    const adminStore = strapi.store({
+        type: 'core',
+        name: 'admin'
+    });
+    const getKeyStatistics = async ()=>{
+        const contentTypes = Object.entries(strapi.contentTypes).filter(([, contentType])=>{
+            return isContentTypeVisible(contentType);
+        });
+        const countApiTokens = await getService('api-token').count();
+        const countAdmins = await getService('user').count();
+        const countLocales = await strapi.plugin('i18n')?.service('locales')?.count() ?? null;
+        const countsAssets = await strapi.db.query('plugin::upload.file').count();
+        const countWebhooks = await strapi.db.query('strapi::webhook').count();
+        const componentCategories = new Set(Object.values(strapi.components).map((component)=>component.category));
+        const components = Array.from(componentCategories);
+        return {
+            assets: countsAssets,
+            contentTypes: contentTypes.length,
+            components: components.length,
+            locales: countLocales,
+            admins: countAdmins,
+            webhooks: countWebhooks,
+            apiTokens: countApiTokens
+        };
+    };
+    const getHomepageLayout = async (userId)=>{
+        const key = keyFor(userId);
+        const value = await adminStore.get({
+            key
+        });
+        if (!value) {
+            // nothing saved yet
+            return null;
+        }
+        return HomepageLayoutSchema.parse(value);
+    };
+    const updateHomepageLayout = async (userId, input)=>{
+        const write = HomepageLayoutWriteSchema.parse(input);
+        const key = keyFor(userId);
+        const currentRaw = await adminStore.get({
+            key
+        });
+        const current = currentRaw ? HomepageLayoutSchema.parse(currentRaw) : null;
+        const widgetsNext = write.widgets ?? current?.widgets ?? [];
+        // Normalize widths (fill defaults where missing)
+        const normalizedWidgets = widgetsNext.map((w)=>{
+            const prev = current?.widgets.find((cw)=>cw.uid === w.uid);
+            return {
+                uid: w.uid,
+                width: w.width ?? prev?.width ?? DEFAULT_WIDTH
+            };
+        });
+        const next = {
+            version: write.version ?? 1,
+            widgets: normalizedWidgets,
+            updatedAt: write.updatedAt ?? new Date().toISOString()
+        };
+        await adminStore.set({
+            key,
+            value: next
+        });
+        return next;
+    };
+    return {
+        getKeyStatistics,
+        getHomepageLayout,
+        updateHomepageLayout
+    };
+};
+
+export { homepageService };
+//# sourceMappingURL=homepage.mjs.map

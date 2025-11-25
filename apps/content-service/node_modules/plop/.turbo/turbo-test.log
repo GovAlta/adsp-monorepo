@@ -1,0 +1,48 @@
+
+> plop@4.0.0 test:instrument
+> nyc instrument ./bin ./instrumented/bin && nyc instrument ./src ./instrumented/src && cp package.json ./instrumented
+
+Browserslist: caniuse-lite is outdated. Please run:
+  npx browserslist@latest --update-db
+  Why you should do it regularly: https://github.com/browserslist/browserslist#browsers-data-updating
+Browserslist: caniuse-lite is outdated. Please run:
+  npx browserslist@latest --update-db
+  Why you should do it regularly: https://github.com/browserslist/browserslist#browsers-data-updating
+
+> plop@4.0.0 vitest
+> vitest run
+
+
+[7m[1m[36m RUN [39m[22m[27m [36mv1.1.0[39m [90mC:/Users/crutchcorn/git/Plop/plop/packages/plop[39m
+
+ [32m✓[39m tests/typescript.spec.js [2m ([22m[2m1 test[22m[2m)[22m[33m 2806[2mms[22m[39m
+ [32m✓[39m tests/action-failure.spec.js [2m ([22m[2m1 test[22m[2m)[22m[33m 2932[2mms[22m[39m
+ [32m✓[39m tests/actions.spec.js [2m ([22m[2m6 tests[22m [2m|[22m [33m4 skipped[39m[2m)[22m[33m 6462[2mms[22m[39m
+ [32m✓[39m tests/esm.spec.js [2m ([22m[2m4 tests[22m[2m)[22m[33m 11837[2mms[22m[39m
+ [32m✓[39m tests/wrapper.spec.js [2m ([22m[2m5 tests[22m[2m)[22m[33m 14946[2mms[22m[39m
+ [32m✓[39m tests/input-processing.spec.js [2m ([22m[2m16 tests[22m [2m|[22m [33m1 skipped[39m[2m)[22m[33m 38264[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[32m28 passed[39m[22m[2m | [22m[90m5 todo[39m[90m (33)[39m
+[2m   Start at [22m 14:27:42
+[2m   Duration [22m 39.24s[2m (transform 133ms, setup 652ms, collect 239ms, tests 77.25s, environment 4ms, prepare 1.43s)[22m
+
+----------------------|---------|----------|---------|---------|--------------------------------
+File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s              
+----------------------|---------|----------|---------|---------|--------------------------------
+All files             |   15.66 |    14.91 |     8.1 |   16.56 |                                
+ bin                  |     100 |      100 |     100 |     100 |                                
+  plop.js             |     100 |      100 |     100 |     100 |                                
+ src                  |   13.58 |    13.39 |    5.55 |   14.37 |                                
+  bypass.js           |       0 |        0 |       0 |       0 | 14-69                          
+  console-out.js      |   14.28 |        0 |       0 |      15 | 9-110,122-123                  
+  input-processing.js |   26.08 |    37.14 |   14.28 |    27.9 | 17-55,68-69,74-80,88-89,98-101 
+  plop.js             |   10.29 |        5 |    8.33 |    10.6 | 51-171                         
+----------------------|---------|----------|---------|---------|--------------------------------
+
+=============================== Coverage summary ===============================
+Statements   : 15.66% ( 26/166 )
+Branches     : 14.91% ( 17/114 )
+Functions    : 8.1% ( 3/37 )
+Lines        : 16.56% ( 26/157 )
+================================================================================

@@ -1,0 +1,36 @@
+import * as z from 'zod/v4';
+
+/**
+ * A validator for i18n locale routes.
+ *
+ */ class I18nLocaleRouteValidator {
+    /**
+   * Generates a validation schema for a single locale.
+   *
+   * @returns A schema for validating locale objects
+   */ get locale() {
+        return z.object({
+            id: z.number().int().positive(),
+            documentId: z.string().uuid(),
+            name: z.string(),
+            code: z.string().length(2, 'Locale code must be exactly 2 characters'),
+            createdAt: z.string(),
+            updatedAt: z.string(),
+            publishedAt: z.string().nullable(),
+            isDefault: z.boolean()
+        });
+    }
+    /**
+   * Generates a validation schema for an array of locales
+   *
+   * @returns A schema for validating arrays of locales
+   */ get locales() {
+        return z.array(this.locale);
+    }
+    constructor(strapi){
+        this._strapi = strapi;
+    }
+}
+
+export { I18nLocaleRouteValidator };
+//# sourceMappingURL=locale.mjs.map

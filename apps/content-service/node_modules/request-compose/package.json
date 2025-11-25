@@ -1,0 +1,52 @@
+{
+  "name": "request-compose",
+  "version": "2.1.7",
+  "description": "Composable HTTP Client",
+  "keywords": [
+    "functional",
+    "compose",
+    "composable",
+    "http",
+    "client"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/simov/request-compose",
+  "author": "Simeon Velichkov <simeonvelichkov@gmail.com> (https://simov.github.io)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simov/request-compose.git"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "mocha": "^10.7.3",
+    "nyc": "^17.0.0",
+    "qs": "^6.13.0",
+    "request-cookie": "^1.0.0",
+    "request-logs": "^2.1.5",
+    "request-multipart": "^1.0.0",
+    "request-oauth": "^1.0.1"
+  },
+  "main": "./compose.js",
+  "type": "commonjs",
+  "files": [
+    "request/",
+    "response/",
+    "utils/",
+    "compose.js",
+    "compose.d.ts",
+    "index.js",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "package.json"
+  ],
+  "types": "compose.d.ts",
+  "scripts": {
+    "test": "npm run test:ci",
+    "test:ci": "npx mocha --recursive",
+    "test:cov": "npx nyc --reporter=lcov --reporter=text-summary mocha -- --recursive"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"constants.mjs","sources":["../../../src/dialects/mysql/constants.ts"],"sourcesContent":["export const MYSQL = 'MYSQL';\nexport const MARIADB = 'MARIADB';\n"],"names":["MYSQL","MARIADB"],"mappings":"AAAO,MAAMA,QAAQ;AACd,MAAMC,UAAU;;;;"}

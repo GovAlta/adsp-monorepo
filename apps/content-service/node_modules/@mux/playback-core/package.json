@@ -1,0 +1,81 @@
+{
+  "name": "@mux/playback-core",
+  "version": "0.27.0",
+  "description": "Core library for media playback in the browser shared by mux elements",
+  "main": "./dist/index.cjs.js",
+  "module": "./dist/index.mjs",
+  "browser": "./dist/index.mjs",
+  "unpkg": "./dist/playback-core.js",
+  "jsdelivr": "./dist/playback-core.js",
+  "typesVersions": {
+    "<4.3.5": {
+      ".": [
+        "./dist/types-ts3.4/index.d.ts"
+      ]
+    },
+    "*": {
+      ".": [
+        "./dist/types/index.d.ts"
+      ]
+    }
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs.js",
+      "default": "./dist/index.cjs.js",
+      "types@<4.3.5": "./dist/types-ts3.4/index.d.ts",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
+  "types": "./dist/types/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/muxinc/elements",
+    "directory": "packages/playback-core"
+  },
+  "author": "Mux, Inc.",
+  "license": "MIT",
+  "scripts": {
+    "clean": "shx rm -rf dist/",
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src/ --ext .js,.jsx,.ts,.tsx",
+    "test": "web-test-runner **/*.test.js --port 8004 --coverage --config test/web-test-runner.config.mjs --root-dir ../..",
+    "posttest": "replace 'SF:src/' 'SF:packages/playback-core/src/' coverage/lcov.info --silent",
+    "dev:cjs": "yarn build:cjs --watch=forever",
+    "dev:esm": "yarn build:esm --watch=forever",
+    "dev:esm-module": "yarn build:esm-module --watch=forever",
+    "dev:iife": "yarn build:iife --watch=forever",
+    "dev:types": "yarn build:types -w",
+    "dev": "npm-run-all --parallel dev:types dev:cjs dev:esm dev:iife dev:esm-module",
+    "build:esm": "esbuilder src/index.ts --sourcemap --format=esm --out-extension:.js=.mjs --external:mux-embed --external:hls.js",
+    "build:esm-module": "esbuilder src/index.ts --sourcemap --format=esm --outfile=./dist/playback-core.mjs",
+    "build:cjs": "esbuilder src/index.ts --sourcemap --format=cjs --out-extension:.js=.cjs.js --external:mux-embed --external:hls.js",
+    "build:iife": "esbuilder src/index.ts --sourcemap --format=iife --outfile=./dist/playback-core.js",
+    "prebuild:types": "shx mkdir -p ./dist/types && shx cp ../../types/** ./dist/types/",
+    "build:types": "tsc",
+    "postbuild:types": "downlevel-dts ./dist/types ./dist/types-ts3.4 --to=3.4",
+    "build": "npm-run-all --parallel 'build:esm --minify' 'build:iife --minify' 'build:cjs --minify' 'build:esm-module --minify'",
+    "create-release-notes": "create-release-notes ./CHANGELOG.md",
+    "publish-release": "../../scripts/publish.sh"
+  },
+  "dependencies": {
+    "hls.js": "~1.5.11",
+    "mux-embed": "^5.3.1"
+  },
+  "devDependencies": {
+    "@mux/esbuilder": "0.1.0",
+    "@open-wc/testing": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.3.0",
+    "@typescript-eslint/parser": "^8.3.0",
+    "@web/dev-server-esbuild": "^1.0.2",
+    "@web/dev-server-import-maps": "^0.2.1",
+    "@web/test-runner": "^0.18.2",
+    "downlevel-dts": "^0.11.0",
+    "esbuild": "^0.19.8",
+    "eslint": "^9.9.1",
+    "npm-run-all": "^4.1.5",
+    "shx": "^0.3.4",
+    "typescript": "^5.5.4"
+  },
+  "gitHead": "e1d17f4ce383e95489fc778d3c5bda3b89a27b5b"
+}

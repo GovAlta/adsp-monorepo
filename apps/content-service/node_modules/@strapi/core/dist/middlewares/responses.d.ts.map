@@ -1,0 +1,1 @@
+{"version":3,"file":"responses.d.ts","sourceRoot":"","sources":["../../src/middlewares/responses.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,eAAe,CAAC;AAE1C,MAAM,WAAW,MAAM;IACrB,QAAQ,CAAC,EAAE,MAAM,CAAC,MAAM,EAAE,IAAI,CAAC,iBAAiB,CAAC,CAAC;CACnD;AAED,eAAO,MAAM,SAAS,EAAE,IAAI,CAAC,iBAAiB,CAAC,MAAM,CAWpD,CAAC"}

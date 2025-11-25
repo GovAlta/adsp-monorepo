@@ -1,0 +1,1 @@
+{"version":3,"file":"TFooter.d.ts","sourceRoot":"","sources":["../../../src/components/Table/TFooter.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,KAAK,MAAM,OAAO,CAAC;AAI/B,OAAO,EAAqB,QAAQ,EAAE,MAAM,sBAAsB,CAAC;AA+BnE,MAAM,WAAW,YAAa,SAAQ,QAAQ,CAAC,QAAQ,CAAC;IACtD,QAAQ,EAAE,KAAK,CAAC,SAAS,CAAC;IAC1B,IAAI,EAAE,KAAK,CAAC,SAAS,CAAC;CACvB;AAED,eAAO,MAAM,OAAO,iCAAkC,YAAY,4CAkBjE,CAAC"}

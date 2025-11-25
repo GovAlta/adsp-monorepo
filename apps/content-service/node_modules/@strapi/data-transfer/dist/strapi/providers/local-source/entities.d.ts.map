@@ -1,0 +1,1 @@
+{"version":3,"file":"entities.d.ts","sourceRoot":"","sources":["../../../../src/strapi/providers/local-source/entities.ts"],"names":[],"mappings":";AAAA,OAAO,EAAE,QAAQ,EAAE,SAAS,EAAE,MAAM,QAAQ,CAAC;AAC7C,OAAO,KAAK,EAAE,IAAI,EAAU,MAAM,eAAe,CAAC;AAKlD;;GAEG;AACH,eAAO,MAAM,oBAAoB,WAAY,KAAK,MAAM,KAAG,QAuC1D,CAAC;AAEF;;;GAGG;AACH,eAAO,MAAM,6BAA6B,QAAO,SAchD,CAAC"}

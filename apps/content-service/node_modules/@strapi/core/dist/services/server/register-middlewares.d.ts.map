@@ -1,0 +1,1 @@
+{"version":3,"file":"register-middlewares.d.ts","sourceRoot":"","sources":["../../../src/services/server/register-middlewares.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,eAAe,CAAC;AAiD1C;;GAEG;AACH,QAAA,MAAM,8BAA8B,WAAkB,KAAK,MAAM,kBAchE,CAAC;AAkCF,eAAe,8BAA8B,CAAC"}

@@ -1,0 +1,47 @@
+{
+  "name": "koa-helmet",
+  "author": "Matt Venables <mattvenables@gmail.com>",
+  "description": "Security header middleware collection for koa",
+  "license": "MIT",
+  "version": "7.0.2",
+  "main": "lib/koa-helmet.js",
+  "typings": "./koa-helmet.d.ts",
+  "scripts": {
+    "format": "eslint lib test --fix",
+    "lint": "eslint lib test",
+    "test": "eslint lib test && nyc ava",
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
+  },
+  "keywords": [
+    "security",
+    "headers",
+    "koa",
+    "x-frame-options",
+    "csp",
+    "hsts"
+  ],
+  "repository": {
+    "url": "https://github.com/venables/koa-helmet"
+  },
+  "engines": {
+    "node": ">= 14.0.0"
+  },
+  "dependencies": {
+    "helmet": "^6.0.1"
+  },
+  "devDependencies": {
+    "ava": "^3.13.0",
+    "coveralls": "^3.1.0",
+    "eslint": "^7.10.0",
+    "eslint-plugin-node": "^11.1.0",
+    "koa": "^2.13.0",
+    "nyc": "^15.1.0",
+    "supertest": "^5.0.0"
+  },
+  "nyc": {
+    "reporter": [
+      "lcov",
+      "text"
+    ]
+  }
+}

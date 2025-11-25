@@ -1,0 +1,1 @@
+{"version":3,"file":"factory.js","sources":["../../src/registries/factory.ts"],"sourcesContent":["export class RegistriesFactory {\n  createAll() {\n    return {};\n  }\n}\n"],"names":["RegistriesFactory","createAll"],"mappings":";;AAAO,MAAMA,iBAAAA,CAAAA;IACXC,SAAY,GAAA;AACV,QAAA,OAAO,EAAC;AACV;AACF;;;;"}

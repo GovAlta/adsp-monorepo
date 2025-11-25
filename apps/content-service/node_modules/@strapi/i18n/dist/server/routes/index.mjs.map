@@ -1,0 +1,1 @@
+{"version":3,"file":"index.mjs","sources":["../../../server/src/routes/index.ts"],"sourcesContent":["import admin from './admin';\nimport contentApi from './content-api';\n\nexport default {\n  admin,\n  'content-api': contentApi,\n};\n"],"names":["admin","contentApi"],"mappings":";;;AAGA,aAAe;AACbA,IAAAA,KAAAA;IACA,aAAeC,EAAAA;AACjB,CAAE;;;;"}

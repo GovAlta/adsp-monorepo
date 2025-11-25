@@ -1,0 +1,1 @@
+{"version":3,"file":"config.js","sources":["../../server/src/config.ts"],"sourcesContent":["export default {\n  default: {},\n  validator() {},\n};\n"],"names":["default","validator"],"mappings":";;AAAA,aAAe;AACbA,IAAAA,OAAAA,EAAS,EAAC;IACVC,SAAa,CAAA,GAAA;AACf,CAAE;;;;"}

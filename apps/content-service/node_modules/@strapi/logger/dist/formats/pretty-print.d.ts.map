@@ -1,0 +1,1 @@
+{"version":3,"file":"pretty-print.d.ts","sourceRoot":"","sources":["../../src/formats/pretty-print.ts"],"names":[],"mappings":"AAAA,OAAO,EAAU,OAAO,EAAE,MAAM,SAAS,CAAC;AAK1C,MAAM,WAAW,kBAAkB;IACjC;;OAEG;IACH,UAAU,CAAC,EAAE,OAAO,CAAC,gBAAgB,CAAC,QAAQ,CAAC,GAAG,OAAO,CAAC;IAC1D;;OAEG;IACH,MAAM,CAAC,EAAE,OAAO,CAAC;CAClB;AAED;;;GAGG;mCACsB,kBAAkB,KAAQ,QAAQ,MAAM;AAAjE,wBA0BE"}

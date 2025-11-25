@@ -1,0 +1,1 @@
+{"version":3,"file":"types.d.ts","sourceRoot":"","sources":["../../src/pre-processor/types.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,UAAU,CAAC;AAEhD,MAAM,WAAW,YAAY;IAC3B,UAAU,CAAC,OAAO,EAAE,eAAe,GAAG,IAAI,CAAC;CAC5C"}

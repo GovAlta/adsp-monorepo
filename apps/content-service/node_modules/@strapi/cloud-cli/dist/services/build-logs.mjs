@@ -1,0 +1,65 @@
+import EventSource from 'eventsource';
+
+const buildLogsServiceFactory = ({ logger })=>{
+    return async (url, token, cliConfig)=>{
+        const CONN_TIMEOUT = Number(cliConfig.buildLogsConnectionTimeout);
+        const MAX_RETRIES = Number(cliConfig.buildLogsMaxRetries);
+        return new Promise((resolve, reject)=>{
+            let timeoutId = null;
+            let retries = 0;
+            const connect = (url)=>{
+                const logsSpinner = logger.spinner('Connecting to the server to get build logs\n').start();
+                logsSpinner.indent = 1;
+                const es = new EventSource(`${url}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                const clearExistingTimeout = ()=>{
+                    if (timeoutId) {
+                        clearTimeout(timeoutId);
+                    }
+                };
+                const resetTimeout = ()=>{
+                    clearExistingTimeout();
+                    timeoutId = setTimeout(()=>{
+                        if (logsSpinner.isSpinning) {
+                            logsSpinner.fail('We were unable to connect to the server to get build logs at this time. This could be due to a temporary issue.');
+                        }
+                        es.close();
+                        reject(new Error('Connection timed out'));
+                    }, CONN_TIMEOUT);
+                };
+                es.onopen = resetTimeout;
+                es.addEventListener('finished', (event)=>{
+                    const data = JSON.parse(event.data);
+                    logger.log(data.msg);
+                    es.close();
+                    clearExistingTimeout();
+                    resolve(null);
+                });
+                es.addEventListener('log', (event)=>{
+                    if (logsSpinner.isSpinning) {
+                        logsSpinner.succeed();
+                    }
+                    resetTimeout();
+                    const data = JSON.parse(event.data);
+                    logger.log(data.msg);
+                });
+                es.onerror = async ()=>{
+                    retries += 1;
+                    if (retries > MAX_RETRIES) {
+                        logsSpinner.fail('We were unable to connect to the server to get build logs at this time.');
+                        es.close();
+                        clearExistingTimeout(); // Important to clear the event loop from remaining timeout - avoid to wait for nothing while the timeout is running
+                        reject(new Error('Max retries reached'));
+                    }
+                };
+            };
+            connect(url);
+        });
+    };
+};
+
+export { buildLogsServiceFactory };
+//# sourceMappingURL=build-logs.mjs.map

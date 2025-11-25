@@ -1,0 +1,1 @@
+{"version":3,"file":"index.mjs","sources":["../../../server/src/controllers/index.ts"],"sourcesContent":["import email from './email';\n\nexport const controllers = { email };\n"],"names":["controllers","email"],"mappings":";;MAEaA,WAAc,GAAA;AAAEC,WAAAA;AAAM;;;;"}

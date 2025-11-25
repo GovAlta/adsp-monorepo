@@ -1,0 +1,1 @@
+{"version":3,"file":"content-api-router.d.ts","sourceRoot":"","sources":["../src/content-api-router.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AACH,eAAO,MAAM,6BAA6B,yBAA0B,MAAM,OAAO;;;CA2BhF,CAAC;AAEF,MAAM,MAAM,uBAAuB,CAAC,OAAO,IAAI,UAAU,CACvD,OAAO,6BAA6B,CAAC,OAAO,CAAC,CAC9C,GAAG;IAAE,MAAM,EAAE,OAAO,CAAA;CAAE,CAAC"}

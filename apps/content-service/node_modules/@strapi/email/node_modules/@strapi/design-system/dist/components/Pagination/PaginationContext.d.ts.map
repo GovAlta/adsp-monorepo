@@ -1,0 +1,1 @@
+{"version":3,"file":"PaginationContext.d.ts","sourceRoot":"","sources":["../../../src/components/Pagination/PaginationContext.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,KAAK,MAAM,OAAO,CAAC;AAE/B,MAAM,WAAW,sBAAsB;IACrC,UAAU,EAAE,MAAM,CAAC;IACnB,SAAS,EAAE,MAAM,CAAC;CACnB;AAED,eAAO,MAAM,iBAAiB,uCAA+E,CAAC;AAC9G,eAAO,MAAM,aAAa,8BAA4C,CAAC"}

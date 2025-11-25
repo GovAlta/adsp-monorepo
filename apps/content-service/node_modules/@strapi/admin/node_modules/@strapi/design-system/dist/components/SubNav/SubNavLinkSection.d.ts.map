@@ -1,0 +1,1 @@
+{"version":3,"file":"SubNavLinkSection.d.ts","sourceRoot":"","sources":["../../../src/components/SubNav/SubNavLinkSection.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,KAAK,MAAM,OAAO,CAAC;AAiB/B,MAAM,WAAW,sBAAsB;IACrC,QAAQ,EAAE,KAAK,CAAC,SAAS,CAAC;IAC1B,EAAE,CAAC,EAAE,MAAM,CAAC;IACZ,KAAK,EAAE,MAAM,CAAC;CACf;AAED,eAAO,MAAM,iBAAiB,4BAA6B,sBAAsB,4CAsChF,CAAC"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"useDateFormatter.d.ts","sourceRoot":"","sources":["../../src/hooks/useDateFormatter.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,aAAa,EAAE,MAAM,yBAAyB,CAAC;AAExD,MAAM,WAAW,oBAAqB,SAAQ,IAAI,CAAC,qBAAqB;IACtE,QAAQ,CAAC,EAAE,MAAM,CAAC;CACnB;AAED;;;;;;;;;;;;;;;;;;;;;;GAsBG;AACH,wBAAgB,gBAAgB,CAAC,MAAM,EAAE,MAAM,EAAE,OAAO,CAAC,EAAE,oBAAoB,GAAG,aAAa,CAW9F"}

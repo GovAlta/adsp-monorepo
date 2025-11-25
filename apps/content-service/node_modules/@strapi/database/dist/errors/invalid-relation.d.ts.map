@@ -1,0 +1,1 @@
+{"version":3,"file":"invalid-relation.d.ts","sourceRoot":"","sources":["../../src/errors/invalid-relation.ts"],"names":[],"mappings":"AAAA,OAAO,aAAa,MAAM,YAAY,CAAC;AAEvC,MAAM,CAAC,OAAO,OAAO,oBAAqB,SAAQ,aAAa;gBACjD,OAAO,SAA4B;CAIhD"}

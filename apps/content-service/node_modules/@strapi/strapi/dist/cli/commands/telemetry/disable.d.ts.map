@@ -1,0 +1,1 @@
+{"version":3,"file":"disable.d.ts","sourceRoot":"","sources":["../../../../src/cli/commands/telemetry/disable.ts"],"names":[],"mappings":"AAKA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,aAAa,CAAC;AA6BjD,QAAA,MAAM,MAAM,sBAsCX,CAAC;AAEF;;GAEG;AACH,QAAA,MAAM,OAAO,EAAE,aAId,CAAC;AAEF,OAAO,EAAE,MAAM,EAAE,OAAO,EAAE,CAAC"}

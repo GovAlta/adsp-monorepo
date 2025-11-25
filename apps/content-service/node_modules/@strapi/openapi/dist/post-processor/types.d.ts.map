@@ -1,0 +1,1 @@
+{"version":3,"file":"types.d.ts","sourceRoot":"","sources":["../../src/post-processor/types.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,UAAU,CAAC;AAEhD,MAAM,WAAW,aAAa;IAC5B,WAAW,CAAC,OAAO,EAAE,eAAe,GAAG,IAAI,CAAC;CAC7C"}

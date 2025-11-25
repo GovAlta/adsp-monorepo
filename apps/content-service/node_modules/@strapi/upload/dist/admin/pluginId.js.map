@@ -1,0 +1,1 @@
+{"version":3,"file":"pluginId.js","sources":["../../admin/src/pluginId.ts"],"sourcesContent":["import pluginPkg from '../../package.json';\n\nexport const pluginId = pluginPkg.name.replace(/^@strapi\\//i, '');\n"],"names":["pluginId","pluginPkg","name","replace"],"mappings":";;;;AAEO,MAAMA,WAAWC,gBAAUC,CAAAA,IAAI,CAACC,OAAO,CAAC,eAAe,EAAI;;;;"}

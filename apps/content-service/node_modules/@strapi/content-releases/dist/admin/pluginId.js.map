@@ -1,0 +1,1 @@
+{"version":3,"file":"pluginId.js","sources":["../../admin/src/pluginId.ts"],"sourcesContent":["export const pluginId = 'content-releases';\n"],"names":["pluginId"],"mappings":";;AAAO,MAAMA,WAAW;;;;"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sources":["../../../../server/src/content-types/release/index.ts"],"sourcesContent":["import schema from './schema';\n\nexport const release = {\n  schema,\n};\n"],"names":["release","schema"],"mappings":";;;;MAEaA,OAAU,GAAA;AACrBC,IAAAA;AACF;;;;"}

@@ -1,0 +1,21 @@
+'use strict';
+
+/**
+ * @description
+ * Adds form options to the default section or as a new section
+ */ const addItemsToFormSection = (formTypeOptions, sections)=>{
+    formTypeOptions.forEach((item)=>{
+        if (!('sectionTitle' in item)) {
+            // When there is no sectionTitle key,
+            // add the item to the default section
+            sections[0].items?.push(item);
+            return;
+        }
+        // Otherwise, when sectionTitle has a value (including null),
+        // add the item as a new section
+        sections.push(item);
+    });
+};
+
+exports.addItemsToFormSection = addItemsToFormSection;
+//# sourceMappingURL=addItemsToFormSection.js.map

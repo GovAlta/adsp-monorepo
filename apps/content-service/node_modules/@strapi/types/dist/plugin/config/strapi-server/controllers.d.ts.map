@@ -1,0 +1,1 @@
+{"version":3,"file":"controllers.d.ts","sourceRoot":"","sources":["../../../../src/plugin/config/strapi-server/controllers.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,KAAK,IAAI,MAAM,eAAe,CAAC;AAG3C,MAAM,MAAM,UAAU,GAAG,CAAC,EAAE,MAAM,EAAE,EAAE;IAAE,MAAM,EAAE,IAAI,CAAC,MAAM,CAAA;CAAE,KAAK,IAAI,CAAC,UAAU,CAAC;AAElF,MAAM,WAAW,WAAW;IAC1B,CAAC,GAAG,EAAE,MAAM,GAAG,UAAU,CAAC;CAC3B"}

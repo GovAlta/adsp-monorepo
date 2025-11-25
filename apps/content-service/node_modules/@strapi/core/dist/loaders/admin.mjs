@@ -1,0 +1,25 @@
+import _ from 'lodash';
+import { getGlobalId } from '../domain/content-type/index.mjs';
+
+async function loadAdmin(strapi) {
+    strapi.get('services').add(`admin::`, strapi.admin?.services);
+    strapi.get('controllers').add(`admin::`, strapi.admin?.controllers);
+    strapi.get('content-types').add(`admin::`, formatContentTypes(strapi.admin?.contentTypes ?? {}));
+    strapi.get('policies').add(`admin::`, strapi.admin?.policies);
+    strapi.get('middlewares').add(`admin::`, strapi.admin?.middlewares);
+    const userAdminConfig = strapi.config.get('admin');
+    strapi.get('config').set('admin', _.merge(strapi.admin?.config, userAdminConfig));
+}
+const formatContentTypes = (contentTypes)=>{
+    Object.values(contentTypes).forEach((definition)=>{
+        const { schema } = definition;
+        Object.assign(schema, {
+            plugin: 'admin',
+            globalId: getGlobalId(schema, 'admin')
+        });
+    });
+    return contentTypes;
+};
+
+export { loadAdmin as default };
+//# sourceMappingURL=admin.mjs.map

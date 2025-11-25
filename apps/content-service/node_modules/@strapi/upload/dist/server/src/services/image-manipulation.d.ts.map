@@ -1,0 +1,1 @@
+{"version":3,"file":"image-manipulation.d.ts","sourceRoot":"","sources":["../../../../server/src/services/image-manipulation.ts"],"names":[],"mappings":"AAQA,OAAO,KAAK,EAAE,cAAc,EAAE,MAAM,UAAU,CAAC;AAE/C,KAAK,UAAU,GAAG;IAChB,KAAK,EAAE,MAAM,GAAG,IAAI,CAAC;IACrB,MAAM,EAAE,MAAM,GAAG,IAAI,CAAC;CACvB,CAAC;;;;;;;;;;;;;;;AAmSF,wBAUE"}

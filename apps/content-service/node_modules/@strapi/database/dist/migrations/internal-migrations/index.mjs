@@ -1,0 +1,24 @@
+import { createdDocumentId } from './5.0.0-02-document-id.mjs';
+import { renameIdentifiersLongerThanMaxLength } from './5.0.0-01-convert-identifiers-long-than-max-length.mjs';
+import { createdLocale } from './5.0.0-03-locale.mjs';
+import { createdPublishedAt } from './5.0.0-04-published-at.mjs';
+import { dropSlugFieldsIndex } from './5.0.0-05-drop-slug-unique-index.mjs';
+
+/**
+ * List of all the internal migrations. The array order will be the order in which they are executed.
+ *
+ * {
+ *   name: 'some-name',
+ *   async up(knex: Knex, db: Database) {},
+ *   async down(knex: Knex, db: Database) {},
+ * },
+ */ const internalMigrations = [
+    renameIdentifiersLongerThanMaxLength,
+    createdDocumentId,
+    createdLocale,
+    createdPublishedAt,
+    dropSlugFieldsIndex
+];
+
+export { internalMigrations };
+//# sourceMappingURL=index.mjs.map

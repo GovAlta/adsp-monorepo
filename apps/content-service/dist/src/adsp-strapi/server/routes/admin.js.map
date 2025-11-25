@@ -1,0 +1,1 @@
+{"version":3,"file":"admin.js","sourceRoot":"","sources":["../../../../../src/adsp-strapi/server/routes/admin.ts"],"names":[],"mappings":";;AAAA,kBAAe;IACb,IAAI,EAAE,OAAO;IACb,MAAM,EAAE;QACN;YACE,MAAM,EAAE,MAAM;YACd,IAAI,EAAE,OAAO;YACb,OAAO,EAAE,aAAa;YACtB,MAAM,EAAE;gBACN,QAAQ,EAAE,CAAC,iCAAiC,CAAC;aAC9C;SACF;KACF;CACF,CAAC"}

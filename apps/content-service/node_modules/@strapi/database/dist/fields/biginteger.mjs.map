@@ -1,0 +1,1 @@
+{"version":3,"file":"biginteger.mjs","sources":["../../src/fields/biginteger.ts"],"sourcesContent":["import StringField from './string';\n\nexport default class BigIntegerField extends StringField {}\n"],"names":["BigIntegerField","StringField"],"mappings":";;AAEe,MAAMA,eAAwBC,SAAAA,WAAAA,CAAAA;AAAa;;;;"}

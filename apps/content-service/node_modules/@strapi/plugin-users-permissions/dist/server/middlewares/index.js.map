@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sources":["../../../server/middlewares/index.js"],"sourcesContent":["'use strict';\n\nconst rateLimit = require('./rateLimit');\n\nmodule.exports = {\n  rateLimit,\n};\n"],"names":["rateLimit","require$$0","middlewares"],"mappings":";;;;;;;;;AAEA,IAAA,MAAMA,WAAYC,GAAAA,mBAAAA,EAAAA;IAElBC,WAAiB,GAAA;AACfF,mBAAAA;AACF,KAAA;;;;;;"}

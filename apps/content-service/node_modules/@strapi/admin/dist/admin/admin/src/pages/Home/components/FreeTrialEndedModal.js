@@ -1,0 +1,183 @@
+'use strict';
+
+var jsxRuntime = require('react/jsx-runtime');
+var React = require('react');
+var designSystem = require('@strapi/design-system');
+var icons = require('@strapi/icons');
+var dateFns = require('date-fns');
+var reactIntl = require('react-intl');
+var styled = require('styled-components');
+var useLicenseLimits = require('../../../../../ee/admin/src/hooks/useLicenseLimits.js');
+var usePersistentState = require('../../../hooks/usePersistentState.js');
+
+const StyledModalContent = styled(designSystem.Modal.Content)`
+  max-width: 51.6rem;
+`;
+const StyledModalBody = styled(designSystem.Modal.Body)`
+  padding: 0;
+  position: relative;
+
+  > div {
+    padding: 0;
+  }
+`;
+const StyledButton = styled(designSystem.Button)`
+  border: 0;
+  border-radius: 50%;
+`;
+const FreeTrialEndedModal = ()=>{
+    const { formatMessage } = reactIntl.useIntl();
+    const [open, setOpen] = React.useState(true);
+    const [previouslyOpen, setPreviouslyOpen] = usePersistentState.useScopedPersistentState('STRAPI_FREE_TRIAL_ENDED_MODAL', false);
+    const [cachedTrialEndsAt] = usePersistentState.useScopedPersistentState('STRAPI_FREE_TRIAL_ENDS_AT', undefined);
+    const { license } = useLicenseLimits.useLicenseLimits();
+    const sevenDaysAgo = dateFns.subDays(new Date(), 7);
+    // When the license is not a trial + not EE, and the cached trial end date is found in the localstorage, that means the trial has ended
+    // We show the banner to encourage the user to upgrade (for 7 days after the trial ends)
+    const isTrialEndedRecently = Boolean(!license?.isTrial && !window.strapi.isEE && cachedTrialEndsAt && dateFns.isAfter(new Date(cachedTrialEndsAt), sevenDaysAgo));
+    const handleClose = ()=>{
+        setPreviouslyOpen(true);
+        setOpen(false);
+    };
+    const handleOnOpenChange = (isOpen)=>{
+        if (!isOpen) {
+            setPreviouslyOpen(true);
+        }
+        setOpen(isOpen);
+    };
+    if (!previouslyOpen && isTrialEndedRecently) {
+        return /*#__PURE__*/ jsxRuntime.jsx(designSystem.Modal.Root, {
+            open: open,
+            onOpenChange: handleOnOpenChange,
+            children: /*#__PURE__*/ jsxRuntime.jsx(StyledModalContent, {
+                "aria-labelledby": "title",
+                children: /*#__PURE__*/ jsxRuntime.jsxs(StyledModalBody, {
+                    children: [
+                        /*#__PURE__*/ jsxRuntime.jsx(designSystem.Box, {
+                            position: "absolute",
+                            top: 0,
+                            right: 0,
+                            padding: 2,
+                            children: /*#__PURE__*/ jsxRuntime.jsx(StyledButton, {
+                                "aria-label": formatMessage({
+                                    id: 'app.utils.close-label',
+                                    defaultMessage: 'Close'
+                                }),
+                                variant: "ghost",
+                                width: "2.4rem",
+                                height: "2.4rem",
+                                onClick: handleClose,
+                                children: /*#__PURE__*/ jsxRuntime.jsx(icons.Cross, {})
+                            })
+                        }),
+                        /*#__PURE__*/ jsxRuntime.jsxs(designSystem.Flex, {
+                            direction: "column",
+                            alignItems: "start",
+                            justifyContent: "stretch",
+                            padding: 8,
+                            gap: 4,
+                            children: [
+                                /*#__PURE__*/ jsxRuntime.jsx(designSystem.Typography, {
+                                    variant: "alpha",
+                                    fontWeight: "bold",
+                                    fontSize: 4,
+                                    id: "title",
+                                    children: formatMessage({
+                                        id: 'app.components.FreeTrialEndedModal.title',
+                                        defaultMessage: 'Your trial has ended'
+                                    })
+                                }),
+                                /*#__PURE__*/ jsxRuntime.jsx(designSystem.Typography, {
+                                    children: formatMessage({
+                                        id: 'app.components.FreeTrialEndedModal.description',
+                                        defaultMessage: 'Your access to Growth plan features such as Content history, Releases and Single sign-On (SSO) has expired.'
+                                    })
+                                }),
+                                /*#__PURE__*/ jsxRuntime.jsxs(designSystem.Box, {
+                                    background: "primary200",
+                                    padding: 4,
+                                    hasRadius: true,
+                                    children: [
+                                        /*#__PURE__*/ jsxRuntime.jsx(designSystem.Typography, {
+                                            fontWeight: "bold",
+                                            children: formatMessage({
+                                                id: 'app.components.FreeTrialEndedModal.notice.title',
+                                                defaultMessage: 'Important to know:'
+                                            })
+                                        }),
+                                        /*#__PURE__*/ jsxRuntime.jsxs("ul", {
+                                            style: {
+                                                listStyleType: 'disc',
+                                                marginLeft: '1.5rem'
+                                            },
+                                            children: [
+                                                /*#__PURE__*/ jsxRuntime.jsx("li", {
+                                                    children: /*#__PURE__*/ jsxRuntime.jsx(designSystem.Typography, {
+                                                        children: formatMessage({
+                                                            id: 'app.components.FreeTrialEndedModal.notice.item1',
+                                                            defaultMessage: 'Downgrading will remove access to the above features.'
+                                                        })
+                                                    })
+                                                }),
+                                                /*#__PURE__*/ jsxRuntime.jsx("li", {
+                                                    children: /*#__PURE__*/ jsxRuntime.jsx(designSystem.Typography, {
+                                                        children: formatMessage({
+                                                            id: 'app.components.FreeTrialEndedModal.notice.item2',
+                                                            defaultMessage: 'Document version history will be deleted.'
+                                                        })
+                                                    })
+                                                }),
+                                                /*#__PURE__*/ jsxRuntime.jsx("li", {
+                                                    children: /*#__PURE__*/ jsxRuntime.jsx(designSystem.Typography, {
+                                                        children: formatMessage({
+                                                            id: 'app.components.FreeTrialEndedModal.notice.item3',
+                                                            defaultMessage: 'All releases will be erased.'
+                                                        })
+                                                    })
+                                                }),
+                                                /*#__PURE__*/ jsxRuntime.jsx("li", {
+                                                    children: /*#__PURE__*/ jsxRuntime.jsx(designSystem.Typography, {
+                                                        children: formatMessage({
+                                                            id: 'app.components.FreeTrialEndedModal.notice.item4',
+                                                            defaultMessage: 'If you downgrade ensure to set a root admin password to keep access to the admin panel.'
+                                                        })
+                                                    })
+                                                })
+                                            ]
+                                        })
+                                    ]
+                                }),
+                                /*#__PURE__*/ jsxRuntime.jsxs(designSystem.Flex, {
+                                    marginTop: 4,
+                                    gap: 2,
+                                    children: [
+                                        /*#__PURE__*/ jsxRuntime.jsx(designSystem.LinkButton, {
+                                            href: "https://strapi.chargebeeportal.com/",
+                                            target: "_blank",
+                                            children: formatMessage({
+                                                id: 'app.components.FreeTrialEndedModal.button.upgrade',
+                                                defaultMessage: 'Stay on the Growth plan'
+                                            })
+                                        }),
+                                        /*#__PURE__*/ jsxRuntime.jsx(designSystem.Button, {
+                                            variant: "tertiary",
+                                            onClick: handleClose,
+                                            children: formatMessage({
+                                                id: 'app.components.FreeTrialEndedModal.button.downgrade',
+                                                defaultMessage: 'Downgrade to Community'
+                                            })
+                                        })
+                                    ]
+                                })
+                            ]
+                        })
+                    ]
+                })
+            })
+        });
+    }
+    return null;
+};
+
+exports.FreeTrialEndedModal = FreeTrialEndedModal;
+//# sourceMappingURL=FreeTrialEndedModal.js.map

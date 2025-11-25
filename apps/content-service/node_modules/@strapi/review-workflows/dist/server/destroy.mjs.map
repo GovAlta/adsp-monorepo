@@ -1,0 +1,1 @@
+{"version":3,"file":"destroy.mjs","sources":["../../server/src/destroy.ts"],"sourcesContent":["import type { Core } from '@strapi/types';\n\nexport default async ({ strapi }: { strapi: Core.Strapi }) => {};\n"],"names":["strapi"],"mappings":"AAEA,cAAe,CAAA,OAAO,EAAEA,MAAM,EAA2B,GAAA,EAAM;;;;"}

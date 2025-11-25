@@ -1,0 +1,1 @@
+{"version":3,"file":"admin-api.d.ts","sourceRoot":"","sources":["../../../src/services/server/admin-api.ts"],"names":[],"mappings":";;AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,eAAe,CAAC;AAG1C,QAAA,MAAM,cAAc,WAAY,KAAK,MAAM;;;;;CAO1C,CAAC;AAEF,OAAO,EAAE,cAAc,EAAE,CAAC"}

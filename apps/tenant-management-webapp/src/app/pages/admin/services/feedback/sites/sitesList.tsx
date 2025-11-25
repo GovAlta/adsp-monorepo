@@ -60,7 +60,7 @@ const SiteComponent: FunctionComponent<SiteProps> = ({ site, onEdit, onDelete, s
                 <DetailsTagWrapper>
                   {site.tags.map((tag) => (
                     <TagBadgePadding>
-                      <GoABadge type={'midtone'} content={tag} testId={tag} mb="xs" mr="xs"></GoABadge>
+                      <GoABadge type={'midtone'} content={tag} testId={tag} mb="xs" mr="xs" icon={false}></GoABadge>
                     </TagBadgePadding>
                   ))}
                 </DetailsTagWrapper>

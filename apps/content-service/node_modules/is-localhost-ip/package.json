@@ -1,0 +1,59 @@
+{
+  "name": "is-localhost-ip",
+  "version": "2.0.0",
+  "description": "Checks whether given DNS name or IPv4/IPv6 address belongs to a local machine",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "types": "index.d.ts",
+  "engines": {
+    "node": ">=12"
+  },
+  "scripts": {
+    "test": "jest --coverage --verbose",
+    "lint": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tinovyatkin/is-localhost-ip.git"
+  },
+  "keywords": [
+    "localhost",
+    "is-localhost",
+    "check-localhost",
+    "is-loopback",
+    "is-local-ip",
+    "ip",
+    "dns"
+  ],
+  "author": "Konstantin Vyatkin <tino@vtkn.io>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tinovyatkin/is-localhost-ip/issues"
+  },
+  "homepage": "https://github.com/tinovyatkin/is-localhost-ip#readme",
+  "devDependencies": {
+    "@types/jest": "28.1.6",
+    "@types/node": "~12",
+    "eslint": "8.21.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "eslint-plugin-regexp": "^1.8.0",
+    "jest": "28.1.3",
+    "prettier": "2.7.1"
+  },
+  "jest": {
+    "coverageReporters": [
+      "text",
+      "json",
+      "cobertura",
+      "lcov"
+    ],
+    "coverageProvider": "v8",
+    "testEnvironment": "node",
+    "collectCoverage": true
+  }
+}

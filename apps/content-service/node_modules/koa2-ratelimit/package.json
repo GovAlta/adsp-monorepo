@@ -1,0 +1,87 @@
+{
+  "name": "koa2-ratelimit",
+  "author": "YSO CORP",
+  "version": "1.1.3",
+  "description": "IP rate-limiting middleware for Koajs 2. Use to limit repeated requests to APIs and/or endpoints such as password reset.",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=7.10.1"
+  },
+  "people": {
+    "name": "YSO CORP",
+    "email": "contact@ysocorp.com",
+    "url": "http://ysocorp.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ysocorp/koa2-ratelimit"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "mongoose": ">= 5",
+    "redis": ">= 4.0.0",
+    "sequelize": ">=5.8.7"
+  },
+  "peerDependenciesMeta": {
+    "mongoose": {
+      "optional": true
+    },
+    "redis": {
+      "optional": true
+    },
+    "sequelize": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.17.3",
+    "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-react": "^7.13.0",
+    "expect": "^24.8.0",
+    "mocha": "^6.1.4"
+  },
+  "scripts": {
+    "lint": "eslint src test",
+    "test": "mocha --opts mocha.opts"
+  },
+  "keywords": [
+    "koa2-ratelimit",
+    "koa2-rate-limit",
+    "koa-rate-limit",
+    "koa2-ratelimit",
+    "koa-ratelimit",
+    "koa2-brute-force",
+    "koa-brute-force",
+    "koa2-bruteforce",
+    "koa-bruteforce",
+    "koa2",
+    "rate",
+    "limit",
+    "sequelize",
+    "mongodb",
+    "ratelimit",
+    "ratelimit-sequelize",
+    "ratelimit-mongodb",
+    "rate-limit",
+    "rate-limit-sequelize",
+    "rate-limit-mongodb",
+    "middleware",
+    "ip",
+    "auth",
+    "authorization",
+    "security",
+    "brute",
+    "force",
+    "bruteforce",
+    "bruteforce-sequelize",
+    "bruteforce-mongodb",
+    "brute-force",
+    "brute-force-sequelize",
+    "brute-force-mongodb",
+    "attack"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"constants.js","sources":["../../../../admin/src/routes/settings/constants.ts"],"sourcesContent":["export type DragDropTypes = 'stage';\n\nexport const DRAG_DROP_TYPES: Record<Uppercase<DragDropTypes>, DragDropTypes> = {\n  STAGE: 'stage',\n};\n"],"names":["DRAG_DROP_TYPES","STAGE"],"mappings":";;MAEaA,eAAmE,GAAA;IAC9EC,KAAO,EAAA;AACT;;;;"}

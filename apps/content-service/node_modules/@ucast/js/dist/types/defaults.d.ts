@@ -1,0 +1,23 @@
+export declare const allInterpreters: {
+    in: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<unknown[]>, unknown>;
+    or: import("./types").JsInterpreter<import("@ucast/core").CompoundCondition<import("@ucast/core").Condition<unknown>>, any>;
+    nor: import("./types").JsInterpreter<import("@ucast/core").CompoundCondition<import("@ucast/core").Condition<unknown>>, any>;
+    and: import("./types").JsInterpreter<import("@ucast/core").CompoundCondition<import("@ucast/core").Condition<unknown>>, any>;
+    not: import("./types").JsInterpreter<import("@ucast/core").CompoundCondition<import("@ucast/core").Condition<unknown>>, any>;
+    eq: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<unknown>, any>;
+    ne: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<unknown>, any>;
+    lte: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<string | number | Date>, string | number | Date | Record<string | number | symbol, unknown>>;
+    lt: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<string | number | Date>, string | number | Date | Record<string | number | symbol, unknown>>;
+    gt: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<string | number | Date>, string | number | Date | Record<string | number | symbol, unknown>>;
+    gte: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<string | number | Date>, string | number | Date | Record<string | number | symbol, unknown>>;
+    exists: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<boolean>, any>;
+    mod: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<[number, number]>, number | Record<string | number | symbol, unknown>>;
+    size: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<number>, unknown[] | Record<string | number | symbol, unknown>>;
+    regex: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<RegExp>, string | Record<string | number | symbol, unknown>>;
+    within: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<unknown[]>, unknown>;
+    nin: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<unknown[]>, unknown>;
+    all: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<unknown[]>, any>;
+    elemMatch: import("./types").JsInterpreter<import("@ucast/core").FieldCondition<import("@ucast/core").Condition<unknown>>, any>;
+    where: import("./types").JsInterpreter<import("@ucast/core").DocumentCondition<(this: Record<string | number | symbol, unknown>) => boolean>, Record<string | number | symbol, unknown>>;
+};
+export declare const interpret: (...args: [import("@ucast/core").Condition<unknown>, any] | [import("@ucast/core").Condition<unknown>, string | number | Date | Record<string | number | symbol, unknown>] | [import("@ucast/core").Condition<unknown>, number | Record<string | number | symbol, unknown>] | [import("@ucast/core").Condition<unknown>, unknown[] | Record<string | number | symbol, unknown>] | [import("@ucast/core").Condition<unknown>, string | Record<string | number | symbol, unknown>] | [import("@ucast/core").Condition<unknown>, unknown] | [import("@ucast/core").Condition<unknown>, Record<string | number | symbol, unknown>]) => boolean;

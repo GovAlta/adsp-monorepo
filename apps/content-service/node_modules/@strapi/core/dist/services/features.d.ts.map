@@ -1,0 +1,1 @@
+{"version":3,"file":"features.d.ts","sourceRoot":"","sources":["../../src/services/features.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAEH,OAAO,KAAK,EAAE,IAAI,EAAE,OAAO,EAAE,MAAM,eAAe,CAAC;AAInD,QAAA,MAAM,qBAAqB,WAAY,KAAK,MAAM,KAAG,QAAQ,QAAQ,gBAapE,CAAC;AAEF,OAAO,EAAE,qBAAqB,EAAE,CAAC;AACjC,MAAM,MAAM,eAAe,GAAG,OAAO,CAAC,QAAQ,CAAC,eAAe,CAAC"}

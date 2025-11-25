@@ -1,0 +1,1 @@
+{"version":3,"file":"monorepo.d.ts","sourceRoot":"","sources":["../../../src/node/core/monorepo.ts"],"names":[],"mappings":"AAGA,UAAU,cAAc;IACtB,IAAI,EAAE,MAAM,CAAC;CACd;AAED;;;;GAIG;AACH,iBAAe,kBAAkB,CAAC,GAAG,EAAE,MAAM,GAAG,OAAO,CAAC,cAAc,GAAG,SAAS,CAAC,CAkBlF;AAED,OAAO,EAAE,kBAAkB,EAAE,CAAC;AAC9B,YAAY,EAAE,cAAc,EAAE,CAAC"}

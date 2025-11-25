@@ -1,0 +1,52 @@
+{
+  "name": "purest",
+  "version": "4.0.2",
+  "description": "REST API Client Library",
+  "keywords": [
+    "rest",
+    "restful",
+    "api",
+    "http",
+    "https",
+    "client"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/simov/purest",
+  "author": "Simeon Velichkov <simeonvelichkov@gmail.com> (https://simov.github.io)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simov/purest.git"
+  },
+  "dependencies": {
+    "@simov/deep-extend": "^1.0.0",
+    "qs": "^6.10.3",
+    "request-compose": "^2.1.4",
+    "request-multipart": "^1.0.0",
+    "request-oauth": "^1.0.1"
+  },
+  "devDependencies": {
+    "mocha": "^9.2.2",
+    "nyc": "^15.1.0",
+    "request-logs": "^2.1.4"
+  },
+  "main": "./purest.js",
+  "files": [
+    "config/",
+    "lib/",
+    "purest.js",
+    "purest.d.ts",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "package.json"
+  ],
+  "types": "purest.d.ts",
+  "scripts": {
+    "test": "npm run test:ci",
+    "test:ci": "npx mocha --recursive",
+    "test:cov": "npx nyc --reporter=lcov --reporter=text-summary mocha -- --recursive"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}

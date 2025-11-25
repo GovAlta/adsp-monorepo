@@ -1,0 +1,7597 @@
+"use strict";
+Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+const React = require("react");
+const reactUseCallbackRef = require("@radix-ui/react-use-callback-ref");
+const date = require("@internationalized/date");
+const jsxRuntime = require("react/jsx-runtime");
+const Tooltip = require("@radix-ui/react-tooltip");
+const styled = require("styled-components");
+const DismissibleLayerPrimitive = require("@radix-ui/react-dismissable-layer");
+const uiPrimitives = require("@strapi/ui-primitives");
+const RadixAccordion = require("@radix-ui/react-accordion");
+const icons = require("@strapi/icons");
+const Avatar$1 = require("@radix-ui/react-avatar");
+const DropdownMenu = require("@radix-ui/react-dropdown-menu");
+const Checkbox = require("@radix-ui/react-checkbox");
+const ScrollArea = require("@radix-ui/react-scroll-area");
+const AlertDialog = require("@radix-ui/react-alert-dialog");
+const reactDom$1 = require("@floating-ui/react-dom");
+const reactFocusGuards = require("@radix-ui/react-focus-guards");
+const reactFocusScope = require("@radix-ui/react-focus-scope");
+const reactDom = require("react-dom");
+const reactRemoveScroll = require("react-remove-scroll");
+const langJson = require("@codemirror/lang-json");
+const reactCodemirror = require("@uiw/react-codemirror");
+const state = require("@codemirror/state");
+const view = require("@codemirror/view");
+const Dialog$1 = require("@radix-ui/react-dialog");
+const number = require("@internationalized/number");
+const Popover$1 = require("@radix-ui/react-popover");
+const Progress = require("@radix-ui/react-progress");
+const RadioGroup = require("@radix-ui/react-radio-group");
+const Switch = require("@radix-ui/react-switch");
+const Tabs$1 = require("@radix-ui/react-tabs");
+const lodash = require("lodash");
+const _interopDefault = (e) => e && e.__esModule ? e : { default: e };
+function _interopNamespace(e) {
+  if (e && e.__esModule)
+    return e;
+  const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
+  if (e) {
+    for (const k in e) {
+      if (k !== "default") {
+        const d = Object.getOwnPropertyDescriptor(e, k);
+        Object.defineProperty(n, k, d.get ? d : {
+          enumerable: true,
+          get: () => e[k]
+        });
+      }
+    }
+  }
+  n.default = e;
+  return Object.freeze(n);
+}
+const React__namespace = /* @__PURE__ */ _interopNamespace(React);
+const Tooltip__namespace = /* @__PURE__ */ _interopNamespace(Tooltip);
+const styled__default = /* @__PURE__ */ _interopDefault(styled);
+const DismissibleLayerPrimitive__namespace = /* @__PURE__ */ _interopNamespace(DismissibleLayerPrimitive);
+const RadixAccordion__namespace = /* @__PURE__ */ _interopNamespace(RadixAccordion);
+const Avatar__namespace = /* @__PURE__ */ _interopNamespace(Avatar$1);
+const DropdownMenu__namespace = /* @__PURE__ */ _interopNamespace(DropdownMenu);
+const Checkbox__namespace = /* @__PURE__ */ _interopNamespace(Checkbox);
+const ScrollArea__namespace = /* @__PURE__ */ _interopNamespace(ScrollArea);
+const AlertDialog__namespace = /* @__PURE__ */ _interopNamespace(AlertDialog);
+const Dialog__namespace = /* @__PURE__ */ _interopNamespace(Dialog$1);
+const Popover__namespace = /* @__PURE__ */ _interopNamespace(Popover$1);
+const Progress__namespace = /* @__PURE__ */ _interopNamespace(Progress);
+const RadioGroup__namespace = /* @__PURE__ */ _interopNamespace(RadioGroup);
+const Switch__namespace = /* @__PURE__ */ _interopNamespace(Switch);
+const Tabs__namespace = /* @__PURE__ */ _interopNamespace(Tabs$1);
+const createContext = (rootComponentName, defaultContext) => {
+  const Context = React__namespace.createContext(defaultContext);
+  const Provider2 = (props) => {
+    const { children, ...context } = props;
+    const value = React__namespace.useMemo(() => context, Object.values(context));
+    return /* @__PURE__ */ jsxRuntime.jsx(Context.Provider, { value, children });
+  };
+  function useContext(consumerName) {
+    const context = React__namespace.useContext(Context);
+    if (context)
+      return context;
+    if (defaultContext !== void 0)
+      return defaultContext;
+    throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
+  }
+  Provider2.displayName = `${rootComponentName}Provider`;
+  return [Provider2, useContext];
+};
+function isKeyOf(o, s) {
+  if (typeof o === "string") {
+    return false;
+  }
+  return s in o;
+}
+function isObject(item) {
+  return item && typeof item === "object" && !Array.isArray(item);
+}
+function extractStyleFromTheme(themeSection, key, defaultValue) {
+  if (themeSection && key && isKeyOf(themeSection, key)) {
+    return themeSection[key];
+  }
+  return defaultValue;
+}
+const mappedCSSProps = {
+  padding: ["padding-block-start", "padding-inline-end", "padding-block-end", "padding-inline-start"],
+  paddingTop: "padding-block-start",
+  paddingRight: "padding-inline-end",
+  paddingBottom: "padding-block-end",
+  paddingLeft: "padding-inline-start",
+  margin: ["margin-block-start", "margin-inline-end", "margin-block-end", "margin-inline-start"],
+  marginLeft: "margin-inline-start",
+  marginRight: "margin-inline-end",
+  marginTop: "margin-block-start",
+  marginBottom: "margin-block-end",
+  borderRadius: "border-radius",
+  borderStyle: "border-style",
+  borderWidth: "border-width",
+  borderColor: "border-color",
+  fontSize: "font-size",
+  fontWeight: "font-weight",
+  lineHeight: "line-height",
+  zIndex: "z-index",
+  boxShadow: "box-shadow",
+  pointerEvents: "pointer-events",
+  textAlign: "text-align",
+  textTransform: "text-transform",
+  textDecoration: "text-decoration",
+  flexGrow: "flex-grow",
+  flexShrink: "flex-shrink",
+  flexBasis: "flex-basis",
+  minWidth: "min-width",
+  maxWidth: "max-width",
+  minHeight: "min-height",
+  maxHeight: "max-height",
+  flexDirection: "flex-direction",
+  flexWrap: "flex-wrap",
+  justifyContent: "justify-content",
+  alignItems: "align-items"
+};
+const fillCssValues = (value) => {
+  const [top, right, bottom, left] = value;
+  const rightValue = right ?? top;
+  const bottomValue = bottom ?? top;
+  const leftValue = left ?? rightValue;
+  return [top, rightValue, bottomValue, leftValue];
+};
+function getThemeSection(key, theme) {
+  switch (key) {
+    case "gap":
+    case "padding":
+    case "margin":
+    case "paddingTop":
+    case "paddingLeft":
+    case "paddingRight":
+    case "paddingBottom":
+    case "marginTop":
+    case "marginLeft":
+    case "marginRight":
+    case "marginBottom":
+    case "left":
+    case "right":
+    case "top":
+    case "bottom":
+    case "width":
+    case "maxWidth":
+    case "minWidth":
+    case "height":
+    case "maxHeight":
+    case "minHeight":
+    case "borderRadius":
+    case "borderWidth":
+      return theme.spaces;
+    case "color":
+    case "background":
+    case "borderColor":
+      return theme.colors;
+    case "fontSize":
+      return theme.fontSizes;
+    case "fontWeight":
+      return theme.fontWeights;
+    case "lineHeight":
+      return theme.lineHeights;
+    case "zIndex":
+      return theme.zIndices;
+    case "boxShadow":
+      return theme.shadows;
+    default:
+      return null;
+  }
+}
+const handleResponsiveValues = (values, theme) => {
+  const stylesByBreakpoint = Object.entries(values).reduce(
+    (acc, curr) => {
+      const [key, value] = curr;
+      const themeSection = getThemeSection(key, theme);
+      const cssProperty = Object.prototype.hasOwnProperty.call(mappedCSSProps, key) ? mappedCSSProps[key] : key;
+      if (cssProperty && (value || value === 0)) {
+        if (typeof value === "object" && !Array.isArray(value)) {
+          Object.entries(value).forEach(([breakpointName, breakpointValue]) => {
+            acc[breakpointName] = {
+              ...acc[breakpointName],
+              ...convertCssPropertiesToCssValues(cssProperty, breakpointValue, themeSection)
+            };
+          });
+        } else {
+          acc.initial = {
+            ...acc.initial,
+            ...convertCssPropertiesToCssValues(cssProperty, value, themeSection)
+          };
+        }
+      }
+      return acc;
+    },
+    {
+      initial: {},
+      small: {},
+      medium: {},
+      large: {}
+    }
+  );
+  return Object.entries(stylesByBreakpoint).reduce((acc, [key, value]) => {
+    if (value && Object.keys(value).length > 0) {
+      const breakpointStyles = Object.entries(value).reduce((arr, [property, value2]) => {
+        arr.push(`${property}: ${value2};`);
+        return arr;
+      }, []).join("\n");
+      if (key === "initial") {
+        acc.push(breakpointStyles);
+      } else {
+        acc.push(`${theme.breakpoints[key]}{ ${breakpointStyles} }`);
+      }
+    }
+    return acc;
+  }, []).join("\n");
+};
+const convertCssPropertiesToCssValues = (property, value, themeSection) => {
+  if (Array.isArray(property) && Array.isArray(value)) {
+    const shorthandValues = fillCssValues(value);
+    return property.reduce((acc, prop, index) => {
+      acc[prop] = extractStyleFromTheme(themeSection, shorthandValues[index], shorthandValues[index]);
+      return acc;
+    }, {});
+  } else if (Array.isArray(property) && !Array.isArray(value)) {
+    return property.reduce((acc, prop) => {
+      acc[prop] = extractStyleFromTheme(themeSection, value, value);
+      return acc;
+    }, {});
+  } else if (!Array.isArray(property) && !Array.isArray(value)) {
+    return {
+      [property]: extractStyleFromTheme(themeSection, value, value)
+    };
+  } else {
+    console.warn(
+      "You've passed an array of values to a property that does not support it. Please check the property and value you're passing."
+    );
+    return {};
+  }
+};
+const forwardRef = React__namespace.forwardRef;
+const Box = forwardRef((props, ref) => {
+  const {
+    background,
+    basis,
+    borderColor,
+    color,
+    flex,
+    fontSize,
+    grow,
+    hasRadius,
+    padding,
+    paddingBottom,
+    paddingLeft,
+    paddingRight,
+    paddingTop,
+    margin,
+    marginLeft,
+    marginBottom,
+    marginRight,
+    marginTop,
+    shadow,
+    shrink,
+    lineHeight,
+    fontWeight,
+    width,
+    minWidth,
+    maxWidth,
+    height,
+    minHeight,
+    maxHeight,
+    top,
+    left,
+    bottom,
+    right,
+    borderRadius,
+    borderStyle,
+    borderWidth,
+    tag,
+    pointerEvents,
+    display,
+    position,
+    zIndex,
+    overflow,
+    cursor,
+    transition,
+    transform,
+    animation,
+    textAlign,
+    textTransform,
+    ...rest
+  } = props;
+  const AsComponent = tag || "div";
+  const mappedProps = {
+    $background: background,
+    $basis: basis,
+    $borderColor: borderColor,
+    $color: color,
+    $flex: flex,
+    $fontSize: fontSize,
+    $grow: grow,
+    $hasRadius: hasRadius,
+    $padding: padding,
+    $paddingBottom: paddingBottom,
+    $paddingLeft: paddingLeft,
+    $paddingRight: paddingRight,
+    $paddingTop: paddingTop,
+    $margin: margin,
+    $marginLeft: marginLeft,
+    $marginBottom: marginBottom,
+    $marginRight: marginRight,
+    $marginTop: marginTop,
+    $shadow: shadow,
+    $shrink: shrink,
+    $lineHeight: lineHeight,
+    $fontWeight: fontWeight,
+    $width: width,
+    $minWidth: minWidth,
+    $maxWidth: maxWidth,
+    $height: height,
+    $minHeight: minHeight,
+    $maxHeight: maxHeight,
+    $top: top,
+    $left: left,
+    $bottom: bottom,
+    $right: right,
+    $borderRadius: borderRadius,
+    $borderStyle: borderStyle,
+    $borderWidth: borderWidth,
+    $pointerEvents: pointerEvents,
+    $display: display,
+    $position: position,
+    $zIndex: zIndex,
+    $overflow: overflow,
+    $cursor: cursor,
+    $transition: transition,
+    $transform: transform,
+    $animation: animation,
+    $textAlign: textAlign,
+    $textTransform: textTransform
+  };
+  return /* @__PURE__ */ jsxRuntime.jsx(StyledBox, { as: AsComponent, ref, ...mappedProps, ...rest });
+});
+const StyledBox = styled.styled.div`
+  ${({ theme, ...props }) => {
+  return handleResponsiveValues(
+    {
+      padding: props.$padding,
+      paddingTop: props.$paddingTop,
+      paddingBottom: props.$paddingBottom,
+      paddingLeft: props.$paddingLeft,
+      paddingRight: props.$paddingRight,
+      margin: props.$margin,
+      marginTop: props.$marginTop,
+      marginBottom: props.$marginBottom,
+      marginLeft: props.$marginLeft,
+      marginRight: props.$marginRight,
+      top: props.$top,
+      left: props.$left,
+      bottom: props.$bottom,
+      right: props.$right,
+      width: props.$width,
+      minWidth: props.$minWidth,
+      maxWidth: props.$maxWidth,
+      height: props.$height,
+      minHeight: props.$minHeight,
+      maxHeight: props.$maxHeight,
+      color: props.$color,
+      background: props.$background,
+      fontSize: props.$fontSize,
+      fontWeight: props.$fontWeight,
+      lineHeight: props.$lineHeight,
+      borderRadius: props.$hasRadius ? theme.borderRadius : props.$borderRadius,
+      borderStyle: props.$borderColor && !props.$borderStyle ? "solid" : props.$borderStyle,
+      borderWidth: props.$borderColor && !props.$borderWidth ? "1px" : props.$borderWidth,
+      borderColor: props.$borderColor,
+      zIndex: props.$zIndex,
+      boxShadow: props.$shadow,
+      display: props.$display,
+      pointerEvents: props.$pointerEvents,
+      cursor: props.$cursor,
+      textAlign: props.$textAlign,
+      textTransform: props.$textTransform,
+      transition: props.$transition,
+      transform: props.$transform,
+      animation: props.$animation,
+      position: props.$position,
+      overflow: props.$overflow,
+      flex: props.$flex,
+      flexShrink: props.$shrink,
+      flexGrow: props.$grow,
+      flexBasis: props.$basis
+    },
+    theme
+  );
+}};
+`;
+const Flex = forwardRef((props, ref) => {
+  const { className, alignItems, direction, inline, gap, justifyContent, wrap, ...rest } = props;
+  const mappedProps = {
+    $alignItems: alignItems,
+    $direction: direction,
+    $gap: gap,
+    $justifyContent: justifyContent,
+    $wrap: wrap,
+    $inline: inline
+  };
+  return /* @__PURE__ */ jsxRuntime.jsx(StyledFlex, { className, ref, ...mappedProps, ...rest });
+});
+const StyledFlex = styled.styled(Box)`
+  ${({ theme, $display = "flex", $alignItems = "center", $direction = "row", ...props }) => handleResponsiveValues(
+  {
+    gap: props.$gap,
+    alignItems: $alignItems,
+    justifyContent: props.$justifyContent,
+    flexWrap: props.$wrap,
+    flexDirection: $direction,
+    display: props.$inline ? "inline-flex" : $display
+  },
+  theme
+)};
+`;
+const ALPHA = "alpha";
+const BETA = "beta";
+const DELTA = "delta";
+const EPSILON = "epsilon";
+const OMEGA = "omega";
+const PI = "pi";
+const SIGMA = "sigma";
+const ellipsis = styled.css`
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+const variant = ({ $variant = OMEGA, theme }) => {
+  switch ($variant) {
+    case ALPHA: {
+      return `
+        font-weight: ${theme.fontWeights.bold};
+        font-size: ${theme.fontSizes[5]};
+        line-height: ${theme.lineHeights[2]};
+      `;
+    }
+    case BETA: {
+      return `
+        font-weight: ${theme.fontWeights.bold};
+        font-size: ${theme.fontSizes[4]};
+        line-height: ${theme.lineHeights[1]};
+      `;
+    }
+    case DELTA: {
+      return `
+        font-weight: ${theme.fontWeights.semiBold};
+        font-size: ${theme.fontSizes[3]};
+        line-height: ${theme.lineHeights[2]};
+      `;
+    }
+    case EPSILON: {
+      return `
+        font-size: ${theme.fontSizes[3]};
+        line-height: ${theme.lineHeights[6]};
+      `;
+    }
+    case OMEGA: {
+      return `
+        font-size: ${theme.fontSizes[2]};
+        line-height: ${theme.lineHeights[4]};
+      `;
+    }
+    case PI: {
+      return `
+        font-size: ${theme.fontSizes[1]};
+        line-height: ${theme.lineHeights[3]};
+      `;
+    }
+    case SIGMA: {
+      return `
+        font-weight: ${theme.fontWeights.bold};
+        font-size: ${theme.fontSizes[0]};
+        line-height: ${theme.lineHeights[5]};
+        text-transform: uppercase;
+      `;
+    }
+    default: {
+      return `
+        font-size: ${theme.fontSizes[2]};
+      `;
+    }
+  }
+};
+const Typography = forwardRef(
+  (props, ref) => {
+    const {
+      ellipsis: ellipsis2,
+      textColor = "currentcolor",
+      textDecoration,
+      textTransform,
+      variant: variant2,
+      lineHeight,
+      fontWeight,
+      fontSize,
+      ...rest
+    } = props;
+    const mappedProps = {
+      $ellipsis: ellipsis2,
+      $textColor: textColor,
+      $textDecoration: textDecoration,
+      $textTransform: textTransform,
+      $variant: variant2,
+      $lineHeight: lineHeight,
+      $fontWeight: fontWeight,
+      $fontSize: fontSize
+    };
+    return /* @__PURE__ */ jsxRuntime.jsx(StyledTypography, { ref, tag: "span", ...mappedProps, ...rest });
+  }
+);
+const StyledTypography = styled.styled(Box)`
+  ${variant}
+  ${({ $ellipsis }) => $ellipsis ? ellipsis : ""}
+
+  ${({ theme, ...props }) => {
+  return handleResponsiveValues(
+    {
+      color: props.$textColor,
+      textDecoration: props.$textDecoration,
+      textTransform: props.$textTransform,
+      lineHeight: props.$lineHeight,
+      fontWeight: props.$fontWeight,
+      fontSize: props.$fontSize
+    },
+    theme
+  );
+}}
+`;
+const [AccordionProvider, useAccordion] = createContext("Accordion");
+const Root$8 = React__namespace.forwardRef(({ children, size = "S", ...props }, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(AccordionRoot, { ref: forwardedRef, $size: size, collapsible: true, ...props, type: "single", children: /* @__PURE__ */ jsxRuntime.jsx(AccordionProvider, { size, children }) });
+});
+const AccordionRoot = styled.styled(RadixAccordion__namespace.Root)`
+  background-color: ${(props) => props.theme.colors.neutral0};
+
+  ${(props) => {
+  if (props.$size === "S") {
+    return styled.css`
+        border-radius: ${(props2) => props2.theme.borderRadius};
+        border: solid 1px ${(props2) => props2.theme.colors.neutral200};
+      `;
+  } else {
+    return styled.css``;
+  }
+}}
+`;
+const Item$5 = React__namespace.forwardRef((props, forwardedRef) => {
+  const { size } = useAccordion("Item");
+  return /* @__PURE__ */ jsxRuntime.jsx(AccordionItem, { $size: size, "data-size": size, ref: forwardedRef, ...props });
+});
+const AccordionItem = styled.styled(RadixAccordion__namespace.Item)`
+  overflow: hidden;
+  margin: 1px 0;
+
+  &:first-child {
+    border-top-left-radius: 0.3rem;
+    border-top-right-radius: 0.3rem;
+    margin-top: 0;
+  }
+
+  &:last-child {
+    border-bottom-left-radius: 0.3rem;
+    border-bottom-right-radius: 0.3rem;
+    margin-bottom: 0;
+  }
+
+  &[data-size='S'] {
+    & + & {
+      border-top: solid 1px ${(props) => props.theme.colors.neutral200};
+    }
+  }
+
+  &[data-state='open'] {
+    box-shadow: 0 0 0 1px ${(props) => props.theme.colors.primary600};
+  }
+
+  &:not([data-disabled]):hover {
+    box-shadow: 0 0 0 1px ${(props) => props.theme.colors.primary600};
+  }
+
+  /* This applies our desired focus effect correctly. */
+  &:focus-within {
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 0 1px ${(props) => props.theme.colors.primary600};
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: box-shadow ${(props) => props.theme.motion.timings["120"]}
+      ${(props) => props.theme.motion.easings.easeOutQuad};
+  }
+`;
+const Trigger$7 = React__namespace.forwardRef(
+  ({ caretPosition = "left", description, icon: Icon, iconProps, children, ...restProps }, forwardedRef) => {
+    const { size } = useAccordion("Trigger");
+    return /* @__PURE__ */ jsxRuntime.jsxs(AccordionTrigger, { $caretPosition: caretPosition, $size: size, ref: forwardedRef, ...restProps, children: [
+      caretPosition === "left" ? /* @__PURE__ */ jsxRuntime.jsx(TriggerIcon, { $size: size, children: /* @__PURE__ */ jsxRuntime.jsx(icons.CaretDown, { width: size === "S" ? "1.2rem" : "1.6rem", height: size === "S" ? "1.2rem" : "1.6rem" }) }) : null,
+      /* @__PURE__ */ jsxRuntime.jsxs(Flex, { tag: "span", gap: 2, overflow: "hidden", children: [
+        Icon && size === "S" ? /* @__PURE__ */ jsxRuntime.jsx(IconBox$1, { children: /* @__PURE__ */ jsxRuntime.jsx(Icon, { ...iconProps }) }) : null,
+        /* @__PURE__ */ jsxRuntime.jsxs(Flex, { alignItems: "flex-start", direction: "column", tag: "span", ref: forwardedRef, overflow: "hidden", children: [
+          /* @__PURE__ */ jsxRuntime.jsx(
+            Typography,
+            {
+              fontWeight: size === "S" ? "bold" : void 0,
+              ellipsis: true,
+              variant: size === "M" ? "delta" : void 0,
+              textAlign: "left",
+              width: "100%",
+              children
+            }
+          ),
+          description && size === "M" ? /* @__PURE__ */ jsxRuntime.jsx(Typography, { textAlign: "left", children: description }) : null
+        ] })
+      ] }),
+      caretPosition === "right" ? /* @__PURE__ */ jsxRuntime.jsx(TriggerIcon, { $size: size, children: /* @__PURE__ */ jsxRuntime.jsx(icons.CaretDown, { width: size === "S" ? "1.2rem" : "1.6rem", height: size === "S" ? "1.2rem" : "1.6rem" }) }) : null
+    ] });
+  }
+);
+const IconBox$1 = styled.styled(Box)`
+  color: ${(props) => props.theme.colors.neutral500};
+  display: flex;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: ${(props) => props.theme.transitions.color};
+  }
+`;
+const TriggerIcon = styled.styled(Flex).attrs((props) => ({
+  ...props,
+  tag: "span"
+}))`
+  background-color: ${(props) => props.theme.colors.neutral200};
+  width: ${(props) => props.$size === "S" ? "2.4rem" : "3.2rem"};
+  height: ${(props) => props.$size === "S" ? "2.4rem" : "3.2rem"};
+  flex: ${(props) => props.$size === "S" ? "0 0 2.4rem" : "0 0 3.2rem"};
+  border-radius: 50%;
+  justify-content: center;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition:
+      transform ${(props) => props.theme.motion.timings["200"]} ${(props) => props.theme.motion.easings.authenticMotion},
+      ${(props) => props.theme.transitions.backgroundColor};
+  }
+`;
+const AccordionTrigger = styled.styled(RadixAccordion__namespace.Trigger)`
+  display: flex;
+  align-items: center;
+  justify-content: ${(props) => props.$caretPosition === "left" ? "flex-start" : "space-between"};
+  width: 100%;
+  gap: ${(props) => props.theme.spaces[4]};
+  padding-inline: ${(props) => props.$size === "S" ? props.theme.spaces[4] : props.theme.spaces[6]};
+  padding-block: ${(props) => props.$size === "S" ? props.theme.spaces[3] : props.theme.spaces[6]};
+  cursor: pointer;
+  color: ${(props) => props.theme.colors.neutral800};
+  overflow: hidden;
+
+  &[data-disabled] {
+    cursor: default;
+    color: ${(props) => props.theme.colors.neutral600};
+  }
+
+  &[data-state='open'] > ${TriggerIcon} {
+    transform: rotate(180deg);
+  }
+
+  /* we remove the default focus because the entire item should have the focus style and the default would be hidden. */
+  &:focus-visible {
+    outline: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: ${(props) => props.theme.transitions.color};
+  }
+`;
+const Actions = React__namespace.forwardRef((props, forwardedRef) => {
+  const { size } = useAccordion("Trigger");
+  return /* @__PURE__ */ jsxRuntime.jsx(ActionWrapper, { $size: size, ...props, ref: forwardedRef });
+});
+const ActionWrapper = styled.styled(Flex).attrs((props) => ({
+  ...props,
+  tag: "span"
+}))`
+  padding-inline: ${(props) => props.$size === "S" ? props.theme.spaces[2] : props.theme.spaces[6]};
+  padding-block: ${(props) => props.$size === "S" ? props.theme.spaces[2] : props.theme.spaces[6]};
+
+  // Remove default IconButton styles so there are no backgrounds or borders.
+  & > button {
+    border: none;
+    background: none;
+    color: ${(props) => props.theme.colors.neutral600};
+
+    @media (prefers-reduced-motion: no-preference) {
+      transition: ${(props) => props.theme.transitions.color};
+    }
+  }
+`;
+const Header$2 = React__namespace.forwardRef(({ variant: variant2 = "primary", ...props }, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(AccordionHeader, { $variant: variant2, ref: forwardedRef, ...props });
+});
+const AccordionHeader = styled.styled(RadixAccordion__namespace.Header)`
+  display: flex;
+  align-items: center;
+  background-color: ${(props) => props.$variant === "primary" ? props.theme.colors.neutral0 : props.theme.colors.neutral100};
+
+  &[data-disabled] {
+    background-color: ${(props) => props.theme.colors.neutral150};
+  }
+
+  &:not([data-disabled]) {
+    &:hover,
+    &[data-state='open'] {
+      background-color: ${(props) => props.theme.colors.primary100};
+
+      & > ${AccordionTrigger} {
+        color: ${(props) => props.theme.colors.primary600};
+
+        & ${IconBox$1} {
+          color: ${(props) => props.theme.colors.primary600};
+        }
+
+        & ${TriggerIcon} {
+          background-color: ${(props) => props.theme.colors.primary200};
+        }
+      }
+
+      & > ${ActionWrapper} > button {
+        color: ${(props) => props.theme.colors.primary600};
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: ${(props) => props.theme.transitions.backgroundColor};
+  }
+`;
+const Content$7 = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(AccordionContent, { ref: forwardedRef, ...props });
+});
+const slideDown = styled.keyframes`
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+`;
+const slideUp = styled.keyframes`
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+`;
+const AccordionContent = styled.styled(RadixAccordion__namespace.Content)`
+  overflow: hidden;
+
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-state='open'] {
+      animation: ${slideDown} ${(props) => props.theme.motion.timings["320"]}
+        ${(props) => props.theme.motion.easings.authenticMotion};
+    }
+
+    &[data-state='closed'] {
+      animation: ${slideUp} ${(props) => props.theme.motion.timings["320"]}
+        ${(props) => props.theme.motion.easings.authenticMotion};
+    }
+  }
+`;
+const Accordion = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  Actions,
+  Content: Content$7,
+  Header: Header$2,
+  Item: Item$5,
+  Root: Root$8,
+  Trigger: Trigger$7
+}, Symbol.toStringTag, { value: "Module" }));
+const focus = styled.css`
+  position: relative;
+  outline: none;
+
+  &:after {
+    transition-property: all;
+    transition-duration: 0.2s;
+    border-radius: 8px;
+    content: '';
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    left: -4px;
+    right: -4px;
+    border: 2px solid transparent;
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    &:after {
+      border-radius: 8px;
+      content: '';
+      position: absolute;
+      top: -5px;
+      bottom: -5px;
+      left: -5px;
+      right: -5px;
+      border: 2px solid ${(props) => props.theme.colors.primary600};
+    }
+  }
+`;
+const VisuallyHidden = ({ tag, ...props }) => {
+  const AsComponent = tag || "span";
+  return /* @__PURE__ */ jsxRuntime.jsx(Span, { ...props, as: AsComponent });
+};
+const Span = styled.styled.span`
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+`;
+const AccessibleIcon = ({ children, label }) => {
+  const child = React__namespace.Children.only(children);
+  return /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
+    React__namespace.cloneElement(child, {
+      // accessibility
+      "aria-hidden": "true",
+      focusable: "false"
+      // See: https://allyjs.io/tutorials/focusing-in-svg.html#making-svg-elements-focusable
+    }),
+    /* @__PURE__ */ jsxRuntime.jsx(VisuallyHidden, { children: label })
+  ] });
+};
+AccessibleIcon.displayName = "AccessibleIcon";
+const handleBackgroundColor = (variant2) => {
+  switch (variant2) {
+    case "danger":
+      return "danger100";
+    case "success":
+      return "success100";
+    case "warning":
+      return "warning100";
+    default:
+      return "primary100";
+  }
+};
+const handleBorderColor = (variant2) => {
+  return handleBackgroundColor(variant2).replace("100", "200");
+};
+const handleIconColor = ({ theme, $variant }) => {
+  if ($variant === "danger") {
+    return theme.colors.danger700;
+  }
+  if ($variant === "success") {
+    return theme.colors.success700;
+  }
+  if ($variant === "warning") {
+    return theme.colors.warning700;
+  }
+  return theme.colors.primary700;
+};
+const CloseButton = styled.styled(Box)`
+  ${focus};
+`;
+const AlertIconWrapper = styled.styled(Flex)`
+  svg {
+    height: 100%;
+    width: 100%;
+
+    path {
+      fill: ${handleIconColor};
+    }
+  }
+`;
+const AlertIcon = ({ variant: variant2, ...props }) => {
+  if (variant2 === "success") {
+    return /* @__PURE__ */ jsxRuntime.jsx(icons.CheckCircle, { ...props });
+  }
+  if (variant2 === "danger" || variant2 === "warning") {
+    return /* @__PURE__ */ jsxRuntime.jsx(icons.WarningCircle, { ...props });
+  }
+  return /* @__PURE__ */ jsxRuntime.jsx(icons.Information, { ...props });
+};
+const ActionBox = styled.styled(Box)`
+  & a > span {
+    color: ${handleIconColor};
+  }
+
+  svg path {
+    fill: ${handleIconColor};
+  }
+`;
+const Alert = ({
+  title,
+  children,
+  variant: variant2 = "default",
+  onClose,
+  closeLabel,
+  titleAs = "p",
+  action,
+  ...props
+}) => {
+  return /* @__PURE__ */ jsxRuntime.jsxs(
+    Flex,
+    {
+      alignItems: "flex-start",
+      background: handleBackgroundColor(variant2),
+      borderColor: handleBorderColor(variant2),
+      shadow: "filterShadow",
+      gap: 3,
+      hasRadius: true,
+      padding: 5,
+      paddingRight: 6,
+      ...props,
+      children: [
+        /* @__PURE__ */ jsxRuntime.jsx(AlertIconWrapper, { height: "2rem", shrink: 0, $variant: variant2, width: "2rem", children: /* @__PURE__ */ jsxRuntime.jsx(AlertIcon, { "aria-hidden": true, variant: variant2 }) }),
+        /* @__PURE__ */ jsxRuntime.jsxs(
+          Flex,
+          {
+            alignItems: "start",
+            gap: action ? 2 : 1,
+            wrap: "wrap",
+            role: variant2 === "danger" ? "alert" : "status",
+            width: "100%",
+            children: [
+              title && /* @__PURE__ */ jsxRuntime.jsx(Typography, { fontWeight: "bold", textColor: "neutral800", tag: titleAs, children: title }),
+              /* @__PURE__ */ jsxRuntime.jsx(Typography, { tag: "p", textColor: "neutral800", children }),
+              action && /* @__PURE__ */ jsxRuntime.jsx(ActionBox, { $variant: variant2, children: action })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntime.jsx(
+          CloseButton,
+          {
+            tag: "button",
+            background: "transparent",
+            borderColor: void 0,
+            height: "1.6rem",
+            width: "1.6rem",
+            marginTop: 1,
+            onClick: onClose,
+            color: "neutral700",
+            children: /* @__PURE__ */ jsxRuntime.jsx(AccessibleIcon, { label: closeLabel, children: /* @__PURE__ */ jsxRuntime.jsx(icons.Cross, {}) })
+          }
+        )
+      ]
+    }
+  );
+};
+function useControllableState$1({ prop, defaultProp, onChange = () => {
+} }) {
+  const [uncontrolledProp, setUncontrolledProp] = useUncontrolledState({ defaultProp, onChange });
+  const isControlled = prop !== void 0;
+  const value = isControlled ? prop : uncontrolledProp;
+  const handleChange = reactUseCallbackRef.useCallbackRef(onChange);
+  const setValue = React__namespace.useCallback(
+    (nextValue) => {
+      if (isControlled) {
+        const setter = nextValue;
+        const value2 = typeof nextValue === "function" ? setter(prop) : nextValue;
+        if (value2 !== prop)
+          handleChange(value2);
+      } else {
+        setUncontrolledProp(nextValue);
+      }
+    },
+    [isControlled, prop, setUncontrolledProp, handleChange]
+  );
+  return [value, setValue];
+}
+function useUncontrolledState({ defaultProp, onChange }) {
+  const uncontrolledState = React__namespace.useState(defaultProp);
+  const [value] = uncontrolledState;
+  const prevValueRef = React__namespace.useRef(value);
+  const handleChange = reactUseCallbackRef.useCallbackRef(onChange);
+  React__namespace.useEffect(() => {
+    if (prevValueRef.current !== value) {
+      handleChange(value);
+      prevValueRef.current = value;
+    }
+  }, [value, prevValueRef, handleChange]);
+  return uncontrolledState;
+}
+const EASINGS = {
+  easeInSine: "cubic-bezier(0.47, 0, 0.745, 0.715)",
+  easeOutSine: "cubic-bezier(0.39, 0.575, 0.565, 1)",
+  easeInOutSine: "cubic-bezier(0.39, 0.575, 0.565, 1)",
+  easeInQuad: "cubic-bezier(0.55, 0.085, 0.68, 0.53)",
+  easeOutQuad: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+  easeInOutQuad: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+  easeInCubic: "cubic-bezier(0.55, 0.055, 0.675, 0.19)",
+  easeOutCubic: "cubic-bezier(0.215, 0.61, 0.355, 1)",
+  easeInOutCubic: "cubic-bezier(0.215, 0.61, 0.355, 1)",
+  easeInQuart: "cubic-bezier(0.895, 0.03, 0.685, 0.22)",
+  easeOutQuart: "cubic-bezier(0.165, 0.84, 0.44, 1)",
+  easeInOutQuart: "cubic-bezier(0.165, 0.84, 0.44, 1)",
+  easeInQuint: "cubic-bezier(0.755, 0.05, 0.855, 0.06)",
+  easeOutQuint: "cubic-bezier(0.23, 1, 0.32, 1)",
+  easeInOutQuint: "cubic-bezier(0.23, 1, 0.32, 1)",
+  easeInExpo: "cubic-bezier(0.95, 0.05, 0.795, 0.035)",
+  easeOutExpo: "cubic-bezier(0.19, 1, 0.22, 1)",
+  easeInOutExpo: "cubic-bezier(0.19, 1, 0.22, 1)",
+  easeInCirc: "cubic-bezier(0.6, 0.04, 0.98, 0.335)",
+  easeOutCirc: "cubic-bezier(0.075, 0.82, 0.165, 1)",
+  easeInOutCirc: "cubic-bezier(0.075, 0.82, 0.165, 1)",
+  easeInBack: "cubic-bezier(0.6, -0.28, 0.735, 0.045)",
+  easeOutBack: "cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+  easeInOutBack: "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+  easeInOutFast: "cubic-bezier(1,0,0,1)",
+  authenticMotion: "cubic-bezier(.4,0,.2,1)"
+};
+const TIMINGS = {
+  "320": "320ms",
+  "200": "200ms",
+  "120": "120ms"
+};
+const TRANSITIONS = {
+  color: `color ${TIMINGS["120"]} ${EASINGS.easeOutQuad}`,
+  backgroundColor: `background-color ${TIMINGS["120"]} ${EASINGS.easeOutQuad}`
+};
+const ANIMATIONS = {
+  overlayFadeIn: styled.keyframes`
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 0.2;
+    }
+  `,
+  modalPopIn: styled.keyframes`
+    from {
+      transform:translate(-50%, -50%)  scale(0.8);
+      opacity: 0;
+    }
+    to {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+  `,
+  modalPopOut: styled.keyframes`
+    from {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    to {
+      transform:translate(-50%, -50%)  scale(0.8);
+      opacity: 0;
+    }
+  `,
+  popIn: styled.keyframes`
+    from {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  `,
+  popOut: styled.keyframes`
+    from {
+      transform: scale(1);
+      opacity: 1;
+    }
+    to {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+  `,
+  slideDownIn: styled.keyframes`
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  `,
+  slideDownOut: styled.keyframes`
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+  `,
+  slideUpIn: styled.keyframes`
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  `,
+  slideUpOut: styled.keyframes`
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  `,
+  fadeIn: styled.keyframes`
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  `,
+  fadeOut: styled.keyframes`
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  `
+};
+const SIZE = 32;
+const PREVIEW_SCALE = 2;
+const Item$4 = React__namespace.forwardRef(
+  ({ onLoadingStatusChange, delayMs = 600, src, alt, fallback, preview = false, ...restProps }, forwardedRef) => {
+    const [loadingStatus, setLoadingStatus] = useControllableState$1({
+      onChange: onLoadingStatusChange
+    });
+    const [tooltipOpen, setTooltipOpen] = React__namespace.useState(false);
+    const hasPreview = preview && loadingStatus === "loaded";
+    const handleTooltipOpen = (isOpen) => {
+      if (hasPreview) {
+        setTooltipOpen(isOpen);
+      }
+    };
+    return /* @__PURE__ */ jsxRuntime.jsxs(Tooltip__namespace.Root, { onOpenChange: handleTooltipOpen, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(Tooltip__namespace.Trigger, { asChild: true, children: /* @__PURE__ */ jsxRuntime.jsxs(AvatarRoot, { ref: forwardedRef, ...restProps, children: [
+        hasPreview ? /* @__PURE__ */ jsxRuntime.jsx(
+          AvatarOverlay,
+          {
+            width: "100%",
+            height: "100%",
+            position: "absolute",
+            background: "neutral0",
+            zIndex: "overlay",
+            style: { opacity: tooltipOpen ? 0.4 : 0 }
+          }
+        ) : null,
+        /* @__PURE__ */ jsxRuntime.jsx(AvatarImage, { src, alt, onLoadingStatusChange: setLoadingStatus }),
+        /* @__PURE__ */ jsxRuntime.jsx(Avatar__namespace.Fallback, { delayMs, children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { fontWeight: "bold", textTransform: "uppercase", children: fallback }) })
+      ] }) }),
+      hasPreview ? /* @__PURE__ */ jsxRuntime.jsx(Tooltip__namespace.Portal, { children: /* @__PURE__ */ jsxRuntime.jsx(PreviewContent, { side: "top", sideOffset: 4, children: /* @__PURE__ */ jsxRuntime.jsx(PreviewImg, { src, alt }) }) }) : null
+    ] });
+  }
+);
+const avatarStyles = styled.css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  overflow: hidden;
+  user-select: none;
+  overflow: hidden;
+  border-radius: 50%;
+`;
+const imgStyles = styled.css`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+`;
+const AvatarRoot = styled.styled(Avatar__namespace.Root)`
+  position: relative;
+  z-index: 0;
+  ${avatarStyles}
+  width: ${SIZE / 10}rem;
+  height: ${SIZE / 10}rem;
+  /* TODO: we should get the user email & hash it to turn it into a hex-value so different emails can consistently get a different background */
+  background-color: ${(p) => p.theme.colors.primary600};
+  color: ${(p) => p.theme.colors.neutral0};
+`;
+const AvatarOverlay = styled.styled(Box)`
+  @media (prefers-reduced-motion: no-preference) {
+    transition: opacity ${(props) => props.theme.motion.timings["200"]}
+      ${(props) => props.theme.motion.easings.authenticMotion};
+  }
+`;
+const AvatarImage = styled.styled(Avatar__namespace.Image)`
+  ${imgStyles}
+`;
+const PreviewContent = styled.styled(Tooltip__namespace.Content)`
+  ${avatarStyles}
+  width: ${SIZE * PREVIEW_SCALE / 10}rem;
+  height: ${SIZE * PREVIEW_SCALE / 10}rem;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: ${ANIMATIONS.fadeIn} ${(props) => props.theme.motion.timings["200"]}
+      ${(props) => props.theme.motion.easings.authenticMotion};
+  }
+`;
+const PreviewImg = styled.styled.img`
+  ${imgStyles}
+`;
+const Group$2 = React__namespace.forwardRef((props, forwarededRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(GroupFlex, { ...props, ref: forwarededRef, tag: "div" });
+});
+const GroupFlex = styled.styled(Flex)`
+  & > ${AvatarRoot} + ${AvatarRoot} {
+    margin-left: -${SIZE / 10 / 2}rem;
+  }
+`;
+const Avatar = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  Group: Group$2,
+  Item: Item$4
+}, Symbol.toStringTag, { value: "Module" }));
+const Badge = ({
+  active = false,
+  size = "M",
+  textColor = "neutral600",
+  backgroundColor = "neutral150",
+  children,
+  minWidth = 5,
+  ...props
+}) => {
+  const paddingX = size === "S" ? 1 : 2;
+  return /* @__PURE__ */ jsxRuntime.jsx(
+    Base,
+    {
+      inline: true,
+      alignItems: "center",
+      justifyContent: "center",
+      minWidth,
+      paddingLeft: paddingX,
+      paddingRight: paddingX,
+      background: active ? "primary200" : backgroundColor,
+      $size: size,
+      ...props,
+      children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "sigma", textColor: active ? "primary600" : textColor, lineHeight: "1rem", children })
+    }
+  );
+};
+const Base = styled.styled(Flex)`
+  border-radius: ${({ theme, $size }) => $size === "S" ? "2px" : theme.borderRadius};
+  ${({ $size, theme }) => {
+  if ($size === "S") {
+    return styled.css`
+        padding-block: 0.3rem;
+        padding-inline ${theme.spaces[1]}
+      `;
+  }
+  return styled.css`
+      padding-block: 0.7rem;
+      padding-inline ${theme.spaces[2]}
+    `;
+}};
+`;
+const BaseLinkImpl = forwardRef(
+  ({ href, disabled = false, isExternal = false, ...props }, ref) => {
+    return /* @__PURE__ */ jsxRuntime.jsx(
+      BaseLink,
+      {
+        tag: "a",
+        ref,
+        target: isExternal ? "_blank" : void 0,
+        rel: isExternal ? "noreferrer noopener" : void 0,
+        href,
+        tabIndex: disabled ? -1 : void 0,
+        "aria-disabled": disabled,
+        pointerEvents: disabled ? "none" : void 0,
+        cursor: disabled ? void 0 : "pointer",
+        ...props
+      }
+    );
+  }
+);
+const BaseLink = styled.styled(Box)`
+  text-decoration: none;
+
+  &:visited {
+    color: inherit;
+  }
+`;
+const Divider$1 = () => {
+  return /* @__PURE__ */ jsxRuntime.jsx(Box, { "aria-hidden": true, paddingLeft: 1, paddingRight: 1, children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "pi", textColor: "neutral500", children: "/" }) });
+};
+Divider$1.displayName = "Divider";
+const AlignedList = styled.styled(Flex)`
+  // CrumbLinks do have padding-x, because they need to have a
+  // interaction effect, which mis-aligns the breadcrumbs on the left.
+  // This normalizes the behavior by moving the first item to left by
+  // the same amount it has inner padding
+  & > *:first-child {
+    margin-left: ${({ theme }) => `calc(-1*${theme.spaces[2]})`};
+  }
+`;
+const Breadcrumbs = React__namespace.forwardRef(
+  ({ label, children, ...props }, forwardedRef) => {
+    const childrenArray = React__namespace.Children.toArray(children);
+    return /* @__PURE__ */ jsxRuntime.jsx(Box, { "aria-label": label, tag: "nav", ...props, ref: forwardedRef, children: /* @__PURE__ */ jsxRuntime.jsx(AlignedList, { tag: "ol", children: React__namespace.Children.map(childrenArray, (child, index) => {
+      const shouldDisplayDivider = childrenArray.length > 1 && index + 1 < childrenArray.length;
+      return /* @__PURE__ */ jsxRuntime.jsxs(Flex, { inline: true, tag: "li", children: [
+        child,
+        shouldDisplayDivider && /* @__PURE__ */ jsxRuntime.jsx(Divider$1, {})
+      ] });
+    }) }) });
+  }
+);
+Breadcrumbs.displayName = "Breadcrumbs";
+const Crumb = React__namespace.forwardRef(
+  ({ children, isCurrent = false, ...props }, forwardedRef) => /* @__PURE__ */ jsxRuntime.jsx(Box, { paddingLeft: 2, paddingRight: 2, paddingTop: 1, paddingBottom: 1, ref: forwardedRef, children: /* @__PURE__ */ jsxRuntime.jsx(
+    Typography,
+    {
+      variant: "pi",
+      textColor: "neutral800",
+      fontWeight: isCurrent ? "bold" : "regular",
+      "aria-current": isCurrent,
+      ...props,
+      children
+    }
+  ) })
+);
+Crumb.displayName = "Crumb";
+const StyledLink = styled.styled(BaseLinkImpl)`
+  border-radius: ${({ theme }) => theme.borderRadius};
+  color: ${({ theme }) => theme.colors.neutral600};
+  font-size: ${({ theme }) => theme.fontSizes[1]};
+  line-height: ${({ theme }) => theme.lineHeights[4]};
+  padding: ${({ theme }) => `${theme.spaces[1]} ${theme.spaces[2]}`};
+  text-decoration: none;
+
+  :hover,
+  :focus {
+    background-color: ${({ theme }) => theme.colors.neutral200};
+    color: ${({ theme }) => theme.colors.neutral700};
+  }
+`;
+const CrumbLink = React__namespace.forwardRef(({ children, ...props }, forwardedRef) => /* @__PURE__ */ jsxRuntime.jsx(StyledLink, { ref: forwardedRef, ...props, children }));
+CrumbLink.displayName = "CrumbLink";
+const stripReactIdOfColon = (str) => str.replaceAll(":", "");
+function setRef(ref, value) {
+  if (typeof ref === "function") {
+    ref(value);
+  } else if (ref !== null && ref !== void 0) {
+    ref.current = value;
+  }
+}
+function composeRefs(...refs) {
+  return (node) => refs.forEach((ref) => setRef(ref, node));
+}
+function useComposedRefs(...refs) {
+  return React__namespace.useCallback(composeRefs(...refs), refs);
+}
+const isSSR = () => typeof window === "undefined" || !window.navigator || /ServerSideRendering|^Deno\//.test(window.navigator.userAgent);
+const useIsomorphicLayoutEffect = isSSR() ? React.useEffect : React.useLayoutEffect;
+const useReactId = React__namespace["useId".toString()] || (() => void 0);
+let count = 0;
+const useId = (initialId) => {
+  const [id, setId] = React__namespace.useState(useReactId());
+  useIsomorphicLayoutEffect(() => {
+    if (!initialId)
+      setId((reactId) => reactId ?? String(count++));
+  }, [initialId]);
+  return initialId?.toString() ?? (id || "");
+};
+const useIntersection = (scrollableAreaRef, callback, { selectorToWatch, skipWhen = false }) => {
+  const handleIntersection = uiPrimitives.useCallbackRef(callback);
+  React__namespace.useEffect(() => {
+    if (skipWhen || !scrollableAreaRef.current)
+      return;
+    const options = {
+      root: scrollableAreaRef.current,
+      rootMargin: "0px"
+    };
+    const onEnterZone = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && scrollableAreaRef.current) {
+          if (scrollableAreaRef.current.scrollHeight > scrollableAreaRef.current.clientHeight) {
+            handleIntersection(entry);
+          }
+        }
+      });
+    };
+    const observer = new IntersectionObserver(onEnterZone, options);
+    const target = scrollableAreaRef.current.querySelector(selectorToWatch);
+    if (target) {
+      observer.observe(target);
+    }
+    return () => {
+      observer.disconnect();
+    };
+  }, [skipWhen, handleIntersection, selectorToWatch, scrollableAreaRef]);
+};
+const SUCCESS_LIGHT = "success-light";
+const DANGER_LIGHT = "danger-light";
+const DEFAULT = "default";
+const TERTIARY = "tertiary";
+const SECONDARY = "secondary";
+const DANGER = "danger";
+const SUCCESS = "success";
+const GHOST = "ghost";
+const LIGHT_VARIANTS = [SUCCESS_LIGHT, DANGER_LIGHT];
+const VARIANTS = [DEFAULT, TERTIARY, SECONDARY, DANGER, SUCCESS, GHOST, ...LIGHT_VARIANTS];
+const BUTTON_SIZES = ["XS", "S", "M", "L"];
+const getVariantColorName = (variant2) => {
+  if (variant2 === SUCCESS_LIGHT || variant2 === DANGER_LIGHT) {
+    return `${variant2.substring(0, variant2.lastIndexOf("-"))}`;
+  }
+  if (variant2 === TERTIARY) {
+    return "neutral";
+  }
+  if (variant2 === DEFAULT || variant2 === SECONDARY || VARIANTS.every((vari) => vari !== variant2)) {
+    return "primary";
+  }
+  return `${variant2}`;
+};
+const getDisabledStyle = ({ theme }) => {
+  return styled.css`
+    border: 1px solid ${theme.colors.neutral200};
+    background: ${theme.colors.neutral150};
+    color: ${theme.colors.neutral600};
+    cursor: default;
+  `;
+};
+const getHoverStyle = ({ theme, $variant }) => {
+  if ([...LIGHT_VARIANTS, SECONDARY].includes($variant)) {
+    return styled.css`
+      background-color: ${theme.colors.neutral0};
+    `;
+  }
+  if ($variant === TERTIARY) {
+    return styled.css`
+      background-color: ${theme.colors.neutral100};
+    `;
+  }
+  if ($variant === GHOST) {
+    return styled.css`
+      background-color: ${theme.colors.neutral100};
+    `;
+  }
+  if ($variant === DEFAULT) {
+    return styled.css`
+      border: 1px solid ${theme.colors.buttonPrimary500};
+      background: ${theme.colors.buttonPrimary500};
+    `;
+  }
+  return styled.css`
+    border: 1px solid ${theme.colors[`${getVariantColorName($variant)}500`]};
+    background: ${theme.colors[`${getVariantColorName($variant)}500`]};
+  `;
+};
+const getActiveStyle = ({ theme, $variant }) => {
+  if ([...LIGHT_VARIANTS, SECONDARY].includes($variant)) {
+    return styled.css`
+      background-color: ${theme.colors.neutral0};
+      border: 1px solid ${theme.colors[`${getVariantColorName($variant)}600`]};
+      color: ${theme.colors[`${getVariantColorName($variant)}600`]};
+    `;
+  }
+  if ($variant === TERTIARY || $variant === GHOST) {
+    return styled.css`
+      background-color: ${theme.colors.neutral150};
+    `;
+  }
+  return styled.css`
+    border: 1px solid ${theme.colors[`${getVariantColorName($variant)}600`]};
+    background: ${theme.colors[`${getVariantColorName($variant)}600`]};
+  `;
+};
+const getVariantStyle = ({ theme, $variant }) => {
+  switch ($variant) {
+    case DANGER_LIGHT:
+    case SUCCESS_LIGHT:
+    case SECONDARY: {
+      return styled.css`
+        border: 1px solid ${theme.colors[`${getVariantColorName($variant)}200`]};
+        background: ${theme.colors[`${getVariantColorName($variant)}100`]};
+        color: ${theme.colors[`${getVariantColorName($variant)}700`]};
+      `;
+    }
+    case TERTIARY: {
+      return styled.css`
+        border: 1px solid ${theme.colors.neutral200};
+        background: ${theme.colors.neutral0};
+        color: ${theme.colors.neutral800};
+      `;
+    }
+    case GHOST: {
+      return styled.css`
+        border: 1px solid transparent;
+        background: transparent;
+        color: ${theme.colors.neutral800};
+
+        svg {
+          fill: ${theme.colors.neutral500};
+        }
+      `;
+    }
+    case SUCCESS:
+    case DANGER: {
+      return styled.css`
+        border: 1px solid ${theme.colors[`${getVariantColorName($variant)}600`]};
+        background: ${theme.colors[`${getVariantColorName($variant)}600`]};
+        color: ${theme.colors.neutral0};
+      `;
+    }
+    default: {
+      return styled.css`
+        border: 1px solid ${theme.colors.buttonPrimary600};
+        background: ${theme.colors.buttonPrimary600};
+        color: ${theme.colors.buttonNeutral0};
+      `;
+    }
+  }
+};
+const Button = forwardRef(
+  ({
+    variant: variant2 = DEFAULT,
+    startIcon,
+    endIcon,
+    disabled = false,
+    children,
+    onClick,
+    size = BUTTON_SIZES[1],
+    loading = false,
+    fullWidth = false,
+    ...props
+  }, ref) => {
+    const isDisabled = disabled || loading;
+    const handleClick = (e) => {
+      if (!isDisabled && onClick) {
+        onClick(e);
+      }
+    };
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      ButtonWrapper,
+      {
+        ref,
+        "aria-disabled": isDisabled,
+        disabled: isDisabled,
+        $size: size,
+        $variant: variant2,
+        tag: "button",
+        onClick: handleClick,
+        hasRadius: true,
+        gap: 2,
+        inline: true,
+        alignItems: "center",
+        justifyContent: "center",
+        width: fullWidth ? "100%" : void 0,
+        paddingLeft: 4,
+        paddingRight: 4,
+        cursor: "pointer",
+        ...props,
+        children: [
+          (startIcon || loading) && /* @__PURE__ */ jsxRuntime.jsx(Flex, { tag: "span", "aria-hidden": true, children: loading ? /* @__PURE__ */ jsxRuntime.jsx(LoaderAnimated, {}) : startIcon }),
+          /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: size === "S" ? "pi" : void 0, fontWeight: "bold", children }),
+          endIcon && /* @__PURE__ */ jsxRuntime.jsx(Flex, { tag: "span", "aria-hidden": true, children: endIcon })
+        ]
+      }
+    );
+  }
+);
+const rotation$2 = styled.keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359deg);
+  }
+`;
+const LoaderAnimated = styled.styled(icons.Loader)`
+  animation: ${rotation$2} 2s infinite linear;
+  will-change: transform;
+`;
+const ButtonWrapper = styled.styled(Flex)`
+  height: ${({ theme, $size }) => theme.sizes.button[$size]};
+  text-decoration: none;
+  ${getVariantStyle}
+
+  &:hover {
+    ${getHoverStyle}
+  }
+
+  &:active {
+    ${getActiveStyle}
+  }
+
+  &[aria-disabled='true'] {
+    ${getDisabledStyle}
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition:
+      ${(props) => props.theme.transitions.backgroundColor},
+      ${(props) => props.theme.transitions.color},
+      border-color ${(props) => props.theme.motion.timings["200"]} ${(props) => props.theme.motion.easings.easeOutQuad};
+  }
+`;
+const TooltipImpl = React__namespace.forwardRef(
+  ({
+    children,
+    description,
+    label,
+    defaultOpen,
+    open,
+    onOpenChange,
+    delayDuration = 500,
+    disableHoverableContent,
+    ...restProps
+  }, forwardedRef) => {
+    if (!label && !description)
+      return children;
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      Tooltip__namespace.Root,
+      {
+        defaultOpen,
+        open,
+        onOpenChange,
+        delayDuration,
+        disableHoverableContent,
+        children: [
+          /* @__PURE__ */ jsxRuntime.jsx(Tooltip__namespace.Trigger, { asChild: true, children }),
+          /* @__PURE__ */ jsxRuntime.jsx(Tooltip__namespace.Portal, { children: /* @__PURE__ */ jsxRuntime.jsx(TooltipContent, { ref: forwardedRef, sideOffset: 8, ...restProps, children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "pi", fontWeight: "bold", children: label || description }) }) })
+        ]
+      }
+    );
+  }
+);
+const TooltipContent = styled.styled(Tooltip__namespace.Content)`
+  background-color: ${(props) => props.theme.colors.neutral900};
+  color: ${(props) => props.theme.colors.neutral0};
+  padding-inline: ${(props) => props.theme.spaces[2]};
+  padding-block: ${(props) => props.theme.spaces[2]};
+  border-radius: ${(props) => props.theme.borderRadius};
+  z-index: ${(props) => props.theme.zIndices.tooltip};
+  will-change: opacity;
+  transform-origin: var(--radix-tooltip-content-transform-origin);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: ${ANIMATIONS.fadeIn} ${(props) => props.theme.motion.timings["200"]}
+      ${(props) => props.theme.motion.easings.authenticMotion};
+  }
+`;
+const IconButton = forwardRef(
+  ({
+    label,
+    background,
+    children,
+    disabled = false,
+    onClick,
+    size = "S",
+    variant: variant2 = "tertiary",
+    withTooltip = true,
+    ...restProps
+  }, ref) => {
+    const handleClick = (e) => {
+      if (!disabled && onClick) {
+        onClick(e);
+      }
+    };
+    const component = /* @__PURE__ */ jsxRuntime.jsx(
+      IconButtonWrapper,
+      {
+        "aria-disabled": disabled,
+        background: disabled ? "neutral150" : background,
+        tag: "button",
+        display: "inline-flex",
+        justifyContent: "center",
+        hasRadius: true,
+        cursor: "pointer",
+        ...restProps,
+        ref,
+        $size: size,
+        onClick: handleClick,
+        $variant: variant2,
+        children: /* @__PURE__ */ jsxRuntime.jsx(AccessibleIcon, { label, children })
+      }
+    );
+    return withTooltip ? /* @__PURE__ */ jsxRuntime.jsx(TooltipImpl, { label, children: component }) : component;
+  }
+);
+const IconButtonWrapper = styled.styled(Flex)`
+  text-decoration: none;
+
+  ${(props) => {
+  switch (props.$size) {
+    case "XS": {
+      return styled.css`
+          padding-block: 0.2rem;
+          padding-inline: 0.2rem;
+        `;
+    }
+    case "S": {
+      return styled.css`
+          padding-block: 0.7rem;
+          padding-inline: 0.7rem;
+        `;
+    }
+    case "M": {
+      return styled.css`
+          padding-block: 0.9rem;
+          padding-inline: 0.9rem;
+        `;
+    }
+    case "L": {
+      return styled.css`
+          padding-block: 1.1rem;
+          padding-inline: 1.1rem;
+        `;
+    }
+  }
+}}
+  ${getVariantStyle}
+  ${(props) => props.$variant === "tertiary" ? styled.css`
+          color: ${props.theme.colors.neutral500};
+        ` : ""}
+
+  &:hover {
+    ${getHoverStyle}
+    ${(props) => props.$variant === "tertiary" ? styled.css`
+            color: ${props.theme.colors.neutral600};
+          ` : ""}
+  }
+
+  &:active {
+    ${getActiveStyle}
+  }
+
+  &[aria-disabled='true'] {
+    ${getDisabledStyle}
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition:
+      ${(props) => props.theme.transitions.backgroundColor},
+      ${(props) => props.theme.transitions.color},
+      border-color ${(props) => props.theme.motion.timings["200"]} ${(props) => props.theme.motion.easings.easeOutQuad};
+  }
+`;
+const IconButtonGroup = styled.styled(Flex)`
+  & ${IconButtonWrapper}:first-child {
+    border-radius: ${({ theme }) => `${theme.borderRadius} 0 0 ${theme.borderRadius}`};
+  }
+
+  & ${IconButtonWrapper}:last-child {
+    border-radius: ${({ theme }) => `0 ${theme.borderRadius} ${theme.borderRadius} 0`};
+  }
+
+  & ${IconButtonWrapper} {
+    border-radius: 0;
+
+    & + ${IconButtonWrapper} {
+      border-left: none;
+    }
+  }
+`;
+const Link = forwardRef(
+  ({ children, href, disabled = false, startIcon, endIcon, isExternal = false, ...props }, ref) => {
+    return /* @__PURE__ */ jsxRuntime.jsxs(LinkWrapper$1, { ref, href, disabled, isExternal, ...props, children: [
+      startIcon,
+      /* @__PURE__ */ jsxRuntime.jsx(Typography, { textColor: disabled ? "neutral600" : "primary600", children }),
+      endIcon,
+      href && !endIcon && isExternal && /* @__PURE__ */ jsxRuntime.jsx(icons.ExternalLink, {})
+    ] });
+  }
+);
+const LinkWrapper$1 = styled.styled(BaseLinkImpl)`
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  gap: ${({ theme }) => theme.spaces[2]};
+  pointer-events: ${({ disabled }) => disabled ? "none" : void 0};
+
+  svg {
+    font-size: 1rem;
+
+    path {
+      fill: ${({ disabled, theme }) => disabled ? theme.colors.neutral600 : theme.colors.primary600};
+    }
+  }
+
+  &:hover {
+    & > span {
+      color: ${({ theme }) => theme.colors.primary500};
+    }
+
+    svg path {
+      fill: ${({ theme }) => theme.colors.primary500};
+    }
+  }
+
+  &:active {
+    color: ${({ theme }) => theme.colors.primary700};
+  }
+
+  ${focus};
+`;
+const getBackgroundColorHover = (variant2) => {
+  switch (variant2) {
+    case "danger":
+      return "danger100";
+    default:
+      return "primary100";
+  }
+};
+const getTextColor = (variant2, disabled) => {
+  switch (variant2) {
+    case "danger":
+      return disabled ? "danger500" : "danger700";
+    default:
+      return disabled ? "neutral500" : "neutral800";
+  }
+};
+const getIconColor = (variant2, disabled) => {
+  switch (variant2) {
+    case "danger":
+      return disabled ? "danger500" : "danger700";
+    default:
+      return disabled ? "neutral300" : "neutral500";
+  }
+};
+const MenuRoot = DropdownMenu__namespace.Root;
+const MenuTrigger = React__namespace.forwardRef(
+  ({ label, endIcon = /* @__PURE__ */ jsxRuntime.jsx(icons.CaretDown, { width: "1.2rem", height: "1.2rem", "aria-hidden": true }), tag = Button, icon, ...rest }, ref) => {
+    const props = {
+      ...rest,
+      ref,
+      type: "button"
+    };
+    return /* @__PURE__ */ jsxRuntime.jsx(DropdownMenu__namespace.Trigger, { asChild: true, disabled: props.disabled, children: tag === IconButton ? /* @__PURE__ */ jsxRuntime.jsx(IconButton, { label, variant: "tertiary", ...props, children: icon }) : /* @__PURE__ */ jsxRuntime.jsx(Button, { endIcon, variant: "ghost", ...props }) });
+  }
+);
+const MenuContent = React__namespace.forwardRef(
+  ({ children, intersectionId, onCloseAutoFocus, popoverPlacement = "bottom-start", ...props }, ref) => {
+    const [side, align] = popoverPlacement.split("-");
+    return /* @__PURE__ */ jsxRuntime.jsx(DropdownMenu__namespace.Portal, { children: /* @__PURE__ */ jsxRuntime.jsx(DropdownMenuContent, { align, side, loop: true, onCloseAutoFocus, asChild: true, children: /* @__PURE__ */ jsxRuntime.jsxs(
+      Viewport$1,
+      {
+        ref,
+        direction: "column",
+        borderColor: "neutral150",
+        hasRadius: true,
+        background: "neutral0",
+        shadow: "filterShadow",
+        maxHeight: "15rem",
+        padding: 1,
+        marginTop: 1,
+        marginBottom: 1,
+        alignItems: "flex-start",
+        position: "relative",
+        overflow: "auto",
+        ...props,
+        children: [
+          children,
+          /* @__PURE__ */ jsxRuntime.jsx(Box, { id: intersectionId, width: "100%", height: "1px" })
+        ]
+      }
+    ) }) });
+  }
+);
+const Viewport$1 = styled.styled(Flex)`
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  z-index: ${(props) => props.theme.zIndices.popover};
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+`;
+const DropdownMenuContent = styled.styled(DropdownMenu__namespace.Content)`
+  @media (prefers-reduced-motion: no-preference) {
+    animation-duration: ${(props) => props.theme.motion.timings["200"]};
+
+    &[data-state='open'] {
+      animation-timing-function: ${(props) => props.theme.motion.easings.authenticMotion};
+
+      &[data-side='top'] {
+        animation-name: ${ANIMATIONS.slideUpIn};
+      }
+
+      &[data-side='bottom'] {
+        animation-name: ${ANIMATIONS.slideDownIn};
+      }
+    }
+  }
+`;
+const MenuItem$1 = ({
+  onSelect,
+  disabled = false,
+  isLink,
+  startIcon,
+  endIcon,
+  isExternal,
+  variant: variant2 = "default",
+  ...props
+}) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(DropdownMenu__namespace.Item, { asChild: true, onSelect, disabled, children: isLink || isExternal ? /* @__PURE__ */ jsxRuntime.jsx(
+    OptionLink,
+    {
+      color: getTextColor(variant2, disabled),
+      startIcon,
+      endIcon,
+      ...props,
+      isExternal: isExternal ?? false,
+      $variant: variant2,
+      children: props.children
+    }
+  ) : /* @__PURE__ */ jsxRuntime.jsxs(
+    OptionButton,
+    {
+      cursor: "pointer",
+      color: getTextColor(variant2, disabled),
+      background: "transparent",
+      borderStyle: "none",
+      gap: 2,
+      $variant: variant2,
+      ...props,
+      children: [
+        startIcon && /* @__PURE__ */ jsxRuntime.jsx(Flex, { tag: "span", color: getIconColor(variant2, disabled), "aria-hidden": true, children: startIcon }),
+        /* @__PURE__ */ jsxRuntime.jsx(Typography, { grow: 1, children: props.children }),
+        endIcon && /* @__PURE__ */ jsxRuntime.jsx(Flex, { tag: "span", color: getIconColor(variant2, disabled), "aria-hidden": true, children: endIcon })
+      ]
+    }
+  ) });
+};
+const getOptionStyle = ({ theme, $variant }) => styled.css`
+  text-align: left;
+  width: 100%;
+  border-radius: ${theme.borderRadius};
+  padding: ${theme.spaces[2]} ${theme.spaces[4]};
+
+  &[aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
+  &[data-highlighted] {
+    background-color: ${theme.colors[getBackgroundColorHover($variant)]};
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    &:after {
+      content: none;
+    }
+  }
+`;
+const OptionButton = styled.styled(Flex)`
+  ${({ theme, $variant }) => getOptionStyle({ theme, $variant })}
+`;
+const OptionLink = styled.styled(Link)`
+  /* We include this here again because typically when people use OptionLink they provide an as prop which cancels the Box props */
+  color: ${({ theme, color }) => extractStyleFromTheme(theme.colors, color, void 0)};
+  text-decoration: none;
+
+  &:hover {
+    color: unset;
+  }
+
+  /* TODO: do we need this? */
+  svg > path,
+  &:focus-visible svg > path {
+    fill: currentColor;
+  }
+
+  ${({ theme, $variant }) => getOptionStyle({ theme, $variant })}
+`;
+const StyledSeparator = styled.styled(Box)`
+  /* Negative horizontal margin to compensate Menu.Content's padding */
+  margin: ${({ theme }) => theme.spaces[1]} -${({ theme }) => theme.spaces[1]};
+  width: calc(100% + ${({ theme }) => theme.spaces[2]});
+  /* Hide separator if there's nothing above in the menu */
+  &:first-child {
+    display: none;
+  }
+`;
+const MenuSeparator = React__namespace.forwardRef((props, ref) => /* @__PURE__ */ jsxRuntime.jsx(DropdownMenu__namespace.Separator, { ...props, asChild: true, children: /* @__PURE__ */ jsxRuntime.jsx(StyledSeparator, { height: "1px", shrink: 0, background: "neutral150", ref }) }));
+const MenuLabel = React__namespace.forwardRef((props, ref) => /* @__PURE__ */ jsxRuntime.jsx(DropdownMenu__namespace.Label, { asChild: true, children: /* @__PURE__ */ jsxRuntime.jsx(StyledLabel, { ref, variant: "sigma", textColor: "neutral600", ...props }) }));
+const StyledLabel = styled.styled(Typography)`
+  padding: ${({ theme }) => theme.spaces[2]} ${({ theme }) => theme.spaces[4]};
+`;
+const MenuSubRoot = DropdownMenu__namespace.Sub;
+const MenuSubTrigger = React__namespace.forwardRef(({ disabled = false, ...props }, ref) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(DropdownMenu__namespace.SubTrigger, { asChild: true, disabled, children: /* @__PURE__ */ jsxRuntime.jsxs(
+    SubmenuTrigger,
+    {
+      ref,
+      color: "neutral800",
+      tag: "button",
+      type: "button",
+      background: "transparent",
+      borderStyle: "none",
+      gap: 5,
+      ...props,
+      children: [
+        /* @__PURE__ */ jsxRuntime.jsx(Typography, { children: props.children }),
+        /* @__PURE__ */ jsxRuntime.jsx(icons.ChevronRight, { fill: "neutral500", height: "1.2rem", width: "1.2rem" })
+      ]
+    }
+  ) });
+});
+const SubmenuTrigger = styled.styled(OptionButton)`
+  &[data-state='open'] {
+    background-color: ${({ theme }) => theme.colors.primary100};
+  }
+`;
+const MenuSubContent = React__namespace.forwardRef((props, ref) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(DropdownMenu__namespace.Portal, { children: /* @__PURE__ */ jsxRuntime.jsx(DropdownMenu__namespace.SubContent, { sideOffset: 8, asChild: true, children: /* @__PURE__ */ jsxRuntime.jsx(
+    Viewport$1,
+    {
+      ref,
+      direction: "column",
+      borderStyle: "solid",
+      borderWidth: "1px",
+      borderColor: "neutral150",
+      hasRadius: true,
+      background: "neutral0",
+      shadow: "filterShadow",
+      maxHeight: "15rem",
+      padding: 1,
+      alignItems: "flex-start",
+      overflow: "auto",
+      ...props
+    }
+  ) }) });
+});
+const Root$7 = MenuRoot;
+const Trigger$6 = MenuTrigger;
+const Content$6 = MenuContent;
+const Item$3 = MenuItem$1;
+const Separator = MenuSeparator;
+const Label$1 = MenuLabel;
+const SubRoot = MenuSubRoot;
+const SubTrigger = MenuSubTrigger;
+const SubContent = MenuSubContent;
+const Menu = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  Content: Content$6,
+  Item: Item$3,
+  Label: Label$1,
+  Root: Root$7,
+  Separator,
+  SubContent,
+  SubRoot,
+  SubTrigger,
+  Trigger: Trigger$6
+}, Symbol.toStringTag, { value: "Module" }));
+const SimpleMenu = React__namespace.forwardRef(
+  ({ children, onOpen, onClose, popoverPlacement, onReachEnd, ...props }, forwardedRef) => {
+    const triggerRef = React__namespace.useRef(null);
+    const composedRef = useComposedRefs(forwardedRef, triggerRef);
+    const contentRef = React__namespace.useRef(null);
+    const [internalIsOpen, setInternalIsOpen] = React__namespace.useState(false);
+    const handleReachEnd = (entry) => {
+      if (onReachEnd) {
+        onReachEnd(entry);
+      }
+    };
+    const handleOpenChange = (isOpen) => {
+      if (isOpen && typeof onOpen === "function") {
+        onOpen();
+      } else if (!isOpen && typeof onClose === "function") {
+        onClose();
+      }
+      setInternalIsOpen(isOpen);
+    };
+    const generatedId = useId();
+    const intersectionId = `intersection-${stripReactIdOfColon(generatedId)}`;
+    useIntersection(contentRef, handleReachEnd, {
+      selectorToWatch: `#${intersectionId}`,
+      /**
+       * We need to know when the select is open because only then will viewportRef
+       * not be null. Because it uses a portal that (sensibly) is not mounted 24/7.
+       */
+      skipWhen: !internalIsOpen
+    });
+    return /* @__PURE__ */ jsxRuntime.jsxs(Root$7, { onOpenChange: handleOpenChange, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(Trigger$6, { ref: composedRef, ...props, children: props.label }),
+      /* @__PURE__ */ jsxRuntime.jsx(Content$6, { ref: contentRef, intersectionId, popoverPlacement, children })
+    ] });
+  }
+);
+const MenuItem = Item$3;
+const StyledButton = styled.styled(SimpleMenu)`
+  padding: ${({ theme }) => `${theme.spaces[1]} ${theme.spaces[2]}`};
+  height: unset;
+
+  :hover,
+  :focus {
+    background-color: ${({ theme }) => theme.colors.neutral200};
+  }
+`;
+const CrumbSimpleMenu = React__namespace.forwardRef(
+  ({ children, ...props }, forwardedRef) => /* @__PURE__ */ jsxRuntime.jsx(StyledButton, { ref: forwardedRef, endIcon: null, size: "S", ...props, children })
+);
+CrumbSimpleMenu.displayName = "CrumbSimpleMenu";
+const CardContext = React__namespace.createContext({ id: "" });
+const useCard = () => React__namespace.useContext(CardContext);
+const Card = React__namespace.forwardRef(({ id, ...props }, forwardedRef) => {
+  const generatedId = useId(id);
+  const context = React__namespace.useMemo(() => ({ id: generatedId }), [generatedId]);
+  return /* @__PURE__ */ jsxRuntime.jsx(CardContext.Provider, { value: context, children: /* @__PURE__ */ jsxRuntime.jsx(
+    Box,
+    {
+      ref: forwardedRef,
+      id,
+      tabIndex: 0,
+      hasRadius: true,
+      background: "neutral0",
+      borderStyle: "solid",
+      borderWidth: "1px",
+      borderColor: "neutral150",
+      shadow: "tableShadow",
+      tag: "article",
+      "aria-labelledby": `${generatedId}-title`,
+      ...props
+    }
+  ) });
+});
+const CardActionImpl = React__namespace.forwardRef(({ position, ...restProps }, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(CardAction, { ref: forwardedRef, $position: position, ...restProps, direction: "row", gap: 2 });
+});
+const CardAction = styled.styled(Flex)`
+  position: absolute;
+  top: ${({ theme }) => theme.spaces[3]};
+  right: ${({ $position, theme }) => {
+  if ($position === "end") {
+    return theme.spaces[3];
+  }
+  return void 0;
+}};
+  left: ${({ $position, theme }) => {
+  if ($position === "start") {
+    return theme.spaces[3];
+  }
+  return void 0;
+}};
+`;
+const CardAsset = ({ size = "M", children, ...props }) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(CardAssetWrapper, { $size: size, children: children ? children : /* @__PURE__ */ jsxRuntime.jsx(CardAssetImg, { ...props, "aria-hidden": true }) });
+};
+const CardAssetImg = styled.styled.img`
+  // inline flows is based on typography and displays an extra white space below the image
+  // switch to block is required in order to make the img stick the bottom of the container
+  // addition infos: https://stackoverflow.com/questions/5804256/image-inside-div-has-extra-space-below-the-image
+  margin: 0;
+  padding: 0;
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+`;
+const CardAssetWrapper = styled.styled.div`
+  display: flex;
+  justify-content: center;
+  height: ${({ $size }) => $size === "S" ? "8.8rem" : "16.4rem"};
+  width: 100%;
+  background: repeating-conic-gradient(${({ theme }) => theme.colors.neutral100} 0% 25%, transparent 0% 50%) 50% / 20px
+    20px;
+  border-top-left-radius: ${({ theme }) => theme.borderRadius};
+  border-top-right-radius: ${({ theme }) => theme.borderRadius};
+`;
+const CardBadgeWrapper = styled.styled.div`
+  margin-left: auto;
+  flex-shrink: 0;
+`;
+const BadgePosition = styled.styled(Badge)`
+  margin-left: ${({ theme }) => theme.spaces[1]};
+`;
+const CardBadge = (props) => /* @__PURE__ */ jsxRuntime.jsx(CardBadgeWrapper, { children: /* @__PURE__ */ jsxRuntime.jsx(BadgePosition, { ...props }) });
+const CardBody = (props) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(Box, { paddingLeft: 3, paddingRight: 3, paddingTop: 2, paddingBottom: 2, children: /* @__PURE__ */ jsxRuntime.jsx(Flex, { ...props, alignItems: "flex-start" }) });
+};
+const CheckIcon = ({ fill, ...props }) => {
+  const { colors } = styled.useTheme();
+  return /* @__PURE__ */ jsxRuntime.jsx(
+    Box,
+    {
+      tag: "svg",
+      viewBox: "0 0 32 32",
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: fill ? colors[fill] : void 0,
+      ...props,
+      children: /* @__PURE__ */ jsxRuntime.jsx("path", { d: "M29.0613 10.0613L13.0613 26.0613C12.9219 26.2011 12.7563 26.3121 12.574 26.3878C12.3917 26.4635 12.1962 26.5024 11.9988 26.5024C11.8013 26.5024 11.6059 26.4635 11.4235 26.3878C11.2412 26.3121 11.0756 26.2011 10.9363 26.0613L3.93626 19.0613C3.79673 18.9217 3.68605 18.7561 3.61053 18.5738C3.53502 18.3915 3.49615 18.1961 3.49615 17.9988C3.49615 17.8014 3.53502 17.606 3.61053 17.4237C3.68605 17.2414 3.79673 17.0758 3.93626 16.9363C4.07579 16.7967 4.24143 16.686 4.42374 16.6105C4.60604 16.535 4.80143 16.4962 4.99876 16.4962C5.19608 16.4962 5.39147 16.535 5.57378 16.6105C5.75608 16.686 5.92173 16.7967 6.06126 16.9363L12 22.875L26.9388 7.93876C27.2205 7.65697 27.6027 7.49866 28.0013 7.49866C28.3998 7.49866 28.782 7.65697 29.0638 7.93876C29.3455 8.22055 29.5039 8.60274 29.5039 9.00126C29.5039 9.39977 29.3455 9.78197 29.0638 10.0638L29.0613 10.0613Z" })
+    }
+  );
+};
+const CheckboxEl = React__namespace.forwardRef(
+  ({ defaultChecked, checked: checkedProp, onCheckedChange, ...props }, forwardedRef) => {
+    const checkboxRef = React__namespace.useRef(null);
+    const [checked, setChecked] = useControllableState$1({
+      defaultProp: defaultChecked,
+      prop: checkedProp,
+      onChange: onCheckedChange
+    });
+    const composedRefs = useComposedRefs(checkboxRef, forwardedRef);
+    return /* @__PURE__ */ jsxRuntime.jsx(CheckboxRoot, { ref: composedRefs, checked, onCheckedChange: setChecked, ...props, children: /* @__PURE__ */ jsxRuntime.jsxs(CheckboxIndicator, { forceMount: true, children: [
+      checked === true ? /* @__PURE__ */ jsxRuntime.jsx(CheckIcon, { width: "1.6rem", fill: "neutral0" }) : null,
+      checked === "indeterminate" ? /* @__PURE__ */ jsxRuntime.jsx(icons.Minus, { fill: "neutral0" }) : null
+    ] }) });
+  }
+);
+const CheckboxRoot = styled.styled(Checkbox__namespace.Root)`
+  background: ${(props) => props.theme.colors.neutral0};
+  width: 2rem;
+  height: 2rem;
+  border-radius: ${(props) => props.theme.borderRadius};
+  border: 1px solid ${(props) => props.theme.colors.neutral300};
+  position: relative;
+  z-index: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  // this ensures the checkbox is always a square even in flex-containers.
+  flex: 0 0 2rem;
+
+  &[data-state='checked']:not([data-disabled]),
+  &[data-state='indeterminate']:not([data-disabled]) {
+    border: 1px solid ${(props) => props.theme.colors.primary600};
+    background-color: ${(props) => props.theme.colors.primary600};
+  }
+
+  &[data-disabled] {
+    background-color: ${(props) => props.theme.colors.neutral200};
+  }
+
+  /* increase target size for touch devices https://www.w3.org/WAI/WCAG21/Understanding/target-size.html */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    min-width: 44px;
+    min-height: 44px;
+  }
+`;
+const CheckboxIndicator = styled.styled(Checkbox__namespace.Indicator)`
+  display: inline-flex;
+  pointer-events: auto !important;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+
+  &[data-disabled] {
+    cursor: not-allowed;
+  }
+`;
+const CheckboxImpl = React__namespace.forwardRef(({ children, ...restProps }, forwardedRef) => {
+  const labelId = useId(restProps.id);
+  if (!children) {
+    return /* @__PURE__ */ jsxRuntime.jsx(CheckboxEl, { ref: forwardedRef, ...restProps });
+  }
+  return /* @__PURE__ */ jsxRuntime.jsxs(Flex, { gap: 2, children: [
+    /* @__PURE__ */ jsxRuntime.jsx(CheckboxEl, { id: labelId, ...restProps }),
+    /* @__PURE__ */ jsxRuntime.jsx(Typography, { tag: "label", textColor: "neutral800", htmlFor: labelId, children })
+  ] });
+});
+const CardCheckbox = React__namespace.forwardRef((props, forwardedRef) => {
+  const { id } = useCard();
+  return /* @__PURE__ */ jsxRuntime.jsx(CardActionImpl, { position: "start", children: /* @__PURE__ */ jsxRuntime.jsx(CheckboxImpl, { "aria-labelledby": `${id}-title`, ...props, ref: forwardedRef }) });
+});
+const BreakBox = styled.styled(Box)`
+  word-break: break-all;
+`;
+const CardContent = ({ children, ...props }) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(BreakBox, { ...props, children });
+};
+const CardHeaderWrapper = styled.styled(Flex)`
+  border-bottom: 1px solid ${({ theme }) => theme.colors.neutral150};
+`;
+const CardHeader = (props) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(CardHeaderWrapper, { position: "relative", justifyContent: "center", ...props });
+};
+const CardTimer = ({ children, ...props }) => /* @__PURE__ */ jsxRuntime.jsx(
+  Box,
+  {
+    tag: "time",
+    background: "neutral800",
+    bottom: 1,
+    right: 1,
+    color: "neutral0",
+    hasRadius: true,
+    position: "absolute",
+    padding: 1,
+    ...props,
+    children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "pi", textColor: "neutral0", children })
+  }
+);
+const CardTitle = (props) => {
+  const { id } = useCard();
+  return /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "pi", id: `${id}-title`, textColor: "neutral800", fontWeight: "bold", tag: "div", ...props });
+};
+const CardSubtitle = (props) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "pi", ...props, textColor: "neutral600", tag: "div" });
+};
+const KeyboardKeys = {
+  DOWN: "ArrowDown",
+  UP: "ArrowUp",
+  RIGHT: "ArrowRight",
+  LEFT: "ArrowLeft",
+  ESCAPE: "Escape",
+  ENTER: "Enter",
+  SPACE: " ",
+  TAB: "Tab",
+  END: "End",
+  HOME: "Home",
+  DELETE: "Delete",
+  PAGE_UP: "PageUp",
+  PAGE_DOWN: "PageDown",
+  BACKSPACE: "Backspace",
+  CLEAR: "Clear"
+};
+const CarouselGrid = styled.styled(Box)`
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: 'startAction slides endAction';
+`;
+const CarouselSlides = styled.styled(Flex)`
+  grid-area: slides;
+`;
+const CarouselAction = styled.styled(Box)`
+  grid-area: ${({ $area }) => $area};
+
+  &:focus svg path,
+  &:hover svg path {
+    fill: ${({ theme }) => theme.colors.neutral900};
+  }
+`;
+const Carousel = React__namespace.forwardRef(
+  ({ actions, children, label, nextLabel, onNext, onPrevious, previousLabel, secondaryLabel, selectedSlide, ...props }, forwardedRef) => {
+    const prevActionRef = React__namespace.useRef(null);
+    const nextActionRef = React__namespace.useRef(null);
+    const childrenArray = React__namespace.Children.map(
+      children,
+      (node, index) => React__namespace.cloneElement(node, { selected: index === selectedSlide })
+    );
+    const handleKeyDown = (event) => {
+      switch (event.key) {
+        case KeyboardKeys.RIGHT: {
+          event.preventDefault();
+          if (nextActionRef?.current) {
+            nextActionRef.current.focus();
+          }
+          if (onNext) {
+            onNext();
+          }
+          break;
+        }
+        case KeyboardKeys.LEFT: {
+          event.preventDefault();
+          if (prevActionRef?.current) {
+            prevActionRef.current.focus();
+          }
+          if (onPrevious) {
+            onPrevious();
+          }
+          break;
+        }
+      }
+    };
+    return /* @__PURE__ */ jsxRuntime.jsx(Box, { ref: forwardedRef, ...props, onKeyDown: handleKeyDown, children: /* @__PURE__ */ jsxRuntime.jsxs(Box, { padding: 2, borderColor: "neutral200", hasRadius: true, background: "neutral100", children: [
+      /* @__PURE__ */ jsxRuntime.jsxs(
+        CarouselGrid,
+        {
+          tag: "section",
+          "aria-roledescription": "carousel",
+          "aria-label": label,
+          display: "grid",
+          position: "relative",
+          children: [
+            childrenArray && childrenArray.length > 1 && /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
+              /* @__PURE__ */ jsxRuntime.jsx(CarouselAction, { tag: "button", onClick: onPrevious, $area: "startAction", ref: prevActionRef, type: "button", children: /* @__PURE__ */ jsxRuntime.jsx(AccessibleIcon, { label: previousLabel, children: /* @__PURE__ */ jsxRuntime.jsx(icons.ChevronLeft, { width: "1.6rem", height: "1.6rem", fill: "neutral600" }) }) }),
+              /* @__PURE__ */ jsxRuntime.jsx(CarouselAction, { tag: "button", onClick: onNext, $area: "endAction", ref: nextActionRef, type: "button", children: /* @__PURE__ */ jsxRuntime.jsx(AccessibleIcon, { label: nextLabel, children: /* @__PURE__ */ jsxRuntime.jsx(icons.ChevronRight, { width: "1.6rem", height: "1.6rem", fill: "neutral600" }) }) })
+            ] }),
+            /* @__PURE__ */ jsxRuntime.jsx(CarouselSlides, { "aria-live": "polite", paddingLeft: 2, paddingRight: 2, width: "100%", overflow: "hidden", children: childrenArray }),
+            actions
+          ]
+        }
+      ),
+      secondaryLabel && /* @__PURE__ */ jsxRuntime.jsx(Box, { paddingTop: 2, paddingLeft: 4, paddingRight: 4, children: /* @__PURE__ */ jsxRuntime.jsx(TooltipImpl, { label: secondaryLabel, children: /* @__PURE__ */ jsxRuntime.jsx(Flex, { justifyContent: "center", children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "pi", textColor: "neutral600", ellipsis: true, children: secondaryLabel }) }) }) })
+    ] }) });
+  }
+);
+const sizes = {
+  accordions: {
+    S: `4.8rem`,
+    M: `8.8rem`
+  },
+  button: {
+    S: `3.2rem`,
+    M: `3.6rem`,
+    L: `4rem`
+  }
+};
+const commonTheme = {
+  sizes,
+  zIndices: {
+    navigation: 100,
+    overlay: 300,
+    modal: 310,
+    dialog: 320,
+    popover: 500,
+    notification: 700,
+    tooltip: 1e3
+  },
+  spaces: ["0px", "4px", "8px", "12px", "16px", "20px", "24px", "32px", "40px", "48px", "56px", "64px"],
+  borderRadius: "4px",
+  breakpoints: {
+    initial: "@media(min-width: 0px)",
+    small: "@media(min-width: 520px)",
+    medium: "@media(min-width: 768px)",
+    large: "@media(min-width: 1080px)"
+  },
+  fontSizes: [`1.1rem`, `1.2rem`, `1.4rem`, "1.6rem", `1.8rem`, `3.2rem`],
+  lineHeights: [1.14, 1.22, 1.25, 1.33, 1.43, 1.45, 1.5],
+  fontWeights: {
+    regular: 400,
+    semiBold: 500,
+    bold: 600
+  },
+  transitions: TRANSITIONS,
+  motion: {
+    easings: EASINGS,
+    timings: TIMINGS
+  }
+};
+const lightColorTokenObject = {
+  color: {
+    alternative100: "#f6ecfc",
+    alternative200: "#e0c1f4",
+    alternative500: "#ac73e6",
+    alternative600: "#9736e8",
+    alternative700: "#8312d1",
+    buttonNeutral0: "#ffffff",
+    buttonPrimary500: "#7b79ff",
+    buttonPrimary600: "#4945ff",
+    danger100: "#fcecea",
+    danger200: "#f5c0b8",
+    danger500: "#ee5e52",
+    danger600: "#d02b20",
+    danger700: "#b72b1a",
+    neutral0: "#ffffff",
+    neutral100: "#f6f6f9",
+    neutral1000: "#181826",
+    neutral150: "#eaeaef",
+    neutral200: "#dcdce4",
+    neutral300: "#c0c0cf",
+    neutral400: "#a5a5ba",
+    neutral500: "#8e8ea9",
+    neutral600: "#666687",
+    neutral700: "#4a4a6a",
+    neutral800: "#32324d",
+    neutral900: "#212134",
+    primary100: "#f0f0ff",
+    primary200: "#d9d8ff",
+    primary500: "#7b79ff",
+    primary600: "#4945ff",
+    primary700: "#271fe0",
+    secondary100: "#eaf5ff",
+    secondary200: "#b8e1ff",
+    secondary500: "#66b7f1",
+    secondary600: "#0c75af",
+    secondary700: "#006096",
+    success100: "#eafbe7",
+    success200: "#c6f0c2",
+    success500: "#5cb176",
+    success600: "#328048",
+    success700: "#2f6846",
+    warning100: "#fdf4dc",
+    warning200: "#fae7b9",
+    warning500: "#f29d41",
+    warning600: "#d9822f",
+    warning700: "#be5d01"
+  }
+};
+const lightShadowTokenObject = {
+  shadow: {
+    filterShadow: "0px 1px 4px rgba(33, 33, 52, 0.1)",
+    focus: "inset 2px 0px 0px rgb(39, 31, 224), inset 0px 2px 0px rgb(39, 31, 224), inset -2px 0px 0px rgb(39, 31, 224), inset 0px -2px 0px rgb(39, 31, 224)",
+    focusShadow: "0px 0px 6px rgba(76, 191, 255, 0.75)",
+    popupShadow: "0px 2px 15px rgba(33, 33, 52, 0.1)",
+    tableShadow: "0px 1px 4px rgba(33, 33, 52, 0.1)"
+  }
+};
+const lightTheme = {
+  colors: lightColorTokenObject.color,
+  shadows: lightShadowTokenObject.shadow,
+  ...commonTheme
+};
+const darkColorTokenObject = {
+  color: {
+    alternative100: "#181826",
+    alternative200: "#4a4a6a",
+    alternative500: "#ac73e6",
+    alternative600: "#ac73e6",
+    alternative700: "#e0c1f4",
+    buttonNeutral0: "#ffffff",
+    buttonPrimary500: "#7b79ff",
+    buttonPrimary600: "#4945ff",
+    danger100: "#181826",
+    danger200: "#4a4a6a",
+    danger500: "#ee5e52",
+    danger600: "#ee5e52",
+    danger700: "#ee5e52",
+    neutral0: "#212134",
+    neutral100: "#181826",
+    neutral1000: "#ffffff",
+    neutral150: "#32324d",
+    neutral200: "#4a4a6a",
+    neutral300: "#666687",
+    neutral400: "#a5a5ba",
+    neutral500: "#c0c0cf",
+    neutral600: "#a5a5ba",
+    neutral700: "#eaeaef",
+    neutral800: "#ffffff",
+    neutral900: "#ffffff",
+    primary100: "#181826",
+    primary200: "#4a4a6a",
+    primary500: "#4945ff",
+    primary600: "#7b79ff",
+    primary700: "#7b79ff",
+    secondary100: "#181826",
+    secondary200: "#4a4a6a",
+    secondary500: "#66b7f1",
+    secondary600: "#66b7f1",
+    secondary700: "#b8e1ff",
+    success100: "#181826",
+    success200: "#4a4a6a",
+    success500: "#5cb176",
+    success600: "#5cb176",
+    success700: "#c6f0c2",
+    warning100: "#181826",
+    warning200: "#4a4a6a",
+    warning500: "#f29d41",
+    warning600: "#f29d41",
+    warning700: "#fae7b9"
+  }
+};
+const darkShadowTokenObject = {
+  shadow: {
+    filterShadow: "1px 1px 10px rgba(3, 3, 5, 0.35)",
+    focus: "inset 2px 0px 0px rgb(39, 31, 224), inset 0px 2px 0px rgb(39, 31, 224), inset -2px 0px 0px rgb(39, 31, 224), inset 0px -2px 0px rgb(39, 31, 224)",
+    focusShadow: "0px 0px 6px rgba(76, 191, 255, 0.75)",
+    popupShadow: "1px 1px 10px rgba(3, 3, 5, 0.35)",
+    tableShadow: "1px 1px 10px rgba(3, 3, 5, 0.2)"
+  }
+};
+const darkTheme = {
+  colors: darkColorTokenObject.color,
+  shadows: darkShadowTokenObject.shadow,
+  ...commonTheme
+};
+const generateError = (customMessage) => `
+${customMessage}
+
+The following is an example:
+
+
+import { lightTheme, extendTheme } from '@strapi/design-system';
+
+const myCustomTheme = extendTheme(lightTheme, {
+    ${Object.keys(lightTheme).map((key) => `${key}: /* put the overrides for the ${key} key */,`).join("\n")}
+})
+`;
+const extendTheme = (theme, overrides) => {
+  if (!isObject(theme)) {
+    const error = generateError(
+      "The first argument should be an object and corresponds to the theme you want to extend."
+    );
+    throw new Error(error);
+  }
+  if (!isObject(overrides)) {
+    const error = generateError(
+      "The second argument should be an object and corresponds to the keys of the theme you want to override."
+    );
+    throw new Error(error);
+  }
+  function customizer(objValue, srcValue) {
+    if (Array.isArray(objValue)) {
+      return srcValue;
+    }
+    if (isObject(objValue) && isObject(srcValue)) {
+      return lodash.merge(objValue, srcValue);
+    }
+    return void 0;
+  }
+  const masterTheme = lodash.cloneDeep(theme ?? {});
+  const masterOverrides = lodash.cloneDeep(overrides ?? {});
+  lodash.assignWith(masterTheme, masterOverrides, customizer);
+  return masterTheme;
+};
+const getThemeSize = (type) => {
+  return ({ theme, size }) => theme.sizes[type][size];
+};
+const inputFocusStyle = (rootElement = "&") => ({ theme, $hasError = false }) => styled.css`
+    outline: none;
+    box-shadow: none;
+    transition-property: border-color, box-shadow, fill;
+    transition-duration: 0.2s;
+
+    ${rootElement}:focus-within {
+      border: 1px solid ${$hasError ? theme.colors.danger600 : theme.colors.primary600};
+      box-shadow: ${$hasError ? theme.colors.danger600 : theme.colors.primary600} 0px 0px 0px 2px;
+    }
+  `;
+const [FieldProvider, useField] = createContext("Field", {});
+const Root$6 = React__namespace.forwardRef(
+  ({ children, name, error = false, hint, id, required = false, ...props }, ref) => {
+    const generatedId = useId(id);
+    const [labelNode, setLabelNode] = React__namespace.useState();
+    return /* @__PURE__ */ jsxRuntime.jsx(
+      FieldProvider,
+      {
+        name,
+        id: generatedId,
+        error,
+        hint,
+        required,
+        labelNode,
+        setLabelNode,
+        children: /* @__PURE__ */ jsxRuntime.jsx(Flex, { direction: "column", alignItems: "stretch", gap: 1, ref, ...props, children })
+      }
+    );
+  }
+);
+const Label = React__namespace.forwardRef(({ children, action, ...props }, ref) => {
+  const { id, required, setLabelNode } = useField("Label");
+  const composedRefs = useComposedRefs(ref, setLabelNode);
+  if (!children) {
+    return null;
+  }
+  return /* @__PURE__ */ jsxRuntime.jsxs(
+    TypographyLabel,
+    {
+      ref: composedRefs,
+      variant: "pi",
+      textColor: "neutral800",
+      fontWeight: "bold",
+      ...props,
+      id: `${id}-label`,
+      htmlFor: id,
+      tag: "label",
+      ellipsis: true,
+      children: [
+        children,
+        required && /* @__PURE__ */ jsxRuntime.jsx(Typography, { "aria-hidden": true, lineHeight: "1em", textColor: "danger600", children: "*" }),
+        action && /* @__PURE__ */ jsxRuntime.jsx(LabelAction, { marginLeft: 1, children: action })
+      ]
+    }
+  );
+});
+const TypographyLabel = styled.styled(Typography)`
+  display: flex;
+`;
+const LabelAction = styled.styled(Flex)`
+  line-height: 0;
+  color: ${({ theme }) => theme.colors.neutral500};
+`;
+const Input$2 = React__namespace.forwardRef(
+  ({
+    endAction,
+    startAction,
+    disabled = false,
+    onChange,
+    hasError: hasErrorProp,
+    required: requiredProp,
+    className,
+    size = "M",
+    ...props
+  }, ref) => {
+    const { id, error, hint, name, required } = useField("Input");
+    let ariaDescription;
+    if (error) {
+      ariaDescription = `${id}-error`;
+    } else if (hint) {
+      ariaDescription = `${id}-hint`;
+    }
+    const hasError = Boolean(error);
+    const endActionRef = React__namespace.useRef(null);
+    const inputElementRef = React__namespace.useRef(null);
+    const inputRef = useComposedRefs(inputElementRef, ref);
+    const handleChange = (e) => {
+      if (!disabled && onChange) {
+        onChange(e);
+      }
+    };
+    React__namespace.useLayoutEffect(() => {
+      if (endActionRef.current && inputElementRef.current) {
+        const endActionWidth = endActionRef.current.offsetWidth;
+        const inputElement = inputElementRef.current;
+        if (inputElement) {
+          const inputPadding = endActionWidth + 8 + 16;
+          inputElement.style.paddingRight = `${inputPadding}px`;
+        }
+      }
+    }, [endAction]);
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      InputWrapper,
+      {
+        gap: 2,
+        justifyContent: "space-between",
+        $hasError: hasError || hasErrorProp,
+        $disabled: disabled,
+        $size: size,
+        $hasLeftAction: Boolean(startAction),
+        $hasRightAction: Boolean(endAction),
+        className,
+        children: [
+          startAction,
+          /* @__PURE__ */ jsxRuntime.jsx(
+            InputElement,
+            {
+              id,
+              name,
+              ref: inputRef,
+              $size: size,
+              "aria-describedby": ariaDescription,
+              "aria-invalid": hasError || hasErrorProp,
+              "aria-disabled": disabled,
+              disabled,
+              "data-disabled": disabled ? "" : void 0,
+              onChange: handleChange,
+              "aria-required": required || requiredProp,
+              $hasLeftAction: Boolean(startAction),
+              $hasRightAction: Boolean(endAction),
+              ...props
+            }
+          ),
+          endAction && /* @__PURE__ */ jsxRuntime.jsx(EndAction, { ref: endActionRef, children: endAction })
+        ]
+      }
+    );
+  }
+);
+const InputElement = styled.styled.input`
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius};
+  cursor: ${(props) => props["aria-disabled"] ? "not-allowed" : void 0};
+
+  color: ${({ theme }) => theme.colors.neutral800};
+  font-weight: 400;
+  font-size: ${(props) => props.theme.fontSizes[2]};
+  line-height: 2.2rem;
+  display: block;
+  width: 100%;
+  background: inherit;
+
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.neutral600};
+    opacity: 1;
+  }
+
+  &[aria-disabled='true'] {
+    color: inherit;
+  }
+
+  //focus managed by InputWrapper
+  &:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  ${(props) => {
+  switch (props.$size) {
+    case "S":
+      return styled.css`
+          padding-inline-start: ${props.$hasLeftAction ? 0 : props.theme.spaces[4]};
+          padding-inline-end: ${props.$hasRightAction ? 0 : props.theme.spaces[4]};
+          padding-block: ${props.theme.spaces[1]};
+        `;
+    default:
+      return styled.css`
+          padding-inline-start: ${props.$hasLeftAction ? 0 : props.theme.spaces[4]};
+          padding-inline-end: ${props.$hasRightAction ? 0 : props.theme.spaces[4]};
+          padding-block: ${props.theme.spaces[2]};
+        `;
+  }
+}}
+`;
+const EndAction = styled.styled(Flex)`
+  position: absolute;
+  right: ${({ theme }) => theme.spaces[4]};
+  top: 50%;
+  transform: translateY(-50%);
+`;
+const InputWrapper = styled.styled(Flex)`
+  border: 1px solid ${({ theme, $hasError }) => $hasError ? theme.colors.danger600 : theme.colors.neutral200};
+  border-radius: ${({ theme }) => theme.borderRadius};
+  background: ${({ theme }) => theme.colors.neutral0};
+  padding-inline-start: ${({ $hasLeftAction, theme }) => $hasLeftAction ? theme.spaces[4] : 0};
+  position: relative;
+
+  ${inputFocusStyle()}
+  ${({ theme, $disabled }) => $disabled ? styled.css`
+          color: ${theme.colors.neutral600};
+          background: ${theme.colors.neutral150};
+        ` : void 0};
+`;
+const Hint = () => {
+  const { id, hint, error } = useField("Hint");
+  if (!hint || error) {
+    return null;
+  }
+  return /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "pi", tag: "p", id: `${id}-hint`, textColor: "neutral600", children: hint });
+};
+const Error$1 = () => {
+  const { id, error } = useField("Error");
+  if (!error || typeof error !== "string") {
+    return null;
+  }
+  return /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "pi", tag: "p", id: `${id}-error`, textColor: "danger600", "data-strapi-field-error": true, children: error });
+};
+const Action$1 = React__namespace.forwardRef(({ label, children, ...props }, ref) => /* @__PURE__ */ jsxRuntime.jsx(
+  FieldActionWrapper,
+  {
+    justifyContent: "unset",
+    background: "transparent",
+    borderStyle: "none",
+    ...props,
+    type: "button",
+    tag: "button",
+    ref,
+    children: /* @__PURE__ */ jsxRuntime.jsx(AccessibleIcon, { label, children })
+  }
+));
+const FieldActionWrapper = styled.styled(Flex)`
+  font-size: 1.6rem;
+  padding: 0;
+`;
+const Field = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  Action: Action$1,
+  Error: Error$1,
+  Hint,
+  Input: Input$2,
+  Label,
+  Root: Root$6,
+  useField
+}, Symbol.toStringTag, { value: "Module" }));
+const CarouselInput = React__namespace.forwardRef(
+  ({
+    actions,
+    children,
+    error,
+    hint,
+    label,
+    labelAction,
+    nextLabel,
+    onNext,
+    onPrevious,
+    previousLabel,
+    required,
+    secondaryLabel,
+    selectedSlide,
+    id,
+    ...props
+  }, forwardedRef) => {
+    const generatedId = useId(id);
+    return /* @__PURE__ */ jsxRuntime.jsx(Root$6, { hint, error, id: generatedId, required, children: /* @__PURE__ */ jsxRuntime.jsxs(Flex, { direction: "column", alignItems: "stretch", gap: 1, children: [
+      label && /* @__PURE__ */ jsxRuntime.jsx(Label, { action: labelAction, children: label }),
+      /* @__PURE__ */ jsxRuntime.jsx(
+        Carousel,
+        {
+          ref: forwardedRef,
+          actions,
+          label,
+          nextLabel,
+          onNext,
+          onPrevious,
+          previousLabel,
+          secondaryLabel,
+          selectedSlide,
+          id: generatedId,
+          ...props,
+          children
+        }
+      ),
+      /* @__PURE__ */ jsxRuntime.jsx(Hint, {}),
+      /* @__PURE__ */ jsxRuntime.jsx(Error$1, {})
+    ] }) });
+  }
+);
+const CarouselActions = ({ horizontal = true, ...props }) => /* @__PURE__ */ jsxRuntime.jsx(
+  Flex,
+  {
+    justifyContent: "center",
+    direction: horizontal ? "row" : "column",
+    alignItems: horizontal ? "center" : "stretch",
+    position: "absolute",
+    width: "100%",
+    bottom: 1,
+    gap: 1,
+    ...props
+  }
+);
+const StyledImage = styled.styled(Box)`
+  ${ellipsis}
+`;
+const CarouselImage = (props) => {
+  const [isError, setIsError] = React__namespace.useState(false);
+  const handleImageError = () => {
+    setIsError(true);
+  };
+  if (isError) {
+    return /* @__PURE__ */ jsxRuntime.jsx(TooltipImpl, { label: props.alt ?? "", children: /* @__PURE__ */ jsxRuntime.jsx(StyledImage, { tag: "img", height: "100%", maxWidth: "100%", ...props }) });
+  }
+  return /* @__PURE__ */ jsxRuntime.jsx(StyledImage, { tag: "img", height: "100%", maxWidth: "100%", ...props, onError: handleImageError });
+};
+const CarouselSlideFlex = styled.styled(Flex)`
+  display: ${({ $selected }) => $selected ? "flex" : "none"};
+`;
+const CarouselSlide = ({ label, children, selected = false, ...props }) => /* @__PURE__ */ jsxRuntime.jsx(
+  CarouselSlideFlex,
+  {
+    $selected: selected,
+    alignItems: "center",
+    role: "group",
+    "aria-roledescription": "slide",
+    "aria-label": label,
+    justifyContent: "center",
+    height: "124px",
+    width: "100%",
+    ...props,
+    children
+  }
+);
+const ScrollAreaImpl$1 = React__namespace.forwardRef(
+  ({ children, viewportRef, ...restProps }, forwardedRef) => {
+    return /* @__PURE__ */ jsxRuntime.jsxs(ScrollAreaRoot, { ref: forwardedRef, ...restProps, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(ScrollAreaViewport, { ref: viewportRef, children }),
+      /* @__PURE__ */ jsxRuntime.jsx(Scrollbar, { orientation: "vertical", children: /* @__PURE__ */ jsxRuntime.jsx(Thumb, {}) }),
+      /* @__PURE__ */ jsxRuntime.jsx(Scrollbar, { orientation: "horizontal", children: /* @__PURE__ */ jsxRuntime.jsx(Thumb, {}) })
+    ] });
+  }
+);
+const ScrollAreaRoot = styled.styled(ScrollArea__namespace.Root)`
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+`;
+const ScrollAreaViewport = styled.styled(ScrollArea__namespace.Viewport)`
+  min-width: 100%;
+`;
+const Scrollbar = styled.styled(ScrollArea__namespace.Scrollbar)`
+  display: flex;
+  /* ensures no selection */
+  user-select: none;
+  /* disable browser handling of all panning and zooming gestures on touch devices */
+  touch-action: none;
+
+  &[data-orientation='vertical'] {
+    width: 0.4rem;
+    margin: 0.4rem;
+  }
+
+  &[data-orientation='horizontal'] {
+    flex-direction: column;
+    height: 0.4rem;
+    margin: 0.4rem;
+  }
+`;
+const Thumb = styled.styled(ScrollArea__namespace.Thumb)`
+  position: relative;
+  flex: 1;
+  background-color: ${(props) => props.theme.colors.neutral150};
+  border-radius: 0.4rem;
+
+  /* increase target size for touch devices https://www.w3.org/WAI/WCAG21/Understanding/target-size.html */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    min-width: 44px;
+    min-height: 44px;
+  }
+`;
+const loaderSvg = "data:image/svg+xml,%3csvg%20width='63'%20height='63'%20viewBox='0%200%2063%2063'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='M42.5563%2011.9816C39.484%2010.3071%2035.8575%209.29097%2032.3354%209.13521C28.6443%208.92888%2024.8295%209.72318%2021.3336%2011.4129C20.9123%2011.5901%2020.5376%2011.8101%2020.1722%2012.0249L20.0108%2012.1179C19.8774%2012.1951%2019.7441%2012.2724%2019.608%2012.3536C19.3253%2012.5146%2019.0492%2012.6744%2018.7544%2012.8792C18.5463%2013.0329%2018.3395%2013.1759%2018.1301%2013.323C17.5658%2013.7208%2016.9868%2014.1317%2016.4983%2014.5979C14.8476%2015.9524%2013.5571%2017.6075%2012.6071%2018.9214C10.4365%2022.1566%209.08622%2025.9567%208.80702%2029.6143L8.7764%2030.1588C8.73328%2030.9196%208.68476%2031.7057%208.75353%2032.4555C8.76648%2032.6084%208.7661%2032.7638%208.77506%2032.914C8.78895%2033.229%208.80152%2033.5373%208.846%2033.8672L9.07396%2035.4221C9.09756%2035.5764%209.1198%2035.7413%209.1633%2035.9263L9.65919%2037.9272L10.138%2039.2823C10.2729%2039.6673%2010.4158%2040.0751%2010.6%2040.43C12.0292%2043.637%2014.1425%2046.4578%2016.7063%2048.585C19.0508%2050.5296%2021.824%2052.0023%2024.7491%2052.8452L26.2371%2053.2376C26.3781%2053.2693%2026.4926%2053.2889%2026.6031%2053.3058L26.7775%2053.3311C27.0052%2053.3636%2027.2195%2053.3986%2027.4445%2053.435C27.8598%2053.5076%2028.2672%2053.5748%2028.7079%2053.6183L30.5641%2053.7229C30.9516%2053.7249%2031.3352%2053.7068%2031.7081%2053.6874C31.9039%2053.681%2032.0984%2053.6681%2032.3288%2053.662C34.5253%2053.4772%2036.5106%2053.0634%2038.0516%2052.4652C38.1769%2052.4171%2038.3008%2052.3796%2038.4234%2052.3355C38.6727%2052.2499%2038.9259%2052.167%2039.1432%2052.0599L40.8591%2051.2626L42.5702%2050.266C42.9009%2050.0682%2043.0205%2049.6414%2042.8282%2049.2984C42.632%2048.9526%2042.2034%2048.8308%2041.8634%2049.0166L40.1792%2049.9218L38.4995%2050.6224C38.3169%2050.6953%2038.121%2050.7534%2037.9224%2050.8155C37.7838%2050.8489%2037.6518%2050.8983%2037.5012%2050.9408C36.0711%2051.435%2034.2445%2051.7425%2032.244%2051.8346C32.0442%2051.8383%2031.8471%2051.8379%2031.654%2051.8403C31.3051%2051.8414%2030.9602%2051.8451%2030.6392%2051.8305L28.9177%2051.6725C28.5476%2051.619%2028.1695%2051.5427%2027.7848%2051.4678C27.5639%2051.4167%2027.3376%2051.3737%2027.1299%2051.3374L26.9529%2051.2987C26.8704%2051.2834%2026.7772%2051.2667%2026.7333%2051.2543L25.3466%2050.8322C22.7651%2049.9789%2020.33%2048.5729%2018.2942%2046.7557C16.1056%2044.7951%2014.3339%2042.2335%2013.1742%2039.3582C12.0276%2036.6013%2011.5988%2033.2792%2011.9716%2030.0076C12.3145%2027.0213%2013.3948%2024.1635%2015.1858%2021.5083C15.3034%2021.3339%2015.421%2021.1596%2015.5212%2021.0196C16.4309%2019.8688%2017.5408%2018.5589%2018.9483%2017.496C19.3367%2017.1525%2019.7862%2016.856%2020.2611%2016.5478C20.4878%2016.4009%2020.7079%2016.2553%2020.8907%2016.1306C21.0974%2016.0048%2021.3188%2015.8831%2021.5348%2015.7694C21.6761%2015.6975%2021.8162%2015.619%2021.9388%2015.5576L22.1002%2015.4646C22.4002%2015.3037%2022.6749%2015.1546%2022.9908%2015.039L24.1186%2014.5715C24.3399%2014.4844%2024.5718%2014.4159%2024.7997%2014.3447C24.953%2014.2982%2025.0982%2014.2635%2025.2635%2014.2078C25.786%2014.0182%2026.3283%2013.9112%2026.9105%2013.7965C27.117%2013.7571%2027.3302%2013.7163%2027.5608%2013.6585C27.7553%2013.611%2027.9737%2013.5969%2028.2082%2013.5762C28.364%2013.5603%2028.5172%2013.5483%2028.6318%2013.5333C28.7876%2013.5173%2028.9342%2013.5066%2029.0927%2013.4867C29.3285%2013.4555%2029.5456%2013.4347%2029.7494%2013.4337C30.0237%2013.44%2030.2994%2013.4357%2030.5777%2013.4274C31.0811%2013.421%2031.5579%2013.4197%2032.0318%2013.4914C34.9664%2013.7352%2037.7144%2014.6085%2040.2052%2016.0868C42.3489%2017.3655%2044.2716%2019.1525%2045.7607%2021.264C47.0255%2023.0628%2047.9756%2025.0528%2048.4928%2027.0393C48.572%2027.3176%2048.6299%2027.5931%2048.6839%2027.8659C48.7154%2028.0428%2048.7563%2028.2145%2048.7892%2028.3636C48.8037%2028.4541%2048.8208%2028.5406%2048.8445%2028.6258C48.8749%2028.7443%2048.8986%2028.864%2048.9116%2028.9651L48.9793%2029.6047C48.9922%2029.7748%2049.0132%2029.9331%2049.0301%2030.0887C49.0668%2030.3268%2049.0889%2030.5608%2049.0964%2030.7561L49.1083%2031.9001C49.1312%2032.3307%2049.089%2032.7116%2049.0522%2033.0673C49.0384%2033.2598%2049.0126%2033.4443%2049.0123%2033.5824C48.9961%2033.6926%2048.9918%2033.7935%2048.9836%2033.8917C48.9753%2034.0072%2048.9724%2034.1148%2048.9414%2034.2554L48.5449%2036.3059C48.3134%2037.8623%2049.3793%2039.3365%2050.9488%2039.5822C52.0417%2039.7601%2053.1536%2039.2819%2053.7711%2038.3664C54.0063%2038.0176%2054.1604%2037.6257%2054.2227%2037.2064L54.5217%2035.2574C54.5514%2035.0756%2054.572%2034.83%2054.5846%2034.5791L54.6028%2034.2338C54.6098%2034.0598%2054.6223%2033.8779%2054.6347%2033.6788C54.6734%2033.1052%2054.7163%2032.4479%2054.6619%2031.8058L54.5867%2030.4289C54.5622%2030.0952%2054.5097%2029.76%2054.4559%2029.4181C54.431%2029.2572%2054.4048%2029.0896%2054.3826%2028.9074L54.2687%2028.104C54.2332%2027.9244%2054.1804%2027.7273%2054.1329%2027.5396L54.0643%2027.2454C54.0195%2027.071%2053.9773%2026.8927%2053.9338%2026.7076C53.8455%2026.3309%2053.7479%2025.9422%2053.613%2025.5571C52.84%2023.0292%2051.5383%2020.5194%2049.8338%2018.2799C47.8544%2015.682%2045.3333%2013.5087%2042.5563%2011.9816Z'%20fill='%234945FF'/%3e%3c/svg%3e";
+const Loader = React__namespace.forwardRef(({ children, small = false, ...props }, ref) => {
+  return /* @__PURE__ */ jsxRuntime.jsxs("div", { role: "alert", "aria-live": "assertive", ref, ...props, children: [
+    /* @__PURE__ */ jsxRuntime.jsx(VisuallyHidden, { children }),
+    /* @__PURE__ */ jsxRuntime.jsx(LoaderImg, { src: loaderSvg, "aria-hidden": true, $small: small })
+  ] });
+});
+const rotation$1 = styled.keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359deg);
+  }
+`;
+const LoaderImg = styled.styled.img`
+  animation: ${rotation$1} 1s infinite linear;
+  will-change: transform;
+  ${({ $small, theme }) => $small && `width: ${theme.spaces[6]}; height: ${theme.spaces[6]};`}
+`;
+const Combobox = React__namespace.forwardRef(
+  ({
+    allowCustomValue,
+    autocomplete,
+    children,
+    className,
+    clearLabel = "Clear",
+    creatable = false,
+    creatableDisabled = false,
+    creatableStartIcon,
+    createMessage = (value2) => `Create "${value2}"`,
+    defaultFilterValue,
+    defaultTextValue,
+    defaultOpen = false,
+    open,
+    onOpenChange,
+    disabled = false,
+    hasError: hasErrorProp,
+    id: idProp,
+    filterValue,
+    hasMoreItems = false,
+    isPrintableCharacter: isPrintableCharacter2,
+    loading = false,
+    loadingMessage = "Loading content...",
+    name: nameProp,
+    noOptionsMessage = () => "No results found",
+    onChange,
+    onClear,
+    onCreateOption,
+    onFilterValueChange,
+    onInputChange,
+    onTextValueChange,
+    onLoadMore,
+    placeholder = "Select or enter a value",
+    required: requiredProp = false,
+    size = "M",
+    startIcon,
+    textValue,
+    value,
+    ...restProps
+  }, forwardedRef) => {
+    const [internalIsOpen, setInternalIsOpen] = useControllableState$1({
+      prop: open,
+      defaultProp: defaultOpen,
+      onChange: onOpenChange
+    });
+    const [internalTextValue, setInternalTextValue] = useControllableState$1({
+      prop: textValue,
+      defaultProp: allowCustomValue && !defaultTextValue ? value : defaultTextValue,
+      onChange: onTextValueChange
+    });
+    const [internalFilterValue, setInternalFilterValue] = useControllableState$1({
+      prop: filterValue,
+      defaultProp: defaultFilterValue,
+      onChange: onFilterValueChange
+    });
+    const viewportRef = React__namespace.useRef(null);
+    const triggerRef = React__namespace.useRef(null);
+    const composedTriggerRefs = useComposedRefs(triggerRef, forwardedRef);
+    const clearRef = React__namespace.useRef(null);
+    const handleClearClick = (e) => {
+      if (onClear && !disabled) {
+        setInternalTextValue("");
+        setInternalFilterValue("");
+        onClear(e);
+        triggerRef.current.focus();
+      }
+    };
+    const handleOpenChange = (open2) => {
+      setInternalIsOpen(open2);
+    };
+    const handleTextValueChange = (textValue2) => {
+      setInternalTextValue(textValue2);
+    };
+    const handleFilterValueChange = (filterValue2) => {
+      setInternalFilterValue(filterValue2);
+    };
+    const handleInputChange = (e) => {
+      if (onInputChange) {
+        onInputChange(e);
+      }
+    };
+    const handleChange = (value2) => {
+      if (onChange) {
+        onChange(value2);
+      }
+    };
+    const handleReachEnd = (entry) => {
+      if (onLoadMore && hasMoreItems && !loading) {
+        onLoadMore(entry);
+      }
+    };
+    const handleCreateItemClick = () => {
+      if (onCreateOption && internalTextValue && creatable !== "visible") {
+        onCreateOption(internalTextValue);
+      } else if (onCreateOption && creatable === "visible") {
+        onCreateOption();
+        setInternalIsOpen(false);
+      }
+    };
+    const generatedIntersectionId = useId();
+    const intersectionId = `intersection-${stripReactIdOfColon(generatedIntersectionId)}`;
+    useIntersection(viewportRef, handleReachEnd, {
+      selectorToWatch: `#${intersectionId}`,
+      /**
+       * We need to know when the select is open because only then will viewportRef
+       * not be null. Because it uses a portal that (sensibly) is not mounted 24/7.
+       */
+      skipWhen: !internalIsOpen
+    });
+    const { error, ...field } = useField("Combobox");
+    const hasError = Boolean(error) || hasErrorProp;
+    const id = field.id ?? idProp;
+    const name = field.name ?? nameProp;
+    const required = field.required || requiredProp;
+    let ariaDescription;
+    if (error) {
+      ariaDescription = `${id}-error`;
+    } else if (field.hint) {
+      ariaDescription = `${id}-hint`;
+    }
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      uiPrimitives.Combobox.Root,
+      {
+        autocomplete: autocomplete || (creatable === true ? "list" : "both"),
+        onOpenChange: handleOpenChange,
+        open: internalIsOpen,
+        onTextValueChange: handleTextValueChange,
+        textValue: internalTextValue,
+        allowCustomValue: !!creatable || allowCustomValue,
+        disabled,
+        required,
+        value,
+        onValueChange: handleChange,
+        filterValue: internalFilterValue,
+        onFilterValueChange: handleFilterValueChange,
+        isPrintableCharacter: isPrintableCharacter2,
+        visible: creatable === "visible",
+        children: [
+          /* @__PURE__ */ jsxRuntime.jsxs(Trigger$5, { $hasError: hasError, $size: size, className, children: [
+            /* @__PURE__ */ jsxRuntime.jsxs(Flex, { flex: "1", tag: "span", gap: 3, children: [
+              startIcon ? /* @__PURE__ */ jsxRuntime.jsx(Flex, { flex: "0 0 1.6rem", tag: "span", "aria-hidden": true, children: startIcon }) : null,
+              /* @__PURE__ */ jsxRuntime.jsx(
+                TextInput$1,
+                {
+                  placeholder,
+                  id,
+                  "aria-invalid": Boolean(error),
+                  onChange: handleInputChange,
+                  ref: composedTriggerRefs,
+                  name,
+                  "aria-describedby": ariaDescription,
+                  ...restProps
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxRuntime.jsxs(Flex, { tag: "span", gap: 3, children: [
+              internalTextValue && onClear ? /* @__PURE__ */ jsxRuntime.jsx(
+                IconButton,
+                {
+                  size: "XS",
+                  variant: "ghost",
+                  onClick: handleClearClick,
+                  "aria-disabled": disabled,
+                  "aria-label": clearLabel,
+                  label: clearLabel,
+                  ref: clearRef,
+                  children: /* @__PURE__ */ jsxRuntime.jsx(icons.Cross, {})
+                }
+              ) : null,
+              /* @__PURE__ */ jsxRuntime.jsx(DownIcon$1, { children: /* @__PURE__ */ jsxRuntime.jsx(icons.CaretDown, { fill: "neutral500" }) })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntime.jsx(uiPrimitives.Combobox.Portal, { children: /* @__PURE__ */ jsxRuntime.jsx(Content$5, { sideOffset: 4, children: /* @__PURE__ */ jsxRuntime.jsxs(uiPrimitives.Combobox.Viewport, { ref: viewportRef, children: [
+            /* @__PURE__ */ jsxRuntime.jsxs(ScrollAreaCombobox, { children: [
+              children,
+              creatable !== true && !loading ? /* @__PURE__ */ jsxRuntime.jsx(uiPrimitives.Combobox.NoValueFound, { asChild: true, children: /* @__PURE__ */ jsxRuntime.jsx(OptionBox, { $hasHover: false, children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { children: noOptionsMessage(internalTextValue ?? "") }) }) }) : null,
+              loading ? /* @__PURE__ */ jsxRuntime.jsx(Flex, { justifyContent: "center", alignItems: "center", paddingTop: 2, paddingBottom: 2, children: /* @__PURE__ */ jsxRuntime.jsx(Loader, { small: true, children: loadingMessage }) }) : null,
+              /* @__PURE__ */ jsxRuntime.jsx(Box, { id: intersectionId, width: "100%", height: "1px" })
+            ] }),
+            creatable ? /* @__PURE__ */ jsxRuntime.jsx(
+              ComboboxCreateItem,
+              {
+                onPointerUp: handleCreateItemClick,
+                onClick: handleCreateItemClick,
+                disabled: creatableDisabled,
+                asChild: true,
+                children: /* @__PURE__ */ jsxRuntime.jsx(OptionBox, { children: /* @__PURE__ */ jsxRuntime.jsxs(Flex, { gap: 2, children: [
+                  creatableStartIcon && /* @__PURE__ */ jsxRuntime.jsx(Box, { tag: "span", "aria-hidden": true, display: "inline-flex", children: creatableStartIcon }),
+                  /* @__PURE__ */ jsxRuntime.jsx(Typography, { children: createMessage(internalTextValue ?? "") })
+                ] }) })
+              }
+            ) : null
+          ] }) }) })
+        ]
+      }
+    );
+  }
+);
+const Trigger$5 = styled.styled(uiPrimitives.Combobox.Trigger)`
+  position: relative;
+  border: 1px solid ${({ theme, $hasError }) => $hasError ? theme.colors.danger600 : theme.colors.neutral200};
+  border-radius: ${({ theme }) => theme.borderRadius};
+  background: ${({ theme }) => theme.colors.neutral0};
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spaces[4]};
+
+  ${(props) => {
+  switch (props.$size) {
+    case "S":
+      return styled.css`
+          padding-inline-start: ${({ theme }) => theme.spaces[4]};
+          padding-inline-end: ${({ theme }) => theme.spaces[3]};
+          padding-block: ${({ theme }) => theme.spaces[1]};
+        `;
+    default:
+      return styled.css`
+          padding-inline-start: ${({ theme }) => theme.spaces[4]};
+          padding-inline-end: ${({ theme }) => theme.spaces[3]};
+          padding-block: ${({ theme }) => theme.spaces[2]};
+        `;
+  }
+}}
+
+  &[data-disabled] {
+    color: ${({ theme }) => theme.colors.neutral600};
+    background: ${({ theme }) => theme.colors.neutral150};
+    cursor: not-allowed;
+  }
+
+  /* Required to ensure the below inputFocusStyles are adhered too */
+  &:focus-visible {
+    outline: none;
+  }
+
+  ${({ theme, $hasError }) => inputFocusStyle()({ theme, $hasError })};
+`;
+const TextInput$1 = styled.styled(uiPrimitives.Combobox.TextInput)`
+  width: 100%;
+  font-size: 1.4rem;
+  line-height: 2.2rem;
+  color: ${({ theme }) => theme.colors.neutral800};
+  padding: 0;
+  border: none;
+  background-color: transparent;
+
+  &:focus-visible {
+    outline: none;
+  }
+
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.neutral600};
+    opacity: 1;
+  }
+
+  &[aria-disabled='true'] {
+    cursor: inherit;
+  }
+`;
+const DownIcon$1 = styled.styled(uiPrimitives.Combobox.Icon)`
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: ${({ theme }) => theme.colors.neutral600};
+  display: flex;
+
+  &[aria-disabled='true'] {
+    cursor: inherit;
+  }
+`;
+const Content$5 = styled.styled(uiPrimitives.Combobox.Content)`
+  background: ${({ theme }) => theme.colors.neutral0};
+  box-shadow: ${({ theme }) => theme.shadows.filterShadow};
+  border: 1px solid ${({ theme }) => theme.colors.neutral150};
+  border-radius: ${({ theme }) => theme.borderRadius};
+  width: var(--radix-combobox-trigger-width);
+  /* This is from the design-system figma file. */
+  max-height: 15rem;
+  z-index: ${({ theme }) => theme.zIndices.popover};
+
+  &:focus-visible {
+    outline: ${({ theme }) => `2px solid ${theme.colors.primary600}`};
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation-duration: ${(props) => props.theme.motion.timings["200"]};
+
+    /* The select can't animate out yet, watch https://github.com/radix-ui/primitives/issues/1893, or take a look and solve it yourself. */
+    &[data-state='open'] {
+      animation-timing-function: ${(props) => props.theme.motion.easings.authenticMotion};
+
+      &[data-side='top'] {
+        animation-name: ${ANIMATIONS.slideUpIn};
+      }
+
+      &[data-side='bottom'] {
+        animation-name: ${ANIMATIONS.slideDownIn};
+      }
+    }
+  }
+`;
+const ComboboxCreateItem = styled.styled(uiPrimitives.Combobox.CreateItem)`
+  && {
+    border-top: 1px solid ${({ theme }) => theme.colors.neutral150};
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    background: ${({ theme }) => theme.colors.neutral0};
+    cursor: pointer;
+    padding: ${({ theme }) => theme.spaces[1]};
+    position: sticky;
+    bottom: 0;
+    left: 0;
+  }
+  &&:hover,
+  &&[data-highlighted] {
+    background: ${({ theme }) => theme.colors.neutral0};
+  }
+  &&[data-disabled] {
+    color: ${({ theme }) => theme.colors.neutral600};
+    cursor: not-allowed;
+  }
+  &&[data-disabled] svg {
+    fill: ${({ theme }) => theme.colors.neutral300};
+  }
+  && > div {
+    padding: ${({ theme }) => theme.spaces[2]} ${({ theme }) => theme.spaces[4]};
+  }
+  && > div:hover,
+  &&[data-highlighted] > div {
+    background-color: ${({ theme }) => theme.colors.primary100};
+    border-radius: ${({ theme }) => theme.borderRadius};
+  }
+  &&[data-disabled] > div {
+    background-color: inherit;
+  }
+`;
+const ScrollAreaCombobox = styled.styled(ScrollAreaImpl$1)`
+  padding: ${({ theme }) => theme.spaces[1]};
+`;
+const Option = React__namespace.forwardRef(
+  ({ children, value, disabled, textValue, ...props }, ref) => {
+    return /* @__PURE__ */ jsxRuntime.jsx(uiPrimitives.Combobox.ComboboxItem, { asChild: true, value, disabled, textValue, children: /* @__PURE__ */ jsxRuntime.jsx(OptionBox, { ref, ...props, children: /* @__PURE__ */ jsxRuntime.jsx(uiPrimitives.Combobox.ItemText, { asChild: true, children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { children }) }) }) });
+  }
+);
+const OptionBox = styled.styled.div`
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline-offset: -3px;
+  padding: ${({ theme }) => theme.spaces[2]} ${({ theme }) => theme.spaces[4]};
+  background-color: ${({ theme }) => theme.colors.neutral0};
+  border-radius: ${({ theme }) => theme.borderRadius};
+  user-select: none;
+
+  &[data-state='checked'] {
+    background-color: ${({ theme }) => theme.colors.primary100};
+    color: ${({ theme }) => theme.colors.primary600};
+    font-weight: bold;
+  }
+
+  &:hover,
+  &[data-highlighted] {
+    outline: none;
+    background-color: ${({ theme, $hasHover = true }) => $hasHover ? theme.colors.primary100 : theme.colors.neutral0};
+  }
+
+  &[data-highlighted] {
+    color: ${({ theme }) => theme.colors.primary600};
+    font-weight: bold;
+  }
+`;
+const setOpacity = (hex, alpha) => `${hex}${Math.floor(alpha * 255).toString(16).padStart(2, "0")}`;
+const Root$5 = AlertDialog__namespace.Root;
+const Trigger$4 = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(AlertDialog__namespace.Trigger, { ...props, asChild: true, ref: forwardedRef });
+});
+const Content$4 = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(AlertDialog__namespace.Portal, { children: /* @__PURE__ */ jsxRuntime.jsx(Overlay$1, { children: /* @__PURE__ */ jsxRuntime.jsx(ContentImpl$1, { ref: forwardedRef, ...props }) }) });
+});
+const Overlay$1 = styled.styled(AlertDialog__namespace.Overlay)`
+  background: ${(props) => setOpacity(props.theme.colors.neutral800, 0.2)};
+  position: fixed;
+  inset: 0;
+  z-index: ${(props) => props.theme.zIndices.overlay};
+  will-change: opacity;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: ${ANIMATIONS.overlayFadeIn} ${(props) => props.theme.motion.timings["200"]}
+      ${(props) => props.theme.motion.easings.authenticMotion};
+  }
+`;
+const ContentImpl$1 = styled.styled(AlertDialog__namespace.Content)`
+  max-width: 42rem;
+  height: min-content;
+  width: 100%;
+  overflow: hidden;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  border-radius: ${(props) => props.theme.borderRadius};
+  background-color: ${(props) => props.theme.colors.neutral0};
+  box-shadow: ${(props) => props.theme.shadows.popupShadow};
+  z-index: ${(props) => props.theme.zIndices.modal};
+
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-state='open'] {
+      animation-duration: ${(props) => props.theme.motion.timings["200"]};
+      animation-timing-function: ${(props) => props.theme.motion.easings.authenticMotion};
+      animation-name: ${ANIMATIONS.modalPopIn};
+    }
+
+    &[data-state='closed'] {
+      animation-duration: ${(props) => props.theme.motion.timings["120"]};
+      animation-timing-function: ${(props) => props.theme.motion.easings.easeOutQuad};
+      animation-name: ${ANIMATIONS.modalPopOut};
+    }
+  }
+`;
+const Header$1 = React__namespace.forwardRef(({ children, ...restProps }, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(AlertDialog__namespace.Title, { asChild: true, children: /* @__PURE__ */ jsxRuntime.jsx(Title$1, { tag: "h2", variant: "beta", ref: forwardedRef, padding: 6, fontWeight: "bold", ...restProps, children }) });
+});
+const Title$1 = styled.styled(Typography)`
+  display: flex;
+  justify-content: center;
+  border-bottom: solid 1px ${(props) => props.theme.colors.neutral150};
+`;
+const Body$1 = React__namespace.forwardRef(({ children, icon, ...restProps }, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(
+    Flex,
+    {
+      ref: forwardedRef,
+      gap: 2,
+      direction: "column",
+      paddingTop: 8,
+      paddingBottom: 8,
+      paddingLeft: 6,
+      paddingRight: 6,
+      ...restProps,
+      children: typeof children === "string" ? /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
+        icon ? React__namespace.cloneElement(icon, {
+          width: 24,
+          height: 24
+        }) : null,
+        /* @__PURE__ */ jsxRuntime.jsx(Description, { children })
+      ] }) : children
+    }
+  );
+});
+const Description = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(AlertDialog__namespace.Description, { asChild: true, children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { ref: forwardedRef, variant: "omega", ...props, tag: "p" }) });
+});
+const Footer$1 = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(Foot$1, { ref: forwardedRef, gap: 2, padding: 4, justifyContent: "space-between", ...props, tag: "footer" });
+});
+const Foot$1 = styled.styled(Flex)`
+  border-top: solid 1px ${(props) => props.theme.colors.neutral150};
+  flex: 1;
+`;
+const Cancel = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(AlertDialog__namespace.Cancel, { ...props, asChild: true, ref: forwardedRef });
+});
+const Action = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(AlertDialog__namespace.Action, { ...props, asChild: true, ref: forwardedRef });
+});
+const Dialog = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  Action,
+  Body: Body$1,
+  Cancel,
+  Content: Content$4,
+  Description,
+  Footer: Footer$1,
+  Header: Header$1,
+  Root: Root$5,
+  Trigger: Trigger$4
+}, Symbol.toStringTag, { value: "Module" }));
+function useDateFormatter(locale, options) {
+  const lastOptions = React__namespace.useRef(null);
+  if (options && lastOptions.current && isEqual(options, lastOptions.current)) {
+    options = lastOptions.current;
+  }
+  lastOptions.current = options ?? null;
+  return React__namespace.useMemo(() => new date.DateFormatter(locale, options), [locale, options]);
+}
+function isEqual(a, b) {
+  if (a === b) {
+    return true;
+  }
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) {
+    return false;
+  }
+  for (const key of aKeys) {
+    if (b[key] !== a[key]) {
+      return false;
+    }
+  }
+  return true;
+}
+const LiveRegionIds = {
+  Log: "live-region-log",
+  Status: "live-region-status",
+  Alert: "live-region-alert"
+};
+const notifyLog = (message) => {
+  const logEl = document.querySelector(`#${LiveRegionIds.Log}`);
+  if (logEl) {
+    logEl.innerText = message;
+  }
+};
+const notifyStatus = (message) => {
+  const statusEl = document.querySelector(`#${LiveRegionIds.Status}`);
+  if (statusEl) {
+    statusEl.innerText = message;
+  }
+};
+const notifyAlert = (message) => {
+  const alertEl = document.querySelector(`#${LiveRegionIds.Alert}`);
+  if (alertEl) {
+    alertEl.innerText = message;
+  }
+};
+const useNotifyAT = () => {
+  React__namespace.useEffect(() => {
+    return () => {
+      notifyLog("");
+      notifyAlert("");
+      notifyStatus("");
+    };
+  }, []);
+  return { notifyLog, notifyAlert, notifyStatus };
+};
+const LiveRegions = () => {
+  return /* @__PURE__ */ jsxRuntime.jsxs(VisuallyHidden, { children: [
+    /* @__PURE__ */ jsxRuntime.jsx("p", { role: "log", "aria-live": "polite", id: LiveRegionIds.Log, "aria-relevant": "all" }),
+    /* @__PURE__ */ jsxRuntime.jsx("p", { role: "status", "aria-live": "polite", id: LiveRegionIds.Status, "aria-relevant": "all" }),
+    /* @__PURE__ */ jsxRuntime.jsx("p", { role: "alert", "aria-live": "assertive", id: LiveRegionIds.Alert, "aria-relevant": "all" })
+  ] });
+};
+const GlobalStyle = styled.createGlobalStyle`
+${styled.css`
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  * {
+    margin: 0;
+  }
+
+  html {
+    /* Sets 1rem === 10px */
+    font-size: 62.5%;
+  }
+
+  body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
+      'Helvetica Neue', sans-serif;
+    color: ${({ theme }) => theme.colors.neutral800};
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  img,
+  picture,
+  video,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  input,
+  button,
+  textarea,
+  select {
+    padding: 0;
+    font: inherit;
+  }
+
+  button {
+    border: unset;
+    background: unset;
+    padding: unset;
+    margin: unset;
+  }
+
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    overflow-wrap: break-word;
+    font: unset;
+  }
+
+  #root {
+    isolation: isolate;
+  }
+
+  ol,
+  ul {
+    list-style: none;
+    padding: unset;
+    margin: unset;
+  }
+
+  table {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+
+  *:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.primary600};
+    outline-offset: 2px;
+  }
+
+  *:has(> :disabled:not(button)) {
+    cursor: not-allowed !important;
+  }
+
+  [aria-disabled='true']:not(button) {
+    cursor: not-allowed !important;
+  }
+
+  /* Focusing the button with a mouse, touch, or stylus will show a subtle drop shadow. */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  .lock-body-scroll {
+    height: 100vh;
+    overflow-y: hidden;
+  }
+`}
+`;
+const DEFAULT_LOCALE = "en-EN";
+const getDefaultLocale = () => {
+  if (typeof navigator === "undefined") {
+    return DEFAULT_LOCALE;
+  }
+  if (navigator.language) {
+    return navigator.language;
+  }
+  return DEFAULT_LOCALE;
+};
+const [Provider, useDesignSystem] = createContext("StrapiDesignSystem", {
+  locale: getDefaultLocale()
+});
+const DesignSystemProvider = ({
+  children,
+  locale = getDefaultLocale(),
+  theme = lightTheme,
+  tooltipConfig
+}) => {
+  useIsomorphicLayoutEffect(() => {
+    const css = document.createElement("style");
+    css.type = "text/css";
+    css.appendChild(
+      document.createTextNode(`
+        * {
+          -webkit-transition: none !important;
+          -moz-transition: none !important;
+          -o-transition: none !important;
+          -ms-transition: none !important;
+          transition: none !important;
+          animation: none !important;
+        }
+    `)
+    );
+    document.head.appendChild(css);
+    window.getComputedStyle(css).opacity;
+    document.head.removeChild(css);
+  }, [theme]);
+  return /* @__PURE__ */ jsxRuntime.jsx(Provider, { locale, children: /* @__PURE__ */ jsxRuntime.jsxs(styled.ThemeProvider, { theme, children: [
+    /* @__PURE__ */ jsxRuntime.jsx(Tooltip.Provider, { ...tooltipConfig, children }),
+    /* @__PURE__ */ jsxRuntime.jsx(LiveRegions, {}),
+    /* @__PURE__ */ jsxRuntime.jsx(GlobalStyle, {})
+  ] }) });
+};
+const DismissibleLayer = DismissibleLayerPrimitive__namespace.Root;
+const Portal$1 = React__namespace.forwardRef(
+  ({ container = globalThis?.document?.body, ...portalProps }, forwardedRef) => {
+    return container ? reactDom.createPortal(/* @__PURE__ */ jsxRuntime.jsx(Box, { ref: forwardedRef, ...portalProps }), container) : null;
+  }
+);
+Portal$1.displayName = "Portal";
+const SelectTrigger = React__namespace.forwardRef(
+  ({ onClear, clearLabel = "Clear", startIcon, disabled, hasError, children, id, size = "M", withTags, ...restProps }, ref) => {
+    const triggerRef = React__namespace.useRef(null);
+    const handleClearClick = (e) => {
+      if (onClear && !disabled) {
+        onClear(e);
+        triggerRef.current.focus();
+      }
+    };
+    const { labelNode } = useField("SelectTrigger");
+    const composedRefs = useComposedRefs(triggerRef, ref);
+    return /* @__PURE__ */ jsxRuntime.jsx(uiPrimitives.Select.Trigger, { asChild: true, children: /* @__PURE__ */ jsxRuntime.jsxs(
+      StyledTrigger,
+      {
+        "aria-disabled": disabled,
+        $hasError: hasError,
+        ref: composedRefs,
+        alignItems: "center",
+        justifyContent: "space-between",
+        position: "relative",
+        overflow: "hidden",
+        hasRadius: true,
+        background: disabled ? "neutral150" : "neutral0",
+        gap: 4,
+        cursor: "default",
+        "aria-labelledby": labelNode ? `${id}-label` : void 0,
+        $size: size,
+        $withTags: withTags,
+        ...restProps,
+        children: [
+          /* @__PURE__ */ jsxRuntime.jsxs(Flex, { flex: "1", tag: "span", gap: 3, children: [
+            startIcon && /* @__PURE__ */ jsxRuntime.jsx(Flex, { tag: "span", "aria-hidden": true, children: startIcon }),
+            children
+          ] }),
+          /* @__PURE__ */ jsxRuntime.jsxs(Flex, { tag: "span", gap: 3, children: [
+            onClear ? /* @__PURE__ */ jsxRuntime.jsx(
+              IconButton,
+              {
+                size: "XS",
+                variant: "ghost",
+                onClick: handleClearClick,
+                "aria-disabled": disabled,
+                "aria-label": clearLabel,
+                label: clearLabel,
+                children: /* @__PURE__ */ jsxRuntime.jsx(icons.Cross, {})
+              }
+            ) : null,
+            /* @__PURE__ */ jsxRuntime.jsx(DownIcon, { children: /* @__PURE__ */ jsxRuntime.jsx(icons.CaretDown, {}) })
+          ] })
+        ]
+      }
+    ) });
+  }
+);
+const StyledTrigger = styled.styled(Flex)`
+  border: 1px solid ${({ theme, $hasError }) => $hasError ? theme.colors.danger600 : theme.colors.neutral200};
+  ${(props) => {
+  switch (props.$size) {
+    case "S":
+      return styled.css`
+          padding-block: ${props.theme.spaces[1]};
+          padding-inline-start: ${props.$withTags ? props.theme.spaces[1] : props.theme.spaces[4]};
+          padding-inline-end: ${props.theme.spaces[3]};
+        `;
+    default:
+      return styled.css`
+          padding-block: ${props.$withTags ? "0.3rem" : props.theme.spaces[2]};
+          padding-inline-start: ${props.$withTags ? props.theme.spaces[1] : props.theme.spaces[4]};
+          padding-inline-end: ${props.theme.spaces[3]};
+        `;
+  }
+}}
+  cursor: pointer;
+
+  &[aria-disabled='true'] {
+    color: ${(props) => props.theme.colors.neutral500};
+  }
+
+  /* Required to ensure the below inputFocusStyles are adhered too */
+  &:focus-visible {
+    outline: none;
+  }
+
+  ${({ theme, $hasError }) => inputFocusStyle()({ theme, $hasError })};
+`;
+const DownIcon = styled.styled(uiPrimitives.Select.Icon)`
+  display: flex;
+  & > svg {
+    fill: ${({ theme }) => theme.colors.neutral500};
+  }
+`;
+const SelectValue = React__namespace.forwardRef(({ children, placeholder, ...restProps }, ref) => /* @__PURE__ */ jsxRuntime.jsx(ValueType, { ref, ellipsis: true, ...restProps, children: /* @__PURE__ */ jsxRuntime.jsx(StyledValue, { placeholder, children }) }));
+const ValueType = styled.styled(Typography)`
+  flex: 1;
+  font-size: 1.4rem;
+  line-height: 2.2rem;
+  min-height: 2.2rem;
+`;
+const StyledValue = styled.styled(uiPrimitives.Select.Value)`
+  display: flex;
+  gap: ${({ theme }) => theme.spaces[1]};
+  flex-wrap: wrap;
+`;
+const SelectContent = React__namespace.forwardRef((props, ref) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(StyledContent, { ref, ...props, children: /* @__PURE__ */ jsxRuntime.jsx(ScrollAreaImpl$1, { children: props.children }) });
+});
+const StyledContent = styled.styled(uiPrimitives.Select.Content)`
+  background: ${({ theme }) => theme.colors.neutral0};
+  box-shadow: ${({ theme }) => theme.shadows.filterShadow};
+  border: 1px solid ${({ theme }) => theme.colors.neutral150};
+  border-radius: ${({ theme }) => theme.borderRadius};
+  min-width: var(--radix-select-trigger-width);
+  max-height: 15.6rem;
+  z-index: ${({ theme }) => theme.zIndices.popover};
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation-duration: ${(props) => props.theme.motion.timings["200"]};
+
+    /* The select can't animate out yet, watch https://github.com/radix-ui/primitives/issues/1893, or take a look and solve it yourself. */
+    &[data-state='open'] {
+      animation-timing-function: ${(props) => props.theme.motion.easings.authenticMotion};
+
+      &[data-side='top'] {
+        animation-name: ${ANIMATIONS.slideUpIn};
+      }
+
+      &[data-side='bottom'] {
+        animation-name: ${ANIMATIONS.slideDownIn};
+      }
+    }
+  }
+`;
+const SelectViewport = styled.styled(uiPrimitives.Select.Viewport)`
+  padding: ${({ theme }) => theme.spaces[1]};
+`;
+const SelectItem = React__namespace.forwardRef((props, ref) => /* @__PURE__ */ jsxRuntime.jsx(StyledSelectItem, { ref, ...props }));
+const itemStyles = styled.css`
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline-offset: -3px;
+  border-radius: ${(props) => props.theme.borderRadius};
+  padding: ${(props) => `${props.theme.spaces[2]} ${props.theme.spaces[4]}`};
+  padding-left: ${({ theme }) => theme.spaces[4]};
+  background-color: ${({ theme }) => theme.colors.neutral0};
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spaces[2]};
+  white-space: nowrap;
+  user-select: none;
+  color: ${({ theme }) => theme.colors.neutral800};
+
+  &:focus-visible {
+    outline: none;
+    background-color: ${({ theme }) => theme.colors.primary100};
+    cursor: pointer;
+  }
+`;
+const StyledSelectItem = styled.styled(uiPrimitives.Select.Item)`
+  ${itemStyles}
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primary100};
+    cursor: pointer;
+  }
+`;
+const Root$4 = uiPrimitives.Select.Root;
+const Trigger$3 = SelectTrigger;
+const Value = SelectValue;
+const Portal = uiPrimitives.Select.Portal;
+const Content$3 = SelectContent;
+const Viewport = SelectViewport;
+const Item$2 = SelectItem;
+const ItemIndicator = uiPrimitives.Select.ItemIndicator;
+const ItemText = uiPrimitives.Select.ItemText;
+const Group$1 = uiPrimitives.Select.Group;
+const SingleSelect = React__namespace.forwardRef(
+  ({
+    children,
+    clearLabel = "Clear",
+    customizeContent,
+    disabled,
+    hasError: hasErrorProp,
+    id: idProp,
+    name: nameProp,
+    onChange,
+    onClear,
+    onCloseAutoFocus,
+    onReachEnd,
+    placeholder,
+    required: requiredProp,
+    size,
+    startIcon,
+    value: passedValue,
+    ...restProps
+  }, forwardedRef) => {
+    const [internalValue, setInternalValue] = React__namespace.useState();
+    const [internalIsOpen, setInternalIsOpen] = React__namespace.useState(false);
+    const handleOpenChange = (open) => {
+      setInternalIsOpen(open);
+    };
+    const handleOnClear = (e) => {
+      if (onClear) {
+        onClear(e);
+      }
+      if (!onChange) {
+        setInternalValue("");
+      }
+    };
+    const handleValueChange = (value2) => {
+      if (onChange) {
+        const shouldBeNumber = typeof passedValue === "number";
+        onChange(shouldBeNumber ? Number(value2) : value2);
+      } else {
+        setInternalValue(value2);
+      }
+    };
+    const viewportRef = React__namespace.useRef(null);
+    const generatedIntersectionId = useId();
+    const intersectionId = `intersection-${stripReactIdOfColon(generatedIntersectionId)}`;
+    const handleReachEnd = (entry) => {
+      if (onReachEnd) {
+        onReachEnd(entry);
+      }
+    };
+    useIntersection(viewportRef, handleReachEnd, {
+      selectorToWatch: `#${intersectionId}`,
+      /**
+       * We need to know when the select is open because only then will viewportRef
+       * not be null. Because it uses a portal that (sensibly) is not mounted 24/7.
+       */
+      skipWhen: !internalIsOpen
+    });
+    const { error, required, ...field } = useField("SingleSelect");
+    const hasError = Boolean(error) || hasErrorProp;
+    const id = field.id ?? idProp;
+    const name = field.name ?? nameProp;
+    let ariaDescription;
+    if (error) {
+      ariaDescription = `${id}-error`;
+    } else if (field.hint) {
+      ariaDescription = `${id}-hint`;
+    }
+    const value = (typeof passedValue !== "undefined" && passedValue !== null ? passedValue.toString() : internalValue) ?? "";
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      Root$4,
+      {
+        onOpenChange: handleOpenChange,
+        disabled,
+        required: required ?? requiredProp,
+        onValueChange: handleValueChange,
+        value,
+        ...restProps,
+        children: [
+          /* @__PURE__ */ jsxRuntime.jsx(
+            Trigger$3,
+            {
+              ref: forwardedRef,
+              id,
+              name,
+              startIcon,
+              hasError,
+              disabled,
+              clearLabel,
+              onClear: value && onClear ? handleOnClear : void 0,
+              "aria-label": restProps["aria-label"],
+              "aria-describedby": ariaDescription ?? restProps["aria-describedby"],
+              size,
+              children: /* @__PURE__ */ jsxRuntime.jsx(Value, { placeholder, textColor: value ? "neutral800" : "neutral600", children: value && customizeContent ? customizeContent(value) : void 0 })
+            }
+          ),
+          /* @__PURE__ */ jsxRuntime.jsx(Portal, { children: /* @__PURE__ */ jsxRuntime.jsx(Content$3, { position: "popper", sideOffset: 4, onCloseAutoFocus, children: /* @__PURE__ */ jsxRuntime.jsxs(Viewport, { ref: viewportRef, children: [
+            children,
+            /* @__PURE__ */ jsxRuntime.jsx(Box, { id: intersectionId, width: "100%", height: "1px" })
+          ] }) }) })
+        ]
+      }
+    );
+  }
+);
+const SingleSelectOption = React__namespace.forwardRef(
+  ({ value, startIcon, children, ...restProps }, ref) => {
+    return /* @__PURE__ */ jsxRuntime.jsxs(Item$2, { ref, value: value.toString(), ...restProps, children: [
+      startIcon && /* @__PURE__ */ jsxRuntime.jsx(Flex, { tag: "span", "aria-hidden": true, children: startIcon }),
+      /* @__PURE__ */ jsxRuntime.jsx(Typography, { lineHeight: "20px", width: "100%", children: /* @__PURE__ */ jsxRuntime.jsx(ItemText, { children }) })
+    ] });
+  }
+);
+const DEFAULT_PAST_RANGE = 200;
+const DEFAULT_FUTURE_RANGE = 15;
+const [DatePickerProvider, useDatePickerContext] = createContext("DatePicker");
+const DatePicker = React__namespace.forwardRef(
+  ({
+    /**
+     * DatePickerCalendar props
+     */
+    calendarLabel,
+    className,
+    initialDate,
+    locale: defaultLocale,
+    maxDate,
+    minDate,
+    monthSelectLabel = "Month",
+    onChange,
+    value: valueProp,
+    yearSelectLabel = "Year",
+    /**
+     * Combobox props
+     */
+    hasError: hasErrorProp,
+    id: idProp,
+    name: nameProp,
+    disabled = false,
+    required: requiredProp = false,
+    onClear,
+    clearLabel = "Clear",
+    size = "M",
+    ...restProps
+  }, ref) => {
+    const timeZone = date.getLocalTimeZone();
+    const designContext = useDesignSystem("DatePicker");
+    const locale = defaultLocale ?? designContext.locale;
+    const formatter = useDateFormatter(locale, {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+    const [open, setOpen] = React__namespace.useState(false);
+    const [trigger, setTrigger] = React__namespace.useState(null);
+    const [textInput, setTextInput] = React__namespace.useState(null);
+    const [content, setContent] = React__namespace.useState(null);
+    const [textValue, setTextValue] = React__namespace.useState();
+    const [value, setValue] = useControllableState$1({
+      defaultProp: initialDate ? convertUTCDateToCalendarDate(initialDate) : void 0,
+      prop: valueProp ? convertUTCDateToCalendarDate(valueProp) : void 0,
+      onChange(date2) {
+        if (onChange) {
+          onChange(date2?.toDate(timeZone));
+        }
+      }
+    });
+    const [actualMinDate, actualMaxDate] = React__namespace.useMemo(() => {
+      const now = initialDate ? convertUTCDateToCalendarDate(initialDate) : date.today("UTC");
+      const actualMinDate2 = minDate ? convertUTCDateToCalendarDate(minDate) : now.set({ day: 1, month: 1, year: now.year - DEFAULT_PAST_RANGE });
+      let actualMaxDate2 = maxDate ? convertUTCDateToCalendarDate(maxDate) : now.set({ day: 31, month: 12, year: now.year + DEFAULT_FUTURE_RANGE });
+      if (actualMaxDate2.compare(actualMinDate2) < 0) {
+        actualMaxDate2 = actualMinDate2.set({ day: 31, month: 12, year: actualMinDate2.year + DEFAULT_FUTURE_RANGE });
+      }
+      return [actualMinDate2, actualMaxDate2];
+    }, [minDate, maxDate, initialDate]);
+    const [calendarDate, setCalendarDate] = React__namespace.useState(
+      makeInitialCalendarDate({
+        currentValue: value,
+        minDate: actualMinDate,
+        maxDate: actualMaxDate
+      })
+    );
+    const contentId = useId();
+    const clearRef = React__namespace.useRef(null);
+    const handleClearClick = (e) => {
+      if (onClear && !disabled) {
+        setTextValue("");
+        setValue(void 0);
+        onClear(e);
+        textInput?.focus();
+      }
+    };
+    const handleOpenChange = React__namespace.useCallback(
+      (nextOpen) => {
+        if (nextOpen && value) {
+          setCalendarDate(value);
+        }
+        setOpen(nextOpen);
+      },
+      [value]
+    );
+    useIsomorphicLayoutEffect(() => {
+      if (valueProp) {
+        const date2 = convertUTCDateToCalendarDate(valueProp);
+        setTextValue(formatter.format(date2.toDate(timeZone)));
+        setCalendarDate(date2);
+      } else {
+        setTextValue("");
+      }
+    }, [valueProp, formatter, timeZone]);
+    useIsomorphicLayoutEffect(() => {
+      if (initialDate && textValue === void 0) {
+        const date2 = convertUTCDateToCalendarDate(initialDate);
+        setTextValue(formatter.format(date2.toDate(timeZone)));
+      }
+    }, [initialDate, textValue, formatter, timeZone]);
+    const { error, ...field } = useField("Combobox");
+    const hasError = Boolean(error) || hasErrorProp;
+    const id = field.id ?? idProp;
+    const name = field.name ?? nameProp;
+    const required = field.required || requiredProp;
+    let ariaDescription;
+    if (error) {
+      ariaDescription = `${id}-error`;
+    } else if (field.hint) {
+      ariaDescription = `${id}-hint`;
+    }
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      DatePickerProvider,
+      {
+        calendarDate,
+        content,
+        contentId,
+        disabled,
+        locale,
+        minDate: actualMinDate,
+        maxDate: actualMaxDate,
+        open,
+        onCalendarDateChange: setCalendarDate,
+        onContentChange: setContent,
+        onOpenChange: handleOpenChange,
+        onTextInputChange: setTextInput,
+        onTextValueChange: setTextValue,
+        onTriggerChange: setTrigger,
+        onValueChange: setValue,
+        onClear,
+        required,
+        textInput,
+        textValue,
+        timeZone,
+        trigger,
+        value,
+        children: [
+          /* @__PURE__ */ jsxRuntime.jsxs(DatePickerTrigger, { className, hasError, size, children: [
+            /* @__PURE__ */ jsxRuntime.jsx(icons.Calendar, { fill: "neutral500", "aria-hidden": true }),
+            /* @__PURE__ */ jsxRuntime.jsx(DatePickerTextInput, { ref, "aria-describedby": ariaDescription, id, name, ...restProps }),
+            textValue && onClear ? /* @__PURE__ */ jsxRuntime.jsx(
+              IconButton,
+              {
+                size: "XS",
+                variant: "ghost",
+                onClick: handleClearClick,
+                "aria-disabled": disabled,
+                "aria-label": clearLabel,
+                label: clearLabel,
+                ref: clearRef,
+                children: /* @__PURE__ */ jsxRuntime.jsx(icons.Cross, {})
+              }
+            ) : null
+          ] }),
+          /* @__PURE__ */ jsxRuntime.jsx(Portal$1, { children: /* @__PURE__ */ jsxRuntime.jsx(DatePickerContent, { label: calendarLabel, children: /* @__PURE__ */ jsxRuntime.jsx(DatePickerCalendar, { monthSelectLabel, yearSelectLabel }) }) })
+        ]
+      }
+    );
+  }
+);
+const isPrintableCharacter = (str) => {
+  return Boolean(str.match(/^[^a-zA-Z]*$/));
+};
+const makeInitialCalendarDate = ({ currentValue, minDate, maxDate }) => {
+  const now = date.today("UTC");
+  if (currentValue) {
+    return currentValue;
+  }
+  if (date.minDate(minDate, now) === minDate && date.maxDate(maxDate, now) === maxDate) {
+    return now;
+  }
+  if (date.minDate(minDate, now) === now) {
+    return minDate;
+  }
+  if (date.maxDate(maxDate, now) === now) {
+    return maxDate;
+  }
+  return now;
+};
+const DATE_PICKER_TRIGGER_NAME = "DatePickerTrigger";
+const DatePickerTrigger = React__namespace.forwardRef(
+  ({ hasError, size, ...restProps }, forwardedRef) => {
+    const context = useDatePickerContext(DATE_PICKER_TRIGGER_NAME);
+    const composedRefs = useComposedRefs(forwardedRef, (node) => context.onTriggerChange(node));
+    const handleOpenChange = () => {
+      if (!context.disabled) {
+        context.onOpenChange(true);
+      }
+    };
+    return /* @__PURE__ */ jsxRuntime.jsx(
+      reactFocusScope.FocusScope,
+      {
+        asChild: true,
+        trapped: context.open,
+        onMountAutoFocus: (event) => {
+          event.preventDefault();
+        },
+        onUnmountAutoFocus: (event) => {
+          document.getSelection()?.empty();
+          event.preventDefault();
+        },
+        children: /* @__PURE__ */ jsxRuntime.jsx(
+          TriggerElement,
+          {
+            ref: composedRefs,
+            $hasError: hasError,
+            $size: size,
+            $hasOnClear: Boolean(context.onClear),
+            ...restProps,
+            hasRadius: true,
+            gap: 3,
+            overflow: "hidden",
+            background: context.disabled ? "neutral150" : "neutral0",
+            onClick: uiPrimitives.composeEventHandlers(restProps.onClick, () => {
+              context.textInput?.focus();
+            }),
+            onPointerDown: uiPrimitives.composeEventHandlers(restProps.onPointerDown, (event) => {
+              const target = event.target;
+              if (target.hasPointerCapture(event.pointerId)) {
+                target.releasePointerCapture(event.pointerId);
+              }
+              const buttonTarg = target.closest("button") ?? target.closest("div");
+              if (buttonTarg !== event.currentTarget) {
+                return;
+              }
+              if (event.button === 0 && event.ctrlKey === false) {
+                handleOpenChange();
+                context.textInput?.focus();
+              }
+            })
+          }
+        )
+      }
+    );
+  }
+);
+const TriggerElement = styled.styled(Flex)`
+  min-width: ${({ $hasOnClear }) => $hasOnClear ? "160px" : "130px"};
+  border: 1px solid ${({ theme, $hasError }) => $hasError ? theme.colors.danger600 : theme.colors.neutral200};
+  ${(props) => {
+  switch (props.$size) {
+    case "S":
+      return styled.css`
+          padding-block: ${props.theme.spaces[1]};
+          padding-inline: ${props.theme.spaces[3]};
+        `;
+    default:
+      return styled.css`
+          padding-block: ${props.theme.spaces[2]};
+          padding-inline: ${props.theme.spaces[3]};
+        `;
+  }
+}}
+
+  & > svg {
+    flex: 1 0 auto;
+  }
+
+  &[data-disabled] {
+    color: ${({ theme }) => theme.colors.neutral600};
+    background: ${({ theme }) => theme.colors.neutral150};
+    cursor: not-allowed;
+  }
+
+  /* Required to ensure the below inputFocusStyles are adhered too */
+  &:focus-visible {
+    outline: none;
+  }
+
+  ${({ theme, $hasError }) => inputFocusStyle()({ theme, $hasError })};
+`;
+const DATE_PICKER_TEXT_INPUT_NAME = "DatePickerTextInput";
+const DatePickerTextInput = React__namespace.forwardRef(
+  ({ placeholder, ...props }, forwardedRef) => {
+    const context = useDatePickerContext(DATE_PICKER_TEXT_INPUT_NAME);
+    const { onTextValueChange, textValue, onTextInputChange, onOpenChange, disabled, locale } = context;
+    const composedRefs = useComposedRefs(forwardedRef, (node) => onTextInputChange(node));
+    const handleOpenChange = () => {
+      if (!disabled) {
+        onOpenChange(true);
+      }
+    };
+    const formatter = useDateFormatter(locale, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    });
+    const [dateFormatPlaceholder, separator, dateStructure] = React__namespace.useMemo(() => {
+      const parts = formatter.formatToParts(/* @__PURE__ */ new Date());
+      const dateStructure2 = parts.filter(
+        (part) => part.type === "year" || part.type === "month" || part.type === "day"
+      );
+      const placeholder2 = dateStructure2.map((part) => {
+        switch (part.type) {
+          case "day":
+            return "DD";
+          case "month":
+            return "MM";
+          case "year":
+            return "YYYY";
+          default:
+            return "";
+        }
+      });
+      const separator2 = parts.find((part) => part.type === "literal")?.value ?? "";
+      return [placeholder2, separator2, dateStructure2];
+    }, [formatter]);
+    const inputPattern = dateFormatPlaceholder.map((part) => `\\d{${part.length}}`).join(`\\${separator}`);
+    return /* @__PURE__ */ jsxRuntime.jsx(
+      Input$1,
+      {
+        role: "combobox",
+        type: "text",
+        inputMode: "numeric",
+        ref: composedRefs,
+        "aria-autocomplete": "none",
+        "aria-controls": context.contentId,
+        "aria-disabled": context.disabled,
+        "aria-expanded": context.open,
+        "aria-required": context.required,
+        "aria-haspopup": "dialog",
+        "data-state": context.open ? "open" : "closed",
+        disabled,
+        "data-disabled": disabled ? "" : void 0,
+        pattern: inputPattern,
+        placeholder: placeholder ?? dateFormatPlaceholder.join(separator),
+        ...props,
+        value: textValue ?? "",
+        onBlur: uiPrimitives.composeEventHandlers(props.onBlur, () => {
+          if (!context.textValue) {
+            context.onValueChange(void 0);
+            return;
+          }
+          context.onTextValueChange(formatter.format(context.calendarDate.toDate(context.timeZone)));
+          context.onValueChange(context.calendarDate);
+        }),
+        onChange: uiPrimitives.composeEventHandlers(props.onChange, (event) => {
+          if (isPrintableCharacter(event.target.value)) {
+            const inputByPart = event.target.value.split(separator);
+            const [day, month, year] = dateStructure.map((part, index) => {
+              const value = inputByPart[index];
+              return {
+                ...part,
+                value
+              };
+            }).sort((a, b) => {
+              if (a.type === "year") {
+                return 1;
+              }
+              if (b.type === "year") {
+                return -1;
+              }
+              if (a.type === "month") {
+                return 1;
+              }
+              if (b.type === "month") {
+                return -1;
+              }
+              return 0;
+            }).map((part) => part.value);
+            const currentYear = context.calendarDate.year;
+            let newYear = context.calendarDate.year;
+            if (year) {
+              const normalizedYear = year.length === 1 ? `0${year}` : year;
+              newYear = year.length < 3 ? Number(`${currentYear}`.slice(0, 4 - normalizedYear.length) + normalizedYear) : Number(normalizedYear);
+            }
+            if (year && year.length < 3 && newYear > context.maxDate.year) {
+              newYear -= 100;
+            }
+            const newDateWithYear = context.calendarDate.set({ year: newYear });
+            const maxMonthNumber = newDateWithYear.calendar.getMonthsInYear(newDateWithYear);
+            const newDateWithMonthAndYear = newDateWithYear.set({
+              month: month && Number(month) <= maxMonthNumber ? Number(month) : void 0
+            });
+            const maxDayNumber = newDateWithMonthAndYear.calendar.getDaysInMonth(newDateWithMonthAndYear);
+            const newDateWithDayMonthAndYear = newDateWithMonthAndYear.set({
+              day: day && Number(day) <= maxDayNumber ? Number(day) : void 0
+            });
+            context.onCalendarDateChange(constrainValue(newDateWithDayMonthAndYear, context.minDate, context.maxDate));
+            context.onTextValueChange(event.target.value);
+          }
+        }),
+        onKeyDown: uiPrimitives.composeEventHandlers(props.onKeyDown, (event) => {
+          if (!context.open && (isPrintableCharacter(event.key) || ["ArrowDown", "Backspace"].includes(event.key))) {
+            handleOpenChange();
+          } else if (["Tab"].includes(event.key) && context.open) {
+            event.preventDefault();
+          } else if (["Escape"].includes(event.key)) {
+            if (context.open) {
+              context.onOpenChange(false);
+            } else {
+              context.onValueChange(void 0);
+              context.onTextValueChange("");
+            }
+            event.preventDefault();
+          } else if (context.open && ["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(event.key)) {
+            event.preventDefault();
+            switch (event.key) {
+              case "ArrowDown": {
+                const nextDate = context.calendarDate.add({ weeks: 1 });
+                if (context.maxDate && nextDate.compare(context.maxDate) > 0) {
+                  return;
+                }
+                context.onCalendarDateChange(nextDate);
+                return;
+              }
+              case "ArrowRight": {
+                const nextDate = context.calendarDate.add({ days: 1 });
+                if (context.maxDate && nextDate.compare(context.maxDate) > 0) {
+                  return;
+                }
+                context.onCalendarDateChange(nextDate);
+                return;
+              }
+              case "ArrowUp": {
+                const nextDate = context.calendarDate.subtract({ weeks: 1 });
+                if (context.minDate && nextDate.compare(context.minDate) < 0) {
+                  return;
+                }
+                context.onCalendarDateChange(nextDate);
+                return;
+              }
+              case "ArrowLeft": {
+                const nextDate = context.calendarDate.subtract({ days: 1 });
+                if (context.minDate && nextDate.compare(context.minDate) < 0) {
+                  return;
+                }
+                context.onCalendarDateChange(nextDate);
+              }
+            }
+          } else if (context.open && ["Enter"].includes(event.key)) {
+            event.preventDefault();
+            onTextValueChange(formatter.format(context.calendarDate.toDate(context.timeZone)));
+            context.onValueChange(context.calendarDate);
+            context.onOpenChange(false);
+          }
+        })
+      }
+    );
+  }
+);
+function constrainValue(date$1, minValue, maxValue) {
+  if (minValue) {
+    date$1 = date.maxDate(date$1, minValue);
+  }
+  if (maxValue) {
+    date$1 = date.minDate(date$1, maxValue);
+  }
+  return date$1;
+}
+const Input$1 = styled.styled.input`
+  width: 100%;
+  font-size: 1.4rem;
+  line-height: 2.2rem;
+  color: ${({ theme }) => theme.colors.neutral800};
+  border: none;
+  background-color: transparent;
+
+  &:focus-visible {
+    outline: none;
+  }
+
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.neutral600};
+    opacity: 1;
+  }
+
+  &[aria-disabled='true'] {
+    cursor: inherit;
+  }
+`;
+const CONTENT_NAME = "DatePickerContent";
+const DatePickerContent = React__namespace.forwardRef((props, forwardedRef) => {
+  const [fragment, setFragment] = React__namespace.useState();
+  const context = useDatePickerContext(CONTENT_NAME);
+  useIsomorphicLayoutEffect(() => {
+    setFragment(new DocumentFragment());
+  }, []);
+  if (!context.open) {
+    const frag = fragment;
+    return frag ? reactDom.createPortal(/* @__PURE__ */ jsxRuntime.jsx("div", { children: props.children }), frag) : null;
+  }
+  return /* @__PURE__ */ jsxRuntime.jsx(DatePickerContentImpl, { ...props, ref: forwardedRef });
+});
+const CONTENT_IMPL_NAME = "DatePickerContent";
+const DatePickerContentImpl = React__namespace.forwardRef(
+  (props, forwardedRef) => {
+    const { label = "Choose date", ...restProps } = props;
+    const { onOpenChange, ...context } = useDatePickerContext(CONTENT_IMPL_NAME);
+    const { x, y, refs, strategy, placement } = reactDom$1.useFloating({
+      strategy: "fixed",
+      placement: "bottom-start",
+      middleware: [
+        reactDom$1.offset({
+          mainAxis: 4
+        }),
+        reactDom$1.shift(),
+        reactDom$1.flip()
+      ],
+      elements: {
+        reference: context.trigger
+      },
+      whileElementsMounted: reactDom$1.autoUpdate
+    });
+    React__namespace.useEffect(() => {
+      const close = () => {
+        onOpenChange(false);
+      };
+      window.addEventListener("blur", close);
+      window.addEventListener("resize", close);
+      return () => {
+        window.removeEventListener("blur", close);
+        window.removeEventListener("resize", close);
+      };
+    }, [onOpenChange]);
+    const composedRefs = useComposedRefs(
+      forwardedRef,
+      (node) => context.onContentChange(node),
+      refs.setFloating
+    );
+    reactFocusGuards.useFocusGuards();
+    return /* @__PURE__ */ jsxRuntime.jsx(reactRemoveScroll.RemoveScroll, { allowPinchZoom: true, children: /* @__PURE__ */ jsxRuntime.jsx(
+      DismissibleLayer,
+      {
+        asChild: true,
+        onFocusOutside: (event) => {
+          event.preventDefault();
+        },
+        onDismiss: () => {
+          onOpenChange(false);
+        },
+        children: /* @__PURE__ */ jsxRuntime.jsx(
+          ContentElement,
+          {
+            ref: composedRefs,
+            "data-state": context.open ? "open" : "closed",
+            "data-side": placement.includes("top") ? "top" : "bottom",
+            onContextMenu: (event) => event.preventDefault(),
+            id: context.contentId,
+            role: "dialog",
+            "aria-modal": "true",
+            "aria-label": label,
+            style: {
+              left: x,
+              top: y,
+              position: strategy
+            },
+            hasRadius: true,
+            background: "neutral0",
+            padding: 1,
+            ...restProps
+          }
+        )
+      }
+    ) });
+  }
+);
+const ContentElement = styled.styled(Box)`
+  box-shadow: ${({ theme }) => theme.shadows.filterShadow};
+  z-index: ${({ theme }) => theme.zIndices.popover};
+  border: 1px solid ${({ theme }) => theme.colors.neutral150};
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation-duration: ${(props) => props.theme.motion.timings["200"]};
+
+    &[data-state='open'] {
+      animation-timing-function: ${(props) => props.theme.motion.easings.authenticMotion};
+
+      &[data-side='top'] {
+        animation-name: ${ANIMATIONS.slideUpIn};
+      }
+
+      &[data-side='bottom'] {
+        animation-name: ${ANIMATIONS.slideDownIn};
+      }
+    }
+  }
+`;
+const DATE_PICKER_CALENDAR_NAME = "DatePickerCalendar";
+const DatePickerCalendar = React__namespace.forwardRef(
+  ({ monthSelectLabel, yearSelectLabel, ...restProps }, ref) => {
+    const { locale, timeZone, minDate, maxDate, calendarDate, onCalendarDateChange } = useDatePickerContext(DATE_PICKER_CALENDAR_NAME);
+    const startDate = date.startOfMonth(calendarDate);
+    const years = React__namespace.useMemo(() => {
+      const minYear = minDate.year;
+      const maxYear = maxDate.year;
+      return [...Array(maxYear - minYear + 1).keys()].map((y) => (minYear + y).toString());
+    }, [minDate, maxDate]);
+    const monthFormatter = useDateFormatter(locale, { month: "long" });
+    const months = React__namespace.useMemo(
+      () => [...Array(calendarDate.calendar.getMonthsInYear(calendarDate)).keys()].map(
+        (m) => monthFormatter.format(calendarDate.set({ month: m + 1 }).toDate(timeZone))
+      ),
+      [calendarDate, monthFormatter, timeZone]
+    );
+    const dayFormatter = useDateFormatter(locale, { weekday: "short" });
+    const weekDays = React__namespace.useMemo(() => {
+      const weekStart = date.startOfWeek(date.today(timeZone), locale);
+      return [...new Array(7).keys()].map((index) => {
+        const date2 = weekStart.add({ days: index });
+        const dateDay = date2.toDate(timeZone);
+        return dayFormatter.format(dateDay);
+      });
+    }, [timeZone, locale, dayFormatter]);
+    const handleMonthChange = (month) => {
+      if (typeof month === "number") {
+        return;
+      }
+      const updatedDate = calendarDate.set({ month: months.indexOf(month) + 1 });
+      onCalendarDateChange(updatedDate);
+    };
+    const handleYearChange = (year) => {
+      if (typeof year === "number") {
+        return;
+      }
+      const updatedDate = calendarDate.set({ year: parseInt(year, 10) });
+      onCalendarDateChange(updatedDate);
+    };
+    const getDatesInWeek = makeGetDatesInWeek(startDate, locale);
+    return /* @__PURE__ */ jsxRuntime.jsxs(Flex, { ref, direction: "column", alignItems: "stretch", padding: 4, ...restProps, children: [
+      /* @__PURE__ */ jsxRuntime.jsxs(ToolbarFlex, { justifyContent: "flex-start", paddingBottom: 4, paddingLeft: 2, paddingRight: 2, gap: 2, children: [
+        /* @__PURE__ */ jsxRuntime.jsx(Root$6, { children: /* @__PURE__ */ jsxRuntime.jsx(
+          SingleSelect,
+          {
+            "aria-label": monthSelectLabel,
+            value: months[calendarDate.month - 1],
+            onChange: handleMonthChange,
+            children: months.map((month) => /* @__PURE__ */ jsxRuntime.jsx(SingleSelectOption, { value: month, children: month }, month))
+          }
+        ) }),
+        /* @__PURE__ */ jsxRuntime.jsx(Root$6, { children: /* @__PURE__ */ jsxRuntime.jsx(SingleSelect, { value: calendarDate.year.toString(), "aria-label": yearSelectLabel, onChange: handleYearChange, children: years.map((year) => /* @__PURE__ */ jsxRuntime.jsx(SingleSelectOption, { value: year, children: year }, year)) }) })
+      ] }),
+      /* @__PURE__ */ jsxRuntime.jsxs("table", { role: "grid", children: [
+        /* @__PURE__ */ jsxRuntime.jsx("thead", { "aria-hidden": true, children: /* @__PURE__ */ jsxRuntime.jsx("tr", { "aria-rowindex": 0, children: weekDays.map((day, index) => /* @__PURE__ */ jsxRuntime.jsx(DatePickerHeaderCell, { "aria-colindex": index, children: day }, day)) }) }),
+        /* @__PURE__ */ jsxRuntime.jsx("tbody", { children: [...new Array(6).keys()].map((weekIndex) => /* @__PURE__ */ jsxRuntime.jsx("tr", { "aria-rowindex": weekIndex + 2, children: getDatesInWeek(weekIndex).map(
+          (date2, index) => date2 ? /* @__PURE__ */ jsxRuntime.jsx(
+            DatePickerCalendarCell,
+            {
+              "aria-colindex": index + 1,
+              date: date2,
+              startDate,
+              disabled: minDate.compare(date2) > 0 || date2.compare(maxDate) > 0
+            },
+            date2.toString()
+          ) : /* @__PURE__ */ jsxRuntime.jsx(Cell, { "aria-colindex": index + 1 }, index + 1)
+        ) }, weekIndex)) })
+      ] })
+    ] });
+  }
+);
+const makeGetDatesInWeek = (from, locale) => (weekIndex) => {
+  let date$1 = from.add({ weeks: weekIndex });
+  const dates = [];
+  date$1 = date.startOfWeek(date$1, locale);
+  const dayOfWeek = date.getDayOfWeek(date$1, locale);
+  for (let i = 0; i < dayOfWeek; i++) {
+    dates.push(null);
+  }
+  while (dates.length < 7) {
+    dates.push(date$1);
+    const nextDate = date$1.add({ days: 1 });
+    if (date.isSameDay(date$1, nextDate)) {
+      break;
+    }
+    date$1 = nextDate;
+  }
+  while (dates.length < 7) {
+    dates.push(null);
+  }
+  return dates;
+};
+const ToolbarFlex = styled.styled(Flex)`
+  div[role='combobox'] {
+    border: 1px solid transparent;
+    background: transparent;
+    font-weight: ${(props) => props.theme.fontWeights.bold};
+
+    svg {
+      fill: ${({ theme }) => theme.colors.neutral500};
+    }
+
+    &:hover {
+      background-color: ${({ theme }) => theme.colors.neutral100};
+    }
+  }
+`;
+const DatePickerHeaderCell = React__namespace.forwardRef(
+  ({ children, ...props }, forwardedRef) => {
+    return /* @__PURE__ */ jsxRuntime.jsx(Th$1, { tag: "th", role: "gridcell", ref: forwardedRef, ...props, height: "2.4rem", width: "3.2rem", children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "pi", fontWeight: "bold", color: "neutral800", children: children.slice(0, 2) }) });
+  }
+);
+const Th$1 = styled.styled(Box)`
+  border-radius: ${({ theme }) => theme.borderRadius};
+  text-transform: capitalize;
+`;
+const DATE_PICKER_CALEDNAR_CELL_NAME = "DatePickerCalendarCell";
+const DatePickerCalendarCell = React__namespace.forwardRef(
+  ({ date: date$1, startDate, disabled, ...props }, forwardedRef) => {
+    const { timeZone, locale, calendarDate, onValueChange, onOpenChange, onTextValueChange, onCalendarDateChange } = useDatePickerContext(DATE_PICKER_CALEDNAR_CELL_NAME);
+    const isSelected = date.isSameDay(calendarDate, date$1);
+    const dateFormatter = useDateFormatter(locale, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    });
+    const label = React__namespace.useMemo(() => dateFormatter.format(date$1.toDate(timeZone)), [dateFormatter, date$1, timeZone]);
+    const cellDateFormatter = useDateFormatter(locale, {
+      day: "numeric",
+      calendar: date$1.calendar.identifier
+    });
+    const formattedDate = React__namespace.useMemo(
+      () => cellDateFormatter.formatToParts(date$1.toDate(timeZone)).find((part) => part.type === "day").value,
+      [cellDateFormatter, date$1, timeZone]
+    );
+    const textValueFormatter = useDateFormatter(locale, {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+    const endDate = date.endOfMonth(startDate);
+    const isOutsideVisibleRange = date$1.compare(startDate) < 0 || date$1.compare(endDate) > 0;
+    let textColor = "neutral900";
+    if (isSelected) {
+      textColor = "primary600";
+    } else if (isOutsideVisibleRange) {
+      textColor = "neutral600";
+    }
+    return /* @__PURE__ */ jsxRuntime.jsx(
+      Cell,
+      {
+        tag: "td",
+        role: "gridcell",
+        ref: forwardedRef,
+        "aria-selected": isSelected,
+        ...props,
+        hasRadius: true,
+        "aria-label": label,
+        tabIndex: isSelected ? 0 : -1,
+        background: isSelected ? "primary100" : "neutral0",
+        cursor: "pointer",
+        onPointerDown: uiPrimitives.composeEventHandlers(props.onPointerDown, (event) => {
+          event.preventDefault();
+          onCalendarDateChange(date$1);
+          onValueChange(date$1);
+          onTextValueChange(textValueFormatter.format(date$1.toDate(timeZone)));
+          onOpenChange(false);
+        }),
+        "aria-disabled": disabled,
+        children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "pi", textColor, children: formattedDate })
+      }
+    );
+  }
+);
+const Cell = styled.styled(Box)`
+  text-align: center;
+  padding: 0.7rem;
+  // Trick to prevent the outline from overflowing because of the general outline-offset
+  outline-offset: -2px !important;
+  &[aria-disabled='true'] {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  &[aria-disabled='false'] {
+    &:hover {
+      background: ${({ theme }) => theme.colors.primary100};
+      color: ${({ theme }) => theme.colors.primary600};
+    }
+  }
+`;
+const convertUTCDateToCalendarDate = (date$1) => {
+  const utcDateString = date$1.toISOString();
+  const zonedDateTime = date.parseAbsolute(utcDateString, "UTC");
+  return date.toCalendarDate(zonedDateTime);
+};
+const isNotAlphabeticalCharacter = (str) => {
+  return Boolean(str.match(/^[^a-zA-Z]*$/));
+};
+function escapeForRegex(str = "") {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+const TimePickerCombobox = styled__default.default(Combobox)`
+  min-width: ${({ onClear }) => onClear ? "160px" : "130px"};
+`;
+const TimePicker = React__namespace.forwardRef(
+  ({ step = 15, value: valueProp, defaultValue, onChange, ...restProps }, forwardedRef) => {
+    const context = useDesignSystem("TimePicker");
+    const [textValue, setTextValue] = React__namespace.useState("");
+    const [value, setValue] = useControllableState$1({
+      prop: valueProp,
+      defaultProp: defaultValue,
+      onChange
+    });
+    const formatter = useDateFormatter(context.locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+    const separator = React__namespace.useMemo(() => {
+      const parts = formatter.formatToParts(/* @__PURE__ */ new Date());
+      const { value: separator2 } = parts.find((part) => part.type === "literal");
+      return separator2;
+    }, [formatter]);
+    const timeOptions = React__namespace.useMemo(() => {
+      const stepCount = 60 / step;
+      return [...Array(24).keys()].flatMap(
+        (hour) => [...Array(stepCount).keys()].map((minuteStep) => formatter.format(new Date(0, 0, 0, hour, minuteStep * step)))
+      );
+    }, [step, formatter]);
+    const handleTextValueChange = (string) => {
+      if (!string || isNotAlphabeticalCharacter(string)) {
+        setTextValue(string);
+      }
+    };
+    const createNewTimeValue = (value2) => {
+      const [hours, minutes] = value2.split(separator);
+      if (!hours && !minutes)
+        return void 0;
+      const hoursAsNumber = Number(hours ?? "0");
+      const minutesAsNumber = Number(minutes ?? "0");
+      if (hoursAsNumber > 23 || minutesAsNumber > 59)
+        return void 0;
+      return formatter.format(new Date(0, 0, 0, hoursAsNumber, minutesAsNumber));
+    };
+    const handleBlur = (event) => {
+      const newValue = createNewTimeValue(event.target.value);
+      if (newValue) {
+        setTextValue(newValue);
+        setValue(newValue);
+      } else {
+        setTextValue(value);
+      }
+    };
+    const handleChange = (changedValue) => {
+      if (typeof changedValue !== "undefined") {
+        const newValue = createNewTimeValue(changedValue);
+        setValue(newValue);
+      } else {
+        setValue(changedValue);
+      }
+    };
+    React__namespace.useEffect(() => {
+      const actualValue = typeof valueProp === "undefined" ? "" : valueProp;
+      if (isNotAlphabeticalCharacter(actualValue)) {
+        setTextValue(actualValue);
+      }
+    }, [valueProp, setTextValue]);
+    const escapedSeparator = escapeForRegex(separator);
+    const pattern = `\\d{2}${escapedSeparator}\\d{2}`;
+    return /* @__PURE__ */ jsxRuntime.jsx(
+      TimePickerCombobox,
+      {
+        ...restProps,
+        ref: forwardedRef,
+        value,
+        onChange: handleChange,
+        isPrintableCharacter: isNotAlphabeticalCharacter,
+        allowCustomValue: true,
+        placeholder: `--${separator}--`,
+        autocomplete: "none",
+        startIcon: /* @__PURE__ */ jsxRuntime.jsx(icons.Clock, { fill: "neutral500" }),
+        inputMode: "numeric",
+        pattern,
+        textValue,
+        onTextValueChange: handleTextValueChange,
+        onBlur: handleBlur,
+        children: timeOptions.map((time) => /* @__PURE__ */ jsxRuntime.jsx(Option, { value: time, children: time }, time))
+      }
+    );
+  }
+);
+const DateTimePicker = React__namespace.forwardRef(
+  ({
+    clearLabel = "clear",
+    dateLabel = "Choose date",
+    timeLabel = "Choose time",
+    disabled = false,
+    hasError: hasErrorProp,
+    onChange,
+    onClear,
+    required = false,
+    step,
+    value,
+    initialDate,
+    size,
+    ...props
+  }, forwardedRef) => {
+    const DatePickerElement2 = React__namespace.useRef(null);
+    const [dateValue, setDateValue] = useControllableState$1({
+      defaultProp: initialDate ? convertUTCDateToCalendarDateTime(initialDate, false) : void 0,
+      prop: value ? convertUTCDateToCalendarDateTime(value, false) : value ?? void 0,
+      onChange(date$1) {
+        if (onChange) {
+          onChange(date$1?.toDate(date.getLocalTimeZone()));
+        }
+      }
+    });
+    const context = useDesignSystem("DateTimePicker");
+    const timeFormatter = useDateFormatter(context.locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+    const timeValue = dateValue ? timeFormatter.format(dateValue.toDate(date.getLocalTimeZone())) : "";
+    const handleDateChange = (date2) => {
+      let newDate = date2 ? convertUTCDateToCalendarDateTime(date2) : void 0;
+      if (newDate && dateValue && newDate.compare(dateValue) === 0) {
+        return;
+      }
+      if (timeValue && newDate) {
+        const [hours, minutes] = timeValue.split(":");
+        newDate = newDate.set({ hour: parseInt(hours, 10), minute: parseInt(minutes, 10) });
+      }
+      setDateValue(newDate);
+    };
+    const handleTimeChange = (time) => {
+      if (!time) {
+        return;
+      }
+      const [hours, minutes] = time.split(":");
+      const dateToSet = dateValue ? dateValue.set({ hour: parseInt(hours, 10), minute: parseInt(minutes, 10) }) : convertUTCDateToCalendarDateTime(/* @__PURE__ */ new Date()).set({
+        hour: parseInt(hours, 10),
+        minute: parseInt(minutes, 10)
+      });
+      setDateValue(dateToSet);
+    };
+    const handleDateClear = (e) => {
+      setDateValue(void 0);
+      if (onClear) {
+        onClear(e);
+      }
+    };
+    const handleTimeClear = () => {
+      const newDate = dateValue ? dateValue.set({ hour: 0, minute: 0 }) : convertUTCDateToCalendarDateTime(/* @__PURE__ */ new Date());
+      setDateValue(newDate);
+    };
+    const composedRefs = useComposedRefs(DatePickerElement2, forwardedRef);
+    const { error, id, labelNode } = useField("DateTimePicker");
+    const hasError = Boolean(error) || hasErrorProp;
+    return /* @__PURE__ */ jsxRuntime.jsxs(Flex, { "aria-labelledby": labelNode ? `${id}-label` : void 0, role: "group", flex: "1", gap: 1, wrap: "wrap", children: [
+      /* @__PURE__ */ jsxRuntime.jsx(Root$6, { flex: "1", children: /* @__PURE__ */ jsxRuntime.jsx(
+        DatePicker,
+        {
+          ...props,
+          size,
+          value: dateValue?.toDate("UTC"),
+          onChange: handleDateChange,
+          required,
+          onClear: onClear ? handleDateClear : void 0,
+          clearLabel: `${clearLabel} date`,
+          disabled,
+          ref: composedRefs,
+          "aria-label": dateLabel
+        }
+      ) }),
+      /* @__PURE__ */ jsxRuntime.jsx(Root$6, { flex: "1", children: /* @__PURE__ */ jsxRuntime.jsx(
+        TimePicker,
+        {
+          size,
+          hasError,
+          value: timeValue,
+          onChange: handleTimeChange,
+          onClear: onClear && timeValue !== void 0 && timeValue !== "00:00" ? handleTimeClear : void 0,
+          clearLabel: `${clearLabel} time`,
+          required,
+          disabled,
+          step,
+          "aria-label": timeLabel
+        }
+      ) })
+    ] });
+  }
+);
+const convertUTCDateToCalendarDateTime = (date$1, resetTime = true) => {
+  const utcDateString = date$1.toISOString();
+  let zonedDateTime = date.parseAbsoluteToLocal(utcDateString);
+  if (resetTime) {
+    zonedDateTime = zonedDateTime.set({ hour: 0, minute: 0 });
+  }
+  return date.toCalendarDateTime(zonedDateTime);
+};
+const Divider = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(
+    DividerImpl,
+    {
+      ref: forwardedRef,
+      background: "neutral150",
+      ...props,
+      "data-orientation": "horizontal",
+      role: "separator",
+      tag: "div"
+    }
+  );
+});
+const DividerImpl = styled.styled(Box)`
+  height: 1px;
+  border: none;
+  /* If contained in a Flex parent we want to prevent the Divider to shink */
+  flex-shrink: 0;
+`;
+const EmptyStateIconWrapper = styled.styled(Box)`
+  svg {
+    height: 8.8rem;
+  }
+`;
+const EmptyStateLayout = React__namespace.forwardRef(
+  ({ icon, content, action, hasRadius = true, shadow = "tableShadow" }, forwardedRef) => {
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      Flex,
+      {
+        ref: forwardedRef,
+        alignItems: "center",
+        direction: "column",
+        padding: 11,
+        background: "neutral0",
+        hasRadius,
+        shadow,
+        children: [
+          icon ? /* @__PURE__ */ jsxRuntime.jsx(EmptyStateIconWrapper, { paddingBottom: 6, "aria-hidden": true, children: icon }) : null,
+          /* @__PURE__ */ jsxRuntime.jsx(Box, { paddingBottom: 4, children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "delta", tag: "p", textAlign: "center", textColor: "neutral600", children: content }) }),
+          action
+        ]
+      }
+    );
+  }
+);
+const addMarks = state.StateEffect.define();
+const filterMarks = state.StateEffect.define();
+const lineHighlightMark = view.Decoration.mark({
+  attributes: { style: "background-color: yellow; color: black" }
+});
+const markField = state.StateField.define({
+  // Start with an empty set of decorations
+  create() {
+    return view.Decoration.none;
+  },
+  // This is called whenever the editor updates it computes the new set
+  update(value, transaction) {
+    value = value.map(transaction.changes);
+    transaction.effects.forEach((effect) => {
+      if (effect.is(addMarks)) {
+        value = value.update({
+          add: effect.value,
+          sort: true
+        });
+      } else if (effect.is(filterMarks)) {
+        value = value.update({ filter: effect.value });
+      }
+    });
+    return value;
+  },
+  // Indicate that this field provides a set of decorations
+  provide: (f) => view.EditorView.decorations.from(f)
+});
+const JSONInput = React__namespace.forwardRef(
+  ({
+    hasError: hasErrorProp,
+    required: requiredProp,
+    id: idProp,
+    value = "",
+    disabled = false,
+    onChange = () => null,
+    ...boxProps
+  }, forwardedRef) => {
+    const editor = React__namespace.useRef();
+    const editorState = React__namespace.useRef();
+    const editorView = React__namespace.useRef();
+    const { error, ...field } = useField("JsonInput");
+    const hasError = Boolean(error) || hasErrorProp;
+    const id = field.id ?? idProp;
+    const required = field.required || requiredProp;
+    let ariaDescription;
+    if (error) {
+      ariaDescription = `${id}-error`;
+    } else if (field.hint) {
+      ariaDescription = `${id}-hint`;
+    }
+    const highglightErrorAtLine = (lineNumber) => {
+      const doc = editorState.current?.doc;
+      if (doc) {
+        const { text, to: lineEnd } = doc.line(lineNumber);
+        const lineStart = lineEnd - text.trimStart().length;
+        if (lineEnd > lineStart) {
+          editorView.current?.dispatch({
+            effects: addMarks.of([lineHighlightMark.range(lineStart, lineEnd)])
+          });
+        }
+      }
+    };
+    const clearErrorHighlight = () => {
+      const doc = editorState.current?.doc;
+      if (doc) {
+        const docEnd = doc.length || 0;
+        editorView.current?.dispatch({
+          effects: filterMarks.of((from, to) => to <= 0 || from >= docEnd)
+        });
+      }
+    };
+    const lintJSON = ({ state: state2, view: view22 }) => {
+      editorView.current = view22;
+      editorState.current = state2;
+      clearErrorHighlight();
+      const lintJSONForErrrors = langJson.jsonParseLinter();
+      const lintErrors = lintJSONForErrrors(view22);
+      if (lintErrors.length) {
+        highglightErrorAtLine(state2.doc.lineAt(lintErrors[0].from).number);
+      }
+    };
+    const onCodeMirrorChange = (currentValue, viewUpdate) => {
+      lintJSON(viewUpdate);
+      onChange(currentValue);
+    };
+    const onCreateEditor = (view22, state2) => {
+      editorView.current = view22;
+      editorState.current = state2;
+      lintJSON({ view: view22, state: state2 });
+    };
+    const { setContainer, view: view2 } = reactCodemirror.useCodeMirror({
+      value,
+      onCreateEditor,
+      container: editor.current,
+      editable: !disabled,
+      extensions: [langJson.json(), markField],
+      onChange: onCodeMirrorChange,
+      theme: "dark",
+      basicSetup: {
+        lineNumbers: true,
+        bracketMatching: true,
+        closeBrackets: true,
+        indentOnInput: true,
+        syntaxHighlighting: true,
+        highlightSelectionMatches: true,
+        tabSize: 2
+      }
+    });
+    const composedRefs = useComposedRefs(editor, setContainer);
+    React__namespace.useImperativeHandle(
+      forwardedRef,
+      () => ({
+        ...view2?.dom,
+        focus() {
+          if (view2) {
+            view2.focus();
+          }
+        },
+        scrollIntoView(args) {
+          if (view2) {
+            view2.dom.scrollIntoView(args);
+          }
+        }
+      }),
+      [view2]
+    );
+    return /* @__PURE__ */ jsxRuntime.jsx(
+      JSONInputContainer,
+      {
+        ref: composedRefs,
+        $disabled: disabled,
+        $hasError: hasError,
+        alignItems: "stretch",
+        fontSize: 2,
+        hasRadius: true,
+        "aria-required": required,
+        id,
+        "aria-describedby": ariaDescription,
+        ...boxProps
+      }
+    );
+  }
+);
+const JSONInputContainer = styled.styled(Flex)`
+  line-height: ${({ theme }) => theme.lineHeights[2]};
+
+  .cm-editor {
+    /** 
+     * Hard coded since the color is the same between themes,
+     * theme.colors.neutral800 changes between themes 
+     */
+    background-color: #32324d;
+    width: 100%;
+    outline: none;
+    cursor: ${({ $disabled }) => $disabled ? "not-allowed" : "text"};
+  }
+
+  .cm-scroller {
+    border: 1px solid ${({ theme, $hasError }) => $hasError ? theme.colors.danger600 : theme.colors.neutral200};
+    /* inputFocusStyle will receive hasError prop */
+    ${inputFocusStyle()}
+  }
+
+  .cm-editor,
+  .cm-scroller {
+    border-radius: ${({ theme }) => theme.borderRadius};
+  }
+
+  .cm-gutters,
+  .cm-activeLineGutter {
+    /** 
+     * Hard coded since the color is the same between themes,
+     * theme.colors.neutral700 changes between themes 
+     */
+    background-color: #4a4a6a;
+  }
+`;
+const LinkButton = forwardRef(
+  ({ disabled, ...restProps }, ref) => {
+    return /* @__PURE__ */ jsxRuntime.jsx(
+      Button,
+      {
+        ref,
+        tag: BaseLinkImpl,
+        tabIndex: disabled ? -1 : void 0,
+        disabled,
+        ...restProps
+      }
+    );
+  }
+);
+const MainWrapper = styled.styled(Box)`
+  // To prevent global outline on focus visible to force an outline when Main is focused
+  &:focus-visible {
+    outline: none;
+  }
+`;
+const Main = ({ labelledBy = "main-content-title", ...props }) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(MainWrapper, { "aria-labelledby": labelledBy, tag: "main", id: "main-content", tabIndex: -1, ...props });
+};
+const AnchorBox = styled.styled(Box)`
+  text-decoration: none;
+
+  &:focus {
+    left: ${({ theme }) => theme.spaces[3]};
+    top: ${({ theme }) => theme.spaces[3]};
+  }
+`;
+const SkipToContent = ({ children }) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(
+    AnchorBox,
+    {
+      tag: "a",
+      href: "#main-content",
+      background: "primary600",
+      color: "neutral0",
+      left: "-100%",
+      padding: 3,
+      position: "absolute",
+      top: "-100%",
+      hasRadius: true,
+      zIndex: 9999,
+      children
+    }
+  );
+};
+const Root$3 = Dialog__namespace.Root;
+const Trigger$2 = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(Dialog__namespace.Trigger, { ...props, asChild: true, ref: forwardedRef });
+});
+const Content$2 = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(Dialog__namespace.Portal, { children: /* @__PURE__ */ jsxRuntime.jsx(Overlay, { children: /* @__PURE__ */ jsxRuntime.jsx(ContentImpl, { ref: forwardedRef, ...props }) }) });
+});
+const Overlay = styled.styled(Dialog__namespace.Overlay)`
+  background: ${(props) => setOpacity(props.theme.colors.neutral800, 0.2)};
+  position: fixed;
+  inset: 0;
+  z-index: ${(props) => props.theme.zIndices.overlay};
+  will-change: opacity;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: ${ANIMATIONS.overlayFadeIn} ${(props) => props.theme.motion.timings["200"]}
+      ${(props) => props.theme.motion.easings.authenticMotion};
+  }
+`;
+const ContentImpl = styled.styled(Dialog__namespace.Content)`
+  max-width: 83rem;
+  max-height: 90vh;
+  height: auto;
+  width: 60%;
+  overflow: hidden;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  border-radius: ${(props) => props.theme.borderRadius};
+  background-color: ${(props) => props.theme.colors.neutral0};
+  box-shadow: ${(props) => props.theme.shadows.popupShadow};
+  z-index: ${(props) => props.theme.zIndices.modal};
+
+  > form {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-state='open'] {
+      animation-duration: ${(props) => props.theme.motion.timings["200"]};
+      animation-timing-function: ${(props) => props.theme.motion.easings.authenticMotion};
+      animation-name: ${ANIMATIONS.modalPopIn};
+    }
+
+    &[data-state='closed'] {
+      animation-duration: ${(props) => props.theme.motion.timings["120"]};
+      animation-timing-function: ${(props) => props.theme.motion.easings.easeOutQuad};
+      animation-name: ${ANIMATIONS.modalPopOut};
+    }
+  }
+`;
+const Close = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(Dialog__namespace.Close, { ...props, asChild: true, ref: forwardedRef });
+});
+const Header = React__namespace.forwardRef(
+  ({ children, closeLabel = "Close modal", ...restProps }, forwardedRef) => {
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      Head,
+      {
+        ref: forwardedRef,
+        padding: 4,
+        paddingLeft: 5,
+        paddingRight: 5,
+        background: "neutral100",
+        justifyContent: "space-between",
+        ...restProps,
+        tag: "header",
+        children: [
+          children,
+          /* @__PURE__ */ jsxRuntime.jsx(Close, { children: /* @__PURE__ */ jsxRuntime.jsx(IconButton, { withTooltip: false, label: closeLabel, children: /* @__PURE__ */ jsxRuntime.jsx(icons.Cross, {}) }) })
+        ]
+      }
+    );
+  }
+);
+const Head = styled.styled(Flex)`
+  border-bottom: solid 1px ${(props) => props.theme.colors.neutral150};
+`;
+const Title = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(Dialog__namespace.Title, { asChild: true, children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { tag: "h2", variant: "omega", fontWeight: "bold", ref: forwardedRef, ...props }) });
+});
+const Body = React__namespace.forwardRef(({ children, ...restProps }, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(BodyScroll, { ref: forwardedRef, ...restProps, children });
+});
+const BodyScroll = styled.styled(ScrollAreaImpl$1)`
+  padding-inline: ${(props) => props.theme.spaces[7]};
+
+  & > div {
+    padding-block: ${(props) => props.theme.spaces[8]};
+    /* Add negative margin and padding to avoid cropping the box shadow when the inputs are focused */
+    margin: 0 -2px 0 -2px;
+    padding-left: 2px;
+    padding-right: 2px;
+
+    & > div {
+      // the scroll area component applies a display: table to the child, which we don't want.
+      display: block !important;
+    }
+  }
+`;
+const Footer = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(
+    Foot,
+    {
+      ref: forwardedRef,
+      padding: 4,
+      paddingLeft: 5,
+      paddingRight: 5,
+      background: "neutral100",
+      justifyContent: "space-between",
+      ...props,
+      tag: "footer"
+    }
+  );
+});
+const Foot = styled.styled(Flex)`
+  border-top: solid 1px ${(props) => props.theme.colors.neutral150};
+  flex: 1;
+`;
+const Modal = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  Body,
+  Close,
+  Content: Content$2,
+  Footer,
+  Header,
+  Root: Root$3,
+  Title,
+  Trigger: Trigger$2
+}, Symbol.toStringTag, { value: "Module" }));
+const INITIAL_VALUE = "";
+const NumberInput = React__namespace.forwardRef(
+  ({ startAction, locale: defaultLocale, onValueChange, value, step = 1, disabled = false, ...props }, ref) => {
+    const designContext = useDesignSystem("NumberInput");
+    const locale = defaultLocale || designContext.locale;
+    const numberParserRef = React__namespace.useRef(new number.NumberParser(locale, { style: "decimal" }));
+    const numberFormaterRef = React__namespace.useRef(new number.NumberFormatter(locale, { maximumFractionDigits: 20 }));
+    const [inputValue, setInputValue] = useControllableState({
+      prop(currentInputValue) {
+        const stringifiedValue = String(value);
+        return isNaN(Number(stringifiedValue)) || stringifiedValue !== currentInputValue && currentInputValue !== "" ? currentInputValue : numberFormaterRef.current.format(Number(value));
+      },
+      defaultProp: INITIAL_VALUE,
+      onChange(value2) {
+        const parsedValue = numberParserRef.current.parse(value2 ?? "");
+        onValueChange(isNaN(parsedValue) ? void 0 : parsedValue);
+      }
+    });
+    const formatNumberAndSetInput = (value2) => {
+      setInputValue(String(value2));
+    };
+    const handelInputChange = ({ target: { value: value2 } }) => {
+      if (numberParserRef.current.isValidPartialNumber(value2)) {
+        formatNumberAndSetInput(value2);
+      }
+    };
+    const getDecimalPlaces = (step2) => {
+      const stepString = step2.toString();
+      if (!stepString.includes("."))
+        return 0;
+      return stepString.split(".")[1].length;
+    };
+    const decimalPlaces = getDecimalPlaces(step);
+    const increment = () => {
+      if (!inputValue) {
+        formatNumberAndSetInput(step);
+        return;
+      }
+      const parsedValue = numberParserRef.current.parse(inputValue);
+      const newValue = isNaN(parsedValue) ? step : parsedValue + step;
+      const roundedValue = parseFloat(newValue.toFixed(decimalPlaces));
+      formatNumberAndSetInput(numberFormaterRef.current.format(roundedValue));
+    };
+    const decrement = () => {
+      if (!inputValue) {
+        formatNumberAndSetInput(-step);
+        return;
+      }
+      const parsedValue = numberParserRef.current.parse(inputValue);
+      const newValue = isNaN(parsedValue) ? -step : parsedValue - step;
+      const roundedValue = parseFloat(newValue.toFixed(decimalPlaces));
+      formatNumberAndSetInput(numberFormaterRef.current.format(roundedValue));
+    };
+    const handleKeyDown = (e) => {
+      if (disabled)
+        return;
+      switch (e.key) {
+        case KeyboardKeys.DOWN: {
+          e.preventDefault();
+          decrement();
+          break;
+        }
+        case KeyboardKeys.UP: {
+          e.preventDefault();
+          increment();
+          break;
+        }
+      }
+    };
+    const handleBlur = () => {
+      if (inputValue) {
+        const parsedValue = numberParserRef.current.parse(inputValue);
+        const formattedValue = isNaN(parsedValue) ? "" : numberFormaterRef.current.format(parsedValue);
+        formatNumberAndSetInput(formattedValue);
+      }
+    };
+    return /* @__PURE__ */ jsxRuntime.jsx(
+      Input$2,
+      {
+        ref,
+        startAction,
+        disabled,
+        type: "text",
+        inputMode: "decimal",
+        onChange: handelInputChange,
+        onKeyDown: handleKeyDown,
+        onBlur: handleBlur,
+        value: inputValue,
+        endAction: /* @__PURE__ */ jsxRuntime.jsxs(Flex, { direction: "column", children: [
+          /* @__PURE__ */ jsxRuntime.jsx(
+            ArrowButton,
+            {
+              disabled,
+              "aria-hidden": true,
+              $reverse: true,
+              onClick: increment,
+              tabIndex: -1,
+              type: "button",
+              "data-testid": "ArrowUp",
+              children: /* @__PURE__ */ jsxRuntime.jsx(icons.CaretDown, { fill: "neutral500" })
+            }
+          ),
+          /* @__PURE__ */ jsxRuntime.jsx(
+            ArrowButton,
+            {
+              disabled,
+              "aria-hidden": true,
+              onClick: decrement,
+              tabIndex: -1,
+              type: "button",
+              "data-testid": "ArrowDown",
+              children: /* @__PURE__ */ jsxRuntime.jsx(icons.CaretDown, { fill: "neutral500" })
+            }
+          )
+        ] }),
+        ...props
+      }
+    );
+  }
+);
+const ArrowButton = styled.styled.button`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: translateY(${({ $reverse }) => $reverse ? `-2px` : `2px`});
+  cursor: ${({ disabled }) => disabled ? "not-allowed" : void 0};
+  height: 1.1rem;
+
+  svg {
+    width: 1.2rem;
+    transform: ${({ $reverse }) => $reverse ? "rotateX(180deg)" : void 0};
+  }
+`;
+function useControllableState({
+  prop,
+  defaultProp,
+  onChange = () => {
+  }
+}) {
+  const [uncontrolledProp, setUncontrolledProp] = useUncontrolledState({
+    defaultProp,
+    onChange
+  });
+  const isControlled = prop !== void 0;
+  const propValue = prop instanceof Function ? prop(uncontrolledProp) : prop;
+  const value = isControlled ? propValue : uncontrolledProp;
+  const handleChange = uiPrimitives.useCallbackRef(onChange);
+  const setValue = React__namespace.useCallback(
+    (nextValue) => {
+      if (isControlled) {
+        const setter = nextValue;
+        const value2 = typeof nextValue === "function" ? setter(propValue) : nextValue;
+        if (value2 !== propValue) {
+          handleChange(value2);
+          setUncontrolledProp(nextValue);
+        }
+      } else {
+        setUncontrolledProp(nextValue);
+      }
+    },
+    [isControlled, propValue, setUncontrolledProp, handleChange]
+  );
+  return [value, setValue];
+}
+const PaginationContext = React__namespace.createContext({ activePage: 1, pageCount: 1 });
+const usePagination = () => React__namespace.useContext(PaginationContext);
+const Pagination = ({ children, label = "Pagination", activePage, pageCount }) => {
+  const context = React__namespace.useMemo(() => ({ activePage, pageCount }), [activePage, pageCount]);
+  return /* @__PURE__ */ jsxRuntime.jsx(PaginationContext.Provider, { value: context, children: /* @__PURE__ */ jsxRuntime.jsx(Box, { "aria-label": label, tag: "nav", children: /* @__PURE__ */ jsxRuntime.jsx(Flex, { tag: "ol", gap: 1, children: React__namespace.Children.map(children, (child, index) => {
+    return /* @__PURE__ */ jsxRuntime.jsx("li", { children: child }, index);
+  }) }) }) });
+};
+const PreviousLink = forwardRef(
+  ({ children, ...props }, ref) => {
+    const { activePage } = usePagination();
+    const disabled = activePage === 1;
+    return /* @__PURE__ */ jsxRuntime.jsxs(ActionLinkWrapper, { ref, "aria-disabled": disabled, tabIndex: disabled ? -1 : void 0, ...props, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(VisuallyHidden, { children }),
+      /* @__PURE__ */ jsxRuntime.jsx(icons.ChevronLeft, { "aria-hidden": true })
+    ] });
+  }
+);
+const NextLink = forwardRef(
+  ({ children, ...props }, ref) => {
+    const { activePage, pageCount } = usePagination();
+    const disabled = activePage === pageCount;
+    return /* @__PURE__ */ jsxRuntime.jsxs(ActionLinkWrapper, { ref, "aria-disabled": disabled, tabIndex: disabled ? -1 : void 0, ...props, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(VisuallyHidden, { children }),
+      /* @__PURE__ */ jsxRuntime.jsx(icons.ChevronRight, { "aria-hidden": true })
+    ] });
+  }
+);
+const LinkWrapper = styled.styled(BaseLinkImpl)`
+  padding: ${({ theme }) => theme.spaces[3]};
+  border-radius: ${({ theme }) => theme.borderRadius};
+  box-shadow: ${({ $active, theme }) => $active ? theme.shadows.filterShadow : void 0};
+  text-decoration: none;
+  display: flex;
+
+  ${focus}
+`;
+const ActionLinkWrapper = styled.styled(LinkWrapper)`
+  font-size: 1.1rem;
+
+  svg path {
+    fill: ${(p) => p["aria-disabled"] ? p.theme.colors.neutral300 : p.theme.colors.neutral600};
+  }
+
+  &:focus,
+  &:hover {
+    svg path {
+      fill: ${(p) => p["aria-disabled"] ? p.theme.colors.neutral300 : p.theme.colors.neutral700};
+    }
+  }
+
+  ${(p) => p["aria-disabled"] ? `
+  pointer-events: none;
+    ` : void 0}
+`;
+const PageLink = forwardRef(
+  ({ number: number2, children, ...props }, ref) => {
+    const { activePage } = usePagination();
+    const isActive = activePage === number2;
+    return /* @__PURE__ */ jsxRuntime.jsxs(PageLinkWrapper, { ref, ...props, "aria-current": isActive, $active: isActive, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(VisuallyHidden, { children }),
+      /* @__PURE__ */ jsxRuntime.jsx(Typography, { "aria-hidden": true, fontWeight: isActive ? "bold" : void 0, lineHeight: "revert", variant: "pi", children: number2 })
+    ] });
+  }
+);
+const PageLinkWrapper = styled.styled(LinkWrapper)`
+  color: ${({ theme, $active }) => $active ? theme.colors.primary700 : theme.colors.neutral800};
+  background: ${({ theme, $active }) => $active ? theme.colors.neutral0 : void 0};
+
+  &:hover {
+    box-shadow: ${({ theme }) => theme.shadows.filterShadow};
+  }
+`;
+const Dots = ({ children, ...props }) => /* @__PURE__ */ jsxRuntime.jsxs(Box, { ...props, children: [
+  /* @__PURE__ */ jsxRuntime.jsx(VisuallyHidden, { children }),
+  /* @__PURE__ */ jsxRuntime.jsx(Typography, { "aria-hidden": true, lineHeight: "revert", textColor: "neutral800", variant: "pi", children: "…" })
+] });
+const Root$2 = Popover__namespace.Root;
+const Anchor = Popover__namespace.Anchor;
+const Arrow = Popover__namespace.Arrow;
+const Trigger$1 = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(Popover__namespace.Trigger, { ...props, asChild: true, ref: forwardedRef });
+});
+const Content$1 = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(Popover__namespace.Portal, { children: /* @__PURE__ */ jsxRuntime.jsx(PopoverContent, { sideOffset: 4, side: "bottom", align: "start", ...props, ref: forwardedRef }) });
+});
+const PopoverContent = styled.styled(Popover__namespace.Content)`
+  box-shadow: ${({ theme }) => theme.shadows.filterShadow};
+  z-index: ${({ theme }) => theme.zIndices.popover};
+  background-color: ${(props) => props.theme.colors.neutral0};
+  border: 1px solid ${({ theme }) => theme.colors.neutral150};
+  border-radius: ${({ theme }) => theme.borderRadius};
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation-duration: ${(props) => props.theme.motion.timings["200"]};
+
+    &[data-state='open'] {
+      animation-timing-function: ${(props) => props.theme.motion.easings.authenticMotion};
+
+      &[data-side='top'] {
+        animation-name: ${ANIMATIONS.slideUpIn};
+      }
+
+      &[data-side='bottom'] {
+        animation-name: ${ANIMATIONS.slideDownIn};
+      }
+    }
+
+    &[data-state='closed'] {
+      animation-timing-function: ${(props) => props.theme.motion.easings.easeOutQuad};
+
+      &[data-side='top'] {
+        animation-name: ${ANIMATIONS.slideUpOut};
+      }
+
+      &[data-side='bottom'] {
+        animation-name: ${ANIMATIONS.slideDownOut};
+      }
+    }
+  }
+`;
+const ScrollAreaImpl = React__namespace.forwardRef(
+  ({ children, intersectionId, onReachEnd, ...props }, forwardedRef) => {
+    const popoverRef = React__namespace.useRef(null);
+    const composedRef = useComposedRefs(popoverRef, forwardedRef);
+    const generatedIntersectionId = useId();
+    useIntersection(popoverRef, onReachEnd ?? (() => {
+    }), {
+      selectorToWatch: `#${stripReactIdOfColon(generatedIntersectionId)}`,
+      skipWhen: !intersectionId || !onReachEnd
+    });
+    return /* @__PURE__ */ jsxRuntime.jsxs(PopoverScrollArea, { ref: composedRef, ...props, children: [
+      children,
+      intersectionId && onReachEnd && /* @__PURE__ */ jsxRuntime.jsx(Box, { id: stripReactIdOfColon(generatedIntersectionId), width: "100%", height: "1px" })
+    ] });
+  }
+);
+const PopoverScrollArea = styled.styled(ScrollAreaImpl$1)`
+  height: 20rem;
+`;
+const Popover = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  Anchor,
+  Arrow,
+  Content: Content$1,
+  Root: Root$2,
+  ScrollArea: ScrollAreaImpl,
+  Trigger: Trigger$1
+}, Symbol.toStringTag, { value: "Module" }));
+const ProgressBar = React__namespace.forwardRef(
+  ({ size = "M", value, ...restProps }, forwardedRef) => {
+    return /* @__PURE__ */ jsxRuntime.jsx(ProgressRoot, { ref: forwardedRef, $size: size, ...restProps, children: /* @__PURE__ */ jsxRuntime.jsx(ProgressIndicator, { style: { transform: `translate3D(-${100 - (value ?? 0)}%, 0, 0)` } }) });
+  }
+);
+const ProgressRoot = styled.styled(Progress__namespace.Root)`
+  position: relative;
+  overflow: hidden;
+  width: ${(props) => props.$size === "S" ? "7.8rem" : "10.2rem"};
+  height: ${(props) => props.$size === "S" ? "0.4rem" : "0.8rem"};
+  background-color: ${(props) => props.theme.colors.neutral600};
+  border-radius: ${(props) => props.theme.borderRadius};
+
+  /* Fix overflow clipping in Safari */
+  /* https://gist.github.com/domske/b66047671c780a238b51c51ffde8d3a0 */
+  transform: translateZ(0);
+`;
+const ProgressIndicator = styled.styled(Progress__namespace.Indicator)`
+  background-color: ${({ theme }) => theme.colors.neutral0};
+  border-radius: ${({ theme }) => theme.borderRadius};
+  width: 100%;
+  height: 100%;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: transform ${(props) => props.theme.motion.timings["320"]}
+      ${(props) => props.theme.motion.easings.authenticMotion};
+  }
+`;
+const Group = React__namespace.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(RadioGroupRoot, { ref: forwardedRef, ...props });
+});
+const RadioGroupRoot = styled.styled(RadioGroup__namespace.Root)`
+  display: flex;
+  flex-direction: column;
+  gap: ${(props) => props.theme.spaces[3]};
+`;
+const Item$1 = React__namespace.forwardRef(({ children, id: idProp, ...restProps }, forwardedRef) => {
+  const id = useId(idProp);
+  return /* @__PURE__ */ jsxRuntime.jsxs(Flex, { gap: 2, children: [
+    /* @__PURE__ */ jsxRuntime.jsx(RadioGroupItem, { id, ref: forwardedRef, ...restProps, children: /* @__PURE__ */ jsxRuntime.jsx(RadioGroupIndicator, {}) }),
+    /* @__PURE__ */ jsxRuntime.jsx(Typography, { tag: "label", htmlFor: id, children })
+  ] });
+});
+const RadioGroupItem = styled.styled(RadioGroup__namespace.Item)`
+  background: ${(props) => props.theme.colors.neutral0};
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  border-radius: 50%;
+  border: 1px solid ${(props) => props.theme.colors.neutral300};
+  position: relative;
+  cursor: pointer;
+  z-index: 0;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: border-color ${(props) => props.theme.motion.timings["120"]}
+      ${(props) => props.theme.motion.easings.easeOutQuad};
+  }
+
+  &[data-state='checked'] {
+    border: 1px solid ${(props) => props.theme.colors.primary600};
+  }
+
+  &[data-disabled] {
+    cursor: not-allowed;
+    background-color: ${(props) => props.theme.colors.neutral200};
+  }
+
+  /* increase target size for touch devices https://www.w3.org/WAI/WCAG21/Understanding/target-size.html */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    min-width: 44px;
+    min-height: 44px;
+  }
+`;
+const RadioGroupIndicator = styled.styled(RadioGroup__namespace.Indicator)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+
+  &[data-state='checked'] {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: ${ANIMATIONS.popIn} ${(props) => props.theme.motion.timings["200"]};
+    }
+  }
+
+  &::after {
+    content: '';
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: ${(props) => props.theme.colors.primary600};
+  }
+`;
+const Radio = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  Group,
+  Item: Item$1
+}, Symbol.toStringTag, { value: "Module" }));
+const focusFocusable = (node) => {
+  const nextNode = node.querySelector('[tabindex="0"]');
+  if (nextNode) {
+    nextNode.focus();
+  }
+};
+const RawTableContext = React__namespace.createContext({
+  rowIndex: 0,
+  colIndex: 0,
+  setTableValues() {
+    throw new Error("setTableValues must be initialized via the RawTableContext.Provider");
+  }
+});
+const useTable = () => React__namespace.useContext(RawTableContext);
+const RawTable = React__namespace.forwardRef(
+  ({ colCount, rowCount, jumpStep = 3, initialCol = 0, initialRow = 0, ...props }, forwardedRef) => {
+    const tableRef = React__namespace.useRef(null);
+    const mountedRef = React__namespace.useRef(false);
+    const composedRef = useComposedRefs(tableRef, forwardedRef);
+    const [rowIndex, setRowIndex] = React__namespace.useState(initialRow);
+    const [colIndex, setColIndex] = React__namespace.useState(initialCol);
+    const setTableValues = React__namespace.useCallback(({ colIndex: colIndex2, rowIndex: rowIndex2 }) => {
+      setColIndex(colIndex2);
+      setRowIndex(rowIndex2);
+    }, []);
+    React__namespace.useEffect(() => {
+      if (mountedRef.current) {
+        focusFocusable(tableRef.current);
+      }
+      if (!mountedRef.current) {
+        mountedRef.current = true;
+      }
+    }, [colIndex, rowIndex]);
+    const handleKeyDown = (e) => {
+      switch (e.key) {
+        case KeyboardKeys.RIGHT: {
+          e.preventDefault();
+          setColIndex((prevColIndex) => prevColIndex < colCount - 1 ? prevColIndex + 1 : prevColIndex);
+          break;
+        }
+        case KeyboardKeys.LEFT: {
+          e.preventDefault();
+          setColIndex((prevColIndex) => prevColIndex > 0 ? prevColIndex - 1 : prevColIndex);
+          break;
+        }
+        case KeyboardKeys.UP: {
+          e.preventDefault();
+          setRowIndex((prevRowIndex) => prevRowIndex > 0 ? prevRowIndex - 1 : prevRowIndex);
+          break;
+        }
+        case KeyboardKeys.DOWN: {
+          e.preventDefault();
+          setRowIndex((prevRowIndex) => prevRowIndex < rowCount - 1 ? prevRowIndex + 1 : prevRowIndex);
+          break;
+        }
+        case KeyboardKeys.HOME: {
+          e.preventDefault();
+          if (e.ctrlKey) {
+            setRowIndex(0);
+          }
+          setColIndex(0);
+          break;
+        }
+        case KeyboardKeys.END: {
+          e.preventDefault();
+          if (e.ctrlKey) {
+            setRowIndex(rowCount - 1);
+          }
+          setColIndex(colCount - 1);
+          break;
+        }
+        case KeyboardKeys.PAGE_DOWN: {
+          e.preventDefault();
+          setRowIndex((prevRowIndex) => prevRowIndex + jumpStep < rowCount ? prevRowIndex + jumpStep : rowCount - 1);
+          break;
+        }
+        case KeyboardKeys.PAGE_UP: {
+          e.preventDefault();
+          setRowIndex((prevRowIndex) => prevRowIndex - jumpStep > 0 ? prevRowIndex - jumpStep : 0);
+          break;
+        }
+      }
+    };
+    const context = React__namespace.useMemo(() => ({ rowIndex, colIndex, setTableValues }), [colIndex, rowIndex, setTableValues]);
+    return /* @__PURE__ */ jsxRuntime.jsx(RawTableContext.Provider, { value: context, children: /* @__PURE__ */ jsxRuntime.jsx(
+      "table",
+      {
+        role: "grid",
+        ref: composedRef,
+        "aria-rowcount": rowCount,
+        "aria-colcount": colCount,
+        onKeyDown: handleKeyDown,
+        ...props
+      }
+    ) });
+  }
+);
+const getFocusableNodes = (node, includeNegativeTabIndex) => {
+  const nodes = [
+    ...node.querySelectorAll(
+      'a, button, input, textarea, select, details, [tabindex]:not([tabindex="-1"])'
+    )
+  ];
+  const focusables = nodes.filter((node2) => {
+    if (node2.hasAttribute("disabled"))
+      return false;
+    if (includeNegativeTabIndex)
+      return true;
+    return node2.getAttribute("tabindex") !== "-1";
+  });
+  return focusables;
+};
+const getFocusableNodesWithKeyboardNav = (nodes) => {
+  return nodes.filter((node) => {
+    if (node.tagName === "INPUT") {
+      return node.type !== "checkbox" && node.type !== "radio";
+    }
+    return false;
+  });
+};
+const RawTd = React__namespace.forwardRef(
+  ({ coords = { col: 0, row: 0 }, tag = "td", ...props }, forwardedRef) => {
+    const tdRef = React__namespace.useRef(null);
+    const composedRef = useComposedRefs(forwardedRef, tdRef);
+    const { rowIndex, colIndex, setTableValues } = useTable();
+    const [isActive, setIsActive] = React__namespace.useState(false);
+    const handleKeyDown = (e) => {
+      const focusableNodes = getFocusableNodes(tdRef.current, true);
+      if (focusableNodes.length === 0 || focusableNodes.length === 1 && getFocusableNodesWithKeyboardNav(focusableNodes).length === 0) {
+        return;
+      }
+      if (focusableNodes.length > 1 && !focusableNodes.find((node) => node.tagName !== "BUTTON")) {
+        e.preventDefault();
+        const focussedButtonIndex = focusableNodes.findIndex((node) => node === document.activeElement);
+        if (e.key === KeyboardKeys.RIGHT) {
+          const nextNode = focusableNodes[focussedButtonIndex + 1];
+          if (nextNode) {
+            e.stopPropagation();
+            nextNode.focus();
+          }
+        } else if (e.key === KeyboardKeys.LEFT) {
+          const nextNode = focusableNodes[focussedButtonIndex - 1];
+          if (nextNode) {
+            e.stopPropagation();
+            nextNode.focus();
+          }
+        }
+        return;
+      }
+      const isEnterKey = e.key === KeyboardKeys.ENTER;
+      if (isEnterKey && !isActive) {
+        setIsActive(true);
+      } else if ((e.key === KeyboardKeys.ESCAPE || isEnterKey) && isActive) {
+        if (isEnterKey && document.activeElement?.tagName === "A") {
+          return;
+        }
+        setIsActive(false);
+        tdRef.current.focus();
+      } else if (isActive) {
+        e.stopPropagation();
+      }
+    };
+    const isFocused = rowIndex === coords.row - 1 && colIndex === coords.col - 1;
+    useIsomorphicLayoutEffect(() => {
+      const focusableNodes = getFocusableNodes(tdRef.current, true);
+      if (focusableNodes.length === 0 || focusableNodes.length === 1 && getFocusableNodesWithKeyboardNav(focusableNodes).length !== 0 || focusableNodes.length > 1 && Boolean(focusableNodes.find((node) => node.tagName !== "BUTTON"))) {
+        tdRef.current.setAttribute("tabIndex", !isActive && isFocused ? "0" : "-1");
+        focusableNodes.forEach((node, index) => {
+          node.setAttribute("tabIndex", isActive ? "0" : "-1");
+          if (isActive && index === 0) {
+            node.focus();
+          }
+        });
+      } else {
+        focusableNodes.forEach((node) => {
+          node.setAttribute("tabIndex", isFocused ? "0" : "-1");
+        });
+      }
+    }, [isActive, isFocused]);
+    const handleFocusableNodeFocus = React__namespace.useCallback(() => {
+      const focusableNodes = getFocusableNodes(tdRef.current, true);
+      if (focusableNodes.length >= 1 && (getFocusableNodesWithKeyboardNav(focusableNodes).length !== 0 || !focusableNodes.find((node) => node.tagName !== "BUTTON"))) {
+        setIsActive(true);
+      }
+      setTableValues({ rowIndex: coords.row - 1, colIndex: coords.col - 1 });
+    }, [coords, setTableValues]);
+    useIsomorphicLayoutEffect(() => {
+      const cell = tdRef.current;
+      const focusableNodes = getFocusableNodes(cell, true);
+      focusableNodes.forEach((node) => {
+        node.addEventListener("focus", handleFocusableNodeFocus);
+      });
+      return () => {
+        const focusableNodes2 = getFocusableNodes(cell, true);
+        focusableNodes2.forEach((node) => {
+          node.removeEventListener("focus", handleFocusableNodeFocus);
+        });
+      };
+    }, [handleFocusableNodeFocus]);
+    return /* @__PURE__ */ jsxRuntime.jsx(Box, { role: "gridcell", tag, ref: composedRef, onKeyDown: handleKeyDown, ...props });
+  }
+);
+const RawTh = (props) => /* @__PURE__ */ jsxRuntime.jsx(RawTd, { ...props, tag: "th" });
+const RawThead = ({ children, ...props }) => {
+  const childrenClone = React__namespace.Children.toArray(children).map((child) => {
+    if (React__namespace.isValidElement(child)) {
+      return React__namespace.cloneElement(child, { "aria-rowindex": 1 });
+    }
+    return child;
+  });
+  return /* @__PURE__ */ jsxRuntime.jsx("thead", { ...props, children: childrenClone });
+};
+const RawTbody = ({ children, ...props }) => {
+  const childrenClone = React__namespace.Children.toArray(children).map((child, index) => {
+    if (React__namespace.isValidElement(child)) {
+      return React__namespace.cloneElement(child, { "aria-rowindex": index + 2 });
+    }
+    return child;
+  });
+  return /* @__PURE__ */ jsxRuntime.jsx("tbody", { ...props, children: childrenClone });
+};
+const RawTr = ({ children, ...props }) => {
+  const childrenClone = React__namespace.Children.toArray(children).map((child, index) => {
+    if (React__namespace.isValidElement(child)) {
+      return React__namespace.cloneElement(child, {
+        "aria-colindex": index + 1,
+        coords: { col: index + 1, row: props["aria-rowindex"] }
+      });
+    }
+    return child;
+  });
+  return /* @__PURE__ */ jsxRuntime.jsx(Box, { tag: "tr", ...props, children: childrenClone });
+};
+const CloseIcon = styled.styled(icons.Cross)`
+  font-size: 0.5rem;
+  path {
+    fill: ${({ theme }) => theme.colors.neutral500};
+  }
+`;
+const SearchIcon = styled.styled(icons.Search)`
+  font-size: 1rem;
+  path {
+    fill: ${({ theme }) => theme.colors.neutral500};
+  }
+`;
+const SearchbarWrapper = styled.styled.div`
+  border-radius: ${({ theme }) => theme.borderRadius};
+  border: 1px solid ${({ theme }) => theme.colors.neutral150}
+
+  &:focus-within {
+    ${SearchIcon} {
+      fill: ${({ theme }) => theme.colors.primary600};
+    }
+  }
+`;
+const SearchbarInput = styled.styled(Input$2)`
+  border: 1px solid ${({ theme }) => theme.colors.neutral150}
+  height: 16px;
+  padding: 0 0 0 8px;
+  color: ${({ theme }) => theme.colors.neutral800};
+  
+  &:hover {
+    button {
+      cursor: pointer;
+    }
+  }
+
+  ${inputFocusStyle()}
+`;
+const Searchbar = React__namespace.forwardRef(
+  ({ name, children, value = "", onClear, clearLabel = "Clear", ...props }, ref) => {
+    const inputRef = React__namespace.useRef(null);
+    const isCompleting = value.length > 0;
+    const handleClear = (e) => {
+      onClear(e);
+      inputRef.current.focus();
+    };
+    const actualRef = composeRefs(ref, inputRef);
+    return /* @__PURE__ */ jsxRuntime.jsx(SearchbarWrapper, { children: /* @__PURE__ */ jsxRuntime.jsxs(Root$6, { name, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(VisuallyHidden, { children: /* @__PURE__ */ jsxRuntime.jsx(Label, { children }) }),
+      /* @__PURE__ */ jsxRuntime.jsx(
+        SearchbarInput,
+        {
+          size: "S",
+          ref: actualRef,
+          value,
+          startAction: /* @__PURE__ */ jsxRuntime.jsx(SearchIcon, { "aria-hidden": true }),
+          endAction: isCompleting ? /* @__PURE__ */ jsxRuntime.jsx(
+            IconButton,
+            {
+              onClick: handleClear,
+              onMouseDown: (e) => {
+                e.preventDefault();
+              },
+              label: clearLabel,
+              size: "XS",
+              variant: "ghost",
+              type: "button",
+              children: /* @__PURE__ */ jsxRuntime.jsx(CloseIcon, {})
+            }
+          ) : void 0,
+          ...props
+        }
+      )
+    ] }) });
+  }
+);
+const SearchForm = (props) => /* @__PURE__ */ jsxRuntime.jsx("form", { ...props, role: "search" });
+const ButtonBox$1 = styled.styled(Box)`
+  display: inline-flex;
+  border: none;
+
+  & > svg {
+    height: 1.2rem;
+    width: 1.2rem;
+  }
+
+  & > svg path {
+    fill: ${({ theme, ...p }) => p["aria-disabled"] ? theme.colors.neutral600 : theme.colors.primary600};
+  }
+
+  &:hover {
+    cursor: ${({ $iconAction }) => $iconAction ? "pointer" : "initial"};
+  }
+`;
+const Tag = ({ children, icon, label, disabled = false, onClick, ...props }) => {
+  const handleClick = (e) => {
+    if (disabled || !onClick)
+      return;
+    onClick(e);
+  };
+  return /* @__PURE__ */ jsxRuntime.jsxs(
+    Flex,
+    {
+      inline: true,
+      background: disabled ? "neutral200" : "primary100",
+      color: disabled ? "neutral700" : "primary600",
+      paddingLeft: 3,
+      paddingRight: 1,
+      borderColor: disabled ? "neutral300" : "primary200",
+      hasRadius: true,
+      height: "3.2rem",
+      ...props,
+      children: [
+        /* @__PURE__ */ jsxRuntime.jsx(TagText, { $disabled: disabled, variant: "pi", fontWeight: "bold", children }),
+        /* @__PURE__ */ jsxRuntime.jsx(
+          ButtonBox$1,
+          {
+            tag: "button",
+            disabled,
+            "aria-disabled": disabled,
+            "aria-label": label,
+            padding: 2,
+            onClick: handleClick,
+            $iconAction: !!onClick,
+            children: icon
+          }
+        )
+      ]
+    }
+  );
+};
+const TagText = styled.styled(Typography)`
+  color: inherit;
+  border-right: 1px solid ${({ theme, $disabled }) => $disabled ? theme.colors.neutral300 : theme.colors.primary200};
+  padding-right: ${({ theme }) => theme.spaces[2]};
+`;
+const MultiSelect = React__namespace.forwardRef(
+  ({
+    children,
+    clearLabel = "Clear",
+    customizeContent,
+    disabled,
+    hasError: hasErrorProp,
+    id: idProp,
+    name: nameProp,
+    onChange,
+    onClear,
+    onCloseAutoFocus,
+    onReachEnd,
+    placeholder,
+    required: requiredProp,
+    size,
+    startIcon,
+    value: passedValue,
+    withTags,
+    ...restProps
+  }, forwardedRef) => {
+    const viewportRef = React__namespace.useRef(null);
+    const [internalValue, setInternalValue] = React__namespace.useState();
+    const [internalIsOpen, setInternalIsOpen] = React__namespace.useState(false);
+    const handleValueChange = (value2) => {
+      if (onChange) {
+        onChange(value2);
+      } else {
+        setInternalValue(value2);
+      }
+    };
+    const handleTagClick = (value2) => () => {
+      const newValue = Array.isArray(passedValue) ? passedValue.filter((val) => val !== value2) : (internalValue ?? []).filter((val) => val !== value2);
+      if (onChange) {
+        onChange(newValue);
+      } else {
+        setInternalValue(newValue);
+      }
+    };
+    const handleOpenChange = (open) => {
+      setInternalIsOpen(open);
+    };
+    const generatedIntersectionId = useId();
+    const intersectionId = `intersection-${stripReactIdOfColon(generatedIntersectionId)}`;
+    const handleReachEnd = (entry) => {
+      if (onReachEnd) {
+        onReachEnd(entry);
+      }
+    };
+    useIntersection(viewportRef, handleReachEnd, {
+      selectorToWatch: `#${intersectionId}`,
+      /**
+       * We need to know when the select is open because only then will viewportRef
+       * not be null. Because it uses a portal that (sensibly) is not mounted 24/7.
+       */
+      skipWhen: !internalIsOpen
+    });
+    const value = typeof passedValue !== "undefined" && passedValue !== null ? passedValue : internalValue;
+    const renderTags = (arg) => {
+      if (arg && typeof arg === "object" && arg.value) {
+        return /* @__PURE__ */ jsxRuntime.jsx(
+          Tag,
+          {
+            tabIndex: -1,
+            disabled,
+            icon: /* @__PURE__ */ jsxRuntime.jsx(icons.Cross, { width: `${14 / 16}rem`, height: `${14 / 16}rem` }),
+            onClick: handleTagClick(arg.value),
+            children: arg.textValue
+          },
+          arg.value
+        );
+      }
+      return null;
+    };
+    const { error, ...field } = useField("MultiSelect");
+    const hasError = Boolean(error) || hasErrorProp;
+    const id = field.id ?? idProp;
+    const name = field.name ?? nameProp;
+    const required = field.required ?? requiredProp;
+    let ariaDescription;
+    if (error) {
+      ariaDescription = `${id}-error`;
+    } else if (field.hint) {
+      ariaDescription = `${id}-hint`;
+    }
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      Root$4,
+      {
+        onOpenChange: handleOpenChange,
+        disabled,
+        required,
+        onValueChange: handleValueChange,
+        value,
+        ...restProps,
+        multi: true,
+        children: [
+          /* @__PURE__ */ jsxRuntime.jsx(
+            Trigger$3,
+            {
+              ref: forwardedRef,
+              id,
+              name,
+              "aria-label": restProps["aria-label"],
+              "aria-describedby": ariaDescription ?? restProps["aria-describedby"],
+              startIcon,
+              hasError,
+              disabled,
+              clearLabel,
+              onClear: value?.length ? onClear : void 0,
+              withTags: Boolean(withTags && (value?.length ?? 0 > 0)),
+              size,
+              children: /* @__PURE__ */ jsxRuntime.jsx(Value, { placeholder, textColor: value?.length ? "neutral800" : "neutral600", children: value?.length ? withTags ? renderTags : customizeContent ? customizeContent(value) : void 0 : void 0 })
+            }
+          ),
+          /* @__PURE__ */ jsxRuntime.jsx(Portal, { children: /* @__PURE__ */ jsxRuntime.jsx(Content$3, { position: "popper", sideOffset: 4, onCloseAutoFocus, children: /* @__PURE__ */ jsxRuntime.jsxs(Viewport, { ref: viewportRef, children: [
+            children,
+            /* @__PURE__ */ jsxRuntime.jsx(Box, { id: intersectionId, width: "100%", height: "1px" })
+          ] }) }) })
+        ]
+      }
+    );
+  }
+);
+const MultiSelectOption = React__namespace.forwardRef(
+  ({ value, children, startIcon, ...restProps }, ref) => {
+    return /* @__PURE__ */ jsxRuntime.jsxs(Item$2, { ref, value: value.toString(), ...restProps, children: [
+      startIcon && /* @__PURE__ */ jsxRuntime.jsx(Box, { tag: "span", "aria-hidden": true, children: startIcon }),
+      /* @__PURE__ */ jsxRuntime.jsx(ItemIndicator, { children: ({ isSelected, isIntermediate }) => /* @__PURE__ */ jsxRuntime.jsx(CheckboxImpl, { checked: isIntermediate ? "indeterminate" : isSelected }) }),
+      /* @__PURE__ */ jsxRuntime.jsx(Typography, { children: /* @__PURE__ */ jsxRuntime.jsx(ItemText, { children }) })
+    ] });
+  }
+);
+const MultiSelectGroup = React__namespace.forwardRef(
+  ({ children, label, startIcon, values = [], ...restProps }, ref) => {
+    return /* @__PURE__ */ jsxRuntime.jsxs(Group$1, { ref, children: [
+      /* @__PURE__ */ jsxRuntime.jsxs(Item$2, { value: values, ...restProps, children: [
+        startIcon && /* @__PURE__ */ jsxRuntime.jsx(Box, { tag: "span", "aria-hidden": true, children: startIcon }),
+        /* @__PURE__ */ jsxRuntime.jsx(ItemIndicator, { children: ({ isSelected, isIntermediate }) => /* @__PURE__ */ jsxRuntime.jsx(CheckboxImpl, { checked: isIntermediate ? "indeterminate" : isSelected }) }),
+        /* @__PURE__ */ jsxRuntime.jsx(Typography, { children: label })
+      ] }),
+      children
+    ] });
+  }
+);
+const MultiSelectNested = ({ options, ...props }) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(MultiSelect, { ...props, children: options.map((opt) => {
+    if ("children" in opt) {
+      return /* @__PURE__ */ jsxRuntime.jsx(
+        MultiSelectGroup,
+        {
+          label: opt.label,
+          values: opt.children.map((child) => child.value.toString()),
+          children: opt.children.map((child) => /* @__PURE__ */ jsxRuntime.jsx(NestedOption, { value: child.value, children: child.label }, child.value))
+        },
+        opt.label
+      );
+    }
+    return /* @__PURE__ */ jsxRuntime.jsx(MultiSelectOption, { value: opt.value, children: opt.label }, opt.value);
+  }) });
+};
+const NestedOption = styled.styled(MultiSelectOption)`
+  padding-left: ${({ theme }) => theme.spaces[7]};
+`;
+const getPadding = (size) => {
+  if (size === "XS") {
+    return { paddingX: "0.6rem", paddingY: "0.2rem" };
+  }
+  if (size === "S") {
+    return { paddingX: 2, paddingY: 1 };
+  }
+  return { paddingX: 5, paddingY: 4 };
+};
+const Status = ({ variant: variant2 = "primary", size = "M", children, ...props }) => {
+  const backgroundColor = `${variant2}100`;
+  const borderColor = `${variant2}200`;
+  const textColor = `${variant2}600`;
+  const { paddingX, paddingY } = getPadding(size);
+  return /* @__PURE__ */ jsxRuntime.jsx(
+    Box,
+    {
+      borderColor,
+      color: textColor,
+      background: backgroundColor,
+      hasRadius: true,
+      paddingTop: paddingY,
+      paddingBottom: paddingY,
+      paddingLeft: paddingX,
+      paddingRight: paddingX,
+      ...props,
+      children
+    }
+  );
+};
+const SUBNAV_WIDTH = `23.2rem`;
+const SubNav = React__namespace.forwardRef(({ ...props }, ref) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(SubNavWrapper, { ref, ...props, tag: "nav" });
+});
+const SubNavWrapper = styled.styled(Box)`
+  width: ${SUBNAV_WIDTH};
+  background: ${({ theme }) => theme.colors.neutral100};
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid ${({ theme }) => theme.colors.neutral200};
+  z-index: 1;
+`;
+const CustomDivider = styled.styled(Divider)`
+  width: 2.4rem;
+  background-color: ${({ theme }) => theme.colors.neutral200};
+`;
+const SubNavHeader = ({
+  tag = "h2",
+  label,
+  searchLabel = "",
+  searchable = false,
+  onChange = () => {
+  },
+  value = "",
+  onClear = () => {
+  },
+  onSubmit = () => {
+  },
+  id,
+  placeholder
+}) => {
+  const [isSearchOpen, setSearchOpen] = React__namespace.useState(false);
+  const previousSearchOpenValue = uiPrimitives.usePrev(isSearchOpen);
+  const clearButtonId = useId(id);
+  const searchRef = React__namespace.useRef(void 0);
+  const searchButtonRef = React__namespace.useRef(void 0);
+  React__namespace.useEffect(() => {
+    if (isSearchOpen && searchRef.current) {
+      searchRef.current.focus();
+    }
+    if (previousSearchOpenValue && !isSearchOpen && searchButtonRef.current) {
+      searchButtonRef.current.focus();
+    }
+  }, [isSearchOpen, previousSearchOpenValue]);
+  const toggleSearch = () => {
+    setSearchOpen((isOpen) => !isOpen);
+  };
+  const handleClear = (e) => {
+    onClear(e);
+    searchRef.current.focus();
+  };
+  const handleBlur = (e) => {
+    if (e.relatedTarget?.id !== clearButtonId) {
+      setSearchOpen(false);
+    }
+  };
+  const handleKeyDown = (e) => {
+    if (e.key === KeyboardKeys.ESCAPE) {
+      setSearchOpen(false);
+    }
+  };
+  if (isSearchOpen) {
+    return /* @__PURE__ */ jsxRuntime.jsxs(Box, { paddingLeft: 4, paddingTop: 5, paddingBottom: 2, paddingRight: 4, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(SearchForm, { children: /* @__PURE__ */ jsxRuntime.jsx(
+        Searchbar,
+        {
+          name: "searchbar",
+          value,
+          onChange,
+          placeholder,
+          onKeyDown: handleKeyDown,
+          ref: searchRef,
+          onBlur: handleBlur,
+          onClear: handleClear,
+          onSubmit,
+          clearLabel: "Clear",
+          children: searchLabel
+        }
+      ) }),
+      /* @__PURE__ */ jsxRuntime.jsx(Box, { paddingLeft: 2, paddingTop: 4, children: /* @__PURE__ */ jsxRuntime.jsx(CustomDivider, {}) })
+    ] });
+  }
+  return /* @__PURE__ */ jsxRuntime.jsxs(Flex, { direction: "column", alignItems: "flex-start", paddingLeft: 6, paddingTop: 6, paddingBottom: 2, paddingRight: 4, children: [
+    /* @__PURE__ */ jsxRuntime.jsxs(Flex, { justifyContent: "space-between", alignItems: "flex-start", width: "100%", gap: 2, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "beta", tag, children: label }),
+      searchable && /* @__PURE__ */ jsxRuntime.jsx(IconButton, { ref: searchButtonRef, onClick: toggleSearch, label: searchLabel, children: /* @__PURE__ */ jsxRuntime.jsx(icons.Search, {}) })
+    ] }),
+    /* @__PURE__ */ jsxRuntime.jsx(Box, { paddingTop: 4, children: /* @__PURE__ */ jsxRuntime.jsx(CustomDivider, {}) })
+  ] });
+};
+const SubNavLink = forwardRef(
+  ({ active, children, icon = null, withBullet = false, isSubSectionChild = false, ...props }, ref) => {
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      SubNavLinkWrapper,
+      {
+        background: "neutral100",
+        paddingLeft: isSubSectionChild ? 9 : 7,
+        paddingBottom: 2,
+        paddingTop: 2,
+        ref,
+        ...props,
+        children: [
+          /* @__PURE__ */ jsxRuntime.jsxs(Flex, { children: [
+            icon ? /* @__PURE__ */ jsxRuntime.jsx(IconWrapper, { children: icon }) : /* @__PURE__ */ jsxRuntime.jsx(CustomBullet, { $active: active }),
+            /* @__PURE__ */ jsxRuntime.jsx(Typography, { paddingLeft: 2, children })
+          ] }),
+          withBullet && /* @__PURE__ */ jsxRuntime.jsx(Flex, { paddingRight: 4, children: /* @__PURE__ */ jsxRuntime.jsx(CustomBullet, { $active: true }) })
+        ]
+      }
+    );
+  }
+);
+const CustomBullet = styled.styled.span`
+  width: 0.4rem;
+  height: 0.4rem;
+  background-color: ${({ theme, $active }) => $active ? theme.colors.primary600 : theme.colors.neutral600};
+  border-radius: 50%;
+`;
+const SubNavLinkWrapper = styled.styled(BaseLinkImpl)`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-decoration: none;
+  color: ${({ theme }) => theme.colors.neutral800};
+  svg > * {
+    fill: ${({ theme }) => theme.colors.neutral600};
+  }
+
+  &.active {
+    ${({ theme }) => {
+  return styled.css`
+        background-color: ${theme.colors.primary100};
+        border-right: 2px solid ${theme.colors.primary600};
+        color: ${theme.colors.primary700};
+        font-weight: 500;
+      `;
+}}
+
+    ${CustomBullet} {
+      background-color: ${({ theme }) => theme.colors.primary600};
+    }
+  }
+
+  &:focus-visible {
+    outline-offset: -2px;
+  }
+`;
+const IconWrapper = styled.styled.div`
+  svg {
+    height: 1.6rem;
+    width: 1.6rem;
+  }
+`;
+const SubNavLinkSectionButton = styled.styled.button`
+  border: none;
+  padding: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+`;
+const SubNavLinkSection = ({ label, children, id }) => {
+  const [isOpen, setOpenLinks] = React__namespace.useState(true);
+  const listId = useId(id);
+  const handleClick = () => {
+    setOpenLinks((prev) => !prev);
+  };
+  return /* @__PURE__ */ jsxRuntime.jsxs(Box, { children: [
+    /* @__PURE__ */ jsxRuntime.jsx(Box, { paddingLeft: 7, paddingTop: 2, paddingBottom: 2, paddingRight: 4, children: /* @__PURE__ */ jsxRuntime.jsx(Flex, { justifyContent: "space-between", children: /* @__PURE__ */ jsxRuntime.jsxs(SubNavLinkSectionButton, { onClick: handleClick, "aria-expanded": isOpen, "aria-controls": listId, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(
+        icons.CaretDown,
+        {
+          width: "1.2rem",
+          height: "1.2rem",
+          "aria-hidden": true,
+          fill: "neutral700",
+          style: { transform: `rotateX(${isOpen ? "0deg" : "180deg"})` }
+        }
+      ),
+      /* @__PURE__ */ jsxRuntime.jsx(Box, { paddingLeft: 2, children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { tag: "span", fontWeight: "semiBold", textColor: "neutral800", children: label }) })
+    ] }) }) }),
+    isOpen && /* @__PURE__ */ jsxRuntime.jsx("ul", { id: listId, children: React__namespace.Children.map(children, (child, index) => {
+      return /* @__PURE__ */ jsxRuntime.jsx("li", { children: child }, index);
+    }) })
+  ] });
+};
+const SubNavSectionLabel = ({
+  collapsable = false,
+  label,
+  onClick = () => {
+  },
+  ariaExpanded,
+  ariaControls
+}) => {
+  if (collapsable) {
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      Flex,
+      {
+        tag: "button",
+        onClick,
+        "aria-expanded": ariaExpanded,
+        "aria-controls": ariaControls,
+        textAlign: "left",
+        alignItems: "center",
+        children: [
+          /* @__PURE__ */ jsxRuntime.jsx(Box, { paddingRight: 1, children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "sigma", textColor: "neutral600", children: label }) }),
+          collapsable && /* @__PURE__ */ jsxRuntime.jsx(
+            icons.CaretDown,
+            {
+              width: "1.2rem",
+              "aria-hidden": true,
+              fill: "neutral500",
+              style: { transform: ariaExpanded ? "rotateX(0deg)" : "rotateX(180deg)" }
+            }
+          )
+        ]
+      }
+    );
+  }
+  return /* @__PURE__ */ jsxRuntime.jsx(Flex, { children: /* @__PURE__ */ jsxRuntime.jsx(Box, { paddingRight: 1, children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "sigma", textColor: "neutral600", children: label }) }) });
+};
+const SubNavSectionWrapper = styled.styled(Box)`
+  & > svg {
+    height: 0.4rem;
+    fill: ${({ theme }) => theme.colors.neutral500};
+  }
+`;
+const SubNavSection = ({ collapsable = false, label, badgeLabel, children, id }) => {
+  const [isOpen, setOpenLinks] = React__namespace.useState(true);
+  const listId = useId(id);
+  const handleClick = () => {
+    setOpenLinks((prev) => !prev);
+  };
+  return /* @__PURE__ */ jsxRuntime.jsxs(Flex, { direction: "column", alignItems: "stretch", gap: 1, children: [
+    /* @__PURE__ */ jsxRuntime.jsx(SubNavSectionWrapper, { paddingLeft: 6, paddingTop: 2, paddingBottom: 2, paddingRight: 4, children: /* @__PURE__ */ jsxRuntime.jsxs(Box, { position: "relative", paddingRight: badgeLabel ? 6 : 0, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(
+        SubNavSectionLabel,
+        {
+          onClick: handleClick,
+          ariaExpanded: isOpen,
+          ariaControls: listId,
+          collapsable,
+          label
+        }
+      ),
+      badgeLabel && /* @__PURE__ */ jsxRuntime.jsx(
+        Badge,
+        {
+          backgroundColor: "neutral150",
+          textColor: "neutral600",
+          position: "absolute",
+          right: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          children: badgeLabel
+        }
+      )
+    ] }) }),
+    (!collapsable || isOpen) && /* @__PURE__ */ jsxRuntime.jsx("ol", { id: listId, children: React__namespace.Children.map(children, (child, index) => {
+      return /* @__PURE__ */ jsxRuntime.jsx("li", { children: child }, index);
+    }) })
+  ] });
+};
+const SubNavSections = ({ children, spacing = 2, horizontal = false, ...props }) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(Box, { paddingTop: 2, paddingBottom: 4, children: /* @__PURE__ */ jsxRuntime.jsx(
+    Flex,
+    {
+      tag: "ol",
+      gap: spacing,
+      direction: horizontal ? "row" : "column",
+      alignItems: horizontal ? "center" : "stretch",
+      ...props,
+      children: React__namespace.Children.map(children, (child, index) => {
+        return /* @__PURE__ */ jsxRuntime.jsx("li", { children: child }, index);
+      })
+    }
+  ) });
+};
+const SwitchImpl = React__namespace.forwardRef(
+  ({
+    visibleLabels,
+    onLabel = "On",
+    offLabel = "Off",
+    onCheckedChange: onCheckedChangeProp,
+    checked: checkedProp,
+    defaultChecked,
+    disabled,
+    ...restProps
+  }, forwardedRef) => {
+    const [internalChecked, setInternalChecked] = useControllableState$1({
+      prop: checkedProp,
+      defaultProp: defaultChecked
+    });
+    const handleCheckChange = (checked) => {
+      setInternalChecked(checked);
+    };
+    return /* @__PURE__ */ jsxRuntime.jsxs(Flex, { gap: 3, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(
+        SwitchRoot,
+        {
+          ref: forwardedRef,
+          onCheckedChange: uiPrimitives.composeEventHandlers(onCheckedChangeProp, handleCheckChange),
+          checked: internalChecked,
+          disabled,
+          ...restProps,
+          children: /* @__PURE__ */ jsxRuntime.jsx(SwitchThumb, {})
+        }
+      ),
+      visibleLabels ? /* @__PURE__ */ jsxRuntime.jsx(LabelTypography, { "aria-hidden": true, "data-disabled": disabled, "data-state": internalChecked ? "checked" : "unchecked", children: internalChecked ? onLabel : offLabel }) : null
+    ] });
+  }
+);
+const SwitchRoot = styled.styled(Switch__namespace.Root)`
+  width: 4rem;
+  height: 2.4rem;
+  border-radius: 1.2rem;
+  background-color: ${({ theme }) => theme.colors.danger500};
+
+  &[data-state='checked'] {
+    background-color: ${({ theme }) => theme.colors.success500};
+  }
+
+  &[data-disabled] {
+    background-color: ${({ theme }) => theme.colors.neutral300};
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: ${(props) => props.theme.transitions.backgroundColor};
+  }
+`;
+const SwitchThumb = styled.styled(Switch__namespace.Thumb)`
+  display: block;
+  height: 1.6rem;
+  width: 1.6rem;
+  border-radius: 50%;
+  background-color: ${({ theme }) => theme.colors.neutral0};
+  transform: translateX(4px);
+
+  &[data-state='checked'] {
+    transform: translateX(20px);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: transform ${(props) => props.theme.motion.timings["120"]}
+      ${(props) => props.theme.motion.easings.authenticMotion};
+  }
+`;
+const LabelTypography = styled.styled(Typography)`
+  color: ${(props) => props.theme.colors.danger600};
+
+  &[data-state='checked'] {
+    color: ${(props) => props.theme.colors.success600};
+  }
+
+  &[data-disabled='true'] {
+    color: ${({ theme }) => theme.colors.neutral500};
+  }
+`;
+const [TabsProvider, useTabs] = createContext("Tabs");
+const Root$1 = React__namespace.forwardRef(
+  ({ disabled = false, variant: variant2 = "regular", hasError, ...props }, forwardedRef) => {
+    return /* @__PURE__ */ jsxRuntime.jsx(TabsProvider, { disabled, hasError, variant: variant2, children: /* @__PURE__ */ jsxRuntime.jsx(TabsRoot, { ref: forwardedRef, ...props }) });
+  }
+);
+const TabsRoot = styled.styled(Tabs__namespace.Root)`
+  width: 100%;
+  position: relative;
+`;
+const List = React__namespace.forwardRef((props, forwardedRef) => {
+  const { variant: variant2 } = useTabs("List");
+  return /* @__PURE__ */ jsxRuntime.jsx(TabsList, { ref: forwardedRef, ...props, $variant: variant2 });
+});
+const TabsList = styled.styled(Tabs__namespace.List)`
+  display: flex;
+  align-items: ${(props) => props.$variant === "regular" ? "flex-end" : "unset"};
+  position: relative;
+  z-index: 0;
+`;
+const Trigger = React__namespace.forwardRef(
+  ({ children, disabled: disabledProp, ...props }, forwardedRef) => {
+    const { disabled: disabledContext, variant: variant2, hasError } = useTabs("Trigger");
+    const isDisabled = disabledContext === true || disabledContext === props.value || disabledProp;
+    const isErrored = hasError === props.value;
+    return /* @__PURE__ */ jsxRuntime.jsxs(TabsTrigger, { ref: forwardedRef, ...props, $hasError: isErrored, $variant: variant2, disabled: isDisabled, children: [
+      /* @__PURE__ */ jsxRuntime.jsx(TriggerTypography, { fontWeight: "bold", variant: variant2 === "simple" ? "sigma" : void 0, children }),
+      variant2 === "simple" ? /* @__PURE__ */ jsxRuntime.jsx(TabBar, {}) : null
+    ] });
+  }
+);
+const TabBar = styled.styled.span`
+  display: block;
+  width: 100%;
+  background-color: currentColor;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  opacity: 0;
+  height: 0.2rem;
+`;
+const TriggerTypography = styled.styled(Typography)``;
+const TabsTrigger = styled.styled(Tabs__namespace.Trigger)`
+  position: relative;
+  color: ${(props) => props.$hasError ? props.theme.colors.danger600 : props.theme.colors.neutral600};
+  cursor: pointer;
+  z-index: 0;
+
+  ${(props) => {
+  if (props.$variant === "simple") {
+    return styled.css`
+        padding-block: ${(props2) => props2.theme.spaces[4]};
+        padding-inline: ${(props2) => props2.theme.spaces[4]};
+
+        & > ${TriggerTypography} {
+          line-height: 1.2rem;
+        }
+
+        &[data-state='active'] {
+          color: ${props.$hasError ? props.theme.colors.danger600 : props.theme.colors.primary700};
+
+          & > ${TabBar} {
+            opacity: 1;
+          }
+        }
+      `;
+  } else {
+    return styled.css`
+        padding-block: ${(props2) => props2.theme.spaces[3]};
+        padding-inline: ${(props2) => props2.theme.spaces[3]};
+        flex: 1;
+        background-color: ${(props2) => props2.theme.colors.neutral100};
+        border-bottom: solid 1px ${(props2) => props2.theme.colors.neutral150};
+
+        &:not([data-state='active']) + &:not([data-state='active']) {
+          border-left: solid 1px ${(props2) => props2.theme.colors.neutral150};
+        }
+
+        &[data-state='active'] {
+          padding-block: ${(props2) => props2.theme.spaces[4]};
+          padding-inline: ${(props2) => props2.theme.spaces[4]};
+          color: ${props.$hasError ? props.theme.colors.danger600 : props.theme.colors.primary700};
+          border-top-right-radius: ${(props2) => props2.theme.borderRadius};
+          border-top-left-radius: ${(props2) => props2.theme.borderRadius};
+          background-color: ${(props2) => props2.theme.colors.neutral0};
+          border-bottom: solid 1px ${(props2) => props2.theme.colors.neutral0};
+          box-shadow: ${props.theme.shadows.tableShadow};
+          z-index: 1;
+        }
+      `;
+  }
+}}
+
+  &[data-disabled] {
+    cursor: not-allowed;
+    color: ${(props) => props.theme.colors.neutral400};
+  }
+`;
+const Content = React__namespace.forwardRef((props, forwardedRef) => {
+  const { variant: variant2 } = useTabs("Content");
+  return /* @__PURE__ */ jsxRuntime.jsx(TabsContent, { $variant: variant2, ref: forwardedRef, ...props });
+});
+const TabsContent = styled.styled(Tabs__namespace.Content)`
+  ${(props) => {
+  if (props.$variant === "simple") {
+    return styled.css``;
+  } else {
+    return styled.css`
+        position: relative;
+        z-index: 1;
+        background-color: ${(props2) => props2.theme.colors.neutral0};
+      `;
+  }
+}}
+`;
+const Tabs = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  Content,
+  List,
+  Root: Root$1,
+  Trigger
+}, Symbol.toStringTag, { value: "Module" }));
+const TableContainer = styled.styled(Box)`
+  overflow: hidden;
+  border: 1px solid ${({ theme }) => theme.colors.neutral150};
+`;
+const TableWrapper = styled.styled(RawTable)`
+  width: 100%;
+  white-space: nowrap;
+`;
+const TableBox = styled.styled(Box)`
+  &:before {
+    // TODO: make sure to add a token for this weird stuff
+    background: linear-gradient(90deg, #c0c0cf 0%, rgba(0, 0, 0, 0) 100%);
+    opacity: 0.2;
+    position: absolute;
+    height: 100%;
+    content: ${({ $overflowing }) => $overflowing === "both" || $overflowing === "left" ? "''" : void 0};
+    box-shadow: ${({ theme }) => theme.shadows.tableShadow};
+    width: ${({ theme }) => theme.spaces[2]};
+    left: 0;
+  }
+
+  &:after {
+    // TODO: make sure to add a token for this weird stuff
+    background: linear-gradient(270deg, #c0c0cf 0%, rgba(0, 0, 0, 0) 100%);
+    opacity: 0.2;
+    position: absolute;
+    height: 100%;
+    content: ${({ $overflowing }) => $overflowing === "both" || $overflowing === "right" ? "''" : void 0};
+    box-shadow: ${({ theme }) => theme.shadows.tableShadow};
+    width: ${({ theme }) => theme.spaces[2]};
+    right: 0;
+    top: 0;
+  }
+`;
+const ScrollContainer = styled.styled(Box)`
+  overflow-x: auto;
+`;
+const Table = React__namespace.forwardRef(({ footer, ...props }, forwardedRef) => {
+  const tableRef = React__namespace.useRef(null);
+  const [overflowing, setOverflowing] = React__namespace.useState();
+  const handleScroll = (e) => {
+    const maxScrollLeft = e.target.scrollWidth - e.target.clientWidth;
+    if (e.target.scrollLeft === 0) {
+      setOverflowing("right");
+      return;
+    }
+    if (e.target.scrollLeft === maxScrollLeft) {
+      setOverflowing("left");
+      return;
+    }
+    if (e.target.scrollLeft > 0) {
+      setOverflowing("both");
+    }
+  };
+  React__namespace.useEffect(() => {
+    if (tableRef.current.scrollWidth > tableRef.current.clientWidth) {
+      setOverflowing("right");
+    }
+  }, []);
+  return /* @__PURE__ */ jsxRuntime.jsxs(TableContainer, { shadow: "tableShadow", hasRadius: true, background: "neutral0", children: [
+    /* @__PURE__ */ jsxRuntime.jsx(TableBox, { $overflowing: overflowing, position: "relative", children: /* @__PURE__ */ jsxRuntime.jsx(ScrollContainer, { ref: tableRef, onScroll: handleScroll, paddingLeft: 6, paddingRight: 6, children: /* @__PURE__ */ jsxRuntime.jsx(TableWrapper, { ref: forwardedRef, ...props }) }) }),
+    footer
+  ] });
+});
+const TbodyWrapper = styled.styled(RawTbody)`
+  & tr:last-of-type {
+    border-bottom: none;
+  }
+`;
+const Tbody = ({ children, ...props }) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(TbodyWrapper, { ...props, children });
+};
+const TheadWrapper = styled.styled(RawThead)`
+  border-bottom: 1px solid ${({ theme }) => theme.colors.neutral150};
+`;
+const Thead = ({ children, ...props }) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(TheadWrapper, { ...props, children });
+};
+const TrWrapper = styled.styled(RawTr)`
+  border-bottom: 1px solid ${({ theme }) => theme.colors.neutral150};
+
+  & td,
+  & th {
+    padding: ${({ theme }) => theme.spaces[4]};
+  }
+
+  & td:first-of-type,
+  & th:first-of-type {
+    padding: 0 ${({ theme }) => theme.spaces[1]};
+  }
+
+  // Resetting padding values and fixing a height
+  th {
+    padding-top: 0;
+    padding-bottom: 0;
+    height: 5.6rem;
+  }
+`;
+const Tr = (props) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(TrWrapper, { ...props });
+};
+const CellWrapper = styled.styled(RawTd)`
+  vertical-align: middle;
+  text-align: left;
+  outline-offset: -4px;
+
+  /**
+  * Hack to make sure the checkbox looks aligned
+  */
+  input {
+    vertical-align: sub;
+  }
+`;
+const Th = React__namespace.forwardRef(({ children, action, ...props }, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(CellWrapper, { color: "neutral600", as: RawTh, ref: forwardedRef, ...props, children: /* @__PURE__ */ jsxRuntime.jsxs(Flex, { children: [
+    children,
+    action
+  ] }) });
+});
+const Td = React__namespace.forwardRef(({ children, ...props }, forwardedRef) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(CellWrapper, { color: "neutral800", ref: forwardedRef, ...props, children });
+});
+const IconBox = styled.styled(Box)`
+  height: 2.4rem;
+  width: 2.4rem;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  svg {
+    height: 1rem;
+    width: 1rem;
+  }
+
+  svg path {
+    fill: ${({ theme }) => theme.colors.primary600};
+  }
+`;
+const ButtonBox = styled.styled(Box)`
+  border-radius: 0 0 ${({ theme }) => theme.borderRadius} ${({ theme }) => theme.borderRadius};
+  display: block;
+  width: 100%;
+  border: none;
+`;
+const TFooter = ({ children, icon, ...props }) => {
+  return /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
+    /* @__PURE__ */ jsxRuntime.jsx(Divider, {}),
+    /* @__PURE__ */ jsxRuntime.jsx(ButtonBox, { tag: "button", background: "primary100", padding: 5, ...props, children: /* @__PURE__ */ jsxRuntime.jsxs(Flex, { children: [
+      /* @__PURE__ */ jsxRuntime.jsx(IconBox, { "aria-hidden": true, background: "primary200", children: icon }),
+      /* @__PURE__ */ jsxRuntime.jsx(Box, { paddingLeft: 3, children: /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "pi", fontWeight: "bold", textColor: "primary600", children }) })
+    ] }) })
+  ] });
+};
+const TextButton = forwardRef(
+  ({ children, startIcon, endIcon, disabled = false, loading = false, ...props }, ref) => {
+    const isDisabled = disabled || loading;
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      TextButtonWrapper,
+      {
+        ref,
+        disabled: isDisabled,
+        "aria-disabled": isDisabled,
+        tag: "button",
+        type: "button",
+        gap: 2,
+        ...props,
+        children: [
+          loading ? /* @__PURE__ */ jsxRuntime.jsx(LoadingWrapper, { "aria-hidden": true, children: /* @__PURE__ */ jsxRuntime.jsx(icons.Loader, {}) }) : startIcon,
+          /* @__PURE__ */ jsxRuntime.jsx(Typography, { variant: "pi", children }),
+          endIcon
+        ]
+      }
+    );
+  }
+);
+const rotation = styled.keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359deg);
+  }
+`;
+const LoadingWrapper = styled.styled.span`
+  display: flex;
+  animation: ${rotation} 2s infinite linear;
+  will-change: transform;
+`;
+const TextButtonWrapper = styled.styled(Flex)`
+  border: none;
+  background-color: transparent;
+  color: ${(props) => props.theme.colors.primary600};
+  cursor: pointer;
+
+  &[aria-disabled='true'] {
+    pointer-events: none;
+    color: ${(props) => props.theme.colors.neutral600};
+  }
+
+  ${focus}
+`;
+const TextInput = React__namespace.forwardRef((props, ref) => {
+  return /* @__PURE__ */ jsxRuntime.jsx(Input$2, { ref, ...props });
+});
+TextInput.displayName = "TextInput";
+const Textarea = React__namespace.forwardRef(
+  ({ disabled, hasError: hasErrorProp, id: idProp, name: nameProp, required: requiredProp, ...props }, ref) => {
+    const { error, ...field } = useField("Textarea");
+    const hasError = Boolean(error) || hasErrorProp;
+    const id = field.id ?? idProp;
+    const name = field.name ?? nameProp;
+    const required = field.required || requiredProp;
+    let ariaDescription;
+    if (error) {
+      ariaDescription = `${id}-error`;
+    } else if (field.hint) {
+      ariaDescription = `${id}-hint`;
+    }
+    return /* @__PURE__ */ jsxRuntime.jsx(Wrapper$1, { borderColor: hasError ? "danger600" : "neutral200", $hasError: hasError, hasRadius: true, children: /* @__PURE__ */ jsxRuntime.jsx(
+      TextareaElement,
+      {
+        "aria-invalid": hasError,
+        "aria-required": required,
+        tag: "textarea",
+        background: disabled ? "neutral150" : "neutral0",
+        color: disabled ? "neutral600" : "neutral800",
+        disabled,
+        fontSize: 2,
+        hasRadius: true,
+        ref,
+        lineHeight: 4,
+        padding: 4,
+        width: "100%",
+        height: "100%",
+        id,
+        name,
+        "aria-describedby": ariaDescription,
+        ...props
+      }
+    ) });
+  }
+);
+const Wrapper$1 = styled.styled(Box)`
+  height: 10.5rem;
+  ${inputFocusStyle()}
+`;
+const TextareaElement = styled.styled(Box)`
+  border: none;
+  resize: none;
+
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.neutral600};
+    font-size: ${({ theme }) => theme.fontSizes[2]};
+    opacity: 1;
+  }
+
+  &:focus-within {
+    outline: none;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+`;
+const Toggle = React__namespace.forwardRef(
+  ({
+    offLabel,
+    onLabel,
+    disabled,
+    hasError: hasErrorProp,
+    required: requiredProp,
+    id: idProp,
+    name: nameProp,
+    checked: checkedProp,
+    onChange,
+    ...props
+  }, forwardedRef) => {
+    const [checked = false, setChecked] = useControllableState$1({
+      prop: checkedProp
+    });
+    const isFalseyChecked = checked !== null && !checked;
+    const { error, ...field } = useField("Toggle");
+    const hasError = Boolean(error) || hasErrorProp;
+    const id = field.id ?? idProp;
+    const name = field.name ?? nameProp;
+    const required = field.required || requiredProp;
+    let ariaDescription;
+    if (error) {
+      ariaDescription = `${id}-error`;
+    } else if (field.hint) {
+      ariaDescription = `${id}-hint`;
+    }
+    return /* @__PURE__ */ jsxRuntime.jsxs(
+      ToggleWrapper,
+      {
+        position: "relative",
+        hasRadius: true,
+        padding: 1,
+        background: disabled ? "neutral150" : "neutral100",
+        borderStyle: "solid",
+        borderWidth: "1px",
+        borderColor: "neutral200",
+        wrap: "wrap",
+        cursor: disabled ? "not-allowed" : "pointer",
+        $hasError: hasError,
+        children: [
+          /* @__PURE__ */ jsxRuntime.jsx(
+            ToggleOption,
+            {
+              hasRadius: true,
+              flex: "1 1 50%",
+              paddingTop: 2,
+              paddingBottom: 2,
+              paddingLeft: 3,
+              paddingRight: 3,
+              justifyContent: "center",
+              background: disabled && isFalseyChecked ? "neutral200" : isFalseyChecked ? "neutral0" : "transparent",
+              borderColor: disabled && isFalseyChecked ? "neutral300" : isFalseyChecked ? "neutral200" : disabled ? "neutral150" : "neutral100",
+              children: /* @__PURE__ */ jsxRuntime.jsx(
+                Typography,
+                {
+                  variant: "pi",
+                  fontWeight: "bold",
+                  textTransform: "uppercase",
+                  textColor: disabled ? "neutral700" : isFalseyChecked ? "danger700" : "neutral600",
+                  children: offLabel
+                }
+              )
+            }
+          ),
+          /* @__PURE__ */ jsxRuntime.jsx(
+            ToggleOption,
+            {
+              hasRadius: true,
+              flex: "1 1 50%",
+              paddingLeft: 3,
+              paddingRight: 3,
+              justifyContent: "center",
+              background: disabled && checked ? "neutral200" : checked ? "neutral0" : "transparent",
+              borderColor: disabled && checked ? "neutral300" : checked ? "neutral200" : disabled ? "neutral150" : "neutral100",
+              children: /* @__PURE__ */ jsxRuntime.jsx(
+                Typography,
+                {
+                  variant: "pi",
+                  fontWeight: "bold",
+                  textTransform: "uppercase",
+                  textColor: disabled ? "neutral700" : checked ? "primary600" : "neutral600",
+                  children: onLabel
+                }
+              )
+            }
+          ),
+          /* @__PURE__ */ jsxRuntime.jsx(
+            Input,
+            {
+              ...props,
+              id,
+              name,
+              ref: forwardedRef,
+              onChange: (e) => {
+                setChecked(e.currentTarget.checked);
+                onChange?.(e);
+              },
+              type: "checkbox",
+              "aria-required": required,
+              disabled,
+              "aria-disabled": disabled,
+              checked: Boolean(checked),
+              "aria-describedby": ariaDescription
+            }
+          )
+        ]
+      }
+    );
+  }
+);
+const ToggleWrapper = styled.styled(Flex)`
+  ${inputFocusStyle()}
+`;
+const ToggleOption = styled.styled(Flex)`
+  padding-block: 0.6rem;
+`;
+const Input = styled.styled.input`
+  height: 100%;
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  z-index: 0;
+  width: 100%;
+`;
+const Root = forwardRef((props, forwardedRef) => {
+  const { gap = 0, gridCols = 12, ...rest } = props;
+  return /* @__PURE__ */ jsxRuntime.jsx(Wrapper, { ref: forwardedRef, $gap: gap, $gridCols: gridCols, ...rest });
+});
+const Wrapper = styled.styled(Box)`
+  display: grid;
+  grid-template-columns: repeat(${({ $gridCols }) => $gridCols}, 1fr);
+  ${({ theme, $gap }) => handleResponsiveValues({ gap: $gap }, theme)}
+`;
+const ItemImpl = forwardRef(
+  ({ col, s, xs, m, ...props }, forwardedRef) => /* @__PURE__ */ jsxRuntime.jsx(Item, { ref: forwardedRef, $col: col, $s: s, $xs: xs, $m: m, ...props })
+);
+const Item = styled.styled(Flex)`
+  grid-column: span ${({ $xs }) => $xs ?? 12};
+  max-width: 100%;
+
+  ${({ theme }) => theme.breakpoints.small} {
+    grid-column: span ${({ $s, $xs }) => $s ?? $xs ?? 12};
+  }
+
+  ${({ theme }) => theme.breakpoints.medium} {
+    grid-column: span ${({ $m, $s, $xs }) => $m ?? $s ?? $xs ?? 12};
+  }
+
+  ${({ theme }) => theme.breakpoints.large} {
+    grid-column: span ${({ $col, $m, $s, $xs }) => $col ?? $m ?? $s ?? $xs ?? 12};
+  }
+`;
+const Grid = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  Item: ItemImpl,
+  Root
+}, Symbol.toStringTag, { value: "Module" }));
+const defaultState = {
+  x: 0,
+  y: 0,
+  width: 0,
+  height: 0,
+  top: 0,
+  left: 0,
+  bottom: 0,
+  right: 0
+};
+function useMeasure() {
+  const [element, ref] = React.useState(null);
+  const [rect, setRect] = React.useState(defaultState);
+  const observer = React.useMemo(
+    () => new ResizeObserver((entries) => {
+      if (entries[0]) {
+        const { x, y, width, height, top, left, bottom, right } = entries[0].contentRect;
+        setRect({ x, y, width, height, top, left, bottom, right });
+      }
+    }),
+    []
+  );
+  useIsomorphicLayoutEffect(() => {
+    if (!element)
+      return;
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+    };
+  }, [element, observer]);
+  return [ref, rect];
+}
+const FocusTrap = ({ onEscape, restoreFocus = true, skipAutoFocus = false, ...props }) => {
+  const trappedRef = React__namespace.useRef(null);
+  React__namespace.useEffect(() => {
+    let currentFocus = null;
+    if (restoreFocus) {
+      currentFocus = document.activeElement;
+    }
+    return () => {
+      if (currentFocus) {
+        currentFocus.focus();
+      }
+    };
+  }, [restoreFocus]);
+  React__namespace.useEffect(() => {
+    if (!trappedRef.current || skipAutoFocus)
+      return;
+    const focusableChildren = getFocusableNodes(trappedRef.current);
+    if (focusableChildren.length > 0) {
+      const firstElement = focusableChildren[0];
+      firstElement.focus();
+    } else {
+      console.warn(
+        "[FocusTrap]: it seems there are no focusable elements in the focus trap tree. Make sure there s at least one."
+      );
+    }
+  }, [skipAutoFocus]);
+  const handleKeyDown = (e) => {
+    if (e.key === KeyboardKeys.ESCAPE && onEscape) {
+      onEscape();
+      return;
+    }
+    if (e.key !== KeyboardKeys.TAB)
+      return;
+    const focusableChildren = getFocusableNodes(trappedRef.current);
+    if (focusableChildren.length > 0) {
+      const firstElement = focusableChildren[0];
+      const lastElement = focusableChildren[focusableChildren.length - 1];
+      if (e.shiftKey) {
+        if (firstElement === document.activeElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else if (lastElement === document.activeElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    }
+  };
+  return /* @__PURE__ */ jsxRuntime.jsx("div", { ref: trappedRef, onKeyDown: handleKeyDown, ...props });
+};
+const KeyboardNavigable = ({ tagName, attributeName = "", ...props }) => {
+  const isValidFocusedElement = () => {
+    const focused = document.activeElement;
+    if (!focused) {
+      return false;
+    }
+    if (tagName) {
+      return focused.tagName.toLowerCase() === tagName;
+    }
+    return focused.hasAttribute(attributeName);
+  };
+  const queryElement = (parentEl) => {
+    if (tagName) {
+      return parentEl.querySelectorAll(tagName);
+    }
+    return parentEl.querySelectorAll(`[${attributeName}]`);
+  };
+  const handleKeyDown = (e) => {
+    switch (e.key) {
+      case KeyboardKeys.RIGHT:
+      case KeyboardKeys.DOWN: {
+        if (isValidFocusedElement()) {
+          e.preventDefault();
+          const focused = document.activeElement;
+          const allElements = [...queryElement(e.currentTarget)];
+          const focusedIndex = allElements.findIndex((node) => node === focused);
+          const nextIndex = focusedIndex + 1 < allElements.length ? focusedIndex + 1 : 0;
+          allElements[nextIndex].focus();
+        }
+        break;
+      }
+      case KeyboardKeys.LEFT:
+      case KeyboardKeys.UP: {
+        if (isValidFocusedElement()) {
+          e.preventDefault();
+          const focused = document.activeElement;
+          const allElements = [...queryElement(e.currentTarget)];
+          const focusedIndex = allElements.findIndex((node) => node === focused);
+          const nextIndex = focusedIndex - 1 > -1 ? focusedIndex - 1 : allElements.length - 1;
+          allElements[nextIndex].focus();
+        }
+        break;
+      }
+      case KeyboardKeys.HOME: {
+        if (isValidFocusedElement()) {
+          e.preventDefault();
+          const allElements = queryElement(e.currentTarget);
+          const focusElement = allElements.item(0);
+          focusElement.focus();
+        }
+        break;
+      }
+      case KeyboardKeys.END: {
+        if (isValidFocusedElement()) {
+          e.preventDefault();
+          const allElements = queryElement(e.currentTarget);
+          const focusElement = allElements.item(allElements.length - 1);
+          focusElement.focus();
+        }
+        break;
+      }
+    }
+  };
+  return /* @__PURE__ */ jsxRuntime.jsx(Box, { onKeyDown: handleKeyDown, ...props });
+};
+Object.defineProperty(exports, "composeEventHandlers", {
+  enumerable: true,
+  get: () => uiPrimitives.composeEventHandlers
+});
+Object.defineProperty(exports, "useCallbackRef", {
+  enumerable: true,
+  get: () => uiPrimitives.useCallbackRef
+});
+Object.defineProperty(exports, "useCollator", {
+  enumerable: true,
+  get: () => uiPrimitives.useCollator
+});
+Object.defineProperty(exports, "useFilter", {
+  enumerable: true,
+  get: () => uiPrimitives.useFilter
+});
+exports.AccessibleIcon = AccessibleIcon;
+exports.Accordion = Accordion;
+exports.Alert = Alert;
+exports.Avatar = Avatar;
+exports.Badge = Badge;
+exports.BaseLink = BaseLinkImpl;
+exports.Box = Box;
+exports.Breadcrumbs = Breadcrumbs;
+exports.Button = Button;
+exports.Card = Card;
+exports.CardAction = CardActionImpl;
+exports.CardAsset = CardAsset;
+exports.CardBadge = CardBadge;
+exports.CardBody = CardBody;
+exports.CardCheckbox = CardCheckbox;
+exports.CardContent = CardContent;
+exports.CardHeader = CardHeader;
+exports.CardSubtitle = CardSubtitle;
+exports.CardTimer = CardTimer;
+exports.CardTitle = CardTitle;
+exports.Carousel = Carousel;
+exports.CarouselActions = CarouselActions;
+exports.CarouselImage = CarouselImage;
+exports.CarouselInput = CarouselInput;
+exports.CarouselSlide = CarouselSlide;
+exports.Checkbox = CheckboxImpl;
+exports.Combobox = Combobox;
+exports.ComboboxOption = Option;
+exports.Crumb = Crumb;
+exports.CrumbLink = CrumbLink;
+exports.CrumbSimpleMenu = CrumbSimpleMenu;
+exports.DatePicker = DatePicker;
+exports.DateTimePicker = DateTimePicker;
+exports.DesignSystemProvider = DesignSystemProvider;
+exports.Dialog = Dialog;
+exports.DismissibleLayer = DismissibleLayer;
+exports.Divider = Divider;
+exports.Dots = Dots;
+exports.EmptyStateLayout = EmptyStateLayout;
+exports.Field = Field;
+exports.Flex = Flex;
+exports.FocusTrap = FocusTrap;
+exports.Grid = Grid;
+exports.IconButton = IconButton;
+exports.IconButtonGroup = IconButtonGroup;
+exports.JSONInput = JSONInput;
+exports.KeyboardNavigable = KeyboardNavigable;
+exports.Link = Link;
+exports.LinkButton = LinkButton;
+exports.LiveRegions = LiveRegions;
+exports.Loader = Loader;
+exports.Main = Main;
+exports.Menu = Menu;
+exports.MenuItem = MenuItem;
+exports.Modal = Modal;
+exports.MultiSelect = MultiSelect;
+exports.MultiSelectGroup = MultiSelectGroup;
+exports.MultiSelectNested = MultiSelectNested;
+exports.MultiSelectOption = MultiSelectOption;
+exports.NextLink = NextLink;
+exports.NumberInput = NumberInput;
+exports.PageLink = PageLink;
+exports.Pagination = Pagination;
+exports.Popover = Popover;
+exports.Portal = Portal$1;
+exports.PreviousLink = PreviousLink;
+exports.ProgressBar = ProgressBar;
+exports.Radio = Radio;
+exports.RawTable = RawTable;
+exports.RawTbody = RawTbody;
+exports.RawTd = RawTd;
+exports.RawTh = RawTh;
+exports.RawThead = RawThead;
+exports.RawTr = RawTr;
+exports.ScrollArea = ScrollAreaImpl$1;
+exports.SearchForm = SearchForm;
+exports.Searchbar = Searchbar;
+exports.SimpleMenu = SimpleMenu;
+exports.SingleSelect = SingleSelect;
+exports.SingleSelectOption = SingleSelectOption;
+exports.SkipToContent = SkipToContent;
+exports.Status = Status;
+exports.SubNav = SubNav;
+exports.SubNavHeader = SubNavHeader;
+exports.SubNavLink = SubNavLink;
+exports.SubNavLinkSection = SubNavLinkSection;
+exports.SubNavSection = SubNavSection;
+exports.SubNavSections = SubNavSections;
+exports.Switch = SwitchImpl;
+exports.TFooter = TFooter;
+exports.Table = Table;
+exports.Tabs = Tabs;
+exports.Tag = Tag;
+exports.Tbody = Tbody;
+exports.Td = Td;
+exports.TextButton = TextButton;
+exports.TextInput = TextInput;
+exports.Textarea = Textarea;
+exports.Th = Th;
+exports.Thead = Thead;
+exports.TimePicker = TimePicker;
+exports.Toggle = Toggle;
+exports.Tooltip = TooltipImpl;
+exports.Tr = Tr;
+exports.Typography = Typography;
+exports.VisuallyHidden = VisuallyHidden;
+exports._internaluseUncontrolledState = useUncontrolledState;
+exports.composeRefs = composeRefs;
+exports.convertUTCDateToCalendarDateTime = convertUTCDateToCalendarDateTime;
+exports.darkTheme = darkTheme;
+exports.extendTheme = extendTheme;
+exports.getThemeSize = getThemeSize;
+exports.inputFocusStyle = inputFocusStyle;
+exports.isSSR = isSSR;
+exports.lightTheme = lightTheme;
+exports.useComposedRefs = useComposedRefs;
+exports.useControllableState = useControllableState$1;
+exports.useDateFormatter = useDateFormatter;
+exports.useDesignSystem = useDesignSystem;
+exports.useField = useField;
+exports.useId = useId;
+exports.useIsomorphicLayoutEffect = useIsomorphicLayoutEffect;
+exports.useMeasure = useMeasure;
+exports.useNotifyAT = useNotifyAT;
+//# sourceMappingURL=index.js.map

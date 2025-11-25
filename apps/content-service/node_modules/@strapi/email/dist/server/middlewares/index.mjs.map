@@ -1,0 +1,1 @@
+{"version":3,"file":"index.mjs","sources":["../../../server/src/middlewares/index.ts"],"sourcesContent":["import rateLimit from './rateLimit';\n\nexport { default as rateLimit } from './rateLimit';\n\nexport default {\n  rateLimit,\n};\n"],"names":["rateLimit"],"mappings":";;AAIA,kBAAe;AACbA,IAAAA;AACF,CAAE;;;;"}

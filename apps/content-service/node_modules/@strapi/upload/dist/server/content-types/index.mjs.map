@@ -1,0 +1,1 @@
+{"version":3,"file":"index.mjs","sources":["../../../server/src/content-types/index.ts"],"sourcesContent":["import file from './file';\nimport folder from './folder';\n\nexport const contentTypes = {\n  file,\n  folder,\n};\n"],"names":["contentTypes","file","folder"],"mappings":";;;MAGaA,YAAe,GAAA;AAC1BC,IAAAA,IAAAA;AACAC,IAAAA;AACF;;;;"}

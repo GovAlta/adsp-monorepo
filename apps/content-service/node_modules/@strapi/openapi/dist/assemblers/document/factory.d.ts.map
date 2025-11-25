@@ -1,0 +1,1 @@
+{"version":3,"file":"factory.d.ts","sourceRoot":"","sources":["../../../src/assemblers/document/factory.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,IAAI,CAAC;AAMpC,qBAAa,wBAAwB;IACnC,SAAS,IAAI,SAAS,CAAC,QAAQ,EAAE;IAQjC,OAAO,CAAC,oBAAoB;IAI5B,OAAO,CAAC,wBAAwB;IAIhC,OAAO,CAAC,qBAAqB;CAQ9B"}

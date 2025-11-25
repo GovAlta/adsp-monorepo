@@ -1,0 +1,33 @@
+import * as React from 'react';
+import { Combobox as ComboboxPrimitive } from '@strapi/ui-primitives';
+import { Field } from '../Field';
+interface ComboboxProps extends Pick<ComboboxPrimitive.RootProps, 'allowCustomValue' | 'autocomplete' | 'children' | 'disabled' | 'defaultTextValue' | 'defaultOpen' | 'defaultFilterValue' | 'filterValue' | 'isPrintableCharacter' | 'open' | 'onOpenChange' | 'onFilterValueChange' | 'onTextValueChange' | 'required' | 'textValue' | 'value'>, Pick<Field.InputProps, 'hasError' | 'name' | 'id'>, Omit<ComboboxPrimitive.TextInputProps, 'required' | 'disabled' | 'value' | 'onChange' | 'size'> {
+    clearLabel?: string;
+    creatable?: boolean | 'visible';
+    creatableDisabled?: boolean;
+    createMessage?: (value: string) => string;
+    creatableStartIcon?: React.ReactNode;
+    hasMoreItems?: boolean;
+    loading?: boolean;
+    loadingMessage?: string;
+    noOptionsMessage?: (value: string) => string;
+    onChange?: ComboboxPrimitive.RootProps['onValueChange'];
+    onClear?: React.MouseEventHandler<HTMLButtonElement | HTMLDivElement>;
+    onCreateOption?: (value?: string) => void;
+    onLoadMore?: (entry: IntersectionObserverEntry) => void;
+    onInputChange?: React.ChangeEventHandler<HTMLInputElement>;
+    /**
+     * @default "M"
+     */
+    size?: 'S' | 'M';
+    startIcon?: React.ReactNode;
+}
+type ComboboxInputElement = HTMLInputElement;
+declare const Combobox: React.ForwardRefExoticComponent<ComboboxProps & React.RefAttributes<HTMLInputElement>>;
+interface ComboboxOptionProps extends ComboboxPrimitive.ItemProps {
+    children: React.ReactNode;
+}
+declare const Option: React.ForwardRefExoticComponent<ComboboxOptionProps & React.RefAttributes<HTMLDivElement>>;
+export { Combobox, Option as ComboboxOption };
+export type { ComboboxInputElement, ComboboxOptionProps, ComboboxProps };
+//# sourceMappingURL=Combobox.d.ts.map

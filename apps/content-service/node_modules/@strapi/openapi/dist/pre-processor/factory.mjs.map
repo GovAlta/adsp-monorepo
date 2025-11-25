@@ -1,0 +1,1 @@
+{"version":3,"file":"factory.mjs","sources":["../../src/pre-processor/factory.ts"],"sourcesContent":["import type { PreProcessor } from './types';\n\nexport class PreProcessorFactory {\n  createAll(): PreProcessor[] {\n    return [];\n  }\n}\n"],"names":["PreProcessorFactory","createAll"],"mappings":"AAEO,MAAMA,mBAAAA,CAAAA;IACXC,SAA4B,GAAA;AAC1B,QAAA,OAAO,EAAE;AACX;AACF;;;;"}

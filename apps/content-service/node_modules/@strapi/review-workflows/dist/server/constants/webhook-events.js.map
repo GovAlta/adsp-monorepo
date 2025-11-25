@@ -1,0 +1,1 @@
+{"version":3,"file":"webhook-events.js","sources":["../../../server/src/constants/webhook-events.ts"],"sourcesContent":["export const WORKFLOW_UPDATE_STAGE = 'review-workflows.updateEntryStage';\n\nexport default {\n  WORKFLOW_UPDATE_STAGE,\n};\n"],"names":["WORKFLOW_UPDATE_STAGE"],"mappings":";;;;AAAO,MAAMA,wBAAwB;AAErC,oBAAe;AACbA,IAAAA;AACF,CAAE;;;;;"}

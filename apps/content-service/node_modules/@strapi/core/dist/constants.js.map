@@ -1,0 +1,1 @@
+{"version":3,"file":"constants.js","sources":["../src/constants.ts"],"sourcesContent":["import type { Algorithm } from 'jsonwebtoken';\n\nexport const DEFAULT_ALGORITHM: Algorithm = 'HS256';\n"],"names":["DEFAULT_ALGORITHM"],"mappings":";;AAEO,MAAMA,oBAA+B;;;;"}

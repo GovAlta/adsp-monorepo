@@ -1,0 +1,1 @@
+{"version":3,"file":"index.mjs","sources":["../../../../server/src/content-types/release-action/index.ts"],"sourcesContent":["import schema from './schema';\n\nexport const releaseAction = {\n  schema,\n};\n"],"names":["releaseAction","schema"],"mappings":";;MAEaA,aAAgB,GAAA;AAC3BC,IAAAA;AACF;;;;"}

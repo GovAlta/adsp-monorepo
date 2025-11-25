@@ -1,0 +1,51 @@
+'use strict';
+
+var createDebugger = require('debug');
+
+const debug = createDebugger('strapi:worker-queue');
+const noop = ()=>{};
+class WorkerQueue {
+    subscribe(worker) {
+        debug('Subscribe to worker queue');
+        this.worker = worker;
+    }
+    enqueue(payload) {
+        debug('Enqueue event in worker queue');
+        if (this.running < this.concurrency) {
+            this.running += 1;
+            this.execute(payload);
+        } else {
+            this.queue.unshift(payload);
+        }
+    }
+    pop() {
+        debug('Pop worker queue and execute');
+        const payload = this.queue.pop();
+        if (payload) {
+            this.execute(payload);
+        } else {
+            this.running -= 1;
+        }
+    }
+    async execute(payload) {
+        debug('Execute worker');
+        try {
+            await this.worker(payload);
+        } catch (error) {
+            this.logger.error(error);
+        } finally{
+            this.pop();
+        }
+    }
+    constructor({ logger, concurrency = 5 }){
+        debug('Initialize worker queue');
+        this.logger = logger;
+        this.worker = noop;
+        this.concurrency = concurrency;
+        this.running = 0;
+        this.queue = [];
+    }
+}
+
+module.exports = WorkerQueue;
+//# sourceMappingURL=worker-queue.js.map

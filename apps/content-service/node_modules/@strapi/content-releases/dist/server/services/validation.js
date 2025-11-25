@@ -1,0 +1,91 @@
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var utils = require('@strapi/utils');
+var constants = require('../constants.js');
+
+class AlreadyOnReleaseError extends utils.errors.ApplicationError {
+    constructor(message){
+        super(message);
+        this.name = 'AlreadyOnReleaseError';
+    }
+}
+const createReleaseValidationService = ({ strapi })=>({
+        async validateUniqueEntry (releaseId, releaseActionArgs) {
+            /**
+     * Asserting the type, otherwise TS complains: 'release.actions' is of type 'unknown', even though the types come through for non-populated fields...
+     * Possibly related to the comment on GetValues: https://github.com/strapi/strapi/blob/main/packages/core/types/src/modules/entity-service/result.ts
+     */ const release = await strapi.db.query(constants.RELEASE_MODEL_UID).findOne({
+                where: {
+                    id: releaseId
+                },
+                populate: {
+                    actions: true
+                }
+            });
+            if (!release) {
+                throw new utils.errors.NotFoundError(`No release found for id ${releaseId}`);
+            }
+            const isEntryInRelease = release.actions.some((action)=>action.entryDocumentId === releaseActionArgs.entryDocumentId && action.contentType === releaseActionArgs.contentType && (releaseActionArgs.locale ? action.locale === releaseActionArgs.locale : true));
+            if (isEntryInRelease) {
+                throw new AlreadyOnReleaseError(`Entry with documentId ${releaseActionArgs.entryDocumentId}${releaseActionArgs.locale ? `( ${releaseActionArgs.locale})` : ''} and contentType ${releaseActionArgs.contentType} already exists in release with id ${releaseId}`);
+            }
+        },
+        validateEntryData (contentTypeUid, entryDocumentId) {
+            const contentType = strapi.contentType(contentTypeUid);
+            if (!contentType) {
+                throw new utils.errors.NotFoundError(`No content type found for uid ${contentTypeUid}`);
+            }
+            if (!utils.contentTypes.hasDraftAndPublish(contentType)) {
+                throw new utils.errors.ValidationError(`Content type with uid ${contentTypeUid} does not have draftAndPublish enabled`);
+            }
+            if (contentType.kind === 'collectionType' && !entryDocumentId) {
+                throw new utils.errors.ValidationError('Document id is required for collection type');
+            }
+        },
+        async validatePendingReleasesLimit () {
+            // Use the maximum releases option if it exists, otherwise default to 3
+            const featureCfg = strapi.ee.features.get('cms-content-releases');
+            const maximumPendingReleases = typeof featureCfg === 'object' && featureCfg?.options?.maximumReleases || 3;
+            const [, pendingReleasesCount] = await strapi.db.query(constants.RELEASE_MODEL_UID).findWithCount({
+                filters: {
+                    releasedAt: {
+                        $null: true
+                    }
+                }
+            });
+            // Unlimited is a number that will never be reached like 9999
+            if (pendingReleasesCount >= maximumPendingReleases) {
+                throw new utils.errors.ValidationError('You have reached the maximum number of pending releases');
+            }
+        },
+        async validateUniqueNameForPendingRelease (name, id) {
+            const pendingReleases = await strapi.db.query(constants.RELEASE_MODEL_UID).findMany({
+                where: {
+                    releasedAt: {
+                        $null: true
+                    },
+                    name,
+                    ...id && {
+                        id: {
+                            $ne: id
+                        }
+                    }
+                }
+            });
+            const isNameUnique = pendingReleases.length === 0;
+            if (!isNameUnique) {
+                throw new utils.errors.ValidationError(`Release with name ${name} already exists`);
+            }
+        },
+        async validateScheduledAtIsLaterThanNow (scheduledAt) {
+            if (scheduledAt && new Date(scheduledAt) <= new Date()) {
+                throw new utils.errors.ValidationError('Scheduled at must be later than now');
+            }
+        }
+    });
+
+exports.AlreadyOnReleaseError = AlreadyOnReleaseError;
+exports.default = createReleaseValidationService;
+//# sourceMappingURL=validation.js.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"plugin.d.ts","sourceRoot":"","sources":["../../../src/routes/providers/plugin.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,IAAI,EAAE,MAAM,eAAe,CAAC;AAG1C,OAAO,EAAE,sBAAsB,EAAE,MAAM,YAAY,CAAC;AAIpD;;;;;;;GAOG;AACH,qBAAa,oBAAqB,SAAQ,sBAAsB;IAC9D;;;;;;;;OAQG;IACH,IAAW,MAAM,IAAI,IAAI,CAAC,KAAK,EAAE,CAgBhC;CACF"}

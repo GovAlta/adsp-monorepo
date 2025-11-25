@@ -1,0 +1,1 @@
+{"version":3,"file":"settings.d.ts","sourceRoot":"","sources":["../../../../../../server/src/services/utils/configuration/settings.ts"],"names":[],"mappings":"AAyBA,iBAAe,kBAAkB,CAAC,MAAM,EAAE,GAAG,EAAE,KAAK,EAAE,GAAG,oBAkBxD;AAED,QAAA,MAAM,qBAAqB,WAAkB,GAAG,iBAU/C,CAAC;AAEF,QAAA,MAAM,YAAY,kBAAyB,GAAG,UAAU,GAAG,iBAY1D,CAAC;AAEF,OAAO,EAAE,kBAAkB,EAAE,qBAAqB,EAAE,YAAY,EAAE,CAAC"}

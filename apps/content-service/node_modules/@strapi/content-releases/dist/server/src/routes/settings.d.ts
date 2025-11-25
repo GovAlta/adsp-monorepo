@@ -1,0 +1,18 @@
+declare const _default: {
+    type: string;
+    routes: {
+        method: string;
+        path: string;
+        handler: string;
+        config: {
+            policies: (string | {
+                name: string;
+                config: {
+                    actions: string[];
+                };
+            })[];
+        };
+    }[];
+};
+export default _default;
+//# sourceMappingURL=settings.d.ts.map

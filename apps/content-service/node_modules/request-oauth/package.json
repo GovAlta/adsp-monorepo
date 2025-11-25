@@ -1,0 +1,49 @@
+{
+  "name": "request-oauth",
+  "version": "1.0.1",
+  "description": "OAuth 1.0a support for request-compose",
+  "keywords": [
+    "request",
+    "compose",
+    "http",
+    "oauth",
+    "client"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/simov/request-oauth",
+  "author": "Simeon Velichkov <simeonvelichkov@gmail.com> (https://simov.github.io)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simov/request-oauth.git"
+  },
+  "dependencies": {
+    "qs": "^6.9.6",
+    "uuid": "^8.3.2",
+    "oauth-sign": "^0.9.0"
+  },
+  "devDependencies": {
+    "coveralls": "^3.1.0",
+    "mocha": "^7.2.0",
+    "nyc": "^15.1.0",
+    "request-compose": "^2.1.0",
+    "request-logs": "^2.1.3"
+  },
+  "bin": {},
+  "main": "./oauth.js",
+  "type": "commonjs",
+  "files": [
+    "lib/",
+    "oauth.js",
+    "LICENSE",
+    "README.md",
+    "package.json"
+  ],
+  "scripts": {
+    "test": "npm run test:ci",
+    "test:ci": "npx mocha --recursive",
+    "test:cov": "npx nyc --reporter=lcov --reporter=text-summary mocha -- --recursive"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"set-creator-fields.d.ts","sourceRoot":"","sources":["../src/set-creator-fields.ts"],"names":[],"mappings":"AAKA,MAAM,WAAW,OAAO;IACtB,IAAI,EAAE,IAAI,CAAC;IACX,SAAS,CAAC,EAAE,OAAO,CAAC;CACrB;AAED,UAAU,IAAI;IACZ,EAAE,EAAE,MAAM,GAAG,MAAM,CAAC;CACrB;AAED,QAAA,MAAM,gBAAgB,8CACgC,OAAO,+CACjB,UAAU,eASnD,CAAC;AAEJ,eAAe,gBAAgB,CAAC"}

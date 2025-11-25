@@ -1,0 +1,1 @@
+{"version":3,"file":"watch.d.ts","sourceRoot":"","sources":["../../../src/node/webpack/watch.ts"],"names":[],"mappings":"AAOA,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,yBAAyB,CAAC;AAG5D,UAAU,cAAc;IACtB,KAAK,IAAI,OAAO,CAAC,IAAI,CAAC,CAAC;CACxB;AAED,QAAA,MAAM,KAAK,QAAe,YAAY,KAAG,QAAQ,cAAc,CA+F9D,CAAC;AAEF,OAAO,EAAE,KAAK,EAAE,CAAC;AACjB,YAAY,EAAE,cAAc,EAAE,CAAC"}

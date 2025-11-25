@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sources":["../../../src/strapi/providers/index.ts"],"sourcesContent":["// Local\nexport * from './local-destination';\nexport * from './local-source';\n\n// Remote\nexport * from './remote-destination';\nexport * from './remote-source';\n"],"names":[],"mappings":";;;;;;;AAAA;;;;;;;;;"}

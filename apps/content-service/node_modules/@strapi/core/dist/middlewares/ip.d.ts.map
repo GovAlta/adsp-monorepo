@@ -1,0 +1,1 @@
+{"version":3,"file":"ip.d.ts","sourceRoot":"","sources":["../../src/middlewares/ip.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,QAAQ,CAAC;AAC3B,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,eAAe,CAAC;AAE1C,MAAM,MAAM,MAAM,GAAG,KAAK,CAAC,YAAY,CAAC;AAExC,eAAO,MAAM,EAAE,EAAE,IAAI,CAAC,iBAAiB,CAAC,MAAM,CAA6B,CAAC"}

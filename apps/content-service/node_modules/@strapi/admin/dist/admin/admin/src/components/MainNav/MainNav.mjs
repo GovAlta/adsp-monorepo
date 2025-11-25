@@ -1,0 +1,36 @@
+import { jsx } from 'react/jsx-runtime';
+import { Flex } from '@strapi/design-system';
+import { styled } from 'styled-components';
+
+const MainNavWrapper = styled(Flex)`
+  border-bottom: 1px solid ${({ theme })=>theme.colors.neutral150};
+  position: sticky;
+  max-height: 100%;
+  height: auto;
+  z-index: 4;
+
+  ${({ theme })=>theme.breakpoints.large} {
+    border-bottom: none;
+    border-right: 1px solid ${({ theme })=>theme.colors.neutral150};
+    height: 100dvh;
+  }
+`;
+const MainNav = (props)=>/*#__PURE__*/ jsx(MainNavWrapper, {
+        alignItems: "normal",
+        tag: "nav",
+        background: "neutral0",
+        direction: {
+            initial: 'row',
+            large: 'column'
+        },
+        top: 0,
+        zIndex: 3,
+        width: {
+            initial: '100dvw',
+            large: 10
+        },
+        ...props
+    });
+
+export { MainNav };
+//# sourceMappingURL=MainNav.mjs.map

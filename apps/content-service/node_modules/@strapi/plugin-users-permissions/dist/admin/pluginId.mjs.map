@@ -1,0 +1,1 @@
+{"version":3,"file":"pluginId.mjs","sources":["../../admin/src/pluginId.js"],"sourcesContent":["import { name } from '../../package.json';\n\nconst pluginId = name.replace(/^@strapi\\/plugin-/i, '');\n\nexport default pluginId;\n"],"names":["pluginId","name","replace"],"mappings":";;AAEA,MAAMA,QAAWC,GAAAA,IAAAA,CAAKC,OAAO,CAAC,oBAAsB,EAAA,EAAA;;;;"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"lifecycles.mjs","sources":["../../src/utils/lifecycles.ts"],"sourcesContent":["export const LIFECYCLES = {\n  REGISTER: 'register',\n  BOOTSTRAP: 'bootstrap',\n  DESTROY: 'destroy',\n} as const;\n"],"names":["LIFECYCLES","REGISTER","BOOTSTRAP","DESTROY"],"mappings":"MAAaA,UAAa,GAAA;IACxBC,QAAU,EAAA,UAAA;IACVC,SAAW,EAAA,WAAA;IACXC,OAAS,EAAA;AACX;;;;"}

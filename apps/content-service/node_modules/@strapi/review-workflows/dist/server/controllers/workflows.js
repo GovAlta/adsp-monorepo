@@ -1,0 +1,136 @@
+'use strict';
+
+var fp = require('lodash/fp');
+var utils = require('@strapi/utils');
+var index = require('../utils/index.js');
+var reviewWorkflows = require('../validation/review-workflows.js');
+var workflows$1 = require('../constants/workflows.js');
+
+/**
+ *
+ * @param { Core.Strapi } strapi - Strapi instance
+ * @param userAbility
+ * @return { PermissionChecker }
+ */ function getWorkflowsPermissionChecker({ strapi: strapi1 }, userAbility) {
+    return strapi1.plugin('content-manager').service('permission-checker').create({
+        userAbility,
+        model: workflows$1.WORKFLOW_MODEL_UID
+    });
+}
+/**
+ * Transforms workflow to an admin UI format.
+ * Some attributes (like permissions) are presented in a different format in the admin UI.
+ * @param {Workflow} workflow
+ */ function formatWorkflowToAdmin(workflow) {
+    if (!workflow) return;
+    if (!workflow.stages) return workflow;
+    // Transform permissions roles to be the id string instead of an object
+    const transformPermissions = fp.map(fp.update('role', fp.property('id')));
+    const transformStages = fp.map(fp.update('permissions', transformPermissions));
+    return fp.update('stages', transformStages, workflow);
+}
+var workflows = {
+    /**
+   * Create a new workflow
+   * @param {import('koa').BaseContext} ctx - koa context
+   */ async create (ctx) {
+        const { body, query } = ctx.request;
+        const { sanitizeCreateInput, sanitizeOutput, sanitizedQuery } = getWorkflowsPermissionChecker({
+            strapi
+        }, ctx.state.userAbility);
+        const { populate } = await sanitizedQuery.create(query);
+        const workflowBody = await reviewWorkflows.validateWorkflowCreate(body.data);
+        const workflowService = index.getService('workflows');
+        const createdWorkflow = await workflowService.create({
+            data: await sanitizeCreateInput(workflowBody),
+            populate
+        }).then(formatWorkflowToAdmin);
+        ctx.created({
+            data: await sanitizeOutput(createdWorkflow)
+        });
+    },
+    /**
+   * Update a workflow
+   * @param {import('koa').BaseContext} ctx - koa context
+   */ async update (ctx) {
+        const { id } = ctx.params;
+        const { body, query } = ctx.request;
+        const workflowService = index.getService('workflows');
+        const { sanitizeUpdateInput, sanitizeOutput, sanitizedQuery } = getWorkflowsPermissionChecker({
+            strapi
+        }, ctx.state.userAbility);
+        const { populate } = await sanitizedQuery.update(query);
+        const workflowBody = await reviewWorkflows.validateWorkflowUpdate(body.data);
+        // Find if workflow exists
+        const workflow = await workflowService.findById(id, {
+            populate: workflows$1.WORKFLOW_POPULATE
+        });
+        if (!workflow) {
+            return ctx.notFound();
+        }
+        // Sanitize input data
+        const getPermittedFieldToUpdate = sanitizeUpdateInput(workflow);
+        const dataToUpdate = await getPermittedFieldToUpdate(workflowBody);
+        // Update workflow
+        const updatedWorkflow = await workflowService.update(workflow, {
+            data: dataToUpdate,
+            populate
+        }).then(formatWorkflowToAdmin);
+        // Send sanitized response
+        ctx.body = {
+            data: await sanitizeOutput(updatedWorkflow)
+        };
+    },
+    /**
+   * Delete a workflow
+   * @param {import('koa').BaseContext} ctx - koa context
+   */ async delete (ctx) {
+        const { id } = ctx.params;
+        const { query } = ctx.request;
+        const workflowService = index.getService('workflows');
+        const { sanitizeOutput, sanitizedQuery } = getWorkflowsPermissionChecker({
+            strapi
+        }, ctx.state.userAbility);
+        const { populate } = await sanitizedQuery.delete(query);
+        const workflow = await workflowService.findById(id, {
+            populate: workflows$1.WORKFLOW_POPULATE
+        });
+        if (!workflow) {
+            return ctx.notFound("Workflow doesn't exist");
+        }
+        const deletedWorkflow = await workflowService.delete(workflow, {
+            populate
+        }).then(formatWorkflowToAdmin);
+        ctx.body = {
+            data: await sanitizeOutput(deletedWorkflow)
+        };
+    },
+    /**
+   * List all workflows
+   * @param {import('koa').BaseContext} ctx - koa context
+   */ async find (ctx) {
+        const { query } = ctx.request;
+        const workflowService = index.getService('workflows');
+        const { sanitizeOutput, sanitizedQuery } = getWorkflowsPermissionChecker({
+            strapi
+        }, ctx.state.userAbility);
+        const { populate, filters, sort } = await sanitizedQuery.read(query);
+        const [workflows, workflowCount] = await Promise.all([
+            workflowService.find({
+                populate,
+                filters,
+                sort
+            }).then(fp.map(formatWorkflowToAdmin)),
+            workflowService.count()
+        ]);
+        ctx.body = {
+            data: await utils.async.map(workflows, sanitizeOutput),
+            meta: {
+                workflowCount
+            }
+        };
+    }
+};
+
+module.exports = workflows;
+//# sourceMappingURL=workflows.js.map

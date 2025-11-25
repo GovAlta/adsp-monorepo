@@ -162,10 +162,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     item.subject?.length !== 0 ? (
                       <div>
                         <div className="mobile">
-                          <GoABadge content="" type="information" />
+                          <GoABadge content="" type="information" icon={false} />
                         </div>
                         <div className="desktop">
-                          <GoABadge content="Unsaved" type="information" />
+                          <GoABadge content="Unsaved" type="information" icon={false} />
                         </div>
                       </div>
                     ) : (

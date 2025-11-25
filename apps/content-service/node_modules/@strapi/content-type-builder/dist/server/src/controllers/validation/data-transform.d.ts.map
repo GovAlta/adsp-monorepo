@@ -1,0 +1,1 @@
+{"version":3,"file":"data-transform.d.ts","sourceRoot":"","sources":["../../../../../server/src/controllers/validation/data-transform.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,MAAM,EAAE,MAAM,eAAe,CAAC;AAI5C,eAAO,MAAM,mBAAmB,SACxB,QAAQ,OAAO,iBAAiB,CAAC,GAAG,QAAQ,OAAO,eAAe,CAAC,GAAG,SAAS,SAWtF,CAAC;AAEF,eAAO,MAAM,4BAA4B,SAAU,OAAO,iBAAiB,SAY1E,CAAC"}

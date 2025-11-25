@@ -1,0 +1,73 @@
+{
+  "name": "slate-react",
+  "description": "Tools for building completely customizable richtext editors with React.",
+  "version": "0.98.3",
+  "license": "MIT",
+  "repository": "git://github.com/ianstormtaylor/slate.git",
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "umd": "dist/slate-react.js",
+  "umdMin": "dist/slate-react.min.js",
+  "sideEffects": false,
+  "files": [
+    "dist/"
+  ],
+  "dependencies": {
+    "@juggle/resize-observer": "^3.4.0",
+    "@types/is-hotkey": "^0.1.1",
+    "@types/lodash": "^4.14.149",
+    "direction": "^1.0.3",
+    "is-hotkey": "^0.1.6",
+    "is-plain-object": "^5.0.0",
+    "lodash": "^4.17.4",
+    "scroll-into-view-if-needed": "^2.2.20",
+    "tiny-invariant": "1.0.6"
+  },
+  "devDependencies": {
+    "@babel/runtime": "^7.7.4",
+    "@types/jest": "^27.4.1",
+    "@types/jsdom": "^16.2.14",
+    "@types/react": "^16.9.13",
+    "@types/react-dom": "^16.9.4",
+    "@types/react-test-renderer": "^16.8.0",
+    "@types/resize-observer-browser": "^0.1.7",
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0",
+    "react-test-renderer": ">=16.8.0",
+    "slate": "^0.94.0",
+    "slate-hyperscript": "^0.81.3",
+    "source-map-loader": "^4.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0",
+    "slate": ">=0.65.3"
+  },
+  "umdGlobals": {
+    "react": "React",
+    "slate": "Slate"
+  },
+  "keywords": [
+    "canvas",
+    "contenteditable",
+    "docs",
+    "document",
+    "edit",
+    "editor",
+    "editable",
+    "html",
+    "immutable",
+    "markdown",
+    "medium",
+    "paper",
+    "react",
+    "rich",
+    "richtext",
+    "richtext",
+    "slate",
+    "text",
+    "wysiwyg",
+    "wysiwym"
+  ]
+}

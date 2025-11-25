@@ -1,0 +1,42 @@
+import * as React from 'react';
+import * as SelectParts from './SelectParts';
+type MultiSelectPropsWithoutLabel = Omit<SelectParts.MultiSelectProps, 'value' | 'multi'> & Pick<SelectParts.ContentProps, 'onCloseAutoFocus'> & Pick<SelectParts.TriggerProps, 'clearLabel' | 'onClear' | 'startIcon' | 'hasError' | 'id' | 'name' | 'size'> & Pick<SelectParts.ValueProps, 'placeholder'> & {
+    /**
+     * @default (value) => value.join(',')
+     */
+    customizeContent?(value?: string[]): string;
+    onChange?: (value: string[]) => void;
+    onReachEnd?: (entry: IntersectionObserverEntry) => void;
+    value?: string[] | null;
+    withTags?: boolean;
+};
+export type MultiSelectProps = MultiSelectPropsWithoutLabel & {
+    'aria-label'?: string;
+    'aria-describedby'?: string;
+};
+export declare const MultiSelect: React.ForwardRefExoticComponent<Omit<import("@strapi/ui-primitives/dist/components/Select/Select").MultiSelectProps, "value" | "multi"> & Pick<import("@strapi/ui-primitives/dist/components/Select/Select").SelectContentImplProps, "onCloseAutoFocus"> & Pick<SelectParts.TriggerProps, "id" | "name" | "size" | "startIcon" | "hasError" | "clearLabel" | "onClear"> & Pick<SelectParts.ValueProps, "placeholder"> & {
+    /**
+     * @default (value) => value.join(',')
+     */
+    customizeContent?(value?: string[]): string;
+    onChange?: ((value: string[]) => void) | undefined;
+    onReachEnd?: ((entry: IntersectionObserverEntry) => void) | undefined;
+    value?: string[] | null | undefined;
+    withTags?: boolean | undefined;
+} & {
+    'aria-label'?: string | undefined;
+    'aria-describedby'?: string | undefined;
+} & React.RefAttributes<HTMLDivElement>>;
+export interface MultiSelectOptionProps extends Omit<SelectParts.ItemProps, 'value'> {
+    startIcon?: React.ReactNode;
+    value: string | number;
+}
+export declare const MultiSelectOption: React.ForwardRefExoticComponent<MultiSelectOptionProps & React.RefAttributes<HTMLDivElement>>;
+export interface MultiSelectGroupProps extends Pick<MultiSelectOptionProps, 'startIcon'> {
+    children: React.ReactNode;
+    label: string;
+    values?: string[];
+}
+export declare const MultiSelectGroup: React.ForwardRefExoticComponent<MultiSelectGroupProps & React.RefAttributes<HTMLDivElement>>;
+export {};
+//# sourceMappingURL=MultiSelect.d.ts.map

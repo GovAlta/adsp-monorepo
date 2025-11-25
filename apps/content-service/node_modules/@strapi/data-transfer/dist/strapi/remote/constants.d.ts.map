@@ -1,0 +1,1 @@
+{"version":3,"file":"constants.d.ts","sourceRoot":"","sources":["../../../src/strapi/remote/constants.ts"],"names":[],"mappings":"AAAA,eAAO,MAAM,aAAa,oBAA8B,CAAC;AACzD,eAAO,MAAM,gBAAgB,2BAA4B,CAAC;AAE1D,MAAM,MAAM,YAAY,GAAG,OAAO,aAAa,CAAC;AAChD,MAAM,MAAM,cAAc,GAAG,CAAC,OAAO,gBAAgB,CAAC,CAAC,MAAM,CAAC,CAAC"}

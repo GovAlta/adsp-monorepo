@@ -1,0 +1,57 @@
+'use strict';
+
+var index = require('../utils/index.js');
+var reviewWorkflows = require('../validation/review-workflows.js');
+var workflows = require('../constants/workflows.js');
+
+var assignees = {
+    /**
+   * Updates an entity's assignee.
+   * @async
+   * @param {Object} ctx - The Koa context object.
+   * @param {Object} ctx.params - An object containing the parameters from the request URL.
+   * @param {string} ctx.params.model_uid - The model UID of the entity.
+   * @param {string} ctx.params.id - The ID of the entity to update.
+   * @param {Object} ctx.request.body.data - Optional data object containing the new assignee ID for the entity.
+   * @param {string} ctx.request.body.data.id - The ID of the new assignee for the entity.
+   * @throws {ApplicationError} If review workflows is not activated on the specified model UID.
+   * @throws {ValidationError} If the `data` object in the request body fails to pass validation.
+   * @returns {Promise<void>} A promise that resolves when the entity's assignee has been updated.
+   */ async updateEntity (ctx) {
+        const assigneeService = index.getService('assignees');
+        const workflowService = index.getService('workflows');
+        const stagePermissions = index.getService('stage-permissions');
+        const { model_uid: model, id: documentId } = ctx.params;
+        const locale = await reviewWorkflows.validateLocale(ctx.request.query?.locale) ?? undefined;
+        const { sanitizeOutput } = strapi.plugin('content-manager').service('permission-checker').create({
+            userAbility: ctx.state.userAbility,
+            model
+        });
+        // Retrieve the entity so we can get its current stage
+        const entity = await strapi.documents(model).findOne({
+            documentId,
+            locale,
+            populate: [
+                workflows.ENTITY_STAGE_ATTRIBUTE
+            ]
+        });
+        if (!entity) {
+            ctx.throw(404, 'Entity not found');
+        }
+        // Only allow users who can update the current stage to change the assignee
+        const canTransitionStage = stagePermissions.can(workflows.STAGE_TRANSITION_UID, entity[workflows.ENTITY_STAGE_ATTRIBUTE]?.id);
+        if (!canTransitionStage) {
+            ctx.throw(403, 'Stage transition permission is required');
+        }
+        // TODO: check if user has update permission on the entity
+        const { id: assigneeId } = await reviewWorkflows.validateUpdateAssigneeOnEntity(ctx.request?.body?.data, 'You should pass a valid id to the body of the put request.');
+        await workflowService.assertContentTypeBelongsToWorkflow(model);
+        const updatedEntity = await assigneeService.updateEntityAssignee(entity, model, assigneeId);
+        ctx.body = {
+            data: await sanitizeOutput(updatedEntity)
+        };
+    }
+};
+
+module.exports = assignees;
+//# sourceMappingURL=assignees.js.map

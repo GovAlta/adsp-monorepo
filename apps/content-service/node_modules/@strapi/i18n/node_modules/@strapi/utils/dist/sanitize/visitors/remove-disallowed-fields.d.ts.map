@@ -1,0 +1,1 @@
+{"version":3,"file":"remove-disallowed-fields.d.ts","sourceRoot":"","sources":["../../../src/sanitize/visitors/remove-disallowed-fields.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,wBAAwB,CAAC;yCAEvB,MAAM,EAAE,GAAG,IAAI,KAAU,OAAO;AAA/D,wBAoEI"}

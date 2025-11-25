@@ -1,0 +1,1 @@
+{"version":3,"file":"analytics.d.ts","sourceRoot":"","sources":["../../src/utils/analytics.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,UAAU,EAAE,eAAe,EAAE,YAAY,EAAE,MAAM,UAAU,CAAC;AAE1E,QAAA,MAAM,UAAU,QACT,UAAU,mBACE,eAAe,aACrB,MAAM,aACN,YAAY,kBAOxB,CAAC;AAEF,OAAO,EAAE,UAAU,EAAE,CAAC"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"admin.d.ts","sourceRoot":"","sources":["../../../src/routes/providers/admin.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,eAAe,CAAC;AAG1C,OAAO,EAAE,sBAAsB,EAAE,MAAM,YAAY,CAAC;AAIpD,qBAAa,mBAAoB,SAAQ,sBAAsB;IAC7D,IAAW,MAAM,IAAI,IAAI,CAAC,KAAK,EAAE,CAQhC;CACF"}

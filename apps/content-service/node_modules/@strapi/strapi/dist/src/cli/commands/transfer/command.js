@@ -1,0 +1,171 @@
+'use strict';
+
+var inquirer = require('inquirer');
+var commander = require('commander');
+var commander$1 = require('../../utils/commander.js');
+var helpers = require('../../utils/helpers.js');
+var dataTransfer = require('../../utils/data-transfer.js');
+var action = require('./action.js');
+
+/**
+ * `$ strapi transfer`
+ */ const command = ()=>{
+    return commander.createCommand('transfer').description('Transfer data from one source to another').allowExcessArguments(false).addOption(new commander.Option('--from <sourceURL>', `URL of the remote Strapi instance to get data from`).argParser(commander$1.parseURL)).addOption(new commander.Option('--from-token <token>', `Transfer token for the remote Strapi source`)).addOption(new commander.Option('--to <destinationURL>', `URL of the remote Strapi instance to send data to`).argParser(commander$1.parseURL)).addOption(new commander.Option('--to-token <token>', `Transfer token for the remote Strapi destination`)).addOption(new commander.Option('--verbose', 'Enable verbose logs')).addOption(commander$1.forceOption).addOption(dataTransfer.excludeOption).addOption(dataTransfer.onlyOption).addOption(dataTransfer.throttleOption).hook('preAction', dataTransfer.validateExcludeOnly).hook('preAction', helpers.ifOptions((opts)=>opts.from && opts.to || opts.from && opts.toToken || opts.to && opts.fromToken, async ()=>helpers.exitWith(1, 'Only one remote source (from) or destination (to) option may be provided'))).hook('preAction', async (thisCommand)=>{
+        const opts = thisCommand.opts();
+        const hasEnvUrl = process.env.STRAPI_TRANSFER_URL;
+        const hasEnvToken = process.env.STRAPI_TRANSFER_TOKEN;
+        const logDocumentation = ()=>{
+            console.info('ℹ️  Data transfer documentation: https://docs.strapi.io/dev-docs/data-management/transfer');
+        };
+        const logEnvironmentVariables = ()=>{
+            if (!hasEnvUrl && !hasEnvToken) {
+                console.info('ℹ️  No transfer configuration found in environment variables');
+                console.info('   → Add STRAPI_TRANSFER_URL and STRAPI_TRANSFER_TOKEN environment variables to make the transfer process faster for future runs');
+                return;
+            }
+            console.info('ℹ️  Found transfer configuration in your environment:');
+            if (hasEnvUrl) {
+                console.info(`   → Environment STRAPI_TRANSFER_URL (${hasEnvUrl}) will be used as the transfer URL`);
+            }
+            if (hasEnvToken) {
+                console.info('   → Environment STRAPI_TRANSFER_TOKEN value will be used as the transfer token');
+            }
+            console.info(); // Empty line for better readability
+        };
+        const determineDirection = async ()=>{
+            // If user has not provided a direction from CLI, log the documentation
+            if (!opts.from && !opts.to) {
+                logDocumentation();
+            }
+            logEnvironmentVariables();
+            if (opts.from) {
+                return opts.from;
+            }
+            if (opts.to) {
+                return opts.to;
+            }
+            const { dir } = await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'dir',
+                    message: 'Choose transfer direction:',
+                    choices: [
+                        {
+                            name: 'Pull data from remote Strapi to local',
+                            value: 'from'
+                        },
+                        {
+                            name: 'Push local data to remote Strapi',
+                            value: 'to'
+                        }
+                    ]
+                }
+            ]);
+            return dir;
+        };
+        const determineUrl = async (direction)=>{
+            if (opts[direction]) {
+                return new URL(opts[direction]);
+            }
+            if (process.env.STRAPI_TRANSFER_URL) {
+                return new URL(process.env.STRAPI_TRANSFER_URL);
+            }
+            const answer = await inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'remoteUrl',
+                    message: `Enter the URL of the remote Strapi instance to ${direction === 'from' ? 'get data from' : 'send data to'}:`,
+                    default: process.env.STRAPI_TRANSFER_URL,
+                    validate (input) {
+                        try {
+                            const url = new URL(input);
+                            if (![
+                                'http:',
+                                'https:'
+                            ].includes(url.protocol)) {
+                                return 'URL must use http: or https: protocol';
+                            }
+                            return true;
+                        } catch (error) {
+                            return 'Please enter a valid URL (e.g., http://localhost:1337/admin or https://example.com/admin)';
+                        }
+                    }
+                }
+            ]);
+            return new URL(answer.remoteUrl);
+        };
+        const determineToken = async (direction)=>{
+            if (opts[`${direction}Token`]) {
+                return opts[`${direction}Token`];
+            }
+            if (process.env.STRAPI_TRANSFER_TOKEN) {
+                return process.env.STRAPI_TRANSFER_TOKEN;
+            }
+            const answer = await inquirer.prompt([
+                {
+                    type: 'password',
+                    name: 'token',
+                    message: `Enter the transfer token for the remote Strapi ${direction === 'from' ? 'source' : 'destination'}:`,
+                    default: process.env.STRAPI_TRANSFER_TOKEN,
+                    validate (input) {
+                        if (!input?.length) {
+                            return 'Transfer token is required';
+                        }
+                        return true;
+                    }
+                }
+            ]);
+            return answer.token;
+        };
+        const direction = await determineDirection();
+        opts[direction] = await determineUrl(direction);
+        opts[`${direction}Token`] = await determineToken(direction);
+    })// If --from is used, validate the URL and token
+    .hook('preAction', helpers.ifOptions((opts)=>opts.from, async (thisCommand)=>{
+        helpers.assertUrlHasProtocol(thisCommand.opts().from, [
+            'https:',
+            'http:'
+        ]);
+        if (!thisCommand.opts().fromToken) {
+            const answers = await inquirer.prompt([
+                {
+                    type: 'password',
+                    message: 'Please enter your transfer token for the remote Strapi source',
+                    name: 'fromToken'
+                }
+            ]);
+            if (!answers.fromToken?.length) {
+                helpers.exitWith(1, 'No token provided for remote source, aborting transfer.');
+            }
+            thisCommand.opts().fromToken = answers.fromToken;
+        }
+        await commander$1.getCommanderConfirmMessage('The transfer will delete all the local Strapi assets and its database. Are you sure you want to proceed?', {
+            failMessage: 'Transfer process aborted'
+        })(thisCommand);
+    }))// If --to is used, validate the URL, token, and confirm restore
+    .hook('preAction', helpers.ifOptions((opts)=>opts.to, async (thisCommand)=>{
+        helpers.assertUrlHasProtocol(thisCommand.opts().to, [
+            'https:',
+            'http:'
+        ]);
+        if (!thisCommand.opts().toToken) {
+            const answers = await inquirer.prompt([
+                {
+                    type: 'password',
+                    message: 'Please enter your transfer token for the remote Strapi destination',
+                    name: 'toToken'
+                }
+            ]);
+            if (!answers.toToken?.length) {
+                helpers.exitWith(1, 'No token provided for remote destination, aborting transfer.');
+            }
+            thisCommand.opts().toToken = answers.toToken;
+        }
+        await commander$1.getCommanderConfirmMessage('The transfer will delete existing data from the remote Strapi! Are you sure you want to proceed?', {
+            failMessage: 'Transfer process aborted'
+        })(thisCommand);
+    })).action(action);
+};
+
+module.exports = command;
+//# sourceMappingURL=command.js.map

@@ -1,0 +1,81 @@
+'use strict';
+
+var fp = require('lodash/fp');
+
+const ALLOWED_TYPES = [
+    'biginteger',
+    'boolean',
+    'date',
+    'datetime',
+    'decimal',
+    'email',
+    'enumeration',
+    'float',
+    'integer',
+    'json',
+    'password',
+    'richtext',
+    'string',
+    'text',
+    'time',
+    'uid'
+];
+const customFieldsRegistry = (strapi)=>{
+    const customFields = {};
+    return {
+        getAll () {
+            return customFields;
+        },
+        get (customField) {
+            const registeredCustomField = customFields[customField];
+            if (!registeredCustomField) {
+                throw new Error(`Could not find Custom Field: ${customField}`);
+            }
+            return registeredCustomField;
+        },
+        add (customField) {
+            const customFieldList = Array.isArray(customField) ? customField : [
+                customField
+            ];
+            for (const cf of customFieldList){
+                if (!fp.has('name', cf) || !fp.has('type', cf)) {
+                    throw new Error(`Custom fields require a 'name' and 'type' key`);
+                }
+                const { name, plugin, type, inputSize } = cf;
+                if (!ALLOWED_TYPES.includes(type)) {
+                    throw new Error(`Custom field type: '${type}' is not a valid Strapi type or it can't be used with a Custom Field`);
+                }
+                const isValidObjectKey = /^(?![0-9])[a-zA-Z0-9$_-]+$/g;
+                if (!isValidObjectKey.test(name)) {
+                    throw new Error(`Custom field name: '${name}' is not a valid object key`);
+                }
+                // Validate inputSize when provided
+                if (inputSize) {
+                    if (!fp.isPlainObject(inputSize) || !fp.has('default', inputSize) || !fp.has('isResizable', inputSize)) {
+                        throw new Error(`inputSize should be an object with 'default' and 'isResizable' keys`);
+                    }
+                    if (![
+                        4,
+                        6,
+                        8,
+                        12
+                    ].includes(inputSize.default)) {
+                        throw new Error('Custom fields require a valid default input size');
+                    }
+                    if (typeof inputSize.isResizable !== 'boolean') {
+                        throw new Error('Custom fields should specify if their input is resizable');
+                    }
+                }
+                // When no plugin is specified, or it isn't found in Strapi, default to global
+                const uid = plugin && strapi.plugin(plugin) ? `plugin::${plugin}.${name}` : `global::${name}`;
+                if (fp.has(uid, customFields)) {
+                    throw new Error(`Custom field: '${uid}' has already been registered`);
+                }
+                customFields[uid] = cf;
+            }
+        }
+    };
+};
+
+module.exports = customFieldsRegistry;
+//# sourceMappingURL=custom-fields.js.map

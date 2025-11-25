@@ -1,0 +1,1 @@
+{"version":3,"file":"homepage.d.ts","sourceRoot":"","sources":["../../../../server/src/services/homepage.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,eAAe,CAAC;AAE1C,OAAO,KAAK,EAAE,mBAAmB,EAAE,MAAM,oCAAoC,CAAC;AAE9E,QAAA,MAAM,qBAAqB,eAAgB;IAAE,MAAM,EAAE,KAAK,MAAM,CAAA;CAAE;2BAIjC,QAAQ,4BAA4B,CAAC,MAAM,CAAC,CAAC;CAc7E,CAAC;AAEF,eAAe,qBAAqB,CAAC"}

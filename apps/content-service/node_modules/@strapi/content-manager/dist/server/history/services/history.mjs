@@ -1,0 +1,201 @@
+import { traverseEntity, errors } from '@strapi/utils';
+import { omit } from 'lodash/fp';
+import { HISTORY_VERSION_UID, FIELDS_TO_IGNORE } from '../constants.mjs';
+import { createServiceUtils } from './utils.mjs';
+import { getService } from '../../utils/index.mjs';
+
+const createHistoryService = ({ strapi })=>{
+    const query = strapi.db.query(HISTORY_VERSION_UID);
+    const serviceUtils = createServiceUtils({
+        strapi
+    });
+    return {
+        async createVersion (historyVersionData) {
+            await query.create({
+                data: {
+                    ...historyVersionData,
+                    createdAt: new Date(),
+                    createdBy: strapi.requestContext.get()?.state?.user.id
+                }
+            });
+        },
+        async findVersionsPage (params) {
+            const schema = strapi.getModel(params.query.contentType);
+            const isLocalizedContentType = serviceUtils.isLocalizedContentType(schema);
+            const defaultLocale = await serviceUtils.getDefaultLocale();
+            let locale = null;
+            if (isLocalizedContentType) {
+                locale = params.query.locale || defaultLocale;
+            }
+            const [{ results, pagination }, localeDictionary] = await Promise.all([
+                query.findPage({
+                    ...params.query,
+                    where: {
+                        $and: [
+                            {
+                                contentType: params.query.contentType
+                            },
+                            ...params.query.documentId ? [
+                                {
+                                    relatedDocumentId: params.query.documentId
+                                }
+                            ] : [],
+                            ...locale ? [
+                                {
+                                    locale
+                                }
+                            ] : []
+                        ]
+                    },
+                    populate: [
+                        'createdBy'
+                    ],
+                    orderBy: [
+                        {
+                            createdAt: 'desc'
+                        }
+                    ]
+                }),
+                serviceUtils.getLocaleDictionary()
+            ]);
+            const populateEntry = async (entry)=>{
+                return traverseEntity(async (options, utils)=>{
+                    if (!options.attribute) return;
+                    if (!options.value) return;
+                    const currentValue = Array.isArray(options.value) ? options.value : [
+                        options.value
+                    ];
+                    if (options.attribute.type === 'component') {
+                        // Ids on components throw an error when restoring
+                        utils.remove('id');
+                    }
+                    if (options.attribute.type === 'relation' && // TODO: handle polymorphic relations
+                    options.attribute.relation !== 'morphToOne' && options.attribute.relation !== 'morphToMany') {
+                        if (options.attribute.target === 'admin::user') {
+                            const adminUsers = await Promise.all(currentValue.map((userToPopulate)=>{
+                                if (userToPopulate == null) {
+                                    return null;
+                                }
+                                return strapi.query('admin::user').findOne({
+                                    where: {
+                                        ...userToPopulate.id ? {
+                                            id: userToPopulate.id
+                                        } : {},
+                                        ...userToPopulate.documentId ? {
+                                            documentId: userToPopulate.documentId
+                                        } : {}
+                                    }
+                                });
+                            }));
+                            utils.set(options.key, adminUsers);
+                        }
+                        const permissionChecker = getService('permission-checker').create({
+                            userAbility: params.state.userAbility,
+                            model: options.attribute.target
+                        });
+                        const response = await serviceUtils.buildRelationReponse(currentValue, options.attribute);
+                        const sanitizedResults = await Promise.all(response.results.map((media)=>permissionChecker.sanitizeOutput(media)));
+                        utils.set(options.key, {
+                            results: sanitizedResults,
+                            meta: response.meta
+                        });
+                    }
+                    if (options.attribute.type === 'media') {
+                        const permissionChecker = getService('permission-checker').create({
+                            userAbility: params.state.userAbility,
+                            model: 'plugin::upload.file'
+                        });
+                        const response = await serviceUtils.buildMediaResponse(currentValue);
+                        const sanitizedResults = await Promise.all(response.results.map((media)=>permissionChecker.sanitizeOutput(media)));
+                        utils.set(options.key, {
+                            results: sanitizedResults,
+                            meta: response.meta
+                        });
+                    }
+                }, {
+                    schema,
+                    getModel: strapi.getModel.bind(strapi)
+                }, entry.data);
+            };
+            const formattedResults = await Promise.all(results.map(async (result)=>{
+                return {
+                    ...result,
+                    data: await populateEntry(result),
+                    meta: {
+                        unknownAttributes: serviceUtils.getSchemaAttributesDiff(result.schema, strapi.getModel(params.query.contentType).attributes)
+                    },
+                    locale: result.locale ? localeDictionary[result.locale] : null
+                };
+            }));
+            return {
+                results: formattedResults,
+                pagination
+            };
+        },
+        async restoreVersion (versionId) {
+            const version = await query.findOne({
+                where: {
+                    id: versionId
+                }
+            });
+            const contentTypeSchemaAttributes = strapi.getModel(version.contentType).attributes;
+            const schemaDiff = serviceUtils.getSchemaAttributesDiff(version.schema, contentTypeSchemaAttributes);
+            // Set all added attribute values to null
+            const dataWithoutAddedAttributes = Object.keys(schemaDiff.added).reduce((currentData, addedKey)=>{
+                currentData[addedKey] = null;
+                return currentData;
+            }, // Clone to avoid mutating the original version data
+            structuredClone(version.data));
+            // Remove the schema attributes history should ignore
+            const schema = structuredClone(version.schema);
+            schema.attributes = omit(FIELDS_TO_IGNORE, contentTypeSchemaAttributes);
+            const dataWithoutMissingRelations = await traverseEntity(async (options, utils)=>{
+                if (!options.attribute) return;
+                if (options.attribute.type === 'component') {
+                    // Ids on components throw an error when restoring
+                    utils.remove('id');
+                    if (options.attribute.repeatable && options.value === null) {
+                        // Repeatable Components should always be an array
+                        utils.set(options.key, []);
+                    }
+                }
+                if (options.attribute.type === 'dynamiczone') {
+                    if (options.value === null) {
+                        // Dynamic zones should always be an array
+                        utils.set(options.key, []);
+                    }
+                }
+                if (options.attribute.type === 'relation' && // TODO: handle polymorphic relations
+                options.attribute.relation !== 'morphToOne' && options.attribute.relation !== 'morphToMany') {
+                    if (!options.value) return;
+                    const data = await serviceUtils.getRelationRestoreValue(options.value, options.attribute);
+                    utils.set(options.key, data);
+                }
+                if (options.attribute.type === 'media') {
+                    if (!options.value) return;
+                    const data = await serviceUtils.getMediaRestoreValue(options.value);
+                    utils.set(options.key, data);
+                }
+            }, {
+                schema,
+                getModel: strapi.getModel.bind(strapi)
+            }, dataWithoutAddedAttributes);
+            const data = omit([
+                'id',
+                ...Object.keys(schemaDiff.removed)
+            ], dataWithoutMissingRelations);
+            const restoredDocument = await strapi.documents(version.contentType).update({
+                documentId: version.relatedDocumentId,
+                locale: version.locale,
+                data
+            });
+            if (!restoredDocument) {
+                throw new errors.ApplicationError('Failed to restore version');
+            }
+            return restoredDocument;
+        }
+    };
+};
+
+export { createHistoryService };
+//# sourceMappingURL=history.mjs.map

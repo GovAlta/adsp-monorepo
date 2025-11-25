@@ -1,0 +1,1 @@
+{"version":3,"file":"index.mjs","sources":["../../../server/src/content-types/index.ts"],"sourcesContent":["import locale from './locale';\n\nexport default {\n  locale,\n};\n"],"names":["locale"],"mappings":";;AAEA,mBAAe;AACbA,IAAAA;AACF,CAAE;;;;"}

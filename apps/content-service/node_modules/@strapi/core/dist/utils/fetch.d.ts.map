@@ -1,0 +1,1 @@
+{"version":3,"file":"fetch.d.ts","sourceRoot":"","sources":["../../src/utils/fetch.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,OAAO,EAAE,MAAM,eAAe,CAAC;AAKnD,UAAU,kBAAkB;IAC1B,IAAI,CAAC,EAAE,OAAO,CAAC;CAChB;AAGD,eAAO,MAAM,iBAAiB,WACpB,KAAK,MAAM,YACT,kBAAkB,KAC3B,aAAa,MA4Bf,CAAC;AAEF,MAAM,MAAM,KAAK,GAAG,OAAO,CAAC,KAAK,CAAC,KAAK,CAAC"}

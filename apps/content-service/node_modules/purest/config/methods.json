@@ -1,0 +1,47 @@
+{
+  "methods": {
+    "get"      : ["select"],
+    "head"     : [],
+    "post"     : ["update", "refresh"],
+    "put"      : [],
+    "patch"    : [],
+    "options"  : [],
+    "delete"   : [],
+    "trace"    : [],
+    "connect"  : []
+  },
+  "http": {
+    "method"   : [],
+    "headers"  : [],
+    "timeout"  : [],
+    "agent"    : [],
+
+    "url"      : [],
+    "proxy"    : [],
+    "qs"       : ["where"],
+    "form"     : [],
+    "json"     : [],
+    "body"     : [],
+    "multipart": [],
+    "auth"     : [],
+    "oauth"    : [],
+    "encoding" : [],
+    "cookie"   : [],
+    "redirect" : [],
+
+    "request"  : ["submit"],
+    "buffer"   : [],
+    "stream"   : []
+  },
+  "url": {
+    "origin"   : [],
+    "path"     : [],
+    "subdomain": [],
+    "version"  : [],
+    "type"     : []
+  },
+  "purest": {
+    "endpoint" : ["query"],
+    "auth"     : ["token"]
+  }
+}

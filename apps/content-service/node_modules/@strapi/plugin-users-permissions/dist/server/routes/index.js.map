@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sources":["../../../server/routes/index.js"],"sourcesContent":["'use strict';\n\nmodule.exports = {\n  admin: require('./admin'),\n  'content-api': require('./content-api'),\n};\n"],"names":["routes","admin","require$$0","require$$1"],"mappings":";;;;;;;;;;IAEAA,MAAiB,GAAA;QACfC,KAAOC,EAAAA,eAAAA,EAAAA;QACP,aAAeC,EAAAA,iBAAAA;AACjB,KAAA;;;;;;"}

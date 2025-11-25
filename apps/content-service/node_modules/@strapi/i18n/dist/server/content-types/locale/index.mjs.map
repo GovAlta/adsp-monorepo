@@ -1,0 +1,1 @@
+{"version":3,"file":"index.mjs","sources":["../../../../server/src/content-types/locale/index.ts"],"sourcesContent":["import schema from './schema.json';\n\nexport default {\n  schema,\n};\n"],"names":["schema"],"mappings":";;AAEA,aAAe;AACbA,IAAAA;AACF,CAAE;;;;"}

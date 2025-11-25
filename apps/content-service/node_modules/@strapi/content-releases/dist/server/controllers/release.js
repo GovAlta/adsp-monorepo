@@ -1,0 +1,302 @@
+'use strict';
+
+var utils = require('@strapi/utils');
+var constants = require('../constants.js');
+var release = require('./validation/release.js');
+var index = require('../utils/index.js');
+
+const releaseController = {
+    /**
+   * Find releases based on documents attached or not to the release.
+   * If `hasEntryAttached` is true, it will return all releases that have the entry attached.
+   * If `hasEntryAttached` is false, it will return all releases that don't have the entry attached.
+   */ async findByDocumentAttached (ctx) {
+        const permissionsManager = strapi.service('admin::permission').createPermissionsManager({
+            ability: ctx.state.userAbility,
+            model: constants.RELEASE_MODEL_UID
+        });
+        await permissionsManager.validateQuery(ctx.query);
+        const releaseService = index.getService('release', {
+            strapi
+        });
+        const query = await permissionsManager.sanitizeQuery(ctx.query);
+        await release.validatefindByDocumentAttachedParams(query);
+        // If entry is a singleType, we need to manually add the entryDocumentId to the query
+        const model = strapi.getModel(query.contentType);
+        if (model.kind && model.kind === 'singleType') {
+            const document = await strapi.db.query(model.uid).findOne({
+                select: [
+                    'documentId'
+                ]
+            });
+            if (!document) {
+                throw new utils.errors.NotFoundError(`No entry found for contentType ${query.contentType}`);
+            }
+            query.entryDocumentId = document.documentId;
+        }
+        const { contentType, hasEntryAttached, entryDocumentId, locale } = query;
+        const isEntryAttached = typeof hasEntryAttached === 'string' ? Boolean(JSON.parse(hasEntryAttached)) : false;
+        if (isEntryAttached) {
+            const releases = await releaseService.findMany({
+                where: {
+                    releasedAt: null,
+                    actions: {
+                        contentType,
+                        entryDocumentId: entryDocumentId ?? null,
+                        locale: locale ?? null
+                    }
+                },
+                populate: {
+                    actions: {
+                        fields: [
+                            'type'
+                        ],
+                        filters: {
+                            contentType,
+                            entryDocumentId: entryDocumentId ?? null,
+                            locale: locale ?? null
+                        }
+                    }
+                }
+            });
+            ctx.body = {
+                data: releases
+            };
+        } else {
+            const relatedReleases = await releaseService.findMany({
+                where: {
+                    releasedAt: null,
+                    actions: {
+                        contentType,
+                        entryDocumentId: entryDocumentId ?? null,
+                        locale: locale ?? null
+                    }
+                }
+            });
+            const releases = await releaseService.findMany({
+                where: {
+                    $or: [
+                        {
+                            id: {
+                                $notIn: relatedReleases.map((release)=>release.id)
+                            }
+                        },
+                        {
+                            actions: null
+                        }
+                    ],
+                    releasedAt: null
+                }
+            });
+            ctx.body = {
+                data: releases
+            };
+        }
+    },
+    async findPage (ctx) {
+        const permissionsManager = strapi.service('admin::permission').createPermissionsManager({
+            ability: ctx.state.userAbility,
+            model: constants.RELEASE_MODEL_UID
+        });
+        await permissionsManager.validateQuery(ctx.query);
+        const releaseService = index.getService('release', {
+            strapi
+        });
+        const query = await permissionsManager.sanitizeQuery(ctx.query);
+        const { results, pagination } = await releaseService.findPage(query);
+        const data = results.map((release)=>{
+            const { actions, ...releaseData } = release;
+            return {
+                ...releaseData,
+                actions: {
+                    meta: {
+                        count: actions.count
+                    }
+                }
+            };
+        });
+        const pendingReleasesCount = await strapi.db.query(constants.RELEASE_MODEL_UID).count({
+            where: {
+                releasedAt: null
+            }
+        });
+        ctx.body = {
+            data,
+            meta: {
+                pagination,
+                pendingReleasesCount
+            }
+        };
+    },
+    async findOne (ctx) {
+        const id = ctx.params.id;
+        const releaseService = index.getService('release', {
+            strapi
+        });
+        const releaseActionService = index.getService('release-action', {
+            strapi
+        });
+        const release = await releaseService.findOne(id, {
+            populate: [
+                'createdBy'
+            ]
+        });
+        if (!release) {
+            throw new utils.errors.NotFoundError(`Release not found for id: ${id}`);
+        }
+        const count = await releaseActionService.countActions({
+            filters: {
+                release: id
+            }
+        });
+        const sanitizedRelease = {
+            ...release,
+            createdBy: release.createdBy ? strapi.service('admin::user').sanitizeUser(release.createdBy) : null
+        };
+        // Format the data object
+        const data = {
+            ...sanitizedRelease,
+            actions: {
+                meta: {
+                    count
+                }
+            }
+        };
+        ctx.body = {
+            data
+        };
+    },
+    async mapEntriesToReleases (ctx) {
+        const { contentTypeUid, documentIds, locale } = ctx.query;
+        if (!contentTypeUid || !documentIds) {
+            throw new utils.errors.ValidationError('Missing required query parameters');
+        }
+        const releaseService = index.getService('release', {
+            strapi
+        });
+        const releasesWithActions = await releaseService.findMany({
+            where: {
+                releasedAt: null,
+                actions: {
+                    contentType: contentTypeUid,
+                    entryDocumentId: {
+                        $in: documentIds
+                    },
+                    locale
+                }
+            },
+            populate: {
+                actions: true
+            }
+        });
+        const mappedEntriesInReleases = releasesWithActions.reduce((acc, release)=>{
+            release.actions.forEach((action)=>{
+                if (action.contentType !== contentTypeUid) {
+                    return;
+                }
+                if (locale && action.locale !== locale) {
+                    return;
+                }
+                if (!acc[action.entryDocumentId]) {
+                    acc[action.entryDocumentId] = [
+                        {
+                            id: release.id,
+                            name: release.name
+                        }
+                    ];
+                } else {
+                    acc[action.entryDocumentId].push({
+                        id: release.id,
+                        name: release.name
+                    });
+                }
+            });
+            return acc;
+        }, {});
+        ctx.body = {
+            data: mappedEntriesInReleases
+        };
+    },
+    async create (ctx) {
+        const user = ctx.state.user;
+        const releaseArgs = ctx.request.body;
+        await release.validateRelease(releaseArgs);
+        const releaseService = index.getService('release', {
+            strapi
+        });
+        const release$1 = await releaseService.create(releaseArgs, {
+            user
+        });
+        const permissionsManager = strapi.service('admin::permission').createPermissionsManager({
+            ability: ctx.state.userAbility,
+            model: constants.RELEASE_MODEL_UID
+        });
+        ctx.created({
+            data: await permissionsManager.sanitizeOutput(release$1)
+        });
+    },
+    async update (ctx) {
+        const user = ctx.state.user;
+        const releaseArgs = ctx.request.body;
+        const id = ctx.params.id;
+        await release.validateRelease(releaseArgs);
+        const releaseService = index.getService('release', {
+            strapi
+        });
+        const release$1 = await releaseService.update(id, releaseArgs, {
+            user
+        });
+        const permissionsManager = strapi.service('admin::permission').createPermissionsManager({
+            ability: ctx.state.userAbility,
+            model: constants.RELEASE_MODEL_UID
+        });
+        ctx.body = {
+            data: await permissionsManager.sanitizeOutput(release$1)
+        };
+    },
+    async delete (ctx) {
+        const id = ctx.params.id;
+        const releaseService = index.getService('release', {
+            strapi
+        });
+        const release = await releaseService.delete(id);
+        ctx.body = {
+            data: release
+        };
+    },
+    async publish (ctx) {
+        const id = ctx.params.id;
+        const releaseService = index.getService('release', {
+            strapi
+        });
+        const releaseActionService = index.getService('release-action', {
+            strapi
+        });
+        const release = await releaseService.publish(id);
+        const [countPublishActions, countUnpublishActions] = await Promise.all([
+            releaseActionService.countActions({
+                filters: {
+                    release: id,
+                    type: 'publish'
+                }
+            }),
+            releaseActionService.countActions({
+                filters: {
+                    release: id,
+                    type: 'unpublish'
+                }
+            })
+        ]);
+        ctx.body = {
+            data: release,
+            meta: {
+                totalEntries: countPublishActions + countUnpublishActions,
+                totalPublishedEntries: countPublishActions,
+                totalUnpublishedEntries: countUnpublishActions
+            }
+        };
+    }
+};
+
+module.exports = releaseController;
+//# sourceMappingURL=release.js.map

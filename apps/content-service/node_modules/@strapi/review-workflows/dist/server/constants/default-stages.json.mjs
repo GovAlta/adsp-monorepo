@@ -1,0 +1,21 @@
+var defaultStages = [
+    {
+        name: "To do",
+        color: "#4945FF"
+    },
+    {
+        name: "Ready to review",
+        color: "#9736E8"
+    },
+    {
+        name: "In progress",
+        color: "#EE5E52"
+    },
+    {
+        name: "Reviewed",
+        color: "#328048"
+    }
+];
+
+export { defaultStages as default };
+//# sourceMappingURL=default-stages.json.mjs.map

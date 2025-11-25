@@ -1,0 +1,1 @@
+{"version":3,"file":"plugin.d.ts","sourceRoot":"","sources":["../../../src/core/config/plugin.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,MAAM;IACrB,CAAC,GAAG,EAAE,MAAM,GACR;QACE,OAAO,EAAE,OAAO,CAAC;QACjB,OAAO,CAAC,EAAE,MAAM,CAAC;QACjB,MAAM,CAAC,EAAE,MAAM,CAAC;KACjB,GACD,OAAO,CAAC;CACb"}
