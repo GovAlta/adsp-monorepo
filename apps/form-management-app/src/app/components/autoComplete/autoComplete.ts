@@ -1,3 +1,5 @@
+import type { languages, editor, Position } from 'monaco-editor';
+import { Monaco } from '@monaco-editor/react';
 
 export interface EventDefinition {
   isCore: boolean;
@@ -6,9 +8,6 @@ export interface EventDefinition {
   description: string;
   payloadSchema: Record<string, unknown>;
 }
-
-import type { languages, editor, Position } from 'monaco-editor';
-import { Monaco } from '@monaco-editor/react';
 
 export interface EditorSuggestion {
   label: string;
@@ -96,7 +95,7 @@ export const buildSuggestions = (
     });
   }
 
-  text = text.replace('{', '').trim();
+  text = text.replace(/\{/g, '').trim();
 
   if (text.length === 0) {
     results = suggestions;

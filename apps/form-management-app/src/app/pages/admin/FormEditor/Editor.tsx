@@ -4,12 +4,7 @@ import { Tab, Tabs } from '../../../components/Tabs';
 import { DataEditorContainer } from './DataEditorContainer';
 
 import { UIEditorContainer } from './UiEditorContainer';
-import {
-  NameDescriptionDataSchema,
-  FormEditorTitle,
-  FormEditor,
-  FormPreviewContainer,
-} from './styled-components';
+import { NameDescriptionDataSchema, FormEditorTitle, FormEditor, FormPreviewContainer } from './styled-components';
 import {
   FormDataSchemaElementCompletionItemProvider,
   FormPropertyValueCompletionItemProvider,
@@ -20,7 +15,7 @@ import { useValidators } from '../../../components/useValidators';
 import { badCharsCheck, isNotEmptyCheck, wordMaxLengthCheck } from '../../../components/checkInput';
 import type * as monacoNS from 'monaco-editor';
 
-import { FormDefinition } from '../../../state/types'
+import { FormDefinition } from '../../../state/types';
 import { Buttons } from './Button';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
@@ -32,6 +27,7 @@ export interface EditorProps {
   isFormUpdated: boolean;
   updateFormDefinition: (form: FormDefinition) => void;
   resolvedDataSchema: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   indicator?: any;
 }
 

@@ -5,6 +5,7 @@ import { isValidJSONSchemaCheck } from '../../../components/checkInput';
 import { useWindowDimensions } from '../../../components/useWindowDimensions';
 import { GoAFormItem } from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
+import { JsonSchema } from '@jsonforms/core';
 
 export interface UiEditorContainerProps {
   errors: Record<string, string | null>;
@@ -13,8 +14,8 @@ export interface UiEditorContainerProps {
     dataSchemaJSON: string | null;
     dataSchemaJSONSchema: string | null;
   };
-  tempUiSchema: any;
-  setDraftUiSchema: (schema: any) => void;
+  tempUiSchema: JsonSchema;
+  setDraftUiSchema: (schema: JsonSchema) => void;
   setEditorErrors: React.Dispatch<
     React.SetStateAction<{
       uiSchema: string | null;

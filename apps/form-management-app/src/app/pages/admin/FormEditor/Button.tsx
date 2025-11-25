@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { GoAButtonGroup, GoAButton } from '@abgov/react-components';
+import { useNavigate } from 'react-router-dom';
 import { SaveFormModal } from '../../../components/saveModal';
 import { FinalButtonPadding } from './styled-components';
 import type * as monacoNS from 'monaco-editor';
-
-
 import { FormDefinition } from '../../../state/types';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
@@ -20,11 +19,14 @@ export interface EditorProps {
   };
   updateFormDefinition: (definition: FormDefinition) => void;
   activeIndex: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getCurrentEditorRef: () => any;
   foldAll: (editor: IEditor) => void;
   unfoldAll: (editor: IEditor) => void;
   isFormUpdated: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   validators: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   indicator: any;
 }
 
@@ -42,6 +44,11 @@ export const Buttons: React.FC<EditorProps> = ({
   indicator,
 }) => {
   const [saveModal, setSaveModal] = useState({ visible: false });
+  const navigate = useNavigate();
+
+  const close = () => {
+    navigate('/');
+  };
 
   return (
     <div>

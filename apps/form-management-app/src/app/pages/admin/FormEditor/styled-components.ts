@@ -70,3 +70,15 @@ export const FinalButtonPadding = styled.div`
   justify-content: space-between;
   align-items: center;
 `;
+
+export const FormPreviewScrollPane = styled.div`
+  overflow-y: auto;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  height: calc(100vh - 192px);
+`;
+
+
+export const FormPreviewSpacer = styled.div`
+  margin-top: var(--goa-space-l);
+`;

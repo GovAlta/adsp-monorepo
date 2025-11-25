@@ -1,7 +1,7 @@
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
-import { createDefaultAjv, RegisterData, tryResolveRefs } from '@abgov/jsonforms-components';
+import { createDefaultAjv, tryResolveRefs } from '@abgov/jsonforms-components';
 import { JsonFormsCore, JsonSchema, UISchemaElement } from '@jsonforms/core';
-import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import * as _ from 'lodash';
 import { AppState } from '../store';
@@ -41,8 +41,6 @@ export interface FormState {
   };
 }
 
-
-
 const CONFIGURATION_SERVICE_ID = 'urn:ads:platform:configuration-service:v2';
 const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 
@@ -53,19 +51,19 @@ const hasProperties = (schema: JsonSchema): boolean => {
   );
 };
 
-export const uneditedDataSchemaDraft = createAsyncThunk<string, string>('form/uneditedDataSchemaDraft', async (draft, { rejectWithValue }) => {
-  return draft;
-});
-export const updateDataParsed = createAsyncThunk<JsonSchema, JsonSchema>(
-  'form/updateDataParsed',
-  async (draft, { rejectWithValue }) => {
+export const uneditedDataSchemaDraft = createAsyncThunk<string, string>(
+  'form/uneditedDataSchemaDraft',
+  async (draft) => {
     return draft;
   }
 );
+export const updateDataParsed = createAsyncThunk<JsonSchema, JsonSchema>('form/updateDataParsed', async (draft) => {
+  return draft;
+});
 
 export const setDraftDataSchema = createAsyncThunk(
   'form/set-draft',
-  async (definition: string, { getState, dispatch, rejectWithValue }) => {
+  async (definition: string, { dispatch, rejectWithValue }) => {
     try {
       await dispatch(uneditedDataSchemaDraft(definition)).unwrap();
       const parsedSchema = JSON.parse(definition);
@@ -93,28 +91,28 @@ export const setDraftDataSchema = createAsyncThunk(
             message: err.response?.data?.errorMessage || err.message,
           });
         }
-      } 
+      }
       return rejectWithValue({
         status: 500,
         message: err instanceof Error ? err.message : String(err),
-      }); 
+      });
     }
   }
 );
 
-export const uneditedUiSchemaDraft = createAsyncThunk<string, string>('form/uneditedUiSchemaDraft', async (draft, { rejectWithValue }) => {
+export const uneditedUiSchemaDraft = createAsyncThunk<string, string>('form/uneditedUiSchemaDraft', async (draft) => {
   return draft;
 });
 export const updateUiParsed = createAsyncThunk<UISchemaElement, UISchemaElement>(
   'form/updateUiParsed',
-  async (draft, { rejectWithValue }) => {
+  async (draft) => {
     return draft;
   }
 );
 
 export const setDraftUiSchema = createAsyncThunk(
   'form/set-draft-ui',
-  async (definition: string, { getState, dispatch, rejectWithValue }) => {
+  async (definition: string, { dispatch, rejectWithValue }) => {
     try {
       await dispatch(uneditedUiSchemaDraft(definition)).unwrap();
       const parsedSchema = JSON.parse(definition);
@@ -155,7 +153,7 @@ export const setDraftUiSchema = createAsyncThunk(
 
 export const updateDefinition = createAsyncThunk(
   'form/update-definition',
-  async (definition: FormDefinition, { getState, dispatch, rejectWithValue }) => {
+  async (definition: FormDefinition, { getState, rejectWithValue }) => {
     try {
       const { config } = getState() as AppState;
       const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
@@ -185,7 +183,7 @@ export const openEditorForDefinition = createAsyncThunk<
   { definition: FormDefinition; isNew?: boolean },
   { id: string; newDefinition?: FormDefinition },
   { rejectValue: { status?: number; message: string } }
->('form/open-editor-for-definition', async ({ id, newDefinition }, { getState, dispatch, rejectWithValue }) => {
+>('form/open-editor-for-definition', async ({ id, newDefinition }, { getState, rejectWithValue }) => {
   try {
     if (!id) {
       throw new Error('Cannot open editor without form definition ID.');
@@ -203,7 +201,7 @@ export const openEditorForDefinition = createAsyncThunk<
       if (configurationService && token) {
         const { data } = await axios.get<{ latest: { configuration: FormDefinition } }>(
           new URL(`v2/configuration/form-service/${id}`, configurationService).href,
-         
+
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -223,7 +221,7 @@ export const openEditorForDefinition = createAsyncThunk<
         message: err.response?.data?.errorMessage || err.message,
       });
     }
-  
+
     return rejectWithValue({
       status: 500,
       message: err instanceof Error ? err.message : String(err),
@@ -286,7 +284,6 @@ const initialFormState: FormState = {
   },
 };
 
-
 const formSlice = createSlice({
   name: FORM_FEATURE_KEY,
   initialState: initialFormState,
@@ -303,7 +300,7 @@ const formSlice = createSlice({
       .addCase(getFormDefinitions.rejected, (state) => {
         state.loading = false;
       })
-        .addCase(setDraftDataSchema.fulfilled, (state, { payload }) => {
+      .addCase(setDraftDataSchema.fulfilled, (state, { payload }) => {
         state.editor.resolvedDataSchema = payload;
       })
       .addCase(uneditedDataSchemaDraft.fulfilled, (state, { payload }) => {
@@ -352,12 +349,4 @@ const formSlice = createSlice({
   },
 });
 
-
-
-
-
-
-
-
 export const formReducer = formSlice.reducer;
-
