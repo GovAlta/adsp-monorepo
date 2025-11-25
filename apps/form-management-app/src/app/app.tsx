@@ -13,15 +13,6 @@ import FormEditor from './pages/admin/FormEditor';
 import FormPreview from './pages/admin/FormPreview';
 import { AppDispatch, configInitializedSelector, initializeTenant, userSelector } from './state';
 
-declare global {
-  interface Window {
-    adspFeedback: {
-      initialize: (options: { tenant: string }) => void;
-      openFeedbackForm: () => void;
-    };
-  }
-}
-
 // Layout wrapper component
 const LayoutWrapper = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
