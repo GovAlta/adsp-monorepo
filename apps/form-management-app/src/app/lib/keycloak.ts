@@ -1,161 +1,41 @@
-import { Session } from './models';
+import axios from 'axios';
 
-import Keycloak, { KeycloakConfig, KeycloakInitOptions } from 'keycloak-js';
-
-const LOGOUT_REDIRECT = '/logout-redirect';
-const LOGIN_REDIRECT = '/autotest/login';
-
-export const MAX_ALLOWED_IDLE_IN_MINUTE = 28;
-export const REFRESH_TOKEN_EXPIRY_IN_MINUTE = 30;
-
-export enum LOGIN_TYPES {
-  tenantAdmin = 'tenant-admin',
-  tenantCreationInit = 'tenant-creation-init',
-  tenant = 'tenant',
+export interface Role {
+  id: string;
+  name: string;
 }
 
-export let authInstance: KeycloakAuthImpl = null;
-export const getOrCreateKeycloakAuth = async (config: KeycloakConfig, realm: string): Promise<KeycloakAuth> => {
-  console.log("a")
-  if (!realm) {
-    throw new Error('Realm value not set on keycloak retrieval.');
+export interface Tenant {
+  id: string;
+  name: string;
+  realm: string;
+  adminEmail: string;
+  isTenantAdmin: boolean;
+  isTenantCreated: boolean;
+  realmRoles: Role[];
+  loginSucceeded?: boolean;
+}
+interface TenantsResponse {
+  results: Tenant[];
+}
+
+/*
+ *  Tenant name => Realm name
+ *  Note: Kebab case tenant names have their dashes replaced
+ *        by spaces, giving users the convenience of typing
+ *        a dash instead of %20 when logging in to tenants
+ *        with a space in their name.
+ */
+export const getRealm = async (name: string, host: string): Promise<string | null> => {
+  if (!host) {
+    return null;
   }
-
-  console.log("b")
-
-  // Lazy create singleton and reinitialize if realm changes
-  if (!authInstance) {
-    authInstance = new KeycloakAuthImpl(config);
+  const actualName = name.replace(/-/g, '%20');
+  const request = axios.create({ baseURL: host });
+  const url = `/api/tenant/v2/tenants?name=${actualName}`;
+  const { data } = await request.get<TenantsResponse>(url);
+  if (data?.results?.length !== 1) {
+    return null;
   }
-
-    console.log("c")
-    console.log(JSON.stringify(config)+ "<config-0000000000")
-    console.log(JSON.stringify(realm))
-    console.log(JSON.stringify(authInstance))
-  await authInstance.initialize(realm);
-   console.log("d")
-  return authInstance;
+  return data.results[0].realm;
 };
-
-export const getIdpHint = () => {
-  const location: string = window.location.href;
-  const urlParams = new URLSearchParams(window.location.search);
-  const skipSSO = location.indexOf('kc_idp_hint') > -1 && urlParams.get('kc_idp_hint') !== 'null';
-  if (skipSSO) {
-    const idpFromUrl = encodeURIComponent(urlParams.get('kc_idp_hint'));
-    return idpFromUrl;
-  }
-
-  return null;
-};
-
-export interface KeycloakAuth {
-  loginByCore(type: string, idpHint: string | null): Promise<void>;
-  loginByTenant(idp: string): Promise<void>;
-  logout(): Promise<void>;
-  checkSSO(): Promise<Session>;
-  refreshToken(): Promise<Session>;
-}
-
-class KeycloakAuthImpl implements KeycloakAuth {
-  config: KeycloakConfig & KeycloakInitOptions;
-  loginRedirect: string;
-  logoutRedirect: string;
-
-  keycloak: Keycloak;
-
-  constructor(config: KeycloakConfig & KeycloakInitOptions) {
-    this.config = config;
-    this.loginRedirect = `${window.location.origin}${LOGIN_REDIRECT}`;
-    this.logoutRedirect = `${window.location.origin}${LOGOUT_REDIRECT}`;
-  }
-
-  public async initialize(realm: string) {
-    if (realm !== this.keycloak?.realm) {
-      console.log(JSON.stringify({ ...this.config, realm }) + "<{ ...this.config, realm }")
-      this.keycloak = new Keycloak({ ...this.config, realm });
-      await this.keycloak.init({ ...this.config, onLoad: 'check-sso' });
-    }
-  }
-
-  async loginByCore(type: string, idpHint: string | null) {
-    let redirectUri = `${this.loginRedirect}?type=${type}&realm=core`;
-    try {
-      if (idpHint === null) {
-        await this.keycloak.login({ redirectUri });
-      } else {
-        redirectUri += `&kc_idp_hint=${idpHint}`;
-        await this.keycloak.login({ idpHint: ' ', redirectUri });
-      }
-    } catch (e) {
-      console.error(`Failed to login`, e);
-    }
-  }
-
-  async logout() {
-    await this.keycloak.logout({ redirectUri: this.logoutRedirect });
-  }
-
-  async checkSSO() {
-    try {
-      const authenticated = this.keycloak.authenticated;
-      if (authenticated) {
-        return this.convertToSession(this.keycloak);
-      } else {
-        return null;
-      }
-    } catch (e) {
-      console.error('Failed to initialize', e);
-      throw e;
-    }
-  }
-
-  public getExpiryTime() {
-    return this.keycloak.refreshTokenParsed.exp;
-  }
-
-  async loginByTenant(idp: string) {
-    let redirectUri = `${this.loginRedirect}?realm=${this.keycloak.realm}&type=${LOGIN_TYPES.tenant}`;
-    console.debug(`Keycloak redirect URL: ${redirectUri}`);
-    redirectUri += `&kc_idp_hint=${idp}`;
-    await this.keycloak.login({ idpHint: idp, redirectUri });
-  }
-
-  async refreshToken(): Promise<Session> {
-    try {
-      const refreshed = await this.keycloak.updateToken(60 * MAX_ALLOWED_IDLE_IN_MINUTE);
-      if (refreshed) {
-        console.debug('Keycloak token was refreshed');
-        return this.convertToSession(this.keycloak);
-      } else {
-        return null;
-      }
-    } catch (e) {
-      console.error(`Failed to refresh the keycloak token: ${e.message}`);
-      throw e;
-    }
-  }
-
-  private convertToSession(kc: Keycloak): Session {
-    return {
-      authenticated: kc.authenticated,
-      clientId: kc.clientId,
-      realm: kc.realm,
-      userInfo: {
-        sub: kc.tokenParsed?.['sub'],
-        email: kc.tokenParsed?.['email'],
-        name: kc.tokenParsed?.['name'],
-        preferredUsername: kc.tokenParsed?.['preferred_username'],
-        emailVerified: kc.tokenParsed?.['email_verified'],
-      },
-      realmAccess: kc.realmAccess,
-      resourceAccess: kc.resourceAccess,
-      credentials: {
-        token: kc.token,
-        tokenExp: kc.tokenParsed.exp,
-        refreshToken: kc.refreshToken,
-        refreshTokenExp: kc.refreshTokenParsed.exp,
-      },
-    };
-  }
-}

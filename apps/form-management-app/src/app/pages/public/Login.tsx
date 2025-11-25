@@ -1,60 +1,74 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams, useNavigate } from 'react-router-dom';
-
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   AppDispatch,
   configInitializedSelector,
-  initializeTenant,
-  loginUser,
-  tenantSelector,
-  feedbackSelector,
+  directorySelector,
+  environmentSelector,
+  initializeConfig,
+  loginUserWithIDP,
 } from '../../state';
 
-const LoginLanding = (): JSX.Element => {
-  const navigate = useNavigate();
+import { getRealm } from '../../lib/keycloak';
+
+export const Login = () => {
+  const realm = useParams<{ realm: string }>().realm;
+  const definitionId = useParams<{ definitionId: string }>().definitionId;
+
   const dispatch = useDispatch<AppDispatch>();
-
-  const { tenant: tenantName } = useParams<{ tenant: string }>();
-
-  const tenant = useSelector(tenantSelector);
-  const feedback = useSelector(feedbackSelector);
+  const navigate = useNavigate();
+  const environment = useSelector(environmentSelector);
+  const directory = useSelector(directorySelector);
   const configInitialized = useSelector(configInitializedSelector);
 
-  // Prevent duplicated calls
-  const didInitTenant = useRef(false);
-  const didLogin = useRef(false);
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const isUUID = (id: string) => {
+    return uuidRegex.test(id);
+  };
 
-  // STEP 1: Load tenant once config is ready
-  useEffect(() => {
-    if (!configInitialized) return;
+  const loginByIDP = (realm: string, loginRedirect: string) => {
+    const location: string = window.location.href;
+    const skipSSO = location.indexOf('kc_idp_hint') > -1;
 
-    if (!didInitTenant.current) {
-      didInitTenant.current = true;
-      console.log('Initializing tenant:', tenantName);
-      dispatch(initializeTenant(tenantName));
+    const urlParams = new URLSearchParams(window.location.search);
+    const idpFromUrl = urlParams.has('kc_idp_hint') ? encodeURIComponent(urlParams.get('kc_idp_hint')) : null;
+
+    let idp = 'core';
+    if (skipSSO && !idpFromUrl) {
+      idp = ' ';
     }
-  }, [configInitialized, tenantName, dispatch]);
+    dispatch(loginUserWithIDP({ idpFromUrl: idp, realm, from: loginRedirect }));
+  };
 
-  // STEP 2: Log user in once tenant is loaded
-  useEffect(() => {
-    if (!tenant) return;
-
-    if (!didLogin.current) {
-      didLogin.current = true;
-      console.log('Calling loginUser with tenant:', tenant);
-      dispatch(loginUser({ tenant, from: `/${tenantName}` }));
+  const tenantLogin = async (realm: string, definitionId?: string) => {
+    let loginRedirectUrl = window.location.origin;
+    if (definitionId) {
+      loginRedirectUrl = `${window.location.origin}/${realm}/${definitionId}?autoCreate=true`;
+    } else {
+      loginRedirectUrl = `${window.location.origin}/${realm}`;
     }
-  }, [tenant, tenantName, dispatch]);
 
-  // STEP 3: Tenant not found -> navigate away
-  useEffect(() => {
-    if (feedback?.message?.includes('not found')) {
-      navigate(`/overview`);
+    const tenantApi = directory['urn:ads:platform:tenant-service'];
+    const updatedRealm = isUUID(realm) ? realm : await getRealm(realm, tenantApi);
+
+    if (updatedRealm) {
+      loginByIDP(updatedRealm, loginRedirectUrl);
+    } else {
+      navigate(`/${realm}`);
     }
-  }, [feedback, navigate]);
+  };
 
-  return <div></div>;
+  useEffect(() => {
+    if (!configInitialized) {
+      dispatch(initializeConfig());
+    }
+
+    if (realm && Object.keys(environment).length > 0) {
+      tenantLogin(realm, definitionId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, configInitialized]);
+
+  return null;
 };
-
-export default LoginLanding;

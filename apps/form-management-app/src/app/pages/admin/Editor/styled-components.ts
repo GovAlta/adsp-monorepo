@@ -29,3 +29,44 @@ export const NameDescriptionDataSchema = styled.div`
     overflow-y: auto;
   }
 `;
+
+export const FormEditor = styled.div`
+  width: 100%;
+
+  .hr-resize {
+    margin-top: var(--goa-space-s);
+  }
+
+  .hr-resize-bottom {
+    margin-bottom: var(--goa-space-2xs);
+    margin-top: var(--goa-space-xl);
+  }
+
+  .info-circle {
+    margin: 5px 0 0 5px;
+  }
+`;
+
+export const FormTemplateEditorContainer = styled.div`
+  display: flex;
+  flex: auto;
+  margin-top: 6px;
+  padding-left: 3rem;
+  padding-right: 3rem;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  box-sizing: border-box;
+`;
+
+
+export const FormPreviewContainer = styled.div`
+  width: 50%;
+`;
+
+export const FinalButtonPadding = styled.div`
+  display: flex;
+  padding-top: 20px;
+  justify-content: space-between;
+  align-items: center;
+`;

@@ -38,11 +38,17 @@ export const getKeycloakExpiry = () => {
 
 async function initializeKeycloakClient(dispatch: Dispatch, realm: string, config: ConfigState) {
   if (client?.realm !== realm) {
+    console.log(JSON.stringify(`${config.environment.access.url}/auth`) + "<`${config.environment.access.url}/auth`")
+    console.log(JSON.stringify(config.environment.access.client_id) + "<config.environment.access.client_id`")
+    console.log(JSON.stringify(realm) + "<realm")
     client = new Keycloak({
       url: `${config.environment.access.url}/auth`,
       clientId: config.environment.access.client_id,
       realm,
     });
+
+    console.log("anchor")
+    console.log(JSON.stringify(client) + "<>clientxxxxxxx");
 
     try {
       await client.init({

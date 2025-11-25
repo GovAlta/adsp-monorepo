@@ -1,78 +1,162 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { Tab, Tabs } from '../../../components/Tabs';
-import {DataEditorContainer } from './DataEditorContainer';
-import { UIEditorContainer} from './UiEditorContainer';
-import { NameDescriptionDataSchema, EditorPadding, FormEditorTitle } from './styled-components';
+import { DataEditorContainer } from './DataEditorContainer';
+import { UIEditorContainer } from './UiEditorContainer';
+import {
+  NameDescriptionDataSchema,
+  EditorPadding,
+  FormEditorTitle,
+  FormEditor,
+  FormPreviewContainer,
+  FinalButtonPadding,
+} from './styled-components';
+import {
+  FormDataSchemaElementCompletionItemProvider,
+  FormPropertyValueCompletionItemProvider,
+  FormUISchemaElementCompletionItemProvider,
+} from '../../../components/autoComplete';
+import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { useValidators } from '../../../components/useValidators';
 import { badCharsCheck, isNotEmptyCheck, wordMaxLengthCheck } from '../../../components/checkInput';
-import { editor } from 'monaco-editor';
+import type * as monacoNS from 'monaco-editor';
 import { FormDefinition } from '../../../state/form.slice';
+import { Buttons } from './Buttons'
 
-
-
-//   const getQueueTaskToProcessValue = () => {
-//     let value = NO_TASK_CREATED_OPTION;
-
-//     if (definition.queueTaskToProcess) {
-//       const { queueNameSpace, queueName } = definition.queueTaskToProcess;
-//       if (queueNameSpace !== '' && queueName !== '') {
-//         value = `${queueNameSpace}:${queueName}`;
-//       } else {
-//         value = NO_TASK_CREATED_OPTION;
-//       }
-//     }
-
-//     return value;
-//   };
+type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
 export interface EditorProps {
   definition: FormDefinition;
+  setDraftDataSchema: (definition: string) => void;
+  setDraftUiSchema: (definition: string) => void;
+  isFormUpdated: boolean;
+  updateFormDefinition: (form: FormDefinition) => void;
+  resolvedDataSchema: Record<string, unknown>;
+  indicator?: any;
 }
 
-export const Editor: React.FC<EditorProps> = ({ definition, setDraftDataSchema }) => {
-
-    const { errors, validators } = useValidators(
+export const Editor: React.FC<EditorProps> = ({
+  definition,
+  setDraftDataSchema,
+  setDraftUiSchema,
+  updateFormDefinition,
+  isFormUpdated,
+  indicator,
+  resolvedDataSchema,
+}) => {
+  const { errors, validators } = useValidators(
     'name',
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
-    )
+  )
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
 
-  const [editorErrors, setEditorErrors] = useState({
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const editorRefData = useRef(null);
+  const editorRefUi = useRef(null);
+
+  const monaco = useMonaco();
+
+
+
+  const [editorErrors, setEditorErrors] = useState<{
+    uiSchema: string | null;
+    dataSchemaJSON: string | null;
+    dataSchemaJSONSchema: string | null;
+  }>({
     uiSchema: null,
     dataSchemaJSON: null,
     dataSchemaJSONSchema: null,
   });
+
+  function foldAll(editor: IEditor) {
+    editor.trigger('folding-util', 'editor.foldAll', undefined);
+  }
+  function unfoldAll(editor: IEditor) {
+    editor.trigger('folding-util', 'editor.unfoldAll', undefined);
+  }
+
+  const getCurrentEditorRef = () => {
+    if (activeIndex === 0) return editorRefData.current; // Data schema tab
+    if (activeIndex === 1) return editorRefUi.current; // UI schema tab
+    return null;
+  };
+
+  // Resolved data schema (with refs inlined) is used to generate suggestions.
+
+  useEffect(() => {
+    if (monaco) {
+      const valueProvider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormPropertyValueCompletionItemProvider(resolvedDataSchema)
+      );
+
+      const uiElementProvider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormUISchemaElementCompletionItemProvider(resolvedDataSchema)
+      );
+
+      const dataElementProvider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormDataSchemaElementCompletionItemProvider()
+      );
+
+      return function () {
+        valueProvider.dispose();
+        uiElementProvider.dispose();
+        dataElementProvider.dispose();
+      };
+    }
+  }, [monaco, resolvedDataSchema]);
 
   if (!definition) {
     return <div>Loading...</div>;
   }
 
   return (
-    <AdminLayout>
-      <Main>
-        <h2>Welcome to editor</h2>
+    <FormEditor>
+      <NameDescriptionDataSchema>
         <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
-        <Tabs data-testid="form-editor-tabs">
+        <hr className="hr-resize" />
+        <Tabs activeIndex={activeIndex} data-testid="form-editor-tabs">
           <Tab label="Data schema" data-testid="dcm-form-editor-data-schema-tab">
             <DataEditorContainer
               errors={errors}
               editorErrors={editorErrors}
-              tempDataSchema={definition.dataSchema}
+              tempDataSchema={definition?.dataSchema}
               setDraftDataSchema={setDraftDataSchema}
               setEditorErrors={setEditorErrors}
             />
           </Tab>
           <Tab label="UI schema" data-testid="dcm-form-editor-ui-schema-tab">
-            <UIEditorContainer />
+            <UIEditorContainer
+              errors={errors}
+              editorErrors={editorErrors}
+              tempUiSchema={definition?.uiSchema}
+              setDraftUiSchema={setDraftUiSchema}
+              setEditorErrors={setEditorErrors}
+            />
           </Tab>
         </Tabs>
-      </Main>
-    </AdminLayout>
+
+        <Buttons
+          getCurrentEditorRef={getCurrentEditorRef}
+          activeIndex={activeIndex}
+          editorErrors={editorErrors}
+          definition={definition}
+          updateFormDefinition={updateFormDefinition}
+          foldAll={foldAll}
+          unfoldAll={unfoldAll}
+          isFormUpdated={isFormUpdated}
+          validators={validators}
+          indicator={indicator}
+        />
+      </NameDescriptionDataSchema>
+      <FormPreviewContainer></FormPreviewContainer>
+    </FormEditor>
   );
 };
 

@@ -1,0 +1,136 @@
+{
+  "clientId": "urn:ads:platform:form-app",
+  "name": "",
+  "description": "",
+  "rootUrl": "",
+  "adminUrl": "",
+  "baseUrl": "",
+  "surrogateAuthRequired": false,
+  "enabled": true,
+  "alwaysDisplayInConsole": false,
+  "clientAuthenticatorType": "client-secret",
+  "redirectUris": [
+    "https://form.adsp-dev.gov.ab.ca/*",
+    "http://localhost:4200/*",
+    "http://localhost:4201/*",
+    "http://localhost:4202/*"
+  ],
+  "webOrigins": [
+    "+"
+  ],
+  "notBefore": 0,
+  "bearerOnly": false,
+  "consentRequired": false,
+  "standardFlowEnabled": true,
+  "implicitFlowEnabled": false,
+  "directAccessGrantsEnabled": true,
+  "serviceAccountsEnabled": false,
+  "publicClient": true,
+  "frontchannelLogout": false,
+  "protocol": "openid-connect",
+  "attributes": {
+    "saml.force.post.binding": "false",
+    "saml.multivalued.roles": "false",
+    "post.logout.redirect.uris": "+",
+    "oauth2.device.authorization.grant.enabled": "false",
+    "backchannel.logout.revoke.offline.tokens": "false",
+    "saml.server.signature.keyinfo.ext": "false",
+    "use.refresh.tokens": "true",
+    "oidc.ciba.grant.enabled": "false",
+    "backchannel.logout.session.required": "true",
+    "client_credentials.use_refresh_token": "false",
+    "require.pushed.authorization.requests": "false",
+    "saml.client.signature": "false",
+    "id.token.as.detached.signature": "false",
+    "saml.assertion.signature": "false",
+    "saml.encrypt": "false",
+    "saml.server.signature": "false",
+    "exclude.session.state.from.auth.response": "false",
+    "client.use.lightweight.access.token.enabled": "false",
+    "saml.artifact.binding": "false",
+    "saml_force_name_id_format": "false",
+    "acr.loa.map": "{}",
+    "tls.client.certificate.bound.access.tokens": "false",
+    "saml.authnstatement": "false",
+    "display.on.consent.screen": "false",
+    "token.response.type.bearer.lower-case": "false",
+    "saml.onetimeuse.condition": "false"
+  },
+  "authenticationFlowBindingOverrides": {
+    "browser": "5700c176-dd59-4f98-a41e-23a7e4b02ae0"
+  },
+  "fullScopeAllowed": true,
+  "nodeReRegistrationTimeout": -1,
+  "protocolMappers": [
+    {
+      "name": "form-applicant-role",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-hardcoded-role-mapper",
+      "consentRequired": false,
+      "config": {
+        "role": "urn:ads:platform:form-service.form-applicant"
+      }
+    },
+    {
+      "name": "form-service-aud",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-audience-mapper",
+      "consentRequired": false,
+      "config": {
+        "included.client.audience": "urn:ads:platform:form-service",
+        "id.token.claim": "true",
+        "access.token.claim": "true"
+      }
+    },
+    {
+      "name": "form-gateway-aud",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-audience-mapper",
+      "consentRequired": false,
+      "config": {
+        "id.token.claim": "false",
+        "access.token.claim": "true",
+        "included.custom.audience": "urn:ads:platform:form-gateway"
+      }
+    },
+    {
+      "name": "push-service-aud",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-audience-mapper",
+      "consentRequired": false,
+      "config": {
+        "id.token.claim": "false",
+        "access.token.claim": "true",
+        "included.custom.audience": "urn:ads:platform:push-service"
+      }
+    },
+    {
+      "name": "comment-service-aud",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-audience-mapper",
+      "consentRequired": false,
+      "config": {
+        "included.client.audience": "urn:ads:platform:comment-service",
+        "id.token.claim": "false",
+        "access.token.claim": "true"
+      }
+    }
+  ],
+  "defaultClientScopes": [
+    "web-origins",
+    "profile",
+    "roles",
+    "email"
+  ],
+  "optionalClientScopes": [
+    "address",
+    "phone",
+    "offline_access",
+    "microprofile-jwt"
+  ],
+  "access": {
+    "view": true,
+    "configure": true,
+    "manage": true
+  }
+}

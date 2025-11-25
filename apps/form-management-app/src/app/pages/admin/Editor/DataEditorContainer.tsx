@@ -1,30 +1,42 @@
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 import { NameDescriptionDataSchema, EditorPadding } from './styled-components';
-import { isValidJSONSchemaCheck } from '../../../components/checkInput'
+import { isValidJSONSchemaCheck } from '../../../components/checkInput';
 import { useWindowDimensions } from '../../../components/useWindowDimensions';
 import { GoAFormItem } from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 
-export const DataEditorContainer = ({
+export interface DataEditorContainerProps {
+  errors: Record<string, string | null>; // From useValidators()
+  editorErrors: {
+    uiSchema: string | null;
+    dataSchemaJSON: string | null;
+    dataSchemaJSONSchema: string | null;
+  };
+  tempDataSchema: any; // Replace with your actual schema type
+  setDraftDataSchema: (schema: any) => void; // Replace `any` as needed
+  setEditorErrors: React.Dispatch<
+    React.SetStateAction<{
+      uiSchema: string | null;
+      dataSchemaJSON: string | null;
+      dataSchemaJSONSchema: string | null;
+    }>
+  >;
+}
+
+export const DataEditorContainer: React.FC<DataEditorContainerProps> = ({
   errors,
   editorErrors,
   tempDataSchema,
   setDraftDataSchema,
-  setEditorErrors
+  setEditorErrors,
 }): JSX.Element => {
   const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
-
   const editorRefData = useRef(null);
-
   const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
-
   const { height } = useWindowDimensions();
-
   const EditorHeight = height - 400;
-
   const isUseMiniMap = window.screen.availWidth >= 1920;
-
   const handleEditorDidMountData = (editor) => {
     editorRefData.current = editor;
 
@@ -39,10 +51,10 @@ export const DataEditorContainer = ({
     });
   };
 
+
   return (
     <AdminLayout>
       <Main>
-        <h2>Welcome to Data Container</h2>
         <GoAFormItem
           error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
           label=""
@@ -51,7 +63,7 @@ export const DataEditorContainer = ({
             <MonacoEditor
               data-testid="form-data-schema"
               height={EditorHeight}
-              value={tempDataSchema}
+              value={JSON.stringify(tempDataSchema, null, 2)}
               onMount={handleEditorDidMountData}
               onChange={(value) => {
                 const jsonSchemaValidResult = JSONSchemaValidator(value);

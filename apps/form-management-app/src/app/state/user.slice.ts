@@ -1,12 +1,11 @@
-import { Dispatch, createAsyncThunk, createSelector, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
+import { Dispatch, createAsyncThunk, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
 import axios from 'axios';
 import Keycloak from 'keycloak-js';
-import { DateTime } from 'luxon';
 import { v4 as uuidv4 } from 'uuid';
 import { ConfigState } from './config.slice';
+import { FeedbackMessage } from './feedback.slice';
 import { AppState } from './store';
 import { isAxiosErrorPayload } from './util';
-import { FeedbackMessage } from './types';
 
 export const USER_FEATURE_KEY = 'user';
 
@@ -25,22 +24,25 @@ export interface UserState {
     email: string;
     roles: string[];
   };
-  sessionExpiresAt: string;
-  alertSessionExpiresAt: string;
 }
 
 let client: Keycloak;
+
+export const getKeycloakExpiry = () => {
+  if (client) {
+    return client?.refreshTokenParsed?.exp || 0;
+  }
+
+  return 0;
+};
+
 async function initializeKeycloakClient(dispatch: Dispatch, realm: string, config: ConfigState) {
-  console.log(JSON.stringify(config) + 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
-  console.log(JSON.stringify(realm) + '<-realm');
   if (client?.realm !== realm) {
     client = new Keycloak({
       url: `${config.environment.access.url}/auth`,
       clientId: config.environment.access.client_id,
       realm,
     });
-
-    console.log(JSON.stringify(client) + '<-client');
 
     try {
       await client.init({
@@ -51,43 +53,19 @@ async function initializeKeycloakClient(dispatch: Dispatch, realm: string, confi
       client.onAuthLogout = () => {
         dispatch(userActions.clearUser());
       };
-      client.onAuthRefreshSuccess = () => {
-        updateSessionTimeout(dispatch);
-      };
     } catch (err) {
-      console.log(JSON.stringify(err) + '<Err');
       // Keycloak client throws undefined in certain cases.
     }
   }
 
-  console.log(JSON.stringify(client) + '<-client2');
-
   return client;
-}
-
-let sessionTimeout;
-function updateSessionTimeout(dispatch: Dispatch) {
-  if (client.refreshTokenParsed) {
-    const expires = DateTime.fromSeconds(client.refreshTokenParsed.exp);
-    dispatch(userActions.setSessionExpiry({ expiresAt: expires.toISO(), alert: false }));
-
-    if (sessionTimeout) {
-      clearTimeout(sessionTimeout);
-    }
-
-    const tilExpiresAlert = expires.diff(DateTime.now()).minus(120000);
-    sessionTimeout = setTimeout(
-      () => dispatch(userActions.setSessionExpiry({ expiresAt: expires.toISO(), alert: true })),
-      tilExpiresAlert.as('milliseconds')
-    );
-  }
 }
 
 export async function getAccessToken(): Promise<string> {
   let token = null;
   if (client) {
     try {
-      await client.updateToken(60);
+      await client.updateToken(5 * 60);
       token = client.token;
     } catch (err) {
       // If we're unable to update token, return no value and the request will fail on 401.
@@ -101,8 +79,6 @@ export const initializeTenant = createAsyncThunk(
   async (name: string, { getState, dispatch, rejectWithValue }) => {
     const { config } = getState() as AppState;
     const url = config.directory['urn:ads:platform:tenant-service'];
-
-    console.log(url + '<url-=------------');
     if (!url) {
       return null;
     }
@@ -114,8 +90,6 @@ export const initializeTenant = createAsyncThunk(
     });
 
     const tenant = data?.results?.[0];
-
-    console.log(JSON.stringify(tenant) + '<tenant-=------------');
     if (!tenant) {
       return rejectWithValue({
         id: uuidv4(),
@@ -123,7 +97,6 @@ export const initializeTenant = createAsyncThunk(
         message: `Tenant "${name}" not found.`,
       } as FeedbackMessage);
     } else {
-      console.log('we are initializing');
       dispatch(initializeUser(tenant));
       return tenant;
     }
@@ -134,18 +107,8 @@ export const initializeUser = createAsyncThunk(
   'user/initialize-user',
   async (tenant: Tenant, { getState, dispatch }) => {
     const { config } = getState() as AppState;
-
-    console.log('we are initializing again');
-    console.log(JSON.stringify(config) + '<config-=------------');
-    console.log(JSON.stringify(tenant.realm) + '<tenant.realm-=------------');
-
     const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
-
-    console.log(JSON.stringify(client) + '<client-=------------');
-    console.log(JSON.stringify(client.tokenParsed) + '<client.tokenParsed-=------------');
     if (client.tokenParsed) {
-      updateSessionTimeout(dispatch);
-
       return {
         id: client.tokenParsed.sub,
         name: client.tokenParsed['name'] || client.tokenParsed['preferred_username'] || client.tokenParsed['email'],
@@ -164,41 +127,36 @@ export const initializeUser = createAsyncThunk(
   }
 );
 
-const getIdpHint = (): string => {
-  const location: string = window.location.href;
-  const skipSSO = location.indexOf('kc_idp_hint') > -1;
+export const loginUserWithIDP = createAsyncThunk(
+  'user/login-idp',
+  async ({ realm, idpFromUrl, from }: { realm: string; idpFromUrl: string; from: string }, { getState, dispatch }) => {
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const idpFromUrl = urlParams.has('kc_idp_hint') ? encodeURIComponent(urlParams.get('kc_idp_hint')) : null;
-  let idp = 'core';
-  if (skipSSO && !idpFromUrl) {
-    idp = ' ';
+    const { config } = getState() as AppState;
+    const client = await initializeKeycloakClient(dispatch, realm, config);               
+    Promise.all([
+      client.login({
+        idpHint: idpFromUrl,
+        redirectUri: from === '/' ? new URL(`/auth/callback?from=${'/'}`, window.location.href).href : from,
+      }),
+    ]);
+
+
+
+    // Client login causes redirect, so this code and the thunk fulfilled reducer are de facto not executed.
+    return await client.loadUserProfile();
   }
-
-  return idp;
-};
+);
 
 export const loginUser = createAsyncThunk(
   'user/login',
   async ({ tenant, from }: { tenant: Tenant; from: string }, { getState, dispatch }) => {
+
     const { config } = getState() as AppState;
-    const idpHint = getIdpHint();
-
-    console.log(JSON.stringify(idpHint) + '<idpHint');
-    console.log(JSON.stringify(config) + '<config');
-    console.log(JSON.stringify(tenant.realm) + '< tenant.realm');
-
     const client = await initializeKeycloakClient(dispatch, tenant.realm, config);
 
-    console.log(JSON.stringify(client) + '< clientclient----');
-    Promise.all([
-      client.login({
-        idpHint,
-        redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
-      }),
-    ]);
-
-    console.log(JSON.stringify(client) + '< clientclient- 222222222---');
+    await client.login({
+      redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
+    });
 
     // Client login causes redirect, so this code and the thunk fulfilled reducer are de facto not executed.
     return await client.loadUserProfile();
@@ -220,27 +178,15 @@ export const logoutUser = createAsyncThunk(
 const initialUserState: UserState = {
   initialized: false,
   tenant: null,
-  user: undefined,
-  sessionExpiresAt: null,
-  alertSessionExpiresAt: null,
+  user: null,
 };
-
-export const renewSession = createAsyncThunk('user/renew-session', async (_, { dispatch }) => {
-  // Getting the access token triggers refresh token use and update.
-  await getAccessToken();
-  updateSessionTimeout(dispatch);
-});
 
 const userSlice = createSlice({
   name: USER_FEATURE_KEY,
   initialState: initialUserState,
   reducers: {
     clearUser: (state) => {
-      state.user = undefined;
-    },
-    setSessionExpiry: (state, { payload }: { payload: { expiresAt: string; alert: boolean } }) => {
-      state.sessionExpiresAt = payload.expiresAt;
-      state.alertSessionExpiresAt = payload.alert ? payload.expiresAt : null;
+      state.user = null;
     },
   },
   extraReducers: (builder) => {
@@ -249,22 +195,14 @@ const userSlice = createSlice({
         state.tenant = payload;
       })
       .addCase(initializeUser.fulfilled, (state, { payload }) => {
-        console.log('do we never get here or do we');
-        console.log(JSON.stringify(payload) + '<-payloadxxxxxxxx');
-
         state.user = payload;
         state.initialized = true;
       })
-      .addCase(initializeUser.rejected, (state, { payload }) => {
-        console.log('do we never get here or do we');
-        console.log(JSON.stringify(payload) + '<-payloadxxxxxxxx rejected');
-      })
-      .addCase(loginUser.fulfilled, (state, { payload }) => {
-        console.log(JSON.stringify(payload) + '<payload');
-        //  state.user = payload as unknown //as typeof state.user;
-      })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
+      })
+      .addCase(loginUserWithIDP.fulfilled, (state, { payload }) => {
+        state.user = payload as typeof state.user;
       })
       .addMatcher(isRejectedWithValue(), (state, { payload }) => {
         if (isAxiosErrorPayload(payload) && payload.status === 401) {
@@ -280,11 +218,3 @@ export const userActions = userSlice.actions;
 export const tenantSelector = (state: AppState) => state.user.tenant;
 
 export const userSelector = (state: AppState) => state.user;
-
-export const sessionExpirySelector = createSelector(
-  (state: AppState) => state.user.alertSessionExpiresAt,
-  (expiresAt) => ({
-    secondsTilExpiry: expiresAt && Math.round(DateTime.fromISO(expiresAt).diff(DateTime.now()).as('seconds')),
-    showAlert: !!expiresAt,
-  })
-);

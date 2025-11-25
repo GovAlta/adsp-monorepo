@@ -1,10 +1,17 @@
 import { createSelector, createSlice, isRejected } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 import { AppState } from './store';
-import { FeedbackMessage } from './types';
 import { isAxiosErrorPayload } from './util';
 
 export const FEEDBACK_FEATURE_KEY = 'feedback';
+
+export type FeedbackMessageLevel = 'info' | 'success' | 'warn' | 'error';
+export interface FeedbackMessage {
+  id: string;
+  level: FeedbackMessageLevel;
+  message: string;
+  in?: string;
+}
 
 interface FeedbackState {
   items: FeedbackMessage[];
@@ -23,9 +30,6 @@ function isFeedbackPayload(payload: unknown): payload is FeedbackMessage {
   );
 }
 
-const hasMessage = (items, message) => {
-  return items.length !== 0 && items.some((obj) => obj?.message === message);
-};
 const feedbackSlice = createSlice({
   name: FEEDBACK_FEATURE_KEY,
   initialState: initialFeedbackState,
@@ -55,9 +59,7 @@ const feedbackSlice = createSlice({
         };
       }
 
-      if (!hasMessage(state.items, item.message)) {
-        state.items.push(item);
-      }
+      state.items.push(item);
     });
   },
 });

@@ -40,7 +40,7 @@ export interface Intake {
   isUpcoming: boolean;
 }
 
-export interface FormDefinition {
+interface FormDefinition {
   urn: string;
   id: string;
   revision: number;
@@ -83,7 +83,7 @@ export interface Form {
   dryRun?: boolean;
 }
 
-export interface FormDisposition {
+interface FormDisposition {
   id: string;
   status: string;
   reason: string;
@@ -116,10 +116,10 @@ export interface SerializedAxiosError {
   message: string;
 }
 
-export type FeedbackMessageLevel = 'info' | 'success' | 'warn' | 'error';
-export interface FeedbackMessage {
-  id: string;
-  level: FeedbackMessageLevel;
-  message: string;
-  in?: string;
-}
+//export type FeedbackMessageLevel = 'info' | 'success' | 'warn' | 'error';
+// export interface FeedbackMessage {
+//   id: string;
+//   level: FeedbackMessageLevel;
+//   message: string;
+//   in?: string;
+// }

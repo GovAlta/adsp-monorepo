@@ -45,7 +45,9 @@ export const FormTenant = () => {
       <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
       <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Form`}>
         <>
+          <pre>user: {JSON.stringify(user)}</pre>
           <span style={{ display: 'none' }}></span>
+ 
           {userInitialized && (
             <AccountActionsDiv>
               {user && (
