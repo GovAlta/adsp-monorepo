@@ -55,7 +55,7 @@ export function App() {
           <Route path="/:tenant" element={<LayoutWrapper />}>
             <Route index element={<TenantManagement />} />
             <Route path="forms" element={<FormDefinitions />} />
-            <Route path="editor/:formId" element={<FormEditor />} />
+            <Route path="editor/:id" element={<FormEditor />} />
             <Route path="preview/:formId" element={<FormPreview />} />
           </Route>
         </Routes>
