@@ -30,8 +30,8 @@ class AbstractXdpFactory(ABC):
     def handle_basic_input(self, field: ET.Element, labels: ControlLabels) -> Any: ...
 
     @abstractmethod
-    def handle_group(
-        self, container: ET.Element, children: list, label: str
+    def handle_radio_subform(
+        self, element: ET.Element, labels: ControlLabels
     ) -> Any: ...
 
     @abstractmethod

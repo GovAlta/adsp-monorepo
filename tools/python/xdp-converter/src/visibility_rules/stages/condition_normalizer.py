@@ -72,5 +72,5 @@ class ConditionNormalizer:
         context[CTX_FINAL_RULES] = normalized_rules
         print(f"[ConditionNormalizer] Normalized {len(normalized_rules)} rules total.")
         print("[ConditionNormalizer] Done.\n")
-
+        print(f"[ConditionNormalizer] OUT: {len(normalized_rules)} rules")
         return context

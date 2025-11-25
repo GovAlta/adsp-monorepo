@@ -14,6 +14,7 @@ class ValueResolver:
                 self._resolve_condition(cond, enum_map)
 
         context[CTX_RESOLVED_RULES] = rules
+        print(f"[ValueResolver] OUT: {len(rules)} rules")
         return context
 
     def _resolve_condition(self, cond, enum_map):

@@ -1,3 +1,4 @@
+from constants import CTX_JSONFORMS_RULES
 from schema_generator.form_element import FormElement
 from xdp_parser.parse_context import ParseContext
 
@@ -21,6 +22,8 @@ class Form(FormElement):
         return True
 
     def to_json_schema(self):
+        rules = self.context.get(CTX_JSONFORMS_RULES) or {}
+
         schemas = []
         for element in self.sections:
             if element.has_json_schema():

@@ -1,6 +1,4 @@
-import re
 from schema_generator.form_element import FormElement
-from xdp_parser.control_labels import _control_name, inline_caption
 from xdp_parser.parse_context import ParseContext
 
 
@@ -11,14 +9,20 @@ class FormLayout(FormElement):
         self.elements = elements
         self.is_leaf = False
 
+    # def build_ui_schema(self):
+    #     ui_schema = {"type": self.type}
+    #     ui_schema["elements"] = []
+    #     for element in self.elements:
+    #         child = element.to_ui_schema()
+    #         if child:
+    #             ui_schema["elements"].append(child)
+    #     return ui_schema
+
     def build_ui_schema(self):
-        ui_schema = {"type": self.type}
-        ui_schema["elements"] = []
+        schemas = []
         for element in self.elements:
-            child = element.to_ui_schema()
-            if child:
-                ui_schema["elements"].append(child)
-        return ui_schema
+            schemas.append(element.build_ui_schema())
+        return schemas
 
     def has_json_schema(self):
         return True
@@ -103,6 +107,8 @@ def group_horizontally(
       - FormLayout("HorizontalLayout", [elements...]) for multi-element rows
       - Single elements for 1-element rows (including FormGroups)
     """
+
+    return elements
     # --- Input hardening ---
     elements = list(elements or [])
     tol = abs(float(tolerance_mm or 0.0))  # negative? None? no problem.

@@ -1,3 +1,4 @@
+# radio_group_collapser.py
 from constants import (
     CTX_ENUM_MAP,
     CTX_RADIO_GROUPS,
@@ -6,50 +7,54 @@ from constants import (
 
 
 class RadioGroupCollapser:
+    """
+    Converts raw Adobe checkbox-based radio groups like:
+        chkStandard → Section2 = "Standard"
+        chkContingency → Section2 = "Contingency"
+    """
+
     def process(self, context):
         radio_groups = context.get(CTX_RADIO_GROUPS, {})
         enum_map = context.get(CTX_ENUM_MAP, {})
-
         rules = context.get(CTX_RESOLVED_RULES, [])
+
         print(f"[RGC] Collapsing {len(rules)} rules…")
 
-        driver_map = {}
+        # ---------------------------------------------------------
+        # STEP 1 — Build reverse mapping: chkX → (Section2, label)
+        # ---------------------------------------------------------
+        reverse_map = {}
 
-        print("\n[RGC] ==== ENTERING RADIO GROUP COLLAPSER ====")
-        print("[RGC] Radio groups:", radio_groups)
-        print("[RGC] Number of resolved rules:", len(rules))
-        print("[RGC] 'chk' drivers in rules:")
-        for rule in rules:
-            cond = rule.conditions[0]
-            if cond.driver[:3] == "chk" or cond.driver == "section2":
+        for group_name, raw_fields in radio_groups.items():
+            if group_name not in enum_map:
+                print(f"[RGC] WARNING: {group_name} not in enum_map — skipping")
+                continue
+
+            group_enum = enum_map[group_name]  # { "1": "Standard", ... }
+
+            if len(group_enum) != len(raw_fields):
                 print(
-                    "  driver:",
-                    cond.driver,
-                    "value:",
-                    cond.value,
-                    "→ target:",
-                    rule.target,
+                    f"[RGC] WARNING: Mismatch in sizes for {group_name}: "
+                    f"{len(raw_fields)} raw vs {len(group_enum)} enum"
                 )
+                continue
 
-        for group, field_names in radio_groups.items():
-            group_enum = enum_map.get(group, {})
+            # zip fields to enum labels
+            sorted_labels = [group_enum[k] for k in sorted(group_enum, key=int)]
 
-            for index, field_name in enumerate(field_names, start=1):
-                label = group_enum.get(str(index))
-                if label:
-                    driver_map[field_name] = (group, label)
+            for raw_field, human_label in zip(raw_fields, sorted_labels):
+                reverse_map[raw_field] = (group_name, human_label)
 
-        print("[RGC] driver_map generated:")
-        for drv, (group, label) in driver_map.items():
-            print(f"   {drv} → {group} :: {label}")
-        # Rewrite rule conditions
+        # ---------------------------------------------------------
+        # STEP 2 — Rewrite rules using reverse_map
+        # ---------------------------------------------------------
         for rule in rules:
             for cond in rule.conditions:
-                if cond.driver in driver_map:
-                    group, label = driver_map[cond.driver]
-                    cond.driver = group
-                    cond.value = label
+                driver = cond.driver
 
-        # 🚨 IMPORTANT: WRITE BACK TO THE SAME KEY
-        context[CTX_RESOLVED_RULES] = rules
+                if driver in reverse_map:
+                    group_name, human_label = reverse_map[driver]
+                    cond.driver = group_name
+                    cond.value = human_label
+        print(f"[RGC] OUT: {len(rules)} rewritten rules")
         return context

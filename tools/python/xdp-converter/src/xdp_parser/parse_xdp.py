@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 from typing import List
+from constants import CTX_RADIO_GROUPS
 from xdp_parser.control_labels import ControlLabels, inline_caption
 from xdp_parser.control_helpers import is_checkbox, is_radio_button
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
@@ -46,10 +47,10 @@ class XdpParser:
             elements = self.parse_subform(subform)
             if elements:
                 # Preserve grouping for top-level subforms (e.g. Adult, Child)
-                label = subform.get("name") or inline_caption(subform) or ""
-                group = self.factory.handle_group(subform, elements, label)
-                if group:
-                    all_elements.append(group)
+                # label = subform.get("name") or inline_caption(subform) or ""
+                # group = self.factory.handle_group(subform, elements, label)
+                # if group:
+                all_elements.extend(elements)
 
         return remove_duplicates(self.to_form_elements(all_elements))
 
@@ -88,7 +89,7 @@ class XdpParser:
         # --- Handle implicit radio group (subform full of radio-style checkButtons) ---
         radio_labels = extract_radio_button_labels(subform)
         if radio_labels:
-            control = self.factory.handle_radio(subform, self.control_labels)
+            control = self.factory.handle_radio_subform(subform, self.control_labels)
             if control:
                 controls.append(control)
             return remove_duplicates(controls)
@@ -146,10 +147,10 @@ class XdpParser:
             if is_subform(elem):
                 nested_controls = self.parse_subform(elem)
                 if nested_controls:
-                    label = elem.get("name") or inline_caption(elem) or ""
-                    control = self.factory.handle_group(elem, nested_controls, label)
-                    if control:
-                        controls.append(control)
+                    # label = elem.get("name") or inline_caption(elem) or ""
+                    # control = self.factory.handle_group(elem, nested_controls, label)
+                    # if control:
+                    controls.extend(nested_controls)
                 i += 1
                 continue
 
@@ -190,11 +191,11 @@ class XdpParser:
         name = elem.get("name") or ""
         if not name:
             return False
-        if name in self.context.get("visibility_rules", {}):
+        if name in self.context.get(CTX_RADIO_GROUPS, {}):
             return True
 
         # dotted keys may reference this control by suffix
-        for key in self.context.get("visibility_rules", {}).keys():
+        for key in self.context.get(CTX_RADIO_GROUPS, {}).keys():
             if key.endswith(f".{name}"):
                 return True
         return False

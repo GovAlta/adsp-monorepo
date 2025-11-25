@@ -34,4 +34,5 @@ class RuleConsolidator:
         )
 
         context[CTX_FINAL_RULES] = consolidated
+        print(f"[RuleConsolidator] OUT: {len(consolidated)} rules")
         return context
