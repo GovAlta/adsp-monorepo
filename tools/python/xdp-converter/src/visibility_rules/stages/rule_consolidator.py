@@ -1,3 +1,6 @@
+from constants import CTX_FINAL_RULES
+
+
 class RuleConsolidator:
     """
     Consolidates rules for the same target/effect pair.
@@ -5,7 +8,7 @@ class RuleConsolidator:
     """
 
     def process(self, context):
-        rules = context.get("normalized_visibility_rules", [])
+        rules = context.get(CTX_FINAL_RULES, [])
         print("\n[RuleConsolidator] Starting...")
 
         # Group by (target, effect)
@@ -30,5 +33,6 @@ class RuleConsolidator:
             f"[RuleConsolidator] Consolidated {len(consolidated)} merged rules total.\n"
         )
 
-        context["consolidated_visibility_rules"] = consolidated
+        context[CTX_FINAL_RULES] = consolidated
+        print(f"[RuleConsolidator] OUT: {len(consolidated)} rules")
         return context

@@ -4,7 +4,11 @@ from importlib.resources.readers import remove_duplicates
 
 from schema_generator.form_element import FormElement
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.xdp_utils import split_camel_case, strip_label_prefix
+from xdp_parser.xdp_utils import (
+    compute_full_xdp_path,
+    split_camel_case,
+    strip_label_prefix,
+)
 
 
 class XdpElement(ABC):
@@ -15,19 +19,7 @@ class XdpElement(ABC):
         self.parent_map = context.get("parent_map", {}) if context else {}
 
     def get_full_path(self) -> str:
-        """
-        Build a fully qualified path for this element using parent_map.
-        Example: form1.Page1.Section4.Alternate.cboEnvDecalPack
-        """
-        parts = []
-        node = self.xdp_element
-        while node is not None:
-            name = node.attrib.get("name")
-            if name:
-                parts.insert(0, name)
-            node = self.parent_map.get(node) if self.parent_map else None
-
-        return ".".join(parts)
+        return compute_full_xdp_path(self.xdp_element, self.parent_map)
 
     @property
     def full_path(self) -> str:

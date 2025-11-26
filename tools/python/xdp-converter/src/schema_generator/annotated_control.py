@@ -18,3 +18,7 @@ class AnnotatedControl(FormLayout):
 
     def build_ui_schema(self):
         return super().build_ui_schema()
+        # schemas = []
+        # for element in self.elements:
+        #     schemas.append(element.build_ui_schema())
+        # return schemas
