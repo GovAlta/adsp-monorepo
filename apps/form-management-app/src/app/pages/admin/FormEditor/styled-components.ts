@@ -19,7 +19,20 @@ export const FormEditorTitle = styled.div`
   font-weight: var(--fw-regular);
 `;
 
+export const PRE = styled.div`
+  background: #f3f3f3;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: var(--goa-font-size-1);
+  line-height: var(--goa-line-height-05);
+  padding: var(--goa-space-m);
 
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-height: 60vh;
+  overflow: auto;
+  max-width: 100%;
+`;
 
 export const NameDescriptionDataSchema = styled.div`
   flex: 6;
@@ -69,4 +82,20 @@ export const FinalButtonPadding = styled.div`
   padding-top: 20px;
   justify-content: space-between;
   align-items: center;
+`;
+
+export const FormPreviewSpacer = styled.div`
+  margin-top: var(--goa-space-l);
+`;
+
+
+export const ReviewPageTabWrapper = styled.div`
+  padding-top: var(--goa-space-m);
+`;
+
+export const FormPreviewScrollPane = styled.div`
+  overflow-y: auto;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  height: calc(100vh - 192px);
 `;

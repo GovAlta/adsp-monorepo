@@ -9,11 +9,16 @@ import {
   openEditorForDefinition,
 
 } from '../../../state/form/form.slice';
-import { isFormUpdatedSelector } from '../../../state/form/selectors';
+import { isFormUpdatedSelector, schemaErrorSelector } from '../../../state/form/selectors';
 
 import { Editor } from './Editor';
 import { modifiedDefinitionSelector } from '../../../state/form/selectors';
 import { setDraftDataSchema, setDraftUiSchema } from '../../../state/form/form.slice';
+import { CONFIGURATION_SERVICE_ID } from '../../../state';
+import { selectRegisterData } from '../../../state/configuration/selectors';
+import { UISchemaElement } from '@jsonforms/core';
+
+//import { downloadFile } from '../../../state/file/file.slice';
 
 const EditorWrapper = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
@@ -28,7 +33,7 @@ const EditorWrapper = (): JSX.Element => {
         dispatch(openEditorForDefinition({ id }));
       }
     } catch (e) {
-      console.error('ggggggggg:' + JSON.stringify(e));
+      console.error('error:' + JSON.stringify(e));
     }
   }, [id, selectedId, dispatch]);
 
@@ -49,10 +54,32 @@ const EditorWrapper = (): JSX.Element => {
     dispatch(setDraftUiSchema(definition));
   };
 
-  const resolvedDataSchema = useSelector((state: AppState) => state.form.editor.resolvedDataSchema) as Record<
-    string,
-    unknown
-  >;
+  const resolvedDataSchema = useSelector((state: AppState) => state.form.editor.resolvedDataSchema) as Record<string,unknown>;
+  const uiSchema = useSelector((state: AppState) => state.form.editor.uiSchema) as UISchemaElement;
+
+  const fileList = useSelector((state: AppState) => {
+    return state?.file.newFileList;
+  });
+
+  const downloadFile = (file) => {
+    //dispatch(downloadFile(file.urn)).unwrap();
+    console.log("pretend to download file")
+  };
+  const uploadFile = (file) => {
+
+    console.log('pretend to upload file');
+  };
+  const deleteFile = (file) => {
+    console.log('pretend to delete file');
+  };
+
+
+  const registerData = useSelector(selectRegisterData);
+  const nonAnonymous = useSelector((state: AppState) => state.configuration?.nonAnonymous);
+  const dataList = useSelector((state: AppState) => state.configuration?.dataList);
+  
+  const formServiceApiUrl = useSelector((state: AppState) => state.config.directory[CONFIGURATION_SERVICE_ID]);
+    const schemaError = useSelector(schemaErrorSelector);
 
   return (
     <AdminLayout>
@@ -65,6 +92,16 @@ const EditorWrapper = (): JSX.Element => {
             setDraftUiSchema={setDraftUi}
             isFormUpdated={isFormUpdated}
             resolvedDataSchema={resolvedDataSchema}
+            fileList={fileList}
+            uploadFile={uploadFile}
+            downloadFile={downloadFile}
+            deleteFile={deleteFile}
+            formServiceApiUrl={formServiceApiUrl}
+            schemaError={schemaError}
+            uiSchema={uiSchema}
+            registerData={registerData}
+            nonAnonymous={nonAnonymous}
+            dataList={dataList}
           />
         )}
       </FormTemplateEditorContainer>

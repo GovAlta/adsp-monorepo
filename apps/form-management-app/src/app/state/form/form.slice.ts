@@ -28,6 +28,8 @@ export interface FormState {
     dataSchemaDraft: string;
     uiSchemaDraft: string;
     resolvedDataSchema: JsonSchema;
+    dataSchemaError?: string;
+    uiSchemaError?: string;
   };
   busy: {
     loading: boolean;
@@ -43,7 +45,7 @@ export interface FormState {
 
 
 
-const CONFIGURATION_SERVICE_ID = 'urn:ads:platform:configuration-service:v2';
+export const CONFIGURATION_SERVICE_ID = 'urn:ads:platform:configuration-service:v2';
 const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 
 const hasProperties = (schema: JsonSchema): boolean => {
@@ -283,6 +285,8 @@ const initialFormState: FormState = {
     dataSchema: {},
     uiSchema: {} as UISchemaElement,
     resolvedDataSchema: {},
+    dataSchemaError: "",
+    uiSchemaError: ""
   },
   initialized: {
     forms: false,
@@ -312,6 +316,12 @@ const formSlice = createSlice({
       .addCase(uneditedDataSchemaDraft.fulfilled, (state, { payload }) => {
         state.editor.dataSchemaDraft = payload;
       })
+      .addCase(setDraftDataSchema.rejected, (state, { payload }) => {
+        state.editor.dataSchemaError = payload as string;
+      })
+      .addCase(setDraftUiSchema.rejected, (state, { payload }) => {
+        state.editor.uiSchemaError = payload as string;
+      })
       .addCase(updateDataParsed.fulfilled, (state, { payload }) => {
         state.editor.dataSchema = payload;
       })
@@ -335,7 +345,7 @@ const formSlice = createSlice({
         state.editor.loading = false;
         state.editor.saving = false;
 
-        state.editor.resolvedDataSchema = initialFormState.editor.resolvedDataSchema;
+       // state.editor.resolvedDataSchema = initialFormState.editor.resolvedDataSchema;
       })
       .addCase(openEditorForDefinition.fulfilled, (state, action) => {
         const { dataSchema, uiSchema, ...definition } = action.payload.definition;

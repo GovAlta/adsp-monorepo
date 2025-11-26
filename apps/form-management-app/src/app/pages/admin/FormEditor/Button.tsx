@@ -26,22 +26,18 @@ export interface EditorProps {
   isFormUpdated: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   validators: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  indicator: any;
 }
 
 export const Buttons: React.FC<EditorProps> = ({
   activeIndex,
   editorErrors,
   definition,
-
   updateFormDefinition,
   getCurrentEditorRef,
   foldAll,
   unfoldAll,
   isFormUpdated,
   validators,
-  indicator,
 }) => {
   const [saveModal, setSaveModal] = useState({ visible: false });
   const navigate = useNavigate();

@@ -1,11 +1,9 @@
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
-import { NameDescriptionDataSchema, EditorPadding } from './styled-components';
-import { isValidJSONSchemaCheck } from '../../../components/checkInput';
+import { EditorPadding } from './styled-components';
 import { useWindowDimensions } from '../../../components/useWindowDimensions';
 import { GoAFormItem } from '@abgov/react-components';
-import MonacoEditor, { useMonaco } from '@monaco-editor/react';
-import { JsonSchema } from '@jsonforms/core';
+import MonacoEditor from '@monaco-editor/react';
 
 export interface UiEditorContainerProps {
   errors: Record<string, string | null>;
@@ -14,8 +12,8 @@ export interface UiEditorContainerProps {
     dataSchemaJSON: string | null;
     dataSchemaJSONSchema: string | null;
   };
-  tempUiSchema: JsonSchema;
-  setDraftUiSchema: (schema: JsonSchema) => void;
+  tempUiSchema: string;
+  setDraftUiSchema: (schema: string) => void;
   setEditorErrors: React.Dispatch<
     React.SetStateAction<{
       uiSchema: string | null;

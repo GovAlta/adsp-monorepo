@@ -34,3 +34,9 @@ export const isFormUpdatedSelector = createSelector(
     return originalDigest !== modifiedDigest;
   }
 );
+
+export const schemaErrorSelector = createSelector(
+  (state: AppState) => state.form.editor.dataSchemaError,
+  (state: AppState) => state.form.editor.uiSchemaError,
+  (dataError, uiError) => dataError || uiError
+);

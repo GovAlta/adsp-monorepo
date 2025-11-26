@@ -5,7 +5,7 @@ import { isValidJSONSchemaCheck } from '../../../components/checkInput';
 import { useWindowDimensions } from '../../../components/useWindowDimensions';
 import { GoAFormItem } from '@abgov/react-components';
 import MonacoEditor from '@monaco-editor/react';
-import { JsonSchema } from '@jsonforms/core';
+
 
 export interface DataEditorContainerProps {
   errors: Record<string, string | null>; // From useValidators()
@@ -15,8 +15,8 @@ export interface DataEditorContainerProps {
     dataSchemaJSONSchema: string | null;
   };
 
-  tempDataSchema: JsonSchema;
-  setDraftDataSchema: (schema: JsonSchema) => void;
+  tempDataSchema: string;
+  setDraftDataSchema: (schema: string) => void;
   setEditorErrors: React.Dispatch<
     React.SetStateAction<{
       uiSchema: string | null;

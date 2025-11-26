@@ -14,7 +14,7 @@ import { useMonaco } from '@monaco-editor/react';
 import { useValidators } from '../../../components/useValidators';
 import { badCharsCheck, isNotEmptyCheck, wordMaxLengthCheck } from '../../../components/checkInput';
 import type * as monacoNS from 'monaco-editor';
-
+import { Preview } from './Preview';
 import { FormDefinition } from '../../../state/types';
 import { Buttons } from './Button';
 
@@ -28,7 +28,16 @@ export interface EditorProps {
   updateFormDefinition: (form: FormDefinition) => void;
   resolvedDataSchema: Record<string, unknown>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  indicator?: any;
+  fileList: any;
+  uploadFile: any;
+  downloadFile: any;
+  deleteFile: any;
+  formServiceApiUrl: any;
+  schemaError: any;
+  uiSchema: any;
+  registerData: any;
+  nonAnonymous: any;
+  dataList: any;
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -37,8 +46,17 @@ export const Editor: React.FC<EditorProps> = ({
   setDraftUiSchema,
   updateFormDefinition,
   isFormUpdated,
-  indicator,
   resolvedDataSchema,
+  fileList,
+  uploadFile,
+  downloadFile,
+  deleteFile,
+  formServiceApiUrl,
+  schemaError,
+  uiSchema,
+  registerData,
+  nonAnonymous,
+  dataList
 }) => {
   const { errors, validators } = useValidators(
     'name',
@@ -146,10 +164,24 @@ export const Editor: React.FC<EditorProps> = ({
           unfoldAll={unfoldAll}
           isFormUpdated={isFormUpdated}
           validators={validators}
-          indicator={indicator}
         />
       </NameDescriptionDataSchema>
-      <FormPreviewContainer></FormPreviewContainer>
+      <FormPreviewContainer>
+        <Preview
+          fileList={fileList}
+          uploadFile={uploadFile}
+          downloadFile={downloadFile}
+          deleteFile={deleteFile}
+          formServiceApiUrl={formServiceApiUrl}
+          schemaError={schemaError}
+          definition={definition}
+          dataSchema={resolvedDataSchema}
+          uiSchema={uiSchema}
+          registerData={registerData}
+          nonAnonymous={nonAnonymous}
+          dataList={dataList}
+        />
+      </FormPreviewContainer>
     </FormEditor>
   );
 };
