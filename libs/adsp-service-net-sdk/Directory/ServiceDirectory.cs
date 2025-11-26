@@ -52,22 +52,22 @@ internal sealed class ServiceDirectory : IServiceDirectory, IDisposable
   private async Task<IDictionary<AdspId, Uri>> RetrieveDirectory(string @namespace)
   {
     var entries = await _retryPolicy.ExecuteAsync(async () =>
+    {
+      var entries = new Dictionary<AdspId, Uri>();
+      var results = await _client.GetAsync<DirectoryEntry[]>(new RestRequest($"/directory/v2/namespaces/{@namespace}/entries"));
+      if (results != null)
       {
-        var entries = new Dictionary<AdspId, Uri>();
-        var results = await _client.GetAsync<DirectoryEntry[]>(new RestRequest($"/directory/v2/namespaces/{@namespace}/entries"));
-        if (results != null)
+        foreach (var result in results)
         {
-          foreach (var result in results)
+          if (result?.Url != null)
           {
-            if (result?.Url != null)
-            {
-              entries[AdspId.Parse(result.Urn)] = result.Url;
-            }
+            entries[AdspId.Parse(result.Urn)] = result.Url;
           }
         }
-
-        return entries;
       }
+
+      return entries;
+    }
     );
 
     foreach (var entry in entries)

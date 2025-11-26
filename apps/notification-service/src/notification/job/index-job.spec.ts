@@ -1,4 +1,4 @@
-import { Subscribable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Logger } from 'winston';
 import {
   AdspId,
@@ -13,7 +13,6 @@ import { createProcessEventJob } from './processEvent';
 import { createSendNotificationJob } from './sendNotification';
 import { createJobs } from './index';
 import { SubscriptionRepository } from '../repository';
-import { TemplateService } from '../template';
 import { NotificationWorkItem, Providers } from '../types';
 
 jest.mock('./processEvent');
@@ -27,8 +26,7 @@ describe('createJobs', () => {
   let directory: ServiceDirectory;
   let configurationService: ConfigurationService;
   let eventService: EventService;
-  let templateService: TemplateService;
-  let events: Subscribable<DomainEventWorkItem>;
+  let events: Observable<DomainEventWorkItem>;
   let queueService: WorkQueueService<NotificationWorkItem>;
   let subscriptionRepository: SubscriptionRepository;
   let providers: Providers;
@@ -41,10 +39,9 @@ describe('createJobs', () => {
     directory = {} as ServiceDirectory;
     configurationService = {} as ConfigurationService;
     eventService = {} as EventService;
-    templateService = {} as TemplateService;
     events = {
       subscribe: jest.fn(),
-    } as unknown as Subscribable<DomainEventWorkItem>;
+    } as unknown as Observable<DomainEventWorkItem>;
     queueService = {
       getItems: jest.fn().mockReturnValue({
         subscribe: jest.fn(),

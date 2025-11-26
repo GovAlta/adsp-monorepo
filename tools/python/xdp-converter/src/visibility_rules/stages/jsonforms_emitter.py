@@ -1,3 +1,14 @@
+from constants import (
+    CTX_ENUM_MAP,
+    CTX_FINAL_RULES,
+    CTX_JSONFORMS_RULES,
+    CTX_LABEL_TO_ENUM,
+    CTX_PARENT_MAP,
+    CTX_XDP_ROOT,
+)
+from xdp_parser.xdp_utils import compute_full_xdp_path
+
+
 class JsonFormsEmitter:
     """
     Converts normalized visibility rules into JSONForms-compatible
@@ -14,87 +25,119 @@ class JsonFormsEmitter:
     def process(self, context):
         print("\n[JsonFormsEmitter] Starting...")
 
-        normalized_rules = context.get("normalized_visibility_rules", [])
-        enum_maps = context.get("enum_map", {})
-        label_to_enum = context.get("label_to_enum", {})
-        parent_map = context.get("parent_map")
-        xdp_root = context.get("xdp_root")
+        normalized_rules = context.get(CTX_FINAL_RULES, [])
+        enum_maps = context.get(CTX_ENUM_MAP, {})
+        label_to_enum = context.get(CTX_LABEL_TO_ENUM, {})
+        parent_map = context.get(CTX_PARENT_MAP, {})
+        xdp_root = context.get(CTX_XDP_ROOT, None)
+
+        print(f"[JsonFormsEmitter] IN rules: {len(normalized_rules)}")
 
         emitted = {}
+
+        # --- Diagnostic counters ---
+        unmapped = 0
+        empty_props = 0
 
         for rule in normalized_rules:
             driver, const_value = self._resolve_target_to_enum(
                 rule.target, label_to_enum
             )
 
+            # Case 1: Target enum resolved cleanly
             if driver and const_value is not None:
-                # Always resolve enum values for human-readable output
                 mapped_value = self.resolve_enum_value(driver, const_value, enum_maps)
+
+                if mapped_value is None:
+                    unmapped += 1
+                    continue
+
                 schema = {"const": mapped_value}
                 scope = f"#/properties/{driver}"
 
+            # Case 2: Exactly one condition
             elif len(rule.conditions) == 1:
                 cond = rule.conditions[0]
                 driver = cond.driver
-                schema = {
-                    "const": self.resolve_enum_value(driver, cond.value, enum_maps)
-                }
+
+                mapped = self.resolve_enum_value(driver, cond.value, enum_maps)
+                if mapped is None:
+                    unmapped += 1
+                    continue
+
+                schema = {"const": mapped}
                 scope = f"#/properties/{driver}"
+
+            # Case 3: Multi-condition rules
             else:
+                # print(f"[DEBUG] multi-cond rule.target={rule.target}")
+                # for cond in rule.conditions:
+                #     print(
+                #         f"    [DEBUG] cond.driver={cond.driver}, cond.value={cond.value}"
+                #     )
+                # print(
+                #     f"    [DEBUG] label_to_enum keys={list(label_to_enum.keys())[:8]}..."
+                # )
+                # print(f"    [DEBUG] enum_maps keys={list(enum_maps.keys())[:8]}...")
+
                 props = {}
                 for cond in rule.conditions:
+                    ...
+
+                for cond in rule.conditions:
+                    # Skip reflexive conditions
                     if cond.driver.split(".")[-1] == rule.target.split(".")[-1]:
                         continue
+
                     driver_key = cond.driver.split(".")[-1]
-                    mapped_value = self._map_enum_value(
-                        driver_key, cond.value, enum_maps
+                    mapped_value = self._resolve_checkbox_or_enum(
+                        cond, enum_maps, label_to_enum
                     )
+
+                    if mapped_value is None:
+                        unmapped += 1
+                        continue
+
                     props[driver_key] = {"const": mapped_value}
+
+                if not props:
+                    empty_props += 1
+                    continue
+
                 schema = {"properties": props}
                 scope = "#/properties"
 
-            # 🔹 Build JSONForms-style rule entry
+            # Now construct final rule entry
             rule_entry = {
                 "effect": "SHOW" if rule.effect.upper() == "VISIBLE" else "HIDE",
                 "condition": {"scope": scope, "schema": schema},
             }
 
-            # 🔹 Compute fully qualified key
-            qualified_target = self._get_qualified_name(
-                rule.target, parent_map, xdp_root
+            # Compute fully-qualified key
+            qualified_target = compute_full_xdp_path(
+                self._find_node_by_name(rule.target, xdp_root), parent_map
+            )
+            emitted.setdefault(qualified_target, {"rules": []})["rules"].append(
+                rule_entry
             )
 
-            if qualified_target not in emitted:
-                emitted[qualified_target] = {"rules": [rule_entry]}
-            else:
-                emitted[qualified_target]["rules"].append(rule_entry)
+        # --- Emit diagnostics ---
+        print(f"[JsonFormsEmitter]   unmapped rules: {unmapped}")
+        print(f"[JsonFormsEmitter]   empty_props rules: {empty_props}")
 
-        # Post-process: collapse per-target rules into a single JSONForms "rule" object
+        # Merge rule lists into single rules
         for key, entry in list(emitted.items()):
             merged = self._merge_rules_to_single(entry.get("rules", []))
             if merged:
                 entry["rule"] = merged
             entry.pop("rules", None)
 
-        context["jsonforms_visibility_rules"] = emitted
+        context[CTX_JSONFORMS_RULES] = emitted
+
+        print(f"[JsonFormsEmitter] OUT jsonforms rules: {len(emitted)}")
         print("[JsonFormsEmitter] Done.\n")
+
         return context
-
-    def _get_qualified_name(self, target: str, parent_map: dict, xdp_root):
-        """Return a fully qualified XDP path name for the given target."""
-        target_node = self._find_node_by_name(target, xdp_root)
-        if not target_node:
-            print(f"  [WARN] Could not find node for {target}; using fallback name")
-            return target
-
-        parts = []
-        node = target_node
-        while node is not None:
-            name = node.attrib.get("name")
-            if name:
-                parts.insert(0, name)
-            node = parent_map.get(node)
-        return ".".join(parts)
 
     def _find_node_by_name(self, name: str, xdp_root):
         """Find the first element in the tree whose name attribute matches the given name."""
@@ -251,3 +294,25 @@ class JsonFormsEmitter:
                 },
             },
         }
+
+    def _resolve_checkbox_or_enum(self, cond, enum_maps, label_to_enum):
+        raw = str(cond.value).strip()
+        raw_lc = raw.lower()
+
+        # 1) direct hit
+        if raw in label_to_enum:
+            driver, const_val = label_to_enum[raw]
+            enum_map = enum_maps.get(driver, {})
+            return enum_map.get(str(const_val), const_val)
+
+        # 2) fuzzy hit (handles chkXxx names vs labels)
+        for label, (driver, const_val) in label_to_enum.items():
+            lab_lc = str(label).strip().lower()
+            if raw_lc == lab_lc or raw_lc in lab_lc or lab_lc in raw_lc:
+                enum_map = enum_maps.get(driver, {})
+                return enum_map.get(str(const_val), const_val)
+
+        # 3) normal enum mapping by driver
+        driver_key = cond.driver.split(".")[-1]
+        mapping = enum_maps.get(driver_key)
+        return mapping.get(str(raw), raw) if mapping else raw

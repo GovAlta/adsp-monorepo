@@ -1,3 +1,6 @@
+from constants import CTX_FINAL_RULES, CTX_RAW_RULES, CTX_RESOLVED_RULES
+from visibility_rules.stages.radio_group_collapser import RadioGroupCollapser
+from visibility_rules.stages.value_resolver import ValueResolver
 from visibility_rules.stages.visibility_script_extractor import (
     VisibilityScriptExtractor,
 )
@@ -8,30 +11,25 @@ from visibility_rules.stages.jsonforms_emitter import JsonFormsEmitter
 
 
 class VisibilityRulesPipeline:
-    """
-    Orchestrates all stages of the visibility rules processing pipeline.
-    """
-
     def __init__(self):
         self.stages = [
             VisibilityScriptExtractor(),
             DriverResolver(),
+            ValueResolver(),
+            RadioGroupCollapser(),
             ConditionNormalizer(),
             RuleConsolidator(),
             JsonFormsEmitter(),
         ]
 
     def run(self, context):
-        """
-        Run the full pipeline starting from the XDP root node.
-        """
-        context = {**context, "rules": []}
-        print(f"[VisibilityRulesPipeline] context is: {context.keys()}")
-
         for stage in self.stages:
-            print(f"[{stage.__class__.__name__}] Starting...")
             context = stage.process(context)
-            print(f"[{stage.__class__.__name__}] Done.\n")
+            print(
+                f"[PIPE] After {stage.__class__.__name__}: "
+                f"resolved={len(context.get('resolved_visibility_rules', []))}, "
+                f"final={len(context.get('rules', []))}, "
+                f"raw={len(context.get('raw_visibility_rules', []))}"
+            )
 
-        print("[VisibilityRulesPipeline] Pipeline complete.")
         return context

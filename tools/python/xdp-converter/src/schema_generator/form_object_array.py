@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 from schema_generator.form_element import FormElement
 from xdp_parser.parse_context import ParseContext
@@ -33,6 +33,34 @@ class FormObjectArray(FormElement):
         # return {self.name: {"type": "array", "items": items}}
 
     def build_ui_schema(self):
-        control = {"type": "Control", "scope": f"#/properties/{self.name}"}
-        control["label"] = self.label if self.label else self.name
-        return control
+        detail_elements = []
+
+        for child in self.elements:
+            child_ui = child.build_ui_schema()
+
+            # 🔥 Rewrite the child scope so it lives under the array's item schema
+            if isinstance(child_ui, dict) and "scope" in child_ui:
+                original = child_ui["scope"]  # e.g., "#/properties/cboForestryCode"
+                name = original.split("/")[-1]  # e.g., "cboForestryCode"
+
+                # Inject correct array path
+                child_ui["scope"] = f"#/properties/{self.name}/items/properties/{name}"
+
+            detail_elements.append(child_ui)
+
+        return {
+            "type": "ListWithDetail",
+            "scope": f"#/properties/{self.name}",
+            "label": self.label or self.name,
+            "options": {
+                "detail": {
+                    "type": "VerticalLayout",
+                    "elements": detail_elements,
+                }
+            },
+        }
+
+    # def build_ui_schema(self):
+    #     control = {"type": "Control", "scope": f"#/properties/{self.name}"}
+    #     control["label"] = self.label if self.label else self.name
+    #     return control

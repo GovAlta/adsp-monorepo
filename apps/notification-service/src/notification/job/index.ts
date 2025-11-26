@@ -1,4 +1,4 @@
-import { Subscribable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Logger } from 'winston';
 import {
   AdspId,
@@ -11,7 +11,6 @@ import {
 import { DomainEventWorkItem, WorkQueueService } from '@core-services/core-common';
 import { createProcessEventJob } from './processEvent';
 import { SubscriptionRepository } from '../repository';
-import { TemplateService } from '../template';
 import { NotificationWorkItem, Providers } from '../types';
 import { createSendNotificationJob } from './sendNotification';
 
@@ -23,7 +22,7 @@ interface JobProps {
   directory: ServiceDirectory;
   configurationService: ConfigurationService;
   eventService: EventService;
-  events: Subscribable<DomainEventWorkItem>;
+  events: Observable<DomainEventWorkItem>;
   queueService: WorkQueueService<NotificationWorkItem>;
   subscriptionRepository: SubscriptionRepository;
   providers: Providers;

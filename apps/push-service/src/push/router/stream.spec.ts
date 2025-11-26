@@ -1,7 +1,7 @@
 import { adspId, TenantService, EventService, User, TokenProvider } from '@abgov/adsp-service-sdk';
 import { DomainEventSubscriberService, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Namespace, Socket } from 'socket.io';
 import { Logger } from 'winston';
 import { getStream, getStreams, subscribeBySse, mapStreamItem } from './stream';
@@ -40,7 +40,7 @@ describe('stream router', () => {
 
   const eventServiceAmpMock = {
     enqueue: jest.fn(),
-    getItems: jest.fn(() => of()),
+    getItems: jest.fn(() => of() as Observable<unknown>),
     isConnected: jest.fn(),
   };
 
