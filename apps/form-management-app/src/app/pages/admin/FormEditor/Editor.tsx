@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './Editor.scss';
-import { Tab, Tabs } from '../../../components/Tabs';
 import { DataEditorContainer } from './DataEditorContainer';
 import { UIEditorContainer } from './UiEditorContainer';
 import {
@@ -15,6 +14,7 @@ import type * as monacoNS from 'monaco-editor';
 
 import { FormDefinition } from '../../../state/types';
 import { Buttons } from './Button';
+import { GoATabs, GoATab } from '@abgov/react-components';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -109,8 +109,8 @@ export const Editor: React.FC<EditorProps> = ({
       <div className="name-description-data-schema">
         <div className="form-editor-title">Form / Definition Editor</div>
         <hr className="hr-resize" />
-        <Tabs activeIndex={activeIndex} data-testid="form-editor-tabs">
-          <Tab label="Data schema" data-testid="dcm-form-editor-data-schema-tab">
+        <GoATabs data-testid="form-editor-tabs">
+          <GoATab heading="Data schema" data-testid="dcm-form-editor-data-schema-tab">
             <DataEditorContainer
               errors={errors}
               editorErrors={editorErrors}
@@ -118,8 +118,8 @@ export const Editor: React.FC<EditorProps> = ({
               setDraftDataSchema={setDraftDataSchema}
               setEditorErrors={setEditorErrors}
             />
-          </Tab>
-          <Tab label="UI schema" data-testid="dcm-form-editor-ui-schema-tab">
+          </GoATab>
+          <GoATab heading="UI schema" data-testid="dcm-form-editor-ui-schema-tab">
             <UIEditorContainer
               errors={errors}
               editorErrors={editorErrors}
@@ -127,8 +127,8 @@ export const Editor: React.FC<EditorProps> = ({
               setDraftUiSchema={setDraftUiSchema}
               setEditorErrors={setEditorErrors}
             />
-          </Tab>
-        </Tabs>
+          </GoATab>
+        </GoATabs>
 
         <Buttons
           getCurrentEditorRef={getCurrentEditorRef}
@@ -140,7 +140,6 @@ export const Editor: React.FC<EditorProps> = ({
           unfoldAll={unfoldAll}
           isFormUpdated={isFormUpdated}
           validators={validators}
-        
         />
       </div>
       <div className="form-preview-container"></div>
