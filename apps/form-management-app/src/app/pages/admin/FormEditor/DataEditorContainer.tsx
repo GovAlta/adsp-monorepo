@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import './Editor.scss';
-import { isValidJSONSchemaCheck } from '../../../components/checkInput';
+import { isValidJSONSchemaCheck } from '../../../utils/checkInput';
 import { useWindowDimensions } from '../../../utils/useWindowDimensions';
 import { GoAFormItem } from '@abgov/react-components';
 import MonacoEditor from '@monaco-editor/react';

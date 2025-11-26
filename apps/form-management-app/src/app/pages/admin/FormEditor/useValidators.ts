@@ -1,7 +1,7 @@
-import { ValidationAction } from '../../../components/checkInput';
+import { ValidationAction } from '../../../utils/checkInput';
 
 import { useState } from 'react';
-import { checkInput, Validator } from '../../../components/checkInput';
+import { checkInput, Validator } from '../../../utils/checkInput';
 
 /**
  * A React Hook for creating a set of validation methods that will

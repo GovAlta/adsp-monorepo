@@ -9,7 +9,7 @@ import {
 } from '../../../utils/autoComplete';
 import { useMonaco } from '@monaco-editor/react';
 import { useValidators } from './useValidators';
-import { badCharsCheck, isNotEmptyCheck, wordMaxLengthCheck } from '../../../components/checkInput';
+import { badCharsCheck, isNotEmptyCheck, wordMaxLengthCheck } from '../../../utils/checkInput';
 import type * as monacoNS from 'monaco-editor';
 
 import { FormDefinition } from '../../../state/types';
@@ -25,7 +25,6 @@ export interface EditorProps {
   isFormUpdated: boolean;
   updateFormDefinition: (form: FormDefinition) => void;
   resolvedDataSchema: Record<string, unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }
 
 export const Editor: React.FC<EditorProps> = ({
