@@ -119,7 +119,7 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
 
       {event?.isAllDay === true && (
         <div>
-          <GoABadge type="midtone" content="All day" />
+          <GoABadge type="midtone" content="All day" icon={false} />
         </div>
       )}
 
@@ -127,7 +127,7 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
 
       {event?.isPublic === true && (
         <div>
-          <GoABadge type="midtone" content=" Public " />
+          <GoABadge type="midtone" content=" Public " icon={false} />
         </div>
       )}
     </EventDetailTd>

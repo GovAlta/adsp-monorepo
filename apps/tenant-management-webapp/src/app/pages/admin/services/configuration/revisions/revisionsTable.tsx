@@ -54,8 +54,8 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
           <div className="number-badge">
             {revision.revision}
             <div>
-              {isLatest && <GoABadge type="information" content="latest" />}
-              {isActive && <GoABadge type="success" content="active" />}
+              {isLatest && <GoABadge type="information" content="latest" icon={false} />}
+              {isActive && <GoABadge type="success" content="active" icon={false} />}
             </div>
           </div>
         </td>

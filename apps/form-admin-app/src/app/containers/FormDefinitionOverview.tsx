@@ -179,7 +179,11 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                   <tr key={event.urn}>
                     <td>
                       {definition.intake?.urn === event.urn && (
-                        <GoABadge type="success" content={definition.intake.isUpcoming ? 'Upcoming' : 'Active'} />
+                        <GoABadge
+                          type="success"
+                          content={definition.intake.isUpcoming ? 'Upcoming' : 'Active'}
+                          icon={false}
+                        />
                       )}
                     </td>
                     <td>{event.start.toFormat('LLL d, yyyy ttt')}</td>
