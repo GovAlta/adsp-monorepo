@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
+import './Editor.scss';
 import { GoAButtonGroup, GoAButton } from '@abgov/react-components';
 import { useNavigate } from 'react-router-dom';
-import { SaveFormModal } from '../../../components/saveModal';
-import { FinalButtonPadding } from './styled-components';
+import { SaveFormModal } from './saveModal';
 import type * as monacoNS from 'monaco-editor';
 import { FormDefinition } from '../../../state/types';
 
@@ -26,22 +25,18 @@ export interface EditorProps {
   isFormUpdated: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   validators: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  indicator: any;
 }
 
 export const Buttons: React.FC<EditorProps> = ({
   activeIndex,
   editorErrors,
   definition,
-
   updateFormDefinition,
   getCurrentEditorRef,
   foldAll,
   unfoldAll,
   isFormUpdated,
   validators,
-  indicator,
 }) => {
   const [saveModal, setSaveModal] = useState({ visible: false });
   const navigate = useNavigate();
@@ -52,7 +47,7 @@ export const Buttons: React.FC<EditorProps> = ({
 
   return (
     <div>
-      <FinalButtonPadding>
+      <div className='final-button-padding'>
         <GoAButtonGroup alignment="start">
           <GoAButton
             type="tertiary"
@@ -114,7 +109,7 @@ export const Buttons: React.FC<EditorProps> = ({
             Back
           </GoAButton>
         </GoAButtonGroup>
-      </FinalButtonPadding>
+      </div>
       <SaveFormModal
         open={saveModal.visible}
         onDontSave={() => {
@@ -133,12 +128,3 @@ export const Buttons: React.FC<EditorProps> = ({
     </div>
   );
 };
-
-const Main = styled.div`
-  flex: 1 1 auto;
-  padding: var(--goa-space-l, 24px) 0;
-`;
-
-const AdminLayout = styled.div`
-  display: flex;
-`;

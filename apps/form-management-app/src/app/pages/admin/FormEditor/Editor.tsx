@@ -1,17 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import styled from 'styled-components';
+import './Editor.scss';
 import { Tab, Tabs } from '../../../components/Tabs';
 import { DataEditorContainer } from './DataEditorContainer';
-
 import { UIEditorContainer } from './UiEditorContainer';
-import { NameDescriptionDataSchema, FormEditorTitle, FormEditor, FormPreviewContainer } from './styled-components';
 import {
   FormDataSchemaElementCompletionItemProvider,
   FormPropertyValueCompletionItemProvider,
   FormUISchemaElementCompletionItemProvider,
-} from '../../../components/autoComplete';
+} from '../../../utils/autoComplete';
 import { useMonaco } from '@monaco-editor/react';
-import { useValidators } from '../../../components/useValidators';
+import { useValidators } from './useValidators';
 import { badCharsCheck, isNotEmptyCheck, wordMaxLengthCheck } from '../../../components/checkInput';
 import type * as monacoNS from 'monaco-editor';
 
@@ -28,7 +26,6 @@ export interface EditorProps {
   updateFormDefinition: (form: FormDefinition) => void;
   resolvedDataSchema: Record<string, unknown>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  indicator?: any;
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -37,7 +34,6 @@ export const Editor: React.FC<EditorProps> = ({
   setDraftUiSchema,
   updateFormDefinition,
   isFormUpdated,
-  indicator,
   resolvedDataSchema,
 }) => {
   const { errors, validators } = useValidators(
@@ -79,8 +75,6 @@ export const Editor: React.FC<EditorProps> = ({
     return null;
   };
 
-  // Resolved data schema (with refs inlined) is used to generate suggestions.
-
   useEffect(() => {
     if (monaco) {
       const valueProvider = monaco.languages.registerCompletionItemProvider(
@@ -111,9 +105,9 @@ export const Editor: React.FC<EditorProps> = ({
   }
 
   return (
-    <FormEditor>
-      <NameDescriptionDataSchema>
-        <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
+    <div className="form-editor">
+      <div className="name-description-data-schema">
+        <div className="form-editor-title">Form / Definition Editor</div>
         <hr className="hr-resize" />
         <Tabs activeIndex={activeIndex} data-testid="form-editor-tabs">
           <Tab label="Data schema" data-testid="dcm-form-editor-data-schema-tab">
@@ -146,19 +140,10 @@ export const Editor: React.FC<EditorProps> = ({
           unfoldAll={unfoldAll}
           isFormUpdated={isFormUpdated}
           validators={validators}
-          indicator={indicator}
+        
         />
-      </NameDescriptionDataSchema>
-      <FormPreviewContainer></FormPreviewContainer>
-    </FormEditor>
+      </div>
+      <div className="form-preview-container"></div>
+    </div>
   );
 };
-
-const Main = styled.div`
-  flex: 1 1 auto;
-  padding: var(--goa-space-l, 24px) 0;
-`;
-
-const AdminLayout = styled.div`
-  display: flex;
-`;

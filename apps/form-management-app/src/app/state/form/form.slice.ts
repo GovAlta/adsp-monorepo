@@ -6,8 +6,7 @@ import axios from 'axios';
 import * as _ from 'lodash';
 import { AppState } from '../store';
 import { getAccessToken } from '../user/user.slice';
-import { FORM_SERVICE_ID } from '../types';
-import { FormDefinition } from '../types';
+import { FORM_SERVICE_ID, CONFIGURATION_SERVICE_ID, FormDefinition } from '../types'
 export const FORM_FEATURE_KEY = 'form';
 
 export type ValidationError = JsonFormsCore['errors'][number];
@@ -41,7 +40,6 @@ export interface FormState {
   };
 }
 
-const CONFIGURATION_SERVICE_ID = 'urn:ads:platform:configuration-service:v2';
 const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 
 const hasProperties = (schema: JsonSchema): boolean => {
@@ -159,7 +157,7 @@ export const updateDefinition = createAsyncThunk(
       const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
       const token = await getAccessToken();
       const { data } = await axios.patch<{ latest: { configuration: FormDefinition } }>(
-        new URL(`v2/configuration/form-service/${definition.id}`, configurationService).href,
+        new URL(`configuration/v2/configuration/form-service/${definition.id}`, configurationService).href,
         { operation: 'REPLACE', configuration: definition },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -200,7 +198,7 @@ export const openEditorForDefinition = createAsyncThunk<
 
       if (configurationService && token) {
         const { data } = await axios.get<{ latest: { configuration: FormDefinition } }>(
-          new URL(`v2/configuration/form-service/${id}`, configurationService).href,
+          new URL(`configuration/v2/configuration/form-service/${id}`, configurationService).href,
 
           { headers: { Authorization: `Bearer ${token}` } }
         );

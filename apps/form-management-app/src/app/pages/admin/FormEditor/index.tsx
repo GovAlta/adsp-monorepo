@@ -1,16 +1,9 @@
 import React, { useEffect } from 'react';
-import styled from 'styled-components';
 import { useParams } from 'react-router-dom';
-import { FormTemplateEditorContainer } from './styled-components';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, AppState } from '../../../state';
-import {
-  updateDefinition,
-  openEditorForDefinition,
-
-} from '../../../state/form/form.slice';
+import { updateDefinition, openEditorForDefinition} from '../../../state/form/form.slice';
 import { isFormUpdatedSelector } from '../../../state/form/selectors';
-
 import { Editor } from './Editor';
 import { modifiedDefinitionSelector } from '../../../state/form/selectors';
 import { setDraftDataSchema, setDraftUiSchema } from '../../../state/form/form.slice';
@@ -55,8 +48,8 @@ const EditorWrapper = (): JSX.Element => {
   >;
 
   return (
-    <AdminLayout>
-      <FormTemplateEditorContainer>
+    <div>
+      <div className="form-template-editor-container">
         {definition?.id && (
           <Editor
             updateFormDefinition={updateFormDefinition}
@@ -67,18 +60,9 @@ const EditorWrapper = (): JSX.Element => {
             resolvedDataSchema={resolvedDataSchema}
           />
         )}
-      </FormTemplateEditorContainer>
-    </AdminLayout>
+      </div>
+    </div>
   );
 };
-
-const Main = styled.div`
-  flex: 1 1 auto;
-  padding: var(--goa-space-l, 24px) 0;
-`;
-
-const AdminLayout = styled.div`
-  display: flex;
-`;
 
 export default EditorWrapper
