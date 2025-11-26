@@ -9,20 +9,20 @@ class FormLayout(FormElement):
         self.elements = elements
         self.is_leaf = False
 
-    # def build_ui_schema(self):
-    #     ui_schema = {"type": self.type}
-    #     ui_schema["elements"] = []
-    #     for element in self.elements:
-    #         child = element.to_ui_schema()
-    #         if child:
-    #             ui_schema["elements"].append(child)
-    #     return ui_schema
-
     def build_ui_schema(self):
-        schemas = []
+        ui_schema = {"type": self.type}
+        ui_schema["elements"] = []
         for element in self.elements:
-            schemas.append(element.build_ui_schema())
-        return schemas
+            child = element.to_ui_schema()
+            if child:
+                ui_schema["elements"].append(child)
+        return ui_schema
+
+    # def build_ui_schema(self):
+    #     schemas = []
+    #     for element in self.elements:
+    #         schemas.append(element.build_ui_schema())
+    #     return schemas
 
     def has_json_schema(self):
         return True
