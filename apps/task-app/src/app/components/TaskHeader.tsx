@@ -42,9 +42,9 @@ const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({
         </span>
         <span>
           {isLive ? (
-            <GoABadge mt="m" mb="s" type="success" content="Live" />
+            <GoABadge mt="m" mb="s" type="success" content="Live" icon={false} />
           ) : (
-            <GoABadge mt="m" mb="s" type="information" content="Not live" />
+            <GoABadge mt="m" mb="s" type="information" content="Not live" icon={false} />
           )}
         </span>
       </div>

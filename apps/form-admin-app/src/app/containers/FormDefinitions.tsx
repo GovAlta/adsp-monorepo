@@ -24,7 +24,7 @@ import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
 
 const FeatureBadge: FunctionComponent<{ feature: string; hasFeature?: boolean }> = ({ feature, hasFeature }) => {
-  return hasFeature && <GoABadge type="information" content={feature} mr="xs" mb="xs" />;
+  return hasFeature && <GoABadge type="information" content={feature} mr="xs" mb="xs" icon={false} />;
 };
 
 interface FormDefinitionRowProps {

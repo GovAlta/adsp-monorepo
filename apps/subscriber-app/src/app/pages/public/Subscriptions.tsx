@@ -164,16 +164,16 @@ const Subscriptions = (): JSX.Element => {
                 <p>
                   <VerificationWrapper>
                     {isEmailVerified !== undefined && isEmailVerified === true && (
-                      <GoABadge type="success" content="Verified" />
+                      <GoABadge type="success" content="Verified" icon={false} />
                     )}
                     {isEmailVerified !== undefined && isEmailVerified === false && (
                       <div>
                         {validCodeExists ? (
                           <div>
-                            <GoABadge type="midtone" content="Pending" />
+                            <GoABadge type="midtone" content="Pending" icon={false} />
                           </div>
                         ) : (
-                          <GoABadge type="important" content="Not verified" />
+                          <GoABadge type="important" content="Not verified" icon={false} />
                         )}
                       </div>
                     )}

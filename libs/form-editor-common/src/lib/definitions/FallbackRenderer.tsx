@@ -4,7 +4,7 @@ import { GoABadge, GoAButton } from '@abgov/react-components';
 function fallbackRender({ error, resetErrorBoundary }) {
   return (
     <div role="alert">
-      <GoABadge type="emergency" content="Unexpected error in JSON Form" />
+      <GoABadge type="emergency" content="Unexpected error in JSON Form" icon={false} />
       <pre>{error.message}</pre>
       <GoAButton
         onClick={() => {

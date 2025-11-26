@@ -128,7 +128,12 @@ export const TenantIdp = (): JSX.Element => {
           <p>Found {`${email} in core and tenant realms.`}</p>
           <p>
             {`The user id in core realm is: `}
-            <GoABadge type="information" testId="user-idp-in-core-badge" content={`${fetchUserIdState?.id}`} />
+            <GoABadge
+              type="information"
+              testId="user-idp-in-core-badge"
+              content={`${fetchUserIdState?.id}`}
+              icon={false}
+            />
             {copied !== fetchUserIdState?.id && (
               <GoAIconButton
                 testId="copy-user-id-btn"

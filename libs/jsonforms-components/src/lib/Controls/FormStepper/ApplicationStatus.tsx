@@ -12,9 +12,9 @@ export const ApplicationStatus = ({
   const completed = completedGroups;
   const badge =
     totalGroups === completed ? (
-      <GoABadge type="success" content="Complete"></GoABadge>
+      <GoABadge type="success" content="Complete" icon={false} />
     ) : (
-      <GoABadge type="information" content="Incomplete"></GoABadge>
+      <GoABadge type="information" content="Incomplete" icon={false} />
     );
   const mainHeading = 'Application Progress';
   const progressPercentageAccurate = (100 * completed) / totalGroups;
