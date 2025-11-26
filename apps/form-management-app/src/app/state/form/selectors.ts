@@ -1,4 +1,3 @@
-import { AppState } from '../store';
+// The selectors have been moved to form.slice.ts to keep them close to the state definition.
 
-export const selectFormDefinitions = (state: AppState) => state.form.definitions;
-export const selectFormLoading = (state: AppState) => state.form.loading;
+export * from './form.slice';

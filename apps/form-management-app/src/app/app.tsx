@@ -56,6 +56,7 @@ export function App() {
             <Route index element={<TenantManagement />} />
             <Route path="forms" element={<FormDefinitions />} />
             <Route path="editor/:formId" element={<FormEditor />} />
+            <Route path="preview" element={<FormPreview />} />
             <Route path="preview/:formId" element={<FormPreview />} />
           </Route>
         </Routes>

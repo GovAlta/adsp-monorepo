@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   AppDispatch,
   getFormDefinitions,
-  selectFormDefinitions,
+  definitionsSelector,
   configInitializedSelector,
   userSelector,
   selectIsAuthenticated,
@@ -11,14 +11,14 @@ import {
 
 const FormDefinitions = (): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
-  const definitions = useSelector(selectFormDefinitions);
+  const definitions = useSelector(definitionsSelector);
   const configInitialized = useSelector(configInitializedSelector);
   const { initialized: userInitialized } = useSelector(userSelector);
   const authenticated = useSelector(selectIsAuthenticated);
 
   useEffect(() => {
     if (configInitialized && userInitialized && authenticated) {
-      dispatch(getFormDefinitions());
+      dispatch(getFormDefinitions({}));
     }
   }, [dispatch, configInitialized, userInitialized, authenticated]);
 
