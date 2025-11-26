@@ -66,11 +66,24 @@ class UiSchemaGenerator:
             buffer.clear()
 
         for el in elements:
+
+            # --- NEW RULE-PROTECTION LOGIC ---
+            if (
+                isinstance(el, dict)
+                and el.get("type") == "HelpContent"
+                and "rule" in el
+            ):
+                flush_buffer()
+                # Recurse but keep node intact
+                new_elems.append(self._consolidate_help_blocks(el))
+                continue
+
+            # --- EXISTING CONSOLIDATION LOGIC ---
             if isinstance(el, dict) and el.get("type") == "HelpContent":
                 buffer.append(el)
                 continue
 
-            # non-help element → flush buffer, then recurse into child
+            # non-help element → flush buffer, then recurse
             flush_buffer()
             if isinstance(el, dict):
                 new_elems.append(self._consolidate_help_blocks(el))
