@@ -1,2 +1,2 @@
 export { BackButton } from './BackButton';
-export * from './styled-components';
+export { default as styles } from './components.module.scss';

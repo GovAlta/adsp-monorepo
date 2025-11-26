@@ -24,7 +24,7 @@ import {
 } from '../../../state/form/form.slice';
 import { AppDispatch } from '../../../state/store';
 import { configInitializedSelector, userSelector, selectIsAuthenticated } from '../../../state';
-import { BackButton, NavigationWrapper, SkeletonWrapper, LoadMoreWrapper } from '../../../components';
+import { BackButton, styles } from '../../../components';
 
 const FormPreview = (): JSX.Element => {
   const location = useLocation();
@@ -84,9 +84,9 @@ const FormPreview = (): JSX.Element => {
   if (loading && definitions.length === 0) {
     return (
       <GoAContainer>
-        <NavigationWrapper>
+        <div className={styles.navigationWrapper}>
           <BackButton onClick={handleBackToLanding}>Back to Landing</BackButton>
-        </NavigationWrapper>
+        </div>
 
         <GoAGrid minChildWidth="100%">
           <div>
@@ -95,13 +95,13 @@ const FormPreview = (): JSX.Element => {
           </div>
         </GoAGrid>
 
-        <SkeletonWrapper>
+        <div className={styles.skeletonWrapper}>
           <GoASkeleton type="card" lineCount={3} maxWidth="100%" />
           <GoASkeleton type="card" lineCount={3} maxWidth="100%" />
           <GoASkeleton type="card" lineCount={3} maxWidth="100%" />
           <GoASkeleton type="card" lineCount={3} maxWidth="100%" />
           <GoASkeleton type="card" lineCount={3} maxWidth="100%" />
-        </SkeletonWrapper>
+        </div>
       </GoAContainer>
     );
   }
@@ -109,11 +109,11 @@ const FormPreview = (): JSX.Element => {
   if (isViewingSubmissions && selectedDefinition) {
     return (
       <GoAContainer>
-        <NavigationWrapper>
+        <div className={styles.navigationWrapper}>
           <BackButton onClick={handleBackToDefinitions}>Back to Form Definitions</BackButton>
           <h1>Submissions for: {selectedDefinition.name}</h1>
           <p>{selectedDefinition.description}</p>
-        </NavigationWrapper>
+        </div>
         <FormSubmissions definitionId={selectedDefinition.id} />
       </GoAContainer>
     );
@@ -121,9 +121,9 @@ const FormPreview = (): JSX.Element => {
 
   return (
     <GoAContainer>
-      <NavigationWrapper>
+      <div className={styles.navigationWrapper}>
         <BackButton onClick={handleBackToLanding}>Back to Landing</BackButton>
-      </NavigationWrapper>
+      </div>
 
       <GoAGrid minChildWidth="100%">
         <div>
@@ -185,11 +185,11 @@ const FormPreview = (): JSX.Element => {
           </GoATable>
 
           {nextPage && (
-            <LoadMoreWrapper>
+            <div className={styles.loadMoreWrapper}>
               <GoAButton type="secondary" disabled={loading} onClick={handleLoadMore}>
                 {loading ? 'Loading...' : 'Load More Definitions'}
               </GoAButton>
-            </LoadMoreWrapper>
+            </div>
           )}
         </>
       ) : (

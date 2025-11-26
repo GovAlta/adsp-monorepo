@@ -10,7 +10,7 @@ import {
   GoASkeleton,
 } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
-import { ContentWrapper, FormSection, LoadingSkeletonWrapper } from '../components';
+import { styles } from '../components';
 import { useNavigate } from 'react-router-dom';
 import {
   getFormSubmissions,
@@ -61,10 +61,10 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
   }, [dispatch, definitionId]);
 
   return (
-    <ContentWrapper>
+    <div className={styles.contentWrapper}>
       <h2>Form Submissions</h2>
 
-      <FormSection>
+      <div className={styles.formSection}>
         <GoAFormItem label="Disposition Status">
           <GoADropdown
             relative={true}
@@ -99,15 +99,15 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
             Find submissions
           </GoAButton>
         </GoAButtonGroup>
-      </FormSection>
+      </div>
 
       {loading && submissions.length === 0 && (
-        <LoadingSkeletonWrapper>
+        <div className={styles.loadingSkeletonWrapper}>
           <GoASkeleton type="card" lineCount={3} maxWidth="100%" />
           <GoASkeleton type="card" lineCount={3} maxWidth="100%" />
           <GoASkeleton type="card" lineCount={3} maxWidth="100%" />
           <GoASkeleton type="card" lineCount={3} maxWidth="100%" />
-        </LoadingSkeletonWrapper>
+        </div>
       )}
 
       {submissions && submissions.length > 0 ? (
@@ -154,6 +154,6 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
           </GoACallout>
         )
       )}
-    </ContentWrapper>
+    </div>
   );
 };
