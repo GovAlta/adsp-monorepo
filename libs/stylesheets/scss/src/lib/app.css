@@ -167,7 +167,4 @@ input[type='submit'].goa-button:disabled.goa--tertiary {
   resize: none;
 }
 
-thead th:last-child {
-  text-align: end;
-}
 /* == OVERRIDES END */
