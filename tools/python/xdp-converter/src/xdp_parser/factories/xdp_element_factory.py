@@ -56,4 +56,9 @@ class XdpElementFactory(AbstractXdpFactory):
     def handle_group(
         self, elem: ET.Element, children: list, label: str
     ) -> Optional[Any]:
-        return XdpLayout(elem, "VerticalLayout", children)
+        if len(children) > 1:
+            return XdpLayout(elem, "VerticalLayout", children)
+        elif len(children) == 1:
+            return children[0]
+        else:
+            return None

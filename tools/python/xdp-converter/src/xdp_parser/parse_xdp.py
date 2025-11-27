@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 from typing import List
-from constants import CTX_RADIO_GROUPS, CTX_VISIBILITY_GROUPS
+from constants import CTX_RADIO_GROUPS
 from xdp_parser.control_labels import ControlLabels, inline_caption
 from xdp_parser.control_helpers import is_checkbox, is_radio_button
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
@@ -26,61 +26,64 @@ class XdpParser:
         self.control_labels = None
 
     # ----------------------------------------------------------------------
+    # Small helper: maybe wrap a subform in a group due to visibility rules
+    # ----------------------------------------------------------------------
+    def _maybe_group_subform(
+        self, subform: ET.Element, child_controls: List[XdpElement]
+    ) -> List[XdpElement]:
+        """
+        If this subform is in context.visibility_groups, wrap its children
+        in a group element via factory.handle_group. Otherwise just return
+        the children unchanged.
+        """
+        name = subform.get("name") or ""
+
+        # visibility_groups may or may not be on the context depending on caller.
+        visibility_groups = getattr(self.context, "visibility_groups", None) or set()
+
+        if name and name in visibility_groups:
+            print(f"[XdpParser] Grouping subform '{name}' due to visibility rules.")
+            label = inline_caption(subform) or name
+            group = self.factory.handle_group(subform, child_controls, label)
+            if group is not None:
+                return [group]
+
+        # Fallback: just return the child controls unchanged
+        return child_controls
+
+    # ----------------------------------------------------------------------
     # Entry point
     # ----------------------------------------------------------------------
     def parse_xdp(self) -> List:
         """
         Parse the XDP, returning a structured list of factory-built controls/sections.
-
-        Args:
-            root: stripped-ns XDP root element
-            parent_map: optional element->parent map (used for list-control detection)
-            visibility_rules: optional rules dict to detect hidden-but-controlled fields
         """
 
         form_root = self.find_form_root(self.context.get("root"))
         subforms = self.find_top_subforms(form_root)
         self.control_labels = ControlLabels(form_root, self.context)
 
-        all_elements = []
+        all_elements: List[XdpElement] = []
         for subform in subforms:
-            elements = self.parse_subform(subform)
+            elements = self.parse_subform(subform)  # -> List[XdpElement]
             if elements:
-                # Preserve grouping for top-level subforms (e.g. Adult, Child)
+                # Top-level grouping (e.g., Section3Emergency etc.)
                 grouped = self._maybe_group_subform(subform, elements)
                 all_elements.extend(grouped)
 
         return remove_duplicates(self.to_form_elements(all_elements))
 
-    def _maybe_group_subform(self, subform: ET.Element, child_controls: List):
-        """
-        If a subform is controlled by visibility rules, wrap its children
-        in a layout group via the factory.
-
-        Otherwise return the children unchanged.
-
-        Returns:
-            A list containing either:
-            - the grouped subform element (wrapped), OR
-            - the flat list of children
-        """
-        visibility_groups = self.context.visibility_groups or set()
-        name = subform.get("name") or ""
-
-        # Only group if visibility rules explicitly target this subform
-        if name and name in visibility_groups:
-            print(f"[XdpParser] Grouping subform '{name}' due to visibility rules.")
-            label = inline_caption(subform) or name
-            group = self.factory.handle_group(subform, child_controls, label)
-            if group:
-                return [group]
-
-        # Default: flatten
-        return child_controls
-
     def to_form_elements(self, xdp_elements) -> List:
         form_elements = []
         for xdp_element in xdp_elements:
+            if not isinstance(xdp_element, XdpElement):
+                # Defensive logging so we can see where the bad type came from
+                print(
+                    "[XdpParser] WARNING: Non-XdpElement in to_form_elements: "
+                    f"{type(xdp_element)} | value={xdp_element}"
+                )
+                continue
+
             form_element = xdp_element.to_form_element()
             if form_element:
                 form_elements.append(form_element)
@@ -89,8 +92,8 @@ class XdpParser:
     # ----------------------------------------------------------------------
     # Core traversal
     # ----------------------------------------------------------------------
-    def parse_subform(self, subform: ET.Element) -> List:
-        controls = []
+    def parse_subform(self, subform: ET.Element) -> List[XdpElement]:
+        controls: List[XdpElement] = []
 
         # Skip list-control containers (Add/Remove) — already modelled elsewhere
         if is_add_remove_container(
@@ -118,29 +121,12 @@ class XdpParser:
                 controls.append(control)
             return remove_duplicates(controls)
 
-        # --- Default: recurse into simple controls ---
         form_elements = self.find_simple_controls(subform)
-
-        if not form_elements:
-            return controls
-
-        # NEW: if this subform is a visibility-group target, wrap it
-        visibility_groups = self.context.get("visibility_groups", set()) or set()
-        name = subform.get("name") or ""
-
-        if name and name in visibility_groups:
-            print(f"[XdpParser] Grouping subform '{name}' due to visibility rules.")
-            label = inline_caption(subform) or name
-            group = self.factory.handle_group(subform, form_elements, label)
-            if group:
-                return [group]
-
-        # Otherwise, just flatten the children
         controls.extend(form_elements)
         return controls
 
     def find_simple_controls(self, node: ET.Element) -> List[XdpElement]:
-        controls = []
+        controls: List[XdpElement] = []
         elements = list(node)
         i = 0
         while i < len(elements):
@@ -186,9 +172,10 @@ class XdpParser:
 
             # Nested subforms (containers)
             if is_subform(elem):
-                nested_controls = self.parse_subform(elem)
+                nested_controls = self.parse_subform(elem)  # -> List[XdpElement]
                 if nested_controls:
-                    grouped = self._maybe_group_subform(elem, elements)
+                    # ⚠️ IMPORTANT: group *nested_controls*, not the raw XML children list
+                    grouped = self._maybe_group_subform(elem, nested_controls)
                     controls.extend(grouped)
                 i += 1
                 continue

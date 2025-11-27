@@ -12,6 +12,7 @@ from constants import (
     CTX_LABEL_TO_ENUM,
     CTX_PARENT_MAP,
     CTX_RADIO_GROUPS,
+    CTX_VISIBILITY_GROUPS,
     CTX_XDP_ROOT,
 )
 from schema_generator.json_schema_generator import JsonSchemaGenerator
@@ -110,8 +111,10 @@ def process_one(
             CTX_RADIO_GROUPS: normalized_radio_groups,
         }
 
-        jsonforms_rules = pipeline.run(rule_context).get(CTX_JSONFORMS_RULES, {})
-
+        # jsonforms_rules = pipeline.run(rule_context).get(CTX_JSONFORMS_RULES, {})
+        pipeline_output = pipeline.run(rule_context)
+        jsonforms_rules = pipeline_output[CTX_JSONFORMS_RULES]
+        visibility_groups = pipeline_output[CTX_VISIBILITY_GROUPS]
         # Build the UI parse context
         context = ParseContext(
             root=root,
@@ -119,6 +122,7 @@ def process_one(
             radio_groups=normalized_radio_groups,
             help_text=help_text,
             jsonforms_rules=jsonforms_rules,
+            visibility_groups=visibility_groups,
         )
 
         parser = XdpParser(XdpElementFactory(context), context)
