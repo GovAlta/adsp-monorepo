@@ -1,10 +1,10 @@
-import { JsonFormsCore, } from '@jsonforms/core';
+import { JsonFormsCore } from '@jsonforms/core';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import * as _ from 'lodash';
 import { AppState } from '../store';
+import { FormDefinition, FORM_SERVICE_ID, PagedResults, CONFIGURATION_SERVICE_ID } from '../types';
 import { getAccessToken } from '../user/user.slice';
-import { FORM_SERVICE_ID, CONFIGURATION_SERVICE_ID, FormDefinition } from '../types'
 export const FORM_FEATURE_KEY = 'form';
 
 export type ValidationError = JsonFormsCore['errors'][number];
@@ -104,33 +104,37 @@ export const getFormConfiguration = createAsyncThunk<
   }
 });
 
-export const getFormDefinitions = createAsyncThunk('form/get-definitions', async (_, { getState, rejectWithValue }) => {
-  try {
-    const { config } = getState() as AppState;
-    const formServiceUrl = config.directory[FORM_SERVICE_ID];
-    const accessToken = await getAccessToken();
+export const getFormDefinitions = createAsyncThunk(
+  'form/get-definitions',
+  async ({ top, after }: { top?: number; after?: string } = {}, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+      const accessToken = await getAccessToken();
 
-    const { data } = await axios.get<{ results: FormDefinition[] }>(
-      new URL('/form/v1/definitions', formServiceUrl).href,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      const { data } = await axios.get<PagedResults<FormDefinition>>(
+        new URL('/form/v1/definitions', formServiceUrl).href,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: { top, after },
+        }
+      );
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
       }
-    );
-
-    return data.results;
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      return rejectWithValue({
-        status: err.response?.status,
-        message: err.response?.data?.errorMessage || err.message,
-      });
-    } else {
-      throw err;
     }
   }
-});
+);
 
-const initialFormState: FormState = {
+export const initialFormState: FormState = {
   definitions: [],
   selected: null,
   loading: false,
@@ -157,7 +161,7 @@ const formSlice = createSlice({
         state.loading = true;
       })
       .addCase(getFormDefinitions.fulfilled, (state, { payload }) => {
-        state.definitions = payload;
+        state.definitions = payload.results;
         state.loading = false;
       })
       .addCase(getFormDefinitions.rejected, (state) => {

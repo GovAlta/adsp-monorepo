@@ -29,5 +29,7 @@ module.exports = composePlugins(withNx(), withReact(), (config, { options, conte
     ];
   }
 
+  config.ignoreWarnings = [/Failed to parse source map/];
+
   return require('./webpack.config.old.js')(config, context);
 });

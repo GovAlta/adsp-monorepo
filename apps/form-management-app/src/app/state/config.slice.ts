@@ -41,15 +41,6 @@ export const initializeConfig = createAsyncThunk('config/initialize', async () =
       `${directoryUrl}/directory/v2/namespaces/platform/entries`
     );
     directory = platform.reduce((result, entry) => ({ ...result, [entry.urn]: entry.url }), directory);
-
-    try {
-      const { data: tenant } = await axios.get<{ urn: string; url: string }[]>(
-        `${directoryUrl}/directory/v2/namespaces/platform/entries`
-      );
-      directory = tenant.reduce((result, entry) => ({ ...result, [entry.urn]: entry.url }), directory);
-    } catch (err) {
-      // Tenant directory may not exist if no entries have been added.
-    }
   }
 
   return { directory, environment };
