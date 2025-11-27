@@ -15,7 +15,7 @@ export interface DataEditorContainerProps {
   };
 
   tempDataSchema: JsonSchema;
-  setDraftDataSchema: (schema: JsonSchema) => void;
+  setDraftDataSchema: (schema: string) => void;
   setEditorErrors: React.Dispatch<
     React.SetStateAction<{
       uiSchema: string | null;
@@ -66,7 +66,7 @@ export const DataEditorContainer: React.FC<DataEditorContainerProps> = ({
             onMount={handleEditorDidMountData}
             onChange={(value) => {
               const jsonSchemaValidResult = JSONSchemaValidator(value);
-              setDraftDataSchema(value);
+              setDraftDataSchema(value || '');
 
               if (jsonSchemaValidResult === '') {
                 setEditorErrors({

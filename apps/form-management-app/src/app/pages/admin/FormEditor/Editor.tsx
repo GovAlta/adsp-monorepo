@@ -1,19 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import './Editor.scss';
 import { DataEditorContainer } from './DataEditorContainer';
 import { UIEditorContainer } from './UiEditorContainer';
-import {
-  FormDataSchemaElementCompletionItemProvider,
-  FormPropertyValueCompletionItemProvider,
-  FormUISchemaElementCompletionItemProvider,
-} from '../../../utils/autoComplete';
-import { useMonaco } from '@monaco-editor/react';
 import { useValidators } from './useValidators';
 import { badCharsCheck, isNotEmptyCheck, wordMaxLengthCheck } from '../../../utils/checkInput';
 import type * as monacoNS from 'monaco-editor';
-
 import { FormDefinition } from '../../../state/types';
-import { Buttons } from './Button';
+import { SubmitButtonsBar } from './SubmitButtonsBar';
 import { GoATabs, GoATab } from '@abgov/react-components';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
@@ -23,8 +16,7 @@ export interface EditorProps {
   setDraftDataSchema: (definition: string) => void;
   setDraftUiSchema: (definition: string) => void;
   isFormUpdated: boolean;
-  updateFormDefinition: (form: FormDefinition) => void;
-  resolvedDataSchema: Record<string, unknown>;
+  updateFormDefinition: () => void;
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -33,7 +25,6 @@ export const Editor: React.FC<EditorProps> = ({
   setDraftUiSchema,
   updateFormDefinition,
   isFormUpdated,
-  resolvedDataSchema,
 }) => {
   const { errors, validators } = useValidators(
     'name',
@@ -48,8 +39,6 @@ export const Editor: React.FC<EditorProps> = ({
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const editorRefData = useRef(null);
   const editorRefUi = useRef(null);
-
-  const monaco = useMonaco();
 
   const [editorErrors, setEditorErrors] = useState<{
     uiSchema: string | null;
@@ -73,31 +62,6 @@ export const Editor: React.FC<EditorProps> = ({
     if (activeIndex === 1) return editorRefUi.current; // UI schema tab
     return null;
   };
-
-  useEffect(() => {
-    if (monaco) {
-      const valueProvider = monaco.languages.registerCompletionItemProvider(
-        'json',
-        new FormPropertyValueCompletionItemProvider(resolvedDataSchema)
-      );
-
-      const uiElementProvider = monaco.languages.registerCompletionItemProvider(
-        'json',
-        new FormUISchemaElementCompletionItemProvider(resolvedDataSchema)
-      );
-
-      const dataElementProvider = monaco.languages.registerCompletionItemProvider(
-        'json',
-        new FormDataSchemaElementCompletionItemProvider()
-      );
-
-      return function () {
-        valueProvider.dispose();
-        uiElementProvider.dispose();
-        dataElementProvider.dispose();
-      };
-    }
-  }, [monaco, resolvedDataSchema]);
 
   if (!definition) {
     return <div>Loading...</div>;
@@ -128,8 +92,7 @@ export const Editor: React.FC<EditorProps> = ({
             />
           </GoATab>
         </GoATabs>
-
-        <Buttons
+        <SubmitButtonsBar
           getCurrentEditorRef={getCurrentEditorRef}
           activeIndex={activeIndex}
           editorErrors={editorErrors}

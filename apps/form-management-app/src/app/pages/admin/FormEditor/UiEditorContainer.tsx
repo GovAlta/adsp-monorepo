@@ -13,7 +13,7 @@ export interface UiEditorContainerProps {
     dataSchemaJSONSchema: string | null;
   };
   tempUiSchema: JsonSchema;
-  setDraftUiSchema: (schema: JsonSchema) => void;
+  setDraftUiSchema: (schema: string) => void;
   setEditorErrors: React.Dispatch<
     React.SetStateAction<{
       uiSchema: string | null;
@@ -39,8 +39,17 @@ export const UIEditorContainer: React.FC<UiEditorContainerProps> = ({
   const EditorHeight = height - 400;
 
   const isUseMiniMap = window.screen.availWidth >= 1920;
-  const handleEditorDidMountUi = (editor) => {
-    editorRefData.current = editor;
+  interface EditorScrollEvent {
+    scrollTop: number;
+  }
+
+  interface EditorInstance {
+    setScrollTop(scrollTop: number): void;
+    onDidScrollChange(listener: (e: EditorScrollEvent) => void): void;
+  }
+
+  const handleEditorDidMountUi = (editor: EditorInstance): void => {
+    (editorRefData as React.MutableRefObject<EditorInstance | null>).current = editor;
 
     requestAnimationFrame(() => {
       setTimeout(() => {
@@ -48,7 +57,7 @@ export const UIEditorContainer: React.FC<UiEditorContainerProps> = ({
       }, 5);
     });
 
-    editor.onDidScrollChange((e) => {
+    editor.onDidScrollChange((e: EditorScrollEvent) => {
       setDataEditorLocation(e.scrollTop);
     });
   };
@@ -78,7 +87,7 @@ export const UIEditorContainer: React.FC<UiEditorContainerProps> = ({
           }}
           onMount={handleEditorDidMountUi}
           onChange={(value) => {
-            setDraftUiSchema(value);
+            setDraftUiSchema(value || '');
           }}
           language="json"
           options={{

@@ -1,51 +1,83 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { AppDispatch, AppState } from '../../../state';
-import { updateDefinition, openEditorForDefinition} from '../../../state/form/form.slice';
-import { isFormUpdatedSelector } from '../../../state/form/selectors';
+import { AppDispatch, FormDefinition } from '../../../state';
+import { updateDefinition, getFormConfiguration} from '../../../state/form/form.slice';
 import { Editor } from './Editor';
-import { modifiedDefinitionSelector } from '../../../state/form/selectors';
-import { setDraftDataSchema, setDraftUiSchema } from '../../../state/form/form.slice';
+import { savedDefinition } from '../../../state/form/selectors';
+import { JSONSchema } from '@apidevtools/json-schema-ref-parser';
+
+function digestConfiguration(configuration: FormDefinition | null): string {
+  return JSON.stringify(
+    Object.keys(configuration || {})
+      .sort()
+      .reduce((values, key) => ({ ...values, [key]: configuration[key] }), {})
+  );
+}
 
 const EditorWrapper = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
 
   const dispatch = useDispatch<AppDispatch>();
 
-  const selectedId = useSelector((state: AppState) => state.form.editor.selectedId);
+  const [tempDefinition, setTempDefinition] = useState<FormDefinition | null>(null);
 
   useEffect(() => {
     try {
-      if (id && id !== selectedId) {
-        dispatch(openEditorForDefinition({ id }));
+      if (id) {
+        dispatch(getFormConfiguration({ id }));
       }
     } catch (e) {
-      console.error('ggggggggg:' + JSON.stringify(e));
+      console.error('error:' + JSON.stringify(e));
     }
-  }, [id, selectedId, dispatch]);
+  }, [id,  dispatch]);
 
-  const { isFormUpdated } = useSelector((state: AppState) => ({
-    isFormUpdated: isFormUpdatedSelector(state),
-  }));
+  const definition = useSelector(savedDefinition);
 
-  const updateFormDefinition = (definition) => {
-    dispatch(updateDefinition(definition));
+  useEffect(() => {
+    setTempDefinition(definition || null);
+  }, [definition]);
+
+  const isFormUpdatedFunction = () => {
+    const originalDigest = digestConfiguration(definition);
+    const modifiedDigest = digestConfiguration(tempDefinition);
+    return originalDigest !== modifiedDigest;
   };
 
-  const definition = useSelector(modifiedDefinitionSelector);
+  const isFormUpdated = isFormUpdatedFunction();
 
-  const setDraftData = (definition: string) => {
-    dispatch(setDraftDataSchema(definition));
-  };
-  const setDraftUi = (definition: string) => {
-    dispatch(setDraftUiSchema(definition));
+  const updateFormDefinition = () => {
+    if (tempDefinition) {
+      dispatch(updateDefinition(tempDefinition));
+    }
   };
 
-  const resolvedDataSchema = useSelector((state: AppState) => state.form.editor.resolvedDataSchema) as Record<
-    string,
-    unknown
-  >;
+  const setDraftData = (dataDefinition: string) => {
+    try {
+      const parsedSchema = JSON.parse(dataDefinition) as JSONSchema;
+      const tempSchema = {
+        ...(tempDefinition ?? definition ?? {}),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        dataSchema: parsedSchema as unknown as any,
+      } as FormDefinition;
+      setTempDefinition(tempSchema);
+    } catch (err) {
+      console.error('Failed to parse data schema: ' + err);
+    }
+  };
+  const setDraftUi = (uiDefinition: string) => {
+    try {
+      const parsedSchema = JSON.parse(uiDefinition) as JSONSchema;
+      const tempSchema = {
+        ...(tempDefinition ?? definition ?? {}),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        uiSchema: parsedSchema as unknown as any,
+      } as FormDefinition;
+      setTempDefinition(tempSchema);
+    } catch (err) {
+      console.error('Failed to parse data schema: ' + err);
+    }
+  };
 
   return (
     <div>
@@ -57,7 +89,6 @@ const EditorWrapper = (): JSX.Element => {
             setDraftDataSchema={setDraftData}
             setDraftUiSchema={setDraftUi}
             isFormUpdated={isFormUpdated}
-            resolvedDataSchema={resolvedDataSchema}
           />
         )}
       </div>

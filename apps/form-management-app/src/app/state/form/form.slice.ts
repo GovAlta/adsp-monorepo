@@ -16,18 +16,6 @@ export interface FormState {
   selected: string | null;
   loading: boolean;
   currentDefinition: FormDefinition | null;
-  editor: {
-    selectedId: string;
-    loading: boolean;
-    saving: boolean;
-    original: FormDefinition;
-    modified: Omit<FormDefinition, 'dataSchema' | 'uiSchema'>;
-    dataSchema: JsonSchema;
-    uiSchema: UISchemaElement;
-    dataSchemaDraft: string;
-    uiSchemaDraft: string;
-    resolvedDataSchema: JsonSchema;
-  };
   busy: {
     loading: boolean;
     creating: boolean;
@@ -48,106 +36,6 @@ const hasProperties = (schema: JsonSchema): boolean => {
     ('properties' in schema && (('type' in schema && schema.type === 'object') || !('type' in schema)))
   );
 };
-
-export const uneditedDataSchemaDraft = createAsyncThunk<string, string>(
-  'form/uneditedDataSchemaDraft',
-  async (draft) => {
-    return draft;
-  }
-);
-export const updateDataParsed = createAsyncThunk<JsonSchema, JsonSchema>('form/updateDataParsed', async (draft) => {
-  return draft;
-});
-
-export const setDraftDataSchema = createAsyncThunk(
-  'form/set-draft',
-  async (definition: string, { dispatch, rejectWithValue }) => {
-    try {
-      await dispatch(uneditedDataSchemaDraft(definition)).unwrap();
-      const parsedSchema = JSON.parse(definition);
-      await dispatch(updateDataParsed(parsedSchema)).unwrap();
-      ajv.validateSchema(parsedSchema, true);
-
-      if (Object.keys(parsedSchema).length > 0 && !hasProperties(parsedSchema)) {
-        throw new Error('Data schema must have "properties"');
-      }
-      const [resolvedSchema, error] = await tryResolveRefs(parsedSchema, standardV1JsonSchema, commonV1JsonSchema);
-
-      if (error) {
-        return rejectWithValue({
-          status: error,
-          message: error,
-        });
-      } else {
-        return resolvedSchema;
-      }
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        if (err.response?.status !== 400) {
-          return rejectWithValue({
-            status: err.response?.status,
-            message: err.response?.data?.errorMessage || err.message,
-          });
-        }
-      }
-      return rejectWithValue({
-        status: 500,
-        message: err instanceof Error ? err.message : String(err),
-      });
-    }
-  }
-);
-
-export const uneditedUiSchemaDraft = createAsyncThunk<string, string>('form/uneditedUiSchemaDraft', async (draft) => {
-  return draft;
-});
-export const updateUiParsed = createAsyncThunk<UISchemaElement, UISchemaElement>(
-  'form/updateUiParsed',
-  async (draft) => {
-    return draft;
-  }
-);
-
-export const setDraftUiSchema = createAsyncThunk(
-  'form/set-draft-ui',
-  async (definition: string, { dispatch, rejectWithValue }) => {
-    try {
-      await dispatch(uneditedUiSchemaDraft(definition)).unwrap();
-      const parsedSchema = JSON.parse(definition);
-      await dispatch(updateUiParsed(parsedSchema)).unwrap();
-
-      ajv.validateSchema(parsedSchema, true);
-
-      if (Object.keys(parsedSchema).length > 0 && !hasProperties(parsedSchema)) {
-        throw new Error('Data schema must have "properties"');
-      }
-
-      const [resolvedSchema, error] = await tryResolveRefs(parsedSchema, standardV1JsonSchema, commonV1JsonSchema);
-
-      if (error) {
-        return rejectWithValue({
-          status: error,
-          message: error,
-        });
-      } else {
-        return resolvedSchema;
-      }
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        if (err.response?.status !== 400) {
-          return rejectWithValue({
-            status: err.response?.status,
-            message: err.response?.data?.errorMessage || err.message,
-          });
-        }
-      }
-      return rejectWithValue({
-        status: 500,
-        message: err instanceof Error ? err.message : String(err),
-      });
-    }
-  }
-);
 
 export const updateDefinition = createAsyncThunk(
   'form/update-definition',
@@ -177,7 +65,7 @@ export const updateDefinition = createAsyncThunk(
   }
 );
 
-export const openEditorForDefinition = createAsyncThunk<
+export const getFormConfiguration = createAsyncThunk<
   { definition: FormDefinition; isNew?: boolean },
   { id: string; newDefinition?: FormDefinition },
   { rejectValue: { status?: number; message: string } }
@@ -265,18 +153,6 @@ const initialFormState: FormState = {
     submitting: false,
     deleting: false,
   },
-  editor: {
-    selectedId: null,
-    loading: false,
-    saving: false,
-    original: null,
-    modified: null,
-    dataSchemaDraft: '',
-    uiSchemaDraft: '',
-    dataSchema: {},
-    uiSchema: {} as UISchemaElement,
-    resolvedDataSchema: {},
-  },
   initialized: {
     forms: false,
   },
@@ -298,51 +174,15 @@ const formSlice = createSlice({
       .addCase(getFormDefinitions.rejected, (state) => {
         state.loading = false;
       })
-      .addCase(setDraftDataSchema.fulfilled, (state, { payload }) => {
-        state.editor.resolvedDataSchema = payload;
-      })
-      .addCase(uneditedDataSchemaDraft.fulfilled, (state, { payload }) => {
-        state.editor.dataSchemaDraft = payload;
-      })
-      .addCase(updateDataParsed.fulfilled, (state, { payload }) => {
-        state.editor.dataSchema = payload;
-      })
-      .addCase(uneditedUiSchemaDraft.fulfilled, (state, { payload }) => {
-        state.editor.uiSchemaDraft = payload;
-      })
-      .addCase(updateUiParsed.fulfilled, (state, { payload }) => {
-        state.editor.uiSchema = payload;
-      })
       .addCase(updateDefinition.fulfilled, (state, { payload }) => {
         if (payload) {
-          const { dataSchema, uiSchema, ...definition } = payload.latest.configuration;
           state.currentDefinition = payload.latest.configuration;
-          state.editor.selectedId = payload.latest.configuration.id;
-          state.editor.original = payload.latest.configuration;
-          state.editor.modified = definition;
-          state.editor.dataSchemaDraft = JSON.stringify(dataSchema, null, 2);
-          state.editor.uiSchemaDraft = JSON.stringify(uiSchema, null, 2);
         }
-
-        state.editor.loading = false;
-        state.editor.saving = false;
-
-        state.editor.resolvedDataSchema = initialFormState.editor.resolvedDataSchema;
       })
-      .addCase(openEditorForDefinition.fulfilled, (state, action) => {
+      .addCase(getFormConfiguration.fulfilled, (state, action) => {
         const { dataSchema, uiSchema, ...definition } = action.payload.definition;
 
         state.currentDefinition = action.payload.definition;
-        state.editor.selectedId = action.payload.definition.id;
-        state.editor.loading = false;
-        state.editor.saving = false;
-        state.editor.original = action.payload.definition;
-        state.editor.modified = definition;
-        state.editor.dataSchema = dataSchema;
-        state.editor.uiSchema = uiSchema;
-        state.editor.dataSchemaDraft = JSON.stringify(dataSchema, null, 2);
-        state.editor.uiSchemaDraft = JSON.stringify(uiSchema, null, 2);
-        state.editor.resolvedDataSchema = initialFormState.editor.resolvedDataSchema;
       });
   },
 });
