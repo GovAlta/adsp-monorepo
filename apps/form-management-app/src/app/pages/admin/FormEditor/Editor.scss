@@ -1,0 +1,88 @@
+
+.editor-padding {
+  border: 1px solid grey;
+  border-radius: 3px;
+  padding: 0.15rem;
+
+  .monaco-scrollable-element {
+    margin-top: 5px !important;
+  }
+
+  .margin-view-overlays {
+    margin-top: 5px !important;
+  }
+}
+
+
+.form-editor-title {
+  font-size: var(--goa-font-size-7);
+  line-height: var(--lh-lg);
+  font-weight: var(--fw-regular);
+}
+
+
+.name-description-data-schema {
+  flex: 6;
+  padding-right: 3rem;
+
+  .life-cycle-auto-scroll {
+    overflow-y: auto;
+  }
+}
+
+
+.form-editor {
+  width: 100%;
+
+  .hr-resize {
+    margin-top: var(--goa-space-s);
+  }
+
+  .hr-resize-bottom {
+    margin-bottom: var(--goa-space-2xs);
+    margin-top: var(--goa-space-xl);
+  }
+
+  .info-circle {
+    margin: 5px 0 0 5px;
+  }
+}
+
+
+.form-template-editor-container {
+  display: flex;
+  flex: auto;
+  margin-top: 6px;
+  padding-left: 3rem;
+  padding-right: 3rem;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+
+.form-preview-container {
+  width: 50%;
+}
+
+
+.final-button-padding {
+  display: flex;
+  padding-top: 20px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+
+.form-preview-scroll-pane {
+  overflow-y: auto;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  height: calc(100vh - 192px);
+}
+
+
+.form-preview-spacer {
+  margin-top: var(--goa-space-l);
+}

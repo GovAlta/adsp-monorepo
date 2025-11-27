@@ -11,7 +11,7 @@ const TenantManagement = (): JSX.Element => {
             <Link to="./forms">Form Definitions</Link>
           </li>
           <li>
-            <Link to="./editor/new">Form Editor</Link>
+            <Link to="./editor/1-1-1-def">Form Editor</Link>
           </li>
           <li>
             <Link to="./preview/sample">Form Preview</Link>
