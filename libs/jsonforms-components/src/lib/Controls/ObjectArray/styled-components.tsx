@@ -118,3 +118,13 @@ export const HasErrorLabel = styled.div`
 export const HilightCellWarning = styled.div`
   background-color: var(--goa-color-warning-default);
 `;
+
+export const FixTableHeaderAlignment = styled.div`
+  table thead th:nth-child(3) {
+    text-align: center;
+  }
+
+  table tbody td:nth-child(3) {
+    text-align: center;
+  }
+`;
