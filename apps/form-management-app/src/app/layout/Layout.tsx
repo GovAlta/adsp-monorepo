@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
 import { selectIsAuthenticated, selectUserName, selectUserEmail, selectTenant } from '../state/user/selectors';
 import { UserInfo, Tenant } from '../models';
 import AppHeader from '../components/AppHeader/AppHeader';
@@ -23,6 +24,7 @@ const Layout: React.FC<LayoutProps> = ({
   showFooter = true,
 }) => {
   // Centralized state management
+  const { tenant: tenantName } = useParams<{ tenant: string }>();
   const authenticated = useSelector(selectIsAuthenticated);
   const userName = useSelector(selectUserName);
   const userEmail = useSelector(selectUserEmail);
@@ -46,6 +48,7 @@ const Layout: React.FC<LayoutProps> = ({
           admin={admin}
           userInfo={userInfo}
           tenant={tenant}
+          tenantName={tenantName}
         />
       )}
 

@@ -17,6 +17,7 @@ interface HeaderProps {
   admin?: boolean;
   userInfo: UserInfo;
   tenant?: Tenant;
+  tenantName?: string;
 }
 
 const ActionsMenu = ({ hasLoginLink, admin, userInfo, tenant }: HeaderMenuProps): JSX.Element => {
@@ -111,11 +112,12 @@ function AppHeader({
   admin = false,
   userInfo,
   tenant,
+  tenantName,
 }: HeaderProps): JSX.Element {
   return (
     <div className={styles.headerContainer}>
       <GoAMicrositeHeader type="alpha"></GoAMicrositeHeader>
-      <GoAAppHeader url="/" heading={serviceName}>
+      <GoAAppHeader url={tenantName ? `/${tenantName}` : '/'} heading={serviceName}>
         <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} userInfo={userInfo} tenant={tenant} />
       </GoAAppHeader>
     </div>
@@ -123,9 +125,3 @@ function AppHeader({
 }
 
 export default AppHeader;
-
-// Export the NoPaddingH2 component for backward compatibility
-export const NoPaddingH2: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => <h2 className={`${styles.noPaddingH2} ${className}`}>{children}</h2>;
