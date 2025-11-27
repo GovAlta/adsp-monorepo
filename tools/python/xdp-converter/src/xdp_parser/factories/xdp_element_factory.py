@@ -6,6 +6,7 @@ from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
 from xdp_parser.group_labels import find_group_label
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_help_text import XdpHelpText
+from xdp_parser.xdp_layout import XdpLayout
 from xdp_parser.xdp_object_array import XdpObjectArray
 from xdp_parser.xdp_radio import XdpRadio
 from xdp_parser.xdp_radio_selector import XdpRadioSelector, extract_radio_button_labels
@@ -51,3 +52,8 @@ class XdpElementFactory(AbstractXdpFactory):
 
     def handle_help_text(self, elem: ET.Element, help_text: str) -> Any:
         return XdpHelpText(help_text, self.context)
+
+    def handle_group(
+        self, elem: ET.Element, children: list, label: str
+    ) -> Optional[Any]:
+        return XdpLayout(elem, "VerticalLayout", children)

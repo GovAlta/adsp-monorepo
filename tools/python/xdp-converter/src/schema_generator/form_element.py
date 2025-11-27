@@ -40,25 +40,14 @@ class FormElement(ABC):
         if not fq:
             return None
 
-        # print(f"\n[RULEMATCH] Looking for rule for element: {fq}")
-
         # Direct match
         if fq in rules:
-            # print(f"[RULEMATCH] ✔ direct match")
             return rules[fq]
 
         # Prefix match (rule applies to a parent subform)
         for key, rule in rules.items():
             if key and fq.startswith(key + "."):
-                # print(f"[RULEMATCH] ✔ prefix match: {key}")
                 return rule
-
-        # Debug: show “possible but not matched” hints
-        # for key in rules.keys():
-        #     if key in fq or fq in key:
-        #         print(f"[RULEMATCH] 🔍 potential match: {key}")
-
-        # print(f"[RULEMATCH] ❌ no match")
         return None
 
     def to_ui_schema(self):
@@ -77,11 +66,6 @@ class FormElement(ABC):
 
         qname = self.qualified_name or ""
         short = qname.split(".")[-1] if qname else ""
-
-        print("\n[DEBUG][RuleMatch]")
-        print(f"  qualified_name: {qname!r}")
-        print(f"  short name    : {short!r}")
-        print(f"  total rules   : {len(rules)}")
 
         substring_hits = []
         suffix_hits = []

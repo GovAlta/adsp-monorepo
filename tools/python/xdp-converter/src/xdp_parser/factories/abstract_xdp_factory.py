@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import xml.etree.ElementTree as ET
-from typing import Any
+from typing import Any, Optional
 from xdp_parser.control_labels import ControlLabels
 
 
@@ -36,3 +36,9 @@ class AbstractXdpFactory(ABC):
 
     @abstractmethod
     def handle_help_text(self, elem: ET.Element, help_text: str) -> Any: ...
+
+    @abstractmethod
+    def handle_group(
+        self, elem: ET.Element, children: list, label: str
+    ) -> Optional[Any]:
+        pass

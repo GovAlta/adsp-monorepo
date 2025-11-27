@@ -22,12 +22,8 @@ class FormInformation(FormElement):
             "variant": "detail",
             "help": f"{self.style}{capitalize_first(self.help)}",
         }
-        print(
-            f"help text for {self.element_name} with option {self.option} and hidden {self.hidden}"
-        )
         if self.hidden:
             ui_schema["rule"] = self._add_rule(self.element_name, self.option)
-            print(ui_schema["rule"])
         return ui_schema
 
     def _add_rule(self, name, value):

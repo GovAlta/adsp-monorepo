@@ -1,4 +1,5 @@
 # xdp_parser/factories/enum_map_factory.py
+from typing import Any, Optional
 import xml.etree.ElementTree as ET
 from xdp_parser.control_labels import ControlLabels
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
@@ -79,6 +80,11 @@ class EnumMapFactory(AbstractXdpFactory):
         return None
 
     def handle_object_array(self, *_):
+        return None
+
+    def handle_group(
+        self, elem: ET.Element, children: list, label: str
+    ) -> Optional[Any]:
         return None
 
     def handle_radio_subform(self, elem: ET.Element, _):

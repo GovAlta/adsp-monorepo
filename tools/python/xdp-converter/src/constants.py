@@ -18,3 +18,5 @@ CTX_RADIO_GROUPS = "radio_groups"
 
 # Final rules ready for JsonForms UI/Schema emitters
 CTX_JSONFORMS_RULES = "jsonforms_rules"
+
+CTX_VISIBILITY_GROUPS = "visibility_groups"

@@ -1,3 +1,7 @@
+from dataclasses import field
+from typing import Set
+
+
 class ParseContext:
     """
     Shared context for all XDP parsing operations.
@@ -10,21 +14,17 @@ class ParseContext:
         radio_groups=None,
         help_text=None,
         jsonforms_rules=None,
-        **kwargs
+        visibility_groups=None,
     ):
         self.root = root
         self.parent_map = parent_map
         self.radio_groups = radio_groups or {}
         self.help_text = help_text or {}
         self.jsonforms_rules = jsonforms_rules or {}
-
-        # Anything else pipeline stages want to stash
-        self.extra = kwargs
+        self.visibility_groups: Set[str] = visibility_groups or set()
 
     def get(self, key, default=None):
         # try instance attributes first
         if hasattr(self, key):
             return getattr(self, key)
-
-        # fallback to extra stash
-        return self.extra.get(key, default)
+        return default
