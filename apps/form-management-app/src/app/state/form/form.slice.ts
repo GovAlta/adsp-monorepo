@@ -1,6 +1,4 @@
-import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
-import { createDefaultAjv, tryResolveRefs } from '@abgov/jsonforms-components';
-import { JsonFormsCore, JsonSchema, UISchemaElement } from '@jsonforms/core';
+import { JsonFormsCore, } from '@jsonforms/core';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import * as _ from 'lodash';
@@ -27,15 +25,6 @@ export interface FormState {
     forms: boolean;
   };
 }
-
-const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
-
-const hasProperties = (schema: JsonSchema): boolean => {
-  return (
-    (typeof schema === 'object' && Object.keys(schema).length === 0) ||
-    ('properties' in schema && (('type' in schema && schema.type === 'object') || !('type' in schema)))
-  );
-};
 
 export const updateDefinition = createAsyncThunk(
   'form/update-definition',
