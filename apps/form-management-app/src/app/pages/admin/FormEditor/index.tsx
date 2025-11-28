@@ -27,7 +27,9 @@ const EditorWrapper = (): JSX.Element => {
 
   const [tempDefinition, setTempDefinition] = useState<FormDefinition | null>(null);
   const [resolvedTempDefinition, setResolvedTempDefinition] = useState({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [dataError, setDataError] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [uiError, setUiError] = useState<any>(null);
 
   useEffect(() => {
@@ -111,10 +113,9 @@ const EditorWrapper = (): JSX.Element => {
 
       const [resolvedSchema, error] = await tryResolveRefs(parsedSchema, standardV1JsonSchema, commonV1JsonSchema);
       setResolvedTempDefinition(resolvedSchema);
-      setDataError(error);
     } catch (err) {
       console.error('Failed to parse data schema: ' + err);
-      setDataError;
+      setDataError(err);
     }
   };
   const setDraftUi = (uiDefinition: string) => {

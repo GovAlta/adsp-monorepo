@@ -5,22 +5,28 @@ import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { GoAFormItem, GoATabs, GoATab } from '@abgov/react-components';
 
 import { FormDefinition } from '../../../state/types';
+import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
+import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 
 export const ContextProvider = ContextProviderFactory();
 
 export interface PreviewProps {
-  fileList: any;
-  uploadFile: any;
-  downloadFile: any;
-  deleteFile: any;
+  fileList: Record<string, Record<string, string>[]>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  uploadFile: (file: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  downloadFile: (file: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  deleteFile: (file: any) => void;
   formServiceApiUrl: string;
-  schemaError: any;
+  schemaError: string | null;
   definition: FormDefinition;
-  dataSchema: any;
-  uiSchema: any;
-  registerData: any;
-  nonAnonymous: any;
-  dataList: any;
+  dataSchema: JsonSchema;
+  uiSchema: UISchemaElement;
+
+  registerData: RegisterData;
+  nonAnonymous: string[];
+  dataList: string[];
 }
 
 export const Preview: React.FC<PreviewProps> = ({
@@ -36,6 +42,7 @@ export const Preview: React.FC<PreviewProps> = ({
   nonAnonymous,
   dataList,
 }): JSX.Element => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>({});
 
   return (

@@ -9,6 +9,8 @@ import { Preview } from './Preview';
 import { FormDefinition } from '../../../state/types';
 import { SubmitButtonsBar } from './SubmitButtonsBar';
 import { GoATabs, GoATab } from '@abgov/react-components';
+import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
+import { UISchemaElement } from '@jsonforms/core';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -19,17 +21,19 @@ export interface EditorProps {
   isFormUpdated: boolean;
   updateFormDefinition: () => void;
   resolvedDataSchema: Record<string, unknown>;
+  fileList: Record<string, Record<string, string>[]>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fileList: any;
-  uploadFile: any;
-  downloadFile: any;
-  deleteFile: any;
-  formServiceApiUrl: any;
-  schemaError: any;
-  uiSchema: any;
-  registerData: any;
-  nonAnonymous: any;
-  dataList: any;
+  uploadFile: (file: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  downloadFile: (file: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  deleteFile: (file: any) => void;
+  formServiceApiUrl: string;
+  schemaError: string | null;
+  uiSchema: UISchemaElement;
+  registerData: RegisterData;
+  nonAnonymous: string[];
+  dataList: string[];
 }
 
 export const Editor: React.FC<EditorProps> = ({

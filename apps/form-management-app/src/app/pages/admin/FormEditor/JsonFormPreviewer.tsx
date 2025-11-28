@@ -1,20 +1,23 @@
 import { GoARenderers, GoACells, JsonFormRegisterProvider } from '@abgov/jsonforms-components';
 import './Editor.scss';
 import { GoACallout } from '@abgov/react-components';
-import { ajv} from '../../../utils/checkInput'
+import { ajv } from '../../../utils/checkInput';
 import { JsonForms } from '@jsonforms/react';
 import { ErrorBoundary } from 'react-error-boundary';
 import FallbackRender from './FallbackRenderer';
+import { UISchemaElement } from '@jsonforms/core';
+import { JsonSchema } from '@jsonforms/core';
+import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
 
 interface JSONFormPreviewerProps {
   data: unknown;
   onChange: ({ data }: { data: unknown }) => void;
-  dataSchema: any;
-  uiSchema: any;
-  error: any;
-  registerData: any;
-  nonAnonymous: any;
-  dataList: any;
+  dataSchema: JsonSchema;
+  uiSchema: UISchemaElement;
+  error: string | null;
+  registerData: RegisterData;
+  nonAnonymous: string[];
+  dataList: string[];
 }
 
 export const JSONFormPreviewer = ({
@@ -28,7 +31,6 @@ export const JSONFormPreviewer = ({
   dataList,
 }: JSONFormPreviewerProps): JSX.Element => {
   // Resolved data schema (with refs inlined) is used with JsonForms since it doesn't handle remote refs.
-
 
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
