@@ -1,13 +1,17 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { CONFIG_FEATURE_KEY, configReducer } from './config.slice';
+import { CONFIGURATION_FEATURE_KEY, configurationReducer } from './configuration/configuration.slice';
 import { FORM_FEATURE_KEY, formReducer } from './form/form.slice';
 import { USER_FEATURE_KEY, userReducer } from './user/user.slice';
+import { FILE_FEATURE_KEY, fileReducer } from './file/file.slice';
 
 export const store = configureStore({
   reducer: {
     [CONFIG_FEATURE_KEY]: configReducer,
+    [CONFIGURATION_FEATURE_KEY]: configurationReducer,
     [USER_FEATURE_KEY]: userReducer,
     [FORM_FEATURE_KEY]: formReducer,
+    [FILE_FEATURE_KEY]: fileReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
   // Optional Redux store enhancers

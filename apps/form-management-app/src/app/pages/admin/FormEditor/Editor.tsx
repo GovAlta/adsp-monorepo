@@ -5,9 +5,12 @@ import { UIEditorContainer } from './UiEditorContainer';
 import { useValidators } from './useValidators';
 import { badCharsCheck, isNotEmptyCheck, wordMaxLengthCheck } from '../../../utils/checkInput';
 import type * as monacoNS from 'monaco-editor';
+import { Preview } from './Preview';
 import { FormDefinition } from '../../../state/types';
 import { SubmitButtonsBar } from './SubmitButtonsBar';
 import { GoATabs, GoATab } from '@abgov/react-components';
+import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
+import { UISchemaElement } from '@jsonforms/core';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -17,6 +20,20 @@ export interface EditorProps {
   setDraftUiSchema: (definition: string) => void;
   isFormUpdated: boolean;
   updateFormDefinition: () => void;
+  resolvedDataSchema: Record<string, unknown>;
+  fileList: Record<string, Record<string, string>[]>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  uploadFile: (file: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  downloadFile: (file: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  deleteFile: (file: any) => void;
+  formServiceApiUrl: string;
+  schemaError: string | null;
+  uiSchema: UISchemaElement;
+  registerData: RegisterData;
+  nonAnonymous: string[];
+  dataList: string[];
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -25,6 +42,17 @@ export const Editor: React.FC<EditorProps> = ({
   setDraftUiSchema,
   updateFormDefinition,
   isFormUpdated,
+  resolvedDataSchema,
+  fileList,
+  uploadFile,
+  downloadFile,
+  deleteFile,
+  formServiceApiUrl,
+  schemaError,
+  uiSchema,
+  registerData,
+  nonAnonymous,
+  dataList
 }) => {
   const { errors, validators } = useValidators(
     'name',
@@ -104,7 +132,22 @@ export const Editor: React.FC<EditorProps> = ({
           validators={validators}
         />
       </div>
-      <div className="form-preview-container"></div>
+      <div className="preview-pane">
+        <Preview
+          fileList={fileList}
+          uploadFile={uploadFile}
+          downloadFile={downloadFile}
+          deleteFile={deleteFile}
+          formServiceApiUrl={formServiceApiUrl}
+          schemaError={schemaError}
+          definition={definition}
+          dataSchema={resolvedDataSchema}
+          uiSchema={uiSchema}
+          registerData={registerData}
+          nonAnonymous={nonAnonymous}
+          dataList={dataList}
+        />
+      </div>
     </div>
   );
 };

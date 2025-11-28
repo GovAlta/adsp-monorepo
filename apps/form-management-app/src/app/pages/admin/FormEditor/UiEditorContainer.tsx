@@ -3,7 +3,6 @@ import './Editor.scss';
 import { useWindowDimensions } from '../../../utils/useWindowDimensions';
 import { GoAFormItem } from '@abgov/react-components';
 import MonacoEditor from '@monaco-editor/react';
-import { JsonSchema } from '@jsonforms/core';
 
 export interface UiEditorContainerProps {
   errors: Record<string, string | null>;
@@ -12,7 +11,7 @@ export interface UiEditorContainerProps {
     dataSchemaJSON: string | null;
     dataSchemaJSONSchema: string | null;
   };
-  tempUiSchema: JsonSchema;
+  tempUiSchema: string;
   setDraftUiSchema: (schema: string) => void;
   setEditorErrors: React.Dispatch<
     React.SetStateAction<{
