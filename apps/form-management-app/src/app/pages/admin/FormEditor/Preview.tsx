@@ -1,14 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
+import './Editor.scss';
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
-import styled from 'styled-components';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
-import { NameDescriptionDataSchema, FormPreviewScrollPane, ReviewPageTabWrapper, PRE } from './styled-components';
+import { GoAFormItem, GoATabs, GoATab } from '@abgov/react-components';
 
-import { useWindowDimensions } from '../../../components/useWindowDimensions';
-import { GoAFormItem } from '@abgov/react-components';
-import MonacoEditor, { useMonaco } from '@monaco-editor/react';
-import { Tab, Tabs} from '../../../components/Tabs'
-import { PreviewTop } from '../../../../../../../libs/form-editor-common/src/lib/definitions/PDFPreviewTemplateCore';
 import { FormDefinition } from '../../../state/types';
 
 export const ContextProvider = ContextProviderFactory();
@@ -28,7 +23,6 @@ export interface PreviewProps {
   dataList: any;
 }
 
-
 export const Preview: React.FC<PreviewProps> = ({
   fileList,
   uploadFile,
@@ -36,27 +30,19 @@ export const Preview: React.FC<PreviewProps> = ({
   deleteFile,
   formServiceApiUrl,
   schemaError,
-  definition,
   dataSchema,
   uiSchema,
   registerData,
   nonAnonymous,
   dataList,
 }): JSX.Element => {
-    const [data, setData] = useState<unknown>({});
-    const [currentTab, setCurrentTab] = useState(0);
-
-    const saveCurrentTab = (tab: number) => {
-      setCurrentTab(tab);
-    };
-
-
+  const [data, setData] = useState<any>({});
 
   return (
     <div>
-      <Tabs data-testid="preview-tabs" activeIndex={0} changeTabCallback={saveCurrentTab}>
-        <Tab label="Preview" data-testid="preview-view-tab">
-          <FormPreviewScrollPane>
+      <GoATabs data-testid="preview-tabs">
+        <GoATab heading="Preview" data-testid="preview-view-tab">
+          <div className="form-preview-scroll-pane">
             <ContextProvider
               fileManagement={{
                 fileList: fileList,
@@ -81,29 +67,15 @@ export const Preview: React.FC<PreviewProps> = ({
                 />
               </GoAFormItem>
             </ContextProvider>
-          </FormPreviewScrollPane>
-        </Tab>
-        <Tab label="Data" data-testid="data-view">
-          <ReviewPageTabWrapper>{data && <PRE>{JSON.stringify(data, null, 2)}</PRE>}</ReviewPageTabWrapper>
-        </Tab>
-        {definition?.submissionPdfTemplate ? (
-          <Tab
-            label={<PreviewTop title="PDF Preview" form={definition} data={data} currentTab={currentTab} />}
-            data-testid="data-view"
-          >
-            <PDFPreviewTemplateCore formName={definition.name} />
-          </Tab>
-        ) : null}
-      </Tabs>
+          </div>
+        </GoATab>
+
+        <GoATab heading="Data" data-testid="data-view">
+          <div className="review-page-tab-wrapper">
+            {data && <div className="PRE">{JSON.stringify(data, null, 2)}</div>}
+          </div>
+        </GoATab>
+      </GoATabs>
     </div>
   );
 };
-
-const Main = styled.div`
-  flex: 1 1 auto;
-  padding: var(--goa-space-l, 24px) 0;
-`;
-
-const AdminLayout = styled.div`
-  display: flex;
-`;

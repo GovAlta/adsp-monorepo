@@ -6,11 +6,19 @@ import os
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import traceback
+from constants import (
+    CTX_ENUM_MAP,
+    CTX_JSONFORMS_RULES,
+    CTX_LABEL_TO_ENUM,
+    CTX_PARENT_MAP,
+    CTX_RADIO_GROUPS,
+    CTX_XDP_ROOT,
+)
 from schema_generator.json_schema_generator import JsonSchemaGenerator
 from schema_generator.ui_schema_generator import UiSchemaGenerator
 import xml.etree.ElementTree as ET
 from xdp_parser import control_labels
-from xdp_parser.factories.enum_map_factory import EnumMapFactory
+from xdp_parser.factories.enum_map_factory import EnumMapFactory, normalize_enum_labels
 from xdp_parser.factories.xdp_element_factory import XdpElementFactory
 from xdp_parser.help_text_parser import JSHelpTextParser
 from xdp_parser.help_text_registry import HelpTextRegistry
@@ -64,51 +72,59 @@ def process_one(
         if not quiet:
             print(f"🧩 Parsing {xdp_path}…")
 
-        # --- 1. Parse XDP and strip namespaces ---
+        # --- Parse XDP and strip namespaces ---
         tree = strip_namespaces(ET.parse(xdp_path))
         root = tree.getroot()
 
-        # --- 2. Build parent map ---
+        # --- Build parent map ---
         parent_map = build_parent_map(root)
 
-        # --- 3. Extract enum maps ---
-        print(f"  [DEBUG] Extracting enum maps from XDP…")
-        enum_context = ParseContext(
-            root=root, parent_map=parent_map, visibility_rules={}
-        )
-        enum_factory = EnumMapFactory(enum_context)
-        traversal = XdpParser(enum_factory, enum_context)
-        traversal.parse_xdp()
-
-        pipeline = VisibilityRulesPipeline()
-        rule_context = {
-            "xdp_root": root,
-            "enum_map": traversal.factory.enum_maps,
-            "parent_map": parent_map,
-            "label_to_enum": enum_factory.label_to_enum,
-        }
-        visibility_rules = pipeline.run(rule_context).get(
-            "jsonforms_visibility_rules", {}
-        )
-
-        # --- 5. Load help text (unchanged) ---
+        # --- Load help text  ---
         registry = HelpTextRegistry()
         registry.load_messages(root)
 
         help_text_parser = JSHelpTextParser(tree)
         help_text = help_text_parser.get_messages()
 
-        # --- 6. Parse XDP into form elements (unchanged) ---
+        # --- Extract enum maps ---
+        print(f"  [DEBUG] Extracting enum maps from XDP…")
+        enum_context = ParseContext(root=root, parent_map=parent_map, radio_groups={})
+        enum_factory = EnumMapFactory(enum_context)
+        traversal = XdpParser(enum_factory, enum_context)
+        traversal.parse_xdp()
+
+        normalized_enum_maps = normalize_enum_labels(
+            traversal.factory.enum_maps, enum_factory.label_to_enum
+        )
+
+        # Keep the actual field names as the group members
+        normalized_radio_groups = enum_context.radio_groups
+
+        # Run the visibility pipeline
+        pipeline = VisibilityRulesPipeline()
+        rule_context = {
+            CTX_XDP_ROOT: root,
+            CTX_ENUM_MAP: normalized_enum_maps,
+            CTX_PARENT_MAP: parent_map,
+            CTX_LABEL_TO_ENUM: enum_factory.label_to_enum,
+            CTX_RADIO_GROUPS: normalized_radio_groups,
+        }
+
+        jsonforms_rules = pipeline.run(rule_context).get(CTX_JSONFORMS_RULES, {})
+
+        # Build the UI parse context
         context = ParseContext(
             root=root,
             parent_map=parent_map,
-            visibility_rules=visibility_rules,
+            radio_groups=normalized_radio_groups,
             help_text=help_text,
+            jsonforms_rules=jsonforms_rules,
         )
+
         parser = XdpParser(XdpElementFactory(context), context)
         input_groups = parser.parse_xdp()
 
-        # --- 7. Generate schemas (unchanged) ---
+        # --- Generate schemas ---
         print(f"  [DEBUG] Generating JSON schema from input groups.")
         json_generator = JsonSchemaGenerator()
         json_schema = json_generator.to_schema(input_groups)
@@ -117,7 +133,7 @@ def process_one(
         print(f"##################.   Generating UI schema from input groups.")
         ui_schema = ui_generator.to_schema()
 
-        # --- 8. Write output files ---
+        # --- Write output files ---
         schema_out.parent.mkdir(parents=True, exist_ok=True)
         with schema_out.open("w", encoding="utf-8") as f:
             json.dump(json_schema, f, indent=4, ensure_ascii=False)
@@ -125,7 +141,7 @@ def process_one(
         with ui_out.open("w", encoding="utf-8") as f:
             json.dump(ui_schema, f, indent=4, ensure_ascii=False)
 
-        # --- 9. Diagnostics (unchanged) ---
+        # --- Diagnostics  ---
         # XdpParser().diagnose()
 
         return (xdp_path, True, None)

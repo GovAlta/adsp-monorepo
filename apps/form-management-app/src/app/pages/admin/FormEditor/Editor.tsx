@@ -1,22 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
-import styled from 'styled-components';
-import { Tab, Tabs } from '../../../components/Tabs';
+import React, { useState, useRef } from 'react';
+import './Editor.scss';
 import { DataEditorContainer } from './DataEditorContainer';
-
 import { UIEditorContainer } from './UiEditorContainer';
-import { NameDescriptionDataSchema, FormEditorTitle, FormEditor, FormPreviewContainer } from './styled-components';
-import {
-  FormDataSchemaElementCompletionItemProvider,
-  FormPropertyValueCompletionItemProvider,
-  FormUISchemaElementCompletionItemProvider,
-} from '../../../components/autoComplete';
-import { useMonaco } from '@monaco-editor/react';
-import { useValidators } from '../../../components/useValidators';
-import { badCharsCheck, isNotEmptyCheck, wordMaxLengthCheck } from '../../../components/checkInput';
+import { useValidators } from './useValidators';
+import { badCharsCheck, isNotEmptyCheck, wordMaxLengthCheck } from '../../../utils/checkInput';
 import type * as monacoNS from 'monaco-editor';
 import { Preview } from './Preview';
 import { FormDefinition } from '../../../state/types';
-import { Buttons } from './Button';
+import { SubmitButtonsBar } from './SubmitButtonsBar';
+import { GoATabs, GoATab } from '@abgov/react-components';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -25,7 +17,7 @@ export interface EditorProps {
   setDraftDataSchema: (definition: string) => void;
   setDraftUiSchema: (definition: string) => void;
   isFormUpdated: boolean;
-  updateFormDefinition: (form: FormDefinition) => void;
+  updateFormDefinition: () => void;
   resolvedDataSchema: Record<string, unknown>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fileList: any;
@@ -72,8 +64,6 @@ export const Editor: React.FC<EditorProps> = ({
   const editorRefData = useRef(null);
   const editorRefUi = useRef(null);
 
-  const monaco = useMonaco();
-
   const [editorErrors, setEditorErrors] = useState<{
     uiSchema: string | null;
     dataSchemaJSON: string | null;
@@ -97,44 +87,17 @@ export const Editor: React.FC<EditorProps> = ({
     return null;
   };
 
-  // Resolved data schema (with refs inlined) is used to generate suggestions.
-
-  useEffect(() => {
-    if (monaco) {
-      const valueProvider = monaco.languages.registerCompletionItemProvider(
-        'json',
-        new FormPropertyValueCompletionItemProvider(resolvedDataSchema)
-      );
-
-      const uiElementProvider = monaco.languages.registerCompletionItemProvider(
-        'json',
-        new FormUISchemaElementCompletionItemProvider(resolvedDataSchema)
-      );
-
-      const dataElementProvider = monaco.languages.registerCompletionItemProvider(
-        'json',
-        new FormDataSchemaElementCompletionItemProvider()
-      );
-
-      return function () {
-        valueProvider.dispose();
-        uiElementProvider.dispose();
-        dataElementProvider.dispose();
-      };
-    }
-  }, [monaco, resolvedDataSchema]);
-
   if (!definition) {
     return <div>Loading...</div>;
   }
 
   return (
-    <FormEditor>
-      <NameDescriptionDataSchema>
-        <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
+    <div className="form-editor">
+      <div className="name-description-data-schema">
+        <div className="form-editor-title">Form / Definition Editor</div>
         <hr className="hr-resize" />
-        <Tabs activeIndex={activeIndex} data-testid="form-editor-tabs">
-          <Tab label="Data schema" data-testid="dcm-form-editor-data-schema-tab">
+        <GoATabs data-testid="form-editor-tabs">
+          <GoATab heading="Data schema" data-testid="dcm-form-editor-data-schema-tab">
             <DataEditorContainer
               errors={errors}
               editorErrors={editorErrors}
@@ -142,8 +105,8 @@ export const Editor: React.FC<EditorProps> = ({
               setDraftDataSchema={setDraftDataSchema}
               setEditorErrors={setEditorErrors}
             />
-          </Tab>
-          <Tab label="UI schema" data-testid="dcm-form-editor-ui-schema-tab">
+          </GoATab>
+          <GoATab heading="UI schema" data-testid="dcm-form-editor-ui-schema-tab">
             <UIEditorContainer
               errors={errors}
               editorErrors={editorErrors}
@@ -151,10 +114,9 @@ export const Editor: React.FC<EditorProps> = ({
               setDraftUiSchema={setDraftUiSchema}
               setEditorErrors={setEditorErrors}
             />
-          </Tab>
-        </Tabs>
-
-        <Buttons
+          </GoATab>
+        </GoATabs>
+        <SubmitButtonsBar
           getCurrentEditorRef={getCurrentEditorRef}
           activeIndex={activeIndex}
           editorErrors={editorErrors}
@@ -165,8 +127,8 @@ export const Editor: React.FC<EditorProps> = ({
           isFormUpdated={isFormUpdated}
           validators={validators}
         />
-      </NameDescriptionDataSchema>
-      <FormPreviewContainer>
+      </div>
+      <div className="preview-pane">
         <Preview
           fileList={fileList}
           uploadFile={uploadFile}
@@ -181,16 +143,7 @@ export const Editor: React.FC<EditorProps> = ({
           nonAnonymous={nonAnonymous}
           dataList={dataList}
         />
-      </FormPreviewContainer>
-    </FormEditor>
+      </div>
+    </div>
   );
 };
-
-const Main = styled.div`
-  flex: 1 1 auto;
-  padding: var(--goa-space-l, 24px) 0;
-`;
-
-const AdminLayout = styled.div`
-  display: flex;
-`;

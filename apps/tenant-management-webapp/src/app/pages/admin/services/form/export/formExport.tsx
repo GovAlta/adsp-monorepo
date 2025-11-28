@@ -242,7 +242,7 @@ export const FormExport = (): JSX.Element => {
         </GoAFormItem>
 
         <h3>Records</h3>
-        {selectedForm && <GoABadge type="information" content={resourceType}></GoABadge>}
+        {selectedForm && <GoABadge type="information" content={resourceType} icon={false} />}
         <br />
         <br />
         <GoAFormItem label="Format">

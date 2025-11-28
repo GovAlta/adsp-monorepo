@@ -172,11 +172,9 @@ export const uploadAnonymousFile = createAsyncThunk(
       const { config, user } = getState() as AppState;
       const tenantId = user.tenant.id;
 
-      let token: string;
-      const grecaptcha = window['grecaptcha'];
-      if (grecaptcha?.execute) {
-        token = await grecaptcha.execute(config.environment.recaptchaKey, { action: 'submit_form_supporting_doc' });
-      }
+      
+
+      const token = await getAccessToken();
 
       const formData = new FormData();
       formData.append('type', typeId);

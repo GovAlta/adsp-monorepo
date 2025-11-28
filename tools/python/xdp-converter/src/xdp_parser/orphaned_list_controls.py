@@ -1,3 +1,4 @@
+from asyncio import events
 import re
 from xml.etree import ElementTree as ET
 from typing import Dict, Optional
@@ -14,8 +15,12 @@ from xdp_parser.xdp_utils import has_repeater_occur, is_button, non_button_input
 def _is_add_remove_button(field: ET.Element) -> bool:
     if not is_button(field):
         return False
+
     click_events = [e for _, _, e in find_click_events(field)]
-    event_operators = r"\binstanceManager\.(addInstance|removeInstance|insertInstance|moveInstance)\s*\("
+
+    # Match any add/remove/insert/move instance operation
+    event_operators = r"(addInstance|removeInstance|insertInstance|moveInstance)\s*\("
+
     return any(
         re.search(event_operators, ce, re.I)
         or re.search(r"\bsetInstances\s*\(", ce, re.I)
@@ -90,7 +95,7 @@ def _resolve_som_path(root: ET.Element, som: str) -> Optional[ET.Element]:
     return cur
 
 
-def is_list_control_container(
+def is_sibling_container(
     subform: ET.Element, root: ET.Element, parent_map: Dict[ET.Element, ET.Element]
 ) -> bool:
     """
@@ -136,6 +141,56 @@ def is_list_control_container(
     # 3) Name hint only (bonus): looks like controls, and we already verified it has buttons and no inputs
     name = subform.attrib.get("name") or ""
     if re.match(r"^(add(remove)?|controls?|toolbar|buttons?)", name, re.I):
+        return True
+
+    return False
+
+
+def is_child_container(sf: ET.Element) -> bool:
+    """
+    Returns True if `sf` is a subform containing ONLY Add/Remove buttons,
+    regardless of nesting inside a row or beside it.
+    """
+
+    # Optional hint
+    name = (sf.attrib.get("name") or "").lower()
+    # name_hint = bool(re.match(r"^(addremove|controls?|toolbar|buttons?)", name))
+
+    fields = sf.findall("./field")
+    if not fields:
+        return False
+
+    # Split fields into buttons vs real inputs
+    button_fields = [f for f in fields if _is_add_remove_button(f)]
+    real_inputs = [f for f in fields if not _is_add_remove_button(f)]
+
+    # Must have at least one button
+    if len(button_fields) == 0:
+        return False
+
+    # Must NOT have any non-button inputs
+    if len(real_inputs) > 0:
+        return False
+
+    # This is a pure button block → success
+    return True
+
+
+def is_add_remove_container(
+    sf: ET.Element, root: ET.Element, parent_map: Dict[ET.Element, ET.Element]
+) -> bool:
+    """
+    Unified detector for all forms of Add/Remove control blocks.
+    Delegates to both the original (sibling container) detector and
+    the new (embedded controls-only subform) detector.
+    """
+
+    # Buttons embedded directly inside row subform
+    if is_child_container(sf):
+        return True
+
+    # Buttons in sibling control block
+    if is_sibling_container(sf, root, parent_map):
         return True
 
     return False

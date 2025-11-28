@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { GoAButton, GoAIconButton, GoACallout } from '@abgov/react-components';
 import _ from 'underscore';
-import {
-  generatePdf,
-  updatePdfResponse,
-  showCurrentFilePdf,
-  setPdfDisplayFileId,
-  getCorePdfTemplates,
-  updateTempTemplate,
-} from '@store/pdf/action';
+// import {
+//   generatePdf,
+//   updatePdfResponse,
+//   showCurrentFilePdf,
+//   setPdfDisplayFileId,
+//   getCorePdfTemplates,
+//   updateTempTemplate,
+// } from '@store/pdf/action';
 
 import {
   SpinnerPadding,
@@ -23,12 +23,12 @@ import {
 
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
-import { DownloadFileService } from '@store/file/actions';
-import { streamPdfSocket } from '@store/pdf/action';
+//import { DownloadFileService } from '@store/file/actions';
+// import { streamPdfSocket } from '@store/pdf/action';
 import { useParams } from 'react-router-dom';
 import { PageIndicator } from '@components/Indicator';
 
-import { FetchFileService } from '@store/file/actions';
+//import { FetchFileService } from '@store/file/actions';
 
 const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
   const byteCharacters = atob(b64Data);

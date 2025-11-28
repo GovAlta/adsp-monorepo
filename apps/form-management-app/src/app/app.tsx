@@ -13,8 +13,7 @@ import FormEditor from './pages/admin/FormEditor';
 import FormPreview from './pages/admin/FormPreview';
 import { AppDispatch, configInitializedSelector, initializeTenant, userSelector } from './state';
 
-// Layout wrapper component
-const LayoutWrapper = () => {
+const TenantGuard = ({ children }: { children: React.ReactNode }) => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
@@ -27,20 +26,30 @@ const LayoutWrapper = () => {
     }
   }, [configInitialized, tenantName, dispatch]);
 
-  if (!userInitialized) {
-    return null;
-  }
+  if (!userInitialized) return null;
 
   if (!user) {
     return <Navigate to={`/${tenantName}/login?from=${encodeURIComponent(location.pathname)}`} />;
   }
 
-  return (
-    <Layout serviceName="Form Management" admin={true}>
+  return <>{children}</>;
+};
+
+const LayoutWrapper = () => (
+  <TenantGuard>
+    <Layout serviceName="Form Management" admin>
       <Outlet />
     </Layout>
-  );
-};
+  </TenantGuard>
+);
+
+const LayoutWrapperBasic = () => (
+  <TenantGuard>
+    <div>
+      <Outlet />
+    </div>
+  </TenantGuard>
+);
 
 export function App() {
   return (
@@ -51,12 +60,18 @@ export function App() {
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/:tenant/login" element={<Login />} />
 
-          {/* Routes with layout */}
-          <Route path="/:tenant" element={<LayoutWrapper />}>
-            <Route index element={<TenantManagement />} />
-            <Route path="forms" element={<FormDefinitions />} />
-            <Route path="editor/:id" element={<FormEditor />} />
-            <Route path="preview/:formId" element={<FormPreview />} />
+          <Route path="/:tenant">
+            {/* Default tenant layout */}
+            <Route element={<LayoutWrapper />}>
+              <Route index element={<TenantManagement />} />
+              <Route path="forms" element={<FormDefinitions />} />
+              <Route path="preview/:formId" element={<FormPreview />} />
+            </Route>
+
+            {/* Editor uses a different layout */}
+            <Route element={<LayoutWrapperBasic />}>
+              <Route path="editor/:id" element={<FormEditor />} />
+            </Route>
           </Route>
         </Routes>
       </Router>

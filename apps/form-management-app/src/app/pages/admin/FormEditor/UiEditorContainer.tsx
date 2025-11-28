@@ -1,7 +1,6 @@
 import React, { useRef, useState } from 'react';
-import styled from 'styled-components';
-import { EditorPadding } from './styled-components';
-import { useWindowDimensions } from '../../../components/useWindowDimensions';
+import './Editor.scss';
+import { useWindowDimensions } from '../../../utils/useWindowDimensions';
 import { GoAFormItem } from '@abgov/react-components';
 import MonacoEditor from '@monaco-editor/react';
 
@@ -39,8 +38,17 @@ export const UIEditorContainer: React.FC<UiEditorContainerProps> = ({
   const EditorHeight = height - 400;
 
   const isUseMiniMap = window.screen.availWidth >= 1920;
-  const handleEditorDidMountUi = (editor) => {
-    editorRefData.current = editor;
+  interface EditorScrollEvent {
+    scrollTop: number;
+  }
+
+  interface EditorInstance {
+    setScrollTop(scrollTop: number): void;
+    onDidScrollChange(listener: (e: EditorScrollEvent) => void): void;
+  }
+
+  const handleEditorDidMountUi = (editor: EditorInstance): void => {
+    (editorRefData as React.MutableRefObject<EditorInstance | null>).current = editor;
 
     requestAnimationFrame(() => {
       setTimeout(() => {
@@ -48,67 +56,54 @@ export const UIEditorContainer: React.FC<UiEditorContainerProps> = ({
       }, 5);
     });
 
-    editor.onDidScrollChange((e) => {
+    editor.onDidScrollChange((e: EditorScrollEvent) => {
       setDataEditorLocation(e.scrollTop);
     });
   };
 
   return (
-    <AdminLayout>
-      <Main>
-        <GoAFormItem
-          error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
-          label=""
-        >
-          <EditorPadding>
-            <MonacoEditor
-              data-testid="form-ui-schema"
-              height={EditorHeight}
-              value={JSON.stringify(tempUiSchema, null, 2)}
-              onValidate={(makers) => {
-                if (makers.length === 0) {
-                  setEditorErrors({
-                    ...editorErrors,
-                    uiSchema: null,
-                  });
-                  return;
-                }
-                setEditorErrors({
-                  ...editorErrors,
-                  uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
-                });
-              }}
-              onMount={handleEditorDidMountUi}
-              onChange={(value) => {
-                setDraftUiSchema(value);
-              }}
-              language="json"
-              options={{
-                automaticLayout: true,
-                scrollBeyondLastLine: false,
-                wordWrap: 'on',
-                tabSize: 2,
-                padding: {
-                  top: 8,
-                },
-                minimap: { enabled: isUseMiniMap },
-                folding: true,
-                foldingStrategy: 'auto',
-                showFoldingControls: 'always',
-              }}
-            />
-          </EditorPadding>
-        </GoAFormItem>
-      </Main>
-    </AdminLayout>
+    <GoAFormItem
+      error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
+      label=""
+    >
+      <div className="editor-padding">
+        <MonacoEditor
+          data-testid="form-ui-schema"
+          height={EditorHeight}
+          value={JSON.stringify(tempUiSchema, null, 2)}
+          onValidate={(makers) => {
+            if (makers.length === 0) {
+              setEditorErrors({
+                ...editorErrors,
+                uiSchema: null,
+              });
+              return;
+            }
+            setEditorErrors({
+              ...editorErrors,
+              uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+            });
+          }}
+          onMount={handleEditorDidMountUi}
+          onChange={(value) => {
+            setDraftUiSchema(value || '');
+          }}
+          language="json"
+          options={{
+            automaticLayout: true,
+            scrollBeyondLastLine: false,
+            wordWrap: 'on',
+            tabSize: 2,
+            padding: {
+              top: 8,
+            },
+            minimap: { enabled: isUseMiniMap },
+            folding: true,
+            foldingStrategy: 'auto',
+            showFoldingControls: 'always',
+          }}
+        />
+      </div>
+    </GoAFormItem>
   );
 };
-
-const Main = styled.div`
-  flex: 1 1 auto;
-  padding: var(--goa-space-l, 24px) 0;
-`;
-
-const AdminLayout = styled.div`
-  display: flex;
-`;

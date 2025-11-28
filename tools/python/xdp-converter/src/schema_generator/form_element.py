@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from constants import CTX_JSONFORMS_RULES
 from xdp_parser.parse_context import ParseContext
 
 
@@ -33,34 +34,84 @@ class FormElement(ABC):
         pass
 
     def _find_visibility_rule(self, rules: dict) -> dict | None:
-        if not self.qualified_name:
+        fq = getattr(self, "qualified_name", None)
+
+        # No path? No rule.
+        if not fq:
             return None
 
-        parts = self.qualified_name.split(".")
-        checked = set()
+        # print(f"\n[RULEMATCH] Looking for rule for element: {fq}")
 
-        # --- First, try suffixes (deepest child first)
-        for i in range(len(parts)):
-            suffix = ".".join(parts[i:])
-            if suffix not in checked:
-                checked.add(suffix)
-                if suffix in rules:
-                    return rules[suffix]
+        # Direct match
+        if fq in rules:
+            # print(f"[RULEMATCH] ✔ direct match")
+            return rules[fq]
 
-        # --- Then, try progressive parent paths (from deepest to shallow)
-        for i in range(len(parts) - 1, 0, -1):
-            parent = ".".join(parts[:i])
-            if parent not in checked:
-                checked.add(parent)
-                if parent in rules:
-                    return rules[parent]
+        # Prefix match (rule applies to a parent subform)
+        for key, rule in rules.items():
+            if key and fq.startswith(key + "."):
+                # print(f"[RULEMATCH] ✔ prefix match: {key}")
+                return rule
 
+        # Debug: show “possible but not matched” hints
+        # for key in rules.keys():
+        #     if key in fq or fq in key:
+        #         print(f"[RULEMATCH] 🔍 potential match: {key}")
+
+        # print(f"[RULEMATCH] ❌ no match")
         return None
 
     def to_ui_schema(self):
         schema = self.build_ui_schema()
-        rules = self.context.get("visibility_rules") or {}
+        rules = self.context.get(CTX_JSONFORMS_RULES) or {}
         rule_entry = self._find_visibility_rule(rules)
         if rule_entry is not None:
             schema["rule"] = rule_entry["rule"]
         return schema
+
+    def _debug_rule_matching(self, rules: dict):
+        """
+        Diagnostic: print all rule keys that might match this element.
+        Helps understand why visibility rules attach or fail to attach.
+        """
+
+        qname = self.qualified_name or ""
+        short = qname.split(".")[-1] if qname else ""
+
+        print("\n[DEBUG][RuleMatch]")
+        print(f"  qualified_name: {qname!r}")
+        print(f"  short name    : {short!r}")
+        print(f"  total rules   : {len(rules)}")
+
+        substring_hits = []
+        suffix_hits = []
+        exact_hits = []
+
+        for key in rules.keys():
+            # Exact match on full qualified name
+            if key == qname:
+                exact_hits.append(key)
+
+            # Match by suffix (last part of dotted name)
+            if key.split(".")[-1] == short:
+                suffix_hits.append(key)
+
+            # Any substring match (wide net — diagnostics only)
+            if qname and qname in key:
+                substring_hits.append(key)
+
+        print("  --- Candidate matches ---")
+
+        print(f"  Exact matches ({len(exact_hits)}):")
+        for k in exact_hits:
+            print(f"    • {k}")
+
+        print(f"  Suffix matches ({len(suffix_hits)}):")
+        for k in suffix_hits:
+            print(f"    • {k}")
+
+        print(f"  Substring matches ({len(substring_hits)}):")
+        for k in substring_hits:
+            print(f"    • {k}")
+
+        print("  -------------------------\n")

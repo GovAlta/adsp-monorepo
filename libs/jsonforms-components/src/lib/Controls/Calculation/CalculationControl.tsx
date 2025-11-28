@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { ControlProps } from '@jsonforms/core';
 import { GoAFormItem, GoAInput } from '@abgov/react-components';
@@ -8,26 +8,37 @@ import { evaluateExpression } from './CalculationEngine';
 import { useJsonForms } from '@jsonforms/react';
 
 const GoACalculation = (props: ControlProps) => {
-  const { uischema, data, schema, path, id, visible, handleChange } = props;
-
+  const { uischema, schema, path, id, visible, handleChange } = props;
+  const label = typeof uischema?.label === 'string' ? uischema.label : undefined;
   const expression = schema?.description;
 
-  const label = typeof uischema?.label === 'string' ? uischema.label : undefined;
   const { core } = useJsonForms();
-
   const rootData = core?.data ?? {};
 
-  const computedValue = expression ? evaluateExpression(expression, rootData) : undefined;
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const prevDataRef = useRef(rootData);
+  useEffect(() => {
+    setHasInteracted((was) => (was ? true : true));
+  }, [rootData]);
+  useEffect(() => {
+    if (prevDataRef.current !== rootData) {
+      setHasInteracted(true);
+      prevDataRef.current = rootData;
+    }
+  }, [rootData]);
+  const { value: computedValue, error } = evaluateExpression(expression, rootData);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (computedValue !== undefined && typeof handleChange === 'function' && path) {
       handleChange(path, computedValue);
     }
   }, [computedValue, handleChange, path]);
 
+  const showError = hasInteracted && !!error;
+
   return (
     <Visible visible={visible}>
-      <GoAFormItem label={label}>
+      <GoAFormItem label={label} error={showError ? error : ''}>
         <GoAInput
           name={`computed-input-${id}`}
           testId={`computed-input-${id}`}

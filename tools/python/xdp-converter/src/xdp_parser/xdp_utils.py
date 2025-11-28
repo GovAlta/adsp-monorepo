@@ -172,3 +172,17 @@ def get_field_caption(field: ET.Element) -> Optional[ET.Element]:
             # Collapse whitespace and trim
             return re.sub(r"\s+", " ", raw_text).strip()
     return None
+
+
+def compute_full_xdp_path(node, parent_map):
+    """
+    Build the same full dotted XDP path that XdpElement.get_full_path() produces.
+    """
+    parts = []
+    while node is not None:
+        name = node.attrib.get("name")
+        if name:
+            parts.insert(0, name)
+        node = parent_map.get(node)
+
+    return ".".join(parts)

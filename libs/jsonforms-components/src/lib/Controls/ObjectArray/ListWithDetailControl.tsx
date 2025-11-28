@@ -1,7 +1,10 @@
 import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
+
 import range from 'lodash/range';
 import React, { useState, useEffect, useRef } from 'react';
+import pluralize from 'pluralize';
+
 import {
   ArrayLayoutProps,
   ControlElement,
@@ -18,7 +21,7 @@ import { WithDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoAGrid, GoAIconButton } from '@abgov/react-components';
+import { GoAButton, GoAGrid, GoAIconButton, GoAFormItem } from '@abgov/react-components';
 import {
   ToolBarHeader,
   ObjectArrayTitle,
@@ -27,10 +30,13 @@ import {
   RowFlex,
   FlexTabs,
   FlexForm,
-  TabName,
   Trash,
   ListContainer,
   RowFlexMenu,
+  MarginTop,
+  UpdateListContainer,
+  TabData,
+  IconPadding,
 } from './styled-components';
 import { Visible } from '../../util';
 import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
@@ -297,16 +303,17 @@ interface NonEmptyRowProps {
   path: string;
   translations: ArrayTranslations;
   uischema: ControlElement;
+  listTitle?: string;
 }
-interface LeftRowProps {
+interface MainRowProps {
   childPath: string;
   rowIndex: number;
   enabled: boolean;
   name: string;
   currentTab: number;
   current: HTMLElement | null;
-  translations: ArrayTranslations;
   selectCurrentTab: (index: number) => void;
+  setCurrentListPage: (index: number) => void;
 }
 
 const NonEmptyRowComponent = ({
@@ -331,7 +338,7 @@ const NonEmptyRowComponent = ({
   );
 };
 
-const LeftTab = ({
+const MainTab = ({
   childPath,
   rowIndex,
   openDeleteDialog,
@@ -340,43 +347,71 @@ const LeftTab = ({
   currentTab,
   name,
   current,
-  translations,
-}: LeftRowProps & WithDeleteDialogSupport) => {
+  setCurrentListPage,
+}: MainRowProps & WithDeleteDialogSupport) => {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const getDataAtPath = (data: any, path: string) =>
+    path
+      .replace(/\[(\d+)\]/g, '.$1')
+      .split('.')
+      .reduce((acc, key) => (acc ? acc[key] : undefined), data);
+
+  const { core } = useJsonForms();
+
+  const rowData = getDataAtPath(core?.data, childPath);
+  const rowErrors = core?.errors
+    ?.filter((e) => {
+      const base = `/${childPath.replace(/\./g, '/')}`;
+      return e.instancePath === base || e.instancePath.startsWith(base + '/');
+    })
+    .map((error) => error?.message);
   return (
     <div key={childPath}>
-      <SideMenuItem
-        style={currentTab === rowIndex ? { background: '#EFF8FF' } : {}}
-        onClick={() => selectCurrentTab(rowIndex)}
-        onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-          if (e.key === 'ArrowRight') {
-            e.preventDefault();
-            if (current) {
-              const goa = current?.querySelector('goa-input, goa-button');
-              if (goa?.shadowRoot) {
-                const internal = goa.shadowRoot.querySelector('input, button');
+      <GoAFormItem error={rowErrors?.length ? rowErrors : undefined}>
+        <SideMenuItem
+          onClick={() => selectCurrentTab(rowIndex)}
+          onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+            if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              if (current) {
+                const goa = current?.querySelector('goa-input, goa-button');
+                if (goa?.shadowRoot) {
+                  const internal = goa.shadowRoot.querySelector('input, button');
 
-                (internal as HTMLElement)?.focus();
-                selectCurrentTab(rowIndex);
+                  (internal as HTMLElement)?.focus();
+                  selectCurrentTab(rowIndex);
+                }
               }
             }
-          }
-        }}
-      >
-        <RowFlexMenu tabIndex={0}>
-          <TabName>{name}</TabName>
-          {enabled ? (
-            <Trash role="trash button">
+          }}
+        >
+          <RowFlexMenu tabIndex={0}>
+            <TabData>
+              {Object.keys(rowData ?? {}).length === 0 && 'No data'} {Object.values(rowData).join(', ')}
+            </TabData>
+            {enabled ? (
+              <Trash>
+                <GoAIconButton
+                  disabled={!enabled}
+                  icon="trash"
+                  title={'remove'}
+                  testId="remove the details"
+                  onClick={() => openDeleteDialog(childPath, rowIndex, name)}
+                ></GoAIconButton>
+              </Trash>
+            ) : null}
+            <IconPadding>
               <GoAIconButton
                 disabled={!enabled}
-                icon="trash"
-                title={'trash button'}
-                testId="remove the details"
-                onClick={() => openDeleteDialog(childPath, rowIndex, name)}
+                icon="create"
+                title={'edit'}
+                testId="edit button"
+                onClick={() => setCurrentListPage(currentTab + 1)}
               ></GoAIconButton>
-            </Trash>
-          ) : null}
-        </RowFlexMenu>
-      </SideMenuItem>
+            </IconPadding>
+          </RowFlexMenu>
+        </SideMenuItem>
+      </GoAFormItem>
     </div>
   );
 };
@@ -394,6 +429,10 @@ interface TableRowsProp {
   translations: ArrayTranslations;
   currentIndex: number;
   setCurrentIndex: (index: number) => void;
+  setCurrentListPage: (index: number) => void;
+  currentListPage: number;
+  listTitle?: string;
+  errors: string;
 }
 const ObjectArrayList = ({
   data,
@@ -407,11 +446,15 @@ const ObjectArrayList = ({
   translations,
   currentIndex,
   setCurrentIndex,
+  setCurrentListPage,
+  currentListPage,
+  listTitle,
+  errors,
 }: TableRowsProp & WithDeleteDialogSupport) => {
   const isEmptyList = data === 0;
   const rightRef = useRef(null);
   const current = rightRef.current as HTMLElement | null;
-  const minHeight = 300;
+  const minHeight = 100;
   const [rightHeight, setRightHeight] = useState<number | undefined>(minHeight);
 
   useEffect(() => {
@@ -450,48 +493,71 @@ const ObjectArrayList = ({
     setCurrentIndex(index);
   };
 
-  const paddedHeight = rightHeight && rightHeight + 48;
-  // const detailRef = useRef<HTMLDivElement>(null);
+  const nameTitle = (() => {
+    const str = appliedUiSchemaOptions?.itemLabel ? `${appliedUiSchemaOptions.itemLabel}` : `${path}`;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  })();
+
   return (
     <ListContainer>
       <RowFlex>
-        <FlexTabs style={{ height: paddedHeight }}>
-          {range(data).map((index: number) => {
-            const childPath = Paths.compose(path, `${index}`);
-            const name = appliedUiSchemaOptions?.itemLabel
-              ? `${appliedUiSchemaOptions?.itemLabel} ${index + 1}`
-              : `${path} ${index + 1}`;
-            return (
-              <LeftTab
-                key={childPath}
-                childPath={childPath}
-                rowIndex={index}
-                currentTab={currentIndex}
-                name={name}
+        {currentListPage === 0 && (
+          <FlexTabs style={{ height: '100%' }}>
+            {range(data).map((index: number) => {
+              const childPath = Paths.compose(path, `${index}`);
+              const name = appliedUiSchemaOptions?.itemLabel
+                ? `${pluralize.singular(appliedUiSchemaOptions?.itemLabel)} ${index + 1}`
+                : `${pluralize.singular(path)} ${index + 1}`;
+
+              return (
+                <MainTab
+                  key={childPath}
+                  childPath={childPath}
+                  rowIndex={index}
+                  currentTab={currentIndex}
+                  name={name}
+                  openDeleteDialog={openDeleteDialog}
+                  selectCurrentTab={selectCurrentTab}
+                  enabled={enabled}
+                  current={current}
+                  setCurrentListPage={(index: number) => setCurrentListPage(index)}
+                />
+              );
+            })}
+          </FlexTabs>
+        )}
+        {currentListPage > 0 && (
+          <UpdateListContainer>
+            <FlexForm ref={rightRef} tabIndex={-1}>
+              <ObjectArrayTitle>{pluralize.singular(listTitle || '')}</ObjectArrayTitle>
+
+              <NonEmptyList
+                key={Paths.compose(path, `${currentIndex}`)}
+                childPath={Paths.compose(path, `${currentIndex}`)}
+                rowIndex={currentIndex}
+                schema={schema}
                 openDeleteDialog={openDeleteDialog}
-                selectCurrentTab={selectCurrentTab}
+                showSortButtons={
+                  appliedUiSchemaOptions.showSortButtons || appliedUiSchemaOptions.showArrayTableSortButtons
+                }
                 enabled={enabled}
-                current={current}
+                cells={cells}
+                path={path}
+                uischema={uischema}
                 translations={translations}
               />
-            );
-          })}
-        </FlexTabs>
-        <FlexForm ref={rightRef} tabIndex={-1}>
-          <NonEmptyList
-            key={Paths.compose(path, `${currentIndex}`)}
-            childPath={Paths.compose(path, `${currentIndex}`)}
-            rowIndex={currentIndex}
-            schema={schema}
-            openDeleteDialog={openDeleteDialog}
-            showSortButtons={appliedUiSchemaOptions.showSortButtons || appliedUiSchemaOptions.showArrayTableSortButtons}
-            enabled={enabled}
-            cells={cells}
-            path={path}
-            uischema={uischema}
-            translations={translations}
-          />
-        </FlexForm>
+            </FlexForm>
+            <GoAButton
+              type={'primary'}
+              onClick={() => {
+                setCurrentListPage(0);
+              }}
+              testId="next-list-button"
+            >
+              Continue
+            </GoAButton>
+          </UpdateListContainer>
+        )}
       </RowFlex>
     </ListContainer>
   );
@@ -504,12 +570,12 @@ interface ListWithDetailControlProps extends ObjectArrayControlProps {
 export class ListWithDetailControl extends React.Component<ListWithDetailControlProps, any> {
   state = {
     maxItemsError: '',
+    currentListPage: 0,
   };
 
   // eslint-disable-next-line
   addItem = (path: string, value: any) => {
     const { data, addItem, setCurrentTab, uischema } = this.props;
-
     const isNonEmpty = data !== undefined && data !== null;
     const newIndex = isNonEmpty ? data ?? 0 : 0;
     const maxItems = uischema?.options?.detail?.maxItems ?? DEFAULT_MAX_ITEMS;
@@ -555,27 +621,40 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
     return (
       <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
         <ToolBarHeader>
-          {listTitle && (
-            <ObjectArrayTitle>
-              {listTitle} <span>{additionalProps.required && '(required)'}</span>
-              {this.state.maxItemsError && (
-                <span style={{ color: 'red', marginLeft: '1rem' }}>{this.state.maxItemsError}</span>
-              )}
-            </ObjectArrayTitle>
+          {listTitle && this.state.currentListPage === 0 && (
+            <MarginTop>
+              <ObjectArrayTitle>
+                {listTitle} <span>{additionalProps.required && '(required)'}</span>
+                {this.state.maxItemsError && (
+                  <span style={{ color: 'red', marginLeft: '1rem' }}>{this.state.maxItemsError}</span>
+                )}
+              </ObjectArrayTitle>
+            </MarginTop>
           )}
-          <ObjectArrayToolBar
-            errors={errors}
-            label={label}
-            addItem={(path, value) => () => {
-              this.addItem(path, value);
-            }}
-            numColumns={0}
-            path={path}
-            uischema={controlElement}
-            schema={schema}
-            rootSchema={rootSchema}
-            enabled={enabled}
-          />
+          {/* {this.state.currentListPage > 0 && <ObjectArrayTitle>{name}</ObjectArrayTitle>} */}
+          {this.state.currentListPage === 0 && data === 0 && (
+            <ObjectArrayToolBar
+              data={data}
+              errors={errors}
+              label={label}
+              addItem={(path, value) => () => {
+                this.addItem(path, value);
+              }}
+              numColumns={0}
+              path={path}
+              uischema={controlElement}
+              schema={schema}
+              rootSchema={rootSchema}
+              enabled={enabled}
+              setCurrentListPage={(listPage: number) => {
+                this.setState({
+                  currentListPage: listPage,
+                });
+              }}
+              currentListPage={this.state.currentListPage}
+              buttonType="secondary"
+            />
+          )}
         </ToolBarHeader>
         <div>
           <ObjectArrayList
@@ -590,9 +669,40 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
             config={config}
             currentIndex={this.props.currentTab}
             setCurrentIndex={this.props.setCurrentTab}
+            setCurrentListPage={(listPage: number) => {
+              this.setState({
+                currentListPage: listPage,
+              });
+            }}
+            errors={errors}
+            currentListPage={this.state.currentListPage}
+            listTitle={listTitle}
             {...additionalProps}
           />
         </div>
+        {this.state.currentListPage === 0 && data > 0 && (
+          <ObjectArrayToolBar
+            data={data}
+            errors={errors}
+            label={label}
+            addItem={(path, value) => () => {
+              this.addItem(path, value);
+            }}
+            numColumns={0}
+            path={path}
+            uischema={controlElement}
+            schema={schema}
+            rootSchema={rootSchema}
+            enabled={enabled}
+            setCurrentListPage={(listPage: number) => {
+              this.setState({
+                currentListPage: listPage,
+              });
+            }}
+            currentListPage={this.state.currentListPage}
+            buttonType="tertiary"
+          />
+        )}
       </Visible>
     );
   }

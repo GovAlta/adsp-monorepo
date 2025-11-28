@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
+import './Editor.scss';
 import { GoAButtonGroup, GoAButton } from '@abgov/react-components';
 import { useNavigate } from 'react-router-dom';
-import { SaveFormModal } from '../../../components/saveModal';
-import { FinalButtonPadding } from './styled-components';
+import { SaveFormModal } from './saveModal';
 import type * as monacoNS from 'monaco-editor';
 import { FormDefinition } from '../../../state/types';
 
@@ -17,7 +16,7 @@ export interface EditorProps {
     dataSchemaJSON: string | null;
     dataSchemaJSONSchema: string | null;
   };
-  updateFormDefinition: (definition: FormDefinition) => void;
+  updateFormDefinition: () => void;
   activeIndex: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getCurrentEditorRef: () => any;
@@ -28,14 +27,11 @@ export interface EditorProps {
   validators: any;
 }
 
-export const Buttons: React.FC<EditorProps> = ({
+export const SubmitButtonsBar: React.FC<EditorProps> = ({
   activeIndex,
   editorErrors,
   definition,
   updateFormDefinition,
-  getCurrentEditorRef,
-  foldAll,
-  unfoldAll,
   isFormUpdated,
   validators,
 }) => {
@@ -48,31 +44,7 @@ export const Buttons: React.FC<EditorProps> = ({
 
   return (
     <div>
-      <FinalButtonPadding>
-        <GoAButtonGroup alignment="start">
-          <GoAButton
-            type="tertiary"
-            testId="collapse-all"
-            onClick={() => {
-              const editor = getCurrentEditorRef();
-              if (editor) foldAll(editor);
-            }}
-            disabled={activeIndex > 1}
-          >
-            Collapse all
-          </GoAButton>
-          <GoAButton
-            testId="expand-all"
-            type="tertiary"
-            disabled={activeIndex > 1}
-            onClick={() => {
-              const editor = getCurrentEditorRef();
-              if (editor) unfoldAll(editor);
-            }}
-          >
-            Expand all
-          </GoAButton>
-        </GoAButtonGroup>
+      <div className='final-button-padding'>
 
         <GoAButtonGroup alignment="end">
           <GoAButton
@@ -87,9 +59,7 @@ export const Buttons: React.FC<EditorProps> = ({
               editorErrors.uiSchema !== null
             }
             onClick={() => {
-              // if (indicator.show !== true) {
-              updateFormDefinition(definition);
-              //}
+              updateFormDefinition();
             }}
           >
             Save
@@ -110,14 +80,14 @@ export const Buttons: React.FC<EditorProps> = ({
             Back
           </GoAButton>
         </GoAButtonGroup>
-      </FinalButtonPadding>
+      </div>
       <SaveFormModal
         open={saveModal.visible}
         onDontSave={() => {
           close();
         }}
         onSave={() => {
-          updateFormDefinition(definition);
+          updateFormDefinition();
           setSaveModal({ visible: false });
           close();
         }}
@@ -129,12 +99,3 @@ export const Buttons: React.FC<EditorProps> = ({
     </div>
   );
 };
-
-const Main = styled.div`
-  flex: 1 1 auto;
-  padding: var(--goa-space-l, 24px) 0;
-`;
-
-const AdminLayout = styled.div`
-  display: flex;
-`;

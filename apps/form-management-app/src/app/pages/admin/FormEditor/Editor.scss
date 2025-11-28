@@ -1,6 +1,5 @@
-import styled from 'styled-components';
 
-export const EditorPadding = styled.div`
+.editor-padding {
   border: 1px solid grey;
   border-radius: 3px;
   padding: 0.15rem;
@@ -8,43 +7,48 @@ export const EditorPadding = styled.div`
   .monaco-scrollable-element {
     margin-top: 5px !important;
   }
+
   .margin-view-overlays {
     margin-top: 5px !important;
   }
-`;
+}
 
-export const FormEditorTitle = styled.div`
+
+.form-editor-title {
   font-size: var(--goa-font-size-7);
   line-height: var(--lh-lg);
   font-weight: var(--fw-regular);
-`;
+}
 
-export const PRE = styled.div`
+.PRE {
   background: #f3f3f3;
   white-space: pre-wrap;
   font-family: monospace;
   font-size: var(--goa-font-size-1);
   line-height: var(--goa-line-height-05);
   padding: var(--goa-space-m);
+}
 
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  max-height: 60vh;
-  overflow: auto;
-  max-width: 100%;
-`;
-
-export const NameDescriptionDataSchema = styled.div`
-  flex: 6;
+.name-description-data-schema {
+  flex: 1;
   padding-right: 3rem;
+
 
   .life-cycle-auto-scroll {
     overflow-y: auto;
   }
-`;
+}
+.preview-pane {
+  flex: 1;
+ 
+}
 
-export const FormEditor = styled.div`
+
+.form-editor {
   width: 100%;
+  display: flex;
+  
+  flex-direction: row;
 
   .hr-resize {
     margin-top: var(--goa-space-s);
@@ -58,9 +62,10 @@ export const FormEditor = styled.div`
   .info-circle {
     margin: 5px 0 0 5px;
   }
-`;
+}
 
-export const FormTemplateEditorContainer = styled.div`
+
+.form-template-editor-container {
   display: flex;
   flex: auto;
   margin-top: 6px;
@@ -70,32 +75,38 @@ export const FormTemplateEditorContainer = styled.div`
   height: 100vh;
   overflow: hidden;
   box-sizing: border-box;
-`;
+}
 
 
-export const FormPreviewContainer = styled.div`
+.form-preview-container {
   width: 50%;
-`;
+}
+.form-preview-spacer {
+  margin-top: var(--goa-space-l);
+}
 
-export const FinalButtonPadding = styled.div`
+
+.final-button-padding {
   display: flex;
   padding-top: 20px;
   justify-content: space-between;
   align-items: center;
-`;
-
-export const FormPreviewSpacer = styled.div`
-  margin-top: var(--goa-space-l);
-`;
+}
 
 
-export const ReviewPageTabWrapper = styled.div`
-  padding-top: var(--goa-space-m);
-`;
-
-export const FormPreviewScrollPane = styled.div`
+.form-preview-scroll-pane {
   overflow-y: auto;
   padding-left: 0.25rem;
   padding-right: 0.25rem;
   height: calc(100vh - 192px);
-`;
+}
+
+.review-page-tab-wrapper {
+  padding-top: var(--goa-space-m);
+}
+
+
+.form-preview-spacer {
+  margin-top: var(--goa-space-l);
+}
+

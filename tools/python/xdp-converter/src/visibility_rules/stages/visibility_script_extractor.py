@@ -2,6 +2,7 @@
 
 import re
 from common.rule_model import ScriptEntry, RawRule
+from constants import CTX_PARENT_MAP, CTX_RAW_RULES, CTX_XDP_ROOT
 from visibility_rules.stages.js_parser import parse_js_visibility_script
 
 
@@ -14,8 +15,8 @@ class VisibilityScriptExtractor:
     def process(self, context):
         print("[VisibilityScriptExtractor] Starting...")
 
-        xdp_root = context["xdp_root"]
-        parent_map = context["parent_map"]
+        xdp_root = context[CTX_XDP_ROOT]
+        parent_map = context[CTX_PARENT_MAP]
         self.parent_map = parent_map
 
         raw_rules = []
@@ -77,18 +78,21 @@ class VisibilityScriptExtractor:
                         event=event_name,
                     )
 
-                    raw_rules.append(
-                        RawRule(
-                            target=vis_target,
-                            xpath=self._get_xpath(script_elem, parent_map),
-                            scripts=[script_entry],
-                        )
+                    raw_rule = RawRule(
+                        target=vis_target,
+                        xpath=self._get_xpath(script_elem, parent_map),
+                        scripts=[script_entry],
                     )
+
+                    # ⭐ IMPORTANT: Give DriverResolver access to the actual script node
+                    raw_rule.element = script_elem
+
+                    raw_rules.append(raw_rule)
 
         print(
             f"[VisibilityScriptExtractor] Extracted {len(raw_rules)} visibility rules."
         )
-        context["raw_visibility_rules"] = raw_rules
+        context[CTX_RAW_RULES] = raw_rules
         return context
 
     def _extract_script_text(self, event_elem):

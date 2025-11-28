@@ -1,4 +1,4 @@
-import { characterCheck, checkInput, validationPattern, wordCheck } from './checkInput';
+import { characterCheck, checkInput, validationPattern, wordCheck } from '../utils/checkInput';
 
 describe('checkInput', () => {
   describe('character check', () => {
