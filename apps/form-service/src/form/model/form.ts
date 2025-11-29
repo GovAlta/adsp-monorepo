@@ -273,6 +273,10 @@ export class FormEntity implements Form {
       !isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || []) &&
       !((await this.definition?.canApply(user, dryRun)) && user.id === this.createdBy.id)
     ) {
+      if (!(await this.definition?.checkScheduledIntakes(user, dryRun))) {
+        throw new InvalidOperationError('Cannot submit form as there is no active intake.');
+      }
+
       throw new UnauthorizedUserError('submit form', user);
     }
 
