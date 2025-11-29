@@ -18,30 +18,49 @@ export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean
 function isNumber(value?: string): boolean {
   return value != null && value !== '' && !isNaN(Number(value.toString()));
 }
+
 export const getIncompletePaths = (ajv: Ajv, schema: any, data: any, scopes: string[]): string[] => {
   const incomplete: string[] = [];
 
+  const getSchemaForPath = (rootSchema: any, schemaPath: string[]) => {
+    let current = rootSchema;
+    for (const key of schemaPath) {
+      if (!current?.properties?.[key]) {
+        return null;
+      }
+      current = current.properties[key];
+    }
+    return current;
+  };
+
+  const getParentSchemaForPath = (rootSchema: any, schemaPath: string[]) => {
+    if (schemaPath.length === 0) return null;
+    let current = rootSchema;
+    for (let i = 0; i < schemaPath.length - 1; i++) {
+      const key = schemaPath[i];
+      if (!current?.properties?.[key]) {
+        return null;
+      }
+      current = current.properties[key];
+    }
+    return current;
+  };
+
   for (const scope of scopes) {
-    const path = toDataPath(scope);
+    const path = toDataPath(scope); // e.g. "applicantContactDetails.applicantMailAddress.addressLine1"
     const value = get(data, path);
 
-    const schemaPath = path.split('.');
-    let currentSchema: any = schema;
+    const schemaPath = path.split('.'); // ["applicantContactDetails", "applicantMailAddress", "addressLine1"]
 
-    for (const key of schemaPath) {
-      if (!currentSchema || !currentSchema.properties || !currentSchema.properties[key]) {
-        currentSchema = null;
-        break;
-      }
-      currentSchema = currentSchema.properties[key];
-    }
+    const parentSchema = getParentSchemaForPath(schema, schemaPath);
+    const currentSchema = getSchemaForPath(schema, schemaPath);
 
-    const isRequired =
-      schemaPath.length > 1
-        ? schema?.properties?.[schemaPath[0]]?.required?.includes(schemaPath[1])
-        : schema?.required?.includes(path);
+    const leafKey = schemaPath[schemaPath.length - 1];
 
-    const hasMinLength = currentSchema?.minLength !== undefined;
+    // Required is always defined on the parent object of the property
+    const isRequired = !!parentSchema?.required?.includes(leafKey);
+
+    const hasMinLength = typeof currentSchema?.minLength === 'number';
 
     if (
       (isRequired && (value === undefined || value === null || value === '')) ||
