@@ -3,7 +3,6 @@ import React from 'react';
 import { CategoryStatus, PageStepperRow, Center } from '../styled-components';
 import { getCategoryStatusBadge } from '../CategoryStatus';
 import { CategoryState } from '../context';
-import { GoAText } from '@abgov/react-components';
 
 interface CategoryRowProps {
   category: CategoryState;
