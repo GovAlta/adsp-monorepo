@@ -6,6 +6,9 @@ class XdpBasicInput(XdpElement):
     def __init__(self, xdp, labels, context):
         super().__init__(xdp, labels, context)
 
+    def is_control(self):
+        return True
+
     def to_form_element(self):
         fe = FormInput(
             self.get_name(),

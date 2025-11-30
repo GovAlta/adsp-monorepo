@@ -52,6 +52,8 @@ class FormElement(ABC):
 
     def to_ui_schema(self):
         schema = self.build_ui_schema()
+        if not schema:
+            return None
         rules = self.context.get(CTX_JSONFORMS_RULES) or {}
         rule_entry = self._find_visibility_rule(rules)
         if rule_entry is not None:

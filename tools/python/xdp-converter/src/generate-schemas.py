@@ -1,6 +1,5 @@
 import argparse
 import json
-from multiprocessing import context
 import sys
 import os
 from pathlib import Path
@@ -18,7 +17,6 @@ from constants import (
 from schema_generator.json_schema_generator import JsonSchemaGenerator
 from schema_generator.ui_schema_generator import UiSchemaGenerator
 import xml.etree.ElementTree as ET
-from xdp_parser import control_labels
 from xdp_parser.factories.enum_map_factory import EnumMapFactory, normalize_enum_labels
 from xdp_parser.factories.xdp_element_factory import XdpElementFactory
 from xdp_parser.help_text_parser import JSHelpTextParser
@@ -101,7 +99,7 @@ def process_one(
         # Keep the actual field names as the group members
         normalized_radio_groups = enum_context.radio_groups
 
-        # Run the visibility pipeline
+        # --- Run the visibility pipeline ---
         pipeline = VisibilityRulesPipeline()
         rule_context = {
             CTX_XDP_ROOT: root,
@@ -111,18 +109,16 @@ def process_one(
             CTX_RADIO_GROUPS: normalized_radio_groups,
         }
 
-        # jsonforms_rules = pipeline.run(rule_context).get(CTX_JSONFORMS_RULES, {})
         pipeline_output = pipeline.run(rule_context)
         jsonforms_rules = pipeline_output[CTX_JSONFORMS_RULES]
-        visibility_groups = pipeline_output[CTX_VISIBILITY_GROUPS]
-        # Build the UI parse context
+
+        # --- Build the UI parse context ---
         context = ParseContext(
             root=root,
             parent_map=parent_map,
             radio_groups=normalized_radio_groups,
             help_text=help_text,
             jsonforms_rules=jsonforms_rules,
-            visibility_groups=visibility_groups,
         )
 
         parser = XdpParser(XdpElementFactory(context), context)
@@ -144,9 +140,6 @@ def process_one(
 
         with ui_out.open("w", encoding="utf-8") as f:
             json.dump(ui_schema, f, indent=4, ensure_ascii=False)
-
-        # --- Diagnostics  ---
-        # XdpParser().diagnose()
 
         return (xdp_path, True, None)
 

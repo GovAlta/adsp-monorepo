@@ -11,3 +11,6 @@ class XdpCheckbox(XdpElement):
         return FormCheckbox(
             self.get_name(), self.full_path, "boolean", self.get_label(), self.context
         )
+
+    def is_control(self):
+        return True

@@ -14,14 +14,12 @@ class ParseContext:
         radio_groups=None,
         help_text=None,
         jsonforms_rules=None,
-        visibility_groups=None,
     ):
         self.root = root
         self.parent_map = parent_map
         self.radio_groups = radio_groups or {}
         self.help_text = help_text or {}
         self.jsonforms_rules = jsonforms_rules or {}
-        self.visibility_groups: Set[str] = visibility_groups or set()
 
     def get(self, key, default=None):
         # try instance attributes first
