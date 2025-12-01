@@ -29,5 +29,3 @@ export const fileLoadingSelector = createSelector(
   (_state: AppState, urn: string) => urn,
   (busy, urn) => busy.metadata[urn] || busy.download[urn]
 );
-
-

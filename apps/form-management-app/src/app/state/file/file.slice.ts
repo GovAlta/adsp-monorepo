@@ -216,18 +216,26 @@ export const uploadAnonymousFile = createAsyncThunk(
 export const uploadFile = createAsyncThunk(
   'file/upload-file',
   async (
-    { typeId, file, recordId, propertyId }: { typeId: string; file: File; recordId: string; propertyId: string },
+    { typeId, file, recordId }: { typeId: string; file: File; recordId: string; propertyId: string },
     { dispatch, getState, rejectWithValue }
   ) => {
     try {
       const { config } = getState() as AppState;
       const fileServiceUrl = config.directory[FILE_SERVICE_ID];
 
+      console.log(JSON.stringify(config)+ "<config");
+      console.log(JSON.stringify(fileServiceUrl)+ "<config");
+    
+
       const token = await getAccessToken();
+
+         console.log(JSON.stringify(token)+ "<token");
       const formData = new FormData();
       formData.append('type', typeId);
       formData.append('recordId', recordId);
       formData.append('file', file);
+
+         console.log(JSON.stringify(formData)+ "<formData");
 
       const { data: metadata } = await axios.post<FileMetadata>(
         new URL('/file/v1/files', fileServiceUrl).href,
@@ -241,6 +249,9 @@ export const uploadFile = createAsyncThunk(
         }
       );
 
+        console.log(JSON.stringify(metadata)+ "<metadataxx");
+
+
       // Keep the file in data URL form in the state, so we don't need to download again.
       const fileDataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -248,6 +259,9 @@ export const uploadFile = createAsyncThunk(
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = () => reject(reader.error);
       });
+
+           console.log(JSON.stringify(fileDataUrl)+ "<fileDataUrl");
+           console.log(JSON.stringify(metadata)+ "<metadata");
 
       return { metadata, file: fileDataUrl };
     } catch (err) {

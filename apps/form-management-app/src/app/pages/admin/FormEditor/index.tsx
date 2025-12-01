@@ -12,6 +12,10 @@ import { selectRegisterData } from '../../../state/configuration/selectors';
 import { tryResolveRefs } from '@abgov/jsonforms-components';
 import styles from './Editor.module.scss';
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
+import { uploadFile, downloadFile, deleteFile } from '../../../state/file/file.slice';
+
+
+export const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
 
 function digestConfiguration(configuration: FormDefinition | null): string {
   return JSON.stringify(
@@ -32,6 +36,8 @@ const EditorWrapper = (): JSX.Element => {
   const [dataError, setDataError] = useState<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [uiError, setUiError] = useState<any>(null);
+
+
 
   useEffect(() => {
     try {
@@ -85,14 +91,17 @@ const EditorWrapper = (): JSX.Element => {
     return state?.file.newFileList;
   });
 
-  const downloadFile = (file) => {
+  const downloadFileFunction = (file) => {
     console.log('pretend to download file');
+    dispatch(downloadFile(file));
   };
-  const uploadFile = (file) => {
+  const uploadFileFunction = (file: File, propertyId: string) => {
     console.log('pretend to upload file');
+    const fileInfo = { file: file, typeId: FORM_SUPPORTING_DOCS, recordId: definition?.urn || '', propertyId: propertyId };
+    dispatch(uploadFile(fileInfo));
   };
-  const deleteFile = (file) => {
-    console.log('pretend to delete file');
+  const deleteFileFunction = (file) => {
+      dispatch(deleteFile(file?.id));
   };
 
   const registerData = useSelector(selectRegisterData);
@@ -144,10 +153,10 @@ const EditorWrapper = (): JSX.Element => {
           setDraftUiSchema={setDraftUi}
           isFormUpdated={isFormUpdated}
           fileList={fileList}
-          uploadFile={uploadFile}
+          uploadFile={uploadFileFunction}
           resolvedDataSchema={resolvedTempDefinition}
-          downloadFile={downloadFile}
-          deleteFile={deleteFile}
+          downloadFile={downloadFileFunction}
+          deleteFile={deleteFileFunction}
           formServiceApiUrl={formServiceApiUrl}
           schemaError={schemaError}
           uiSchema={tempDefinition?.uiSchema}

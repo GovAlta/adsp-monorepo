@@ -23,7 +23,7 @@ export interface EditorProps {
   resolvedDataSchema: Record<string, unknown>;
   fileList: Record<string, Record<string, string>[]>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  uploadFile: (file: any) => void;
+  uploadFile: (file: File, propertyId: string) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   downloadFile: (file: any) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
