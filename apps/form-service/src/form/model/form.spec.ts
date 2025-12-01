@@ -697,9 +697,34 @@ describe('FormEntity', () => {
       ).rejects.toThrow(InvalidOperationError);
     });
 
-    it('can throw unauthorized user for missing definition', async () => {
+    it('can throw InvalidOperationError for if no valid intakes in definition', async () => {
       // Missing definition means that no user will pass authorization check for submitting form.
-      const entity = new FormEntity(repositoryMock, tenantId, null, subscriber, formInfo);
+      const definitionMock = {
+        checkScheduledIntakes: jest.fn().mockResolvedValue(false),
+        canApply: jest.fn().mockResolvedValue(false),
+        validateData: jest.fn().mockResolvedValue(false),
+      } as unknown as FormDefinitionEntity;
+      const entity = new FormEntity(repositoryMock, tenantId, definitionMock, subscriber, formInfo);
+      await expect(
+        entity.submit(
+          { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+          queueTaskServiceMock,
+          repositoryMock,
+          pdfServiceMock
+        )
+      ).rejects.toThrow(InvalidOperationError);
+      expect(repositoryMock.save).not.toHaveBeenCalled();
+    });
+
+    it('can throw unauthorized user for missing definition ', async () => {
+      // Missing definition means that no user will pass authorization check for submitting form.
+      const definitionMock = {
+        checkScheduledIntakes: jest.fn().mockResolvedValue(true),
+        canApply: jest.fn().mockResolvedValue(false),
+        validateData: jest.fn().mockResolvedValue(true),
+      } as unknown as FormDefinitionEntity;
+      const entity = new FormEntity(repositoryMock, tenantId, definitionMock, subscriber, formInfo);
+
       await expect(
         entity.submit(
           { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
