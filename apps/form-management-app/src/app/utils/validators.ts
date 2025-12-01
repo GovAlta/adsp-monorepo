@@ -35,7 +35,7 @@ export const checkFormDefaultUrl = (): Validator => ({
 
     const trimmedUrl = url.replace(/\s/g, '');
     const isHttps = trimmedUrl.toLowerCase().startsWith('https://');
-    const containsIdVariable = trimmedUrl.includes('{{id}}');
+    const _containsIdVariable = trimmedUrl.includes('{{id}}');
     const urlWithOutId = trimmedUrl.replace(/{{id}}/g, 'test');
 
     try {

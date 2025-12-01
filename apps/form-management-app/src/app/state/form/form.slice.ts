@@ -3,7 +3,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import * as _ from 'lodash';
 import { AppState } from '../store';
-import { FormDefinition, FORM_SERVICE_ID, PagedResults, CONFIGURATION_SERVICE_ID } from '../types';
+import { FormDefinition, CONFIGURATION_SERVICE_ID } from '../types';
 import { getAccessToken } from '../user/user.slice';
 export const FORM_FEATURE_KEY = 'form';
 
@@ -173,8 +173,8 @@ export const getFormDefinitions = createAsyncThunk(
       // Transform the configuration service response to match our expected format
       const results = data.results || [];
       const definitions = results
-        .map((def: any) => def.latest?.configuration)
-        .filter((config: any) => config && config.id);
+        .map((def: { latest?: { configuration?: FormDefinition } }) => def.latest?.configuration)
+        .filter((config: FormDefinition | undefined): config is FormDefinition => config && !!config.id);
 
       return {
         results: definitions,
@@ -266,7 +266,7 @@ const formSlice = createSlice({
         state.busy.deleting = false;
       })
       .addCase(getFormConfiguration.fulfilled, (state, action) => {
-        const { dataSchema, uiSchema, ...definition } = action.payload.definition;
+        const { dataSchema: _dataSchema, uiSchema: _uiSchema, ..._definition } = action.payload.definition;
 
         state.currentDefinition = action.payload.definition;
       });

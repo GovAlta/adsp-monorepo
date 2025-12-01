@@ -20,6 +20,7 @@ import {
   userSelector,
   selectIsAuthenticated,
 } from '../../../state';
+import type { FormDefinition } from '../../../state/types';
 import { deleteDefinition } from '../../../state/form/form.slice';
 import { selectIsDeletingDefinition } from '../../../state/form/selectors';
 import styles from './index.module.scss';
@@ -38,11 +39,12 @@ const FormDefinitions = (): JSX.Element => {
   const [next, setNext] = useState<string | null>(null);
   const [cursors, setCursors] = useState<Record<number, string | null>>({ 1: null });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [definitionToDelete, setDefinitionToDelete] = useState<any>(null);
+  const [definitionToDelete, setDefinitionToDelete] = useState<FormDefinition | null>(null);
 
   useEffect(() => {
+    const currentCursor = cursors[page];
     if (configInitialized && userInitialized && authenticated) {
-      dispatch(getFormDefinitions({ top: 40, after: cursors[page] }))
+      dispatch(getFormDefinitions({ top: 40, after: currentCursor }))
         .unwrap()
         .then((result) => {
           setNext(result.page.next);
@@ -54,7 +56,7 @@ const FormDefinitions = (): JSX.Element => {
           }
         });
     }
-  }, [dispatch, configInitialized, userInitialized, authenticated, page, cursors[page]]);
+  }, [dispatch, configInitialized, userInitialized, authenticated, page, cursors]);
 
   return (
     <div>

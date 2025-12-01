@@ -33,7 +33,7 @@ const TenantGuard = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to={`/${tenantName}/login?from=${encodeURIComponent(location.pathname)}`} />;
   }
 
-  return <>{children}</>;
+  return children;
 };
 
 const LayoutWrapper = () => (
