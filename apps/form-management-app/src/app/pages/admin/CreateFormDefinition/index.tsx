@@ -54,10 +54,6 @@ const CreateFormDefinition = (): JSX.Element => {
     id: '',
     name: '',
     description: '',
-    ministry: '',
-    programName: null,
-    registeredId: '',
-    actsOfLegislation: [],
     formDraftUrlTemplate: '',
     dataSchema: { type: 'object', properties: {} },
     uiSchema: { type: 'VerticalLayout', elements: [] },
@@ -72,10 +68,6 @@ const CreateFormDefinition = (): JSX.Element => {
     scheduledIntakes: false,
     supportTopic: false,
   });
-
-
-
-
 
   const definitionIds = definitions.map((d) => d.name);
 
@@ -125,8 +117,6 @@ const CreateFormDefinition = (): JSX.Element => {
     if (!isEdit) {
       validations['duplicate'] = definition.name || '';
     }
-
-
 
     if (!validators.checkAll(validations)) {
       return;
@@ -249,8 +239,6 @@ const CreateFormDefinition = (): JSX.Element => {
           </GoAFormItem>
         </div>
 
-
-
         <div className={styles.actions}>
           <GoAButton type="secondary" onClick={() => navigate(`/${tenant}/forms`)} disabled={isLoading}>
             Cancel
@@ -264,10 +252,6 @@ const CreateFormDefinition = (): JSX.Element => {
           </GoAButton>
         </div>
       </div>
-
-
-
-
     </div>
   );
 };
