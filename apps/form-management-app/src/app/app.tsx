@@ -11,6 +11,7 @@ import TenantManagement from './pages/admin/index';
 import FormDefinitions from './pages/admin/FormDefinitions';
 import FormEditor from './pages/admin/FormEditor';
 import FormPreview from './pages/admin/FormPreview';
+import CreateFormDefinition from './pages/admin/CreateFormDefinition';
 import { AppDispatch, configInitializedSelector, initializeTenant, userSelector } from './state';
 
 const TenantGuard = ({ children }: { children: React.ReactNode }) => {
@@ -65,6 +66,8 @@ export function App() {
             <Route element={<LayoutWrapper />}>
               <Route index element={<TenantManagement />} />
               <Route path="forms" element={<FormDefinitions />} />
+              <Route path="forms/new" element={<CreateFormDefinition />} />
+              <Route path="forms/edit/:id" element={<CreateFormDefinition />} />
               <Route path="preview/:formId" element={<FormPreview />} />
             </Route>
 

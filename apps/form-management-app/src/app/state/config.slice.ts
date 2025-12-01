@@ -119,6 +119,8 @@ const configSlice = createSlice({
 
 export const configReducer = configSlice.reducer;
 
+export const selectConfigState = (state: AppState) => state.config;
+
 export const configInitializedSelector = createSelector(
   (state: AppState) => state.config,
   (config) => config.initialized
