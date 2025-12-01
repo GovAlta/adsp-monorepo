@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Editor.scss';
+import styles from './Editor.module.scss';
 import { GoAButtonGroup, GoAButton } from '@abgov/react-components';
 import { useNavigate } from 'react-router-dom';
 import { SaveFormModal } from './saveModal';
@@ -44,8 +44,7 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
 
   return (
     <div>
-      <div className='final-button-padding'>
-
+      <div className={styles['final-button-padding']}>
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="primary"
