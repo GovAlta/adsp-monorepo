@@ -32,7 +32,7 @@ export const SpaceAdjust = styled.h3`
   padding-bottom: 1rem;
 `;
 export const LoadMoreWrapper = styled.div`
-  padding-bottom: var(--goa-space-4xl);
+  padding-bottom: var(--goa-space-1xl);
 `;
 
 export const GapAdjustment = styled.h3`

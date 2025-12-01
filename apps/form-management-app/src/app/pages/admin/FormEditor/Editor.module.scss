@@ -20,19 +20,35 @@
   font-weight: var(--fw-regular);
 }
 
+.PRE {
+  background: #f3f3f3;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: var(--goa-font-size-1);
+  line-height: var(--goa-line-height-05);
+  padding: var(--goa-space-m);
+}
 
 .name-description-data-schema {
-  flex: 6;
+  flex: 1;
   padding-right: 3rem;
+
 
   .life-cycle-auto-scroll {
     overflow-y: auto;
   }
 }
+.preview-pane {
+  flex: 1;
+
+}
 
 
 .form-editor {
   width: 100%;
+  display: flex;
+
+  flex-direction: row;
 
   .hr-resize {
     margin-top: var(--goa-space-s);
@@ -55,7 +71,7 @@
   margin-top: 6px;
   padding-left: 3rem;
   padding-right: 3rem;
-  width: 100%;
+  width: 100% !important;
   height: 100vh;
   overflow: hidden;
   box-sizing: border-box;
@@ -64,6 +80,9 @@
 
 .form-preview-container {
   width: 50%;
+}
+.form-preview-spacer {
+  margin-top: var(--goa-space-l);
 }
 
 
@@ -82,7 +101,12 @@
   height: calc(100vh - 192px);
 }
 
+.review-page-tab-wrapper {
+  padding-top: var(--goa-space-m);
+}
+
 
 .form-preview-spacer {
   margin-top: var(--goa-space-l);
 }
+
