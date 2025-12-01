@@ -10,6 +10,7 @@ import { AppState } from '../../../state';
 import { CONFIGURATION_SERVICE_ID } from '../../../state';
 import { selectRegisterData } from '../../../state/configuration/selectors';
 import { tryResolveRefs } from '@abgov/jsonforms-components';
+import styles from './Editor.module.scss';
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
 
 function digestConfiguration(configuration: FormDefinition | null): string {
@@ -134,7 +135,7 @@ const EditorWrapper = (): JSX.Element => {
   };
 
   return (
-    <div className="form-template-editor-container">
+    <div className={styles['form-template-editor-container']}>
       {definition?.id && (
         <Editor
           updateFormDefinition={updateFormDefinition}

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import './Editor.scss';
+import styles from './Editor.module.scss';
 import { DataEditorContainer } from './DataEditorContainer';
 import { UIEditorContainer } from './UiEditorContainer';
 import { useValidators } from './useValidators';
@@ -52,7 +52,7 @@ export const Editor: React.FC<EditorProps> = ({
   uiSchema,
   registerData,
   nonAnonymous,
-  dataList
+  dataList,
 }) => {
   const { errors, validators } = useValidators(
     'name',
@@ -96,10 +96,10 @@ export const Editor: React.FC<EditorProps> = ({
   }
 
   return (
-    <div className="form-editor">
-      <div className="name-description-data-schema">
-        <div className="form-editor-title">Form / Definition Editor</div>
-        <hr className="hr-resize" />
+    <div className={styles['form-editor']}>
+      <div className={styles['name-description-data-schema']}>
+        <div className={styles['form-editor-title']}>Form / Definition Editor</div>
+        <hr className={styles['hr-resize']} />
         <GoATabs data-testid="form-editor-tabs">
           <GoATab heading="Data schema" data-testid="dcm-form-editor-data-schema-tab">
             <DataEditorContainer
@@ -132,7 +132,7 @@ export const Editor: React.FC<EditorProps> = ({
           validators={validators}
         />
       </div>
-      <div className="preview-pane">
+      <div className={styles['preview-pane']}>
         <Preview
           fileList={fileList}
           uploadFile={uploadFile}

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import './Editor.scss';
+import styles from './Editor.module.scss';
 import { useWindowDimensions } from '../../../utils/useWindowDimensions';
 import { GoAFormItem } from '@abgov/react-components';
 import MonacoEditor from '@monaco-editor/react';
@@ -66,7 +66,7 @@ export const UIEditorContainer: React.FC<UiEditorContainerProps> = ({
       error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
       label=""
     >
-      <div className="editor-padding">
+      <div className={styles['editor-padding']}>
         <MonacoEditor
           data-testid="form-ui-schema"
           height={EditorHeight}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Editor.scss';
+import styles from './Editor.module.scss';
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
 import { GoAFormItem, GoATabs, GoATab } from '@abgov/react-components';
@@ -49,7 +49,7 @@ export const Preview: React.FC<PreviewProps> = ({
     <div>
       <GoATabs data-testid="preview-tabs">
         <GoATab heading="Preview" data-testid="preview-view-tab">
-          <div className="form-preview-scroll-pane">
+          <div className={styles['form-preview-scroll-pane']}>
             <ContextProvider
               fileManagement={{
                 fileList: fileList,
@@ -78,7 +78,7 @@ export const Preview: React.FC<PreviewProps> = ({
         </GoATab>
 
         <GoATab heading="Data" data-testid="data-view">
-          <div className="review-page-tab-wrapper">
+          <div className={styles['review-page-tab-wrapper']}>
             {data && <div className="PRE">{JSON.stringify(data, null, 2)}</div>}
           </div>
         </GoATab>

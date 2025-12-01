@@ -40,14 +40,14 @@
 }
 .preview-pane {
   flex: 1;
- 
+
 }
 
 
 .form-editor {
   width: 100%;
   display: flex;
-  
+
   flex-direction: row;
 
   .hr-resize {
@@ -71,7 +71,7 @@
   margin-top: 6px;
   padding-left: 3rem;
   padding-right: 3rem;
-  width: 100%;
+  width: 100% !important;
   height: 100vh;
   overflow: hidden;
   box-sizing: border-box;

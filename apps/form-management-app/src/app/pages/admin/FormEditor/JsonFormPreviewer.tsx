@@ -1,5 +1,5 @@
 import { GoARenderers, GoACells, JsonFormRegisterProvider } from '@abgov/jsonforms-components';
-import './Editor.scss';
+import styles from './Editor.module.scss';
 import { GoACallout } from '@abgov/react-components';
 import { ajv } from '../../../utils/checkInput';
 import { JsonForms } from '@jsonforms/react';
@@ -35,7 +35,7 @@ export const JSONFormPreviewer = ({
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
       {/* // This is a blank spacer div since web components can be problematic to apply styles to. */}
-      <div className="form-preview-spacer" />
+      <div className={styles['form-preview-spacer']} />
       {error && (
         <GoACallout type="important" size="medium" testId="form-preview-error-callout" heading={error}>
           You will see the last valid preview until the schema errors are fixed.

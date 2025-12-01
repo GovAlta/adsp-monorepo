@@ -1,10 +1,9 @@
 import React, { useRef, useState } from 'react';
-import './Editor.scss';
+import styles from './Editor.module.scss';
 import { isValidJSONSchemaCheck } from '../../../utils/checkInput';
 import { useWindowDimensions } from '../../../utils/useWindowDimensions';
 import { GoAFormItem } from '@abgov/react-components';
 import MonacoEditor from '@monaco-editor/react';
-
 
 export interface DataEditorContainerProps {
   errors: Record<string, string | null>; // From useValidators()
@@ -58,7 +57,7 @@ export const DataEditorContainer: React.FC<DataEditorContainerProps> = ({
         error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
         label=""
       >
-        <div className="editor-padding">
+        <div className={styles['editor-padding']}>
           <MonacoEditor
             data-testid="form-data-schema"
             height={EditorHeight}
