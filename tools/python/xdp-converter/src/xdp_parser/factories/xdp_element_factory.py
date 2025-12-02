@@ -196,3 +196,7 @@ class XdpElementFactory(AbstractXdpFactory):
     def _is_top_level_subform(self, subform: ET.Element) -> bool:
         top = self.context.get("top_subforms", set())
         return id(subform) in top
+
+    def _is_static_hidden(self, subform: ET.Element) -> bool:
+        presence = (subform.get("presence") or "").strip().lower()
+        return presence == "hidden"

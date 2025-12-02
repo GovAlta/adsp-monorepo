@@ -22,6 +22,7 @@ class XdpElement(ABC):
         self.context = context or {}
         self.parent_map = context.get("parent_map", {}) if context else {}
         self.geometry: XdpGeometry = XdpGeometry.from_xdp(xdp)
+        self.presence = xdp.get("presence", "").strip().lower()
 
     def get_full_path(self) -> str:
         return compute_full_xdp_path(self.xdp_element, self.parent_map)
