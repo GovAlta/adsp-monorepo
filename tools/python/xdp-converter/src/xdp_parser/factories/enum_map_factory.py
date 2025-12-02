@@ -130,10 +130,6 @@ class EnumMapFactory(AbstractXdpFactory):
                 fields.append(field_name)
 
         if len(fields) != len(extracted_labels):
-            print(
-                f"[WARN] Radio group '{group_name}' mismatch: "
-                f"{len(fields)} fields vs {len(extracted_labels)} labels."
-            )
             # Continue anyway — assume extracted_labels is authoritative
             # and zip the shorter of the two.
             min_len = min(len(fields), len(extracted_labels))
@@ -187,12 +183,6 @@ class EnumMapFactory(AbstractXdpFactory):
         if enum_values:
             return [str(v) for v in remove_duplicates(enum_values)]
         return None
-
-    def __del__(self):
-        print(
-            f"EnumMapFactory collected {len(self.enum_maps)} enumeration maps "
-            f"and {len(self.label_to_enum)} label links."
-        )
 
 
 def normalize_enum_labels(enum_map, label_to_enum):

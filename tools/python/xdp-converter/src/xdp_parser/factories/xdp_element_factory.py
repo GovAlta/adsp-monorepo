@@ -17,6 +17,7 @@ from xdp_parser.xdp_basic_input import XdpBasicInput
 class XdpElementFactory(AbstractXdpFactory):
     """
     Builds real XdpElement instances for rendering/schema generation.
+    Now uses authoritative top-level subform knowledge from the parser.
     """
 
     def __init__(self, context: ParseContext):
@@ -53,7 +54,7 @@ class XdpElementFactory(AbstractXdpFactory):
         return XdpHelpText(help_text, self.context)
 
     # ----------------------------------------------------------------------
-    # Group handling
+    # GROUP LOGIC
     # ----------------------------------------------------------------------
     def handle_group(
         self, subform: ET.Element, elements: List[XdpElement], label: str
@@ -61,42 +62,34 @@ class XdpElementFactory(AbstractXdpFactory):
         """
         Build a logical group (FormGroup) from a subform.
 
-        This version:
         • Sorts children by geometry
-        • Hoists top-most HelpContent as header
-        • Eliminates empty or help-only groups
-        • Computes group geometry safely
+        • Hoists section headers (ONLY for top-level subforms)
+        • Removes empty/help-only groups
+        • Computes group geometry
         """
 
-        # ------------------------------------------------------------------
-        # 0) If nothing survived parsing, skip group
-        # ------------------------------------------------------------------
+        # --------------------------------------------------
+        # 0) empty — return None
+        # --------------------------------------------------
         if not elements:
             return None
 
-        # ------------------------------------------------------------------
-        # 1) Sort children by visual order (y, then x)
-        # ------------------------------------------------------------------
+        # --------------------------------------------------
+        # 1) sort by (y, x)
+        # --------------------------------------------------
         elements = self._sort_by_geometry(elements)
 
-        # ------------------------------------------------------------------
-        # 2) Hoist a HelpContent section header if present
-        # ------------------------------------------------------------------
-        # Extract layout attribute (default: tb or lr-tb)
-        layout = (subform.get("layout") or "").lower().strip()
-        if not layout:
-            layout = "lr-tb"
+        # --------------------------------------------------
+        # 2) header hoisting ONLY for true top-level subforms
+        # --------------------------------------------------
+        layout = (subform.get("layout") or "").lower().strip() or "lr-tb"
 
         if self._should_hoist_header(subform, elements, layout):
             elements = self._hoist_section_header(elements, layout)
-        # ------------------------------------------------------------------
-        # 3) Decide whether this subform is *worth* becoming a group.
-        #
-        # A group is only valid if it contains at least one REAL control
-        # (checkbox, text input, radio group, array, etc.)
-        #
-        # HelpContent-only subforms should NOT become groups.
-        # ------------------------------------------------------------------
+
+        # --------------------------------------------------
+        # 3) group must contain at least *one* real control
+        # --------------------------------------------------
         has_real_control = any(
             getattr(e, "is_control", lambda: False)()
             or getattr(e, "is_radio", False)
@@ -105,59 +98,72 @@ class XdpElementFactory(AbstractXdpFactory):
         )
 
         if not has_real_control:
-            # This is a layout/visual subform — ignore it
-            print(f"[SkipGroup] Ignored subform '{label}' (no real controls).")
             return None
 
-        # ------------------------------------------------------------------
-        # 4) Build XdpGroup with the cleaned element list
-        # ------------------------------------------------------------------
+        # --------------------------------------------------
+        # 4) build group
+        # --------------------------------------------------
         group = XdpGroup(subform, elements, self.context, label)
 
-        # ------------------------------------------------------------------
-        # 5) Compute geometry from subform + children
-        # ------------------------------------------------------------------
+        # --------------------------------------------------
+        # 5) compute geometry
+        # --------------------------------------------------
         base_geo = XdpGeometry.from_xdp(subform)
         group.geometry = XdpGeometry.from_children(elements, fallback=base_geo)
 
         print(
-            f"[GroupGeom] Final group '{label}' "
-            f"at y={group.geometry.y}, x={group.geometry.x}"
+            f"[GroupGeom] Final group '{label}' at y={group.geometry.y}, x={group.geometry.x}"
         )
 
         return group
 
-    def _should_hoist_header(self, subform, elements, layout):
-        # Only top-level groups
+    # ----------------------------------------------------------------------
+    # HEADER LOGIC
+    # ----------------------------------------------------------------------
+    def _should_hoist_header(self, subform, elements, layout) -> bool:
+        """
+        A header is only hoisted when:
+        • the subform is a true top-level subform (per parser)
+        • it contains at least one help-text element
+        • AND the first help-text looks like a major section header
+        """
         if not self._is_top_level_subform(subform):
             return False
 
-        # Help text must clearly be a section header
-        first_help = next((e for e in elements if e.is_help()), None)
+        first_help = next((e for e in elements if e.is_help_text()), None)
         if not first_help:
             return False
 
-        if not self._looks_like_major_section_header(first_help):
+        # Major section headers should be single-line, shortish, section-like
+        return self._looks_like_major_section_header(first_help)
+
+    def _looks_like_major_section_header(self, help_el: XdpHelpText) -> bool:
+        text = (help_el.get_text() or "").strip()
+        if not text:
             return False
 
+        # Hard reject: multi-line long blobs are NOT section headers
+        if "\n" in text or len(text) > 60:
+            return False
+
+        # Strong match
+        if text.lower().startswith("section"):
+            return True
+
+        # Weak match: short single-line help texts
         return True
 
-    # ----------------------------------------------------------------------
-    # Header logic
-    # ----------------------------------------------------------------------
-    def _find_section_header(self, elements, subform_layout):
-        # strongest: the top-most HelpContent by y
+    def _find_section_header(self, elements, layout):
+        # strong: top-most help by y
         help_elems = [
             e for e in elements if e.is_help_text() and e.geometry.y is not None
         ]
         if help_elems:
             return min(help_elems, key=lambda e: e.geometry.y)
 
-        # weaker: if tb-flow, first HelpContent
-        if subform_layout in ("tb", "lr-tb"):
-            for e in elements:
-                if e.is_help_text():
-                    return e
+        # fallback: for tb-like flows, first help
+        if layout in ("tb", "lr-tb"):
+            return next((e for e in elements if e.is_help_text()), None)
 
         return None
 
@@ -166,14 +172,11 @@ class XdpElementFactory(AbstractXdpFactory):
         if not header:
             return elements
 
-        new = [header] + [el for el in elements if el is not header]
-
-        print(f"[HeaderHoist] Hoisted header to top for layout='{layout}'")
-
-        return new
+        print(f"[HeaderHoist] Hoisting header '{header.get_name()}' (layout={layout})")
+        return [header] + [e for e in elements if e is not header]
 
     # ----------------------------------------------------------------------
-    # Geometry sorting
+    # GEOMETRY SORT
     # ----------------------------------------------------------------------
     def _sort_by_geometry(self, elements: List[XdpElement]) -> List[XdpElement]:
         def key(el: XdpElement):
@@ -185,11 +188,11 @@ class XdpElementFactory(AbstractXdpFactory):
 
         sorted_elements = sorted(elements, key=key)
 
-        print("[GeomSort] Sorted elements:")
-        for el in sorted_elements:
-            geo = el.geometry
-            print(
-                f"  - {el.__class__.__name__}('{el.get_name()}') at y={geo.y}, x={geo.x}"
-            )
-
         return sorted_elements
+
+    # ----------------------------------------------------------------------
+    # AUTHORITATIVE top-level detection
+    # ----------------------------------------------------------------------
+    def _is_top_level_subform(self, subform: ET.Element) -> bool:
+        top = self.context.get("top_subforms", set())
+        return id(subform) in top

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from constants import CTX_JSONFORMS_RULES
+from visibility_rules.pipeline_context import CTX_JSONFORMS_RULES
 from xdp_parser.parse_context import ParseContext
 
 
@@ -59,45 +59,3 @@ class FormElement(ABC):
         if rule_entry is not None:
             schema["rule"] = rule_entry["rule"]
         return schema
-
-    def _debug_rule_matching(self, rules: dict):
-        """
-        Diagnostic: print all rule keys that might match this element.
-        Helps understand why visibility rules attach or fail to attach.
-        """
-
-        qname = self.qualified_name or ""
-        short = qname.split(".")[-1] if qname else ""
-
-        substring_hits = []
-        suffix_hits = []
-        exact_hits = []
-
-        for key in rules.keys():
-            # Exact match on full qualified name
-            if key == qname:
-                exact_hits.append(key)
-
-            # Match by suffix (last part of dotted name)
-            if key.split(".")[-1] == short:
-                suffix_hits.append(key)
-
-            # Any substring match (wide net — diagnostics only)
-            if qname and qname in key:
-                substring_hits.append(key)
-
-        print("  --- Candidate matches ---")
-
-        print(f"  Exact matches ({len(exact_hits)}):")
-        for k in exact_hits:
-            print(f"    • {k}")
-
-        print(f"  Suffix matches ({len(suffix_hits)}):")
-        for k in suffix_hits:
-            print(f"    • {k}")
-
-        print(f"  Substring matches ({len(substring_hits)}):")
-        for k in substring_hits:
-            print(f"    • {k}")
-
-        print("  -------------------------\n")

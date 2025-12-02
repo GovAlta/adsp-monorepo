@@ -5,14 +5,14 @@ import os
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import traceback
-from constants import (
+from visibility_rules.pipeline_context import (
     CTX_ENUM_MAP,
     CTX_JSONFORMS_RULES,
     CTX_LABEL_TO_ENUM,
     CTX_PARENT_MAP,
     CTX_RADIO_GROUPS,
-    CTX_VISIBILITY_GROUPS,
     CTX_XDP_ROOT,
+    PipelineContext,
 )
 from schema_generator.json_schema_generator import JsonSchemaGenerator
 from schema_generator.ui_schema_generator import UiSchemaGenerator
@@ -86,7 +86,6 @@ def process_one(
         help_text = help_text_parser.get_messages()
 
         # --- Extract enum maps ---
-        print(f"  [DEBUG] Extracting enum maps from XDP…")
         enum_context = ParseContext(root=root, parent_map=parent_map, radio_groups={})
         enum_factory = EnumMapFactory(enum_context)
         traversal = XdpParser(enum_factory, enum_context)
@@ -101,25 +100,31 @@ def process_one(
 
         # --- Run the visibility pipeline ---
         pipeline = VisibilityRulesPipeline()
-        rule_context = {
-            CTX_XDP_ROOT: root,
-            CTX_ENUM_MAP: normalized_enum_maps,
-            CTX_PARENT_MAP: parent_map,
-            CTX_LABEL_TO_ENUM: enum_factory.label_to_enum,
-            CTX_RADIO_GROUPS: normalized_radio_groups,
-        }
+        pipeline_context = PipelineContext(
+            {
+                CTX_XDP_ROOT: root,
+                CTX_ENUM_MAP: normalized_enum_maps,
+                CTX_PARENT_MAP: parent_map,
+                CTX_LABEL_TO_ENUM: enum_factory.label_to_enum,
+                CTX_RADIO_GROUPS: normalized_radio_groups,
+            }
+        )
 
-        pipeline_output = pipeline.run(rule_context)
-        jsonforms_rules = pipeline_output[CTX_JSONFORMS_RULES]
+        pipeline_output = pipeline.run(pipeline_context)
+        jsonforms_rules = pipeline_output.get(CTX_JSONFORMS_RULES, {})
 
-        # --- Build the UI parse context ---
+        top_subforms = set(id(sf) for sf in XdpParser.find_top_subforms(root))
         context = ParseContext(
             root=root,
             parent_map=parent_map,
             radio_groups=normalized_radio_groups,
             help_text=help_text,
             jsonforms_rules=jsonforms_rules,
+            top_subforms=top_subforms,
         )
+
+        print(f"Jsonforms rules has {len(jsonforms_rules)} rules")
+        print(jsonforms_rules)
 
         parser = XdpParser(XdpElementFactory(context), context)
         input_groups = parser.parse_xdp()

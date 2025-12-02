@@ -1,5 +1,5 @@
 # radio_group_collapser.py
-from constants import (
+from visibility_rules.pipeline_context import (
     CTX_ENUM_MAP,
     CTX_RADIO_GROUPS,
     CTX_RESOLVED_RULES,
@@ -18,8 +18,6 @@ class RadioGroupCollapser:
         enum_map = context.get(CTX_ENUM_MAP, {})
         rules = context.get(CTX_RESOLVED_RULES, [])
 
-        print(f"[RGC] Collapsing {len(rules)} rules…")
-
         # ---------------------------------------------------------
         # STEP 1 — Build reverse mapping: chkX → (Section2, label)
         # ---------------------------------------------------------
@@ -27,16 +25,11 @@ class RadioGroupCollapser:
 
         for group_name, raw_fields in radio_groups.items():
             if group_name not in enum_map:
-                print(f"[RGC] WARNING: {group_name} not in enum_map — skipping")
                 continue
 
             group_enum = enum_map[group_name]  # { "1": "Standard", ... }
 
             if len(group_enum) != len(raw_fields):
-                print(
-                    f"[RGC] WARNING: Mismatch in sizes for {group_name}: "
-                    f"{len(raw_fields)} raw vs {len(group_enum)} enum"
-                )
                 continue
 
             # zip fields to enum labels

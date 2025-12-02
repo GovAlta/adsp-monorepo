@@ -6,7 +6,6 @@ import xml.etree.ElementTree as ET
 
 class XdpHelpText(XdpElement):
     def __init__(self, help_content: str, context: ParseContext):
-        print(f"################## found string help {help_content}")
         el = ET.Element("draw")
         el.text = help_content
         xdp = el
@@ -20,7 +19,6 @@ class XdpHelpText(XdpElement):
         return True
 
     def get_text(self):
-        print(f"################## get_text returning {self.text}")
         return self.text
 
     @staticmethod

@@ -2,14 +2,14 @@
 
 import xml.etree.ElementTree as ET
 from typing import List
-from constants import CTX_RADIO_GROUPS
+from visibility_rules.pipeline_context import CTX_RADIO_GROUPS
 from xdp_parser.control_labels import ControlLabels, inline_caption
 from xdp_parser.control_helpers import is_checkbox, is_radio_button
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
 from xdp_parser.orphaned_list_controls import is_add_remove_container
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.parsing_helpers import is_object_array
-from xdp_parser.xdp_element import XdpElement, XdpGeometry
+from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_group import XdpGroup
 from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_radio_selector import extract_radio_button_labels
@@ -213,7 +213,8 @@ class XdpParser:
             raise ValueError("Form root not found")
         return level2
 
-    def find_top_subforms(self, form_root: ET.Element) -> List[ET.Element]:
+    @staticmethod
+    def find_top_subforms(form_root: ET.Element) -> List[ET.Element]:
         """Return first-level subforms containing logical input groups."""
         return [sf for sf in form_root if tag_name(sf.tag) == "subform"]
 
@@ -398,7 +399,6 @@ class XdpParser:
             name = getattr(el, "get_name", lambda: "")()
             y = geo.y if geo and geo.y is not None else None
             x = geo.x if geo and geo.x is not None else None
-            print(f"  - {el.__class__.__name__}('{name}') at y={y}, x={x}")
 
         return sorted_elements
 

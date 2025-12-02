@@ -1,11 +1,11 @@
 import re
 from common.rule_model import VisibilityRule, VisibilityCondition
-from constants import (
+from visibility_rules.pipeline_context import (
     CTX_ENUM_MAP,
     CTX_PARENT_MAP,
+    CTX_RADIO_GROUPS,
     CTX_RAW_RULES,
     CTX_RESOLVED_RULES,
-    CTX_RADIO_GROUPS,
     CTX_VISIBILITY_GROUPS,
 )
 
@@ -56,9 +56,6 @@ class DriverResolver:
             # --- NEW: mark subforms that are controlled by rules ---
             if target_name in self.subforms_by_name:
                 visibility_groups.add(target_name)
-                print(
-                    f"[DriverResolver] Marked subform '{target_name}' as visibility-group"
-                )
 
             resolved_conditions: list[VisibilityCondition] = []
 
