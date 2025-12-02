@@ -3,7 +3,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import * as _ from 'lodash';
 import { AppState } from '../store';
-import { FormDefinition, CONFIGURATION_SERVICE_ID } from '../types';
+import { FormDefinition, CONFIGURATION_SERVICE_ID, FORM_SERVICE_ID } from '../types';
 import { getAccessToken } from '../user/user.slice';
 export const FORM_FEATURE_KEY = 'form';
 
@@ -160,24 +160,20 @@ export const getFormDefinitions = createAsyncThunk(
   async ({ top, after }: { top?: number; after?: string } = {}, { getState, rejectWithValue }) => {
     try {
       const { config } = getState() as AppState;
-      const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
+      const formService = config.directory[FORM_SERVICE_ID];
       const accessToken = await getAccessToken();
 
-      const url = `${configurationService}/configuration/v2/configuration/form-service?top=${top || 50}&after=${
-        after || ''
-      }`;
+      const params = new URLSearchParams();
+      if (top) params.append('top', top.toString());
+      if (after) params.append('after', after);
+
+      const url = `${formService}/form/v1/definitions?${params.toString()}`;
       const { data } = await axios.get(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
-      // Transform the configuration service response to match our expected format
-      const results = data.results || [];
-      const definitions = results
-        .map((def: { latest?: { configuration?: FormDefinition } }) => def.latest?.configuration)
-        .filter((config: FormDefinition | undefined): config is FormDefinition => config && !!config.id);
-
       return {
-        results: definitions,
+        results: data.results || [],
         page: data.page || { next: null },
       };
     } catch (err) {
