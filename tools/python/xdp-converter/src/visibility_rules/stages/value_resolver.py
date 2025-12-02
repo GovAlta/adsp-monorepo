@@ -1,4 +1,4 @@
-from constants import CTX_ENUM_MAP, CTX_RESOLVED_RULES
+from visibility_rules.pipeline_context import CTX_ENUM_MAP, CTX_RESOLVED_RULES
 
 
 class ValueResolver:

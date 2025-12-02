@@ -1,5 +1,5 @@
 from common.rule_model import VisibilityCondition, VisibilityRule
-from constants import CTX_FINAL_RULES, CTX_RESOLVED_RULES
+from visibility_rules.pipeline_context import CTX_FINAL_RULES, CTX_RESOLVED_RULES
 
 
 class ConditionNormalizer:

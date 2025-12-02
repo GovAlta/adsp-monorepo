@@ -1,4 +1,5 @@
 # xdp_parser/factories/enum_map_factory.py
+from typing import Any, Optional
 import xml.etree.ElementTree as ET
 from xdp_parser.control_labels import ControlLabels
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
@@ -81,6 +82,11 @@ class EnumMapFactory(AbstractXdpFactory):
     def handle_object_array(self, *_):
         return None
 
+    def handle_group(
+        self, elem: ET.Element, children: list, label: str
+    ) -> Optional[Any]:
+        return None
+
     def handle_radio_subform(self, elem: ET.Element, _):
         """
         Handle faux-radio-groups: subforms containing checkButtons marked with "circle".
@@ -124,10 +130,6 @@ class EnumMapFactory(AbstractXdpFactory):
                 fields.append(field_name)
 
         if len(fields) != len(extracted_labels):
-            print(
-                f"[WARN] Radio group '{group_name}' mismatch: "
-                f"{len(fields)} fields vs {len(extracted_labels)} labels."
-            )
             # Continue anyway — assume extracted_labels is authoritative
             # and zip the shorter of the two.
             min_len = min(len(fields), len(extracted_labels))
@@ -181,12 +183,6 @@ class EnumMapFactory(AbstractXdpFactory):
         if enum_values:
             return [str(v) for v in remove_duplicates(enum_values)]
         return None
-
-    def __del__(self):
-        print(
-            f"EnumMapFactory collected {len(self.enum_maps)} enumeration maps "
-            f"and {len(self.label_to_enum)} label links."
-        )
 
 
 def normalize_enum_labels(enum_map, label_to_enum):

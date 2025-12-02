@@ -1,4 +1,3 @@
-from constants import CTX_FINAL_RULES, CTX_RAW_RULES, CTX_RESOLVED_RULES
 from visibility_rules.stages.radio_group_collapser import RadioGroupCollapser
 from visibility_rules.stages.value_resolver import ValueResolver
 from visibility_rules.stages.visibility_script_extractor import (
@@ -23,13 +22,10 @@ class VisibilityRulesPipeline:
         ]
 
     def run(self, context):
+        print("\n=== PIPELINE START ===")
         for stage in self.stages:
+            name = stage.__class__.__name__
+            print(f"\n--- Stage: {name} ---")
             context = stage.process(context)
-            print(
-                f"[PIPE] After {stage.__class__.__name__}: "
-                f"resolved={len(context.get('resolved_visibility_rules', []))}, "
-                f"final={len(context.get('rules', []))}, "
-                f"raw={len(context.get('raw_visibility_rules', []))}"
-            )
-
+        print("=== PIPELINE END ===\n")
         return context

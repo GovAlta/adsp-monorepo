@@ -16,6 +16,9 @@ class XdpRadioSelector(XdpElement):
         self.is_leaf = True
         self.messages = messages
 
+    def is_control(self):
+        return True
+
     def to_form_element(self):
         if self.has_annotation():
             return self._to_annotated_control()
