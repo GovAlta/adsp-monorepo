@@ -7,6 +7,7 @@ export const EXPORT_SERVICE_ID = 'urn:ads:platform:export-service';
 export const CALENDAR_SERVICE_ID = 'urn:ads:platform:calendar-service';
 export const DIRECTORY_SERVICE_ID = 'urn:ads:platform:directory-service';
 export const CACHE_SERVICE_ID = 'urn:ads:platform:cache-service';
+export const FORM_APP_ID = 'urn:ads:platform:form-app';
 
 export interface Session {
   authenticated: boolean;
@@ -86,6 +87,11 @@ export interface FormDefinition {
   scheduledIntakes: boolean;
   supportTopic: boolean;
   intake?: Intake;
+  ministry?: string;
+  programName?: string;
+  registeredId?: string;
+  actsOfLegislation?: string[];
+  formDraftUrlTemplate?: string;
 }
 
 export enum FormStatus {
