@@ -121,7 +121,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
               </p>
             </div>
             <GoAButtonGroup alignment="end">
-              {definition && canCreateDraft && (
+              {definition && definition.oneFormPerApplicant === false && canCreateDraft && (
                 <GoAButton
                   mr="m"
                   disabled={busy.creating}

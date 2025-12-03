@@ -46,6 +46,10 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
     }
   }, [dispatch, definition, user]);
 
+  if (initialized && definition && definition.oneFormPerApplicant === false) {
+    return <Navigate to="forms" />;
+  }
+
   return definition.anonymousApply ? (
     <Navigate to="draft" />
   ) : (
@@ -97,7 +101,7 @@ export const FormDefinition: FunctionComponent = () => {
           <ScheduledIntake definition={definition}>
             <Routes>
               <Route path="/draft" element={<AnonymousForm />} />
-              <Route path="/forms" element={<Forms definition={definition} />} />{' '}
+              <Route path="/forms" element={<Forms definition={definition} />} />
               <Route path="/:formId" element={<Form />} />
               <Route path="/" element={<FormDefinitionStart definition={definition} user={user} />} />
               <Route path="*" element={<Navigate to="/" />} />
