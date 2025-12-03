@@ -179,7 +179,8 @@ describe('Object Array Renderer', () => {
     expect(closedDeleteModal!.getAttribute('open')).toBe('false');
 
     // Ensure item still exists
-    const item = baseElement.querySelector('goa-form-item');
+    const item = baseElement.querySelector(`[data-testid="object-array-main-item-0"]`);
+    console.log(baseElement.innerHTML);
     expect(item).toBeInTheDocument();
 
     expect(item).not.toBeNull();
