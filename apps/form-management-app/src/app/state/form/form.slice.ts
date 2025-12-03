@@ -14,6 +14,7 @@ export interface FormState {
   selected: string | null;
   loading: boolean;
   currentDefinition: FormDefinition | null;
+  files: Record<string, string>;
   busy: {
     loading: boolean;
     creating: boolean;
@@ -138,6 +139,7 @@ export const initialFormState: FormState = {
   definitions: [],
   selected: null,
   loading: false,
+  files: {},
   currentDefinition: null,
   busy: {
     loading: false,
@@ -154,7 +156,11 @@ export const initialFormState: FormState = {
 const formSlice = createSlice({
   name: FORM_FEATURE_KEY,
   initialState: initialFormState,
-  reducers: {},
+  reducers: {
+      updateFormFiles: (state, action: { payload: Record<string, string> }) => {
+      state.files = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getFormDefinitions.pending, (state) => {
@@ -179,5 +185,7 @@ const formSlice = createSlice({
       });
   },
 });
+
+export const formActions = formSlice.actions;
 
 export const formReducer = formSlice.reducer;

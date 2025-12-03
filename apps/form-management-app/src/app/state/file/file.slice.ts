@@ -13,6 +13,11 @@ export interface FileMetadata {
   recordId?: string;
 }
 
+export interface FileWithMetadata extends File {
+  urn: string;
+  filename?: string;
+}
+
 const FILE_SERVICE_ID = 'urn:ads:platform:file-service';
 async function getFileMetadata(fileServiceUrl: string, urn: string): Promise<FileMetadata> {
   if (!AdspId.isAdspId(urn) || !urn.startsWith(FILE_SERVICE_ID)) {
@@ -162,95 +167,28 @@ export const checkPdfFile = createAsyncThunk(
   }
 );
 
-export const uploadAnonymousFile = createAsyncThunk(
-  'file/upload-anonymous-file',
-  async (
-    { typeId, file }: { typeId: string; file: File; recordId: string; propertyId: string },
-    { dispatch, getState, rejectWithValue }
-  ) => {
-    try {
-      const { config, user } = getState() as AppState;
-      const tenantId = user.tenant.id;
-
-      
-
-      const token = await getAccessToken();
-
-      const formData = new FormData();
-      formData.append('type', typeId);
-      formData.append('file', file);
-      formData.append('filename', file.name);
-      formData.append('tenantId', tenantId);
-
-      const { data: metadata } = await axios.post<FileMetadata>(`/api/gateway/v1/files`, formData, {
-        headers: { token },
-        params: { tenant: tenantId },
-        onUploadProgress: ({ loaded, total }: AxiosProgressEvent) => {
-          const progress = Math.floor((loaded * 100) / total);
-          dispatch(fileActions.setUploadProgress({ name: file.name, progress }));
-        },
-      });
-
-      // Keep the file in data URL form in the state, so we don't need to download again.
-      const fileDataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(reader.error);
-      });
-
-      return { metadata, file: fileDataUrl };
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        return rejectWithValue({
-          status: err.response?.status,
-          message: err.response?.data?.errorMessage || err.message,
-        });
-      } else {
-        throw err;
-      }
-    }
-  }
-);
-
 export const uploadFile = createAsyncThunk(
   'file/upload-file',
   async (
-    { typeId, file, recordId }: { typeId: string; file: File; recordId: string; propertyId: string },
+    { typeId, file, recordId }: { typeId: string; file: FileWithMetadata; recordId: string; propertyId: string },
     { dispatch, getState, rejectWithValue }
   ) => {
     try {
       const { config } = getState() as AppState;
       const fileServiceUrl = config.directory[FILE_SERVICE_ID];
 
-      console.log(JSON.stringify(config)+ "<config");
-      console.log(JSON.stringify(fileServiceUrl)+ "<config");
-    
-
       const token = await getAccessToken();
-
-         console.log(JSON.stringify(token)+ "<token");
       const formData = new FormData();
       formData.append('type', typeId);
       formData.append('recordId', recordId);
       formData.append('file', file);
-
-         console.log(JSON.stringify(formData)+ "<formData");
-
       const { data: metadata } = await axios.post<FileMetadata>(
         new URL('/file/v1/files', fileServiceUrl).href,
         formData,
         {
-          headers: { Authorization: `Bearer ${token}` },
-          onUploadProgress: ({ loaded, total }: AxiosProgressEvent) => {
-            const progress = Math.floor((loaded * 100) / total);
-            dispatch(fileActions.setUploadProgress({ name: file.name, progress }));
-          },
+          headers: { Authorization: `Bearer ${token}` }
         }
       );
-
-        console.log(JSON.stringify(metadata)+ "<metadataxx");
-
 
       // Keep the file in data URL form in the state, so we don't need to download again.
       const fileDataUrl = await new Promise<string>((resolve, reject) => {
@@ -259,9 +197,6 @@ export const uploadFile = createAsyncThunk(
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = () => reject(reader.error);
       });
-
-           console.log(JSON.stringify(fileDataUrl)+ "<fileDataUrl");
-           console.log(JSON.stringify(metadata)+ "<metadata");
 
       return { metadata, file: fileDataUrl };
     } catch (err) {
@@ -280,15 +215,12 @@ export const uploadFile = createAsyncThunk(
 export const deleteFile = createAsyncThunk(
   'file/delete-file',
   async (
-    { urn, anonymousApply }: { urn: string; propertyId: string; anonymousApply: boolean },
+    { urn }: { urn: string; propertyId: string },
     { getState, rejectWithValue }
   ) => {
     try {
       const { config, file } = getState() as AppState;
       const fileServiceUrl = config.directory[FILE_SERVICE_ID];
-      if (anonymousApply === true) {
-        return file.metadata[urn];
-      }
 
       const token = await getAccessToken();
       const filePath = urn.split(':').pop();
@@ -315,7 +247,6 @@ interface FileState {
   pdfFile: string;
   pdfFileExists?: boolean;
   metadata: Record<string, Array<FileMetadata>>;
-  upload: { name: string; progress: number };
   busy: {
     download: Record<string, boolean>;
     metadata: Record<string, boolean>;
@@ -327,10 +258,9 @@ interface FileState {
 
 const initialFileState: FileState = {
   files: {},
-  pdfFile: null,
-  pdfFileExists: null,
+  pdfFile: '',
+  pdfFileExists: false,
   metadata: {},
-  upload: null,
   busy: {
     download: {},
     metadata: {},
@@ -344,9 +274,7 @@ export const fileSlice = createSlice({
   name: FILE_FEATURE_KEY,
   initialState: initialFileState,
   reducers: {
-    setUploadProgress: (state, { payload }: { payload: { name: string; progress: number } }) => {
-      state.upload = payload;
-    },
+   
   },
   extraReducers: (builder) => {
     builder
@@ -397,7 +325,6 @@ export const fileSlice = createSlice({
       })
       .addCase(uploadFile.pending, (state, { meta }) => {
         state.busy.uploading = true;
-        state.upload = { name: meta.arg.file.name, progress: 0 };
       })
       .addCase(uploadFile.fulfilled, (state, { meta, payload }) => {
         state.busy.uploading = false;
@@ -407,20 +334,9 @@ export const fileSlice = createSlice({
       .addCase(uploadFile.rejected, (state) => {
         state.busy.uploading = false;
       })
-      .addCase(uploadAnonymousFile.pending, (state, { meta }) => {
-        state.busy.uploading = true;
-        state.upload = { name: meta.arg.file.name, progress: 0 };
-      })
-      .addCase(uploadAnonymousFile.fulfilled, (state, { meta, payload }) => {
-        state.busy.uploading = false;
-        state.files[payload.metadata.urn] = payload.file;
-        state.metadata[meta.arg.propertyId] = [...(state.metadata?.[meta.arg.propertyId] || []), payload.metadata];
-      })
-      .addCase(uploadAnonymousFile.rejected, (state) => {
-        state.busy.uploading = false;
-      })
+
       .addCase(deleteFile.fulfilled, (state, { meta }) => {
-        state.files[meta.arg.urn] = null;
+        delete state.files[meta.arg.urn];
         const propertyIdRoot = meta.arg.propertyId.split('.')?.[0];
         state.metadata[propertyIdRoot] = state.metadata[propertyIdRoot].filter((f) => f.urn !== meta.arg.urn);
         if (state.metadata[propertyIdRoot].length === 0) {
@@ -433,3 +349,4 @@ export const fileSlice = createSlice({
 
 const fileActions = fileSlice.actions;
 export const fileReducer = fileSlice.reducer;
+export const metaDataSelector = (state: AppState) => state.file.metadata;
