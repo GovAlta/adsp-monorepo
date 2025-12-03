@@ -326,6 +326,16 @@ const initialFileState: FileState = {
   },
 };
 
+export interface FileCriteria {
+  filenameContains?: string;
+  scanned?: boolean;
+  deleted?: boolean;
+  infected?: boolean;
+  typeEquals?: string;
+  recordIdEquals?: string;
+  recordIdContains?: string;
+}
+
 const fileSlice = createSlice({
   name: FILE_FEATURE_KEY,
   initialState: initialFileState,
