@@ -203,9 +203,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
   return (
     <Visible visible={visible}>
-      a
       <FileUploaderStyle className="FileUploader">
-        b
         <GoAFormItem label={sentenceCaseLabel} requirement={required ? 'required' : undefined} error={uploadError} />
         {!readOnly && (
           <div className="file-upload">
@@ -232,7 +230,6 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
             </div>
           )}
         </div>
-        c
       </FileUploaderStyle>
     </Visible>
   );

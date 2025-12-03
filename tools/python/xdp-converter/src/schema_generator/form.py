@@ -1,4 +1,4 @@
-from constants import CTX_JSONFORMS_RULES
+from visibility_rules.pipeline_context import CTX_JSONFORMS_RULES
 from schema_generator.form_element import FormElement
 from xdp_parser.parse_context import ParseContext
 

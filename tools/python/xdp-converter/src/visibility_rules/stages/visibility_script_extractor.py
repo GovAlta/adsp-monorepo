@@ -2,7 +2,11 @@
 
 import re
 from common.rule_model import ScriptEntry, RawRule
-from constants import CTX_PARENT_MAP, CTX_RAW_RULES, CTX_XDP_ROOT
+from visibility_rules.pipeline_context import (
+    CTX_PARENT_MAP,
+    CTX_RAW_RULES,
+    CTX_XDP_ROOT,
+)
 from visibility_rules.stages.js_parser import parse_js_visibility_script
 
 

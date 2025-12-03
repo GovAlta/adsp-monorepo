@@ -20,6 +20,9 @@ class XdpObjectArray(XdpElement):
         self.name = name
         self.columns = columns
 
+    def is_control(self):
+        return True
+
     def to_form_element(self) -> FormElement:
         children = []
         for col in self.columns:

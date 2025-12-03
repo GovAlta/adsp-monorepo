@@ -3,7 +3,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import * as _ from 'lodash';
 import { AppState } from '../store';
-import { FormDefinition, FORM_SERVICE_ID, PagedResults, CONFIGURATION_SERVICE_ID } from '../types';
+import { FormDefinition, CONFIGURATION_SERVICE_ID, FORM_SERVICE_ID } from '../types';
 import { getAccessToken } from '../user/user.slice';
 export const FORM_FEATURE_KEY = 'form';
 
@@ -27,6 +27,32 @@ export interface FormState {
   };
 }
 
+export const createDefinition = createAsyncThunk(
+  'form/create-definition',
+  async (definition: FormDefinition, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
+      const token = await getAccessToken();
+      const { data } = await axios.patch<{ latest: { configuration: FormDefinition } }>(
+        new URL(`configuration/v2/configuration/form-service/${definition.id}`, configurationService).href,
+        { operation: 'REPLACE', configuration: definition },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 export const updateDefinition = createAsyncThunk(
   'form/update-definition',
   async (definition: FormDefinition, { getState, rejectWithValue }) => {
@@ -48,6 +74,31 @@ export const updateDefinition = createAsyncThunk(
             message: err.response?.data?.errorMessage || err.message,
           });
         }
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const deleteDefinition = createAsyncThunk(
+  'form/delete-definition',
+  async (definitionId: string, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
+      const token = await getAccessToken();
+      await axios.delete(
+        new URL(`configuration/v2/configuration/form-service/${definitionId}`, configurationService).href,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return definitionId;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
       } else {
         throw err;
       }
@@ -110,18 +161,22 @@ export const getFormDefinitions = createAsyncThunk(
   async ({ top, after }: { top?: number; after?: string } = {}, { getState, rejectWithValue }) => {
     try {
       const { config } = getState() as AppState;
-      const formServiceUrl = config.directory[FORM_SERVICE_ID];
+      const formService = config.directory[FORM_SERVICE_ID];
       const accessToken = await getAccessToken();
 
-      const { data } = await axios.get<PagedResults<FormDefinition>>(
-        new URL('/form/v1/definitions', formServiceUrl).href,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          params: { top, after },
-        }
-      );
+      const params = new URLSearchParams();
+      if (top) params.append('top', top.toString());
+      if (after) params.append('after', after);
 
-      return data;
+      const url = `${formService}/form/v1/definitions?${params.toString()}`;
+      const { data } = await axios.get(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      return {
+        results: data.results || [],
+        page: data.page || { next: null },
+      };
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -173,13 +228,47 @@ const formSlice = createSlice({
       .addCase(getFormDefinitions.rejected, (state) => {
         state.loading = false;
       })
-      .addCase(updateDefinition.fulfilled, (state, { payload }) => {
-        if (payload) {
+      .addCase(createDefinition.pending, (state) => {
+        state.busy.creating = true;
+      })
+      .addCase(createDefinition.fulfilled, (state, { payload }) => {
+        if (payload && payload.latest && payload.latest.configuration) {
+          // Don't add to existing array since we'll refetch the list
           state.currentDefinition = payload.latest.configuration;
         }
+        state.busy.creating = false;
+      })
+      .addCase(createDefinition.rejected, (state) => {
+        state.busy.creating = false;
+      })
+      .addCase(updateDefinition.pending, (state) => {
+        state.busy.saving = true;
+      })
+      .addCase(updateDefinition.fulfilled, (state, { payload }) => {
+        if (payload) {
+          const index = state.definitions.findIndex((def) => def.id === payload.latest.configuration.id);
+          if (index !== -1) {
+            state.definitions[index] = payload.latest.configuration;
+          }
+          state.currentDefinition = payload.latest.configuration;
+        }
+        state.busy.saving = false;
+      })
+      .addCase(updateDefinition.rejected, (state) => {
+        state.busy.saving = false;
+      })
+      .addCase(deleteDefinition.pending, (state) => {
+        state.busy.deleting = true;
+      })
+      .addCase(deleteDefinition.fulfilled, (state, { payload }) => {
+        state.definitions = state.definitions.filter((def) => def.id !== payload);
+        state.busy.deleting = false;
+      })
+      .addCase(deleteDefinition.rejected, (state) => {
+        state.busy.deleting = false;
       })
       .addCase(getFormConfiguration.fulfilled, (state, action) => {
-        const { dataSchema, uiSchema, ...definition } = action.payload.definition;
+        const { dataSchema: _dataSchema, uiSchema: _uiSchema, ..._definition } = action.payload.definition;
 
         state.currentDefinition = action.payload.definition;
       });

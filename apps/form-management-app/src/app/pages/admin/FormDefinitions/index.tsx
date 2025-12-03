@@ -8,6 +8,8 @@ import {
   GoAPagination,
   GoASpacer,
   GoAButton,
+  GoAModal,
+  GoAButtonGroup,
 } from '@abgov/react-components';
 import {
   AppDispatch,
@@ -18,6 +20,9 @@ import {
   userSelector,
   selectIsAuthenticated,
 } from '../../../state';
+import type { FormDefinition } from '../../../state/types';
+import { deleteDefinition } from '../../../state/form/form.slice';
+import { selectIsDeletingDefinition } from '../../../state/form/selectors';
 import styles from './index.module.scss';
 
 const FormDefinitions = (): JSX.Element => {
@@ -25,6 +30,7 @@ const FormDefinitions = (): JSX.Element => {
   const navigate = useNavigate();
   const definitions = useSelector(selectFormDefinitions);
   const loading = useSelector(selectFormLoading);
+  const isDeleting = useSelector(selectIsDeletingDefinition);
   const configInitialized = useSelector(configInitializedSelector);
   const { initialized: userInitialized } = useSelector(userSelector);
   const authenticated = useSelector(selectIsAuthenticated);
@@ -32,10 +38,13 @@ const FormDefinitions = (): JSX.Element => {
   const [page, setPage] = useState(1);
   const [next, setNext] = useState<string | null>(null);
   const [cursors, setCursors] = useState<Record<number, string | null>>({ 1: null });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [definitionToDelete, setDefinitionToDelete] = useState<FormDefinition | null>(null);
 
   useEffect(() => {
+    const currentCursor = cursors[page];
     if (configInitialized && userInitialized && authenticated) {
-      dispatch(getFormDefinitions({ top: 40, after: cursors[page] }))
+      dispatch(getFormDefinitions({ top: 40, after: currentCursor }))
         .unwrap()
         .then((result) => {
           setNext(result.page.next);
@@ -47,7 +56,7 @@ const FormDefinitions = (): JSX.Element => {
           }
         });
     }
-  }, [dispatch, configInitialized, userInitialized, authenticated, page, cursors[page]]);
+  }, [dispatch, configInitialized, userInitialized, authenticated, page, cursors]);
 
   return (
     <div>
@@ -99,7 +108,8 @@ const FormDefinitions = (): JSX.Element => {
                       size="medium"
                       ariaLabel="Delete"
                       onClick={() => {
-                        // Placeholder for delete action
+                        setDefinitionToDelete(definition);
+                        setShowDeleteModal(true);
                       }}
                     />
                   </td>
@@ -120,6 +130,48 @@ const FormDefinitions = (): JSX.Element => {
           onChange={(newPage) => setPage(newPage)}
         />
       </div>
+
+      <GoAModal
+        open={showDeleteModal}
+        heading="Delete Form Definition"
+        actions={
+          <GoAButtonGroup alignment="end">
+            <GoAButton
+              type="secondary"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDefinitionToDelete(null);
+              }}
+              disabled={isDeleting}
+            >
+              Cancel
+            </GoAButton>
+            <GoAButton
+              type="primary"
+              variant="destructive"
+              onClick={async () => {
+                if (definitionToDelete) {
+                  try {
+                    await dispatch(deleteDefinition(definitionToDelete.id)).unwrap();
+                    setShowDeleteModal(false);
+                    setDefinitionToDelete(null);
+                  } catch (error) {
+                    console.error('Failed to delete definition:', error);
+                  }
+                }
+              }}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </GoAButton>
+          </GoAButtonGroup>
+        }
+      >
+        <p>
+          Are you sure you want to delete the form definition "{definitionToDelete?.name}"? This action cannot be
+          undone.
+        </p>
+      </GoAModal>
     </div>
   );
 };

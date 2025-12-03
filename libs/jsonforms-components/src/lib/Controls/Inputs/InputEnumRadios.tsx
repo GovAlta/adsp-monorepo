@@ -18,8 +18,8 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
   return (
     <GoARadioGroup
       error={isVisited && errors.length > 0}
-      name={`${options || appliedUiSchemaOptions.label}`}
-      testId={`${label || id}-jsonforms-radio`}
+      name={`${path || appliedUiSchemaOptions.label}`}
+      testId={`${path || id || label}-radio-group`}
       value={data}
       disabled={!enabled}
       {...appliedUiSchemaOptions}

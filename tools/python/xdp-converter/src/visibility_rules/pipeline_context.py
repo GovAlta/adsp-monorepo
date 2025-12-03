@@ -1,3 +1,4 @@
+# pipeline_context.py
 # Extracted from scripts but not normalized
 CTX_RAW_RULES = "raw_visibility_rules"
 
@@ -18,3 +19,14 @@ CTX_RADIO_GROUPS = "radio_groups"
 
 # Final rules ready for JsonForms UI/Schema emitters
 CTX_JSONFORMS_RULES = "jsonforms_rules"
+
+CTX_VISIBILITY_GROUPS = "visibility_groups"
+
+
+class PipelineContext(dict):
+    """
+    Mutable staging dictionary used during visibility rule extraction.
+    Pipeline stages freely read/write into this
+    """
+
+    pass

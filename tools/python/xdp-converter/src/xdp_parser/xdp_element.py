@@ -1,6 +1,10 @@
-# This class represents an XDP fragment that describes a form element
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from importlib.resources.readers import remove_duplicates
+from dataclasses import dataclass
+from typing import Optional, Any
+
+from importlib.resources.readers import remove_duplicates  # your existing import
 
 from schema_generator.form_element import FormElement
 from xdp_parser.parse_context import ParseContext
@@ -17,6 +21,8 @@ class XdpElement(ABC):
         self.labels = labels
         self.context = context or {}
         self.parent_map = context.get("parent_map", {}) if context else {}
+        self.geometry: XdpGeometry = XdpGeometry.from_xdp(xdp)
+        self.presence = xdp.get("presence", "").strip().lower()
 
     def get_full_path(self) -> str:
         return compute_full_xdp_path(self.xdp_element, self.parent_map)
@@ -28,6 +34,14 @@ class XdpElement(ABC):
             self._full_path_cache = self.get_full_path()
         return self._full_path_cache
 
+    @property
+    def x(self):
+        return self.geometry.x
+
+    @property
+    def y(self):
+        return self.geometry.y
+
     @abstractmethod
     def to_form_element(self) -> FormElement:
         pass
@@ -35,7 +49,28 @@ class XdpElement(ABC):
     def get_type(self):
         return "string"
 
-    def extract_coordinate(self, coordinate):
+    def is_control(self):
+        return False  # default
+
+    def is_help_text(self):
+        return False  # default
+
+    # You can keep this for backward-compat if anything uses it
+    def extract_coordinate(self, coordinate: str) -> float:
+        """
+        Legacy helper; prefers geometry if available, falls back to raw attribute.
+        """
+        # Prefer geometry if we know which one we're asking for
+        if coordinate == "x" and self.geometry.x is not None:
+            return self.geometry.x
+        if coordinate == "y" and self.geometry.y is not None:
+            return self.geometry.y
+        if coordinate == "w" and self.geometry.w is not None:
+            return self.geometry.w
+        if coordinate == "h" and self.geometry.h is not None:
+            return self.geometry.h
+
+        # Fallback to raw attribute parsing
         value = self.xdp_element.get(coordinate, "0")
         if isinstance(value, str) and "mm" in value:
             value = value.replace("mm", "")
@@ -64,7 +99,7 @@ class XdpElement(ABC):
         """
         enum_values = []
 
-        # Find all <items> under this field (assumes namespaces stripped; if not, use a ns map)
+        # Find all <items> under this field (assumes namespaces stripped)
         for items_el in self.xdp_element.findall(".//items"):
             presence = (items_el.attrib.get("presence") or "").strip().lower()
             if presence == "hidden":
@@ -106,3 +141,85 @@ def get_caption_text(xdp_element):
             return caption_text
 
     return None
+
+
+from dataclasses import dataclass
+from typing import Optional, Any
+
+
+@dataclass
+class XdpGeometry:
+    """
+    Simple holder for XDP layout and coordinates.
+    All numeric values are in millimetres where possible.
+    """
+
+    x: Optional[float] = None
+    y: Optional[float] = None
+    w: Optional[float] = None
+    h: Optional[float] = None
+
+    # 🔥 NEW: logical flow layout label ("lr-tb", "tb", "position", etc.)
+    layout: Optional[str] = None
+
+    @staticmethod
+    def _parse_mm(raw: Any) -> Optional[float]:
+        if raw is None:
+            return None
+        s = str(raw).strip()
+        if not s:
+            return None
+        if s.endswith("mm"):
+            s = s[:-2]
+        try:
+            return float(s)
+        except ValueError:
+            return None
+
+    @classmethod
+    def from_xdp(cls, xdp) -> "XdpGeometry":
+        """
+        Build geometry directly from an XDP element's attributes.
+        Missing attributes stay as None so we can detect them.
+        """
+        return cls(
+            x=cls._parse_mm(xdp.get("x")),
+            y=cls._parse_mm(xdp.get("y")),
+            w=cls._parse_mm(xdp.get("w")),
+            h=cls._parse_mm(xdp.get("h")),
+            layout=xdp.get("layout"),  # ← 🔥 ADDED
+        )
+
+    @classmethod
+    def from_children(
+        cls, children: list["XdpElement"], fallback: Optional["XdpGeometry"] = None
+    ) -> "XdpGeometry":
+        """
+        Infer a container's geometry from its children if needed.
+        Primarily uses top-left (x, y) for ordering.
+        """
+        ys = []
+        xs = []
+
+        for child in children:
+            geo = getattr(child, "geometry", None)
+            if not geo:
+                continue
+            if geo.y is not None:
+                ys.append(geo.y)
+            if geo.x is not None:
+                xs.append(geo.x)
+
+        x = min(xs) if xs else (fallback.x if fallback else None)
+        y = min(ys) if ys else (fallback.y if fallback else None)
+
+        # 🔥 Fallback layout propagates from parent if available
+        layout = fallback.layout if fallback else None
+
+        return cls(
+            x=x,
+            y=y,
+            w=fallback.w if fallback else None,
+            h=fallback.h if fallback else None,
+            layout=layout,
+        )

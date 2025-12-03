@@ -1,23 +1,22 @@
 import argparse
 import json
-from multiprocessing import context
 import sys
 import os
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import traceback
-from constants import (
+from visibility_rules.pipeline_context import (
     CTX_ENUM_MAP,
     CTX_JSONFORMS_RULES,
     CTX_LABEL_TO_ENUM,
     CTX_PARENT_MAP,
     CTX_RADIO_GROUPS,
     CTX_XDP_ROOT,
+    PipelineContext,
 )
 from schema_generator.json_schema_generator import JsonSchemaGenerator
 from schema_generator.ui_schema_generator import UiSchemaGenerator
 import xml.etree.ElementTree as ET
-from xdp_parser import control_labels
 from xdp_parser.factories.enum_map_factory import EnumMapFactory, normalize_enum_labels
 from xdp_parser.factories.xdp_element_factory import XdpElementFactory
 from xdp_parser.help_text_parser import JSHelpTextParser
@@ -87,7 +86,6 @@ def process_one(
         help_text = help_text_parser.get_messages()
 
         # --- Extract enum maps ---
-        print(f"  [DEBUG] Extracting enum maps from XDP…")
         enum_context = ParseContext(root=root, parent_map=parent_map, radio_groups={})
         enum_factory = EnumMapFactory(enum_context)
         traversal = XdpParser(enum_factory, enum_context)
@@ -100,26 +98,33 @@ def process_one(
         # Keep the actual field names as the group members
         normalized_radio_groups = enum_context.radio_groups
 
-        # Run the visibility pipeline
+        # --- Run the visibility pipeline ---
         pipeline = VisibilityRulesPipeline()
-        rule_context = {
-            CTX_XDP_ROOT: root,
-            CTX_ENUM_MAP: normalized_enum_maps,
-            CTX_PARENT_MAP: parent_map,
-            CTX_LABEL_TO_ENUM: enum_factory.label_to_enum,
-            CTX_RADIO_GROUPS: normalized_radio_groups,
-        }
+        pipeline_context = PipelineContext(
+            {
+                CTX_XDP_ROOT: root,
+                CTX_ENUM_MAP: normalized_enum_maps,
+                CTX_PARENT_MAP: parent_map,
+                CTX_LABEL_TO_ENUM: enum_factory.label_to_enum,
+                CTX_RADIO_GROUPS: normalized_radio_groups,
+            }
+        )
 
-        jsonforms_rules = pipeline.run(rule_context).get(CTX_JSONFORMS_RULES, {})
+        pipeline_output = pipeline.run(pipeline_context)
+        jsonforms_rules = pipeline_output.get(CTX_JSONFORMS_RULES, {})
 
-        # Build the UI parse context
+        top_subforms = set(id(sf) for sf in XdpParser.find_top_subforms(root))
         context = ParseContext(
             root=root,
             parent_map=parent_map,
             radio_groups=normalized_radio_groups,
             help_text=help_text,
             jsonforms_rules=jsonforms_rules,
+            top_subforms=top_subforms,
         )
+
+        print(f"Jsonforms rules has {len(jsonforms_rules)} rules")
+        print(jsonforms_rules)
 
         parser = XdpParser(XdpElementFactory(context), context)
         input_groups = parser.parse_xdp()
@@ -140,9 +145,6 @@ def process_one(
 
         with ui_out.open("w", encoding="utf-8") as f:
             json.dump(ui_schema, f, indent=4, ensure_ascii=False)
-
-        # --- Diagnostics  ---
-        # XdpParser().diagnose()
 
         return (xdp_path, True, None)
 
