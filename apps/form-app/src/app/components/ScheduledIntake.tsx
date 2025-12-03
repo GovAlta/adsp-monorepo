@@ -25,7 +25,7 @@ export const ScheduledIntake: FunctionComponent<ScheduledIntakeProps> = ({ defin
   return !definition.scheduledIntakes ||
     (definition.intake && !definition.intake.isUpcoming) ||
     user?.roles?.includes('urn:ads:platform:form-service:form-tester') ||
-    form?.id ? (
+    form?.status.toUpperCase() === 'SUBMITTED' ? (
     children
   ) : definition.intake?.isUpcoming ? (
     <GoACallout mt="2xl" ml="2xl" mr="2xl" mb="2xl" type="information" heading="Upcoming intake">
