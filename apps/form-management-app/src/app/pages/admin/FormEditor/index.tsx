@@ -12,13 +12,31 @@ import { selectRegisterData } from '../../../state/configuration/selectors';
 import { tryResolveRefs } from '@abgov/jsonforms-components';
 import styles from './Editor.module.scss';
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
+import { uploadFile, downloadFile, deleteFile } from '../../../state/file/file.slice';
+import { metaDataSelector } from '../../../state/file/selectors';
+import { store } from '../../../state/store';
+import { FileWithMetadata } from '../../../state/file/file.slice';
+
+import { formActions } from '../../../state/form/form.slice';
+import { filesSelector } from '../../../state/form/selectors';
+import { UISchemaElement}  from '@jsonforms/core';
+
+export const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
 
 function digestConfiguration(configuration: FormDefinition | null): string {
+  if (!configuration) return '{}';
+
+  const conf = configuration as unknown as Record<string, unknown>;
+
   return JSON.stringify(
-    Object.keys(configuration || {})
+    Object.keys(conf)
       .sort()
-      .reduce((values, key) => ({ ...values, [key]: configuration[key] }), {})
+      .reduce((values, key) => ({ ...values, [key]: conf[key] }), {})
   );
+}
+
+function getKeyByValue<T extends Record<string, unknown>>(obj: T, value: unknown): string | undefined {
+  return Object.keys(obj).find((key) => obj[key] === value);
 }
 
 const EditorWrapper = (): JSX.Element => {
@@ -42,6 +60,9 @@ const EditorWrapper = (): JSX.Element => {
       console.error('error:' + JSON.stringify(e));
     }
   }, [id, dispatch]);
+
+  const files = useSelector(filesSelector);
+  const metadata = useSelector(metaDataSelector);
 
   const definition = useSelector(savedDefinition);
 
@@ -81,18 +102,54 @@ const EditorWrapper = (): JSX.Element => {
     }
   };
 
-  const fileList = useSelector((state: AppState) => {
-    return state?.file.newFileList;
-  });
+  const downloadFileFunction = async (file: FileWithMetadata) => {
+    const state = store.getState() as AppState;
+    const localFileCache = state.file?.files[file.urn];
+    const element = document.createElement('a');
 
-  const downloadFile = (file) => {
-    console.log('pretend to download file');
+    if (localFileCache) {
+      element.href = localFileCache;
+      element.download = file.filename || "name";
+    } else {
+      try {
+        const fileData = await dispatch(downloadFile(file.urn)).unwrap();
+        const blobUrl = URL.createObjectURL(new Blob([fileData.data]));
+        element.href = blobUrl;
+        element.download = fileData.metadata.filename;
+      } catch (err) {
+        console.error('Failed to download file:', err);
+        return;
+      }
+    }
+
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
   };
-  const uploadFile = (file) => {
-    console.log('pretend to upload file');
+  const uploadFileFunction = async (file: FileWithMetadata, propertyId: string) => {
+    const clonedFiles = { ...files };
+    const propertyIdRoot = propertyId.split('.')[0];
+    const fileInfo = {
+      file: file,
+      typeId: FORM_SUPPORTING_DOCS,
+      recordId: definition?.urn || definition?.id || '',
+      propertyId: propertyIdRoot,
+    };
+
+    try {
+      const fileMetaData = (await dispatch(uploadFile(fileInfo)).unwrap()).metadata;
+      clonedFiles[propertyId] = fileMetaData.urn;
+      dispatch(formActions.updateFormFiles(clonedFiles));
+    } catch (err) {
+      console.error('File upload failed: ' + JSON.stringify(err));
+    }
   };
-  const deleteFile = (file) => {
-    console.log('pretend to delete file');
+  const deleteFileFunction = async (file: FileWithMetadata) => {
+    const clonedFiles = { ...files };
+    const propertyId = getKeyByValue(clonedFiles, file.urn) || "";
+    await dispatch(deleteFile({ urn: file.urn, propertyId }));
+    delete clonedFiles[propertyId];
+    dispatch(formActions.updateFormFiles(clonedFiles));
   };
 
   const registerData = useSelector(selectRegisterData);
@@ -114,9 +171,10 @@ const EditorWrapper = (): JSX.Element => {
 
       const [resolvedSchema, error] = await tryResolveRefs(parsedSchema, standardV1JsonSchema, commonV1JsonSchema);
       setResolvedTempDefinition(resolvedSchema);
+      setDataError(null)
     } catch (err) {
       console.error('Failed to parse data schema: ' + err);
-      setDataError(err);
+      setDataError(err instanceof Error ? err.message : String(err));
     }
   };
   const setDraftUi = (uiDefinition: string) => {
@@ -128,10 +186,16 @@ const EditorWrapper = (): JSX.Element => {
         uiSchema: parsedSchema as unknown as any,
       } as FormDefinition;
       setTempDefinition(tempSchema);
+      setUiError(null);
     } catch (err) {
       console.error('Failed to parse data schema: ' + err);
-      setUiError(err);
+      setUiError(err instanceof Error ? err.message : String(err));
     }
+  };
+
+  const emptyUiSchema: UISchemaElement = {
+    type: 'VerticalLayout',
+    elements: [],
   };
 
   return (
@@ -143,14 +207,14 @@ const EditorWrapper = (): JSX.Element => {
           setDraftDataSchema={setDraftData}
           setDraftUiSchema={setDraftUi}
           isFormUpdated={isFormUpdated}
-          fileList={fileList}
-          uploadFile={uploadFile}
+          fileList={metadata}
+          uploadFile={uploadFileFunction}
           resolvedDataSchema={resolvedTempDefinition}
-          downloadFile={downloadFile}
-          deleteFile={deleteFile}
+          downloadFile={downloadFileFunction}
+          deleteFile={deleteFileFunction}
           formServiceApiUrl={formServiceApiUrl}
           schemaError={schemaError}
-          uiSchema={tempDefinition?.uiSchema}
+          uiSchema={tempDefinition?.uiSchema ?? emptyUiSchema}
           registerData={registerData}
           nonAnonymous={nonAnonymous}
           dataList={dataList}

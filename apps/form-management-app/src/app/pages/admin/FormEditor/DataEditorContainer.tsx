@@ -4,6 +4,7 @@ import { isValidJSONSchemaCheck } from '../../../utils/checkInput';
 import { useWindowDimensions } from '../../../utils/useWindowDimensions';
 import { GoAFormItem } from '@abgov/react-components';
 import MonacoEditor from '@monaco-editor/react';
+import { JsonSchema } from '@jsonforms/core';
 
 export interface DataEditorContainerProps {
   errors: Record<string, string | null>; // From useValidators()
@@ -13,7 +14,7 @@ export interface DataEditorContainerProps {
     dataSchemaJSONSchema: string | null;
   };
 
-  tempDataSchema: string;
+  tempDataSchema: JsonSchema;
   setDraftDataSchema: (schema: string) => void;
   setEditorErrors: React.Dispatch<
     React.SetStateAction<{
@@ -37,7 +38,9 @@ export const DataEditorContainer: React.FC<DataEditorContainerProps> = ({
   const { height } = useWindowDimensions();
   const EditorHeight = height - 400;
   const isUseMiniMap = window.screen.availWidth >= 1920;
-  const handleEditorDidMountData = (editor) => {
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleEditorDidMountData = (editor: any) => {
     editorRefData.current = editor;
 
     requestAnimationFrame(() => {
@@ -45,8 +48,8 @@ export const DataEditorContainer: React.FC<DataEditorContainerProps> = ({
         editor.setScrollTop(dataEditorLocation);
       }, 5);
     });
-
-    editor.onDidScrollChange((e) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    editor.onDidScrollChange((e: any) => {
       setDataEditorLocation(e.scrollTop);
     });
   };

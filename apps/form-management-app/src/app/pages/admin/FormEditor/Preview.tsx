@@ -7,17 +7,16 @@ import { GoAFormItem, GoATabs, GoATab } from '@abgov/react-components';
 import { FormDefinition } from '../../../state/types';
 import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
+import { FileMetadata } from '../../../state/file/file.slice';
+import { FileWithMetadata } from '../../../state/file/file.slice';
 
 export const ContextProvider = ContextProviderFactory();
 
 export interface PreviewProps {
-  fileList: Record<string, Record<string, string>[]>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  uploadFile: (file: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  downloadFile: (file: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deleteFile: (file: any) => void;
+  fileList: Record<string, FileMetadata[]>;
+  uploadFile: (file: FileWithMetadata, propertyId: string) => void;
+  downloadFile: (file: FileWithMetadata) => void;
+  deleteFile: (file: FileWithMetadata) => void;
   formServiceApiUrl: string;
   schemaError: string | null;
   definition: FormDefinition;

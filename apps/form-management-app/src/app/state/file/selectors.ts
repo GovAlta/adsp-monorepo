@@ -1,7 +1,5 @@
-
-import {  createSelector } from '@reduxjs/toolkit';
+import { createSelector } from '@reduxjs/toolkit';
 import { AppState } from '../store';
-import { fileSlice } from './file.slice';
 
 export const metaDataSelector = (state: AppState) => state.file.metadata;
 
@@ -29,5 +27,3 @@ export const fileLoadingSelector = createSelector(
   (_state: AppState, urn: string) => urn,
   (busy, urn) => busy.metadata[urn] || busy.download[urn]
 );
-
-

@@ -11,6 +11,7 @@ import { SubmitButtonsBar } from './SubmitButtonsBar';
 import { GoATabs, GoATab } from '@abgov/react-components';
 import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
 import { UISchemaElement } from '@jsonforms/core';
+import { FileMetadata, FileWithMetadata } from '../../../state/file/file.slice';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -21,13 +22,10 @@ export interface EditorProps {
   isFormUpdated: boolean;
   updateFormDefinition: () => void;
   resolvedDataSchema: Record<string, unknown>;
-  fileList: Record<string, Record<string, string>[]>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  uploadFile: (file: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  downloadFile: (file: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deleteFile: (file: any) => void;
+  fileList: Record<string, FileMetadata[]>;
+  uploadFile: (file: FileWithMetadata, propertyId: string) => void;
+  downloadFile: (file: FileWithMetadata) => void;
+  deleteFile: (file: FileWithMetadata) => void;
   formServiceApiUrl: string;
   schemaError: string | null;
   uiSchema: UISchemaElement;
