@@ -364,7 +364,9 @@ const MainTab = ({
       const base = `/${childPath.replace(/\./g, '/')}`;
       return e.instancePath === base || e.instancePath.startsWith(base + '/');
     })
-    .map((error) => error?.message);
+    .map((e) => e?.message?.trim?.() || '')
+    .filter((msg) => msg.length > 0)
+    .map((msg, index, arr) => `${msg}${index < arr.length - 1 ? ', ' : ''}`);
   return (
     <div key={childPath}>
       <GoAFormItem error={rowErrors?.length ? rowErrors : undefined}>
