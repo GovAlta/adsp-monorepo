@@ -186,7 +186,7 @@ export const uploadFile = createAsyncThunk(
         new URL('/file/v1/files', fileServiceUrl).href,
         formData,
         {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -214,10 +214,7 @@ export const uploadFile = createAsyncThunk(
 
 export const deleteFile = createAsyncThunk(
   'file/delete-file',
-  async (
-    { urn }: { urn: string; propertyId: string },
-    { getState, rejectWithValue }
-  ) => {
+  async ({ urn }: { urn: string; propertyId: string }, { getState, rejectWithValue }) => {
     try {
       const { config, file } = getState() as AppState;
       const fileServiceUrl = config.directory[FILE_SERVICE_ID];
@@ -273,9 +270,7 @@ const initialFileState: FileState = {
 export const fileSlice = createSlice({
   name: FILE_FEATURE_KEY,
   initialState: initialFileState,
-  reducers: {
-   
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(loadFileMetadata.pending, (state, { meta }) => {
@@ -347,6 +342,4 @@ export const fileSlice = createSlice({
   },
 });
 
-const fileActions = fileSlice.actions;
 export const fileReducer = fileSlice.reducer;
-export const metaDataSelector = (state: AppState) => state.file.metadata;

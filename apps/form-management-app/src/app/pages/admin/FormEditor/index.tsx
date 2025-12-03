@@ -12,8 +12,8 @@ import { selectRegisterData } from '../../../state/configuration/selectors';
 import { tryResolveRefs } from '@abgov/jsonforms-components';
 import styles from './Editor.module.scss';
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
-import { uploadFile, downloadFile, deleteFile, FileMetadata } from '../../../state/file/file.slice';
-import { metaDataSelector } from '../../../state/file/file.slice';
+import { uploadFile, downloadFile, deleteFile } from '../../../state/file/file.slice';
+import { metaDataSelector } from '../../../state/file/selectors';
 import { store } from '../../../state/store';
 import { FileWithMetadata } from '../../../state/file/file.slice';
 
