@@ -1,11 +1,13 @@
 # tools/python/xdp-converter/src/xdp_parser/parse_xdp.py
 
+import re
 import xml.etree.ElementTree as ET
 from typing import List
 from visibility_rules.pipeline_context import CTX_RADIO_GROUPS
 from xdp_parser.control_labels import ControlLabels, inline_caption
 from xdp_parser.control_helpers import is_checkbox, is_radio_button
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
+from xdp_parser.group_label_resolver import resolve_group_label
 from xdp_parser.orphaned_list_controls import is_add_remove_container
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.parsing_helpers import is_object_array
@@ -142,9 +144,20 @@ class XdpParser:
             # Help text
             help_text = XdpHelpText.get_help_text(elem)
             if help_text:
+                group_label = self._peek_group_label(node)
+                print(
+                    f"[Parser]  help text: '{help_text}' v.s. group label: '{group_label}'"
+                )
+                if group_label and help_text.strip() == group_label.strip():
+                    # It is a header -> skip generating HelpContent element
+                    i += 1
+                    continue
+
                 control = self.factory.handle_help_text(elem, help_text)
                 if control:
                     controls.append(control)
+                i += 1
+                continue
 
             # Explicit or implicit radio groups (exclGroup or radio-like fields)
             if is_radio_button(elem):
@@ -196,6 +209,16 @@ class XdpParser:
             i += 1
 
         return controls
+
+    def _normalize_heading(self, text: str) -> str:
+        """
+        Normalize headings to check whether HelpContent duplicates a label.
+        """
+        if not text:
+            return ""
+        t = re.sub(r"\s+", " ", text).strip()
+        t = re.sub(r":\s*$", "", t)  # strip trailing colon
+        return t.lower()
 
     # ----------------------------------------------------------------------
     # Form structure helpers
@@ -404,3 +427,13 @@ class XdpParser:
 
     def _sort_top_level_groups_only(self, groups):
         return groups
+
+    def _peek_group_label(self, subform_elem):
+        """
+        Used early during parsing to detect whether a help-text
+        matches the subform's group header.
+        """
+        try:
+            return resolve_group_label(subform_elem, self.context)
+        except Exception:
+            return None

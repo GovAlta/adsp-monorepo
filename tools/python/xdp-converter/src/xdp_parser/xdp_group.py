@@ -15,10 +15,9 @@ class XdpGroup(XdpElement):
     ):
         super().__init__(subform, context=context)
         self.elements = elements
-        self.label = label
-
         # Capture layout from subform (<subform layout="...">)
         self.layout = subform.get("layout", "").lower() if subform is not None else ""
+        self.label = label or ""
 
         # If the subform itself has no coordinates, infer from children
         self.inheritGeometry(elements)

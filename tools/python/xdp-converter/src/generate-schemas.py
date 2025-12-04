@@ -123,19 +123,14 @@ def process_one(
             top_subforms=top_subforms,
         )
 
-        print(f"Jsonforms rules has {len(jsonforms_rules)} rules")
-        print(jsonforms_rules)
-
         parser = XdpParser(XdpElementFactory(context), context)
         input_groups = parser.parse_xdp()
 
         # --- Generate schemas ---
-        print(f"  [DEBUG] Generating JSON schema from input groups.")
         json_generator = JsonSchemaGenerator()
         json_schema = json_generator.to_schema(input_groups)
 
         ui_generator = UiSchemaGenerator(input_groups, context)
-        print(f"##################.   Generating UI schema from input groups.")
         ui_schema = ui_generator.to_schema()
 
         # --- Write output files ---
