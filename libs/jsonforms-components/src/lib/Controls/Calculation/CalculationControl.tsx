@@ -1,32 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { withJsonFormsControlProps } from '@jsonforms/react';
-import { ControlProps } from '@jsonforms/core';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
+import { ControlProps, JsonSchema } from '@jsonforms/core';
 import { GoAFormItem, GoAInput } from '@abgov/react-components';
 import { Visible } from '../../util';
 import { RankedTester, rankWith, and, schemaTypeIs, formatIs } from '@jsonforms/core';
-import { evaluateExpression } from './CalculationEngine';
-import { useJsonForms } from '@jsonforms/react';
+import { evaluateExpression, EvalResult, collectScopes } from './CalculationEngine';
 
 const GoACalculation = (props: ControlProps) => {
   const { uischema, schema, path, id, visible, handleChange } = props;
+
+  const { core } = useJsonForms();
+  const rootSchema = core?.schema as JsonSchema | undefined;
+  const rootData = core?.data ?? {};
+
   const label = typeof uischema?.label === 'string' ? uischema.label : undefined;
   const expression = schema?.description;
 
-  const { core } = useJsonForms();
-  const rootData = core?.data ?? {};
-
+  const knownScopes = useMemo(() => collectScopes(rootSchema), [rootSchema]);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const prevDataRef = useRef(rootData);
+  const initialSnapshot = useRef<string>(JSON.stringify(rootData));
+
   useEffect(() => {
-    setHasInteracted((was) => (was ? true : true));
-  }, [rootData]);
-  useEffect(() => {
-    if (prevDataRef.current !== rootData) {
+    if (hasInteracted) return;
+    const now = JSON.stringify(rootData);
+    if (now !== initialSnapshot.current) {
       setHasInteracted(true);
-      prevDataRef.current = rootData;
     }
-  }, [rootData]);
-  const { value: computedValue, error } = evaluateExpression(expression, rootData);
+  }, [rootData, hasInteracted]);
+
+  const { value: computedValue, error }: EvalResult = evaluateExpression(expression, rootData, {
+    knownScopes,
+  });
 
   useEffect(() => {
     if (computedValue !== undefined && typeof handleChange === 'function' && path) {
@@ -34,7 +38,10 @@ const GoACalculation = (props: ControlProps) => {
     }
   }, [computedValue, handleChange, path]);
 
-  const showError = hasInteracted && !!error;
+  const isConfigError =
+    !!error && (error.toLowerCase().includes('invalid scope') || error.toLowerCase().includes('expression syntax'));
+
+  const showError = !!error && (isConfigError || hasInteracted);
 
   return (
     <Visible visible={visible}>
