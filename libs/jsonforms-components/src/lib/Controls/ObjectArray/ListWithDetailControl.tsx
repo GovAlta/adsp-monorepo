@@ -35,7 +35,7 @@ import {
   RowFlexMenu,
   MarginTop,
   UpdateListContainer,
-  TabData,
+  TabName,
   IconPadding,
 } from './styled-components';
 import { Visible } from '../../util';
@@ -309,11 +309,12 @@ interface MainRowProps {
   childPath: string;
   rowIndex: number;
   enabled: boolean;
-  name: string;
   currentTab: number;
   current: HTMLElement | null;
   selectCurrentTab: (index: number) => void;
   setCurrentListPage: (index: number) => void;
+  // eslint-disable-next-line
+  rowData?: Record<string, any>;
 }
 
 const NonEmptyRowComponent = ({
@@ -338,6 +339,64 @@ const NonEmptyRowComponent = ({
   );
 };
 
+const MainItemComponent = ({
+  childPath,
+  rowIndex,
+  openDeleteDialog,
+  selectCurrentTab,
+  enabled,
+  currentTab,
+  current,
+  setCurrentListPage,
+  rowData,
+}: MainRowProps & WithDeleteDialogSupport) => {
+  const displayName = Object.keys(rowData ?? {}).length === 0 ? 'No data' : Object.values(rowData || {}).join(', ');
+
+  return (
+    <SideMenuItem
+      onClick={() => selectCurrentTab(rowIndex)}
+      onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          if (current) {
+            const goa = current?.querySelector('goa-input, goa-button');
+            if (goa?.shadowRoot) {
+              const internal = goa.shadowRoot.querySelector('input, button');
+
+              (internal as HTMLElement)?.focus();
+              selectCurrentTab(rowIndex);
+            }
+          }
+        }
+      }}
+    >
+      <RowFlexMenu tabIndex={0}>
+        <TabName>{displayName}</TabName>
+        {enabled ? (
+          <Trash>
+            <GoAIconButton
+              disabled={!enabled}
+              icon="trash"
+              title={'remove'}
+              testId="remove the details"
+              onClick={() => openDeleteDialog(childPath, rowIndex, displayName)}
+            ></GoAIconButton>
+          </Trash>
+        ) : null}
+        <IconPadding>
+          <GoAIconButton
+            disabled={!enabled}
+            icon="create"
+            title={'edit'}
+            testId="edit button"
+            onClick={() => setCurrentListPage(currentTab + 1)}
+          ></GoAIconButton>
+        </IconPadding>
+      </RowFlexMenu>
+    </SideMenuItem>
+  );
+};
+
 const MainTab = ({
   childPath,
   rowIndex,
@@ -345,7 +404,6 @@ const MainTab = ({
   selectCurrentTab,
   enabled,
   currentTab,
-  name,
   current,
   setCurrentListPage,
 }: MainRowProps & WithDeleteDialogSupport) => {
@@ -364,54 +422,38 @@ const MainTab = ({
       const base = `/${childPath.replace(/\./g, '/')}`;
       return e.instancePath === base || e.instancePath.startsWith(base + '/');
     })
-    .map((error) => error?.message);
+    .map((e) => e?.message?.trim?.() || '')
+    .filter((msg) => msg.length > 0)
+    .map((msg, index, arr) => `${msg}${index < arr.length - 1 ? ', ' : ''}`);
   return (
-    <div key={childPath}>
-      <GoAFormItem error={rowErrors?.length ? rowErrors : undefined}>
-        <SideMenuItem
-          onClick={() => selectCurrentTab(rowIndex)}
-          onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-            if (e.key === 'ArrowRight') {
-              e.preventDefault();
-              if (current) {
-                const goa = current?.querySelector('goa-input, goa-button');
-                if (goa?.shadowRoot) {
-                  const internal = goa.shadowRoot.querySelector('input, button');
-
-                  (internal as HTMLElement)?.focus();
-                  selectCurrentTab(rowIndex);
-                }
-              }
-            }
-          }}
-        >
-          <RowFlexMenu tabIndex={0}>
-            <TabData>
-              {Object.keys(rowData ?? {}).length === 0 && 'No data'} {Object.values(rowData).join(', ')}
-            </TabData>
-            {enabled ? (
-              <Trash>
-                <GoAIconButton
-                  disabled={!enabled}
-                  icon="trash"
-                  title={'remove'}
-                  testId="remove the details"
-                  onClick={() => openDeleteDialog(childPath, rowIndex, name)}
-                ></GoAIconButton>
-              </Trash>
-            ) : null}
-            <IconPadding>
-              <GoAIconButton
-                disabled={!enabled}
-                icon="create"
-                title={'edit'}
-                testId="edit button"
-                onClick={() => setCurrentListPage(currentTab + 1)}
-              ></GoAIconButton>
-            </IconPadding>
-          </RowFlexMenu>
-        </SideMenuItem>
-      </GoAFormItem>
+    <div key={childPath} data-testid={`object-array-main-item-${rowIndex}`}>
+      {rowErrors?.length ? (
+        <GoAFormItem error={rowErrors?.length ? rowErrors : null}>
+          <MainItemComponent
+            rowData={rowData}
+            childPath={childPath}
+            rowIndex={rowIndex}
+            openDeleteDialog={openDeleteDialog}
+            selectCurrentTab={selectCurrentTab}
+            enabled={enabled}
+            currentTab={currentTab}
+            current={current}
+            setCurrentListPage={setCurrentListPage}
+          />
+        </GoAFormItem>
+      ) : (
+        <MainItemComponent
+          rowData={rowData}
+          childPath={childPath}
+          rowIndex={rowIndex}
+          openDeleteDialog={openDeleteDialog}
+          selectCurrentTab={selectCurrentTab}
+          enabled={enabled}
+          currentTab={currentTab}
+          current={current}
+          setCurrentListPage={setCurrentListPage}
+        />
+      )}
     </div>
   );
 };
@@ -493,11 +535,6 @@ const ObjectArrayList = ({
     setCurrentIndex(index);
   };
 
-  const nameTitle = (() => {
-    const str = appliedUiSchemaOptions?.itemLabel ? `${appliedUiSchemaOptions.itemLabel}` : `${path}`;
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  })();
-
   return (
     <ListContainer>
       <RowFlex>
@@ -505,17 +542,12 @@ const ObjectArrayList = ({
           <FlexTabs style={{ height: '100%' }}>
             {range(data).map((index: number) => {
               const childPath = Paths.compose(path, `${index}`);
-              const name = appliedUiSchemaOptions?.itemLabel
-                ? `${pluralize.singular(appliedUiSchemaOptions?.itemLabel)} ${index + 1}`
-                : `${pluralize.singular(path)} ${index + 1}`;
-
               return (
                 <MainTab
                   key={childPath}
                   childPath={childPath}
                   rowIndex={index}
                   currentTab={currentIndex}
-                  name={name}
                   openDeleteDialog={openDeleteDialog}
                   selectCurrentTab={selectCurrentTab}
                   enabled={enabled}

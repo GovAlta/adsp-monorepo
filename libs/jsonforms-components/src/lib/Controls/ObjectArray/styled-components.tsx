@@ -66,7 +66,7 @@ export const FlexForm = styled.div`
   flex: 3;
 `;
 
-export const TabData = styled.div`
+export const TabName = styled.div`
   margin: 1rem 0 1rem 1rem;
   font-weight: 400;
   white-space: nowrap;
