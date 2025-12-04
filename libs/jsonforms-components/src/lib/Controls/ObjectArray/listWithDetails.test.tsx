@@ -227,13 +227,48 @@ describe('Object Array Renderer', () => {
   });
 });
 
+it('errors are visible', () => {
+  const data = { messages: [] };
+  const { baseElement } = render(getForm(data));
+
+  // Add a message
+  const addButton = baseElement.querySelector("goa-button[testId='object-array-toolbar-Messages']");
+  expect(addButton).toBeInTheDocument();
+  const shadowAddBtn = addButton!.shadowRoot?.querySelector('button');
+  expect(shadowAddBtn).not.toBeNull();
+  fireEvent(addButton!, new CustomEvent('_click'));
+  console.log(baseElement.innerHTML);
+
+  const messageInput = baseElement.querySelector("goa-input[testId='#/properties/message-input']");
+  expect(messageInput).toBeInTheDocument();
+  fireEvent(messageInput!, new CustomEvent('_change', { detail: { value: 'The rain in Spain' } }));
+  expect(messageInput).toHaveAttribute('value', 'The rain in Spain');
+
+  // Click continue
+  const continueBtn = baseElement.querySelector("goa-button[testid='next-list-button']");
+  fireEvent(continueBtn!, new CustomEvent('_click'));
+
+  console.log(baseElement.innerHTML);
+
+  // Select the goa-input / form item for the message
+  const messageFormItem = baseElement.querySelector('goa-form-item');
+  expect(messageFormItem).not.toBeNull();
+
+  // Select the error message inside the slot
+  const errorEl = messageFormItem!.querySelector('div[slot="error"]');
+  expect(errorEl).not.toBeNull();
+
+  // Check the error text
+  expect(errorEl!.textContent).toContain('must NOT have more than 5 characters');
+});
+
 describe('ObjectListControl util functions tests', () => {
   it('can render Cell Column with warning error', () => {
     const props = {
       currentData: undefined,
       isRequired: true,
       error: 'is an error',
-    } as RenderCellColumnProps;
+    } as unknown as RenderCellColumnProps;
 
     const element = renderCellColumn(props);
     expect(element).not.toBeNull();
@@ -244,7 +279,7 @@ describe('ObjectListControl util functions tests', () => {
       currentData: 'test',
       isRequired: true,
       error: '',
-    } as RenderCellColumnProps;
+    } as unknown as RenderCellColumnProps;
 
     const element = renderCellColumn(props);
     expect(element).not.toBeNull();
@@ -261,7 +296,7 @@ describe('ObjectListControl util functions tests', () => {
       currentData: JSON.stringify(arr),
       isRequired: true,
       error: '',
-    } as RenderCellColumnProps;
+    } as unknown as RenderCellColumnProps;
 
     const element = renderCellColumn(props);
     expect(element).not.toBeNull();
