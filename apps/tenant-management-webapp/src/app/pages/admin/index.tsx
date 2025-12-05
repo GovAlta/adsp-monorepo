@@ -137,6 +137,6 @@ const SidebarWrapper = styled.nav`
   }
 `;
 
-const ServiceColumnLayout = styled.div`
+export const ServiceColumnLayout = styled.div`
   margin-bottom: var(--goa-space-3xl);
 `;
