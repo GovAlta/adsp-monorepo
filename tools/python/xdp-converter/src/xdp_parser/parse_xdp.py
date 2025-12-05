@@ -65,12 +65,6 @@ class XdpParser:
             else:
                 all_elements.extend(nested_controls)
 
-        all_elements = []
-        for subform in subforms:
-            elements = self.parse_subform(subform)
-            if elements:
-                all_elements.extend(elements)
-
         # 🔹 ensure top-level groups are in visual order
         all_elements = self._sort_top_level_groups_only(all_elements)
 
