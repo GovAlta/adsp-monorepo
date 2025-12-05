@@ -6,6 +6,7 @@ import React, { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { MetricsChart } from './metricsChart';
 import { MetricsSearchForm } from './metricsSearchForm';
+import { ServiceColumnLayout } from '../../admin';
 
 export const ServiceMetrics: FunctionComponent = () => {
   const readerRole = 'value-reader';
@@ -21,28 +22,30 @@ export const ServiceMetrics: FunctionComponent = () => {
 
   return (
     <Main>
-      <h1 data-testid="serviceMetrics-title">Service metrics</h1>
-      <p>
-        Service metrics shows low level response time values benchmarked in service code. Instrument your services to
-        collect then send metrics to the value service to see it here.
-      </p>
-      {hasReaderRole ? (
-        <>
-          <MetricsSearchForm
-            onSearch={() => dispatch(fetchServiceMetrics(service, chartInterval))}
-            onReset={() => {
-              dispatch(setIntervalCriteria('1 hour'));
-              dispatch(setServiceCriteria(null));
-            }}
-          />
-          <br />
-          <MetricsChart />
-        </>
-      ) : (
-        <GoACallout heading="Value reader role required" type="information" testId="metric-role-need-callout">
-          <p>You need the urn:ads:platform:value-service 'value-reader' role to see the event log.</p>
-        </GoACallout>
-      )}
+      <ServiceColumnLayout>
+        <h1 data-testid="serviceMetrics-title">Service metrics</h1>
+        <p>
+          Service metrics shows low level response time values benchmarked in service code. Instrument your services to
+          collect then send metrics to the value service to see it here.
+        </p>
+        {hasReaderRole ? (
+          <>
+            <MetricsSearchForm
+              onSearch={() => dispatch(fetchServiceMetrics(service, chartInterval))}
+              onReset={() => {
+                dispatch(setIntervalCriteria('1 hour'));
+                dispatch(setServiceCriteria(null));
+              }}
+            />
+            <br />
+            <MetricsChart />
+          </>
+        ) : (
+          <GoACallout heading="Value reader role required" type="information" testId="metric-role-need-callout">
+            <p>You need the urn:ads:platform:value-service 'value-reader' role to see the event log.</p>
+          </GoACallout>
+        )}
+      </ServiceColumnLayout>
     </Main>
   );
 };
