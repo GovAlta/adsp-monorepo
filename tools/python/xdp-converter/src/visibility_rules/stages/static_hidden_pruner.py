@@ -72,9 +72,6 @@ class StaticHiddenPruner:
                 continue
 
             if has_dynamic_rules_for(full_name):
-                print(
-                    f"  [KEEP] '{full_name}' is presence=hidden but participates in rules."
-                )
                 continue
 
             # At this point: presence=hidden and no rules on self/descendants

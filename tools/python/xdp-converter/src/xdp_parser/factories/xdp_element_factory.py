@@ -1,8 +1,8 @@
 import xml.etree.ElementTree as ET
-from typing import Any, List, Optional
+from typing import List, Optional
 
-from xdp_parser.control_labels import ControlLabels
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
+from xdp_parser.group_label_resolver import resolve_group_label
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_element import XdpElement, XdpGeometry
 from xdp_parser.xdp_group import XdpGroup
@@ -57,7 +57,7 @@ class XdpElementFactory(AbstractXdpFactory):
     # GROUP LOGIC
     # ----------------------------------------------------------------------
     def handle_group(
-        self, subform: ET.Element, elements: List[XdpElement], label: str
+        self, subform: ET.Element, elements: List[XdpElement], _: str
     ) -> Optional[XdpElement]:
         """
         Build a logical group (FormGroup) from a subform.
@@ -67,7 +67,7 @@ class XdpElementFactory(AbstractXdpFactory):
         • Removes empty/help-only groups
         • Computes group geometry
         """
-
+        print(f"[XdpElementFactory] Handling group for subform: {subform.get('name')}")
         # --------------------------------------------------
         # 0) empty — return None
         # --------------------------------------------------
@@ -79,17 +79,12 @@ class XdpElementFactory(AbstractXdpFactory):
         # --------------------------------------------------
         elements = self._sort_by_geometry(elements)
 
-        # --------------------------------------------------
-        # 2) header hoisting ONLY for true top-level subforms
-        # --------------------------------------------------
-        layout = (subform.get("layout") or "").lower().strip() or "lr-tb"
+        # Pick a proper group label
+        resolved_label = resolve_group_label(subform, self.context)
+        print(
+            f".   ##### [XdpElementFactory] Resolved group label: '{resolved_label}' for subform: {subform.get('name')} "
+        )
 
-        if self._should_hoist_header(subform, elements, layout):
-            elements = self._hoist_section_header(elements, layout)
-
-        # --------------------------------------------------
-        # 3) group must contain at least *one* real control
-        # --------------------------------------------------
         has_real_control = any(
             getattr(e, "is_control", lambda: False)()
             or getattr(e, "is_radio", False)
@@ -97,83 +92,87 @@ class XdpElementFactory(AbstractXdpFactory):
             for e in elements
         )
 
+        print(f".   [XdpElementFactory] Creating group with label: '{resolved_label}'")
         if not has_real_control:
+            print(
+                f".   [XdpElementFactory] '{resolved_label}' has NO real controls inside."
+            )
             return None
+        print(f".   [XdpElementFactory] '{resolved_label}' has real controls inside.")
+        group = XdpGroup(subform, elements, self.context, resolved_label)
 
-        # --------------------------------------------------
-        # 4) build group
-        # --------------------------------------------------
-        group = XdpGroup(subform, elements, self.context, label)
-
-        # --------------------------------------------------
-        # 5) compute geometry
-        # --------------------------------------------------
-        base_geo = XdpGeometry.from_xdp(subform)
+        base_geo = XdpGeometry.resolve(subform, self.context.parent_map)
         group.geometry = XdpGeometry.from_children(elements, fallback=base_geo)
-
-        print(
-            f"[GroupGeom] Final group '{label}' at y={group.geometry.y}, x={group.geometry.x}"
-        )
 
         return group
 
-    # ----------------------------------------------------------------------
-    # HEADER LOGIC
-    # ----------------------------------------------------------------------
-    def _should_hoist_header(self, subform, elements, layout) -> bool:
-        """
-        A header is only hoisted when:
-        • the subform is a true top-level subform (per parser)
-        • it contains at least one help-text element
-        • AND the first help-text looks like a major section header
-        """
-        if not self._is_top_level_subform(subform):
-            return False
+    # # ----------------------------------------------------------------------
+    # # HEADER LOGIC
+    # # ----------------------------------------------------------------------
+    # def _should_hoist_header(self, subform, elements, layout) -> bool:
+    #     """
+    #     A header is only hoisted when:
+    #     • the subform is a true top-level subform (per parser)
+    #     • it contains at least one help-text element
+    #     • AND the first help-text looks like a major section header
+    #     """
+    #     if not self._is_top_level_subform(subform):
+    #         return False
 
-        first_help = next((e for e in elements if e.is_help_text()), None)
-        if not first_help:
-            return False
+    #     first_help = next((e for e in elements if e.is_help_text()), None)
+    #     if not first_help:
+    #         return False
 
-        # Major section headers should be single-line, shortish, section-like
-        return self._looks_like_major_section_header(first_help)
+    #     # Major section headers should be single-line, shortish, section-like
+    #     return self._looks_like_major_section_header(first_help)
 
-    def _looks_like_major_section_header(self, help_el: XdpHelpText) -> bool:
-        text = (help_el.get_text() or "").strip()
-        if not text:
-            return False
+    # def _looks_like_major_section_header(self, help_el: XdpHelpText) -> bool:
+    #     text = (help_el.get_text() or "").strip()
+    #     if not text:
+    #         return False
 
-        # Hard reject: multi-line long blobs are NOT section headers
-        if "\n" in text or len(text) > 60:
-            return False
+    #     # Hard reject: multi-line long blobs are NOT section headers
+    #     if "\n" in text or len(text) > 60:
+    #         return False
 
-        # Strong match
-        if text.lower().startswith("section"):
-            return True
+    #     # Strong match
+    #     if text.lower().startswith("section"):
+    #         return True
 
-        # Weak match: short single-line help texts
-        return True
+    #     # Weak match: short single-line help texts
+    #     return True
 
-    def _find_section_header(self, elements, layout):
-        # strong: top-most help by y
-        help_elems = [
-            e for e in elements if e.is_help_text() and e.geometry.y is not None
-        ]
-        if help_elems:
-            return min(help_elems, key=lambda e: e.geometry.y)
+    # def _find_section_header(self, elements, layout):
+    #     # strong: top-most help by y
+    #     help_elems = [
+    #         e for e in elements if e.is_help_text() and e.geometry.y is not None
+    #     ]
+    #     if help_elems:
+    #         return min(help_elems, key=lambda e: e.geometry.y)
 
-        # fallback: for tb-like flows, first help
-        if layout in ("tb", "lr-tb"):
-            return next((e for e in elements if e.is_help_text()), None)
+    #     # fallback: for tb-like flows, first help
+    #     if layout in ("tb", "lr-tb"):
+    #         return next((e for e in elements if e.is_help_text()), None)
 
-        return None
+    #     return None
 
-    def _hoist_section_header(self, elements: List[XdpElement], layout: str):
-        header = self._find_section_header(elements, layout)
-        if not header:
-            return elements
+    # def _hoist_section_header(self, elements: List[XdpElement], layout: str):
+    #     header = self._find_section_header(elements, layout)
+    #     if not header:
+    #         return elements
+    #     print(f"[HeaderHoist] Found header to hoist: {get_text(header)}")
 
-        print(f"[HeaderHoist] Hoisting header '{header.get_name()}' (layout={layout})")
-        return [header] + [e for e in elements if e is not header]
+    #     # Extract header text and stash it
+    #     try:
+    #         self._last_header_text = get_text(header).strip()
+    #         print(f"[HeaderHoist] Extracted header text: {self._last_header_text}")
+    #     except Exception:
+    #         self._last_header_text = None
+
+    #     new = [header] + [el for el in elements if el is not header]
+
+    #     print(f"[HeaderHoist] Hoisted header to top for layout='{layout}'")
+    #     return new
 
     # ----------------------------------------------------------------------
     # GEOMETRY SORT

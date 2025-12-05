@@ -21,7 +21,7 @@ class XdpElement(ABC):
         self.labels = labels
         self.context = context or {}
         self.parent_map = context.get("parent_map", {}) if context else {}
-        self.geometry: XdpGeometry = XdpGeometry.from_xdp(xdp)
+        self.geometry: XdpGeometry = XdpGeometry.resolve(xdp, self.parent_map)
         self.presence = xdp.get("presence", "").strip().lower()
 
     def get_full_path(self) -> str:
@@ -158,9 +158,37 @@ class XdpGeometry:
     y: Optional[float] = None
     w: Optional[float] = None
     h: Optional[float] = None
-
-    # 🔥 NEW: logical flow layout label ("lr-tb", "tb", "position", etc.)
     layout: Optional[str] = None
+
+    @classmethod
+    def resolve(cls, node, parent_map) -> "XdpGeometry":
+        """
+        Adobe-style coordinate resolution:
+        Walk upward until we find a coordinate-bearing ancestor.
+        """
+        curr = node
+
+        while curr is not None:
+            raw_x = curr.get("x")
+            raw_y = curr.get("y")
+            if raw_x is not None and raw_y is not None:
+                return cls(
+                    x=cls._parse_mm(raw_x),
+                    y=cls._parse_mm(raw_y),
+                    w=cls._parse_mm(curr.get("w")),
+                    h=cls._parse_mm(curr.get("h")),
+                    layout=curr.get("layout"),
+                )
+            curr = parent_map.get(curr)
+
+        # No coordinates found → bottom of list, but stable
+        return cls(
+            x=None,
+            y=None,
+            w=None,
+            h=None,
+            layout=node.get("layout"),
+        )
 
     @staticmethod
     def _parse_mm(raw: Any) -> Optional[float]:
@@ -191,35 +219,25 @@ class XdpGeometry:
         )
 
     @classmethod
-    def from_children(
-        cls, children: list["XdpElement"], fallback: Optional["XdpGeometry"] = None
-    ) -> "XdpGeometry":
-        """
-        Infer a container's geometry from its children if needed.
-        Primarily uses top-left (x, y) for ordering.
-        """
-        ys = []
-        xs = []
+    def from_children(cls, children, fallback=None):
+        xs, ys = [], []
 
         for child in children:
-            geo = getattr(child, "geometry", None)
-            if not geo:
+            g = getattr(child, "geometry", None)
+            if not g:
                 continue
-            if geo.y is not None:
-                ys.append(geo.y)
-            if geo.x is not None:
-                xs.append(geo.x)
+            if g.x is not None:
+                xs.append(g.x)
+            if g.y is not None:
+                ys.append(g.y)
 
         x = min(xs) if xs else (fallback.x if fallback else None)
         y = min(ys) if ys else (fallback.y if fallback else None)
-
-        # 🔥 Fallback layout propagates from parent if available
-        layout = fallback.layout if fallback else None
 
         return cls(
             x=x,
             y=y,
             w=fallback.w if fallback else None,
             h=fallback.h if fallback else None,
-            layout=layout,
+            layout=fallback.layout if fallback else None,
         )

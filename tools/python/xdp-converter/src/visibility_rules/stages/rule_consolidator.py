@@ -39,7 +39,6 @@ class RuleConsolidator:
         filtered: list[VisibilityRule] = []
         for r in rules:
             if not self._is_meaningful_target(r.target):
-                print(f"  [Drop] Ignore script-only target '{r.target}'")
                 continue
             filtered.append(r)
 
