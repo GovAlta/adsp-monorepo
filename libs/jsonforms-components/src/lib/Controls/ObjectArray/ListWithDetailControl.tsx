@@ -315,6 +315,8 @@ interface MainRowProps {
   setCurrentListPage: (index: number) => void;
   // eslint-disable-next-line
   rowData?: Record<string, any>;
+  // eslint-disable-next-line
+  uischema?: Record<string, any>;
 }
 
 const NonEmptyRowComponent = ({
@@ -397,6 +399,34 @@ const MainItemComponent = ({
   );
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function extractScopes(uiSchema: any): string[] {
+  if (uiSchema?.type === 'Control' && uiSchema.scope) {
+    const match = uiSchema.scope.match(/#\/properties\/(.+)$/);
+    return match ? [match[1]] : [];
+  }
+
+  if (Array.isArray(uiSchema?.elements)) {
+    return uiSchema.elements.flatMap(extractScopes);
+  }
+
+  return [];
+}
+
+function orderRowData(rowData: Record<string, any>, uiSchema: any) {
+  const orderedKeys = extractScopes(uiSchema);
+
+  const ordered: Record<string, any> = {};
+
+  for (const key of orderedKeys) {
+    if (key in rowData) {
+      ordered[key] = rowData[key];
+    }
+  }
+
+  return ordered;
+}
+
 const MainTab = ({
   childPath,
   rowIndex,
@@ -406,6 +436,7 @@ const MainTab = ({
   currentTab,
   current,
   setCurrentListPage,
+  uischema,
 }: MainRowProps & WithDeleteDialogSupport) => {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const getDataAtPath = (data: any, path: string) =>
@@ -415,8 +446,9 @@ const MainTab = ({
       .reduce((acc, key) => (acc ? acc[key] : undefined), data);
 
   const { core } = useJsonForms();
-
   const rowData = getDataAtPath(core?.data, childPath);
+  const orderedRowData = orderRowData(rowData, uischema?.options.detail);
+
   const rowErrors = core?.errors
     ?.filter((e) => {
       const base = `/${childPath.replace(/\./g, '/')}`;
@@ -430,7 +462,7 @@ const MainTab = ({
       {rowErrors?.length ? (
         <GoAFormItem error={rowErrors?.length ? rowErrors : null}>
           <MainItemComponent
-            rowData={rowData}
+            rowData={orderedRowData}
             childPath={childPath}
             rowIndex={rowIndex}
             openDeleteDialog={openDeleteDialog}
@@ -443,7 +475,7 @@ const MainTab = ({
         </GoAFormItem>
       ) : (
         <MainItemComponent
-          rowData={rowData}
+          rowData={orderedRowData}
           childPath={childPath}
           rowIndex={rowIndex}
           openDeleteDialog={openDeleteDialog}
@@ -553,6 +585,7 @@ const ObjectArrayList = ({
                   enabled={enabled}
                   current={current}
                   setCurrentListPage={(index: number) => setCurrentListPage(index)}
+                  uischema={uischema}
                 />
               );
             })}
