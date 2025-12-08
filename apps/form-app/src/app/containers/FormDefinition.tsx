@@ -13,6 +13,7 @@ import {
   busySelector,
   createForm,
   userSelector,
+  FormStatus,
 } from '../state';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { ScheduledIntake } from '../components/ScheduledIntake';
@@ -48,6 +49,10 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
 
   if (initialized && definition && definition.oneFormPerApplicant === false) {
     return <Navigate to="forms" />;
+  }
+
+  if (initialized && form?.id && form.status === FormStatus.submitted) {
+    return <Navigate to={`${form.id}`} />;
   }
 
   return definition.anonymousApply ? (
