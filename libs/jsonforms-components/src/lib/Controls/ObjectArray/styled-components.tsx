@@ -148,3 +148,9 @@ export const FixTableHeaderAlignment = styled.div`
     text-align: center;
   }
 `;
+
+export const ListWithDetailsReviewCellDiv = styled.div`
+  display: 'flex';
+  flex-direction: 'column';
+  text-align: 'start';
+`;
