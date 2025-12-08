@@ -1,7 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Results } from '@core-services/core-common';
 import { ConfigurationEntity } from '../model';
-import { ConfigurationDefinition, ConfigurationRevision } from '../types';
+import { ConfigurationDefinition, ConfigurationRevision, RevisionCriteria } from '../types';
 import { ConfigurationEntityCriteria } from './types';
 
 export interface ConfigurationRepository {
@@ -24,7 +24,7 @@ export interface ConfigurationRepository {
     entity: ConfigurationEntity<C>,
     top: number,
     after: string,
-    criteria: unknown
+    criteria: RevisionCriteria
   ): Promise<Results<ConfigurationRevision<C>>>;
 
   saveRevision<C>(

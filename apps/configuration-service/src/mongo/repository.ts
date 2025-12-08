@@ -71,6 +71,47 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       },
     ];
 
+    const match: Record<string, unknown> = {};
+    const orConditions: Record<string, unknown>[] = [];
+
+    Object.entries(criteria).forEach(([key, value]) => {
+      if (
+        key !== 'tenantIdEquals' &&
+        key !== 'namespaceEquals' &&
+        key !== 'registeredIdEquals' &&
+        key !== 'nameContains' &&
+        key !== 'useOr' &&
+        !key.startsWith('$') && // Prevent operator injection in keys
+        value !== undefined &&
+        value !== null &&
+        value !== ''
+      ) {
+        const condition: Record<string, unknown> = {};
+        // Strict type checking to prevent object injection (e.g. { $ne: ... })
+        if (typeof value === 'string') {
+          // Escape regex special characters for safe partial matching
+          const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          condition[`configuration.${key}`] = { $regex: escapedValue, $options: 'i' };
+        } else if (typeof value === 'number' || typeof value === 'boolean') {
+          condition[`configuration.${key}`] = value;
+        }
+        // Ignore objects, arrays, or other types to prevent injection
+        if (Object.keys(condition).length > 0) {
+          if (criteria.useOr === true) {
+            orConditions.push(condition);
+          } else {
+            Object.assign(match, condition);
+          }
+        }
+      }
+    });
+
+    if (criteria.useOr === true && orConditions.length > 0) {
+      pipeline.push({ $match: { $or: orConditions } });
+    } else if (Object.keys(match).length > 0) {
+      pipeline.push({ $match: match });
+    }
+
     const docs: RevisionAggregateDoc<C>[] = await this.revisionModel.aggregate(pipeline).skip(skip).limit(top).exec();
 
     return {
@@ -149,8 +190,20 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       tenant: entity.tenantId?.toString() || { $exists: false },
     };
 
-    if (criteria?.revision !== undefined) {
-      query.revision = criteria.revision;
+    if (criteria) {
+      if (criteria.revision !== undefined) {
+        query.revision = criteria.revision;
+      }
+
+      Object.entries(criteria).forEach(([key, value]) => {
+        if (key !== 'revision' && value !== undefined && value !== null && value !== '') {
+          if (typeof value === 'string') {
+            query[`configuration.${key}`] = { $regex: value, $options: 'i' };
+          } else {
+            query[`configuration.${key}`] = value;
+          }
+        }
+      });
     }
     const skip = decodeAfter(after);
 
@@ -202,7 +255,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
             $set: {
               ...update,
               configuration: renamePrefixProperties(revision.configuration, '$', this.META_PREFIX),
-            }
+            },
           },
           { upsert: true, new: true, lean: true }
         )
