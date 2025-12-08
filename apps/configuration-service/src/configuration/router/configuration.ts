@@ -208,9 +208,16 @@ export function findConfiguration(apiId: AdspId, repository: ConfigurationReposi
       const user = req.user;
       const tenantId = req.tenant?.id;
       const { namespace } = req.params;
-      const { top: topValue, after, includeActive: includeActiveValue, registeredId } = req.query;
+      const {
+        top: topValue,
+        after,
+        includeActive: includeActiveValue,
+        registeredId,
+        criteria: criteriaValue,
+      } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
       const includeActive = includeActiveValue === 'true';
+      const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
       if (
         !isAllowedUser(user, tenantId, ConfigurationServiceRoles.ConfigurationAdmin) &&
@@ -225,7 +232,12 @@ export function findConfiguration(apiId: AdspId, repository: ConfigurationReposi
       }
 
       const { results: entities, page } = await repository.find(
-        { tenantIdEquals: tenantId, namespaceEquals: namespace, registeredIdEquals: registeredId as string },
+        {
+          ...criteria,
+          tenantIdEquals: tenantId,
+          namespaceEquals: namespace,
+          registeredIdEquals: registeredId as string,
+        },
         top,
         after as string
       );
@@ -535,7 +547,10 @@ export function deleteConfiguration(apiId: AdspId, logger: Logger, eventService:
 
 export const getRevisions =
   (
-    getCriteria = (_req: Request) => ({}),
+    getCriteria = (req: Request) => {
+      const { criteria } = req.query;
+      return criteria ? JSON.parse(criteria as string) : {};
+    },
     mapResults = (_req: Request, results: Results<ConfigurationRevision>): unknown => results
   ): RequestHandler =>
   async (req, res, next) => {
@@ -585,7 +600,8 @@ export function createConfigurationRouter({
       query('top').optional().isInt({ min: 1, max: 1000 }),
       query('after').optional().isString(),
       query('includeActive').optional().isBoolean(),
-      query('registerIdEquals').optional().isBoolean()
+      query('registerIdEquals').optional().isBoolean(),
+      query('criteria').optional().isJSON()
     ),
     findConfiguration(apiId, configurationRepository)
   );
@@ -660,7 +676,8 @@ export function createConfigurationRouter({
         .isString()
         .custom((val) => {
           return !isNaN(decodeAfter(val));
-        })
+        }),
+      query('criteria').optional().isJSON()
     ),
     getConfigurationEntity(serviceId, configurationRepository, rateLimitHandler, true),
     getRevisions()
