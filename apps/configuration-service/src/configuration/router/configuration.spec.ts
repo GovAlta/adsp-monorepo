@@ -125,6 +125,48 @@ describe('router', () => {
       );
     });
 
+    it('can find configuration with criteria', async () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        validationMock,
+        null,
+        tenantId
+      );
+
+      const criteria = { ministry: 'test' };
+      const req = {
+        user: { isCore: false, roles: [ConfigurationServiceRoles.ConfigurationAdmin], tenantId } as User,
+        tenant: { id: tenantId },
+        params: { namespace, name },
+        query: { top: '12', after: 'next', criteria: JSON.stringify(criteria) },
+      } as unknown as Request;
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      const page = {};
+      repositoryMock.find.mockResolvedValueOnce({ page, results: [entity] });
+
+      const handler = findConfiguration(apiId, repositoryMock);
+      await handler(req, res as unknown as Response, next);
+
+      expect(repositoryMock.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          namespaceEquals: req.params.namespace,
+          tenantIdEquals: tenantId,
+          ...criteria,
+        }),
+        12,
+        'next'
+      );
+    });
+
     it('can call next with unauthorized user error', async () => {
       const req = {
         user: { isCore: false, roles: [], tenantId } as User,
