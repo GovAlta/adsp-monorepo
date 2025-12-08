@@ -1,7 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { ValidationService } from '@core-services/core-common';
-import { model } from 'mongoose';
 import { Logger } from 'winston';
+import { ConfigurationEntityCriteria } from '../configuration';
 import { MongoConfigurationRepository } from './repository';
 
 jest.mock('mongoose', () => {
@@ -38,13 +38,13 @@ describe('MongoConfigurationRepository', () => {
   } as unknown as ValidationService;
 
   let repository: MongoConfigurationRepository;
-  let revisionModelMock: any;
+  let revisionModelMock: { aggregate: jest.Mock };
 
   beforeEach(() => {
     jest.clearAllMocks();
     repository = new MongoConfigurationRepository(loggerMock, validationServiceMock);
     // Access the private revisionModel to mock its methods
-    revisionModelMock = (repository as any).revisionModel;
+    revisionModelMock = (repository as unknown as { revisionModel: { aggregate: jest.Mock } }).revisionModel;
   });
 
   describe('find', () => {
@@ -125,7 +125,9 @@ describe('MongoConfigurationRepository', () => {
 
       // Should not contain the injected key
       const calls = revisionModelMock.aggregate.mock.calls[0][0];
-      const matchStage = calls.find((stage: any) => stage.$match && stage.$match['configuration.$where']);
+      const matchStage = calls.find(
+        (stage: { $match: Record<string, unknown> }) => stage.$match && stage.$match['configuration.$where']
+      );
       expect(matchStage).toBeUndefined();
     });
 
@@ -143,11 +145,13 @@ describe('MongoConfigurationRepository', () => {
       };
       revisionModelMock.aggregate.mockReturnValue(aggregateMock);
 
-      await repository.find(criteria as any);
+      await repository.find(criteria as unknown as ConfigurationEntityCriteria);
 
       // Should not contain the injected object value
       const calls = revisionModelMock.aggregate.mock.calls[0][0];
-      const matchStage = calls.find((stage: any) => stage.$match && stage.$match['configuration.password']);
+      const matchStage = calls.find(
+        (stage: { $match: Record<string, unknown> }) => stage.$match && stage.$match['configuration.password']
+      );
       expect(matchStage).toBeUndefined();
     });
 
