@@ -40,7 +40,6 @@ import ObjectArrayToolBar from './ObjectArrayToolBar';
 import {
   EmptyListProps,
   HandleChangeProps,
-  Items,
   NonEmptyCellProps,
   NonEmptyRowComponentProps,
   NonEmptyRowProps,
@@ -49,7 +48,7 @@ import {
   OwnPropsOfNonEmptyCellWithDialog,
   TableRowsProp,
 } from './ObjectListControlTypes';
-import { extractNames, extractNestedFields, renderCellColumn } from './ObjectListControlUtils';
+import { extractNames, renderCellColumn } from './ObjectListControlUtils';
 import {
   FixTableHeaderAlignment,
   ListWithDetailWarningIconDiv,
@@ -59,6 +58,7 @@ import {
   TableTHHeader,
   TextCenter,
   ToolBarHeader,
+  ListWithDetailsReviewCellDiv,
 } from './styled-components';
 import { DataProperty } from './ObjectListControlTypes';
 import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
@@ -91,9 +91,9 @@ const GenerateRows = (
       errors,
     };
     return (
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <ListWithDetailsReviewCellDiv>
         <Cell {...props} count={count || 0} />
-      </div>
+      </ListWithDetailsReviewCellDiv>
     );
   } else {
     const props = {
