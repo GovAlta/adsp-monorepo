@@ -135,7 +135,7 @@ describe('MongoConfigurationRepository', () => {
       );
     });
 
-    it('prevents injection of operator keys', async () => {
+    it('prevents Operator Injection (e.g. $where) in criteria keys', async () => {
       const criteria = {
         tenantIdEquals: AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test'),
         namespaceEquals: 'test-namespace',
@@ -159,7 +159,7 @@ describe('MongoConfigurationRepository', () => {
       expect(matchStage).toBeUndefined();
     });
 
-    it('prevents injection of object values', async () => {
+    it('prevents Object Injection (e.g. { $ne: null }) in criteria values', async () => {
       const criteria = {
         tenantIdEquals: AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test'),
         namespaceEquals: 'test-namespace',
@@ -183,7 +183,7 @@ describe('MongoConfigurationRepository', () => {
       expect(matchStage).toBeUndefined();
     });
 
-    it('escapes regex characters', async () => {
+    it('prevents Regex Injection by escaping special characters', async () => {
       const criteria = {
         tenantIdEquals: AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test'),
         namespaceEquals: 'test-namespace',
@@ -204,6 +204,146 @@ describe('MongoConfigurationRepository', () => {
           expect.objectContaining({
             $match: expect.objectContaining({
               'configuration.name': { $regex: '\\.\\*', $options: 'i' },
+            }),
+          }),
+        ])
+      );
+    });
+
+    it('prevents Parameter Pollution by ignoring array values', async () => {
+      const criteria = {
+        tenantIdEquals: AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test'),
+        namespaceEquals: 'test-namespace',
+        ministry: ['test', 'admin'], // Array value
+      };
+
+      const aggregateMock = {
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([]),
+      };
+      revisionModelMock.aggregate.mockReturnValue(aggregateMock);
+
+      await repository.find(criteria as unknown as ConfigurationEntityCriteria);
+
+      // Should not contain the array value key
+      const calls = revisionModelMock.aggregate.mock.calls[0][0];
+      const matchStage = calls.find(
+        (stage: { $match: Record<string, unknown> }) => stage.$match && stage.$match['configuration.ministry']
+      );
+      expect(matchStage).toBeUndefined();
+    });
+
+    it('allows Deep Property Access via dot notation', async () => {
+      const criteria = {
+        tenantIdEquals: AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test'),
+        namespaceEquals: 'test-namespace',
+        'metadata.author': 'me',
+      };
+
+      const aggregateMock = {
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([]),
+      };
+      revisionModelMock.aggregate.mockReturnValue(aggregateMock);
+
+      await repository.find(criteria);
+
+      expect(revisionModelMock.aggregate).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            $match: expect.objectContaining({
+              'configuration.metadata.author': { $regex: 'me', $options: 'i' },
+            }),
+          }),
+        ])
+      );
+    });
+
+    it('prevents Logical Scope Expansion when using OR criteria', async () => {
+      // Verifies that tenant filter is applied independently of the OR conditions
+      const criteria = {
+        tenantIdEquals: AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test'),
+        namespaceEquals: 'test-namespace',
+        ministry: 'test-ministry',
+        useOr: true,
+      };
+
+      const aggregateMock = {
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([]),
+      };
+      revisionModelMock.aggregate.mockReturnValue(aggregateMock);
+
+      await repository.find(criteria);
+
+      const pipeline = revisionModelMock.aggregate.mock.calls[0][0];
+
+      // First match should contain tenant
+      const firstMatch = pipeline[0].$match;
+      expect(firstMatch.tenant).toBeDefined();
+      expect(firstMatch.tenant).not.toEqual({ $exists: false });
+
+      // OR match should be later in pipeline
+      const orMatch = pipeline.find((stage: { $match: { $or: unknown } }) => stage.$match && stage.$match.$or);
+      expect(orMatch).toBeDefined();
+    });
+
+    it('handles Type Confusion by passing primitives directly', async () => {
+      const criteria = {
+        tenantIdEquals: AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test'),
+        namespaceEquals: 'test-namespace',
+        count: 123,
+        isActive: true,
+      };
+
+      const aggregateMock = {
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([]),
+      };
+      revisionModelMock.aggregate.mockReturnValue(aggregateMock);
+
+      await repository.find(criteria as unknown as ConfigurationEntityCriteria);
+
+      expect(revisionModelMock.aggregate).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            $match: expect.objectContaining({
+              'configuration.count': 123,
+              'configuration.isActive': true,
+            }),
+          }),
+        ])
+      );
+    });
+
+    it('handles Long Strings safely (ReDoS mitigation check)', async () => {
+      const longString = 'a'.repeat(10000) + '.*';
+      const criteria = {
+        tenantIdEquals: AdspId.parse('urn:ads:platform:tenant-service:v2:/tenants/test'),
+        namespaceEquals: 'test-namespace',
+        description: longString,
+      };
+
+      const aggregateMock = {
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([]),
+      };
+      revisionModelMock.aggregate.mockReturnValue(aggregateMock);
+
+      await repository.find(criteria);
+
+      // Verify it was escaped and passed to regex
+      const escaped = longString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      expect(revisionModelMock.aggregate).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            $match: expect.objectContaining({
+              'configuration.description': { $regex: escaped, $options: 'i' },
             }),
           }),
         ])
