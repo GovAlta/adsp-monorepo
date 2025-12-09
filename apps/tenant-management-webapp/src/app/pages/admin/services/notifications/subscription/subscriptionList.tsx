@@ -166,9 +166,20 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
   searchCriteria,
 }) => {
   const dispatch = useDispatch();
+  const loading = useSelector((state: RootState) => state.session.indicator.show);
   const { groups, typeSubscriptions } = useSelector(typeSubscriptionsSelector);
   const [editSubscription, setEditSubscription] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState(null);
+
+  const isFullyLoaded = !loading && groups.length > 0 && Object.keys(typeSubscriptions).length === groups.length;
+
+  if (!isFullyLoaded) {
+    return <PageIndicator />;
+  }
+
+  if (groups.length === 0) {
+    return renderNoItem('subscription');
+  }
 
   const openModalFunction = (subscription) => {
     setSelectedSubscription(subscription);
@@ -179,22 +190,11 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     setEditSubscription(false);
   }
 
-  if (!groups) {
-    return (
-      <div>
-        <PageIndicator />
-      </div>
-    );
-  }
-
   const searchFn = ({ type, searchCriteria }) => {
     if (typeSubscriptions) {
       dispatch(GetTypeSubscriptions(type, searchCriteria, searchCriteria.next));
     }
   };
-  if (groups.length === 0) {
-    return renderNoItem('subscription');
-  }
 
   return (
     <div className={className}>
