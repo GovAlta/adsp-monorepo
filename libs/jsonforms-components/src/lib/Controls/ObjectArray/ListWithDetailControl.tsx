@@ -1,5 +1,6 @@
 import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
+import { toDataPath } from '@jsonforms/core';
 
 import range from 'lodash/range';
 import React, { useState, useEffect, useRef } from 'react';
@@ -315,8 +316,7 @@ interface MainRowProps {
   setCurrentListPage: (index: number) => void;
   // eslint-disable-next-line
   rowData?: Record<string, any>;
-  // eslint-disable-next-line
-  uischema?: Record<string, any>;
+  uischema?: ControlElement;
 }
 
 const NonEmptyRowComponent = ({
@@ -399,28 +399,49 @@ const MainItemComponent = ({
   );
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-function extractScopes(uiSchema: any): string[] {
-  if (uiSchema?.type === 'Control' && uiSchema.scope) {
-    const match = uiSchema.scope.match(/#\/properties\/(.+)$/);
-    return match ? [match[1]] : [];
+function isControlElement(element: UISchemaElement): element is ControlElement {
+  return element.type === 'Control';
+}
+
+function isLayoutElement(element: UISchemaElement): element is Layout {
+  return 'elements' in element;
+}
+
+function extractPaths(uiSchema?: UISchemaElement): string[] {
+  if (!uiSchema) {
+    return [];
   }
 
-  if (Array.isArray(uiSchema?.elements)) {
-    return uiSchema.elements.flatMap(extractScopes);
+  if (isControlElement(uiSchema)) {
+    return uiSchema.scope ? [toDataPath(uiSchema.scope)] : [];
+  }
+
+  if (isLayoutElement(uiSchema)) {
+    return uiSchema.elements.flatMap(extractPaths);
   }
 
   return [];
 }
 
-function orderRowData(rowData: Record<string, any>, uiSchema: any) {
-  const orderedKeys = extractScopes(uiSchema);
+function getValue(obj: unknown, path: string): unknown {
+  return path
+    .split('.')
+    .reduce<unknown>(
+      (acc, key) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined),
+      obj
+    );
+}
 
-  const ordered: Record<string, any> = {};
+function orderRowData(rowData: Record<string, unknown>, detailUiSchema?: UISchemaElement): Record<string, unknown> {
+  const orderedPaths = extractPaths(detailUiSchema);
 
-  for (const key of orderedKeys) {
-    if (key in rowData) {
-      ordered[key] = rowData[key];
+  const ordered: Record<string, unknown> = {};
+
+  for (const path of orderedPaths) {
+    const value = getValue(rowData, path);
+
+    if (value !== undefined) {
+      ordered[path] = value;
     }
   }
 
@@ -447,7 +468,7 @@ const MainTab = ({
 
   const { core } = useJsonForms();
   const rowData = getDataAtPath(core?.data, childPath);
-  const orderedRowData = orderRowData(rowData, uischema?.options.detail);
+  const orderedRowData = orderRowData(rowData, uischema?.options?.detail);
 
   const rowErrors = core?.errors
     ?.filter((e) => {
