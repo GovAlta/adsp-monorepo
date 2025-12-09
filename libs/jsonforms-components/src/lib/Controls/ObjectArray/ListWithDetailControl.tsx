@@ -1,5 +1,6 @@
 import isEmpty from 'lodash/isEmpty';
 import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
+import { toDataPath } from '@jsonforms/core';
 
 import range from 'lodash/range';
 import React, { useState, useEffect, useRef } from 'react';
@@ -315,6 +316,7 @@ interface MainRowProps {
   setCurrentListPage: (index: number) => void;
   // eslint-disable-next-line
   rowData?: Record<string, any>;
+  uischema?: ControlElement;
 }
 
 const NonEmptyRowComponent = ({
@@ -397,6 +399,55 @@ const MainItemComponent = ({
   );
 };
 
+function isControlElement(element: UISchemaElement): element is ControlElement {
+  return element.type === 'Control';
+}
+
+function isLayoutElement(element: UISchemaElement): element is Layout {
+  return 'elements' in element;
+}
+
+function extractPaths(uiSchema?: UISchemaElement): string[] {
+  if (!uiSchema) {
+    return [];
+  }
+
+  if (isControlElement(uiSchema)) {
+    return uiSchema.scope ? [toDataPath(uiSchema.scope)] : [];
+  }
+
+  if (isLayoutElement(uiSchema)) {
+    return uiSchema.elements.flatMap(extractPaths);
+  }
+
+  return [];
+}
+
+function getValue(obj: unknown, path: string): unknown {
+  return path
+    .split('.')
+    .reduce<unknown>(
+      (acc, key) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined),
+      obj
+    );
+}
+
+function orderRowData(rowData: Record<string, unknown>, detailUiSchema?: UISchemaElement): Record<string, unknown> {
+  const orderedPaths = extractPaths(detailUiSchema);
+
+  const ordered: Record<string, unknown> = {};
+
+  for (const path of orderedPaths) {
+    const value = getValue(rowData, path);
+
+    if (value !== undefined) {
+      ordered[path] = value;
+    }
+  }
+
+  return ordered;
+}
+
 const MainTab = ({
   childPath,
   rowIndex,
@@ -406,6 +457,7 @@ const MainTab = ({
   currentTab,
   current,
   setCurrentListPage,
+  uischema,
 }: MainRowProps & WithDeleteDialogSupport) => {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const getDataAtPath = (data: any, path: string) =>
@@ -415,8 +467,9 @@ const MainTab = ({
       .reduce((acc, key) => (acc ? acc[key] : undefined), data);
 
   const { core } = useJsonForms();
-
   const rowData = getDataAtPath(core?.data, childPath);
+  const orderedRowData = orderRowData(rowData, uischema?.options?.detail);
+
   const rowErrors = core?.errors
     ?.filter((e) => {
       const base = `/${childPath.replace(/\./g, '/')}`;
@@ -430,7 +483,7 @@ const MainTab = ({
       {rowErrors?.length ? (
         <GoAFormItem error={rowErrors?.length ? rowErrors : null}>
           <MainItemComponent
-            rowData={rowData}
+            rowData={orderedRowData}
             childPath={childPath}
             rowIndex={rowIndex}
             openDeleteDialog={openDeleteDialog}
@@ -443,7 +496,7 @@ const MainTab = ({
         </GoAFormItem>
       ) : (
         <MainItemComponent
-          rowData={rowData}
+          rowData={orderedRowData}
           childPath={childPath}
           rowIndex={rowIndex}
           openDeleteDialog={openDeleteDialog}
@@ -553,6 +606,7 @@ const ObjectArrayList = ({
                   enabled={enabled}
                   current={current}
                   setCurrentListPage={(index: number) => setCurrentListPage(index)}
+                  uischema={uischema}
                 />
               );
             })}
