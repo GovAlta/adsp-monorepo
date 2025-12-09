@@ -62,6 +62,8 @@ export const Subscriptions: FunctionComponent = () => {
     );
   }
 
+  const isLoading = indicator.show === true || loadingState?.state === 'start' || loadingState === undefined;
+
   return (
     <section>
       <SubscribersSearchForm
@@ -70,19 +72,18 @@ export const Subscriptions: FunctionComponent = () => {
         searchCriteria={criteriaState}
         onUpdate={setCriteriaState}
       />
-      {indicator.show && <PageIndicator />}
+      {isLoading && <PageIndicator />}
 
-      {(indicator.show === false && loadingState === undefined) ||
-        (loadingState?.state === 'completed' && (
-          <SubscriptionList
-            onDelete={(sub: Subscriber, type: string) => {
-              setSelectedSubscription(sub);
-              setShowDeleteConfirmation(true);
-              setSelectedType(type);
-            }}
-            searchCriteria={criteriaState}
-          />
-        ))}
+      {!isLoading && (
+        <SubscriptionList
+          onDelete={(sub: Subscriber, type: string) => {
+            setSelectedSubscription(sub);
+            setShowDeleteConfirmation(true);
+            setSelectedType(type);
+          }}
+          searchCriteria={criteriaState}
+        />
+      )}
 
       {/* Delete confirmation */}
       <DeleteModal
