@@ -8,6 +8,7 @@ import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { FormDefinition, Disposition, QueueTaskToProcess, SecurityClassificationType } from '../types';
 import { FormEntity } from './form';
+import { InvalidOperationError } from '@core-services/core-common';
 
 export class FormDefinitionEntity implements FormDefinition {
   id: string;
@@ -125,6 +126,9 @@ export class FormDefinitionEntity implements FormDefinition {
     dryRun?: boolean,
     applicantInfo?: Omit<Subscriber, 'urn'>
   ): Promise<FormEntity> {
+    if (!(await this.checkScheduledIntakes(user, dryRun))) {
+      throw new InvalidOperationError('Cannot create form as there is no active intake.');
+    }
     if (!(await this.canApply(user, dryRun))) {
       throw new UnauthorizedUserError('create form', user);
     }
