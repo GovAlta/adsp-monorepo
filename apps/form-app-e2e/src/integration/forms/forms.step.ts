@@ -335,7 +335,7 @@ Then('the user views a success callout message of {string}', function (calloutMe
 
 Then('the user views a drafted form for {string}', function (formDefinitionName) {
   const regex = new RegExp(
-    `https://.+/${formDefinitionName}\/(?:[0-9a-fA-F]){8}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){12}`
+    `https://.+/${formDefinitionName}/(?:[0-9a-fA-F]){8}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){12}`
   );
   cy.url().should('match', regex);
 });
