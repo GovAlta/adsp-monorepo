@@ -15,6 +15,14 @@ on:
         options:
           - dev
           - uat
+      SERVICE_NAME:
+        type: choice
+        description: Choose environment you want to test
+        options:
+          - event-service
+          - status-service
+          - form-app
+          - all
 env:
   NODE_OPTIONS: --max-old-space-size=16384
 
@@ -22,6 +30,7 @@ jobs:
   artillery-event:
     runs-on: ubuntu-latest
     container: artilleryio/artillery:latest
+    if: ${{ inputs.SERVICE_NAME == 'all' || inputs.SERVICE_NAME == 'event-service' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -59,6 +68,7 @@ jobs:
 
   artillery-status:
     runs-on: ubuntu-latest
+    if: ${{ inputs.SERVICE_NAME == 'all' || inputs.SERVICE_NAME == 'status-service' }}
     container: artilleryio/artillery:latest
     steps:
       - name: Checkout repository
@@ -85,6 +95,7 @@ jobs:
   artillery-form-app:
     runs-on: ubuntu-latest
     container: artilleryio/artillery:latest
+    if: ${{ inputs.SERVICE_NAME == 'all' || inputs.SERVICE_NAME == 'form-app' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
