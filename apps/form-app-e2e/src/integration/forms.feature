@@ -81,3 +81,22 @@ Feature: Form app
     Then the user views "Last name is required" validation message under "Last name" field on summary page
     And the user views "Are you married? is required" validation message under "Are you married?" field on summary page
     And the user views the submit button is disabled on summary page
+
+  # TEST DATA: autotest-open-intake is created as a form definition with an open intake period
+  @TEST_CS-4319 @REQ_CS-2954 @regression
+  Scenario: As a form applicant, I can apply during an open intake period
+    Given the user deletes any existing form from "Auto Test" for "autotest-open-intake"
+    When an authenticated user is logged in to see "autotest-open-intake" application
+    Then the user views a drafted form for "autotest-open-intake"
+
+  # TEST DATA: autotest-closed-intake is created as a form definition with an open intake period in the past
+  @TEST_CS-4567 @REQ_CS-2954 @regression
+  Scenario: As a form applicant, I cannot apply outside open intake period(s)
+    When an authenticated user is logged in to see "autotest-closed-intake" application
+    Then the user views a callout message of "This form is not available at this time"
+
+  # TEST DATA: autotest-closed-submitted is created as a form definition with an open intake period in the past and an application already submitted by the test user
+  @TEST_CS-4568 @REQ_CS-2954 @regression
+  Scenario: As a form applicant, I cannot apply outside an open intake period
+    When an authenticated user is logged in to see "autotest-closed-submitted" application
+    Then the user views a success callout message of "We're processing your application"

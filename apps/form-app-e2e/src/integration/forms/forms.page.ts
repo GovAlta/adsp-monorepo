@@ -81,6 +81,14 @@ class FormsPage {
       '//div[@class="link"]/div[text()="Download PDF copy"]/following-sibling::goa-icon-button[@icon="download"]'
     );
   }
+
+  formNotAvailableCallout() {
+    return cy.xpath('//goa-callout[contains(@heading,"Form not available")]');
+  }
+
+  ProcessingYourApplicationCallout() {
+    return cy.xpath('//goa-callout[contains(@heading,"We\'re processing your application") and @type="success"]');
+  }
 }
 
 export default FormsPage;
