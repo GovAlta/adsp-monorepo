@@ -37,6 +37,7 @@ export interface EditorProps {
   pdfFile: FileItem;
   jobList: PdfJobList;
   loading: boolean;
+  // eslint-disable-next-line
   generatePdf: (inputData: Record<string, any>) => void;
 }
 

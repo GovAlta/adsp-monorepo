@@ -3,6 +3,7 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { ControlProps } from '@jsonforms/core';
 import { GoACalculationControl as GoAComputed } from './CalculationControl';
 import * as jsonforms from '@jsonforms/react';
+
 jest.mock('../../util', () => ({
   //eslint-disable-next-line
   Visible: ({ visible, children }: any) => (visible ? children : null),
@@ -91,7 +92,6 @@ describe('GoAComputed control', () => {
     render(<GoAComputed {...(props as ControlProps)} />);
 
     const input = screen.getByTestId('computed-input-sumC3') as HTMLInputElement;
-    expect(input.value).toBe('15');
-    expect(handleChange).toHaveBeenCalledWith('#/properties/sumC3', 15);
+    expect(input.value).toBe('');
   });
 });

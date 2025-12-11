@@ -5,4 +5,6 @@ export interface ConfigurationEntityCriteria {
   nameContains?: string;
   tenantIdEquals?: AdspId;
   registeredIdEquals?: string;
+  useOr?: boolean;
+  [key: string]: unknown;
 }

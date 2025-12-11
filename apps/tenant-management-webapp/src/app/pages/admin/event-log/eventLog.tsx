@@ -9,6 +9,7 @@ import { GoAButton, GoACallout } from '@abgov/react-components';
 
 import { EventSearchCriteria } from '@store/event/models';
 import { LoadMoreWrapper } from '@components/styled-components';
+import { ServiceColumnLayout } from '../../admin';
 
 export const EventLog: FunctionComponent = () => {
   const readerRole = 'value-reader';
@@ -50,31 +51,33 @@ export const EventLog: FunctionComponent = () => {
   };
   return (
     <Main>
-      <h1 data-testid="eventLog-title">Event log</h1>
-      <p>
-        The event log shows the sequence of events for your tenant. Enable the adsp-event-listener in your realm to
-        include access events. Send domain events via the event service to include your own events in the log.
-      </p>
-      <section>
-        {hasReaderRole ? (
-          <>
-            <EventSearchForm onSearch={(criteria) => onSearch(criteria)} onCancel={onSearchCancel} />
-            <br />
-            <EventLogEntries onSearch={onSearch} />
-            {next && (
-              <LoadMoreWrapper>
-                <GoAButton disabled={isLoading} type="tertiary" onClick={onNext}>
-                  Load more
-                </GoAButton>
-              </LoadMoreWrapper>
-            )}
-          </>
-        ) : (
-          <GoACallout heading="Value reader role required" type="information" testId="role-need-callout">
-            <p>You need the urn:ads:platform:value-service 'value-reader' role to see the event log.</p>
-          </GoACallout>
-        )}
-      </section>
+      <ServiceColumnLayout>
+        <h1 data-testid="eventLog-title">Event log</h1>
+        <p>
+          The event log shows the sequence of events for your tenant. Enable the adsp-event-listener in your realm to
+          include access events. Send domain events via the event service to include your own events in the log.
+        </p>
+        <section>
+          {hasReaderRole ? (
+            <>
+              <EventSearchForm onSearch={(criteria) => onSearch(criteria)} onCancel={onSearchCancel} />
+              <br />
+              <EventLogEntries onSearch={onSearch} />
+              {next && (
+                <LoadMoreWrapper>
+                  <GoAButton disabled={isLoading} type="tertiary" onClick={onNext}>
+                    Load more
+                  </GoAButton>
+                </LoadMoreWrapper>
+              )}
+            </>
+          ) : (
+            <GoACallout heading="Value reader role required" type="information" testId="role-need-callout">
+              <p>You need the urn:ads:platform:value-service 'value-reader' role to see the event log.</p>
+            </GoACallout>
+          )}
+        </section>
+      </ServiceColumnLayout>
     </Main>
   );
 };

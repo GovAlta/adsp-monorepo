@@ -78,11 +78,9 @@ export const PDFPreviewTemplateCore = ({ jobList, currentPDF, loading }: HasForm
   };
 
   return (
-    jobList.length > 0 && (
-      <div className={styles['preview-container']}>
-        <PdfPreview />
-      </div>
-    )
+    <div className={styles['preview-container']}>
+      <PdfPreview />
+    </div>
   );
 };
 

@@ -15,10 +15,9 @@ class XdpGroup(XdpElement):
     ):
         super().__init__(subform, context=context)
         self.elements = elements
-        self.label = label
-
         # Capture layout from subform (<subform layout="...">)
         self.layout = subform.get("layout", "").lower() if subform is not None else ""
+        self.label = label or ""
 
         # If the subform itself has no coordinates, infer from children
         self.inheritGeometry(elements)
@@ -27,12 +26,12 @@ class XdpGroup(XdpElement):
         # infer y if missing
         if self.geometry.y is None:
             ys = [e.geometry.y for e in elements if e.geometry.y is not None]
-            self.geometry.y = min(ys) if ys else 9999
+            self.geometry.y = min(ys) if ys else 0  # default was 9999, now 0
 
         # infer x if missing
         if self.geometry.x is None:
             xs = [e.geometry.x for e in elements if e.geometry.x is not None]
-            self.geometry.x = min(xs) if xs else 9999
+            self.geometry.x = min(xs) if xs else 0  # same fix
 
     def to_form_element(self) -> FormElement:
         group_elements = []

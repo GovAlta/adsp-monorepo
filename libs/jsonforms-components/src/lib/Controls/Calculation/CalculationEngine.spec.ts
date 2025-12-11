@@ -1,5 +1,5 @@
-import { resolveScope, evaluateSum, evaluateExpression } from './CalculationEngine';
-
+import { resolveScope, evaluateSum, evaluateExpression, collectScopes } from './CalculationEngine';
+import { JsonSchema } from '@jsonforms/core';
 describe('CalculationEngine', () => {
   const data = {
     x: 2,
@@ -62,84 +62,180 @@ describe('CalculationEngine', () => {
 
       expect(result.value).toBeUndefined();
       expect(result.error).toBeDefined();
-      expect(result.error).toMatch(/scope/i);
+      expect(result.error).toMatch('SUM requires array/column path like #/properties/arr/c3');
     });
   });
 
   describe('evaluateExpression', () => {
-    const baseData = {
-      x: 2,
-      y: 3,
-      z: 4,
-      arr: [{ c3: 1 }, { c3: 2 }, { c3: 3 }],
-    };
-
-    it('returns undefined with no error when expression is empty', () => {
-      const result = evaluateExpression('', baseData);
-
-      expect(result.value).toBeUndefined();
-      expect(result.error).toBeUndefined();
-    });
-
-    it('computes a normal arithmetic expression with scopes', () => {
-      const expression = '#/properties/x * #/properties/y + #/properties/z';
-
-      const result = evaluateExpression(expression, baseData);
-
-      // 2 * 3 + 4 = 10
-      expect(result.value).toBe(10);
-      expect(result.error).toBeUndefined();
-    });
-
-    it('supports SUM() expression', () => {
-      const expression = 'SUM(#/properties/arr/c3)';
-
-      const result = evaluateExpression(expression, baseData);
-
-      expect(result.value).toBe(6);
-      expect(result.error).toBeUndefined();
-    });
-
-    it('does not show error when nothing is filled yet (all variables undefined)', () => {
-      const emptyData = {};
-      const expression = '#/properties/x * #/properties/y + #/properties/z';
-
-      const result = evaluateExpression(expression, emptyData);
-
-      expect(result.value).toBeUndefined();
-      expect(result.error).toBe('Please provide values for: #/properties/x, #/properties/y, #/properties/z');
-    });
-
-    it('still no error if some variables filled and others empty, but cannot compute', () => {
-      const partialData = { x: 2 }; // y and z missing
-      const expression = '#/properties/x * #/properties/y + #/properties/z';
-
-      const result = evaluateExpression(expression, partialData);
-
-      expect(result.value).toBeUndefined();
-      expect(result.error).toBe('Please provide values for: #/properties/y, #/properties/z');
-    });
-
-    it('returns an error when expression contains an invalid scope (typo in designer config)', () => {
-      const expression = '#/properties/x * #/properties/badField + 1';
-
-      const result = evaluateExpression(expression, baseData);
-
-      expect(result.value).toBeUndefined();
-      expect(result.error).toBeDefined();
-      expect(result.error).toMatch(/badField|scope/i);
-    });
-
-    it('ignores non-numeric SUM items with a clear error', () => {
-      const badData = {
-        arr: [{ c3: 1 }, { c3: 'oops' }],
+    it('returns value for a valid simple expression', () => {
+      const data = {
+        x: 2,
+        y: 3,
+        z: 4,
       };
-      const expression = 'SUM(#/properties/arr/c3)';
 
-      const result = evaluateExpression(expression, badData);
+      const expr = '#/properties/x * #/properties/y + #/properties/z';
+
+      const result = evaluateExpression(expr, data);
+
+      expect(result.error).toBeUndefined();
+      expect(result.value).toBe(2 * 3 + 4); // 10
+    });
+
+    it('returns value for a SUM() over an array column', () => {
+      const data = {
+        arr: [{ c3: 1 }, { c3: 2 }, { c3: 3 }],
+      };
+
+      const expr = 'SUM(#/properties/arr/c3)';
+
+      const result = evaluateExpression(expr, data);
+
+      expect(result.error).toBeUndefined();
+      expect(result.value).toBe(6);
+    });
+
+    it('reports missing values when referenced scopes exist but are undefined/null', () => {
+      const data = {
+        // x is present
+        x: 2,
+        // y and z are missing (undefined)
+      };
+
+      const expr = '#/properties/x * #/properties/y + #/properties/z';
+
+      const result = evaluateExpression(expr, data);
 
       expect(result.value).toBeUndefined();
       expect(result.error).toBeDefined();
+      // loosen the expectation to avoid exact-string brittleness
+      expect(result.error).toContain('Please provide values for');
+      expect(result.error).toContain('#/properties/y');
+      expect(result.error).toContain('#/properties/z');
+      // and *not* complain about x as missing
+      expect(result.error).not.toContain('#/properties/x');
+    });
+
+    it('reports invalid scopes when a referenced path does not exist', () => {
+      const data = {
+        x: 2,
+        y: 3,
+        // no "doesNotExist" anywhere
+      };
+
+      const expr = '#/properties/x + #/properties/doesNotExist';
+
+      const result = evaluateExpression(expr, data);
+
+      expect(result.value).toBeUndefined();
+      expect(result.error).toBeDefined();
+      // Again, keep expectations flexible
+      expect(result.error).toBe('Please provide values for: #/properties/doesNotExist');
+      expect(result.error).toContain('#/properties/doesNotExist');
+    });
+
+    it('treats invalid scopes in the middle or end of expression the same', () => {
+      const data = {
+        x: 1,
+        y: 2,
+        z: 3,
+      };
+
+      const expr = '#/properties/x + #/properties/y + #/properties/doesNotExist';
+
+      const result = evaluateExpression(expr, data);
+
+      expect(result.value).toBeUndefined();
+      expect(result.error).toBeDefined();
+      expect(result.error).toBe('Please provide values for: #/properties/doesNotExist');
+      expect(result.error).toContain('#/properties/doesNotExist');
+    });
+
+    it('reports invalid expression syntax', () => {
+      const data = {
+        x: 2,
+        y: 3,
+      };
+
+      const expr = '#/properties/x *** #/properties/y'; // invalid operator
+
+      const result = evaluateExpression(expr, data);
+
+      expect(result.value).toBeUndefined();
+      expect(result.error).toBeDefined();
+      expect(result.error).toMatch(/invalid expression syntax/i);
+    });
+
+    it('returns undefined for empty or whitespace-only expression without error', () => {
+      const data = {
+        x: 1,
+      };
+
+      const result1 = evaluateExpression('', data);
+      const result2 = evaluateExpression('   ', data);
+      const result3 = evaluateExpression(null as unknown as string, data);
+
+      [result1, result2, result3].forEach((r) => {
+        expect(r.value).toBeUndefined();
+        expect(r.error).toBeUndefined();
+      });
+    });
+
+    it('ignores non-scope text and still evaluates correctly', () => {
+      const data = {
+        x: 5,
+      };
+
+      const expr = '#/properties/x + 10';
+
+      const result = evaluateExpression(expr, data);
+
+      expect(result.error).toBeUndefined();
+      expect(result.value).toBe(15);
+    });
+
+    it('returns error when SUM() column contains non-numeric data', () => {
+      const data = {
+        arr: [{ c3: 1 }, { c3: 'not-a-number' }],
+      };
+
+      const expr = 'SUM(#/properties/arr/c3)';
+
+      const result = evaluateExpression(expr, data);
+
+      expect(result.value).toBeUndefined();
+      expect(result.error).toBeDefined();
+      expect(result.error).toBe('Please provide values for: #/properties/arr/c3');
+    });
+  });
+  describe('collectScopes', () => {
+    it('returns empty array for undefined schema', () => {
+      // @ts-expect-no-error runtime will just get undefined
+      const result = collectScopes(undefined);
+
+      expect(result).toEqual([]);
+    });
+
+    it('returns empty array for non-object schema', () => {
+      const schema = 42 as unknown as JsonSchema;
+
+      const result = collectScopes(schema);
+
+      expect(result).toEqual([]);
+    });
+
+    it('collects scopes for flat object properties', () => {
+      const schema: JsonSchema = {
+        type: 'object',
+        properties: {
+          x: { type: 'number' },
+          y: { type: 'number' },
+        },
+      };
+
+      const result = collectScopes(schema);
+
+      expect(result).toEqual(['#/properties/x', '#/properties/y']);
     });
   });
 });

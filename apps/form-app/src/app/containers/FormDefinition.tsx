@@ -13,6 +13,7 @@ import {
   busySelector,
   createForm,
   userSelector,
+  FormStatus,
 } from '../state';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { ScheduledIntake } from '../components/ScheduledIntake';
@@ -45,6 +46,14 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
       dispatch(findUserForms({ definitionId: definition.id }));
     }
   }, [dispatch, definition, user]);
+
+  if (initialized && definition && definition.oneFormPerApplicant === false) {
+    return <Navigate to="forms" />;
+  }
+
+  if (initialized && form?.id && form.status === FormStatus.submitted) {
+    return <Navigate to={`${form.id}`} />;
+  }
 
   return definition.anonymousApply ? (
     <Navigate to="draft" />
@@ -97,7 +106,7 @@ export const FormDefinition: FunctionComponent = () => {
           <ScheduledIntake definition={definition}>
             <Routes>
               <Route path="/draft" element={<AnonymousForm />} />
-              <Route path="/forms" element={<Forms definition={definition} />} />{' '}
+              <Route path="/forms" element={<Forms definition={definition} />} />
               <Route path="/:formId" element={<Form />} />
               <Route path="/" element={<FormDefinitionStart definition={definition} user={user} />} />
               <Route path="*" element={<Navigate to="/" />} />

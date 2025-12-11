@@ -3,8 +3,7 @@ const { getJestProjectsAsync } = require('@nx/jest');
 export default async () => ({
   testMatch: ['**/+(*.)+(spec|test).+(ts|js)?(x)'],
   transform: {
-    '^.+\\.(ts|js|html)
-: 'ts-jest',
+    '^.+\\.(ts|js|html)$': 'ts-jest',
   },
   preset: './jest.preset.js',
   resolver: '@nx/jest/plugins/resolver',

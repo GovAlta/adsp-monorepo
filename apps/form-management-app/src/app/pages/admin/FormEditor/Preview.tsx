@@ -28,6 +28,7 @@ export interface PreviewProps {
   currentPDF: string;
   pdfFile: FileItem;
   jobList: PdfJobList;
+  // eslint-disable-next-line
   generatePdf: (inputData: Record<string, any>) => void;
   loading: boolean;
 }

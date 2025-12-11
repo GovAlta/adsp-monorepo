@@ -38,6 +38,7 @@ export const DataEditorContainer: React.FC<DataEditorContainerProps> = ({
   const { height } = useWindowDimensions();
   const EditorHeight = height - 400;
   const isUseMiniMap = window.screen.availWidth >= 1920;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEditorDidMountData = (editor: any) => {
     editorRefData.current = editor;

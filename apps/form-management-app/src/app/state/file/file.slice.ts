@@ -388,6 +388,5 @@ export const fileSlice = createSlice({
   },
 });
 
-const fileActions = fileSlice.actions;
 export const fileReducer = fileSlice.reducer;
 export const metaDataSelector = (state: AppState) => state.file.metadata;
