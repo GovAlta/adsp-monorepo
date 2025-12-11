@@ -11,7 +11,8 @@ import { SubmitButtonsBar } from './SubmitButtonsBar';
 import { GoATabs, GoATab } from '@abgov/react-components';
 import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
 import { UISchemaElement } from '@jsonforms/core';
-import { FileMetadata, FileWithMetadata } from '../../../state/file/file.slice';
+import { FileItem, FileMetadata, FileWithMetadata } from '../../../state/file/file.slice';
+import { PdfJobList } from '../../../state/pdf/pdf.slice';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -24,14 +25,19 @@ export interface EditorProps {
   resolvedDataSchema: Record<string, unknown>;
   fileList: Record<string, FileMetadata[]>;
   uploadFile: (file: FileWithMetadata, propertyId: string) => void;
-  downloadFile: (file: FileWithMetadata) => void;
-  deleteFile: (file: FileWithMetadata) => void;
+  downloadFile: (file: FileItem) => void;
+  deleteFile: (file: FileItem) => void;
   formServiceApiUrl: string;
   schemaError: string | null;
   uiSchema: UISchemaElement;
   registerData: RegisterData;
   nonAnonymous: string[];
   dataList: string[];
+  currentPDF: string;
+  pdfFile: FileItem;
+  jobList: PdfJobList;
+  loading: boolean;
+  generatePdf: (inputData: Record<string, string>) => void;
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -51,6 +57,11 @@ export const Editor: React.FC<EditorProps> = ({
   registerData,
   nonAnonymous,
   dataList,
+  currentPDF,
+  pdfFile,
+  jobList,
+  generatePdf,
+  loading,
 }) => {
   const { errors, validators } = useValidators(
     'name',
@@ -138,12 +149,16 @@ export const Editor: React.FC<EditorProps> = ({
           deleteFile={deleteFile}
           formServiceApiUrl={formServiceApiUrl}
           schemaError={schemaError}
-          definition={definition}
           dataSchema={resolvedDataSchema}
           uiSchema={uiSchema}
           registerData={registerData}
           nonAnonymous={nonAnonymous}
           dataList={dataList}
+          currentPDF={currentPDF}
+          pdfFile={pdfFile}
+          jobList={jobList}
+          generatePdf={generatePdf}
+          loading={loading}
         />
       </div>
     </div>

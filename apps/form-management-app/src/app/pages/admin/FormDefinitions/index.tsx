@@ -41,9 +41,8 @@ const FormDefinitions = (): JSX.Element => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [definitionToDelete, setDefinitionToDelete] = useState<FormDefinition | null>(null);
 
-  const currentCursor = cursors[page];
-
   useEffect(() => {
+    const currentCursor = cursors[page];
     if (configInitialized && userInitialized && authenticated) {
       dispatch(getFormDefinitions({ top: 40, after: currentCursor || undefined }))
         .unwrap()
@@ -57,7 +56,7 @@ const FormDefinitions = (): JSX.Element => {
           }
         });
     }
-  }, [dispatch, configInitialized, userInitialized, authenticated, page, currentCursor]);
+  }, [dispatch, configInitialized, userInitialized, authenticated, page, cursors]);
 
   return (
     <div>

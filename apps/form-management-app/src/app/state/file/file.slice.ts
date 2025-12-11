@@ -67,10 +67,7 @@ export const downloadFile = createAsyncThunk(
       let metadata = undefined;
 
       for (const propertyId in fileState.metadata) {
-        metadata = fileState.metadata[propertyId].find((f) => f.urn === urn);
-        if (metadata) {
-          break;
-        }
+        metadata = fileState.metadata[propertyId]
       }
 
       if (!metadata) {
@@ -78,23 +75,23 @@ export const downloadFile = createAsyncThunk(
       }
 
       const token = await getAccessToken();
-      const { data, headers } = await axios.get(
+      const response = await axios.get(
         new URL(`/file/v1/${urn.substring(FILE_SERVICE_ID.length + 4)}/download?unsafe=true`, fileServiceUrl).href,
         {
           responseType: 'blob',
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      const mimeType = headers['content-type']?.toString();
 
-      const file = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(new File([data], metadata.filename, { type: mimeType }));
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(reader.error);
-      });
+      const fileName = (Array.isArray(metadata)) ? metadata[0]?.filename : metadata.filename;
+      
 
-      return { file, data, metadata: { ...metadata, mimeType } };
+      return {
+        blob: response.data as Blob,
+        filename: fileName,
+        mimeType: response.headers['content-type'],
+        urn,
+      };
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -239,6 +236,45 @@ export const deleteFile = createAsyncThunk(
   }
 );
 
+export const FetchFileService = createAsyncThunk(
+  'file/fetch-file',
+  async ({ fileId }: { fileId: string }, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const token = await getAccessToken();
+      const fileServiceUrl = config.directory[FILE_SERVICE_ID];
+
+      const { data } = await axios.get(`${fileServiceUrl}/file/v1/files/${fileId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export interface FileItem {
+  id?: string;
+  filename?: string;
+  size?: number;
+  fileURN?: string;
+  urn: string;
+  typeName?: string;
+  recordId?: string;
+  created?: string;
+  lastAccessed?: string;
+  propertyId?: string;
+}
+
 interface FileState {
   files: Record<string, string>;
   pdfFile: string;
@@ -251,6 +287,7 @@ interface FileState {
     loading: boolean;
   };
   newFileList: Record<string, Record<string, string>[]>;
+  fileList: FileItem[];
 }
 
 const initialFileState: FileState = {
@@ -265,6 +302,7 @@ const initialFileState: FileState = {
     loading: false,
   },
   newFileList: {},
+  fileList: [],
 };
 
 export const fileSlice = createSlice({
@@ -290,9 +328,7 @@ export const fileSlice = createSlice({
       .addCase(downloadFile.pending, (state, { meta }) => {
         state.busy.download[meta.arg] = true;
       })
-      .addCase(downloadFile.fulfilled, (state, { meta, payload: { file, metadata } }) => {
-        state.files[meta.arg] = file;
-        state.metadata[meta.arg] = metadata;
+      .addCase(downloadFile.fulfilled, (state, { meta, payload }) => {
         state.busy.download[meta.arg] = false;
       })
       .addCase(downloadFile.rejected, (state, { meta }) => {
@@ -338,8 +374,20 @@ export const fileSlice = createSlice({
           delete state.metadata[propertyIdRoot];
         }
         state.busy.loading = false;
+      })
+      .addCase(FetchFileService.fulfilled, (state, { payload }) => {
+        state.fileList = [payload, ...state.fileList];
+        state.busy.loading = false;
+      })
+      .addCase(FetchFileService.rejected, (state, { payload }) => {
+        state.busy.loading = false;
+      })
+      .addCase(FetchFileService.pending, (state, { payload }) => {
+       state.busy.loading = true;
       });
   },
 });
 
+const fileActions = fileSlice.actions;
 export const fileReducer = fileSlice.reducer;
+export const metaDataSelector = (state: AppState) => state.file.metadata;

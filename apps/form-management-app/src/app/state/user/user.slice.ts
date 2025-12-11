@@ -88,9 +88,9 @@ export const initializeTenant = createAsyncThunk(
   'user/initialize-tenant',
   async (name: string, { getState, dispatch, rejectWithValue }) => {
     const { config } = getState() as AppState;
+
     const url = config.directory['urn:ads:platform:tenant-service'];
 
-    console.log(url);
     if (!url) {
       return null;
     }

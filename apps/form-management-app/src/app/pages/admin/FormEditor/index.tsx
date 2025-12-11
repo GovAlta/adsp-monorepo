@@ -11,15 +11,24 @@ import { CONFIGURATION_SERVICE_ID } from '../../../state';
 import { selectRegisterData } from '../../../state/configuration/selectors';
 import { tryResolveRefs } from '@abgov/jsonforms-components';
 import styles from './Editor.module.scss';
+import { getSocketChannel } from '../../../state/pdf/selectors';
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
-import { uploadFile, downloadFile, deleteFile } from '../../../state/file/file.slice';
-import { metaDataSelector } from '../../../state/file/selectors';
+import { uploadFile, downloadFile, deleteFile, FileItem } from '../../../state/file/file.slice';
+import { metaDataSelector, FileWithMetadata } from '../../../state/file/file.slice';
 import { store } from '../../../state/store';
-import { FileWithMetadata } from '../../../state/file/file.slice';
-
 import { formActions } from '../../../state/form/form.slice';
 import { filesSelector } from '../../../state/form/selectors';
-import { UISchemaElement}  from '@jsonforms/core';
+import { UISchemaElement } from '@jsonforms/core';
+import { streamPdfSocket } from '../../../state/pdf/pdf.slice';
+import { FetchFileService } from '../../../state/file/file.slice';
+import { updateTempTemplate } from '../../../state/pdf/pdf.slice';
+
+import {
+  generatePdf,
+  showCurrentFilePdf,
+  setPdfDisplayFileId,
+  getCorePdfTemplates,
+} from '../../../state/pdf/pdf.slice';
 
 export const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
 
@@ -39,6 +48,11 @@ function getKeyByValue<T extends Record<string, unknown>>(obj: T, value: unknown
   return Object.keys(obj).find((key) => obj[key] === value);
 }
 
+const hasFormName = (jobFileName: string, formName: string): boolean => {
+  const partFormName = formName.length >= 10 ? formName.substr(0, 10) : formName;
+  return jobFileName.indexOf(partFormName) !== -1;
+};
+
 const EditorWrapper = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
 
@@ -50,6 +64,12 @@ const EditorWrapper = (): JSX.Element => {
   const [dataError, setDataError] = useState<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [uiError, setUiError] = useState<any>(null);
+
+  const pdfFiles = useSelector((state: AppState) => state?.pdf.files);
+  const currentId = useSelector((state: AppState) => state?.pdf?.currentId);
+  const pdfTemplate = useSelector((state: AppState) => state.pdf?.corePdfTemplates?.['submitted-form']);
+  const fileList = useSelector((state: AppState) => state.file.fileList);
+  const loading = useSelector((state: AppState) => state?.pdf.busy.loading);
 
   useEffect(() => {
     try {
@@ -65,6 +85,50 @@ const EditorWrapper = (): JSX.Element => {
   const metadata = useSelector(metaDataSelector);
 
   const definition = useSelector(savedDefinition);
+
+  const socketChannel = useSelector((state: AppState) => {
+    return getSocketChannel(state);
+  });
+
+  const jobList = useSelector((state: AppState) =>
+    state?.pdf?.jobs.filter(
+      (job) => job.templateId === pdfTemplate?.id && hasFormName(job.filename, definition?.name || '')
+    )
+  );
+
+  useEffect(() => {
+    dispatch(getCorePdfTemplates());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    dispatch(updateTempTemplate({ tempTemplate: pdfTemplate }));
+  }, [pdfTemplate]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!socketChannel) {
+      dispatch(streamPdfSocket({ disconnect: false }));
+    }
+  }, [socketChannel, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const jobIds = new Set(jobList.map((job) => job?.id).filter((id): id is string => !!id));
+    const currentFile = fileList.find((file) => file?.recordId && jobIds.has(file?.recordId));
+
+    if (currentFile) {
+      dispatch(showCurrentFilePdf({ fileId: currentFile?.id }));
+    } else {
+      dispatch(setPdfDisplayFileId({ fileId: undefined }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, fileList]);
+
+  const reloadFile = useSelector((state: AppState) => state.pdf?.reloadFile);
+
+  useEffect(() => {
+    if (reloadFile && reloadFile[pdfTemplate?.id]) {
+      dispatch(FetchFileService({ fileId: reloadFile[pdfTemplate?.id] }));
+    }
+  }, [reloadFile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const init = async () => {
@@ -102,20 +166,20 @@ const EditorWrapper = (): JSX.Element => {
     }
   };
 
-  const downloadFileFunction = async (file: FileWithMetadata) => {
+  const downloadFileFunction = async (file: FileItem) => {
     const state = store.getState() as AppState;
     const localFileCache = state.file?.files[file.urn];
     const element = document.createElement('a');
 
     if (localFileCache) {
       element.href = localFileCache;
-      element.download = file.filename || "name";
+      element.download = file.filename || 'name';
     } else {
       try {
-        const fileData = await dispatch(downloadFile(file.urn)).unwrap();
-        const blobUrl = URL.createObjectURL(new Blob([fileData.data]));
+        const { blob, filename } = await dispatch(downloadFile(file.urn)).unwrap();
+        const blobUrl = URL.createObjectURL(new Blob([blob]));
         element.href = blobUrl;
-        element.download = fileData.metadata.filename;
+        element.download = filename;
       } catch (err) {
         console.error('Failed to download file:', err);
         return;
@@ -144,18 +208,37 @@ const EditorWrapper = (): JSX.Element => {
       console.error('File upload failed: ' + JSON.stringify(err));
     }
   };
-  const deleteFileFunction = async (file: FileWithMetadata) => {
+  const deleteFileFunction = async (file: FileItem) => {
     const clonedFiles = { ...files };
-    const propertyId = getKeyByValue(clonedFiles, file.urn) || "";
+    const propertyId = getKeyByValue(clonedFiles, file.urn) || '';
     await dispatch(deleteFile({ urn: file.urn, propertyId }));
     delete clonedFiles[propertyId];
     dispatch(formActions.updateFormFiles(clonedFiles));
   };
 
+  const getFileName = (formName: string): string =>
+    `${PDF_FORM_TEMPLATE_ID}_${formName.length >= 10 ? formName.substr(0, 10) : formName}_${new Date()
+      .toJSON()
+      .slice(0, 19)
+      .replace(/:/g, '-')}.pdf`;
+
+  const PDF_FORM_TEMPLATE_ID = 'submitted-form';
+
+  const generateTemplate = (data: Record<string, string>) => {
+    const payload = {
+      templateId: PDF_FORM_TEMPLATE_ID,
+      data: { definition: definition },
+      fileName: getFileName(definition?.name || ''),
+      formId: definition?.name,
+      inputData: data,
+    };
+
+    dispatch(generatePdf(payload));
+  };
+
   const registerData = useSelector(selectRegisterData);
   const nonAnonymous = useSelector((state: AppState) => state.configuration?.nonAnonymous);
   const dataList = useSelector((state: AppState) => state.configuration?.dataList);
-
   const formServiceApiUrl = useSelector((state: AppState) => state.config.directory[CONFIGURATION_SERVICE_ID]);
   const schemaError = dataError || uiError;
 
@@ -171,7 +254,7 @@ const EditorWrapper = (): JSX.Element => {
 
       const [resolvedSchema, error] = await tryResolveRefs(parsedSchema, standardV1JsonSchema, commonV1JsonSchema);
       setResolvedTempDefinition(resolvedSchema);
-      setDataError(null)
+      setDataError(null);
     } catch (err) {
       console.error('Failed to parse data schema: ' + err);
       setDataError(err instanceof Error ? err.message : String(err));
@@ -218,6 +301,11 @@ const EditorWrapper = (): JSX.Element => {
           registerData={registerData}
           nonAnonymous={nonAnonymous}
           dataList={dataList}
+          currentPDF={pdfFiles[currentId]}
+          pdfFile={fileList[0]}
+          jobList={jobList}
+          generatePdf={generateTemplate}
+          loading={loading}
         />
       )}
     </div>
