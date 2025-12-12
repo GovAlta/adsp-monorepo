@@ -1,2 +1,0 @@
-keycloak_url,realm_id,form-service-host,form-app-host
-https://access-uat.alberta.ca,2ef492af-0a16-470b-9ea5-c8bfa7b08a7c,https://form-service.adsp-uat.alberta.ca,https://form.adsp-uat.alberta.ca

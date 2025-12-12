@@ -3,12 +3,6 @@ name: Artillery performance tests
 on:
   workflow_dispatch:
     inputs:
-      CLIENT_ID:
-        description: CLIENT_ID
-        required: true
-      CLIENT_SECRET:
-        description: CLIENT_SECRET
-        required: true
       ENVIRONMENT:
         type: choice
         description: Choose environment you want to test
@@ -23,8 +17,15 @@ on:
           - status-service
           - form-app
           - all
+      CLIENT_SECRET:
+        description: Keycloak credential for the artillery-cli client in the testing environment
+      USER_SECRET:
+        description: User (artillery-tester) secret in the keycloak load test realm
 env:
   NODE_OPTIONS: --max-old-space-size=16384
+  ARTILLERY_CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
+  ARTILLERY_ENV: ${{ inputs.ENVIRONMENT }}
+  ARTILLERY_USER_SECRET: ${{ inputs.USER_SECRET }}
 
 jobs:
   artillery-event:
@@ -102,7 +103,3 @@ jobs:
         run: mkdir reports
       - name: Execute load tests form app
         run: /home/node/artillery/bin/run run tests/form-app/load.yml --output reports/form-app-report.json
-        env:
-          CLIENT_ID: ${{ inputs.CLIENT_ID }}
-          CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
-          ARTILLERY_ENV: ${{ inputs.ENVIRONMENT }}
