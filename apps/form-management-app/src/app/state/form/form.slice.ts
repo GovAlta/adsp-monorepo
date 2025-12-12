@@ -15,6 +15,8 @@ export interface FormState {
   loading: boolean;
   currentDefinition: FormDefinition | null;
   files: Record<string, string>;
+  programs: string[];
+  ministries: string[];
   busy: {
     loading: boolean;
     creating: boolean;
@@ -24,6 +26,16 @@ export interface FormState {
   };
   initialized: {
     forms: boolean;
+  };
+  next: string | null;
+  page: number;
+  cursors: Record<number, string | null>;
+  criteria: {
+    name: string;
+    actsOfLegislation: string;
+    registeredId: string;
+    program: string;
+    ministry: string;
   };
 }
 
@@ -156,25 +168,108 @@ export const getFormConfiguration = createAsyncThunk<
   }
 });
 
+export const getPrograms = createAsyncThunk('form/get-programs', async (_, { getState, rejectWithValue }) => {
+  try {
+    const { config } = getState() as AppState;
+    const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
+    const accessToken = await getAccessToken();
+
+    const { data } = await axios.get(`${configurationService}/configuration/v2/configuration/dcm/programs`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    return data.latest.configuration;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      return rejectWithValue({
+        status: err.response?.status,
+        message: err.response?.data?.errorMessage || err.message,
+      });
+    } else {
+      throw err;
+    }
+  }
+});
+
+export const getMinistries = createAsyncThunk('form/get-ministries', async (_, { getState, rejectWithValue }) => {
+  try {
+    const { config } = getState() as AppState;
+    const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
+    const accessToken = await getAccessToken();
+
+    const { data } = await axios.get(`${configurationService}/configuration/v2/configuration/dcm/ministry`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    return data.latest.configuration;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      return rejectWithValue({
+        status: err.response?.status,
+        message: err.response?.data?.errorMessage || err.message,
+      });
+    } else {
+      throw err;
+    }
+  }
+});
+
 export const getFormDefinitions = createAsyncThunk(
   'form/get-definitions',
-  async ({ top, after }: { top?: number; after?: string } = {}, { getState, rejectWithValue }) => {
+  async (
+    {
+      top,
+      after,
+      name,
+      actsOfLegislation,
+      registeredId,
+      program,
+      ministry,
+    }: {
+      top?: number;
+      after?: string;
+      name?: string;
+      actsOfLegislation?: string;
+      registeredId?: string;
+      program?: string;
+      ministry?: string;
+    } = {},
+    { getState, rejectWithValue }
+  ) => {
     try {
       const { config } = getState() as AppState;
-      const formService = config.directory[FORM_SERVICE_ID];
+      const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
       const accessToken = await getAccessToken();
 
       const params = new URLSearchParams();
       if (top) params.append('top', top.toString());
       if (after) params.append('after', after);
+      const criteria: Record<string, string> = {};
+      if (name) criteria.name = name;
+      if (actsOfLegislation) criteria.actsOfLegislation = actsOfLegislation;
+      if (registeredId) criteria.registeredId = registeredId;
+      if (program) criteria.program = program;
+      if (ministry) criteria.ministry = ministry;
 
-      const url = `${formService}/form/v1/definitions?${params.toString()}`;
+      if (Object.keys(criteria).length > 0) {
+        params.append('criteria', JSON.stringify(criteria));
+      }
+      params.append('includeActive', 'true');
+
+      const url = `${configurationService}/configuration/v2/configuration/form-service?${params.toString()}`;
       const { data } = await axios.get(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       return {
-        results: data.results || [],
+        results:
+          data.results?.map((r) => {
+            const item = r.active || r.latest;
+            return {
+              ...item.configuration,
+              revision: item.revision,
+            };
+          }) || [],
         page: data.page || { next: null },
       };
     } catch (err) {
@@ -196,6 +291,8 @@ export const initialFormState: FormState = {
   loading: false,
   files: {},
   currentDefinition: null,
+  programs: [],
+  ministries: [],
   busy: {
     loading: false,
     creating: false,
@@ -206,14 +303,41 @@ export const initialFormState: FormState = {
   initialized: {
     forms: false,
   },
+  next: null,
+  page: 1,
+  cursors: { 1: null },
+  criteria: {
+    name: '',
+    actsOfLegislation: '',
+    registeredId: '',
+    program: '',
+    ministry: '',
+  },
 };
 
 const formSlice = createSlice({
   name: FORM_FEATURE_KEY,
   initialState: initialFormState,
   reducers: {
-      updateFormFiles: (state, action: { payload: Record<string, string> }) => {
+    updateFormFiles: (state, action: { payload: Record<string, string> }) => {
       state.files = action.payload;
+    },
+    setPage: (state, action: { payload: number }) => {
+      state.page = action.payload;
+    },
+    setCriteria: (
+      state,
+      action: {
+        payload: {
+          name?: string;
+          actsOfLegislation?: string;
+          registeredId?: string;
+          program?: string;
+          ministry?: string;
+        };
+      }
+    ) => {
+      state.criteria = { ...state.criteria, ...action.payload };
     },
   },
   extraReducers: (builder) => {
@@ -224,6 +348,10 @@ const formSlice = createSlice({
       .addCase(getFormDefinitions.fulfilled, (state, { payload }) => {
         state.definitions = payload.results;
         state.loading = false;
+        state.next = payload.page.next;
+        if (payload.page.next) {
+          state.cursors[state.page + 1] = payload.page.next;
+        }
       })
       .addCase(getFormDefinitions.rejected, (state) => {
         state.loading = false;
@@ -271,6 +399,12 @@ const formSlice = createSlice({
         const { dataSchema: _dataSchema, uiSchema: _uiSchema, ..._definition } = action.payload.definition;
 
         state.currentDefinition = action.payload.definition;
+      })
+      .addCase(getPrograms.fulfilled, (state, { payload }) => {
+        state.programs = payload;
+      })
+      .addCase(getMinistries.fulfilled, (state, { payload }) => {
+        state.ministries = payload;
       });
   },
 });
