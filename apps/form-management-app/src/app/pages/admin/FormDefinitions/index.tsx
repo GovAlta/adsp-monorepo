@@ -75,28 +75,33 @@ const FormDefinitions = (): JSX.Element => {
   );
 
   const onNameChange = (_name: string, value: string) => {
+    if (name === value) return;
     setName(value);
     debounceUpdateQuery({ name: value, actsOfLegislation, registeredId, program, ministry });
   };
 
   const onActsChange = (_name: string, value: string) => {
+    if (actsOfLegislation === value) return;
     setActsOfLegislation(value);
     debounceUpdateQuery({ name, actsOfLegislation: value, registeredId, program, ministry });
   };
 
   const onRegisteredIdChange = (_name: string, value: string) => {
+    if (registeredId === value) return;
     setRegisteredId(value);
     debounceUpdateQuery({ name, actsOfLegislation, registeredId: value, program, ministry });
   };
 
   const onProgramChange = (_name: string, value: string | string[]) => {
     const val = Array.isArray(value) ? value[0] : value;
+    if (program === val) return;
     setProgram(val);
     debounceUpdateQuery({ name, actsOfLegislation, registeredId, program: val, ministry });
   };
 
   const onMinistryChange = (_name: string, value: string | string[]) => {
     const val = Array.isArray(value) ? value[0] : value;
+    if (ministry === val) return;
     setMinistry(val);
     debounceUpdateQuery({ name, actsOfLegislation, registeredId, program, ministry: val });
   };
