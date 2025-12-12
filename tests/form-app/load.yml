@@ -10,7 +10,7 @@ config:
       skipHeader: true
       fields:
         - 'keycloak_url'
-        - 'tenant_realm_id'
+        - 'realm_id'
         - 'form-service-host'
         - 'form-app-host'
   phases:
@@ -23,9 +23,9 @@ config:
       name: Soak test phase
 before:
   flow:
-    - log: 'Getting the access token (tenant: {{ tenant_realm_id }})'
+    - log: 'Getting the access token (tenant: {{ realm_id }})'
     - post:
-        url: '{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token'
+        url: '{{ keycloak_url }}/auth/realms/{{ realm_id }}/protocol/openid-connect/token'
         headers:
           Content-Type: 'application/x-www-form-urlencoded'
           Accept: 'application/json'
