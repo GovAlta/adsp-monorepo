@@ -1,0 +1,3 @@
+keycloak_url,realm_id,configuration-service-host
+https://access-uat.alberta.ca,2ef492af-0a16-470b-9ea5-c8bfa7b08a7c,https://configuration-service.adsp-uat.alberta.ca
+

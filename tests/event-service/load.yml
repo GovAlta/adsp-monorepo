@@ -1,0 +1,48 @@
+config:
+  environments:
+    # to support different environments, the actual target is in the corresponding csv file
+    dev:
+      target: 'https://event-service.adsp-dev.gov.ab.ca'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+      Accept: 'application/json'
+  payload:
+    - path: './artillery.{{  $processEnvironment.ARTILLERY_ENV }}.csv'
+      skipHeader: true
+      fields:
+        - 'keycloak_url'
+        - 'realm_id'
+        - 'configuration-service-host'
+  variables:
+    tenant:
+      - 'demo'
+      - 'platform'
+  processor: '../my-functions.js'
+  phases:
+    - name: warm up
+      duration: 10
+      arrivalRate: 2
+before:
+  flow:
+    - log: 'Getting the access token (tenant: {{ realm_id }}) {{ keycloak_url }}/auth/realms/{{ realm_id }}/protocol/openid-connect/token'
+    - post:
+        url: '{{ keycloak_url }}/auth/realms/{{ realm_id }}/protocol/openid-connect/token'
+        headers:
+          Content-Type: 'application/x-www-form-urlencoded'
+          Accept: 'application/json'
+        form:
+          {
+            grant_type: 'client_credentials',
+            client_id: '{{ $processEnvironment.CLIENT_ID }}',
+            client_secret: '{{ $processEnvironment.CLIENT_SECRET }}',
+          }
+        capture:
+          - json: '$.access_token'
+            as: token
+scenarios:
+  - name: get events list, create events and delete events
+    weight: 25
+    flow:
+      - get:
+          url: '{{ configuration-service-host }}/configuration/v2/configuration/platform/event-service/latest?core'

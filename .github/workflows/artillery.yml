@@ -34,15 +34,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Make reports directory
         run: mkdir reports
-
       - name: Execute load tests event service
-        run: /home/node/artillery/bin/run run tests/events-service/load.yml --environment dev --output reports/event-report.json
+        run: /home/node/artillery/bin/run run tests/event-service/load.yml --output reports/event-service-report.json
         env:
           CLIENT_ID: ${{ inputs.CLIENT_ID }}
           CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
+          ARTILLERY_ENV: ${{ inputs.ENVIRONMENT }}
 
       - name: Generate HTML report event service
         run: /home/node/artillery/bin/run report --output reports/event-report.html reports/event-report.json
