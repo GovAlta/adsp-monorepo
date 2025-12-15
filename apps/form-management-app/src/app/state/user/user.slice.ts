@@ -26,10 +26,11 @@ export interface UserState {
 
 let client: Keycloak;
 async function initializeKeycloakClient(dispatch: Dispatch, realm: string, config: ConfigState) {
-  if (client?.realm !== realm) {
+  const clientId = config?.environment?.access?.client_id;
+  if (client?.realm !== realm && clientId !== undefined) {
     client = new Keycloak({
-      url: `${config.environment.access.url}/auth`,
-      clientId: config.environment.access.client_id,
+      url: `${config?.environment?.access?.url}/auth`,
+      clientId,
       realm,
     });
 
