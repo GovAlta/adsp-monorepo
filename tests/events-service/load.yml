@@ -1,19 +1,20 @@
 config:
   environments:
-    # to support different environments, the actual target is in the corresponding csv file
     dev:
+      # Configuration service is behind the event service
       target: 'https://event-service.adsp-dev.gov.ab.ca'
   defaults:
     headers:
       Content-Type: 'application/json'
       Accept: 'application/json'
   payload:
-    - path: './artillery.{{  $processEnvironment.ARTILLERY_ENV }}.csv'
+    - path: '../artillery.{{  $processEnvironment.ARTILLERY_ENV }}.csv'
       skipHeader: true
       fields:
         - 'keycloak_url'
         - 'realm_id'
         - 'configuration-service-host'
+        - 'client_id'
   variables:
     tenant:
       - 'demo'
@@ -34,8 +35,8 @@ before:
         form:
           {
             grant_type: 'client_credentials',
-            client_id: '{{ $processEnvironment.CLIENT_ID }}',
-            client_secret: '{{ $processEnvironment.CLIENT_SECRET }}',
+            client_id: '{{ client_id }}',
+            client_secret: '{{ $processEnvironment.ARTILLERY_CLIENT_SECRET  }}',
           }
         capture:
           - json: '$.access_token'
