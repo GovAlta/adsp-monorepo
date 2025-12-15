@@ -22,6 +22,8 @@ import { UISchemaElement } from '@jsonforms/core';
 import { streamPdfSocket } from '../../../state/pdf/pdf.slice';
 import { FetchFileService } from '../../../state/file/file.slice';
 import { updateTempTemplate } from '../../../state/pdf/pdf.slice';
+import { rolesSelector } from '../../../state/keycloak/selectors';
+import { fetchKeycloakServiceRoles, fetchRoles } from '../../../state/keycloak/keycloak.slice';
 
 import {
   generatePdf,
@@ -95,6 +97,13 @@ const EditorWrapper = (): JSX.Element => {
       (job) => job.templateId === pdfTemplate?.id && hasFormName(job.filename, definition?.name || '')
     )
   );
+
+  useEffect(() => {
+    if (definition?.id) {
+      // dispatch(fetchKeycloakServiceRoles());
+      dispatch(fetchRoles());
+    }
+  }, [definition]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     dispatch(getCorePdfTemplates());
@@ -281,6 +290,8 @@ const EditorWrapper = (): JSX.Element => {
     elements: [],
   };
 
+  const roles = useSelector(rolesSelector) as any[];
+
   return (
     <div className={styles['form-template-editor-container']}>
       {definition?.id && (
@@ -306,6 +317,16 @@ const EditorWrapper = (): JSX.Element => {
           jobList={jobList}
           generatePdf={generateTemplate}
           loading={loading}
+          roles={roles}
+          updateEditorFormDefinition={(definition: Partial<FormDefinition>) => {
+            const tempSchema = {
+              ...(tempDefinition || {}),
+              ...(definition || {}),
+            } as FormDefinition;
+
+            setTempDefinition(tempSchema);
+          }}
+          fetchKeycloakServiceRoles={() => dispatch(fetchKeycloakServiceRoles())}
         />
       )}
     </div>

@@ -14,6 +14,10 @@ import { UISchemaElement } from '@jsonforms/core';
 import { FileItem, FileMetadata, FileWithMetadata } from '../../../state/file/file.slice';
 import { PdfJobList } from '../../../state/pdf/pdf.slice';
 
+import { RoleContainer } from './RoleContainer';
+import { AppState } from '../../../state';
+import { useSelector } from 'react-redux';
+
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
 export interface EditorProps {
@@ -38,6 +42,9 @@ export interface EditorProps {
   jobList: PdfJobList;
   loading: boolean;
   generatePdf: (inputData: Record<string, string>) => void;
+  roles: any[];
+  updateEditorFormDefinition: (update: Partial<FormDefinition>) => void;
+  fetchKeycloakServiceRoles: () => void;
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -62,6 +69,9 @@ export const Editor: React.FC<EditorProps> = ({
   jobList,
   generatePdf,
   loading,
+  roles,
+  updateEditorFormDefinition,
+  fetchKeycloakServiceRoles,
 }) => {
   const { errors, validators } = useValidators(
     'name',
@@ -94,6 +104,8 @@ export const Editor: React.FC<EditorProps> = ({
     editor.trigger('folding-util', 'editor.unfoldAll', undefined);
   }
 
+  const [activeTab, setActiveTab] = useState(0)
+
   const getCurrentEditorRef = () => {
     if (activeIndex === 0) return editorRefData.current; // Data schema tab
     if (activeIndex === 1) return editorRefUi.current; // UI schema tab
@@ -103,13 +115,18 @@ export const Editor: React.FC<EditorProps> = ({
   if (!definition) {
     return <div>Loading...</div>;
   }
+  const { isLoadingRoles } = useSelector((state: AppState) => ({
+    isLoadingRoles: state.keycloak.loadingRealmRoles || state.keycloak.loadingKeycloakRoles,
+  }));
 
   return (
     <div className={styles['form-editor']}>
       <div className={styles['name-description-data-schema']}>
         <div className={styles['form-editor-title']}>Form / Definition Editor</div>
         <hr className={styles['hr-resize']} />
-        <GoATabs data-testid="form-editor-tabs">
+        {isLoadingRoles && <div className={styles.textLoadingIndicator}>Loading roles from access service</div>}
+        {activeTab}--activeTab
+        <GoATabs onChange={(event) => setActiveTab(event)} data-testid="form-editor-tabs">
           <GoATab heading="Data schema" data-testid="dcm-form-editor-data-schema-tab">
             <DataEditorContainer
               errors={errors}
@@ -127,6 +144,16 @@ export const Editor: React.FC<EditorProps> = ({
               setDraftUiSchema={setDraftUiSchema}
               setEditorErrors={setEditorErrors}
             />
+          </GoATab>
+          <GoATab heading="Roles" data-testid="dcm-form-editor-ui-schema-tab">
+            {activeTab == 3 && (
+              <RoleContainer
+                definition={definition}
+                roles={roles}
+                updateEditorFormDefinition={updateEditorFormDefinition}
+                fetchKeycloakServiceRoles={fetchKeycloakServiceRoles}
+              />
+            )}
           </GoATab>
         </GoATabs>
         <SubmitButtonsBar

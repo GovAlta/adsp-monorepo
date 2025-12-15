@@ -152,3 +152,36 @@
   margin-top: var(--goa-space-l);
 }
 
+.addToggleButtonPadding {
+  padding-top: var(--goa-space-m);
+}
+
+.borderBottom {
+  border-bottom: 1px solid #ccc;
+}
+
+.scrollPane {
+  overflow-y: scroll;
+  width: 100%;
+  max-height: calc(100vh - 330px);
+}
+
+.rolesTabBody {
+  display: flex;
+  border-radius: 3px;
+  min-height: 65px;
+}
+
+.textLoadingIndicator {
+  animation: blinker 1s linear infinite;
+  font-size: 16px;
+  font-style: italic;
+  text-align: center;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
+

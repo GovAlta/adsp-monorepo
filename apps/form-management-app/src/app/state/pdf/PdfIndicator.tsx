@@ -59,14 +59,3 @@ export const PdfPageIndicator = (variant?: PdfPageIndicatorProps): JSX.Element |
     </Center>
   ) : null;
 };
-
-export const TextLoadingIndicator = styled.span`
-  animation: blinker 1s linear infinite;
-  font-size: 14px;
-  font-style: italic;
-  @keyframes blinker {
-    50% {
-      opacity: 0;
-    }
-  }
-`;
