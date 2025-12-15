@@ -1,18 +1,25 @@
 config:
-  # The target will not be overwrote in the configuration.
-  target: 'https://form-service.adsp-dev.gov.ab.ca'
+  environments:
+    dev:
+      target: 'https://form.adsp-dev.gov.ab.ca'
+    uat:
+      target: 'https://form.adsp-uat.alberta.ca' # The target will not be overwrote in the configuration.
   ensure:
     thresholds:
       - 'http.response_time.p99': 500
       - 'http.response_time.p95': 300
   payload:
-    - path: './artillery.{{  $processEnvironment.ARTILLERY_ENV }}.csv'
+    - path: '../artillery.{{ $environment }}.csv'
       skipHeader: true
       fields:
         - 'keycloak_url'
         - 'realm_id'
-        - 'form-service-host'
-        - 'form-app-host'
+        - 'tenant_name'
+        - 'client_id'
+    - path: './application.{{ $environment }}.csv'
+      skipHeader: true
+      fields:
+        - 'form-name'
   phases:
     - duration: 10
       arrivalRate: 5
@@ -32,25 +39,16 @@ before:
         form:
           {
             grant_type: 'client_credentials',
-            client_id: '{{ $processEnvironment.CLIENT_ID }}',
-            client_secret: '{{ $processEnvironment.CLIENT_SECRET }}',
+            client_id: '{{ $processEnvironment.ARTILLERY_CLIENT_SECRET }}',
+            client_secret: '{{ $processEnvironment.ARTILLERY_CLIENT_SECRET }}',
           }
         capture:
           - json: '$.access_token'
             as: token
 scenarios:
   - name: 'User visit small size form'
-    weight: 25
+    weight: 10
     flow:
       - get:
-          url: '{{ form-app-host }}/autotest/load-test-s-v1-pub'
+          url: '/{{ form-name }}/{{ form-name }}'
       - think: '{{ $randomNumber(15,20) }}' # stop for 20 seconds
-      - post:
-          url: '{{ form-service-host }}/form/v1/forms'
-          headers:
-            authorization: 'Bearer {{ token }}'
-          json:
-            definitionId: load-test-s-v1
-            data:
-              name: mock-test-name
-            submit: false
