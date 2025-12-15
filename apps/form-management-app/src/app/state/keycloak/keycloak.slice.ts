@@ -4,9 +4,23 @@ import { getAccessToken } from '../user/user.slice';
 import { AppState } from '../store';
 export const KEYCLOAK_FEATURE_KEY = 'keycloak';
 
+type RoleItem = {
+  id: string;
+  name: string;
+  description?: string;
+  composite: boolean;
+  clientRole: boolean;
+  containerId: string;
+};
+
+interface Clients {
+  id: string,
+  clientId:string,
+}
+
 export interface KeycloakState {
   keycloakRoles?: ServiceRoleConfig;
-  realmRoles: any[];
+  realmRoles: RoleItem[];
   loadingKeycloakRoles: boolean;
   loadingRealmRoles: boolean;
 }
@@ -19,7 +33,6 @@ export interface KeycloakClientRole {
 
 export interface ConfigServiceRole {
   roles?: ServiceRoles;
-
 }
 
 export type ServiceRoles = ServiceRole[];
@@ -43,12 +56,12 @@ function KeycloakRoleToServiceRole(kcRoles: KeycloakClientRole[]): ServiceRole[]
 
 export const fetchKeycloakServiceRoles = createAsyncThunk(
   'keycloak/fetchKeycloakServiceRoles',
-  async (_, { getState, dispatch, rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
     try {
       const { config, user } = getState() as AppState;
 
       const token = await getAccessToken();
-    
+
       const keycloakurl = `${config?.environment?.access?.url}`;
 
       const defaultRealmClients = ['broker', 'realm-management', 'account'];
@@ -60,65 +73,45 @@ export const fetchKeycloakServiceRoles = createAsyncThunk(
         },
       });
 
-       
-
-      const keycloakRoles: Record<string, { roles: any }> = {};
+      const keycloakRoles: ServiceRoleConfig = {};
       const keycloakRoleIds: string[] = [];
       const keycloakRoleNames: string[] = [];
 
       data
-        .filter((c) => {
+        .filter((c: Clients) => {
+          console.log(JSON.stringify(c) + "<>cccccccc")
           return !defaultRealmClients.includes(c.clientId);
         })
-        .forEach((c) => {
+        .forEach((c: Clients) => {
+          console.log(JSON.stringify(c) + "<>ccccccxxxxxxxxxxcc")
           keycloakRoleNames.push(c.clientId);
           keycloakRoleIds.push(c.id);
           keycloakIdMap[c.clientId] = c.id;
         });
 
-      
-
-
-       console.time('transform roles x');
-
-
       const rolePromises = keycloakRoleIds.map((id) => {
         const url = `${keycloakurl}/auth/admin/realms/${user.tenant.realm}/clients/${id}/roles`;
-      
+
         return axios.get(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
       });
-        console.timeEnd('transform roles x');
+
 
       const roleResponses = await Promise.all(rolePromises);
 
-      console.time('transform roles');
-      console.log("Current time (ms):" + Date.now())
-
       roleResponses.forEach(async (response, index) => {
-      
         keycloakRoles[keycloakRoleNames[index]] = {
           roles: KeycloakRoleToServiceRole(response.data),
         };
       });
 
-      // for (let i = 0; i < roleResponses.length; i++) {
-      //   await new Promise(requestAnimationFrame);
-
-      //   keycloakRoles[keycloakRoleNames[i]] = {
-      //     roles: KeycloakRoleToServiceRole(roleResponses[i].data),
-      //   };
-      // }
-
-      console.timeEnd('transform roles');
-      console.log("Current time 2 (ms):" + Date.now())
-
+       console.log(JSON.stringify(keycloakRoles) + '<keycloakroales');
 
       return {
-          keycloak: keycloakRoles,
-          keycloakIdMap,
-        };
+        keycloak: keycloakRoles,
+        keycloakIdMap,
+      };
     } catch (err) {
       if (axios.isAxiosError(err)) {
         if (err.response?.status !== 400) {
@@ -134,51 +127,33 @@ export const fetchKeycloakServiceRoles = createAsyncThunk(
   }
 );
 
-export const fetchRoles = createAsyncThunk(
-  'keycloak/fetch-roles',
-  async (_, { getState, dispatch, rejectWithValue }) => {
+export const fetchRoles = createAsyncThunk('keycloak/fetch-roles', async (_, { getState, rejectWithValue }) => {
+  try {
+    const { config, user } = getState() as AppState;
 
-    try {
-      const { config, user } = getState() as AppState;
+    const token = await getAccessToken();
+    const keycloakurl = `${config?.environment?.access?.url}`;
 
-    
-  
-      const token = await getAccessToken();
-      const keycloakurl = `${config?.environment?.access?.url}`;
+    const { data } = await axios.get(`${keycloakurl}/auth/admin/realms/${user.tenant.realm}/roles`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-
-   
-      const { data } = await axios.get(
-        `${keycloakurl}/auth/admin/realms/${user.tenant.realm}/roles`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-         console.log("Current time 4 (ms):" + Date.now())
-
-
-      return data
-
-      
-    } catch (err) {
+    return data;
+  } catch (err) {
     if (axios.isAxiosError(err)) {
-        if (err.response?.status !== 400) {
-          return rejectWithValue({
-            status: err.response?.status,
-            message: err.response?.data?.errorMessage || err.message,
-          });
-        }
-      } else {
-        throw err;
+      if (err.response?.status !== 400) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
       }
+    } else {
+      throw err;
     }
   }
-);
-
-
+});
 
 const initialKeycloakState: KeycloakState = {
   keycloakRoles: {},
@@ -192,31 +167,28 @@ const accessSlice = createSlice({
   initialState: initialKeycloakState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(fetchKeycloakServiceRoles.fulfilled, (state, { payload }) => {
-      state.keycloakRoles = payload?.keycloak;
-      state.loadingKeycloakRoles = false;
-
-       console.log("Current time 3 (ms):" + Date.now())
-
-    })
-    .addCase(fetchRoles.fulfilled, (state, { payload }) => {
-      state.realmRoles = payload;
+    builder
+      .addCase(fetchKeycloakServiceRoles.fulfilled, (state, { payload }) => {
+        state.keycloakRoles = payload?.keycloak;
+        state.loadingKeycloakRoles = false;
+      })
+      .addCase(fetchRoles.fulfilled, (state, { payload }) => {
+        state.realmRoles = payload;
+        console.log(JSON.stringify(state.realmRoles) + "<--realmroles")
         state.loadingRealmRoles = false;
-
-               console.log("Current time 5 (ms):" + Date.now())
-    })
-    .addCase(fetchKeycloakServiceRoles.pending, (state, { payload }) => {
-      state.loadingKeycloakRoles = true;
-    })
-    .addCase(fetchKeycloakServiceRoles.rejected, (state, { payload }) => {
-      state.loadingKeycloakRoles = false;
-    })
-    .addCase(fetchRoles.pending, (state, { payload }) => {
-      state.loadingRealmRoles = true;
-    })
-    .addCase(fetchRoles.rejected, (state, { payload }) => {
-      state.loadingRealmRoles = false;
-    })
+      })
+      .addCase(fetchKeycloakServiceRoles.pending, (state, { payload }) => {
+        state.loadingKeycloakRoles = true;
+      })
+      .addCase(fetchKeycloakServiceRoles.rejected, (state, { payload }) => {
+        state.loadingKeycloakRoles = false;
+      })
+      .addCase(fetchRoles.pending, (state, { payload }) => {
+        state.loadingRealmRoles = true;
+      })
+      .addCase(fetchRoles.rejected, (state, { payload }) => {
+        state.loadingRealmRoles = false;
+      });
   },
 });
 

@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { AppState } from '../store';
 
 
-interface ClientElement {
+export interface ClientElement {
   roleNames: string[];
   clientId: string;
 }

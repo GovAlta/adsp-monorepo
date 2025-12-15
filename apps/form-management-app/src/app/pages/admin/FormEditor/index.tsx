@@ -98,12 +98,12 @@ const EditorWrapper = (): JSX.Element => {
     )
   );
 
-  useEffect(() => {
-    if (definition?.id) {
-      // dispatch(fetchKeycloakServiceRoles());
-      dispatch(fetchRoles());
-    }
-  }, [definition]); // eslint-disable-line react-hooks/exhaustive-deps
+  // useEffect(() => {
+  //   if (definition?.id) {
+  //     // dispatch(fetchKeycloakServiceRoles());
+  //     dispatch(fetchRoles());
+  //   }
+  // }, [definition]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     dispatch(getCorePdfTemplates());
@@ -326,7 +326,10 @@ const EditorWrapper = (): JSX.Element => {
 
             setTempDefinition(tempSchema);
           }}
-          fetchKeycloakServiceRoles={() => dispatch(fetchKeycloakServiceRoles())}
+          fetchKeycloakServiceRoles={() => {
+            dispatch(fetchKeycloakServiceRoles());
+                dispatch(fetchRoles());
+          }}
         />
       )}
     </div>

@@ -36,7 +36,7 @@ export const UIEditorContainer: React.FC<UiEditorContainerProps> = ({
 
   const { height } = useWindowDimensions();
 
-  const EditorHeight = height - 400;
+  const EditorHeight = height - 180;
 
   const isUseMiniMap = window.screen.availWidth >= 1920;
   interface EditorScrollEvent {

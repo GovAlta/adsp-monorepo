@@ -1,35 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useMemo, useCallback, useLayoutEffect, useRef } from 'react';
 import { GoACheckbox, GoATable } from '@abgov/react-components';
 import styles from './RoleTable.module.scss';
 import { useSelector } from 'react-redux';
 import { AppState } from '../state';
 import { v4 as uuidV4 } from 'uuid';
 
-
 export const REALM_ROLE_KEY = uuidV4();
-
-/**
- * A React component for creating roles table
- *
- * @param roles
- * A string array of role names
- * @param roleSelectFunc
- * callback function that new role is selected or deselected will update current state
- * @param checkedRoles
- *  A string array of selected role names
- * @param service
- * service name to use, for example : file-type or script
- * @param anonymousRead
- * boolean value to use for anonymous read
- * @param clientId
- * service account client id for example urn:ads:platform:status-app
- */
 
 export interface SelectedRoles {
   title: string;
   selectedRoles: string[];
   disabled?: boolean;
 }
+
 interface ClientRoleTableProps {
   roles: string[];
   roleSelectFunc: (roles: string[], type: string) => void;
@@ -41,98 +24,113 @@ interface ClientRoleTableProps {
   disabled?: boolean;
 }
 
-function capitalizeFirstLetter(string) {
+function capitalizeFirstLetter(string: string) {
   return string ? string.charAt(0).toUpperCase() + string.slice(1) : '';
 }
 
 export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
-  const { tenantName } = useSelector((state: AppState) => {
-    return {
-      tenantName: state.user.tenant.name,
-    };
-  });
+  const { tenantName } = useSelector((state: AppState) => ({
+    tenantName: state.user.tenant.name,
+  }));
 
   const [checkedRoles, setCheckedRoles] = useState(props.checkedRoles);
-  const service = props.service;
-  const nameColumnStyle = {
-    width: props?.nameColumnWidth ? `${props.nameColumnWidth}%` : '',
-  };
 
-  const getClientId = () => {
-    return props.clientId && props.clientId !== REALM_ROLE_KEY ? <div className={styles.paddingRem}>{props.clientId}</div> : tenantName;
-  };
+  const scrollPaneRef = useRef<HTMLDivElement | null>(null);
+
+  const nameColumnStyle = useMemo(
+    () => ({
+      width: props?.nameColumnWidth ? `${props.nameColumnWidth}%` : '',
+    }),
+    [props.nameColumnWidth]
+  );
+
+  const clientIdDisplay = useMemo(() => {
+    return props.clientId && props.clientId !== REALM_ROLE_KEY ? (
+      <div className={styles.paddingRem}>{props.clientId}</div>
+    ) : (
+      tenantName
+    );
+  }, [props.clientId, tenantName]);
+
+  const handleCheckboxChange = useCallback(
+    (checkedRole: SelectedRoles, compositeRole: string) => {
+      setCheckedRoles((prev) => {
+        const updated = prev.map((cr) =>
+          cr.title === checkedRole.title
+            ? {
+                ...cr,
+                selectedRoles: cr.selectedRoles.includes(compositeRole)
+                  ? cr.selectedRoles.filter((r) => r !== compositeRole)
+                  : [...cr.selectedRoles, compositeRole],
+              }
+            : cr
+        );
+
+        const updatedRole = updated.find((cr) => cr.title === checkedRole.title);
+        if (updatedRole) {
+          props.roleSelectFunc(updatedRole.selectedRoles, checkedRole.title);
+        }
+
+        return updated;
+      });
+
+      // Save scroll position
+      if (scrollPaneRef.current) {
+        const scrollTop = scrollPaneRef.current.scrollTop;
+        requestAnimationFrame(() => {
+          if (scrollPaneRef.current) scrollPaneRef.current.scrollTop = scrollTop;
+        });
+      }
+    },
+    [props.roleSelectFunc]
+  );
+
+  const tableBody = useMemo(() => {
+    return props.roles.map((role) => {
+      const compositeRole = props.clientId && props.clientId !== tenantName ? `${props.clientId}:${role}` : role;
+
+      return (
+        <tr key={`${props.service}-row-${role}`}>
+          <td className="role-name" style={{ overflowWrap: 'anywhere' }}>
+            {role}
+          </td>
+          {checkedRoles.map((checkedRole, index) => (
+            <td className="role" key={`${props.service}-${role}-checkbox-${index}`}>
+              <GoACheckbox
+                name={`${props.service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
+                checked={checkedRole.selectedRoles.includes(compositeRole)}
+                testId={`${props.service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
+                disabled={(props.anonymousRead && checkedRole.title === 'read') || checkedRole?.disabled}
+                ariaLabel={`${props.service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
+                onChange={() => handleCheckboxChange(checkedRole, compositeRole)}
+              />
+            </td>
+          ))}
+        </tr>
+      );
+    });
+  }, [props.roles, props.clientId, props.service, checkedRoles, handleCheckboxChange, props.anonymousRead, tenantName]);
 
   return (
     <>
-      <div className={styles.marginAdjustment}>{getClientId()}</div>
-      <GoATable width="100%">
-        <thead>
-          <tr>
-            {/* Cannot use class to change the width */}
-            <th id={`${service}-roles-${getClientId()}`} style={nameColumnStyle}>
-              Roles
-            </th>
-            {props.checkedRoles.map((role, index) => {
-              return (
-                <th key={`${role.title}-${index}`} id={`${role.title}-role-action-${getClientId()}`} className="role">
+      <div className={styles.marginAdjustment}>{clientIdDisplay}</div>
+      <div className="roles-scroll-pane" ref={scrollPaneRef}>
+        <GoATable width="100%">
+          <thead>
+            <tr>
+              <th id={`${props.service}-roles-${clientIdDisplay}`} style={nameColumnStyle}>
+                Roles
+              </th>
+              {checkedRoles.map((role, index) => (
+                <th key={`${role.title}-${index}`} id={`${role.title}-role-action-${clientIdDisplay}`} className="role">
                   <div>{capitalizeFirstLetter(role.title)}</div>
                 </th>
-              );
-            })}
-          </tr>
-        </thead>
-
-        <tbody>
-          {props.roles?.map((role): JSX.Element => {
-            const compositeRole = props.clientId && props.clientId !== tenantName ? `${props.clientId}:${role}` : role;
-
-            return (
-              <tr key={`${service}-row-${role}`}>
-                {/* Cannot use class to change the overflow-wrap */}
-                <td className="role-name" style={{ overflowWrap: 'anywhere' }}>
-                  {role}
-                </td>
-                {checkedRoles.map((checkedRole, index) => {
-                  return (
-                    <td className="role" key={`${service}-${role}-checkbox-${index}`}>
-                      <GoACheckbox
-                        name={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
-                        key={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
-                        checked={checkedRole.selectedRoles?.includes(compositeRole)}
-                        testId={`${service}-${checkedRole?.title}-role-checkbox-${compositeRole}`}
-                        disabled={
-                          (props.anonymousRead && checkedRole.title === 'read') || checkedRole?.disabled === true
-                        }
-                        ariaLabel={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
-                        onChange={() => {
-                          if (checkedRole.selectedRoles?.includes(compositeRole)) {
-                            const newRoles = checkedRole.selectedRoles.filter((readRole) => {
-                              return readRole !== compositeRole;
-                            });
-                            checkedRole.selectedRoles = newRoles;
-                            setCheckedRoles(checkedRoles);
-                            props.roleSelectFunc(newRoles, checkedRole.title);
-                          } else {
-                            const newRoles = [...checkedRole.selectedRoles, compositeRole];
-                            checkedRole.selectedRoles = newRoles;
-                            setCheckedRoles(checkedRoles);
-                            props.roleSelectFunc(newRoles, checkedRole.title);
-                          }
-                          const scrollPane = document.querySelector('.roles-scroll-pane');
-                          const scrollTop = scrollPane ? scrollPane.scrollTop : 0;
-                          setTimeout(() => {
-                            if (scrollPane) scrollPane.scrollTop = scrollTop;
-                          }, 0);
-                        }}
-                      />
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </GoATable>
+              ))}
+            </tr>
+          </thead>
+          <tbody>{tableBody}</tbody>
+        </GoATable>
+      </div>
     </>
   );
 };

@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import styles from './Editor.module.scss';
 import { JsonSchema } from '@jsonforms/core';
-
 
 import { GoAButtonGroup, GoACheckbox } from '@abgov/react-components';
 import { FormDefinition } from '../../../state';
 
 import { ClientRoleTable } from '../../../components/RoleTable';
+import { ClientElement } from '../../../state/keycloak/selectors';
 
 export interface UiEditorContainerProps {
   errors: Record<string, string | null>;
@@ -39,34 +39,47 @@ const types = [
   { type: 'clerkRoles', name: 'Clerk roles' },
   { type: 'assessorRoles', name: 'Assessor roles' },
 ];
+
 const applicantRoles = types[0];
 const clerkRoles = types[1];
+const assessorRoles = types[2];
 
 interface RoleContainerProps {
   definition: FormDefinition;
-  // eslint-disable-next-line
-  roles: string[];
+  roles: ClientElement[];
   updateEditorFormDefinition: (update: Partial<FormDefinition>) => void;
   fetchKeycloakServiceRoles: () => void;
 }
 
-const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdateRoles }: ClientRoleProps) => {
-  return (
-    <ClientRoleTable
-      roles={roleNames}
-      clientId={clientId}
-      anonymousRead={anonymousRead}
-      roleSelectFunc={onUpdateRoles}
-      nameColumnWidth={40}
-      service="FormService"
-      checkedRoles={[
-        { title: types[0].name, selectedRoles: configuration[types[0].type], disabled: anonymousRead },
-        { title: types[1].name, selectedRoles: configuration[types[1].type] },
-        { title: types[2].name, selectedRoles: configuration[types[2].type] },
-      ]}
-    />
-  );
-};
+const ClientRole = React.memo(
+  ({ roleNames, clientId, anonymousRead, configuration, onUpdateRoles }: ClientRoleProps) => {
+    // Memoize checkedRoles so it doesn't recreate each render
+    const checkedRoles = useMemo(
+      () => [
+        {
+          title: applicantRoles.name,
+          selectedRoles: configuration[applicantRoles.type] || [],
+          disabled: anonymousRead,
+        },
+        { title: clerkRoles.name, selectedRoles: configuration[clerkRoles.type] || [] },
+        { title: assessorRoles.name, selectedRoles: configuration[assessorRoles.type] || [] },
+      ],
+      [configuration, anonymousRead]
+    );
+
+    return (
+      <ClientRoleTable
+        roles={roleNames}
+        clientId={clientId}
+        anonymousRead={anonymousRead}
+        roleSelectFunc={onUpdateRoles}
+        nameColumnWidth={40}
+        service="FormService"
+        checkedRoles={checkedRoles}
+      />
+    );
+  }
+);
 
 export const RoleContainer: React.FC<RoleContainerProps> = ({
   definition,
@@ -76,28 +89,65 @@ export const RoleContainer: React.FC<RoleContainerProps> = ({
 }): JSX.Element => {
   const [showSelectedRoles, setShowSelectedRoles] = useState(false);
 
-  const setDefinition = (update: Partial<FormDefinition>) => updateEditorFormDefinition(update);
+  const setDefinition = useCallback(
+    (update: Partial<FormDefinition>) => {
+      updateEditorFormDefinition(update);
+    },
+    [updateEditorFormDefinition]
+  );
 
-  const getFilteredRoles = (
-    roleNames: string[],
-    clientId: string,
-    checkedRoles: Record<string, string[] | undefined>
-  ) => {
-    const allCheckedRoles = Object.values(checkedRoles).flat();
-    return showSelectedRoles
-      ? roleNames.filter((role) => {
-          const selectedRole = clientId ? `${clientId}:${role}` : role;
-          return allCheckedRoles.includes(selectedRole);
-        })
-      : roleNames;
-  };
+  // Memoize filtered roles per client
+  const getFilteredRoles = useCallback(
+    (roleNames: string[], clientId: string) => {
+      if (!definition) return [];
+      if (!showSelectedRoles) return roleNames;
+
+      const allCheckedRoles = [
+        ...(definition.applicantRoles || []),
+        ...(definition.clerkRoles || []),
+        ...(definition.assessorRoles || []),
+      ];
+
+      return roleNames.filter((role) => {
+        const selectedRole = clientId ? `${clientId}:${role}` : role;
+        return allCheckedRoles.includes(selectedRole);
+      });
+    },
+    [definition, showSelectedRoles]
+  );
+
+  // Stable handler for updating roles
+  const handleUpdateRoles = useCallback(
+    (roles: string[], type: string) => {
+      if (!definition) return;
+
+      if (type === applicantRoles.name) {
+        setDefinition({ applicantRoles: Array.from(new Set(roles)) });
+      } else if (type === clerkRoles.name) {
+        setDefinition({ clerkRoles: Array.from(new Set(roles)) });
+      } else if (type === assessorRoles.name) {
+        setDefinition({ assessorRoles: Array.from(new Set(roles)) });
+      }
+    },
+    [definition, setDefinition]
+  );
+
 
   useEffect(() => {
-    console.log('TRIGGERING FETCHKEYCLOAK');
-    if (definition) {
+    if (definition && roles.length <= 1) {
       fetchKeycloakServiceRoles();
     }
-  }, [definition]);
+  }, []);
+
+  // Memoize configuration object per render
+  const configuration = useMemo(
+    () => ({
+      applicantRoles: definition?.applicantRoles || [],
+      clerkRoles: definition?.clerkRoles || [],
+      assessorRoles: definition?.assessorRoles || [],
+    }),
+    [definition]
+  );
 
   return (
     <div className={styles.BorderBottom}>
@@ -114,45 +164,22 @@ export const RoleContainer: React.FC<RoleContainerProps> = ({
       <div className={styles.rolesTabBody} data-testid="roles-editor-body">
         <div className={styles.scrollPane}>
           {roles.map((e, key) => {
-            const rolesMap = getFilteredRoles(e.roleNames, e.clientId, {
-              applicantRoles: definition?.applicantRoles,
-              clerkRoles: definition?.clerkRoles,
-              assessorRoles: definition?.assessorRoles,
-            });
+            const rolesMap = getFilteredRoles(e.roleNames, e.clientId);
+            if (rolesMap.length === 0) return null;
+
             return (
-              rolesMap.length > 0 && (
-                <ClientRole
-                  roleNames={rolesMap}
-                  key={key}
-                  clientId={e.clientId}
-                  anonymousRead={definition.anonymousApply}
-                  configuration={{
-                    applicantRoles: definition.applicantRoles,
-                    clerkRoles: definition.clerkRoles,
-                    assessorRoles: definition.assessorRoles,
-                  }}
-                  // eslint-disable-next-line
-                  onUpdateRoles={(roles: any, type: any) => {
-                    if (type === applicantRoles.name) {
-                      setDefinition({
-                        applicantRoles: [...new Set(roles as string[])],
-                      });
-                    } else if (type === clerkRoles.name) {
-                      setDefinition({
-                        clerkRoles: [...new Set(roles as string[])],
-                      });
-                    } else {
-                      setDefinition({
-                        assessorRoles: [...new Set(roles as string[])],
-                      });
-                    }
-                  }}
-                />
-              )
+              <ClientRole
+                roleNames={rolesMap}
+                key={e.clientId || key}
+                clientId={e.clientId}
+                anonymousRead={definition?.anonymousApply || false}
+                configuration={configuration}
+                onUpdateRoles={handleUpdateRoles}
+              />
             );
           })}
         </div>
       </div>
     </div>
   );
-};;
+};
