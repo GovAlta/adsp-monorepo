@@ -107,7 +107,11 @@ const GenerateRows = (
       handleChange,
       data,
     };
-    return <Cell key={rowPath} {...props} count={count || 0} />;
+    return (
+      <ListWithDetailsReviewCellDiv>
+        <Cell key={rowPath} {...props} count={count || 0} />
+      </ListWithDetailsReviewCellDiv>
+    );
   }
 };
 

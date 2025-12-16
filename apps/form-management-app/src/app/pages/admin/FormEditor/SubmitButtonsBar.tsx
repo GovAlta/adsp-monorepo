@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styles from './Editor.module.scss';
 import { GoAButtonGroup, GoAButton } from '@abgov/react-components';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { SaveFormModal } from './saveModal';
 import type * as monacoNS from 'monaco-editor';
 import { FormDefinition } from '../../../state/types';
@@ -37,9 +37,10 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
 }) => {
   const [saveModal, setSaveModal] = useState({ visible: false });
   const navigate = useNavigate();
+  const { tenant } = useParams<{ tenant: string }>();
 
   const close = () => {
-    navigate('/');
+    navigate(`/${tenant}/forms`);
   };
 
   return (

@@ -3,37 +3,46 @@ name: Artillery performance tests
 on:
   workflow_dispatch:
     inputs:
-      CLIENT_ID:
-        description: CLIENT_ID
-        required: true
-      CLIENT_SECRET:
-        description: CLIENT_SECRET
-        required: true
       ENVIRONMENT:
         type: choice
         description: Choose environment you want to test
         options:
           - dev
           - uat
+      SERVICE_NAME:
+        type: choice
+        description: Choose environment you want to test
+        options:
+          - event-service
+          - status-service
+          - form-app
+          - all
+      CLIENT_SECRET:
+        description: Keycloak credential for the artillery-cli client in the testing environment
+      USER_SECRET:
+        description: User (artillery-tester) secret in the keycloak load test realm
 env:
   NODE_OPTIONS: --max-old-space-size=16384
+  ARTILLERY_CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
+  ARTILLERY_ENV: ${{ inputs.ENVIRONMENT }}
+  ARTILLERY_USER_SECRET: ${{ inputs.USER_SECRET }}
 
 jobs:
   artillery-event:
     runs-on: ubuntu-latest
     container: artilleryio/artillery:latest
+    if: ${{ inputs.SERVICE_NAME == 'all' || inputs.SERVICE_NAME == 'event-service' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Make reports directory
         run: mkdir reports
-
       - name: Execute load tests event service
-        run: /home/node/artillery/bin/run run tests/events-service/load.yml --environment dev --output reports/event-report.json
+        run: /home/node/artillery/bin/run run tests/event-service/load.yml --output reports/event-service-report.json
         env:
           CLIENT_ID: ${{ inputs.CLIENT_ID }}
           CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
+          ARTILLERY_ENV: ${{ inputs.ENVIRONMENT }}
 
       - name: Generate HTML report event service
         run: /home/node/artillery/bin/run report --output reports/event-report.html reports/event-report.json
@@ -59,6 +68,7 @@ jobs:
 
   artillery-status:
     runs-on: ubuntu-latest
+    if: ${{ inputs.SERVICE_NAME == 'all' || inputs.SERVICE_NAME == 'status-service' }}
     container: artilleryio/artillery:latest
     steps:
       - name: Checkout repository
@@ -85,14 +95,11 @@ jobs:
   artillery-form-app:
     runs-on: ubuntu-latest
     container: artilleryio/artillery:latest
+    if: ${{ inputs.SERVICE_NAME == 'all' || inputs.SERVICE_NAME == 'form-app' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Make reports directory
         run: mkdir reports
       - name: Execute load tests form app
-        run: /home/node/artillery/bin/run run tests/form-app/load.yml --output reports/form-app-report.json
-        env:
-          CLIENT_ID: ${{ inputs.CLIENT_ID }}
-          CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
-          ARTILLERY_ENV: ${{ inputs.ENVIRONMENT }}
+        run: /home/node/artillery/bin/run run tests/form-app/load.yml --environment ${{ inputs.ENVIRONMENT }} --output reports/form-app-report.json

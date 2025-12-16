@@ -1,35 +1,35 @@
 config:
   environments:
     dev:
-      target: "https://form-service.adsp-dev.gov.ab.ca"
+      target: 'https://form-service.adsp-dev.gov.ab.ca'
     uat:
-      target: "https://form-service.adsp-uat.alberta.ca"
+      target: 'https://form-service.adsp-uat.alberta.ca'
   defaults:
     headers:
-      Content-Type: "application/json"
-      Accept: "application/json"
-  processor: "./support.mjs"
+      Content-Type: 'application/json'
+      Accept: 'application/json'
+  processor: './support.mjs'
   payload:
-    - path: "../artillery.{{ $environment }}.csv"
+    - path: '../artillery.{{ $environment }}.csv'
       skipHeader: true
       fields:
-        - "keycloak_url"
-        - "tenant_realm_id"
-        - "client_id"
-        - "client_secret"
-        - "username"
-        - "password"
-        - "user_id"
-    - path: "./definitions.csv"
+        - 'keycloak_url'
+        - 'tenant_realm_id'
+        - 'client_id'
+        - 'client_secret'
+        - 'username'
+        - 'password'
+        - 'user_id'
+    - path: './definitions.csv'
       skipHeader: true
       fields:
-        - "definition_id"
-    - path: "./applicants.csv"
+        - 'definition_id'
+    - path: './applicants.csv'
       skipHeader: true
       fields:
-        - "first_name"
-        - "last_name"
-        - "email"
+        - 'first_name'
+        - 'last_name'
+        - 'email'
   phases:
     - name: warm up
       duration: 60
@@ -43,118 +43,118 @@ scenarios:
     weight: 2
     flow:
       - post:
-          url: "{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token"
+          url: '{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token'
           headers:
-            Content-Type: "application/x-www-form-urlencoded"
-            Accept: "application/json"
+            Content-Type: 'application/x-www-form-urlencoded'
+            Accept: 'application/json'
           form:
             {
-              grant_type: "password",
-              client_id: "{{ client_id }}",
-              client_secret: "{{ client_secret }}",
-              username: "{{ username }}",
-              password: "{{ password }}",
-              scopes: "openid",
+              grant_type: 'password',
+              client_id: '{{ client_id }}',
+              client_secret: '{{ client_secret }}',
+              username: '{{ username }}',
+              password: '{{ password }}',
+              scopes: 'openid',
             }
           capture:
-            - json: "$.access_token"
+            - json: '$.access_token'
               as: token
       - post:
-          url: "/form/v1/forms"
+          url: '/form/v1/forms'
           headers:
-            authorization: "Bearer {{ token }}"
+            authorization: 'Bearer {{ token }}'
           json:
-            definitionId: "{{ definition_id }}"
+            definitionId: '{{ definition_id }}'
             applicant:
-              addressAs: "{{ first_name }} {{ last_name }}"
-              userId: "{{ email }}"
+              addressAs: '{{ first_name }} {{ last_name }}'
+              userId: '{{ email }}'
               channels:
                 - channel: email
-                  address: "{{ email }}"
+                  address: '{{ email }}'
           capture:
-            - json: "$.id"
+            - json: '$.id'
               as: form_id
-      - log: "Created form (Id: {{ form_id }})."
+      - log: 'Created form (Id: {{ form_id }}).'
   - name: Update form draft
     weight: 6
     flow:
       - post:
-          url: "{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token"
+          url: '{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token'
           headers:
-            Content-Type: "application/x-www-form-urlencoded"
-            Accept: "application/json"
+            Content-Type: 'application/x-www-form-urlencoded'
+            Accept: 'application/json'
           form:
             {
-              grant_type: "password",
-              client_id: "{{ client_id }}",
-              client_secret: "{{ client_secret }}",
-              username: "{{ username }}",
-              password: "{{ password }}",
-              scopes: "openid",
+              grant_type: 'password',
+              client_id: '{{ client_id }}',
+              client_secret: '{{ client_secret }}',
+              username: '{{ username }}',
+              password: '{{ password }}',
+              scopes: 'openid',
             }
           capture:
-            - json: "$.access_token"
+            - json: '$.access_token'
               as: token
       - get:
-          url: "/form/v1/forms"
+          url: '/form/v1/forms'
           qs:
             criteria: '{"createdByIdEquals":"{{ user_id }}","definitionIdEquals":"{{ definition_id }}"}'
           headers:
-            authorization: "Bearer {{ token }}"
+            authorization: 'Bearer {{ token }}'
           capture:
-            - json: "$.results"
+            - json: '$.results'
               as: form_results
-      - function: "randomForm"
-      - log: "Selected form (Id: {{ form_id }}) for updates."
+      - function: 'randomForm'
+      - log: 'Selected form (Id: {{ form_id }}) for updates.'
       - loop:
           - think: 2
           - put:
-              url: "/form/v1/forms/{{ form_id }}/data"
+              url: '/form/v1/forms/{{ form_id }}/data'
               headers:
-                authorization: "Bearer {{ token }}"
+                authorization: 'Bearer {{ token }}'
               json:
                 data:
                   id1: true
                   id3: true
                   hasPartner: true
                   name:
-                    firstName: "{{ first_name }}"
-                    secondName: "{{ last_name }}"
+                    firstName: '{{ first_name }}'
+                    secondName: '{{ last_name }}'
         count: 5
   - name: Submit form
     weight: 2
     flow:
       - post:
-          url: "{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token"
+          url: '{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token'
           headers:
-            Content-Type: "application/x-www-form-urlencoded"
-            Accept: "application/json"
+            Content-Type: 'application/x-www-form-urlencoded'
+            Accept: 'application/json'
           form:
             {
-              grant_type: "password",
-              client_id: "{{ client_id }}",
-              client_secret: "{{ client_secret }}",
-              username: "{{ username }}",
-              password: "{{ password }}",
-              scopes: "openid",
+              grant_type: 'password',
+              client_id: '{{ client_id }}',
+              client_secret: '{{ client_secret }}',
+              username: '{{ username }}',
+              password: '{{ password }}',
+              scopes: 'openid',
             }
           capture:
-            - json: "$.access_token"
+            - json: '$.access_token'
               as: token
       - get:
-          url: "/form/v1/forms"
+          url: '/form/v1/forms'
           qs:
             criteria: '{"createdByIdEquals":"{{ user_id }}","definitionIdEquals":"{{ definition_id }}"}'
           headers:
-            authorization: "Bearer {{ token }}"
+            authorization: 'Bearer {{ token }}'
           capture:
-            - json: "$.results"
+            - json: '$.results'
               as: form_results
-      - function: "randomForm"
-      - log: "Selected form (Id: {{ form_id }}) for submission."
+      - function: 'randomForm'
+      - log: 'Selected form (Id: {{ form_id }}) for submission.'
       - post:
-          url: "/form/v1/forms/{{ form_id }}"
+          url: '/form/v1/forms/{{ form_id }}'
           headers:
-            authorization: "Bearer {{ token }}"
+            authorization: 'Bearer {{ token }}'
           json:
-            operation: "submit"
+            operation: 'submit'

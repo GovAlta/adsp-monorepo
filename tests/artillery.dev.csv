@@ -1,2 +1,2 @@
-keycloak_url,realm_id,client_id,client_secret,username,password
-https://access.adsp-dev.gov.ab.ca,1b0dbf9a-58be-4604-b995-18ff15dcdfd5,"","",{ username },{ password }
+keycloak_url,realm_id,tenant_name,client_id,username
+https://access.adsp-dev.gov.ab.ca,b6aff762-20f8-4c5d-88d3-c38ae16d1937,autotest,artillery-cli,artillery-tester
