@@ -39,7 +39,7 @@ before:
         form:
           {
             grant_type: 'client_credentials',
-            client_id: '{{ $processEnvironment.ARTILLERY_CLIENT_SECRET }}',
+            client_id: '{{ client_id }}',
             client_secret: '{{ $processEnvironment.ARTILLERY_CLIENT_SECRET }}',
           }
         capture:
