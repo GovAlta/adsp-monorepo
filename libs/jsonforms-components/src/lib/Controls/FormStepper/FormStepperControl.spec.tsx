@@ -302,7 +302,7 @@ describe('Form Stepper Control', () => {
 
     const step1 = baseElement.querySelector('goa-form-step[text="Name"]');
     expect(step1).toBeInTheDocument();
-    expect(step1!.getAttribute('status')).toBe(null);
+    expect(step1!.getAttribute('status')).toBe('incomplete');
   });
 
   it('will recognize a complete status', () => {

@@ -1,5 +1,18 @@
-import { isJson, getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage, getIncompletePaths } from './util';
-import Ajv from 'ajv';
+import { isJson } from './util';
+import { buildConditionalDeps } from '../util/conditionalDeps';
+import {
+  getStepStatus,
+  getIncompletePaths,
+  normalizeSchemaPath,
+  normalizeInstancePath,
+  getErrorsInScopes,
+  subErrorInParent,
+  hasDataInScopes,
+  saveIsVisitFromLocalStorage,
+  getIsVisitFromLocalStorage,
+} from './util';
+import type { ErrorObject } from 'ajv';
+
 const localStorageMock = {
   store: {},
   setItem(key, value) {
@@ -50,135 +63,228 @@ describe('Test the stepper utilities', () => {
     saveIsVisitFromLocalStorage([true]);
   });
 });
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+jest.mock('../util/conditionalDeps', () => ({
+  buildConditionalDeps: jest.fn(),
+}));
+
+type AjvError = ErrorObject & { dataPath?: string };
+
+function requiredErr(instancePath: string, missingProperty: string, schemaPath = '#/required'): AjvError {
+  return {
+    keyword: 'required',
+    instancePath,
+    schemaPath,
+    params: { missingProperty },
+    message: `must have required property '${missingProperty}'`,
+  } as any;
+}
+
+function errorMessageErr(instancePath: string, schemaPath: string, message: string): AjvError {
+  return {
+    keyword: 'errorMessage',
+    instancePath,
+    schemaPath,
+    params: {},
+    message,
+  } as any;
+}
+
+describe('normalizeSchemaPath', () => {
+  it('converts #/properties/a/properties/b to a.b', () => {
+    expect(normalizeSchemaPath('#/properties/a/properties/b')).toBe('a.b');
+  });
+
+  it('returns empty string for non #/ paths', () => {
+    expect(normalizeSchemaPath('a/b')).toBe('');
+  });
+
+  it('keeps non-properties segments', () => {
+    expect(normalizeSchemaPath('#/allOf/0/then/required')).toBe('allOf.0.then.required');
+  });
+});
+
+describe('normalizeInstancePath', () => {
+  it('converts /a/b/c to a.b.c', () => {
+    expect(normalizeInstancePath('/a/b/c')).toBe('a.b.c');
+  });
+
+  it('drops numeric indices: /roadmap/0/when => roadmap.when', () => {
+    expect(normalizeInstancePath('/roadmap/0/when')).toBe('roadmap.when');
+  });
+
+  it('empty input => empty', () => {
+    expect(normalizeInstancePath('')).toBe('');
+  });
+});
+
 describe('getIncompletePaths', () => {
-  const ajv = new Ajv();
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  const schema: any = {
-    type: 'object',
-    required: ['firstName', 'address'],
-    properties: {
-      firstName: {
-        type: 'string',
-      },
-      lastName: {
-        type: 'string',
-      },
-      address: {
-        type: 'object',
-        required: ['street'],
-        properties: {
-          street: {
-            type: 'string',
-            minLength: 5,
-          },
-          city: {
-            type: 'string',
-          },
-        },
-      },
-      bio: {
-        type: 'string',
-        minLength: 10,
-      },
-    },
-  };
-
-  const scopes = ['#/properties/firstName', '#/properties/address/properties/street', '#/properties/bio'];
-
-  it('returns empty array when all required & minLength constraints are satisfied', () => {
-    const data = {
-      firstName: 'Alice',
-      address: {
-        street: '12345 Main',
-        city: 'Edmonton',
-      },
-      bio: 'I am more than ten chars',
-    };
-
-    const result = getIncompletePaths(ajv, schema, data, scopes);
-
-    expect(result).toEqual([]);
+  it('returns [] when no errors', () => {
+    expect(getIncompletePaths([], ['#/properties/a'])).toEqual([]);
+    expect(getIncompletePaths(null, ['#/properties/a'])).toEqual([]);
+    expect(getIncompletePaths(undefined, ['#/properties/a'])).toEqual([]);
   });
 
-  it('flags missing top-level required field', () => {
-    const data = {
-      address: {
-        street: '12345 Main',
-      },
-    };
+  it('matches required error to exact scope (nested)', () => {
+    const scopes = ['#/properties/applicantContactDetails/properties/firstName'];
+    const errors: AjvError[] = [requiredErr('/applicantContactDetails', 'firstName')];
 
-    const result = getIncompletePaths(ajv, schema, data, scopes);
-
-    // 预期：只标记 firstName
-    expect(result).toContain('firstName');
-    expect(result).not.toContain('address.street');
-    expect(result).not.toContain('bio');
+    expect(getIncompletePaths(errors, scopes)).toEqual(['applicantContactDetails.firstName']);
   });
 
-  it('flags nested required field with too-short value (minLength)', () => {
-    const data = {
-      firstName: 'Alice',
-      address: {
-        street: '123',
-      },
-    };
+  it('matches required error on parent object to child scope (parent missing)', () => {
+    const scopes = ['#/properties/applicantContactDetails/properties/firstName'];
+    const errors: AjvError[] = [requiredErr('', 'applicantContactDetails')];
 
-    const result = getIncompletePaths(ajv, schema, data, scopes);
-
-    expect(result).toContain('address.street');
-    expect(result).not.toContain('firstName');
+    // candidate = applicantContactDetails, scope startsWith "applicantContactDetails."
+    expect(getIncompletePaths(errors, scopes)).toEqual(['applicantContactDetails.firstName']);
   });
 
-  it('flags field that only violates minLength (not required)', () => {
-    const data = {
-      firstName: 'Alice',
-      address: {
-        street: '12345 Main',
-      },
-      bio: 'short',
-    };
+  it('matches non-required instancePath errors inside scope', () => {
+    const scopes = ['#/properties/whichOfThemApplies'];
+    const errors: AjvError[] = [
+      errorMessageErr(
+        '/whichOfThemApplies',
+        '#/properties/whichOfThemApplies/errorMessage',
+        'Choose all that apply is required'
+      ),
+    ];
 
-    const result = getIncompletePaths(ajv, schema, data, scopes);
+    expect(getIncompletePaths(errors, scopes)).toEqual(['whichOfThemApplies']);
+  });
+});
 
-    expect(result).toContain('bio');
+describe('getStepStatus (with mocked conditional deps)', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
   });
 
-  it('does not flag non-required field when missing and only minLength is defined', () => {
-    const data = {
-      firstName: 'Alice',
-      address: {
-        street: '12345 Main',
-      },
-    };
+  it('returns InProgress when incomplete fields exist in this step scopes', () => {
+    (buildConditionalDeps as jest.Mock).mockReturnValue(new Map());
 
-    const result = getIncompletePaths(ajv, schema, data, scopes);
+    const scopes = ['#/properties/whichOfThemApplies'];
+    const errors: AjvError[] = [
+      errorMessageErr('/whichOfThemApplies', '#/properties/whichOfThemApplies/errorMessage', 'required'),
+    ];
 
-    expect(result).not.toContain('bio');
+    const status = getStepStatus({ scopes, data: {}, errors, schema: {} });
+    expect(status).toBe('InProgress');
   });
 
-  it('ignores scopes that do not exist in the schema', () => {
-    const badScopes = ['#/properties/doesNotExist'];
+  it('returns Completed when no errors in step AND no controllers in step', () => {
+    (buildConditionalDeps as jest.Mock).mockReturnValue(new Map());
 
-    const data = {
-      firstName: 'Alice',
-    };
-
-    const result = getIncompletePaths(ajv, schema, data, badScopes);
-
-    expect(result).toEqual([]);
+    const scopes = ['#/properties/applicantContactDetails/properties/firstName'];
+    const status = getStepStatus({ scopes, data: {}, errors: [], schema: {} });
+    expect(status).toBe('Completed');
   });
 
-  it('combines multiple issues correctly', () => {
-    const data = {
-      address: {
-        street: '12',
-      },
-      bio: 'tiny',
-    };
+  it('returns InProgress when step contains a controller that triggers missing required in affected path', () => {
+    // controller: fillingApplicationOnbehalf
+    // affected: applicantContactDetails
+    (buildConditionalDeps as jest.Mock).mockReturnValue(
+      new Map<string, string[]>([['fillingApplicationOnbehalf', ['applicantContactDetails']]])
+    );
 
-    const result = getIncompletePaths(ajv, schema, data, scopes);
+    const scopes = ['#/properties/fillingApplicationOnbehalf'];
 
-    expect(result).toEqual(expect.arrayContaining(['firstName', 'address.street', 'bio']));
-    expect(result.length).toBe(3);
+    // error is outside this step scope, but is under affectedPaths => should make controller step InProgress
+    const errors: AjvError[] = [requiredErr('', 'applicantContactDetails', '#/allOf/0/then/required')];
+
+    const status = getStepStatus({ scopes, data: { fillingApplicationOnbehalf: 'No' }, errors, schema: {} });
+    expect(status).toBe('InProgress');
+  });
+
+  it('returns Completed when controller step has no affected-path errors', () => {
+    (buildConditionalDeps as jest.Mock).mockReturnValue(
+      new Map<string, string[]>([['fillingApplicationOnbehalf', ['applicantContactDetails']]])
+    );
+
+    const scopes = ['#/properties/fillingApplicationOnbehalf'];
+    const errors: AjvError[] = [
+      // unrelated error
+      errorMessageErr('/whichOfThemApplies', '#/properties/whichOfThemApplies/errorMessage', 'required'),
+    ];
+
+    const status = getStepStatus({ scopes, data: { fillingApplicationOnbehalf: 'No' }, errors, schema: {} });
+    expect(status).toBe('Completed');
+  });
+});
+
+describe('getErrorsInScopes', () => {
+  it('filters required error to matching scope path', () => {
+    const scopes = ['#/properties/applicantContactDetails/properties/firstName'];
+    const errors: AjvError[] = [requiredErr('/applicantContactDetails', 'firstName')];
+
+    const result = getErrorsInScopes(errors as any, scopes);
+    expect(result.length).toBe(1);
+    expect(result[0].keyword).toBe('required');
+  });
+
+  it('filters non-required error to matching scope path', () => {
+    const scopes = ['#/properties/whichOfThemApplies'];
+    const errors: AjvError[] = [
+      errorMessageErr('/whichOfThemApplies', '#/properties/whichOfThemApplies/errorMessage', 'required'),
+    ];
+
+    const result = getErrorsInScopes(errors as any, scopes);
+    expect(result.length).toBe(1);
+    expect(result[0].keyword).toBe('errorMessage');
+  });
+
+  it('returns [] if no scopes or errors', () => {
+    expect(getErrorsInScopes([], [])).toEqual([]);
+    expect(getErrorsInScopes(undefined, ['#/properties/a'])).toEqual([]);
+  });
+});
+
+describe('subErrorInParent', () => {
+  it('detects /roadmap/0 belongs to /roadmap', () => {
+    const err = { instancePath: '/roadmap/0', keyword: 'required', schemaPath: '#/required', params: {} } as any;
+    expect(subErrorInParent(err, ['/roadmap'])).toBe(true);
+  });
+
+  it('detects /roadmap/0/when belongs to /roadmap', () => {
+    const err = { instancePath: '/roadmap/0/when', keyword: 'required', schemaPath: '#/required', params: {} } as any;
+    expect(subErrorInParent(err, ['/roadmap'])).toBe(true);
+  });
+
+  it('returns false when not array-index pattern', () => {
+    const err = { instancePath: '/roadmap/when', keyword: 'required', schemaPath: '#/required', params: {} } as any;
+    expect(subErrorInParent(err, ['/roadmap'])).toBe(false);
+  });
+});
+
+describe('hasDataInScopes', () => {
+  it('returns true if any scope has data', () => {
+    const data = { applicantContactDetails: { firstName: 'A' } };
+    const scopes = ['#/properties/applicantContactDetails/properties/firstName'];
+    expect(hasDataInScopes(data as any, scopes)).toBe(true);
+  });
+
+  it('returns false if all scoped data undefined', () => {
+    const data = {};
+    const scopes = ['#/properties/applicantContactDetails/properties/firstName'];
+    expect(hasDataInScopes(data as any, scopes)).toBe(false);
+  });
+});
+
+describe('localStorage helpers', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('saveIsVisitFromLocalStorage + getIsVisitFromLocalStorage roundtrip', () => {
+    const val = [true, false, true];
+    saveIsVisitFromLocalStorage(val);
+
+    const restored = getIsVisitFromLocalStorage();
+    expect(restored).toEqual(val);
+  });
+
+  it('getIsVisitFromLocalStorage returns undefined if missing or invalid', () => {
+    const restored = getIsVisitFromLocalStorage();
+    expect(restored).toBeUndefined();
   });
 });

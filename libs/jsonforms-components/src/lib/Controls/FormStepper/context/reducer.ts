@@ -2,7 +2,7 @@ import { StepperContextDataType } from './types';
 import { ErrorObject } from 'ajv';
 import { Dispatch } from 'react';
 import Ajv from 'ajv';
-import { getIncompletePaths, getErrorsInScopes } from './util';
+import { getStepStatus } from './util';
 
 export type JsonFormStepperDispatch = Dispatch<StepperAction>;
 
@@ -78,32 +78,45 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
 
     case 'update/category': {
       const { id, ajv, errors = [], schema, data } = action.payload;
-      if (id >= categories.length) return state;
 
-      try {
-        ajv.validate(schema, data);
-      } catch (err) {
-        console.warn('AJV validation error:', err);
+      ajv.validate(schema, data);
+
+      let matched = false;
+
+      const newCategories = state.categories.map((cat) => {
+        // ✅ compare against cat.id, not the index
+        if (cat.id !== id) {
+          return cat;
+        }
+
+        matched = true;
+
+        const status = getStepStatus({
+          scopes: cat.scopes,
+          data,
+          errors: ajv.errors ?? [],
+          schema,
+        });
+
+        return {
+          ...cat,
+          isCompleted: status === 'Completed',
+          isValid: status === 'Completed',
+          isVisited: true,
+          status,
+        };
+      });
+
+      if (!matched) {
+        console.warn(
+          '[stepper] update/category: no category matched id =',
+          id,
+          'categories:',
+          state.categories.map((c) => c.id)
+        );
       }
 
-      const incompletePaths = getIncompletePaths(ajv, schema, data, categories[id]?.scopes || []);
-      const errorsInCategory = getErrorsInScopes(errors, categories[id]?.scopes || []);
-
-      const newCategories = categories.map((cat, idx) =>
-        idx === id
-          ? {
-              ...cat,
-              isCompleted: incompletePaths.length === 0,
-              isValid: errorsInCategory.length === 0,
-              isVisited: true,
-            }
-          : cat
-      );
-
-      return {
-        ...state,
-        categories: newCategories,
-      };
+      return { ...state, categories: newCategories };
     }
 
     case 'validate/form': {
