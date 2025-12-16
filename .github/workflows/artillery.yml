@@ -40,7 +40,7 @@ jobs:
       - name: Execute load tests event service
         run: /home/node/artillery/bin/run run tests/event-service/load.yml --environment ${{ inputs.ENVIRONMENT }} --output reports/event-service-report.json
       - name: Generate HTML report event service
-        run: /home/node/artillery/bin/run report --output reports/event-report.html reports/event-report.json
+        run: /home/node/artillery/bin/run report --output reports/events-report.html reports/event-report.json
 
       - name: Archive tests reports
         uses: actions/upload-artifact@v4
