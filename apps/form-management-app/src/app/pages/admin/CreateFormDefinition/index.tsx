@@ -1,17 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   GoATextArea,
   GoAInput,
-  GoAButtonGroup,
   GoAFormItem,
   GoAButton,
   GoACircularProgress,
   GoADropdown,
   GoADropdownItem,
-  GoAIconButton,
-  GoATooltip,
   GoAFilterChip,
 } from '@abgov/react-components';
 
@@ -87,6 +84,8 @@ const CreateFormDefinition = (): JSX.Element => {
   const [newAct, setNewAct] = useState<string>('');
   const [actError, setActError] = useState<string | null>(null);
 
+  const firstRender = useRef(true);
+
   const definitionIds = definitions.map((d) => d.name);
   const registeredIds = definitions.map((d) => d.registeredId).filter((id): id is string => id != null && id !== '');
 
@@ -104,9 +103,20 @@ const CreateFormDefinition = (): JSX.Element => {
     .build();
 
   useEffect(() => {
-    dispatch(getPrograms());
-    dispatch(getMinistries());
-  }, [dispatch]);
+    if (firstRender.current) {
+      firstRender.current = false;
+      if (programs.length > 0 && ministries.length > 0) {
+        return;
+      }
+    }
+
+    if (programs.length === 0) {
+      dispatch(getPrograms());
+    }
+    if (ministries.length === 0) {
+      dispatch(getMinistries());
+    }
+  }, [dispatch, programs.length, ministries.length]);
 
   // Auto-populate form template URL for new definitions
   useEffect(() => {
@@ -304,76 +314,42 @@ const CreateFormDefinition = (): JSX.Element => {
         </div>
 
         <div className={styles.formRow}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ flex: 1 }}>
-              <GoAFormItem label="Ministry (optional)">
-                <GoADropdown
-                  name="ministry"
-                  value={definition?.ministry || ''}
-                  onChange={(_, v) => {
-                    const value = Array.isArray(v) ? v[0] ?? '' : v;
-                    setDefinition({ ...definition, ministry: value || undefined });
-                  }}
-                  width="100%"
-                  placeholder="Select a ministry"
-                >
-                  <GoADropdownItem value="" label="Select a ministry" />
-                  {ministries.map((m) => (
-                    <GoADropdownItem key={m} value={m} label={m} />
-                  ))}
-                </GoADropdown>
-              </GoAFormItem>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                gap: '0.4rem',
-                paddingLeft: '0.5rem',
-                marginTop: '15px',
+          <GoAFormItem label="Ministry (optional)">
+            <GoADropdown
+              name="ministry"
+              value={definition?.ministry || ''}
+              onChange={(_, v) => {
+                const value = Array.isArray(v) ? v[0] ?? '' : v;
+                setDefinition({ ...definition, ministry: value || undefined });
               }}
+              width="100%"
+              placeholder="Select a ministry"
             >
-              <GoATooltip content="Edit ministries" position="top">
-                <GoAIconButton variant="color" size="medium" icon="pencil" onClick={() => {}} />
-              </GoATooltip>
-            </div>
-          </div>
+              <GoADropdownItem value="" label="Select a ministry" />
+              {ministries.map((m) => (
+                <GoADropdownItem key={m} value={m} label={m} />
+              ))}
+            </GoADropdown>
+          </GoAFormItem>
         </div>
 
         <div className={styles.formRow}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ flex: 1 }}>
-              <GoAFormItem label="Program (optional)">
-                <GoADropdown
-                  name="program"
-                  value={definition?.programName || ''}
-                  onChange={(_, v: string | string[]) => {
-                    const value = Array.isArray(v) ? (v[0] as string) : v;
-                    setDefinition({ ...definition, programName: value || undefined });
-                  }}
-                  width="100%"
-                >
-                  <GoADropdownItem value="" label="--Select--" />
-                  {programs.map((p) => (
-                    <GoADropdownItem key={p} value={p} label={p} />
-                  ))}
-                </GoADropdown>
-              </GoAFormItem>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                gap: '0.4rem',
-                paddingLeft: '0.5rem',
-                marginTop: '15px',
+          <GoAFormItem label="Program (optional)">
+            <GoADropdown
+              name="program"
+              value={definition?.programName || ''}
+              onChange={(_, v: string | string[]) => {
+                const value = Array.isArray(v) ? (v[0] as string) : v;
+                setDefinition({ ...definition, programName: value || undefined });
               }}
+              width="100%"
             >
-              <GoATooltip content="Edit programs" position="top">
-                <GoAIconButton variant="color" size="medium" icon="pencil" onClick={() => {}} />
-              </GoATooltip>
-            </div>
-          </div>
+              <GoADropdownItem value="" label="--Select--" />
+              {programs.map((p) => (
+                <GoADropdownItem key={p} value={p} label={p} />
+              ))}
+            </GoADropdown>
+          </GoAFormItem>
         </div>
 
         <div className={styles.formRow}>
@@ -410,7 +386,7 @@ const CreateFormDefinition = (): JSX.Element => {
 
         <div className={styles.formRow}>
           <GoAFormItem label="Acts of Legislation (optional)" error={actError ?? undefined}>
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
+            <div className={styles.actsSection}>
               <GoAInput
                 error={!!actError}
                 name="new-act-input"
@@ -427,17 +403,14 @@ const CreateFormDefinition = (): JSX.Element => {
               </GoAButton>
 
               {(definition.actsOfLegislation ?? []).length === 0 ? (
-                <div style={{ fontStyle: 'italic', color: '#666' }}>No Acts added.</div>
+                <div className={styles.noActs}>No Acts added.</div>
               ) : (
-                <div>
+                <div className={styles.actsChips}>
                   {(definition.actsOfLegislation ?? [])
                     .slice()
                     .sort((a, b) => a.localeCompare(b))
                     .map((act) => (
-                      <span
-                        key={act}
-                        style={{ display: 'inline-block', marginRight: '0.5rem', marginBottom: '0.5rem' }}
-                      >
+                      <span key={act} className={styles.actChip}>
                         <GoAFilterChip content={act} onClick={() => removeAct(act)} />
                       </span>
                     ))}
