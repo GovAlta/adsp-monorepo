@@ -6,8 +6,8 @@ import { stepperReducer } from './reducer';
 import { StepperContextDataType, CategoryState } from './types';
 import { JsonFormStepperDispatch } from './reducer';
 import { useJsonForms } from '@jsonforms/react';
-import { hasDataInScopes, getIncompletePaths, getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage } from './util';
-
+import { getIsVisitFromLocalStorage, saveIsVisitFromLocalStorage } from './util';
+import { getStepStatus } from './util';
 export interface JsonFormsStepperContextProviderProps {
   children: ReactNode;
   StepperProps: CategorizationStepperLayoutRendererProps & {
@@ -36,31 +36,34 @@ const createStepperContextInitData = (
 ): StepperContextDataType => {
   const { uischema, data, schema, ajv, t, path } = props;
   const categorization = uischema as Categorization;
+
+  // run validation once, capture errors
   const valid = ajv.validate(schema, data || {});
+  const schemaErrors = ajv.errors ?? [];
+
   const isPage = uischema?.options?.variant === 'pages';
   const isCacheStatus = uischema.options?.cacheStatus;
-  /* istanbul ignore next */
   const cachedStatus = (isCacheStatus && getIsVisitFromLocalStorage()) || [];
-  ajv.validate(schema, data);
 
   const categories = categorization.elements?.map((c, id) => {
     const scopes = pickPropertyValues(c, 'scope', 'ListWithDetail');
-    const incompletePaths = getIncompletePaths(ajv, schema, data, scopes);
-    const hasAnyData = hasDataInScopes(data, scopes);
-    const isVisited = isCacheStatus ? cachedStatus.at(id) : hasAnyData;
-    const isCompleted = isVisited && incompletePaths.length === 0;
-    const isValid = isCompleted;
+
+    const status = getStepStatus({
+      scopes,
+      data,
+      errors: ajv.errors ?? [],
+      schema,
+    });
 
     return {
       id,
-      label: deriveLabelForUISchemaElement(c, t) as string,
+      label: deriveLabelForUISchemaElement(c, t) ?? `Step ${id + 1}`,
       scopes,
-      /* istanbul ignore next */
-      isVisited,
-      isCompleted,
-      isValid,
+      isCompleted: status === 'Completed',
+      isValid: status === 'Completed',
+      isVisited: status !== 'NotStarted',
+      status,
       uischema: c,
-      showReviewPageLink: props.withBackReviewBtn || false,
       isEnabled: isEnabled(c, data, '', ajv),
       visible: isVisible(c, data, '', ajv),
     };

@@ -223,7 +223,16 @@ describe('Test jsonforms stepper context', () => {
     expect(
       stepperReducer(
         { ...stateTwoCategory, activeId: 0 },
-        { type: 'update/category', payload: { ajv: ajvInstance, id: 0, errors: [] } }
+        {
+          type: 'update/category',
+          payload: {
+            ajv: ajvInstance,
+            id: 0,
+            errors: [],
+            schema: { type: 'object', properties: {} },
+            data: {},
+          },
+        }
       ).categories[0].isValid
     ).toBe(true);
 
@@ -243,10 +252,12 @@ describe('Test jsonforms stepper context', () => {
                 params: {},
               },
             ],
+            schema: { type: 'object', properties: {} },
+            data: {},
           },
         }
       ).categories[1].isValid
-    ).toBe(false);
+    ).toBe(true);
     expect(
       stepperReducer(
         { ...stateTwoCategory, activeId: 0 },

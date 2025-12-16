@@ -37,21 +37,37 @@ function mergeOrphanSections(sections: SectionMap[]): SectionMap[] {
 
 const shouldShow = (cat: CategoryState) => cat?.uischema?.options?.showInTaskList !== false;
 
+const isInTaskList = (cat: CategoryState) => cat?.uischema?.options?.showInTaskList !== false;
+
 function updateCompletion(group: CategoryState[], index: number): CategoryState {
   const category = group[index];
-  if (!shouldShow(category)) return category;
+
+  if (!isInTaskList(category)) return category;
 
   let endIndex = index;
-  while (endIndex + 1 < group.length && !shouldShow(group[endIndex + 1])) {
+  while (endIndex + 1 < group.length && !isInTaskList(group[endIndex + 1])) {
     endIndex++;
   }
 
-  const relevant = group.slice(index, endIndex + 1); // current + subsequent hidden
-  const newIsCompleted = relevant.every((cat) => cat.isCompleted);
+  const relevant = group.slice(index, endIndex + 1);
 
-  if (category.isCompleted === newIsCompleted) return category;
+  // A task is "completed" iff:
+  // - the main row itself isCompleted, AND
+  // - every detail page that is currently visible is also completed.
 
-  return { ...category, isCompleted: newIsCompleted };
+  const newIsCompleted = category.isCompleted && relevant.every((cat) => !cat.visible || cat.isCompleted);
+
+  // If nothing changed, keep the same reference
+  if (category.isCompleted === newIsCompleted) {
+    return category;
+  }
+
+  // Otherwise, update the flag (and optionally keep status in sync)
+  return {
+    ...category,
+    isCompleted: newIsCompleted,
+    isValid: newIsCompleted ? category.isValid : false,
+  };
 }
 
 export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subtitle, isValid, hideSummary }) => {
