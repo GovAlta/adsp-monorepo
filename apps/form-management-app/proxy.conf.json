@@ -1,8 +1,1 @@
-[
-  {
-    "context": ["/config/*"],
-    "target": "https://form.adsp-dev.gov.ab.ca/config/config.json",
-    "secure": true,
-    "changeOrigin": true
-  }
-]
+[]

@@ -22,14 +22,19 @@ export interface ConfigState {
 }
 
 export const initializeConfig = createAsyncThunk('config/initialize', async () => {
-  let environment = envStatic;
+  let environment = null;
   try {
     const { data: envConfig } = await axios.get<Environment>('https://form.adsp-dev.gov.ab.ca/config/config.json');
     environment = envConfig;
 
     console.log('Loaded environment configuration', environment);
-  } catch (error) {
-    // Use the static imported environment if config.json not available.
+  } catch (e) {
+    console.log('Error in loading /config/config.json');
+  } finally {
+    console.warn('Cannot fetch data from /config/config.json. Start to use the development config.');
+    if (environment === null) {
+      environment = envStatic;
+    }
   }
 
   // Initialize state with environment and ADSP directory of services.

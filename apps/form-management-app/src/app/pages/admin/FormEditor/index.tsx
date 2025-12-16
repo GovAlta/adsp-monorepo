@@ -290,7 +290,7 @@ const EditorWrapper = (): JSX.Element => {
     elements: [],
   };
 
-  const roles = useSelector(rolesSelector) as any[];
+  const roles = useSelector(rolesSelector);
 
   return (
     <div className={styles['form-template-editor-container']}>

@@ -5,8 +5,27 @@
 
 .actions {
   text-align: right;
-  display: flex;
   gap: 0.5rem;
-  justify-content: flex-end;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.container {
+  display: flex;
+  gap: var(--goa-space-m);
+}
+
+.filters {
+  width: 300px;
+  flex-shrink: 0;
+  padding-top: var(--goa-space-xl);
+}
+
+.tableContainer {
+  flex: 1;
 }
 

@@ -79,11 +79,9 @@ export const fetchKeycloakServiceRoles = createAsyncThunk(
 
       data
         .filter((c: Clients) => {
-          console.log(JSON.stringify(c) + "<>cccccccc")
           return !defaultRealmClients.includes(c.clientId);
         })
         .forEach((c: Clients) => {
-          console.log(JSON.stringify(c) + "<>ccccccxxxxxxxxxxcc")
           keycloakRoleNames.push(c.clientId);
           keycloakRoleIds.push(c.id);
           keycloakIdMap[c.clientId] = c.id;
@@ -105,8 +103,6 @@ export const fetchKeycloakServiceRoles = createAsyncThunk(
           roles: KeycloakRoleToServiceRole(response.data),
         };
       });
-
-       console.log(JSON.stringify(keycloakRoles) + '<keycloakroales');
 
       return {
         keycloak: keycloakRoles,
@@ -174,7 +170,6 @@ const accessSlice = createSlice({
       })
       .addCase(fetchRoles.fulfilled, (state, { payload }) => {
         state.realmRoles = payload;
-        console.log(JSON.stringify(state.realmRoles) + "<--realmroles")
         state.loadingRealmRoles = false;
       })
       .addCase(fetchKeycloakServiceRoles.pending, (state, { payload }) => {

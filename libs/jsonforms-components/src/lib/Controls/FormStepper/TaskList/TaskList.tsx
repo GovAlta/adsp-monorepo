@@ -35,16 +35,6 @@ function mergeOrphanSections(sections: SectionMap[]): SectionMap[] {
   return result;
 }
 
-function expandSections(inputArray: SectionMap[]): SectionMap[] {
-  if (!inputArray?.length) return [];
-  const original = inputArray[0];
-  const categories = original.categories || [];
-  return categories.map((cat) => ({
-    sectionTitle: `${cat.label} Section`,
-    categories: [cat],
-  }));
-}
-
 const shouldShow = (cat: CategoryState) => cat?.uischema?.options?.showInTaskList !== false;
 
 function updateCompletion(group: CategoryState[], index: number): CategoryState {
@@ -69,10 +59,7 @@ export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subti
 
   // Merge and expand sections
   const mergedSections = useMemo(() => {
-    let sections = mergeOrphanSections(getCategorySections(categories));
-    if (sections.length === 1) {
-      sections = expandSections(sections);
-    }
+    const sections = mergeOrphanSections(getCategorySections(categories));
     return sections;
   }, [categories]);
 
