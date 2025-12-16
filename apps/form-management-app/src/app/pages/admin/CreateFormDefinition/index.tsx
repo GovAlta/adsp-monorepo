@@ -185,7 +185,11 @@ const CreateFormDefinition = (): JSX.Element => {
         id: definition.id || toKebabName(definition.name || ''),
         ministry: definition.ministry || undefined,
         programName: definition.programName || undefined,
-        registeredId: definition.registeredId || undefined,
+        registeredId: definition.registeredId?.trim() || undefined,
+        actsOfLegislation:
+          definition.actsOfLegislation && definition.actsOfLegislation.length > 0
+            ? definition.actsOfLegislation
+            : undefined,
       } as FormDefinition;
 
       if (isEdit) {
