@@ -38,33 +38,14 @@ jobs:
       - name: Make reports directory
         run: mkdir reports
       - name: Execute load tests event service
-        run: /home/node/artillery/bin/run run tests/event-service/load.yml --output reports/event-service-report.json
-        env:
-          CLIENT_ID: ${{ inputs.CLIENT_ID }}
-          CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
-          ARTILLERY_ENV: ${{ inputs.ENVIRONMENT }}
-
+        run: /home/node/artillery/bin/run run tests/events-service/load.yml --environment ${{ inputs.ENVIRONMENT }} --output reports/event-service-report.json
       - name: Generate HTML report event service
         run: /home/node/artillery/bin/run report --output reports/event-report.html reports/event-report.json
-
       - name: Archive tests reports
         uses: actions/upload-artifact@v4
         with:
           name: artillery-test-report-event
           path: reports/*
-
-      - id: set_var
-        run: |
-          content=`cat reports/event-report.json`
-          # the following lines are only required for multi line json
-          content="${content//'%'/'%25'}"
-          content="${content//$'\n'/'%0A'}"
-          content="${content//$'\r'/'%0D'}"
-          # end of optional handling for multi line json
-          echo "::set-output name=packageJson::$content"
-          # echo "packageJson=$content" >> $GITHUB_OUTPUT
-      - run: |
-          echo "${{fromJson(steps.set_var.outputs.packageJson).aggregate.counters.firstCounterAt}}"
 
   artillery-status:
     runs-on: ubuntu-latest
@@ -102,4 +83,9 @@ jobs:
       - name: Make reports directory
         run: mkdir reports
       - name: Execute load tests form app
-        run: /home/node/artillery/bin/run run tests/form-app/load.yml --output reports/form-app-report.json
+        run: /home/node/artillery/bin/run run tests/form-app/load.yml --environment ${{ inputs.ENVIRONMENT }} --output reports/form-app-report.json
+      - name: Archive tests reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: artillery-test-report-event
+          path: reports/*
