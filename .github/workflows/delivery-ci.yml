@@ -15,7 +15,7 @@ on:
 jobs:
   build:
     permissions:
-      id-token: write  # Required for OIDC to NPM for 
+      id-token: write  # Required for OIDC to NPM for publishing
       contents: write
     runs-on: ubuntu-22.04
     outputs:
