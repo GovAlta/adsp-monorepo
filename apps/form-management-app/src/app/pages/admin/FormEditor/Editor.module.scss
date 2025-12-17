@@ -3,6 +3,7 @@
   border: 1px solid grey;
   border-radius: 3px;
   padding: 0.15rem;
+  margin-top: -15px;
 
   .monaco-scrollable-element {
     margin-top: 5px !important;
@@ -130,7 +131,7 @@
 
 .final-button-padding {
   display: flex;
-  padding-top: 20px;
+  padding-top: 12px;
   justify-content: space-between;
   align-items: center;
 }
@@ -150,5 +151,36 @@
 
 .form-preview-spacer {
   margin-top: var(--goa-space-l);
+}
+
+
+.borderBottom {
+  border-bottom: 1px solid #ccc;
+}
+
+.scrollPane {
+  overflow-y: scroll;
+  width: 100%;
+  max-height: calc(100vh - 195px);
+}
+
+.rolesTabBody {
+  display: flex;
+  border-radius: 3px;
+  min-height: 65px;
+  margin-top: -15px;
+}
+
+.textLoadingIndicator {
+  animation: blinker 1s linear infinite;
+  font-size: 16px;
+  font-style: italic;
+  text-align: center;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
 }
 

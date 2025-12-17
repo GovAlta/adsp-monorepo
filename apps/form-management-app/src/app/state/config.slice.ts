@@ -24,7 +24,7 @@ export interface ConfigState {
 export const initializeConfig = createAsyncThunk('config/initialize', async () => {
   let environment = null;
   try {
-    const { data: envConfig } = await axios.get<Environment>('/config/config.json');
+    const { data: envConfig } = await axios.get<Environment>('https://form.adsp-dev.gov.ab.ca/config/config.json');
     environment = envConfig;
 
     console.log('Loaded environment configuration', environment);

@@ -191,7 +191,7 @@ const initialUserState: UserState = {
   tenant: null,
   user: undefined,
   sessionExpiresAt: null,
-  alertSessionExpiresAt: null,
+  alertSessionExpiresAt: null
 };
 
 export const renewSession = createAsyncThunk('user/renew-session', async (_, { dispatch }) => {
