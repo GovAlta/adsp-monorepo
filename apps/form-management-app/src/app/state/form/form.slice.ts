@@ -17,6 +17,7 @@ export interface FormState {
   files: Record<string, string>;
   programs: string[];
   ministries: string[];
+  actsOfLegislation: string[];
   busy: {
     loading: boolean;
     creating: boolean;
@@ -214,6 +215,32 @@ export const getMinistries = createAsyncThunk('form/get-ministries', async (_, {
   }
 });
 
+export const getActsOfLegislation = createAsyncThunk(
+  'form/get-acts-of-legislation',
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
+      const accessToken = await getAccessToken();
+
+      const { data } = await axios.get(`${configurationService}/configuration/v2/configuration/dcm/acts`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      return data.latest.configuration;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 export const getFormDefinitions = createAsyncThunk(
   'form/get-definitions',
   async (
@@ -293,6 +320,7 @@ export const initialFormState: FormState = {
   currentDefinition: null,
   programs: [],
   ministries: [],
+  actsOfLegislation: [],
   busy: {
     loading: false,
     creating: false,
@@ -405,6 +433,9 @@ const formSlice = createSlice({
       })
       .addCase(getMinistries.fulfilled, (state, { payload }) => {
         state.ministries = payload;
+      })
+      .addCase(getActsOfLegislation.fulfilled, (state, { payload }) => {
+        state.actsOfLegislation = payload;
       });
   },
 });

@@ -49,7 +49,8 @@
 }
 
 .actsSection {
-  margin-bottom: var(--goa-space-l);
+  display: grid;
+  gap: var(--goa-space-xs);
 }
 
 .actsInput {
@@ -61,12 +62,12 @@
 .actsChips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--goa-space-s);
-  margin-top: var(--goa-space-s);
+  gap: var(--goa-space-xs);
+  margin-top: var(--goa-space-xs);
 }
 
 .actChip {
-  position: relative;
+  display: inline-block;
   cursor: pointer;
 }
 
@@ -82,8 +83,8 @@
 
 .noActs {
   font-style: italic;
-  color: var(--goa-color-greyscale-500);
-  margin-top: var(--goa-space-s);
+  color: var(--goa-color-greyscale-600);
+  margin-top: var(--goa-space-xs);
 }
 
 .actions {

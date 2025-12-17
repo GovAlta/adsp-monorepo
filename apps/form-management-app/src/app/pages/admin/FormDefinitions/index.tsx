@@ -20,6 +20,7 @@ import {
   getFormDefinitions,
   getPrograms,
   getMinistries,
+  getActsOfLegislation,
   selectFormDefinitions,
   selectFormLoading,
   configInitializedSelector,
@@ -27,6 +28,7 @@ import {
   selectIsAuthenticated,
   selectPrograms,
   selectMinistries,
+  selectActsOfLegislation,
   selectFormPage,
   selectFormNext,
   selectFormCursors,
@@ -49,6 +51,7 @@ const FormDefinitions = (): JSX.Element => {
   const authenticated = useSelector(selectIsAuthenticated);
   const programs = useSelector(selectPrograms);
   const ministries = useSelector(selectMinistries);
+  const acts = useSelector(selectActsOfLegislation);
 
   const page = useSelector(selectFormPage);
   const next = useSelector(selectFormNext);
@@ -80,10 +83,11 @@ const FormDefinitions = (): JSX.Element => {
     debounceUpdateQuery({ name: value, actsOfLegislation, registeredId, program, ministry });
   };
 
-  const onActsChange = (_name: string, value: string) => {
-    if (actsOfLegislation === value) return;
-    setActsOfLegislation(value);
-    debounceUpdateQuery({ name, actsOfLegislation: value, registeredId, program, ministry });
+  const onActsChange = (_name: string, value: string | string[]) => {
+    const val = Array.isArray(value) ? value[0] : value;
+    if (actsOfLegislation === val) return;
+    setActsOfLegislation(val);
+    debounceUpdateQuery({ name, actsOfLegislation: val, registeredId, program, ministry });
   };
 
   const onRegisteredIdChange = (_name: string, value: string) => {
@@ -118,10 +122,17 @@ const FormDefinitions = (): JSX.Element => {
   useEffect(() => {
     const currentCursor = cursors[page];
     if (configInitialized && userInitialized && authenticated) {
-      dispatch(getPrograms());
-      dispatch(getMinistries());
+      if (programs.length === 0) {
+        dispatch(getPrograms());
+      }
+      if (ministries.length === 0) {
+        dispatch(getMinistries());
+      }
+      if (acts.length === 0) {
+        dispatch(getActsOfLegislation());
+      }
     }
-  }, [dispatch, configInitialized, userInitialized, authenticated]);
+  }, [dispatch, configInitialized, userInitialized, authenticated, programs.length, ministries.length, acts.length]);
 
   useEffect(() => {
     if (configInitialized && userInitialized && authenticated) {
@@ -175,14 +186,18 @@ const FormDefinitions = (): JSX.Element => {
             width="100%"
           />
           <GoASpacer vSpacing="m" />
-          <GoAInput
+          <GoADropdown
             name="actsOfLegislation"
-            type="search"
-            placeholder="Search by acts of legislation"
             value={actsOfLegislation}
             onChange={onActsChange}
             width="100%"
-          />
+            placeholder="Select acts of legislation"
+          >
+            <GoADropdownItem value={actsOfLegislation} label="Select acts of legislation" />
+            {acts.map((act) => (
+              <GoADropdownItem key={act} value={act} label={act} />
+            ))}
+          </GoADropdown>
           <GoASpacer vSpacing="m" />
           <GoAInput
             name="registeredId"
@@ -201,8 +216,8 @@ const FormDefinitions = (): JSX.Element => {
             placeholder="Select a program"
           >
             <GoADropdownItem value="" label="Select a program" />
-            {programs.map((p) => (
-              <GoADropdownItem key={p} value={p} label={p} />
+            {programs.map((program) => (
+              <GoADropdownItem key={program} value={program} label={program} />
             ))}
           </GoADropdown>
           <GoASpacer vSpacing="m" />
@@ -214,8 +229,8 @@ const FormDefinitions = (): JSX.Element => {
             placeholder="Select a ministry"
           >
             <GoADropdownItem value="" label="Select a ministry" />
-            {ministries.map((m) => (
-              <GoADropdownItem key={m} value={m} label={m} />
+            {ministries.map((ministry) => (
+              <GoADropdownItem key={ministry} value={ministry} label={ministry} />
             ))}
           </GoADropdown>
           <GoASpacer vSpacing="m" />

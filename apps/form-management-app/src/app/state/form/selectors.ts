@@ -11,6 +11,7 @@ export const selectIsSavingDefinition = (state: AppState) => state.form.busy.sav
 export const selectIsDeletingDefinition = (state: AppState) => state.form.busy.deleting;
 export const selectPrograms = (state: AppState) => state.form.programs;
 export const selectMinistries = (state: AppState) => state.form.ministries;
+export const selectActsOfLegislation = (state: AppState) => state.form.actsOfLegislation;
 export const selectFormPage = (state: AppState) => state.form.page;
 export const selectFormNext = (state: AppState) => state.form.next;
 export const selectFormCursors = (state: AppState) => state.form.cursors;

@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   GoATextArea,
   GoAInput,
-  GoAButtonGroup,
   GoAFormItem,
   GoAButton,
   GoACircularProgress,
+  GoADropdown,
+  GoADropdownItem,
 } from '@abgov/react-components';
 
 import { AppDispatch, selectConfigState, ConfigState } from '../../../state';
@@ -16,12 +17,18 @@ import {
   updateDefinition,
   getFormConfiguration,
   getFormDefinitions,
+  getPrograms,
+  getMinistries,
+  getActsOfLegislation,
 } from '../../../state/form/form.slice';
 import {
   selectFormDefinitions,
   selectIsCreatingDefinition,
   selectIsSavingDefinition,
   selectCurrentDefinition,
+  selectPrograms,
+  selectMinistries,
+  selectActsOfLegislation,
 } from '../../../state/form/selectors';
 import { FormDefinition, FORM_APP_ID } from '../../../state/types';
 import { toKebabName } from '../../../utils/kebabName';
@@ -45,11 +52,13 @@ const CreateFormDefinition = (): JSX.Element => {
   const isSaving = useSelector(selectIsSavingDefinition);
   const currentDefinition = useSelector(selectCurrentDefinition);
   const config = useSelector(selectConfigState) as ConfigState;
+  const programs = useSelector(selectPrograms);
+  const ministries = useSelector(selectMinistries);
+  const acts = useSelector(selectActsOfLegislation);
 
   const isEdit = Boolean(id);
   const isLoading = isCreating || isSaving;
 
-  // Form state
   const [definition, setDefinition] = useState<Partial<FormDefinition>>({
     id: '',
     name: '',
@@ -67,9 +76,16 @@ const CreateFormDefinition = (): JSX.Element => {
     generatesPdf: false,
     scheduledIntakes: false,
     supportTopic: false,
+    ministry: undefined,
+    programName: undefined,
+    registeredId: undefined,
+    actsOfLegislation: undefined,
   });
 
+  const firstRender = useRef(true);
+
   const definitionIds = definitions.map((d) => d.name);
+  const registeredIds = definitions.map((d) => d.registeredId).filter((id): id is string => id != null && id !== '');
 
   const { errors, validators } = useValidators(
     'name',
@@ -79,9 +95,29 @@ const CreateFormDefinition = (): JSX.Element => {
     isNotEmptyCheck('name')
   )
     .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
+    .add('duplicateRegisteredId', 'registeredId', duplicateNameCheck(registeredIds, 'Registered ID'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .add('formDraftUrlTemplate', 'formDraftUrlTemplate', checkFormDefaultUrl())
     .build();
+
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      if (programs.length > 0 && ministries.length > 0 && acts.length > 0) {
+        return;
+      }
+    }
+
+    if (programs.length === 0) {
+      dispatch(getPrograms());
+    }
+    if (ministries.length === 0) {
+      dispatch(getMinistries());
+    }
+    if (acts.length === 0) {
+      dispatch(getActsOfLegislation());
+    }
+  }, [dispatch, programs.length, ministries.length, acts.length]);
 
   // Auto-populate form template URL for new definitions
   useEffect(() => {
@@ -108,7 +144,7 @@ const CreateFormDefinition = (): JSX.Element => {
   }, [currentDefinition, isEdit]);
 
   const handleSave = async () => {
-    const validations = {
+    const validations: Record<string, string> = {
       name: definition.name || '',
       description: definition.description || '',
       formDraftUrlTemplate: definition.formDraftUrlTemplate || '',
@@ -116,6 +152,10 @@ const CreateFormDefinition = (): JSX.Element => {
 
     if (!isEdit) {
       validations['duplicate'] = definition.name || '';
+    }
+
+    if (definition.registeredId && definition.registeredId.trim()) {
+      validations['duplicateRegisteredId'] = definition.registeredId;
     }
 
     if (!validators.checkAll(validations)) {
@@ -126,6 +166,10 @@ const CreateFormDefinition = (): JSX.Element => {
       const cleanDefinition = {
         ...definition,
         id: definition.id || toKebabName(definition.name || ''),
+        ministry: definition.ministry || undefined,
+        programName: definition.programName || undefined,
+        registeredId: definition.registeredId?.trim() || undefined,
+        actsOfLegislation: definition.actsOfLegislation || undefined,
       } as FormDefinition;
 
       if (isEdit) {
@@ -170,7 +214,7 @@ const CreateFormDefinition = (): JSX.Element => {
               value={definition.name || ''}
               width="100%"
               onChange={(_, value) => {
-                const validations = { name: value };
+                const validations: Record<string, string> = { name: value };
 
                 if (!isEdit) {
                   validators.remove('name');
@@ -185,7 +229,7 @@ const CreateFormDefinition = (): JSX.Element => {
                 });
               }}
               onBlur={() => {
-                const validations = { name: definition.name || '' };
+                const validations: Record<string, string> = { name: definition.name || '' };
                 if (!isEdit) {
                   validations['duplicate'] = definition.name || '';
                 }
@@ -236,6 +280,96 @@ const CreateFormDefinition = (): JSX.Element => {
               {'}'}
               {'}'}' as a placeholder for the form ID in the URL
             </div>
+          </GoAFormItem>
+        </div>
+
+        <div className={styles.formRow}>
+          <GoAFormItem label="Ministry (optional)">
+            <GoADropdown
+              name="ministry"
+              value={definition?.ministry || ''}
+              onChange={(_, selectedValue) => {
+                const value = Array.isArray(selectedValue) ? selectedValue[0] ?? '' : selectedValue;
+                setDefinition({ ...definition, ministry: value || undefined });
+              }}
+              width="100%"
+              placeholder="Select a ministry"
+            >
+              <GoADropdownItem value="" label="Select a ministry" />
+              {ministries.map((ministry) => (
+                <GoADropdownItem key={ministry} value={ministry} label={ministry} />
+              ))}
+            </GoADropdown>
+          </GoAFormItem>
+        </div>
+
+        <div className={styles.formRow}>
+          <GoAFormItem label="Program (optional)">
+            <GoADropdown
+              name="program"
+              value={definition?.programName || ''}
+              onChange={(_, selectedValue: string | string[]) => {
+                const value = Array.isArray(selectedValue) ? (selectedValue[0] as string) : selectedValue;
+                setDefinition({ ...definition, programName: value || undefined });
+              }}
+              width="100%"
+            >
+              <GoADropdownItem value="" label="--Select--" />
+              {programs.map((program) => (
+                <GoADropdownItem key={program} value={program} label={program} />
+              ))}
+            </GoADropdown>
+          </GoAFormItem>
+        </div>
+
+        <div className={styles.formRow}>
+          <GoAFormItem label="Acts of Legislation (optional)">
+            <GoADropdown
+              name="actsOfLegislation"
+              value={definition?.actsOfLegislation || ''}
+              onChange={(_, selectedValue: string | string[]) => {
+                const value = Array.isArray(selectedValue) ? (selectedValue[0] as string) : selectedValue;
+                setDefinition({ ...definition, actsOfLegislation: value || undefined });
+              }}
+              width="100%"
+            >
+              <GoADropdownItem value="" label="--Select--" />
+              {acts.map((act) => (
+                <GoADropdownItem key={act} value={act} label={act} />
+              ))}
+            </GoADropdown>
+          </GoAFormItem>
+        </div>
+
+        <div className={styles.formRow}>
+          <GoAFormItem error={errors?.['duplicateRegisteredId']} label="Registered ID (optional)">
+            <GoAInput
+              type="text"
+              name="form-definition-registeredId"
+              value={definition.registeredId || ''}
+              width="100%"
+              onChange={(_, value) => {
+                if (!value.trim()) {
+                  const updated = { ...definition };
+                  delete updated.registeredId;
+                  validators.remove('duplicateRegisteredId');
+                  setDefinition(updated);
+                } else {
+                  validators.remove('duplicateRegisteredId');
+                  validators.checkAll({
+                    duplicateRegisteredId: value,
+                  });
+                  setDefinition({ ...definition, registeredId: value });
+                }
+              }}
+              onBlur={() => {
+                if (definition.registeredId) {
+                  validators.checkAll({
+                    duplicateRegisteredId: definition.registeredId,
+                  });
+                }
+              }}
+            />
           </GoAFormItem>
         </div>
 
