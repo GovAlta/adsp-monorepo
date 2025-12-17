@@ -193,9 +193,9 @@ const FormDefinitions = (): JSX.Element => {
             width="100%"
             placeholder="Select acts of legislation"
           >
-            <GoADropdownItem value="" label="Select acts of legislation" />
-            {acts.map((a) => (
-              <GoADropdownItem key={a} value={a} label={a} />
+            <GoADropdownItem value={actsOfLegislation} label="Select acts of legislation" />
+            {acts.map((act) => (
+              <GoADropdownItem key={act} value={act} label={act} />
             ))}
           </GoADropdown>
           <GoASpacer vSpacing="m" />
@@ -216,8 +216,8 @@ const FormDefinitions = (): JSX.Element => {
             placeholder="Select a program"
           >
             <GoADropdownItem value="" label="Select a program" />
-            {programs.map((p) => (
-              <GoADropdownItem key={p} value={p} label={p} />
+            {programs.map((program) => (
+              <GoADropdownItem key={program} value={program} label={program} />
             ))}
           </GoADropdown>
           <GoASpacer vSpacing="m" />
@@ -229,8 +229,8 @@ const FormDefinitions = (): JSX.Element => {
             placeholder="Select a ministry"
           >
             <GoADropdownItem value="" label="Select a ministry" />
-            {ministries.map((m) => (
-              <GoADropdownItem key={m} value={m} label={m} />
+            {ministries.map((ministry) => (
+              <GoADropdownItem key={ministry} value={ministry} label={ministry} />
             ))}
           </GoADropdown>
           <GoASpacer vSpacing="m" />

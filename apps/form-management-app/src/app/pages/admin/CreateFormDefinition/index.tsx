@@ -288,16 +288,16 @@ const CreateFormDefinition = (): JSX.Element => {
             <GoADropdown
               name="ministry"
               value={definition?.ministry || ''}
-              onChange={(_, v) => {
-                const value = Array.isArray(v) ? v[0] ?? '' : v;
+              onChange={(_, selectedValue) => {
+                const value = Array.isArray(selectedValue) ? selectedValue[0] ?? '' : selectedValue;
                 setDefinition({ ...definition, ministry: value || undefined });
               }}
               width="100%"
               placeholder="Select a ministry"
             >
               <GoADropdownItem value="" label="Select a ministry" />
-              {ministries.map((m) => (
-                <GoADropdownItem key={m} value={m} label={m} />
+              {ministries.map((ministry) => (
+                <GoADropdownItem key={ministry} value={ministry} label={ministry} />
               ))}
             </GoADropdown>
           </GoAFormItem>
@@ -308,15 +308,15 @@ const CreateFormDefinition = (): JSX.Element => {
             <GoADropdown
               name="program"
               value={definition?.programName || ''}
-              onChange={(_, v: string | string[]) => {
-                const value = Array.isArray(v) ? (v[0] as string) : v;
+              onChange={(_, selectedValue: string | string[]) => {
+                const value = Array.isArray(selectedValue) ? (selectedValue[0] as string) : selectedValue;
                 setDefinition({ ...definition, programName: value || undefined });
               }}
               width="100%"
             >
               <GoADropdownItem value="" label="--Select--" />
-              {programs.map((p) => (
-                <GoADropdownItem key={p} value={p} label={p} />
+              {programs.map((program) => (
+                <GoADropdownItem key={program} value={program} label={program} />
               ))}
             </GoADropdown>
           </GoAFormItem>
@@ -327,15 +327,15 @@ const CreateFormDefinition = (): JSX.Element => {
             <GoADropdown
               name="actsOfLegislation"
               value={definition?.actsOfLegislation || ''}
-              onChange={(_, v: string | string[]) => {
-                const value = Array.isArray(v) ? (v[0] as string) : v;
+              onChange={(_, selectedValue: string | string[]) => {
+                const value = Array.isArray(selectedValue) ? (selectedValue[0] as string) : selectedValue;
                 setDefinition({ ...definition, actsOfLegislation: value || undefined });
               }}
               width="100%"
             >
               <GoADropdownItem value="" label="--Select--" />
-              {acts.map((a) => (
-                <GoADropdownItem key={a} value={a} label={a} />
+              {acts.map((act) => (
+                <GoADropdownItem key={act} value={act} label={act} />
               ))}
             </GoADropdown>
           </GoAFormItem>
