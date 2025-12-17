@@ -9,7 +9,6 @@ import {
   GoACircularProgress,
   GoADropdown,
   GoADropdownItem,
-  GoAFilterChip,
 } from '@abgov/react-components';
 
 import { AppDispatch, selectConfigState, ConfigState } from '../../../state';
@@ -20,6 +19,7 @@ import {
   getFormDefinitions,
   getPrograms,
   getMinistries,
+  getActsOfLegislation,
 } from '../../../state/form/form.slice';
 import {
   selectFormDefinitions,
@@ -28,6 +28,7 @@ import {
   selectCurrentDefinition,
   selectPrograms,
   selectMinistries,
+  selectActsOfLegislation,
 } from '../../../state/form/selectors';
 import { FormDefinition, FORM_APP_ID } from '../../../state/types';
 import { toKebabName } from '../../../utils/kebabName';
@@ -53,11 +54,11 @@ const CreateFormDefinition = (): JSX.Element => {
   const config = useSelector(selectConfigState) as ConfigState;
   const programs = useSelector(selectPrograms);
   const ministries = useSelector(selectMinistries);
+  const acts = useSelector(selectActsOfLegislation);
 
   const isEdit = Boolean(id);
   const isLoading = isCreating || isSaving;
 
-  // Form state
   const [definition, setDefinition] = useState<Partial<FormDefinition>>({
     id: '',
     name: '',
@@ -78,11 +79,8 @@ const CreateFormDefinition = (): JSX.Element => {
     ministry: undefined,
     programName: undefined,
     registeredId: undefined,
-    actsOfLegislation: [],
+    actsOfLegislation: undefined,
   });
-
-  const [newAct, setNewAct] = useState<string>('');
-  const [actError, setActError] = useState<string | null>(null);
 
   const firstRender = useRef(true);
 
@@ -105,7 +103,7 @@ const CreateFormDefinition = (): JSX.Element => {
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
-      if (programs.length > 0 && ministries.length > 0) {
+      if (programs.length > 0 && ministries.length > 0 && acts.length > 0) {
         return;
       }
     }
@@ -116,7 +114,10 @@ const CreateFormDefinition = (): JSX.Element => {
     if (ministries.length === 0) {
       dispatch(getMinistries());
     }
-  }, [dispatch, programs.length, ministries.length]);
+    if (acts.length === 0) {
+      dispatch(getActsOfLegislation());
+    }
+  }, [dispatch, programs.length, ministries.length, acts.length]);
 
   // Auto-populate form template URL for new definitions
   useEffect(() => {
@@ -141,34 +142,6 @@ const CreateFormDefinition = (): JSX.Element => {
       setDefinition(currentDefinition);
     }
   }, [currentDefinition, isEdit]);
-
-  const addAct = () => {
-    const val = newAct.trim();
-    if (!val) {
-      setActError('Please enter an Act.');
-      return;
-    }
-
-    const existing = (definition.actsOfLegislation ?? []).map((a) => a.toLowerCase());
-    if (existing.includes(val.toLowerCase())) {
-      setActError(`Duplicate Act name ${val}. Must be unique.`);
-      return;
-    }
-
-    setDefinition({
-      ...definition,
-      actsOfLegislation: [...(definition.actsOfLegislation ?? []), val],
-    });
-    setNewAct('');
-    setActError(null);
-  };
-
-  const removeAct = (act: string) => {
-    setDefinition({
-      ...definition,
-      actsOfLegislation: (definition.actsOfLegislation ?? []).filter((a) => a !== act),
-    });
-  };
 
   const handleSave = async () => {
     const validations: Record<string, string> = {
@@ -196,10 +169,7 @@ const CreateFormDefinition = (): JSX.Element => {
         ministry: definition.ministry || undefined,
         programName: definition.programName || undefined,
         registeredId: definition.registeredId?.trim() || undefined,
-        actsOfLegislation:
-          definition.actsOfLegislation && definition.actsOfLegislation.length > 0
-            ? definition.actsOfLegislation
-            : undefined,
+        actsOfLegislation: definition.actsOfLegislation || undefined,
       } as FormDefinition;
 
       if (isEdit) {
@@ -353,6 +323,25 @@ const CreateFormDefinition = (): JSX.Element => {
         </div>
 
         <div className={styles.formRow}>
+          <GoAFormItem label="Acts of Legislation (optional)">
+            <GoADropdown
+              name="actsOfLegislation"
+              value={definition?.actsOfLegislation || ''}
+              onChange={(_, v: string | string[]) => {
+                const value = Array.isArray(v) ? (v[0] as string) : v;
+                setDefinition({ ...definition, actsOfLegislation: value || undefined });
+              }}
+              width="100%"
+            >
+              <GoADropdownItem value="" label="--Select--" />
+              {acts.map((a) => (
+                <GoADropdownItem key={a} value={a} label={a} />
+              ))}
+            </GoADropdown>
+          </GoAFormItem>
+        </div>
+
+        <div className={styles.formRow}>
           <GoAFormItem error={errors?.['duplicateRegisteredId']} label="Registered ID (optional)">
             <GoAInput
               type="text"
@@ -381,42 +370,6 @@ const CreateFormDefinition = (): JSX.Element => {
                 }
               }}
             />
-          </GoAFormItem>
-        </div>
-
-        <div className={styles.formRow}>
-          <GoAFormItem label="Acts of Legislation (optional)" error={actError ?? undefined}>
-            <div className={styles.actsSection}>
-              <GoAInput
-                error={!!actError}
-                name="new-act-input"
-                width="100%"
-                value={newAct}
-                placeholder="Type an Act"
-                onChange={(_, v) => {
-                  setNewAct(v);
-                  if (actError) setActError(null);
-                }}
-              />
-              <GoAButton type="secondary" onClick={addAct} disabled={!newAct.trim()}>
-                Add
-              </GoAButton>
-
-              {(definition.actsOfLegislation ?? []).length === 0 ? (
-                <div className={styles.noActs}>No Acts added.</div>
-              ) : (
-                <div className={styles.actsChips}>
-                  {(definition.actsOfLegislation ?? [])
-                    .slice()
-                    .sort((a, b) => a.localeCompare(b))
-                    .map((act) => (
-                      <span key={act} className={styles.actChip}>
-                        <GoAFilterChip content={act} onClick={() => removeAct(act)} />
-                      </span>
-                    ))}
-                </div>
-              )}
-            </div>
           </GoAFormItem>
         </div>
 

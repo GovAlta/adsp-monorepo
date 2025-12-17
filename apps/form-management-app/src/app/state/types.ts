@@ -90,7 +90,7 @@ export interface FormDefinition {
   ministry?: string;
   programName?: string;
   registeredId?: string;
-  actsOfLegislation?: string[];
+  actsOfLegislation?: string;
   formDraftUrlTemplate?: string;
 }
 
