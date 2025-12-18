@@ -117,8 +117,6 @@ export const getConfigurationDefinitions = createAsyncThunk<
 >('configuration/getConfigurationDefinitions', async (_, { getState, rejectWithValue }) => {
   try {
     const { config } = getState() as AppState;
-    let tenant: RegisterConfigData[] = [];
-
     const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
     const token = await getAccessToken();
   

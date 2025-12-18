@@ -14,6 +14,10 @@
   }
 }
 
+.preview-padding {
+  margin-top: -5px;
+}
+
 
 .form-editor-title {
   font-size: var(--goa-font-size-7);
@@ -64,6 +68,7 @@
 .displayFlex {
   display: flex !important;
   flex-direction: row !important;
+  margin-bottom: -8px !important;
 }
 .button-icon-padding-three {
   margin-top: -3px;
@@ -110,12 +115,13 @@
 
 .form-template-editor-container {
   display: flex;
+
   flex: auto;
   margin-top: 6px;
   padding-left: 3rem;
   padding-right: 3rem;
   width: 100% !important;
-  height: 100vh;
+  height: auto;
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -141,11 +147,16 @@
   overflow-y: auto;
   padding-left: 0.25rem;
   padding-right: 0.25rem;
+  margin-top: -2rem;
   height: calc(100vh - 192px);
 }
 
 .review-page-tab-wrapper {
   padding-top: var(--goa-space-m);
+  margin-top: -2rem;
+}
+.pdf-preview-wrapper {
+  margin-top: -1rem;
 }
 
 
