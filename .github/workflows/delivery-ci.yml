@@ -53,7 +53,6 @@ jobs:
         with:
           affected-base: ${{ github.event.inputs.AFFECTED_BASE || steps.last_successful_commit.outputs.base }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          npm_token: ${{ secrets.NPM_TOKEN }}
       - run: npm prune --production
       - if: steps.production-build.outputs.affected-apps
         run: tar czf adsp-build-dist.tar.gz node_modules/ dist/
