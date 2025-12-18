@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -82,8 +82,6 @@ const CreateFormDefinition = (): JSX.Element => {
     actsOfLegislation: undefined,
   });
 
-  const firstRender = useRef(true);
-
   const definitionIds = definitions.map((d) => d.name);
   const registeredIds = definitions.map((d) => d.registeredId).filter((id): id is string => id != null && id !== '');
 
@@ -101,23 +99,10 @@ const CreateFormDefinition = (): JSX.Element => {
     .build();
 
   useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
-      if (programs.length > 0 && ministries.length > 0 && acts.length > 0) {
-        return;
-      }
-    }
-
-    if (programs.length === 0) {
-      dispatch(getPrograms());
-    }
-    if (ministries.length === 0) {
-      dispatch(getMinistries());
-    }
-    if (acts.length === 0) {
-      dispatch(getActsOfLegislation());
-    }
-  }, [dispatch, programs.length, ministries.length, acts.length]);
+    dispatch(getPrograms());
+    dispatch(getMinistries());
+    dispatch(getActsOfLegislation());
+  }, [dispatch]);
 
   // Auto-populate form template URL for new definitions
   useEffect(() => {

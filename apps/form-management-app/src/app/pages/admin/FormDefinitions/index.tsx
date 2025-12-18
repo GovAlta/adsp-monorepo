@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { debounce } from 'lodash';
@@ -67,7 +67,6 @@ const FormDefinitions = (): JSX.Element => {
   const [ministry, setMinistry] = useState(criteria.ministry);
 
   const currentCursor = cursors[page];
-  const firstRender = useRef(true);
 
   const debounceUpdateQuery = useCallback(
     debounce((nextQuery) => {
@@ -120,29 +119,15 @@ const FormDefinitions = (): JSX.Element => {
   };
 
   useEffect(() => {
-    const currentCursor = cursors[page];
     if (configInitialized && userInitialized && authenticated) {
-      if (programs.length === 0) {
-        dispatch(getPrograms());
-      }
-      if (ministries.length === 0) {
-        dispatch(getMinistries());
-      }
-      if (acts.length === 0) {
-        dispatch(getActsOfLegislation());
-      }
+      dispatch(getPrograms());
+      dispatch(getMinistries());
+      dispatch(getActsOfLegislation());
     }
-  }, [dispatch, configInitialized, userInitialized, authenticated, programs.length, ministries.length, acts.length]);
+  }, [dispatch, configInitialized, userInitialized, authenticated]);
 
   useEffect(() => {
     if (configInitialized && userInitialized && authenticated) {
-      if (firstRender.current) {
-        firstRender.current = false;
-        if (definitions && definitions.length > 0) {
-          return;
-        }
-      }
-
       dispatch(
         getFormDefinitions({
           top: 40,
@@ -153,11 +138,7 @@ const FormDefinitions = (): JSX.Element => {
           program: criteria.program,
           ministry: criteria.ministry,
         })
-      )
-        .unwrap()
-        .then((result) => {
-          // next and cursors are updated in the slice
-        });
+      );
     }
   }, [dispatch, configInitialized, userInitialized, authenticated, page, currentCursor, criteria]);
 

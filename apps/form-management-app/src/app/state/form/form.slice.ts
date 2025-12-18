@@ -3,11 +3,21 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import * as _ from 'lodash';
 import { AppState } from '../store';
-import { FormDefinition, CONFIGURATION_SERVICE_ID, FORM_SERVICE_ID } from '../types';
+import { FormDefinition, CONFIGURATION_SERVICE_ID } from '../types';
 import { getAccessToken } from '../user/user.slice';
 export const FORM_FEATURE_KEY = 'form';
 
 export type ValidationError = JsonFormsCore['errors'][number];
+
+export interface FormDefinitionsCriteria {
+  top?: number;
+  after?: string;
+  name?: string;
+  actsOfLegislation?: string;
+  registeredId?: string;
+  program?: string;
+  ministry?: string;
+}
 
 export interface FormState {
   definitions: FormDefinition[];
@@ -38,6 +48,7 @@ export interface FormState {
     program: string;
     ministry: string;
   };
+  lastCriteria: FormDefinitionsCriteria | null;
 }
 
 export const createDefinition = createAsyncThunk(
@@ -169,51 +180,71 @@ export const getFormConfiguration = createAsyncThunk<
   }
 });
 
-export const getPrograms = createAsyncThunk('form/get-programs', async (_, { getState, rejectWithValue }) => {
-  try {
-    const { config } = getState() as AppState;
-    const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
-    const accessToken = await getAccessToken();
+export const getPrograms = createAsyncThunk(
+  'form/get-programs',
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
+      const accessToken = await getAccessToken();
 
-    const { data } = await axios.get(`${configurationService}/configuration/v2/configuration/dcm/programs`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    return data.latest.configuration;
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      return rejectWithValue({
-        status: err.response?.status,
-        message: err.response?.data?.errorMessage || err.message,
+      const { data } = await axios.get(`${configurationService}/configuration/v2/configuration/dcm/programs`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
-    } else {
-      throw err;
+
+      return data.latest.configuration;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as AppState;
+      if (state.form.programs && state.form.programs.length > 0) return false;
+      return true;
+    },
   }
-});
+);
 
-export const getMinistries = createAsyncThunk('form/get-ministries', async (_, { getState, rejectWithValue }) => {
-  try {
-    const { config } = getState() as AppState;
-    const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
-    const accessToken = await getAccessToken();
+export const getMinistries = createAsyncThunk(
+  'form/get-ministries',
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
+      const accessToken = await getAccessToken();
 
-    const { data } = await axios.get(`${configurationService}/configuration/v2/configuration/dcm/ministry`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    return data.latest.configuration;
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      return rejectWithValue({
-        status: err.response?.status,
-        message: err.response?.data?.errorMessage || err.message,
+      const { data } = await axios.get(`${configurationService}/configuration/v2/configuration/dcm/ministry`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
-    } else {
-      throw err;
+
+      return data.latest.configuration;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as AppState;
+      if (state.form.ministries && state.form.ministries.length > 0) return false;
+      return true;
+    },
   }
-});
+);
 
 export const getActsOfLegislation = createAsyncThunk(
   'form/get-acts-of-legislation',
@@ -238,31 +269,20 @@ export const getActsOfLegislation = createAsyncThunk(
         throw err;
       }
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as AppState;
+      if (state.form.actsOfLegislation && state.form.actsOfLegislation.length > 0) return false;
+      return true;
+    },
   }
 );
 
 export const getFormDefinitions = createAsyncThunk(
   'form/get-definitions',
-  async (
-    {
-      top,
-      after,
-      name,
-      actsOfLegislation,
-      registeredId,
-      program,
-      ministry,
-    }: {
-      top?: number;
-      after?: string;
-      name?: string;
-      actsOfLegislation?: string;
-      registeredId?: string;
-      program?: string;
-      ministry?: string;
-    } = {},
-    { getState, rejectWithValue }
-  ) => {
+  async (criteria: FormDefinitionsCriteria = {}, { getState, rejectWithValue }) => {
+    const { top, after, name, actsOfLegislation, registeredId, program, ministry } = criteria;
     try {
       const { config } = getState() as AppState;
       const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
@@ -271,15 +291,15 @@ export const getFormDefinitions = createAsyncThunk(
       const params = new URLSearchParams();
       if (top) params.append('top', top.toString());
       if (after) params.append('after', after);
-      const criteria: Record<string, string> = {};
-      if (name) criteria.name = name;
-      if (actsOfLegislation) criteria.actsOfLegislation = actsOfLegislation;
-      if (registeredId) criteria.registeredId = registeredId;
-      if (program) criteria.program = program;
-      if (ministry) criteria.ministry = ministry;
+      const criteriaObj: Record<string, string> = {};
+      if (name) criteriaObj.name = name;
+      if (actsOfLegislation) criteriaObj.actsOfLegislation = actsOfLegislation;
+      if (registeredId) criteriaObj.registeredId = registeredId;
+      if (program) criteriaObj.program = program;
+      if (ministry) criteriaObj.ministry = ministry;
 
-      if (Object.keys(criteria).length > 0) {
-        params.append('criteria', JSON.stringify(criteria));
+      if (Object.keys(criteriaObj).length > 0) {
+        params.append('criteria', JSON.stringify(criteriaObj));
       }
       params.append('includeActive', 'true');
 
@@ -309,6 +329,15 @@ export const getFormDefinitions = createAsyncThunk(
         throw err;
       }
     }
+  },
+  {
+    condition: (criteria, { getState }) => {
+      const state = getState() as AppState;
+      if (state.form.loading) return false;
+      // If criteria matches the last successful fetch, don't fetch again
+      if (_.isEqual(criteria, state.form.lastCriteria)) return false;
+      return true;
+    },
   }
 );
 
@@ -341,6 +370,7 @@ export const initialFormState: FormState = {
     program: '',
     ministry: '',
   },
+  lastCriteria: null,
 };
 
 const formSlice = createSlice({
@@ -373,13 +403,16 @@ const formSlice = createSlice({
       .addCase(getFormDefinitions.pending, (state) => {
         state.loading = true;
       })
-      .addCase(getFormDefinitions.fulfilled, (state, { payload }) => {
+      .addCase(getFormDefinitions.fulfilled, (state, { payload, meta }) => {
         state.definitions = payload.results;
         state.loading = false;
         state.next = payload.page.next;
         if (payload.page.next) {
           state.cursors[state.page + 1] = payload.page.next;
         }
+        // meta.arg contains the original arguments passed to the thunk (the criteria).
+        // We store this to compare against future requests in the thunk's condition callback.
+        state.lastCriteria = meta.arg;
       })
       .addCase(getFormDefinitions.rejected, (state) => {
         state.loading = false;
@@ -393,6 +426,7 @@ const formSlice = createSlice({
           state.currentDefinition = payload.latest.configuration;
         }
         state.busy.creating = false;
+        state.lastCriteria = null;
       })
       .addCase(createDefinition.rejected, (state) => {
         state.busy.creating = false;
