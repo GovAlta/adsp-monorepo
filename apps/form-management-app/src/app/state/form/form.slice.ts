@@ -3,7 +3,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import * as _ from 'lodash';
 import { AppState } from '../store';
-import { FormDefinition, CONFIGURATION_SERVICE_ID, FORM_SERVICE_ID } from '../types';
+import { FormDefinition, CONFIGURATION_SERVICE_ID } from '../types';
 import { getAccessToken } from '../user/user.slice';
 export const FORM_FEATURE_KEY = 'form';
 
