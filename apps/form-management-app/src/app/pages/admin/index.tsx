@@ -13,9 +13,6 @@ const TenantManagement = (): JSX.Element => {
           <li>
             <Link to="./editor/1-1-1-def">Form Editor</Link>
           </li>
-          <li>
-            <Link to="./preview/sample">Form Preview</Link>
-          </li>
         </ul>
       </nav>
     </div>
