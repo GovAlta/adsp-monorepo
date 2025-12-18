@@ -42,7 +42,7 @@ class RadioGroupCollapser:
         # STEP 2 — Rewrite rules using reverse_map
         # ---------------------------------------------------------
         for rule in rules:
-            for cond in rule.conditions:
+            for cond in rule.triggers:
                 driver = cond.driver
 
                 if driver in reverse_map:

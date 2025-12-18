@@ -1,4 +1,4 @@
-from common.rule_model import VisibilityCondition, VisibilityRule
+from common.rule_model import Trigger, VisibilityRule
 from visibility_rules.pipeline_context import CTX_FINAL_RULES, CTX_RESOLVED_RULES
 
 
@@ -23,7 +23,7 @@ class ConditionNormalizer:
         for rule in resolved_rules:
             normalized_conditions = []
 
-            for cond in rule.conditions:
+            for cond in rule.triggers:
                 driver = cond.driver.strip() if cond.driver else None
                 operator = cond.operator or "=="
                 value = str(cond.value).strip("'\"") if cond.value is not None else None
@@ -52,7 +52,7 @@ class ConditionNormalizer:
                     operator = "!="
 
                 normalized_conditions.append(
-                    VisibilityCondition(driver=driver, operator=operator, value=value)
+                    Trigger(driver=driver, operator=operator, value=value)
                 )
 
             # Only add rules that have valid conditions
@@ -61,7 +61,7 @@ class ConditionNormalizer:
                     VisibilityRule(
                         target=rule.target,
                         effect=rule.effect,
-                        conditions=normalized_conditions,
+                        triggers=normalized_conditions,
                         logic="AND",
                         xpath=rule.xpath,
                     )

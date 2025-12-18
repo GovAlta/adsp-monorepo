@@ -1,5 +1,4 @@
-import re
-from common.rule_model import VisibilityRule, VisibilityCondition
+from common.rule_model import EventDescription, RawRule, VisibilityRule, Trigger
 from visibility_rules.pipeline_context import (
     CTX_ENUM_MAP,
     CTX_PARENT_MAP,
@@ -17,25 +16,19 @@ class DriverResolver:
 
     Behaviour:
     - Extracts drivers from *.rawValue references in the condition script.
-    - Resolves 'this' up the parent map to the owning field/exclGroup/subform.
     - Normalizes driver names (drops .rawValue, whitespace, etc.).
     - Uses CTX_RADIO_GROUPS to remap faux-radio checkboxes to the group name.
     - Marks any rule target that is a <subform> as a visibility-group.
     """
 
-    RAWVAL_RE = re.compile(r"([A-Za-z0-9_.]+)\.rawValue")
-
     def __init__(self):
         # name -> <subform> element
         self.subforms_by_name: dict[str, object] = {}
 
-    # ------------------------------------------------------------------
-    #  Main entry point
-    # ------------------------------------------------------------------
     def process(self, context):
         print("\n[DriverResolver] Starting...")
 
-        raw_rules = context.get(CTX_RAW_RULES, [])
+        events: list[EventDescription] = context.get(CTX_RAW_RULES, [])
         parent_map = context.get(CTX_PARENT_MAP, {}) or {}
         radio_groups = context.get(CTX_RADIO_GROUPS, {}) or {}
 
@@ -50,30 +43,26 @@ class DriverResolver:
 
         resolved_rules: list[VisibilityRule] = []
 
-        for raw in raw_rules:
-            target_name = raw.target or ""
+        for event in events:
+            target_name = event.action.target
 
-            # --- NEW: mark subforms that are controlled by rules ---
+            # --- Mark subforms that are controlled by rules ---
             if target_name in self.subforms_by_name:
                 visibility_groups.add(target_name)
 
-            resolved_conditions: list[VisibilityCondition] = []
+            resolved_triggers: list[Trigger] = []
 
-            for script in raw.scripts:
-                cond_text = (script.condition or "").strip()
-                # We only create VisibilityRule entries for scripts that have
-                # an actual condition expression. Unconditional scripts are
-                # still useful to infer "dynamic block", but not for rules.
-                if not cond_text:
+            for script in events:
+                trigger = (script.trigger or "").strip()
+                if not trigger:
                     continue
 
                 # --- 1) Derive driver, operator, value ---
-                driver_expr, operator, value = self._parse_condition_legacy(cond_text)
-                driver = self._normalize_driver_name(driver_expr)
+                driver, operator, value = self._parse_trigger(trigger)
 
                 # --- 2) Resolve 'this' via parent_map (field / exclGroup / subform) ---
                 if driver and driver.lower() == "this":
-                    elem = getattr(raw, "element", None)
+                    elem = getattr(event, "element", None)
                     parent = parent_map.get(elem) if elem is not None else None
 
                     # Walk upward until we hit a field, exclGroup, or subform
@@ -87,7 +76,7 @@ class DriverResolver:
                         parent = parent_map.get(parent)
 
                 # --- 3) Radio-group remapping (faux radio subforms) ---
-                driver = self._remap_radio_driver(driver_expr, driver, radio_groups)
+                driver = self._remap_radio_driver(driver, driver, radio_groups)
 
                 # --- 4) Faux-radio collapse (map checkbox → group label) ---
                 collapsed_driver, collapsed_value = self._try_collapse_faux_radio(
@@ -97,8 +86,8 @@ class DriverResolver:
                     driver = collapsed_driver
                     value = collapsed_value
 
-                resolved_conditions.append(
-                    VisibilityCondition(
+                resolved_triggers.append(
+                    Trigger(
                         driver=driver,
                         operator=operator,
                         value=value,
@@ -106,16 +95,16 @@ class DriverResolver:
                 )
 
             # If we found at least one condition for this raw rule, emit a VisibilityRule
-            if resolved_conditions:
+            if resolved_triggers:
                 # Use the effect from the last script we processed (your existing behaviour)
                 effect = script.effect
                 resolved_rules.append(
                     VisibilityRule(
-                        target=raw.target,
+                        target=event.target,
                         effect=effect,
-                        conditions=resolved_conditions,
+                        triggers=resolved_triggers,
                         logic="AND",
-                        xpath=raw.xpath,
+                        xpath=event.xpath,
                     )
                 )
 
@@ -123,74 +112,6 @@ class DriverResolver:
         print(f"[DriverResolver] OUT: {len(resolved_rules)} rules")
         print("[DriverResolver] Done.\n")
         return context
-
-    # ------------------------------------------------------------------
-    #  Subform indexing
-    # ------------------------------------------------------------------
-    def _init_subforms_index(self, ctx: dict):
-        """
-        Build a name → subform element map so we can tell whether
-        a rule target refers to a subform.
-        """
-        if self.subforms_by_name:
-            return
-
-        # In your ParseContext, the root is stored as 'root'
-        root = ctx.get("root") or ctx.get("xfa_root")
-        if root is None:
-            return
-
-        for elem in root.iter():
-            if elem.tag.endswith("subform"):
-                name = elem.attrib.get("name")
-                if name:
-                    self.subforms_by_name[name] = elem
-
-    # ------------------------------------------------------------------
-    #  Condition parsing (keeps your old behaviour)
-    # ------------------------------------------------------------------
-    def _parse_condition_legacy(self, cond_text: str):
-        """
-        Original behaviour:
-        - Extract driver from '<something>.rawValue'
-        - Fallback driver = 'this'
-        - Extract operator & value with a simple regex
-        """
-        refs = self.RAWVAL_RE.findall(cond_text)
-        if refs:
-            driver_expr = refs[0]
-        else:
-            driver_expr = "this"
-
-        operator = self._extract_operator(cond_text)
-        value = self._extract_value(cond_text)
-        return driver_expr, operator, value
-
-    def _extract_operator(self, cond: str):
-        for op in ["==", "!=", ">=", "<=", ">", "<"]:
-            if op in cond:
-                return op
-        return "=="
-
-    def _extract_value(self, cond: str):
-        # Matches: == 1, == '1', == "1", == SOME_TOKEN
-        m = re.search(r"==\s*(['\"]?([A-Za-z0-9_]+)['\"]?)", cond)
-        if m:
-            # group(2) is the inner token without quotes
-            return m.group(2)
-        return None
-
-    # ------------------------------------------------------------------
-    #  Normalization & radio-group logic
-    # ------------------------------------------------------------------
-    def _normalize_driver_name(self, driver: str | None) -> str | None:
-        """Clean purely syntactic artefacts."""
-        if not driver:
-            return driver
-        driver = driver.strip()
-        driver = driver.replace(".rawValue", "")
-        driver = driver.replace(" ", "")
-        return driver
 
     def _remap_radio_driver(
         self,
