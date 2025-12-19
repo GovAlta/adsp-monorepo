@@ -1,27 +1,21 @@
 config:
   environments:
     dev:
-      target: "https://status-service.adsp-dev.gov.ab.ca"
-    test:
-      target: "https://status-service-core-services-test.os99.gov.ab.ca"
+      target: 'https://status-service.adsp-dev.gov.ab.ca'
     uat:
-      target: "https://status-service-uat.alpha.alberta.ca"
+      target: 'https://status.adsp-uat.alberta.ca'
   defaults:
     headers:
-      Content-Type: "application/json"
-      Accept: "application/json"
+      Content-Type: 'application/json'
+      Accept: 'application/json'
   payload:
-    - path: "../artillery.{{ $environment }}.csv"
+    - path: '../artillery.{{ $environment }}.csv'
       skipHeader: true
       fields:
-        - "keycloak_url"
-        - "tenant_realm_id"
-        # - "client_id"
-        # - "client_secret"
-  variables:
-    tenant:
-      - "demo"
-      - "platform"
+        - 'keycloak_url'
+        - 'realm_id'
+        - 'tenant_name'
+        - 'client_id'
   phases:
     - name: warm up
       duration: 10
@@ -34,25 +28,25 @@ config:
     #   # maxVusers: 50 // concurrent users
 before:
   flow:
-    - log: "Getting the access token (tenant: {{ tenant_realm_id }}) for user {{ username }}"
+    - log: 'Getting the access token (tenant: {{ realm_id }}) for user'
     - post:
-        url: "{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token"
+        url: '{{ keycloak_url }}/auth/realms/{{ realm_id }}/protocol/openid-connect/token'
         headers:
-          Content-Type: "application/x-www-form-urlencoded"
-          Accept: "application/json"
+          Content-Type: 'application/x-www-form-urlencoded'
+          Accept: 'application/json'
         form:
           {
-            grant_type: "client_credentials",
-            client_id: "{{ $processEnvironment.CLIENT_ID }}",
-            client_secret: "{{ $processEnvironment.CLIENT_SECRET }}",
+            grant_type: 'client_credentials',
+            client_id: '{{ client_id }}',
+            client_secret: '{{ $processEnvironment.ARTILLERY_CLIENT_SECRET }}',
           }
         capture:
-          - json: "$.access_token"
+          - json: '$.access_token'
             as: token
 scenarios:
   - name: get application statuses
     flow:
       - get:
-          url: "/status/v1/applications"
+          url: '/status/v1/applications'
           headers:
-            authorization: "Bearer {{ token }}"
+            authorization: 'Bearer {{ token }}'

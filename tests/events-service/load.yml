@@ -2,7 +2,7 @@ config:
   environments:
     dev:
       # Configuration service is behind the event service
-      target: 'https://event-service.adsp-dev.gov.ab.ca'
+      target: 'https://configuration-service.adsp-dev.gov.ab.ca'
   defaults:
     headers:
       Content-Type: 'application/json'
@@ -42,8 +42,10 @@ before:
           - json: '$.access_token'
             as: token
 scenarios:
-  - name: get events list, create events and delete events
-    weight: 25
+  - name: 'get events list, create events and delete events'
+    weight': 25
     flow:
       - get:
-          url: '{{ configuration-service-host }}/configuration/v2/configuration/platform/event-service/latest?core'
+          url: /configuration/v2/configuration/platform/event-service/latest
+          headers:
+            authorization: 'Bearer {{ token }}'
