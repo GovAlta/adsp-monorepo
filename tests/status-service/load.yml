@@ -16,7 +16,6 @@ config:
         - 'realm_id'
         - 'tenant_name'
         - 'client_id'
-        - 'username'
   phases:
     - name: warm up
       duration: 10
@@ -29,7 +28,7 @@ config:
     #   # maxVusers: 50 // concurrent users
 before:
   flow:
-    - log: 'Getting the access token (tenant: {{ realm_id }}) for user {{ username }}'
+    - log: 'Getting the access token (tenant: {{ realm_id }}) for user'
     - post:
         url: '{{ keycloak_url }}/auth/realms/{{ realm_id }}/protocol/openid-connect/token'
         headers:
