@@ -2,7 +2,7 @@
 
 import re
 import xml.etree.ElementTree as ET
-from common.rule_model import Action, EventDescription, EventMetadata, RawRule, Trigger
+from common.rule_model import Action, EventDescription, EventMetadata
 from visibility_rules.pipeline_context import (
     CTX_PARENT_MAP,
     CTX_RAW_RULES,
@@ -10,6 +10,10 @@ from visibility_rules.pipeline_context import (
     CTX_XDP_ROOT,
 )
 from visibility_rules.stages.js_parser import parse_js_visibility_script
+from visibility_rules.stages.print_event import print_event
+from visibility_rules.stages.trigger_parser import TriggerParser
+
+debug = False
 
 
 class VisibilityScriptExtractor:
@@ -28,7 +32,7 @@ class VisibilityScriptExtractor:
         In this example:
             - script_owner: the field/subform containing the <script>
             - target: name of affected field/subform (from "this" or explicit)
-            - trigger: Condition triggering action e.g. Section2.chkEmergency.rawValue == 1
+            - trigger: Conditions triggering action e.g. Section2.chkEmergency.rawValue == 1
 
     """
 
@@ -41,6 +45,7 @@ class VisibilityScriptExtractor:
         self.subform_map = context[CTX_SUBFORM_MAP]
 
         parsed_rules = []
+        trigger_parser = TriggerParser()
 
         # Iterate over <script> tags, not <event> tags
         for script_elem in xdp_root.findall(".//script"):
@@ -66,10 +71,13 @@ class VisibilityScriptExtractor:
             raw_rules = parse_js_visibility_script(code)
             for r_rule in raw_rules:
                 if not r_rule.trigger:
-                    print(f"[EXTRACTOR] Trigger not found in: {script_name.strip()}")
+                    if debug:
+                        print(
+                            f"[EXTRACTOR] Trigger not found in: {script_name.strip()}"
+                        )
                     continue
 
-                trigger = self._parse_trigger(r_rule.trigger.strip(), script_elem)
+                trigger = trigger_parser.parse(r_rule.trigger.strip())
                 actions = self._extract_events(r_rule.actions, script_elem)
                 metadata = self._extract_metadata(script_elem, target_name)
 
@@ -85,11 +93,16 @@ class VisibilityScriptExtractor:
                         script_node=script_elem,
                         metadata=metadata,
                     )
-                    debug_event(
-                        event,
-                        ["Section3Default", "Section3Emergency", "section3Seasonal"],
-                    )
                     parsed_rules.append(event)
+                    if debug:
+                        print_event(
+                            event,
+                            [
+                                "Section3Default",
+                                "Section3Emergency",
+                                "section3Seasonal",
+                            ],
+                        )
 
         print(f"[Extractor] Extracted {len(parsed_rules)} visibility rules.")
         context[CTX_RAW_RULES] = parsed_rules
@@ -176,67 +189,9 @@ class VisibilityScriptExtractor:
         # Reverse to get root → leaf order
         return "/" + "/".join(reversed(path_parts))
 
-    TRIGGER_EXPR = re.compile(r"([A-Za-z0-9_.]+)\.rawValue")
-
-    def _parse_trigger(self, trigger: str, script_node: ET) -> Trigger:
-        """
-        Extract driver,operator & value from a trigger expression.
-        - e.g. from "Section2.chkEmergency.rawValue == 1"
-        ️- Returns (driver, operator, value)
-        """
-        driver = self._extract_driver(trigger)
-        if not driver:
-            return None
-        if driver.lower() == "this":
-            parent = self._find_enclosing_control(script_node)
-            driver = parent.get("name")
-        if not driver:
-            return None
-        operator = self._extract_operator(trigger)
-        value = self._extract_value(trigger, operator)
-        return Trigger(driver=driver, operator=operator, value=value)
-
-    def _extract_driver(self, trigger: str):
-        m = self.TRIGGER_EXPR.search(trigger)
-        if m:
-            return m.group(1)
-        return None
-
-    def _extract_operator(self, trigger: str):
-        for op in ["==", "!=", ">=", "<=", ">", "<"]:
-            if op in trigger:
-                return op
-        return "=="
-
-    def _extract_value(self, expr: str, operator: str):
-        """
-        Return the RHS value of a comparison expression.
-
-        Examples:
-        "Section2 == 'Emergency'"   -> "Emergency"
-        "count >= 3"                -> "3"
-        "foo != null"               -> "null"
-        "bar == SOME_TOKEN"         -> "SOME_TOKEN"
-        """
-        if not operator or operator not in expr:
-            return None
-
-        # Split once on the operator
-        _, rhs = expr.split(operator, 1)
-
-        value = rhs.strip()
-
-        # Strip surrounding quotes if present
-        if (value.startswith('"') and value.endswith('"')) or (
-            value.startswith("'") and value.endswith("'")
-        ):
-            value = value[1:-1]
-
-        return value
-
     def _extract_metadata(self, script_elem, target_name: str) -> EventMetadata:
         control = self._find_enclosing_control(script_elem)
-        owner = control.get("name") if control is not None else ""
+        owner = control.get("name") if control is not None else "unknown"
         owner_type = control.tag if control is not None else ""
         target_is_subform = target_name and target_name in self.subform_map
         xpath = self._get_xpath(script_elem, self.parent_map)
@@ -247,21 +202,3 @@ class VisibilityScriptExtractor:
             xpath=xpath,
             script_name=script_elem.get("name") or "",
         )
-
-
-def debug_event(event: EventDescription, targets=None):
-    trigger = event.trigger
-    action = event.action
-    metadata = event.metadata
-    if event.trigger.operator != "==":
-        print(
-            "[EXTRACTOR EVENT] Received non-equality operator on driver {trigger.driver}"
-        )
-    do_print = targets is None or action.target.lower() in [t.lower() for t in targets]
-    if do_print:
-        print("[EXTRACTOR EVENT]")
-        print(f"    Trigger: {trigger.driver} {trigger.operator} {trigger.value}")
-        print(f"    Target: {action.target} -> ({'HIDE' if action.hide else 'SHOW'})")
-        print(f"    Action: {'HIDE' if action.hide else 'SHOW'}")
-        print(f"    Owner: {metadata.owner} ({metadata.owner_type})")
-        print(f"    XPath: {metadata.xpath}")

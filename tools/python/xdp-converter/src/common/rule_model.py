@@ -2,20 +2,14 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from visibility_rules.stages.trigger_ast import Trigger
+
 
 @dataclass
 class Action:
     # e.g., target.presence = 'visible'
     target: str
     hide: bool
-
-
-@dataclass
-class Trigger:
-    # e.g., Section2.chkEmergency.rawValue == 1
-    driver: str  # the controlling field name
-    operator: str  # e.g., "==", "!=", ">", "<="
-    value: str
 
 
 @dataclass
