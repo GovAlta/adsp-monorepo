@@ -6,6 +6,7 @@ import type { EventSearchCriteria } from '@store/event/models';
 import { getEventDefinitions } from '@store/event/actions';
 import styled from 'styled-components';
 import { GoAButton, GoAIconButton, GoAButtonGroup, GoAGrid, GoAFormItem } from '@abgov/react-components';
+import { externalEventSuggestionList } from '@store/event/selectors';
 const initCriteria: EventSearchCriteria = {
   namespace: '',
   name: '',
@@ -35,7 +36,9 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   }, [dispatch]);
   const events = useSelector((state: RootState) => state.event.definitions);
 
-  const autoCompleteList = Object.keys(events).sort((a, b) => (a < b ? -1 : 1));
+  const autoCompleteList = [...new Set([...Object.keys(events), ...externalEventSuggestionList])].sort((a, b) =>
+    a < b ? -1 : 1
+  );
 
   const suggestionOnChange = (e) => {
     const userInput = e.target.value;
