@@ -42,6 +42,14 @@ import {
 import { Visible } from '../../util';
 import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
 
+const getItemsTitle = (schema?: JsonSchema): string | undefined => {
+  const items = schema?.items;
+  if (items && !Array.isArray(items) && typeof items === 'object') {
+    return items.title;
+  }
+  return undefined;
+};
+
 export type ObjectArrayControlProps = ArrayLayoutProps & WithDeleteDialogSupport;
 
 // eslint-disable-next-line
@@ -615,7 +623,7 @@ const ObjectArrayList = ({
         {currentListPage > 0 && (
           <UpdateListContainer>
             <FlexForm ref={rightRef} tabIndex={-1}>
-              <ObjectArrayTitle>{pluralize.singular(listTitle || '')}</ObjectArrayTitle>
+              <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>
 
               <NonEmptyList
                 key={Paths.compose(path, `${currentIndex}`)}
@@ -702,7 +710,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
 
     const controlElement = uischema as ControlElement;
     // eslint-disable-next-line
-    const listTitle = label || uischema.options?.title;
+    const listTitle = uischema?.label ?? uischema?.options?.title ?? getItemsTitle(schema) ?? schema?.title ?? label;
 
     return (
       <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
