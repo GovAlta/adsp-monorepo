@@ -59,10 +59,7 @@ jobs:
         run: mkdir reports
 
       - name: Execute load tests status service
-        run: /home/node/artillery/bin/run run tests/status-service/load.yml --environment dev --output reports/status-report.json
-        env:
-          CLIENT_ID: ${{ inputs.CLIENT_ID }}
-          CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
+        run: /home/node/artillery/bin/run run tests/status-service/load.yml --environment ${{ inputs.ENVIRONMENT }}  --output reports/status-report.json
 
       - name: Generate HTML report status service
         run: /home/node/artillery/bin/run report --output reports/status-report.html reports/status-report.json
