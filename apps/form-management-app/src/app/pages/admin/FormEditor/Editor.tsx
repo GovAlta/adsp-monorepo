@@ -1,0 +1,201 @@
+import React, { useState, useRef, useEffect } from 'react';
+import styles from './Editor.module.scss';
+import { DataEditorContainer } from './DataEditorContainer';
+import { UIEditorContainer } from './UiEditorContainer';
+import { useValidators } from './useValidators';
+import { badCharsCheck, isNotEmptyCheck, wordMaxLengthCheck } from '../../../utils/checkInput';
+import type * as monacoNS from 'monaco-editor';
+import { Preview } from './Preview';
+import { FormDefinition } from '../../../state/types';
+import { SubmitButtonsBar } from './SubmitButtonsBar';
+import { GoATabs, GoATab } from '@abgov/react-components';
+import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
+import { UISchemaElement } from '@jsonforms/core';
+import { FileItem, FileMetadata, FileWithMetadata } from '../../../state/file/file.slice';
+import { PdfJobList } from '../../../state/pdf/pdf.slice';
+
+import { RoleContainer } from './RoleContainer';
+import { AppState } from '../../../state';
+import { useSelector } from 'react-redux';
+import { ClientElement } from '../../../state/keycloak/selectors';
+
+type IEditor = monacoNS.editor.IStandaloneCodeEditor;
+
+export interface EditorProps {
+  definition: FormDefinition;
+  setDraftDataSchema: (definition: string) => void;
+  setDraftUiSchema: (definition: string) => void;
+  isFormUpdated: boolean;
+  updateFormDefinition: () => void;
+  resolvedDataSchema: Record<string, unknown>;
+  fileList: Record<string, FileMetadata[]>;
+  uploadFile: (file: FileWithMetadata, propertyId: string) => void;
+  downloadFile: (file: FileItem) => void;
+  deleteFile: (file: FileItem) => void;
+  formServiceApiUrl: string;
+  schemaError: string | null;
+  uiSchema: UISchemaElement;
+  registerData: RegisterData;
+  nonAnonymous: string[];
+  dataList: string[];
+  currentPDF: string;
+  pdfFile: FileItem;
+  jobList: PdfJobList;
+  loading: boolean;
+  generatePdf: (inputData: Record<string, string>) => void;
+  roles: ClientElement[];
+  updateEditorFormDefinition: (update: Partial<FormDefinition>) => void;
+  fetchKeycloakServiceRoles: () => void;
+}
+
+export const Editor: React.FC<EditorProps> = ({
+  definition,
+  setDraftDataSchema,
+  setDraftUiSchema,
+  updateFormDefinition,
+  isFormUpdated,
+  resolvedDataSchema,
+  fileList,
+  uploadFile,
+  downloadFile,
+  deleteFile,
+  formServiceApiUrl,
+  schemaError,
+  uiSchema,
+  registerData,
+  nonAnonymous,
+  dataList,
+  currentPDF,
+  pdfFile,
+  jobList,
+  generatePdf,
+  loading,
+  roles,
+  updateEditorFormDefinition,
+  fetchKeycloakServiceRoles,
+}) => {
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    badCharsCheck,
+    wordMaxLengthCheck(32, 'Name'),
+    isNotEmptyCheck('name')
+  )
+    .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
+    .build();
+
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const editorRefData = useRef(null);
+  const editorRefUi = useRef(null);
+
+  const [editorErrors, setEditorErrors] = useState<{
+    uiSchema: string | null;
+    dataSchemaJSON: string | null;
+    dataSchemaJSONSchema: string | null;
+  }>({
+    uiSchema: null,
+    dataSchemaJSON: null,
+    dataSchemaJSONSchema: null,
+  });
+
+  function foldAll(editor: IEditor) {
+    editor.trigger('folding-util', 'editor.foldAll', undefined);
+  }
+  function unfoldAll(editor: IEditor) {
+    editor.trigger('folding-util', 'editor.unfoldAll', undefined);
+  }
+
+  const [rolesTabLoaded, setRolesTabLoaded] = useState(false);
+
+  const [activeTab, setActiveTab] = useState(1);
+
+  useEffect(() => {
+    if (activeTab === 3) setRolesTabLoaded(true);
+  }, [activeTab]);
+
+  const getCurrentEditorRef = () => {
+    if (activeIndex === 0) return editorRefData.current; // Data schema tab
+    if (activeIndex === 1) return editorRefUi.current; // UI schema tab
+    return null;
+  };
+
+  const { isLoadingRoles } = useSelector((state: AppState) => ({
+    isLoadingRoles: state.keycloak.loadingRealmRoles || state.keycloak.loadingKeycloakRoles,
+  }));
+
+  return (
+    <div className={styles['form-editor']}>
+      <div className={styles['name-description-data-schema']}>
+        <GoATabs
+          onChange={(event) => {
+            !!event && setActiveTab(event);
+          }}
+          data-testid="form-editor-tabs"
+        >
+          <GoATab heading="Data schema" data-testid="dcm-form-editor-data-schema-tab">
+            <DataEditorContainer
+              errors={errors}
+              editorErrors={editorErrors}
+              tempDataSchema={definition?.dataSchema}
+              setDraftDataSchema={setDraftDataSchema}
+              setEditorErrors={setEditorErrors}
+            />
+          </GoATab>
+          <GoATab heading="UI schema" data-testid="dcm-form-editor-ui-schema-tab">
+            <UIEditorContainer
+              errors={errors}
+              editorErrors={editorErrors}
+              tempUiSchema={definition?.uiSchema}
+              setDraftUiSchema={setDraftUiSchema}
+              setEditorErrors={setEditorErrors}
+            />
+          </GoATab>
+          <GoATab heading="Roles" data-testid="dcm-form-editor-ui-schema-tab">
+            {rolesTabLoaded && (
+              <div>
+                <RoleContainer
+                  definition={definition}
+                  roles={roles}
+                  updateEditorFormDefinition={updateEditorFormDefinition}
+                  fetchKeycloakServiceRoles={fetchKeycloakServiceRoles}
+                />
+                {isLoadingRoles && <div className={styles.textLoadingIndicator}>Loading roles from access service</div>}
+              </div>
+            )}
+          </GoATab>
+        </GoATabs>
+        <SubmitButtonsBar
+          getCurrentEditorRef={getCurrentEditorRef}
+          activeIndex={activeIndex}
+          editorErrors={editorErrors}
+          definition={definition}
+          updateFormDefinition={updateFormDefinition}
+          foldAll={foldAll}
+          unfoldAll={unfoldAll}
+          isFormUpdated={isFormUpdated}
+          validators={validators}
+        />
+      </div>
+      <div className={styles['preview-pane']}>
+        <Preview
+          fileList={fileList}
+          uploadFile={uploadFile}
+          downloadFile={downloadFile}
+          deleteFile={deleteFile}
+          formServiceApiUrl={formServiceApiUrl}
+          schemaError={schemaError}
+          dataSchema={resolvedDataSchema}
+          uiSchema={uiSchema}
+          registerData={registerData}
+          nonAnonymous={nonAnonymous}
+          dataList={dataList}
+          currentPDF={currentPDF}
+          pdfFile={pdfFile}
+          jobList={jobList}
+          generatePdf={generatePdf}
+          loading={loading}
+        />
+      </div>
+    </div>
+  );
+};

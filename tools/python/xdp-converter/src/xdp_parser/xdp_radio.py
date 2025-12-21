@@ -8,6 +8,9 @@ class XdpRadio(XdpElement):
     def __init__(self, xdp, labels, context: ParseContext):
         super().__init__(xdp, labels, context)
 
+    def is_control(self):
+        return True
+
     def to_form_element(self):
         options = []
 

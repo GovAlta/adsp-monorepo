@@ -96,7 +96,12 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                           <div className="flex-auto">
                             {currentFile?.filename === job?.filename && (
                               <BadgeWrapper>
-                                <GoABadge content={'Viewing'} data-testid="viewing-badge" type="information" />
+                                <GoABadge
+                                  content={'Viewing'}
+                                  data-testid="viewing-badge"
+                                  type="information"
+                                  icon={false}
+                                />
                               </BadgeWrapper>
                             )}
                           </div>

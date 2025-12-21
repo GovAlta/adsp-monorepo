@@ -283,15 +283,15 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                         <FormGap>
                           {isEmailVerified !== undefined && isEmailVerified === true && (
                             <div>
-                              <GoABadge type="success" content="Verified" />
+                              <GoABadge type="success" content="Verified" icon={false} />
                             </div>
                           )}
                           {isEmailVerified !== undefined && isEmailVerified === false && (
                             <div>
                               {codeEmailExists ? (
-                                <GoABadge type="midtone" content="Pending" />
+                                <GoABadge type="midtone" content="Pending" icon={false} />
                               ) : (
-                                <GoABadge type="important" content="Not verified" />
+                                <GoABadge type="important" content="Not verified" icon={false} />
                               )}
                             </div>
                           )}
@@ -309,14 +309,14 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                       <VerificationWrapper>
                         <FormGap>
                           {isSmsVerified !== undefined && isSmsVerified === true && (
-                            <GoABadge type="success" content="Verified" />
+                            <GoABadge type="success" content="Verified" icon={false} />
                           )}
                           {isSmsVerified !== undefined && isSmsVerified === false && (
                             <div>
                               {codeSMSExists ? (
-                                <GoABadge type="midtone" content="Pending" />
+                                <GoABadge type="midtone" content="Pending" icon={false} />
                               ) : (
-                                <GoABadge type="important" content="Not verified" />
+                                <GoABadge type="important" content="Not verified" icon={false} />
                               )}
                             </div>
                           )}

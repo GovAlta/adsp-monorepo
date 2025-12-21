@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import xml.etree.ElementTree as ET
-from typing import Any
+from typing import Any, Optional
 from xdp_parser.control_labels import ControlLabels
 
 
@@ -30,9 +30,15 @@ class AbstractXdpFactory(ABC):
     def handle_basic_input(self, field: ET.Element, labels: ControlLabels) -> Any: ...
 
     @abstractmethod
-    def handle_group(
-        self, container: ET.Element, children: list, label: str
+    def handle_radio_subform(
+        self, element: ET.Element, labels: ControlLabels
     ) -> Any: ...
 
     @abstractmethod
     def handle_help_text(self, elem: ET.Element, help_text: str) -> Any: ...
+
+    @abstractmethod
+    def handle_group(
+        self, elem: ET.Element, children: list, label: str
+    ) -> Optional[Any]:
+        pass

@@ -1590,3 +1590,72 @@ Then(
     });
   }
 );
+
+When('the user sends a form service request to create a form draft from {string} form definition', function (formDef) {
+  const createFormDraftRquestURL = Cypress.env('formServiceApiUrl') + '/form/v1/forms';
+  cy.request({
+    method: 'POST',
+    url: createFormDraftRquestURL,
+    failOnStatusCode: false,
+    auth: {
+      bearer: Cypress.env('autotest-admin-token'),
+    },
+    body: {
+      definitionId: formDef,
+      applicant: {
+        userId: 'auto.test@gov.ab.ca',
+        addressAs: 'Auto Test',
+        channels: [
+          {
+            channel: 'email',
+            address: 'auto.test@gov.ab.ca',
+          },
+        ],
+      },
+    },
+  }).then(function (response) {
+    responseObj = response;
+    cy.log('Response body: ' + JSON.stringify(responseObj.body));
+  });
+});
+
+When('the user sends a form service request to submit a form draft from {string} form definition', function (formDef) {
+  const getFormsRquestURL =
+    Cypress.env('formServiceApiUrl') + '/form/v1/forms?criteria={"definitionIdEquals":"' + formDef + '"}';
+  cy.request({
+    method: 'GET',
+    url: getFormsRquestURL,
+    failOnStatusCode: false,
+    auth: {
+      bearer: Cypress.env('autotest-admin-token'),
+    },
+  }).then(function (response) {
+    expect(response.status).to.eq(200);
+    cy.log('Form definition ID: ' + response.body.results[0].id);
+    const submitFormrRquestURL = Cypress.env('formServiceApiUrl') + '/form/v1/forms/' + response.body.results[0].id;
+    cy.request({
+      method: 'POST',
+      url: submitFormrRquestURL,
+      failOnStatusCode: false,
+      auth: {
+        bearer: Cypress.env('autotest-admin-token'),
+      },
+      body: {
+        operation: 'submit',
+      },
+    }).then(function (response) {
+      responseObj = response;
+      expect(responseObj.status).to.eq(400);
+      cy.log('Response body: ' + JSON.stringify(responseObj.body));
+    });
+  });
+});
+
+Then(
+  'the user gets a {string} status code with an error message containing {string}',
+  function (statusCode, errorMessage) {
+    const statusCodeNum = Number(statusCode);
+    expect(responseObj.status).to.eq(statusCodeNum);
+    expect(responseObj.body.errorMessage).to.contain(errorMessage);
+  }
+);

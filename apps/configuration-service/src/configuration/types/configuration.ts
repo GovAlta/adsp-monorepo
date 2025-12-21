@@ -17,4 +17,5 @@ export interface Configuration<C = Record<string, unknown>> {
 
 export interface RevisionCriteria {
   revision?: number;
+  [key: string]: unknown;
 }

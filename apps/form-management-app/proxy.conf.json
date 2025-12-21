@@ -1,10 +1,1 @@
-[
-  {
-    "context": [
-      "/config/*"
-    ],
-    "target": "https://form-management-app-adsp-dev.apps.aro.gov.ab.ca",
-    "secure": true,
-    "changeOrigin": true
-  }
-]
+[]

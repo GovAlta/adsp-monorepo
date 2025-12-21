@@ -46,9 +46,9 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
             {email && (
               <GoABadgeWrapper>
                 {emailVerified ? (
-                  <GoABadge key="email-verified" type="success" content="Verified" />
+                  <GoABadge key="email-verified" type="success" content="Verified" icon={false} />
                 ) : (
-                  <GoABadge key="email-not-verified" type="important" content="Not verified" />
+                  <GoABadge key="email-not-verified" type="important" content="Not verified" icon={false} />
                 )}
               </GoABadgeWrapper>
             )}
@@ -61,9 +61,9 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
               {sms && (
                 <GoABadgeWrapper>
                   {smsVerified ? (
-                    <GoABadge key="sms-verified" type="success" content="Verified" />
+                    <GoABadge key="sms-verified" type="success" content="Verified" icon={false} />
                   ) : (
-                    <GoABadge key="sms-not-verified" type="important" content="Not verified" />
+                    <GoABadge key="sms-not-verified" type="important" content="Not verified" icon={false} />
                   )}
                 </GoABadgeWrapper>
               )}

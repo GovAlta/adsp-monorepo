@@ -368,3 +368,12 @@ Feature: Form
     And the user views form data of "false" as "citizen" for "residencyOptions" object on data page
     And the user views form data of "Ben:Bond:2011-05-15" as "givenName:surname:dob" for "dependant" array on data page
 
+  # TEST DATA: autotest-closed-intake is created as a form definition with an open intake period in the past
+  # TEST DATA: autotest-closed-intake form definition has a draft created for it
+  @TEST_CS-4569 @REQ_CS-2955 @regression
+  Scenario: As a form service developer, form creation and form submission return bad request if the form is not open for intake
+    When the user sends a form service request to create a form draft from "autotest-closed-intake" form definition
+    Then the user gets a "400" status code with an error message containing "no active intake"
+    When the user sends a form service request to submit a form draft from "autotest-closed-intake" form definition
+    Then the user gets a "400" status code with an error message containing "no active intake"
+

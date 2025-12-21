@@ -1,100 +1,269 @@
+from visibility_rules.pipeline_context import (
+    CTX_ENUM_MAP,
+    CTX_FINAL_RULES,
+    CTX_JSONFORMS_RULES,
+    CTX_LABEL_TO_ENUM,
+    CTX_PARENT_MAP,
+    CTX_XDP_ROOT,
+)
+from xdp_parser.xdp_utils import compute_full_xdp_path
+
+
 class JsonFormsEmitter:
     """
     Converts normalized visibility rules into JSONForms-compatible
     rule definitions.
 
-    Features:
-    - Converts numeric constants into labels via enum_maps
-    - Builds clean schema/scope (no redundant 'properties')
-    - Supports multiple rules per target (no overwriting)
-    - Removes duplicate or redundant rule entries
-    - Emits detailed debug output
+    Hybrid goals:
+    - Use VisibilityRule.conditions as source of truth
+    - Respect rule.logic (AND vs OR)
+    - Map numeric enum values → labels via enum_maps
+    - Emit clean schemas:
+        AND → properties + required
+        OR  → schema.anyOf = [ {properties, required}, ... ]
+    - Generate robust keys for attachment:
+        * Prefer target if already qualified
+        * Otherwise compute XDP path from XML
+        * Fallback to the raw target
     """
 
     def process(self, context):
         print("\n[JsonFormsEmitter] Starting...")
 
-        normalized_rules = context.get("normalized_visibility_rules", [])
-        enum_maps = context.get("enum_map", {})
-        label_to_enum = context.get("label_to_enum", {})
-        parent_map = context.get("parent_map")
-        xdp_root = context.get("xdp_root")
+        normalized_rules = context.get(CTX_FINAL_RULES, [])
+        enum_maps = context.get(CTX_ENUM_MAP, {}) or {}
+        label_to_enum = context.get(CTX_LABEL_TO_ENUM, {}) or {}
+        parent_map = context.get(CTX_PARENT_MAP, {}) or {}
+        xdp_root = context.get(CTX_XDP_ROOT)
 
-        emitted = {}
+        print(f"[JsonFormsEmitter] IN merged rules: {len(normalized_rules)}")
+
+        emitted: dict[str, dict] = {}
+
+        unmapped_values = 0
+        skipped_empty = 0
 
         for rule in normalized_rules:
-            driver, const_value = self._resolve_target_to_enum(
-                rule.target, label_to_enum
-            )
+            if not rule.conditions:
+                print(f"  [SKIP] Rule '{rule.target}' has no conditions.")
+                continue
 
-            if driver and const_value is not None:
-                # Always resolve enum values for human-readable output
-                mapped_value = self.resolve_enum_value(driver, const_value, enum_maps)
-                schema = {"const": mapped_value}
-                scope = f"#/properties/{driver}"
+            effect = self._map_effect(rule.effect)
 
-            elif len(rule.conditions) == 1:
-                cond = rule.conditions[0]
-                driver = cond.driver
-                schema = {
-                    "const": self.resolve_enum_value(driver, cond.value, enum_maps)
-                }
-                scope = f"#/properties/{driver}"
+            logic = (rule.logic or "AND").upper()
+
+            if logic == "OR":
+                schema, scope = self._build_or_schema(rule, enum_maps, label_to_enum)
             else:
-                props = {}
-                for cond in rule.conditions:
-                    if cond.driver.split(".")[-1] == rule.target.split(".")[-1]:
-                        continue
-                    driver_key = cond.driver.split(".")[-1]
-                    mapped_value = self._map_enum_value(
-                        driver_key, cond.value, enum_maps
-                    )
-                    props[driver_key] = {"const": mapped_value}
-                schema = {"properties": props}
-                scope = "#/properties"
+                schema, scope = self._build_and_schema(rule, enum_maps, label_to_enum)
 
-            # 🔹 Build JSONForms-style rule entry
-            rule_entry = {
-                "effect": "SHOW" if rule.effect.upper() == "VISIBLE" else "HIDE",
-                "condition": {"scope": scope, "schema": schema},
+            if schema is None:
+                skipped_empty += 1
+                continue
+
+            jsonforms_rule = {
+                "effect": effect,
+                "condition": {
+                    "scope": scope,
+                    "schema": schema,
+                },
             }
 
-            # 🔹 Compute fully qualified key
-            qualified_target = self._get_qualified_name(
-                rule.target, parent_map, xdp_root
-            )
+            key = self._compute_rule_key(rule, xdp_root, parent_map)
+            if key is None:
+                print(
+                    f"  [WARN] Could not compute key for target '{rule.target}', skipping."
+                )
+                continue
 
-            if qualified_target not in emitted:
-                emitted[qualified_target] = {"rules": [rule_entry]}
-            else:
-                emitted[qualified_target]["rules"].append(rule_entry)
+            # If multiple rules land on the same target, keep the last one for now.
+            # (If you want multiple rules per target, this is where we could
+            #  collect into a list and later merge.)
+            emitted[key] = {"rule": jsonforms_rule}
 
-        # Post-process: collapse per-target rules into a single JSONForms "rule" object
-        for key, entry in list(emitted.items()):
-            merged = self._merge_rules_to_single(entry.get("rules", []))
-            if merged:
-                entry["rule"] = merged
-            entry.pop("rules", None)
+        context[CTX_JSONFORMS_RULES] = emitted
 
-        context["jsonforms_visibility_rules"] = emitted
+        print(f"[JsonFormsEmitter] OUT jsonforms rules: {len(emitted)}")
+        print(f"[JsonFormsEmitter]   skipped_empty: {skipped_empty}")
         print("[JsonFormsEmitter] Done.\n")
+
         return context
 
-    def _get_qualified_name(self, target: str, parent_map: dict, xdp_root):
-        """Return a fully qualified XDP path name for the given target."""
-        target_node = self._find_node_by_name(target, xdp_root)
-        if not target_node:
-            print(f"  [WARN] Could not find node for {target}; using fallback name")
+    # ------------------------------------------------------------------
+    # Effect mapping
+    # ------------------------------------------------------------------
+    def _map_effect(self, raw_effect: str | None) -> str:
+        if not raw_effect:
+            return "SHOW"
+
+        eff = raw_effect.upper()
+
+        if eff in {"SHOW", "HIDE", "DISABLE", "ENABLE"}:
+            return eff
+
+        # Common XDP-style wordings
+        if eff in {"VISIBLE", "VIS"}:
+            return "SHOW"
+        if eff in {"INVISIBLE", "HIDDEN"}:
+            return "HIDE"
+
+        return eff
+
+    # ------------------------------------------------------------------
+    # Schema builders
+    # ------------------------------------------------------------------
+    def _build_and_schema(self, rule, enum_maps, label_to_enum):
+        """
+        Build a single {properties, required} schema combining all conditions
+        with logical AND.
+        """
+        properties: dict[str, dict] = {}
+        required: list[str] = []
+
+        for cond in rule.conditions:
+            sub = self._condition_to_subschema(cond, enum_maps, label_to_enum)
+            if not sub:
+                continue
+
+            sub_props = sub.get("properties", {})
+            sub_req = sub.get("required", [])
+
+            for drv, drv_schema in sub_props.items():
+                if drv in properties:
+                    # If the same driver appears multiple times, we can
+                    # eventually merge const/enum – for now, last wins.
+                    # (If this becomes a problem, we can add merging logic here.)
+                    pass
+                properties[drv] = drv_schema
+
+            for drv in sub_req:
+                if drv not in required:
+                    required.append(drv)
+
+        if not properties:
+            return None, None
+
+        return {"properties": properties, "required": required}, "#"
+
+    def _build_or_schema(self, rule, enum_maps, label_to_enum):
+        """
+        Build a schema with anyOf = [ {properties, required}, ... ]
+        where each branch represents one of the conditions.
+        """
+        any_of: list[dict] = []
+
+        for cond in rule.conditions:
+            sub = self._condition_to_subschema(cond, enum_maps, label_to_enum)
+            if not sub:
+                continue
+            any_of.append(sub)
+
+        if not any_of:
+            return None, None
+
+        return {"anyOf": any_of}, "#"
+
+    # ------------------------------------------------------------------
+    # Condition → {properties, required} helper
+    # ------------------------------------------------------------------
+    def _condition_to_subschema(self, cond, enum_maps, label_to_enum):
+        """
+        Turn a single VisibilityCondition into:
+
+            {
+               "properties": {
+                 "<driver>": { "const": <mapped_value> }
+               },
+               "required": ["<driver>"]
+            }
+        """
+
+        if not getattr(cond, "driver", None):
+            return None
+
+        raw_value = getattr(cond, "value", None)
+        if raw_value is None:
+            return None
+
+        driver_full = cond.driver
+        driver_key = driver_full.split(".")[-1]
+
+        mapped_value = self._resolve_checkbox_or_enum(cond, enum_maps, label_to_enum)
+
+        if mapped_value is None:
+            return None
+
+        return {
+            "properties": {
+                driver_key: {"const": mapped_value},
+            },
+            "required": [driver_key],
+        }
+
+    # ------------------------------------------------------------------
+    # Enum / checkbox value mapping
+    # ------------------------------------------------------------------
+    def _resolve_checkbox_or_enum(self, cond, enum_maps, label_to_enum):
+        """
+        Try to map condition value into a human label using:
+        1. label_to_enum (for checkbox label → (driver,const))
+        2. enum_maps[driver_key][const]
+        3. fallback: raw value
+        """
+        raw = str(cond.value).strip()
+        raw_lc = raw.lower()
+
+        # 1) direct label hit
+        if raw in label_to_enum:
+            driver, const_val = label_to_enum[raw]
+            enum_map = enum_maps.get(driver, {})
+            return enum_map.get(str(const_val), const_val)
+
+        # 2) fuzzy label hit
+        for label, (driver, const_val) in label_to_enum.items():
+            lab_lc = str(label).strip().lower()
+            if raw_lc == lab_lc or raw_lc in lab_lc or lab_lc in raw_lc:
+                enum_map = enum_maps.get(driver, {})
+                return enum_map.get(str(const_val), const_val)
+
+        # 3) enum mapping by driver suffix
+        driver_key = cond.driver.split(".")[-1]
+        mapping = enum_maps.get(driver_key)
+        if mapping:
+            return mapping.get(str(raw), raw)
+
+        # 4) raw value as fallback
+        return raw
+
+    # ------------------------------------------------------------------
+    # Rule key computation
+    # ------------------------------------------------------------------
+    def _compute_rule_key(self, rule, xdp_root, parent_map):
+        """
+        Compute the key that will be used to look up rules during UI schema emission.
+
+        Strategy:
+        - If rule.target already looks qualified (has dots), use it as-is.
+        - Else, if we can find the XDP node by name, use compute_full_xdp_path.
+        - Else, fall back to raw rule.target.
+        """
+        target = rule.target or ""
+
+        # Rule targets coming from upstream often already look like
+        # "Section3Default", "Section4.Regular.cboDecalPackage", etc.
+        if "." in target:
             return target
 
-        parts = []
-        node = target_node
-        while node is not None:
-            name = node.attrib.get("name")
-            if name:
-                parts.insert(0, name)
-            node = parent_map.get(node)
-        return ".".join(parts)
+        if xdp_root is not None:
+            node = self._find_node_by_name(target, xdp_root)
+            if node is not None:
+                try:
+                    return compute_full_xdp_path(node, parent_map)
+                except Exception as e:
+                    print(f"  [WARN] compute_full_xdp_path failed for '{target}': {e}")
+
+        # Fallback: raw target
+        return target or None
 
     def _find_node_by_name(self, name: str, xdp_root):
         """Find the first element in the tree whose name attribute matches the given name."""
@@ -102,152 +271,3 @@ class JsonFormsEmitter:
             if el.attrib.get("name") == name:
                 return el
         return None
-
-    def resolve_enum_value(self, driver: str, raw_value: str | int, enum_maps):
-        """
-        Convert numeric constants (e.g. '1', '2') into enum labels
-        using the provided enum_maps from the extractor.
-        Tries both full and partial driver names.
-        """
-        if raw_value is None:
-            return None
-
-        value_key = str(raw_value).strip()
-        enum_map = enum_maps.get(driver)
-        if enum_map and value_key in enum_map:
-            mapped = enum_map[value_key]
-            return mapped
-
-        if "." in driver:
-            last = driver.split(".")[-1]
-            enum_map = enum_maps.get(last)
-            if enum_map and value_key in enum_map:
-                mapped = enum_map[value_key]
-                return mapped
-
-        return raw_value
-
-    def _map_enum_value(self, driver: str, raw_value: str, enum_maps: dict) -> str:
-        maps = enum_maps or {}
-        key = driver
-        mapping = maps.get(key)
-
-        if mapping is None and "." in driver:
-            suffix = driver.split(".")[-1]
-            mapping = maps.get(suffix)
-
-        return mapping.get(str(raw_value), raw_value) if mapping else raw_value
-
-    def _resolve_target_to_enum(
-        self, target: str, label_to_enum: dict[str, tuple[str, str]]
-    ):
-        """Return (driver, const_value) if the target label matches a known enum label."""
-        for label, (driver, const_value) in label_to_enum.items():
-            if target.strip().lower() in label.strip().lower():
-                return driver, const_value
-        return None, None
-
-    def _merge_rules_to_single(self, rule_list: list[dict]) -> dict | None:
-        """
-        Merge multiple raw rules into a single JSONForms-compliant rule object *without* using anyOf.
-        Strategy:
-        - Prefer a single EFFECT per target. If any SHOW exists, prefer SHOW; otherwise HIDE.
-        - Combine all conditions for the preferred effect into a single schema with:
-            scope: "#"
-            schema: { "properties": { <driver>: {const|enum: ...}, ... }, "required": [drivers...] }
-        - Drivers that appear multiple times get merged using `enum` of all their values.
-        - If we encounter an unsupported schema shape, fall back to returning the first rule of the preferred effect.
-        """
-        if not rule_list:
-            return None
-
-        # 1) Choose preferred effect (SHOW wins if present)
-        effects = [r.get("effect") for r in rule_list]
-        preferred_effect = "SHOW" if "SHOW" in effects else (effects[0] or "SHOW")
-
-        # 2) Collect all rules matching the preferred effect
-        selected = [r for r in rule_list if r.get("effect") == preferred_effect]
-        if not selected:
-            selected = [rule_list[0]]
-
-        # Helper to add a (driver -> value) to the accumulator
-        def add_prop(acc: dict[str, list], driver: str, value):
-            if driver not in acc:
-                acc[driver] = []
-            if value not in acc[driver]:
-                acc[driver].append(value)
-
-        prop_values: dict[str, list] = {}
-
-        # 3) Normalize/merge each selected rule's schema into prop_values
-        for r in selected:
-            cond = r.get("condition", {})
-            schema = cond.get("schema", {})
-            scope = cond.get("scope", "") or ""
-
-            # Case A: single-property rule like scope "#/properties/<driver>", schema {const: X}
-            if (
-                scope.startswith("#/properties/")
-                and "const" in schema
-                and isinstance(schema, dict)
-            ):
-                driver = scope.split("#/properties/")[-1]
-                add_prop(prop_values, driver, schema.get("const"))
-                continue
-
-            # Case B: multi-property rule like schema {properties: {...}}
-            if (
-                isinstance(schema, dict)
-                and "properties" in schema
-                and isinstance(schema["properties"], dict)
-            ):
-                props = schema["properties"]
-                unsupported = False
-                for driver, drv_schema in props.items():
-                    if not isinstance(drv_schema, dict):
-                        unsupported = True
-                        break
-                    if "const" in drv_schema:
-                        add_prop(prop_values, driver, drv_schema["const"])
-                    elif "enum" in drv_schema and isinstance(drv_schema["enum"], list):
-                        for v in drv_schema["enum"]:
-                            add_prop(prop_values, driver, v)
-                    else:
-                        # Complex shapes (e.g., {"not": {...}}) are not merged here
-                        unsupported = True
-                        break
-                if unsupported:
-                    # Fallback to returning the first selected rule unchanged
-                    return selected[0]
-                continue
-
-            # Unknown shape → fallback
-            return selected[0]
-
-        # 4) Build merged properties + required
-        merged_props: dict[str, dict] = {}
-        required: list[str] = []
-        for driver, vals in prop_values.items():
-            if not vals:
-                continue
-            required.append(driver)
-            if len(vals) == 1:
-                merged_props[driver] = {"const": vals[0]}
-            else:
-                merged_props[driver] = {"enum": vals}
-
-        if not merged_props:
-            # Nothing to merge; return first selected rule
-            return selected[0]
-
-        # 5) Return the single merged rule
-        return {
-            "effect": preferred_effect,
-            "condition": {
-                "scope": "#",
-                "schema": {
-                    "properties": merged_props,
-                    "required": required,
-                },
-            },
-        }

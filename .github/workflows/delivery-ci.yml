@@ -14,6 +14,9 @@ on:
 
 jobs:
   build:
+    permissions:
+      id-token: write  # Required for OIDC to NPM for publishing
+      contents: write
     runs-on: ubuntu-22.04
     outputs:
       affected_apps: ${{ steps.set_outputs.outputs.affected_apps }}
@@ -28,7 +31,7 @@ jobs:
           cache: "npm"
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9"
+          dotnet-version: 9
       - uses: actions/setup-java@v4
         with:
           java-version: "17"
@@ -50,7 +53,6 @@ jobs:
         with:
           affected-base: ${{ github.event.inputs.AFFECTED_BASE || steps.last_successful_commit.outputs.base }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          npm_token: ${{ secrets.NPM_TOKEN }}
       - run: npm prune --production
       - if: steps.production-build.outputs.affected-apps
         run: tar czf adsp-build-dist.tar.gz node_modules/ dist/

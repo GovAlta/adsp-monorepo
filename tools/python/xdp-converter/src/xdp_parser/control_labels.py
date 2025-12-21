@@ -1,3 +1,4 @@
+from os import name
 import re
 from xml.etree import ElementTree as ET
 
@@ -16,21 +17,21 @@ class ControlLabels:
 
     def _find_control_labels(self, container_node: ET.Element) -> dict[str, str]:
         """
-        Build { control_name: label } for every visible <field>/<exclGroup> under container_node.
+        Build { control_name: label } for every visible <field>/<exclGroup>.
 
         Priority:
-        1. traversal-hints
-        2. inline caption (including exData help captions)
+        1. traversal-hints (strongest)
+        2. inline caption
         3. preceding <draw> label
         4. cleaned control name (fallback)
         """
 
-        # 1) Traversal-based labels (strongest)
+        # 1) Traversal-based (strongest)
         target, label = self._find_traversal_hints(container_node)
         if target and label:
             self.mapping[target] = label
 
-        # 2) Inline caption fallback
+        # 2) Inline captions
         for name, node in self.controls_by_name.items():
             if name in self.mapping:
                 continue
@@ -38,7 +39,7 @@ class ControlLabels:
             if caption:
                 self.mapping[name] = caption
 
-        # 3) Preceding-draw label fallback
+        # 3) Preceding <draw> label fallback
         for name, node in self.controls_by_name.items():
             if name in self.mapping and self.mapping[name].strip():
                 continue
@@ -51,14 +52,6 @@ class ControlLabels:
             if name in self.mapping and self.mapping[name].strip():
                 continue
             self.mapping[name] = _control_name(name)
-
-        # DEBUG: show labels for radio groups and friends
-        interesting_keys = [
-            "rbApplicant",
-            "rbCoverYes_No",
-            "rbStatusYes_No",
-            "rbCanadaYes_No",
-        ]
 
         return self.mapping
 

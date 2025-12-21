@@ -1,0 +1,26 @@
+.headerContainer {
+  position: relative;
+  border-bottom: 1px solid #dcdcdc;
+}
+
+.actions {
+  display: flex;
+
+  > .desktop {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .mobile {
+      display: none;
+    }
+    .desktop {
+      display: flex;
+    }
+  }
+}
+
+.signoutBadgeWrapper {
+  display: inline-block;
+  position: relative;
+}

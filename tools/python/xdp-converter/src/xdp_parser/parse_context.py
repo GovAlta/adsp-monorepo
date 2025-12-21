@@ -1,20 +1,22 @@
-from dataclasses import dataclass
-from typing import Any, Dict, Optional
-import xml.etree.ElementTree as ET
+from dataclasses import dataclass, field
+from typing import Any, Dict, Optional, Set
 
 
 @dataclass
 class ParseContext:
-    """
-    Shared context for all XDP parsing operations.
-    """
 
-    root: Optional[ET.Element] = None
-    parent_map: Optional[Dict[ET.Element, ET.Element]] = None
-    visibility_rules: Optional[Dict[str, list[dict]]] = None
+    # Required for both passes
+    root: Any
+    parent_map: Dict[Any, Any]
+    radio_groups: Dict[str, list]
+
+    # Only needed after visibility pipeline
     help_text: Optional[Dict[str, str]] = None
-    extra: Optional[Dict[str, Any]] = None  # for anything transient or stage-specific
+    jsonforms_rules: Optional[Dict[str, Any]] = None
 
-    def get(self, key: str, default=None):
-        """Convenience for safe lookups."""
-        return getattr(self, key, self.extra.get(key) if self.extra else default)
+    # Populated inside parse_xdp() during the *final* pass
+    top_subforms: Optional[Set[int]] = None
+
+    def get(self, key, default=None):
+        """Support existing call sites (to avoid churn)."""
+        return getattr(self, key, default)

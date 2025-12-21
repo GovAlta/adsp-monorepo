@@ -7,14 +7,11 @@ import {
   names,
   updateProjectConfiguration,
   readProjectConfiguration,
-  readJsonFile,
-  writeJsonFile,
 } from '@nx/devkit';
 import { applicationGenerator } from '@nx/express';
 import { Linter } from '@nx/eslint';
 import * as path from 'path';
 import { NormalizedSchema, Schema } from './schema';
-import { addService } from './utils/keycloak';
 
 function addProjectFiles(host: Tree, options: NormalizedSchema) {
   const templateOptions = {
@@ -49,6 +46,7 @@ export default async function (host: Tree, { name, displayName, port }: Schema) 
   };
 
   await applicationGenerator(host, {
+    directory: projectRoot,
     name,
     skipFormat: true,
     skipPackageJson: true,
@@ -56,7 +54,7 @@ export default async function (host: Tree, { name, displayName, port }: Schema) 
     unitTestRunner: 'jest',
     linter: Linter.EsLint,
     pascalCaseFiles: false,
-  });
+  } as Parameters<typeof applicationGenerator>[1]);
 
   host.delete(`${projectRoot}/src/environments/environment.prod.ts`);
   host.delete(`${projectRoot}/src/app/.gitkeep`);

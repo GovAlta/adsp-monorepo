@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 
 namespace Adsp.Sdk;
+
 public class FileType
 {
   [JsonPropertyName("id")]

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Adsp.Sdk.Events;
+
 internal static class EventExtensions
 {
   internal static bool ContainsService<T, TImplementation>(this IServiceCollection services)

@@ -92,6 +92,12 @@ components:
         required: false
         schema:
           type: boolean
+      - name: criteria
+        description: JSON string of criteria to filter configuration. Use 'useOr' property to switch to OR logic.
+        in: query
+        required: false
+        schema:
+          type: string
     responses:
       200:
         description: Request completed successfully.
@@ -382,6 +388,12 @@ components:
           type: number
       - name: after
         description: Cursor for retrieving additional pages.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: criteria
+        description: JSON string of criteria to filter revisions. Use 'useOr' property to switch to OR logic.
         in: query
         required: false
         schema:

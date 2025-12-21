@@ -99,7 +99,9 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
             >
               Change status
             </GoAButton>
-            {app.status && <GoABadge type={publicStatusMap[app.status]} content={humanizeText(app.status)} />}
+            {app.status && (
+              <GoABadge type={publicStatusMap[app.status]} content={humanizeText(app.status)} icon={false} />
+            )}
           </AppStatus>
         </div>
 

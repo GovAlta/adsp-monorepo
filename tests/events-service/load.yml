@@ -1,74 +1,51 @@
 config:
   environments:
     dev:
-      target: "https://configuration-service.adsp-dev.gov.ab.ca"
-    test:
-      target: "https://status-service-core-services-test.os99.gov.ab.ca"
-    uat:
-      target: "https://status-service-uat.alpha.alberta.ca"
+      # Configuration service is behind the event service
+      target: 'https://configuration-service.adsp-dev.gov.ab.ca'
   defaults:
     headers:
-      Content-Type: "application/json"
-      Accept: "application/json"
+      Content-Type: 'application/json'
+      Accept: 'application/json'
   payload:
-    - path: "../artillery.{{ $environment }}.csv"
+    - path: '../artillery.{{  $processEnvironment.ARTILLERY_ENV }}.csv'
       skipHeader: true
       fields:
-        - "keycloak_url"
-        - "tenant_realm_id"
-        # - "client_id"
-        # - "client_secret"
+        - 'keycloak_url'
+        - 'realm_id'
+        - 'configuration-service-host'
+        - 'client_id'
   variables:
     tenant:
-      - "demo"
-      - "platform"
-  processor: "../my-functions.js"
+      - 'demo'
+      - 'platform'
+  processor: '../my-functions.js'
   phases:
     - name: warm up
       duration: 10
-      arrivalRate: 10
-    # - name: load
-    #   duration: 120
-    #   arrivalCount: 500 // creates users in 120 sec
-    #   # arrivalRate: 10 // creates virtual users every second until duration and maxv
-    #   # rampTo: 50 // ramp to that users count in 120 duration sec
-    #   # maxVusers: 50 // concurrent users
+      arrivalRate: 2
 before:
   flow:
-    - log: "Getting the access token (tenant: {{ tenant_realm_id }}) for user {{ username }}"
+    - log: 'Getting the access token (tenant: {{ realm_id }}) {{ keycloak_url }}/auth/realms/{{ realm_id }}/protocol/openid-connect/token'
     - post:
-        url: "{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token"
+        url: '{{ keycloak_url }}/auth/realms/{{ realm_id }}/protocol/openid-connect/token'
         headers:
-          Content-Type: "application/x-www-form-urlencoded"
-          Accept: "application/json"
+          Content-Type: 'application/x-www-form-urlencoded'
+          Accept: 'application/json'
         form:
           {
-            grant_type: "client_credentials",
-            client_id: "{{ $processEnvironment.CLIENT_ID }}",
-            client_secret: "{{ $processEnvironment.CLIENT_SECRET }}",
+            grant_type: 'client_credentials',
+            client_id: '{{ client_id }}',
+            client_secret: '{{ $processEnvironment.ARTILLERY_CLIENT_SECRET  }}',
           }
         capture:
-          - json: "$.access_token"
+          - json: '$.access_token'
             as: token
 scenarios:
-  - name: get events list, create events and delete events
+  - name: 'get events list, create events and delete events'
+    weight': 25
     flow:
-      # - function: "setJSONBody"
       - get:
-          url: "/configuration/v2/configuration/platform/event-service/latest?core"
+          url: /configuration/v2/configuration/platform/event-service/latest
           headers:
-            authorization: "Bearer {{ token }}"
-      # - patch:
-      #     url: "/configuration/v2/configuration/platform/event-service"
-      #     headers:
-      #       authorization: "Bearer {{ token }}"
-      #     beforeRequest: "setJSONBody"
-      #     afterResponse: "logHeaders"
-      #     json: "{{payload}}"
-      # - patch:
-      #     url: "/configuration/v2/configuration/platform/event-service"
-      #     beforeRequest: "deleteEvent"
-      #     afterResponse: "logHeaders"
-      #     headers:
-      #       authorization: "Bearer {{ token }}"
-      #     json: "{{deletePayload}}"
+            authorization: 'Bearer {{ token }}'

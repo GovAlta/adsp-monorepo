@@ -40,7 +40,6 @@ import ObjectArrayToolBar from './ObjectArrayToolBar';
 import {
   EmptyListProps,
   HandleChangeProps,
-  Items,
   NonEmptyCellProps,
   NonEmptyRowComponentProps,
   NonEmptyRowProps,
@@ -49,8 +48,9 @@ import {
   OwnPropsOfNonEmptyCellWithDialog,
   TableRowsProp,
 } from './ObjectListControlTypes';
-import { extractNames, extractNestedFields, renderCellColumn } from './ObjectListControlUtils';
+import { extractNames, renderCellColumn } from './ObjectListControlUtils';
 import {
+  FixTableHeaderAlignment,
   ListWithDetailWarningIconDiv,
   NonEmptyCellStyle,
   ObjectArrayTitle,
@@ -58,6 +58,7 @@ import {
   TableTHHeader,
   TextCenter,
   ToolBarHeader,
+  ListWithDetailsReviewCellDiv,
 } from './styled-components';
 import { DataProperty } from './ObjectListControlTypes';
 import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
@@ -90,9 +91,9 @@ const GenerateRows = (
       errors,
     };
     return (
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <ListWithDetailsReviewCellDiv>
         <Cell {...props} count={count || 0} />
-      </div>
+      </ListWithDetailsReviewCellDiv>
     );
   } else {
     const props = {
@@ -106,7 +107,11 @@ const GenerateRows = (
       handleChange,
       data,
     };
-    return <Cell key={rowPath} {...props} count={count || 0} />;
+    return (
+      <ListWithDetailsReviewCellDiv>
+        <Cell key={rowPath} {...props} count={count || 0} />
+      </ListWithDetailsReviewCellDiv>
+    );
   }
 };
 
@@ -214,173 +219,178 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
       })}
       {properties && Object.keys(properties).length > 0 && (
         <>
-          <GoATable width="100%">
-            <thead>
-              <tr key={0}>
-                {Object.entries(tableKeys).map(([value, index]) => {
-                  const currentProperty = properties[value];
-                  if (!isInReview) {
+          <FixTableHeaderAlignment>
+            <GoATable width="100%">
+              <thead>
+                <tr key={0}>
+                  {Object.entries(tableKeys).map(([value, index]) => {
+                    const currentProperty = properties[value];
+                    if (!isInReview) {
+                      return (
+                        <th key={index}>
+                          <p>
+                            {currentProperty?.title || convertToSentenceCase(index)}
+                            {required?.includes(value) && <RequiredSpan>(required)</RequiredSpan>}
+                          </p>
+                        </th>
+                      );
+                    }
                     return (
-                      <th key={index}>
+                      <TableTHHeader key={index}>
                         <p>
-                          {currentProperty?.title || convertToSentenceCase(index)}
-                          {required?.includes(value) && <RequiredSpan>(required)</RequiredSpan>}
+                          {`${currentProperty?.title || convertToSentenceCase(index)}`}
+                          {required?.includes(value) && (
+                            <RequiredSpan>
+                              <br /> (required)
+                            </RequiredSpan>
+                          )}
                         </p>
-                      </th>
+                      </TableTHHeader>
                     );
-                  }
+                  })}
+                  {isInReview !== true && (
+                    <th>
+                      <p>Actions</p>
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {range(count || 0).map((num, i) => {
+                  const errorRow = errors?.find((error: ErrorObject) =>
+                    error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`)
+                  ) as { message: string };
+
                   return (
-                    <TableTHHeader key={index}>
-                      <p>
-                        {`${currentProperty?.title || convertToSentenceCase(index)}`}
-                        {required?.includes(value) && (
-                          <RequiredSpan>
-                            <br /> (required)
-                          </RequiredSpan>
-                        )}
-                      </p>
-                    </TableTHHeader>
-                  );
-                })}
-                {isInReview !== true && (
-                  <th>
-                    <p>Actions</p>
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {range(count || 0).map((num, i) => {
-                const errorRow = errors?.find((error: ErrorObject) =>
-                  error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`)
-                ) as { message: string };
+                    <tr key={`${rowPath}-${i}-${num}`}>
+                      {Object.keys(properties).map((element, ix) => {
+                        const dataObject = properties[element];
+                        const schemaName = element;
+                        const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
 
-                return (
-                  <tr key={`${rowPath}-${i}-${num}`}>
-                    {Object.keys(properties).map((element, ix) => {
-                      const dataObject = properties[element];
-                      const schemaName = element;
-                      const currentData = data && data[num] ? (data[num][element] as unknown as string) : '';
+                        //Get out of the loop to not render extra blank columns at the end of the table
+                        if (ix > 1 && Object.keys(tableKeys).length === ix) return null;
 
-                      //Get out of the loop to not render extra blank columns at the end of the table
-                      if (ix > 1 && Object.keys(tableKeys).length === ix) return null;
+                        const error = (
+                          errors?.filter(
+                            (e: ErrorObject) =>
+                              e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
+                              e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
+                          ) as { message: string; instancePath: string; data: { key: string; value: string } }[]
+                        ).find((y) => {
+                          return y?.message?.includes(element) || y.instancePath.includes(element);
+                        }) as { message: string };
 
-                      const error = (
-                        errors?.filter(
-                          (e: ErrorObject) =>
-                            e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
-                            e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
-                        ) as { message: string; instancePath: string; data: { key: string; value: string } }[]
-                      ).find((y) => {
-                        return y?.message?.includes(element) || y.instancePath.includes(element);
-                      }) as { message: string };
+                        if (
+                          error?.message.includes('must NOT have fewer') &&
+                          required.find((r) => r === schemaName) &&
+                          (isEmptyBoolean(schema, currentData) || isEmptyNumber(schema, currentData))
+                        ) {
+                          error.message = `${capitalizeFirstLetter(schemaName)} is required`;
+                        }
 
-                      if (
-                        error?.message.includes('must NOT have fewer') &&
-                        required.find((r) => r === schemaName) &&
-                        (isEmptyBoolean(schema, currentData) || isEmptyNumber(schema, currentData))
-                      ) {
-                        error.message = `${capitalizeFirstLetter(schemaName)} is required`;
-                      }
+                        if (isInReview === true) {
+                          return (
+                            <td key={ix}>
+                              <div
+                                data-testid={`#/properties/${schemaName}-input-${i}-review`}
+                                style={{ display: 'block' }}
+                              >
+                                {renderCellColumn({
+                                  data: currentData ? String(currentData) : undefined,
+                                  error: error?.message,
+                                  isRequired: required?.includes(tableKeys[element]) ?? false,
+                                  errors: errors !== undefined ? errors : [],
+                                  count: count !== undefined ? count : -1,
+                                  element,
+                                  rowPath,
+                                  index: i,
+                                })}
+                              </div>
+                            </td>
+                          );
+                        }
 
-                      if (isInReview === true) {
                         return (
                           <td key={ix}>
-                            <div data-testid={`#/properties/${schemaName}-input-${i}-review`}>
-                              {renderCellColumn({
-                                data: currentData ? String(currentData) : undefined,
-                                error: error?.message,
-                                isRequired: required?.includes(tableKeys[element]) ?? false,
-                                errors: errors !== undefined ? errors : [],
-                                count: count !== undefined ? count : -1,
-                                element,
-                                rowPath,
-                                index: i,
-                              })}
-                            </div>
+                            <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
+                              {dataObject.enum ? (
+                                <GoADropdown
+                                  id={schemaName}
+                                  name={schemaName}
+                                  value={currentData != null ? String(currentData) : ''}
+                                  testId={`#/properties/${schemaName}-select-${i}`}
+                                  onChange={(name: string, value: string | string[]) => {
+                                    const selectedValue = Array.isArray(value) ? value[0] : value;
+                                    const coerced =
+                                      dataObject.type === 'number' && selectedValue !== ''
+                                        ? Number(selectedValue)
+                                        : selectedValue;
+                                    handleChange(rowPath, { [num]: { [schemaName]: coerced } });
+                                  }}
+                                  width="100%"
+                                  ariaLabel={schemaName}
+                                  error={!!error?.message}
+                                >
+                                  {!required?.includes(schemaName) && (
+                                    <GoADropdownItem
+                                      value=""
+                                      label={`-- Select ${convertToSentenceCase(schemaName)} --`}
+                                    />
+                                  )}
+                                  {dataObject.enum.map((opt: string | number) => (
+                                    <GoADropdownItem key={String(opt)} value={String(opt)} label={String(opt)} />
+                                  ))}
+                                </GoADropdown>
+                              ) : dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
+                                <GoAInput
+                                  error={error?.message.length > 0}
+                                  type={dataObject.type === 'number' ? 'number' : 'text'}
+                                  id={schemaName}
+                                  name={schemaName}
+                                  value={currentData}
+                                  testId={`#/properties/${schemaName}-input-${i}`}
+                                  onChange={(name: string, value: string) => {
+                                    handleChange(rowPath, {
+                                      [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
+                                    });
+                                  }}
+                                  ariaLabel={schemaName}
+                                  width="100%"
+                                />
+                              ) : (
+                                <GoACallout
+                                  type="important"
+                                  size="medium"
+                                  testId="form-support-callout"
+                                  heading="Not supported"
+                                >
+                                  Only string, number, and enum are supported inside arrays
+                                </GoACallout>
+                              )}
+                            </GoAFormItem>
                           </td>
                         );
-                      }
-
-                      return (
-                        <td key={ix}>
-                          <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
-                            {dataObject.enum ? (
-                              <GoADropdown
-                                id={schemaName}
-                                name={schemaName}
-                                value={currentData != null ? String(currentData) : ''}
-                                testId={`#/properties/${schemaName}-select-${i}`}
-                                onChange={(name: string, value: string | string[]) => {
-                                  const selectedValue = Array.isArray(value) ? value[0] : value;
-                                  const coerced =
-                                    dataObject.type === 'number' && selectedValue !== ''
-                                      ? Number(selectedValue)
-                                      : selectedValue;
-                                  handleChange(rowPath, { [num]: { [schemaName]: coerced } });
-                                }}
-                                width="100%"
-                                ariaLabel={schemaName}
-                                error={!!error?.message}
-                              >
-                                {!required?.includes(schemaName) && (
-                                  <GoADropdownItem
-                                    value=""
-                                    label={`-- Select ${convertToSentenceCase(schemaName)} --`}
-                                  />
-                                )}
-                                {dataObject.enum.map((opt: string | number) => (
-                                  <GoADropdownItem key={String(opt)} value={String(opt)} label={String(opt)} />
-                                ))}
-                              </GoADropdown>
-                            ) : dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
-                              <GoAInput
-                                error={error?.message.length > 0}
-                                type={dataObject.type === 'number' ? 'number' : 'text'}
-                                id={schemaName}
-                                name={schemaName}
-                                value={currentData}
-                                testId={`#/properties/${schemaName}-input-${i}`}
-                                onChange={(name: string, value: string) => {
-                                  handleChange(rowPath, {
-                                    [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
-                                  });
-                                }}
-                                ariaLabel={schemaName}
-                                width="100%"
-                              />
-                            ) : (
-                              <GoACallout
-                                type="important"
-                                size="medium"
-                                testId="form-support-callout"
-                                heading="Not supported"
-                              >
-                                Only string, number, and enum are supported inside arrays
-                              </GoACallout>
-                            )}
-                          </GoAFormItem>
+                      })}
+                      {!isInReview && (
+                        <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
+                          <div aria-hidden="true">
+                            <GoAIconButton
+                              icon="trash"
+                              title="trash button"
+                              testId="trash-icon-button"
+                              aria-label={`remove-element-${num}`}
+                              onClick={() => openDeleteDialog(num)}
+                            ></GoAIconButton>
+                          </div>
                         </td>
-                      );
-                    })}
-                    {!isInReview && (
-                      <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
-                        <div aria-hidden="true">
-                          <GoAIconButton
-                            icon="trash"
-                            title="trash button"
-                            testId="trash-icon-button"
-                            aria-label={`remove-element-${num}`}
-                            onClick={() => openDeleteDialog(num)}
-                          ></GoAIconButton>
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </GoATable>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </GoATable>
+          </FixTableHeaderAlignment>
           {hasAnyErrors && isInReview && (
             <GoAFormItem error={`There are validation errors for '${capitalizeFirstLetter(rowPath)}'`}></GoAFormItem>
           )}

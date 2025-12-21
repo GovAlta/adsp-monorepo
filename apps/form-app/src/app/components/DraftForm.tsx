@@ -171,7 +171,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     <div>
       {!anonymousApply && (
         <SavingIndicator data-saving={saving}>
-          <GoABadge type="information" content="Saving..." />
+          <GoABadge type="information" content="Saving..." icon={false} />
         </SavingIndicator>
       )}
       <ContextProvider

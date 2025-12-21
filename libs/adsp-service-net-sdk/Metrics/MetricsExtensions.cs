@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 
 namespace Adsp.Sdk.Metrics;
+
 public static class MetricsExtensions
 {
   /// <summary>

@@ -1,91 +1,171 @@
 import re
-from common.rule_model import RawRule, VisibilityRule, VisibilityCondition
-from common.condition_parser import ConditionParser
+from common.rule_model import VisibilityRule, VisibilityCondition
+from visibility_rules.pipeline_context import (
+    CTX_ENUM_MAP,
+    CTX_PARENT_MAP,
+    CTX_RADIO_GROUPS,
+    CTX_RAW_RULES,
+    CTX_RESOLVED_RULES,
+    CTX_VISIBILITY_GROUPS,
+)
 
 
 class DriverResolver:
     """
-    Resolves which field ('driver') controls each visibility rule.
-    Refactored to use a small pipeline:
-      1. Parse → 2. Normalize → 3. Contextual Resolve → 4. Emit
+    Resolves which field ('driver') controls each visibility rule and
+    identifies dynamic subforms that should be treated as groups.
+
+    Behaviour:
+    - Extracts drivers from *.rawValue references in the condition script.
+    - Resolves 'this' up the parent map to the owning field/exclGroup/subform.
+    - Normalizes driver names (drops .rawValue, whitespace, etc.).
+    - Uses CTX_RADIO_GROUPS to remap faux-radio checkboxes to the group name.
+    - Marks any rule target that is a <subform> as a visibility-group.
     """
 
     RAWVAL_RE = re.compile(r"([A-Za-z0-9_.]+)\.rawValue")
 
+    def __init__(self):
+        # name -> <subform> element
+        self.subforms_by_name: dict[str, object] = {}
+
+    # ------------------------------------------------------------------
+    #  Main entry point
+    # ------------------------------------------------------------------
     def process(self, context):
         print("\n[DriverResolver] Starting...")
-        raw_rules = context.get("raw_visibility_rules", [])
-        resolved_rules = []
-        parent_map = context.get("parent_map")
-        xdp_root = context.get("xdp_root")
+
+        raw_rules = context.get(CTX_RAW_RULES, [])
+        parent_map = context.get(CTX_PARENT_MAP, {}) or {}
+        radio_groups = context.get(CTX_RADIO_GROUPS, {}) or {}
+
+        # Build the subform index once
+        self._init_subforms_index(context)
+
+        # Ensure we have a shared visibility_groups set in context
+        visibility_groups = context.get(CTX_VISIBILITY_GROUPS)
+        if visibility_groups is None:
+            visibility_groups = set()
+            context[CTX_VISIBILITY_GROUPS] = visibility_groups
+
+        resolved_rules: list[VisibilityRule] = []
 
         for raw in raw_rules:
-            resolved_conditions = []
+            target_name = raw.target or ""
+
+            # --- NEW: mark subforms that are controlled by rules ---
+            if target_name in self.subforms_by_name:
+                visibility_groups.add(target_name)
+
+            resolved_conditions: list[VisibilityCondition] = []
 
             for script in raw.scripts:
                 cond_text = (script.condition or "").strip()
+                # We only create VisibilityRule entries for scripts that have
+                # an actual condition expression. Unconditional scripts are
+                # still useful to infer "dynamic block", but not for rules.
                 if not cond_text:
                     continue
 
-                # 1️⃣ Find all "something.rawValue" references
-                refs = self.RAWVAL_RE.findall(cond_text)
-                if refs:
-                    driver = refs[0]  # use the first one
-                else:
-                    driver = "this"
+                # --- 1) Derive driver, operator, value ---
+                driver_expr, operator, value = self._parse_condition_legacy(cond_text)
+                driver = self._normalize_driver_name(driver_expr)
 
-                # 2️⃣ Resolve 'this' contextually
-                if driver.lower() == "this":
-                    # Try to locate the element node for context
+                # --- 2) Resolve 'this' via parent_map (field / exclGroup / subform) ---
+                if driver and driver.lower() == "this":
                     elem = getattr(raw, "element", None)
-                    parent = (
-                        parent_map.get(elem)
-                        if elem is not None and parent_map
-                        else None
-                    )
+                    parent = parent_map.get(elem) if elem is not None else None
 
-                    # Fallback: if no element reference, walk up via xpath text (best effort)
-                    if parent is None and parent_map and raw.xpath:
-                        for candidate in parent_map.keys():
-                            name = candidate.get("name", "")
-                            if name and name in raw.xpath:
-                                parent = candidate
-                                break
-                    # Walk upward until we hit a field or exclGroup
+                    # Walk upward until we hit a field, exclGroup, or subform
                     while parent is not None:
-                        if parent.tag.endswith("field") and parent.get("name"):
-                            driver = parent.get("name")
-                            break
-                        if parent.tag.endswith("exclGroup") and parent.get("name"):
-                            driver = parent.get("name")
-                            break
+                        tag = parent.tag.split("}")[-1]
+                        if tag in ("field", "exclGroup", "subform"):
+                            name = parent.get("name")
+                            if name:
+                                driver = name
+                                break
                         parent = parent_map.get(parent)
 
-                # 3️⃣ Extract operator/value from the expression
-                operator = self._extract_operator(cond_text)
-                value = self._extract_value(cond_text)
+                # --- 3) Radio-group remapping (faux radio subforms) ---
+                driver = self._remap_radio_driver(driver_expr, driver, radio_groups)
+
+                # --- 4) Faux-radio collapse (map checkbox → group label) ---
+                collapsed_driver, collapsed_value = self._try_collapse_faux_radio(
+                    driver, value, context
+                )
+                if collapsed_driver:
+                    driver = collapsed_driver
+                    value = collapsed_value
 
                 resolved_conditions.append(
-                    VisibilityCondition(driver=driver, operator=operator, value=value)
+                    VisibilityCondition(
+                        driver=driver,
+                        operator=operator,
+                        value=value,
+                    )
                 )
 
+            # If we found at least one condition for this raw rule, emit a VisibilityRule
             if resolved_conditions:
+                # Use the effect from the last script we processed (your existing behaviour)
+                effect = script.effect
                 resolved_rules.append(
                     VisibilityRule(
                         target=raw.target,
-                        effect=script.effect,
+                        effect=effect,
                         conditions=resolved_conditions,
                         logic="AND",
                         xpath=raw.xpath,
                     )
                 )
 
-        context["resolved_visibility_rules"] = resolved_rules
-        print(f"[DriverResolver] Resolved {len(resolved_rules)} driver relationships.")
+        context[CTX_RESOLVED_RULES] = resolved_rules
+        print(f"[DriverResolver] OUT: {len(resolved_rules)} rules")
         print("[DriverResolver] Done.\n")
         return context
 
-    # --- helper methods, same as before ---
+    # ------------------------------------------------------------------
+    #  Subform indexing
+    # ------------------------------------------------------------------
+    def _init_subforms_index(self, ctx: dict):
+        """
+        Build a name → subform element map so we can tell whether
+        a rule target refers to a subform.
+        """
+        if self.subforms_by_name:
+            return
+
+        # In your ParseContext, the root is stored as 'root'
+        root = ctx.get("root") or ctx.get("xfa_root")
+        if root is None:
+            return
+
+        for elem in root.iter():
+            if elem.tag.endswith("subform"):
+                name = elem.attrib.get("name")
+                if name:
+                    self.subforms_by_name[name] = elem
+
+    # ------------------------------------------------------------------
+    #  Condition parsing (keeps your old behaviour)
+    # ------------------------------------------------------------------
+    def _parse_condition_legacy(self, cond_text: str):
+        """
+        Original behaviour:
+        - Extract driver from '<something>.rawValue'
+        - Fallback driver = 'this'
+        - Extract operator & value with a simple regex
+        """
+        refs = self.RAWVAL_RE.findall(cond_text)
+        if refs:
+            driver_expr = refs[0]
+        else:
+            driver_expr = "this"
+
+        operator = self._extract_operator(cond_text)
+        value = self._extract_value(cond_text)
+        return driver_expr, operator, value
+
     def _extract_operator(self, cond: str):
         for op in ["==", "!=", ">=", "<=", ">", "<"]:
             if op in cond:
@@ -93,39 +173,18 @@ class DriverResolver:
         return "=="
 
     def _extract_value(self, cond: str):
-        m = re.search(r"==\s*(['\"]?[A-Za-z0-9_]+['\"]?)", cond)
+        # Matches: == 1, == '1', == "1", == SOME_TOKEN
+        m = re.search(r"==\s*(['\"]?([A-Za-z0-9_]+)['\"]?)", cond)
         if m:
-            return m.group(1).strip("'\"")
+            # group(2) is the inner token without quotes
+            return m.group(2)
         return None
 
-    # ---------------------------------------------------------------------
-    #  Stage 1: Parse
-    # ---------------------------------------------------------------------
-    def _parse_condition(self, cond_text: str | None, code: str, raw: RawRule, context):
-        text = cond_text or code
-        if not text:
-            return None, None, None
-
-        atoms = ConditionParser.parse(text)
-        if not atoms:
-            return None, None, None
-
-        atom = atoms[0]
-        driver, operator, value = atom.driver, atom.operator, atom.value
-
-        # Stage 2 → Normalize
-        driver = self._normalize_driver_name(driver)
-
-        # Stage 3 → Contextual resolve
-        driver = self._resolve_driver_in_context(driver, raw, context)
-
-        return driver, operator, value
-
-    # ---------------------------------------------------------------------
-    #  Stage 2: Normalize driver name
-    # ---------------------------------------------------------------------
-    def _normalize_driver_name(self, driver: str | None) -> str:
-        """Clean up purely syntactic artifacts."""
+    # ------------------------------------------------------------------
+    #  Normalization & radio-group logic
+    # ------------------------------------------------------------------
+    def _normalize_driver_name(self, driver: str | None) -> str | None:
+        """Clean purely syntactic artefacts."""
         if not driver:
             return driver
         driver = driver.strip()
@@ -133,77 +192,54 @@ class DriverResolver:
         driver = driver.replace(" ", "")
         return driver
 
-    # ---------------------------------------------------------------------
-    #  Stage 3: Resolve driver in context
-    # ---------------------------------------------------------------------
-    def _resolve_driver_in_context(self, driver: str, raw: RawRule, context) -> str:
+    def _remap_radio_driver(
+        self,
+        driver_expr: str,
+        normalized_driver: str,
+        radio_groups: dict,
+    ) -> str:
         """
-        Handle 'this' → actual field name,
-        and drop ghost prefixes like 'Header' or 'Partner'
-        that aren’t true <field> elements.
+        If the driver expression refers to a checkbox inside a radio-like subform,
+        return the *group* name (e.g., 'Section2') instead of the checkbox name
+        (e.g., 'chkContingency').
+
+        Example:
+          driver_expr = 'form1.Page1.Section2.chkContingency'
+          radio_groups = {'Section2': [..., 'Seasonal Pool', ...]}
+          → returns 'Section2'
         """
-        xdp_root = context.get("xdp_root")
-        if not xdp_root or not driver:
-            return driver
+        if not driver_expr:
+            return normalized_driver
 
-        # --- A) Resolve 'this' ---
-        if driver == "this":
-            driver = self._resolve_this_driver(raw, context)
+        parts = driver_expr.replace(".rawValue", "").split(".")
 
-        # --- B) Drop ghost prefixes ---
-        if "." in driver:
-            parts = driver.split(".")
-            for i in range(len(parts)):
-                candidate = ".".join(parts[i:])
-                field_match = xdp_root.find(f".//field[@name='{candidate}']")
-                if field_match is not None:
+        # Look from right to left, skipping the very last segment (field name)
+        # to find the nearest ancestor that is a known radio group.
+        if len(parts) >= 2:
+            for i in range(len(parts) - 2, -1, -1):
+                candidate = parts[i]
+                if candidate in radio_groups:
                     return candidate
-            # No field found — fallback to last segment
-            last = parts[-1]
-            return last
 
-        if driver == "this":
-            print(f"  [ERROR] could not resolve 'this' for rule {raw.target}")
+        # No radio group match → fall back to normalized last segment behaviour
+        if "." in normalized_driver:
+            return normalized_driver.split(".")[-1]
 
-        return driver
+        return normalized_driver
 
-    # ---------------------------------------------------------------------
-    #  Support: resolve 'this' using xpath
-    # ---------------------------------------------------------------------
-    def _resolve_this_driver(self, raw: RawRule, context):
+    def _try_collapse_faux_radio(self, driver, value, context):
         """
-        Replace 'this' with the actual field name if known.
-        Walks up the parent map until it finds a <field> node.
+        For faux-radio groups, map a raw driver like 'chkEmergency' to the
+        group name and human label using CTX_ENUM_MAP / CTX_RADIO_GROUPS.
         """
-        xdp_root = context.get("xdp_root")
-        parent_map = context.get("parent_map", {})
-        elem = None
+        radio_groups = context.get(CTX_RADIO_GROUPS, {}) or {}
+        enum_maps = context.get(CTX_ENUM_MAP, {}) or {}
 
-        # 1️⃣ Locate the script element by XPath (if possible)
-        if xdp_root is not None and raw.xpath:
-            try:
-                elem = xdp_root.find(raw.xpath)
-            except Exception:
-                elem = None
+        for group_name, items in radio_groups.items():
+            if driver in items:
+                idx = items.index(driver) + 1
+                enum_map = enum_maps.get(group_name, {})
+                label = enum_map.get(str(idx), None)
+                return group_name, label or str(idx)
 
-        # 2️⃣ If we have a parent_map, walk up until we hit a field
-        field_name = None
-        current = elem
-        while current is not None:
-            tag = current.tag.split("}")[-1]  # strip namespaces
-            if tag == "field":
-                field_name = current.get("name")
-                break
-            current = parent_map.get(current)
-
-        # 3️⃣ If nothing found, use last segment of target as fallback
-        if not field_name and raw.target:
-            parts = raw.target.split(".")
-            field_name = parts[-1]
-
-        # 4️⃣ Final fallback
-        if not field_name:
-            print(f"  [WARN] resorting to 'this' for rule {raw.target}")
-            field_name = "this"
-
-        return field_name
+        return None, None

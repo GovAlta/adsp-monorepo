@@ -1,3 +1,6 @@
+from visibility_rules.stages.radio_group_collapser import RadioGroupCollapser
+from visibility_rules.stages.static_hidden_pruner import StaticHiddenPruner
+from visibility_rules.stages.value_resolver import ValueResolver
 from visibility_rules.stages.visibility_script_extractor import (
     VisibilityScriptExtractor,
 )
@@ -8,30 +11,23 @@ from visibility_rules.stages.jsonforms_emitter import JsonFormsEmitter
 
 
 class VisibilityRulesPipeline:
-    """
-    Orchestrates all stages of the visibility rules processing pipeline.
-    """
-
     def __init__(self):
         self.stages = [
             VisibilityScriptExtractor(),
             DriverResolver(),
+            ValueResolver(),
+            RadioGroupCollapser(),
             ConditionNormalizer(),
             RuleConsolidator(),
             JsonFormsEmitter(),
+            StaticHiddenPruner(),
         ]
 
     def run(self, context):
-        """
-        Run the full pipeline starting from the XDP root node.
-        """
-        context = {**context, "rules": []}
-        print(f"[VisibilityRulesPipeline] context is: {context.keys()}")
-
+        print("\n=== PIPELINE START ===")
         for stage in self.stages:
-            print(f"[{stage.__class__.__name__}] Starting...")
+            name = stage.__class__.__name__
+            print(f"\n--- Stage: {name} ---")
             context = stage.process(context)
-            print(f"[{stage.__class__.__name__}] Done.\n")
-
-        print("[VisibilityRulesPipeline] Pipeline complete.")
+        print("=== PIPELINE END ===\n")
         return context

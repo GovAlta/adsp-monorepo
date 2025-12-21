@@ -1,60 +1,71 @@
+# tools/python/xdp-converter/src/xdp_parser/parse_xdp.py
+
 import xml.etree.ElementTree as ET
 from typing import List
+
+from visibility_rules.pipeline_context import CTX_RADIO_GROUPS
 from xdp_parser.control_labels import ControlLabels, inline_caption
 from xdp_parser.control_helpers import is_checkbox, is_radio_button
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
-from xdp_parser.orphaned_list_controls import is_list_control_container
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.parsing_helpers import find_input_fields, is_object_array
+from xdp_parser.parsing_helpers import is_object_array
 from xdp_parser.xdp_element import XdpElement
-from xdp_parser.xdp_utils import remove_duplicates, is_hidden, is_subform, tag_name
 from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_radio_selector import extract_radio_button_labels
+from xdp_parser.xdp_utils import (
+    remove_duplicates,
+    is_hidden,
+    is_subform,
+    tag_name,
+)
+from xdp_parser.orphaned_list_controls import is_add_remove_container
+from xdp_parser.grouping_pass import XdpGroupingPass
+from xdp_parser.xdp_subform_placeholder import XdpSubformPlaceholder
 
 
 class XdpParser:
     """
     Central traversal engine for XDP trees.
-    Delegates element creation to a pluggable factory
-    that implements AbstractXdpFactory.
+
+    NEW ARCH:
+      • This parser DOES NOT do grouping.
+      • It builds a structural tree of XdpElement + XdpSubformPlaceholder.
+      • A separate XdpGroupingPass turns placeholders into XdpGroup or flattens them.
     """
 
     def __init__(self, factory: AbstractXdpFactory, context: ParseContext):
         self.factory = factory
         self.context = context
-        self.control_labels = None
+        self.control_labels: ControlLabels | None = None
 
     # ----------------------------------------------------------------------
     # Entry point
     # ----------------------------------------------------------------------
-    def parse_xdp(self) -> List:
+    def parse_xdp(self) -> List[XdpElement]:
         """
         Parse the XDP, returning a structured list of factory-built controls/sections.
-
-        Args:
-            root: stripped-ns XDP root element
-            parent_map: optional element->parent map (used for list-control detection)
-            visibility_rules: optional rules dict to detect hidden-but-controlled fields
         """
 
         form_root = self.find_form_root(self.context.get("root"))
         subforms = self.find_top_subforms(form_root)
         self.control_labels = ControlLabels(form_root, self.context)
 
-        all_elements = []
+        # 1) Build a tree of placeholders + controls (NO grouping yet)
+        root_nodes: List[XdpElement] = []
         for subform in subforms:
-            elements = self.parse_subform(subform)
-            if elements:
-                # Preserve grouping for top-level subforms (e.g. Adult, Child)
-                label = subform.get("name") or inline_caption(subform) or ""
-                group = self.factory.handle_group(subform, elements, label)
-                if group:
-                    all_elements.append(group)
+            node = self._parse_subform_to_node(subform)
+            if node:
+                root_nodes.append(node)
 
-        return remove_duplicates(self.to_form_elements(all_elements))
+        # 2) Run the single grouping pass over the placeholder tree
+        grouper = XdpGroupingPass(self.factory, self.context)
+        grouped_elements = grouper.group_placeholders(root_nodes)
 
-    def to_form_elements(self, xdp_elements) -> List:
-        form_elements = []
+        # 3) Convert to JSONForms elements
+        return remove_duplicates(self.to_form_elements(grouped_elements))
+
+    def to_form_elements(self, xdp_elements: List[XdpElement]) -> List[dict]:
+        form_elements: List[dict] = []
         for xdp_element in xdp_elements:
             form_element = xdp_element.to_form_element()
             if form_element:
@@ -64,43 +75,58 @@ class XdpParser:
     # ----------------------------------------------------------------------
     # Core traversal
     # ----------------------------------------------------------------------
-    def parse_subform(self, subform: ET.Element) -> List:
-        controls = []
+    def _parse_subform_to_node(self, subform: ET.Element) -> XdpElement | None:
+        """
+        Parse a <subform> into either:
+          • an XdpSubformPlaceholder (normal containers), or
+          • a "leaf" control (object array / radio-subform), or
+          • None (ignored containers like Add/Remove wrappers).
+        """
 
-        # Skip list-control containers (Add/Remove) — already modelled elsewhere
-        if is_list_control_container(
+        # Skip Add/Remove containers entirely
+        if is_add_remove_container(
             subform, self.context.get("root"), self.context.get("parent_map")
         ):
-            return []
+            return None
 
-        # --- Handle object array (list-with-detail) ---
+        # Object-array (List-With-Detail) → single logical control
         if is_object_array(subform):
-            # Extract child input controls (columns)
             row_fields = list(self.find_simple_controls(subform))
-
             control = self.factory.handle_object_array(
                 subform, self.control_labels, row_fields
             )
-            if control:
-                controls.append(control)
-            return remove_duplicates(controls)
+            return control
 
-        # --- Handle implicit radio group (subform full of radio-style checkButtons) ---
+        # Implicit radio subform (checkButton cluster) → radio selector
         radio_labels = extract_radio_button_labels(subform)
         if radio_labels:
-            control = self.factory.handle_radio(subform, self.control_labels)
-            if control:
-                controls.append(control)
-            return remove_duplicates(controls)
+            control = self.factory.handle_radio_subform(subform, self.control_labels)
+            return control
 
-        form_elements = self.find_simple_controls(subform)
-        controls.extend(form_elements)
-        return controls
+        # Normal container subform → placeholder with children
+        children = list(self.find_simple_controls(subform))
+        if not children:
+            return None
+
+        return XdpSubformPlaceholder(subform, children, self.context)
+
+    def parse_subform(self, subform: ET.Element) -> List[XdpElement]:
+        """
+        Backwards-compatible helper; some older code may still call this.
+        Now it simply wraps _parse_subform_to_node.
+        """
+        node = self._parse_subform_to_node(subform)
+        return [node] if node is not None else []
 
     def find_simple_controls(self, node: ET.Element) -> List[XdpElement]:
-        controls = []
+        """
+        Traverse a subform and return a flat list of XdpElement controls
+        and nested container nodes (XdpSubformPlaceholder).
+        """
+        controls: List[XdpElement] = []
         elements = list(node)
         i = 0
+
         while i < len(elements):
             elem = elements[i]
 
@@ -110,6 +136,8 @@ class XdpParser:
                 control = self.factory.handle_help_text(elem, help_text)
                 if control:
                     controls.append(control)
+                i += 1
+                continue
 
             # Explicit or implicit radio groups (exclGroup or radio-like fields)
             if is_radio_button(elem):
@@ -129,9 +157,7 @@ class XdpParser:
 
             # Basic input fields
             if elem.tag == "field":
-                # New logic:
-                # - If field is hidden AND has NO visibility rule → skip (structural hidden)
-                # - Otherwise include it and let the rules engine show/hide at runtime
+                # Hidden + uncontrolled by rules → skip (pure structural)
                 if is_hidden(elem) and not self._is_controlled_by_rules(elem):
                     i += 1
                     continue
@@ -144,12 +170,9 @@ class XdpParser:
 
             # Nested subforms (containers)
             if is_subform(elem):
-                nested_controls = self.parse_subform(elem)
-                if nested_controls:
-                    label = elem.get("name") or inline_caption(elem) or ""
-                    control = self.factory.handle_group(elem, nested_controls, label)
-                    if control:
-                        controls.append(control)
+                nested_node = self._parse_subform_to_node(elem)
+                if nested_node:
+                    controls.append(nested_node)
                 i += 1
                 continue
 
@@ -173,7 +196,8 @@ class XdpParser:
             raise ValueError("Form root not found")
         return level2
 
-    def find_top_subforms(self, form_root: ET.Element) -> List[ET.Element]:
+    @staticmethod
+    def find_top_subforms(form_root: ET.Element) -> List[ET.Element]:
         """Return first-level subforms containing logical input groups."""
         return [sf for sf in form_root if tag_name(sf.tag) == "subform"]
 
@@ -184,17 +208,26 @@ class XdpParser:
         """
         Returns True if there are visibility rules targeting this element.
         We check by:
-          1) exact name match
-          2) suffix match for dotted rule keys like 'Header.rbApplicant'
+          1) radio_groups membership
+          2) dotted rule keys like 'Header.rbApplicant' (suffix match)
         """
         name = elem.get("name") or ""
         if not name:
             return False
-        if name in self.context.get("visibility_rules", {}):
+
+        radio_groups = self.context.get(CTX_RADIO_GROUPS, {})
+        if name in radio_groups:
             return True
 
-        # dotted keys may reference this control by suffix
-        for key in self.context.get("visibility_rules", {}).keys():
+        for key in radio_groups.keys():
             if key.endswith(f".{name}"):
                 return True
+
+        visibility_rules = getattr(self.context, "jsonforms_rules", {}) or {}
+        if name in visibility_rules:
+            return True
+        for key in visibility_rules.keys():
+            if key.endswith(f".{name}"):
+                return True
+
         return False

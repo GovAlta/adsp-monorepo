@@ -8,9 +8,7 @@ import { initializeConfig, store } from './app/state';
 const root = createRoot(document.getElementById('root'));
 root.render(
   <Provider store={store}>
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
+    <App />
   </Provider>
 );
 

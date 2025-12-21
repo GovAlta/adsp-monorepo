@@ -5,17 +5,21 @@ import xml.etree.ElementTree as ET
 
 
 class XdpHelpText(XdpElement):
-    def __init__(self, help_content, context: ParseContext):
-        if isinstance(help_content, str):
-            el = ET.Element("draw")
-            el.text = help_content
-            xdp = el
-        else:
-            xdp = help_content
+    def __init__(self, help_content: str, context: ParseContext):
+        el = ET.Element("draw")
+        el.text = help_content
+        xdp = el
+        self.text = help_content
         super().__init__(xdp, context=context)
 
     def to_form_element(self):
         return FormHelpText(self.xdp_element, self.context)
+
+    def is_help_text(self):
+        return True
+
+    def get_text(self):
+        return self.text
 
     @staticmethod
     def get_help_text(node):

@@ -5,6 +5,7 @@ using Adsp.Sdk.Tenancy;
 using Microsoft.AspNetCore.Http;
 
 namespace Adsp.Sdk;
+
 public static class AdspHttpContextExtensions
 {
   /// <summary>

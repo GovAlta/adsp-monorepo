@@ -324,3 +324,18 @@ Then('the user views the PDF copy of {string} being downloaded', function (pdfFi
   const downloadsFolder = Cypress.config('downloadsFolder');
   cy.readFile(downloadsFolder + '/' + pdfFileName, { timeout: 15000 }).should('exist');
 });
+
+Then('the user views a callout message of {string}', function (calloutMessage) {
+  formsObj.formNotAvailableCallout().should('contain.text', calloutMessage);
+});
+
+Then('the user views a success callout message of {string}', function (calloutMessage) {
+  formsObj.ProcessingYourApplicationCallout().invoke('attr', 'heading').should('contain', calloutMessage);
+});
+
+Then('the user views a drafted form for {string}', function (formDefinitionName) {
+  const regex = new RegExp(
+    `https://.+/${formDefinitionName}/(?:[0-9a-fA-F]){8}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){4}-(?:[0-9a-fA-F]){12}`
+  );
+  cy.url().should('match', regex);
+});

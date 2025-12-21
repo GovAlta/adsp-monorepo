@@ -1,0 +1,131 @@
+.container {
+  padding: var(--goa-space-l);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--goa-space-l);
+}
+
+.title {
+  margin: 0;
+  color: var(--goa-color-greyscale-700);
+}
+
+
+
+.form {
+  background: white;
+  border-radius: 8px;
+  padding: var(--goa-space-xl);
+  box-shadow: var(--goa-shadow-light);
+}
+
+.formRow {
+  margin-bottom: var(--goa-space-l);
+}
+
+.formRowHalf {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--goa-space-l);
+  margin-bottom: var(--goa-space-l);
+}
+
+.programSection {
+  display: flex;
+  align-items: center;
+  gap: var(--goa-space-s);
+}
+
+.programActions {
+  display: flex;
+  gap: var(--goa-space-xs);
+  margin-top: var(--goa-space-s);
+}
+
+.actsSection {
+  display: grid;
+  gap: var(--goa-space-xs);
+}
+
+.actsInput {
+  display: flex;
+  gap: var(--goa-space-s);
+  margin-bottom: var(--goa-space-m);
+}
+
+.actsChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--goa-space-xs);
+  margin-top: var(--goa-space-xs);
+}
+
+.actChip {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.actChipEdit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.noActs {
+  font-style: italic;
+  color: var(--goa-color-greyscale-600);
+  margin-top: var(--goa-space-xs);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--goa-space-m);
+  margin-top: var(--goa-space-xl);
+  padding-top: var(--goa-space-l);
+  border-top: 1px solid var(--goa-color-greyscale-200);
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.helpText {
+  margin-top: var(--goa-space-xs);
+  font-size: var(--goa-font-size-1);
+  color: var(--goa-color-greyscale-500);
+}
+
+.errorText {
+  color: var(--goa-color-status-emergency);
+}
+
+.modal {
+  .modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--goa-space-m);
+  }
+
+  .modalContent {
+    padding: var(--goa-space-l);
+  }
+
+  .checkboxList {
+    display: grid;
+    gap: var(--goa-space-s);
+  }
+}

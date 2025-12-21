@@ -1,33 +1,51 @@
-import React from 'react';
-import { withJsonFormsControlProps } from '@jsonforms/react';
-import { ControlProps } from '@jsonforms/core';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
+import { ControlProps, JsonSchema } from '@jsonforms/core';
 import { GoAFormItem, GoAInput } from '@abgov/react-components';
 import { Visible } from '../../util';
 import { RankedTester, rankWith, and, schemaTypeIs, formatIs } from '@jsonforms/core';
-import { evaluateExpression } from './CalculationEngine';
-import { useJsonForms } from '@jsonforms/react';
+import { evaluateExpression, EvalResult, collectScopes } from './CalculationEngine';
 
 const GoACalculation = (props: ControlProps) => {
-  const { uischema, data, schema, path, id, visible, handleChange } = props;
+  const { uischema, schema, path, id, visible, handleChange } = props;
 
-  const expression = schema?.description;
-
-  const label = typeof uischema?.label === 'string' ? uischema.label : undefined;
   const { core } = useJsonForms();
-
+  const rootSchema = core?.schema as JsonSchema | undefined;
   const rootData = core?.data ?? {};
 
-  const computedValue = expression ? evaluateExpression(expression, rootData) : undefined;
+  const label = typeof uischema?.label === 'string' ? uischema.label : undefined;
+  const expression = schema?.description;
 
-  React.useEffect(() => {
+  const knownScopes = useMemo(() => collectScopes(rootSchema), [rootSchema]);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const initialSnapshot = useRef<string>(JSON.stringify(rootData));
+
+  useEffect(() => {
+    if (hasInteracted) return;
+    const now = JSON.stringify(rootData);
+    if (now !== initialSnapshot.current) {
+      setHasInteracted(true);
+    }
+  }, [rootData, hasInteracted]);
+
+  const { value: computedValue, error }: EvalResult = evaluateExpression(expression, rootData, {
+    knownScopes,
+  });
+
+  useEffect(() => {
     if (computedValue !== undefined && typeof handleChange === 'function' && path) {
       handleChange(path, computedValue);
     }
   }, [computedValue, handleChange, path]);
 
+  const isConfigError =
+    !!error && (error.toLowerCase().includes('invalid scope') || error.toLowerCase().includes('expression syntax'));
+
+  const showError = !!error && (isConfigError || hasInteracted);
+
   return (
     <Visible visible={visible}>
-      <GoAFormItem label={label}>
+      <GoAFormItem label={label} error={showError ? error : ''}>
         <GoAInput
           name={`computed-input-${id}`}
           testId={`computed-input-${id}`}

@@ -7,6 +7,34 @@ export const EXPORT_SERVICE_ID = 'urn:ads:platform:export-service';
 export const CALENDAR_SERVICE_ID = 'urn:ads:platform:calendar-service';
 export const DIRECTORY_SERVICE_ID = 'urn:ads:platform:directory-service';
 export const CACHE_SERVICE_ID = 'urn:ads:platform:cache-service';
+export const FORM_APP_ID = 'urn:ads:platform:form-app';
+
+export interface Session {
+  authenticated: boolean;
+  clientId: string;
+  realm: string;
+  userInfo: {
+    sub: string;
+    email: string;
+    name: string;
+    preferredUsername: string;
+    emailVerified: boolean;
+  };
+  realmAccess?: {
+    roles?: string[];
+  };
+  resourceAccess?: {
+    [key: string]: {
+      roles?: string[];
+    };
+  };
+  credentials: {
+    token: string;
+    tokenExp: number;
+    refreshToken: string;
+    refreshTokenExp: number;
+  };
+}
 
 export interface PagedResults<T> {
   results: T[];
@@ -59,6 +87,11 @@ export interface FormDefinition {
   scheduledIntakes: boolean;
   supportTopic: boolean;
   intake?: Intake;
+  ministry?: string;
+  programName?: string;
+  registeredId?: string;
+  actsOfLegislation?: string;
+  formDraftUrlTemplate?: string;
 }
 
 export enum FormStatus {

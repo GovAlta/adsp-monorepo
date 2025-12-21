@@ -106,7 +106,13 @@ const TenantManagement = (): JSX.Element => {
           <Route path="/service-metrics" element={<ServiceMetrics />} />
 
           {serviceVariables(config.featureFlags).map((service) => {
-            return <Route path={service.link + '/*'} key={service.link} element={renderServices(service.name)} />;
+            return (
+              <Route
+                path={service.link + '/*'}
+                key={service.link}
+                element={<ServiceColumnLayout>{renderServices(service.name)}</ServiceColumnLayout>}
+              />
+            );
           })}
         </Routes>
         <Outlet />
@@ -129,4 +135,8 @@ const SidebarWrapper = styled.nav`
   @media (min-width: 768px) {
     flex-basis: 12rem;
   }
+`;
+
+export const ServiceColumnLayout = styled.div`
+  margin-bottom: var(--goa-space-3xl);
 `;

@@ -4,6 +4,10 @@ export const DeleteDialogContent = styled.div`
   margin-bottom: var(--goa-space-m);
 `;
 
+export const MarginTop = styled.div`
+  margin-top: var(--goa-space-l);
+`;
+
 export const NonEmptyCellStyle = styled.div`
   goa-table thead th {
     background-color: #000:
@@ -11,11 +15,11 @@ export const NonEmptyCellStyle = styled.div`
 `;
 
 export const ToolBarHeader = styled.div`
-  margin-bottom: var(--goa-space-l);
+  margin-bottom: var(--goa-space-s);
 `;
 
 export const ObjectArrayTitle = styled.h3`
-  margin-bottom: var(--goa-space-l);
+  margin-bottom: var(--goa-space-s);
 
   span {
     color: #666666;
@@ -47,33 +51,49 @@ export const RowFlex = styled.div`
 export const RowFlexMenu = styled.div`
   display: flex;
   flex-direction: row;
-  border-bottom: 1px solid #dcdcdc;
+  border: 1px solid #dcdcdc;
+  margin-top: 1rem;
 `;
 
 export const FlexTabs = styled.div`
   flex-direction: column;
   flex: 1;
   overflow-y: auto !important;
-  margin-right: 1.5rem;
 `;
 
 export const FlexForm = styled.div`
   flex-direction: column;
-  margin: 1.5rem 0;
   flex: 3;
 `;
 
 export const TabName = styled.div`
   margin: 1rem 0 1rem 1rem;
-  font-weight: 700;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 export const Trash = styled.div`
-  margin: 0.75rem 1.25rem 0.75rem 0.75rem;
+  margin: 0.9rem 0.4rem 0.6rem 0.75rem;
   margin-left: auto;
 `;
 
 export const ListContainer = styled.div`
+  padding: 0 0 0 0;
+`;
+
+export const IconPadding = styled.div`
+  padding: 0.9rem 0.5rem 0 0;
+`;
+
+export const UpdateListContainer = styled.div`
+  width: 100%;
+  border: 1px solid #dcdcdc;
+  padding: var(--goa-space-xl);
+`;
+
+export const CompleteContainer = styled.div`
   padding: 0 1.5rem 0 0;
   border: 1px solid #dcdcdc;
 `;
@@ -117,4 +137,20 @@ export const HasErrorLabel = styled.div`
 
 export const HilightCellWarning = styled.div`
   background-color: var(--goa-color-warning-default);
+`;
+
+export const FixTableHeaderAlignment = styled.div`
+  table thead th:nth-child(3) {
+    text-align: center;
+  }
+
+  table tbody td:nth-child(3) {
+    text-align: center;
+  }
+`;
+
+export const ListWithDetailsReviewCellDiv = styled.div`
+  display: 'flex';
+  flex-direction: 'column';
+  text-align: 'start';
 `;

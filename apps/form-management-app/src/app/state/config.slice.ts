@@ -3,7 +3,7 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { environment as envStatic } from '../../environments/environment';
 import { AppState } from './store';
-import { getAccessToken } from './user.slice';
+import { getAccessToken } from './user/user.slice';
 import { FeedbackMessage } from './types';
 
 export const CONFIG_FEATURE_KEY = 'config';
@@ -22,14 +22,19 @@ export interface ConfigState {
 }
 
 export const initializeConfig = createAsyncThunk('config/initialize', async () => {
-  let environment = envStatic;
+  let environment = null;
   try {
-    const { data: envConfig } = await axios.get<Environment>('/config/config.json');
+    const { data: envConfig } = await axios.get<Environment>('https://form.adsp-dev.gov.ab.ca/config/config.json');
     environment = envConfig;
 
     console.log('Loaded environment configuration', environment);
-  } catch (error) {
-    // Use the static imported environment if config.json not available.
+  } catch (e) {
+    console.log('Error in loading /config/config.json');
+  } finally {
+    console.warn('Cannot fetch data from /config/config.json. Start to use the development config.');
+    if (environment === null) {
+      environment = envStatic;
+    }
   }
 
   // Initialize state with environment and ADSP directory of services.
@@ -41,15 +46,6 @@ export const initializeConfig = createAsyncThunk('config/initialize', async () =
       `${directoryUrl}/directory/v2/namespaces/platform/entries`
     );
     directory = platform.reduce((result, entry) => ({ ...result, [entry.urn]: entry.url }), directory);
-
-    try {
-      const { data: tenant } = await axios.get<{ urn: string; url: string }[]>(
-        `${directoryUrl}/directory/v2/namespaces/platform/entries`
-      );
-      directory = tenant.reduce((result, entry) => ({ ...result, [entry.urn]: entry.url }), directory);
-    } catch (err) {
-      // Tenant directory may not exist if no entries have been added.
-    }
   }
 
   return { directory, environment };
@@ -127,6 +123,8 @@ const configSlice = createSlice({
 });
 
 export const configReducer = configSlice.reducer;
+
+export const selectConfigState = (state: AppState) => state.config;
 
 export const configInitializedSelector = createSelector(
   (state: AppState) => state.config,

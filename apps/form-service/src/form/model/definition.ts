@@ -8,6 +8,7 @@ import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { FormDefinition, Disposition, QueueTaskToProcess, SecurityClassificationType } from '../types';
 import { FormEntity } from './form';
+import { InvalidOperationError } from '@core-services/core-common';
 
 export class FormDefinitionEntity implements FormDefinition {
   id: string;
@@ -78,12 +79,9 @@ export class FormDefinitionEntity implements FormDefinition {
   }
 
   public async canApply(user: User, dryRun?: boolean): Promise<boolean> {
-    // If this form definition requires scheduled intakes, and there is no current intake, then return false.
-    if (this.scheduledIntakes && !dryRun && !isAllowedUser(user, this.tenantId, FormServiceRoles.Tester, true)) {
-      const intake = await this.calendarService.getScheduledIntake(this);
-      if (!intake || intake.isUpcoming) {
-        return false;
-      }
+    const passesIntakeCheck = await this.checkScheduledIntakes(user, dryRun);
+    if (!passesIntakeCheck) {
+      return false;
     }
 
     return isAllowedUser(
@@ -94,6 +92,20 @@ export class FormDefinitionEntity implements FormDefinition {
         : [...this.applicantRoles, ...this.clerkRoles],
       true
     );
+  }
+
+  public async checkScheduledIntakes(user: User, dryRun?: boolean): Promise<boolean> {
+    // If this form definition requires scheduled intakes, and there is no current intake, then return false.
+
+    if (this.scheduledIntakes && !dryRun && !isAllowedUser(user, this.tenantId, FormServiceRoles.Tester, true)) {
+      const intake = await this.calendarService.getScheduledIntake(this);
+
+      if (!intake || intake?.isUpcoming) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   public isUserApplicant(user: User): boolean {
@@ -114,6 +126,9 @@ export class FormDefinitionEntity implements FormDefinition {
     dryRun?: boolean,
     applicantInfo?: Omit<Subscriber, 'urn'>
   ): Promise<FormEntity> {
+    if (!(await this.checkScheduledIntakes(user, dryRun))) {
+      throw new InvalidOperationError('Cannot create form as there is no active intake.');
+    }
     if (!(await this.canApply(user, dryRun))) {
       throw new UnauthorizedUserError('create form', user);
     }

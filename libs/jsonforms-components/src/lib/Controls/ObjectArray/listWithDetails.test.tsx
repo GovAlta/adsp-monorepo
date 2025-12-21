@@ -119,6 +119,10 @@ describe('Object Array Renderer', () => {
     expect(shadowAddBtn).not.toBeNull();
     fireEvent(addButton!, new CustomEvent('_click'));
 
+    // Click continue button
+    const continueBtn = baseElement.querySelector("goa-button[testid='next-list-button']");
+    fireEvent(continueBtn!, new CustomEvent('_click'));
+
     // Ensure delete modal is closed
     const closedDeleteModal = baseElement.querySelector("goa-modal[testId='object-array-modal']");
     expect(closedDeleteModal).toBeInTheDocument();
@@ -149,8 +153,12 @@ describe('Object Array Renderer', () => {
     const shadowAddBtn = addButton!.shadowRoot?.querySelector('button');
     expect(shadowAddBtn).not.toBeNull();
     fireEvent(addButton!, new CustomEvent('_click'));
-    // Open the delete dialog
 
+    // CLick continue
+    const continueBtn = baseElement.querySelector("goa-button[testid='next-list-button']");
+    fireEvent(continueBtn!, new CustomEvent('_click'));
+
+    // Open the delete dialog
     const deleteBtn = baseElement.querySelector("goa-icon-button[icon='trash']");
     expect(deleteBtn).toBeInTheDocument();
     const shadowDeleteBtn = deleteBtn!.shadowRoot?.querySelector('button');
@@ -171,8 +179,12 @@ describe('Object Array Renderer', () => {
     expect(closedDeleteModal!.getAttribute('open')).toBe('false');
 
     // Ensure item still exists
-    const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input']");
-    expect(nameInput).toBeInTheDocument();
+    const item = baseElement.querySelector(`[data-testid="object-array-main-item-0"]`);
+    console.log(baseElement.innerHTML);
+    expect(item).toBeInTheDocument();
+
+    expect(item).not.toBeNull();
+    expect(item!.textContent).toContain('No data');
   });
 
   it('can do a delete', () => {
@@ -185,6 +197,10 @@ describe('Object Array Renderer', () => {
     const shadowAddBtn = addButton!.shadowRoot?.querySelector('button');
     expect(shadowAddBtn).not.toBeNull();
     fireEvent(addButton!, new CustomEvent('_click'));
+
+    // Click continue
+    const continueBtn = baseElement.querySelector("goa-button[testid='next-list-button']");
+    fireEvent(continueBtn!, new CustomEvent('_click'));
 
     // Open the delete dialog
     const deleteBtn = baseElement.querySelector("goa-icon-button[icon='trash']");
@@ -211,13 +227,48 @@ describe('Object Array Renderer', () => {
   });
 });
 
+it('errors are visible', () => {
+  const data = { messages: [] };
+  const { baseElement } = render(getForm(data));
+
+  // Add a message
+  const addButton = baseElement.querySelector("goa-button[testId='object-array-toolbar-Messages']");
+  expect(addButton).toBeInTheDocument();
+  const shadowAddBtn = addButton!.shadowRoot?.querySelector('button');
+  expect(shadowAddBtn).not.toBeNull();
+  fireEvent(addButton!, new CustomEvent('_click'));
+  console.log(baseElement.innerHTML);
+
+  const messageInput = baseElement.querySelector("goa-input[testId='#/properties/message-input']");
+  expect(messageInput).toBeInTheDocument();
+  fireEvent(messageInput!, new CustomEvent('_change', { detail: { value: 'The rain in Spain' } }));
+  expect(messageInput).toHaveAttribute('value', 'The rain in Spain');
+
+  // Click continue
+  const continueBtn = baseElement.querySelector("goa-button[testid='next-list-button']");
+  fireEvent(continueBtn!, new CustomEvent('_click'));
+
+  console.log(baseElement.innerHTML);
+
+  // Select the goa-input / form item for the message
+  const messageFormItem = baseElement.querySelector('goa-form-item');
+  expect(messageFormItem).not.toBeNull();
+
+  // Select the error message inside the slot
+  const errorEl = messageFormItem!.querySelector('div[slot="error"]');
+  expect(errorEl).not.toBeNull();
+
+  // Check the error text
+  expect(errorEl!.textContent).toContain('must NOT have more than 5 characters');
+});
+
 describe('ObjectListControl util functions tests', () => {
   it('can render Cell Column with warning error', () => {
     const props = {
       currentData: undefined,
       isRequired: true,
       error: 'is an error',
-    } as RenderCellColumnProps;
+    } as unknown as RenderCellColumnProps;
 
     const element = renderCellColumn(props);
     expect(element).not.toBeNull();
@@ -228,7 +279,7 @@ describe('ObjectListControl util functions tests', () => {
       currentData: 'test',
       isRequired: true,
       error: '',
-    } as RenderCellColumnProps;
+    } as unknown as RenderCellColumnProps;
 
     const element = renderCellColumn(props);
     expect(element).not.toBeNull();
@@ -245,7 +296,7 @@ describe('ObjectListControl util functions tests', () => {
       currentData: JSON.stringify(arr),
       isRequired: true,
       error: '',
-    } as RenderCellColumnProps;
+    } as unknown as RenderCellColumnProps;
 
     const element = renderCellColumn(props);
     expect(element).not.toBeNull();

@@ -72,12 +72,12 @@ internal sealed class TenantService : ITenantService, IDisposable
     var requestUrl = new Uri(tenantApiUrl, $"v2{tenantId.Resource}").AbsoluteUri;
 
     var tenant = await _retryPolicy.ExecuteAsync(async (ctx) =>
-      {
-        var token = await _tokenProvider.GetAccessToken();
-        var request = new RestRequest(requestUrl);
-        request.AddHeader("Authorization", $"Bearer {token}");
-        return await _client.GetAsync<Tenant>(request);
-      },
+    {
+      var token = await _tokenProvider.GetAccessToken();
+      var request = new RestRequest(requestUrl);
+      request.AddHeader("Authorization", $"Bearer {token}");
+      return await _client.GetAsync<Tenant>(request);
+    },
       new Dictionary<string, object> { { ContextUrlKey, requestUrl } }
     );
 
@@ -95,14 +95,14 @@ internal sealed class TenantService : ITenantService, IDisposable
     var requestUrl = new Uri(tenantApiUrl, "v2/tenants").AbsoluteUri;
 
     var tenants = await _retryPolicy.ExecuteAsync(async (ctx) =>
-      {
-        var token = await _tokenProvider.GetAccessToken();
-        var request = new RestRequest(requestUrl);
-        request.AddHeader("Authorization", $"Bearer {token}");
-        var result = await _client.GetAsync<CollectionResults<Tenant>>(request);
+    {
+      var token = await _tokenProvider.GetAccessToken();
+      var request = new RestRequest(requestUrl);
+      request.AddHeader("Authorization", $"Bearer {token}");
+      var result = await _client.GetAsync<CollectionResults<Tenant>>(request);
 
-        return result?.Results;
-      },
+      return result?.Results;
+    },
       new Dictionary<string, object> { { ContextUrlKey, requestUrl } }
     );
 

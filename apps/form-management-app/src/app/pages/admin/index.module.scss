@@ -1,0 +1,8 @@
+.adminLayout {
+  display: flex;
+}
+
+.main {
+  flex: 1 1 auto;
+  padding: var(--goa-space-l, 24px) 0;
+}

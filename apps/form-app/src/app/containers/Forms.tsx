@@ -80,11 +80,11 @@ const FormsLayout = styled.div`
 const FormStatusBadge: FunctionComponent<{ status: FormStatus }> = ({ status }) => {
   switch (status) {
     case FormStatus.draft:
-      return <GoABadge mt="xs" type="information" content={status} />;
+      return <GoABadge mt="xs" type="information" content={status} icon={false} />;
     case FormStatus.submitted:
-      return <GoABadge mt="xs" type="success" content={status} />;
+      return <GoABadge mt="xs" type="success" content={status} icon={false} />;
     default:
-      return <GoABadge mt="xs" type="light" content={status} />;
+      return <GoABadge mt="xs" type="light" content={status} icon={false} />;
   }
 };
 
@@ -121,7 +121,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
               </p>
             </div>
             <GoAButtonGroup alignment="end">
-              {definition && canCreateDraft && (
+              {definition && definition.oneFormPerApplicant === false && canCreateDraft && (
                 <GoAButton
                   mr="m"
                   disabled={busy.creating}

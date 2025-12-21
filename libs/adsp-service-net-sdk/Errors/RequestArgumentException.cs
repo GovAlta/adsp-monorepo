@@ -1,6 +1,7 @@
 using System.Net;
 
 namespace Adsp.Sdk.Errors;
+
 public class RequestArgumentException : HttpResponseException
 {
 
