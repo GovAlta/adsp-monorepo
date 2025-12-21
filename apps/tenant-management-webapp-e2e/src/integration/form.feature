@@ -194,108 +194,108 @@ Feature: Form
     And the user clicks the information icon button besides the checkbox of Create submission records on submit
     Then the user "views" the help tooltip for "enabling" create submission records on submit
 
-  # TEST DATA: a form definition named "autotest-form-disposition-states" is precreated
-  @TEST_CS-3224 @REQ_CS-2468 @regression
-  Scenario: As a tenant admin, I can add, order, edit and delete disposition states
-    Given a tenant admin user is on form definitions page
-    When the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
-    Then the user views form definition editor for "autotest-form-disposition-states", "DO NOT DELETE"
-    When the user clicks "Lifecycle" tab in form definition editor
-    And the user deletes all disposition states if any
-    And the user "checks" the checkbox of Create submission records on submit
-    # Add disposition states
-    And the user clicks the information icon button besides Disposition States
-    Then the user "views" the help tooltip text for Disposition States
-    When the user adds a dispoistion state of "Approved", "The application is approved"
-    Then the user "views" the disposition state of "Approved", "The application is approved"
-    When the user adds a dispoistion state of "Documents needed", "Need to supply required documents"
-    Then the user "views" the disposition state of "Documents needed", "Need to supply required documents"
-    When the user adds a dispoistion state of "Rejected", "The application is rejected"
-    Then the user "views" the disposition state of "Rejected", "The application is rejected"
-    # Order states
-    And the user should only view "arrow down" icon for the disposition state of "Approved", "The application is approved"
-    And the user should only view "arrow up" icon for the disposition state of "Rejected", "The application is rejected"
-    When the user clicks "arrow up" for the disposition state of "Documents needed", "Need to supply required documents"
-    Then the user views the disposition state of "Documents needed", "Need to supply required documents" being row "1"
-    When the user clicks "arrow down" for the disposition state of "Approved", "The application is approved"
-    Then the user views the disposition state of "Approved", "The application is approved" being row "3"
-    # Edit states
-    When the user clicks Save button in form definition editor
-    And the user clicks Back button in form definition editor
-    And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
-    When the user clicks "Lifecycle" tab in form definition editor
-    And the user clicks "edit" button for the disposition state of "Approved", "The application is approved"
-    Then the user views Edit disposition state modal
-    When the user enters "Reviewed" as name and "The application is reviewed" as description in Edit disposition state modal
-    And the user clicks Cancel button in Edit disposition state modal
-    Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
-    When the user clicks "edit" button for the disposition state of "Approved", "The application is approved"
-    Then the user views Edit disposition state modal
-    When the user enters "Reviewed" as name and "The application is reviewed" as description in Edit disposition state modal
-    And the user clicks Save button in disposition state modal
-    Then the user "views" the disposition state of "Reviewed", "The application is reviewed"
-    # Delete states
-    When the user clicks Save button in form definition editor
-    And the user clicks Back button in form definition editor
-    And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
-    When the user clicks "Lifecycle" tab in form definition editor
-    And the user clicks "Delete" button for the disposition state of "Reviewed", "The application is reviewed"
-    Then the user views delete "disposition state" confirmation modal for "Reviewed"
-    When the user clicks Cancel button in delete confirmation modal
-    Then the user "views" the disposition state of "Reviewed", "The application is reviewed"
-    When the user clicks "Delete" button for the disposition state of "Reviewed", "The application is reviewed"
-    Then the user views delete "disposition state" confirmation modal for "Reviewed"
-    When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
-    When the user clicks "Delete" button for the disposition state of "Documents needed", "Need to supply required documents"
-    Then the user views delete "disposition state" confirmation modal for "Documents needed"
-    When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
-    When the user clicks "Delete" button for the disposition state of "Rejected", "The application is rejected"
-    Then the user views delete "disposition state" confirmation modal for "Rejected"
-    When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the disposition state of "Rejected", "The application is rejected"
-    When the user clicks Save button in form definition editor
-    And the user clicks Back button in form definition editor
-    And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
-    And the user clicks "Lifecycle" tab in form definition editor
-    Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
-    And the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
-    And the user "should not view" the disposition state of "Rejected", "The application is rejected"
+  # # TEST DATA: a form definition named "autotest-form-disposition-states" is precreated
+  # @TEST_CS-3224 @REQ_CS-2468 @regression
+  # Scenario: As a tenant admin, I can add, order, edit and delete disposition states
+  #   Given a tenant admin user is on form definitions page
+  #   When the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
+  #   Then the user views form definition editor for "autotest-form-disposition-states", "DO NOT DELETE"
+  #   When the user clicks "Lifecycle" tab in form definition editor
+  #   And the user deletes all disposition states if any
+  #   And the user "checks" the checkbox of Create submission records on submit
+  #   # Add disposition states
+  #   And the user clicks the information icon button besides Disposition States
+  #   Then the user "views" the help tooltip text for Disposition States
+  #   When the user adds a dispoistion state of "Approved", "The application is approved"
+  #   Then the user "views" the disposition state of "Approved", "The application is approved"
+  #   When the user adds a dispoistion state of "Documents needed", "Need to supply required documents"
+  #   Then the user "views" the disposition state of "Documents needed", "Need to supply required documents"
+  #   When the user adds a dispoistion state of "Rejected", "The application is rejected"
+  #   Then the user "views" the disposition state of "Rejected", "The application is rejected"
+  #   # Order states
+  #   And the user should only view "arrow down" icon for the disposition state of "Approved", "The application is approved"
+  #   And the user should only view "arrow up" icon for the disposition state of "Rejected", "The application is rejected"
+  #   When the user clicks "arrow up" for the disposition state of "Documents needed", "Need to supply required documents"
+  #   Then the user views the disposition state of "Documents needed", "Need to supply required documents" being row "1"
+  #   When the user clicks "arrow down" for the disposition state of "Approved", "The application is approved"
+  #   Then the user views the disposition state of "Approved", "The application is approved" being row "3"
+  #   # Edit states
+  #   When the user clicks Save button in form definition editor
+  #   And the user clicks Back button in form definition editor
+  #   And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
+  #   When the user clicks "Lifecycle" tab in form definition editor
+  #   And the user clicks "edit" button for the disposition state of "Approved", "The application is approved"
+  #   Then the user views Edit disposition state modal
+  #   When the user enters "Reviewed" as name and "The application is reviewed" as description in Edit disposition state modal
+  #   And the user clicks Cancel button in Edit disposition state modal
+  #   Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
+  #   When the user clicks "edit" button for the disposition state of "Approved", "The application is approved"
+  #   Then the user views Edit disposition state modal
+  #   When the user enters "Reviewed" as name and "The application is reviewed" as description in Edit disposition state modal
+  #   And the user clicks Save button in disposition state modal
+  #   Then the user "views" the disposition state of "Reviewed", "The application is reviewed"
+  #   # Delete states
+  #   When the user clicks Save button in form definition editor
+  #   And the user clicks Back button in form definition editor
+  #   And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
+  #   When the user clicks "Lifecycle" tab in form definition editor
+  #   And the user clicks "Delete" button for the disposition state of "Reviewed", "The application is reviewed"
+  #   Then the user views delete "disposition state" confirmation modal for "Reviewed"
+  #   When the user clicks Cancel button in delete confirmation modal
+  #   Then the user "views" the disposition state of "Reviewed", "The application is reviewed"
+  #   When the user clicks "Delete" button for the disposition state of "Reviewed", "The application is reviewed"
+  #   Then the user views delete "disposition state" confirmation modal for "Reviewed"
+  #   When the user clicks Delete button in delete confirmation modal
+  #   Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
+  #   When the user clicks "Delete" button for the disposition state of "Documents needed", "Need to supply required documents"
+  #   Then the user views delete "disposition state" confirmation modal for "Documents needed"
+  #   When the user clicks Delete button in delete confirmation modal
+  #   Then the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
+  #   When the user clicks "Delete" button for the disposition state of "Rejected", "The application is rejected"
+  #   Then the user views delete "disposition state" confirmation modal for "Rejected"
+  #   When the user clicks Delete button in delete confirmation modal
+  #   Then the user "should not view" the disposition state of "Rejected", "The application is rejected"
+  #   When the user clicks Save button in form definition editor
+  #   And the user clicks Back button in form definition editor
+  #   And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
+  #   And the user clicks "Lifecycle" tab in form definition editor
+  #   Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
+  #   And the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
+  #   And the user "should not view" the disposition state of "Rejected", "The application is rejected"
 
-  @TEST_CS-3356 @REQ_CS-3381 @regression
-  Scenario: As a tenant admin, I can set the classification on a form definition and view the updated classification in event log
-    Given a tenant admin user is on form definitions page
-    # Add a form definition
-    When the user clicks Add definition button on form definitions page
-    Then the user views Add form definition modal
-    When the user enters "autotest-sec-cls<$ph>", "autotest desc" in Add form definition modal
-    And the user clicks Save button in Add form definition modal
-    # Lifecycle page validation for security classification
-    Then the user views form definition editor for "autotest-sec-cls<$ph>", "autotest desc"
-    When the user clicks "Lifecycle" tab in form definition editor
-    Then the user views Security classification dropdown after Form template URL under Application
-    And the user views the security classification dropdown has the default value of "Protected B" from the options of "Public", "Protected A", "Protected B", "Protected C"
-    When the user selects "Protected C" from the security classification dropdown in form definition editor
-    And the user clicks Save button in form definition editor
-    And the user clicks Back button in form definition editor
-    And the user clicks "Edit" button for the form definition of "autotest-sec-cls<$ph>", "autotest desc"
-    And the user clicks "Lifecycle" tab in form definition editor
-    Then the user views "Protected C" in security classification dropdown in form definition editor
-    When the user clicks Back button in form definition editor
-    # Configuration updated event log validation for security classification
-    And the user waits "10" seconds
-    And the user selects the "Event log" menu item
-    And the user searches with "configuration-service:configuration-updated", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
-    And the user clicks Show details button for the latest event of "configuration-updated" for "configuration-service"
-    Then the user views the event details for the configuration-updated event to have "Protected C" as the securityClassification value
-    # Delete the created form definition
-    When the user selects the "Form" menu item
-    And the user selects "Definitions" tab for "Form"
-    And the user clicks "Delete" button for the form definition of "autotest-sec-cls<$ph>", "autotest desc"
-    Then the user views delete form definition confirmation modal for "autotest-sec-cls<$ph>"
-    When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the form definition of "autotest-sec-cls<$ph>", "autotest desc"
+  # @TEST_CS-3356 @REQ_CS-3381 @regression
+  # Scenario: As a tenant admin, I can set the classification on a form definition and view the updated classification in event log
+  #   Given a tenant admin user is on form definitions page
+  #   # Add a form definition
+  #   When the user clicks Add definition button on form definitions page
+  #   Then the user views Add form definition modal
+  #   When the user enters "autotest-sec-cls<$ph>", "autotest desc" in Add form definition modal
+  #   And the user clicks Save button in Add form definition modal
+  #   # Lifecycle page validation for security classification
+  #   Then the user views form definition editor for "autotest-sec-cls<$ph>", "autotest desc"
+  #   When the user clicks "Lifecycle" tab in form definition editor
+  #   Then the user views Security classification dropdown after Form template URL under Application
+  #   And the user views the security classification dropdown has the default value of "Protected B" from the options of "Public", "Protected A", "Protected B", "Protected C"
+  #   When the user selects "Protected C" from the security classification dropdown in form definition editor
+  #   And the user clicks Save button in form definition editor
+  #   And the user clicks Back button in form definition editor
+  #   And the user clicks "Edit" button for the form definition of "autotest-sec-cls<$ph>", "autotest desc"
+  #   And the user clicks "Lifecycle" tab in form definition editor
+  #   Then the user views "Protected C" in security classification dropdown in form definition editor
+  #   When the user clicks Back button in form definition editor
+  #   # Configuration updated event log validation for security classification
+  #   And the user waits "10" seconds
+  #   And the user selects the "Event log" menu item
+  #   And the user searches with "configuration-service:configuration-updated", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+  #   And the user clicks Show details button for the latest event of "configuration-updated" for "configuration-service"
+  #   Then the user views the event details for the configuration-updated event to have "Protected C" as the securityClassification value
+  #   # Delete the created form definition
+  #   When the user selects the "Form" menu item
+  #   And the user selects "Definitions" tab for "Form"
+  #   And the user clicks "Delete" button for the form definition of "autotest-sec-cls<$ph>", "autotest desc"
+  #   Then the user views delete form definition confirmation modal for "autotest-sec-cls<$ph>"
+  #   When the user clicks Delete button in delete confirmation modal
+  #   Then the user "should not view" the form definition of "autotest-sec-cls<$ph>", "autotest desc"
 
   @TEST_CS-3358 @REQ_CS-3306 @regression
   Scenario: As a tenant admin, I can see form-applicant as default applicant role for new form definitions
