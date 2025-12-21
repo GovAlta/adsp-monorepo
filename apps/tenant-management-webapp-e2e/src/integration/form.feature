@@ -21,90 +21,90 @@ Feature: Form
     Then the user views "autotest" in Filter by tag dropdown on form definitions page
     And the user "views" the form definition of "autotest-form-existing-tag", "DO NOT DELETE"
 
-#   # TEST DATA: a form definition named "autotest-form-tags" is precreated; all tags in the form definition are deleted
-#   @TEST_CS-3927 @REQ_CS-3589 @TEST_CS-3943 @REQ_CS-3591 @regression
-#   Scenario: As a tenant admin, I can add, edit and delete tags for a form definition and view them in details view
-#     Given a tenant admin user is on form definitions page
-#     When the user deletes all tags for the form definition of "autotest-form-tags", "DO NOT DELETE"
-#     # Add a new tag
-#     And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-#     Then the user views Add tags modal for "autotest-form-tags"
-#     When the user enters "mytag$$$" in the tag input field in Add tags modal
-#     Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -, [space]" in Add tags modal
-#     When the user enters "   mytag<$ph>   " in the tag input field in Add tags modal
-#     And the user clicks "Create and add tag" button in Add tags modal
-#     And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-#     Then the user views the tag "mytag<$ph>" under the tag input field in Add tags modal
-#     # Enter an existing tag
-#     When the user enters "autotest" in the tag input field in Add tags modal
-#     And the user clicks "Add tag" button in Add tags modal
-#     And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-#     Then the user views the tag "autotest" under the tag input field in Add tags modal
-#     # Enter a duplicate tag
-#     When the user enters "autotest" in the tag input field in Add tags modal
-#     Then the user views Add tag button being disabled in Add tags modal
-#     When the user clicks "Close" button in Add tags modal
-#     Then the user "should not view" the Add tags modal
-#     # View tags in details view
-#     When the user clicks "Eye" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-#     Then the user views "autotest-form-tags" as Definition ID and "autotest,mytag<$ph>" as Tags in the details view
-#     When the user clicks "Eye off" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-#     Then the user should not view details view of "autotest-form-tags", "DO NOT DELETE" on form definitions page
-#     # Remove a tag
-#     When the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-#     Then the user views Add tags modal for "autotest-form-tags"
-#     When the user clicks Remove button for the tag "mytag<$ph>" in Add tags modal
-#     Then the user "should not view" the tag "mytag<$ph>" under the tag input field in Add tags modal
-#     When the user clicks Remove button for the tag "autotest" in Add tags modal
-#     Then the user "should not view" the tag "autotest" under the tag input field in Add tags modal
-#     When the user clicks "Close" button in Add tags modal
-#     And the user clicks "Eye" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
-#     Then the user should not view "mytag<$ph>" tag in the details view on form definitions page
-#     And the user should not view "autotest" tag in the details view on form definitions page
-#     When the user sends a request to delete "mytag<$ph>" tag in directory service
-#     Then the user should not get "mytag<$ph>" tag in the response when the user sends a request to get the tag
+  # TEST DATA: a form definition named "autotest-form-tags" is precreated; all tags in the form definition are deleted
+  @TEST_CS-3927 @REQ_CS-3589 @TEST_CS-3943 @REQ_CS-3591 @regression
+  Scenario: As a tenant admin, I can add, edit and delete tags for a form definition and view them in details view
+    Given a tenant admin user is on form definitions page
+    When the user deletes all tags for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    # Add a new tag
+    And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user views Add tags modal for "autotest-form-tags"
+    When the user enters "mytag$$$" in the tag input field in Add tags modal
+    Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -, [space]" in Add tags modal
+    When the user enters "   mytag<$ph>   " in the tag input field in Add tags modal
+    And the user clicks "Create and add tag" button in Add tags modal
+    And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user views the tag "mytag<$ph>" under the tag input field in Add tags modal
+    # Enter an existing tag
+    When the user enters "autotest" in the tag input field in Add tags modal
+    And the user clicks "Add tag" button in Add tags modal
+    And the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user views the tag "autotest" under the tag input field in Add tags modal
+    # Enter a duplicate tag
+    When the user enters "autotest" in the tag input field in Add tags modal
+    Then the user views Add tag button being disabled in Add tags modal
+    When the user clicks "Close" button in Add tags modal
+    Then the user "should not view" the Add tags modal
+    # View tags in details view
+    When the user clicks "Eye" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user views "autotest-form-tags" as Definition ID and "autotest,mytag<$ph>" as Tags in the details view
+    When the user clicks "Eye off" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user should not view details view of "autotest-form-tags", "DO NOT DELETE" on form definitions page
+    # Remove a tag
+    When the user clicks "Add tag" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user views Add tags modal for "autotest-form-tags"
+    When the user clicks Remove button for the tag "mytag<$ph>" in Add tags modal
+    Then the user "should not view" the tag "mytag<$ph>" under the tag input field in Add tags modal
+    When the user clicks Remove button for the tag "autotest" in Add tags modal
+    Then the user "should not view" the tag "autotest" under the tag input field in Add tags modal
+    When the user clicks "Close" button in Add tags modal
+    And the user clicks "Eye" button for the form definition of "autotest-form-tags", "DO NOT DELETE"
+    Then the user should not view "mytag<$ph>" tag in the details view on form definitions page
+    And the user should not view "autotest" tag in the details view on form definitions page
+    When the user sends a request to delete "mytag<$ph>" tag in directory service
+    Then the user should not get "mytag<$ph>" tag in the response when the user sends a request to get the tag
 
-#   # Bug #: CS-4368 tasks tab shows a blank page with console errors
-#   # TEST DATA: a form definition named "autotest-submission-task" is precreated
-#   # TEST DATA: a task queue named autotest:testSubmissionQueue is precreated
-#   @TEST_CS-2780 @REQ_CS-2570 @regression @ignore
-#   Scenario: As a tenant admin, I can configure if and what task is created for processing a form submission record
-#     Given all existing tasks in "testSubmissionQueue" if any have been deleted
-#     And a tenant admin user is on form definitions page
-#     When the user clicks "Edit" button for the form definition of "autotest-submission-task", "DO NOT DELETE"
-#     Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
-#     When the user clicks "Lifecycle" tab in form definition editor
-#     # Verify help content for No task created option
-#     And the user "checks" the checkbox of Create submission records on submit
-#     And the user selects "No task created" in task queue to process dropdown
-#     And the user clicks the information icon button besides task queue to process dropdown
-#     Then the user "views" the help tooltip for "disabling" task queue to process dropdown
-#     # Select a task and verify help content for a task queue is selected
-#     When the user selects "autotest:testSubmissionQueue" in task queue to process dropdown
-#     And the user clicks the information icon button besides task queue to process dropdown
-#     Then the user "views" the help tooltip for "enabling" task queue to process dropdown
-#     When the user saves the changes if any and go back out of form definition editor
-#     # Submit a form
-#     Given the user deletes any existing form from "Auto Test" for "autotest-submission-task"
-#     When the user is logged in to see "autotest-submission-task" application
-#     Then the user views a from draft of "autotest-submission-task"
-#     When the user enters "Joe" in a text field labelled "First name"
-#     And the user clicks submit button in the form
-#     Then the user views a callout with a message of "We're processing your application"
-#     # Verify a task is created for form submission
-#     Given a tenant admin user is on task service overview page
-#     When the user selects "Tasks" tab for "Task"
-#     And the user selects "autotest:testSubmissionQueue" in Select a queue dropdown
-#     Then the user "views" the task of "Process form submission", "autotest-submission-task" on tasks page
-#     # Set task queue to No task created for the form
-#     When the user selects the "Form" menu item
-#     And the user selects "Definitions" tab for "Form"
-#     And the user clicks "Edit" button for the form definition of "autotest-submission-task", "DO NOT DELETE"
-#     Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
-#     When the user clicks "Lifecycle" tab in form definition editor
-#     And the user selects "No task created" in task queue to process dropdown
-#     And the user clicks Save button in form definition editor
-#     And the user clicks Back button in form definition editor
+  # Bug #: CS-4368 tasks tab shows a blank page with console errors
+  # TEST DATA: a form definition named "autotest-submission-task" is precreated
+  # TEST DATA: a task queue named autotest:testSubmissionQueue is precreated
+  @TEST_CS-2780 @REQ_CS-2570 @regression @ignore
+  Scenario: As a tenant admin, I can configure if and what task is created for processing a form submission record
+    Given all existing tasks in "testSubmissionQueue" if any have been deleted
+    And a tenant admin user is on form definitions page
+    When the user clicks "Edit" button for the form definition of "autotest-submission-task", "DO NOT DELETE"
+    Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
+    When the user clicks "Lifecycle" tab in form definition editor
+    # Verify help content for No task created option
+    And the user "checks" the checkbox of Create submission records on submit
+    And the user selects "No task created" in task queue to process dropdown
+    And the user clicks the information icon button besides task queue to process dropdown
+    Then the user "views" the help tooltip for "disabling" task queue to process dropdown
+    # Select a task and verify help content for a task queue is selected
+    When the user selects "autotest:testSubmissionQueue" in task queue to process dropdown
+    And the user clicks the information icon button besides task queue to process dropdown
+    Then the user "views" the help tooltip for "enabling" task queue to process dropdown
+    When the user saves the changes if any and go back out of form definition editor
+    # Submit a form
+    Given the user deletes any existing form from "Auto Test" for "autotest-submission-task"
+    When the user is logged in to see "autotest-submission-task" application
+    Then the user views a from draft of "autotest-submission-task"
+    When the user enters "Joe" in a text field labelled "First name"
+    And the user clicks submit button in the form
+    Then the user views a callout with a message of "We're processing your application"
+    # Verify a task is created for form submission
+    Given a tenant admin user is on task service overview page
+    When the user selects "Tasks" tab for "Task"
+    And the user selects "autotest:testSubmissionQueue" in Select a queue dropdown
+    Then the user "views" the task of "Process form submission", "autotest-submission-task" on tasks page
+    # Set task queue to No task created for the form
+    When the user selects the "Form" menu item
+    And the user selects "Definitions" tab for "Form"
+    And the user clicks "Edit" button for the form definition of "autotest-submission-task", "DO NOT DELETE"
+    Then the user views form definition editor for "autotest-submission-task", "DO NOT DELETE"
+    When the user clicks "Lifecycle" tab in form definition editor
+    And the user selects "No task created" in task queue to process dropdown
+    And the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
 
 #   @TEST_CS-2366 @TEST_CS-2356 @TEST_CS-2332 @TEST_CS-2406 @REQ_CS-1848 @REQ_CS-2170 @REQ_CS-2169 @REQ_CS-2254 @regression
 #   Scenario: As a tenant admin, I can add, edit and delete a form definition
