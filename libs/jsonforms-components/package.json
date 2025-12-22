@@ -13,7 +13,7 @@
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",
     "@mdx-js/mdx": "^3.1.0",
-    "expr-eval": "^2.0.2",
+    "expr-eval-fork": "^3.0.1",
     "pluralize": "^8.0.0"
   },
   "dependencies": {
