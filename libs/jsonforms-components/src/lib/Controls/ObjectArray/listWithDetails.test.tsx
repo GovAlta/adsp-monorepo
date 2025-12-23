@@ -213,7 +213,6 @@ describe('Object Array Renderer', () => {
 
     // Ensure item still exists
     const item = baseElement.querySelector(`[data-testid="object-array-main-item-0"]`);
-    console.log(baseElement.innerHTML);
     expect(item).toBeInTheDocument();
 
     expect(item).not.toBeNull();
@@ -270,7 +269,6 @@ it('errors are visible', () => {
   const shadowAddBtn = addButton!.shadowRoot?.querySelector('button');
   expect(shadowAddBtn).not.toBeNull();
   fireEvent(addButton!, new CustomEvent('_click'));
-  console.log(baseElement.innerHTML);
 
   const messageInput = baseElement.querySelector("goa-input[testId='#/properties/message-input']");
   expect(messageInput).toBeInTheDocument();
@@ -280,8 +278,6 @@ it('errors are visible', () => {
   // Click continue
   const continueBtn = baseElement.querySelector("goa-button[testid='next-list-button']");
   fireEvent(continueBtn!, new CustomEvent('_click'));
-
-  console.log(baseElement.innerHTML);
 
   // Select the goa-input / form item for the message
   const messageFormItem = baseElement.querySelector('goa-form-item');
@@ -304,7 +300,6 @@ it('required errors work', () => {
   const shadowAddBtn = addButton!.shadowRoot?.querySelector('button');
   expect(shadowAddBtn).not.toBeNull();
   fireEvent(addButton!, new CustomEvent('_click'));
-  console.log(baseElement.innerHTML);
 
   const messageInput = baseElement.querySelector("goa-input[testId='#/properties/message-input']");
   expect(messageInput).toBeInTheDocument();
@@ -314,8 +309,6 @@ it('required errors work', () => {
   // Click continue
   const continueBtn = baseElement.querySelector("goa-button[testid='next-list-button']");
   fireEvent(continueBtn!, new CustomEvent('_click'));
-
-  console.log(baseElement.innerHTML);
 
   // Select the goa-input / form item for the message
   const messageFormItem = baseElement.querySelector('goa-form-item');
