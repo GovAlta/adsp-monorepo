@@ -100,12 +100,12 @@ export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subti
     <PageBorder>
       <div data-testid={testid}>
         {title && (
-          <GoAText size="heading-xl" ml="xl" mb="xl">
+          <GoAText size="heading-xl" mb="xl">
             {title}
           </GoAText>
         )}
         {subtitle && (
-          <GoAText size="heading-l" mt="none" mb="xl" ml="xl">
+          <GoAText size="heading-l" mt="none" mb="xl">
             {subtitle}
           </GoAText>
         )}

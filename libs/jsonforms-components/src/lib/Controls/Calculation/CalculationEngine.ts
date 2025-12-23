@@ -1,4 +1,4 @@
-import { Parser } from 'expr-eval';
+import { Parser } from 'expr-eval-fork';
 import { JsonSchema } from '@jsonforms/core';
 
 export interface EvalResult {
