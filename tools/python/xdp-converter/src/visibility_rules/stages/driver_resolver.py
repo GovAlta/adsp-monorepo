@@ -14,7 +14,7 @@ from visibility_rules.stages.trigger_ast import (
     Trigger,
 )
 
-debug = True
+debug = False
 
 
 class DriverResolver:
@@ -44,7 +44,6 @@ class DriverResolver:
             context[CTX_TARGETED_GROUPS] = targeted_subforms
 
         resolved_events = []
-
         for ev in events:
             if not ev or not ev.trigger or not ev.action:
                 continue
@@ -75,7 +74,7 @@ class DriverResolver:
                     "Section3Emergency",
                     "Section3Seasonal",
                 }
-                print_event(ev2, events_of_interest)
+                print_event(ev2, None)
 
             resolved_events.append(ev2)
 
@@ -106,10 +105,10 @@ class DriverResolver:
     def _rewrite_atomic(self, atom, ev, radio_groups, enum_maps):
         """
         Rewrite one AtomicCondition:
-          - resolve driver 'this' -> owner_name
-          - enforce no '.rawValue'
-          - collapse member drivers to group driver where applicable
-          - map value to enum label when we can
+        - resolve driver 'this' -> owner
+        - enforce no '.rawValue'
+        - collapse member drivers to group driver where applicable
+        - map numeric values to enum labels where possible (radio OR dropdown)
         """
 
         driver = (atom.driver or "").strip()
@@ -119,17 +118,17 @@ class DriverResolver:
         if ".rawValue" in driver:
             raise ValueError(
                 f"[DriverResolver] Contract violation: '.rawValue' leaked into DriverResolver: {driver!r} "
-                f"(owner={getattr(ev.metadata, 'owner_name', None)!r})"
+                f"(owner={getattr(ev.metadata, 'owner', None)!r})"
             )
 
         # --- Resolve 'this' driver using metadata owner ---
         if driver.lower() == "this":
-            owner_name = getattr(ev.metadata, "owner", None)
-            if not owner_name:
+            owner = getattr(ev.metadata, "owner", None)
+            if not owner:
                 raise ValueError(
-                    "[DriverResolver] Cannot resolve 'this': missing metadata.owner_name"
+                    "[DriverResolver] Cannot resolve 'this': missing metadata.owner"
                 )
-            driver = owner_name
+            driver = owner
 
         # Normalize dotted drivers to leaf for membership checks, but preserve full when needed
         leaf = driver.split(".")[-1] if driver else driver
@@ -137,21 +136,26 @@ class DriverResolver:
         # --- Faux-radio collapse: if leaf is a member checkbox, driver becomes group ---
         group = self._group_for_member(leaf, radio_groups)
         if group:
-            # If the trigger is like: chkAdditional == 1  ==> Section2 == <label>
-            # or: Section2.chkAdditional == 1 ==> Section2 == <label>
-            # Interpret "== 1" as selecting that member.
             driver = group
             value = self._member_value_to_label(
                 group, leaf, value, enum_maps, radio_groups, atom
             )
 
+            # IMPORTANT: in the member-collapse case, the value you returned is *usually already a label*,
+            # but sometimes it's still numeric. We'll run generic enum mapping too (safe).
+            value = self._resolve_enum_value(driver, value, enum_maps)
+
         else:
             # Not a member: normalize driver to leaf (matches your old behaviour)
             driver = leaf
 
-            # If driver itself is a known radio group, map numeric value -> label
+            # Old behaviour: if driver itself is a known radio group, map numeric -> label
             if driver in radio_groups:
                 value = self._index_to_label(driver, value, enum_maps)
+
+            # NEW behaviour: if driver is any enum-backed control (dropdowns like cboCategory),
+            # map numeric/save-value -> label.
+            value = self._resolve_enum_value(driver, value, enum_maps)
 
         return AtomicCondition(driver=driver, op=atom.op, value=value)
 
@@ -204,4 +208,33 @@ class DriverResolver:
         s = str(value).strip()
         if s.isdigit():
             return enum_maps.get(group, {}).get(s) or value
+        return value
+
+    def _strip_quotes(self, s: str) -> str:
+        s = (s or "").strip()
+        if len(s) >= 2 and ((s[0] == s[-1]) and s[0] in ("'", '"')):
+            return s[1:-1]
+        return s
+
+    def _resolve_enum_value(self, driver: str, value: str, enum_maps: dict) -> str:
+        """
+        Resolve numeric enum values to labels.
+
+        Special case:
+        - If the resolved label is blank, return empty string "".
+            This represents an unselected / placeholder value in XDP.
+        """
+        if not driver or value is None:
+            return value
+
+        mapping = enum_maps.get(driver)
+        if not mapping:
+            return value
+
+        key = self._strip_quotes(str(value)).strip()
+        if key in mapping:
+            label = mapping[key]
+            # IMPORTANT: blank label is meaningful → empty string
+            return (label or "").strip()
+
         return value

@@ -1,98 +1,116 @@
-from dataclasses import replace
+# visibility_rules/stages/rule_consolidator.py
+
+from __future__ import annotations
+
+from typing import Dict, List, Optional, Tuple
+
+from visibility_rules.pipeline_context import CTX_RESOLVED_RULES, CTX_FINAL_RULES
+from visibility_rules.stages.trigger_ast import Trigger, BooleanOp
 from common.rule_model import VisibilityRule
-from visibility_rules.pipeline_context import CTX_FINAL_RULES
+
+debug = False
 
 
 class RuleConsolidator:
     """
-    Consolidates visibility rules that share the same (target, effect, logic).
+    Consolidate EventDescriptions into VisibilityRules.
 
-    ✔ Filters out non-UI targets (e.g. "this")
-    ✔ Groups by (target, effect, logic)
-    ✔ OR/AND merges condition lists (no semantic guessing)
-    ✔ Preserves logic + xpath from representative rule
-    ✔ Returns a *new* list of VisibilityRule (no in-place mutation)
-    ✔ Writes merged rules back into context
+    Groups by (target, effect) and combines triggers with OR:
+        rule.trigger = t1 OR t2 OR t3 ...
+
+    Then:
+      - flattens OR-chains
+      - removes duplicate atomic operands in OR-chains (A OR A -> A)
+      - asserts 'this' does not appear in any atomic driver
     """
 
     _SPECIAL_TARGETS = {"this"}
 
-    def _is_meaningful_target(self, target: str | None) -> bool:
-        if not target:
-            return False
-        return target.strip().lower() not in self._SPECIAL_TARGETS
-
     def process(self, context):
-        rules: list[VisibilityRule] = context.get(CTX_FINAL_RULES, [])
-
+        events = context.get(CTX_RESOLVED_RULES, []) or []
         print("\n[RuleConsolidator] Starting...")
-        print(f"[RuleConsolidator] IN raw rules: {len(rules)}")
+        print(f"[RuleConsolidator] IN events: {len(events)}")
 
-        if not rules:
-            print("[RuleConsolidator] No rules to consolidate.\n")
-            context[CTX_FINAL_RULES] = []
-            return context
+        grouped: Dict[Tuple[str, str], List[Trigger]] = {}
+        rep_xpath: Dict[Tuple[str, str], Optional[str]] = {}
 
-        # ---------------------------------------------------------
-        # 1) Filter out meaningless targets
-        # ---------------------------------------------------------
-        filtered: list[VisibilityRule] = []
-        for r in rules:
-            if not self._is_meaningful_target(r.target):
-                continue
-            filtered.append(r)
+        skipped = 0
 
-        print(f"[RuleConsolidator] After filtering: {len(filtered)} remain")
-
-        if not filtered:
-            print("[RuleConsolidator] All rules filtered out.\n")
-            context[CTX_FINAL_RULES] = []
-            return context
-
-        # ---------------------------------------------------------
-        # 2) Group by (target, effect, logic)
-        #    (logic is important for how JsonFormsEmitter will interpret them)
-        # ---------------------------------------------------------
-        grouped: dict[tuple[str, str, str], list[VisibilityRule]] = {}
-        for rule in filtered:
-            key = (rule.target, rule.effect, (rule.logic or "AND").upper())
-            grouped.setdefault(key, []).append(rule)
-
-        print(f"[RuleConsolidator] Unique groups: {len(grouped)}")
-
-        # ---------------------------------------------------------
-        # 3) Merge groups (just concatenate conditions; logic stays as-is)
-        # ---------------------------------------------------------
-        consolidated: list[VisibilityRule] = []
-
-        for (target, effect, logic), group in grouped.items():
-            merged_conditions = []
-            representative = group[0]
-
-            for r in group:
-                conds = getattr(r, "conditions", [])
-                if not conds:
-                    print(f"    [WARN] Rule for target '{r.target}' has no conditions.")
-                    continue
-                merged_conditions.extend(conds)
-
-            if not merged_conditions:
-                print(
-                    f"  [SKIP] No usable conditions for group target='{target}', effect='{effect}'"
-                )
+        for ev in events:
+            if not ev or not ev.trigger or not ev.action:
+                skipped += 1
                 continue
 
-            # Create a *new* rule; do not mutate any original
-            merged_rule = replace(
-                representative,
+            target = (ev.action.target or "").strip()
+            if not target or target.lower() in self._SPECIAL_TARGETS:
+                skipped += 1
+                continue
+
+            effect = "HIDE" if ev.action.hide else "SHOW"
+            key = (target, effect)
+
+            grouped.setdefault(key, []).append(ev.trigger)
+
+            if key not in rep_xpath:
+                rep_xpath[key] = getattr(getattr(ev, "metadata", None), "xpath", None)
+
+        consolidated: List[VisibilityRule] = []
+
+        for (target, effect), triggers in grouped.items():
+            combined = self._combine_or(triggers)
+            self._assert_no_this(combined, target=target, effect=effect)
+
+            rule = VisibilityRule(
                 target=target,
                 effect=effect,
-                logic=logic,
-                conditions=merged_conditions,
+                trigger=combined,
+                xpath=rep_xpath.get((target, effect)),
             )
-            consolidated.append(merged_rule)
 
-        print(f"\n[RuleConsolidator] OUT consolidated rules: {len(consolidated)}\n")
+            if debug:
+                rule.print()
 
+            consolidated.append(rule)
+
+        print(
+            f"\n[RuleConsolidator] OUT rules: {len(consolidated)} "
+            f"(groups={len(grouped)}, skipped_events={skipped})\n"
+        )
         context[CTX_FINAL_RULES] = consolidated
         return context
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+    def _combine_or(self, triggers: List[Trigger]) -> Trigger:
+        """
+        OR-combine a list of Trigger ASTs into one, with cleanup.
+        """
+        if not triggers:
+            raise ValueError("[RuleConsolidator] Cannot consolidate empty trigger list")
+
+        combined = Trigger.or_all(triggers)
+
+        # Structural cleanup (OR-of-OR, etc.)
+        combined = Trigger.flatten_trigger(combined)
+
+        # Remove duplicates in OR chains (A OR A -> A)
+        combined = Trigger.remove_duplicates(BooleanOp.OR, combined)
+
+        # One more flatten pass keeps it tidy after rebuilding
+        combined = Trigger.flatten_trigger(combined)
+
+        return combined
+
+    def _assert_no_this(self, t: Trigger, *, target: str, effect: str) -> None:
+        """
+        Contract: DriverResolver should have eliminated 'this' by now.
+        Fail fast if it leaks through.
+        """
+        for atom in t.iter_atomic():
+            if (atom.driver or "").strip().lower() == "this":
+                raise ValueError(
+                    f"[RuleConsolidator] Contract violation: 'this' driver leaked into "
+                    f"final rules for target={target!r} effect={effect!r}. "
+                    f"Trigger={t.to_flat_str()}"
+                )

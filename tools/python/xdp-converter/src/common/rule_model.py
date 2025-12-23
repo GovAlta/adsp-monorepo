@@ -29,27 +29,31 @@ class EventDescription:
     script_node: ET
 
 
-@dataclass
-class RawRule:
-    """
-    Represents all scripts related to a single XDP target (field/subform).
-    Shared structure for both visibility and calculation pipelines.
-    """
-
-    target: str
-    xpath: str
-    events: List[EventDescription] = field(default_factory=list)
-
-
-@dataclass
+@dataclass(frozen=True)
 class VisibilityRule:
-    """
-    Represents a normalized, actionable visibility rule.
-    Produced by ConditionNormalizer / RuleConsolidator.
-    """
+    target: str
+    effect: str  # "HIDE" / "SHOW"
+    trigger: Trigger
+    xpath: Optional[str] = None
 
-    target: str  # field or subform affected
-    effect: str  # HIDE, SHOW, DISABLE, etc.
-    triggers: List[Trigger] = field(default_factory=list)
-    logic: str = "AND"  # how multiple conditions combine
-    xpath: Optional[str] = None  # for trace/debugging
+    def print(self):
+        try:
+            trig_str = self.trigger.to_flat_str()  # type: ignore[attr-defined]
+        except Exception:
+            trig_str = str(self.trigger)
+
+        print("[Visibility Rule]")
+        print(f"    Target: {self.target} -> (effect: {self.effect})")
+        print(f"    Trigger: {trig_str}")
+
+
+# @dataclass
+# class RawRule:
+#     """
+#     Represents all scripts related to a single XDP target (field/subform).
+#     Shared structure for both visibility and calculation pipelines.
+#     """
+
+#     target: str
+#     xpath: str
+#     events: List[EventDescription] = field(default_factory=list)

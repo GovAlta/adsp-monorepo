@@ -98,6 +98,8 @@ def process_one(
             traversal.factory.enum_maps, enum_factory.label_to_enum
         )
 
+        print(f"cboEnvDecalPack: {normalized_enum_maps.get('cboEnvDecalPack')}")
+
         # Keep the actual field names as the group members
         normalized_radio_groups = enum_context.radio_groups
 
