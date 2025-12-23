@@ -21,6 +21,15 @@ Feature: Form
     Then the user views "autotest" in Filter by tag dropdown on form definitions page
     And the user "views" the form definition of "autotest-form-existing-tag", "DO NOT DELETE"
 
+  # TEST DATA: autotest-closed-intake is created as a form definition with an open intake period in the past
+  # TEST DATA: autotest-closed-intake form definition has a draft created for it
+  @TEST_CS-4569 @REQ_CS-2955 @regression
+  Scenario: As a form service developer, form creation and form submission return bad request if the form is not open for intake
+    When the user sends a form service request to create a form draft from "autotest-closed-intake" form definition
+    Then the user gets a "400" status code with an error message containing "no active intake"
+    When the user sends a form service request to submit a form draft from "autotest-closed-intake" form definition
+    Then the user gets a "400" status code with an error message containing "no active intake"
+
   # TEST DATA: a form definition named "autotest-form-tags" is precreated; all tags in the form definition are deleted
   @TEST_CS-3927 @REQ_CS-3589 @TEST_CS-3943 @REQ_CS-3591 @regression
   Scenario: As a tenant admin, I can add, edit and delete tags for a form definition and view them in details view
@@ -106,7 +115,8 @@ Feature: Form
     And the user clicks Save button in form definition editor
     And the user clicks Back button in form definition editor
 
-  @TEST_CS-2366 @TEST_CS-2356 @TEST_CS-2332 @TEST_CS-2406 @REQ_CS-1848 @REQ_CS-2170 @REQ_CS-2169 @REQ_CS-2254 @regression
+  # Ignore the test as it crashes chrome. Need futher investigation.
+  @TEST_CS-2366 @TEST_CS-2356 @TEST_CS-2332 @TEST_CS-2406 @REQ_CS-1848 @REQ_CS-2170 @REQ_CS-2169 @REQ_CS-2254 @regression @ignore
   Scenario: As a tenant admin, I can add, edit and delete a form definition
     Given a tenant admin user is on form service overview page
     When the user clicks Add definition button on form service overview page
@@ -368,12 +378,4 @@ Feature: Form
     And the user views form data of "false" as "citizen" for "residencyOptions" object on data page
     And the user views form data of "Ben:Bond:2011-05-15" as "givenName:surname:dob" for "dependant" array on data page
 
-# # TEST DATA: autotest-closed-intake is created as a form definition with an open intake period in the past
-# # TEST DATA: autotest-closed-intake form definition has a draft created for it
-# @TEST_CS-4569 @REQ_CS-2955 @regression
-# Scenario: As a form service developer, form creation and form submission return bad request if the form is not open for intake
-#   When the user sends a form service request to create a form draft from "autotest-closed-intake" form definition
-#   Then the user gets a "400" status code with an error message containing "no active intake"
-#   When the user sends a form service request to submit a form draft from "autotest-closed-intake" form definition
-#   Then the user gets a "400" status code with an error message containing "no active intake"
 
