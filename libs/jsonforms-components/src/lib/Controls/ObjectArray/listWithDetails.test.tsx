@@ -5,6 +5,8 @@ import Ajv, { ErrorObject } from 'ajv';
 import { GoACells, GoARenderers } from '../../../index';
 import { isObjectArrayEmpty, renderCellColumn } from './ObjectListControlUtils';
 import { RenderCellColumnProps } from './ObjectListControlTypes';
+import { findControlLabel, humanizeAjvError } from './ListWithDetailControl'; // adjust path
+import { ControlElement, Layout, UISchemaElement, JsonSchema } from '@jsonforms/core';
 
 // Mock ResizeObserver in the scope of this test file
 class MockResizeObserver {
@@ -43,6 +45,11 @@ const dataSchema = {
   },
 };
 
+const dataSchemaRequired = {
+  name: { type: 'string', title: 'Special Name' },
+  message: { type: 'string' },
+};
+
 const rootSchema = {
   type: 'object',
   properties: {
@@ -51,6 +58,20 @@ const rootSchema = {
       items: {
         type: 'object',
         properties: dataSchema,
+      },
+    },
+  },
+};
+
+const rootSchemaRequired = {
+  type: 'object',
+  properties: {
+    messages: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: dataSchemaRequired,
+        required: ['name', 'message'],
       },
     },
   },
@@ -74,6 +95,18 @@ const getForm = (formData: object) => {
     <JsonForms
       data={formData}
       schema={rootSchema}
+      uischema={getUiSchema()}
+      ajv={new Ajv({ allErrors: true, verbose: true })}
+      renderers={GoARenderers}
+      cells={GoACells}
+    />
+  );
+};
+const getFormRequired = (formData: object) => {
+  return (
+    <JsonForms
+      data={formData}
+      schema={rootSchemaRequired}
       uischema={getUiSchema()}
       ajv={new Ajv({ allErrors: true, verbose: true })}
       renderers={GoARenderers}
@@ -259,7 +292,218 @@ it('errors are visible', () => {
   expect(errorEl).not.toBeNull();
 
   // Check the error text
-  expect(errorEl!.textContent).toContain('must NOT have more than 5 characters');
+  expect(errorEl!.textContent).toContain('Message must be at most 5 characters');
+});
+it('required errors work', () => {
+  const data = { messages: [] };
+  const { baseElement } = render(getFormRequired(data));
+
+  // Add a message
+  const addButton = baseElement.querySelector("goa-button[testId='object-array-toolbar-Messages']");
+  expect(addButton).toBeInTheDocument();
+  const shadowAddBtn = addButton!.shadowRoot?.querySelector('button');
+  expect(shadowAddBtn).not.toBeNull();
+  fireEvent(addButton!, new CustomEvent('_click'));
+  console.log(baseElement.innerHTML);
+
+  const messageInput = baseElement.querySelector("goa-input[testId='#/properties/message-input']");
+  expect(messageInput).toBeInTheDocument();
+  fireEvent(messageInput!, new CustomEvent('_change', { detail: { value: 'The rain in Spain' } }));
+  expect(messageInput).toHaveAttribute('value', 'The rain in Spain');
+
+  // Click continue
+  const continueBtn = baseElement.querySelector("goa-button[testid='next-list-button']");
+  fireEvent(continueBtn!, new CustomEvent('_click'));
+
+  console.log(baseElement.innerHTML);
+
+  // Select the goa-input / form item for the message
+  const messageFormItem = baseElement.querySelector('goa-form-item');
+  expect(messageFormItem).not.toBeNull();
+
+  // Select the error message inside the slot
+  const errorEl = messageFormItem!.querySelector('div[slot="error"]');
+  expect(errorEl).not.toBeNull();
+
+  // Check the error text
+  expect(errorEl!.textContent).toContain('Name is required');
+});
+
+describe('findControlLabel', () => {
+  it('returns label if uischema is a Control and scope matches', () => {
+    const uischema: ControlElement = {
+      type: 'Control',
+      scope: '#/properties/firstName',
+      label: 'First Name',
+    };
+
+    const result = findControlLabel(uischema, '#/properties/firstName');
+    expect(result).toBe('First Name');
+  });
+
+  it('returns label from nested detail if hasDetail is true', () => {
+    const uischema: UISchemaElement = {
+      type: 'ListWithDetail',
+      options: {
+        detail: {
+          type: 'Control',
+          scope: '#/properties/lastName',
+          label: 'Last Name',
+        },
+      },
+    };
+
+    const result = findControlLabel(uischema, '#/properties/lastName');
+    expect(result).toBe('Last Name');
+  });
+
+  it('returns label from nested elements if hasElements is true', () => {
+    const childControl: ControlElement = {
+      type: 'Control',
+      scope: '#/properties/age',
+      label: 'Age',
+    };
+
+    const parentLayout: Layout = {
+      type: 'VerticalLayout',
+      elements: [childControl],
+    };
+
+    const result = findControlLabel(parentLayout, '#/properties/age');
+    expect(result).toBe('Age');
+  });
+
+  it('returns undefined if no matching control is found', () => {
+    const uischema: Layout = {
+      type: 'VerticalLayout',
+      elements: [
+        {
+          type: 'Control',
+          scope: '#/properties/unrelated',
+          label: 'Unrelated',
+        },
+      ],
+    };
+
+    const result = findControlLabel(uischema, '#/properties/nonexistent');
+    expect(result).toBeUndefined();
+  });
+
+  it('returns label if nested elements inside detail contain the control', () => {
+    const uischema: UISchemaElement = {
+      type: 'ListWithDetail',
+      options: {
+        detail: {
+          type: 'VerticalLayout',
+          elements: [
+            {
+              type: 'Control',
+              scope: '#/properties/email',
+              label: 'Email',
+            },
+          ],
+        },
+      },
+    };
+
+    const result = findControlLabel(uischema, '#/properties/email');
+    expect(result).toBe('Email');
+  });
+});
+
+describe('humanizeAjvError', () => {
+  const schema: JsonSchema = {}; // mock schema
+  const uischema = { type: 'Control', scope: '/dummy' } as unknown as UISchemaElement;
+
+  it('should handle "required" keyword', () => {
+    const error: ErrorObject = {
+      keyword: 'required',
+      instancePath: '/name',
+      schemaPath: '#/properties/name/required',
+      params: {},
+      message: '',
+    };
+
+    expect(humanizeAjvError(error, schema, uischema)).toBe('Name is required');
+  });
+
+  it('should handle "minLength" keyword', () => {
+    const error: ErrorObject = {
+      keyword: 'minLength',
+      instancePath: '/password',
+      schemaPath: '#/properties/password/minLength',
+      params: { limit: 5 },
+      message: '',
+    };
+    expect(humanizeAjvError(error, schema, uischema)).toBe('Password must be at least 5 characters');
+  });
+
+  it('should handle "maxLength" keyword', () => {
+    const error: ErrorObject = {
+      keyword: 'maxLength',
+      instancePath: '/username',
+      schemaPath: '#/properties/username/maxLength', // required
+      params: { limit: 10 },
+      message: '', // optional, but you can include
+    };
+
+    expect(humanizeAjvError(error, schema, uischema)).toBe('Username must be at most 10 characters');
+  });
+
+  it('should handle "format" keyword', () => {
+    const error: ErrorObject = {
+      keyword: 'format',
+      instancePath: '/email',
+      schemaPath: '#/properties/email/format',
+      params: { format: 'email' },
+      message: '',
+    };
+    expect(humanizeAjvError(error, schema, uischema)).toBe('Email must be a valid email');
+  });
+
+  it('should handle "minimum" keyword', () => {
+    const error: ErrorObject = {
+      keyword: 'minimum',
+      instancePath: '/age',
+      schemaPath: '#/properties/age/minimum',
+      params: { limit: 18 },
+      message: '',
+    };
+    expect(humanizeAjvError(error, schema, uischema)).toBe('Age must be ≥ 18');
+  });
+
+  it('should handle "maximum" keyword', () => {
+    const error: ErrorObject = {
+      keyword: 'maximum',
+      instancePath: '/score',
+      schemaPath: '#/properties/score/maximum',
+      params: { limit: 100 },
+      message: '',
+    };
+    expect(humanizeAjvError(error, schema, uischema)).toBe('Score must be ≤ 100');
+  });
+
+  it('should handle "type" keyword', () => {
+    const error: ErrorObject = {
+      keyword: 'type',
+      instancePath: '/isActive',
+      schemaPath: '#/properties/isActive/type',
+      params: { type: 'boolean' },
+      message: '',
+    };
+    expect(humanizeAjvError(error, schema, uischema)).toBe('Is Active must be a boolean');
+  });
+
+  it('should handle unknown keyword', () => {
+    const error: ErrorObject = {
+      keyword: 'custom',
+      instancePath: '/field',
+      schemaPath: '#/properties/password/minLength',
+      params: {},
+      message: 'something went wrong',
+    };
+    expect(humanizeAjvError(error, schema, uischema)).toBe('Field something went wrong');
+  });
 });
 
 describe('ObjectListControl util functions tests', () => {
