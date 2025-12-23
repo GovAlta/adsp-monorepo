@@ -19,6 +19,25 @@ export interface ConfigurationDefinitionState {
   errorRegisterData: string | null;
 }
 
+export type ConfigurationSchema = {
+  configurationSchema?: {
+    type?: 'array';
+    items?: {
+      type?: 'string' | 'object';
+    };
+  };
+  anonymousRead: boolean;
+};
+
+function hasMessage(err: unknown): err is { message: string } {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'message' in err &&
+    typeof (err as { message: unknown }).message === 'string'
+  );
+}
+
 export const CONFIGURATION_FEATURE_KEY = 'configuration';
 
 export const fetchRegisterData = createAsyncThunk<
@@ -40,22 +59,17 @@ export const fetchRegisterData = createAsyncThunk<
     const tenantConfigs = Object.entries(configuration.tenantConfigDefinitions || []);
     const registerConfigs =
       tenantConfigs
-        // eslint-disable-next-line
-        .filter(([name, config]) => {
-          // eslint-disable-next-line
-          const _c = config as any;
+        .filter(([_name, config]) => {
+          const _c = config as ConfigurationSchema;
           return (
             _c?.configurationSchema?.type === 'array' &&
             (_c?.configurationSchema?.items?.type === 'string' || _c?.configurationSchema?.items?.type === 'object')
           );
         })
-        // eslint-disable-next-line
-        .map(([name, config]) => name) || [];
+        .map(([name]) => name) || [];
     const dataListObject = tenantConfigs
-    // eslint-disable-next-line
-      .filter(([name, config]) => {
-        // eslint-disable-next-line
-        const _c = config as any;
+      .filter(([_name, config]) => {
+        const _c = config as ConfigurationSchema;
         return (
           _c?.configurationSchema?.type === 'array' &&
           (_c?.configurationSchema?.items?.type === 'string' || _c?.configurationSchema?.items?.type === 'object')
@@ -67,13 +81,12 @@ export const fetchRegisterData = createAsyncThunk<
 
     const anonymousRead =
       dataListObject
-        .filter(([name, config]) => {
-          // eslint-disable-next-line
-          const _c = config as any;
+        .filter(([_name, config]) => {
+          const _c = config as ConfigurationSchema;
 
           return _c.anonymousRead !== true;
         })
-        .map(([name, config]) => name.replace(':', '/')) || [];
+        .map(([name, _config]) => name.replace(':', '/')) || [];
     for (const registerConfig of registerConfigs) {
       try {
         const [namespace, service] = registerConfig.split(':');
@@ -100,10 +113,20 @@ export const fetchRegisterData = createAsyncThunk<
       anonymousRead,
       nonAnonymous,
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    console.warn(`Error fetching register data: ${err}`);
-    return rejectWithValue(err?.message || 'Unknown error');
+  
+  } catch (err: unknown) {
+    let message = 'Unknown error';
+
+    if (err instanceof Error) {
+      message = err.message;
+    } else if (typeof err === 'string') {
+      message = err;
+    } else if (hasMessage(err)) {
+      message = err.message;
+    }
+
+    console.warn(`Error fetching register data: ${message}`);
+    return rejectWithValue(message);
   }
 });
 
@@ -127,10 +150,20 @@ export const getConfigurationDefinitions = createAsyncThunk<
     return {
       tenant: data?.latest?.configuration
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    console.warn(`Error fetching register data: ${err}`);
-    return rejectWithValue(err?.message || 'Unknown error');
+  
+  } catch (err: unknown) {
+    let message = 'Unknown error';
+
+    if (err instanceof Error) {
+      message = err.message;
+    } else if (typeof err === 'string') {
+      message = err;
+    } else if (hasMessage(err)) {
+      message = err.message;
+    }
+
+    console.warn(`Error fetching register data: ${message}`);
+    return rejectWithValue(message);
   }
 });
 

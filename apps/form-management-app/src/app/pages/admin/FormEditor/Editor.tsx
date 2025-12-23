@@ -13,7 +13,6 @@ import { RegisterData } from '../../../../../../../libs/jsonforms-components/src
 import { UISchemaElement } from '@jsonforms/core';
 import { FileItem, FileMetadata, FileWithMetadata } from '../../../state/file/file.slice';
 import { PdfJobList } from '../../../state/pdf/pdf.slice';
-import type * as monaco from 'monaco-editor';
 import { useMonaco } from '@monaco-editor/react';
 import { RoleContainer } from './RoleContainer';
 import { AppState } from '../../../state';
@@ -90,8 +89,8 @@ export const Editor: React.FC<EditorProps> = ({
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
 
-  const editorRefData = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
-  const editorRefUi = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const editorRefData = useRef<monacoNS.editor.IStandaloneCodeEditor | null>(null);
+  const editorRefUi = useRef<monacoNS.editor.IStandaloneCodeEditor | null>(null);
 
   const [editorErrors, setEditorErrors] = useState<{
     uiSchema: string | null;
@@ -127,7 +126,7 @@ export const Editor: React.FC<EditorProps> = ({
     return null;
   };
 
-  const handleEditorDidMountData = (editor: monaco.editor.IStandaloneCodeEditor) => {
+  const handleEditorDidMountData = (editor: monacoNS.editor.IStandaloneCodeEditor) => {
     editorRefData.current = editor;
 
     requestAnimationFrame(() => {
@@ -135,13 +134,12 @@ export const Editor: React.FC<EditorProps> = ({
         editor.setScrollTop(dataEditorLocation);
       }, 5);
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    editor.onDidScrollChange((e: any) => {
+    editor.onDidScrollChange((e: monacoNS.IScrollEvent) => {
       setDataEditorLocation(e.scrollTop);
     });
   };
 
-  const handleEditorDidMountUi = (editor: monaco.editor.IStandaloneCodeEditor) => {
+  const handleEditorDidMountUi = (editor: monacoNS.editor.IStandaloneCodeEditor) => {
     editorRefUi.current = editor;
 
     requestAnimationFrame(() => {
@@ -150,7 +148,7 @@ export const Editor: React.FC<EditorProps> = ({
       }, 5);
     });
 
-    editor.onDidScrollChange((e) => {
+    editor.onDidScrollChange((e: monacoNS.IScrollEvent) => {
       setUiEditorLocation(e.scrollTop);
     });
   };
