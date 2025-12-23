@@ -21,6 +21,15 @@ Feature: Form
     Then the user views "autotest" in Filter by tag dropdown on form definitions page
     And the user "views" the form definition of "autotest-form-existing-tag", "DO NOT DELETE"
 
+  # TEST DATA: autotest-closed-intake is created as a form definition with an open intake period in the past
+  # TEST DATA: autotest-closed-intake form definition has a draft created for it
+  @TEST_CS-4569 @REQ_CS-2955 @regression
+  Scenario: As a form service developer, form creation and form submission return bad request if the form is not open for intake
+    When the user sends a form service request to create a form draft from "autotest-closed-intake" form definition
+    Then the user gets a "400" status code with an error message containing "no active intake"
+    When the user sends a form service request to submit a form draft from "autotest-closed-intake" form definition
+    Then the user gets a "400" status code with an error message containing "no active intake"
+
   # TEST DATA: a form definition named "autotest-form-tags" is precreated; all tags in the form definition are deleted
   @TEST_CS-3927 @REQ_CS-3589 @TEST_CS-3943 @REQ_CS-3591 @regression
   Scenario: As a tenant admin, I can add, edit and delete tags for a form definition and view them in details view
@@ -194,74 +203,74 @@ Feature: Form
     And the user clicks the information icon button besides the checkbox of Create submission records on submit
     Then the user "views" the help tooltip for "enabling" create submission records on submit
 
-  # # TEST DATA: a form definition named "autotest-form-disposition-states" is precreated
-  # @TEST_CS-3224 @REQ_CS-2468 @regression
-  # Scenario: As a tenant admin, I can add, order, edit and delete disposition states
-  #   Given a tenant admin user is on form definitions page
-  #   When the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
-  #   Then the user views form definition editor for "autotest-form-disposition-states", "DO NOT DELETE"
-  #   When the user clicks "Lifecycle" tab in form definition editor
-  #   And the user deletes all disposition states if any
-  #   And the user "checks" the checkbox of Create submission records on submit
-  #   # Add disposition states
-  #   And the user clicks the information icon button besides Disposition States
-  #   Then the user "views" the help tooltip text for Disposition States
-  #   When the user adds a dispoistion state of "Approved", "The application is approved"
-  #   Then the user "views" the disposition state of "Approved", "The application is approved"
-  #   When the user adds a dispoistion state of "Documents needed", "Need to supply required documents"
-  #   Then the user "views" the disposition state of "Documents needed", "Need to supply required documents"
-  #   When the user adds a dispoistion state of "Rejected", "The application is rejected"
-  #   Then the user "views" the disposition state of "Rejected", "The application is rejected"
-  #   # Order states
-  #   And the user should only view "arrow down" icon for the disposition state of "Approved", "The application is approved"
-  #   And the user should only view "arrow up" icon for the disposition state of "Rejected", "The application is rejected"
-  #   When the user clicks "arrow up" for the disposition state of "Documents needed", "Need to supply required documents"
-  #   Then the user views the disposition state of "Documents needed", "Need to supply required documents" being row "1"
-  #   When the user clicks "arrow down" for the disposition state of "Approved", "The application is approved"
-  #   Then the user views the disposition state of "Approved", "The application is approved" being row "3"
-  #   # Edit states
-  #   When the user clicks Save button in form definition editor
-  #   And the user clicks Back button in form definition editor
-  #   And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
-  #   When the user clicks "Lifecycle" tab in form definition editor
-  #   And the user clicks "edit" button for the disposition state of "Approved", "The application is approved"
-  #   Then the user views Edit disposition state modal
-  #   When the user enters "Reviewed" as name and "The application is reviewed" as description in Edit disposition state modal
-  #   And the user clicks Cancel button in Edit disposition state modal
-  #   Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
-  #   When the user clicks "edit" button for the disposition state of "Approved", "The application is approved"
-  #   Then the user views Edit disposition state modal
-  #   When the user enters "Reviewed" as name and "The application is reviewed" as description in Edit disposition state modal
-  #   And the user clicks Save button in disposition state modal
-  #   Then the user "views" the disposition state of "Reviewed", "The application is reviewed"
-  #   # Delete states
-  #   When the user clicks Save button in form definition editor
-  #   And the user clicks Back button in form definition editor
-  #   And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
-  #   When the user clicks "Lifecycle" tab in form definition editor
-  #   And the user clicks "Delete" button for the disposition state of "Reviewed", "The application is reviewed"
-  #   Then the user views delete "disposition state" confirmation modal for "Reviewed"
-  #   When the user clicks Cancel button in delete confirmation modal
-  #   Then the user "views" the disposition state of "Reviewed", "The application is reviewed"
-  #   When the user clicks "Delete" button for the disposition state of "Reviewed", "The application is reviewed"
-  #   Then the user views delete "disposition state" confirmation modal for "Reviewed"
-  #   When the user clicks Delete button in delete confirmation modal
-  #   Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
-  #   When the user clicks "Delete" button for the disposition state of "Documents needed", "Need to supply required documents"
-  #   Then the user views delete "disposition state" confirmation modal for "Documents needed"
-  #   When the user clicks Delete button in delete confirmation modal
-  #   Then the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
-  #   When the user clicks "Delete" button for the disposition state of "Rejected", "The application is rejected"
-  #   Then the user views delete "disposition state" confirmation modal for "Rejected"
-  #   When the user clicks Delete button in delete confirmation modal
-  #   Then the user "should not view" the disposition state of "Rejected", "The application is rejected"
-  #   When the user clicks Save button in form definition editor
-  #   And the user clicks Back button in form definition editor
-  #   And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
-  #   And the user clicks "Lifecycle" tab in form definition editor
-  #   Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
-  #   And the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
-  #   And the user "should not view" the disposition state of "Rejected", "The application is rejected"
+  # TEST DATA: a form definition named "autotest-form-disposition-states" is precreated
+  @TEST_CS-3224 @REQ_CS-2468 @regression
+  Scenario: As a tenant admin, I can add, order, edit and delete disposition states
+    Given a tenant admin user is on form definitions page
+    When the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
+    Then the user views form definition editor for "autotest-form-disposition-states", "DO NOT DELETE"
+    When the user clicks "Lifecycle" tab in form definition editor
+    And the user deletes all disposition states if any
+    And the user "checks" the checkbox of Create submission records on submit
+    # Add disposition states
+    And the user clicks the information icon button besides Disposition States
+    Then the user "views" the help tooltip text for Disposition States
+    When the user adds a dispoistion state of "Approved", "The application is approved"
+    Then the user "views" the disposition state of "Approved", "The application is approved"
+    When the user adds a dispoistion state of "Documents needed", "Need to supply required documents"
+    Then the user "views" the disposition state of "Documents needed", "Need to supply required documents"
+    When the user adds a dispoistion state of "Rejected", "The application is rejected"
+    Then the user "views" the disposition state of "Rejected", "The application is rejected"
+    # Order states
+    And the user should only view "arrow down" icon for the disposition state of "Approved", "The application is approved"
+    And the user should only view "arrow up" icon for the disposition state of "Rejected", "The application is rejected"
+    When the user clicks "arrow up" for the disposition state of "Documents needed", "Need to supply required documents"
+    Then the user views the disposition state of "Documents needed", "Need to supply required documents" being row "1"
+    When the user clicks "arrow down" for the disposition state of "Approved", "The application is approved"
+    Then the user views the disposition state of "Approved", "The application is approved" being row "3"
+    # Edit states
+    When the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
+    And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
+    When the user clicks "Lifecycle" tab in form definition editor
+    And the user clicks "edit" button for the disposition state of "Approved", "The application is approved"
+    Then the user views Edit disposition state modal
+    When the user enters "Reviewed" as name and "The application is reviewed" as description in Edit disposition state modal
+    And the user clicks Cancel button in Edit disposition state modal
+    Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
+    When the user clicks "edit" button for the disposition state of "Approved", "The application is approved"
+    Then the user views Edit disposition state modal
+    When the user enters "Reviewed" as name and "The application is reviewed" as description in Edit disposition state modal
+    And the user clicks Save button in disposition state modal
+    Then the user "views" the disposition state of "Reviewed", "The application is reviewed"
+    # Delete states
+    When the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
+    And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
+    When the user clicks "Lifecycle" tab in form definition editor
+    And the user clicks "Delete" button for the disposition state of "Reviewed", "The application is reviewed"
+    Then the user views delete "disposition state" confirmation modal for "Reviewed"
+    When the user clicks Cancel button in delete confirmation modal
+    Then the user "views" the disposition state of "Reviewed", "The application is reviewed"
+    When the user clicks "Delete" button for the disposition state of "Reviewed", "The application is reviewed"
+    Then the user views delete "disposition state" confirmation modal for "Reviewed"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
+    When the user clicks "Delete" button for the disposition state of "Documents needed", "Need to supply required documents"
+    Then the user views delete "disposition state" confirmation modal for "Documents needed"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
+    When the user clicks "Delete" button for the disposition state of "Rejected", "The application is rejected"
+    Then the user views delete "disposition state" confirmation modal for "Rejected"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the disposition state of "Rejected", "The application is rejected"
+    When the user clicks Save button in form definition editor
+    And the user clicks Back button in form definition editor
+    And the user clicks "Edit" button for the form definition of "autotest-form-disposition-states", "DO NOT DELETE"
+    And the user clicks "Lifecycle" tab in form definition editor
+    Then the user "should not view" the disposition state of "Reviewed", "The application is reviewed"
+    And the user "should not view" the disposition state of "Documents needed", "Need to supply required documents"
+    And the user "should not view" the disposition state of "Rejected", "The application is rejected"
 
   @TEST_CS-3356 @REQ_CS-3381 @regression
   Scenario: As a tenant admin, I can set the classification on a form definition and view the updated classification in event log
@@ -368,12 +377,4 @@ Feature: Form
     And the user views form data of "false" as "citizen" for "residencyOptions" object on data page
     And the user views form data of "Ben:Bond:2011-05-15" as "givenName:surname:dob" for "dependant" array on data page
 
-  # TEST DATA: autotest-closed-intake is created as a form definition with an open intake period in the past
-  # TEST DATA: autotest-closed-intake form definition has a draft created for it
-  @TEST_CS-4569 @REQ_CS-2955 @regression
-  Scenario: As a form service developer, form creation and form submission return bad request if the form is not open for intake
-    When the user sends a form service request to create a form draft from "autotest-closed-intake" form definition
-    Then the user gets a "400" status code with an error message containing "no active intake"
-    When the user sends a form service request to submit a form draft from "autotest-closed-intake" form definition
-    Then the user gets a "400" status code with an error message containing "no active intake"
 
