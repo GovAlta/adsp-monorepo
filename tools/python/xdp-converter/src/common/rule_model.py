@@ -1,77 +1,59 @@
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-
-# ---------------------------------------------------------------------
-# 🧩 Base structures (shared between pipelines)
-# ---------------------------------------------------------------------
-@dataclass
-class ScriptEntry:
-    """
-    Represents one <event> or <calculate> script block in an XDP field/subform.
-    Shared between visibility and calculation pipelines.
-    """
-
-    event: Optional[str]
-    code: str
-    effect: Optional[str] = None
-    condition: Optional[str] = None
-    driver_hint: Optional[str] = None
+from visibility_rules.stages.trigger_ast import Trigger
 
 
 @dataclass
-class RawRule:
-    """
-    Represents all scripts related to a single XDP target (field/subform).
-    Shared structure for both visibility and calculation pipelines.
-    """
-
+class Action:
+    # e.g., target.presence = 'visible'
     target: str
-    xpath: str
-    scripts: List[ScriptEntry] = field(default_factory=list)
-
-
-# ---------------------------------------------------------------------
-# 👁️ Visibility-specific normalized structure
-# ---------------------------------------------------------------------
-@dataclass
-class VisibilityCondition:
-    """
-    A normalized condition derived from a visibility script.
-    """
-
-    driver: str  # the controlling field name
-    operator: str  # e.g., "==", "!=", ">", "<="
-    value: Optional[str] = None  # constant being compared, if any
+    hide: bool
 
 
 @dataclass
+class EventMetadata:
+    owner: str  # enclosing control node.
+    owner_type: str  # "field" or "subform"
+    target_is_subform: bool  # True if action.target refers to a subform
+    xpath: str  # use in debug/trace
+    script_name: str  # use in debug/trace
+
+
+@dataclass
+class EventDescription:
+    trigger: Trigger
+    action: Action
+    metadata: EventMetadata
+    script_node: ET
+
+
+@dataclass(frozen=True)
 class VisibilityRule:
-    """
-    Represents a normalized, actionable visibility rule.
-    Produced by ConditionNormalizer / RuleConsolidator.
-    """
-
-    target: str  # field or subform affected
-    effect: str  # HIDE, SHOW, DISABLE, etc.
-    conditions: List[VisibilityCondition] = field(default_factory=list)
-    logic: str = "AND"  # how multiple conditions combine (future-proof)
-    xpath: Optional[str] = None  # for trace/debugging
-
-
-# ---------------------------------------------------------------------
-# 🧮 Calculation-specific normalized structure
-# ---------------------------------------------------------------------
-@dataclass
-class CalculationRule:
-    """
-    Represents a normalized calculation rule extracted from <calculate> scripts.
-    """
-
-    target: str  # field where result is stored
-    expression: str  # e.g., "FieldA + FieldB"
-    dependencies: List[str] = field(
-        default_factory=list
-    )  # fields referenced in expression
-    language: Optional[str] = None
+    target: str
+    effect: str  # "HIDE" / "SHOW"
+    trigger: Trigger
     xpath: Optional[str] = None
+
+    def print(self):
+        try:
+            trig_str = self.trigger.to_flat_str()  # type: ignore[attr-defined]
+        except Exception:
+            trig_str = str(self.trigger)
+
+        print("[Visibility Rule]")
+        print(f"    Target: {self.target} -> (effect: {self.effect})")
+        print(f"    Trigger: {trig_str}")
+
+
+# @dataclass
+# class RawRule:
+#     """
+#     Represents all scripts related to a single XDP target (field/subform).
+#     Shared structure for both visibility and calculation pipelines.
+#     """
+
+#     target: str
+#     xpath: str
+#     events: List[EventDescription] = field(default_factory=list)

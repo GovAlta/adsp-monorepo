@@ -67,10 +67,6 @@ class XdpElementFactory(AbstractXdpFactory):
         • Removes empty/help-only groups
         • Computes group geometry
         """
-        print(f"[XdpElementFactory] Handling group for subform: {subform.get('name')}")
-        # --------------------------------------------------
-        # 0) empty — return None
-        # --------------------------------------------------
         if not elements:
             return None
 
@@ -81,9 +77,6 @@ class XdpElementFactory(AbstractXdpFactory):
 
         # Pick a proper group label
         resolved_label = resolve_group_label(subform, self.context)
-        print(
-            f".   ##### [XdpElementFactory] Resolved group label: '{resolved_label}' for subform: {subform.get('name')} "
-        )
 
         has_real_control = any(
             getattr(e, "is_control", lambda: False)()
@@ -92,13 +85,9 @@ class XdpElementFactory(AbstractXdpFactory):
             for e in elements
         )
 
-        print(f".   [XdpElementFactory] Creating group with label: '{resolved_label}'")
         if not has_real_control:
-            print(
-                f".   [XdpElementFactory] '{resolved_label}' has NO real controls inside."
-            )
             return None
-        print(f".   [XdpElementFactory] '{resolved_label}' has real controls inside.")
+
         group = XdpGroup(subform, elements, self.context, resolved_label)
 
         base_geo = XdpGeometry.resolve(subform, self.context.parent_map)

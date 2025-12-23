@@ -9,6 +9,8 @@ from visibility_rules.pipeline_context import (
 )
 from xdp_parser.xdp_utils import compute_full_xdp_path
 
+debug = True
+
 
 class StaticHiddenPruner:
     """
@@ -40,15 +42,23 @@ class StaticHiddenPruner:
         # Keys are fully-qualified targets like "Section3Default", "Section3Seasonal.Decals", etc.
         rule_keys = list(jsonforms_rules.keys())
         print(f"[StaticHiddenPruner] Dynamic rule targets: {len(rule_keys)}")
+        if debug:
+            print("[StaticHiddenPruner] Sample rule keys:", rule_keys[:10])
 
         # Build a quick lookup to see if a name participates in any rule, either
         # as the actual target or as an ancestor of a target.
         def has_dynamic_rules_for(full_name: str) -> bool:
             if not full_name:
                 return False
-            prefix = full_name + "."
+
             for key in rule_keys:
-                if key == full_name or key.startswith(prefix):
+                if key == full_name:
+                    return True
+                if key.startswith(full_name + "."):  # full_name is ancestor of key
+                    return True
+                if full_name.startswith(key + "."):  # key is ancestor of full_name
+                    return True
+                if full_name.endswith("." + key):  # key is suffix of full_name
                     return True
             return False
 

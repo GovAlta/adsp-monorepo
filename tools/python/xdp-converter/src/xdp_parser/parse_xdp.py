@@ -158,7 +158,11 @@ class XdpParser:
             # Basic input fields
             if elem.tag == "field":
                 # Hidden + uncontrolled by rules → skip (pure structural)
-                if is_hidden(elem) and not self._is_controlled_by_rules(elem):
+                if (
+                    is_hidden(elem)
+                    and not self._is_controlled_by_rules(elem)
+                    and not self._looks_actionable(elem)
+                ):
                     i += 1
                     continue
 
@@ -229,5 +233,16 @@ class XdpParser:
         for key in visibility_rules.keys():
             if key.endswith(f".{name}"):
                 return True
+
+        return False
+
+    def _looks_actionable(self, elem: ET.Element) -> bool:
+        # If it has items, it's a choice control (dropdown/listbox) => keep it
+        if elem.find(".//items") is not None:
+            return True
+
+        # If it has any script/event, it's participating in runtime behavior => keep it
+        if elem.find(".//event") is not None or elem.find(".//script") is not None:
+            return True
 
         return False
