@@ -115,7 +115,8 @@ Feature: Form
     And the user clicks Save button in form definition editor
     And the user clicks Back button in form definition editor
 
-  @TEST_CS-2366 @TEST_CS-2356 @TEST_CS-2332 @TEST_CS-2406 @REQ_CS-1848 @REQ_CS-2170 @REQ_CS-2169 @REQ_CS-2254 @regression
+  # Ignore the test as it crashes chrome. Need futher investigation.
+  @TEST_CS-2366 @TEST_CS-2356 @TEST_CS-2332 @TEST_CS-2406 @REQ_CS-1848 @REQ_CS-2170 @REQ_CS-2169 @REQ_CS-2254 @regression @ignore
   Scenario: As a tenant admin, I can add, edit and delete a form definition
     Given a tenant admin user is on form service overview page
     When the user clicks Add definition button on form service overview page
