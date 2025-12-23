@@ -9,15 +9,15 @@ import {
   and,
   optionIs,
 } from '@jsonforms/core';
-import { GoATextArea } from '@abgov/react-components';
+import { GoabTextArea } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { onKeyPressForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
+import { GoabTextAreaOnKeyPressDetail } from '@abgov/ui-components-common';
+export type GoabInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 
-export type GoAInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
-
-export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element => {
+export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, path, schema, label, isVisited, errors, setIsVisited } = props;
   const { required } = props as ControlProps;
   const [textAreaValue, _] = React.useState<string>(data);
@@ -32,7 +32,7 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
   const textAreaName = `${label || path}-text-area` || '';
 
   const txtAreaComponent = (
-    <GoATextArea
+    <GoabTextArea
       error={isVisited && errors.length > 0}
       value={textAreaValue}
       disabled={!enabled}
@@ -43,28 +43,28 @@ export const MultiLineText = (props: GoAInputMultiLineTextProps): JSX.Element =>
       width={width}
       // Note: Paul Jan-09-2023. The latest ui-component come with the maxCount. We need to uncomment the following line when the component is updated
       // maxCount={schema.maxLength || 256}
-      onKeyPress={(name: string, value: string, key: string) => {
-        const newValue = autoCapitalize ? value.toUpperCase() : value;
+      onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+        const newValue = autoCapitalize ? detail.value.toUpperCase() : detail.value;
 
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
-        if (value.length === 0 || (required && errors.length === 0 && value.length > 0)) {
+        if (detail.value.length === 0 || (required && errors.length === 0 && detail.value.length > 0)) {
           onKeyPressForTextControl({
-            name,
+            name: detail.name,
             value: newValue,
-            key,
+            key: detail.key,
             controlProps: props as ControlProps,
           });
         }
 
         onChangeForInputControl({
-          name,
+          name: detail.name,
           value: newValue,
           controlProps: props as ControlProps,
         });
       }}
-      onChange={(name: string, value: string) => {
+      onChange={() => {
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }

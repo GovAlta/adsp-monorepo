@@ -8,8 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';
-
-import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabInput, GoabModal, GoabButtonGroup, GoabFormItem, GoabButton } from '@abgov/react-components';
 interface AddEditCommentTopicTypeProps {
   open: boolean;
   isEdit: boolean;
@@ -72,14 +72,14 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
   return (
-    <GoAModal
+    <GoabModal
       testId="topicType-comment"
       open={open}
       heading={`${isEdit ? 'Edit' : 'Add'} topic type`}
-      width="640px"
+      maxWidth="640px"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             testId="comment-cancel"
             type="secondary"
             onClick={() => {
@@ -88,8 +88,8 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="comment-save"
             disabled={!topicType.name || validators.haveErrors()}
@@ -114,8 +114,8 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       {spinner ? (
@@ -123,34 +123,36 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
       ) : (
         <>
           <CommentCommentItem>
-            <GoAFormItem error={errors?.['name']} label="Name">
-              <GoAInput
+            <GoabFormItem error={errors?.['name']} label="Name">
+              <GoabInput
                 type="text"
                 name="comment-topicType-name"
                 value={topicType.name}
                 testId="comment-topicType-name"
                 aria-label="comment-topicType-name"
                 width="100%"
-                onChange={(name, value) => {
+                onChange={(detail: GoabInputOnChangeDetail) => {
                   const validations = {
-                    name: value,
-                    duplicate: value,
+                    name: detail.value,
+                    duplicate: detail.value,
                   };
                   validators.remove('name');
                   validators.checkAll(validations);
                   setTopicType(
-                    isEdit ? { ...topicType, name: value } : { ...topicType, name: value, id: toKebabName(value) }
+                    isEdit
+                      ? { ...topicType, name: detail.value }
+                      : { ...topicType, name: detail.value, id: toKebabName(detail.value) }
                   );
                 }}
                 onBlur={() => {
                   validators.checkAll({ name: topicType.name, duplicate: topicType.name });
                 }}
               />
-            </GoAFormItem>
+            </GoabFormItem>
           </CommentCommentItem>
-          <GoAFormItem label="Topic type ID">
+          <GoabFormItem label="Topic type ID">
             <CommentCommentItem>
-              <GoAInput
+              <GoabInput
                 name="comment-topicType-id"
                 value={topicType.id}
                 testId="comment-topicType-id"
@@ -160,9 +162,9 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
                 onChange={() => {}}
               />
             </CommentCommentItem>
-          </GoAFormItem>
+          </GoabFormItem>
         </>
       )}
-    </GoAModal>
+    </GoabModal>
   );
 };

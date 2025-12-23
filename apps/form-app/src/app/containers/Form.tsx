@@ -1,4 +1,4 @@
-import { GoAIconButton } from '@abgov/react-components';
+import { GoabIconButton } from '@abgov/react-components';
 import { Container } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -96,7 +96,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
           <CommentsViewer />
         </div>
         {topic ? (
-          <GoAIconButton
+          <GoabIconButton
             disabled={!form}
             icon={showComments ? 'help-circle' : 'help-circle'}
             size="large"

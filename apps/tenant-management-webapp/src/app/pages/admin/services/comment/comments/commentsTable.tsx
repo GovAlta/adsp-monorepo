@@ -17,7 +17,7 @@ import {
 import { ActionIconsDiv } from '../../styled-components';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoACircularProgress } from '@abgov/react-components';
+import { GoabButton, GoabCircularProgress } from '@abgov/react-components';
 import { AddCommentModal } from '../comments/addCommentModal';
 import { DeleteConfirmationsView } from '../comments/deleteConfirmationsView';
 import { addCommentRequest, fetchComments, updateComment } from '@store/comment/action';
@@ -98,9 +98,9 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
     <section>
       <HeaderFont>
         <h3>Comments list</h3>
-        <GoAButton size="compact" type="secondary" testId="add-comment" onClick={addNewComment}>
+        <GoabButton size="compact" type="secondary" testId="add-comment" onClick={addNewComment}>
           Add comment
-        </GoAButton>
+        </GoabButton>
       </HeaderFont>
 
       {comments &&
@@ -145,15 +145,15 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
 
       {elementIndicator?.show && (
         <CommentLoader>
-          <GoACircularProgress size="small" visible={true} />
+          <GoabCircularProgress size="small" visible={true} />
         </CommentLoader>
       )}
       {!elementIndicator?.show && comments && !comments.length && renderNoItem('comments')}
       {next && (
         <LoadMoreCommentsWrapper>
-          <GoAButton testId="comment-load-more-btn" key="comment-load-more-btn" type="tertiary" onClick={onNext}>
+          <GoabButton testId="comment-load-more-btn" key="comment-load-more-btn" type="tertiary" onClick={onNext}>
             View older comments
-          </GoAButton>
+          </GoabButton>
         </LoadMoreCommentsWrapper>
       )}
       {deleteAction && (

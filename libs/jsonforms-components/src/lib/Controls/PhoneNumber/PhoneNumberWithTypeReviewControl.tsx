@@ -1,4 +1,4 @@
-import { GoAFormItem, GoAGrid } from '@abgov/react-components';
+import { GoabFormItem, GoabGrid } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { TextWrapDiv } from '../AddressLookup/styled-components';
@@ -11,7 +11,7 @@ export const PhoneNumberWithTypeReviewControl = (props: PhoneNumberWithTypeRevie
 
   return (
     <PhoneGrid>
-      <GoAFormItem
+      <GoabFormItem
         label="Phone number"
         error={required && !data?.number ? 'Phone number is required' : ''}
         requirement={required ? 'required' : undefined}
@@ -19,9 +19,9 @@ export const PhoneNumberWithTypeReviewControl = (props: PhoneNumberWithTypeRevie
         <TextWrapDiv>
           <div data-testid={`phone-number-control-${id}`}>{data?.number || ''}</div>
         </TextWrapDiv>
-      </GoAFormItem>
+      </GoabFormItem>
 
-      <GoAFormItem
+      <GoabFormItem
         label="Phone type"
         error={required && !data?.type ? 'Phone type is required' : ''}
         requirement={required ? 'required' : undefined}
@@ -29,9 +29,9 @@ export const PhoneNumberWithTypeReviewControl = (props: PhoneNumberWithTypeRevie
         <TextWrapDiv>
           <div data-testid={`phone-type-control-${id}`}>{data?.type || ''}</div>
         </TextWrapDiv>
-      </GoAFormItem>
+      </GoabFormItem>
     </PhoneGrid>
   );
 };
 
-export const GoAInputBasePhoneNumberWithTypeReviewControl = withJsonFormsAllOfProps(PhoneNumberWithTypeReviewControl);
+export const GoabInputBasePhoneNumberWithTypeReviewControl = withJsonFormsAllOfProps(PhoneNumberWithTypeReviewControl);

@@ -1,7 +1,7 @@
 import { GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
-import { GoABlock } from '@abgov/react-components';
+import { GoabBlock } from '@abgov/react-components';
 import greenArrow from '@assets/green-arrow.svg';
 import redArrow from '@assets/red-arrow.svg';
 import natural from '@assets/neutral-icon.svg';
@@ -51,7 +51,7 @@ const MomDiv = styled.div`
 
 export const Metrics: FunctionComponent<MetricsProps> = ({ metrics }: MetricsProps) => {
   return (
-    <GoABlock gap="s" direction="row">
+    <GoabBlock gap="s" direction="row">
       {metrics.map(({ id, name, value, mom }) => {
         const ratingInfo = value !== undefined ? ratings.find((r) => r.value === Math.round(value)) : undefined;
 
@@ -88,6 +88,6 @@ export const Metrics: FunctionComponent<MetricsProps> = ({ metrics }: MetricsPro
           </MetricGridItem>
         );
       })}
-    </GoABlock>
+    </GoabBlock>
   );
 };

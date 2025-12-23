@@ -7,19 +7,23 @@ import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
 
 import { renderNoItem } from '@components/NoItem';
 import {
-  GoAButton,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoASkeleton,
-  GoACircularProgress,
+  GoabButton,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabSkeleton,
+  GoabCircularProgress,
 } from '@abgov/react-components';
 import { TaskModal } from './taskModal';
 import { ButtonPadding, ProgressWrapper } from '../styled-components';
 import { TaskListTable } from './tasksTable';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { getSortedQueues } from '../taskUtil';
-
+import {
+  GoabTextAreaOnKeyPressDetail,
+  GoabInputOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+} from '@abgov/ui-components-common';
 interface VisibleProps {
   visible: boolean;
 }
@@ -85,32 +89,37 @@ export const TasksList = (): JSX.Element => {
     <section>
       {!indicator.show && Object.keys(taskQueues).length === 0 && renderNoItem('task queues')}
 
-      <GoAFormItem label="Select a queue">
-        {indicator.show && Object.keys(taskQueues).length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}
+      <GoabFormItem label="Select a queue">
+        {indicator.show && Object.keys(taskQueues).length === 0 && <GoabSkeleton type="text" key={1}></GoabSkeleton>}
         {Object.keys(taskQueues).length > 0 && (
-          <GoADropdown
+          <GoabDropdown
             name="Queues"
             value={selectedTask}
-            onChange={(name: string, selectedTask: string) => {
+            onChange={(detail: GoabDropdownOnChangeDetail) => {
               dispatch(clearTasks());
-              setSelectedTask(selectedTask);
+              setSelectedTask(detail.value);
             }}
             aria-label="select-task-dropdown"
             width="100%"
             testId="task-select-definition-dropdown"
-            relative={true}
           >
             {Object.keys(taskQueues).map((item) => (
-              <GoADropdownItem name="Queues" key={item} label={item} value={item} testId={`${item}-get-task-options`} />
+              <GoabDropdownItem
+                name="Queues"
+                key={item}
+                label={item}
+                value={item}
+                testId={`${item}-get-task-options`}
+              />
             ))}
-          </GoADropdown>
+          </GoabDropdown>
         )}
-      </GoAFormItem>
+      </GoabFormItem>
 
       {selectedTask !== '' && (
         <div>
           <ButtonPadding>
-            <GoAButton
+            <GoabButton
               testId="add-queue-btn"
               disabled={selectedTask === ''}
               onClick={() => {
@@ -120,7 +129,7 @@ export const TasksList = (): JSX.Element => {
               }}
             >
               Add task
-            </GoAButton>
+            </GoabButton>
           </ButtonPadding>
         </div>
       )}
@@ -141,14 +150,14 @@ export const TasksList = (): JSX.Element => {
           />
           {!next && indicator.show && (
             <ProgressWrapper>
-              <GoACircularProgress visible={indicator.show} size="small" />
+              <GoabCircularProgress visible={indicator.show} size="small" />
             </ProgressWrapper>
           )}
           {next && (
             <LoadMoreWrapper>
-              <GoAButton testId="task-load-more-btn" key="task-load-more-btn" type="tertiary" onClick={onNext}>
+              <GoabButton testId="task-load-more-btn" key="task-load-more-btn" type="tertiary" onClick={onNext}>
                 Load more
-              </GoAButton>
+              </GoabButton>
             </LoadMoreWrapper>
           )}
         </Visible>

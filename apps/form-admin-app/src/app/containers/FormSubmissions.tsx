@@ -1,10 +1,10 @@
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoATable,
+  GoabButton,
+  GoabButtonGroup,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabTable,
 } from '@abgov/react-components';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
@@ -36,7 +36,7 @@ import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
 import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
-
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 interface FormSubmissionsProps {
   definitionId: string;
 }
@@ -80,9 +80,8 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                 )
               }
             />
-            <GoAFormItem label="Disposition" mr="m">
-              <GoADropdown
-                relative={true}
+            <GoabFormItem label="Disposition" mr="m">
+              <GoabDropdown
                 name="submission-disposition"
                 disabled={!!criteria.tag}
                 value={
@@ -92,20 +91,20 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                     ? 'dispositioned'
                     : 'not dispositioned'
                 }
-                onChange={(_, values) =>
+                onChange={(detail: GoabDropdownOnChangeDetail) =>
                   dispatch(
                     formActions.setSubmissionCriteria({
                       ...criteria,
-                      dispositioned: values === '' ? undefined : values === 'dispositioned',
+                      dispositioned: detail.value === '' ? undefined : detail.value === 'dispositioned',
                     })
                   )
                 }
               >
-                <GoADropdownItem value="" label="<No disposition filter>" />
-                <GoADropdownItem value="not dispositioned" label="Not dispositioned" />
-                <GoADropdownItem value="dispositioned" label="Dispositioned" />
-              </GoADropdown>
-            </GoAFormItem>
+                <GoabDropdownItem value="" label="<No disposition filter>" />
+                <GoabDropdownItem value="not dispositioned" label="Not dispositioned" />
+                <GoabDropdownItem value="dispositioned" label="Dispositioned" />
+              </GoabDropdown>
+            </GoabFormItem>
             {dataValues.map(({ name, path, type }) => (
               <DataValueCriteriaItem
                 key={path}
@@ -128,32 +127,32 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               />
             ))}
           </SearchFormItemsContainer>
-          <GoAButtonGroup alignment="end" mt="l">
+          <GoabButtonGroup alignment="end" mt="l">
             {canExport && (
-              <GoAButton type="tertiary" mr="xl" disabled={!!criteria.tag} onClick={() => setShowExport(true)}>
+              <GoabButton type="tertiary" mr="xl" disabled={!!criteria.tag} onClick={() => setShowExport(true)}>
                 Export to file
-              </GoAButton>
+              </GoabButton>
             )}
-            <GoAButton
+            <GoabButton
               type="secondary"
               onClick={() => dispatch(formActions.setSubmissionCriteria({ dispositioned: false }))}
             >
               Reset filter
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               type="primary"
               leadingIcon="search"
               disabled={busy.loading}
               onClick={() => dispatch(findSubmissions({ definitionId, criteria }))}
             >
               Find submissions
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         </form>
       }
     >
       <ContentContainer>
-        <GoATable width="100%">
+        <GoabTable width="100%">
           <thead>
             <tr>
               <th>Submitted on</th>
@@ -177,11 +176,11 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
                   <DataValueCell key={path}>{submission.values[path]}</DataValueCell>
                 ))}
                 <td>
-                  <GoAButtonGroup alignment="end">
-                    <GoAButton type="secondary" size="compact" onClick={() => navigate(submission.id)}>
+                  <GoabButtonGroup alignment="end">
+                    <GoabButton type="secondary" size="compact" onClick={() => navigate(submission.id)}>
                       Open
-                    </GoAButton>
-                  </GoAButtonGroup>
+                    </GoabButton>
+                  </GoabButtonGroup>
                 </td>
               </tr>
             ))}
@@ -193,7 +192,7 @@ export const FormSubmissions: FunctionComponent<FormSubmissionsProps> = ({ defin
               onLoadMore={(after) => dispatch(findSubmissions({ definitionId, criteria, after }))}
             />
           </tbody>
-        </GoATable>
+        </GoabTable>
       </ContentContainer>
       <AddTagModal
         open={!!showTagSubmission}

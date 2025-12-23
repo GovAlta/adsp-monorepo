@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAContainer } from '@abgov/react-components';
+import { GoabContainer } from '@abgov/react-components';
 import { GroupLayout, LayoutProps, RankedTester, rankWith, uiTypeIs, withIncreasedRank } from '@jsonforms/core';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { renderLayoutElements } from '../util/layout';
@@ -16,24 +16,24 @@ export const GoAGroupControlComponent = (props: LayoutProps & withIsStepper): JS
   return (
     <Visible visible={visible}>
       {group.options?.componentProps?.accent === 'thick' && (
-        <GoAContainer heading={group.label} {...group.options?.componentProps}>
+        <GoabContainer heading={group.label} {...group.options?.componentProps}>
           {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
-        </GoAContainer>
+        </GoabContainer>
       )}
       {(group.options?.componentProps?.accent === 'thin' || group.options?.componentProps?.accent === 'filled') && (
         <div>
           {group.label && <h3>{group.label}</h3>}
-          <GoAContainer {...group.options?.componentProps}>
+          <GoabContainer {...group.options?.componentProps}>
             {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
-          </GoAContainer>
+          </GoabContainer>
         </div>
       )}
       {group.options?.componentProps && !group.options?.componentProps?.accent && (
         <div>
           {group.label && <h3>{group.label}</h3>}
-          <GoAContainer {...group.options?.componentProps}>
+          <GoabContainer {...group.options?.componentProps}>
             {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
-          </GoAContainer>
+          </GoabContainer>
         </div>
       )}
       {!group.options?.componentProps && (
@@ -41,7 +41,9 @@ export const GoAGroupControlComponent = (props: LayoutProps & withIsStepper): JS
           {group.label && <h3>{group.label}</h3>}
           {isStepperReview && <>{renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}</>}
           {!isStepperReview && (
-            <GoAContainer>{renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}</GoAContainer>
+            <GoabContainer>
+              {renderLayoutElements(group.elements, schema, path, enabled, renderers, cells)}
+            </GoabContainer>
           )}
         </div>
       )}

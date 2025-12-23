@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 import { DeleteDialogContent } from './styled-components';
 
 export interface DeleteDialogProps {
@@ -36,10 +36,10 @@ export const DeleteDialog = React.memo(function DeleteDialog({
   }, [open]);
 
   return (
-    <GoAModal open={open} key={1} testId="object-array-modal" heading={title}>
+    <GoabModal open={open} key={1} testId="object-array-modal" heading={title}>
       <DeleteDialogContent data-testid="object-array-modal-content">{`${message}?`}</DeleteDialogContent>
-      <GoAButtonGroup alignment="end">
-        <GoAButton
+      <GoabButtonGroup alignment="end">
+        <GoabButton
           type="secondary"
           testId="object-array-modal-button"
           onClick={() => {
@@ -47,8 +47,8 @@ export const DeleteDialog = React.memo(function DeleteDialog({
           }}
         >
           Cancel
-        </GoAButton>
-        <GoAButton
+        </GoabButton>
+        <GoabButton
           type="primary"
           variant="destructive"
           testId="object-array-confirm-button"
@@ -57,8 +57,8 @@ export const DeleteDialog = React.memo(function DeleteDialog({
           }}
         >
           Delete
-        </GoAButton>
-      </GoAButtonGroup>
-    </GoAModal>
+        </GoabButton>
+      </GoabButtonGroup>
+    </GoabModal>
   );
 });

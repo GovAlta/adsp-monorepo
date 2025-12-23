@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styles from './Editor.module.scss';
-import { GoAButtonGroup, GoAButton } from '@abgov/react-components';
+import { GoabButtonGroup, GoabButton } from '@abgov/react-components';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SaveFormModal } from './saveModal';
 import type * as monacoNS from 'monaco-editor';
@@ -46,8 +46,8 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
   return (
     <div>
       <div className={styles['final-button-padding']}>
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="primary"
             testId="definition-form-save"
             disabled={
@@ -63,8 +63,8 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
             }}
           >
             Save
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             testId="form-editor-cancel"
             type="secondary"
             onClick={() => {
@@ -78,8 +78,8 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
             }}
           >
             Back
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </div>
       <SaveFormModal
         open={saveModal.visible}

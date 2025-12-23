@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  GoAButton,
-  GoACircularProgress,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoAInput,
-  GoAButtonGroup,
+  GoabButton,
+  GoabCircularProgress,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabInput,
+  GoabButtonGroup,
 } from '@abgov/react-components';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -38,6 +38,7 @@ import { LoadMoreWrapper } from './style-components';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
+import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -314,16 +315,16 @@ export const FormDefinitions = ({
 
   return (
     <section>
-      <GoACircularProgress variant="fullscreen" size="small" message="Loading message..."></GoACircularProgress>
+      <GoabCircularProgress variant="fullscreen" size="small" message="Loading message..."></GoabCircularProgress>
 
-      <GoAFormItem label="Filter by tag" mb={'s'}>
-        <GoADropdown
+      <GoabFormItem label="Filter by tag" mb={'s'}>
+        <GoabDropdown
           name="TagFilter"
           value={selectedTag?.value || ''}
           disabled={false}
-          onChange={(_, value) => {
+          onChange={(detail: GoabDropdownOnChangeDetail) => {
             dispatch(resetRegisteredId());
-            const selectedTagObj = tags.find((tag) => tag?.value === value);
+            const selectedTagObj = tags.find((tag) => tag?.value === detail.value);
             if (selectedTagObj) {
               dispatch(setSelectedTag(selectedTagObj));
               setTimeout(() => {
@@ -335,83 +336,83 @@ export const FormDefinitions = ({
           }}
           width="60ch"
         >
-          <GoADropdownItem value={NO_TAG_FILTER.value} label={NO_TAG_FILTER.label} />
+          <GoabDropdownItem value={NO_TAG_FILTER.value} label={NO_TAG_FILTER.label} />
           {tags
             .sort((a, b) => a.label.localeCompare(b.label))
             .map((tag) => (
-              <GoADropdownItem key={tag.urn} value={tag.value} label={tag.label} />
+              <GoabDropdownItem key={tag.urn} value={tag.value} label={tag.label} />
             ))}
-        </GoADropdown>
-      </GoAFormItem>
+        </GoabDropdown>
+      </GoabFormItem>
 
-      <GoAFormItem label="Filter by program" mb={'s'}>
-        <GoADropdown
+      <GoabFormItem label="Filter by program" mb={'s'}>
+        <GoabDropdown
           name="ProgramFilter"
           width="60ch"
           value={programFilter}
-          onChange={(_, v) => {
-            const value = Array.isArray(v) ? v[0] ?? '' : v;
+          onChange={(detail: GoabDropdownOnChangeDetail) => {
+            const value = Array.isArray(detail.values) ? detail.values[0] ?? '' : detail.value;
             dispatch(resetRegisteredId());
             setProgramFilter(value);
           }}
         >
-          <GoADropdownItem value="" label="<No Program Filter>" />
+          <GoabDropdownItem value="" label="<No Program Filter>" />
           {programOptions.map((p) => (
-            <GoADropdownItem key={p.id} value={p.id} label={p.label || p.id} />
+            <GoabDropdownItem key={p.id} value={p.id} label={p.label || p.id} />
           ))}
-        </GoADropdown>
-      </GoAFormItem>
+        </GoabDropdown>
+      </GoabFormItem>
 
-      <GoAFormItem label="Filter by ministry" mb={'s'}>
-        <GoADropdown
+      <GoabFormItem label="Filter by ministry" mb={'s'}>
+        <GoabDropdown
           name="MinistryFilter"
           width="60ch"
           value={ministryFilter}
-          onChange={(_, v) => {
-            const value = Array.isArray(v) ? v[0] ?? '' : v;
+          onChange={(detail: GoabDropdownOnChangeDetail) => {
+            const value = Array.isArray(detail.values) ? detail.values[0] ?? '' : detail.value;
             setMinistryFilter(value);
           }}
         >
-          <GoADropdownItem value="" label="<No Ministry Filter>" />
+          <GoabDropdownItem value="" label="<No Ministry Filter>" />
           {ministryOptions.map((m) => (
-            <GoADropdownItem key={m} value={m} label={titleCase(m)} />
+            <GoabDropdownItem key={m} value={m} label={titleCase(m)} />
           ))}
-        </GoADropdown>
-      </GoAFormItem>
+        </GoabDropdown>
+      </GoabFormItem>
 
-      <GoAFormItem label="Registered ID" mb="s">
-        <GoAButtonGroup alignment="start">
-          <GoAInput
+      <GoabFormItem label="Registered ID" mb="s">
+        <GoabButtonGroup alignment="start">
+          <GoabInput
             type="text"
-            onChange={(_: string, value: string) => setRegisterIdSearch(value)}
+            onChange={(detail: GoabInputOnChangeDetail) => setRegisterIdSearch(detail.value)}
             value={registerIdSearch}
             name="register Id Search"
           />
 
-          <GoAButton type="primary" onClick={() => searchRegisterId()} disabled={registerIdSearch.length === 0}>
+          <GoabButton type="primary" onClick={() => searchRegisterId()} disabled={registerIdSearch.length === 0}>
             Search
-          </GoAButton>
+          </GoabButton>
 
-          <GoAButton type="secondary" onClick={() => dispatch(resetRegisteredId())} disabled={!registerIdDefinition}>
+          <GoabButton type="secondary" onClick={() => dispatch(resetRegisteredId())} disabled={!registerIdDefinition}>
             Reset
-          </GoAButton>
-        </GoAButtonGroup>
-      </GoAFormItem>
-      <GoAFormItem label="Search Acts of Legislation" mb={'l'}>
+          </GoabButton>
+        </GoabButtonGroup>
+      </GoabFormItem>
+      <GoabFormItem label="Search Acts of Legislation" mb={'l'}>
         {/* please make sure the last filter or search should be l margin bottom */}
-        <GoAInput
+        <GoabInput
           type="search"
           name="ActsSearch"
           width="60ch"
           value={actSearch}
           testId="acts-search"
           aria-label="Search Acts of Legislation"
-          onChange={(_, v) => setActSearch(v)}
+          onChange={(detail: GoabInputOnChangeDetail) => setActSearch(detail.value)}
         />
-      </GoAFormItem>
+      </GoabFormItem>
 
       {showFormDefinitions && (
-        <GoAButton
+        <GoabButton
           testId="add-definition"
           onClick={() => {
             dispatch(resetRegisteredId());
@@ -420,7 +421,7 @@ export const FormDefinitions = ({
           mb={'l'}
         >
           Add definition
-        </GoAButton>
+        </GoabButton>
       )}
 
       <AddEditFormDefinition
@@ -465,26 +466,26 @@ export const FormDefinitions = ({
                 />
                 {getNextEntries() && !ministryFilter && !programFilter && !actSearch.trim() && (
                   <LoadMoreWrapper>
-                    <GoAButton
+                    <GoabButton
                       testId="form-event-load-more-btn"
                       key="form-event-load-more-btn"
                       type="tertiary"
                       onClick={onNext}
                     >
                       Load more
-                    </GoAButton>
+                    </GoabButton>
                   </LoadMoreWrapper>
                 )}
                 {(programFilter || ministryFilter || actSearch.trim()) && hasMoreFiltered && (
                   <LoadMoreWrapper>
-                    <GoAButton
+                    <GoabButton
                       testId="form-filtered-load-more-btn"
                       key="form-filtered-load-more-btn"
                       type="tertiary"
                       onClick={() => setFilteredVisibleCount((c) => c + 10)}
                     >
                       Load more
-                    </GoAButton>
+                    </GoabButton>
                   </LoadMoreWrapper>
                 )}
               </>

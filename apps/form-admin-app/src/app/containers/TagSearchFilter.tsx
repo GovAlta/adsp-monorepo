@@ -1,7 +1,8 @@
-import { GoAFormItem, GoADropdown, GoADropdownItem } from '@abgov/react-components';
+import { GoabFormItem, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, getTags, tagsSelector } from '../state';
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 interface TagSearchFilterProps {
   value: string;
@@ -21,18 +22,17 @@ export const TagSearchFilter: FunctionComponent<TagSearchFilterProps> = ({ value
   }, [dispatch]);
 
   return (
-    <GoAFormItem label="Tag" mr="m">
-      <GoADropdown
+    <GoabFormItem label="Tag" mr="m">
+      <GoabDropdown
         name="tag"
-        relative={true}
         value={value || ''}
-        onChange={(_: string, value: string) => onChange(value)}
+        onChange={(detail: GoabDropdownOnChangeDetail) => onChange(detail.value)}
       >
-        <GoADropdownItem value="" label="<No tag filter>" />
+        <GoabDropdownItem value="" label="<No tag filter>" />
         {tags.map(({ value, label }) => (
-          <GoADropdownItem key={value} value={value} label={label} />
+          <GoabDropdownItem key={value} value={value} label={label} />
         ))}
-      </GoADropdown>
-    </GoAFormItem>
+      </GoabDropdown>
+    </GoabFormItem>
   );
 };

@@ -1,4 +1,4 @@
-import { GoABadge, GoADivider } from '@abgov/react-components';
+import { GoabBadge, GoabDivider } from '@abgov/react-components';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
 import { Task, tenantSelector } from '../state';
@@ -42,13 +42,13 @@ const TaskHeaderComponent: FunctionComponent<TaskHeaderProps> = ({
         </span>
         <span>
           {isLive ? (
-            <GoABadge mt="m" mb="s" type="success" content="Live" icon={false} />
+            <GoabBadge mt="m" mb="s" type="success" content="Live" icon={false} />
           ) : (
-            <GoABadge mt="m" mb="s" type="information" content="Not live" icon={false} />
+            <GoabBadge mt="m" mb="s" type="information" content="Not live" icon={false} />
           )}
         </span>
       </div>
-      <GoADivider />
+      <GoabDivider />
     </React.Fragment>
   );
 };

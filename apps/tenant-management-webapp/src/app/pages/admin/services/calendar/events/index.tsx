@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { SelectCalendarHeader, CalendarDropdownWrapper } from './styled-components';
-import { GoADropdown, GoADropdownItem, GoAButton, GoASkeleton } from '@abgov/react-components';
+import { GoabDropdown, GoabDropdownItem, GoabButton, GoabSkeleton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { CalendarObjectType, EventAddEditModalType } from '@store/calendar/models';
 import {
@@ -16,7 +16,7 @@ import { EventAddEditModal } from './addEditModal';
 import { EventList } from './eventList';
 import { EventListFilter } from './eventListFilter';
 import { RootState } from '@store/index';
-
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 interface CalendarDropdownProps {
   calendars: CalendarObjectType;
   onSelect: (name: string, value: string) => void;
@@ -25,28 +25,31 @@ interface CalendarDropdownProps {
 const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.Element => {
   return (
     <CalendarDropdownWrapper>
-      <GoADropdown
+      <GoabDropdown
         name="calendars"
         width="100%"
         placeholder="Select"
         testId="calendar-event-dropdown-list"
         aria-label="select-calendar-dropdown"
-        onChange={onSelect}
-        relative={true}
+        onChange={(detail: GoabDropdownOnChangeDetail) => {
+          if (detail.value) {
+            onSelect(detail.name, detail.value);
+          }
+        }}
       >
         {Object.entries(calendars).map(([name, calendar]) => (
-          <GoADropdownItem
+          <GoabDropdownItem
             label={calendar?.name}
             value={`${calendar.name}`}
             key={name}
             testId={`calendar-dropdown-${name}`}
           />
         ))}
-      </GoADropdown>
+      </GoabDropdown>
     </CalendarDropdownWrapper>
   );
 };
-export const readOnlyCalendars = ['form-intake']
+export const readOnlyCalendars = ['form-intake'];
 
 export const CalendarEvents = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -96,15 +99,15 @@ export const CalendarEvents = (): JSX.Element => {
   return (
     <div>
       <SelectCalendarHeader>Select a calendar</SelectCalendarHeader>
-      {!calendars && <GoASkeleton type="text" key={1}></GoASkeleton>}
+      {!calendars && <GoabSkeleton type="text" key={1}></GoabSkeleton>}
       {calendars && (
         <>
           <CalendarDropdown calendars={calendars} onSelect={onCalendarSelect} />
           <br />
-          <GoAButton
+          <GoabButton
             type="primary"
             testId="add-calendar-event-button"
-            disabled={!selectedCalendar ||  readOnlyCalendars.includes(selectedCalendar)}
+            disabled={!selectedCalendar || readOnlyCalendars.includes(selectedCalendar)}
             onClick={() => {
               dispatch(
                 UpdateModalState({
@@ -116,11 +119,11 @@ export const CalendarEvents = (): JSX.Element => {
             }}
           >
             Add event
-          </GoAButton>
+          </GoabButton>
           {calendars && <EventListFilter calenderName={selectedCalendar} />}
           <EventAddEditModal calendarName={selectedCalendar} />
 
-          <GoAButton
+          <GoabButton
             type="secondary"
             testId="export-calendar-event-button"
             disabled={!selectedEvents || selectedEvents?.length === 0}
@@ -129,7 +132,7 @@ export const CalendarEvents = (): JSX.Element => {
             }}
           >
             Export
-          </GoAButton>
+          </GoabButton>
         </>
       )}
       {selectedCalendar && <EventList calendarName={selectedCalendar} />}

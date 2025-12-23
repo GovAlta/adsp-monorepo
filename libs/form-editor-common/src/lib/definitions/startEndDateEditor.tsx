@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { GoAButton, GoAFormItem, GoAInputDate, GoAInputTime, GoAButtonGroup, GoAGrid } from '@abgov/react-components';
+import { GoabButton, GoabFormItem, GoabInput, GoabInputTime, GoabButtonGroup, GoabGrid } from '@abgov/react-components';
 import { UpdateEventsByCalendar, CreateEventsByCalendar } from '@store/calendar/actions';
 
 import { CalendarEvent, EventDeleteModalType } from '@store/calendar/models';
@@ -9,6 +9,7 @@ import { getDateTime } from '@lib/timeUtil';
 import { Margin } from '../styled-components';
 
 import { DeleteCalendarEvent } from '@store/calendar/actions';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 export interface startEndProps {
   event: CalendarEvent;
@@ -40,88 +41,91 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
 
   return (
     <>
-      <GoAGrid minChildWidth="25ch" gap="s">
-        <GoAFormItem label="Start date">
-          <GoAInputDate
+      <GoabGrid minChildWidth="25ch" gap="s">
+        <GoabFormItem label="Start date">
+          <GoabInput
+            type="date"
             name=""
-            value={event.start ? new Date(event.start) : new Date()}
+            value={(event.start ? new Date(event.start) : new Date()).toISOString().slice(0, 10)}
             width="100%"
             testId="calendar-event-modal-start-date-input"
             disabled={!edit}
-            onChange={(_, value) => {
-              setStartDate(value.toLocaleString());
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              setStartDate(detail.value.toLocaleString());
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Start time">
-          <GoAInputTime
+        </GoabFormItem>
+        <GoabFormItem label="Start time">
+          <GoabInput
+            type="time"
             name="StartTime"
             value={new Date(event.start)?.toTimeString().split(' ')[0]}
             step={1}
             width="100%"
             testId="calendar-event-modal-start-time-input"
             disabled={!edit}
-            onChange={(_, value) => {
-              setStartTime(value);
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              setStartTime(detail.value);
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem label="End date" error={endDateError}>
-          <GoAInputDate
+        </GoabFormItem>
+        <GoabFormItem label="End date" error={endDateError}>
+          <GoabInput
             name="endDate"
-            value={event.end ? new Date(event.end) : new Date()}
+            value={(event.end ? new Date(event.end) : new Date()).toISOString().slice(0, 10)}
             width="100%"
             testId="calendar-event-modal-end-date-input"
             disabled={!edit}
-            onChange={(_, value) => {
-              setEndDate(value.toLocaleString());
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              setEndDate(detail.value.toLocaleString());
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem label="End time">
-          <GoAInputTime
+        </GoabFormItem>
+        <GoabFormItem label="End time">
+          <GoabInput
+            type="time"
             name="endTime"
             value={new Date(event.end)?.toTimeString().split(' ')[0]}
             step={1}
             width="100%"
             testId="calendar-event-modal-end-time-input"
             disabled={!edit}
-            onChange={(_, value) => {
-              setEndTime(value);
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              setEndTime(detail.value);
             }}
           />
-        </GoAFormItem>
-      </GoAGrid>
+        </GoabFormItem>
+      </GoabGrid>
       {!edit && (
-        <GoAButtonGroup alignment="start">
+        <GoabButtonGroup alignment="start">
           {!deleteConfirm && (
             <>
               <Margin>
-                <GoAButton type="secondary" onClick={() => setEdit(true)}>
+                <GoabButton type="secondary" onClick={() => setEdit(true)}>
                   Edit
-                </GoAButton>
+                </GoabButton>
               </Margin>
               <Margin>
-                <GoAButton
+                <GoabButton
                   type="primary"
                   variant="destructive"
                   testId="delete-confirm"
                   onClick={() => setDeleteConfirm(true)}
                 >
                   Delete
-                </GoAButton>
+                </GoabButton>
               </Margin>
             </>
           )}
           {deleteConfirm && (
             <>
               <Margin>
-                <GoAButton type="secondary" testId="delete-cancel" onClick={() => setDeleteConfirm(false)}>
+                <GoabButton type="secondary" testId="delete-cancel" onClick={() => setDeleteConfirm(false)}>
                   Cancel
-                </GoAButton>
+                </GoabButton>
               </Margin>
               <Margin>
-                <GoAButton
+                <GoabButton
                   type="primary"
                   variant="destructive"
                   testId="delete-confirm"
@@ -132,16 +136,16 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
                   }}
                 >
                   Confirm Delete
-                </GoAButton>
+                </GoabButton>
               </Margin>
             </>
           )}
-        </GoAButtonGroup>
+        </GoabButtonGroup>
       )}
       {edit && (
         <Margin>
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               type="secondary"
               onClick={() => {
                 setEdit(false);
@@ -149,9 +153,9 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
               }}
             >
               Cancel
-            </GoAButton>
+            </GoabButton>
 
-            <GoAButton
+            <GoabButton
               type="primary"
               onClick={() => {
                 if (getDateTime(endDate, endTime) < getDateTime(startDate, startTime)) {
@@ -175,8 +179,8 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
               }}
             >
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         </Margin>
       )}
     </>

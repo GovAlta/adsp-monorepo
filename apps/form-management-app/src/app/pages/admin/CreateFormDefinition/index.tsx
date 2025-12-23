@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  GoATextArea,
-  GoAInput,
-  GoAFormItem,
-  GoAButton,
-  GoACircularProgress,
-  GoADropdown,
-  GoADropdownItem,
+  GoabTextArea,
+  GoabInput,
+  GoabFormItem,
+  GoabButton,
+  GoabCircularProgress,
+  GoabDropdown,
+  GoabDropdownItem,
 } from '@abgov/react-components';
 
 import { AppDispatch, selectConfigState, ConfigState } from '../../../state';
@@ -41,6 +41,11 @@ import {
   checkFormDefaultUrl,
 } from '../../../utils/validators';
 import styles from './index.module.scss';
+import {
+  GoabDropdownOnChangeDetail,
+  GoabTextAreaOnChangeDetail,
+  GoabInputOnChangeDetail,
+} from '@abgov/ui-components-common';
 
 const CreateFormDefinition = (): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
@@ -175,7 +180,7 @@ const CreateFormDefinition = (): JSX.Element => {
     return (
       <div className={styles.container}>
         <div className={styles.loadingContainer}>
-          <GoACircularProgress visible={true} size="large" />
+          <GoabCircularProgress visible={true} size="large" />
         </div>
       </div>
     );
@@ -185,32 +190,32 @@ const CreateFormDefinition = (): JSX.Element => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>{isEdit ? 'Edit' : 'Create'} Form Definition</h1>
-        <GoAButton type="secondary" onClick={() => navigate(`/${tenant}/forms`)}>
+        <GoabButton type="secondary" onClick={() => navigate(`/${tenant}/forms`)}>
           Back to Definitions
-        </GoAButton>
+        </GoabButton>
       </div>
 
       <div className={styles.form}>
         <div className={styles.formRow}>
-          <GoAFormItem error={errors?.['name']} label="Name" requirement="required">
-            <GoAInput
+          <GoabFormItem error={errors?.['name']} label="Name" requirement="required">
+            <GoabInput
               type="text"
               name="form-definition-name"
               value={definition.name || ''}
               width="100%"
-              onChange={(_, value) => {
-                const validations: Record<string, string> = { name: value };
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                const validations: Record<string, string> = { name: detail.name };
 
                 if (!isEdit) {
                   validators.remove('name');
-                  validations['duplicate'] = value;
+                  validations['duplicate'] = detail.value;
                   validators.checkAll(validations);
                 }
 
                 setDefinition({
                   ...definition,
-                  name: value,
-                  id: isEdit ? definition.id : toKebabName(value),
+                  name: detail.value,
+                  id: isEdit ? definition.id : toKebabName(detail.value),
                 });
               }}
               onBlur={() => {
@@ -221,41 +226,41 @@ const CreateFormDefinition = (): JSX.Element => {
                 validators.checkAll(validations);
               }}
             />
-          </GoAFormItem>
+          </GoabFormItem>
         </div>
 
         <div className={styles.formRow}>
-          <GoAFormItem label="Definition ID">
-            <GoAInput name="form-definition-id" value={definition.id || ''} disabled={true} width="100%" />
-          </GoAFormItem>
+          <GoabFormItem label="Definition ID">
+            <GoabInput name="form-definition-id" value={definition.id || ''} disabled={true} width="100%" />
+          </GoabFormItem>
         </div>
 
         <div className={styles.formRow}>
-          <GoAFormItem error={errors?.['description']} label="Description">
-            <GoATextArea
+          <GoabFormItem error={errors?.['description']} label="Description">
+            <GoabTextArea
               name="form-definition-description"
               value={definition.description || ''}
               width="100%"
-              onChange={(_, value) => {
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {
                 validators.remove('description');
-                validators.checkAll({ description: value });
-                setDefinition({ ...definition, description: value });
+                validators.checkAll({ description: detail.value });
+                setDefinition({ ...definition, description: detail.value });
               }}
             />
-          </GoAFormItem>
+          </GoabFormItem>
         </div>
 
         <div className={styles.formRow}>
-          <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
-            <GoAInput
+          <GoabFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
+            <GoabInput
               name="form-url-id"
               value={definition.formDraftUrlTemplate || ''}
               width="100%"
               placeholder="https://example.com/form/{{id}}"
-              onChange={(_, value) => {
+              onChange={(detail: GoabInputOnChangeDetail) => {
                 validators.remove('formDraftUrlTemplate');
-                validators.checkAll({ formDraftUrlTemplate: value });
-                setDefinition({ ...definition, formDraftUrlTemplate: value });
+                validators.checkAll({ formDraftUrlTemplate: detail.value });
+                setDefinition({ ...definition, formDraftUrlTemplate: detail.value });
               }}
             />
             <div className={styles.helpText}>
@@ -265,76 +270,76 @@ const CreateFormDefinition = (): JSX.Element => {
               {'}'}
               {'}'}' as a placeholder for the form ID in the URL
             </div>
-          </GoAFormItem>
+          </GoabFormItem>
         </div>
 
         <div className={styles.formRow}>
-          <GoAFormItem label="Ministry (optional)">
-            <GoADropdown
+          <GoabFormItem label="Ministry (optional)">
+            <GoabDropdown
               name="ministry"
               value={definition?.ministry || ''}
-              onChange={(_, selectedValue) => {
-                const value = Array.isArray(selectedValue) ? selectedValue[0] ?? '' : selectedValue;
+              onChange={(detail: GoabDropdownOnChangeDetail) => {
+                const value = Array.isArray(detail.values) ? detail.values[0] ?? '' : detail.value;
                 setDefinition({ ...definition, ministry: value || undefined });
               }}
               width="100%"
               placeholder="Select a ministry"
             >
-              <GoADropdownItem value="" label="Select a ministry" />
+              <GoabDropdownItem value="" label="Select a ministry" />
               {ministries.map((ministry) => (
-                <GoADropdownItem key={ministry} value={ministry} label={ministry} />
+                <GoabDropdownItem key={ministry} value={ministry} label={ministry} />
               ))}
-            </GoADropdown>
-          </GoAFormItem>
+            </GoabDropdown>
+          </GoabFormItem>
         </div>
 
         <div className={styles.formRow}>
-          <GoAFormItem label="Program (optional)">
-            <GoADropdown
+          <GoabFormItem label="Program (optional)">
+            <GoabDropdown
               name="program"
               value={definition?.programName || ''}
-              onChange={(_, selectedValue: string | string[]) => {
-                const value = Array.isArray(selectedValue) ? (selectedValue[0] as string) : selectedValue;
+              onChange={(detail: GoabDropdownOnChangeDetail) => {
+                const value = Array.isArray(detail.values) ? (detail.values[0] as string) : detail.value;
                 setDefinition({ ...definition, programName: value || undefined });
               }}
               width="100%"
             >
-              <GoADropdownItem value="" label="--Select--" />
+              <GoabDropdownItem value="" label="--Select--" />
               {programs.map((program) => (
-                <GoADropdownItem key={program} value={program} label={program} />
+                <GoabDropdownItem key={program} value={program} label={program} />
               ))}
-            </GoADropdown>
-          </GoAFormItem>
+            </GoabDropdown>
+          </GoabFormItem>
         </div>
 
         <div className={styles.formRow}>
-          <GoAFormItem label="Acts of Legislation (optional)">
-            <GoADropdown
+          <GoabFormItem label="Acts of Legislation (optional)">
+            <GoabDropdown
               name="actsOfLegislation"
               value={definition?.actsOfLegislation || ''}
-              onChange={(_, selectedValue: string | string[]) => {
-                const value = Array.isArray(selectedValue) ? (selectedValue[0] as string) : selectedValue;
+              onChange={(detail: GoabDropdownOnChangeDetail) => {
+                const value = Array.isArray(detail.values) ? (detail.values[0] as string) : detail.value;
                 setDefinition({ ...definition, actsOfLegislation: value || undefined });
               }}
               width="100%"
             >
-              <GoADropdownItem value="" label="--Select--" />
+              <GoabDropdownItem value="" label="--Select--" />
               {acts.map((act) => (
-                <GoADropdownItem key={act} value={act} label={act} />
+                <GoabDropdownItem key={act} value={act} label={act} />
               ))}
-            </GoADropdown>
-          </GoAFormItem>
+            </GoabDropdown>
+          </GoabFormItem>
         </div>
 
         <div className={styles.formRow}>
-          <GoAFormItem error={errors?.['duplicateRegisteredId']} label="Registered ID (optional)">
-            <GoAInput
+          <GoabFormItem error={errors?.['duplicateRegisteredId']} label="Registered ID (optional)">
+            <GoabInput
               type="text"
               name="form-definition-registeredId"
               value={definition.registeredId || ''}
               width="100%"
-              onChange={(_, value) => {
-                if (!value.trim()) {
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                if (!detail.value.trim()) {
                   const updated = { ...definition };
                   delete updated.registeredId;
                   validators.remove('duplicateRegisteredId');
@@ -342,9 +347,9 @@ const CreateFormDefinition = (): JSX.Element => {
                 } else {
                   validators.remove('duplicateRegisteredId');
                   validators.checkAll({
-                    duplicateRegisteredId: value,
+                    duplicateRegisteredId: detail.value,
                   });
-                  setDefinition({ ...definition, registeredId: value });
+                  setDefinition({ ...definition, registeredId: detail.value });
                 }
               }}
               onBlur={() => {
@@ -355,20 +360,20 @@ const CreateFormDefinition = (): JSX.Element => {
                 }
               }}
             />
-          </GoAFormItem>
+          </GoabFormItem>
         </div>
 
         <div className={styles.actions}>
-          <GoAButton type="secondary" onClick={() => navigate(`/${tenant}/forms`)} disabled={isLoading}>
+          <GoabButton type="secondary" onClick={() => navigate(`/${tenant}/forms`)} disabled={isLoading}>
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             onClick={handleSave}
             disabled={!definition.name || validators.haveErrors() || isLoading}
           >
             {isLoading ? 'Saving...' : isEdit ? 'Update' : 'Create'}
-          </GoAButton>
+          </GoabButton>
         </div>
       </div>
     </div>

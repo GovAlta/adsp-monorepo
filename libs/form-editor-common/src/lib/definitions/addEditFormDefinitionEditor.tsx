@@ -1,18 +1,18 @@
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
 import {
-  GoAButtonGroup,
-  GoAButton,
-  GoAFormItem,
-  GoACheckbox,
-  GoADropdownItem,
-  GoADropdown,
-  GoAInput,
-  GoATooltip,
-  GoAIcon,
-  GoAModal,
-  GoAAccordion,
-  GoAContainer,
-  GoABadge,
+  GoabButtonGroup,
+  GoabButton,
+  GoabFormItem,
+  GoabCheckbox,
+  GoabDropdownItem,
+  GoabDropdown,
+  GoabInput,
+  GoabTooltip,
+  GoabIcon,
+  GoabModal,
+  GoabAccordion,
+  GoabContainer,
+  GoabBadge,
 } from '@abgov/react-components';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { useState, useEffect, useRef } from 'react';
@@ -85,7 +85,7 @@ import { DefinitionAgentChat } from './DefinitionAgentChat';
 import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
 import { startThread } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
-
+import { GoabCheckboxOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
 export const ContextProvider = ContextProviderFactory();
@@ -413,7 +413,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
               data-testid="form-editor-tabs"
             >
               <Tab label="Data schema" data-testid="form-editor-data-schema-tab" isTightContent={true}>
-                <GoAFormItem
+                <GoabFormItem
                   error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
                   label=""
                 >
@@ -468,10 +468,10 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                       }}
                     />
                   </EditorPadding>
-                </GoAFormItem>
+                </GoabFormItem>
               </Tab>
               <Tab label="UI schema" data-testid="form-editor-ui-schema-tab" isTightContent={true}>
-                <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
+                <GoabFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
                   <EditorPadding>
                     <MonacoEditor
                       data-testid="form-ui-schema"
@@ -511,14 +511,14 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                       }}
                     />
                   </EditorPadding>
-                </GoAFormItem>
+                </GoabFormItem>
               </Tab>
               {agentConnected && (
                 <Tab
                   label={
                     <span>
                       AI
-                      <GoABadge type="important" ml="xs" mt="2xs" content="Alpha" icon={false} />
+                      <GoabBadge type="important" ml="xs" mt="2xs" content="Alpha" icon={false} />
                     </span>
                   }
                   data-testid="form-editor-agent-tab"
@@ -530,14 +530,14 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
               <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
                 <BorderBottom>
                   <AddToggleButtonPadding>
-                    <GoAButtonGroup alignment="start">
-                      <GoACheckbox
+                    <GoabButtonGroup alignment="start">
+                      <GoabCheckbox
                         name="showSelectedRoles"
                         text="Show selected roles"
                         checked={showSelectedRoles}
                         onChange={() => setShowSelectedRoles((prev) => !prev)}
                       />
-                    </GoAButtonGroup>
+                    </GoabButtonGroup>
                   </AddToggleButtonPadding>
                   <RolesTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 56 }}>
                     <ScrollPane>
@@ -588,9 +588,9 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                   <div className="life-cycle-auto-scroll" style={{ height: EditorHeight + 7 }}>
                     <H3>Application</H3>
                     <div>
-                      <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
+                      <GoabFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL">
                         <FormFormItem>
-                          <GoAInput
+                          <GoabInput
                             name="form-url-id"
                             value={definition?.formDraftUrlTemplate}
                             testId="form-url-id"
@@ -599,20 +599,20 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                             onChange={null}
                           />
                         </FormFormItem>
-                      </GoAFormItem>
+                      </GoabFormItem>
                       <FlexRow>
                         <GoACheckboxPad>
-                          <GoACheckbox
+                          <GoabCheckbox
                             name="form-definition-anonymous-apply"
                             key="form-definition-anonymous-apply-checkbox"
                             checked={definition.anonymousApply === true}
-                            onChange={(_, checked) => {
-                              setDefinition({ anonymousApply: checked });
+                            onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                              setDefinition({ anonymousApply: detail.checked });
                             }}
                             text={'Allow anonymous application'}
                           />
                         </GoACheckboxPad>
-                        <GoATooltip
+                        <GoabTooltip
                           content={
                             definition.anonymousApply
                               ? 'Forms of this type will allow anonymous user to apply.'
@@ -620,12 +620,12 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                           }
                           position="top"
                         >
-                          <GoAIcon type="information-circle" ariaLabel="anonymous-icon"></GoAIcon>
-                        </GoATooltip>
+                          <GoabIcon type="information-circle" ariaLabel="anonymous-icon"></GoabIcon>
+                        </GoabTooltip>
                       </FlexRow>
                       <FlexRow>
                         <GoACheckboxPad>
-                          <GoACheckbox
+                          <GoabCheckbox
                             name="form-definition-allow-multiple-forms-checkbox"
                             key="form-definition-allow-multiple-forms-checkbox"
                             disabled={definition.anonymousApply}
@@ -636,13 +636,13 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                                 definition.oneFormPerApplicant === null
                               )
                             }
-                            onChange={(_, checked) => {
-                              setDefinition({ oneFormPerApplicant: !checked });
+                            onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                              setDefinition({ oneFormPerApplicant: !detail.value });
                             }}
                             text={'Allow multiple forms per applicant'}
                           />
                         </GoACheckboxPad>
-                        <GoATooltip
+                        <GoabTooltip
                           content={
                             definition.oneFormPerApplicant
                               ? 'Forms of this type will only allow applicants to have one form created and submitted at a time.'
@@ -650,12 +650,12 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                           }
                           position="top"
                         >
-                          <GoAIcon type="information-circle" ariaLabel="allow-multiple-icon"></GoAIcon>
-                        </GoATooltip>
+                          <GoabIcon type="information-circle" ariaLabel="allow-multiple-icon"></GoabIcon>
+                        </GoabTooltip>
                       </FlexRow>
                       <FlexRow>
                         <GoACheckboxPad>
-                          <GoACheckbox
+                          <GoabCheckbox
                             name="support-topic"
                             key="support-topic"
                             disabled={definition.anonymousApply}
@@ -668,7 +668,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                             text="Create support topic"
                           />
                         </GoACheckboxPad>
-                        <GoATooltip
+                        <GoabTooltip
                           content={
                             definition.supportTopic
                               ? 'Forms of this type will create a comment topic used for supporting applicants. Applicants will be able to read and write comments to the topic to interact with staff.'
@@ -676,22 +676,22 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                           }
                           position="top"
                         >
-                          <GoAIcon type="information-circle" ariaLabel="support-topic-icon"></GoAIcon>
-                        </GoATooltip>
+                          <GoabIcon type="information-circle" ariaLabel="support-topic-icon"></GoabIcon>
+                        </GoabTooltip>
                       </FlexRow>
                       <FlexRow>
                         <GoACheckboxPad>
-                          <GoACheckbox
+                          <GoabCheckbox
                             name="form-definition-scheduled-intakes-checkbox"
                             key="form-definition-scheduled-intakes-checkbox"
                             checked={definition.scheduledIntakes}
-                            onChange={(_, checked) => {
-                              setDefinition({ scheduledIntakes: checked });
+                            onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                              setDefinition({ scheduledIntakes: detail.checked });
                             }}
                             text={'Use scheduled intakes'}
                           />
                         </GoACheckboxPad>
-                        <GoATooltip
+                        <GoabTooltip
                           content={
                             definition.scheduledIntakes
                               ? 'Forms of this type will have a timeframe to complete and submit a form.'
@@ -699,12 +699,12 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                           }
                           position="top"
                         >
-                          <GoAIcon type="information-circle" ariaLabel="scheduled-icon"></GoAIcon>
-                        </GoATooltip>
+                          <GoabIcon type="information-circle" ariaLabel="scheduled-icon"></GoabIcon>
+                        </GoabTooltip>
                       </FlexRow>
                       {definition.scheduledIntakes && (
                         <div style={{ marginBottom: '0.5rem' }}>
-                          <GoAButton
+                          <GoabButton
                             type="primary"
                             testId="set-intake-period"
                             onClick={() => {
@@ -712,35 +712,34 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                             }}
                           >
                             Intake periods
-                          </GoAButton>
+                          </GoabButton>
                         </div>
                       )}
                     </div>
                     <div>
-                      <GoAFormItem error={''} label="Security classification">
+                      <GoabFormItem error={''} label="Security classification">
                         {/* The style below is to fix an UI component bug */}
                         <div style={{ paddingLeft: '3px' }}>
-                          <GoADropdown
+                          <GoabDropdown
                             name="securityClassifications"
                             width="25rem"
                             value={definition?.securityClassification || ''}
-                            relative={true}
-                            onChange={(name: string, value: SecurityClassification) => {
-                              setDefinition({ securityClassification: value });
+                            onChange={(detail: GoabDropdownOnChangeDetail) => {
+                              setDefinition({ securityClassification: detail.value as SecurityClassification });
                             }}
                           >
-                            <GoADropdownItem value={SecurityClassification.Public} label="Public" />
-                            <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
-                            <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
-                            <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
-                          </GoADropdown>
+                            <GoabDropdownItem value={SecurityClassification.Public} label="Public" />
+                            <GoabDropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
+                            <GoabDropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
+                            <GoabDropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
+                          </GoabDropdown>
                         </div>
-                      </GoAFormItem>
+                      </GoabFormItem>
                     </div>
                     <h3>Submission</h3>
                     <FlexRow>
                       <SubmissionRecordsBox>
-                        <GoACheckbox
+                        <GoabCheckbox
                           name="generate-pdf-on-submit"
                           key="generate-pdf-on-submit"
                           checked={definition.submissionPdfTemplate ? true : false}
@@ -752,7 +751,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                           text="Create PDF on submit"
                         />
                       </SubmissionRecordsBox>
-                      <GoATooltip
+                      <GoabTooltip
                         content={
                           definition.submissionPdfTemplate
                             ? 'Forms of this type will generate a PDF on submission '
@@ -760,12 +759,12 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                         }
                         position="top"
                       >
-                        <GoAIcon type="information-circle" ariaLabel="generate-pdf-icon"></GoAIcon>
-                      </GoATooltip>
+                        <GoabIcon type="information-circle" ariaLabel="generate-pdf-icon"></GoabIcon>
+                      </GoabTooltip>
                     </FlexRow>
                     <FlexRow>
                       <SubmissionRecordsBox>
-                        <GoACheckbox
+                        <GoabCheckbox
                           name="submission-records"
                           key="submission-records"
                           checked={definition.submissionRecords}
@@ -777,7 +776,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                           text="Create submission records on submit"
                         />
                       </SubmissionRecordsBox>
-                      <GoATooltip
+                      <GoabTooltip
                         content={
                           definition.submissionRecords
                             ? 'Forms of this type will create submission records. This submission record can be used for processing of the application and to record an adjudication decision (disposition state).'
@@ -785,35 +784,34 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                         }
                         position="top"
                       >
-                        <GoAIcon type="information-circle" ariaLabel="submission-icon"></GoAIcon>
-                      </GoATooltip>
+                        <GoabIcon type="information-circle" ariaLabel="submission-icon"></GoabIcon>
+                      </GoabTooltip>
                     </FlexRow>
                     <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                       <SubmissionConfigurationPadding>
                         <H3Inline>Task queue to process</H3Inline>
                         <ToolTipAdjust>
                           {definition.submissionRecords && (
-                            <GoATooltip
+                            <GoabTooltip
                               content={
                                 getQueueTaskToProcessValue() === NO_TASK_CREATED_OPTION
                                   ? ' No task will be created for processing of the submissions. Applications are responsible for management of how submissions are worked on by users.'
                                   : 'A task will be created in queue “{queue namespace + name}” for submissions of the form. This allows program staff to work on the submissions from the task management application using this queue.'
                               }
                             >
-                              <GoAIcon type="information-circle" ariaLabel="queue"></GoAIcon>
-                            </GoATooltip>
+                              <GoabIcon type="information-circle" ariaLabel="queue"></GoabIcon>
+                            </GoabTooltip>
                           )}
                         </ToolTipAdjust>
                         <QueueTaskDropdown>
                           {queueTasks && Object.keys(queueTasks).length > 0 && (
-                            <GoADropdown
+                            <GoabDropdown
                               data-test-id="form-submission-select-queue-task-dropdown"
                               name="queueTasks"
                               disabled={!definition.submissionRecords}
                               value={[getQueueTaskToProcessValue()]}
-                              relative={true}
-                              onChange={(name, queueTask: string) => {
-                                const separatedQueueTask = queueTask.split(':');
+                              onChange={(detail: GoabDropdownOnChangeDetail) => {
+                                const separatedQueueTask = detail.value.split(':');
                                 if (separatedQueueTask.length > 1) {
                                   setDefinition({
                                     queueTaskToProcess: {
@@ -831,7 +829,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                                 }
                               }}
                             >
-                              <GoADropdownItem
+                              <GoabDropdownItem
                                 data-testId={`task-Queue-ToCreate-DropDown`}
                                 key={`No-Task-Created`}
                                 value={NO_TASK_CREATED_OPTION}
@@ -841,28 +839,28 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                                 Object.keys(queueTasks)
                                   .sort()
                                   .map((item) => (
-                                    <GoADropdownItem data-testId={item} key={item} value={item} label={item} />
+                                    <GoabDropdownItem data-testId={item} key={item} value={item} label={item} />
                                   ))}
-                            </GoADropdown>
+                            </GoabDropdown>
                           )}
                         </QueueTaskDropdown>
                         <RowFlex>
                           <h3>Disposition states</h3>
                           <div>
                             {definition.submissionRecords ? (
-                              <GoATooltip
+                              <GoabTooltip
                                 content="Disposition states represent possible decisions applied to submissions by program staff. For example, an adjudicator may find that a submission is incomplete and records an Incomplete state with rationale of what information is missing."
                                 position="top"
                               >
-                                <GoAIcon type="information-circle" ariaLabel="disposition-icon"></GoAIcon>
-                              </GoATooltip>
+                                <GoabIcon type="information-circle" ariaLabel="disposition-icon"></GoabIcon>
+                              </GoabTooltip>
                             ) : (
                               <FakeButton />
                             )}
                           </div>
                           <RightAlign>
                             {definition.submissionRecords ? (
-                              <GoAButton
+                              <GoabButton
                                 type="secondary"
                                 testId="Add state"
                                 disabled={!definition.submissionRecords}
@@ -872,7 +870,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                                 }}
                               >
                                 Add state
-                              </GoAButton>
+                              </GoabButton>
                             ) : (
                               <FakeButton />
                             )}
@@ -919,8 +917,8 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
             </Tabs>
 
             <FinalButtonPadding>
-              <GoAButtonGroup alignment="start">
-                <GoAButton
+              <GoabButtonGroup alignment="start">
+                <GoabButton
                   type="tertiary"
                   testId="collapse-all"
                   onClick={() => {
@@ -930,8 +928,8 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                   disabled={activeIndex > 1}
                 >
                   Collapse all
-                </GoAButton>
-                <GoAButton
+                </GoabButton>
+                <GoabButton
                   testId="expand-all"
                   type="tertiary"
                   disabled={activeIndex > 1}
@@ -941,11 +939,11 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                   }}
                 >
                   Expand all
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
 
-              <GoAButtonGroup alignment="end">
-                <GoAButton
+              <GoabButtonGroup alignment="end">
+                <GoabButton
                   type="primary"
                   testId="definition-form-save"
                   disabled={
@@ -963,8 +961,8 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                   }}
                 >
                   Save
-                </GoAButton>
-                <GoAButton
+                </GoabButton>
+                <GoabButton
                   testId="form-editor-cancel"
                   type="secondary"
                   onClick={() => {
@@ -978,8 +976,8 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                   }}
                 >
                   Back
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
 
@@ -996,14 +994,14 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                     }}
                     formUrl={formServiceApiUrl}
                   >
-                    <GoAFormItem error={schemaError} label="">
+                    <GoabFormItem error={schemaError} label="">
                       <JSONFormPreviewer
                         onChange={({ data }) => {
                           setData(data);
                         }}
                         data={data}
                       />
-                    </GoAFormItem>
+                    </GoabFormItem>
                   </ContextProvider>
                 </FormPreviewScrollPane>
               </Tab>
@@ -1084,7 +1082,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
         }}
       />
       {intakePeriodModal && (
-        <GoAModal heading="Intake Periods" open={intakePeriodModal} maxWidth={'70ch !important'}>
+        <GoabModal heading="Intake Periods" open={intakePeriodModal} maxWidth={'70ch !important'}>
           <form style={{ width: '100%' }}>
             <Margin>
               <div>
@@ -1096,34 +1094,34 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
             {selectedCoreEvent && selectedCoreEvent.length > 0
               ? selectedCoreEvent.map((coreEvent) => {
                   return (
-                    <GoAAccordion heading={coreEvent.name} open={false}>
+                    <GoabAccordion heading={coreEvent.name} open={false}>
                       <StartEndDateEditor event={coreEvent} newEvent={false} closeIntake={() => null} />
-                    </GoAAccordion>
+                    </GoabAccordion>
                   );
                 })
               : !showNew && <b>No intake periods configured for this form</b>}
 
             {showNew && (
               <Margin>
-                <GoAContainer mt="m">
+                <GoabContainer mt="m">
                   <StartEndDateEditor
                     formId={definition.id}
                     event={CalendarEventDefault}
                     closeIntake={() => setShowNew(false)}
                     newEvent={true}
                   />
-                </GoAContainer>
+                </GoabContainer>
               </Margin>
             )}
             {!showNew && (
               <Margin>
-                <GoAButton type="primary" onClick={() => setShowNew(true)}>
+                <GoabButton type="primary" onClick={() => setShowNew(true)}>
                   New intake period
-                </GoAButton>
+                </GoabButton>
               </Margin>
             )}
-            <GoAButtonGroup alignment="end" mt="xl">
-              <GoAButton
+            <GoabButtonGroup alignment="end" mt="xl">
+              <GoabButton
                 type="secondary"
                 disabled={showNew}
                 onClick={() => {
@@ -1131,10 +1129,10 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                 }}
               >
                 Close
-              </GoAButton>
-            </GoAButtonGroup>
+              </GoabButton>
+            </GoabButtonGroup>
           </form>
-        </GoAModal>
+        </GoabModal>
       )}
     </FormEditor>
   );

@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 
-import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { TableDiv } from '../styled-components';
@@ -52,13 +52,13 @@ export const DeleteConfirmationsView: FunctionComponent<taskTableProps> = ({ que
           dispatch(deleteTaskQueue(queue));
         }}
       />
-      <GoAModal
+      <GoabModal
         testId="queue-delete-modal"
         open={showUnableToDeleteConfirmation}
         heading="Queue current in use"
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               type="secondary"
               testId="queue-delete-modal-cancel-btn"
               onClick={() => {
@@ -66,14 +66,14 @@ export const DeleteConfirmationsView: FunctionComponent<taskTableProps> = ({ que
               }}
             >
               Okay
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <p>
           You are unable to delete the queue type <b>{`${queue.name}`}</b> because there are tasks within the queue type
         </p>
-      </GoAModal>
+      </GoabModal>
       <br />
     </TableDiv>
   );

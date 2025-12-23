@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo } from 'react';
-import { GoAButtonType } from '@abgov/react-components';
+import { GoabButtonType } from '@abgov/ui-components-common';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
 import { CategorizationStepperLayoutRendererProps } from './types';
@@ -59,9 +59,9 @@ function hasDataInScopes(data: unknown, scopes?: string[]): boolean {
 
 export interface FormPageOptionProps {
   nextButtonLabel?: string;
-  nextButtonType?: GoAButtonType;
+  nextButtonType?: GoabButtonType;
   previousButtonLabel?: string;
-  previousButtonType?: GoAButtonType;
+  previousButtonType?: GoabButtonType;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

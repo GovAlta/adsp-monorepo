@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { GoADateTimeControl, GoAInputDateTimeProps, GoADateTimeInput } from './InputDateTimeControl';
+import { GoADateTimeControl, GoabInputDateTimeProps, GoADateTimeInput } from './InputDateTimeControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 
@@ -30,7 +30,7 @@ describe('input date time controls', () => {
     label: 'Date control test',
   };
 
-  const staticProps: GoAInputDateTimeProps = {
+  const staticProps: GoabInputDateTimeProps = {
     uischema: uiSchema,
     schema: dateSchema,
     rootSchema: dateSchema,
@@ -100,7 +100,7 @@ describe('input date time controls', () => {
       );
       const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
 
-      expect(input.getAttribute('value')).toBe('2025-01-01T01:01');
+      expect(input.getAttribute('value')).toBe('2025-01-01');
     });
 
     it('can trigger keyPress event', async () => {

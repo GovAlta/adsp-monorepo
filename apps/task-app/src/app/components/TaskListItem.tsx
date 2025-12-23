@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoASkeleton } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabSkeleton } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { styled } from 'styled-components';
 import { Task, TaskUser } from '../state';
@@ -50,41 +50,41 @@ export const TaskListItem: FunctionComponent<TaskListItemProps> = ({
       <td>{task.status}</td>
       <td>{task.assignment?.assignedTo ? task.assignment.assignedTo.name : 'No one'}</td>
       <td>
-        <GoAButtonGroup alignment="end" gap="compact">
+        <GoabButtonGroup alignment="end" gap="compact">
           {initializingUser && (
             <>
               <ActionSkeleton>
-                <GoASkeleton type="header" size={4} />
+                <GoabSkeleton type="header" size={'4'} />
               </ActionSkeleton>
               <ActionSkeleton>
-                <GoASkeleton type="header" size={4} />
+                <GoabSkeleton type="header" size={'4'} />
               </ActionSkeleton>
             </>
           )}
           {user.isAssigner && (
             <>
-              <GoAButton size="compact" type="tertiary" onClick={() => onAssign(task)}>
+              <GoabButton size="compact" type="tertiary" onClick={() => onAssign(task)}>
                 Assign
-              </GoAButton>
-              <GoAButton size="compact" type="tertiary" onClick={() => onSetPriority(task)}>
+              </GoabButton>
+              <GoabButton size="compact" type="tertiary" onClick={() => onSetPriority(task)}>
                 Set priority
-              </GoAButton>
+              </GoabButton>
             </>
           )}
           {!user.isAssigner && user.isWorker && (
-            <GoAButton
+            <GoabButton
               size="compact"
               type="tertiary"
               onClick={() => onAssign(task)}
               disabled={task.assignment?.assignedTo?.id === user.id}
             >
               Assign to me
-            </GoAButton>
+            </GoabButton>
           )}
-          <GoAButton size="compact" type="secondary" trailingIcon="open" onClick={() => onOpen(task)}>
+          <GoabButton size="compact" type="secondary" trailingIcon="open" onClick={() => onOpen(task)}>
             Open
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </td>
     </tr>
   );

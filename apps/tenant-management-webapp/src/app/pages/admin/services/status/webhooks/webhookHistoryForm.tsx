@@ -7,13 +7,18 @@ import DataTable from '@components/DataTable';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
 import { getEventDefinitions } from '@store/event/actions';
 import { LoadMoreWrapper } from '@components/styled-components';
-import { GoABadge, GoAButton, GoAInput, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components';
+import { GoabBadge, GoabButton, GoabInput, GoabButtonGroup, GoabFormItem, GoabModal } from '@abgov/react-components';
 import styled from 'styled-components';
 
 import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 import { HoverWrapper, ToolTip } from '../styled-components';
 import { ResetModalState } from '@store/session/actions';
+import {
+  GoabTextAreaOnKeyPressDetail,
+  GoabInputOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+} from '@abgov/ui-components-common';
 
 interface EventLogEntryComponentProps {
   entry: EventLogEntry;
@@ -22,11 +27,12 @@ interface EventLogEntryComponentProps {
 const statusBadge = (value: string) => {
   return (
     <PaddingRight>
-      <GoABadge
+      <GoabBadge
         key="webhook-status-badge"
         content={value === 'OK' ? 'Success' : 'Failure'}
         data-testid="webhook-status-badge"
         type={value === 'OK' ? 'success' : 'emergency'}
+        icon={false}
       />
     </PaddingRight>
   );
@@ -142,52 +148,52 @@ export const WebhookHistoryModal = (): JSX.Element => {
   if (searchCriteria === undefined) return null;
 
   return (
-    <GoAModalStyle>
-      <GoAModal
+    <GoabModalStyle>
+      <GoabModal
         testId="webhook-history-modal"
         heading="Webhook History"
         open={webhook !== undefined}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               type="secondary"
               onClick={() => {
                 dispatch(ResetModalState());
               }}
             >
               Close
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               type="primary"
               onClick={() => {
                 onSearch(searchCriteria);
               }}
             >
               Search
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
-        <GoAFormItem label="Application">
+        <GoabFormItem label="Application">
           <div className="grey-fill">{webhook?.targetId}</div>
-        </GoAFormItem>
+        </GoabFormItem>
 
-        <GoAFormItem label="URL">
-          <GoAInput
+        <GoabFormItem label="URL">
+          <GoabInput
             name="url"
             type="url"
             width="100%"
             testId="webhook-history-url-input"
             value={searchCriteria?.url || webhook?.url}
-            onChange={(name, value) => {
-              setSearchCriteria({ ...searchCriteria, url: value });
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              setSearchCriteria({ ...searchCriteria, url: detail.value });
             }}
             aria-label="description"
           />
-        </GoAFormItem>
+        </GoabFormItem>
         <DateFilter>
           <StartDate>
-            <GoAFormItem label="Start date">
+            <GoabFormItem label="Start date">
               <DateTimeInput
                 type="datetime-local"
                 name="timestampMin"
@@ -196,10 +202,10 @@ export const WebhookHistoryModal = (): JSX.Element => {
                 value={searchCriteria?.timestampMin}
                 onChange={(e) => setSearchCriteria({ ...searchCriteria, timestampMin: e.target.value })}
               />
-            </GoAFormItem>
+            </GoabFormItem>
           </StartDate>
           <EndDate>
-            <GoAFormItem label="End date">
+            <GoabFormItem label="End date">
               <DateTimeInput
                 type="datetime-local"
                 name="timestampMax"
@@ -208,7 +214,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
                 value={searchCriteria?.timestampMax}
                 onChange={(e) => setSearchCriteria({ ...searchCriteria, timestampMax: e.target.value })}
               />
-            </GoAFormItem>
+            </GoabFormItem>
           </EndDate>
         </DateFilter>
 
@@ -250,25 +256,25 @@ export const WebhookHistoryModal = (): JSX.Element => {
             {next && (
               <div className="mt-1">
                 <LoadMoreWrapper>
-                  <GoAButton
+                  <GoabButton
                     type="tertiary"
                     testId="webhook-history-form-load-more"
                     disabled={isLoading}
                     onClick={onNext}
                   >
                     Load more
-                  </GoAButton>
+                  </GoabButton>
                 </LoadMoreWrapper>
               </div>
             )}
           </div>
         )}
-      </GoAModal>
-    </GoAModalStyle>
+      </GoabModal>
+    </GoabModalStyle>
   );
 };
 
-const GoAModalStyle = styled.div`
+const GoabModalStyle = styled.div`
   max-width: 640px;
   .group-name {
     font-size: var(--goa-font-size-5);

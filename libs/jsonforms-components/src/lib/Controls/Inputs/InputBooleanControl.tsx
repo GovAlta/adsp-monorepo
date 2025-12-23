@@ -1,11 +1,11 @@
 import { isBooleanControl, RankedTester, rankWith, ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoACheckbox } from '@abgov/react-components';
+import { GoabCheckbox } from '@abgov/react-components';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { getLastSegmentFromPointer, convertToReadableFormat } from '../../util/stringUtils';
 import { WithInputProps } from './type';
 import { CheckboxWrapper } from './style-component';
-
+import { GoabCheckboxOnChangeDetail } from '@abgov/ui-components-common';
 export const BooleanComponent = ({
   data,
   enabled,
@@ -36,15 +36,15 @@ export const BooleanComponent = ({
 
   return (
     <CheckboxWrapper>
-      <GoACheckbox
+      <GoabCheckbox
         error={isVisited && errors.length > 0}
         testId={`${path}-checkbox-test-id`}
         disabled={!enabled}
         text={text && text !== 'undefined' ? text : convertToReadableFormat(getLastSegmentFromPointer(uischema.scope))}
         name={`${path}`}
         checked={data}
-        onChange={(_: string, checked: boolean) => {
-          handleChange(path, checked);
+        onChange={(detail: GoabCheckboxOnChangeDetail) => {
+          handleChange(path, detail.checked);
         }}
         {...uischema?.options?.componentProps}
         mb="none"

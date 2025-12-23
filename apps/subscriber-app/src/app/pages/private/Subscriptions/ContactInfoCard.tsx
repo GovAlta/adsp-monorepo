@@ -13,15 +13,15 @@ import { phoneWrapper } from '@lib/wrappers';
 import { ValidateModal } from '../../validateModal';
 
 import {
-  GoAButton,
-  GoAInput,
-  GoAButtonGroup,
-  GoARadioItem,
-  GoARadioGroup,
-  GoABadge,
-  GoAFormItem,
+  GoabButton,
+  GoabInput,
+  GoabButtonGroup,
+  GoabRadioItem,
+  GoabRadioGroup,
+  GoabBadge,
+  GoabFormItem,
 } from '@abgov/react-components';
-
+import { GoabRadioGroupOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 import { FormGap } from './styled-components';
 interface ContactInfoCardProps {
   subscriber?: Subscriber;
@@ -169,12 +169,12 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const updateContactInfoButtons = () => {
     return (
       <div style={{ margin: '2px 10px 0 0' }}>
-        <GoAButtonGroup alignment="start">
-          <GoAButton size="compact" testId="edit-contact-save-button" onClick={saveContactInformation}>
+        <GoabButtonGroup alignment="start">
+          <GoabButton size="compact" testId="edit-contact-save-button" onClick={saveContactInformation}>
             Save
-          </GoAButton>
+          </GoabButton>
 
-          <GoAButton
+          <GoabButton
             size="compact"
             type="secondary"
             testId="edit-contact-cancel-button"
@@ -185,8 +185,8 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
             }}
           >
             Cancel
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </div>
     );
   };
@@ -218,38 +218,38 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
               <GridItem md={3.5} hSpacing={1}>
                 <Label>Email</Label>
                 <FormGap>
-                  <GoAFormItem label="" error={formErrors?.['email']}>
-                    <GoAInput
+                  <GoabFormItem label="" error={formErrors?.['email']}>
+                    <GoabInput
                       type="email"
                       aria-label="email"
                       name="email"
                       value={emailContactInformation}
-                      onChange={setValue}
+                      onChange={(detail: GoabInputOnChangeDetail) => setValue(detail.name, detail.value)}
                       testId="contact-email-input"
                       width="100%"
                     />
-                  </GoAFormItem>
+                  </GoabFormItem>
                 </FormGap>
               </GridItem>
 
               <GridItem md={3.5} hSpacing={1}>
                 <Label>Phone number</Label>
                 <FormGap>
-                  <GoAFormItem label="" error={formErrors?.['sms']}>
-                    <GoAInput
+                  <GoabFormItem label="" error={formErrors?.['sms']}>
+                    <GoabInput
                       type="tel"
                       aria-label="sms"
                       name="sms"
                       width="100%"
                       value={SMSContactInformation}
                       testId="contact-sms-input"
-                      onChange={setValue}
+                      onChange={(detail: GoabInputOnChangeDetail) => setValue(detail.name, detail.value)}
                       trailingIcon="close"
                       onTrailingIconClick={() => {
                         setSMSContactInformation('');
                       }}
                     />
-                  </GoAFormItem>
+                  </GoabFormItem>
                 </FormGap>
               </GridItem>
 
@@ -257,15 +257,15 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 <Label>My preferred notification channel</Label>
                 <br />
                 <FormGap>
-                  <GoARadioGroup
+                  <GoabRadioGroup
                     name="channel"
                     value={preferredChannel}
-                    onChange={(_, value) => updateChannelPreference(value)}
+                    onChange={(detail: GoabRadioGroupOnChangeDetail) => updateChannelPreference(detail.value)}
                   >
-                    <GoARadioItem value={Channels.email} name="channel" label="Email" />
+                    <GoabRadioItem value={Channels.email} name="channel" label="Email" />
 
-                    <GoARadioItem value={Channels.sms} name="channel" label="SMS" />
-                  </GoARadioGroup>
+                    <GoabRadioItem value={Channels.sms} name="channel" label="SMS" />
+                  </GoabRadioGroup>
                 </FormGap>
               </GridItem>
             </Grid>
@@ -283,15 +283,15 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                         <FormGap>
                           {isEmailVerified !== undefined && isEmailVerified === true && (
                             <div>
-                              <GoABadge type="success" content="Verified" icon={false} />
+                              <GoabBadge type="success" content="Verified" icon={false} />
                             </div>
                           )}
                           {isEmailVerified !== undefined && isEmailVerified === false && (
                             <div>
                               {codeEmailExists ? (
-                                <GoABadge type="midtone" content="Pending" icon={false} />
+                                <GoabBadge type="midtone" content="Pending" icon={false} />
                               ) : (
-                                <GoABadge type="important" content="Not verified" icon={false} />
+                                <GoabBadge type="important" content="Not verified" icon={false} />
                               )}
                             </div>
                           )}
@@ -309,14 +309,14 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                       <VerificationWrapper>
                         <FormGap>
                           {isSmsVerified !== undefined && isSmsVerified === true && (
-                            <GoABadge type="success" content="Verified" icon={false} />
+                            <GoabBadge type="success" content="Verified" icon={false} />
                           )}
                           {isSmsVerified !== undefined && isSmsVerified === false && (
                             <div>
                               {codeSMSExists ? (
-                                <GoABadge type="midtone" content="Pending" icon={false} />
+                                <GoabBadge type="midtone" content="Pending" icon={false} />
                               ) : (
-                                <GoABadge type="important" content="Not verified" icon={false} />
+                                <GoabBadge type="important" content="Not verified" icon={false} />
                               )}
                             </div>
                           )}
@@ -330,17 +330,17 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 <GridItem md={5}>
                   <Label>My preferred notification channel</Label>
                   <FormGap>
-                    <GoARadioGroup
+                    <GoabRadioGroup
                       name="preferredChannel"
                       //eslint-disable-next-line
                       onChange={() => {}}
                       disabled={true}
                       value={preferredChannel}
                     >
-                      <GoARadioItem value={Channels.email} name="preferredChannel" label="Email" />
+                      <GoabRadioItem value={Channels.email} name="preferredChannel" label="Email" />
 
-                      <GoARadioItem value={Channels.sms} name="preferredChannel" label="SMS" />
-                    </GoARadioGroup>
+                      <GoabRadioItem value={Channels.sms} name="preferredChannel" label="SMS" />
+                    </GoabRadioGroup>
                   </FormGap>
                 </GridItem>
               </Grid>
@@ -367,7 +367,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
           )}
         </div>
       )}
-      {indicator && <TextGoASkeleton lineCount={5}></TextGoASkeleton>}
+      {indicator && <TextGoASkeleton lineCount={5} />}
       <GapVS />
       {!indicator && (
         <div style={{}}>
@@ -376,7 +376,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
           ) : (
             <div style={{ display: 'flex' }}>
               <div style={{ margin: '5px 10px 0 0' }}>
-                <GoAButton
+                <GoabButton
                   size="compact"
                   testId="edit-contact-button"
                   onClick={() => {
@@ -390,11 +390,11 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                   }}
                 >
                   Edit contact information
-                </GoAButton>
+                </GoabButton>
               </div>
 
               <div style={{ margin: '5px 0 0 5px' }}>
-                <GoAButton
+                <GoabButton
                   size="compact"
                   type="secondary"
                   testId="verify-channel"
@@ -404,7 +404,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                   disabled={neitherChannelUnverified}
                 >
                   Verify channel
-                </GoAButton>
+                </GoabButton>
               </div>
             </div>
           )}

@@ -1,4 +1,4 @@
-import { GoAIconButton } from '@abgov/react-components';
+import { GoabIconButton } from '@abgov/react-components';
 import { Dirent } from 'fs';
 import { useEffect, useRef, useState } from 'react';
 import { styled } from 'styled-components';
@@ -232,7 +232,7 @@ export const EditorConfigurationForm = ({ resource, canEdit = true, onEdit }: Ed
             <Anchor rel="noopener noreferrer" onClick={onEdit}>
               Edit
             </Anchor>
-            <GoAIconButton icon="create" testId="edit-icon-button" title="Edit" size="small" onClick={onEdit} />
+            <GoabIconButton icon="create" testId="edit-icon-button" title="Edit" size="small" onClick={onEdit} />
           </Edit>
         </div>
       )}

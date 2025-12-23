@@ -1,7 +1,14 @@
 import React, { FC, useEffect, useState } from 'react';
 
-import { GoAButton, GoAButtonGroup, GoARadioItem, GoARadioGroup, GoAModal, GoAFormItem } from '@abgov/react-components';
-
+import {
+  GoabButton,
+  GoabButtonGroup,
+  GoabRadioItem,
+  GoabRadioGroup,
+  GoabModal,
+  GoabFormItem,
+} from '@abgov/react-components';
+import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { Channels, expireMinutes } from '@store/subscription/models';
@@ -69,44 +76,44 @@ export const ValidateModal: FC<Props> = ({ isOpen, title, onClose, testId, onVal
 
   return (
     <div>
-      <GoAModal
+      <GoabModal
         open={isOpen}
         testId={testId}
         heading={title}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               type="secondary"
               onClick={() => {
                 onClose();
               }}
             >
               Close
-            </GoAButton>
-            <GoAButton type="primary" onClick={() => onValidate(selectedChannel)}>
+            </GoabButton>
+            <GoabButton type="primary" onClick={() => onValidate(selectedChannel)}>
               Verify
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         {loaded && (
-          <GoAFormItem label="Choose a channel to verify">
+          <GoabFormItem label="Choose a channel to verify">
             {buttons && (
-              <GoARadioGroup
+              <GoabRadioGroup
                 value={selectedChannel}
                 name="option"
-                onChange={(_, value) => setSelectedChannel(value)}
+                onChange={(detail: GoabRadioGroupOnChangeDetail) => setSelectedChannel(detail.value)}
                 orientation="vertical"
                 testId="status-radio-group"
               >
                 {buttons?.map((val) => (
-                  <GoARadioItem name="option" value={val?.value} label={val.label}></GoARadioItem>
+                  <GoabRadioItem name="option" value={val?.value} label={val.label}></GoabRadioItem>
                 ))}
-              </GoARadioGroup>
+              </GoabRadioGroup>
             )}
-          </GoAFormItem>
+          </GoabFormItem>
         )}
-      </GoAModal>
+      </GoabModal>
     </div>
   );
 };

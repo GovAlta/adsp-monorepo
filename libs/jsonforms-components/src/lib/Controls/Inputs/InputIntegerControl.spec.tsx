@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { GoAInputIntegerProps, GoAInputInteger } from './InputIntegerControl';
+import { GoabInputIntegerProps, GoabInputInteger } from './InputIntegerControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 
@@ -17,7 +17,7 @@ describe('input number controls', () => {
   };
 
   const regExNumbers = new RegExp('^\\d+$');
-  const staticProps: GoAInputIntegerProps & ControlProps = {
+  const staticProps: GoabInputIntegerProps & ControlProps = {
     uischema: textBoxUiSchema,
     schema: {
       multipleOf: 1,
@@ -44,7 +44,7 @@ describe('input number controls', () => {
       const props = { ...staticProps };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoAInputInteger {...props} />
+          <GoabInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
       const ageInput = baseElement.querySelector("goa-input[testId='age-input']");
@@ -54,7 +54,7 @@ describe('input number controls', () => {
       const props = { ...staticProps, isVisited: true, errors: 'this is a error' };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoAInputInteger {...props} />
+          <GoabInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
       const ageInput = baseElement.querySelector("goa-input[testId='age-input']");
@@ -64,7 +64,7 @@ describe('input number controls', () => {
       const props = { ...staticProps, isVisited: true, errors: 'this is a error', data: undefined };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoAInputInteger {...props} />
+          <GoabInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
       const ageInput = baseElement.querySelector("goa-input[testId='age-input']");
@@ -75,7 +75,7 @@ describe('input number controls', () => {
       const props = { ...staticProps, id: '', label: 'mytestInput' };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoAInputInteger {...props} />
+          <GoabInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
       const ageInput = baseElement.querySelector("goa-input[testId='-input']");
@@ -86,7 +86,7 @@ describe('input number controls', () => {
       const props = { ...staticProps };
       const baseControl = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoAInputInteger {...props} />
+          <GoabInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
       expect(baseControl).toBeDefined();
@@ -98,7 +98,7 @@ describe('input number controls', () => {
       const props = { ...staticProps };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoAInputInteger {...props} />
+          <GoabInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
       const input = baseElement.querySelector("goa-input[testId='age-input']");
@@ -118,7 +118,7 @@ describe('input number controls', () => {
       const props = { ...staticProps, data: nonNumericValue };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoAInputInteger {...props} />
+          <GoabInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
       const input = baseElement.querySelector("goa-input[testId='age-input']");
@@ -138,7 +138,7 @@ describe('input number controls', () => {
       const props = { ...staticProps, data: numericValue };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoAInputInteger {...props} />
+          <GoabInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
 
@@ -157,7 +157,7 @@ describe('input number controls', () => {
       const props = { ...staticProps };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoAInputInteger {...props} />
+          <GoabInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
       const input = baseElement.querySelector("goa-input[testId='age-input']");
@@ -173,7 +173,7 @@ describe('input number controls', () => {
 
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
-          <GoAInputInteger {...props} />
+          <GoabInputInteger {...props} />
         </JsonFormsContext.Provider>
       );
       const input = baseElement.querySelector("goa-input[testId='age-input']");

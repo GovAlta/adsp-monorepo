@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoAButton, GoAIconButton, GoACallout } from '@abgov/react-components';
+import { GoabButton, GoabIconButton, GoabCallout } from '@abgov/react-components';
 import styles from './Editor.module.scss';
 import { PdfPageIndicator } from '../../../state/pdf/PdfIndicator';
 import { PdfJobList } from '../../../state/pdf/pdf.slice';
@@ -68,9 +68,9 @@ export const PDFPreviewTemplateCore = ({ jobList, currentPDF, loading }: HasForm
           </div>
         )}
         {!loading && hasError && (
-          <GoACallout type="emergency" heading="Error in PDF generation">
+          <GoabCallout type="emergency" heading="Error in PDF generation">
             {pdfGenerationError}
-          </GoACallout>
+          </GoabCallout>
         )}
       </>
     );
@@ -103,7 +103,7 @@ export const PreviewTop = ({
       </div>
       <div style={{ display: 'flex', flexDirection: 'row' }} className={styles.displayFlex}>
         <div>
-          <GoAButton
+          <GoabButton
             type="secondary"
             testId="generate-template"
             size="compact"
@@ -112,10 +112,10 @@ export const PreviewTop = ({
             }}
           >
             Generate PDF
-          </GoAButton>
+          </GoabButton>
         </div>
         <div>
-          <GoAIconButton
+          <GoabIconButton
             icon="download"
             title="Download"
             testId="download-template-icon"

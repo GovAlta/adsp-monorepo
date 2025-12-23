@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 
@@ -8,7 +8,7 @@ const CreateErrorPage = (): JSX.Element => {
     <Page>
       <Main>
         <p>We apologize for the inconvenience, but we could not successfully activate your tenant. Please try again.</p>
-        <GoAButton>Activate Tenant</GoAButton>
+        <GoabButton>Activate Tenant</GoabButton>
       </Main>
       <Aside>
         <SupportLinks />

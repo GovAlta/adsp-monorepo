@@ -25,7 +25,7 @@ describe('File types tab', () => {
       readRoles: ['testRoleB'],
       updateRoles: ['testRoleA'],
       id: 'mock-file-type-b-id',
-      anonymousRead: true,
+      anonymousRead: false,
       hasFile: false,
     },
   ];
@@ -65,7 +65,7 @@ describe('File types tab', () => {
   });
 
   it('render add file type', () => {
-    const { queryByTestId, baseElement } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <MemoryRouter>
           <FileTypes activeEdit={true} openAddFileType={false} />
@@ -84,7 +84,7 @@ describe('File types tab', () => {
   });
 
   it('check file type table actions', () => {
-    const { queryByTestId, baseElement } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <MemoryRouter>
           <FileTypes activeEdit={true} openAddFileType={false} />
@@ -107,8 +107,9 @@ describe('File types tab', () => {
     const deleteActionBtnA = baseElement.querySelector(
       "goa-icon-button[testId='file-type-row-delete-btn-mock-file-type-a-id']"
     );
+
     fireEvent(deleteActionBtnA, new CustomEvent('_click'));
-    const deleteModalTitle = fileTypeModal.querySelector("[slot='heading']");
-    deleteModalTitle.textContent.includes('Delete file type');
+    const deleteModal = baseElement.querySelector("[testid='delete-confirmation']");
+    expect(deleteModal).not.toBeNull();
   });
 });

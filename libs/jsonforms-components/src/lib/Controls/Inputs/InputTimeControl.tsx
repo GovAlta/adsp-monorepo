@@ -1,9 +1,10 @@
 import { CellProps, WithClassname, ControlProps, isTimeControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoAInputTime } from '@abgov/react-components';
+import { GoabInput } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { onKeyPressForTimeControl } from '../../util/inputControlUtils';
+import { GoabInputOnBlurDetail, GoabInputOnKeyPressDetail } from '@abgov/ui-components-common';
 
 export type GoAInputTimeProps = CellProps & WithClassname & WithInputProps;
 
@@ -18,7 +19,8 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
   const width = uischema?.options?.componentProps?.readOnly ?? '100%';
 
   return (
-    <GoAInputTime
+    <GoabInput
+      type="time"
       error={isVisited && errors.length > 0}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       value={data}
@@ -27,20 +29,20 @@ export const GoATimeInput = (props: GoAInputTimeProps): JSX.Element => {
       disabled={!enabled}
       readonly={readOnly}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onBlur={(name: string, value: string) => {
+      onBlur={(detail: GoabInputOnBlurDetail) => {
         /* istanbul ignore next */
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
         /* istanbul ignore next */
-        handleChange(path, value === '' ? undefined : value);
+        handleChange(path, detail.value === '' ? undefined : detail.value);
       }}
-      onChange={(name: string, value: string) => {}}
-      onKeyPress={(name: string, value: string, key: string) => {
+      onChange={() => {}}
+      onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
         onKeyPressForTimeControl({
-          name,
-          value,
-          key,
+          name: detail.name,
+          value: detail.value,
+          key: detail.key,
           controlProps: props as ControlProps,
         });
       }}

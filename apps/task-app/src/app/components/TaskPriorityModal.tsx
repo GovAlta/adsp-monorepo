@@ -1,7 +1,14 @@
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal, GoARadioGroup, GoARadioItem } from '@abgov/react-components';
+import {
+  GoabButton,
+  GoabButtonGroup,
+  GoabFormItem,
+  GoabModal,
+  GoabRadioGroup,
+  GoabRadioItem,
+} from '@abgov/react-components';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { Task } from '../state';
-
+import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 interface TaskPriorityModal {
   task: Task;
   open: boolean;
@@ -23,34 +30,38 @@ export const TaskPriorityModal: FunctionComponent<TaskPriorityModal> = ({
   }, [task]);
 
   return (
-    <GoAModal heading="Set task priority" open={open} onClose={onClose}>
+    <GoabModal heading="Set task priority" open={open} onClose={onClose}>
       <form>
         <p>Set the priority for {task?.name}. Higher priority tasks will appear at the top of the list.</p>
         <div>
           <span>Priority is currently set to: </span>
           <span>{task?.priority}</span>
         </div>
-        <GoAFormItem label="Set priority to" mt="m">
-          <GoARadioGroup name="priority" value={task?.priority} onChange={(_, value) => setPriority(value)}>
-            <GoARadioItem name="Urgent" value="Urgent" />
-            <GoARadioItem name="High" value="High" />
-            <GoARadioItem name="Normal" value="Normal" />
-          </GoARadioGroup>
-        </GoAFormItem>
-        <GoAButtonGroup alignment="end" mt="4xl">
-          <GoAButton type="secondary" onClick={onClose}>
+        <GoabFormItem label="Set priority to" mt="m">
+          <GoabRadioGroup
+            name="priority"
+            value={task?.priority}
+            onChange={(detail: GoabRadioGroupOnChangeDetail) => setPriority(detail.value)}
+          >
+            <GoabRadioItem name="Urgent" value="Urgent" />
+            <GoabRadioItem name="High" value="High" />
+            <GoabRadioItem name="Normal" value="Normal" />
+          </GoabRadioGroup>
+        </GoabFormItem>
+        <GoabButtonGroup alignment="end" mt="4xl">
+          <GoabButton type="secondary" onClick={onClose}>
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             disabled={executing || (priority && priority === task?.priority)}
             onClick={() => onSetPriority(priority)}
           >
             Set priority
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </form>
-    </GoAModal>
+    </GoabModal>
   );
 };
 

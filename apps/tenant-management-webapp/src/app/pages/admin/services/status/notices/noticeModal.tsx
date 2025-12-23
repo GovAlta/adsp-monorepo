@@ -3,20 +3,25 @@ import { saveNotice } from '@store/notice/actions';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  GoATextArea,
-  GoAButton,
-  GoACheckbox,
-  GoAButtonGroup,
-  GoAFormItem,
-  GoAModal,
-  GoAInputDate,
-  GoAInputTime,
-  GoADropdown,
-  GoADropdownItem,
-  GoAGrid,
+  GoabTextArea,
+  GoabButton,
+  GoabCheckbox,
+  GoabButtonGroup,
+  GoabFormItem,
+  GoabModal,
+  GoabInput,
+  GoabInputTime,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabGrid,
 } from '@abgov/react-components';
 import { getTimeFromGMT, getDateTime } from '@lib/timeUtil';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import {
+  GoabTextAreaOnKeyPressDetail,
+  GoabInputOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+} from '@abgov/ui-components-common';
 
 interface NoticeModalProps {
   title: string;
@@ -143,32 +148,32 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
   };
 
   return (
-    <GoAModal
+    <GoabModal
       open={props.isOpen}
       testId="notice-modal"
       heading={props.title}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton type="secondary" testId="notice-form-cancel" onClick={cancel}>
+        <GoabButtonGroup alignment="end">
+          <GoabButton type="secondary" testId="notice-form-cancel" onClick={cancel}>
             Cancel
-          </GoAButton>
-          <GoAButton type="primary" data-testId="notice-form-submit" onClick={submit}>
+          </GoabButton>
+          <GoabButton type="primary" data-testId="notice-form-submit" onClick={submit}>
             Save as draft
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
-      <GoAFormItem error={errors?.['message']} label="Description">
-        <GoATextArea
+      <GoabFormItem error={errors?.['message']} label="Description">
+        <GoabTextArea
           testId="notice-form-description"
           name="message"
           value={message}
           width="100%"
-          onKeyPress={(name, value, key) => {
-            setMessage(value);
+          onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+            setMessage(detail.value);
           }}
           // eslint-disable-next-line
-          onChange={(name, value) => {}}
+          onChange={() => {}}
         />
         <HelpTextComponent
           length={message.length}
@@ -176,10 +181,10 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           descErrMessage={descErrMessage}
           errorMsg={errors?.['description']}
         />
-      </GoAFormItem>
+      </GoabFormItem>
       <br />
-      <GoAFormItem label="Application">
-        <GoACheckbox
+      <GoabFormItem label="Application">
+        <GoabCheckbox
           name="isAllApplications"
           checked={isAllApplications}
           testId="notice-form-all-applications-checkbox"
@@ -189,87 +194,91 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           }}
           text="All applications"
         />
-      </GoAFormItem>
+      </GoabFormItem>
 
       {isAllApplications === false && (
-        <GoAFormItem label="Select an application" error={errors?.['applications']}>
-          <GoADropdown
+        <GoabFormItem label="Select an application" error={errors?.['applications']}>
+          <GoabDropdown
             name="application"
             value={selectedApplications[0]?.name}
-            onChange={(_, name) => onSelect(name)}
+            onChange={(detail: GoabDropdownOnChangeDetail) => onSelect(detail.name)}
             width={'54ch'}
             testId="application-dropdown-list"
             aria-label="application-dropdown"
           >
             {noMonitorOnlyApplications.map((w) => (
-              <GoADropdownItem key={w.name} value={w.name} label={w.name} />
+              <GoabDropdownItem key={w.name} value={w.name} label={w.name} />
             ))}
-          </GoADropdown>
-        </GoAFormItem>
+          </GoabDropdown>
+        </GoabFormItem>
       )}
       <br />
 
-      <GoAGrid gap="s" minChildWidth="25ch">
-        <GoAFormItem label="Start date" error={errors?.['date']}>
-          <GoAInputDate
+      <GoabGrid gap="s" minChildWidth="25ch">
+        <GoabFormItem label="Start date" error={errors?.['date']}>
+          <GoabInput
+            type="date"
             name="StartDate"
-            value={startDate}
+            value={startDate.toISOString().slice(0, 10)}
             width="100%"
             testId="notice-form-start-date-picker"
-            onChange={(name, value) => {
-              if (isValidDateString(value)) {
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              if (isValidDateString(detail.value)) {
                 setErrors({});
-                setStartDate(new Date(value));
+                setStartDate(new Date(detail.value));
               } else {
                 setErrors({ date: 'Please input right start date format!' });
               }
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Start time">
-          <GoAInputTime
+        </GoabFormItem>
+        <GoabFormItem label="Start time">
+          <GoabInput
+            type="time"
             name="startTime"
             value={startTime}
             step={1}
             width="100%"
             testId="notice-form-start-time"
-            onChange={(name, value) => {
-              setStartTime(value);
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              setStartTime(detail.value);
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
 
-        <GoAFormItem label="End date">
-          <GoAInputDate
+        <GoabFormItem label="End date">
+          <GoabInput
+            type="date"
             name="EndDate"
-            value={endDate}
+            value={endDate.toISOString().slice(0, 10)}
             width="100%"
             testId="notice-form-end-date-picker"
-            onChange={(name, value) => {
-              if (isValidDateString(value)) {
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              if (isValidDateString(detail.value)) {
                 setErrors({});
-                setEndDate(new Date(value));
+                setEndDate(new Date(detail.value));
               } else {
                 setErrors({ date: 'Please input right end date format!' });
               }
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
 
-        <GoAFormItem label="End time">
-          <GoAInputTime
+        <GoabFormItem label="End time">
+          <GoabInput
+            type="time"
             name="endTime"
             value={endTime}
             step={1}
             width="100%"
             testId="notice-form-start-time"
-            onChange={(name, value) => {
-              setEndTime(value);
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              setEndTime(detail.value);
             }}
           />
-        </GoAFormItem>
-      </GoAGrid>
-    </GoAModal>
+        </GoabFormItem>
+      </GoabGrid>
+    </GoabModal>
   );
 }
 

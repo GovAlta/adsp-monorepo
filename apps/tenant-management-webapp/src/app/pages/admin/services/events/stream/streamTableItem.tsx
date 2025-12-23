@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Stream } from '@store/stream/models';
 import { IconDiv, NoPaddingTd } from './styleComponents';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { GoABadge } from '@abgov/react-components';
+import { GoabBadge } from '@abgov/react-components';
 import { EntryDetail } from '../../styled-components';
 
 interface SubscriberRolesProps {
@@ -14,11 +14,11 @@ const SubscriberRoles = ({ roles, publicSubscribe }: SubscriberRolesProps): JSX.
   return (
     <td>
       {publicSubscribe ? (
-        <GoABadge key={`roles-public`} type="information" content={'Public'} icon={false} />
+        <GoabBadge key={`roles-public`} type="information" content={'Public'} icon={false} />
       ) : (
         roles &&
         roles.map((role): JSX.Element => {
-          return <GoABadge key={`roles-${role}`} type="information" content={role} icon={false} />;
+          return <GoabBadge key={`roles-${role}`} type="information" content={role} icon={false} />;
         })
       )}
     </td>

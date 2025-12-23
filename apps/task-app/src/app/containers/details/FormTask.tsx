@@ -1,5 +1,5 @@
 import { GoARenderers } from '@abgov/jsonforms-components';
-import { GoAButton, GoAButtonGroup, GoASkeleton } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabSkeleton } from '@abgov/react-components';
 import { AdspId } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -44,7 +44,7 @@ const TaskForm: FunctionComponent<TaskFormProps> = ({ readonly, definitionId, da
       }}
     />
   ) : (
-    <GoASkeleton type="card" />
+    <GoabSkeleton type="card" />
   );
 };
 
@@ -70,8 +70,8 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
         onChangeData={setData}
         onChangeErrors={(errors) => setHasErrors(errors.length > 0)}
       />
-      <GoAButtonGroup alignment="end" mt="l">
-        <GoAButton
+      <GoabButtonGroup alignment="end" mt="l">
+        <GoabButton
           mr="l"
           type={
             task.status === TASK_STATUS.PENDING || task.status === TASK_STATUS.IN_PROGRESS ? 'tertiary' : 'secondary'
@@ -79,8 +79,8 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
           onClick={onClose}
         >
           Close
-        </GoAButton>
-        <GoAButton
+        </GoabButton>
+        <GoabButton
           type="secondary"
           disabled={
             !user.isWorker ||
@@ -91,8 +91,8 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
           onClick={() => dispatch(updateTaskData({ taskId: task.id, data }))}
         >
           Save
-        </GoAButton>
-        <GoAButton
+        </GoabButton>
+        <GoabButton
           disabled={!user.isWorker || isExecuting || task.status !== TASK_STATUS.IN_PROGRESS || hasErrors}
           onClick={async () => {
             await dispatch(updateTaskData({ taskId: task.id, data }));
@@ -100,8 +100,8 @@ const FormTask: FunctionComponent<TaskDetailsProps> = ({ user, task, isExecuting
           }}
         >
           Complete task
-        </GoAButton>
-      </GoAButtonGroup>
+        </GoabButton>
+      </GoabButtonGroup>
     </TaskDetailsLayout>
   );
 };

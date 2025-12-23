@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { GoAContainer, GoACallout, GoAGrid } from '@abgov/react-components';
+import { GoabContainer, GoabCallout, GoabGrid } from '@abgov/react-components';
 import { Link } from 'react-router-dom';
 import { Main, Page } from '@components/Html';
 import { useDispatch, useSelector } from 'react-redux';
@@ -66,9 +66,9 @@ const Dashboard = (): JSX.Element => {
               {tenantName && (
                 <>
                   <h1 data-testid="dashboard-title">Dashboard</h1>
-                  <GoAGrid gap="s" minChildWidth="25ch">
+                  <GoabGrid gap="s" minChildWidth="25ch">
                     {services.map((ref, index) => (
-                      <GoAContainer accent="thin" type="interactive" key={index}>
+                      <GoabContainer accent="thin" type="interactive" key={index}>
                         <div>
                           <HeadingDiv>
                             <h2>
@@ -80,9 +80,9 @@ const Dashboard = (): JSX.Element => {
                           </HeadingDiv>
                           <div>{services[index].description}</div>
                         </div>
-                      </GoAContainer>
+                      </GoabContainer>
                     ))}
-                  </GoAGrid>
+                  </GoabGrid>
                 </>
               )}
             </DashboardMinWidth>
@@ -120,7 +120,7 @@ const Dashboard = (): JSX.Element => {
     return (
       <Main>
         <h2>{tenantName} dashboard</h2>
-        <GoACallout
+        <GoabCallout
           heading="Access to tenant admin app requires tenant-admin role"
           type="important"
           testId="delete-modal"
@@ -129,7 +129,7 @@ const Dashboard = (): JSX.Element => {
             You must have the administrator role to access the tenant administration application. If you need access,
             contact the tenant owner at <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>
           </p>
-        </GoACallout>
+        </GoabCallout>
       </Main>
     );
   };

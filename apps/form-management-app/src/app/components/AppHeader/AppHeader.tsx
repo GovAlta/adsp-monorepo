@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAButton, GoAAppHeader, GoAMicrositeHeader } from '@abgov/react-components';
+import { GoabButton, GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { LOGIN_TYPES, getOrCreateKeycloakAuth, getIdpHint, authInstance } from '@lib/keycloak';
 import { UserInfo, Tenant } from '../../models';
 import styles from './AppHeader.module.scss';
@@ -31,7 +31,7 @@ const ActionsMenu = ({ hasLoginLink, admin, userInfo, tenant }: HeaderMenuProps)
           {(authenticated || admin) && (
             <div className="desktop">
               {displayName && <div className={styles.signoutBadgeWrapper}>{displayName}</div>}
-              <GoAButton
+              <GoabButton
                 type="tertiary"
                 testId="sign-out-btn"
                 onClick={() =>
@@ -65,12 +65,12 @@ const ActionsMenu = ({ hasLoginLink, admin, userInfo, tenant }: HeaderMenuProps)
                 }
               >
                 Sign out
-              </GoAButton>
+              </GoabButton>
             </div>
           )}
 
           {!authenticated && !admin && (
-            <GoAButton
+            <GoabButton
               type="tertiary"
               testId="sign-ing-btn"
               onClick={() => {
@@ -98,7 +98,7 @@ const ActionsMenu = ({ hasLoginLink, admin, userInfo, tenant }: HeaderMenuProps)
               }}
             >
               Sign In
-            </GoAButton>
+            </GoabButton>
           )}
         </div>
       ) : null}
@@ -116,10 +116,10 @@ function AppHeader({
 }: HeaderProps): JSX.Element {
   return (
     <div className={styles.headerContainer}>
-      <GoAMicrositeHeader type="alpha"></GoAMicrositeHeader>
-      <GoAAppHeader url={tenantName ? `/${tenantName}` : '/'} heading={serviceName}>
+      <GoabMicrositeHeader type="alpha"></GoabMicrositeHeader>
+      <GoabAppHeader url={tenantName ? `/${tenantName}` : '/'} heading={serviceName}>
         <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} userInfo={userInfo} tenant={tenant} />
-      </GoAAppHeader>
+      </GoabAppHeader>
     </div>
   );
 }

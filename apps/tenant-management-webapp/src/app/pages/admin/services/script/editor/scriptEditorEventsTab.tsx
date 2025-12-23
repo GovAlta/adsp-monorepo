@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useState } from 'react';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
 import { ScriptItem, ScriptItemTriggerEvent, defaultTriggerEvent } from '@store/script/models';
 import { TriggerEventModal } from './triggerEventModal';
 import DataTable from '@components/DataTable';
@@ -175,8 +175,8 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
   return (
     <>
       <AddTriggerButtonPadding>
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             size="compact"
             testId="script-add-trigger-event-button"
@@ -187,8 +187,8 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
             }}
           >
             Add trigger
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </AddTriggerButtonPadding>
       <ScriptEventTriggerListComponent
         onEdit={onEdit}

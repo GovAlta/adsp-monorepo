@@ -1,9 +1,9 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoAModal, GoAFormItem } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabInput, GoabModal, GoabFormItem } from '@abgov/react-components';
 import styled from 'styled-components';
 import { emailError } from '@lib/inputValidation';
-
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 interface EditContactInformationFormProps {
   initialValue?: ContactInformation;
   onCancel?: () => void;
@@ -47,37 +47,37 @@ export const ContactInformationModalForm: FunctionComponent<EditContactInformati
 
   return (
     <EditStyles>
-      <GoAModal
+      <GoabModal
         testId="edit-contact-information-status"
         open={open}
         heading="Edit contact information"
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton testId="form-cancel" type="secondary" onClick={tryCancel}>
+          <GoabButtonGroup alignment="end">
+            <GoabButton testId="form-cancel" type="secondary" onClick={tryCancel}>
               Cancel
-            </GoAButton>
-            <GoAButton type="primary" testId="form-save" onClick={() => trySave(contactInformation)}>
+            </GoabButton>
+            <GoabButton type="primary" testId="form-save" onClick={() => trySave(contactInformation)}>
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <ErrorWrapper>
-          <GoAFormItem error={formErrors?.['email']} label="Email">
-            <GoAInput
+          <GoabFormItem error={formErrors?.['email']} label="Email">
+            <GoabInput
               type="email"
               width="100%"
               name="email"
               testId="form-email"
               value={contactInformation?.contactEmail || ''}
               aria-label="email"
-              onChange={(_, value) => {
-                setContactInformation({ ...contactInformation, contactEmail: value });
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                setContactInformation({ ...contactInformation, contactEmail: detail.value });
               }}
             />
-          </GoAFormItem>
+          </GoabFormItem>
         </ErrorWrapper>
-      </GoAModal>
+      </GoabModal>
     </EditStyles>
   );
 };

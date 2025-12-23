@@ -12,7 +12,7 @@ import {
 } from '@store/notification/actions';
 import { ReactComponent as Edit } from '@icons/edit.svg';
 import { EditEmailInformationTypeModalForm } from './editEmail';
-import { GoAGrid } from '@abgov/react-components';
+import { GoabGrid } from '@abgov/react-components';
 export const EmailInformation: FunctionComponent = () => {
   const [editEmailInformation, setEditEmailInformation] = useState<boolean>(false);
   const dispatch = useDispatch();
@@ -66,12 +66,12 @@ export const EmailInformation: FunctionComponent = () => {
           The following email information are provided to your subscribers in the subscription management application so
           they know who sent the email and how to get support for notification related issues.
         </p>
-        <GoAGrid minChildWidth="320px">
+        <GoabGrid minChildWidth="320px">
           <div className="word-break contact-border">
             <h4>From email</h4>
             {fromEmail?.fromEmail}
           </div>
-        </GoAGrid>
+        </GoabGrid>
         <EditEmailInformationTypeModalForm
           open={editEmailInformation}
           initialValue={fromEmail || { fromEmail: '' }}

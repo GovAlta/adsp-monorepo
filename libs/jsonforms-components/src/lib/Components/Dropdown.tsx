@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { GoAInput, GoAInputProps } from '@abgov/react-components';
+import { GoabInput, GoabInputProps } from '@abgov/react-components';
 import { isEqual } from 'lodash';
 import {
   ALT_KEY,
@@ -20,6 +20,7 @@ import {
   GoADropdownTextbox,
   LabelItem,
 } from './styled-components';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 export const isValidKey = (keyCode: string): boolean => {
   if (keyCode === SHIFT_KEY || keyCode === ALT_KEY) return false;
@@ -96,10 +97,10 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   };
 
   const setInputTextFocus = () => {
-    const inputEl = document.getElementById(`${id}-input`) as GoAInputProps & HTMLElement;
+    const inputEl = document.getElementById(`${id}-input`) as GoabInputProps & HTMLElement;
 
     if (inputEl) {
-      //The 'focused' property is part of the GoAInput component that is used to
+      //The 'focused' property is part of the GoabInput component that is used to
       //set focus on the input field. We need to set it back to false once we set focus on the input field. Doing with just .focus() doesnt work.
       inputEl.focused = true;
       inputEl.focus();
@@ -230,7 +231,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
           setIsOpen((previousIsOpen) => !previousIsOpen);
         }}
       >
-        <GoAInput
+        <GoabInput
           disabled={!enabled}
           name={`dropdown-${label}`}
           width="100%"
@@ -238,11 +239,11 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
           testId={`${id}-input`}
           id={`${id}-input`}
           readonly={!isAutoCompletion}
-          onChange={(name, value) => {
+          onChange={(detail: GoabInputOnChangeDetail) => {
             if (isAutoCompletion) {
-              setInputText(value);
+              setInputText(detail.value);
               const selectedItems = props.items.filter((item) => {
-                return item.label.includes(value);
+                return item.label.includes(detail.value);
               });
               setItems(selectedItems);
             }

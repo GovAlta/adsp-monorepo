@@ -21,16 +21,16 @@ import {
 
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  GoAButton,
-  GoACallout,
-  GoADropdown,
-  GoADropdownItem,
-  GoAIcon,
-  GoATooltip,
-  GoAButtonGroup,
-  GoACheckbox,
-  GoAFormItem,
-  GoAInput,
+  GoabButton,
+  GoabCallout,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabIcon,
+  GoabTooltip,
+  GoabButtonGroup,
+  GoabCheckbox,
+  GoabFormItem,
+  GoabInput,
 } from '@abgov/react-components';
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
 import { RootState } from '@store/index';
@@ -50,7 +50,11 @@ import { PageLoader } from '@core-services/app-common';
 import { areObjectsEqual } from '@lib/objectUtil';
 import { CustomLoader } from '@components/CustomLoader';
 import { FetchRealmRoles } from '@store/tenant/actions';
-import styled from 'styled-components';
+import {
+  GoabInputOnChangeDetail,
+  GoabCheckboxOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+} from '@abgov/ui-components-common';
 
 export const EditFileTypeDefinitionEditor = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -210,21 +214,20 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
             <EditorPadding>
               <MakePublicPadding>
                 <DropDownZIndex>
-                  <GoAFormItem label="Select a security classification">
-                    <GoADropdown
+                  <GoabFormItem label="Select a security classification">
+                    <GoabDropdown
                       name="securityClassifications"
                       width="25rem"
                       value={fileType?.securityClassification}
-                      relative={true}
-                      onChange={(name: string, value: SecurityClassification) => {
+                      onChange={(detail: GoabDropdownOnChangeDetail) => {
                         setFileType({
                           ...fileType,
-                          securityClassification: value,
+                          securityClassification: detail.value,
                         });
                         if (
-                          (fileType?.securityClassification !== undefined || value !== undefined) &&
+                          (fileType?.securityClassification !== undefined || detail.value !== undefined) &&
                           fileType?.securityClassification !== '' &&
-                          value !== SecurityClassification.Public &&
+                          detail.value !== SecurityClassification.Public &&
                           fileType?.anonymousRead
                         ) {
                           setIsSecurityClassificationCalloutIsOpen(true);
@@ -233,14 +236,14 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                         }
                       }}
                     >
-                      <GoADropdownItem value={SecurityClassification.Public} label="Public" />
-                      <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
-                      <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
-                      <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
-                    </GoADropdown>
-                  </GoAFormItem>
+                      <GoabDropdownItem value={SecurityClassification.Public} label="Public" />
+                      <GoabDropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
+                      <GoabDropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
+                      <GoabDropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
+                    </GoabDropdown>
+                  </GoabFormItem>
                   <div style={{ paddingTop: '0.625rem' }}>
-                    <GoACheckbox
+                    <GoabCheckbox
                       checked={fileType?.anonymousRead}
                       name="file-type-anonymousRead-checkbox"
                       testId="file-type-anonymousRead-checkbox"
@@ -268,33 +271,33 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                 </DropDownZIndex>
                 {isSecurityClassificationCalloutOpen && (
                   <FileTypeEditorWarningCalloutWrapper>
-                    <GoACallout type="important" heading="">
+                    <GoabCallout type="important" heading="">
                       The protected file is publicly accessible.
-                    </GoACallout>
+                    </GoabCallout>
                   </FileTypeEditorWarningCalloutWrapper>
                 )}
               </MakePublicPadding>
-              <GoAFormItem label="">
+              <GoabFormItem label="">
                 <RetentionPolicyLabel>Retention policy</RetentionPolicyLabel>
-                <GoATooltip
+                <GoabTooltip
                   content="The untouched files within the file type will be deleted after the retention period provided."
                   position="right"
                 >
-                  <GoAIcon type="information-circle" ariaLabel="Retention policy"></GoAIcon>
-                </GoATooltip>
+                  <GoabIcon type="information-circle" ariaLabel="Retention policy"></GoabIcon>
+                </GoabTooltip>
                 <RetentionPolicyWrapper>
-                  <GoACheckbox
+                  <GoabCheckbox
                     name="retentionActive"
                     key="retention-period-active-checkbox"
                     checked={fileType?.rules?.retention?.active === true}
-                    onChange={(name, checked) => {
+                    onChange={(detail: GoabCheckboxOnChangeDetail) => {
                       setFileType({
                         ...fileType,
                         rules: {
                           ...fileType?.rules,
                           retention: {
                             ...fileType?.rules?.retention,
-                            active: checked,
+                            active: detail.checked,
                           },
                         },
                       });
@@ -303,17 +306,17 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   />
                   <RetentionPeriodText>Enter retention period</RetentionPeriodText>
                 </RetentionPolicyWrapper>
-              </GoAFormItem>
-              <GoAInput
-                onChange={(name, day) => {
-                  if (parseInt(day) > 0) {
+              </GoabFormItem>
+              <GoabInput
+                onChange={(detail: GoabInputOnChangeDetail) => {
+                  if (parseInt(detail.value) > 0) {
                     setFileType({
                       ...fileType,
                       rules: {
                         ...fileType?.rules,
                         retention: {
                           ...fileType?.rules?.retention,
-                          deleteInDays: parseInt(day),
+                          deleteInDays: parseInt(detail.value),
                           active: fileType?.rules?.retention?.active || false,
                           createdAt: fileType?.rules?.retention?.createdAt || new Date().toISOString(),
                         },
@@ -334,8 +337,8 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
             <FinalButtonPadding>
               <hr className="hr-resize-bottom" />
               <br />
-              <GoAButtonGroup alignment="start">
-                <GoAButton
+              <GoabButtonGroup alignment="start">
+                <GoabButton
                   type="primary"
                   testId="form-save"
                   disabled={areObjectsEqual(initialFileType, fileType) || validators.haveErrors()}
@@ -373,8 +376,8 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   }}
                 >
                   Save
-                </GoAButton>
-                <GoAButton
+                </GoabButton>
+                <GoabButton
                   testId="form-cancel"
                   type="secondary"
                   onClick={() => {
@@ -387,8 +390,8 @@ export const EditFileTypeDefinitionEditor = (): JSX.Element => {
                   }}
                 >
                   Back
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
           <FileTypePermissions>

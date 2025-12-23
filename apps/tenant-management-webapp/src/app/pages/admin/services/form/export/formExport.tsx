@@ -4,18 +4,18 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { RootState } from '@store/index';
 import {
-  GoAButton,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoACircularProgress,
-  GoARadioGroup,
-  GoARadioItem,
-  GoACheckbox,
-  GoABadge,
-  GoAButtonGroup,
-  GoADetails,
-  GoADivider,
+  GoabButton,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabCircularProgress,
+  GoabRadioGroup,
+  GoabRadioItem,
+  GoabCheckbox,
+  GoabBadge,
+  GoabButtonGroup,
+  GoabDetails,
+  GoabDivider,
 } from '@abgov/react-components';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ReactComponent as Error } from '@icons/close-circle-outline.svg';
@@ -25,7 +25,7 @@ import { FormDefinition, Stream, ExportFormat } from '@store/form/model';
 import { DownloadFileService, FetchFilesService } from '@store/file/actions';
 
 import { truncateString, transformToColumns, ColumnOption, generateRandomNumber } from './util';
-
+import { GoabRadioGroupOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 export const FormExport = (): JSX.Element => {
   const dispatch = useDispatch();
 
@@ -211,12 +211,12 @@ export const FormExport = (): JSX.Element => {
   return (
     <section>
       <div>
-        <GoAFormItem label="Form definition">
-          <GoADropdown
+        <GoabFormItem label="Form definition">
+          <GoabDropdown
             name="formTypes"
             value={selectedForm?.name}
-            onChange={(_, value: string) => {
-              const currentForm = formList.find((form) => form.name === value);
+            onChange={(detail: GoabDropdownOnChangeDetail) => {
+              const currentForm = formList.find((form) => form.name === detail.value);
               setSelectedForm(currentForm);
               setDownloadDisable(true);
               setResourceType(currentForm?.submissionRecords === true ? 'Submissions' : 'Forms');
@@ -227,10 +227,9 @@ export const FormExport = (): JSX.Element => {
             width="100%"
             testId="form-selection-dropdown"
             disabled={spinner}
-            relative={true}
           >
             {formList.map((item) => (
-              <GoADropdownItem
+              <GoabDropdownItem
                 name="formTypeList"
                 key={item?.name}
                 label={item?.name}
@@ -238,36 +237,36 @@ export const FormExport = (): JSX.Element => {
                 testId={`${item?.name}`}
               />
             ))}
-          </GoADropdown>
-        </GoAFormItem>
+          </GoabDropdown>
+        </GoabFormItem>
 
         <h3>Records</h3>
-        {selectedForm && <GoABadge type="information" content={resourceType} icon={false} />}
+        {selectedForm && <GoabBadge type="information" content={resourceType} icon={false} />}
         <br />
         <br />
-        <GoAFormItem label="Format">
+        <GoabFormItem label="Format">
           <div>
-            <GoARadioGroup
+            <GoabRadioGroup
               name="formatOptions"
               value={exportFormat}
-              onChange={(_, value) => setExportFormat(value as ExportFormat)}
+              onChange={(detail: GoabRadioGroupOnChangeDetail) => setExportFormat(detail.value as ExportFormat)}
               orientation="horizontal"
               testId="status-radio-group"
               disabled={!selectedForm || Object.keys(formDefinitions).length === 0 || spinner}
             >
-              <GoARadioItem name="formatOptions" value="json"></GoARadioItem>
-              <GoARadioItem name="formatOptions" value="csv"></GoARadioItem>
-            </GoARadioGroup>
+              <GoabRadioItem name="formatOptions" value="json"></GoabRadioItem>
+              <GoabRadioItem name="formatOptions" value="csv"></GoabRadioItem>
+            </GoabRadioGroup>
             <br />
             {exportFormat === 'csv' && (
-              <GoADetails heading="Columns configuration">
+              <GoabDetails heading="Columns configuration">
                 <div>
                   <h4>Standard properties</h4>
                   {columns
                     .filter((col) => col.group === 'Standard properties')
                     .map((col) => (
                       <label key={col.id}>
-                        <GoACheckbox
+                        <GoabCheckbox
                           name={col.id}
                           text={col.id}
                           checked={col.selected}
@@ -284,7 +283,7 @@ export const FormExport = (): JSX.Element => {
                     .filter((col) => col.group === 'Form data')
                     .map((col) => (
                       <label key={col.id}>
-                        <GoACheckbox
+                        <GoabCheckbox
                           name={col.id}
                           text={col.id}
                           checked={col.selected}
@@ -293,14 +292,14 @@ export const FormExport = (): JSX.Element => {
                       </label>
                     ))}
                 </div>
-              </GoADetails>
+              </GoabDetails>
             )}
           </div>
-        </GoAFormItem>
-        <GoADivider mb="l" />
+        </GoabFormItem>
+        <GoabDivider mb="l" />
         {!spinner && (
-          <GoAButtonGroup alignment="start">
-            <GoAButton
+          <GoabButtonGroup alignment="start">
+            <GoabButton
               type="primary"
               size="normal"
               variant="normal"
@@ -309,9 +308,9 @@ export const FormExport = (): JSX.Element => {
               disabled={!selectedForm || Object.keys(formDefinitions).length === 0}
             >
               Export
-            </GoAButton>
+            </GoabButton>
 
-            <GoAButton
+            <GoabButton
               type="secondary"
               testId="export-download-button"
               size="normal"
@@ -321,11 +320,11 @@ export const FormExport = (): JSX.Element => {
               }}
             >
               Download
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         )}
 
-        {spinner && <GoACircularProgress message={loadingMessage} visible={true} size="small" />}
+        {spinner && <GoabCircularProgress message={loadingMessage} visible={true} size="small" />}
 
         <br />
         {!spinner && !downloadDisable && socketStatus()}

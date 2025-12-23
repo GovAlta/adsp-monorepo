@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 
-import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { TableDiv } from '../styled-components';
@@ -46,13 +46,13 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
           dispatch(DeleteCalendar(calendarName));
         }}
       />
-      <GoAModal
+      <GoabModal
         testId="file-type-delete-modal"
         open={showUnableToDeleteConfirmation}
         heading="Calendar current in use"
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               type="secondary"
               testId="file-type-delete-modal-cancel-btn"
               onClick={() => {
@@ -60,15 +60,15 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
               }}
             >
               Okay
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <p>
           You are unable to delete the calender type <b>{`${calendarName}`}</b> because there are events within the
           calendar type
         </p>
-      </GoAModal>
+      </GoabModal>
       <br />
     </TableDiv>
   );

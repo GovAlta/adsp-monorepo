@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { GoAFormItem } from '@abgov/react-components';
+import { GoabFormItem } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { checkFieldValidity, convertToSentenceCase, getLabelText, getRequiredIfThen } from '../../util/stringUtils';
 import { Visible } from '../../util';
 import { JsonFormRegisterProvider } from '../../Context/register';
 import { FormFieldWrapper } from './style-component';
 
-export type GoAInputType =
+export type GoabInputType =
   | 'text'
   | 'password'
   | 'email'
@@ -46,7 +46,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
     <JsonFormRegisterProvider defaultRegisters={undefined}>
       <Visible visible={visible}>
         <FormFieldWrapper>
-          <GoAFormItem
+          <GoabFormItem
             requirement={
               uischema?.options?.componentProps?.requirement ??
               (required || getRequiredIfThen(props).length > 0 ? 'required' : undefined)
@@ -66,7 +66,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
                 },
               }}
             />
-          </GoAFormItem>
+          </GoabFormItem>
         </FormFieldWrapper>
       </Visible>
     </JsonFormRegisterProvider>

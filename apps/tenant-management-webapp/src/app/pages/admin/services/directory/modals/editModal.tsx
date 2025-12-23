@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoAButton, GoAButtonGroup, GoAInput, GoAModal, GoAFormItem } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabInput, GoabModal, GoabFormItem } from '@abgov/react-components';
 import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';
@@ -16,6 +16,11 @@ import { EditModalType, AddModalType } from '@store/directory/models';
 import { selectModalStateByType } from '@store/session/selectors';
 import { ResetModalState } from '@store/session/actions';
 import { selectEditAddDirectory } from '@store/directory/selectors';
+import {
+  GoabTextAreaOnKeyPressDetail,
+  GoabInputOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+} from '@abgov/ui-components-common';
 
 const duplicateServiceCheck = (directory: Service[], tenantName: string, isNew: boolean): Validator => {
   return (input: Service) => {
@@ -83,13 +88,13 @@ export const DirectoryModal = (): JSX.Element => {
   }, [isNew, isQuickAdd, isEdit, initEntry]);
 
   return (
-    <GoAModal
+    <GoabModal
       testId="directory-modal"
       open={isNew || isEdit || isQuickAdd}
       heading={title}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="directory-modal-cancel"
             onClick={() => {
@@ -98,8 +103,8 @@ export const DirectoryModal = (): JSX.Element => {
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             disabled={!entry.service || !entry.url || validators.haveErrors()}
             testId="directory-modal-save"
@@ -133,12 +138,12 @@ export const DirectoryModal = (): JSX.Element => {
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
-      <GoAFormItem error={errors?.['service']} label="Service">
-        <GoAInput
+      <GoabFormItem error={errors?.['service']} label="Service">
+        <GoabInput
           type="text"
           name="service"
           width="100%"
@@ -146,14 +151,14 @@ export const DirectoryModal = (): JSX.Element => {
           testId={`directory-modal-service-input`}
           aria-label="service"
           disabled={!isNew || isQuickAdd}
-          onChange={(name, value) => {
-            validators['service'].check(value);
-            setEntry({ ...entry, service: value });
+          onChange={(detail: GoabInputOnChangeDetail) => {
+            validators['service'].check(detail.value);
+            setEntry({ ...entry, service: detail.value });
           }}
         />
-      </GoAFormItem>
-      <GoAFormItem error={errors?.['api']} label="API">
-        <GoAInput
+      </GoabFormItem>
+      <GoabFormItem error={errors?.['api']} label="API">
+        <GoabInput
           type="text"
           name="api"
           width="100%"
@@ -161,14 +166,14 @@ export const DirectoryModal = (): JSX.Element => {
           testId={`directory-modal-api-input`}
           aria-label="api"
           disabled={!isNew || isQuickAdd}
-          onChange={(name, value) => {
-            validators['api'].check(value);
-            setEntry({ ...entry, api: value });
+          onChange={(detail: GoabInputOnChangeDetail) => {
+            validators['api'].check(detail.value);
+            setEntry({ ...entry, api: detail.value });
           }}
         />
-      </GoAFormItem>
-      <GoAFormItem error={errors?.['url']} label="URL">
-        <GoAInput
+      </GoabFormItem>
+      <GoabFormItem error={errors?.['url']} label="URL">
+        <GoabInput
           type="url"
           name="url"
           width="100%"
@@ -176,12 +181,12 @@ export const DirectoryModal = (): JSX.Element => {
           testId={`directory-modal-url-input`}
           aria-label="name"
           disabled={isQuickAdd}
-          onChange={(name, value) => {
-            validators['url'].check(value);
-            setEntry({ ...entry, url: value });
+          onChange={(detail: GoabInputOnChangeDetail) => {
+            validators['url'].check(detail.value);
+            setEntry({ ...entry, url: detail.value });
           }}
         />
-      </GoAFormItem>
-    </GoAModal>
+      </GoabFormItem>
+    </GoabModal>
   );
 };

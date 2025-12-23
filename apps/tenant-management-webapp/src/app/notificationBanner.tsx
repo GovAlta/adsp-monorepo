@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { GoANotification } from '@abgov/react-components';
+import { GoabNotification } from '@abgov/react-components';
 import { DismissNotification } from '@store/notifications/actions';
 import styled from 'styled-components';
 
@@ -15,7 +15,7 @@ export function NotificationBanner(): JSX.Element {
   return (
     <div style={{ marginBottom: '10px' }}>
       {latestNotification && !latestNotification.disabled && (
-        <GoANotification
+        <GoabNotification
           key={latestNotification.id}
           type={latestNotification.type || 'emergency'}
           onDismiss={() => dispatch(DismissNotification(latestNotification))}
@@ -23,7 +23,7 @@ export function NotificationBanner(): JSX.Element {
           <NotificationStyles>
             <div dangerouslySetInnerHTML={{ __html: latestNotification.message }} />
           </NotificationStyles>
-        </GoANotification>
+        </GoabNotification>
       )}
     </div>
   );

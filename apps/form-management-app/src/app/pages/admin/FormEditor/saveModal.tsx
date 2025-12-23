@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 
 interface SaveFormProps {
   onCancel?: () => void;
@@ -17,26 +17,26 @@ export const SaveFormModal: FunctionComponent<SaveFormProps> = ({
   open,
 }) => {
   return (
-    <GoAModal
+    <GoabModal
       testId="save-form-modal"
       open={open}
       heading="You have unsaved changes"
-      width="640px"
+      maxWidth="640px"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton testId="form-cancel-modal" type="tertiary" onClick={onCancel}>
+        <GoabButtonGroup alignment="end">
+          <GoabButton testId="form-cancel-modal" type="tertiary" onClick={onCancel}>
             Cancel
-          </GoAButton>
-          <GoAButton type="secondary" testId="form-dont-save" onClick={() => onDontSave()}>
+          </GoabButton>
+          <GoabButton type="secondary" testId="form-dont-save" onClick={() => onDontSave()}>
             Don't save
-          </GoAButton>
-          <GoAButton type="primary" testId="form-agree-save" disabled={saveDisable} onClick={() => onSave()}>
+          </GoabButton>
+          <GoabButton type="primary" testId="form-agree-save" disabled={saveDisable} onClick={() => onSave()}>
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       Leaving this page will discard any changes that haven't been saved
-    </GoAModal>
+    </GoabModal>
   );
 };

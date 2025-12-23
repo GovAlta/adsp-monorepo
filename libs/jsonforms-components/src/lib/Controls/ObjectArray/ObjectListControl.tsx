@@ -1,14 +1,14 @@
 import {
-  GoACallout,
-  GoAContainer,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoAGrid,
-  GoAIcon,
-  GoAIconButton,
-  GoAInput,
-  GoATable,
+  GoabCallout,
+  GoabContainer,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabGrid,
+  GoabIcon,
+  GoabIconButton,
+  GoabInput,
+  GoabTable,
 } from '@abgov/react-components';
 import {
   ControlElement,
@@ -62,6 +62,7 @@ import {
 } from './styled-components';
 import { DataProperty } from './ObjectListControlTypes';
 import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
+import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 const GenerateRows = (
   Cell: React.ComponentType<OwnPropsOfNonEmptyCellWithDialog & HandleChangeProps>,
@@ -124,11 +125,11 @@ const getValidColumnProps = (scopedSchema: JsonSchema) => {
 };
 
 const EmptyList = ({ numColumns, noDataMessage, translations }: EmptyListProps) => (
-  <GoAGrid minChildWidth="30ch">
+  <GoabGrid minChildWidth="30ch">
     <TextCenter>
       <b>{noDataMessage}</b>
     </TextCenter>
-  </GoAGrid>
+  </GoabGrid>
 );
 
 const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOfNonEmptyCell): NonEmptyCellProps => {
@@ -220,7 +221,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
       {properties && Object.keys(properties).length > 0 && (
         <>
           <FixTableHeaderAlignment>
-            <GoATable width="100%">
+            <GoabTable width="100%">
               <thead>
                 <tr key={0}>
                   {Object.entries(tableKeys).map(([value, index]) => {
@@ -313,15 +314,15 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
 
                         return (
                           <td key={ix}>
-                            <GoAFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
+                            <GoabFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
                               {dataObject.enum ? (
-                                <GoADropdown
+                                <GoabDropdown
                                   id={schemaName}
                                   name={schemaName}
                                   value={currentData != null ? String(currentData) : ''}
                                   testId={`#/properties/${schemaName}-select-${i}`}
-                                  onChange={(name: string, value: string | string[]) => {
-                                    const selectedValue = Array.isArray(value) ? value[0] : value;
+                                  onChange={(detail: GoabDropdownOnChangeDetail) => {
+                                    const selectedValue = Array.isArray(detail.value) ? detail.value[0] : detail.value;
                                     const coerced =
                                       dataObject.type === 'number' && selectedValue !== ''
                                         ? Number(selectedValue)
@@ -333,55 +334,58 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                   error={!!error?.message}
                                 >
                                   {!required?.includes(schemaName) && (
-                                    <GoADropdownItem
+                                    <GoabDropdownItem
                                       value=""
                                       label={`-- Select ${convertToSentenceCase(schemaName)} --`}
                                     />
                                   )}
                                   {dataObject.enum.map((opt: string | number) => (
-                                    <GoADropdownItem key={String(opt)} value={String(opt)} label={String(opt)} />
+                                    <GoabDropdownItem key={String(opt)} value={String(opt)} label={String(opt)} />
                                   ))}
-                                </GoADropdown>
+                                </GoabDropdown>
                               ) : dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
-                                <GoAInput
+                                <GoabInput
                                   error={error?.message.length > 0}
                                   type={dataObject.type === 'number' ? 'number' : 'text'}
                                   id={schemaName}
                                   name={schemaName}
                                   value={currentData}
                                   testId={`#/properties/${schemaName}-input-${i}`}
-                                  onChange={(name: string, value: string) => {
+                                  onChange={(detail: GoabInputOnChangeDetail) => {
                                     handleChange(rowPath, {
-                                      [num]: { [name]: dataObject.type === 'number' ? parseInt(value) : value },
+                                      [num]: {
+                                        [detail.name]:
+                                          dataObject.type === 'number' ? parseInt(detail.value) : detail.value,
+                                      },
                                     });
                                   }}
                                   ariaLabel={schemaName}
                                   width="100%"
                                 />
                               ) : (
-                                <GoACallout
+                                <GoabCallout
                                   type="important"
                                   size="medium"
                                   testId="form-support-callout"
                                   heading="Not supported"
                                 >
                                   Only string, number, and enum are supported inside arrays
-                                </GoACallout>
+                                </GoabCallout>
                               )}
-                            </GoAFormItem>
+                            </GoabFormItem>
                           </td>
                         );
                       })}
                       {!isInReview && (
                         <td style={{ alignContent: 'baseLine', paddingTop: '18px' }}>
                           <div aria-hidden="true">
-                            <GoAIconButton
+                            <GoabIconButton
                               icon="trash"
                               title="trash button"
                               testId="trash-icon-button"
                               aria-label={`remove-element-${num}`}
                               onClick={() => openDeleteDialog(num)}
-                            ></GoAIconButton>
+                            ></GoabIconButton>
                           </div>
                         </td>
                       )}
@@ -389,10 +393,10 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                   );
                 })}
               </tbody>
-            </GoATable>
+            </GoabTable>
           </FixTableHeaderAlignment>
           {hasAnyErrors && isInReview && (
-            <GoAFormItem error={`There are validation errors for '${capitalizeFirstLetter(rowPath)}'`}></GoAFormItem>
+            <GoabFormItem error={`There are validation errors for '${capitalizeFirstLetter(rowPath)}'`}></GoabFormItem>
           )}
         </>
       )}
@@ -434,7 +438,7 @@ const NonEmptyRowComponent = ({
   return (
     <div key={childPath}>
       {enabled ? (
-        <GoAContainer>
+        <GoabContainer>
           <div>
             <div>
               {GenerateRows(
@@ -452,7 +456,7 @@ const NonEmptyRowComponent = ({
               )}
             </div>
           </div>
-        </GoAContainer>
+        </GoabContainer>
       ) : null}
     </div>
   );
@@ -656,7 +660,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
             isListWithDetail && additionalProps.required && (data === null || data === undefined) ? (
               <b>
                 <ListWithDetailWarningIconDiv>
-                  <GoAIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs" />
+                  <GoabIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs" />
                   {listTitle} is required.
                 </ListWithDetailWarningIconDiv>
               </b>

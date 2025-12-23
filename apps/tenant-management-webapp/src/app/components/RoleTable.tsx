@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { GoACheckbox, GoATable } from '@abgov/react-components';
+import { GoabCheckbox, GoabTable } from '@abgov/react-components';
 import { MarginAdjustment, PaddingRem } from './styled-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
@@ -61,7 +61,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   return (
     <>
       <MarginAdjustment>{getClientId()}</MarginAdjustment>
-      <GoATable width="100%">
+      <GoabTable width="100%">
         <thead>
           <tr>
             {/* Cannot use class to change the width */}
@@ -91,7 +91,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                 {checkedRoles.map((checkedRole, index) => {
                   return (
                     <td className="role" key={`${service}-${role}-checkbox-${index}`}>
-                      <GoACheckbox
+                      <GoabCheckbox
                         name={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                         key={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                         checked={checkedRole.selectedRoles?.includes(compositeRole)}
@@ -128,7 +128,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
             );
           })}
         </tbody>
-      </GoATable>
+      </GoabTable>
     </>
   );
 };

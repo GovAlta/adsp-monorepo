@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { EventDefinitionsList } from './definitionsList';
 import { EventDefinitionModalForm } from './edit';
 import { deleteEventDefinition } from '@store/event/actions';
@@ -48,7 +48,7 @@ export const EventDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdi
       {!indicator.show && definitions && (
         <div>
           <Buttons>
-            <GoAButton
+            <GoabButton
               testId="add-definition"
               onClick={() => {
                 setSelectedDefinition(defaultEventDefinition);
@@ -57,7 +57,7 @@ export const EventDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdi
               }}
             >
               Add definition
-            </GoAButton>
+            </GoabButton>
           </Buttons>
 
           <EventDefinitionsList

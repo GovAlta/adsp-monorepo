@@ -5,18 +5,17 @@ import { ServiceStatusType, PublicServiceStatusTypes, ApplicationStatus } from '
 import { deleteApplication, toggleApplicationStatus } from '@store/status/actions';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoARadioItem,
-  GoARadioGroup,
-  GoACheckbox,
-  GoABadge,
-  GoABadgeType,
-  GoAModal,
-  GoAFormItem,
-  GoANotification,
+  GoabButton,
+  GoabButtonGroup,
+  GoabRadioItem,
+  GoabRadioGroup,
+  GoabCheckbox,
+  GoabBadge,
+  GoabModal,
+  GoabFormItem,
+  GoabNotification,
 } from '@abgov/react-components';
-
+import { GoabBadgeType } from '@abgov/ui-components-common';
 import ApplicationFormModal from '../form';
 
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
@@ -24,7 +23,7 @@ import { DeleteModal } from '@components/DeleteModal';
 import { HealthBar } from './healthBar';
 import { App, AppHeader, AppHealth, AppStatus, AppName } from './styled-components';
 import { saveApplication } from '@store/status/actions';
-
+import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 export const Application = (app: ApplicationStatus): JSX.Element => {
   const dispatch = useDispatch();
   const entries = useSelector((state: RootState) =>
@@ -76,7 +75,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
     return value.substr(0, 1).toUpperCase() + value.substr(1);
   }
 
-  const publicStatusMap: { [key: string]: GoABadgeType } = {
+  const publicStatusMap: { [key: string]: GoabBadgeType } = {
     operational: 'success',
     maintenance: 'important',
     'reported-issues': 'emergency',
@@ -91,16 +90,16 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       <AppHeader>
         <div>
           <AppStatus>
-            <GoAButton
+            <GoabButton
               type="tertiary"
               size="compact"
               testId="status-application-change-status"
               onClick={() => setShowStatusForm(true)}
             >
               Change status
-            </GoAButton>
+            </GoabButton>
             {app.status && (
-              <GoABadge type={publicStatusMap[app.status]} content={humanizeText(app.status)} icon={false} />
+              <GoabBadge type={publicStatusMap[app.status]} content={humanizeText(app.status)} icon={false} />
             )}
           </AppStatus>
         </div>
@@ -120,7 +119,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       <div>ID: {app.appKey}</div>
       <AppHealth>
         <HealthBar data-testid="endpoint" displayCount={30} app={app}></HealthBar>
-        <GoAButton
+        <GoabButton
           type="tertiary"
           size="compact"
           onClick={() => {
@@ -134,10 +133,10 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
           }}
         >
           {app.enabled ? 'Stop health check' : 'Start health check'}
-        </GoAButton>
+        </GoabButton>
       </AppHealth>
 
-      <GoACheckbox
+      <GoabCheckbox
         checked={app.monitorOnly}
         name="monitor-only-checkbox"
         testId="monitor-only-checkbox"
@@ -149,9 +148,9 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         ariaLabel={`monitor-only-checkbox`}
       >
         Monitor only (the application will not be publicly displayed)
-      </GoACheckbox>
+      </GoabCheckbox>
 
-      <GoACheckbox
+      <GoabCheckbox
         checked={app.autoChangeStatus}
         name="autoChangeStatus-checkbox"
         testId="autoChangeStatus-checkbox"
@@ -163,9 +162,9 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         ariaLabel={`autoChangeStatus-checkbox`}
       >
         Change status when site is unresponsive
-      </GoACheckbox>
+      </GoabCheckbox>
 
-      {/* GoAModals */}
+      {/* GoabModals */}
 
       {/* Delete confirmation dialog */}
 
@@ -183,9 +182,9 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
                 notices.filter((notice) => notice.tennantServRef.map((ref) => ref.id).includes(app.appKey)).length >
                   0 && (
                   <div style={{ marginTop: '1rem' }}>
-                    <GoANotification type="emergency">
+                    <GoabNotification type="emergency">
                       This application has attached notices, and deleting it will orphan them
-                    </GoANotification>
+                    </GoabNotification>
                   </div>
                 )}
             </div>
@@ -196,31 +195,31 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       />
 
       {/* Manual status change dialog */}
-      <GoAModal open={showStatusForm} heading="Manual status change">
-        <GoAFormItem label="">
-          <GoARadioGroup
+      <GoabModal open={showStatusForm} heading="Manual status change">
+        <GoabFormItem label="">
+          <GoabRadioGroup
             name="status"
             value={status}
-            onChange={(_name, value) => setStatus(value as ServiceStatusType)}
+            onChange={(detail: GoabRadioGroupOnChangeDetail) => setStatus(detail.value as ServiceStatusType)}
             orientation="vertical"
             testId="status-radio-group"
           >
             {PublicServiceStatusTypes.map((statusType) => (
-              <GoARadioItem key={statusType} name="status" value={statusType}></GoARadioItem>
+              <GoabRadioItem key={statusType} name="status" value={statusType}></GoabRadioItem>
             ))}
-          </GoARadioGroup>
-        </GoAFormItem>
+          </GoabRadioGroup>
+        </GoabFormItem>
 
-        <GoAButtonGroup alignment="end">
-          <GoAButton testId="application-cancel-button" type="secondary" onClick={cancelManualStatusChange}>
+        <GoabButtonGroup alignment="end">
+          <GoabButton testId="application-cancel-button" type="secondary" onClick={cancelManualStatusChange}>
             Cancel
-          </GoAButton>
+          </GoabButton>
 
-          <GoAButton testId="application-save-button" type="primary" onClick={doManualStatusChange}>
+          <GoabButton testId="application-save-button" type="primary" onClick={doManualStatusChange}>
             Save
-          </GoAButton>
-        </GoAButtonGroup>
-      </GoAModal>
+          </GoabButton>
+        </GoabButtonGroup>
+      </GoabModal>
       <ApplicationFormModal
         isOpen={showEditModal}
         title="Edit application"

@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabFormItem, GoabModal } from '@abgov/react-components';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -81,24 +81,24 @@ export const Form = () => {
       header={
         form && (
           <PropertiesContainer>
-            <GoAFormItem mr="xl" mb="s" label="Status">
+            <GoabFormItem mr="xl" mb="s" label="Status">
               {form.status}
-            </GoAFormItem>
-            <GoAFormItem mr="xl" mb="s" label="Applicant">
+            </GoabFormItem>
+            <GoabFormItem mr="xl" mb="s" label="Applicant">
               {form.applicant?.addressAs}
-            </GoAFormItem>
-            <GoAFormItem mr="s" mb="s" label="Created by">
+            </GoabFormItem>
+            <GoabFormItem mr="s" mb="s" label="Created by">
               {form.createdBy.name}
-            </GoAFormItem>
-            <GoAFormItem mr="xl" mb="s" label="Created on">
+            </GoabFormItem>
+            <GoabFormItem mr="xl" mb="s" label="Created on">
               {DateTime.fromISO(form.created).toFormat('LLL d, yyyy')}
-            </GoAFormItem>
-            <GoAFormItem mr="xl" mb="s" label="Submitted on">
+            </GoabFormItem>
+            <GoabFormItem mr="xl" mb="s" label="Submitted on">
               {form.submitted && DateTime.fromISO(form.submitted).toFormat('LLL d, yyyy')}
-            </GoAFormItem>
-            <GoAFormItem mr="s" mb="s" label="Dry run">
-              {form.dryRun ? "true" : "false"}
-            </GoAFormItem>
+            </GoabFormItem>
+            <GoabFormItem mr="s" mb="s" label="Dry run">
+              {form.dryRun ? 'true' : 'false'}
+            </GoabFormItem>
             {form.submitted && <PdfDownload urn={formUrn} />}
           </PropertiesContainer>
         )
@@ -117,37 +117,37 @@ export const Form = () => {
               />
             </ContentContainer>
             <ActionsForm>
-              <GoAButtonGroup alignment="end">
+              <GoabButtonGroup alignment="end">
                 {form?.status === FormStatus.submitted && canSetToDraft && (
-                  <GoAButton
+                  <GoabButton
                     type="secondary"
                     disabled={busy.executing}
                     onClick={() => dispatch(runFormOperation({ urn: AdspId.parse(form.urn), operation: 'to-draft' }))}
                   >
                     Set to draft
-                  </GoAButton>
+                  </GoabButton>
                 )}
                 {form?.status !== FormStatus.archived && canArchive && (
-                  <GoAButton
+                  <GoabButton
                     type={form?.status === FormStatus.submitted ? 'primary' : 'secondary'}
                     disabled={busy.executing}
                     onClick={() => setShowArchiveConfirm(true)}
                   >
                     Archive form
-                  </GoAButton>
+                  </GoabButton>
                 )}
-              </GoAButtonGroup>
+              </GoabButtonGroup>
             </ActionsForm>
-            <GoAModal heading="Archive this form?" open={showArchiveConfirm}>
+            <GoabModal heading="Archive this form?" open={showArchiveConfirm}>
               <div>
                 Archiving the form will change its status to "Archived" so it can be separated from forms that are still
                 being actively worked on. The applicant will no longer be able to update the form.
               </div>
-              <GoAButtonGroup alignment="end" mt="xl">
-                <GoAButton type="secondary" onClick={() => setShowArchiveConfirm(false)}>
+              <GoabButtonGroup alignment="end" mt="xl">
+                <GoabButton type="secondary" onClick={() => setShowArchiveConfirm(false)}>
                   Cancel
-                </GoAButton>
-                <GoAButton
+                </GoabButton>
+                <GoabButton
                   type="primary"
                   onClick={() => {
                     dispatch(runFormOperation({ urn: AdspId.parse(form.urn), operation: 'archive' }));
@@ -155,9 +155,9 @@ export const Form = () => {
                   }}
                 >
                   Archive form
-                </GoAButton>
-              </GoAButtonGroup>
-            </GoAModal>
+                </GoabButton>
+              </GoabButtonGroup>
+            </GoabModal>
           </FormContainer>
         </Tab>
         <Tab

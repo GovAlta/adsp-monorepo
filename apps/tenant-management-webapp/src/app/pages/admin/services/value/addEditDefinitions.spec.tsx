@@ -67,7 +67,7 @@ test('disables namespace and name fields when isEdit is true', () => {
         onSave={() => {}}
         initialValue={initialValue}
         open={true}
-        isEdit={false}
+        isEdit={true}
         onClose={() => {}}
         values={[]}
       />

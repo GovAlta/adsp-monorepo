@@ -1,4 +1,4 @@
-import { GoAButton, GoATable } from '@abgov/react-components';
+import { GoabButton, GoabTable } from '@abgov/react-components';
 import { Categorization, isVisible, Layout, SchemaBasedCondition, Scoped, UISchemaElement } from '@jsonforms/core';
 import { JsonFormsDispatch, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { useContext } from 'react';
@@ -30,7 +30,7 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
           <>
             <TableReviewPageTitleRow>
               <TableReviewCategoryLabel>{categoryLabel}</TableReviewCategoryLabel>
-              <GoAButton
+              <GoabButton
                 type="tertiary"
                 testId={`page-review-change-${category.label}-btn`}
                 onClick={() => {
@@ -41,7 +41,7 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
                 }}
               >
                 Change
-              </GoAButton>
+              </GoabButton>
             </TableReviewPageTitleRow>
             <TableReviewItemSection key={index}>
               {category.uischema?.elements
@@ -80,7 +80,7 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
                 .flat()
                 .map((element, index) => {
                   return (
-                    <GoATable width="100%" key={index}>
+                    <GoabTable width="100%" key={index}>
                       <tbody>
                         <JsonFormsDispatch
                           data-testid={`jsonforms-object-list-defined-elements-dispatch`}
@@ -91,7 +91,7 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
                           cells={cells}
                         />
                       </tbody>
-                    </GoATable>
+                    </GoabTable>
                   );
                 })}
             </TableReviewItemSection>

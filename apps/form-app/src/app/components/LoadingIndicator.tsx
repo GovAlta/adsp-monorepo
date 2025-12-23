@@ -1,4 +1,4 @@
-import { GoASpinner } from '@abgov/react-components';
+import { GoabSpinner } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
 
@@ -10,7 +10,7 @@ interface LoadingIndicatorProps {
 const LoadingIndicatorComponent: FunctionComponent<LoadingIndicatorProps> = ({ className, isLoading }) => {
   return (
     <div className={className} data-loading={isLoading}>
-      <GoASpinner size="large" type="infinite" />
+      <GoabSpinner size="large" type="infinite" />
     </div>
   );
 };

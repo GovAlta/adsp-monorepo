@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import Container from '@components/Container';
 import { Grid, GridItem } from '@core-services/app-common';
 import { RootState } from '@store/index';
-import { GoAContainer } from '@abgov/react-components';
+import { GoabContainer } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 
 import { CardContent, ServiceLayoutMin, CardLayout, RedirectButton, H2, Paragraph } from './LandingComponents';
@@ -27,7 +27,7 @@ export const LandingSample = (): JSX.Element => {
           </ServiceLayoutMin>
           <Grid>
             <GridItem md={4} hSpacing={0.5}>
-              <GoAContainer accent="thin" type="interactive">
+              <GoabContainer accent="thin" type="interactive">
                 <CardLayout>
                   <h2>Chat app</h2>
                   <CardContent maxHeight={100}>
@@ -36,7 +36,7 @@ export const LandingSample = (): JSX.Element => {
                   </CardContent>
                   <RedirectButton name="chat-service" url={`${chatApiUrl}`} label="Learn more" />
                 </CardLayout>
-              </GoAContainer>
+              </GoabContainer>
             </GridItem>
             <GridItem md={4} hSpacing={0.5}></GridItem>
 

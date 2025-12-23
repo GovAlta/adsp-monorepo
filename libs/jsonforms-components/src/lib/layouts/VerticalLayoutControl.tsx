@@ -2,7 +2,7 @@ import React from 'react';
 import { LayoutRenderer, LayoutRendererProps } from '../util/layout';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { LayoutProps, RankedTester, rankWith, uiTypeIs, VerticalLayout } from '@jsonforms/core';
-import { Spacing } from '@abgov/react-components';
+import { Spacing } from '@abgov/ui-components-common';
 
 export const GoAVerticalLayoutComponent = ({
   uischema,

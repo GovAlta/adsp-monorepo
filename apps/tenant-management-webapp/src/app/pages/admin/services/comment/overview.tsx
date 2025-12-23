@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { OverviewLayout } from '@components/Overview';
 import { fetchCommentMetrics } from '@store/comment/action';
 import { useDispatch } from 'react-redux';
@@ -29,7 +29,7 @@ export const CommentOverview: FunctionComponent<CommentOverviewProps> = ({ setOp
       testId="comment-service-overview"
       description={description}
       addButton={
-        <GoAButton
+        <GoabButton
           testId="add-definition"
           onClick={() => {
             setOpenAddTopicTypes(true);
@@ -37,7 +37,7 @@ export const CommentOverview: FunctionComponent<CommentOverviewProps> = ({ setOp
           }}
         >
           Add topic type
-        </GoAButton>
+        </GoabButton>
       }
       extra={<CommentMetrics />}
     />

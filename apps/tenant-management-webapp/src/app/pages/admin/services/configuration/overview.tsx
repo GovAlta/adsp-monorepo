@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { OverviewLayout } from '@components/Overview';
 import { useNavigate } from 'react-router-dom';
 
@@ -22,7 +22,7 @@ export const ConfigurationOverview: FunctionComponent<ConfigurationOverviewProps
       testId="configuration-service-overview"
       description={description}
       addButton={
-        <GoAButton
+        <GoabButton
           testId="add-definition"
           disabled={disabled}
           onClick={() => {
@@ -31,7 +31,7 @@ export const ConfigurationOverview: FunctionComponent<ConfigurationOverviewProps
           }}
         >
           Add definition
-        </GoAButton>
+        </GoabButton>
       }
     />
   );

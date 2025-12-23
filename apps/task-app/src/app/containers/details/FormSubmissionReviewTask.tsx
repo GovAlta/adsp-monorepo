@@ -1,11 +1,11 @@
 import { GoAReviewRenderers } from '@abgov/jsonforms-components';
 import {
-  GoAButtonGroup,
-  GoAButton,
-  GoAFormItem,
-  GoADropdown,
-  GoADropdownItem,
-  GoATextArea,
+  GoabButtonGroup,
+  GoabButton,
+  GoabFormItem,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabTextArea,
 } from '@abgov/react-components';
 import { AdspId } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
@@ -20,6 +20,7 @@ import { registerDetailsComponent } from './register';
 
 import { ReviewContent, ActionContainer, FormReviewContainer } from './styled-components';
 import { TaskCancelModal } from './TaskCancelModal';
+import { GoabTextAreaOnKeyPressDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   user,
@@ -81,65 +82,64 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
   const renderDisposition = () => {
     return (
       <div id="form-disposition-block">
-        <GoAFormItem requirement="required" error={errors?.['dispositionStatus']} label="Disposition">
-          <GoADropdown
+        <GoabFormItem requirement="required" error={errors?.['dispositionStatus']} label="Disposition">
+          <GoabDropdown
             testId="formDispositionStatus"
             value={dispositionStatus}
             disabled={disableFormDispositionControls()}
-            onChange={(_, value: string) => {
-              setDispositionStatus(value);
+            onChange={(detail: GoabDropdownOnChangeDetail) => {
+              setDispositionStatus(detail.value);
               validators.remove('dispositionStatus');
-              validators['dispositionStatus'].check(value);
+              validators['dispositionStatus'].check(detail.value);
             }}
-            relative={true}
             width={'600px'}
           >
-            <GoADropdownItem
+            <GoabDropdownItem
               key={NO_DISPOSITION_SELECTED.id}
               value={NO_DISPOSITION_SELECTED.value}
               label={NO_DISPOSITION_SELECTED.label}
             />
             {dispositionStates?.map((dip, i) => (
-              <GoADropdownItem key={dip.id} value={dip.name} label={dip.description} />
+              <GoabDropdownItem key={dip.id} value={dip.name} label={dip.description} />
             ))}
-          </GoADropdown>
-        </GoAFormItem>
+          </GoabDropdown>
+        </GoabFormItem>
       </div>
     );
   };
   const renderReason = () => {
     return (
       <div id="form-reason-block">
-        <GoAFormItem label="Reason" requirement="required" error={errors?.['dispositionReason']} mt="m">
-          <GoATextArea
+        <GoabFormItem label="Reason" requirement="required" error={errors?.['dispositionReason']} mt="m">
+          <GoabTextArea
             name="reason"
             value={dispositionReason}
             disabled={disableFormDispositionControls()}
             width="600px"
             testId="reason"
             aria-label="reason"
-            onKeyPress={(name, value: string) => {
-              setDispositionReason(value);
+            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+              setDispositionReason(detail.value);
               validators.remove('dispositionReason');
-              validators['dispositionReason'].check(value);
+              validators['dispositionReason'].check(detail.value);
             }}
             // eslint-disable-next-line
             onChange={() => {}}
           />
-        </GoAFormItem>
+        </GoabFormItem>
       </div>
     );
   };
 
   const renderButtonGroup = () => {
     return (
-      <GoAButtonGroup alignment="end" mt="m">
-        <GoAButton type="tertiary" mr="l" onClick={onClose}>
+      <GoabButtonGroup alignment="end" mt="m">
+        <GoabButton type="tertiary" mr="l" onClick={onClose}>
           Close
-        </GoAButton>
+        </GoabButton>
         {task?.status === TASK_STATUS.IN_PROGRESS && (
           <>
-            <GoAButton
+            <GoabButton
               type="secondary"
               disabled={!user.isWorker || isExecuting}
               onClick={() => {
@@ -147,8 +147,8 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
               }}
             >
               Cancel review
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               disabled={buttonDisabledForCompleteTask()}
               onClick={async () => {
                 await dispatch(
@@ -164,15 +164,15 @@ export const FormSubmissionReviewTask: FunctionComponent<TaskDetailsProps> = ({
               }}
             >
               Submit decision
-            </GoAButton>
+            </GoabButton>
           </>
         )}
         {task?.status === TASK_STATUS.PENDING && (
-          <GoAButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
+          <GoabButton disabled={!user.isWorker || isExecuting} onClick={onStart}>
             Start review
-          </GoAButton>
+          </GoabButton>
         )}
-      </GoAButtonGroup>
+      </GoabButtonGroup>
     );
   };
 

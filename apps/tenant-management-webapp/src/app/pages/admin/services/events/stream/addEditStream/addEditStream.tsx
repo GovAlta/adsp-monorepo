@@ -9,15 +9,15 @@ import { generateEventOptions } from '../utils';
 import { EventDefinition } from '@store/event/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import {
-  GoAFilterChip,
-  GoACheckbox,
-  GoAInput,
-  GoATextArea,
-  GoAButton,
-  GoAButtonGroup,
-  GoASkeleton,
-  GoAFormItem,
-  GoAModal,
+  GoabFilterChip,
+  GoabCheckbox,
+  GoabInput,
+  GoabTextArea,
+  GoabButton,
+  GoabButtonGroup,
+  GoabSkeleton,
+  GoabFormItem,
+  GoabModal,
 } from '@abgov/react-components';
 import { initialStream } from '@store/stream/models';
 import { selectAddEditInitStream } from '@store/stream/selectors';
@@ -26,6 +26,8 @@ import { ResetModalState } from '@store/session/actions';
 import { selectModalStateByType } from '@store/session/selectors';
 import { selectRolesObject, constructRoleObjFromUrns, roleObjectToUrns } from '@store/sharedSelectors/roles';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+
 interface AddEditStreamProps {
   onSave: (stream: Stream) => void;
   eventDefinitions: Record<string, EventDefinition>;
@@ -88,13 +90,13 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
 
   return (
     <StreamModalStyles>
-      <GoAModal
+      <GoabModal
         testId="stream-form"
         open={isOpen}
         heading={isEdit ? 'Edit stream' : 'Add stream'}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               testId="form-cancel"
               type="secondary"
               onClick={() => {
@@ -104,8 +106,8 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
               }}
             >
               Cancel
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               type="primary"
               testId="form-save"
               disabled={!stream?.name || validators.haveErrors()}
@@ -119,12 +121,12 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
               }}
             >
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
+        <GoabFormItem error={errors?.['name']} label="Name">
+          <GoabInput
             type="text"
             name="stream-name"
             width="100%"
@@ -132,31 +134,31 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
             disabled={isEdit}
             testId="stream-name"
             aria-label="stream-name"
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               validators.remove('name');
-              validators['name'].check(value);
-              const streamId = toKebabName(value);
-              setStream({ ...stream, name: value, id: streamId });
+              validators['name'].check(detail.value);
+              const streamId = toKebabName(detail.value);
+              setStream({ ...stream, name: detail.value, id: streamId });
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Stream ID">
+        </GoabFormItem>
+        <GoabFormItem label="Stream ID">
           <IdField>{stream.id}</IdField>
-        </GoAFormItem>
-        <GoAFormItem label="Description">
-          <GoATextArea
+        </GoabFormItem>
+        <GoabFormItem label="Description">
+          <GoabTextArea
             name="stream-description"
             value={stream.description}
             testId="stream-description"
             aria-label="stream-description"
             width="100%"
-            onKeyPress={(name, value, key) => {
+            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
               validators.remove('description');
-              validators['description'].check(value);
-              setStream({ ...stream, description: value });
+              validators['description'].check(detail.value);
+              setStream({ ...stream, description: detail.value });
             }}
             // eslint-disable-next-line
-            onChange={(name, value) => {}}
+            onChange={() => {}}
           />
           <HelpTextComponent
             length={stream?.description?.length || 0}
@@ -164,8 +166,8 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
             descErrMessage={descErrMessage}
             errorMsg={errors?.['description']}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Select events">
+        </GoabFormItem>
+        <GoabFormItem label="Select events">
           <GoADropdown
             name="streamEvents"
             selectedValues={streamEvents}
@@ -188,14 +190,14 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
                 <GoADropdownOption label={item.label} value={item.value} key={item.key} data-testid={item.dataTestId} />
               ))}
           </GoADropdown>
-        </GoAFormItem>
+        </GoabFormItem>
         <ChipsWrapper>
           {streamEvents.map((eventChip) => {
-            return <GoAFilterChip key={eventChip} content={eventChip} onClick={() => deleteEventChip(eventChip)} />;
+            return <GoabFilterChip key={eventChip} content={eventChip} onClick={() => deleteEventChip(eventChip)} />;
           })}
         </ChipsWrapper>
 
-        <GoACheckbox
+        <GoabCheckbox
           checked={stream.publicSubscribe}
           name="stream-anonymousRead-checkbox"
           testId="stream-anonymousRead-checkbox"
@@ -209,7 +211,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
           text="Make stream public"
         />
 
-        {rolesObj ? '' : <GoASkeleton type="text" />}
+        {rolesObj ? '' : <GoabSkeleton type="text" />}
         {!stream.publicSubscribe && rolesObj ? (
           Object.entries(rolesObj).map(([clientId, roles]) => {
             return (
@@ -248,7 +250,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
         )}
         <br />
         <br />
-      </GoAModal>
+      </GoabModal>
     </StreamModalStyles>
   );
 };

@@ -5,13 +5,13 @@ import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 
 import {
-  GoAInput,
-  GoAModal,
-  GoAButtonGroup,
-  GoAFormItem,
-  GoAButton,
-  GoAFilterChip,
-  GoASkeleton,
+  GoabInput,
+  GoabModal,
+  GoabButtonGroup,
+  GoabFormItem,
+  GoabButton,
+  GoabFilterChip,
+  GoabSkeleton,
 } from '@abgov/react-components';
 import { FormDefinition, FormResourceTagResult } from '@store/form/model';
 import { ResourceTag } from '@store/directory/models';
@@ -20,6 +20,7 @@ import { RootState } from '@store/index';
 import { fetchFormResourceTags, fetchFormTagByTagName } from '@store/form/action';
 import { AddRemoveResourceTagSpacing } from './style-components';
 import { selectFormResourceTags } from '@store/form/selectors';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddRemoveResourceTagModalProps {
   baseResourceFormUrn: string;
@@ -35,7 +36,7 @@ const TagChipComponent: FunctionComponent<{
   onDelete(tag: FormResourceTagResult);
 }> = ({ tag, onDelete }) => {
   return (
-    <GoAFilterChip
+    <GoabFilterChip
       testId={`tag-label-${tag.label}`}
       content={tag.label}
       onClick={() => {
@@ -127,14 +128,14 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
     return false;
   };
   return (
-    <GoAModal
+    <GoabModal
       testId="add-resource-tag-model"
       open={open}
       heading={`Add tags`}
-      width="640px"
+      maxWidth="640px"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             testId={`add-resource-tag-name-cancel`}
             type="secondary"
             onClick={() => {
@@ -143,8 +144,8 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
             }}
           >
             Close
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="resource-tag-save"
             disabled={isNotValid()}
@@ -161,16 +162,16 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
             }}
           >
             {searchedTagExists ? 'Add tag' : 'Create and add tag'}
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <AddRemoveResourceTagSpacing>
         Add a tag to "{initialFormDefinition.id}". Enter the tag label that you want to use. A new tag will be created
         if necessary.
       </AddRemoveResourceTagSpacing>
-      <GoAFormItem error={errors['name']} label="Tag" mb={'m'}>
-        <GoAInput
+      <GoabFormItem error={errors['name']} label="Tag" mb={'m'}>
+        <GoabInput
           type="text"
           name="add-resource-tag-name"
           value={tag}
@@ -178,28 +179,28 @@ export const AddRemoveResourceTagModal: FunctionComponent<AddRemoveResourceTagMo
           aria-label="add-resource-tag-name"
           width="100%"
           maxLength={MAX_TAG_LENGTH}
-          onChange={(name, value) => {
+          onChange={(detail: GoabInputOnChangeDetail) => {
             validators.remove('name');
             const validations = {
-              name: value,
+              name: detail.value,
             };
 
             validators.checkAll(validations);
             setIsFetchLoading(false);
             if (!validators.haveErrors()) {
-              debouncedChangeHandler(value);
+              debouncedChangeHandler(detail.value);
             }
           }}
         />
-      </GoAFormItem>
+      </GoabFormItem>
 
       {indicator?.show && isFetchLoading && resourceTags === undefined ? (
-        <GoASkeleton type="text" size={3} testId="addResourceModal-Skeleton" key={1} />
+        <GoabSkeleton type="text" size={'3'} testId="addResourceModal-Skeleton" key={1} />
       ) : (
         resourceTags
           ?.sort((a, b) => a.label?.toLowerCase().localeCompare(b.label?.toLowerCase()))
           .map((tag) => <TagChipComponent key={tag.value} tag={tag} onDelete={onDelete} />)
       )}
-    </GoAModal>
+    </GoabModal>
   );
 };

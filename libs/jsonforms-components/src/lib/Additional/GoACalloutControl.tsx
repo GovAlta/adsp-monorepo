@@ -1,12 +1,12 @@
 import React from 'react';
 import { ControlProps, RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoACallout, GoACalloutSize, GoACalloutType } from '@abgov/react-components';
+import { GoabCallout } from '@abgov/react-components';
 import { Visible } from '../util';
-
+import { GoabCalloutSize, GoabCalloutType } from '@abgov/ui-components-common';
 export interface CalloutProps {
-  size?: GoACalloutSize;
-  type?: GoACalloutType;
+  size?: GoabCalloutSize;
+  type?: GoabCalloutType;
   message?: string;
 }
 
@@ -20,9 +20,9 @@ export const callout = (props: CalloutProps): JSX.Element => {
   };
   const testid = componentProps.message?.replace(/\s/g, '');
   return (
-    <GoACallout {...componentProps} data-testid={testid}>
+    <GoabCallout {...componentProps} data-testid={testid}>
       {componentProps?.message}
-    </GoACallout>
+    </GoabCallout>
   );
 };
 const GoACalloutController = (props: ControlProps) => {

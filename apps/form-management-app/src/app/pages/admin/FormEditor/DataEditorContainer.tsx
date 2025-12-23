@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import styles from './Editor.module.scss';
 import { isValidJSONSchemaCheck } from '../../../utils/checkInput';
 import { useWindowDimensions } from '../../../utils/useWindowDimensions';
-import { GoAFormItem } from '@abgov/react-components';
+import { GoabFormItem } from '@abgov/react-components';
 import MonacoEditor from '@monaco-editor/react';
 import { JsonSchema } from '@jsonforms/core';
 
@@ -56,7 +56,7 @@ export const DataEditorContainer: React.FC<DataEditorContainerProps> = ({
 
   return (
     <div>
-      <GoAFormItem
+      <GoabFormItem
         error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
         label=""
       >
@@ -111,7 +111,7 @@ export const DataEditorContainer: React.FC<DataEditorContainerProps> = ({
             }}
           />
         </div>
-      </GoAFormItem>
+      </GoabFormItem>
     </div>
   );
 };

@@ -2,7 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { TestWebhooks } from '@store/status/actions';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
-import { GoAButton, GoAButtonGroup, GoARadioItem, GoARadioGroup, GoAModal, GoAFormItem } from '@abgov/react-components';
+import {
+  GoabButton,
+  GoabButtonGroup,
+  GoabRadioItem,
+  GoabRadioGroup,
+  GoabModal,
+  GoabFormItem,
+} from '@abgov/react-components';
 import { selectWebhookToTestInStatus, selectInitTestWebhookCriteria } from '@store/status/selectors';
 import { renderNoItem } from '@components/NoItem';
 import styled from 'styled-components';
@@ -10,6 +17,7 @@ import { RootState } from '@store/index';
 import { ResetModalState } from '@store/session/actions';
 import { PageIndicator } from '@components/Indicator';
 import { EntryDetail } from '../../styled-components';
+import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 export const TestWebhookModal = (): JSX.Element => {
   const dispatch = useDispatch();
 
@@ -62,14 +70,14 @@ export const TestWebhookModal = (): JSX.Element => {
   ];
 
   return (
-    <GoAModalStyle>
-      <GoAModal
+    <GoabModalStyle>
+      <GoabModal
         open={webhook !== undefined}
         testId={'test-webhook'}
         heading={`Test webhook - ${webhook?.name}`}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               type="secondary"
               onClick={() => {
                 dispatch(clearEventLogEntries());
@@ -78,8 +86,8 @@ export const TestWebhookModal = (): JSX.Element => {
               }}
             >
               Close
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               type="primary"
               disabled={selectedStatusName === null}
               onClick={() => {
@@ -87,27 +95,27 @@ export const TestWebhookModal = (): JSX.Element => {
               }}
             >
               Test
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
-        <GoAFormItem label="Events">
+        <GoabFormItem label="Events">
           {!orderedGroupNames && renderNoItem('event definition')}
 
           {events && (
-            <GoARadioGroup
+            <GoabRadioGroup
               name="option"
               value={selectedStatusName}
-              onChange={(_, value) => setSelectedStatusName(value)}
+              onChange={(detail: GoabRadioGroupOnChangeDetail) => setSelectedStatusName(detail.value)}
               orientation="vertical"
               testId="status-radio-group"
             >
               {events?.map((val) => (
-                <GoARadioItem name="option" value={val}></GoARadioItem>
+                <GoabRadioItem name="option" value={val}></GoabRadioItem>
               ))}
-            </GoARadioGroup>
+            </GoabRadioGroup>
           )}
-        </GoAFormItem>
+        </GoabFormItem>
 
         {(showEntries || (indicator.show && indicator.message !== 'Loading...')) && (
           <EntryDetail>
@@ -125,12 +133,12 @@ export const TestWebhookModal = (): JSX.Element => {
             )}
           </EntryDetail>
         )}
-      </GoAModal>
-    </GoAModalStyle>
+      </GoabModal>
+    </GoabModalStyle>
   );
 };
 
-const GoAModalStyle = styled.div`
+const GoabModalStyle = styled.div`
   .group-name {
     font-size: var(--goa-font-size-5);
     font-weight: var(--fw-bold);

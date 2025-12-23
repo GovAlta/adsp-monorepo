@@ -5,7 +5,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { EventLogEntries } from './eventLogEntries';
 import { EventSearchForm } from './eventSearchForm';
-import { GoAButton, GoACallout } from '@abgov/react-components';
+import { GoabButton, GoabCallout } from '@abgov/react-components';
 
 import { EventSearchCriteria } from '@store/event/models';
 import { LoadMoreWrapper } from '@components/styled-components';
@@ -65,16 +65,16 @@ export const EventLog: FunctionComponent = () => {
               <EventLogEntries onSearch={onSearch} />
               {next && (
                 <LoadMoreWrapper>
-                  <GoAButton disabled={isLoading} type="tertiary" onClick={onNext}>
+                  <GoabButton disabled={isLoading} type="tertiary" onClick={onNext}>
                     Load more
-                  </GoAButton>
+                  </GoabButton>
                 </LoadMoreWrapper>
               )}
             </>
           ) : (
-            <GoACallout heading="Value reader role required" type="information" testId="role-need-callout">
+            <GoabCallout heading="Value reader role required" type="information" testId="role-need-callout">
               <p>You need the urn:ads:platform:value-service 'value-reader' role to see the event log.</p>
-            </GoACallout>
+            </GoabCallout>
           )}
         </section>
       </ServiceColumnLayout>

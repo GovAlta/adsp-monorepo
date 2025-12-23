@@ -1,9 +1,10 @@
 import { CellProps, WithClassname, ControlProps, isNumberControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoAInput } from '@abgov/react-components';
+import { GoabInput } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { onBlurForNumericControl, onChangeForNumericControl } from '../../util/inputControlUtils';
+import { GoabInputOnChangeDetail, GoabInputOnBlurDetail, GoabInputOnKeyPressDetail } from '@abgov/ui-components-common';
 
 export type GoAInputNumberProps = CellProps & WithClassname & WithInputProps;
 
@@ -21,7 +22,7 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
   const width = uischema?.options?.componentProps?.width ?? '100%';
 
   return (
-    <GoAInput
+    <GoabInput
       type="number"
       error={isVisited && errors.length > 0}
       disabled={!enabled}
@@ -34,23 +35,23 @@ export const GoANumberInput = (props: GoAInputNumberProps): JSX.Element => {
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-      onBlur={(name: string, value: string) => {
+      onBlur={(detail: GoabInputOnBlurDetail) => {
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
         onBlurForNumericControl({
-          name,
-          value,
+          name: detail.name,
+          value: detail.value,
           controlProps: props as ControlProps,
         });
       }}
-      onChange={(name: string, value: string) => {
+      onChange={(detail: GoabInputOnChangeDetail) => {
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
         onChangeForNumericControl({
-          name,
-          value,
+          name: detail.name,
+          value: detail.value,
           controlProps: props as ControlProps,
         });
       }}

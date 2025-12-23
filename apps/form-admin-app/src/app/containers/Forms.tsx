@@ -1,11 +1,11 @@
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoAIcon,
-  GoATable,
+  GoabButton,
+  GoabButtonGroup,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabIcon,
+  GoabTable,
 } from '@abgov/react-components';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -41,7 +41,7 @@ import { DataValueCriteriaItem } from '../components/DataValueCriteriaItem';
 import { AddTagModal } from '../components/AddTagModal';
 import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
-
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 interface FormRowProps {
   dispatch: AppDispatch;
   navigate: NavigateFunction;
@@ -62,7 +62,7 @@ const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSuppo
 
   return (
     <tr key={form.urn}>
-      <td>{topic?.requiresAttention && <GoAIcon type="mail-unread" size="small" ariaLabel="mail-unread" />}</td>
+      <td>{topic?.requiresAttention && <GoabIcon type="mail-unread" size="small" ariaLabel="mail-unread" />}</td>
       <td>{form.created.toFormat('LLL d, yyyy')}</td>
       <td>{form.status}</td>
       <td>
@@ -72,11 +72,11 @@ const FormRow: FunctionComponent<FormRowProps> = ({ dispatch, navigate, hasSuppo
         <DataValueCell key={path}>{form.values[path]}</DataValueCell>
       ))}
       <td>
-        <GoAButtonGroup alignment="end">
-          <GoAButton type="secondary" size="compact" onClick={() => navigate(form.id)}>
+        <GoabButtonGroup alignment="end">
+          <GoabButton type="secondary" size="compact" onClick={() => navigate(form.id)}>
             Open
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </td>
     </tr>
   );
@@ -132,27 +132,26 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
                 )
               }
             />
-            <GoAFormItem label="Status" mr="m">
-              <GoADropdown
-                relative={true}
+            <GoabFormItem label="Status" mr="m">
+              <GoabDropdown
                 name="form-status"
                 disabled={!!criteria.tag}
                 value={criteria.statusEquals}
-                onChange={(_, value: string) =>
+                onChange={(detail: GoabDropdownOnChangeDetail) =>
                   dispatch(
                     formActions.setFormCriteria({
                       ...criteria,
-                      statusEquals: value,
+                      statusEquals: detail.value,
                     })
                   )
                 }
               >
-                <GoADropdownItem value="" label="<No status filter>" />
-                <GoADropdownItem value="submitted" label="Submitted" />
-                <GoADropdownItem value="draft" label="Draft" />
-                <GoADropdownItem value="archived" label="Archived" />
-              </GoADropdown>
-            </GoAFormItem>
+                <GoabDropdownItem value="" label="<No status filter>" />
+                <GoabDropdownItem value="submitted" label="Submitted" />
+                <GoabDropdownItem value="draft" label="Draft" />
+                <GoabDropdownItem value="archived" label="Archived" />
+              </GoabDropdown>
+            </GoabFormItem>
             {dataValues.map(({ name, path, type }) => (
               <DataValueCriteriaItem
                 key={path}
@@ -175,32 +174,32 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               />
             ))}
           </SearchFormItemsContainer>
-          <GoAButtonGroup alignment="end" mt="l">
+          <GoabButtonGroup alignment="end" mt="l">
             {canExport && (
-              <GoAButton type="tertiary" mr="xl" disabled={!!criteria.tag} onClick={() => setShowExport(true)}>
+              <GoabButton type="tertiary" mr="xl" disabled={!!criteria.tag} onClick={() => setShowExport(true)}>
                 Export to file
-              </GoAButton>
+              </GoabButton>
             )}
-            <GoAButton
+            <GoabButton
               type="secondary"
               onClick={() => dispatch(formActions.setFormCriteria({ statusEquals: 'submitted' }))}
             >
               Reset filter
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               type="primary"
               leadingIcon="search"
               disabled={busy.loading}
               onClick={() => dispatch(findForms({ definitionId, criteria }))}
             >
               Find forms
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         </form>
       }
     >
       <ContentContainer>
-        <GoATable width="100%">
+        <GoabTable width="100%">
           <thead>
             <tr>
               <th></th>
@@ -233,7 +232,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definitionId }) => {
               onLoadMore={(after) => dispatch(findForms({ definitionId, criteria, after }))}
             />
           </tbody>
-        </GoATable>
+        </GoabTable>
       </ContentContainer>
       <AddTagModal
         open={!!showTagForm}

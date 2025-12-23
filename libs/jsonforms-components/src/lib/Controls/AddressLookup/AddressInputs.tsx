@@ -1,7 +1,12 @@
 import React from 'react';
 import { Address } from './types';
-import { GoAFormItem, GoAInput, GoAGrid, GoADropdownItem, GoADropdown } from '@abgov/react-components';
+import { GoabFormItem, GoabInput, GoabGrid, GoabDropdownItem, GoabDropdown } from '@abgov/react-components';
 import { LabelDiv } from './styled-components';
+import {
+  GoabInputOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+  GoabInputOnBlurDetail,
+} from '@abgov/ui-components-common';
 
 interface AddressInputsProps {
   address: Address;
@@ -43,8 +48,8 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
 
   return (
     <>
-      <GoAFormItem label="">
-        <GoAInput
+      <GoabFormItem label="">
+        <GoabInput
           name="addressLine2"
           testId="address-form-address2"
           disabled={!enabled}
@@ -52,35 +57,35 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
           ariaLabel={'address-form-address2'}
           placeholder="Unit number, suite, apartment"
           value={address?.addressLine2 || ''}
-          onChange={(name, value) => handleInputChange(name, value)}
+          onChange={(detail: GoabInputOnChangeDetail) => handleInputChange(detail.name, detail.value)}
           width="100%"
         />
-      </GoAFormItem>
+      </GoabFormItem>
       <br />
-      <GoAGrid minChildWidth="0ch" gap="s">
-        <GoAFormItem
+      <GoabGrid minChildWidth="0ch" gap="s">
+        <GoabFormItem
           label="City"
           error={errors?.['municipality'] ?? ''}
           requirement={requiredFields?.includes('municipality') ? 'required' : 'optional'}
         >
-          <GoAInput
+          <GoabInput
             name="municipality"
             testId="address-form-city"
             ariaLabel={'address-form-city'}
             disabled={!enabled}
             readonly={readOnly}
             value={address?.municipality || ''}
-            onChange={(name, value) => handleInputChange(name, value)}
-            onBlur={(name) => handleOnBlur(name)}
+            onChange={(detail: GoabInputOnChangeDetail) => handleInputChange(detail.name, detail.value)}
+            onBlur={(detail: GoabInputOnBlurDetail) => handleOnBlur(detail.name)}
             width="100%"
           />
-        </GoAFormItem>
-        <GoAFormItem
+        </GoabFormItem>
+        <GoabFormItem
           label="Postal code"
           error={errors?.postalCode ?? ''}
           requirement={requiredFields?.includes('postalCode') ? 'required' : 'optional'}
         >
-          <GoAInput
+          <GoabInput
             name="postalCode"
             testId="address-form-postal-code"
             ariaLabel={'address-form-postal-code'}
@@ -88,38 +93,39 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
             readonly={readOnly}
             placeholder="A0A 0A0"
             value={address?.postalCode || ''}
-            onChange={(name, value) => handleInputChange(name, value)}
-            onBlur={(name) => handleOnBlur(name)}
+            onChange={(detail: GoabInputOnChangeDetail) => handleInputChange(detail.name, detail.value)}
+            onBlur={(detail: GoabInputOnBlurDetail) => handleOnBlur(detail.name)}
             width="100%"
             maxLength={7}
           />
-        </GoAFormItem>
-      </GoAGrid>
+        </GoabFormItem>
+      </GoabGrid>
       <br />
-      <GoAGrid minChildWidth="0" gap="s">
-        <GoAFormItem label="Province">
+      <GoabGrid minChildWidth="0" gap="s">
+        <GoabFormItem label="Province">
           {isAlbertaAddress && <LabelDiv data-testid="address-form-province">Alberta</LabelDiv>}
           {!isAlbertaAddress && (
-            <GoADropdown
+            <GoabDropdown
               name="subdivisionCode"
               disabled={!enabled}
               testId="address-form-province-dropdown"
               ariaLabel={'address-form-province'}
               value={address?.subdivisionCode || ''}
-              onChange={(_, value) => handleInputChange('subdivisionCode', value as string)}
-              relative={true}
+              onChange={(detail: GoabDropdownOnChangeDetail) =>
+                handleInputChange('subdivisionCode', detail.value as string)
+              }
               width="25ch"
             >
               {provinces.map((w) => (
-                <GoADropdownItem key={w.value} value={w.value} label={w.label} />
+                <GoabDropdownItem key={w.value} value={w.value} label={w.label} />
               ))}
-            </GoADropdown>
+            </GoabDropdown>
           )}
-        </GoAFormItem>
-        <GoAFormItem label="Country">
+        </GoabFormItem>
+        <GoabFormItem label="Country">
           <LabelDiv data-testid="address-form-country">Canada</LabelDiv>
-        </GoAFormItem>
-      </GoAGrid>
+        </GoabFormItem>
+      </GoabGrid>
     </>
   );
 };

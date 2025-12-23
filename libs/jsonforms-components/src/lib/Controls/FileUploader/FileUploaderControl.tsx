@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { GoAFileUploadInput, GoAFormItem, GoACircularProgress, GoAModal } from '@abgov/react-components';
+import { GoabFileUploadInput, GoabFormItem, GoabCircularProgress, GoabModal } from '@abgov/react-components';
 import { WithClassname, ControlProps } from '@jsonforms/core';
 
 import styled from 'styled-components';
@@ -8,7 +8,7 @@ import { JsonFormContext } from '../../Context';
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
 import { DeleteFileModal } from './DeleteFileModal';
 import { convertToSentenceCase, Visible } from '../../util';
-
+import { GoabFileUploadInputOnSelectFileDetail } from '@abgov/ui-components-common';
 interface FileUploadAdditionalProps {
   isStepperReview?: boolean;
 }
@@ -204,20 +204,28 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   return (
     <Visible visible={visible}>
       <FileUploaderStyle className="FileUploader">
-        <GoAFormItem label={sentenceCaseLabel} requirement={required ? 'required' : undefined} error={uploadError} />
+        <GoabFormItem label={sentenceCaseLabel} requirement={required ? 'required' : undefined} error={uploadError} />
         {!readOnly && (
           <div className="file-upload">
-            <GoAFileUploadInput variant={variant} onSelectFile={uploadFile} maxFileSize={maxFileSize} accept={accept} />
+            <GoabFileUploadInput
+              variant={variant}
+              onSelectFile={(detail: GoabFileUploadInputOnSelectFileDetail) => {
+                // adjust based on the actual shape of "detail"
+                uploadFile(detail.file); // or detail.files[0], etc.
+              }}
+              maxFileSize={maxFileSize}
+              accept={accept}
+            />
           </div>
         )}
         {helpText && <HelpText>{helpText}</HelpText>}
         <div>
           {loadingFileName !== undefined ? (
-            <GoAModal open={loadingFileName !== undefined}>
+            <GoabModal open={loadingFileName !== undefined}>
               <div className="align-center">
-                <GoACircularProgress visible={true} message={`Uploading ${loadingFileName}`} size="large" />
+                <GoabCircularProgress visible={true} message={`Uploading ${loadingFileName}`} size="large" />
               </div>
-            </GoAModal>
+            </GoabModal>
           ) : (
             <div>
               {fileList && isMultiFile

@@ -8,7 +8,7 @@ import { RootState } from '@store/index';
 import { FetchTenant } from '@store/tenant/actions';
 
 import { serviceVariables } from '../../../featureFlag';
-import { GoASideMenu, GoASideMenuHeading } from '@abgov/react-components';
+import { GoabSideMenu, GoabSideMenuHeading } from '@abgov/react-components';
 
 interface SidebarProps {
   type: 'mobile' | 'desktop';
@@ -45,7 +45,7 @@ const Sidebar = ({ type }: SidebarProps) => {
     <>
       <Title>{tenantName}</Title>
       <Links>
-        <GoASideMenu>
+        <GoabSideMenu>
           {authenticated && (
             <>
               <NavLink
@@ -75,7 +75,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                   >
                     <span>Service metrics</span>
                   </NavLink>
-                  <GoASideMenuHeading>Services</GoASideMenuHeading>
+                  <GoabSideMenuHeading>Services</GoabSideMenuHeading>
                 </>
               )}
               {hasAdminRole &&
@@ -93,7 +93,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                 ))}
             </>
           )}
-        </GoASideMenu>
+        </GoabSideMenu>
       </Links>
     </>
   );

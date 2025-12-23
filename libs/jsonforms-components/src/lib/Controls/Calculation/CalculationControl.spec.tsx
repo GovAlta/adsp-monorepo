@@ -22,9 +22,9 @@ const useJsonFormsMock = jsonforms.useJsonForms as jest.Mock;
 
 jest.mock('@abgov/react-components', () => ({
   //eslint-disable-next-line
-  GoAFormItem: ({ children }: any) => <div>{children}</div>,
+  GoabFormItem: ({ children }: any) => <div>{children}</div>,
   //eslint-disable-next-line
-  GoAInput: (props: any) => <input data-testid={props.testId} value={props.value ?? ''} readOnly />,
+  GoabInput: (props: any) => <input data-testid={props.testId} value={props.value ?? ''} readOnly />,
 }));
 
 afterEach(() => {

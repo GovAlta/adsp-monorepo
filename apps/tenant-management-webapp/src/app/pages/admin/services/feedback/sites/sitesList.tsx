@@ -7,7 +7,7 @@ import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { renderNoItem } from '@components/NoItem';
 import { TagBadgePadding, DetailsTagWrapper, DetailsTagHeading } from '../../form/styled-components';
-import { GoABadge } from '@abgov/react-components';
+import { GoabBadge } from '@abgov/react-components';
 import { showTaggingFeature } from '../overview';
 
 interface SiteProps {
@@ -60,7 +60,7 @@ const SiteComponent: FunctionComponent<SiteProps> = ({ site, onEdit, onDelete, s
                 <DetailsTagWrapper>
                   {site.tags.map((tag) => (
                     <TagBadgePadding>
-                      <GoABadge type={'midtone'} content={tag} testId={tag} mb="xs" mr="xs" icon={false} />
+                      <GoabBadge type={'midtone'} content={tag} testId={tag} mb="xs" mr="xs" icon={false} />
                     </TagBadgePadding>
                   ))}
                 </DetailsTagWrapper>

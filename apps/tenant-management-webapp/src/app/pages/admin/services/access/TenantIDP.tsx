@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
-  GoAInput,
-  GoAFormItem,
-  GoAButton,
-  GoASpacer,
-  GoABadge,
-  GoACircularProgress,
-  GoAIconButton,
+  GoabInput,
+  GoabFormItem,
+  GoabButton,
+  GoabSpacer,
+  GoabBadge,
+  GoabCircularProgress,
+  GoabIconButton,
 } from '@abgov/react-components';
 import { useDispatch } from 'react-redux';
 import { FetchUserIdByEmail, FETCH_USER_ID_BY_EMAIL, DeleteUserIdp, DELETE_USER_IDP } from '@store/tenant/actions';
@@ -22,7 +22,7 @@ import { DeleteModal } from '@components/DeleteModal';
 import { LoadingIndicatorContainer } from './styled-component';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import { NoPaddingH2 } from '@components/AppHeader';
-
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 export const TenantIdp = (): JSX.Element => {
   const [email, setEmail] = useState('');
   const dispatch = useDispatch();
@@ -93,49 +93,49 @@ export const TenantIdp = (): JSX.Element => {
         users signing in with SSO account will encounter an identity provider error because their Keycloak account is
         linked to the previous AD account.
       </p>
-      <GoAFormItem label="Email" error={`${errors['email'] || ''}`}>
-        <GoAInput
+      <GoabFormItem label="Email" error={`${errors['email'] || ''}`}>
+        <GoabInput
           value={email}
           name="user-email"
           type="email"
           testId={'user-search-email-input'}
-          onChange={InputUserEmailHandler}
-        ></GoAInput>
-      </GoAFormItem>
-      <GoASpacer vSpacing="s"></GoASpacer>
+          onChange={(detail: GoabInputOnChangeDetail) => InputUserEmailHandler}
+        ></GoabInput>
+      </GoabFormItem>
+      <GoabSpacer vSpacing="s"></GoabSpacer>
 
-      <GoAButton
+      <GoabButton
         disabled={(fetchUserIdState?.state as unknown) === 'start'}
         testId={'user-search-email-btn'}
         onClick={searchUserByEmailHandler}
       >
         Search
-      </GoAButton>
+      </GoabButton>
       <LoadingIndicatorContainer>
-        <GoACircularProgress size="small" visible={(fetchUserIdState?.state as unknown) === 'start'} />
+        <GoabCircularProgress size="small" visible={(fetchUserIdState?.state as unknown) === 'start'} />
       </LoadingIndicatorContainer>
 
       {fetchedUserInfo && fetchUserIdState?.state === 'completed' && !fetchUserIdState?.id && (
         <div>
-          <GoASpacer vSpacing="m"></GoASpacer>
+          <GoabSpacer vSpacing="m"></GoabSpacer>
           <p>{`Cannot find user ${email}`}</p>
         </div>
       )}
 
       {fetchedUserInfo && fetchUserIdState?.state === 'completed' && fetchUserIdState?.id?.length > 0 && (
-        <GoAFormItem>
-          <GoASpacer vSpacing="m"></GoASpacer>
+        <GoabFormItem>
+          <GoabSpacer vSpacing="m"></GoabSpacer>
           <p>Found {`${email} in core and tenant realms.`}</p>
           <p>
             {`The user id in core realm is: `}
-            <GoABadge
+            <GoabBadge
               type="information"
               testId="user-idp-in-core-badge"
               content={`${fetchUserIdState?.id}`}
               icon={false}
             />
             {copied !== fetchUserIdState?.id && (
-              <GoAIconButton
+              <GoabIconButton
                 testId="copy-user-id-btn"
                 variant="color"
                 size="small"
@@ -152,7 +152,7 @@ export const TenantIdp = (): JSX.Element => {
             (fetchUserIdState?.data as unknown as any)?.hasDefaultIdpInCore === true && (
               <>
                 <p>The related ADSP default IdP link in the core realm is found.</p>
-                <GoAButton
+                <GoabButton
                   testId="delete-core-idp-btn"
                   disabled={(fetchUserIdState?.state as unknown) === 'start' || deletedUserIdp}
                   variant="destructive"
@@ -161,7 +161,7 @@ export const TenantIdp = (): JSX.Element => {
                   }}
                 >
                   Delete
-                </GoAButton>
+                </GoabButton>
               </>
             )
           }
@@ -172,11 +172,11 @@ export const TenantIdp = (): JSX.Element => {
               <p>The user is NOT linked to the GoA SSO.</p>
             )
           }
-          <GoASpacer vSpacing="m"></GoASpacer>
-          <GoAButton testId="reset-core-idp-btn" type="secondary" onClick={resetFormHandler}>
+          <GoabSpacer vSpacing="m"></GoabSpacer>
+          <GoabButton testId="reset-core-idp-btn" type="secondary" onClick={resetFormHandler}>
             Reset
-          </GoAButton>
-        </GoAFormItem>
+          </GoabButton>
+        </GoabFormItem>
       )}
 
       {openModal && (

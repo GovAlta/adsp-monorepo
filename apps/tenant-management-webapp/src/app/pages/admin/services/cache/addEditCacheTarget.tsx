@@ -9,11 +9,19 @@ import { defaultCacheTarget } from '@store/cache/model';
 import { getEventDefinitions } from '@store/event/actions';
 import { fetchDirectory } from '@store/directory/actions';
 import { selectSortedDirectory } from '@store/directory/selectors';
-import { GoADropdownItem, GoADropdown } from '@abgov/react-components';
 import { GoADropdownOption, GoADropdown as GoADropDownOld } from '@abgov/react-components-old';
 import { Mt, MbS, MbXs } from './style-components';
 
-import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components';
+import {
+  GoabInput,
+  GoabModal,
+  GoabButtonGroup,
+  GoabFormItem,
+  GoabButton,
+  GoabDropdownItem,
+  GoabDropdown,
+} from '@abgov/react-components';
+import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddEditTargetCacheProps {
   open: boolean;
@@ -83,14 +91,14 @@ export const AddEditTargetCache = ({
     .build();
 
   return (
-    <GoAModal
+    <GoabModal
       testId="cache-target-modal"
       open={open}
       heading={`${isEdit ? 'Edit' : 'Add'} target`}
-      width="640px"
+      maxWidth="640px"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             testId="add-edit-target-cancel"
             type="secondary"
             onClick={() => {
@@ -99,8 +107,8 @@ export const AddEditTargetCache = ({
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="target-save"
             disabled={!target.urn || validators.haveErrors()}
@@ -117,44 +125,43 @@ export const AddEditTargetCache = ({
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <div style={{ height: '660px' }}>
         <div>
-          <GoAFormItem error={errors?.['urn']} label="Target" mb="3" mt="3">
-            <GoADropdown
-              relative={true}
+          <GoabFormItem error={errors?.['urn']} label="Target" mb="3" mt="3">
+            <GoabDropdown
               name="target"
               testId="target"
               width="100%"
               disabled={isEdit}
               value={target.urn}
-              onChange={(_, value: string) => {
+              onChange={(detail: GoabDropdownOnChangeDetail) => {
                 validators.clear();
-                setTarget({ ...target, urn: value });
+                setTarget({ ...target, urn: detail.value });
               }}
             >
               {tenantDirectory &&
-                tenantDirectory.map((directory) => <GoADropdownItem value={directory.urn} label={directory.urn} />)}
-            </GoADropdown>
-          </GoAFormItem>
+                tenantDirectory.map((directory) => <GoabDropdownItem value={directory.urn} label={directory.urn} />)}
+            </GoabDropdown>
+          </GoabFormItem>
 
           {tenantDirectory && (
-            <GoAFormItem label="Url" mb="5" mt="5">
-              <GoAInput
+            <GoabFormItem label="Url" mb="5" mt="5">
+              <GoabInput
                 name="target-url"
                 testId="target-url"
                 width="100%"
                 disabled={true}
                 value={tenantDirectory.find((directory) => directory.urn === target.urn)?.url}
               />
-            </GoAFormItem>
+            </GoabFormItem>
           )}
 
-          <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="TTL" mb="3" mt="3">
-            <GoAInput
+          <GoabFormItem error={errors?.['formDraftUrlTemplate']} label="TTL" mb="3" mt="3">
+            <GoabInput
               name="target-ttl-seconds"
               type="number"
               min="0"
@@ -163,15 +170,15 @@ export const AddEditTargetCache = ({
               value={target?.ttl?.toString()}
               testId="target-ttl-seconds"
               width="100%"
-              onChange={(name, value) => {
-                const cleanedValue = value.replace(/[e.-]/g, '');
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                const cleanedValue = detail.value.replace(/[e.-]/g, '');
                 setTarget({ ...target, ttl: Math.min(parseInt(cleanedValue) || 0, 2000000000) });
               }}
               trailingContent="seconds"
             />
-          </GoAFormItem>
+          </GoabFormItem>
           {open && (
-            <GoAFormItem label="Select invalidation events">
+            <GoabFormItem label="Select invalidation events">
               <GoADropDownOld
                 name="invalidationEvents"
                 selectedValues={invalidationEvents}
@@ -200,7 +207,7 @@ export const AddEditTargetCache = ({
                     />
                   ))}
               </GoADropDownOld>
-            </GoAFormItem>
+            </GoabFormItem>
           )}
           <Mt>
             <p>
@@ -212,15 +219,15 @@ export const AddEditTargetCache = ({
               <MbXs>
                 {event.namespace}:{event.name}
               </MbXs>
-              <GoAInput
+              <GoabInput
                 data-testid={`${invalidationEvents}-${i}`}
                 name={`${invalidationEvents}-${i}`}
                 value={event.resourceIdPath.toString()}
-                onChange={(name, resourceIdPath) => {
+                onChange={(detail: GoabInputOnChangeDetail) => {
                   const existingTarget = JSON.parse(JSON.stringify(target));
-                  const splitPath = resourceIdPath.split(',').map((item) => item.trim());
+                  const splitPath = detail.value.split(',').map((item) => item.trim());
                   if (splitPath.length < 2) {
-                    existingTarget.invalidationEvents[i].resourceIdPath = resourceIdPath;
+                    existingTarget.invalidationEvents[i].resourceIdPath = detail.value;
                   } else {
                     existingTarget.invalidationEvents[i].resourceIdPath = splitPath;
                   }
@@ -232,6 +239,6 @@ export const AddEditTargetCache = ({
           ))}
         </div>
       </div>
-    </GoAModal>
+    </GoabModal>
   );
 };

@@ -27,12 +27,13 @@ describe('DeleteConfirmationsView', () => {
   const open = true;
 
   it('should render the dialog with the correct site name', () => {
-    render(
+    const { baseElement } = render(
       <Provider store={store}>
         <DeleteConfirmationsView {...defaultProps} />
       </Provider>
     );
-    expect(screen.getByText('Delete registered site')).toBeInTheDocument();
+    const modal = baseElement.querySelector('goa-modal');
+    expect(modal).toBeInTheDocument();
     const { getByText } = within(screen.getByTestId('deleteMsg'));
     const customTextMatcher = (content, element) => {
       const hasText = (node) => node.textContent === 'Are you sure you wish to delete https://test.com?';

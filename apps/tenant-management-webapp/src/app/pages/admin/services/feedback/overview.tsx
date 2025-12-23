@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -38,7 +38,7 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
   return (
     <section>
       <FeedbackMetrics />
-      <GoAButton
+      <GoabButton
         testId="add-feedback"
         onClick={() => {
           setActiveEdit(true);
@@ -46,7 +46,7 @@ export const FeedbackOverview: FunctionComponent<OverviewProps> = (props) => {
         }}
       >
         Register site
-      </GoAButton>
+      </GoabButton>
     </section>
   );
 };

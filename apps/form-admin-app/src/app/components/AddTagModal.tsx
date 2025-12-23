@@ -1,6 +1,7 @@
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabFormItem, GoabInput, GoabModal } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { Resource } from '../state';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddTagModal {
   open: boolean;
@@ -24,34 +25,34 @@ export const AddTagModal: FunctionComponent<AddTagModal> = ({ open, resource, ta
   }, [tagLabel]);
 
   return (
-    <GoAModal heading="Add tag" open={open}>
+    <GoabModal heading="Add tag" open={open}>
       <form>
         <div>
           Add a tag{resource?.name && ` to "${resource?.name}"`}. Enter the tag label that you want to use. A new tag
           will be created if necessary.
         </div>
-        <GoAFormItem label="Tag" mt="l" error={tagLabelError}>
-          <GoAInput
+        <GoabFormItem label="Tag" mt="l" error={tagLabelError}>
+          <GoabInput
             type="text"
-            onChange={(_: string, value: string) => setTagLabel(value)}
+            onChange={(detail: GoabInputOnChangeDetail) => setTagLabel(detail.value)}
             value={tagLabel}
             name="tagLabel"
             error={!!tagLabelError}
           />
-        </GoAFormItem>
-        <GoAButtonGroup alignment="end" mt="xl">
-          <GoAButton type="secondary" onClick={onClose}>
+        </GoabFormItem>
+        <GoabButtonGroup alignment="end" mt="xl">
+          <GoabButton type="secondary" onClick={onClose}>
             Close
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             disabled={!tagLabel?.trim() || !!tagLabelError || tagging}
             type="primary"
             onClick={() => onTag(resource?.urn, tagLabel.trim())}
           >
             Add tag
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </form>
-    </GoAModal>
+    </GoabModal>
   );
 };

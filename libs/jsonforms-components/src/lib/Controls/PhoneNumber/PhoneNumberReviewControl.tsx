@@ -1,4 +1,4 @@
-import { GoAFormItem } from '@abgov/react-components';
+import { GoabFormItem } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { TextWrapDiv } from '../AddressLookup/styled-components';
@@ -9,7 +9,7 @@ export const PhoneNumberReviewControl = (props: PhoneNumberReviewControlProps): 
   const { data, id, required } = props;
 
   return (
-    <GoAFormItem
+    <GoabFormItem
       label="Phone number"
       error={required && !data ? 'Phone number is required' : ''}
       requirement={required ? 'required' : undefined}
@@ -17,8 +17,8 @@ export const PhoneNumberReviewControl = (props: PhoneNumberReviewControlProps): 
       <TextWrapDiv>
         <div data-testid={`phone-control-${id}`}>{data || ''}</div>
       </TextWrapDiv>
-    </GoAFormItem>
+    </GoabFormItem>
   );
 };
 
-export const GoAInputBasePhoneNumberReviewControl = withJsonFormsAllOfProps(PhoneNumberReviewControl);
+export const GoabInputBasePhoneNumberReviewControl = withJsonFormsAllOfProps(PhoneNumberReviewControl);

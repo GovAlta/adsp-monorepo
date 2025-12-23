@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 import { useDispatch } from 'react-redux';
 import { createKeycloakRole } from '@store/access/actions';
 import { ServiceRoleSyncStatus } from '@store/access/models';
@@ -43,14 +43,14 @@ export const ConfirmationModal = ({ clientId, onCancel, role, status }: Confirma
   const dispatch = useDispatch();
 
   return (
-    <GoAModal
+    <GoabModal
       heading="Add role"
       open={true}
       key="add-service-role-confirmation-modal"
       testId="add-service-role-confirmation-modal"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="add-service-role-modal-cancel-btn"
             key="add-service-role-modal-cancel"
@@ -59,8 +59,8 @@ export const ConfirmationModal = ({ clientId, onCancel, role, status }: Confirma
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="add-service-role-modal-ok-btn"
             key="add-service-role-modal-ok"
@@ -70,11 +70,11 @@ export const ConfirmationModal = ({ clientId, onCancel, role, status }: Confirma
             }}
           >
             Add
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <CreateConfirmationMessage status={status} role={role} clientId={clientId} />
-    </GoAModal>
+    </GoabModal>
   );
 };

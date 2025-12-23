@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CommentTopicTypes } from '@store/comment/model';
 
-import { GoAIconButton } from '@abgov/react-components';
+import { GoabIconButton } from '@abgov/react-components';
 
 import { updateCommentTopicType } from '@store/comment/action';
 
@@ -54,7 +54,7 @@ export const TopicConfigTopicType = ({ topicType }: CommentConfigCommentProps) =
           <Anchor rel="noopener noreferrer" onClick={() => setOpenEditCommentTemplate(true)}>
             Edit
           </Anchor>
-          <GoAIconButton
+          <GoabIconButton
             icon="create"
             testId="comment-template-incommentation-edit-icon"
             title="Edit"

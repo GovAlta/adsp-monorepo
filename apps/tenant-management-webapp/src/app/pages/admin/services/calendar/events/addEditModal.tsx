@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
-  GoAModal,
-  GoAFormItem,
-  GoAButton,
-  GoAButtonGroup,
-  GoAInput,
-  GoATextArea,
-  GoACheckbox,
-  GoAInputDate,
-  GoAInputTime,
-  GoAGrid,
+  GoabModal,
+  GoabFormItem,
+  GoabButton,
+  GoabButtonGroup,
+  GoabInput,
+  GoabTextArea,
+  GoabCheckbox,
+  GoabGrid,
 } from '@abgov/react-components';
 import { selectAddModalEvent, selectCoreCalendars, selectSelectedCalendarEventNames } from '@store/calendar/selectors';
 import { useSelector, useDispatch } from 'react-redux';
@@ -22,7 +20,12 @@ import { areObjectsEqual } from '@lib/objectUtil';
 import { getDateTime } from '@lib/timeUtil';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import { readOnlyCalendars } from '.';
-
+import {
+  GoabTextAreaOnChangeDetail,
+  GoabTextAreaOnKeyPressDetail,
+  GoabInputOnChangeDetail,
+  GoabCheckboxOnChangeDetail,
+} from '@abgov/ui-components-common';
 interface EventAddEditModalProps {
   calendarName: string;
 }
@@ -93,12 +96,12 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   // eslint-disable-next-line react/jsx-no-useless-fragment
   if (initCalendarEvent === null) return <></>;
   return (
-    <GoAModal
+    <GoabModal
       open={initCalendarEvent !== null}
       heading={modalTitle}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="calendar-event-modal-cancel"
             onClick={() => {
@@ -108,8 +111,8 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="calendar-event-modal-save"
             disabled={
@@ -147,12 +150,12 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
-      <GoAFormItem error={errors?.['name']} label="Name">
-        <GoAInput
+      <GoabFormItem error={errors?.['name']} label="Name">
+        <GoabInput
           type="text"
           name="eventName"
           value={calendarEvent?.name}
@@ -160,31 +163,31 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           aria-label="eventName"
           disabled={readOnlyCalendars.includes(calendarName)}
           width="100%"
-          onChange={(_, value) => {
+          onChange={(detail: GoabInputOnChangeDetail) => {
             validators.remove('name');
-            validators['name'].check(value);
-            setCalendarEvent({ ...calendarEvent, name: value });
+            validators['name'].check(detail.value);
+            setCalendarEvent({ ...calendarEvent, name: detail.value });
           }}
           onBlur={() => {
             validators.checkAll({ name: calendarEvent?.name });
           }}
         />
-      </GoAFormItem>
-      <GoAFormItem error={errors?.['description']} label="Description" mb={'xl'}>
-        <GoATextArea
+      </GoabFormItem>
+      <GoabFormItem error={errors?.['description']} label="Description" mb={'xl'}>
+        <GoabTextArea
           name="description"
           value={calendarEvent?.description}
           testId={`calendar-event-modal-description-input`}
           aria-label="description"
           disabled={readOnlyCalendars.includes(calendarName)}
           width="100%"
-          onKeyPress={(name, value, key) => {
+          onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
             validators.remove('description');
-            validators['description'].check(value);
-            setCalendarEvent({ ...calendarEvent, description: value });
+            validators['description'].check(detail.value);
+            setCalendarEvent({ ...calendarEvent, description: detail.value });
           }}
           // eslint-disable-next-line
-          onChange={(name, value) => {}}
+          onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
         />
         <HelpTextComponent
           length={calendarEvent?.description?.length || 0}
@@ -192,31 +195,31 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           descErrMessage={descErrMessage}
           errorMsg={errors?.['description']}
         />
-      </GoAFormItem>
+      </GoabFormItem>
 
-      <GoACheckbox
+      <GoabCheckbox
         name="isPublicCheckbox"
         checked={calendarEvent?.isPublic}
         text={'Is public '}
         disabled={readOnlyCalendars.includes(calendarName)}
-        onChange={(name, value) => {
-          setCalendarEvent({ ...calendarEvent, isPublic: value });
+        onChange={(detail: GoabCheckboxOnChangeDetail) => {
+          setCalendarEvent({ ...calendarEvent, isPublic: detail.checked });
         }}
       />
 
-      <GoACheckbox
+      <GoabCheckbox
         name="isAllDayCheckbox"
         checked={calendarEvent?.isAllDay}
         text={'Is all day'}
         disabled={readOnlyCalendars.includes(calendarName)}
-        onChange={(name, value) => {
-          setCalendarEvent({ ...calendarEvent, isAllDay: value });
+        onChange={(detail: GoabCheckboxOnChangeDetail) => {
+          setCalendarEvent({ ...calendarEvent, isAllDay: detail.checked });
         }}
       />
 
       {Object.keys(core).includes(calendarName) && calendarName === 'form-intake' && isEdit && (
-        <GoAFormItem error={errors?.['formId']} label="Form Id" mb="3" mt="3">
-          <GoAInput
+        <GoabFormItem error={errors?.['formId']} label="Form Id" mb="3" mt="3">
+          <GoabInput
             type="text"
             name="eventName"
             value={calendarEvent?.recordId.substring(calendarEvent?.recordId.lastIndexOf('/') + 1)}
@@ -224,76 +227,80 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             aria-label="eventName"
             disabled={true}
             width="100%"
-            onChange={(_, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               validators.remove('formId');
-              validators['formId'].check(value);
-              setCalendarEvent({ ...calendarEvent, recordId: value });
+              validators['formId'].check(detail.value);
+              setCalendarEvent({ ...calendarEvent, recordId: detail.value });
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
       )}
 
-      <GoAGrid minChildWidth="25ch" gap="s">
-        <GoAFormItem label="Start date" error={errors?.['start']}>
-          <GoAInputDate
+      <GoabGrid minChildWidth="25ch" gap="s">
+        <GoabFormItem label="Start date" error={errors?.['start']}>
+          <GoabInput
+            type="date"
             name="StartDate"
-            value={calendarEvent?.start ? new Date(calendarEvent.start) : new Date()}
+            value={(calendarEvent?.start ? new Date(calendarEvent.start) : new Date()).toISOString().slice(0, 10)}
             width="100%"
             disabled={readOnlyCalendars.includes(calendarName)}
             testId="calendar-event-modal-start-date-input"
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               setEndDateError('');
-              setStartDate(value.toLocaleString());
-              setCalendarEvent({ ...calendarEvent, start: setTimeString(value.toLocaleString(), startTime) });
+              setStartDate(detail.value.toLocaleString());
+              setCalendarEvent({ ...calendarEvent, start: setTimeString(detail.value.toLocaleString(), startTime) });
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Start time">
-          <GoAInputTime
+        </GoabFormItem>
+        <GoabFormItem label="Start time">
+          <GoabInput
             name="StartTime"
+            type="time"
             value={startTime}
             step={1}
             width="100%"
             testId="calendar-event-modal-start-time-input"
             disabled={calendarEvent?.isAllDay || readOnlyCalendars.includes(calendarName)}
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               setEndDateError('');
-              setStartTime(value);
-              setCalendarEvent({ ...calendarEvent, start: setTimeString(startDate, value) });
+              setStartTime(detail.value);
+              setCalendarEvent({ ...calendarEvent, start: setTimeString(startDate, detail.value) });
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem label="End date" error={endDateError}>
-          <GoAInputDate
+        </GoabFormItem>
+        <GoabFormItem label="End date" error={endDateError}>
+          <GoabInput
+            type="date"
             name="endDate"
-            value={calendarEvent?.end ? new Date(calendarEvent?.end) : new Date()}
+            value={(calendarEvent?.end ? new Date(calendarEvent?.end) : new Date()).toISOString().slice(0, 10)}
             width="100%"
             disabled={readOnlyCalendars.includes(calendarName)}
             testId="calendar-event-modal-end-date-input"
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               setEndDateError('');
-              setEndDate(value.toLocaleString());
-              setCalendarEvent({ ...calendarEvent, end: setTimeString(value.toLocaleString(), endTime) });
+              setEndDate(detail.value.toLocaleString());
+              setCalendarEvent({ ...calendarEvent, end: setTimeString(detail.value.toLocaleString(), endTime) });
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
 
-        <GoAFormItem label="End time">
-          <GoAInputTime
+        <GoabFormItem label="End time">
+          <GoabInput
+            type="time"
             name="endTime"
             value={endTime}
             step={1}
             width="100%"
             disabled={calendarEvent?.isAllDay || readOnlyCalendars.includes(calendarName)}
             testId="calendar-event-modal-end-time-input"
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               setEndDateError('');
-              setEndTime(value);
-              setCalendarEvent({ ...calendarEvent, end: setTimeString(endDate, value) });
+              setEndTime(detail.value);
+              setCalendarEvent({ ...calendarEvent, end: setTimeString(endDate, detail.value) });
             }}
           />
-        </GoAFormItem>
-      </GoAGrid>
-    </GoAModal>
+        </GoabFormItem>
+      </GoabGrid>
+    </GoabModal>
   );
 };

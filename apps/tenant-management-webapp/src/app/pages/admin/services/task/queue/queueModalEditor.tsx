@@ -15,7 +15,7 @@ import {
 import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { UpdateTaskQueue, getTaskQueues } from '@store/task/action';
 import { ClientRoleTable } from '@components/RoleTable';
-import { GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components';
+import { GoabButtonGroup, GoabFormItem, GoabButton } from '@abgov/react-components';
 import { PageIndicator } from '@components/Indicator';
 import { TaskDefinition, defaultTaskQueue } from '@store/task/model';
 import { ServiceRoleConfig } from '@store/access/models';
@@ -194,15 +194,15 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
             <hr className="hr-resize" />
             {queue && <TaskConfigQueue queue={queue} />}
 
-            <GoAFormItem label="">
+            <GoabFormItem label="">
               <EditorPadding>
                 <div style={heightCover}></div>
               </EditorPadding>
-            </GoAFormItem>
+            </GoabFormItem>
             <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
-              <GoAButtonGroup alignment="start">
-                <GoAButton
+              <GoabButtonGroup alignment="start">
+                <GoabButton
                   type="primary"
                   testId="queue-save"
                   disabled={isTaskUpdated(initialDefinition, queue) || validators.haveErrors()}
@@ -224,8 +224,8 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
                   }}
                 >
                   Save
-                </GoAButton>
-                <GoAButton
+                </GoabButton>
+                <GoabButton
                   testId="queue-cancel"
                   type="secondary"
                   onClick={() => {
@@ -238,8 +238,8 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
                   }}
                 >
                   Back
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
           <TaskPermissions className="task-permissions-wrapper">

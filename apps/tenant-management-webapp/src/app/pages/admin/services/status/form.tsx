@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { saveApplication } from '@store/status/actions';
 import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/actions';
 import { ApplicationStatus } from '@store/status/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoATextArea, GoAFormItem, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabInput, GoabTextArea, GoabFormItem, GoabModal } from '@abgov/react-components';
 import { useValidators } from '@lib/validation/useValidators';
 import { GoADropdownOption } from '@abgov/react-components-old';
 
@@ -21,6 +21,8 @@ import { createSelector } from 'reselect';
 import { DropdownListContainer, DropdownList, IdField } from './styled-components';
 import { toKebabName } from '@lib/kebabName';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import { GoabTextAreaOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+
 interface Props {
   isOpen: boolean;
   title: string;
@@ -154,13 +156,13 @@ export const ApplicationFormModal: FC<Props> = ({
   // useEffect(() => {}, [healthEndpoints]);
 
   return (
-    <GoAModal
+    <GoabModal
       open={isOpen}
       testId={testId}
       heading={title}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="form-cancel-button"
             onClick={() => {
@@ -172,46 +174,46 @@ export const ApplicationFormModal: FC<Props> = ({
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             testId="form-save-button"
             disabled={!isFormValid() || validators.haveErrors()}
             type="primary"
             onClick={save}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
-      <GoAFormItem error={errors?.['duplicated'] || errors?.['name']} label="Application name">
-        <GoAInput
+      <GoabFormItem error={errors?.['duplicated'] || errors?.['name']} label="Application name">
+        <GoabInput
           type="text"
           name="name"
           width="100%"
           testId="application-name-input"
           value={appName ? appName : application?.name}
-          onChange={(name, value) => {
+          onChange={(detail: GoabInputOnChangeDetail) => {
             if (!isEdit) {
-              const appKey = toKebabName(value);
+              const appKey = toKebabName(detail.value);
               validators.remove('nameAppKey');
               validators['nameAppKey'].check(appKey);
               validators.remove('duplicated');
-              validators['duplicated'].check(value);
+              validators['duplicated'].check(detail.value);
               setApplication({
                 ...application,
-                name: value,
+                name: detail.value,
                 appKey,
               });
             } else {
               validators.remove('nameOnly');
-              validators['nameOnly'].check(value);
+              validators['nameOnly'].check(detail.value);
 
               setApplication({
                 ...application,
-                name: value,
+                name: detail.value,
               });
-              setAppName(value);
+              setAppName(detail.value);
             }
           }}
           onBlur={() => {
@@ -223,24 +225,24 @@ export const ApplicationFormModal: FC<Props> = ({
           }}
           aria-label="name"
         />
-      </GoAFormItem>
-      <GoAFormItem label="Application ID">
+      </GoabFormItem>
+      <GoabFormItem label="Application ID">
         <IdField>{application.appKey}</IdField>
-      </GoAFormItem>
-      <GoAFormItem error={errors?.['description']} label="Description">
-        <GoATextArea
+      </GoabFormItem>
+      <GoabFormItem error={errors?.['description']} label="Description">
+        <GoabTextArea
           name="description"
           width="100%"
           value={appDescription ? appDescription : application?.description}
           testId="application-description"
-          onChange={(name, value) => {
+          onChange={(detail: GoabTextAreaOnChangeDetail) => {
             validators.remove('description');
-            validators['description'].check(value);
+            validators['description'].check(detail.value);
             setApplication({
               ...application,
-              description: value,
+              description: detail.value,
             });
-            setAppDescription(value);
+            setAppDescription(detail.value);
           }}
           aria-label="description"
         />
@@ -250,22 +252,22 @@ export const ApplicationFormModal: FC<Props> = ({
           descErrMessage={descErrMessage}
           errorMsg={errors?.['description']}
         />
-      </GoAFormItem>
-      <GoAFormItem error={errors?.['url']} label="URL">
-        <GoAInput
+      </GoabFormItem>
+      <GoabFormItem error={errors?.['url']} label="URL">
+        <GoabInput
           type="url"
           name="url"
           width="100%"
           value={application?.endpoint?.url}
           aria-label="input-url"
           testId="application-url-input"
-          onChange={(name, value) => {
+          onChange={(detail: GoabInputOnChangeDetail) => {
             validators.remove('url');
-            validators['url'].check(value);
+            validators['url'].check(detail.value);
             setApplication({
               ...application,
               endpoint: {
-                url: value,
+                url: detail.value,
                 status: 'offline',
               },
             });
@@ -302,8 +304,8 @@ export const ApplicationFormModal: FC<Props> = ({
             </DropdownList>
           </DropdownListContainer>
         )}
-      </GoAFormItem>
-    </GoAModal>
+      </GoabFormItem>
+    </GoabModal>
   );
 };
 

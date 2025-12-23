@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { GoAInputTimeProps, GoATimeControl, GoATimeInput } from './InputTimeControl';
-import { ControlElement, ControlProps } from '@jsonforms/core';
+import { GoAInputTimeProps, GoATimeInput } from './InputTimeControl';
+import { ControlElement } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 
 const mockContextValue = {

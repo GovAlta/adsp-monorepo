@@ -1,4 +1,4 @@
-import { GoAAppHeader, GoAMicrositeHeader } from '@abgov/react-components';
+import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { useScripts } from '@core-services/app-common';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -53,10 +53,10 @@ export const FormAdminTenant = () => {
 
   return (
     <React.Fragment>
-      <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
-      <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Form administration`}>
+      <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
+      <GoabAppHeader url="/" heading={`${tenant?.name || tenantName} - Form administration`}>
         <NavigationMenu type="menu" />
-      </GoAAppHeader>
+      </GoabAppHeader>
       <FeedbackNotification />
       <AuthorizeUser>
         <TenantMainContainer>

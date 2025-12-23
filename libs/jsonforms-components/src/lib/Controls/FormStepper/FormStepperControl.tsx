@@ -1,15 +1,14 @@
 import React, { useContext, useState, useEffect, useRef, useMemo } from 'react';
 import {
-  GoAFormStepper,
-  GoAFormStep,
-  GoAPages,
-  GoAButton,
-  GoAModal,
-  GoAButtonGroup,
-  GoAGrid,
-  GoAButtonType,
+  GoabFormStepper,
+  GoabFormStep,
+  GoabPages,
+  GoabButton,
+  GoabModal,
+  GoabButtonGroup,
+  GoabGrid,
 } from '@abgov/react-components';
-
+import { GoabButtonType } from '@abgov/ui-components-common';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { withAjvProps } from '../../util/layout';
 import { FormStepperSummaryH3, RightAlignmentDiv } from './styled-components';
@@ -20,12 +19,12 @@ import { CategorizationStepperLayoutRendererProps } from './types';
 import { FormStepperReviewer } from './FormStepperReviewControl';
 import { JsonFormsStepperContextProvider, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
 import { CategorizationElement } from './context/types';
-
+import { GoabFormStepperOnChangeDetail } from '@abgov/ui-components-common';
 export interface FormStepperOptionProps {
   nextButtonLabel?: string;
-  nextButtonType?: GoAButtonType;
+  nextButtonType?: GoabButtonType;
   previousButtonLabel?: string;
-  previousButtonType?: GoAButtonType;
+  previousButtonType?: GoabButtonType;
 }
 
 const summaryLabel = 'Summary';
@@ -85,19 +84,18 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
       <Visible visible={visible}>
         <div id={`${path || `goa`}-form-stepper`} className="formStepper">
           {
-            <GoAFormStepper
+            <GoabFormStepper
               testId={`form-stepper-headers-${uischema?.options?.testId}` || 'form-stepper-test'}
               key="stepper-form-stepper-wrapper"
-              onChange={(step) => {
-                goToPage(step - 1);
+              onChange={(detail: GoabFormStepperOnChangeDetail) => {
+                goToPage(detail.step - 1);
               }}
             >
               {categories?.map((c, index) => {
                 return (
-                  <div ref={(el) => (headersRef.current[index] = el as HTMLDivElement)}>
-                    <GoAFormStep
+                  <div ref={(el) => (headersRef.current[index] = el as HTMLDivElement)} key={`stepper-tab-${index}`}>
+                    <GoabFormStep
                       data-testid={`stepper-tab-${index}`}
-                      key={`stepper-tab-${index}`}
                       text={`${c.label}`}
                       status={c.isVisited ? (c.isCompleted && c.isValid ? 'complete' : 'incomplete') : undefined}
                     />
@@ -105,12 +103,12 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
                 );
               })}
               <div ref={(el) => (headersRef.current[categories.length] = el as HTMLDivElement)}>
-                <GoAFormStep key={`stepper-tab-review`} text="Review" />
+                <GoabFormStep key={`stepper-tab-review`} text="Review" />
               </div>
-            </GoAFormStepper>
+            </GoabFormStepper>
           }
 
-          <GoAPages current={activeId + 1} mb="xl">
+          <GoabPages current={activeId + 1} mb="xl">
             {categories?.map((category, index) => {
               const props: StepProps = {
                 category: category.uischema as CategorizationElement,
@@ -134,11 +132,11 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
               <FormStepperSummaryH3>{summaryLabel}</FormStepperSummaryH3>
               <FormStepperReviewer {...{ ...props, navigationFunc: goToPage }} />
             </div>
-          </GoAPages>
-          <GoAGrid minChildWidth="100px">
+          </GoabPages>
+          <GoabGrid minChildWidth="100px">
             <div>
               {hasPrevButton ? (
-                <GoAButton
+                <GoabButton
                   type={optionProps?.previousButtonType ? optionProps?.previousButtonType : 'secondary'}
                   disabled={selectIsDisabled()}
                   onClick={() => {
@@ -158,14 +156,14 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
                   testId="prev-button"
                 >
                   {optionProps?.previousButtonLabel ? optionProps?.previousButtonLabel : 'Previous'}
-                </GoAButton>
+                </GoabButton>
               ) : (
                 <div></div>
               )}
             </div>
             {hasNextButton && (
               <RightAlignmentDiv>
-                <GoAButton
+                <GoabButton
                   type={optionProps?.nextButtonType ? optionProps?.nextButtonType : 'primary'}
                   disabled={selectIsDisabled()}
                   onClick={() => {
@@ -183,36 +181,36 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
                   testId="next-button"
                 >
                   {optionProps?.nextButtonLabel ? optionProps?.nextButtonLabel : 'Next'}
-                </GoAButton>
+                </GoabButton>
               </RightAlignmentDiv>
             )}
             {isOnReview && (
               <RightAlignmentDiv>
                 <div>
-                  <GoAButton type={'primary'} onClick={handleSubmit} disabled={!isValid} testId="stepper-submit-btn">
+                  <GoabButton type={'primary'} onClick={handleSubmit} disabled={!isValid} testId="stepper-submit-btn">
                     Submit
-                  </GoAButton>
+                  </GoabButton>
                 </div>
               </RightAlignmentDiv>
             )}
-          </GoAGrid>
+          </GoabGrid>
         </div>
       </Visible>
-      <GoAModal
+      <GoabModal
         testId="submit-confirmation"
         open={isOpen}
         heading={'Form Submitted'}
-        width="640px"
+        maxWidth="640px"
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
+          <GoabButtonGroup alignment="end">
+            <GoabButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
               Close
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
-      </GoAModal>
+      </GoabModal>
     </div>
   );
 };

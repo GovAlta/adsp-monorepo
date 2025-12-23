@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoAButton, GoAIconButton, GoACallout } from '@abgov/react-components';
+import { GoabButton, GoabIconButton, GoabCallout } from '@abgov/react-components';
 import _ from 'underscore';
 import { generatePdf, updatePdfResponse, showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
 
@@ -134,9 +134,9 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
           </section>
         </PreviewWrapper>
         {!indicator?.show && hasError && (
-          <GoACallout type="emergency" heading="Error in PDF generation">
+          <GoabCallout type="emergency" heading="Error in PDF generation">
             {pdfGenerationError}
-          </GoACallout>
+          </GoabCallout>
         )}
       </>
     );
@@ -148,7 +148,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
         <PreviewTopStyle>
           <PDFTitle>{title}</PDFTitle>
 
-          <GoAButton
+          <GoabButton
             disabled={indicator.show || pdfTemplate === null}
             type="secondary"
             testId="generate-template"
@@ -158,9 +158,9 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
             }}
           >
             Generate PDF
-          </GoAButton>
+          </GoabButton>
 
-          <GoAIconButton
+          <GoabIconButton
             icon="download"
             title="Download"
             testId="download-template-icon"

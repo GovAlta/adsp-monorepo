@@ -1,4 +1,4 @@
-import { GoAAppHeader, GoAMicrositeHeader } from '@abgov/react-components';
+import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { Band, Container, Footer, Grid, GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
@@ -21,9 +21,9 @@ export const Landing: FunctionComponent = () => {
 
   return (
     <React.Fragment>
-      <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
+      <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
 
-      <GoAAppHeader url="https://www.alberta.ca/" heading="Alberta Digital Service Platform - Form" />
+      <GoabAppHeader url="https://www.alberta.ca/" heading="Alberta Digital Service Platform - Form" />
       <Band title="Form">Draft, save and submit information using forms.</Band>
       <Main>
         <section>

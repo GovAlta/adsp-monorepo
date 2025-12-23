@@ -3,7 +3,7 @@ import { ControlProps } from '@jsonforms/core';
 import { JsonFormContext } from '../../Context';
 import { AddressInputs } from './AddressInputs';
 
-import { GoAFormItem, GoAInput, GoASpinner } from '@abgov/react-components';
+import { GoabFormItem, GoabInput, GoabSpinner } from '@abgov/react-components';
 import { Address, Suggestion } from './types';
 import { handleAddressKeyDown } from './utils';
 import {
@@ -20,6 +20,7 @@ import { ListItem, SearchBox } from './styled-components';
 import { HelpContentComponent } from '../../Additional';
 import { useDebounce } from '../../util/useDebounce';
 import { Visible } from '../../util';
+import { GoabInputOnBlurDetail, GoabInputOnChangeDetail, GoabInputOnKeyPressDetail } from '@abgov/ui-components-common';
 
 type AddressLookUpProps = ControlProps;
 
@@ -180,7 +181,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     <Visible visible={visible}>
       {renderHelp()}
       <h3>{label}</h3>
-      <GoAFormItem
+      <GoabFormItem
         requirement={'required'}
         label={'Street address or P.O. box'}
         error={errors?.['addressLine1'] ?? ''}
@@ -188,7 +189,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       >
         <SearchBox>
           <div className="input-container">
-            <GoAInput
+            <GoabInput
               leadingIcon={autocompletion && enabled ? 'search' : undefined}
               id="goaInput"
               name="addressLine1"
@@ -198,14 +199,14 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
               ariaLabel={'address-form-address1'}
               placeholder="Start typing the first line of your address, required."
               value={address?.addressLine1 || ''}
-              onChange={(e, value) => handleDropdownChange(value)}
-              onBlur={(name) => handleRequiredFieldBlur(name)}
+              onChange={(detail: GoabInputOnChangeDetail) => handleDropdownChange(detail.value)}
+              onBlur={(detail: GoabInputOnBlurDetail) => handleRequiredFieldBlur(detail.name)}
               width="100%"
-              onKeyPress={(e: string, value: string, key: string) => {
+              onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
                 if (open) {
                   const newIndex = handleAddressKeyDown(
-                    key,
-                    value,
+                    detail.key,
+                    detail.value,
                     activeIndex,
                     suggestions,
                     (val) => handleInputChange('addressLine1', val),
@@ -218,7 +219,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
             {loading && (
               <div className="input-spinner">
-                <GoASpinner type="infinite" size="small"></GoASpinner>
+                <GoabSpinner type="infinite" size="small"></GoabSpinner>
               </div>
             )}
           </div>
@@ -248,7 +249,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
             </ul>
           )}
         </SearchBox>
-      </GoAFormItem>
+      </GoabFormItem>
       <br />
       <AddressInputs
         address={address}

@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -24,13 +24,13 @@ export const ImportModal: FunctionComponent<ImportModalProps> = ({
     );
   };
   return (
-    <GoAModal
+    <GoabModal
       testId="import-configuration-modal"
       open={isOpen}
       heading="The following configuration will be impacted!"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="import-configuration-modal-cancel"
             onClick={() => {
@@ -38,8 +38,8 @@ export const ImportModal: FunctionComponent<ImportModalProps> = ({
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="import-configuration-modal-confirm"
             onClick={() => {
@@ -48,11 +48,11 @@ export const ImportModal: FunctionComponent<ImportModalProps> = ({
             }}
           >
             Confirm
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       {getContent()}
-    </GoAModal>
+    </GoabModal>
   );
 };

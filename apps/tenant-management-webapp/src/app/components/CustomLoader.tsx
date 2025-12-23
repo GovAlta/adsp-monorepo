@@ -1,12 +1,12 @@
 import React from 'react';
-import { GoACircularProgress } from '@abgov/react-components';
+import { GoabCircularProgress } from '@abgov/react-components';
 import styled from 'styled-components';
 
 // eslint-disable-next-line
 export const CustomLoader = (): JSX.Element => {
   return (
     <CustomLoaderWrapper>
-      <GoACircularProgress size="small" visible={true} />
+      <GoabCircularProgress size="small" visible={true} />
     </CustomLoaderWrapper>
   );
 };

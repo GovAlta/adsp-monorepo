@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { GoACallout } from '@abgov/react-components';
+import { GoabCallout } from '@abgov/react-components';
 import { FunctionComponent, ReactElement } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
@@ -44,12 +44,12 @@ export const AuthorizeUser: FunctionComponent<AuthorizeUserProps> = ({ roles, ch
       // Not authorized placeholder; in this state the user has been resolved and doesn't satisfy access requirement.
       <div>
         <Placeholder>
-          <GoACallout
+          <GoabCallout
             heading={loggedOut ? 'Successfully signed out' : error ? 'Login failed' : 'Not authorized'}
             type="information"
           >
             {loggedOut ? '' : error ? 'Error encountered' : 'Logging in...'}
-          </GoACallout>
+          </GoabCallout>
         </Placeholder>
       </div>
     )

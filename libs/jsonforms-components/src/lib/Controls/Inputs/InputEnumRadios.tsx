@@ -6,9 +6,9 @@ import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '../../util';
-import { GoARadioGroup, GoARadioItem } from '@abgov/react-components';
+import { GoabRadioGroup, GoabRadioItem } from '@abgov/react-components';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
-
+import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 type RadioGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
@@ -16,19 +16,19 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
   const enumData = schema?.enum || [];
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
   return (
-    <GoARadioGroup
+    <GoabRadioGroup
       error={isVisited && errors.length > 0}
       name={`${path || appliedUiSchemaOptions.label}`}
       testId={`${path || id || label}-radio-group`}
       value={data}
       disabled={!enabled}
       {...appliedUiSchemaOptions}
-      onChange={(name: string, value: string) => handleChange(path, value)}
+      onChange={(detail: GoabRadioGroupOnChangeDetail) => handleChange(path, detail.value)}
       {...uischema?.options?.componentProps}
     >
       {enumData.map((enumValue, index) => {
         return (
-          <GoARadioItem
+          <GoabRadioItem
             key={`list-item-${enumValue}-${index}`}
             name={enumValue}
             value={`${enumValue}`}
@@ -37,7 +37,7 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
           />
         );
       })}
-    </GoARadioGroup>
+    </GoabRadioGroup>
   );
 };
 
