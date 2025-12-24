@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { SaveFormModal } from './saveModal';
 import type * as monacoNS from 'monaco-editor';
 import { FormDefinition } from '../../../state/types';
+import { ValidatorCollection } from './useValidators';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -18,13 +19,11 @@ export interface EditorProps {
   };
   updateFormDefinition: () => void;
   activeIndex: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getCurrentEditorRef: () => any;
+  getCurrentEditorRef: () => IEditor | null;
   foldAll: (editor: IEditor) => void;
   unfoldAll: (editor: IEditor) => void;
   isFormUpdated: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  validators: any;
+  validators: ValidatorCollection;
 }
 
 export const SubmitButtonsBar: React.FC<EditorProps> = ({

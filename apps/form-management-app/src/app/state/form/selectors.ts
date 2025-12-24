@@ -2,6 +2,7 @@ import { AppState } from '../store';
 
 export const selectFormDefinitions = (state: AppState) => state.form.definitions;
 export const selectFormLoading = (state: AppState) => state.form.loading;
+export const selectFiltersLoading = (state: AppState) => state.form.filtersLoading;
 export const savedDefinition = (state: AppState) => state.form.currentDefinition;
 export const filesSelector = (state: AppState) => state.form.files;
 export const selectCurrentDefinition = (state: AppState) => state.form.currentDefinition;

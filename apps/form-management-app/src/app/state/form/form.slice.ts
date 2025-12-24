@@ -23,6 +23,7 @@ export interface FormState {
   definitions: FormDefinition[];
   selected: string | null;
   loading: boolean;
+  filtersLoading: boolean;
   currentDefinition: FormDefinition | null;
   files: Record<string, string>;
   programs: string[];
@@ -279,6 +280,90 @@ export const getActsOfLegislation = createAsyncThunk(
   }
 );
 
+export const updatePrograms = createAsyncThunk(
+  'form/update-programs',
+  async (programs: string[], { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
+      const accessToken = await getAccessToken();
+
+      const { data } = await axios.patch(
+        `${configurationService}/configuration/v2/configuration/dcm/programs`,
+        { operation: 'REPLACE', configuration: programs },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      return data.latest.configuration;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const updateMinistries = createAsyncThunk(
+  'form/update-ministries',
+  async (ministries: string[], { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
+      const accessToken = await getAccessToken();
+
+      const { data } = await axios.patch(
+        `${configurationService}/configuration/v2/configuration/dcm/ministry`,
+        { operation: 'REPLACE', configuration: ministries },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      return data.latest.configuration;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const updateActsOfLegislation = createAsyncThunk(
+  'form/update-acts-of-legislation',
+  async (acts: string[], { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
+      const accessToken = await getAccessToken();
+
+      const { data } = await axios.patch(
+        `${configurationService}/configuration/v2/configuration/dcm/acts`,
+        { operation: 'REPLACE', configuration: acts },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      return data.latest.configuration;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
 export const getFormDefinitions = createAsyncThunk(
   'form/get-definitions',
   async (criteria: FormDefinitionsCriteria = {}, { getState, rejectWithValue }) => {
@@ -345,6 +430,7 @@ export const initialFormState: FormState = {
   definitions: [],
   selected: null,
   loading: false,
+  filtersLoading: false,
   files: {},
   currentDefinition: null,
   programs: [],
@@ -462,14 +548,65 @@ const formSlice = createSlice({
 
         state.currentDefinition = action.payload.definition;
       })
+      .addCase(getPrograms.pending, (state) => {
+        state.filtersLoading = true;
+      })
       .addCase(getPrograms.fulfilled, (state, { payload }) => {
         state.programs = payload;
+        state.filtersLoading = false;
+      })
+      .addCase(getPrograms.rejected, (state) => {
+        state.filtersLoading = false;
+      })
+      .addCase(getMinistries.pending, (state) => {
+        state.filtersLoading = true;
       })
       .addCase(getMinistries.fulfilled, (state, { payload }) => {
         state.ministries = payload;
+        state.filtersLoading = false;
+      })
+      .addCase(getActsOfLegislation.pending, (state) => {
+        state.filtersLoading = true;
       })
       .addCase(getActsOfLegislation.fulfilled, (state, { payload }) => {
         state.actsOfLegislation = payload;
+        state.filtersLoading = false;
+      })
+      .addCase(getActsOfLegislation.rejected, (state) => {
+        state.filtersLoading = false;
+      })
+      .addCase(getMinistries.rejected, (state) => {
+        state.filtersLoading = false;
+      })
+      .addCase(updatePrograms.pending, (state) => {
+        state.busy.saving = true;
+      })
+      .addCase(updatePrograms.fulfilled, (state, { payload }) => {
+        state.programs = payload;
+        state.busy.saving = false;
+      })
+      .addCase(updatePrograms.rejected, (state) => {
+        state.busy.saving = false;
+      })
+      .addCase(updateMinistries.pending, (state) => {
+        state.busy.saving = true;
+      })
+      .addCase(updateMinistries.fulfilled, (state, { payload }) => {
+        state.ministries = payload;
+        state.busy.saving = false;
+      })
+      .addCase(updateMinistries.rejected, (state) => {
+        state.busy.saving = false;
+      })
+      .addCase(updateActsOfLegislation.pending, (state) => {
+        state.busy.saving = true;
+      })
+      .addCase(updateActsOfLegislation.fulfilled, (state, { payload }) => {
+        state.actsOfLegislation = payload;
+        state.busy.saving = false;
+      })
+      .addCase(updateActsOfLegislation.rejected, (state) => {
+        state.busy.saving = false;
       });
   },
 });
