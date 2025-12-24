@@ -69,6 +69,68 @@ const dataSchema = {
   },
 };
 
+const dataSchemaWithOneOf = {
+  type: 'object',
+  properties: {
+    options: {
+      type: 'array',
+      items: {
+        type: 'string',
+        oneOf: [
+          { const: 'one', title: 'Option One', description: 'Select this for the first choice' },
+          { const: 'two', title: 'Option Two', description: 'Select this for the second choice' },
+          { const: 'three', title: 'Option Three', description: 'Select this for the third choice' },
+          { const: 'four', title: 'Option Four', description: 'Select this to enable the text field below' },
+        ],
+      },
+      uniqueItems: true,
+    },
+    otherSpecify: {
+      type: 'string',
+    },
+    name: {
+      type: 'string',
+    },
+  },
+  required: ['options'],
+};
+
+const uiSchemaForOneOf = {
+  type: 'Group',
+  elements: [
+    {
+      type: 'Control',
+      scope: '#/properties/name',
+    },
+    {
+      type: 'Control',
+      scope: '#/properties/options',
+      label: 'testing',
+      options: {
+        format: 'checkbox',
+        orientation: 'horizontal',
+      },
+    },
+    {
+      type: 'Control',
+      scope: '#/properties/otherSpecify',
+      label: 'If four, specify:',
+      rule: {
+        effect: 'ENABLE',
+        condition: {
+          scope: '#/properties/options',
+          schema: {
+            type: 'array',
+            contains: {
+              const: 'four',
+            },
+          },
+        },
+      },
+    },
+  ],
+} as UISchemaElement;
+
 describe('Input Boolean Checkbox Control', () => {
   it('will render checkboxes', () => {
     render(getForm(dataSchema, uiSchema));
@@ -130,5 +192,117 @@ describe('Input Boolean Checkbox Control', () => {
 
     fireEvent(checkboxTwo!, new CustomEvent('_change', { detail: { name: 'two', value: true } }));
     fireEvent(checkboxOne!, new CustomEvent('_change', { detail: { name: 'one', value: false } }));
+  });
+
+  it('renders checkboxes with descriptions when using oneOf schema', () => {
+    const dataSchemaWithDescriptions = {
+      type: 'object',
+      properties: {
+        options: {
+          type: 'array',
+          items: {
+            type: 'string',
+            oneOf: [
+              { const: 'one', title: 'Option One', description: 'This is the first option' },
+              { const: 'two', title: 'Option Two', description: 'This is the second option' },
+              { const: 'three', title: 'Option Three', description: 'This is the third option' },
+            ],
+          },
+        },
+      },
+    };
+
+    const { container } = render(getForm(dataSchemaWithDescriptions, uiSchema));
+
+    const checkboxOne = container.querySelector('goa-checkbox[name="one"]');
+    const checkboxTwo = container.querySelector('goa-checkbox[name="two"]');
+    const checkboxThree = container.querySelector('goa-checkbox[name="three"]');
+
+    expect(checkboxOne).toBeInTheDocument();
+    expect(checkboxTwo).toBeInTheDocument();
+    expect(checkboxThree).toBeInTheDocument();
+
+    // Verify titles are used as labels
+    expect(checkboxOne?.getAttribute('text')).toBe('Option One');
+    expect(checkboxTwo?.getAttribute('text')).toBe('Option Two');
+    expect(checkboxThree?.getAttribute('text')).toBe('Option Three');
+
+    // Verify descriptions are present
+    expect(checkboxOne?.getAttribute('description')).toBe('This is the first option');
+    expect(checkboxTwo?.getAttribute('description')).toBe('This is the second option');
+    expect(checkboxThree?.getAttribute('description')).toBe('This is the third option');
+  });
+
+  it('renders checkboxes without description when using simple enum', () => {
+    const { container } = render(getForm(dataSchema, uiSchema));
+
+    const checkboxOne = container.querySelector('goa-checkbox[name="one"]');
+    expect(checkboxOne).toBeInTheDocument();
+    expect(checkboxOne?.getAttribute('description')).toBeNull();
+  });
+
+  it('handles oneOf at schema level (not items level)', () => {
+    const dataSchemaWithOneOf = {
+      type: 'object',
+      properties: {
+        options: {
+          type: 'string',
+          oneOf: [
+            { const: 'opt1', title: 'First', description: 'First choice' },
+            { const: 'opt2', title: 'Second', description: 'Second choice' },
+          ],
+        },
+      },
+    };
+
+    const { container } = render(getForm(dataSchemaWithOneOf, uiSchema));
+
+    const checkboxOne = container.querySelector('goa-checkbox[name="opt1"]');
+    const checkboxTwo = container.querySelector('goa-checkbox[name="opt2"]');
+
+    expect(checkboxOne).toBeInTheDocument();
+    expect(checkboxTwo).toBeInTheDocument();
+
+    expect(checkboxOne?.getAttribute('text')).toBe('First');
+    expect(checkboxTwo?.getAttribute('text')).toBe('Second');
+
+    expect(checkboxOne?.getAttribute('description')).toBe('First choice');
+    expect(checkboxTwo?.getAttribute('description')).toBe('Second choice');
+  });
+
+  it('renders checkboxes with descriptions using the full oneOf schema with conditional rule', () => {
+    const { container } = render(getForm(dataSchemaWithOneOf, uiSchemaForOneOf));
+
+    // Check all four checkboxes are rendered
+    const checkboxOne = container.querySelector('goa-checkbox[name="one"]');
+    const checkboxTwo = container.querySelector('goa-checkbox[name="two"]');
+    const checkboxThree = container.querySelector('goa-checkbox[name="three"]');
+    const checkboxFour = container.querySelector('goa-checkbox[name="four"]');
+
+    expect(checkboxOne).toBeInTheDocument();
+    expect(checkboxTwo).toBeInTheDocument();
+    expect(checkboxThree).toBeInTheDocument();
+    expect(checkboxFour).toBeInTheDocument();
+
+    // Verify titles are used as labels
+    expect(checkboxOne?.getAttribute('text')).toBe('Option One');
+    expect(checkboxTwo?.getAttribute('text')).toBe('Option Two');
+    expect(checkboxThree?.getAttribute('text')).toBe('Option Three');
+    expect(checkboxFour?.getAttribute('text')).toBe('Option Four');
+
+    // Verify descriptions are present
+    expect(checkboxOne?.getAttribute('description')).toBe('Select this for the first choice');
+    expect(checkboxTwo?.getAttribute('description')).toBe('Select this for the second choice');
+    expect(checkboxThree?.getAttribute('description')).toBe('Select this for the third choice');
+    expect(checkboxFour?.getAttribute('description')).toBe('Select this to enable the text field below');
+  });
+
+  it('enables conditional field when "four" checkbox is selected in oneOf schema', () => {
+    const data = { options: ['four'] };
+    const { container } = render(getForm(dataSchemaWithOneOf, uiSchemaForOneOf, data));
+
+    // The otherSpecify field should be enabled when "four" is selected
+    const inputBox = container.querySelector('goa-input');
+    expect(inputBox?.getAttribute('disabled')).toBe('false');
   });
 });

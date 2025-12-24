@@ -1,4 +1,3 @@
-# pipeline_context.py
 # Extracted from scripts but not normalized
 CTX_RAW_RULES = "raw_visibility_rules"
 
@@ -13,6 +12,7 @@ CTX_ENUM_MAP = "enum_map"
 CTX_PARENT_MAP = "parent_map"
 CTX_LABEL_TO_ENUM = "label_to_enum"
 CTX_XDP_ROOT = "xdp_root"
+CTX_SUBFORM_MAP = "subform_map"
 
 # Radio groups discovered during XDP parse stage
 CTX_RADIO_GROUPS = "radio_groups"
@@ -20,7 +20,7 @@ CTX_RADIO_GROUPS = "radio_groups"
 # Final rules ready for JsonForms UI/Schema emitters
 CTX_JSONFORMS_RULES = "jsonforms_rules"
 
-CTX_VISIBILITY_GROUPS = "visibility_groups"
+CTX_TARGETED_GROUPS = "targeted_subforms"
 
 
 class PipelineContext(dict):

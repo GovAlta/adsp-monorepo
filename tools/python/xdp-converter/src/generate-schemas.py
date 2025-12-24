@@ -11,12 +11,14 @@ from visibility_rules.pipeline_context import (
     CTX_LABEL_TO_ENUM,
     CTX_PARENT_MAP,
     CTX_RADIO_GROUPS,
+    CTX_SUBFORM_MAP,
     CTX_XDP_ROOT,
     PipelineContext,
 )
 from schema_generator.json_schema_generator import JsonSchemaGenerator
 from schema_generator.ui_schema_generator import UiSchemaGenerator
 import xml.etree.ElementTree as ET
+from visibility_rules.subform_mapper import map_subforms
 from xdp_parser.factories.enum_map_factory import EnumMapFactory, normalize_enum_labels
 from xdp_parser.factories.xdp_element_factory import XdpElementFactory
 from xdp_parser.help_text_parser import JSHelpTextParser
@@ -77,6 +79,7 @@ def process_one(
 
         # --- Build parent map ---
         parent_map = build_parent_map(root)
+        subform_map = map_subforms(root)
 
         # --- Load help text  ---
         registry = HelpTextRegistry()
@@ -95,6 +98,8 @@ def process_one(
             traversal.factory.enum_maps, enum_factory.label_to_enum
         )
 
+        print(f"cboEnvDecalPack: {normalized_enum_maps.get('cboEnvDecalPack')}")
+
         # Keep the actual field names as the group members
         normalized_radio_groups = enum_context.radio_groups
 
@@ -107,6 +112,7 @@ def process_one(
                 CTX_PARENT_MAP: parent_map,
                 CTX_LABEL_TO_ENUM: enum_factory.label_to_enum,
                 CTX_RADIO_GROUPS: normalized_radio_groups,
+                CTX_SUBFORM_MAP: subform_map,
             }
         )
 

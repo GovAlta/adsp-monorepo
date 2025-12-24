@@ -21,11 +21,15 @@ class EnumMapFactory(AbstractXdpFactory):
         if not name:
             return None
 
-        values = self._get_enumeration_values(elem)
-        if values:
-            self.enum_maps[name] = {str(i + 1): v for i, v in enumerate(values)}
-            for i, v in enumerate(values):
-                self.label_to_enum[v.strip()] = (name, str(i + 1))
+        enum_map = self._get_enum_map(elem)  # dict[str,str] | None
+        if not enum_map:
+            return None
+
+        self.enum_maps[name] = enum_map
+        for k, label in enum_map.items():
+            clean = (label or "").strip()
+            if clean:
+                self.label_to_enum[clean] = (name, str(k))
         return None
 
     def handle_radio(self, elem: ET.Element, labels):
@@ -171,18 +175,88 @@ class EnumMapFactory(AbstractXdpFactory):
     def handle_help_text(self, *_):
         return None
 
-    def _get_enumeration_values(self, field_node: ET.Element):
-        enum_values = []
-        for items_el in field_node.findall(".//items"):
-            if (items_el.attrib.get("presence") or "").strip().lower() == "hidden":
+    def _get_saved_enum_map(self, field_node: ET.Element) -> Optional[dict[str, str]]:
+        """
+        For dropdown/list controls that encode the *saved* rawValue separately:
+            <items> <text>Label...</text> </items>
+            <items save="1" presence="hidden"> <text>Code...</text> </items>
+
+        Returns: { saved_value : label }
+        """
+        items_nodes = field_node.findall(".//items")
+        if not items_nodes:
+            return None
+
+        label_items: Optional[ET.Element] = None
+        save_items: Optional[ET.Element] = None
+
+        # Find save list and a non-save list for labels
+        for it in items_nodes:
+            if (it.get("save") or "").strip() == "1":
+                save_items = it
+            else:
+                # Prefer a visible label list if available
+                presence = (it.get("presence") or "").strip().lower()
+                if label_items is None or presence != "hidden":
+                    label_items = it
+
+        if label_items is None or save_items is None:
+            return None  # not a save-coded enum
+
+        labels = [
+            ("".join(t.itertext()) if t is not None else "").strip()
+            for t in label_items.findall("./text")
+        ]
+        saves = [
+            ("".join(t.itertext()) if t is not None else "").strip()
+            for t in save_items.findall("./text")
+        ]
+
+        if len(labels) != len(saves):
+            raise ValueError(
+                f"items/save mismatch for field {field_node.get('name')!r}: "
+                f"{len(labels)} labels vs {len(saves)} saves"
+            )
+
+        enum_map: dict[str, str] = {}
+        for label, saved in zip(labels, saves):
+            if saved == "":
                 continue
+            # Keep label as-is except normalize whitespace
+            enum_map[str(saved).strip()] = (label or "").strip()
+
+        return enum_map or None
+
+    def _get_enum_map(self, field_node: ET.Element) -> dict[str, str] | None:
+        label_items: list[str] = []
+        save_items: list[str] = []
+
+        for items_el in field_node.findall(".//items"):
+            texts = []
             for text_el in items_el.findall("./text"):
-                txt = "".join(text_el.itertext()).strip()
-                if txt:
-                    enum_values.append(txt)
-        if enum_values:
-            return [str(v) for v in remove_duplicates(enum_values)]
-        return None
+                txt = "".join(text_el.itertext())
+                texts.append(txt if txt is not None else "")
+
+            is_hidden = (
+                items_el.attrib.get("presence") or ""
+            ).strip().lower() == "hidden"
+            is_save = (items_el.attrib.get("save") or "").strip() == "1"
+
+            if is_save and is_hidden:
+                save_items.extend([t.strip() for t in texts])
+            elif not is_hidden:
+                label_items.extend([t.strip() for t in texts])
+
+        # no labels => no enum
+        if not label_items:
+            return None
+
+        # If we have a save-list and it lines up, map save->label
+        if save_items and len(save_items) == len(label_items):
+            return {save_items[i]: label_items[i] for i in range(len(label_items))}
+
+        # Fallback: sequential keys
+        return {str(i + 1): label_items[i] for i in range(len(label_items))}
 
 
 def normalize_enum_labels(enum_map, label_to_enum):
