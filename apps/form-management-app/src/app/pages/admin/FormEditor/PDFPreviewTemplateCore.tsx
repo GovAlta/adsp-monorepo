@@ -52,7 +52,7 @@ export const PDFPreviewTemplateCore = ({ jobList, currentPDF, loading }: HasForm
     const blobUrl = blob && URL.createObjectURL(blob);
 
     return (
-      <>
+      <div className={styles['pdf-preview-wrapper']}>
         {loading && (
           <div className={styles['spinner-padding']}>
             <PdfPageIndicator />
@@ -61,7 +61,7 @@ export const PDFPreviewTemplateCore = ({ jobList, currentPDF, loading }: HasForm
         {!loading && !hasError && blobUrl && (
           <div>
             <div>
-              <object type="application/pdf" data={blobUrl} height={windowSize - 192} style={{ width: '100%' }}>
+              <object type="application/pdf" data={blobUrl} height={windowSize - 92} style={{ width: '100%' }}>
                 <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
               </object>
             </div>
@@ -72,7 +72,7 @@ export const PDFPreviewTemplateCore = ({ jobList, currentPDF, loading }: HasForm
             {pdfGenerationError}
           </GoabCallout>
         )}
-      </>
+      </div>
     );
   };
 
@@ -97,12 +97,12 @@ export const PreviewTop = ({
   generateTemplate: () => void;
 }) => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'row' }} className={styles.displayFlex}>
+    <div style={{ display: 'flex', flexDirection: 'row' }}>
       <div style={{ marginRight: '0.5rem' }} className={styles['form-title']}>
         {title}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'row' }} className={styles.displayFlex}>
-        <div>
+      <div style={{ display: 'flex', flexDirection: 'row', marginBottom: '-8px' }}>
+        <div style={{ scale: '86%', marginTop: '-2px' }}>
           <GoabButton
             type="secondary"
             testId="generate-template"
@@ -114,7 +114,7 @@ export const PreviewTop = ({
             Generate PDF
           </GoabButton>
         </div>
-        <div>
+        <div style={{ scale: '86%', marginTop: '-3px' }}>
           <GoabIconButton
             icon="download"
             title="Download"

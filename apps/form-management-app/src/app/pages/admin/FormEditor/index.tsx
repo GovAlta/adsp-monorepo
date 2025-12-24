@@ -31,6 +31,7 @@ import {
   setPdfDisplayFileId,
   getCorePdfTemplates,
 } from '../../../state/pdf/pdf.slice';
+import { fetchRegisterData, getConfigurationDefinitions } from '../../../state/configuration/configuration.slice';
 
 export const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
 
@@ -73,6 +74,8 @@ const EditorWrapper = (): JSX.Element => {
   const fileList = useSelector((state: AppState) => state.file.fileList);
   const loading = useSelector((state: AppState) => state?.pdf.busy.loading);
 
+    const { tenantConfigDefinitions } = useSelector((state: AppState) => state.configuration);
+
   useEffect(() => {
     try {
       if (id) {
@@ -98,16 +101,18 @@ const EditorWrapper = (): JSX.Element => {
     )
   );
 
-  // useEffect(() => {
-  //   if (definition?.id) {
-  //     // dispatch(fetchKeycloakServiceRoles());
-  //     dispatch(fetchRoles());
-  //   }
-  // }, [definition]); // eslint-disable-line react-hooks/exhaustive-deps
-
   useEffect(() => {
+    if (!tenantConfigDefinitions) {
+      dispatch(getConfigurationDefinitions());
+    }
     dispatch(getCorePdfTemplates());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (tenantConfigDefinitions) {
+       dispatch(fetchRegisterData());
+    }
+  }, [tenantConfigDefinitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     dispatch(updateTempTemplate({ tempTemplate: pdfTemplate }));
@@ -334,6 +339,6 @@ const EditorWrapper = (): JSX.Element => {
       )}
     </div>
   );
-};
+};;
 
 export default EditorWrapper;

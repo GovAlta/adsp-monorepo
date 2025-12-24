@@ -5,6 +5,8 @@ import { toDataPath } from '@jsonforms/core';
 import range from 'lodash/range';
 import React, { useState, useEffect, useRef } from 'react';
 import pluralize from 'pluralize';
+import { Resolve } from '@jsonforms/core';
+import type { ErrorObject } from 'ajv';
 
 import {
   ArrayLayoutProps,
@@ -16,6 +18,7 @@ import {
   ArrayTranslations,
   UISchemaElement,
   Layout,
+  LabelDescription,
 } from '@jsonforms/core';
 
 import { WithDeleteDialogSupport } from './DeleteDialog';
@@ -41,6 +44,7 @@ import {
 } from './styled-components';
 import { Visible } from '../../util';
 import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
+import { JSONSchema } from '@apidevtools/json-schema-ref-parser';
 
 const getItemsTitle = (schema?: JsonSchema): string | undefined => {
   const items = schema?.items;
@@ -51,6 +55,32 @@ const getItemsTitle = (schema?: JsonSchema): string | undefined => {
 };
 
 export type ObjectArrayControlProps = ArrayLayoutProps & WithDeleteDialogSupport;
+
+function isControl(uischema: UISchemaElement): uischema is ControlElement {
+  return uischema.type === 'Control';
+}
+
+function hasElements(uischema: UISchemaElement): uischema is Layout {
+  return Array.isArray((uischema as Layout).elements);
+}
+
+function hasDetail(uischema: UISchemaElement): uischema is UISchemaElement & {
+  options: { detail: UISchemaElement };
+} {
+  return uischema.type === 'ListWithDetail' && typeof (uischema as UISchemaElement).options?.detail === 'object';
+}
+
+function normalizeLabel(label?: string | boolean | LabelDescription): string | undefined {
+  if (typeof label === 'string') {
+    return label;
+  }
+
+  if (typeof label === 'object' && label !== null) {
+    return label.text;
+  }
+
+  return;
+}
 
 // eslint-disable-next-line
 export const extractScopesFromUISchema = (uischema: any): string[] => {
@@ -456,6 +486,111 @@ function orderRowData(rowData: Record<string, unknown>, detailUiSchema?: UISchem
   return ordered;
 }
 
+function getEffectiveInstancePath(error: ErrorObject) {
+  if (error.keyword === 'required' && error.params?.missingProperty) {
+    return `${error.instancePath}/${error.params.missingProperty}`;
+  }
+
+  return error.instancePath;
+}
+
+function prettify(prop: string) {
+  return prop
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/[_-]/g, ' ')
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
+function resolveLabel(instancePath: string, schema: JsonSchema, uischema?: UISchemaElement) {
+  const prop = instancePath.split('/').filter(Boolean).pop();
+  const scope = `#/properties/${prop}`;
+
+  if (uischema) {
+    const uiLabel = findControlLabel(uischema, scope);
+
+    if (uiLabel) {
+      return uiLabel;
+    }
+  }
+
+  const schemaPath = ajvPathToSchemaPath(instancePath);
+  const resolvedSchema = Resolve.schema(schema, schemaPath, schema);
+
+  if (resolvedSchema?.title) {
+    return resolvedSchema.title;
+  }
+
+  return prettify(prop || 'Unknown field');
+}
+
+function ajvPathToSchemaPath(instancePath: string) {
+  const parts = instancePath.split('/').filter(Boolean);
+
+  const result: string[] = [];
+
+  for (const part of parts) {
+    if (!isNaN(Number(part))) {
+      // array index → items
+      result.push('items');
+    } else {
+      result.push('properties', part);
+    }
+  }
+
+  return result.join('.');
+}
+
+export function findControlLabel(uischema: UISchemaElement, scope: string): string | undefined {
+  if (isControl(uischema) && uischema.scope === scope) {
+    return normalizeLabel(uischema.label);
+  }
+
+  if (hasDetail(uischema)) {
+    const found = findControlLabel(uischema.options.detail, scope);
+    if (found) return found;
+  }
+
+  if (hasElements(uischema)) {
+    for (const el of uischema.elements) {
+      const found = findControlLabel(el, scope);
+      if (found) return found;
+    }
+  }
+
+  return;
+}
+
+export function humanizeAjvError(error: ErrorObject, schema: JsonSchema, uischema?: UISchemaElement): string {
+  const path = getEffectiveInstancePath(error);
+  const label = resolveLabel(path, schema, uischema);
+
+  switch (error.keyword) {
+    case 'required':
+      return `${label} is required`;
+
+    case 'minLength':
+      return `${label} must be at least ${error.params.limit} characters`;
+
+    case 'maxLength':
+      return `${label} must be at most ${error.params.limit} characters`;
+
+    case 'format':
+      return `${label} must be a valid ${error.params.format}`;
+
+    case 'minimum':
+      return `${label} must be ≥ ${error.params.limit}`;
+
+    case 'maximum':
+      return `${label} must be ≤ ${error.params.limit}`;
+
+    case 'type':
+      return `${label} must be a ${error.params.type}`;
+
+    default:
+      return `${label} ${error.message ?? ''}`.trim();
+  }
+}
+
 const MainTab = ({
   childPath,
   rowIndex,
@@ -483,8 +618,8 @@ const MainTab = ({
       const base = `/${childPath.replace(/\./g, '/')}`;
       return e.instancePath === base || e.instancePath.startsWith(base + '/');
     })
-    .map((e) => e?.message?.trim?.() || '')
-    .filter((msg) => msg.length > 0)
+    .filter((e) => (e?.message?.length || 0) > 0)
+    .map((e) => humanizeAjvError(e, core.schema, core.uischema))
     .map((msg, index, arr) => `${msg}${index < arr.length - 1 ? ', ' : ''}`);
   return (
     <div key={childPath} data-testid={`object-array-main-item-${rowIndex}`}>

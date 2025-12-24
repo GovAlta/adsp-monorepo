@@ -55,58 +55,56 @@ export const Preview: React.FC<PreviewProps> = ({
   const [data, setData] = useState<any>({});
 
   return (
-    <div>
-      <GoabTabs data-testid="preview-tabs">
-        <GoabTab heading="Preview" data-testid="preview-view-tab">
-          <div className={styles['form-preview-scroll-pane']}>
-            <ContextProvider
-              fileManagement={{
-                fileList: fileList,
-                uploadFile: uploadFile,
-                downloadFile: downloadFile,
-                deleteFile: deleteFile,
-              }}
-              formUrl={formServiceApiUrl}
-            >
-              <GoabFormItem error={schemaError} label="">
-                <JSONFormPreviewer
-                  onChange={({ data }) => {
-                    setData(data);
-                  }}
-                  data={data}
-                  dataSchema={dataSchema}
-                  uiSchema={uiSchema}
-                  error={schemaError}
-                  registerData={registerData}
-                  nonAnonymous={nonAnonymous}
-                  dataList={dataList}
-                />
-              </GoabFormItem>
-            </ContextProvider>
-          </div>
-        </GoabTab>
+    <GoabTabs data-testid="preview-tabs">
+      <GoabTab heading="Preview" data-testid="preview-view-tab">
+        <div className={styles['form-preview-scroll-pane']}>
+          <ContextProvider
+            fileManagement={{
+              fileList: fileList,
+              uploadFile: uploadFile,
+              downloadFile: downloadFile,
+              deleteFile: deleteFile,
+            }}
+            formUrl={formServiceApiUrl}
+          >
+            <GoabFormItem error={schemaError} label="">
+              <JSONFormPreviewer
+                onChange={({ data }) => {
+                  setData(data);
+                }}
+                data={data}
+                dataSchema={dataSchema}
+                uiSchema={uiSchema}
+                error={schemaError}
+                registerData={registerData}
+                nonAnonymous={nonAnonymous}
+                dataList={dataList}
+              />
+            </GoabFormItem>
+          </ContextProvider>
+        </div>
+      </GoabTab>
 
-        <GoabTab heading="Data" data-testid="data-view">
-          <div className={styles['review-page-tab-wrapper']}>
-            {data && <div className={styles.PRE}>{JSON.stringify(data, null, 2)}</div>}
-          </div>
-        </GoabTab>
-        <GoabTab
-          heading={
-            <PreviewTop
-              title="PDF Preview"
-              downloadFile={() => {
-                downloadFile(pdfFile);
-              }}
-              currentPDF={currentPDF}
-              generateTemplate={() => generatePdf(data)}
-            />
-          }
-          data-testid="data-view"
-        >
-          <PDFPreviewTemplateCore jobList={jobList} currentPDF={currentPDF} loading={loading} />
-        </GoabTab>
-      </GoabTabs>
-    </div>
+      <GoabTab heading="Data" data-testid="data-view">
+        <div className={styles['review-page-tab-wrapper']}>
+          {data && <div className={styles.PRE}>{JSON.stringify(data, null, 2)}</div>}
+        </div>
+      </GoabTab>
+      <GoabTab
+        heading={
+          <PreviewTop
+            title="PDF Preview"
+            downloadFile={() => {
+              downloadFile(pdfFile);
+            }}
+            currentPDF={currentPDF}
+            generateTemplate={() => generatePdf(data)}
+          />
+        }
+        data-testid="data-view"
+      >
+        <PDFPreviewTemplateCore jobList={jobList} currentPDF={currentPDF} loading={loading} />
+      </GoabTab>
+    </GoabTabs>
   );
 };

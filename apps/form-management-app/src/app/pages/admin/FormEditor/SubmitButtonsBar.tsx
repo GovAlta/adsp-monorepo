@@ -34,6 +34,9 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
   updateFormDefinition,
   isFormUpdated,
   validators,
+  foldAll,
+  getCurrentEditorRef,
+  unfoldAll,
 }) => {
   const [saveModal, setSaveModal] = useState({ visible: false });
   const navigate = useNavigate();
@@ -46,6 +49,32 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
   return (
     <div>
       <div className={styles['final-button-padding']}>
+        <GoabButtonGroup alignment="start">
+          <GoabButton
+            type="tertiary"
+            testId="collapse-all"
+            onClick={() => {
+              const editor = getCurrentEditorRef();
+              if (editor) {
+                foldAll(editor);
+              }
+            }}
+            disabled={activeIndex > 1}
+          >
+            Collapse all
+          </GoabButton>
+          <GoabButton
+            testId="expand-all"
+            type="tertiary"
+            disabled={activeIndex > 1}
+            onClick={() => {
+              const editor = getCurrentEditorRef();
+              if (editor) unfoldAll(editor);
+            }}
+          >
+            Expand all
+          </GoabButton>
+        </GoabButtonGroup>
         <GoabButtonGroup alignment="end">
           <GoabButton
             type="primary"
