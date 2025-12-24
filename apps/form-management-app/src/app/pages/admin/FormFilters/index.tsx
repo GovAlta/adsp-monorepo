@@ -2,16 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AsyncThunk } from '@reduxjs/toolkit';
 import {
-  GoATable,
-  GoACircularProgress,
-  GoAIconButton,
-  GoAInput,
-  GoAModal,
-  GoASpacer,
-  GoAButton,
-  GoAButtonGroup,
-  GoADropdown,
-  GoADropdownItem,
+  GoabTable,
+  GoabCircularProgress,
+  GoabIconButton,
+  GoabInput,
+  GoabModal,
+  GoabSpacer,
+  GoabButton,
+  GoabButtonGroup,
+  GoabDropdown,
+  GoabDropdownItem,
 } from '@abgov/react-components';
 import {
   AppDispatch,
@@ -29,6 +29,7 @@ import {
   updateActsOfLegislation,
 } from '../../../state';
 import styles from './index.module.scss';
+import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 type FilterKey = 'program' | 'ministry' | 'acts-of-legislation';
 
@@ -155,20 +156,29 @@ const FormFilters = (): JSX.Element => {
   return (
     <div>
       <h1>Form Filters</h1>
-      <GoASpacer vSpacing="m" />
-      <GoADropdown name="filter-type" value={selectedFilter} onChange={onFilterChange} width="200px">
+      <GoabSpacer vSpacing="m" />
+      <GoabDropdown
+        name="filter-type"
+        value={selectedFilter}
+        onChange={(detail: GoabDropdownOnChangeDetail) => {
+          if (detail.name && detail.value) {
+            onFilterChange(detail.name, detail.value);
+          }
+        }}
+        width="200px"
+      >
         {Object.keys(filterConfig).map((key) => (
-          <GoADropdownItem key={key} value={key} label={filterConfig[key as FilterKey].label} />
+          <GoabDropdownItem key={key} value={key} label={filterConfig[key as FilterKey].label} />
         ))}
-      </GoADropdown>
-      <GoASpacer vSpacing="m" />
-      <GoATable width="40%">
+      </GoabDropdown>
+      <GoabSpacer vSpacing="m" />
+      <GoabTable width="40%">
         <thead>
           <tr>
             <th>
               <div className={styles.header}>
                 {currentConfig?.label}
-                <GoAIconButton icon="add" size="medium" disabled={isAdding} onClick={onAdd} />
+                <GoabIconButton icon="add" size="medium" disabled={isAdding} onClick={onAdd} />
               </div>
             </th>
             <th>Actions</th>
@@ -178,18 +188,28 @@ const FormFilters = (): JSX.Element => {
           {isAdding && (
             <tr>
               <td>
-                <GoAInput name="filter-new" value={newValue} onChange={(_, value) => setNewValue(value)} width="100%" />
+                <GoabInput
+                  name="filter-new"
+                  value={newValue}
+                  onChange={(detail: GoabInputOnChangeDetail) => setNewValue(detail.value)}
+                  width="100%"
+                />
               </td>
               <td>
-                <GoAIconButton icon="checkmark" size="medium" disabled={!newValue || busy.saving} onClick={onSaveNew} />
-                <GoAIconButton icon="trash" size="medium" onClick={onCancelNew} />
+                <GoabIconButton
+                  icon="checkmark"
+                  size="medium"
+                  disabled={!newValue || busy.saving}
+                  onClick={onSaveNew}
+                />
+                <GoabIconButton icon="trash" size="medium" onClick={onCancelNew} />
               </td>
             </tr>
           )}
           {loading ? (
             <tr>
               <td colSpan={2}>
-                <GoACircularProgress visible={true} size="large" />
+                <GoabCircularProgress visible={true} size="large" />
               </td>
             </tr>
           ) : currentList && currentList.length > 0 ? (
@@ -197,10 +217,10 @@ const FormFilters = (): JSX.Element => {
               <tr key={index}>
                 <td>
                   {editIndex === index ? (
-                    <GoAInput
+                    <GoabInput
                       name="filter-edit"
                       value={editValue}
-                      onChange={(_, value) => setEditValue(value)}
+                      onChange={(detail: GoabInputOnChangeDetail) => setEditValue(detail.value)}
                       width="100%"
                     />
                   ) : (
@@ -209,16 +229,16 @@ const FormFilters = (): JSX.Element => {
                 </td>
                 <td>
                   {editIndex === index ? (
-                    <GoAIconButton
+                    <GoabIconButton
                       icon="checkmark"
                       size="medium"
                       disabled={busy.saving}
                       onClick={() => onSave(index)}
                     />
                   ) : (
-                    <GoAIconButton icon="create" size="medium" onClick={() => onEdit(index, item)} />
+                    <GoabIconButton icon="create" size="medium" onClick={() => onEdit(index, item)} />
                   )}
-                  <GoAIconButton icon="trash" size="medium" onClick={() => onDelete(index)} />
+                  <GoabIconButton icon="trash" size="medium" onClick={() => onDelete(index)} />
                 </td>
               </tr>
             ))
@@ -228,26 +248,26 @@ const FormFilters = (): JSX.Element => {
             </tr>
           )}
         </tbody>
-      </GoATable>
-      <GoAModal
+      </GoabTable>
+      <GoabModal
         heading={`Delete ${currentConfig?.label}`}
         open={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton type="secondary" onClick={() => setShowDeleteModal(false)} disabled={busy.saving}>
+          <GoabButtonGroup alignment="end">
+            <GoabButton type="secondary" onClick={() => setShowDeleteModal(false)} disabled={busy.saving}>
               Cancel
-            </GoAButton>
-            <GoAButton type="primary" variant="destructive" onClick={confirmDelete} disabled={busy.saving}>
+            </GoabButton>
+            <GoabButton type="primary" variant="destructive" onClick={confirmDelete} disabled={busy.saving}>
               {busy.saving ? 'Deleting...' : 'Delete'}
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <p>
           Are you sure you want to delete <b>{deleteIndex !== null ? currentList[deleteIndex] : ''}</b>?
         </p>
-      </GoAModal>
+      </GoabModal>
     </div>
   );
 };
