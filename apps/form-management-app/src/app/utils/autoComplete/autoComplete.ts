@@ -230,20 +230,18 @@ export const luaTriggerInScope = (text: string, lineNumber: number) =>
 const isStringOrNumber = (value: unknown): value is string | number => {
   return typeof value === 'string' || typeof value === 'number';
 };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const convertEditorToSuggestion = (obj: any): EditorSuggestion => {
+export const convertEditorToSuggestion = (obj: unknown): EditorSuggestion => {
   const isArray = Array.isArray(obj);
 
   if (isArray) {
     return {
       label: 'Array',
       insertText: 'Array',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      children: obj.map((item: any) => convertEditorToSuggestion(item)),
+      children: obj.map((item) => convertEditorToSuggestion(item)),
     };
   } else if (typeof obj === 'object' && obj !== null) {
     const properties = Object.keys(obj).map((key) => {
-      const value = obj[key];
+      const value = (obj as Record<string, unknown>)[key];
 
       return isStringOrNumber(value)
         ? {
@@ -255,8 +253,7 @@ export const convertEditorToSuggestion = (obj: any): EditorSuggestion => {
             insertText: key,
 
             children: Array.isArray(value)
-              ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                value.map((item: any) => convertEditorToSuggestion(item))
+              ? value.map((item) => convertEditorToSuggestion(item))
               : convertEditorToSuggestion(value)?.children,
           };
     });
@@ -274,8 +271,7 @@ export const convertEditorToSuggestion = (obj: any): EditorSuggestion => {
   }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const convertToEditorSuggestion = (obj: any): EditorSuggestion[] => {
+export const convertToEditorSuggestion = (obj: unknown): EditorSuggestion[] => {
   const suggest = convertEditorToSuggestion(obj);
   return [
     {

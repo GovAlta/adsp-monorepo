@@ -9,6 +9,8 @@ export const DIRECTORY_SERVICE_ID = 'urn:ads:platform:directory-service';
 export const CACHE_SERVICE_ID = 'urn:ads:platform:cache-service';
 export const FORM_APP_ID = 'urn:ads:platform:form-app';
 
+export type FilterKey = 'program' | 'ministry' | 'acts-of-legislation';
+
 export interface Session {
   authenticated: boolean;
   clientId: string;
