@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { getCommentTopicTypes, updateCommentTopicType, deleteCommentTopicType } from '@store/comment/action';
@@ -74,14 +74,14 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
 
   return (
     <section>
-      <GoAButton
+      <GoabButton
         testId="add-topic-type"
         onClick={() => {
           setOpenAddCommentTopicType(true);
         }}
       >
         Add topic type
-      </GoAButton>
+      </GoabButton>
       <br />
       <br />
       <PageIndicator />

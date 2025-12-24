@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styles from './Editor.module.scss';
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
-import { GoAFormItem, GoATabs, GoATab } from '@abgov/react-components';
+import { GoabFormItem, GoabTabs, GoabTab } from '@abgov/react-components';
 import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { FileItem, FileMetadata } from '../../../state/file/file.slice';
@@ -55,8 +55,8 @@ export const Preview: React.FC<PreviewProps> = ({
   const [data, setData] = useState<any>({});
 
   return (
-    <GoATabs data-testid="preview-tabs">
-      <GoATab heading="Preview" data-testid="preview-view-tab">
+    <GoabTabs data-testid="preview-tabs">
+      <GoabTab heading="Preview" data-testid="preview-view-tab">
         <div className={styles['form-preview-scroll-pane']}>
           <ContextProvider
             fileManagement={{
@@ -67,7 +67,7 @@ export const Preview: React.FC<PreviewProps> = ({
             }}
             formUrl={formServiceApiUrl}
           >
-            <GoAFormItem error={schemaError} label="">
+            <GoabFormItem error={schemaError} label="">
               <JSONFormPreviewer
                 onChange={({ data }) => {
                   setData(data);
@@ -80,17 +80,17 @@ export const Preview: React.FC<PreviewProps> = ({
                 nonAnonymous={nonAnonymous}
                 dataList={dataList}
               />
-            </GoAFormItem>
+            </GoabFormItem>
           </ContextProvider>
         </div>
-      </GoATab>
+      </GoabTab>
 
-      <GoATab heading="Data" data-testid="data-view">
+      <GoabTab heading="Data" data-testid="data-view">
         <div className={styles['review-page-tab-wrapper']}>
           {data && <div className={styles.PRE}>{JSON.stringify(data, null, 2)}</div>}
         </div>
-      </GoATab>
-      <GoATab
+      </GoabTab>
+      <GoabTab
         heading={
           <PreviewTop
             title="PDF Preview"
@@ -104,7 +104,7 @@ export const Preview: React.FC<PreviewProps> = ({
         data-testid="data-view"
       >
         <PDFPreviewTemplateCore jobList={jobList} currentPDF={currentPDF} loading={loading} />
-      </GoATab>
-    </GoATabs>
+      </GoabTab>
+    </GoabTabs>
   );
 };

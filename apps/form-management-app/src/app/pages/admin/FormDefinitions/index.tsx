@@ -3,18 +3,24 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { debounce } from 'lodash';
 import {
-  GoACircularProgress,
-  GoATable,
-  GoAIconButton,
-  GoAPagination,
-  GoASpacer,
-  GoAButton,
-  GoAModal,
-  GoAButtonGroup,
-  GoAInput,
-  GoADropdown,
-  GoADropdownItem,
+  GoabCircularProgress,
+  GoabTable,
+  GoabIconButton,
+  GoabPagination,
+  GoabSpacer,
+  GoabButton,
+  GoabModal,
+  GoabButtonGroup,
+  GoabInput,
+  GoabDropdown,
+  GoabDropdownItem,
 } from '@abgov/react-components';
+import {
+  GoabInputOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+  GoabPaginationOnChangeDetail,
+} from '@abgov/ui-components-common';
+
 import {
   AppDispatch,
   getFormDefinitions,
@@ -146,81 +152,81 @@ const FormDefinitions = (): JSX.Element => {
     <div>
       <div className={styles.header}>
         <h1>Form Definitions</h1>
-        <GoAButton
+        <GoabButton
           type="primary"
           onClick={() => {
             navigate('new');
           }}
         >
           Create Definition
-        </GoAButton>
+        </GoabButton>
       </div>
       <br />
       <div className={styles.container}>
         <div className={styles.filters}>
-          <GoAInput
+          <GoabInput
             name="name"
             type="search"
             placeholder="Search by name"
             value={name}
-            onChange={onNameChange}
+            onChange={(detail: GoabInputOnChangeDetail) => onNameChange(detail.name, detail.value)}
             width="100%"
           />
-          <GoASpacer vSpacing="m" />
-          <GoADropdown
+          <GoabSpacer vSpacing="m" />
+          <GoabDropdown
             name="actsOfLegislation"
             value={actsOfLegislation}
-            onChange={onActsChange}
+            onChange={(detail: GoabInputOnChangeDetail) => onActsChange(detail.name, detail.value)}
             width="100%"
             placeholder="Select acts of legislation"
           >
-            <GoADropdownItem value={actsOfLegislation} label="Select acts of legislation" />
+            <GoabDropdownItem value={actsOfLegislation} label="Select acts of legislation" />
             {acts.map((act) => (
-              <GoADropdownItem key={act} value={act} label={act} />
+              <GoabDropdownItem key={act} value={act} label={act} />
             ))}
-          </GoADropdown>
-          <GoASpacer vSpacing="m" />
-          <GoAInput
+          </GoabDropdown>
+          <GoabSpacer vSpacing="m" />
+          <GoabInput
             name="registeredId"
             type="search"
             placeholder="Search by registered ID"
             value={registeredId}
-            onChange={onRegisteredIdChange}
+            onChange={(detail: GoabInputOnChangeDetail) => onRegisteredIdChange(detail.name, detail.value)}
             width="100%"
           />
-          <GoASpacer vSpacing="m" />
-          <GoADropdown
+          <GoabSpacer vSpacing="m" />
+          <GoabDropdown
             name="program"
             value={program}
-            onChange={onProgramChange}
+            onChange={(detail: GoabDropdownOnChangeDetail) => onProgramChange(detail.name ?? '', detail.values ?? '')}
             width="100%"
             placeholder="Select a program"
           >
-            <GoADropdownItem value="" label="Select a program" />
+            <GoabDropdownItem value="" label="Select a program" />
             {programs.map((program) => (
-              <GoADropdownItem key={program} value={program} label={program} />
+              <GoabDropdownItem key={program} value={program} label={program} />
             ))}
-          </GoADropdown>
-          <GoASpacer vSpacing="m" />
-          <GoADropdown
+          </GoabDropdown>
+          <GoabSpacer vSpacing="m" />
+          <GoabDropdown
             name="ministry"
             value={ministry}
-            onChange={onMinistryChange}
+            onChange={(detail: GoabDropdownOnChangeDetail) => onMinistryChange(detail.name ?? '', detail.values ?? '')}
             width="100%"
             placeholder="Select a ministry"
           >
-            <GoADropdownItem value="" label="Select a ministry" />
+            <GoabDropdownItem value="" label="Select a ministry" />
             {ministries.map((ministry) => (
-              <GoADropdownItem key={ministry} value={ministry} label={ministry} />
+              <GoabDropdownItem key={ministry} value={ministry} label={ministry} />
             ))}
-          </GoADropdown>
-          <GoASpacer vSpacing="m" />
-          <GoAButton type="tertiary" onClick={resetFilters} width="100%">
+          </GoabDropdown>
+          <GoabSpacer vSpacing="m" />
+          <GoabButton type="tertiary" onClick={resetFilters} width="100%">
             Clear all
-          </GoAButton>
+          </GoabButton>
         </div>
         <div className={styles.tableContainer}>
-          <GoATable width="100%">
+          <GoabTable width="100%">
             <thead>
               <tr>
                 <th>Name</th>
@@ -233,7 +239,7 @@ const FormDefinitions = (): JSX.Element => {
                 <tr>
                   <td colSpan={3}>
                     <div className={styles.loadingContainer}>
-                      <GoACircularProgress visible={true} size="large" />
+                      <GoabCircularProgress visible={true} size="large" />
                     </div>
                   </td>
                 </tr>
@@ -243,7 +249,7 @@ const FormDefinitions = (): JSX.Element => {
                     <td>{definition.name}</td>
                     <td>{definition.description}</td>
                     <td className={styles.actions}>
-                      <GoAIconButton
+                      <GoabIconButton
                         icon="pencil"
                         size="medium"
                         ariaLabel="Edit"
@@ -251,7 +257,7 @@ const FormDefinitions = (): JSX.Element => {
                           navigate(`/${tenant}/editor/${definition.id}`);
                         }}
                       />
-                      <GoAIconButton
+                      <GoabIconButton
                         icon="trash"
                         size="medium"
                         ariaLabel="Delete"
@@ -269,23 +275,23 @@ const FormDefinitions = (): JSX.Element => {
                 </tr>
               )}
             </tbody>
-          </GoATable>
-          <GoASpacer vSpacing="xl" />
-          <GoAPagination
+          </GoabTable>
+          <GoabSpacer vSpacing="xl" />
+          <GoabPagination
             itemCount={next ? (page + 1) * 40 : page * 40}
             perPageCount={40}
             pageNumber={page}
-            onChange={(newPage) => dispatch(formActions.setPage(newPage))}
+            onChange={(detail: GoabPaginationOnChangeDetail) => dispatch(formActions.setPage(detail.page))}
           />
         </div>
       </div>
 
-      <GoAModal
+      <GoabModal
         open={showDeleteModal}
         heading="Delete Form Definition"
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               type="secondary"
               onClick={() => {
                 setShowDeleteModal(false);
@@ -294,8 +300,8 @@ const FormDefinitions = (): JSX.Element => {
               disabled={isDeleting}
             >
               Cancel
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               type="primary"
               variant="destructive"
               onClick={async () => {
@@ -312,15 +318,15 @@ const FormDefinitions = (): JSX.Element => {
               disabled={isDeleting}
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <p>
           Are you sure you want to delete the form definition "{definitionToDelete?.name}"? This action cannot be
           undone.
         </p>
-      </GoAModal>
+      </GoabModal>
     </div>
   );
 };

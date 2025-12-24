@@ -1,5 +1,7 @@
-import { GoAModal, GoAFormItem, GoAInputDateTime, GoADate, GoAButtonGroup, GoAButton } from '@abgov/react-components';
+import { GoabModal, GoabFormItem, GoabInputDateTime, GoabButtonGroup, GoabButton } from '@abgov/react-components';
+import { GoabDate } from '@abgov/ui-components-common';
 import { FunctionComponent, useState } from 'react';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface ScheduleIntakeModalProps {
   open: boolean;
@@ -8,24 +10,33 @@ interface ScheduleIntakeModalProps {
 }
 
 export const ScheduleIntakeModal: FunctionComponent<ScheduleIntakeModalProps> = ({ open, onClose, onSchedule }) => {
-  const [start, setStart] = useState<GoADate>();
-  const [end, setEnd] = useState<GoADate>();
+  const [start, setStart] = useState<GoabDate>();
+  const [end, setEnd] = useState<GoabDate>();
 
   return (
-    <GoAModal heading="Schedule intake" open={open}>
+    <GoabModal heading="Schedule intake" open={open}>
       <form>
-        <GoAFormItem label="Start on">
-          <GoAInputDateTime onChange={(_, value: GoADate) => setStart(value)} value={start} name="Start on" />
-        </GoAFormItem>
-        <GoAFormItem label="End on">
-          <GoAInputDateTime onChange={(_, value: GoADate) => setEnd(value)} min={start} value={end} name="End on" />
-        </GoAFormItem>
+        <GoabFormItem label="Start on">
+          <GoabInputDateTime
+            onChange={(detail: GoabInputOnChangeDetail) => setStart(detail.value)}
+            value={start}
+            name="Start on"
+          />
+        </GoabFormItem>
+        <GoabFormItem label="End on">
+          <GoabInputDateTime
+            onChange={(detail: GoabInputOnChangeDetail) => setEnd(detail.value)}
+            min={start}
+            value={end}
+            name="End on"
+          />
+        </GoabFormItem>
       </form>
-      <GoAButtonGroup alignment="end" mt="xl">
-        <GoAButton type="secondary" onClick={onClose}>
+      <GoabButtonGroup alignment="end" mt="xl">
+        <GoabButton type="secondary" onClick={onClose}>
           Close
-        </GoAButton>
-        <GoAButton
+        </GoabButton>
+        <GoabButton
           disabled={!start || !end}
           onClick={async () =>
             await onSchedule(
@@ -35,8 +46,8 @@ export const ScheduleIntakeModal: FunctionComponent<ScheduleIntakeModalProps> = 
           }
         >
           Schedule intake
-        </GoAButton>
-      </GoAButtonGroup>
-    </GoAModal>
+        </GoabButton>
+      </GoabButtonGroup>
+    </GoabModal>
   );
 };

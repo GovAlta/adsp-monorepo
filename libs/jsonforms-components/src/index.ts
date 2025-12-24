@@ -37,7 +37,7 @@ import {
   GoABooleanControl,
   GoABooleanRadioControlTester,
   GoABooleanRadioControl,
-  GoInputBaseReviewControl,
+  GoAInputBaseReviewControl,
   AddressLookUpControl,
   AddressLookUpControlReview,
   AddressLookUpTester,
@@ -137,27 +137,27 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
 
 export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
-  { tester: GoAEnumControlTester, renderer: GoInputBaseReviewControl },
-  { tester: GoAIntegerControlTester, renderer: GoInputBaseReviewControl },
-  { tester: GoANumberControlTester, renderer: GoInputBaseReviewControl },
-  { tester: GoATextControlTester, renderer: GoInputBaseReviewControl },
-  { tester: GoADateControlTester, renderer: GoInputBaseReviewControl },
-  { tester: GoADateTimeControlTester, renderer: GoInputBaseReviewControl },
-  { tester: GoATimeControlTester, renderer: GoInputBaseReviewControl },
+  { tester: GoAEnumControlTester, renderer: GoAInputBaseReviewControl },
+  { tester: GoAIntegerControlTester, renderer: GoAInputBaseReviewControl },
+  { tester: GoANumberControlTester, renderer: GoAInputBaseReviewControl },
+  { tester: GoATextControlTester, renderer: GoAInputBaseReviewControl },
+  { tester: GoADateControlTester, renderer: GoAInputBaseReviewControl },
+  { tester: GoADateTimeControlTester, renderer: GoAInputBaseReviewControl },
+  { tester: GoATimeControlTester, renderer: GoAInputBaseReviewControl },
   {
     tester: GoARadioGroupControlTester,
-    renderer: GoInputBaseReviewControl,
+    renderer: GoAInputBaseReviewControl,
   },
   {
     tester: GoACheckoutGroupControlTester,
-    renderer: GoInputBaseReviewControl,
+    renderer: GoAInputBaseReviewControl,
   },
-  { tester: GoABooleanControlTester, renderer: GoInputBaseReviewControl },
+  { tester: GoABooleanControlTester, renderer: GoAInputBaseReviewControl },
 
-  { tester: GoABooleanRadioControlTester, renderer: GoInputBaseReviewControl },
+  { tester: GoABooleanRadioControlTester, renderer: GoAInputBaseReviewControl },
   {
     tester: MultiLineTextControlTester,
-    renderer: GoInputBaseReviewControl,
+    renderer: GoAInputBaseReviewControl,
   },
   {
     tester: GoAArrayControlTester,

@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
-import { GoATable } from '@abgov/react-components';
+import { GoabTable } from '@abgov/react-components';
 import { DataObject, NestedItem, RenderCellColumnProps } from './ObjectListControlTypes';
-import { GoAIcon } from '@abgov/react-components';
+import { GoabIcon } from '@abgov/react-components';
 import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-components';
 import { isEmpty } from 'lodash';
 import { ErrorObject } from 'ajv';
@@ -57,7 +57,7 @@ export interface TableProps {
 
 const DataTable = ({ itemsSchema, data }: TableProps): JSX.Element => {
   return (
-    <GoATable width="100%">
+    <GoabTable width="100%">
       <thead>
         <tr>
           {itemsSchema &&
@@ -76,7 +76,7 @@ const DataTable = ({ itemsSchema, data }: TableProps): JSX.Element => {
           </tr>
         ))}
       </tbody>
-    </GoATable>
+    </GoabTable>
   );
 };
 
@@ -98,7 +98,7 @@ export const renderCellColumn = ({
     return (
       <HilightCellWarning>
         <ObjectArrayWarningIconDiv>
-          <GoAIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoAIcon>
+          <GoabIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoabIcon>
           {data}
         </ObjectArrayWarningIconDiv>
       </HilightCellWarning>

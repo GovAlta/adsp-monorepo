@@ -1,6 +1,6 @@
 import React from 'react';
 import { ControlElement, createDefaultValue, JsonSchema } from '@jsonforms/core';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { capitalizeFirstLetter, getLabelText } from '../../util';
 import { MarginTop } from './styled-components';
 import pluralize from 'pluralize';
@@ -41,11 +41,11 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
 
   return (
     <>
-      {/* Note: Paul 2024-01-05: need to add the GoATooltip after the upgrade of the ui components */}
+      {/* Note: Paul 2024-01-05: need to add the GoabTooltip after the upgrade of the ui components */}
       <div style={{ textAlign: buttonPosition }}>
         {/* currentListPage== {currentListPage} */}
         <MarginTop>
-          <GoAButton
+          <GoabButton
             disabled={!enabled}
             testId={`object-array-toolbar-${label}`}
             leadingIcon="add"
@@ -59,10 +59,10 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
           >
             {uischema?.options?.addButtonText ||
               `Add ${pluralize.singular(arrayLabel.charAt(0).toLowerCase() + arrayLabel.slice(1))}`}
-          </GoAButton>
+          </GoabButton>
         </MarginTop>
       </div>
-      {/* </GoATooltip> */}
+      {/* </GoabTooltip> */}
     </>
   );
 });

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoAModal,
-  GoAInput,
-  GoAFormItem,
-  GoADropdown,
-  GoADropdownItem,
+  GoabButton,
+  GoabButtonGroup,
+  GoabModal,
+  GoabInput,
+  GoabFormItem,
+  GoabDropdown,
+  GoabDropdownItem,
 } from '@abgov/react-components';
 
 import { useSelector, useDispatch } from 'react-redux';
@@ -22,6 +22,7 @@ import { selectFilteredEventDefinitions } from '@store/event/selectors';
 
 import { useValidators } from '@lib/validation/useValidators';
 import { areObjectsEqual } from '@lib/objectUtil';
+import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 interface ResourceTypeModalProps {
   open: boolean;
@@ -94,16 +95,16 @@ export const AddEditResourceTypeModal = ({
   }, [dispatch]);
 
   return (
-    <GoAModal
+    <GoabModal
       testId="add-edit-resource-type-modal"
       open={open}
       heading={`${isEdit ? 'Edit' : 'New'} resource type`}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton type="secondary" testId="resource-type-modal-cancel" onClick={onCancelModal}>
+        <GoabButtonGroup alignment="end">
+          <GoabButton type="secondary" testId="resource-type-modal-cancel" onClick={onCancelModal}>
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="resource-type-modal-save"
             disabled={
@@ -115,107 +116,105 @@ export const AddEditResourceTypeModal = ({
             onClick={handleSave}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
-      <GoAFormItem label="Api" requirement="required" error={errors?.['api']}>
-        <GoADropdown
+      <GoabFormItem label="Api" requirement="required" error={errors?.['api']}>
+        <GoabDropdown
           name="api"
           value={isEdit ? urn : api}
           aria-label="resource-type-api"
           width="100%"
           testId="resource-type-api"
           disabled={isEdit}
-          onChange={(_, value: string) => {
+          onChange={(detail: GoabDropdownOnChangeDetail) => {
             validators.remove('api');
-            validators['api'].check(value);
+            validators['api'].check(detail.value);
 
-            setApi(value);
+            setApi(detail.value);
             setResourceType({
               ...resourceType,
               deleteEvent: {
                 ...resourceType.deleteEvent,
-                resourceIdPath: value,
+                resourceIdPath: detail.value,
               },
             });
           }}
-          relative={true}
         >
           {tenantDirectory &&
             tenantDirectory.length > 0 &&
-            tenantDirectory.map((state, key) => <GoADropdownItem key={key} value={state.urn} label={state.urn} />)}
-        </GoADropdown>
-      </GoAFormItem>
+            tenantDirectory.map((state, key) => <GoabDropdownItem key={key} value={state.urn} label={state.urn} />)}
+        </GoabDropdown>
+      </GoabFormItem>
       <br />
-      <GoAFormItem label="Type" error={errors?.['type']} requirement="required">
-        <GoAInput
+      <GoabFormItem label="Type" error={errors?.['type']} requirement="required">
+        <GoabInput
           type="text"
           name="type"
           value={resourceType?.type}
           testId={`resource-type-modal-type-input`}
           width="100%"
           aria-label="type"
-          onChange={(name, value) => {
+          onChange={(detail: GoabInputOnChangeDetail) => {
             validators.remove('type');
-            validators['type'].check(value);
-            setResourceType({ ...resourceType, type: value });
+            validators['type'].check(detail.value);
+            setResourceType({ ...resourceType, type: detail.value });
           }}
         />
-      </GoAFormItem>
+      </GoabFormItem>
       <br />
-      <GoAFormItem label="Matcher" error={errors?.['matcher']} requirement="required">
-        <GoAInput
+      <GoabFormItem label="Matcher" error={errors?.['matcher']} requirement="required">
+        <GoabInput
           type="text"
           name="matcher"
           value={resourceType?.matcher}
           testId={`resource-type-modal-matcher-input`}
           width="100%"
           aria-label="matcher"
-          onChange={(name, value) => {
+          onChange={(detail: GoabInputOnChangeDetail) => {
             validators.remove('matcher');
-            validators['matcher'].check(value);
-            setResourceType({ ...resourceType, matcher: value });
+            validators['matcher'].check(detail.value);
+            setResourceType({ ...resourceType, matcher: detail.value });
           }}
         />
-      </GoAFormItem>
+      </GoabFormItem>
       <br />
-      <GoAFormItem
+      <GoabFormItem
         label="Name path"
         helpText="Path to a property on the API GET response for the resource which represents its name"
       >
-        <GoAInput
+        <GoabInput
           type="text"
           name="name_path"
           value={resourceType?.namePath}
           testId={`resource-type-modal-name-path-input`}
           width="100%"
           aria-label="name path"
-          onChange={(name, value) => {
-            setResourceType({ ...resourceType, namePath: value });
+          onChange={(detail: GoabInputOnChangeDetail) => {
+            setResourceType({ ...resourceType, namePath: detail.value });
           }}
         />
-      </GoAFormItem>
+      </GoabFormItem>
       <br />
-      <GoAFormItem label="Delete event">
-        <GoADropdown
+      <GoabFormItem label="Delete event">
+        <GoabDropdown
           name="resource-type-event-definitions"
           value={isEdit ? initialDeleteEvent : selectedDeleteEvent}
           aria-label="resource-type-form-dropdown"
           width="100%"
           testId="resource-type-event-dropdown"
-          relative={true}
           mt="s"
           mb="4xl"
-          onChange={(_, value: string) => {
-            if (value.indexOf(':') > -1) {
-              setSelectedDeleteEvent(value);
+          onChange={(detail: GoabDropdownOnChangeDetail) => {
+            if (detail.value && detail.value.indexOf(':') > -1) {
+              setSelectedDeleteEvent(detail.value);
               setResourceType({
                 ...resourceType,
                 deleteEvent: {
                   ...resourceType.deleteEvent,
-                  namespace: value.split(':')[0],
-                  name: value.split(':')[1],
+                  namespace: detail.value.split(':')[0],
+                  name: detail.value.split(':')[1],
                 },
               });
             }
@@ -223,10 +222,10 @@ export const AddEditResourceTypeModal = ({
         >
           {filteredEventDefinitions &&
             Object.keys(filteredEventDefinitions).map((item, key) => (
-              <GoADropdownItem key={key} label={item} value={item} />
+              <GoabDropdownItem key={key} label={item} value={item} />
             ))}
-        </GoADropdown>
-      </GoAFormItem>
-    </GoAModal>
+        </GoabDropdown>
+      </GoabFormItem>
+    </GoabModal>
   );
 };

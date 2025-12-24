@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AddEditPdfTemplate } from './addEditPdfTemplates';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { getPdfTemplates, updatePdfTemplate, deletePdfTemplate, getCorePdfTemplates } from '@store/pdf/action';
 import { RootState } from '@store/index';
@@ -78,14 +78,14 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
 
   return (
     <section>
-      <GoAButton
+      <GoabButton
         testId="add-template"
         onClick={() => {
           setOpenAddPdfTemplate(true);
         }}
       >
         Add template
-      </GoAButton>
+      </GoabButton>
       <br />
       <br />
       {indicator.show && <PageIndicator />}

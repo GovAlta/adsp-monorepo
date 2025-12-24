@@ -1,6 +1,7 @@
-import { GoAButton, GoAButtonGroup, GoAModal, GoAFormItem, GoATable, GoACheckbox } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal, GoabFormItem, GoabTable, GoabCheckbox } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { AgentConfiguration } from '@store/agent/model';
+import { GoabCheckboxOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddToolAgentModalProps {
   availableAgents: AgentConfiguration[];
@@ -24,17 +25,17 @@ export const AddToolAgentModal: FunctionComponent<AddToolAgentModalProps> = ({
   }, [agents]);
 
   return (
-    <GoAModal
+    <GoabModal
       testId="add-tool-agent-modal"
       open={open}
       heading="Add agent"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton type="secondary" testId="tool-agent-modal-cancel" onClick={onCancel}>
+        <GoabButtonGroup alignment="end">
+          <GoabButton type="secondary" testId="tool-agent-modal-cancel" onClick={onCancel}>
             Cancel
-          </GoAButton>
+          </GoabButton>
 
-          <GoAButton
+          <GoabButton
             type="primary"
             testId="tool-agent-modal-save"
             onClick={() => {
@@ -42,13 +43,13 @@ export const AddToolAgentModal: FunctionComponent<AddToolAgentModalProps> = ({
             }}
           >
             OK
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <form>
-        <GoAFormItem label="Select agents" mb="m">
-          <GoATable width="100%">
+        <GoabFormItem label="Select agents" mb="m">
+          <GoabTable width="100%">
             <thead>
               <tr>
                 <th>Agent</th>
@@ -63,13 +64,13 @@ export const AddToolAgentModal: FunctionComponent<AddToolAgentModalProps> = ({
                     <p>{description}</p>
                   </td>
                   <td>
-                    <GoAButtonGroup alignment="end">
-                      <GoACheckbox
+                    <GoabButtonGroup alignment="end">
+                      <GoabCheckbox
                         name="selected"
                         checked={selected.includes(id)}
-                        onChange={(_, checked) => {
+                        onChange={(detail: GoabCheckboxOnChangeDetail) => {
                           let update: string[];
-                          if (checked) {
+                          if (detail.checked) {
                             update = [...selected, id];
                           } else {
                             update = [...selected];
@@ -81,14 +82,14 @@ export const AddToolAgentModal: FunctionComponent<AddToolAgentModalProps> = ({
                           setSelected(update);
                         }}
                       />
-                    </GoAButtonGroup>
+                    </GoabButtonGroup>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </GoATable>
-        </GoAFormItem>
+          </GoabTable>
+        </GoabFormItem>
       </form>
-    </GoAModal>
+    </GoabModal>
   );
 };

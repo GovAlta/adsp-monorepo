@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Title, EditorLHSWrapper, EditTemplateActions, EditActionLayout } from '../styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 import MonacoEditor from '@monaco-editor/react';
-import { GoAButton, GoAFormItem, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabFormItem, GoabButtonGroup } from '@abgov/react-components';
 import { jsonSchemaCheck } from '@lib/validation/checkInput';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { getConfigurationActive } from '@store/configuration/action';
@@ -127,8 +127,8 @@ export const ConfigurationData = (): JSX.Element => {
             </p>
             <hr />
             <div style={{ marginTop: '20px', height: `calc(100vh - ${Height}px)`, overflowY: 'auto' }}>
-              <GoAFormItem label="">
-                <GoAFormItem error={dataError} label="">
+              <GoabFormItem label="">
+                <GoabFormItem error={dataError} label="">
                   <MonacoEditor
                     height={monacoHeight}
                     language={'json'}
@@ -148,15 +148,15 @@ export const ConfigurationData = (): JSX.Element => {
                       setConfigurationData(value);
                     }}
                   />
-                </GoAFormItem>
-              </GoAFormItem>
+                </GoabFormItem>
+              </GoabFormItem>
             </div>
           </section>
           <EditTemplateActions>
             <hr className="styled-hr styled-hr-bottom" />
             <EditActionLayout>
-              <GoAButtonGroup alignment="end">
-                <GoAButton
+              <GoabButtonGroup alignment="end">
+                <GoabButton
                   disabled={!isConfigurationUpdated(tmpTemplate, configurationTemplate) || dataError.length > 0}
                   onClick={() => {
                     setCustomIndicator(true);
@@ -166,8 +166,8 @@ export const ConfigurationData = (): JSX.Element => {
                   testId="template-form-save"
                 >
                   Save
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             </EditActionLayout>
           </EditTemplateActions>
         </EditorLHSWrapper>

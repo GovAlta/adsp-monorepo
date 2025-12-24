@@ -4,7 +4,7 @@ import { RootState } from '@store/index';
 import { fetchCalendars, UpdateCalendar, FETCH_CALENDARS_ACTION } from '@store/calendar/actions';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { CalendarModal } from './calendarModal';
 import { CalendarTableComponent } from './calendarTable';
 import { fetchEventStreams } from '@store/stream/actions';
@@ -61,7 +61,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
   return (
     <section>
       <div>
-        <GoAButton
+        <GoabButton
           testId="add-calendar-btn"
           onClick={() => {
             setSelectedCalendarName(undefined);
@@ -69,7 +69,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
           }}
         >
           Add calendar
-        </GoAButton>
+        </GoabButton>
       </div>
       {fetchCalendarState === ActionState.inProcess && <PageIndicator />}
       {fetchCalendarState === ActionState.completed &&

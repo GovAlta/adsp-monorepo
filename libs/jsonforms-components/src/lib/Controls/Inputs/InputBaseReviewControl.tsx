@@ -2,7 +2,7 @@ import { CellProps, WithClassname, ControlProps, StatePropsOfControl } from '@js
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoAIcon } from '@abgov/react-components';
+import { GoabIcon } from '@abgov/react-components';
 import { RequiredTextLabel, WarningIconDiv } from './style-component';
 import { convertToSentenceCase, getLastSegmentFromPointer, to12HourFormat, UTCToFullLocalTime } from '../../util';
 
@@ -11,7 +11,7 @@ export type WithBaseInputReviewProps = CellProps & WithClassname & WithInputProp
 const warningIcon = (errorMessage: string) => {
   return (
     <WarningIconDiv>
-      <GoAIcon type="warning" size="small" theme="filled" mt="2xs" ariaLabel="warning"></GoAIcon>
+      <GoabIcon type="warning" size="small" theme="filled" mt="2xs" ariaLabel="warning"></GoabIcon>
       {errorMessage}
     </WarningIconDiv>
   );
@@ -107,4 +107,4 @@ export const GoInputBaseReview = (props: ControlProps) => (
   />
 );
 
-export const GoInputBaseReviewControl = withJsonFormsControlProps(GoInputBaseReview);
+export const GoAInputBaseReviewControl = withJsonFormsControlProps(GoInputBaseReview);

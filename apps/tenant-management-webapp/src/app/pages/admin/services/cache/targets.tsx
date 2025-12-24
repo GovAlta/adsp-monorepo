@@ -6,7 +6,7 @@ import { getCacheTargets, updateCacheTarget } from '@store/cache/action';
 import { Padding } from '@components/styled-components';
 import { AddEditTargetCache } from './addEditCacheTarget';
 import { defaultCacheTarget } from '@store/cache/model';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { DeleteModal } from '@components/DeleteModal';
 import { CacheTarget } from '@store/cache/model';
 import { renderNoItem } from '@components/NoItem';
@@ -39,7 +39,7 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
         Targets are configured as service or API URNs and must be registered in directory service, and an associated TTL
         can be set.
       </Padding>
-      <GoAButton
+      <GoabButton
         testId="add-cache-target"
         onClick={() => {
           setOpenAddDefinition(true);
@@ -48,7 +48,7 @@ export const Targets: FunctionComponent<CacheTargetProps> = ({
         mb={'l'}
       >
         Add cache target
-      </GoAButton>
+      </GoabButton>
       {Object.keys(cacheTargets.tenant).length === 0 && renderNoItem('tenant cache')}
       {cacheTargets?.tenant && Object.keys(cacheTargets.tenant).length > 0 && (
         <CacheTargetTable

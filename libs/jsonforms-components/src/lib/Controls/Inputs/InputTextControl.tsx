@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo } from 'react';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoAInput } from '@abgov/react-components';
+import { GoabInput } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { RegisterDataType } from '../../Context/register';
@@ -9,6 +9,7 @@ import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register
 import { onBlurForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 import { Dropdown } from '../../Components/Dropdown';
 import { sinTitle } from '../../common/Constants';
+import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 
 import { Item } from '../../Components/DropDownTypes';
 
@@ -113,7 +114,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
           }}
         />
       ) : (
-        <GoAInput
+        <GoabInput
           error={isVisited && errors.length > 0}
           type={appliedUiSchemaOptions.format === 'password' ? 'password' : 'text'}
           disabled={!enabled}
@@ -127,30 +128,30 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
           // maxLength={appliedUiSchemaOptions?.maxLength}
           name={appliedUiSchemaOptions?.name || `${id || label}-input`}
           testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-          onChange={(name: string, value: string) => {
-            let formattedValue = value;
-            if (schema && schema.title === sinTitle && value !== '') {
-              formattedValue = formatSin(value);
+          onChange={(detail: GoabInputOnChangeDetail) => {
+            let formattedValue = detail.value;
+            if (schema && schema.title === sinTitle && detail.value !== '') {
+              formattedValue = formatSin(detail.value);
             }
 
             if (isVisited === false && setIsVisited) {
               setIsVisited();
             }
             onChangeForInputControl({
-              name,
+              name: detail.name,
               value: formattedValue,
               controlProps: props as ControlProps,
             });
           }}
-          onBlur={(name: string, value: string) => {
+          onBlur={(detail: GoabInputOnBlurDetail) => {
             if (isVisited === false && setIsVisited) {
               setIsVisited();
             }
 
             onBlurForTextControl({
-              name,
+              name: detail.name,
               controlProps: props as ControlProps,
-              value: autoCapitalize ? value.toUpperCase() : value,
+              value: autoCapitalize ? detail.value.toUpperCase() : detail.value,
             });
           }}
           {...uischema?.options?.componentProps}

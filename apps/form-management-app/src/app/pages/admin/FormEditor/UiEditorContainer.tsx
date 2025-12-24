@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import styles from './Editor.module.scss';
 import { useWindowDimensions } from '../../../utils/useWindowDimensions';
-import { GoAFormItem } from '@abgov/react-components';
+import { GoabFormItem } from '@abgov/react-components';
 import MonacoEditor from '@monaco-editor/react';
 import { JsonSchema } from '@jsonforms/core';
 import type * as monaco from 'monaco-editor';
@@ -49,7 +49,7 @@ export const UIEditorContainer: React.FC<UiEditorContainerProps> = ({
   const isUseMiniMap = window.screen.availWidth >= 1920;
 
   return (
-    <GoAFormItem
+    <GoabFormItem
       error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
       label=""
     >
@@ -91,6 +91,6 @@ export const UIEditorContainer: React.FC<UiEditorContainerProps> = ({
           }}
         />
       </div>
-    </GoAFormItem>
+    </GoabFormItem>
   );
 };

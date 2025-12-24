@@ -8,15 +8,17 @@ import { PdfFormItem, DescriptionItem, PopulateTemplateWrapper } from '../styled
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import {
-  GoATextArea,
-  GoAInput,
-  GoAModal,
-  GoAButtonGroup,
-  GoAFormItem,
-  GoAButton,
-  GoACheckbox,
+  GoabTextArea,
+  GoabInput,
+  GoabModal,
+  GoabButtonGroup,
+  GoabFormItem,
+  GoabButton,
+  GoabCheckbox,
 } from '@abgov/react-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+
 interface AddEditPdfTemplateProps {
   open: boolean;
   isEdit: boolean;
@@ -80,14 +82,14 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
   return (
-    <GoAModal
+    <GoabModal
       testId="template-form"
       open={open}
       heading={`${isEdit ? 'Edit' : 'Add'} template`}
-      width="640px"
+      maxWidth="640px"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             testId="form-cancel"
             type="secondary"
             onClick={() => {
@@ -96,8 +98,8 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="form-save"
             disabled={!template.name || validators.haveErrors()}
@@ -123,37 +125,41 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <PdfFormItem>
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
+        <GoabFormItem error={errors?.['name']} label="Name">
+          <GoabInput
             type="text"
             name="pdf-template-name"
             value={template.name}
             testId="pdf-template-name"
             aria-label="pdf-template-name"
             width="100%"
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               const validations = {
-                name: value,
+                name: detail.value,
               };
               validators.remove('name');
               validators.checkAll(validations);
 
-              setTemplate(isEdit ? { ...template, name: value } : { ...template, name: value, id: toKebabName(value) });
+              setTemplate(
+                isEdit
+                  ? { ...template, name: detail.value }
+                  : { ...template, name: detail.value, id: toKebabName(detail.value) }
+              );
             }}
             onBlur={() => {
               validators.checkAll({ name: template.name });
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
       </PdfFormItem>
-      <GoAFormItem label="Template ID">
+      <GoabFormItem label="Template ID">
         <PdfFormItem>
-          <GoAInput
+          <GoabInput
             name="pdf-template-id"
             value={template.id}
             testId="pdf-template-id"
@@ -163,23 +169,23 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             onChange={() => {}}
           />
         </PdfFormItem>
-      </GoAFormItem>
+      </GoabFormItem>
 
-      <GoAFormItem label="Description">
+      <GoabFormItem label="Description">
         <DescriptionItem>
-          <GoATextArea
+          <GoabTextArea
             name="pdf-template-description"
             value={template.description}
             width="100%"
             testId="pdf-template-description"
             aria-label="pdf-template-description"
-            onKeyPress={(name, value, key) => {
+            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
               validators.remove('description');
-              validators['description'].check(value);
-              setTemplate({ ...template, description: value });
+              validators['description'].check(detail.value);
+              setTemplate({ ...template, description: detail.value });
             }}
             // eslint-disable-next-line
-            onChange={(name, value) => {}}
+            onChange={() => {}}
           />
           <HelpTextComponent
             length={template?.description?.length || 0}
@@ -188,10 +194,10 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             errorMsg={errors?.['description']}
           />
         </DescriptionItem>
-      </GoAFormItem>
+      </GoabFormItem>
       {!isEdit && (
         <PopulateTemplateWrapper>
-          <GoACheckbox
+          <GoabCheckbox
             name={'populate-template'}
             key={'populate-template'}
             ariaLabel={'populate-template-checkbox'}
@@ -215,9 +221,9 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             }}
           >
             Populate template with ADSP default html
-          </GoACheckbox>
+          </GoabCheckbox>
         </PopulateTemplateWrapper>
       )}
-    </GoAModal>
+    </GoabModal>
   );
 };

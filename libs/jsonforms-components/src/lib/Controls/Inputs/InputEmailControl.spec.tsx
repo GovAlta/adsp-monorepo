@@ -65,7 +65,7 @@ describe('GoAEmailInput control', () => {
     );
 
     const input = baseElement.querySelector("goa-input[testId='myEmailId-input']");
-    expect(input?.getAttribute('error')).toBe('false'); // not visited yet
+    expect(input?.getAttribute('error')).toBeFalsy(); // not visited yet
   });
 
   it('calls onChange when typing email', () => {

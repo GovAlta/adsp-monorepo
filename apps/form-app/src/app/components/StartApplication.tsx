@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent, useEffect } from 'react';
 import { FormDefinition } from '../state';
@@ -30,11 +30,16 @@ export const StartApplication: FunctionComponent<StartApplicationProps> = ({
           <GridItem md={1} />
           <GridItem md={10}>
             <div>
-              <GoAButtonGroup alignment="end">
-                <GoAButton type="primary" data-testid="form-start-application" disabled={!canCreate} onClick={onCreate}>
+              <GoabButtonGroup alignment="end">
+                <GoabButton
+                  type="primary"
+                  data-testid="form-start-application"
+                  disabled={!canCreate}
+                  onClick={onCreate}
+                >
                   Start application
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             </div>
           </GridItem>
           <GridItem md={1} />

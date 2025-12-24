@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
 import { getIdpHint } from '@lib/keycloak';
 import { selectUserName, selectUserEmail, selectIsAuthenticated } from '@store/session/selectors';
@@ -54,14 +54,14 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
           {(authenticated || props.admin) && (
             <div>
               {displayName && <SignoutBadgeWrapper>{displayName}</SignoutBadgeWrapper>}
-              <GoAButton type="tertiary" testId="sign-out-btn" onClick={() => dispatch(TenantLogout())}>
+              <GoabButton type="tertiary" testId="sign-out-btn" onClick={() => dispatch(TenantLogout())}>
                 Sign out
-              </GoAButton>
+              </GoabButton>
             </div>
           )}
 
           {!authenticated && !props.admin && (
-            <GoAButton
+            <GoabButton
               type="tertiary"
               testId="sign-ing-btn"
               onClick={() => {
@@ -70,7 +70,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
               }}
             >
               Sign In
-            </GoAButton>
+            </GoabButton>
           )}
         </div>
       ) : null}

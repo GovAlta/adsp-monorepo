@@ -7,7 +7,7 @@ import type { Subscriber, Subscription, SubscriptionSearchCriteria, Criteria } f
 import { UpdateSubscriber, GetTypeSubscriptions } from '@store/subscription/actions';
 import styled from 'styled-components';
 import { SubscriberModalForm } from '../subscribers/editSubscriber';
-import { GoAIcon } from '@abgov/react-components';
+import { GoabIcon } from '@abgov/react-components';
 import { SubscriptionNextLoader } from './subscriptionNextLoader';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { phoneWrapper } from '@lib/wrappers';
@@ -65,11 +65,11 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
                 <div>
                   {channel.channel === 'email' ? (
                     <IconsCell>
-                      <GoAIcon data-testid="mail-icon" size="small" type="mail" ariaLabel="mail" />
+                      <GoabIcon data-testid="mail-icon" size="small" type="mail" ariaLabel="mail" />
                     </IconsCell>
                   ) : channel.channel === 'sms' ? (
                     <IconsCell>
-                      <GoAIcon data-testid="sms-icon" size="small" type="phone-portrait" ariaLabel="sms" />
+                      <GoabIcon data-testid="sms-icon" size="small" type="phone-portrait" ariaLabel="sms" />
                     </IconsCell>
                   ) : (
                     `${channel.channel}:`

@@ -5,9 +5,10 @@ import { WithInputProps } from './type';
 import merge from 'lodash/merge';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithOptionLabel } from '../../util';
-import { GoACheckbox } from '@abgov/react-components';
+import { GoabCheckbox } from '@abgov/react-components';
 import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import Checkboxes from '../../Components/CheckboxGroup';
+import { GoabCheckboxListOnChangeDetail } from '@abgov/ui-components-common';
 type CheckboxGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInputProps;
 
 interface EnumOption {
@@ -61,7 +62,7 @@ export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
         const enumDescription = getOptionDescription(enumOption);
 
         return (
-          <GoACheckbox
+          <GoabCheckbox
             key={enumValue}
             name={enumValue}
             disabled={!enabled}
@@ -71,9 +72,9 @@ export const CheckboxGroup = (props: CheckboxGroupProp): JSX.Element => {
             text={enumLabel}
             description={enumDescription}
             testId={`${enumValue}-checkbox`}
-            onChange={(name: string, value: string) => {
+            onChange={(detail: GoabCheckboxListOnChangeDetail) => {
               let newData: Array<string> = Array.isArray(data) ? [...data] : [];
-              if (value) {
+              if (detail.value) {
                 newData.push(enumValue);
               } else {
                 newData = newData.filter((item) => item !== enumValue);

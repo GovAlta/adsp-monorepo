@@ -1,10 +1,10 @@
 import React from 'react';
 import { isBooleanControl, RankedTester, rankWith, ControlProps, optionIs, and } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoARadioGroup, GoARadioItem } from '@abgov/react-components';
+import { GoabRadioGroup, GoabRadioItem } from '@abgov/react-components';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { WithInputProps } from './type';
-
+import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 export const BooleanRadioComponent = ({
   data,
   enabled,
@@ -26,33 +26,33 @@ export const BooleanRadioComponent = ({
   const BaseTestId = appliedUiSchemaOptions?.testId || `${path}-boolean-radio-jsonform`;
 
   return (
-    <GoARadioGroup
+    <GoabRadioGroup
       error={isVisited && errors.length}
       name={`${label}`}
       value={data === true ? TrueValue : data === false ? FalseValue : null}
       disabled={!enabled}
       testId={BaseTestId}
-      onChange={(_name, value) => {
-        if (value === TrueValue) {
+      onChange={(detail: GoabRadioGroupOnChangeDetail) => {
+        if (detail.value === TrueValue) {
           handleChange(path, true);
         }
-        if (value === FalseValue) {
+        if (detail.value === FalseValue) {
           handleChange(path, false);
         }
       }}
       {...uischema?.options?.componentProps}
     >
-      <GoARadioItem
+      <GoabRadioItem
         value={TrueValue}
-        testId={`${BaseTestId}-yes-option`}
+        data-testId={`${BaseTestId}-yes-option`}
         description={EnableDescription ? TrueDescription : null}
       />
-      <GoARadioItem
+      <GoabRadioItem
         value={FalseValue}
-        testId={`${BaseTestId}-no-option`}
+        data-testId={`${BaseTestId}-no-option`}
         description={EnableDescription ? FalseDescription : null}
       />
-    </GoARadioGroup>
+    </GoabRadioGroup>
   );
 };
 export const BooleanRadioControl = (props: ControlProps) => (

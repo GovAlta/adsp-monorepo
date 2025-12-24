@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 
 import { OverviewLayout } from '@components/Overview';
 import { useNavigate } from 'react-router-dom';
@@ -34,14 +34,14 @@ export const ScriptOverview = ({ setActiveEdit, setActiveIndex }: ScriptOverview
       <OverviewLayout
         description={description}
         addButton={
-          <GoAButton
+          <GoabButton
             testId="add-script-btn"
             onClick={() => {
               setActiveEdit(true);
             }}
           >
             Add script
-          </GoAButton>
+          </GoabButton>
         }
       />
 

@@ -25,7 +25,7 @@ import { WithDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoAButton, GoAGrid, GoAIconButton, GoAFormItem } from '@abgov/react-components';
+import { GoabButton, GoabGrid, GoabIconButton, GoabFormItem } from '@abgov/react-components';
 import {
   ToolBarHeader,
   ObjectArrayTitle,
@@ -170,11 +170,11 @@ export interface EmptyListProps {
 }
 
 const EmptyList = ({ numColumns, noDataMessage }: EmptyListProps) => (
-  <GoAGrid minChildWidth="60ch">
+  <GoabGrid minChildWidth="60ch">
     <TextCenter>
       <b>{noDataMessage}</b>
     </TextCenter>
-  </GoAGrid>
+  </GoabGrid>
 );
 
 interface NonEmptyCellProps extends OwnPropsOfNonEmptyCell {
@@ -369,9 +369,9 @@ const NonEmptyRowComponent = ({
   return (
     <div key={childPath}>
       {isHorizontal ? (
-        <GoAGrid minChildWidth="30ch">
+        <GoabGrid minChildWidth="30ch">
           {GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}
-        </GoAGrid>
+        </GoabGrid>
       ) : !isHorizontal ? (
         <>{GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}</>
       ) : null}
@@ -414,23 +414,23 @@ const MainItemComponent = ({
         <TabName>{displayName}</TabName>
         {enabled ? (
           <Trash>
-            <GoAIconButton
+            <GoabIconButton
               disabled={!enabled}
               icon="trash"
               title={'remove'}
               testId="remove the details"
               onClick={() => openDeleteDialog(childPath, rowIndex, displayName)}
-            ></GoAIconButton>
+            ></GoabIconButton>
           </Trash>
         ) : null}
         <IconPadding>
-          <GoAIconButton
+          <GoabIconButton
             disabled={!enabled}
             icon="create"
             title={'edit'}
             testId="edit button"
             onClick={() => setCurrentListPage(currentTab + 1)}
-          ></GoAIconButton>
+          ></GoabIconButton>
         </IconPadding>
       </RowFlexMenu>
     </SideMenuItem>
@@ -624,7 +624,7 @@ const MainTab = ({
   return (
     <div key={childPath} data-testid={`object-array-main-item-${rowIndex}`}>
       {rowErrors?.length ? (
-        <GoAFormItem error={rowErrors?.length ? rowErrors : null}>
+        <GoabFormItem error={rowErrors?.length ? rowErrors : null}>
           <MainItemComponent
             rowData={orderedRowData}
             childPath={childPath}
@@ -636,7 +636,7 @@ const MainTab = ({
             current={current}
             setCurrentListPage={setCurrentListPage}
           />
-        </GoAFormItem>
+        </GoabFormItem>
       ) : (
         <MainItemComponent
           rowData={orderedRowData}
@@ -776,7 +776,7 @@ const ObjectArrayList = ({
                 translations={translations}
               />
             </FlexForm>
-            <GoAButton
+            <GoabButton
               type={'primary'}
               onClick={() => {
                 setCurrentListPage(0);
@@ -784,7 +784,7 @@ const ObjectArrayList = ({
               testId="next-list-button"
             >
               Continue
-            </GoAButton>
+            </GoabButton>
           </UpdateListContainer>
         )}
       </RowFlex>

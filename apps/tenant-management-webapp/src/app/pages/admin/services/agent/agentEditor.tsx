@@ -1,4 +1,11 @@
-import { GoAButton, GoAButtonGroup, GoACallout, GoACheckbox, GoAIconButton, GoATable } from '@abgov/react-components';
+import {
+  GoabButton,
+  GoabButtonGroup,
+  GoabCallout,
+  GoabCheckbox,
+  GoabIconButton,
+  GoabTable,
+} from '@abgov/react-components';
 import { AgentChat } from '@core-services/app-common';
 import MonacoEditor from '@monaco-editor/react';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -133,16 +140,16 @@ export const AgentEditor: FunctionComponent = () => {
               />
             </Tab>
             <Tab testId="agent-edit-tools" label="Tools" className="editorMain">
-              <GoAButtonGroup alignment="start" mt="s" gap="compact">
-                <GoAButton type="tertiary" size="compact" onClick={() => setToolToEdit({ ...defaultApiToolValue })}>
+              <GoabButtonGroup alignment="start" mt="s" gap="compact">
+                <GoabButton type="tertiary" size="compact" onClick={() => setToolToEdit({ ...defaultApiToolValue })}>
                   Add API tool
-                </GoAButton>
-                <GoAButton type="tertiary" size="compact" onClick={() => setShowBuiltInToolModal(true)}>
+                </GoabButton>
+                <GoabButton type="tertiary" size="compact" onClick={() => setShowBuiltInToolModal(true)}>
                   Add built-in tool
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
               <div style={{ overflow: 'auto' }}>
-                <GoATable>
+                <GoabTable>
                   <colgroup>
                     <col />
                     <col />
@@ -162,13 +169,13 @@ export const AgentEditor: FunctionComponent = () => {
                           <td>{tool}</td>
                           <td>{availableTools.find(({ id }) => tool === id)?.description}</td>
                           <td>
-                            <GoAButtonGroup alignment="end" gap="compact">
-                              <GoAIconButton
+                            <GoabButtonGroup alignment="end" gap="compact">
+                              <GoabIconButton
                                 icon="trash"
                                 size="small"
                                 onClick={() => setToolToDelete({ id: tool, index })}
                               />
-                            </GoAButtonGroup>
+                            </GoabButtonGroup>
                           </td>
                         </tr>
                       ) : (
@@ -176,30 +183,30 @@ export const AgentEditor: FunctionComponent = () => {
                           <td>{tool.id}</td>
                           <td>{tool.description}</td>
                           <td>
-                            <GoAButtonGroup alignment="end" gap="compact">
-                              <GoAIconButton icon="create" size="small" onClick={() => setToolToEdit(tool)} />
-                              <GoAIconButton
+                            <GoabButtonGroup alignment="end" gap="compact">
+                              <GoabIconButton icon="create" size="small" onClick={() => setToolToEdit(tool)} />
+                              <GoabIconButton
                                 icon="trash"
                                 size="small"
                                 onClick={() => setToolToDelete({ id: tool.id, index })}
                               />
-                            </GoAButtonGroup>
+                            </GoabButtonGroup>
                           </td>
                         </tr>
                       )
                     )}
                   </tbody>
-                </GoATable>
+                </GoabTable>
               </div>
             </Tab>
             <Tab testId="agent-edit-agents" label="Agents" className="editorMain">
-              <GoAButtonGroup alignment="start" mt="s" gap="compact">
-                <GoAButton type="tertiary" size="compact" onClick={() => setShowAgentModal(true)}>
+              <GoabButtonGroup alignment="start" mt="s" gap="compact">
+                <GoabButton type="tertiary" size="compact" onClick={() => setShowAgentModal(true)}>
                   Add agent
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
               <div style={{ overflow: 'auto' }}>
-                <GoATable>
+                <GoabTable>
                   <colgroup>
                     <col />
                     <col />
@@ -218,29 +225,29 @@ export const AgentEditor: FunctionComponent = () => {
                         <td>{agent}</td>
                         <td>{availableAgents.find(({ id }) => agent === id)?.description}</td>
                         <td>
-                          <GoAButtonGroup alignment="end" gap="compact">
-                            <GoAIconButton
+                          <GoabButtonGroup alignment="end" gap="compact">
+                            <GoabIconButton
                               icon="trash"
                               size="small"
                               onClick={() => setAgentToDelete({ id: agent, index })}
                             />
-                          </GoAButtonGroup>
+                          </GoabButtonGroup>
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                </GoATable>
+                </GoabTable>
               </div>
             </Tab>
             <Tab testId="agent-edit-roles" label="Roles" className="editorMain">
-              <GoAButtonGroup alignment="start" mt="s">
-                <GoACheckbox
+              <GoabButtonGroup alignment="start" mt="s">
+                <GoabCheckbox
                   name="showSelectedRoles"
                   text="Show selected roles"
                   checked={showSelectedRoles}
                   onChange={() => setShowSelectedRoles((prev) => !prev)}
                 />
-              </GoAButtonGroup>
+              </GoabButtonGroup>
               <div style={{ overflow: 'auto' }}>
                 {filteredRoles?.map(({ clientId, roleNames }) => {
                   return (
@@ -259,19 +266,19 @@ export const AgentEditor: FunctionComponent = () => {
             </Tab>
           </Tabs>
           <hr />
-          <GoAButtonGroup alignment="start" mt="m" mb="xl">
-            <GoAButton
+          <GoabButtonGroup alignment="start" mt="m" mb="xl">
+            <GoabButton
               disabled={saving || !hasChanges}
               onClick={() => dispatch(updateAgent(agent))}
               type="primary"
               testId="agent-form-save"
             >
               Save
-            </GoAButton>
-            <GoAButton onClick={() => navigate('../agents')} testId="agent-form-close" type="secondary">
+            </GoabButton>
+            <GoabButton onClick={() => navigate('../agents')} testId="agent-form-close" type="secondary">
               Back
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
           <DeleteModal
             isOpen={toolToDelete !== null}
             title="Delete tool"
@@ -361,9 +368,9 @@ export const AgentEditor: FunctionComponent = () => {
           <h2>Preview</h2>
           <hr />
           {stalePreview && (
-            <GoACallout type="information" size="medium" mb="none">
+            <GoabCallout type="information" size="medium" mb="none">
               You have unsaved or recently saved changes. Preview will reset after agent update.
-            </GoACallout>
+            </GoabCallout>
           )}
           <ChatContainerDiv>
             <AgentChat

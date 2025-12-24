@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
 import { useNavigate } from 'react-router-dom';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { TenantBasicInfo } from '@store/tenant/models';
 
 export const SelectTenant = (): JSX.Element => {
@@ -21,7 +21,7 @@ export const SelectTenant = (): JSX.Element => {
             <div>
               <b>Tenant Name:</b> {tenant.name} <br /> <b>Realm:</b> {tenant.realm}
             </div>
-            <GoAButton
+            <GoabButton
               type="primary"
               testId={`${tenant.realm}-login-button`}
               onClick={() => {
@@ -29,7 +29,7 @@ export const SelectTenant = (): JSX.Element => {
               }}
             >
               Login
-            </GoAButton>
+            </GoabButton>
             <br /> <br />
           </div>
         </div>

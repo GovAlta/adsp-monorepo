@@ -1,18 +1,18 @@
 import React from 'react';
-import { GoABadge, GoAButton } from '@abgov/react-components';
+import { GoabBadge, GoabButton } from '@abgov/react-components';
 
 function fallbackRender({ error, resetErrorBoundary }) {
   return (
     <div role="alert">
-      <GoABadge type="emergency" content="Unexpected error in JSON Form" icon={false} />
+      <GoabBadge type="emergency" content="Unexpected error in JSON Form" icon={false} />
       <pre>{error.message}</pre>
-      <GoAButton
+      <GoabButton
         onClick={() => {
           resetErrorBoundary();
         }}
       >
         Reset JSON Forms
-      </GoAButton>
+      </GoabButton>
     </div>
   );
 }

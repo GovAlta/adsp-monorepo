@@ -232,7 +232,7 @@ export const NameDescriptionDataSchema = styled.div`
   }
 `;
 
-export const GoACheckboxPad = styled.div`
+export const GoabCheckboxPad = styled.div`
   margin-left: 4px;
 `;
 

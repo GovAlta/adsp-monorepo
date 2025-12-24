@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
-  GoACheckbox,
-  GoATextArea,
-  GoAButton,
-  GoAButtonGroup,
-  GoAInput,
-  GoAFormItem,
-  GoAModal,
+  GoabCheckbox,
+  GoabTextArea,
+  GoabButton,
+  GoabButtonGroup,
+  GoabInput,
+  GoabFormItem,
+  GoabModal,
 } from '@abgov/react-components';
 import { ScriptItem, defaultScript } from '@store/script/models';
 import { useSelector, useDispatch } from 'react-redux';
@@ -21,6 +21,7 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { TextGoASkeleton } from '@core-services/app-common';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddScriptModalProps {
   initialValue?: ScriptItem;
@@ -111,13 +112,13 @@ export const AddScriptModal = ({
   };
 
   return (
-    <GoAModal
+    <GoabModal
       testId="add-script-modal"
       open={open}
       heading={isNew ? 'Add script' : 'Edit script'}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="script-modal-cancel"
             onClick={() => {
@@ -129,8 +130,8 @@ export const AddScriptModal = ({
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="script-modal-save"
             disabled={script.name === '' || (validators && validators.haveErrors())}
@@ -139,8 +140,8 @@ export const AddScriptModal = ({
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <div
@@ -148,38 +149,38 @@ export const AddScriptModal = ({
         className="roles-scroll-pane"
         style={{ overflowY: 'auto', maxHeight: '70vh', padding: '0 3px 0 3px' }}
       >
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
+        <GoabFormItem error={errors?.['name']} label="Name">
+          <GoabInput
             type="text"
             name="name"
             value={script.name}
             width="100%"
             testId={`script-modal-name-input`}
             aria-label="name"
-            onChange={(name, value) => {
-              const scriptId = toKebabName(value);
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              const scriptId = toKebabName(detail.value);
               validators.remove('name');
               const validations = {
-                name: value,
+                name: detail.value,
               };
               validations['duplicated'] = scriptId;
               validators.checkAll(validations);
               if (isNew) {
-                setScript({ ...script, name: value, id: scriptId });
+                setScript({ ...script, name: detail.value, id: scriptId });
               } else {
-                setScript({ ...script, name: value });
+                setScript({ ...script, name: detail.value });
               }
             }}
             onBlur={() => {
               validators.checkAll({ name: script.name });
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Script ID">
+        </GoabFormItem>
+        <GoabFormItem label="Script ID">
           <IdField>{script.id}</IdField>
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['description']} label="Description">
-          <GoATextArea
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['description']} label="Description">
+          <GoabTextArea
             name="description"
             value={script.description}
             testId={`script-modal-description-input`}
@@ -187,8 +188,8 @@ export const AddScriptModal = ({
             width="100%"
             // eslint-disable-next-line
             onChange={() => {}}
-            onKeyPress={(name, value, key) => {
-              const description = value;
+            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+              const description = detail.value;
               validators.remove('description');
               validators['description'].check(description);
               setScript({ ...script, description });
@@ -200,10 +201,10 @@ export const AddScriptModal = ({
             descErrMessage={descErrMessage}
             errorMsg={errors?.['description']}
           />
-        </GoAFormItem>
+        </GoabFormItem>
         <br />
         {isNew && (
-          <GoACheckbox
+          <GoabCheckbox
             checked={script.useServiceAccount}
             name="script-use-service-account-checkbox"
             testId="script-use-service-account-checkbox"
@@ -225,6 +226,6 @@ export const AddScriptModal = ({
 
         {Object.entries(roles).length === 0 && <TextGoASkeleton key={1} lineCount={4}></TextGoASkeleton>}
       </div>
-    </GoAModal>
+    </GoabModal>
   );
 };

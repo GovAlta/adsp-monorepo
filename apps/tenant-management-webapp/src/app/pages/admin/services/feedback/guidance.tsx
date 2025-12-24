@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { CodeSpan, PRE, FeedbackOverviewSection } from './styled-components';
 import { useNavigate } from 'react-router-dom';
 import { NoPaddingH2 } from '@components/AppHeader';
@@ -103,7 +103,7 @@ export const FeedbackGuidance: FunctionComponent<GuidanceProps> = (props) => {
         </div>
       </FeedbackOverviewSection>
       <br />
-      <GoAButton
+      <GoabButton
         testId="add-feedback"
         onClick={() => {
           setActiveEdit(true);
@@ -111,7 +111,7 @@ export const FeedbackGuidance: FunctionComponent<GuidanceProps> = (props) => {
         }}
       >
         Register site
-      </GoAButton>
+      </GoabButton>
     </section>
   );
 };

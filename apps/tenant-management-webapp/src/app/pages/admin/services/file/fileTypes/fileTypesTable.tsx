@@ -3,7 +3,7 @@ import DataTable from '@components/DataTable';
 import { Role } from '@store/tenant/models';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
-import { GoAButtonGroup, GoAModal, GoAButton } from '@abgov/react-components';
+import { GoabButtonGroup, GoabModal, GoabButton } from '@abgov/react-components';
 import { FileTypeItem } from '@store/file/models';
 import { useNavigate } from 'react-router-dom';
 import { DeleteModal } from '@components/DeleteModal';
@@ -235,13 +235,13 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
           setDeleteId(null);
         }}
       />
-      <GoAModal
+      <GoabModal
         testId="file-type-delete-modal"
         open={deleteId && hasFile === true}
         heading="File type current in use"
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               type="secondary"
               testId="file-type-delete-modal-cancel-btn"
               onClick={() => {
@@ -249,15 +249,15 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
               }}
             >
               Okay
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <p>
           You are unable to delete the file type <b>{`${deleteFileType?.name}`}</b> because there are files within the
           file type
         </p>
-      </GoAModal>
+      </GoabModal>
     </div>
   );
 };

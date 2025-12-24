@@ -1,6 +1,6 @@
 import React from 'react';
 import { CellProps, WithClassname, ControlProps, isDateTimeControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoAInputDateTime } from '@abgov/react-components';
+import { GoabInput } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -9,6 +9,7 @@ import {
   onChangeForDateTimeControl,
   onKeyPressForDateControl,
 } from '../../util/inputControlUtils';
+import { GoabInputOnChangeDetail, GoabInputOnKeyPressDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 
 export type GoAInputDateTimeProps = CellProps & WithClassname & WithInputProps;
 
@@ -20,40 +21,41 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
   const width = uischema?.options?.componentProps?.width ?? '100%';
 
   return (
-    <GoAInputDateTime
+    <GoabInput
+      type="time"
       error={isVisited && errors.length > 0}
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
-      value={data ? new Date(data).toISOString() : ''}
+      value={data ? new Date(data).toISOString().slice(0, 10) : ''}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       disabled={!enabled}
       readonly={readOnly}
-      onChange={(name, value: Date | string) => {
+      onChange={(detail: GoabInputOnChangeDetail) => {
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
         onChangeForDateTimeControl({
-          name,
-          value,
+          name: detail.name,
+          value: detail.value,
           controlProps: props as ControlProps,
         });
       }}
-      onKeyPress={(name: string, value: string, key: string) => {
+      onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
         onKeyPressForDateControl({
-          name,
-          value,
-          key,
+          name: detail.name,
+          value: detail.value,
+          key: detail.key,
           controlProps: props as ControlProps,
         });
       }}
-      onBlur={(name: string, value: string) => {
+      onBlur={(detail: GoabInputOnBlurDetail) => {
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
 
         onBlurForDateControl({
-          name,
-          value,
+          name: detail.name,
+          value: detail.value,
           controlProps: props as ControlProps,
         });
       }}

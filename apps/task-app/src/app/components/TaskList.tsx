@@ -1,10 +1,10 @@
-import { GoADropdown, GoADropdownItem, GoAFormItem, GoATable } from '@abgov/react-components';
+import { GoabDropdown, GoabDropdownItem, GoabFormItem, GoabTable } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
 import { QueueMetrics as QueueMetricsValue, Task, TaskFilter, TaskUser } from '../state';
 import { TaskListItem } from './TaskListItem';
 import { QueueMetrics } from './QueueMetrics';
-
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 interface TaskListProps {
   className?: string;
   metrics: QueueMetricsValue;
@@ -40,21 +40,20 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
     <div className={className}>
       <div>
         <QueueMetrics metrics={metrics} isLoading={metricsLoading} />
-        <GoAFormItem label="Filter" ml="xl">
-          <GoADropdown
-            onChange={(_, filter) => onSetFilter(filter as TaskFilter)}
+        <GoabFormItem label="Filter" ml="xl">
+          <GoabDropdown
+            onChange={(detail: GoabDropdownOnChangeDetail) => onSetFilter(detail.value as TaskFilter)}
             value={filter}
-            relative={true}
             width={'100%'}
           >
-            <GoADropdownItem label="Active" value="active" />
-            <GoADropdownItem label="My tasks" value="assigned" />
-            <GoADropdownItem label="Pending" value="pending" />
-          </GoADropdown>
-        </GoAFormItem>
+            <GoabDropdownItem label="Active" value="active" />
+            <GoabDropdownItem label="My tasks" value="assigned" />
+            <GoabDropdownItem label="Pending" value="pending" />
+          </GoabDropdown>
+        </GoabFormItem>
       </div>
       <div>
-        <GoATable mt="l" width="100%">
+        <GoabTable mt="l" width="100%">
           <colgroup>
             <col style={{ width: '5%' }} />
             <col style={{ width: '10%' }} />
@@ -87,7 +86,7 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
               />
             ))}
           </tbody>
-        </GoATable>
+        </GoabTable>
       </div>
     </div>
   );

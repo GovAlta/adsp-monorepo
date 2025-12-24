@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
 import { useDispatch } from 'react-redux';
 import { Page, Main } from '@components/Html';
 import GoALinkButton from '@components/LinkButton';
@@ -17,8 +17,8 @@ const GetStarted = (): JSX.Element => {
           Currently, the Alberta Digital Service Platform only uses the Government of Alberta's account as
           authentication, with plans to expand to other federated login providers in the future.
         </p>
-        <GoAButtonGroup alignment="start">
-          <GoAButton
+        <GoabButtonGroup alignment="start">
+          <GoabButton
             type="primary"
             onClick={() => {
               const idpHint = getIdpHint();
@@ -26,12 +26,12 @@ const GetStarted = (): JSX.Element => {
             }}
           >
             Sign in
-          </GoAButton>
+          </GoabButton>
 
           <GoALinkButton buttonType="secondary" to="/">
             Back to main page
           </GoALinkButton>
-        </GoAButtonGroup>
+        </GoabButtonGroup>
       </Main>
     </Page>
   );

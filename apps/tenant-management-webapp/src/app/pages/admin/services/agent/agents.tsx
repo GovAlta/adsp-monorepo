@@ -1,4 +1,4 @@
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Padding } from '@components/styled-components';
@@ -33,7 +33,7 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
   return (
     <div>
       <Padding>Agents are configurations of LLMs for specific purposes.</Padding>
-      <GoAButton
+      <GoabButton
         testId="add-agent"
         onClick={() => {
           setOpenAddAgent(true);
@@ -41,7 +41,7 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
         mb="l"
       >
         Add agent
-      </GoAButton>
+      </GoabButton>
       {tenantAgents.length === 0 ? (
         renderNoItem('tenant agents')
       ) : (

@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 
 import { getEventDefinitions } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
@@ -50,14 +50,14 @@ export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
           utilized by services consuming events. For example, notification template configuration can validate template
           variables as matching the payload from a triggering event.
         </p>
-        <GoAButton
+        <GoabButton
           testId="add-definition"
           onClick={() => {
             setActiveEdit(true);
           }}
         >
           Add definition
-        </GoAButton>
+        </GoabButton>
       </section>
       <EventMetrics />
     </div>

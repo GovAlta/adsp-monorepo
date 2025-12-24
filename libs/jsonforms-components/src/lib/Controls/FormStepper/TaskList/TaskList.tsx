@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
-import { GoATable, GoAText } from '@abgov/react-components';
+import { GoabTable, GoabText } from '@abgov/react-components';
 import { PageBorder } from '../styled-components';
 import { CategoriesState, CategoryState } from '../context';
 import { ApplicationStatus } from '../ApplicationStatus';
@@ -100,18 +100,18 @@ export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subti
     <PageBorder>
       <div data-testid={testid}>
         {title && (
-          <GoAText size="heading-xl" mb="xl">
+          <GoabText size="heading-xl" mb="xl">
             {title}
-          </GoAText>
+          </GoabText>
         )}
         {subtitle && (
-          <GoAText size="heading-l" mt="none" mb="xl">
+          <GoabText size="heading-l" mt="none" mb="xl">
             {subtitle}
-          </GoAText>
+          </GoabText>
         )}
         <ApplicationStatus completedGroups={completedPages} totalGroups={totalPages} />
 
-        <GoATable width="100%">
+        <GoabTable width="100%">
           <tbody>
             {mergedSections.map(({ sectionTitle, categories: group }, index) => (
               <React.Fragment key={index}>
@@ -139,7 +139,7 @@ export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subti
               <SummaryRow index={globalIndex} isValid={isValid} onClick={onClick} key="task-list-table-summary" />
             ) : null}
           </tbody>
-        </GoATable>
+        </GoabTable>
       </div>
     </PageBorder>
   );

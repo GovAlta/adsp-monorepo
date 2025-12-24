@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoAModal, GoAGrid } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal, GoabGrid } from '@abgov/react-components';
 import { Visible } from '../../util';
 import { PageBorder, PageRenderPadding, PageRenderPaddingBottom } from './styled-components';
 import FormStepperPageReviewer from './PageStepperReviewControl';
@@ -27,7 +27,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   const hideSubmit = props.categoryProps.uischema.options?.hideSubmit ?? false;
   const toAppOverviewLabel = props.categoryProps.uischema.options?.toAppOverviewLabel ?? 'Back to application overview';
   const submissionLabel = props.categoryProps.uischema.options?.submissionLabel ?? 'Next';
-  const hideSummary = props.categoryProps.uischema.options?.hideSummary ;
+  const hideSummary = props.categoryProps.uischema.options?.hideSummary;
   const submitFormFunction = enumerators?.submitFunction.get('submit-form');
   const submitForm = submitFormFunction && submitFormFunction();
 
@@ -82,7 +82,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
 
               if (index === activeId && !isOnReview) {
                 const currentStep = index + 1 - categories.filter((c) => !c.visible && c.id < index).length;
-                const totalSteps = categories.filter((c) => c.visible).length
+                const totalSteps = categories.filter((c) => c.visible).length;
 
                 return (
                   <div
@@ -97,10 +97,10 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                       <RenderStepElements {...categoryProps} />
                     </PageRenderPadding>
                     <PageRenderPadding>
-                      <GoAGrid minChildWidth="100px" gap="2xs">
-                        <GoAButtonGroup alignment="start">
+                      <GoabGrid minChildWidth="100px" gap="2xs">
+                        <GoabButtonGroup alignment="start">
                           {activeId > 0 && (
-                            <GoAButton
+                            <GoabButton
                               type="secondary"
                               onClick={() => {
                                 handleSave();
@@ -115,12 +115,12 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                               testId="pages-prev-btn"
                             >
                               Previous
-                            </GoAButton>
+                            </GoabButton>
                           )}{' '}
-                        </GoAButtonGroup>
+                        </GoabButtonGroup>
 
-                        <GoAButtonGroup alignment="end">
-                          <GoAButton
+                        <GoabButtonGroup alignment="end">
+                          <GoabButton
                             type="submit"
                             onClick={() => {
                               handleSave();
@@ -135,10 +135,10 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                             disabled={!enabled}
                             testId="pages-save-continue-btn"
                           >
-                            {currentStep === totalSteps ? submissionLabel : "Next"}
-                          </GoAButton>
-                        </GoAButtonGroup>
-                      </GoAGrid>
+                            {currentStep === totalSteps ? submissionLabel : 'Next'}
+                          </GoabButton>
+                        </GoabButtonGroup>
+                      </GoabGrid>
                     </PageRenderPadding>
                   </div>
                 );
@@ -149,41 +149,41 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
               <div data-testid="stepper-pages-review-page">
                 <FormStepperPageReviewer {...{ ...props.categoryProps, navigationFunc: goToPage }} />
                 <PageRenderPadding>
-                  <GoAGrid minChildWidth="100px" gap="2xs">
-                    <GoAButtonGroup alignment="end">
+                  <GoabGrid minChildWidth="100px" gap="2xs">
+                    <GoabButtonGroup alignment="end">
                       {!hideSubmit ? (
-                        <GoAButton
+                        <GoabButton
                           type={'primary'}
                           onClick={handleSubmit}
                           disabled={!isValid}
                           testId="pages-submit-btn"
                         >
                           Submit
-                        </GoAButton>
+                        </GoabButton>
                       ) : null}
-                    </GoAButtonGroup>
-                  </GoAGrid>
+                    </GoabButtonGroup>
+                  </GoabGrid>
                 </PageRenderPadding>
               </div>
             )}
           </PageBorder>
         </div>
       </Visible>
-      <GoAModal
+      <GoabModal
         testId="submit-confirmation"
         open={isOpen}
         heading={'Form Submitted'}
-        width="640px"
+        maxWidth="640px"
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
+          <GoabButtonGroup alignment="end">
+            <GoabButton type="primary" testId="close-submit-modal" onClick={onCloseModal}>
               Close
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <b>Submit is a test for preview purposes </b>(i.e. no actual form is being submitted)
-      </GoAModal>
+      </GoabModal>
     </div>
   );
 };

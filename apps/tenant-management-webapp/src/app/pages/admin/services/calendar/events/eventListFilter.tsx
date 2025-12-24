@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { EventFilterWrapper } from './styled-components';
-import { GoAGrid, GoAFormItem, GoAInputDate, GoABadge } from '@abgov/react-components';
+import { GoabGrid, GoabFormItem, GoabInput, GoabBadge } from '@abgov/react-components';
 import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
 import { CalendarEventSearchCriteria } from '@store/calendar/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { CalendarEventFilterError } from './styled-components';
+import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 
 interface EventListFilterProps {
   calenderName?: string;
@@ -34,17 +35,18 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
 
   const parsedStartDate = startDateValue && !isNaN(Date.parse(startDateValue)) ? new Date(startDateValue) : undefined;
   const parsedEndDate = endDateValue && !isNaN(Date.parse(endDateValue)) ? new Date(endDateValue) : undefined;
-
+  console.log('parsedStartDate', parsedStartDate);
   return (
     <EventFilterWrapper>
-      <GoAGrid minChildWidth="20ch">
-        <GoAFormItem label="Start date">
-          <GoAInputDate
+      <GoabGrid minChildWidth="20ch">
+        <GoabFormItem label="Start date">
+          <GoabInput
+            type="date"
             name="calendar-event-filter-start-date"
-            value={calenderName ? parsedStartDate : null}
+            value={calenderName && parsedStartDate?.toISOString().slice(0, 10)}
             disabled={calenderName === null}
-            onChange={(name, value) => {
-              criteria.startDate = new Date(value).toISOString();
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              criteria.startDate = new Date(detail.value).toISOString();
               if (!isSearchCriteriaValid(criteria)) {
                 setShowDateError(true);
               } else {
@@ -53,7 +55,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
                 const updatedCriteria = {
                   ...criteria,
                   endDate: endDateValue,
-                  startDate: new Date(value).toISOString(),
+                  startDate: new Date(detail.value).toISOString(),
                   calendarName: calenderName,
                 };
 
@@ -62,14 +64,15 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
               }
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
 
-        <GoAFormItem label="End date">
-          <GoAInputDate
+        <GoabFormItem label="End date">
+          <GoabInput
+            type="date"
             name="calendar-event-filter-end-date"
-            value={calenderName ? parsedEndDate : null}
+            value={calenderName && parsedEndDate?.toISOString().slice(0, 10)}
             disabled={calenderName === null}
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               if (!isSearchCriteriaValid(criteria)) {
                 setShowDateError(true);
               } else {
@@ -78,7 +81,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
                 const updatedCriteria = {
                   ...criteria,
                   startDate: startDateValue,
-                  endDate: new Date(value).toISOString(),
+                  endDate: new Date(detail.value).toISOString(),
                   calendarName: calenderName,
                 };
                 setEndDateValue(updatedCriteria.endDate);
@@ -86,11 +89,11 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
               }
             }}
           />
-        </GoAFormItem>
-      </GoAGrid>
+        </GoabFormItem>
+      </GoabGrid>
       {showDateError && (
         <>
-          <GoABadge type="emergency" icon />
+          <GoabBadge type="emergency" icon />
           <CalendarEventFilterError>Start date must be before end date.</CalendarEventFilterError>
         </>
       )}

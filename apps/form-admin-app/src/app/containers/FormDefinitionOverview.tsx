@@ -1,14 +1,14 @@
 import {
-  GoABadge,
-  GoAButton,
-  GoAButtonGroup,
-  GoACheckbox,
-  GoAContainer,
-  GoADetails,
-  GoAFormItem,
-  GoAIconButton,
-  GoASpacer,
-  GoATable,
+  GoabBadge,
+  GoabButton,
+  GoabButtonGroup,
+  GoabCheckbox,
+  GoabContainer,
+  GoabDetails,
+  GoabFormItem,
+  GoabIconButton,
+  GoabSpacer,
+  GoabTable,
 } from '@abgov/react-components';
 import { RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
@@ -30,6 +30,7 @@ import {
 import { ContentContainer } from '../components/ContentContainer';
 import { PropertiesContainer } from '../components/PropertiesContainer';
 import { ScheduleIntakeModal } from '../components/ScheduleIntakeModal';
+import { GoabCheckboxOnChangeDetail } from '@abgov/ui-components-common';
 
 const OverviewLayout = styled.div`
   position: absolute;
@@ -85,78 +86,78 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
     <OverviewLayout>
       <ContentContainer>
         <h2>Overview</h2>
-        <GoAContainer mt="m">
+        <GoabContainer mt="m">
           <PropertiesContainer>
-            <GoAFormItem label="ID" mr="m">
+            <GoabFormItem label="ID" mr="m">
               <span>{definition.id}</span>
-            </GoAFormItem>
-            <GoAFormItem label="Rev" mr="m">
+            </GoabFormItem>
+            <GoabFormItem label="Rev" mr="m">
               <span>{definition.revision}</span>
-            </GoAFormItem>
-            <GoAFormItem label="Name" mr="m">
+            </GoabFormItem>
+            <GoabFormItem label="Name" mr="m">
               <span>{definition.name}</span>
-            </GoAFormItem>
-            <GoAFormItem label="Description" mr="m">
+            </GoabFormItem>
+            <GoabFormItem label="Description" mr="m">
               <span>{definition.description}</span>
-            </GoAFormItem>
+            </GoabFormItem>
           </PropertiesContainer>
-        </GoAContainer>
+        </GoabContainer>
         <h3>General</h3>
-        <GoASpacer vSpacing="m" />
+        <GoabSpacer vSpacing="m" />
         {definition.anonymousApply ? (
-          <GoADetails heading="Anonymous applicants">
+          <GoabDetails heading="Anonymous applicants">
             Applicants can create and submit forms without signing in. This can reduce the quality of submissions, and
             users may resubmit the same information more than once.
-          </GoADetails>
+          </GoabDetails>
         ) : (
-          <GoADetails heading="Signed in applicants">
+          <GoabDetails heading="Signed in applicants">
             Applicants must sign in to create and submit forms. The user applying can start and resume from a draft of
             the form, then submit once ready.
-          </GoADetails>
+          </GoabDetails>
         )}
         {!definition.anonymousApply &&
           (definition.oneFormPerApplicant ? (
-            <GoADetails heading="One form per applicant">
+            <GoabDetails heading="One form per applicant">
               Applicants can create one form of this definition. In programs where people are expected to apply only
               once, this configuration limits the the opportunity for duplicate submissions. However, programs should
               still consider duplicates since this configuration cannot fully prevent them (for example, if both parents
               apply for the same dependent child).
-            </GoADetails>
+            </GoabDetails>
           ) : (
-            <GoADetails heading="Multiple forms per applicant">
+            <GoabDetails heading="Multiple forms per applicant">
               Applicants can create multiple forms of this definition. In programs where people can make multiple
               distinct submissions, such as separate submissions for family members, this configuration allows them to
               create, draft and submit the forms separately.
-            </GoADetails>
+            </GoabDetails>
           ))}
         {definition.supportTopic ? (
-          <GoADetails heading="Applicant questions">
+          <GoabDetails heading="Applicant questions">
             Applicants can send questions regarding their form, which staff can review and respond to. Anonymous
             applicants are not able to send questions.
-          </GoADetails>
+          </GoabDetails>
         ) : (
-          <GoADetails heading="No applicant questions">
+          <GoabDetails heading="No applicant questions">
             Applicants are not able to send questions through the form system.
-          </GoADetails>
+          </GoabDetails>
         )}
         {definition.generatesPdf ? (
-          <GoADetails heading="Creates PDF when submitted">
+          <GoabDetails heading="Creates PDF when submitted">
             PDF copy of the submitted information is created when forms are submitted.
-          </GoADetails>
+          </GoabDetails>
         ) : (
-          <GoADetails heading="No PDF is created">PDF copy is not created when forms are submitted.</GoADetails>
+          <GoabDetails heading="No PDF is created">PDF copy is not created when forms are submitted.</GoabDetails>
         )}
         {definition.submissionRecords ? (
-          <GoADetails heading="Creates submission records">
+          <GoabDetails heading="Creates submission records">
             Submission records are created when forms are submitted. The submission captures the information in the form
             when it is submitted for processing, and it can be dispositioned to record a decision.
-          </GoADetails>
+          </GoabDetails>
         ) : (
-          <GoADetails heading="No submission records">
+          <GoabDetails heading="No submission records">
             Submission records are not created when forms are submitted. The form status indicates if it has been
             submitted. Any follow-up actions such as service fulfillment or client onboarding need to be handled outside
             the form system.
-          </GoADetails>
+          </GoabDetails>
         )}
         {definition?.scheduledIntakes && (
           <>
@@ -165,7 +166,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
               This form is configured for scheduled intakes. Applicants will only be able to create and submit forms
               during periods of active intake scheduled on a calendar.
             </p>
-            <GoATable width="100%">
+            <GoabTable width="100%">
               <thead>
                 <tr>
                   <th></th>
@@ -179,7 +180,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                   <tr key={event.urn}>
                     <td>
                       {definition.intake?.urn === event.urn && (
-                        <GoABadge
+                        <GoabBadge
                           type="success"
                           content={definition.intake.isUpcoming ? 'Upcoming' : 'Active'}
                           icon={false}
@@ -189,7 +190,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                     <td>{event.start.toFormat('LLL d, yyyy ttt')}</td>
                     <td>{event.end.toFormat('LLL d, yyyy ttt')}</td>
                     <td>
-                      <GoAIconButton
+                      <GoabIconButton
                         title="trash button"
                         icon="trash"
                         onClick={() => dispatch(deleteEvent(event.urn))}
@@ -199,13 +200,13 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                 ))}
                 <RowSkeleton show={calendarBusy.loading} columns={4} />
               </tbody>
-            </GoATable>
+            </GoabTable>
             <form>
-              <GoAButtonGroup alignment="end" mt="l">
-                <GoAButton type="secondary" onClick={() => setShowScheduleIntake(true)}>
+              <GoabButtonGroup alignment="end" mt="l">
+                <GoabButton type="secondary" onClick={() => setShowScheduleIntake(true)}>
                   Schedule intake
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
               <ScheduleIntakeModal
                 open={showScheduleIntake}
                 onClose={() => setShowScheduleIntake(false)}
@@ -233,7 +234,7 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
           The preferences shown here are saved and shared between users accessing this application from this
           workstation.
         </p>
-        <GoATable width="100%" mt="m">
+        <GoabTable width="100%" mt="m">
           <thead>
             <tr>
               <th>Name</th>
@@ -247,19 +248,19 @@ export const FormDefinitionOverview: FunctionComponent<FormDefinitionOverviewPro
                 <td>{name}</td>
                 <td>{path}</td>
                 <td>
-                  <GoACheckbox
+                  <GoabCheckbox
                     name="Show column"
                     mt="s"
                     checked={!!selected}
-                    onChange={(_, selected) =>
-                      dispatch(updateDataValue({ definitionId: definition.id, path, selected }))
+                    onChange={(detail: GoabCheckboxOnChangeDetail) =>
+                      dispatch(updateDataValue({ definitionId: definition.id, path, selected: detail?.checked }))
                     }
                   />
                 </td>
               </tr>
             ))}
           </tbody>
-        </GoATable>
+        </GoabTable>
       </ContentContainer>
     </OverviewLayout>
   );

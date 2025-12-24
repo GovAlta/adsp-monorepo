@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styles from './Editor.module.scss';
-import { GoAButtonGroup, GoAButton } from '@abgov/react-components';
+import { GoabButtonGroup, GoabButton } from '@abgov/react-components';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SaveFormModal } from './saveModal';
 import type * as monacoNS from 'monaco-editor';
@@ -48,8 +48,8 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
   return (
     <div>
       <div className={styles['final-button-padding']}>
-        <GoAButtonGroup alignment="start">
-          <GoAButton
+        <GoabButtonGroup alignment="start">
+          <GoabButton
             type="tertiary"
             testId="collapse-all"
             onClick={() => {
@@ -61,8 +61,8 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
             disabled={activeIndex > 1}
           >
             Collapse all
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             testId="expand-all"
             type="tertiary"
             disabled={activeIndex > 1}
@@ -72,10 +72,10 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
             }}
           >
             Expand all
-          </GoAButton>
-        </GoAButtonGroup>
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+          </GoabButton>
+        </GoabButtonGroup>
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="primary"
             testId="definition-form-save"
             disabled={
@@ -91,8 +91,8 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
             }}
           >
             Save
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             testId="form-editor-cancel"
             type="secondary"
             onClick={() => {
@@ -106,8 +106,8 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
             }}
           >
             Back
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </div>
       <SaveFormModal
         open={saveModal.visible}

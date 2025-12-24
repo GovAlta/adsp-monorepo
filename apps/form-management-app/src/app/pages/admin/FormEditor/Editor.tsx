@@ -8,7 +8,7 @@ import type * as monacoNS from 'monaco-editor';
 import { Preview } from './Preview';
 import { FormDefinition } from '../../../state/types';
 import { SubmitButtonsBar } from './SubmitButtonsBar';
-import { GoATabs, GoATab } from '@abgov/react-components';
+import { GoabTabs, GoabTab } from '@abgov/react-components';
 import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
 import { UISchemaElement } from '@jsonforms/core';
 import { FileItem, FileMetadata, FileWithMetadata } from '../../../state/file/file.slice';
@@ -18,6 +18,7 @@ import { RoleContainer } from './RoleContainer';
 import { AppState } from '../../../state';
 import { useSelector } from 'react-redux';
 import { ClientElement } from '../../../state/keycloak/selectors';
+import { GoabTabsOnChangeDetail } from '@abgov/ui-components-common';
 import {
   FormPropertyValueCompletionItemProvider,
   FormDataSchemaElementCompletionItemProvider,
@@ -188,13 +189,13 @@ export const Editor: React.FC<EditorProps> = ({
   return (
     <div className={styles['form-editor']}>
       <div className={styles['name-description-data-schema']}>
-        <GoATabs
-          onChange={(event) => {
-            !!event && setActiveTab(event);
+        <GoabTabs
+          onChange={(event: GoabTabsOnChangeDetail) => {
+            !!event && setActiveTab(event.tab);
           }}
           data-testid="form-editor-tabs"
         >
-          <GoATab heading="Data schema" data-testid="dcm-form-editor-data-schema-tab">
+          <GoabTab heading="Data schema" data-testid="dcm-form-editor-data-schema-tab">
             <DataEditorContainer
               errors={errors}
               editorErrors={editorErrors}
@@ -203,8 +204,8 @@ export const Editor: React.FC<EditorProps> = ({
               setEditorErrors={setEditorErrors}
               handleEditorDidMountData={handleEditorDidMountData}
             />
-          </GoATab>
-          <GoATab heading="UI schema" data-testid="dcm-form-editor-ui-schema-tab">
+          </GoabTab>
+          <GoabTab heading="UI schema" data-testid="dcm-form-editor-ui-schema-tab">
             <UIEditorContainer
               errors={errors}
               editorErrors={editorErrors}
@@ -213,8 +214,8 @@ export const Editor: React.FC<EditorProps> = ({
               setEditorErrors={setEditorErrors}
               handleEditorDidMountUi={handleEditorDidMountUi}
             />
-          </GoATab>
-          <GoATab heading="Roles" data-testid="dcm-form-editor-ui-schema-tab">
+          </GoabTab>
+          <GoabTab heading="Roles" data-testid="dcm-form-editor-ui-schema-tab">
             {rolesTabLoaded && (
               <div>
                 <RoleContainer
@@ -226,8 +227,8 @@ export const Editor: React.FC<EditorProps> = ({
                 {isLoadingRoles && <div className={styles.textLoadingIndicator}>Loading roles from access service</div>}
               </div>
             )}
-          </GoATab>
-        </GoATabs>
+          </GoabTab>
+        </GoabTabs>
         <SubmitButtonsBar
           getCurrentEditorRef={getCurrentEditorRef}
           activeIndex={activeTab - 1}

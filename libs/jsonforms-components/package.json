@@ -5,7 +5,8 @@
   "description": "Government of Alberta - React renderers for JSON Forms based on the design system.",
   "repository": "https://github.com/GovAlta/adsp-monorepo",
   "peerDependencies": {
-    "@abgov/react-components": "^5.4.1",
+    "@abgov/react-components": "^6.9.3",
+    "@abgov/ui-components-common": "1.9.1",
     "@jsonforms/core": "^3.1.0",
     "@jsonforms/react": "^3.1.0",
     "react": "^18.0.0",

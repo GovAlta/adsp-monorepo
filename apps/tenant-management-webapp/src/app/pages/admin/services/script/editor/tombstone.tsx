@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { TombStoneWrapper, Edit, Tooltip, Anchor } from '../styled-components';
 import { ScriptItem } from '@store/script/models';
-import { GoAIconButton } from '@abgov/react-components';
+import { GoabIconButton } from '@abgov/react-components';
 import { AddScriptModal } from '../addScriptModal';
 
 interface props {
@@ -95,7 +95,7 @@ export const TombStone = ({ selectedScript, onSave }: props): JSX.Element => {
           <Anchor rel="noopener noreferrer" onClick={() => setOpenAddScript(true)}>
             Edit
           </Anchor>
-          <GoAIconButton
+          <GoabIconButton
             icon="create"
             testId="form-template-information-edit-icon"
             title="Edit"

@@ -1,4 +1,4 @@
-import { GoAButton, GoASideMenu, GoASideMenuHeading } from '@abgov/react-components';
+import { GoabButton, GoabSideMenu, GoabSideMenuHeading } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -44,29 +44,29 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
         <span>
           <UserSpan>{user?.name}</UserSpan>
           {user ? (
-            <GoAButton
+            <GoabButton
               mt="s"
               mr="s"
               type="tertiary"
               onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
             >
               Sign out
-            </GoAButton>
+            </GoabButton>
           ) : (
-            <GoAButton
+            <GoabButton
               mt="s"
               mr="s"
               type="tertiary"
               onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
             >
               Sign in
-            </GoAButton>
+            </GoabButton>
           )}
         </span>
       )}
       <Nav type={type}>
-        <GoASideMenu data-side-nav={true}>
-          <GoASideMenuHeading icon="documents">Form definitions</GoASideMenuHeading>
+        <GoabSideMenu data-side-nav={true}>
+          <GoabSideMenuHeading icon="documents">Form definitions</GoabSideMenuHeading>
           <a
             href={`/${tenantName}/definitions`}
             onClick={(e) => {
@@ -78,7 +78,7 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
           </a>
           {definition && (
             <>
-              <GoASideMenuHeading icon="document">{definition.name}</GoASideMenuHeading>
+              <GoabSideMenuHeading icon="document">{definition.name}</GoabSideMenuHeading>
               <a
                 href={`/${tenantName}/definitions/${definition.id}/overview`}
                 onClick={(e) => {
@@ -110,7 +110,7 @@ export const NavigationMenu: FunctionComponent<NavigationMenuProps> = ({ type })
               )}
             </>
           )}
-        </GoASideMenu>
+        </GoabSideMenu>
       </Nav>
     </>
   );

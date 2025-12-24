@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { FileMetrics } from './metrics';
 import { FetchFileMetrics } from '@store/file/actions';
 import { OverviewLayout } from '@components/Overview';
@@ -48,7 +48,7 @@ const FileOverview = ({ setOpenAddFileType, setActiveEdit }: FileOverviewProps):
           </>
         }
         addButton={
-          <GoAButton
+          <GoabButton
             testId="add-file-type-btn"
             onClick={() => {
               setOpenAddFileType(true);
@@ -57,7 +57,7 @@ const FileOverview = ({ setOpenAddFileType, setActiveEdit }: FileOverviewProps):
             }}
           >
             Add file type
-          </GoAButton>
+          </GoabButton>
         }
         extra={<FileMetrics />}
       />

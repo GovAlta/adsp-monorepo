@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoABadge } from '@abgov/react-components';
+import { GoabBadge } from '@abgov/react-components';
 import { CompletionStatus, BadgeWrapper, CompletionTextHeader, Bar, BarTop } from './styled-components';
 
 export const ApplicationStatus = ({
@@ -12,9 +12,9 @@ export const ApplicationStatus = ({
   const completed = completedGroups;
   const badge =
     totalGroups === completed ? (
-      <GoABadge type="success" content="Complete" icon={false} />
+      <GoabBadge type="success" content="Complete" icon={false} />
     ) : (
-      <GoABadge type="information" content="Incomplete" icon={false} />
+      <GoabBadge type="information" content="Incomplete" icon={false} />
     );
   const mainHeading = 'Application Progress';
   const progressPercentageAccurate = (100 * completed) / totalGroups;

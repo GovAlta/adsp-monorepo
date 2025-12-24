@@ -3,13 +3,13 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import type { FeedbackSite } from '@store/feedback/models';
 import { fetchAllTags } from '@store/form/action';
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoAInput,
-  GoAFormItem,
-  GoAModal,
-  GoACheckbox,
-  GoAFilterChip,
+  GoabButton,
+  GoabButtonGroup,
+  GoabInput,
+  GoabFormItem,
+  GoabModal,
+  GoabCheckbox,
+  GoabFilterChip,
 } from '@abgov/react-components';
 import { GoADropdownOption, GoADropdown } from '@abgov/react-components-old';
 import { fetchResourceTypeAction } from '@store/directory/actions';
@@ -29,6 +29,7 @@ import {
 import { CheckboxSpaceWrapper } from '../styled-components';
 import { ChipsWrapper } from '../../events/stream/styleComponents';
 import { HelpText } from '@components/styled-components';
+import { GoabCheckboxOnChangeDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 interface SiteFormProps {
   initialValue?: FeedbackSite;
   sites: FeedbackSite[];
@@ -91,13 +92,13 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
 
   return (
     <ModalOverwrite>
-      <GoAModal
+      <GoabModal
         testId="add-site-modal"
         open={open}
         heading={isEdit ? 'Edit registered site' : 'Register site'}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               testId="site-cancel"
               type="secondary"
               onClick={() => {
@@ -105,10 +106,10 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
               }}
             >
               Cancel
-            </GoAButton>
+            </GoabButton>
 
             {isEdit ? (
-              <GoAButton
+              <GoabButton
                 type="primary"
                 testId="site-edit"
                 disabled={!site.url || validators.haveErrors()}
@@ -118,9 +119,9 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
                 }}
               >
                 Save
-              </GoAButton>
+              </GoabButton>
             ) : (
-              <GoAButton
+              <GoabButton
                 type="primary"
                 testId="site-register"
                 disabled={!site.url || validators.haveErrors()}
@@ -130,20 +131,20 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
                 }}
               >
                 Register
-              </GoAButton>
+              </GoabButton>
             )}
-          </GoAButtonGroup>
+          </GoabButtonGroup>
         }
       >
         <div>
-          <GoAFormItem
+          <GoabFormItem
             label="Site URL"
             requirement="required"
             labelSize="regular"
             testId="feedback-url-formItem"
             error={errors?.['url'] || urlError}
           >
-            <GoAInput
+            <GoabInput
               type="text"
               name="url"
               value={site.url}
@@ -151,20 +152,20 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
               testId="feedback-url"
               aria-label="url"
               disabled={isEdit}
-              onChange={(name, value) => {
+              onChange={(detail: GoabInputOnChangeDetail) => {
                 validators.remove('url');
-                validators['url'].check(value);
-                setSite({ ...site, url: value });
+                validators['url'].check(detail.value);
+                setSite({ ...site, url: detail.value });
               }}
               onBlur={() => {
                 validators.checkAll({ url: site.url });
                 setUrlError(errors?.['url'] || '');
               }}
             />
-          </GoAFormItem>
+          </GoabFormItem>
           {showTaggingFeature && (
             <div className="mt-1">
-              <GoAFormItem label="Add tag(s)">
+              <GoabFormItem label="Add tag(s)">
                 <GoADropdown
                   name="TagFilter"
                   selectedValues={site.tags}
@@ -186,23 +187,23 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
                     {(site.tags || []).map((tagChip) => {
                       return (
                         <div className="mr-1">
-                          <GoAFilterChip key={tagChip} content={tagChip} onClick={() => removeSelectedTag(tagChip)} />
+                          <GoabFilterChip key={tagChip} content={tagChip} onClick={() => removeSelectedTag(tagChip)} />
                         </div>
                       );
                     })}
                   </ChipsWrapper>
                 </div>
-              </GoAFormItem>
+              </GoabFormItem>
             </div>
           )}
 
           <CheckboxSpaceWrapper>
-            <GoACheckbox
+            <GoabCheckbox
               text={'Allow anonymous feedback'}
               testId="anonymous-feedback"
               ariaLabel="Anonymous feedback"
-              onChange={(name, value) => {
-                setSite({ ...site, allowAnonymous: value });
+              onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                setSite({ ...site, allowAnonymous: detail.checked });
               }}
               name={'isAnonymous'}
               checked={site.allowAnonymous ?? false}
@@ -212,7 +213,7 @@ export const SiteAddEditForm: FunctionComponent<SiteFormProps> = ({
             <div>Enabling anonymous feedback may result in lower quality feedback.</div>
           </HelpText>
         </div>
-      </GoAModal>
+      </GoabModal>
     </ModalOverwrite>
   );
 };

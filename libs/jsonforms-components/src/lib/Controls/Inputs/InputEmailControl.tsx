@@ -9,12 +9,14 @@ import {
   ControlProps,
   JsonSchema,
 } from '@jsonforms/core';
-import { GoAInput, GoAFormItem } from '@abgov/react-components';
+import { GoabInput, GoabFormItem } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { onChangeForInputControl, onBlurForTextControl } from '../../util/inputControlUtils';
 import { FormFieldWrapper } from './style-component';
 import { Visible } from '../../util';
+
+import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 
 type GoAEmailControlProps = ControlProps & WithInputProps;
 type ExtendedJsonSchema = JsonSchema & {
@@ -48,13 +50,13 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
   return (
     <Visible visible={visible}>
       <FormFieldWrapper>
-        <GoAFormItem
+        <GoabFormItem
           error={isVisited && finalErrors}
           testId="form-email-input-wrapper"
           requirement={required ? 'required' : undefined}
           label={primaryLabel}
         >
-          <GoAInput
+          <GoabInput
             error={isVisited && finalErrors.length > 0}
             type={'email'}
             width={width}
@@ -63,28 +65,28 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
             testId={appliedUiSchemaOptions?.testId || `${id}-input`}
             disabled={!enabled}
             readonly={readOnly}
-            onChange={(name: string, value: Date | string) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               if (!isVisited) {
                 setIsVisited(true);
               }
               onChangeForInputControl({
-                name,
-                value,
+                name: detail.name,
+                value: detail.value,
                 controlProps: props as ControlProps,
               });
             }}
-            onBlur={(name: string, value: Date | string) => {
+            onBlur={(detail: GoabInputOnBlurDetail) => {
               if (!isVisited) {
                 setIsVisited(true);
               }
               onBlurForTextControl({
-                name,
-                value,
+                name: detail.name,
+                value: detail.value,
                 controlProps: props as ControlProps,
               });
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
       </FormFieldWrapper>
     </Visible>
   );

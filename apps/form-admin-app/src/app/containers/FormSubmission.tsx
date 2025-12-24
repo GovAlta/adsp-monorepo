@@ -1,10 +1,10 @@
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoATextArea,
+  GoabButton,
+  GoabButtonGroup,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabTextArea,
 } from '@abgov/react-components';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
@@ -28,6 +28,7 @@ import { PropertiesContainer } from '../components/PropertiesContainer';
 import { ActionsForm } from '../components/ActionsForm';
 import { FormViewer } from './FormViewer';
 import { PdfDownload } from './PdfDownload';
+import { GoabDropdownOnChangeDetail, GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
 
 export const FormSubmission = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -60,21 +61,21 @@ export const FormSubmission = () => {
       initialized={!!(definition && submission)}
       navButtons={
         submission?.formId && (
-          <GoAButton type="tertiary" onClick={() => navigate(`../forms/${submission.formId}`)}>
+          <GoabButton type="tertiary" onClick={() => navigate(`../forms/${submission.formId}`)}>
             Go to related form
-          </GoAButton>
+          </GoabButton>
         )
       }
       nextTo={next && `../submissions/${next}`}
       header={
         submission && (
           <PropertiesContainer>
-            <GoAFormItem mr="s" mb="s" label="Submitted by">
+            <GoabFormItem mr="s" mb="s" label="Submitted by">
               {submission.createdBy.name}
-            </GoAFormItem>
-            <GoAFormItem mr="xl" mb="s" label="Submitted on">
+            </GoabFormItem>
+            <GoabFormItem mr="xl" mb="s" label="Submitted on">
               {DateTime.fromISO(submission.created).toFormat('LLL d, yyyy')}
-            </GoAFormItem>
+            </GoabFormItem>
             <PdfDownload urn={formSubmissionUrn} />
           </PropertiesContainer>
         )
@@ -83,39 +84,42 @@ export const FormSubmission = () => {
         <ActionsForm>
           {submission?.disposition ? (
             <PropertiesContainer>
-              <GoAFormItem ml="xl" label="Disposition">
+              <GoabFormItem ml="xl" label="Disposition">
                 <span>{submission.disposition.status}</span>
-              </GoAFormItem>
-              <GoAFormItem ml="xl" label="Reason">
+              </GoabFormItem>
+              <GoabFormItem ml="xl" label="Reason">
                 <span>{submission.disposition.reason}</span>
-              </GoAFormItem>
-              <GoAFormItem ml="xl" label="Dispositioned on">
+              </GoabFormItem>
+              <GoabFormItem ml="xl" label="Dispositioned on">
                 <span>{DateTime.fromISO(submission.disposition.date).toFormat('LLL d, yyyy')}</span>
-              </GoAFormItem>
+              </GoabFormItem>
             </PropertiesContainer>
           ) : (
             <>
-              <GoAFormItem label="Disposition">
-                <GoADropdown
+              <GoabFormItem label="Disposition">
+                <GoabDropdown
                   value={draft.status || ''}
-                  onChange={(_, status: string) => dispatch(formActions.setDispositionDraft({ ...draft, status }))}
-                  relative={true}
+                  onChange={(detail: GoabDropdownOnChangeDetail) =>
+                    dispatch(formActions.setDispositionDraft({ ...draft, status: detail.value }))
+                  }
                 >
-                  <GoADropdownItem value={''} label={'None selected'} />
+                  <GoabDropdownItem value={''} label={'None selected'} />
                   {definition?.dispositionStates?.map((state) => (
-                    <GoADropdownItem key={state.id} value={state.name} label={state.name} />
+                    <GoabDropdownItem key={state.id} value={state.name} label={state.name} />
                   ))}
-                </GoADropdown>
-              </GoAFormItem>
-              <GoAFormItem label="Reason">
-                <GoATextArea
+                </GoabDropdown>
+              </GoabFormItem>
+              <GoabFormItem label="Reason">
+                <GoabTextArea
                   name="reason"
                   value={draft.reason}
-                  onChange={(_, reason) => dispatch(formActions.setDispositionDraft({ ...draft, reason }))}
+                  onChange={(detail: GoabTextAreaOnChangeDetail) =>
+                    dispatch(formActions.setDispositionDraft({ ...draft, reason: detail.value }))
+                  }
                 />
-              </GoAFormItem>
-              <GoAButtonGroup alignment="end">
-                <GoAButton
+              </GoabFormItem>
+              <GoabButtonGroup alignment="end">
+                <GoabButton
                   disabled={!draft.status || !draft.reason || busy.executing}
                   onClick={() =>
                     dispatch(
@@ -128,8 +132,8 @@ export const FormSubmission = () => {
                   }
                 >
                   Disposition
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             </>
           )}
         </ActionsForm>

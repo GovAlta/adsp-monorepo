@@ -4,13 +4,13 @@ import { PageLoader } from '@core-services/app-common';
 
 import { AppState } from '..';
 import { useSelector } from 'react-redux';
-import { CircularProgressVariant } from '@abgov/react-components';
+import { GoabCircularProgressVariant } from '@abgov/ui-components-common';
 
 interface IndicatorProps {
   delay?: number;
   message?: string;
   pageLock?: boolean;
-  variant?: CircularProgressVariant;
+  variant?: GoabCircularProgressVariant;
 }
 export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
   const [showIndicator, setShowIndicator] = useState<boolean>(false);
@@ -35,9 +35,8 @@ export const Center = styled.div`
   justify-content: center;
 `;
 
-
 interface PdfPageIndicatorProps {
-  variant?: CircularProgressVariant;
+  variant?: GoabCircularProgressVariant;
 }
 
 export const PdfPageIndicator = (variant?: PdfPageIndicatorProps): JSX.Element | null => {

@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { SitesList } from './sitesList';
 import { SiteAddEditForm } from './edit';
 import { deleteFeedbackSite, getFeedbackSites, updateFeedbackSite } from '@store/feedback/actions';
@@ -58,7 +58,7 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
 
   return (
     <section>
-      <GoAButton
+      <GoabButton
         testId="add-site"
         onClick={() => {
           setSelectedSite(defaultFeedbackSite);
@@ -67,7 +67,7 @@ export const FeedbackSites: FunctionComponent<ParentCompProps> = ({ activeEdit }
         }}
       >
         Register site
-      </GoAButton>
+      </GoabButton>
 
       <PageIndicator />
       {!indicator.show && sites && (

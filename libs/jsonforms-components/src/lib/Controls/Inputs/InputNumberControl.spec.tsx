@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { GoAInputTextProps, GoAInputText, GoATextControl, formatSin } from './InputTextControl';
+import { GoAInputText, formatSin, GoATextControl } from './InputTextControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 

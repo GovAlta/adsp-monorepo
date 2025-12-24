@@ -261,7 +261,7 @@ const nestedListWithDetailsSchema = {
       properties: {
         details: {
           type: 'string',
-          description: 'Special reqirements when contacting',
+          description: 'Special requirements when contacting',
         },
         methods: {
           type: 'array',

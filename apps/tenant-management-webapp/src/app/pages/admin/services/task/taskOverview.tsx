@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { OverviewLayout } from '@components/Overview';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { useNavigate } from 'react-router-dom';
 
 import { useDispatch } from 'react-redux';
@@ -49,7 +49,7 @@ export const TaskOverview = ({
         </section>
       }
       addButton={
-        <GoAButton
+        <GoabButton
           testId="add-queue"
           onClick={() => {
             setActiveEdit(true);
@@ -57,7 +57,7 @@ export const TaskOverview = ({
           }}
         >
           Add queue
-        </GoAButton>
+        </GoabButton>
       }
     />
   );

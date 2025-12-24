@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState, useRef } from 'react';
 import { RootState } from '@store/index';
-import { GoAButton, GoAFormItem } from '@abgov/react-components';
+import { GoabButton, GoabFormItem } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getConfigurationDefinitions,
@@ -141,7 +141,7 @@ export const ConfigurationImport: FunctionComponent = () => {
             configuration.
           </p>
 
-          <GoAFormItem label="">
+          <GoabFormItem label="">
             <input
               id="file-uploads"
               name="inputJsonFile"
@@ -157,7 +157,7 @@ export const ConfigurationImport: FunctionComponent = () => {
                 element.value = '';
               }}
             />
-          </GoAFormItem>
+          </GoabFormItem>
 
           <div className="row-flex">
             <button
@@ -173,14 +173,14 @@ export const ConfigurationImport: FunctionComponent = () => {
             </div>
           </div>
 
-          <GoAButton
+          <GoabButton
             type="primary"
             onClick={onUploadSubmit}
             disabled={selectedImportFile.length === 0}
             testId="import-input-button"
           >
             Import
-          </GoAButton>
+          </GoabButton>
           <br />
           {errorsStatus && (
             <ErrorStatusText>

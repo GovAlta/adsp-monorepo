@@ -1,7 +1,8 @@
-import { GoAButton, GoAButtonGroup, GoACircularProgress, GoAFormItem, GoATextArea } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabCircularProgress, GoabFormItem, GoabTextArea } from '@abgov/react-components';
 import moment from 'moment';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
+import { GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
 
 interface Comment {
   id: number;
@@ -79,36 +80,38 @@ const CommentsViewerComponent: FunctionComponent<CommentsViewerProps> = ({
             </div>
           </div>
         ))}
-        <GoACircularProgress variant="inline" size="small" visible={loading} />
+        <GoabCircularProgress variant="inline" size="small" visible={loading} />
         {!loading && canLoadMore && (
-          <GoAButton type="tertiary" onClick={onLoadMore}>
+          <GoabButton type="tertiary" onClick={onLoadMore}>
             Load more
-          </GoAButton>
+          </GoabButton>
         )}
       </div>
       <form>
-        <GoAFormItem label={addCommentLabel}>
-          <GoATextArea
+        <GoabFormItem label={addCommentLabel}>
+          <GoabTextArea
             name="comment"
             value={draft.content || ''}
             disabled={!canComment}
-            onChange={(_, value) => onUpdateDraft({ title: draft.title, content: value })}
+            onChange={(detail: GoabTextAreaOnChangeDetail) =>
+              onUpdateDraft({ title: draft.title, content: detail.value })
+            }
             placeholder={'Write your comment...'}
             width="100%"
           />
-        </GoAFormItem>
-        <GoAButtonGroup alignment="end" mt="l">
-          <GoAButton
+        </GoabFormItem>
+        <GoabButtonGroup alignment="end" mt="l">
+          <GoabButton
             type="secondary"
             disabled={!draft.content}
             onClick={() => onUpdateDraft({ title: draft.title, content: null })}
           >
             Clear
-          </GoAButton>
-          <GoAButton type="primary" disabled={!draft.content || commenting} onClick={() => onAddComment(draft)}>
+          </GoabButton>
+          <GoabButton type="primary" disabled={!draft.content || commenting} onClick={() => onAddComment(draft)}>
             {addCommentLabel}
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </form>
     </div>
   );

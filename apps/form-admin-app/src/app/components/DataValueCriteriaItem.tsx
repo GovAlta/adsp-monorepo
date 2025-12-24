@@ -1,5 +1,6 @@
-import { GoAFormItem, GoAInput } from '@abgov/react-components';
+import { GoabFormItem, GoabInput } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface DataValueCriteriaItemProps {
   name: string;
@@ -22,27 +23,29 @@ export const DataValueCriteriaItem: FunctionComponent<DataValueCriteriaItemProps
 }) => {
   return (
     SupportedTypes.includes(type as string) && (
-      <GoAFormItem label={name} key={path} mr="m">
+      <GoabFormItem label={name} key={path} mr="m">
         {type === 'number' || type === 'integer' ? (
-          <GoAInput
+          <GoabInput
             type="number"
-            onChange={(_, value: string) =>
-              onChange(value ? (type === 'integer' ? parseInt(value) : parseFloat(value)) : undefined)
+            onChange={(detail: GoabInputOnChangeDetail) =>
+              onChange(
+                detail.value ? (type === 'integer' ? parseInt(detail.value) : parseFloat(detail.value)) : undefined
+              )
             }
             value={value}
             name={name}
             disabled={disabled}
           />
         ) : (
-          <GoAInput
+          <GoabInput
             type="text"
-            onChange={(_, value: string) => onChange(value)}
+            onChange={(detail: GoabInputOnChangeDetail) => onChange(detail.value)}
             value={value}
             name={name}
             disabled={disabled}
           />
         )}
-      </GoAFormItem>
+      </GoabFormItem>
     )
   );
 };

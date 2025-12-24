@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 interface taskCancelModalProps {
   title: string;
   content?: string | JSX.Element;
@@ -10,23 +10,23 @@ interface taskCancelModalProps {
 
 export const TaskCancelModal = ({ isOpen, title, content, onYes, onNo }: taskCancelModalProps) => {
   return (
-    <GoAModal
+    <GoabModal
       testId="cancel-task-confirmation"
       open={isOpen}
       heading={title}
-      width="640px"
+      maxWidth="640px"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton type="secondary" testId="task-cancelNo" onClick={onNo}>
+        <GoabButtonGroup alignment="end">
+          <GoabButton type="secondary" testId="task-cancelNo" onClick={onNo}>
             No
-          </GoAButton>
-          <GoAButton type="primary" variant="destructive" testId="task-confirmYes" onClick={onYes}>
+          </GoabButton>
+          <GoabButton type="primary" variant="destructive" testId="task-confirmYes" onClick={onYes}>
             Yes
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       {content}
-    </GoAModal>
+    </GoabModal>
   );
 };

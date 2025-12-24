@@ -1,6 +1,6 @@
 import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent } from 'react';
-import { GoAButton, GoAButtonGroup, GoACallout } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabCallout } from '@abgov/react-components';
 import { useLocation } from 'react-router-dom';
 import { AppDispatch, loginUser, tenantSelector, userSelector } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
@@ -34,20 +34,20 @@ export const SignInStartApplication: FunctionComponent<SignInStartApplicationPro
             <div>
               {user || roles?.find((r) => user.roles?.includes(r)) ? (
                 <Placeholder>
-                  <GoACallout heading="Not authorized" type="information">
+                  <GoabCallout heading="Not authorized" type="information">
                     You do not have a permitted role to access the form.
-                  </GoACallout>
+                  </GoabCallout>
                 </Placeholder>
               ) : null}
-              <GoAButtonGroup alignment="end">
-                <GoAButton
+              <GoabButtonGroup alignment="end">
+                <GoabButton
                   type="primary"
                   data-testid="form-start-application-sign-in"
                   onClick={onSignInStartApplication}
                 >
                   Sign in
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             </div>
           </GridItem>
           <GridItem md={1} />

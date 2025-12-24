@@ -1,13 +1,14 @@
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoAModal,
+  GoabButton,
+  GoabButtonGroup,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabModal,
 } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { Person, Task, TaskUser } from '../state';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface TaskAssignmentModalProps {
   user: TaskUser;
@@ -34,7 +35,7 @@ export const TaskAssignmentModal: FunctionComponent<TaskAssignmentModalProps> = 
   }, [task]);
 
   return (
-    <GoAModal heading="Assign task" open={open} onClose={onClose}>
+    <GoabModal heading="Assign task" open={open} onClose={onClose}>
       <form>
         <p>Assign task {task?.name} to a person. Only the assigned person will be able to progress the task.</p>
         <div>
@@ -48,27 +49,26 @@ export const TaskAssignmentModal: FunctionComponent<TaskAssignmentModalProps> = 
           )}
         </div>
         {user.isAssigner ? (
-          <GoAFormItem label="Assign task to" mt="m" mb="4xl">
-            <GoADropdown
+          <GoabFormItem label="Assign task to" mt="m" mb="4xl">
+            <GoabDropdown
               value={task?.assignment?.assignedTo?.id}
-              onChange={(_, id) => setSelected(id as string)}
-              relative={true}
+              onChange={(detail: GoabInputOnChangeDetail) => setSelected(detail.value as string)}
               width={'50ch'}
             >
-              <GoADropdownItem key="no one" value="" label="No one" />
+              <GoabDropdownItem key="no one" value="" label="No one" />
               {workers.map((w) => (
-                <GoADropdownItem key={w.id} value={w.id} label={w.name} />
+                <GoabDropdownItem key={w.id} value={w.id} label={w.name} />
               ))}
-            </GoADropdown>
-          </GoAFormItem>
+            </GoabDropdown>
+          </GoabFormItem>
         ) : (
           <div>Assign this task to yourself?</div>
         )}
-        <GoAButtonGroup alignment="end" mt="4xl">
-          <GoAButton type="secondary" onClick={onClose}>
+        <GoabButtonGroup alignment="end" mt="4xl">
+          <GoabButton type="secondary" onClick={onClose}>
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             disabled={executing || (user.isAssigner && selected === (task?.assignment?.assignedTo?.id || ''))}
             type="primary"
             onClick={() => {
@@ -76,9 +76,9 @@ export const TaskAssignmentModal: FunctionComponent<TaskAssignmentModalProps> = 
             }}
           >
             Assign
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </form>
-    </GoAModal>
+    </GoabModal>
   );
 };

@@ -1,14 +1,14 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoAInput,
-  GoAModal,
-  GoAFormItem,
-  GoATextArea,
-  GoACheckbox,
-  GoASpacer,
+  GoabButton,
+  GoabButtonGroup,
+  GoabInput,
+  GoabModal,
+  GoabFormItem,
+  GoabTextArea,
+  GoabCheckbox,
+  GoabSpacer,
 } from '@abgov/react-components';
 import { ConfigDefinition } from '@store/configuration/model';
 import { RootState } from '@store/index';
@@ -24,7 +24,11 @@ import {
 } from '@lib/validation/checkInput';
 import styled from 'styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
-
+import {
+  GoabTextAreaOnKeyPressDetail,
+  GoabTextAreaOnChangeDetail,
+  GoabInputOnChangeDetail,
+} from '@abgov/ui-components-common';
 interface AddEditConfigDefinitionProps {
   onSave: (definition: ConfigDefinition) => void;
   initialValue: ConfigDefinition;
@@ -102,13 +106,13 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
 
   return (
     <ModalOverwrite>
-      <GoAModal
+      <GoabModal
         testId="definition-form"
         open={open}
         heading={isEdit ? 'Edit definition' : 'Add definition'}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               testId="form-cancel"
               type="secondary"
               onClick={() => {
@@ -118,8 +122,8 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               }}
             >
               Cancel
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               type="primary"
               testId="form-save"
               disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
@@ -132,12 +136,12 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               }}
             >
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
-        <GoAFormItem error={errors?.['namespace']} label="Namespace">
-          <GoAInput
+        <GoabFormItem error={errors?.['namespace']} label="Namespace">
+          <GoabInput
             type="text"
             name="namespace"
             value={definition.namespace}
@@ -145,8 +149,8 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
             testId="form-namespace"
             aria-label="namespace"
             width="100%"
-            onChange={(key, value) => {
-              const updatedDefinition = { ...definition, namespace: value };
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              const updatedDefinition = { ...definition, namespace: detail.value };
               setDefinition(updatedDefinition);
               const updatedIdentifiers = Object.keys(configurations).map(
                 (key) => `${configurations[key]?.namespace}:${configurations[key]?.name}`
@@ -154,13 +158,13 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               const currentIdentifier = `${updatedDefinition.namespace}:${updatedDefinition.name}`;
               validators.remove('duplicated');
               validators['duplicated'].check(currentIdentifier, updatedIdentifiers);
-              validators['namespace'].check(value);
+              validators['namespace'].check(detail.value);
             }}
             onBlur={() => validators.checkAll({ namespace: definition.namespace })}
           />
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['name']} label="Name">
+          <GoabInput
             type="text"
             name="name"
             value={definition.name}
@@ -168,8 +172,8 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
             testId="form-name"
             aria-label="name"
             width="100%"
-            onChange={(key, value) => {
-              const updatedDefinition = { ...definition, name: value };
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              const updatedDefinition = { ...definition, name: detail.value };
               setDefinition(updatedDefinition);
               const updatedIdentifiers = Object.keys(configurations).map(
                 (key) => `${configurations[key]?.namespace}:${configurations[key]?.name}`
@@ -177,26 +181,26 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               const currentIdentifier = `${updatedDefinition.namespace}:${updatedDefinition.name}`;
               validators.remove('duplicated');
               validators['duplicated'].check(currentIdentifier, updatedIdentifiers);
-              validators['name'].check(value);
+              validators['name'].check(detail.value);
             }}
             onBlur={() => validators.checkAll({ name: definition.name })}
           />
-        </GoAFormItem>
+        </GoabFormItem>
 
-        <GoAFormItem error={errors?.['description']} label="Description">
-          <GoATextArea
+        <GoabFormItem error={errors?.['description']} label="Description">
+          <GoabTextArea
             name="description"
             value={definition.description}
             testId="form-description"
             aria-label="description"
             width="100%"
-            onKeyPress={(name, value, key) => {
+            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
               validators.remove('description');
-              validators['description'].check(value);
-              setDefinition({ ...definition, description: value });
+              validators['description'].check(detail.value);
+              setDefinition({ ...definition, description: detail.value });
             }}
             // eslint-disable-next-line
-            onChange={(name, value) => {}}
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
           />
           <HelpTextComponent
             length={definition?.description?.length || 0}
@@ -204,20 +208,20 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
             descErrMessage={descErrMessage}
             errorMsg={errors?.['description']}
           />
-        </GoAFormItem>
-        <GoASpacer vSpacing="xs"></GoASpacer>
-        <GoACheckbox
+        </GoabFormItem>
+        <GoabSpacer vSpacing="xs"></GoabSpacer>
+        <GoabCheckbox
           name="anonymousRead"
           key="anonymousRead"
           checked={!!definition?.anonymousRead}
-          onChange={(name, value) => {
+          onChange={() => {
             setDefinition({ ...definition, anonymousRead: !definition?.anonymousRead });
           }}
           testId={'anonymousRead'}
           ariaLabel="anonymous-read"
           text="Allow anonymous access"
         />
-      </GoAModal>
+      </GoabModal>
     </ModalOverwrite>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 import { RootState } from '@store/index';
 import { TenantLogout } from '@store/tenant/actions';
 import { clearInterval, setInterval } from 'worker-timers';
@@ -71,13 +71,13 @@ export const LogoutModal = (): JSX.Element => {
   }, [open, dispatch]);
 
   return (
-    <GoAModal
+    <GoabModal
       open={open}
       testId="tenant-logout-notice-modal"
       heading="Session expired"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             testId="session-continue-button"
             onClick={() => {
               dispatch(UpdateAccessToken());
@@ -86,8 +86,8 @@ export const LogoutModal = (): JSX.Element => {
             }}
           >
             Continue
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             testId="session-again-button"
             type="secondary"
             onClick={() => {
@@ -95,14 +95,14 @@ export const LogoutModal = (): JSX.Element => {
             }}
           >
             Logout
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <p>
         Your current login session will be expired in <b>{`${countdownTime}`}</b> seconds. Any unsaved changes will be
         lost.
       </p>
-    </GoAModal>
+    </GoabModal>
   );
 };

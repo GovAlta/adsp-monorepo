@@ -6,7 +6,7 @@ import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { Anchor, ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle } from './styled-components';
 import { getProperty } from './util/helpers';
 import { withAjvProps } from '../../util/layout';
-import { GoAGrid } from '@abgov/react-components';
+import { GoabGrid } from '@abgov/react-components';
 import { FormStepperComponentProps } from './types';
 import { GoAReviewRenderers } from '../../../index';
 
@@ -44,7 +44,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
                 </Anchor>
               )}
             </ReviewItemHeader>
-            <GoAGrid minChildWidth="100%">
+            <GoabGrid minChildWidth="100%">
               {category.elements
                 .filter((field) => {
                   // [TODO] we need to double check why we cannot hide the elements at the element level
@@ -93,7 +93,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
                     </div>
                   );
                 })}
-            </GoAGrid>
+            </GoabGrid>
           </ReviewItemSection>
         );
       })}

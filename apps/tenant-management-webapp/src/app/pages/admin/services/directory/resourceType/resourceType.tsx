@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { PageIndicator } from '@components/Indicator';
@@ -92,7 +92,7 @@ export const ResourceTypePage = (): JSX.Element => {
 
   return (
     <section>
-      <GoAButton
+      <GoabButton
         testId="add-resource-type"
         onClick={() => {
           setOpenAddResourceType(true);
@@ -100,7 +100,7 @@ export const ResourceTypePage = (): JSX.Element => {
         }}
       >
         Add type
-      </GoAButton>
+      </GoabButton>
       <br />
       <br />
       <PageIndicator />

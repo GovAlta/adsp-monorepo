@@ -159,7 +159,7 @@ describe('Object Array Renderer', () => {
     // Ensure delete modal is closed
     const closedDeleteModal = baseElement.querySelector("goa-modal[testId='object-array-modal']");
     expect(closedDeleteModal).toBeInTheDocument();
-    expect(closedDeleteModal!.getAttribute('open')).toBe('false');
+    expect(closedDeleteModal!.getAttribute('open')).toBeFalsy();
 
     // Open the delete Dialog
     const deleteBtn = baseElement.querySelector("goa-icon-button[icon='trash']");
@@ -209,7 +209,7 @@ describe('Object Array Renderer', () => {
     const closedDeleteModal = baseElement.querySelector("goa-modal[testId='object-array-modal']");
 
     expect(closedDeleteModal).toBeInTheDocument();
-    expect(closedDeleteModal!.getAttribute('open')).toBe('false');
+    expect(closedDeleteModal!.getAttribute('open')).toBeFalsy();
 
     // Ensure item still exists
     const item = baseElement.querySelector(`[data-testid="object-array-main-item-0"]`);
@@ -251,7 +251,7 @@ describe('Object Array Renderer', () => {
     // Ensure modal is closed
     const closedDeleteModal = baseElement.querySelector("goa-modal[testId='object-array-modal']");
     expect(closedDeleteModal).toBeInTheDocument();
-    expect(closedDeleteModal!.getAttribute('open')).toBe('false');
+    expect(closedDeleteModal!.getAttribute('open')).toBeFalsy();
 
     // Ensure item no longer exists
     const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input']");

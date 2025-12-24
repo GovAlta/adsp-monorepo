@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useLayoutEffect, useRef } from 'react';
-import { GoACheckbox, GoATable } from '@abgov/react-components';
+import { GoabCheckbox, GoabTable } from '@abgov/react-components';
 import styles from './RoleTable.module.scss';
 import { useSelector } from 'react-redux';
 import { AppState } from '../state';
@@ -96,7 +96,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
           </td>
           {checkedRoles.map((checkedRole, index) => (
             <td className="role" key={`${props.service}-${role}-checkbox-${index}`}>
-              <GoACheckbox
+              <GoabCheckbox
                 name={`${props.service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                 checked={checkedRole.selectedRoles.includes(compositeRole)}
                 testId={`${props.service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
@@ -115,7 +115,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
     <>
       <div className={styles.marginAdjustment}>{clientIdDisplay}</div>
       <div className="roles-scroll-pane" ref={scrollPaneRef}>
-        <GoATable width="100%">
+        <GoabTable width="100%">
           <thead>
             <tr>
               <th id={`${props.service}-roles-${clientIdDisplay}`} style={nameColumnStyle}>
@@ -129,7 +129,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
             </tr>
           </thead>
           <tbody>{tableBody}</tbody>
-        </GoATable>
+        </GoabTable>
       </div>
     </>
   );

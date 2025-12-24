@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoAButton, GoAButtonGroup, GoAModal, GoATextArea, GoAInput, GoAFormItem } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal, GoabTextArea, GoabInput, GoabFormItem } from '@abgov/react-components';
 import { CalendarItem } from '@store/calendar/models';
 import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
@@ -15,6 +15,11 @@ import { selectCalendarsByName } from '@store/calendar/selectors';
 import { TextGoASkeleton } from '@core-services/app-common';
 import { areObjectsEqual } from '@lib/objectUtil';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import {
+  GoabTextAreaOnChangeDetail,
+  GoabTextAreaOnKeyPressDetail,
+  GoabInputOnChangeDetail,
+} from '@abgov/ui-components-common';
 
 interface CalendarModalProps {
   calendarName: string | undefined;
@@ -126,30 +131,30 @@ export const CalendarModal = ({
   };
 
   return (
-    <GoAModal
+    <GoabModal
       testId="add-calendar-modal"
       open={open}
       heading={title}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type={tenantMode ? 'secondary' : 'primary'}
             testId="calendar-modal-cancel"
             onClick={handleCancelClick}
           >
             {tenantMode ? 'Cancel' : 'Close'}
-          </GoAButton>
+          </GoabButton>
           {tenantMode && (
-            <GoAButton
+            <GoabButton
               type="primary"
               testId="calendar-modal-save"
               disabled={validators.haveErrors() || areObjectsEqual(calendar, initialValue)}
               onClick={validationCheck}
             >
               Save
-            </GoAButton>
+            </GoabButton>
           )}
-        </GoAButtonGroup>
+        </GoabButtonGroup>
       }
     >
       <div
@@ -157,8 +162,8 @@ export const CalendarModal = ({
         className="roles-scroll-pane"
         style={{ overflowY: 'auto', maxHeight: '70vh', padding: '0 3px 0 3px' }}
       >
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
+        <GoabFormItem error={errors?.['name']} label="Name">
+          <GoabInput
             type="text"
             name="name"
             value={calendar?.displayName}
@@ -166,34 +171,34 @@ export const CalendarModal = ({
             aria-label="name"
             disabled={!isNew || !tenantMode}
             width="100%"
-            onChange={(name, value) => {
-              validateField('name', value);
-              const calendarId = toKebabName(value);
-              setCalendar({ ...calendar, name: calendarId, displayName: value });
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              validateField('name', detail.value);
+              const calendarId = toKebabName(detail.value);
+              setCalendar({ ...calendar, name: calendarId, displayName: detail.value });
             }}
             onBlur={() => validateField('name', calendar?.displayName || '')}
           />
-        </GoAFormItem>
+        </GoabFormItem>
         {tenantMode && (
-          <GoAFormItem label="Calendar ID">
+          <GoabFormItem label="Calendar ID">
             <IdField>{calendar?.name}</IdField>
-          </GoAFormItem>
+          </GoabFormItem>
         )}
         {tenantMode && (
-          <GoAFormItem error={errors?.['description']} label="Description">
-            <GoATextArea
+          <GoabFormItem error={errors?.['description']} label="Description">
+            <GoabTextArea
               name="description"
               value={calendar?.description}
               testId={`calendar-modal-description-input`}
               aria-label="description"
               width="100%"
-              onKeyPress={(name, value, key) => {
+              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
                 validators.remove('description');
-                validators['description'].check(value);
-                setCalendar({ ...calendar, description: value });
+                validators['description'].check(detail.value);
+                setCalendar({ ...calendar, description: detail.value });
               }}
               // eslint-disable-next-line
-              onChange={(name, value) => {}}
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
             />
             <HelpTextComponent
               length={calendar?.description?.length || 0}
@@ -201,7 +206,7 @@ export const CalendarModal = ({
               descErrMessage={descErrMessage}
               errorMsg={errors?.['description']}
             />
-          </GoAFormItem>
+          </GoabFormItem>
         )}
 
         {Array.isArray(roles) &&
@@ -210,6 +215,6 @@ export const CalendarModal = ({
 
         {Array.isArray(roles) && roles.length === 0 && <TextGoASkeleton />}
       </div>
-    </GoAModal>
+    </GoabModal>
   );
 };

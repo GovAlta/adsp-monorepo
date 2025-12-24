@@ -4,15 +4,15 @@ import { saveWebhook } from '@store/status/actions';
 import { Webhooks } from '@store/status/models';
 import { selectWebhookInStatus } from '@store/status/selectors';
 import {
-  GoADropdown,
-  GoADropdownItem,
-  GoAButton,
-  GoACheckbox,
-  GoAButtonGroup,
-  GoATextArea,
-  GoAInput,
-  GoAFormItem,
-  GoAModal,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabButton,
+  GoabCheckbox,
+  GoabButtonGroup,
+  GoabTextArea,
+  GoabInput,
+  GoabFormItem,
+  GoabModal,
 } from '@abgov/react-components';
 import { getEventDefinitions } from '@store/event/actions';
 import { useValidators } from '@lib/validation/useValidators';
@@ -31,6 +31,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { ResetModalState } from '@store/session/actions';
 import { PageIndicator } from '@components/Indicator';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import {
+  GoabTextAreaOnKeyPressDetail,
+  GoabInputOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+  GoabCheckboxOnChangeDetail,
+} from '@abgov/ui-components-common';
+
 export const WebhookFormModal = (): JSX.Element => {
   const dispatch = useDispatch();
   const selectedWebhook = useSelector(selectWebhookInStatus);
@@ -54,7 +61,7 @@ export const WebhookFormModal = (): JSX.Element => {
     /*
      There is no need to reset webhook when selectedWebhook is same as the previous selected.
     */
-    if (selectedWebhook !== undefined && selectedWebhook.id !== webhook?.id) {
+    if (selectedWebhook !== undefined && selectedWebhook?.id !== webhook?.id) {
       setWebhook(selectedWebhook);
     }
     setLoaded(true);
@@ -133,14 +140,14 @@ export const WebhookFormModal = (): JSX.Element => {
   ];
 
   return (
-    <GoAModal
+    <GoabModal
       open={selectedWebhook !== undefined}
       testId={isEdit ? 'edit-webhook' : 'add-webhook'}
       heading={isEdit ? 'Edit webhook' : 'Add webhook'}
       actions={
         loaded && (
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               type="secondary"
               testId="webhook-from-cancel-button"
               onClick={() => {
@@ -148,116 +155,115 @@ export const WebhookFormModal = (): JSX.Element => {
               }}
             >
               Cancel
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               testId="webhook-from-save-button"
               disabled={!isFormValid() || validators.haveErrors()}
               type="primary"
               onClick={save}
             >
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         )
       }
     >
       {loaded ? (
         <>
-          <GoAFormItem error={errors?.['name']} label="Name">
-            <GoAInput
+          <GoabFormItem error={errors?.['name']} label="Name">
+            <GoabInput
               type="text"
               name="name"
               width="100%"
               testId="webhook-name-input"
               value={webhook?.name}
-              onChange={(name, value) => {
-                validators['nameOnly'].check(value);
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                validators['nameOnly'].check(detail.value);
 
                 setWebhook({
                   ...webhook,
-                  name: value,
+                  name: detail.value,
                 });
               }}
               aria-label="name"
             />
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['url']} label="Url">
-            <GoAInput
+          </GoabFormItem>
+          <GoabFormItem error={errors?.['url']} label="Url">
+            <GoabInput
               name="url"
               type="url"
               width="100%"
               testId="webhook-url-input"
               value={webhook?.url}
-              onChange={(name, value) => {
+              onChange={(detail: GoabInputOnChangeDetail) => {
                 validators.remove('url');
-                validators['url'].check(value);
+                validators['url'].check(detail.value);
                 setWebhook({
                   ...webhook,
-                  url: value,
+                  url: detail.value,
                 });
               }}
               aria-label="description"
             />
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['waitInterval']} label="Wait Interval">
-            <GoAInput
+          </GoabFormItem>
+          <GoabFormItem error={errors?.['waitInterval']} label="Wait Interval">
+            <GoabInput
               name="interval"
               type="number"
               width="50%"
               testId="webhook-wait-interval-input"
               value={(webhook?.intervalMinutes || '').toString()}
-              onChange={(name, value) => {
-                validators['waitInterval'].check(parseInt(value));
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                validators['waitInterval'].check(parseInt(detail.value));
                 setWebhook({
                   ...webhook,
-                  intervalMinutes: parseInt(value),
+                  intervalMinutes: parseInt(detail.value),
                 });
               }}
               aria-label="description"
               trailingContent="min"
             />
-          </GoAFormItem>
+          </GoabFormItem>
 
-          <GoAFormItem label="Application">
-            <GoADropdown
+          <GoabFormItem label="Application">
+            <GoabDropdown
               name="targetId"
               value={webhook?.targetId}
-              onChange={(_n, value: string) =>
+              onChange={(detail: GoabDropdownOnChangeDetail) =>
                 setWebhook({
                   ...webhook,
-                  targetId: value,
+                  targetId: detail.value,
                 })
               }
               aria-label="select-webhook-dropdown"
-              relative={true}
               width="55ch"
               testId="webhook-application-dropdown"
             >
               {applications.map((application) => (
-                <GoADropdownItem
+                <GoabDropdownItem
                   name="targetId"
                   label={application.appKey}
                   value={application.appKey}
                   key={application.appKey}
                 />
               ))}
-            </GoADropdown>
-          </GoAFormItem>
-          <GoAFormItem label="Description">
-            <GoATextArea
+            </GoabDropdown>
+          </GoabFormItem>
+          <GoabFormItem label="Description">
+            <GoabTextArea
               name="description"
               value={webhook?.description}
               width="100%"
-              onKeyPress={(name, value, key) => {
+              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
                 validators.remove('description');
-                validators['description'].check(value);
+                validators['description'].check(detail.value);
                 setWebhook({
                   ...webhook,
-                  description: value,
+                  description: detail.value,
                 });
               }}
               // eslint-disable-next-line
-              onChange={(name, value) => {}}
+              onChange={() => {}}
               aria-label="description"
             />
             <HelpTextComponent
@@ -266,21 +272,21 @@ export const WebhookFormModal = (): JSX.Element => {
               descErrMessage={descErrMessage}
               errorMsg={errors?.['description']}
             />
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['events']} label="Events">
+          </GoabFormItem>
+          <GoabFormItem error={errors?.['events']} label="Events">
             {!orderedGroupNames && renderNoItem('event definition')}
             {['monitored-service-down', 'monitored-service-up'].map((name) => {
               return (
-                <GoACheckbox
+                <GoabCheckbox
                   name={name}
                   key={`${name}:${Math.random()}`}
                   testId="webhook-name"
                   checked={webhook?.eventTypes?.map((e) => e.id).includes(`status-service:${name}`)}
-                  onChange={(value: string) => {
+                  onChange={(detail: GoabCheckboxOnChangeDetail) => {
                     const eventTypes = webhook?.eventTypes?.map((e) => e.id);
                     const elementLocation = eventTypes?.indexOf(`status-service:${name}`);
                     if (elementLocation === -1) {
-                      eventTypes.push(`status-service:${value}`);
+                      eventTypes.push(`status-service:${detail.value}`);
                     } else {
                       eventTypes.splice(elementLocation, 1);
                     }
@@ -294,15 +300,15 @@ export const WebhookFormModal = (): JSX.Element => {
                   }}
                 >
                   {name}
-                </GoACheckbox>
+                </GoabCheckbox>
               );
             })}
-          </GoAFormItem>
+          </GoabFormItem>
         </>
       ) : (
         <PageIndicator />
       )}
-    </GoAModal>
+    </GoabModal>
   );
 };
 

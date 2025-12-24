@@ -1,9 +1,10 @@
 import styled from 'styled-components';
-import { GoAFormItem, GoAInput, GoADropdown, GoADropdownItem } from '@abgov/react-components';
+import { GoabFormItem, GoabInput, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { useState } from 'react';
 import { Visible } from '../../util';
+import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 export const PhoneGrid = styled.div`
   display: grid;
@@ -40,28 +41,28 @@ export const PhoneNumberWithTypeControl = (props: ControlProps): JSX.Element => 
   return (
     <Visible visible={visible}>
       <PhoneGrid>
-        <GoAFormItem label="Phone type" requirement={required ? 'required' : undefined}>
-          <GoADropdown
+        <GoabFormItem label="Phone type" requirement={required ? 'required' : undefined}>
+          <GoabDropdown
             name="type"
             value={formData.type || ''}
             disabled={!enabled}
-            onChange={(name, value) => updateFormData({ ...formData, type: value })}
+            onChange={(detail: GoabDropdownOnChangeDetail) => updateFormData({ ...formData, type: detail.value })}
           >
-            <GoADropdownItem value="Mobile"></GoADropdownItem>
-            <GoADropdownItem value="Landline"></GoADropdownItem>
-          </GoADropdown>
-        </GoAFormItem>
+            <GoabDropdownItem value="Mobile"></GoabDropdownItem>
+            <GoabDropdownItem value="Landline"></GoabDropdownItem>
+          </GoabDropdown>
+        </GoabFormItem>
 
-        <GoAFormItem label="Phone number" error={error} requirement={required ? 'required' : undefined}>
-          <GoAInput
+        <GoabFormItem label="Phone number" error={error} requirement={required ? 'required' : undefined}>
+          <GoabInput
             type="tel"
             name="number"
             placeholder="(000) 000-0000"
             value={formData.number || ''}
             disabled={!enabled}
-            onChange={(name, value) => updateFormData({ ...formData, number: value })}
+            onChange={(detail: GoabInputOnChangeDetail) => updateFormData({ ...formData, number: detail.value })}
           />
-        </GoAFormItem>
+        </GoabFormItem>
       </PhoneGrid>
     </Visible>
   );

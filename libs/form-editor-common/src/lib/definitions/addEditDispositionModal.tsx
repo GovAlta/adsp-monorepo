@@ -5,8 +5,10 @@ import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck 
 import { DispositionFormItem, DescriptionItem } from '../styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { GoATextArea, GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components';
+import { GoabTextArea, GoabInput, GoabModal, GoabButtonGroup, GoabFormItem, GoabButton } from '@abgov/react-components';
 import { Disposition } from '@store/form/model';
+import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+
 interface AddEditDispositionModalProps {
   open: boolean;
   isEdit: boolean;
@@ -49,14 +51,14 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
 
     .build();
   return (
-    <GoAModal
+    <GoabModal
       testId="add-disposition-model"
       open={open}
       heading={`${isEdit ? 'Edit' : 'Add'} disposition state`}
-      width="640px"
+      maxWidth="640px"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             testId={`disposition-state-cancel-${isEdit ? 'edit' : 'add'}`}
             type="secondary"
             onClick={() => {
@@ -65,8 +67,8 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="disposition-state-save"
             disabled={!template?.name || validators.haveErrors()}
@@ -86,53 +88,55 @@ export const AddEditDispositionModal: FunctionComponent<AddEditDispositionModalP
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <>
         <DispositionFormItem>
-          <GoAFormItem error={errors?.['name']} label="Name">
-            <GoAInput
+          <GoabFormItem error={errors?.['name']} label="Name">
+            <GoabInput
               type="text"
               name="disposition-name"
               value={template?.name}
               testId="disposition-name"
               aria-label="disposition-name"
               width="100%"
-              onChange={(name, value) => {
+              onChange={(detail: GoabInputOnChangeDetail) => {
                 const validations = {
-                  name: value,
+                  name: detail.value,
                 };
 
                 validators.checkAll(validations);
                 validators.remove('name');
 
                 setTemplate(
-                  isEdit ? { ...template, name: value } : { ...template, name: value, id: toKebabName(value) }
+                  isEdit
+                    ? { ...template, name: detail.value }
+                    : { ...template, name: detail.value, id: toKebabName(detail.value) }
                 );
               }}
             />
-          </GoAFormItem>
+          </GoabFormItem>
         </DispositionFormItem>
 
-        <GoAFormItem label="Description">
+        <GoabFormItem label="Description">
           <DescriptionItem>
-            <GoATextArea
+            <GoabTextArea
               name="disposition-description"
               value={template?.description}
               width="100%"
               testId="disposition-description"
               aria-label="disposition-description"
-              onKeyPress={(name, value, key) => {
-                setTemplate({ ...template, description: value });
+              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+                setTemplate({ ...template, description: detail.value });
               }}
               // eslint-disable-next-line
-              onChange={(name, value) => {}}
+              onChange={() => {}}
             />
           </DescriptionItem>
-        </GoAFormItem>
+        </GoabFormItem>
       </>
-    </GoAModal>
+    </GoabModal>
   );
 };

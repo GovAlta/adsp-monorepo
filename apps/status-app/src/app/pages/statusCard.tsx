@@ -1,7 +1,7 @@
 import React from 'react';
 
 import styled from 'styled-components';
-import { GoACallout } from '@abgov/react-components';
+import { GoabCallout } from '@abgov/react-components';
 import { Notice, sortNotices } from '@store/status/models';
 import { LocalTime } from '@components/Date';
 
@@ -90,13 +90,13 @@ export function ServiceStatus(props: ServiceOptions): JSX.Element {
           <div>{description}</div>
           {sortedNotice.map((notice) => {
             return (
-              <GoACallout heading="Notice" type="important" key={`{notice-${notice.id}}`}>
+              <GoabCallout heading="Notice" type="important" key={`{notice-${notice.id}}`}>
                 <div data-testid="service-notice-message">{notice.message}</div>
                 <br />
                 <div data-testid="service-notice-date-range">
                   From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
                 </div>
-              </GoACallout>
+              </GoabCallout>
             );
           })}
         </div>

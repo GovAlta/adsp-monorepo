@@ -4,7 +4,7 @@ import { RootState } from '@store/index';
 import { getTaskQueues, getTasks, UpdateTaskQueue } from '@store/task/action';
 import { TaskDefinition, defaultTaskQueue } from '@store/task/model';
 import { renderNoItem } from '@components/NoItem';
-import { GoAButton, GoACircularProgress } from '@abgov/react-components';
+import { GoabButton, GoabCircularProgress } from '@abgov/react-components';
 import { QueueListTable } from './queueTable';
 import { QueueModal } from './queueModal';
 import { ProgressWrapper } from '../styled-components';
@@ -65,7 +65,7 @@ export const QueuesList = ({ openAddTask }: AddEditQueueProps): JSX.Element => {
   return (
     <section>
       <div>
-        <GoAButton
+        <GoabButton
           testId="add-queue-btn"
           onClick={() => {
             setSelectedQueue(defaultTaskQueue);
@@ -74,11 +74,11 @@ export const QueuesList = ({ openAddTask }: AddEditQueueProps): JSX.Element => {
           }}
         >
           Add queue
-        </GoAButton>
+        </GoabButton>
       </div>
       {indicator.show && Object.keys(taskQueues).length === 0 && !showDeleteConfirmation && (
         <ProgressWrapper>
-          <GoACircularProgress visible={indicator.show} size="small" />
+          <GoabCircularProgress visible={indicator.show} size="small" />
         </ProgressWrapper>
       )}
       {!indicator.show && Object.keys(taskQueues).length === 0 && renderNoItem('queues')}

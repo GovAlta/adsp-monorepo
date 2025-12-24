@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { GoAInputMultiLineTextProps, MultiLineText } from './InputMultiLineTextControl';
+import { GoabInputMultiLineTextProps, MultiLineText } from './InputMultiLineTextControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 
 describe('Input Text Control tests', () => {
@@ -16,7 +16,7 @@ describe('Input Text Control tests', () => {
     },
   };
 
-  const staticProps: GoAInputMultiLineTextProps & ControlProps = {
+  const staticProps: GoabInputMultiLineTextProps & ControlProps = {
     uischema: textBoxUiSchema,
     schema: {},
     rootSchema: {},

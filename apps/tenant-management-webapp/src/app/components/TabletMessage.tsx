@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import styled from 'styled-components';
 
 interface TabletMessageProps {
@@ -12,7 +12,7 @@ export const TabletMessage = ({ goBack }: TabletMessageProps) => {
       <h1>This editor requires your device to be at least 1440 pixels wide and 630 pixels high</h1>
       <h3>Please rotate your device</h3>
       <h3>For the best experience, please use a Desktop</h3>
-      <GoAButton
+      <GoabButton
         onClick={() => {
           goBack();
         }}
@@ -20,7 +20,7 @@ export const TabletMessage = ({ goBack }: TabletMessageProps) => {
         type="tertiary"
       >
         Go back
-      </GoAButton>
+      </GoabButton>
     </TabletMessageContainer>
   );
 };

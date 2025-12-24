@@ -6,12 +6,12 @@ import { getCommentTopicTypes, fetchTopicsRequest, addTopicRequest, clearComment
 
 import { renderNoItem } from '@components/NoItem';
 import {
-  GoAButton,
-  GoACircularProgress,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoASkeleton,
+  GoabButton,
+  GoabCircularProgress,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabSkeleton,
 } from '@abgov/react-components';
 import { TopicModal } from './topicModal';
 import { ButtonPadding, ProgressWrapper, Topics } from '../styled-components';
@@ -19,7 +19,7 @@ import { TopicListTable } from './topicsTable';
 import { DeleteConfirmationsView } from './deleteConfirmationsView';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { TopicItem, defaultTopic } from '@store/comment/model';
-
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 interface VisibleProps {
   visible: boolean;
 }
@@ -106,26 +106,25 @@ export const TopicsList = (): JSX.Element => {
         Object.keys(coreTopicTypes).length === 0 &&
         renderNoItem('comments')}
       {(Object.keys(topicTypes).length > 0 || Object.keys(coreTopicTypes).length > 0) && (
-        <GoAFormItem label="Select a topic type">
-          {indicator.show && Object.keys(topicTypes).length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}
-          <GoADropdown
+        <GoabFormItem label="Select a topic type">
+          {indicator.show && Object.keys(topicTypes).length === 0 && <GoabSkeleton type="text" key={1}></GoabSkeleton>}
+          <GoabDropdown
             name="TopicTypes"
             value={selectedType}
-            onChange={(name: string, selectedType: string) => {
-              const selectedTopicType = topicTypes[selectedType] ? true : false;
+            onChange={(detail: GoabDropdownOnChangeDetail) => {
+              const selectedTopicType = topicTypes[detail.value] ? true : false;
               setIsSelectedCoreType(selectedTopicType);
               dispatch(clearComments());
               setSelectedType(selectedType);
             }}
             aria-label="select-comment-topic-type-dropdown"
             width="100%"
-            relative={true}
             testId="comment-select-topic-type-dropdown"
           >
             {Object.keys(topicTypes)
               .sort(([a], [b]) => a.localeCompare(b))
               .map((item) => (
-                <GoADropdownItem
+                <GoabDropdownItem
                   name="TopicTypes"
                   key={item}
                   label={item}
@@ -134,7 +133,7 @@ export const TopicsList = (): JSX.Element => {
                 />
               ))}
             {Object.keys(coreTopicTypes).map((item) => (
-              <GoADropdownItem
+              <GoabDropdownItem
                 name="CoreTopicTypes"
                 key={item}
                 label={item}
@@ -142,13 +141,13 @@ export const TopicsList = (): JSX.Element => {
                 testId={`${item}-get-comment-options`}
               />
             ))}
-          </GoADropdown>
-        </GoAFormItem>
+          </GoabDropdown>
+        </GoabFormItem>
       )}
       {selectedType && (
         <div>
           <ButtonPadding>
-            <GoAButton
+            <GoabButton
               testId="add-topic-btn"
               onClick={() => {
                 setModalType('new');
@@ -156,13 +155,13 @@ export const TopicsList = (): JSX.Element => {
               }}
             >
               Add topic
-            </GoAButton>
+            </GoabButton>
           </ButtonPadding>
         </div>
       )}
       {!next && indicator.show && (
         <ProgressWrapper>
-          <GoACircularProgress visible={indicator.show} size="small" />
+          <GoabCircularProgress visible={indicator.show} size="small" />
         </ProgressWrapper>
       )}
       {!indicator.show && selectedType !== '' && topics && Object.keys(topics).length === 0 && renderNoItem('topics')}
@@ -189,9 +188,9 @@ export const TopicsList = (): JSX.Element => {
           )}
           {next && (
             <LoadMoreWrapper>
-              <GoAButton testId="comment-load-more-btn" key="comment-load-more-btn" type="tertiary" onClick={onNext}>
+              <GoabButton testId="comment-load-more-btn" key="comment-load-more-btn" type="tertiary" onClick={onNext}>
                 Load more
-              </GoAButton>
+              </GoabButton>
             </LoadMoreWrapper>
           )}
         </Visible>

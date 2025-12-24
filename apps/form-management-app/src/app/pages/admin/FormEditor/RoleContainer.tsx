@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import styles from './Editor.module.scss';
 import { JsonSchema } from '@jsonforms/core';
 
-import { GoAButtonGroup, GoACheckbox } from '@abgov/react-components';
+import { GoabButtonGroup, GoabCheckbox } from '@abgov/react-components';
 import { FormDefinition } from '../../../state';
 
 import { ClientRoleTable } from '../../../components/RoleTable';
@@ -132,7 +132,6 @@ export const RoleContainer: React.FC<RoleContainerProps> = ({
     [definition, setDefinition]
   );
 
-
   useEffect(() => {
     if (definition && roles.length <= 1) {
       fetchKeycloakServiceRoles();
@@ -152,14 +151,14 @@ export const RoleContainer: React.FC<RoleContainerProps> = ({
   return (
     <div className={styles.BorderBottom}>
       <div className={styles.addToggleButtonPadding}>
-        <GoAButtonGroup alignment="start">
-          <GoACheckbox
+        <GoabButtonGroup alignment="start">
+          <GoabCheckbox
             name="showSelectedRoles"
             text="Show selected roles"
             checked={showSelectedRoles}
             onChange={() => setShowSelectedRoles((prev) => !prev)}
           />
-        </GoAButtonGroup>
+        </GoabButtonGroup>
       </div>
       <div className={styles.rolesTabBody} data-testid="roles-editor-body">
         <div className={styles.scrollPane}>

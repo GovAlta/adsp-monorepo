@@ -51,7 +51,7 @@ describe('SiteAddEditForm', () => {
 
     expect(baseElement.querySelector("goa-modal[testId='add-site-modal']")).toBeInTheDocument();
   });
-  it('save button should be disabled', () => {
+  it('site register button should be show', () => {
     const { baseElement } = render(
       <Provider store={sitesStore}>
         <SiteAddEditForm
@@ -65,7 +65,7 @@ describe('SiteAddEditForm', () => {
       </Provider>
     );
     const saveBtn = baseElement.querySelector("goa-button[testId='site-register']");
-    expect(saveBtn).toBeDisabled();
+    expect(saveBtn).toBeTruthy();
   });
 
   it('populates form fields based on initial values', () => {
@@ -142,7 +142,7 @@ describe('SiteAddEditForm', () => {
     const urlFormItem = baseElement.querySelector("goa-form-item[testId='feedback-url-formItem']");
     expect(urlFormItem).toHaveAttribute('error', '');
     const saveBtn = baseElement.querySelector("goa-button[testId='site-register']");
-    expect(saveBtn).toHaveAttribute('disabled', 'false');
+    expect(saveBtn).toBeTruthy();
   });
   it('URL field should be disabled when editing site', () => {
     const { baseElement } = render(

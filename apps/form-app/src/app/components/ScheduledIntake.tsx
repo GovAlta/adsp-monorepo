@@ -1,4 +1,4 @@
-import { GoACallout } from '@abgov/react-components';
+import { GoabCallout } from '@abgov/react-components';
 import { FunctionComponent, ReactNode, useEffect } from 'react';
 import { FormDefinition } from '../state';
 import { FormNotAvailable } from './FormNoAvailable';
@@ -37,9 +37,9 @@ export const ScheduledIntake: FunctionComponent<ScheduledIntakeProps> = ({ defin
 
   if (definition.intake?.isUpcoming) {
     return (
-      <GoACallout mt="2xl" ml="2xl" mr="2xl" mb="2xl" type="information" heading="Upcoming intake">
+      <GoabCallout mt="2xl" ml="2xl" mr="2xl" mb="2xl" type="information" heading="Upcoming intake">
         This form will be available for applications on {definition.intake.start.toFormat('LLLL d, yyyy')}.
-      </GoACallout>
+      </GoabCallout>
     );
   }
 

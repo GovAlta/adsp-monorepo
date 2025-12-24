@@ -1187,7 +1187,8 @@ describe('AddressLookUpControl - More tests', () => {
       const { baseElement } = renderComponent();
 
       const input = baseElement.querySelector("goa-input[testId='address-form-address1']");
-      expect(input?.getAttribute('readonly')).toBe('false');
+
+      expect(input?.getAttribute('readonly')).toBeFalsy();
     });
   });
 

@@ -1,7 +1,8 @@
 import React, { FunctionComponent, useState } from 'react';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
 
-import { GoAButton, GoAButtonGroup, GoAInput, GoAGrid, GoAFormItem } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabInput, GoabGrid, GoabFormItem } from '@abgov/react-components';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface EventSearchFormProps {
   onSearch?: (searchCriteria: SubscriberSearchCriteria) => void;
@@ -27,43 +28,43 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
 
   return (
     <div>
-      <GoAGrid minChildWidth="26ch" gap="m">
-        <GoAFormItem label="Search subscriber address as">
-          <GoAInput
+      <GoabGrid minChildWidth="26ch" gap="m">
+        <GoabFormItem label="Search subscriber address as">
+          <GoabInput
             name="name"
             testId="subscriber-name-input"
             id="name"
             width="100%"
             value={criteria?.name}
-            onChange={onChangeFn}
+            onChange={(detail: GoabInputOnChangeDetail) => onChangeFn}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Search subscriber email">
-          <GoAInput
+        </GoabFormItem>
+        <GoabFormItem label="Search subscriber email">
+          <GoabInput
             type="email"
             testId="subscriber-email-input"
             name="email"
             width="100%"
             id="email"
             value={criteria?.email}
-            onChange={onChangeFn}
+            onChange={(detail: GoabInputOnChangeDetail) => onChangeFn}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Search subscriber phone">
-          <GoAInput
+        </GoabFormItem>
+        <GoabFormItem label="Search subscriber phone">
+          <GoabInput
             type="tel"
             name="sms"
             testId="subscriber-phone-input"
             id="sms"
             width="100%"
             value={criteria?.sms}
-            onChange={onChangeFn}
+            onChange={(detail: GoabInputOnChangeDetail) => onChangeFn}
           />
-        </GoAFormItem>
-      </GoAGrid>
+        </GoabFormItem>
+      </GoabGrid>
 
-      <GoAButtonGroup alignment="end">
-        <GoAButton
+      <GoabButtonGroup alignment="end">
+        <GoabButton
           type="secondary"
           testId="subscriber-search-reset-button"
           onClick={() => {
@@ -71,8 +72,8 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
           }}
         >
           Reset
-        </GoAButton>
-        <GoAButton
+        </GoabButton>
+        <GoabButton
           testId="subscriber-search-search-button"
           onClick={() => {
             onSearch(criteria);
@@ -80,8 +81,8 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
           }}
         >
           Search
-        </GoAButton>
-      </GoAButtonGroup>
+        </GoabButton>
+      </GoabButtonGroup>
     </div>
   );
 };

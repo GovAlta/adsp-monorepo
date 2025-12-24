@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 interface deleteModalProps {
   title: string;
   content?: string | JSX.Element;
@@ -10,23 +10,23 @@ interface deleteModalProps {
 
 export const DeleteFileModal = ({ isOpen, title, content, onDelete, onCancel }: deleteModalProps) => {
   return (
-    <GoAModal
+    <GoabModal
       testId="delete-confirmation"
       open={isOpen}
       heading={title}
-      width="640px"
+      maxWidth="640px"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton type="secondary" testId="delete-cancel" onClick={onCancel}>
+        <GoabButtonGroup alignment="end">
+          <GoabButton type="secondary" testId="delete-cancel" onClick={onCancel}>
             Cancel
-          </GoAButton>
-          <GoAButton type="primary" variant="destructive" testId="delete-confirm" onClick={onDelete}>
+          </GoabButton>
+          <GoabButton type="primary" variant="destructive" testId="delete-confirm" onClick={onDelete}>
             Delete
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       {content}
-    </GoAModal>
+    </GoabModal>
   );
 };

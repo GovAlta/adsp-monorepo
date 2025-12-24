@@ -1,4 +1,4 @@
-import { GoAAppHeader, GoAMicrositeHeader } from '@abgov/react-components';
+import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { Band, Footer } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
@@ -17,8 +17,8 @@ export const Landing: FunctionComponent = () => {
   useFeedbackLinkHandler();
   return (
     <React.Fragment>
-      <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
-      <GoAAppHeader url="/" heading="Alberta Digital Service Platform - Form management" />
+      <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
+      <GoabAppHeader url="/" heading="Alberta Digital Service Platform - Form management" />
       <Band title="Form management"></Band>
       <Main></Main>
       <Footer logoSrc={GoALogo} />

@@ -3,7 +3,7 @@ import { Subscriber } from '@store/subscription/models';
 import { phoneWrapper } from '@lib/wrappers';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
-import { GoABadge } from '@abgov/react-components';
+import { GoabBadge } from '@abgov/react-components';
 import { RowFlex } from './styled-components';
 import { getSubscriberSubscriptions } from './apis';
 import { EntryDetail } from '../../styled-components';
@@ -44,13 +44,13 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
         <td>
           <div style={{ display: 'flex' }}>
             {email && (
-              <GoABadgeWrapper>
+              <GoabBadgeWrapper>
                 {emailVerified ? (
-                  <GoABadge key="email-verified" type="success" content="Verified" icon={false} />
+                  <GoabBadge key="email-verified" type="success" content="Verified" icon={false} />
                 ) : (
-                  <GoABadge key="email-not-verified" type="important" content="Not verified" icon={false} />
+                  <GoabBadge key="email-not-verified" type="important" content="Not verified" icon={false} />
                 )}
-              </GoABadgeWrapper>
+              </GoabBadgeWrapper>
             )}
             <div>{characterLimit(email, 30)}</div>
           </div>
@@ -59,13 +59,13 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
           <td className="no-wrap">
             <div style={{ display: 'flex' }}>
               {sms && (
-                <GoABadgeWrapper>
+                <GoabBadgeWrapper>
                   {smsVerified ? (
-                    <GoABadge key="sms-verified" type="success" content="Verified" icon={false} />
+                    <GoabBadge key="sms-verified" type="success" content="Verified" icon={false} />
                   ) : (
-                    <GoABadge key="sms-not-verified" type="important" content="Not verified" icon={false} />
+                    <GoabBadge key="sms-not-verified" type="important" content="Not verified" icon={false} />
                   )}
-                </GoABadgeWrapper>
+                </GoabBadgeWrapper>
               )}
               <div>{phoneWrapper(sms)}</div>
             </div>
@@ -145,7 +145,7 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
   );
 };
 
-const GoABadgeWrapper = styled.div`
+const GoabBadgeWrapper = styled.div`
   margin-right: var(--goa-space-s);
   text-wrap: nowrap;
 `;

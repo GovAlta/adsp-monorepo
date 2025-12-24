@@ -1,6 +1,6 @@
 import { GoARenderers, GoACells, JsonFormRegisterProvider } from '@abgov/jsonforms-components';
 import styles from './Editor.module.scss';
-import { GoACallout } from '@abgov/react-components';
+import { GoabCallout } from '@abgov/react-components';
 import { ajv } from '../../../utils/checkInput';
 import { JsonForms } from '@jsonforms/react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -37,9 +37,9 @@ export const JSONFormPreviewer = ({
       {/* // This is a blank spacer div since web components can be problematic to apply styles to. */}
       <div className={styles['form-preview-spacer']} />
       {error && (
-        <GoACallout type="important" size="medium" testId="form-preview-error-callout" heading={error}>
+        <GoabCallout type="important" size="medium" testId="form-preview-error-callout" heading={error}>
           You will see the last valid preview until the schema errors are fixed.
-        </GoACallout>
+        </GoabCallout>
       )}
       <JsonFormRegisterProvider
         defaultRegisters={{ registerData: registerData, dataList: dataList, nonAnonymous: nonAnonymous }}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Notice } from '@store/notice/models';
 import styled from 'styled-components';
-import { GoABadge } from '@abgov/react-components';
+import { GoabBadge } from '@abgov/react-components';
 import { DraftDropdownMenu, PublishedDropdownMenu } from './noticeCardMenu';
 import { IconContext } from '@components/icons/IconContext';
 import { useSelector } from 'react-redux';
@@ -81,7 +81,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
       <HeaderContainer>
         <IconContext>
           {props.mode === 'draft' && (
-            <GoABadge
+            <GoabBadge
               key={`${notice.id}-badge-draft`}
               data-testid="notice-card-mode"
               content={'Draft'}
@@ -91,7 +91,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
             />
           )}
           {props.mode === 'published' && (
-            <GoABadge
+            <GoabBadge
               key={`${notice.id}-badge-published`}
               content={'Published'}
               data-testid="notice-card-mode"
@@ -101,7 +101,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
             />
           )}
           {props.mode === 'archived' && (
-            <GoABadge
+            <GoabBadge
               key={`${notice.id}-badge-archived`}
               content={'Archived'}
               data-testid="notice-card-mode"
@@ -122,7 +122,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
           )}
           {props.isOrphaned && (
             <OrphanedBadge>
-              <GoABadge
+              <GoabBadge
                 key={`${notice.id}-orphaned`}
                 content={'Orphaned'}
                 data-testid="notice-card-orphaned"

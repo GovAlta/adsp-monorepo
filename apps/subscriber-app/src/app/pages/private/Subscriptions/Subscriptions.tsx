@@ -4,7 +4,7 @@ import { Container, TextGoASkeleton } from '@core-services/app-common';
 import DataTable from '@components/DataTable';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
-import { GoAButton, GoACallout, GoAModal, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabCallout, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 import { FetchContactInfoService } from '@store/notification/actions';
 
 import SubscriptionsList from '@components/SubscriptionsList';
@@ -113,13 +113,13 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
 
   const unSubscribeModal = () => {
     return (
-      <GoAModal open={true} key={1} testId="unsubscribe-modal" heading="Are you sure you want unsubscribe?">
+      <GoabModal open={true} key={1} testId="unsubscribe-modal" heading="Are you sure you want unsubscribe?">
         <GoAModelTextWrapper data-testId="unsubscribe-modal-content">
           If you decide to unsubscribe from “{selectedUnsubscribeSub.type.name}” you won’t receive any updates from the
           service in the future.{' '}
         </GoAModelTextWrapper>
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="unsubscribe-modal-cancel-button"
             onClick={() => {
@@ -127,8 +127,8 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="unsubscribe-modal-okay-button"
             onClick={() => {
@@ -142,9 +142,9 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
             }}
           >
             Unsubscribe
-          </GoAButton>
-        </GoAButtonGroup>
-      </GoAModal>
+          </GoabButton>
+        </GoabButtonGroup>
+      </GoabModal>
     );
   };
 
@@ -165,7 +165,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
           </ContactInformationWrapper>
           {!hasSubscriberId ? (
             <NoSubscriberCallout>
-              <GoACallout type="important" heading="You have no subscriptions" />
+              <GoabCallout type="important" heading="You have no subscriptions" />
             </NoSubscriberCallout>
           ) : (
             <>
@@ -187,7 +187,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
                     ) : indicator?.show || subscriber === undefined ? (
                       <tr>
                         <td colSpan={4}>
-                          <TextGoASkeleton lineCount={5}></TextGoASkeleton>
+                          <TextGoASkeleton lineCount={5} />
                         </td>
                       </tr>
                     ) : (
@@ -199,17 +199,17 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
                 </DataTable>
 
                 {subscriber?.subscriptions?.length <= 0 ? (
-                  <GoACallout type="important" heading="You have no subscriptions" />
+                  <GoabCallout type="important" heading="You have no subscriptions" />
                 ) : (
                   ''
                 )}
               </SubscriptionListContainer>
 
               {indicator?.show ? (
-                <TextGoASkeleton lineCount={5}></TextGoASkeleton>
+                <TextGoASkeleton lineCount={5} />
               ) : (
                 <CalloutWrapper id="contactSupport">
-                  <GoACallout heading="Need help? Contact your service admin" type="information">
+                  <GoabCallout heading="Need help? Contact your service admin" type="information">
                     <div>{contact?.supportInstructions || ''}</div>
                     <div>
                       {contact?.contactEmail && (
@@ -223,7 +223,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
                     </div>
                     {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
                     <div data-testid="service-notice-date-range"></div>
-                  </GoACallout>
+                  </GoabCallout>
                 </CalloutWrapper>
               )}
             </>

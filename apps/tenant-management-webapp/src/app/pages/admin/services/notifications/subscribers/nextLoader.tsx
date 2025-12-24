@@ -1,4 +1,4 @@
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import React, { FunctionComponent } from 'react';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
 import { RootState } from '@store/index';
@@ -22,7 +22,7 @@ export const NextLoader: FunctionComponent<EventSearchNextProps> = ({ onSearch, 
   if (next) {
     return (
       <LoadMoreWrapper>
-        <GoAButton
+        <GoabButton
           testId="next-loader"
           type="tertiary"
           onClick={() => {
@@ -38,7 +38,7 @@ export const NextLoader: FunctionComponent<EventSearchNextProps> = ({ onSearch, 
           }}
         >
           Load more
-        </GoAButton>
+        </GoabButton>
       </LoadMoreWrapper>
     );
   } else {

@@ -1,4 +1,4 @@
-import { GoAAppHeader, GoAMicrositeHeader } from '@abgov/react-components';
+import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { Band, Container, Footer, Grid, GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import GoALogo from '../../assets/goa-logo.svg';
@@ -7,8 +7,8 @@ export const Landing: FunctionComponent = () => {
   useFeedbackLinkHandler();
   return (
     <React.Fragment>
-      <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
-      <GoAAppHeader url="/" heading="Alberta Digital Service Platform - Task management" />
+      <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
+      <GoabAppHeader url="/" heading="Alberta Digital Service Platform - Task management" />
       <Band title="Task management">Work on tasks in queues.</Band>
       <main>
         <section>

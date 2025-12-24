@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import type { EventDefinition } from '@store/event/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal, GoATextArea } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabInput, GoabFormItem, GoabModal, GoabTextArea } from '@abgov/react-components';
 import {
   wordCheck,
   isNotEmptyCheck,
@@ -16,6 +16,11 @@ import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import styled from 'styled-components';
+import {
+  GoabTextAreaOnKeyPressDetail,
+  GoabTextAreaOnChangeDetail,
+  GoabInputOnChangeDetail,
+} from '@abgov/ui-components-common';
 
 interface EventDefinitionFormProps {
   initialValue?: EventDefinition;
@@ -70,13 +75,13 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
 
   return (
     <ModalOverwrite>
-      <GoAModal
+      <GoabModal
         testId="definition-form"
         open={open}
         heading={isEdit ? 'Edit definition' : 'Add definition'}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               testId="form-cancel"
               type="secondary"
               onClick={() => {
@@ -85,8 +90,8 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               }}
             >
               Cancel
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               disabled={!definition.namespace || !definition.name || validators.haveErrors()}
               type="primary"
               testId="form-save"
@@ -114,12 +119,12 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               }}
             >
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
-        <GoAFormItem error={errors?.['namespace']} label="Namespace">
-          <GoAInput
+        <GoabFormItem error={errors?.['namespace']} label="Namespace">
+          <GoabInput
             type="text"
             name="namespace"
             value={definition.namespace}
@@ -127,15 +132,15 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
             width="100%"
             testId="form-namespace"
             aria-label="nameSpace"
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               validators.remove('namespace');
-              validators['namespace'].check(value);
-              setDefinition({ ...definition, namespace: value });
+              validators['namespace'].check(detail.value);
+              setDefinition({ ...definition, namespace: detail.value });
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['name']} label="Name">
+          <GoabInput
             type="text"
             name="name"
             width="100%"
@@ -143,27 +148,27 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
             disabled={isEdit}
             testId="form-name"
             aria-label="name"
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               validators.remove('name');
-              validators['name'].check(value);
-              setDefinition({ ...definition, name: value });
+              validators['name'].check(detail.value);
+              setDefinition({ ...definition, name: detail.value });
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['description']} label="Description">
-          <GoATextArea
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['description']} label="Description">
+          <GoabTextArea
             name="description"
             testId="form-description"
             value={definition.description}
             aria-label="description"
             width="100%"
-            onKeyPress={(name, value, key) => {
+            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
               validators.remove('description');
-              validators['description'].check(value);
-              setDefinition({ ...definition, description: value });
+              validators['description'].check(detail.value);
+              setDefinition({ ...definition, description: detail.value });
             }}
             // eslint-disable-next-line
-            onChange={(name, value) => {}}
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
           />
           <HelpTextComponent
             length={definition?.description?.length || 0}
@@ -171,8 +176,8 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
             descErrMessage={descErrMessage}
             errorMsg={errors?.['description']}
           />
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['payloadSchema']} label="Payload schema">
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['payloadSchema']} label="Payload schema">
           <Editor
             data-testid="form-schema"
             height={200}
@@ -193,8 +198,8 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               showFoldingControls: 'always',
             }}
           />
-        </GoAFormItem>
-      </GoAModal>
+        </GoabFormItem>
+      </GoabModal>
     </ModalOverwrite>
   );
 };

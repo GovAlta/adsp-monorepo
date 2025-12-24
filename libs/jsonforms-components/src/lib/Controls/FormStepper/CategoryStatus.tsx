@@ -1,4 +1,4 @@
-import { GoABadge } from '@abgov/react-components';
+import { GoabBadge } from '@abgov/react-components';
 import { CategoryState } from './context';
 
 export enum PageStatus {
@@ -20,7 +20,7 @@ export const getCategoryStatusBadge = (category: CategoryState): JSX.Element => 
   const badgeType = status === PageStatus.Complete ? 'success' : 'information';
   return (
     // <div style={{ paddingTop: '5px' }}>
-    <GoABadge type={badgeType} content={status} ariaLabel={status} icon={false} />
+    <GoabBadge type={badgeType} content={status} ariaLabel={status} icon={false} />
     // </div>
   );
 };

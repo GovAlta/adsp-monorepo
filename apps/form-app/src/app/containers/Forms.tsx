@@ -1,11 +1,11 @@
 import {
-  GoABadge,
-  GoABlock,
-  GoAButton,
-  GoAButtonGroup,
-  GoAContainer,
-  GoADivider,
-  GoASkeleton,
+  GoabBadge,
+  GoabBlock,
+  GoabButton,
+  GoabButtonGroup,
+  GoabContainer,
+  GoabDivider,
+  GoabSkeleton,
 } from '@abgov/react-components';
 import { Container } from '@core-services/app-common';
 import { useDispatch, useSelector } from 'react-redux';
@@ -80,11 +80,11 @@ const FormsLayout = styled.div`
 const FormStatusBadge: FunctionComponent<{ status: FormStatus }> = ({ status }) => {
   switch (status) {
     case FormStatus.draft:
-      return <GoABadge mt="xs" type="information" content={status} icon={false} />;
+      return <GoabBadge mt="xs" type="information" content={status} icon={false} />;
     case FormStatus.submitted:
-      return <GoABadge mt="xs" type="success" content={status} icon={false} />;
+      return <GoabBadge mt="xs" type="success" content={status} icon={false} />;
     default:
-      return <GoABadge mt="xs" type="light" content={status} icon={false} />;
+      return <GoabBadge mt="xs" type="light" content={status} icon={false} />;
   }
 };
 
@@ -120,9 +120,9 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
                 application or view a submitted one.
               </p>
             </div>
-            <GoAButtonGroup alignment="end">
+            <GoabButtonGroup alignment="end">
               {definition && definition.oneFormPerApplicant === false && canCreateDraft && (
-                <GoAButton
+                <GoabButton
                   mr="m"
                   disabled={busy.creating}
                   type="tertiary"
@@ -135,52 +135,52 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
                   }}
                 >
                   New application
-                </GoAButton>
+                </GoabButton>
               )}
-            </GoAButtonGroup>
+            </GoabButtonGroup>
           </PageTitleDiv>
           {forms
             .filter((form) => !!form.definition)
             .map((form) => (
-              <GoAContainer key={form.id} mb="m">
+              <GoabContainer key={form.id} mb="m">
                 <FormHeaderDiv>
                   <div>
                     {form.definition.name}
                     <FormDescriptionParagraph>{form.definition.description}</FormDescriptionParagraph>
                   </div>
-                  <GoAButtonGroup alignment="end">
+                  <GoabButtonGroup alignment="end">
                     {form.definition &&
                       (form.status === FormStatus.draft ? (
                         <>
-                          <GoAButton
+                          <GoabButton
                             type="tertiary"
                             size="compact"
                             leadingIcon="trash"
                             onClick={() => setFormToDelete(form)}
                           >
                             Delete
-                          </GoAButton>
-                          <GoAButton
+                          </GoabButton>
+                          <GoabButton
                             type={form?.id === defaultForm?.id ? 'primary' : 'secondary'}
                             size="compact"
                             onClick={() => navigate(`/${tenant.name}/${form.definition.id}/${form.id}`)}
                           >
                             Continue
-                          </GoAButton>
+                          </GoabButton>
                         </>
                       ) : (
-                        <GoAButton
+                        <GoabButton
                           type="tertiary"
                           size="compact"
                           onClick={() => navigate(`/${tenant.name}/${form.definition.id}/${form.id}`)}
                         >
                           View
-                        </GoAButton>
+                        </GoabButton>
                       ))}
-                  </GoAButtonGroup>
+                  </GoabButtonGroup>
                 </FormHeaderDiv>
-                <GoADivider mt="m" />
-                <GoABlock gap="4xl" direction="row" mt="m">
+                <GoabDivider mt="m" />
+                <GoabBlock gap="4xl" direction="row" mt="m">
                   <div>
                     <FormMetadataLabel>Status</FormMetadataLabel>
                     <div>
@@ -195,19 +195,19 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
                     <FormMetadataLabel>Submitted</FormMetadataLabel>
                     <div>{form.submitted?.toFormat('LLLL dd, yyyy') || 'Not submitted'}</div>
                   </div>
-                </GoABlock>
-              </GoAContainer>
+                </GoabBlock>
+              </GoabContainer>
             ))}
-          {busy.loading && <GoASkeleton type="card" size={1} lineCount={2} />}
+          {busy.loading && <GoabSkeleton type="card" size={'1'} lineCount={2} />}
           <FormLoadMoreDiv>
             {next && (
-              <GoAButton
+              <GoabButton
                 type="tertiary"
                 disabled={busy.loading}
                 onClick={() => dispatch(findUserForms({ definitionId: definition?.id, after: next }))}
               >
                 Load more
-              </GoAButton>
+              </GoabButton>
             )}
           </FormLoadMoreDiv>
         </Container>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ScriptEditorWrapper } from './editor/scriptEditorWrapper';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 
 interface ScriptsViewProps {
   setActiveEdit: (boolean) => void;
@@ -28,14 +28,14 @@ export const ScriptsView = ({ setActiveEdit, activeEdit }: ScriptsViewProps): JS
   return (
     <section>
       <div>
-        <GoAButton
+        <GoabButton
           testId="add-script-btn"
           onClick={() => {
             setOpenAddScript(true);
           }}
         >
           Add script
-        </GoAButton>
+        </GoabButton>
         <br />
         <br />
       </div>

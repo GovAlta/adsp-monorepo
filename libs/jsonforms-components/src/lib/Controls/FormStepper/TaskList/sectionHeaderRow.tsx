@@ -1,4 +1,4 @@
-import { GoAText } from '@abgov/react-components';
+import { GoabText } from '@abgov/react-components';
 import { SectionHeaderRowTr } from '../styled-components';
 
 interface SectionHeaderRowProps {
@@ -11,9 +11,9 @@ export const SectionHeaderRow = ({ title, index }: SectionHeaderRowProps): JSX.E
   return (
     <SectionHeaderRowTr>
       <td colSpan={2}>
-        <GoAText size="heading-m" mt="xl" mb="m">
+        <GoabText size="heading-m" mt="xl" mb="m">
           {section}
-        </GoAText>
+        </GoabText>
       </td>
     </SectionHeaderRowTr>
   );

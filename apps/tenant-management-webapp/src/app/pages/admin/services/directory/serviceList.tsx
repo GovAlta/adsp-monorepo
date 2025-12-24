@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { GoACircularProgress } from '@abgov/react-components';
+import { GoabCircularProgress } from '@abgov/react-components';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
@@ -120,7 +120,7 @@ const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.
             <EntryDetail data-testid="details">
               {!service.loaded && elementIndicator.show && elementIndicator?.id === service.urn && (
                 <ElementLoader>
-                  <GoACircularProgress visible={true} size="small" />
+                  <GoabCircularProgress visible={true} size="small" />
                 </ElementLoader>
               )}
               {service.metadata === null ? renderNoItem('metadata') : JSON.stringify(service.metadata, null, 2)}

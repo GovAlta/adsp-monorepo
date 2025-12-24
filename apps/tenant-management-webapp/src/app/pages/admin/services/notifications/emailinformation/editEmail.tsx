@@ -1,10 +1,10 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import type { FromEmailInformation } from '@store/notification/models';
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabFormItem, GoabInput, GoabModal } from '@abgov/react-components';
 
 import { emailError, hasMultipleEmailError } from '@lib/inputValidation';
-
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 interface EmailNotificationTypeFormProps {
   initialValue?: FromEmailInformation;
   onCancel?: () => void;
@@ -53,37 +53,37 @@ export const EditEmailInformationTypeModalForm: FunctionComponent<EmailNotificat
 
   return (
     <EditStyles>
-      <GoAModal
+      <GoabModal
         testId="edit-email-information-notification"
         open={open}
         heading="Edit email information"
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton testId="edit-email-form-cancel" type="secondary" onClick={tryCancel}>
+          <GoabButtonGroup alignment="end">
+            <GoabButton testId="edit-email-form-cancel" type="secondary" onClick={tryCancel}>
               Cancel
-            </GoAButton>
-            <GoAButton type="primary" testId="edit-email-form-save" onClick={() => trySave(emailInformation)}>
+            </GoabButton>
+            <GoabButton type="primary" testId="edit-email-form-save" onClick={() => trySave(emailInformation)}>
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <ErrorWrapper>
-          <GoAFormItem error={formErrors?.['email']} label="Email" helpText="Email must be a real email with a inbox">
-            <GoAInput
+          <GoabFormItem error={formErrors?.['email']} label="Email" helpText="Email must be a real email with a inbox">
+            <GoabInput
               type="email"
               name="email"
               width="100%"
               testId="edit-email-form-email"
               value={emailInformation.fromEmail}
               aria-label="email"
-              onChange={(_, value) => {
-                setEmailInformation({ ...emailInformation, fromEmail: value });
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                setEmailInformation({ ...emailInformation, fromEmail: detail.value });
               }}
             />
-          </GoAFormItem>
+          </GoabFormItem>
         </ErrorWrapper>
-      </GoAModal>
+      </GoabModal>
     </EditStyles>
   );
 };

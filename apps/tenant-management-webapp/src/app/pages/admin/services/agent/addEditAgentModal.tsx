@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoAModal, GoAInput, GoAFormItem, GoATextArea } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal, GoabInput, GoabFormItem, GoabTextArea } from '@abgov/react-components';
 import { TextGoASkeleton } from '@core-services/app-common';
 import { useState, useEffect, FunctionComponent } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
@@ -14,6 +14,7 @@ import { selectRoleList } from '@store/sharedSelectors/roles';
 import { AgentConfiguration } from '@store/agent/model';
 import { agentNamesSelector } from '@store/agent/selectors';
 import defaultInstructions from './defaultInstructions';
+import { GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
 
 const IdField = styled.div`
   min-height: 1.6rem;
@@ -76,13 +77,13 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
   };
 
   return (
-    <GoAModal
+    <GoabModal
       testId="add-agent-modal"
       open={open}
       heading="Add agent"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="agent-modal-cancel"
             onClick={() => {
@@ -91,9 +92,9 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
             }}
           >
             Cancel
-          </GoAButton>
+          </GoabButton>
 
-          <GoAButton
+          <GoabButton
             type="primary"
             testId="agent-modal-save"
             disabled={validators.haveErrors()}
@@ -112,13 +113,13 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <form>
-        <GoAFormItem error={errors?.['name']} label="Name" mb="l">
-          <GoAInput
+        <GoabFormItem error={errors?.['name']} label="Name" mb="l">
+          <GoabInput
             disabled={initialValue}
             type="text"
             name="name"
@@ -126,28 +127,28 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
             testId="agent-modal-name-input"
             aria-label="name"
             width="100%"
-            onChange={(_, value) => {
-              validateField('name', value);
-              const agentId = toKebabName(value);
-              setAgent({ ...agent, id: agentId, name: value });
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {
+              validateField('name', detail.value);
+              const agentId = toKebabName(detail.value);
+              setAgent({ ...agent, id: agentId, name: detail.value });
             }}
             onBlur={() => validateField('name', agent?.name || '')}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Agent ID" mb="l">
+        </GoabFormItem>
+        <GoabFormItem label="Agent ID" mb="l">
           <IdField>{agent.id}</IdField>
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['description']} label="Description" mb="m">
-          <GoATextArea
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['description']} label="Description" mb="m">
+          <GoabTextArea
             name="description"
             value={agent.description || ''}
             testId="api-tool-modal-description-input"
             aria-label="description"
             width="100%"
-            onChange={(_, value) => {
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {
               validators.remove('description');
-              validators['description'].check(value);
-              setAgent({ ...agent, description: value });
+              validators['description'].check(detail.value);
+              setAgent({ ...agent, description: detail.value });
             }}
           />
           <HelpTextComponent
@@ -156,7 +157,7 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
             descErrMessage="Agent description can not be over 250 characters"
             errorMsg={errors?.['description']}
           />
-        </GoAFormItem>
+        </GoabFormItem>
 
         {roles?.map(({ clientId, roleNames }) => (
           <ClientRoleTable
@@ -176,6 +177,6 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
         ))}
         {roles?.length === 0 && <TextGoASkeleton />}
       </form>
-    </GoAModal>
+    </GoabModal>
   );
 };

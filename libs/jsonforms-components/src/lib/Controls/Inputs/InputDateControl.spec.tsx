@@ -3,7 +3,6 @@ import '@testing-library/jest-dom';
 import { GoAInputDateProps, GoADateInput } from './InputDateControl';
 import { ControlElement } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
-import { Component } from 'react';
 
 const mockContextValue = {
   errors: [],
@@ -39,7 +38,7 @@ describe('input date controls', () => {
     };
   };
 
-  const staticProps: GoAInputDateProps = {
+  const staticProps: GoabInputDateProps = {
     uischema: uiSchema('2023-02-01', '2025-02-01'),
     schema: dateSchema,
     rootSchema: dateSchema,

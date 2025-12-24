@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { ContactInformation } from './contactInformation/contactInformation';
 import { StatusMetrics } from './metrics';
 import styled from 'styled-components';
@@ -48,7 +48,7 @@ export const StatusOverview: FunctionComponent<StatusOverviewProps> = (props) =>
           </section>
         }
         addButton={
-          <GoAButton
+          <GoabButton
             testId="add-application"
             disabled={disabled}
             type="primary"
@@ -57,7 +57,7 @@ export const StatusOverview: FunctionComponent<StatusOverviewProps> = (props) =>
             }}
           >
             Add application
-          </GoAButton>
+          </GoabButton>
         }
         extra={
           <>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ControlProps, isEnabled } from '@jsonforms/core';
-import { GoAFormItem, GoAGrid } from '@abgov/react-components';
+import { GoabFormItem, GoabGrid } from '@abgov/react-components';
 import { NameInputs } from './FullNameInputs';
 import { TextWrapDiv } from '../AddressLookup/styled-components';
 import { Visible } from '../../util';
@@ -20,8 +20,8 @@ export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
     setErrors(err);
   }, [props.data, requiredFields]);
   return (
-    <GoAGrid minChildWidth="0ch" gap="s">
-      <GoAFormItem
+    <GoabGrid minChildWidth="0ch" gap="s">
+      <GoabFormItem
         label="First Name"
         requirement={requiredFields?.includes('firstName') ? 'required' : undefined}
         error={errors?.['firstName'] ?? ''}
@@ -29,13 +29,13 @@ export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
         <TextWrapDiv>
           <div data-testid={`firstName-control-${props.id}`}>{props.data?.firstName}</div>
         </TextWrapDiv>
-      </GoAFormItem>
-      <GoAFormItem label="Middle Name">
+      </GoabFormItem>
+      <GoabFormItem label="Middle Name">
         <TextWrapDiv>
           <div data-testid={`middleName-control-${props.id}`}>{props.data?.middleName}</div>
         </TextWrapDiv>
-      </GoAFormItem>
-      <GoAFormItem
+      </GoabFormItem>
+      <GoabFormItem
         label="Last Name"
         requirement={requiredFields?.includes('lastName') ? 'required' : undefined}
         error={errors?.['lastName'] ?? ''}
@@ -43,8 +43,8 @@ export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
         <TextWrapDiv>
           <div data-testid={`lastName-control-${props.id}`}>{props.data?.lastName}</div>
         </TextWrapDiv>
-      </GoAFormItem>
-    </GoAGrid>
+      </GoabFormItem>
+    </GoabGrid>
   );
 };
 

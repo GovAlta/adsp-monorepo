@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoAFormItem,
-  GoAModal,
-  GoADropdown,
-  GoADropdownItem,
+  GoabButton,
+  GoabButtonGroup,
+  GoabFormItem,
+  GoabModal,
+  GoabDropdown,
+  GoabDropdownItem,
 } from '@abgov/react-components';
 
 import {
@@ -20,7 +20,7 @@ import MonacoEditor from '@monaco-editor/react';
 import { scriptEditorConfig } from './config';
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, isNotEmptyCheck, isValidJSONCheck } from '@lib/validation/checkInput';
-
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 interface TriggerEventModalProps {
   initialScript: ScriptItem;
   initialValue?: ScriptItemTriggerEvent;
@@ -125,13 +125,13 @@ export const TriggerEventModal = ({
   };
 
   return (
-    <GoAModal
+    <GoabModal
       testId="add-trigger-event-modal"
       open={open}
       heading={isNew ? 'Add trigger event' : 'Edit trigger event'}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="script-trigger-event-modal-cancel"
             onClick={() => {
@@ -143,8 +143,8 @@ export const TriggerEventModal = ({
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="script-trigger-event-modal-save"
             disabled={isSaveButtonDisabled()}
@@ -156,21 +156,21 @@ export const TriggerEventModal = ({
             }}
           >
             {isNew ? 'Add' : 'Save'}
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
-      <GoAFormItem label="Select trigger event">
-        <GoADropdown
+      <GoabFormItem label="Select trigger event">
+        <GoabDropdown
           data-test-id="script-trigger-event-name-dropDown"
           name="script-trigger-event-name-dropDown"
           value={`${triggerEvent.namespace}:${triggerEvent.name}`}
           width="55ch"
-          onChange={(name, values) => {
+          onChange={(detail: GoabDropdownOnChangeDetail) => {
             setTriggerEvent({
               ...triggerEvent,
-              namespace: values.toString().split(':')[0],
-              name: values.toString().split(':')[1],
+              namespace: detail.values && detail.values.toString().split(':')[0],
+              name: detail.values && detail.values.toString().split(':')[1],
             });
           }}
         >
@@ -178,12 +178,12 @@ export const TriggerEventModal = ({
             filteredEventNames
               .sort((a, b) => a.localeCompare(b))
               .map((eventName) => (
-                <GoADropdownItem data-testId={eventName} key={eventName} value={eventName} label={eventName} />
+                <GoabDropdownItem data-testId={eventName} key={eventName} value={eventName} label={eventName} />
               ))}
-        </GoADropdown>
-      </GoAFormItem>
+        </GoabDropdown>
+      </GoabFormItem>
 
-      <GoAFormItem error={errors?.['criteria']} label="Trigger event criteria">
+      <GoabFormItem error={errors?.['criteria']} label="Trigger event criteria">
         <MonacoDivBody data-testid="scrip-trigger-event-template-editor-body">
           <MonacoEditor
             data-test-id="script-trigger-event-editor"
@@ -203,7 +203,7 @@ export const TriggerEventModal = ({
             }}
           />
         </MonacoDivBody>
-      </GoAFormItem>
-    </GoAModal>
+      </GoabFormItem>
+    </GoabModal>
   );
 };

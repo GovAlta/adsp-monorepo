@@ -1,12 +1,12 @@
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoAModal,
-  GoAInput,
-  GoAFormItem,
-  GoATextArea,
-  GoADropdown,
-  GoADropdownItem,
+  GoabButton,
+  GoabButtonGroup,
+  GoabModal,
+  GoabInput,
+  GoabFormItem,
+  GoabTextArea,
+  GoabDropdown,
+  GoabDropdownItem,
 } from '@abgov/react-components';
 import { useState, FunctionComponent, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
@@ -22,7 +22,11 @@ import { useValidators } from '@lib/validation/useValidators';
 import { ApiToolConfiguration } from '@store/agent/model';
 import { selectSortedDirectory } from '@store/directory/selectors';
 import { useSelector } from 'react-redux';
-
+import {
+  GoabTextAreaOnChangeDetail,
+  GoabInputOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+} from '@abgov/ui-components-common';
 interface AddEditApiToolModalProps {
   tool: ApiToolConfiguration;
   onCancel: () => void;
@@ -66,13 +70,13 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
     .build();
 
   return (
-    <GoAModal
+    <GoabModal
       testId="add-edit-tool-modal"
       open={open}
       heading={`${initialValue?.id ? 'Edit' : 'Add'} API tool`}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="api-tool-modal-cancel"
             onClick={() => {
@@ -81,9 +85,9 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
             }}
           >
             Cancel
-          </GoAButton>
+          </GoabButton>
 
-          <GoAButton
+          <GoabButton
             type="primary"
             testId="api-tool-modal-save"
             disabled={!tool.id || validators.haveErrors()}
@@ -101,37 +105,37 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
             }}
           >
             OK
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <form>
-        <GoAFormItem error={errors?.['id']} label="Tool ID" mb="m">
-          <GoAInput
+        <GoabFormItem error={errors?.['id']} label="Tool ID" mb="m">
+          <GoabInput
             type="text"
             name="id"
             value={tool.id}
             testId="api-tool-modal-id-input"
             aria-label="id"
             width="100%"
-            onChange={(_, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               validators.remove('id');
-              validators['id'].check(value);
-              setTool({ ...tool, id: value });
+              validators['id'].check(detail.value);
+              setTool({ ...tool, id: detail.value });
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['description']} label="Description" mb="m">
-          <GoATextArea
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['description']} label="Description" mb="m">
+          <GoabTextArea
             name="description"
             value={tool.description}
             testId="api-tool-modal-description-input"
             aria-label="description"
             width="100%"
-            onChange={(_, value) => {
+            onChange={(detail: GoabTextAreaOnChangeDetail) => {
               validators.remove('description');
-              validators['description'].check(value);
-              setTool({ ...tool, description: value });
+              validators['description'].check(detail.value);
+              setTool({ ...tool, description: detail.value });
             }}
           />
           <HelpTextComponent
@@ -140,61 +144,60 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
             descErrMessage="Tool description can not be over 250 characters"
             errorMsg={errors?.['description']}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Method" mb="m">
-          <GoADropdown
+        </GoabFormItem>
+        <GoabFormItem label="Method" mb="m">
+          <GoabDropdown
             testId="api-tool-modal-method-input"
             ariaLabel="method"
             value={tool.method}
-            onChange={(_, value) => setTool({ ...tool, method: value as string })}
+            onChange={(detail: GoabDropdownOnChangeDetail) => setTool({ ...tool, method: detail.value as string })}
           >
-            <GoADropdownItem value="GET" />
-            <GoADropdownItem value="PUT" />
-            <GoADropdownItem value="PATCH" />
-          </GoADropdown>
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['api']} label="Api" mb="m">
-          <GoADropdown
+            <GoabDropdownItem value="GET" />
+            <GoabDropdownItem value="PUT" />
+            <GoabDropdownItem value="PATCH" />
+          </GoabDropdown>
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['api']} label="Api" mb="m">
+          <GoabDropdown
             name="api"
             value={tool.api}
             aria-label="api"
             width="100%"
             testId="api-tool-modal-api-input"
-            onChange={(_, value) => {
+            onChange={(detail: GoabDropdownOnChangeDetail) => {
               validators.remove('api');
-              validators['api'].check(value);
-              setTool({ ...tool, api: value as string });
+              validators['api'].check(detail.value);
+              setTool({ ...tool, api: detail.value as string });
             }}
-            relative={true}
           >
             {coreDirectory
               ?.filter(({ api }) => !!api)
               .map(({ urn }) => (
-                <GoADropdownItem key={urn} value={urn} label={urn} />
+                <GoabDropdownItem key={urn} value={urn} label={urn} />
               ))}
             {tenantDirectory
               ?.filter(({ api }) => !!api)
               .map(({ urn }) => (
-                <GoADropdownItem key={urn} value={urn} label={urn} />
+                <GoabDropdownItem key={urn} value={urn} label={urn} />
               ))}
-          </GoADropdown>
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['path']} label="Path" mb="m">
-          <GoAInput
+          </GoabDropdown>
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['path']} label="Path" mb="m">
+          <GoabInput
             type="text"
             name="path"
             value={tool.path}
             testId="api-tool-modal-path-input"
             aria-label="path"
             width="100%"
-            onChange={(_, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               validators.remove('path');
-              validators['path'].check(value);
-              setTool({ ...tool, path: value });
+              validators['path'].check(detail.value);
+              setTool({ ...tool, path: detail.value });
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['inputSchema']} label="Input schema" mb="m">
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['inputSchema']} label="Input schema" mb="m">
           <Editor
             data-testid="tool-input-schema"
             height={200}
@@ -216,8 +219,8 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
               showFoldingControls: 'always',
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['outputSchema']} label="Output schema" mb="m">
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['outputSchema']} label="Output schema" mb="m">
           <Editor
             data-testid="tool-output-schema"
             height={200}
@@ -239,8 +242,8 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
               showFoldingControls: 'always',
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
       </form>
-    </GoAModal>
+    </GoabModal>
   );
 };

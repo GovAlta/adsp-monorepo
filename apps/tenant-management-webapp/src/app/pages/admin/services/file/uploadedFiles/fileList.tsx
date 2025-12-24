@@ -8,12 +8,12 @@ import {
   FetchFileTypeService,
 } from '@store/file/actions';
 import {
-  GoADropdownItem,
-  GoADropdown,
-  GoAButton,
-  GoAInput,
-  GoAFormItem,
-  GoAButtonGroup,
+  GoabDropdownItem,
+  GoabDropdown,
+  GoabButton,
+  GoabInput,
+  GoabFormItem,
+  GoabButtonGroup,
 } from '@abgov/react-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import DataTable from '@components/DataTable';
@@ -27,6 +27,7 @@ import { selectActionStateStart, selectActionStateCompleted } from '@store/sessi
 import { UPLOAD_FILE } from '@store/file/actions';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { NoPaddingH2 } from '@components/AppHeader';
+import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<FileItem>(null);
@@ -207,66 +208,64 @@ const FileList = (): JSX.Element => {
         </div>
       </>
       <FileTypeDropdown>
-        <GoAFormItem label="Select a file type">
-          <GoADropdown
+        <GoabFormItem label="Select a file type">
+          <GoabDropdown
             name="fileType"
             value={uploadFileType}
             width="100%"
-            relative={true}
             testId="file-type-name-dropdown-1"
-            onChange={(name, values: string | string[]) => {
-              setUploadFileType(values.toString());
+            onChange={(detail: GoabDropdownOnChangeDetail) => {
+              setUploadFileType(detail.values.toString());
             }}
           >
             {getFileTypesValues().map((item, key) => (
-              <GoADropdownItem label={item.name} value={item.id} key={key} testId={item.id} />
+              <GoabDropdownItem label={item.name} value={item.id} key={key} testId={item.id} />
             ))}
-          </GoADropdown>
-        </GoAFormItem>
+          </GoabDropdown>
+        </GoabFormItem>
       </FileTypeDropdown>
 
-      <GoAButton
+      <GoabButton
         type="submit"
         onClick={onUploadSubmit}
-        disabled={isUploadingFile || !(selectedFile && uploadFileType.length > 0)}
+        disabled={isUploadingFile || !(selectedFile && uploadFileType.length > 0) ? true : undefined}
       >
         Upload
-      </GoAButton>
+      </GoabButton>
 
       <div className="mt-48">
         <NoPaddingH2>File filtering</NoPaddingH2>
-        <GoAFormItem label="Search file name">
-          <GoAInput
+        <GoabFormItem label="Search file name">
+          <GoabInput
             type="text"
             name="name"
             id="name"
             value={searchName}
             testId="file-type-name-input"
             width="548px"
-            onChange={(_, value) => setSearchName(value)}
+            onChange={(detail: GoabInputOnChangeDetail) => setSearchName(detail.value)}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Filter file type">
+        </GoabFormItem>
+        <GoabFormItem label="Filter file type">
           {resetFilter === 'visible' && (
-            <GoADropdown
+            <GoabDropdown
               name="fileType"
               value={filterFileType}
               width="100%"
-              relative={true}
               testId="file-type-name-dropdown-2"
-              onChange={(name, value: string | string[]) => {
-                setFilterFileType(value.toString());
+              onChange={(detail: GoabDropdownOnChangeDetail) => {
+                setFilterFileType(detail?.value.toString());
               }}
             >
               {getFileTypesValues().map((item, key) => (
-                <GoADropdownItem label={item.name} value={item.id} key={key} testId={item.id} />
+                <GoabDropdownItem label={item.name} value={item.id} key={key} testId={item.id} />
               ))}
-            </GoADropdown>
+            </GoabDropdown>
           )}
-        </GoAFormItem>
+        </GoabFormItem>
         <br />
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             onClick={() => {
               setSearchName('');
@@ -276,10 +275,10 @@ const FileList = (): JSX.Element => {
             }}
           >
             Reset
-          </GoAButton>
+          </GoabButton>
 
-          <GoAButton onClick={getFilteredFiles}>Search</GoAButton>
-        </GoAButtonGroup>
+          <GoabButton onClick={getFilteredFiles}>Search</GoabButton>
+        </GoabButtonGroup>
       </div>
       <br />
       {!indicator.show && !fileList && renderNoItem('file')}
@@ -287,9 +286,9 @@ const FileList = (): JSX.Element => {
       {indicator.show && <PageIndicator />}
       {next && (
         <LoadMoreWrapper>
-          <GoAButton type="tertiary" disabled={isLoading} onClick={onNext}>
+          <GoabButton type="tertiary" disabled={isLoading} onClick={onNext}>
             Load more
-          </GoAButton>
+          </GoabButton>
         </LoadMoreWrapper>
       )}
     </FileTable>

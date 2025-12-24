@@ -5,11 +5,11 @@ import { NoticeCard } from './noticeCard';
 import FilterIcon from '@assets/icons/filter-filled.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { GoARadioItem, GoARadioGroup } from '@abgov/react-components';
+import { GoabRadioItem, GoabRadioGroup } from '@abgov/react-components';
 import { renderNoItem } from '@components/NoItem';
 import NoticeModal from './noticeModal';
 import { createSelector } from 'reselect';
-
+import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 type filterOptionOnSelect = (option: string) => void;
 
 interface NoticeListFilterProps {
@@ -53,17 +53,17 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
         <img src={FilterIcon} width="20" alt="notice-filter" />
         <span>Filter by status</span>
       </div>
-      <GoARadioGroup
+      <GoabRadioGroup
         name="option"
         value={option}
-        onChange={(_, value: string) => onSelect(value)}
+        onChange={(detail: GoabRadioGroupOnChangeDetail) => onSelect(detail.value)}
         orientation="horizontal"
       >
-        <GoARadioItem value="active" label="Active" name="active" />
-        <GoARadioItem value="draft" label="Draft" name="draft" />
-        <GoARadioItem value="published" label="Published" name="published" />
-        <GoARadioItem value="archived" label="Archived" name="archived" />
-      </GoARadioGroup>
+        <GoabRadioItem value="active" label="Active" name="active" />
+        <GoabRadioItem value="draft" label="Draft" name="draft" />
+        <GoabRadioItem value="published" label="Published" name="published" />
+        <GoabRadioItem value="archived" label="Archived" name="archived" />
+      </GoabRadioGroup>
     </NoticeListFilterContainer>
   );
 };

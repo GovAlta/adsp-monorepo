@@ -2,17 +2,17 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { NotificationItem } from '@store/notification/models';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoADropdown,
-  GoADropdownItem,
-  GoAModal,
-  GoAFormItem,
+  GoabButton,
+  GoabButtonGroup,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabModal,
+  GoabFormItem,
 } from '@abgov/react-components';
 import { RootState } from '@store/index';
 import { getEventDefinitions } from '@store/event/actions';
 import { EventItem, baseTemplate } from '@store/notification/models';
-
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 interface NotificationDefinitionFormProps {
   initialValue?: NotificationItem;
   onCancel?: (closeEventModal: boolean) => void;
@@ -89,14 +89,14 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
   }
 
   return (
-    <GoAModal
+    <GoabModal
       testId="event-form"
       open={open}
       onClose={onClickedOutside}
       heading={'Select an event'}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             testId="event-form-cancel"
             type="secondary"
             onClick={() => {
@@ -105,8 +105,8 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             disabled={selectedValues[0] === ''}
             type="primary"
             testId="event-form-save"
@@ -127,14 +127,14 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
             }}
           >
             Next
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
-      <GoAFormItem label="">
-        <GoADropdown
+      <GoabFormItem label="">
+        <GoabDropdown
           name="event"
-          onChange={onChange}
+          onChange={(detail: GoabDropdownOnChangeDetail) => onChange(detail.name, detail.value)}
           value={selectedValues ? selectedValues : ''}
           aria-label="event-form-dropdown"
           width="50ch"
@@ -143,10 +143,10 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
           mb="4xl"
         >
           {dropDownOptions.map((item, key) => (
-            <GoADropdownItem label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
+            <GoabDropdownItem label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
           ))}
-        </GoADropdown>
-      </GoAFormItem>
-    </GoAModal>
+        </GoabDropdown>
+      </GoabFormItem>
+    </GoabModal>
   );
 };
