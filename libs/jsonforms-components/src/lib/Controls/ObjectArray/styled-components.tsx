@@ -82,6 +82,9 @@ export const Trash = styled.div`
 export const ListContainer = styled.div`
   padding: 0 0 0 0;
 `;
+export const DetailMargin = styled.div`
+  padding: 0 0 var(--goa-space-l) 0;
+`;
 
 export const IconPadding = styled.div`
   padding: 0.9rem 0.5rem 0 0;
