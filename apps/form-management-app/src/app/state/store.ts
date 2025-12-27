@@ -6,6 +6,8 @@ import { USER_FEATURE_KEY, userReducer } from './user/user.slice';
 import { FILE_FEATURE_KEY, fileReducer } from './file/file.slice';
 import { PDF_FEATURE_KEY, pdfReducer } from './pdf/pdf.slice';
 import { KEYCLOAK_FEATURE_KEY, keycloakReducer } from './keycloak/keycloak.slice';
+import { TASK_FEATURE_KEY, taskReducer } from './task/task.slice';
+import { CALENDAR_FEATURE_KEY, calendarReducer } from './calendar/calendar.slice';
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +18,8 @@ export const store = configureStore({
     [FILE_FEATURE_KEY]: fileReducer,
     [PDF_FEATURE_KEY]: pdfReducer,
     [KEYCLOAK_FEATURE_KEY]: keycloakReducer,
+    [TASK_FEATURE_KEY]: taskReducer,
+    [CALENDAR_FEATURE_KEY]: calendarReducer
   },
   devTools: process.env.NODE_ENV !== 'production',
   // Optional Redux store enhancers

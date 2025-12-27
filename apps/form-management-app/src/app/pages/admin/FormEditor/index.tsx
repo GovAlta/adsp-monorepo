@@ -24,6 +24,7 @@ import { FetchFileService } from '../../../state/file/file.slice';
 import { updateTempTemplate } from '../../../state/pdf/pdf.slice';
 import { rolesSelector } from '../../../state/keycloak/selectors';
 import { fetchKeycloakServiceRoles, fetchRoles } from '../../../state/keycloak/keycloak.slice';
+import { fetchCalendar } from '../../../state';
 
 import {
   generatePdf,
@@ -32,6 +33,7 @@ import {
   getCorePdfTemplates,
 } from '../../../state/pdf/pdf.slice';
 import { fetchRegisterData, getConfigurationDefinitions } from '../../../state/configuration/configuration.slice';
+import { fetchTaskQueues } from '../../../state/task/task.slice';
 
 export const FORM_SUPPORTING_DOCS = 'form-supporting-documents';
 
@@ -74,7 +76,11 @@ const EditorWrapper = (): JSX.Element => {
   const fileList = useSelector((state: AppState) => state.file.fileList);
   const loading = useSelector((state: AppState) => state?.pdf.busy.loading);
 
-    const { tenantConfigDefinitions } = useSelector((state: AppState) => state.configuration);
+  const { tenantConfigDefinitions } = useSelector((state: AppState) => state.configuration);
+
+  const queueTasks = useSelector((state: AppState) => state.task?.queues);
+
+  const [intakePeriodModal, setIntakePeriodModal] = useState<boolean>(false);
 
   useEffect(() => {
     try {
@@ -85,6 +91,10 @@ const EditorWrapper = (): JSX.Element => {
       console.error('error:' + JSON.stringify(e));
     }
   }, [id, dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchTaskQueues());
+  }, [dispatch]);
 
   const files = useSelector(filesSelector);
   const metadata = useSelector(metaDataSelector);
@@ -101,6 +111,20 @@ const EditorWrapper = (): JSX.Element => {
     )
   );
 
+  const selectedCoreEvent = useSelector((state: AppState) => state.calendar.formIntakeCalendar);
+
+  useEffect(() => {
+    if (intakePeriodModal) {
+      dispatch(
+        fetchCalendar({
+          criteria: {
+            recordId: `urn:ads:platform:configuration-service:v2:/configuration/form-service/${definition?.id}`,
+          }        
+        })
+      );
+    }
+  }, [intakePeriodModal]);
+
   useEffect(() => {
     if (!tenantConfigDefinitions) {
       dispatch(getConfigurationDefinitions());
@@ -110,7 +134,7 @@ const EditorWrapper = (): JSX.Element => {
 
   useEffect(() => {
     if (tenantConfigDefinitions) {
-       dispatch(fetchRegisterData());
+      dispatch(fetchRegisterData());
     }
   }, [tenantConfigDefinitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -302,7 +326,7 @@ const EditorWrapper = (): JSX.Element => {
       {definition?.id && (
         <Editor
           updateFormDefinition={updateFormDefinition}
-          definition={definition}
+          definition={tempDefinition || definition}
           setDraftDataSchema={setDraftData}
           setDraftUiSchema={setDraftUi}
           isFormUpdated={isFormUpdated}
@@ -328,17 +352,20 @@ const EditorWrapper = (): JSX.Element => {
               ...(tempDefinition || {}),
               ...(definition || {}),
             } as FormDefinition;
-
             setTempDefinition(tempSchema);
           }}
           fetchKeycloakServiceRoles={() => {
             dispatch(fetchKeycloakServiceRoles());
-                dispatch(fetchRoles());
+            dispatch(fetchRoles());
           }}
+          queueTasks={queueTasks}
+          setIntakePeriodModal={setIntakePeriodModal}
+          intakePeriodModal={intakePeriodModal}
+          selectedCoreEvent={selectedCoreEvent}
         />
       )}
     </div>
   );
-};;
+};
 
 export default EditorWrapper;

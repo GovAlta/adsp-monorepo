@@ -6,7 +6,7 @@ import { useValidators } from './useValidators';
 import { badCharsCheck, isNotEmptyCheck, wordMaxLengthCheck } from '../../../utils/checkInput';
 import type * as monacoNS from 'monaco-editor';
 import { Preview } from './Preview';
-import { FormDefinition } from '../../../state/types';
+import { CalendarEvent, FormDefinition } from '../../../state/types';
 import { SubmitButtonsBar } from './SubmitButtonsBar';
 import { GoabTabs, GoabTab } from '@abgov/react-components';
 import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
@@ -24,6 +24,8 @@ import {
   FormDataSchemaElementCompletionItemProvider,
   FormUISchemaElementCompletionItemProvider,
 } from '../../../utils/autoComplete/form';
+import { LifeCycleContainer } from './LifeCycleContainer';
+import { TaskDefinition } from '../../../state/task/task.slice';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -52,6 +54,10 @@ export interface EditorProps {
   roles: ClientElement[];
   updateEditorFormDefinition: (update: Partial<FormDefinition>) => void;
   fetchKeycloakServiceRoles: () => void;
+  queueTasks: Record<string, TaskDefinition>;
+  setIntakePeriodModal: (value: boolean) => void;
+  intakePeriodModal: boolean;
+  selectedCoreEvent: CalendarEvent[];
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -79,6 +85,10 @@ export const Editor: React.FC<EditorProps> = ({
   roles,
   updateEditorFormDefinition,
   fetchKeycloakServiceRoles,
+  queueTasks,
+  setIntakePeriodModal,
+  intakePeriodModal,
+  selectedCoreEvent,
 }) => {
   const { errors, validators } = useValidators(
     'name',
@@ -228,6 +238,17 @@ export const Editor: React.FC<EditorProps> = ({
               </div>
             )}
           </GoabTab>
+          <GoabTab heading="Lifecycle" data-testid="dcm-form-editor-ui-schema-tab">
+            <LifeCycleContainer
+              definition={definition}
+              errors={errors}
+              updateEditorFormDefinition={updateEditorFormDefinition}
+              queueTasks={queueTasks}
+              setIntakePeriodModal={setIntakePeriodModal}
+              intakePeriodModal={intakePeriodModal}
+              selectedCoreEvent={selectedCoreEvent}
+            />
+          </GoabTab>
         </GoabTabs>
         <SubmitButtonsBar
           getCurrentEditorRef={getCurrentEditorRef}
@@ -259,6 +280,7 @@ export const Editor: React.FC<EditorProps> = ({
           jobList={jobList}
           generatePdf={generatePdf}
           loading={loading}
+          definition={definition}
         />
       </div>
     </div>

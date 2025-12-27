@@ -46,14 +46,22 @@ export interface PagedResults<T> {
   };
 }
 
-export interface CalendarEvent {
-  urn: string;
+export interface Attendee {
   id: number;
-  start: string;
-  end?: string;
   name: string;
-  description: string;
-  recordId: string;
+  email: string;
+}
+
+export interface CalendarEvent {
+  id?: number;
+  name: string;
+  description?: string | null;
+  start: string;
+  end: string;
+  isPublic: boolean;
+  isAllDay?: boolean;
+  attendees?: Attendee[];
+  recordId?: string;
 }
 
 interface DispositionState {
@@ -62,12 +70,30 @@ interface DispositionState {
   description: string;
 }
 
+export enum SecurityClassification {
+  ProtectedA = 'protected a',
+  ProtectedB = 'protected b',
+  ProtectedC = 'protected c',
+  Public = 'public',
+}
+
 export interface Intake {
   urn: string;
   start: string;
   end?: string;
   isAllDay: boolean;
   isUpcoming: boolean;
+}
+
+export interface QueueTaskToProcess {
+  queueNameSpace: string;
+  queueName: string;
+}
+
+export interface Disposition {
+  id: string;
+  name: string;
+  description: string;
 }
 
 export interface FormDefinition {
@@ -82,6 +108,9 @@ export interface FormDefinition {
   clerkRoles: string[];
   assessorRoles: string[];
   dispositionStates: DispositionState[];
+  securityClassification?: SecurityClassification;
+  submissionPdfTemplate: string;
+  queueTaskToProcess: QueueTaskToProcess;
   submissionRecords: boolean;
   anonymousApply: boolean;
   oneFormPerApplicant: boolean;

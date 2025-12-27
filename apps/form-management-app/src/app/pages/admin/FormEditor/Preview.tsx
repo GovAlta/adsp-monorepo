@@ -10,6 +10,7 @@ import { FileWithMetadata } from '../../../state/file/file.slice';
 import { PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 import { PreviewTop } from './PDFPreviewTemplateCore';
 import { PdfJobList } from '../../../state/pdf/pdf.slice';
+import { FormDefinition } from '../../../state';
 
 export const ContextProvider = ContextProviderFactory();
 
@@ -31,6 +32,7 @@ export interface PreviewProps {
   // eslint-disable-next-line
   generatePdf: (inputData: Record<string, any>) => void;
   loading: boolean;
+  definition: FormDefinition;
 }
 
 export const Preview: React.FC<PreviewProps> = ({
@@ -50,61 +52,111 @@ export const Preview: React.FC<PreviewProps> = ({
   jobList,
   generatePdf,
   loading,
+  definition,
 }): JSX.Element => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>({});
 
-  return (
-    <GoabTabs data-testid="preview-tabs">
-      <GoabTab heading="Preview" data-testid="preview-view-tab">
-        <div className={styles['form-preview-scroll-pane']}>
-          <ContextProvider
-            fileManagement={{
-              fileList: fileList,
-              uploadFile: uploadFile,
-              downloadFile: downloadFile,
-              deleteFile: deleteFile,
-            }}
-            formUrl={formServiceApiUrl}
-          >
-            <GoabFormItem error={schemaError} label="">
-              <JSONFormPreviewer
-                onChange={({ data }) => {
-                  setData(data);
+  const tabs = React.useMemo(() => {
+    if (definition?.submissionPdfTemplate) {
+      return (
+        <>
+          <GoabTab heading="Preview" data-testid="preview-view-tab">
+            <div className={styles['form-preview-scroll-pane']}>
+              <ContextProvider
+                fileManagement={{
+                  fileList: fileList,
+                  uploadFile: uploadFile,
+                  downloadFile: downloadFile,
+                  deleteFile: deleteFile,
                 }}
-                data={data}
-                dataSchema={dataSchema}
-                uiSchema={uiSchema}
-                error={schemaError}
-                registerData={registerData}
-                nonAnonymous={nonAnonymous}
-                dataList={dataList}
+                formUrl={formServiceApiUrl}
+              >
+                <GoabFormItem error={schemaError} label="">
+                  <JSONFormPreviewer
+                    onChange={({ data }) => {
+                      setData(data);
+                    }}
+                    data={data}
+                    dataSchema={dataSchema}
+                    uiSchema={uiSchema}
+                    error={schemaError}
+                    registerData={registerData}
+                    nonAnonymous={nonAnonymous}
+                    dataList={dataList}
+                  />
+                </GoabFormItem>
+              </ContextProvider>
+            </div>
+          </GoabTab>
+          <GoabTab heading="Data" data-testid="data-view">
+            <div className={styles['review-page-tab-wrapper']}>
+              {data && <div className={styles.PRE}>{JSON.stringify(data, null, 2)}</div>}
+            </div>
+          </GoabTab>
+          <GoabTab
+            heading={
+              <PreviewTop
+                title="PDF Preview"
+                downloadFile={() => {
+                  downloadFile(pdfFile);
+                }}
+                currentPDF={currentPDF}
+                generateTemplate={() => generatePdf(data)}
               />
-            </GoabFormItem>
-          </ContextProvider>
-        </div>
-      </GoabTab>
+            }
+            data-testid="preview-view"
+          >
+            <PDFPreviewTemplateCore jobList={jobList} currentPDF={currentPDF} loading={loading} />
+          </GoabTab>
+        </>
+      );
+    }
 
-      <GoabTab heading="Data" data-testid="data-view">
-        <div className={styles['review-page-tab-wrapper']}>
-          {data && <div className={styles.PRE}>{JSON.stringify(data, null, 2)}</div>}
-        </div>
-      </GoabTab>
-      <GoabTab
-        heading={
-          <PreviewTop
-            title="PDF Preview"
-            downloadFile={() => {
-              downloadFile(pdfFile);
-            }}
-            currentPDF={currentPDF}
-            generateTemplate={() => generatePdf(data)}
-          />
-        }
-        data-testid="data-view"
-      >
-        <PDFPreviewTemplateCore jobList={jobList} currentPDF={currentPDF} loading={loading} />
-      </GoabTab>
+    return (
+      <>
+        <GoabTab heading="Preview" data-testid="preview-view-tab">
+          <div className={styles['form-preview-scroll-pane']}>
+            <ContextProvider
+              fileManagement={{
+                fileList: fileList,
+                uploadFile: uploadFile,
+                downloadFile: downloadFile,
+                deleteFile: deleteFile,
+              }}
+              formUrl={formServiceApiUrl}
+            >
+              <GoabFormItem error={schemaError} label="">
+                <JSONFormPreviewer
+                  onChange={({ data }) => {
+                    setData(data);
+                  }}
+                  data={data}
+                  dataSchema={dataSchema}
+                  uiSchema={uiSchema}
+                  error={schemaError}
+                  registerData={registerData}
+                  nonAnonymous={nonAnonymous}
+                  dataList={dataList}
+                />
+              </GoabFormItem>
+            </ContextProvider>
+          </div>
+        </GoabTab>
+        <GoabTab heading="Data" data-testid="data-view">
+          <div className={styles['review-page-tab-wrapper']}>
+            {data && <div className={styles.PRE}>{JSON.stringify(data, null, 2)}</div>}
+          </div>
+        </GoabTab>
+      </>
+    );
+  }, [definition?.submissionPdfTemplate, data, dataSchema, uiSchema, schemaError, fileList, pdfFile, currentPDF, jobList, loading]);
+
+
+
+  return (
+    <GoabTabs key={definition?.submissionPdfTemplate ? 'with-pdf' : 'no-pdf'} data-testid="preview-tabs">
+      {tabs}
     </GoabTabs>
   );
 };

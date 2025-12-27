@@ -34,6 +34,10 @@
   padding: var(--goa-space-m);
 }
 
+.Margin { 
+  margin: var(--goa-space-s) 0 var(--goa-space-s) 0;
+}
+
 .spinner-padding {
   margin: 200px 0 0 0;
 }
@@ -91,6 +95,101 @@
 
 }
 
+.goACheckboxPad {
+  margin-left: 4px;
+}
+
+.h3Inline {
+  display: inline-block;
+  position: relative;
+  top: var(--goa-space-s);
+}
+
+.toolTipAdjust {
+  position: relative;
+  top: var(--goa-space-s);
+  display: inline-block;
+}
+
+.DispositionFormItem {
+  margin-bottom: 1.5rem;
+  margin-left: 3px;
+  margin-right: 3px;
+}
+
+
+.DescriptionItem {
+  margin-left: 3px;
+  margin-right: 3px;
+}
+
+.RowFlex {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+};
+
+.EmptyBoxSpace {
+  height: 1.5rem;
+  width: 1.5rem;
+};
+
+.ActionSpace {
+  height: 29px;
+  width: 56px;
+};
+
+.Flex {
+  display: flex;
+}
+
+.submissionRecordsBox {
+  margin-bottom: 12px;
+  margin-left: 4px;
+}
+
+.Anchor {
+  color: #0070c4;
+  text-decoration: underline;
+  outline: none;
+  cursor: pointer;
+}
+
+.queueTaskDropdown {
+  width: 50%;
+  margin-top: 0.25rem;
+  margin-bottom: 3rem;
+}
+
+.fakeButton {
+  height: 42px;
+}
+
+.h3 {
+  margin-top: 2rem !important;
+}
+
+.submissionConfigurationPadding {
+  padding: var(--goa-space-s);
+}
+
+.rightAlign {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  margin-left: auto;
+}
+
+.flexRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.formFormItem {
+  margin-bottom: 1.5rem;
+  margin-left: 3px;
+  margin-right: 3px;
+}
 
 .form-editor {
   width: 100%;
@@ -165,8 +264,14 @@
 }
 
 
-.borderBottom {
+.life-cycle-container {
   border-bottom: 1px solid #ccc;
+
+  h3 {
+    margin-bottom: var(--goa-space-m);
+    margin-top: 0
+  }
+
 }
 
 .scrollPane {
