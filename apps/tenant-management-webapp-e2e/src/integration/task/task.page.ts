@@ -4,7 +4,7 @@ class TaskPage {
   }
 
   addQueueModalTitle() {
-    return cy.xpath('//*[@testid="add-queue-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="add-queue-modal" and @open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   queueModalCancelButton() {

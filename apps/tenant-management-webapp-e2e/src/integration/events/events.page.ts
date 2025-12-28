@@ -54,7 +54,7 @@ class eventsPage {
   }
 
   definitionModalTitle() {
-    return cy.xpath('//*[@testid="definition-form" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   definitionModalNamespaceFormItem() {
@@ -140,7 +140,7 @@ class eventsPage {
   }
 
   streamModalTitle() {
-    return cy.xpath('//*[@testid="stream-form" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="stream-form" and @open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   streamModalNameInput() {

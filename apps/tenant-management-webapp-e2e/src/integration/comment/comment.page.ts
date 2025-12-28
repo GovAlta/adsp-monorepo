@@ -4,7 +4,7 @@ class CommentPage {
   }
 
   addTopicTypeModalTitle() {
-    return cy.xpath('//*[@testid="topicType-comment" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="topicType-comment" and @open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   addTopicTypeModalCancelButton() {
@@ -86,7 +86,10 @@ class CommentPage {
   }
 
   topicTypeEditorEditTopicTypeModalTitle() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="topicType-comment"]/*[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="topicType-comment"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   topicTypeEditorEditTopicTypeModalNameInput() {
@@ -114,7 +117,10 @@ class CommentPage {
   }
 
   addTopicModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="add-topic-modal"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="add-topic-modal"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   addTopicModalName() {
@@ -179,7 +185,10 @@ class CommentPage {
   }
 
   addCommentModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="add-comment-modal"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="add-comment-modal"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   addCommentModalComment() {
@@ -227,7 +236,10 @@ class CommentPage {
   }
 
   editCommentModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="edit-comment-modal"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="edit-comment-modal"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   editCommentModalComment() {
@@ -239,7 +251,10 @@ class CommentPage {
   }
 
   deleteCommentModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   deleteCommentModalContent() {
@@ -255,7 +270,10 @@ class CommentPage {
   }
 
   deleteTopicModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   deleteTopicModalContentTopicName() {
@@ -265,7 +283,10 @@ class CommentPage {
   }
 
   deleteTopicTypeModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   deleteTopicTypeModalContentTopicName() {

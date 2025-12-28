@@ -30,7 +30,7 @@ class feedbackPage {
   }
 
   feedbackSitesSiteModalTitle() {
-    return cy.xpath('//goa-modal[@testid="add-site-modal"]/div[@slot="heading"]');
+    return cy.xpath('//goa-modal[@testid="add-site-modal"]').shadow().find('[data-testid="modal-title"]');
   }
 
   feedbackSitesSiteModalAnonymousCheckbox() {

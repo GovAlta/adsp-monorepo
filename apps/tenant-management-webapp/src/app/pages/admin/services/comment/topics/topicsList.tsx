@@ -115,7 +115,7 @@ export const TopicsList = (): JSX.Element => {
               const selectedTopicType = topicTypes[detail.value] ? true : false;
               setIsSelectedCoreType(selectedTopicType);
               dispatch(clearComments());
-              setSelectedType(selectedType);
+              setSelectedType(detail.value as string);
             }}
             aria-label="select-comment-topic-type-dropdown"
             width="100%"

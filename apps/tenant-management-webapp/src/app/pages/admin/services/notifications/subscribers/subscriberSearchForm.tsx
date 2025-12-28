@@ -36,7 +36,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
             id="name"
             width="100%"
             value={criteria?.name}
-            onChange={(detail: GoabInputOnChangeDetail) => onChangeFn}
+            onChange={(detail: GoabInputOnChangeDetail) => onChangeFn(detail.name, detail.value)}
           />
         </GoabFormItem>
         <GoabFormItem label="Search subscriber email">
@@ -47,7 +47,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
             width="100%"
             id="email"
             value={criteria?.email}
-            onChange={(detail: GoabInputOnChangeDetail) => onChangeFn}
+            onChange={(detail: GoabInputOnChangeDetail) => onChangeFn(detail.name, detail.value)}
           />
         </GoabFormItem>
         <GoabFormItem label="Search subscriber phone">
@@ -58,7 +58,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
             id="sms"
             width="100%"
             value={criteria?.sms}
-            onChange={(detail: GoabInputOnChangeDetail) => onChangeFn}
+            onChange={(detail: GoabInputOnChangeDetail) => onChangeFn(detail.name, detail.value)}
           />
         </GoabFormItem>
       </GoabGrid>

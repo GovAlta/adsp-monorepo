@@ -168,10 +168,10 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
               name="TopicTypes"
               value={selectedTopicType}
               onChange={(detail: GoabDropdownOnChangeDetail) => {
-                setSelectedTopic(selectedTopicType);
+                setSelectedTopic(detail.value as string);
                 validators.remove('typeId');
-                validators['typeId'].check(selectedTopicType);
-                setTopic({ ...topic, typeId: selectedTopicType });
+                validators['typeId'].check(detail.value);
+                setTopic({ ...topic, typeId: detail.value });
               }}
               aria-label="add-select-topicType-dropdown"
               width={'54ch'}

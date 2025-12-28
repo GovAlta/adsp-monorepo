@@ -62,7 +62,7 @@ class ConfigurationServicePage {
   }
 
   configurationDefinitionModalTitle() {
-    return cy.xpath('//*[@testid="definition-form" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   addConfigurationDefinitionModalNamespaceField() {
@@ -130,7 +130,7 @@ class ConfigurationServicePage {
   }
 
   revisionCreationConfirmationModalHeading() {
-    return cy.xpath('//goa-modal[@open="true"]//div[@slot="heading"]');
+    return cy.xpath('//goa-modal[@open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   revisionCreationConfirmationModalCreateButton() {
@@ -176,7 +176,10 @@ class ConfigurationServicePage {
   }
 
   revisionTableEditRevisionModalTitle() {
-    return cy.xpath('//goa-modal[@testid="definition-form" and @open="true"]/*[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@testid="definition-form" and @open="true"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   revisionTableEditRevisionModalFormItem() {
@@ -192,7 +195,7 @@ class ConfigurationServicePage {
   }
 
   revisionTableSetActiveRevisionModalHeading() {
-    return cy.xpath('//goa-modal[@open="true"]//*[@slot="heading"]');
+    return cy.xpath('//goa-modal[@open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   revisionTableSetActiveRevisionModalSetActiveButton() {

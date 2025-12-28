@@ -10,7 +10,7 @@ class PDFServicePage {
   }
 
   pdfAddTemplateModalHeading() {
-    return cy.xpath('//goa-modal[@open="true"]/*[@slot="heading"]');
+    return cy.xpath('//goa-modal[@open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   pdfAddTemplateModalName() {
@@ -60,7 +60,7 @@ class PDFServicePage {
   }
 
   pdfTemplateDeleteConfirmationModalHeading() {
-    return cy.xpath('//*[@testid="delete-confirmation"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="delete-confirmation"]').shadow().find('[data-testid="modal-title"]');
   }
 
   pdfTemplateDeleteConfirmationModalContent() {
