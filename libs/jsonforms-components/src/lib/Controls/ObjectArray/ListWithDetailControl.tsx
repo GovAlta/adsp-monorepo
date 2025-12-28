@@ -41,6 +41,7 @@ import {
   UpdateListContainer,
   TabName,
   IconPadding,
+  DetailMargin,
 } from './styled-components';
 import { Visible } from '../../util';
 import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
@@ -849,19 +850,67 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
 
     return (
       <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
-        <ToolBarHeader>
-          {listTitle && this.state.currentListPage === 0 && (
-            <MarginTop>
-              <ObjectArrayTitle>
-                {listTitle} <span>{additionalProps.required && '(required)'}</span>
-                {this.state.maxItemsError && (
-                  <span style={{ color: 'red', marginLeft: '1rem' }}>{this.state.maxItemsError}</span>
-                )}
-              </ObjectArrayTitle>
-            </MarginTop>
-          )}
-          {/* {this.state.currentListPage > 0 && <ObjectArrayTitle>{name}</ObjectArrayTitle>} */}
-          {this.state.currentListPage === 0 && data === 0 && (
+        <DetailMargin>
+          <ToolBarHeader>
+            {listTitle && this.state.currentListPage === 0 && (
+              <MarginTop>
+                <ObjectArrayTitle>
+                  {listTitle} <span>{additionalProps.required && '(required)'}</span>
+                  {this.state.maxItemsError && (
+                    <span style={{ color: 'red', marginLeft: '1rem' }}>{this.state.maxItemsError}</span>
+                  )}
+                </ObjectArrayTitle>
+              </MarginTop>
+            )}
+            {this.state.currentListPage === 0 && data === 0 && (
+              <ObjectArrayToolBar
+                data={data}
+                errors={errors}
+                label={label}
+                addItem={(path, value) => () => {
+                  this.addItem(path, value);
+                }}
+                numColumns={0}
+                path={path}
+                uischema={controlElement}
+                schema={schema}
+                rootSchema={rootSchema}
+                enabled={enabled}
+                setCurrentListPage={(listPage: number) => {
+                  this.setState({
+                    currentListPage: listPage,
+                  });
+                }}
+                currentListPage={this.state.currentListPage}
+                buttonType="secondary"
+              />
+            )}
+          </ToolBarHeader>
+          <div>
+            <ObjectArrayList
+              path={path}
+              schema={schema}
+              uischema={uischema}
+              enabled={enabled}
+              openDeleteDialog={openDeleteDialog}
+              translations={{}}
+              data={data}
+              cells={cells}
+              config={config}
+              currentIndex={this.props.currentTab}
+              setCurrentIndex={this.props.setCurrentTab}
+              setCurrentListPage={(listPage: number) => {
+                this.setState({
+                  currentListPage: listPage,
+                });
+              }}
+              errors={errors}
+              currentListPage={this.state.currentListPage}
+              listTitle={listTitle}
+              {...additionalProps}
+            />
+          </div>
+          {this.state.currentListPage === 0 && data > 0 && (
             <ObjectArrayToolBar
               data={data}
               errors={errors}
@@ -881,57 +930,10 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
                 });
               }}
               currentListPage={this.state.currentListPage}
-              buttonType="secondary"
+              buttonType="tertiary"
             />
           )}
-        </ToolBarHeader>
-        <div>
-          <ObjectArrayList
-            path={path}
-            schema={schema}
-            uischema={uischema}
-            enabled={enabled}
-            openDeleteDialog={openDeleteDialog}
-            translations={{}}
-            data={data}
-            cells={cells}
-            config={config}
-            currentIndex={this.props.currentTab}
-            setCurrentIndex={this.props.setCurrentTab}
-            setCurrentListPage={(listPage: number) => {
-              this.setState({
-                currentListPage: listPage,
-              });
-            }}
-            errors={errors}
-            currentListPage={this.state.currentListPage}
-            listTitle={listTitle}
-            {...additionalProps}
-          />
-        </div>
-        {this.state.currentListPage === 0 && data > 0 && (
-          <ObjectArrayToolBar
-            data={data}
-            errors={errors}
-            label={label}
-            addItem={(path, value) => () => {
-              this.addItem(path, value);
-            }}
-            numColumns={0}
-            path={path}
-            uischema={controlElement}
-            schema={schema}
-            rootSchema={rootSchema}
-            enabled={enabled}
-            setCurrentListPage={(listPage: number) => {
-              this.setState({
-                currentListPage: listPage,
-              });
-            }}
-            currentListPage={this.state.currentListPage}
-            buttonType="tertiary"
-          />
-        )}
+        </DetailMargin>
       </Visible>
     );
   }
