@@ -16,7 +16,7 @@ class StatusServicePage {
   }
 
   noticeModalTitle() {
-    return cy.xpath('//*[@testid="notice-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="notice-modal" and @open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   noticeModalDescField() {
@@ -126,7 +126,7 @@ class StatusServicePage {
   }
 
   addEditApplicationModalTitle() {
-    return cy.xpath('//goa-modal[@open="true"]//*[@slot="heading"]');
+    return cy.xpath('//goa-modal[@open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   addEditApplicationNameModalField() {
@@ -178,7 +178,7 @@ class StatusServicePage {
   }
 
   manualStatusChangeModalTitle() {
-    return cy.xpath('//goa-modal[@open="true"]//*[@slot="heading"]');
+    return cy.xpath('//goa-modal[@open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   manualStatusChangeModalStatusRadioGroup() {
@@ -204,7 +204,7 @@ class StatusServicePage {
   }
 
   editContactInformationModal() {
-    return cy.xpath('//*[@testid="edit-contact-information-status"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="edit-contact-information-status"]').shadow().find('[data-testid="modal-title"]');
   }
 
   editContactInformationEmail() {

@@ -173,7 +173,7 @@ export const TestStream = (): JSX.Element => {
               value={selectedSteamId}
               width="100%"
               onChange={(detail: GoabDropdownOnChangeDetail) => {
-                setSelectedStreamId([detail.values.toString()]);
+                setSelectedStreamId(detail.value ? [detail.value] : []);
               }}
               aria-label="select-test-stream-dropdown"
             >

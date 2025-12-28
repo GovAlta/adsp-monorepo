@@ -16,7 +16,10 @@ class CachePage {
   }
 
   targetModalTitle() {
-    return cy.xpath('//goa-modal[@testid="cache-target-modal" and @open="true"]//*[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@testid="cache-target-modal" and @open="true"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   targetModalCancelButton() {

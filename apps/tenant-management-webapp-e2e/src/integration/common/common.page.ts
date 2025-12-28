@@ -34,7 +34,7 @@ class Common {
   }
 
   deleteConfirmationModalTitle() {
-    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]');
   }
 
   deleteConfirmationModalContent() {

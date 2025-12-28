@@ -4,7 +4,10 @@ class ScriptPage {
   }
 
   addScriptModalTitle() {
-    return cy.xpath('//goa-modal[@testid="add-script-modal" and @open="true"]//*[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@testid="add-script-modal" and @open="true"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   addScriptModalNameFormItem() {

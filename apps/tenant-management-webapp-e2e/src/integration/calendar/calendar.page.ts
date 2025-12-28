@@ -8,7 +8,7 @@ class CalendarPage {
   }
 
   addCalendarModalTitle() {
-    return cy.xpath('//goa-modal[@testid="add-calendar-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.get('goa-modal[testid="add-calendar-modal"][open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   calendarModalCancelButton() {
@@ -84,7 +84,7 @@ class CalendarPage {
   }
 
   eventsCalendarEventModalHeading() {
-    return cy.xpath('//goa-modal[@open="true"]/div[@slot="heading"]');
+    return cy.get('goa-modal[open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   eventsCalendarEventModalNameTextField() {
