@@ -28,9 +28,18 @@ class FormPage {
   }
 
   addDefinitionModalSaveButton() {
-    return cy.xpath(
-      '//goa-modal[@testid="definition-form" and @open="true"]/div[@slot="actions"]/goa-button-group/goa-button[text()="Save" and @disabled="false"]'
-    );
+    return cy
+      .get('goa-modal[testid="definition-form"][open="true"]')
+      .shadow()
+      .find('goa-button-group goa-button')
+      .shadow()
+      .find('button')
+      .contains('Save')
+      .should('not.be.disabled');
+
+    // return cy.xpath(
+    //   '//goa-modal[@testid="definition-form" and @open="true"]/div[@slot="actions"]/goa-button-group/goa-button[text()="Save" and @disabled="false"]'
+    // );
   }
 
   editorDefinitionNameValue() {
@@ -42,7 +51,8 @@ class FormPage {
   }
 
   editorSaveButtonEnabled() {
-    return cy.xpath('//*[@testid="definition-form-save" and @disabled="false"]');
+    return cy.get('goa-button[testid="definition-form-save"]').shadow().find('button').should('not.be.disabled');
+    //return cy.xpath('//*[@testid="definition-form-save" and @disabled="false"]');
   }
 
   editorSaveButton() {
