@@ -17,6 +17,7 @@ on:
           - status-service
           - form-app
           - pdf-service
+          - feedback-service
           - all
       CLIENT_SECRET:
         description: Keycloak credential for the artillery-cli client in the testing environment
@@ -80,7 +81,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Make reports directory
         run: mkdir reports
-      - name: Execute load tests form app
+      - name: Execute load tests for form app
         run: /home/node/artillery/bin/run run tests/form-app/load.yml --environment ${{ inputs.ENVIRONMENT }} --output reports/form-app-report.json
       - name: Archive tests reports
         uses: actions/upload-artifact@v4
@@ -96,8 +97,24 @@ jobs:
         uses: actions/checkout@v4
       - name: Make reports directory
         run: mkdir reports
-      - name: Execute load tests form app
+      - name: Execute load tests pdf service
         run: /home/node/artillery/bin/run run tests/pdf-service/load.yml --environment ${{ inputs.ENVIRONMENT }} --output reports/form-app-report.json
+      - name: Archive tests reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: artillery-test-report-event
+          path: reports/*
+  artillery-feedback-service:
+    runs-on: ubuntu-latest
+    container: artilleryio/artillery:latest
+    if: ${{ inputs.SERVICE_NAME == 'all' || inputs.SERVICE_NAME == 'feedback-service' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Make reports directory
+        run: mkdir reports
+      - name: Execute load tests for feedback service
+        run: /home/node/artillery/bin/run run tests/feedback-service/load.yml --environment ${{ inputs.ENVIRONMENT }} --output reports/form-app-report.json
       - name: Archive tests reports
         uses: actions/upload-artifact@v4
         with:
