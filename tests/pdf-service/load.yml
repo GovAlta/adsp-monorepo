@@ -1,10 +1,9 @@
 config:
   environments:
     dev:
-      target: 'https://file-service.adsp-dev.gov.ab.ca'
+      target: 'https://pdf-service.adsp-dev.gov.ab.ca'
     uat:
-      target: 'https://file-service.adsp-uat.alberta.ca'
-  processor: './functions.js'
+      target: 'https://pdf-service.adsp-uat.alberta.ca'
   defaults:
     headers:
       Content-Type: 'application/json'
@@ -17,22 +16,13 @@ config:
         - 'realm_id'
         - 'tenant_name'
         - 'client_id'
-    - path: './files.{{ $environment }}.csv'
-      skipHeader: true
-      fields:
-        - 'file_id'
-  variables:
-    typeId:
-      - 'artillery-load-test'
-    filename:
-      - 'logo.png'
   phases:
     - name: warm up
-      duration: 60
-      arrivalCount: 50
+      duration: 20
+      arrivalCount: 20
     - name: load
-      duration: 1
-      arrivalCount: 1
+      duration: 10
+      arrivalCount: 10
 before:
   flow:
     - log: 'Getting the access token (tenant: {{ realm_id }}) for client {{ client_id }}'
@@ -47,34 +37,19 @@ before:
             client_id: '{{ client_id }}',
             client_secret: '{{ $processEnvironment.ARTILLERY_CLIENT_SECRET }}',
           }
-
         capture:
           - json: '$.access_token'
             as: token
 scenarios:
-  - name: read file metadata
-    weight: 1
-    flow:
-      - get:
-          url: '/file/v1/files/{{ file_id }}'
-          headers:
-            authorization: 'Bearer {{ token }}'
-  - name: read and download file
-    weight: 1
-    flow:
-      - get:
-          url: '/file/v1/files/{{ file_id }}'
-          headers:
-            authorization: 'Bearer {{ token }}'
-      - get:
-          url: '/file/v1/files/{{ file_id }}/download'
-          headers:
-            authorization: 'Bearer {{ token }}'
-  - name: upload a file
+  - name: Create new PDF jobs
     weight: 1
     flow:
       - post:
-          url: '/file/v1/files'
+          url: '/pdf/v1/jobs'
           headers:
             authorization: 'Bearer {{ token }}'
-          beforeRequest: 'setFormFile'
+          json:
+            operation: generate
+            templateId: artillery-test
+            data: {}
+            filename: 'artillery-test.pdf'

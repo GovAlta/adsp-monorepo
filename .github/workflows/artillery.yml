@@ -16,6 +16,7 @@ on:
           - event-service
           - status-service
           - form-app
+          - pdf-service
           - all
       CLIENT_SECRET:
         description: Keycloak credential for the artillery-cli client in the testing environment
@@ -81,6 +82,22 @@ jobs:
         run: mkdir reports
       - name: Execute load tests form app
         run: /home/node/artillery/bin/run run tests/form-app/load.yml --environment ${{ inputs.ENVIRONMENT }} --output reports/form-app-report.json
+      - name: Archive tests reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: artillery-test-report-event
+          path: reports/*
+  artillery-pdf-service:
+    runs-on: ubuntu-latest
+    container: artilleryio/artillery:latest
+    if: ${{ inputs.SERVICE_NAME == 'all' || inputs.SERVICE_NAME == 'pdf-service' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Make reports directory
+        run: mkdir reports
+      - name: Execute load tests form app
+        run: /home/node/artillery/bin/run run tests/pdf-service/load.yml --environment ${{ inputs.ENVIRONMENT }} --output reports/form-app-report.json
       - name: Archive tests reports
         uses: actions/upload-artifact@v4
         with:
