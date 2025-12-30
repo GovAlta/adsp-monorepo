@@ -3,6 +3,8 @@ config:
     dev:
       # Configuration service is behind the event service
       target: 'https://configuration-service.adsp-dev.gov.ab.ca'
+    uat:
+      target: 'https://configuration-service.adsp-uat.alberta.ca'
   defaults:
     headers:
       Content-Type: 'application/json'
