@@ -99,6 +99,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
     <GoabModal
       open={initCalendarEvent !== null}
       heading={modalTitle}
+      testId="add-edit-calendar-event-modal"
       actions={
         <GoabButtonGroup alignment="end">
           <GoabButton
