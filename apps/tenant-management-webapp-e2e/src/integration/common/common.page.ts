@@ -34,7 +34,12 @@ class Common {
   }
 
   deleteConfirmationModalTitle() {
-    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
+
+    //  return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
   }
 
   deleteConfirmationModalContent() {

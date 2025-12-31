@@ -144,19 +144,19 @@ class CommentPage {
   }
 
   addTopicModalSaveBtn() {
-    return cy
-      .xpath('//goa-modal[@testid="add-topic-modal"]//goa-button[text()="Save" ]')
-      .shadow()
-      .find('button[text()="Save"]')
-      .should('not.be.disabled');
+    // return cy.xpath('//goa-modal[@testid="add-topic-modal"]//goa-button[text()="Save" and @disabled="false"]');
+    return cy.xpath('//goa-button[testid="comment-save"]').shadow().find('button[data-testid="comment-save"]');
   }
 
   addTopicModalCancelBtn() {
     return cy
-      .xpath('//goa-modal[@testid="add-topic-modal"]//goa-button[text()="Cancel" ]')
+      .get('goa-modal[testid="add-topic-modal"]')
+      .find('goa-button')
+      .contains('Cancel')
       .shadow()
-      .find('button[text()="Cancel"]')
+      .find('button')
       .should('not.be.disabled');
+    // return cy.xpath('//goa-modal[@testid="add-topic-modal"]//goa-button[text()="Cancel" and @disabled="false"]');
   }
 
   topicLoadMoreButton() {
@@ -220,7 +220,8 @@ class CommentPage {
       .find('button')
       .contains('Save')
       .should('not.be.disabled');
-    //  return cy.xpath('//goa-modal[@testid="add-comment-modal"]//goa-button[text()="Save" and @disabled="false"]');
+
+    // return cy.xpath('//goa-modal[@testid="add-comment-modal"]//goa-button[text()="Save" and @disabled="false"]');
   }
 
   addCommentModalCancelBtn() {

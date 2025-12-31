@@ -84,7 +84,12 @@ class CalendarPage {
   }
 
   eventsCalendarEventModalHeading() {
-    return cy.get('goa-modal[open="true"]').shadow().find('[data-testid="modal-title"]');
+    return cy
+      .get('goa-modal[testid="add-edit-calendar-event-modal"][open="true"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
+
+    // return cy.get('goa-modal[open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   eventsCalendarEventModalNameTextField() {
