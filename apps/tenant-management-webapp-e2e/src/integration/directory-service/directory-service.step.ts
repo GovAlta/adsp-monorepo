@@ -42,7 +42,7 @@ When('the user clicks Add entry button', function () {
 Then('the user {string} Add entry modal', function (viewOrNot) {
   switch (viewOrNot) {
     case 'views':
-      directoryObj.entryModalTitle().invoke('text').should('eq', 'Add entry');
+      directoryObj.entryModalTitle().should('have.attr', 'heading', 'Add entry');
       break;
     case 'should not view':
       directoryObj.entryModalTitle().should('not.exist');
@@ -53,7 +53,7 @@ Then('the user {string} Add entry modal', function (viewOrNot) {
 });
 
 Then('the user views Edit entry modal', function () {
-  directoryObj.entryModalTitle().invoke('text').should('eq', 'Edit entry');
+  directoryObj.entryModalTitle().should('have.attr', 'heading', 'Edit entry');
 });
 
 Then('the user views Delete entry modal for {string}', function (entryName) {
@@ -91,6 +91,7 @@ Then('the user clicks Save button in Entry modal', function () {
 
 When('the user clicks Cancel button in Entry modal', function () {
   directoryObj.entryModalCancelButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
 });
 
 Then(
