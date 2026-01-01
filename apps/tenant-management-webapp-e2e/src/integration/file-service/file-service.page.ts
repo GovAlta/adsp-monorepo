@@ -134,7 +134,7 @@ class FileServicePage {
   }
 
   fileTypeDeleteModalContent() {
-    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//div[3]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//div[2]');
   }
 
   fileTypeInUseModalTitle() {
