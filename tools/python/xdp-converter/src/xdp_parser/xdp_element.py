@@ -86,10 +86,10 @@ class XdpElement(ABC):
         label = None
         if self.labels:
             label = self.labels.get(self.get_name())
-        if not label:
-            label = strip_label_prefix(self.get_name())
-            if label:
-                label = split_camel_case(label)
+        # if not label:
+        #     label = strip_label_prefix(self.get_name())
+        #     if label:
+        #         label = split_camel_case(label)
         return label
 
     def get_enumeration_values(self):

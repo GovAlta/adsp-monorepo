@@ -12,9 +12,10 @@ _LABEL_PREFIXES = ["txt", "btn", "chk", "dte", "lbl", "cbo", "rb"]
 
 
 def strip_label_prefix(label: str) -> str:
-    for prefix in _LABEL_PREFIXES:
-        if label.lower().startswith(prefix.lower()):
-            return label[len(prefix) :]
+    if label:
+        for prefix in _LABEL_PREFIXES:
+            if label.lower().startswith(prefix.lower()):
+                return label[len(prefix) :]
     return label
 
 

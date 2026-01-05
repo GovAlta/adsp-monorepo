@@ -36,7 +36,7 @@ class FormInput(FormElement):
 
     def build_ui_schema(self):
         control = {"type": "Control", "scope": f"#/properties/{self.name}"}
-        control["label"] = strip_label_prefix(self.label)
+        control["label"] = strip_label_prefix(self.label) if self.label else ""
         if self.is_radio:
             control["options"] = {"format": "radio"}
         return control
