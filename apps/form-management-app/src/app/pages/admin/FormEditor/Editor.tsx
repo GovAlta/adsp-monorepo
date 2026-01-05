@@ -24,6 +24,7 @@ import {
   FormDataSchemaElementCompletionItemProvider,
   FormUISchemaElementCompletionItemProvider,
 } from '../../../utils/autoComplete/form';
+import { LifeCycleContainer } from './LifeCycleContainer';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -52,6 +53,10 @@ export interface EditorProps {
   roles: ClientElement[];
   updateEditorFormDefinition: (update: Partial<FormDefinition>) => void;
   fetchKeycloakServiceRoles: () => void;
+  queueTasks: any;
+  setIntakePeriodModal: (value: boolean) => void;
+  intakePeriodModal: boolean;
+  selectedCoreEvent: any;
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -79,6 +84,10 @@ export const Editor: React.FC<EditorProps> = ({
   roles,
   updateEditorFormDefinition,
   fetchKeycloakServiceRoles,
+  queueTasks,
+  setIntakePeriodModal,
+  intakePeriodModal,
+  selectedCoreEvent,
 }) => {
   const { errors, validators } = useValidators(
     'name',
@@ -227,6 +236,17 @@ export const Editor: React.FC<EditorProps> = ({
                 {isLoadingRoles && <div className={styles.textLoadingIndicator}>Loading roles from access service</div>}
               </div>
             )}
+          </GoabTab>
+          <GoabTab heading="Lifecycle" data-testid="dcm-form-editor-ui-schema-tab">
+            <LifeCycleContainer
+              definition={definition}
+              errors={errors}
+              updateEditorFormDefinition={updateEditorFormDefinition}
+              queueTasks={queueTasks}
+              setIntakePeriodModal={setIntakePeriodModal}
+              intakePeriodModal={intakePeriodModal}
+              selectedCoreEvent={selectedCoreEvent}
+            />
           </GoabTab>
         </GoabTabs>
         <SubmitButtonsBar

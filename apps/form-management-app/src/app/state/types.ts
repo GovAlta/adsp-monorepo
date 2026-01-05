@@ -62,6 +62,14 @@ interface DispositionState {
   description: string;
 }
 
+export enum SecurityClassification {
+  ProtectedA = 'protected a',
+  ProtectedB = 'protected b',
+  ProtectedC = 'protected c',
+  Public = 'public',
+}
+
+
 export interface Intake {
   urn: string;
   start: string;
@@ -69,6 +77,18 @@ export interface Intake {
   isAllDay: boolean;
   isUpcoming: boolean;
 }
+
+export interface QueueTaskToProcess {
+  queueNameSpace: string;
+  queueName: string;
+}
+
+export interface Disposition {
+  id: string;
+  name: string;
+  description: string;
+}
+
 
 export interface FormDefinition {
   urn: string;
@@ -82,6 +102,9 @@ export interface FormDefinition {
   clerkRoles: string[];
   assessorRoles: string[];
   dispositionStates: DispositionState[];
+  securityClassification?: SecurityClassification;
+  submissionPdfTemplate: string;
+  queueTaskToProcess: QueueTaskToProcess
   submissionRecords: boolean;
   anonymousApply: boolean;
   oneFormPerApplicant: boolean;
