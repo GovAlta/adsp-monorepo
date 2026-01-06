@@ -355,6 +355,7 @@ interface MainRowProps {
   // eslint-disable-next-line
   rowData?: Record<string, any>;
   uischema?: ControlElement;
+  schema?: JsonSchema;
 }
 
 const NonEmptyRowComponent = ({
@@ -564,6 +565,7 @@ export function humanizeAjvError(error: ErrorObject, schema: JsonSchema, uischem
   const path = getEffectiveInstancePath(error);
   const label = resolveLabel(path, schema, uischema);
 
+
   switch (error.keyword) {
     case 'required':
       return `${label} is required`;
@@ -613,18 +615,31 @@ const MainTab = ({
   const rowData = getDataAtPath(core?.data, childPath);
   const orderedRowData = orderRowData(rowData, uischema?.options?.detail);
 
-  const rowErrors = core?.errors
-    ?.filter((e) => {
-      const base = `/${childPath.replace(/\./g, '/')}`;
-      return e.instancePath === base || e.instancePath.startsWith(base + '/');
-    })
-    .filter((e) => (e?.message?.length || 0) > 0)
-    .map((e) => humanizeAjvError(e, core.schema, core.uischema))
-    .map((msg, index, arr) => `${msg}${index < arr.length - 1 ? ', ' : ''}`);
+  function resolveField(e: any): string {
+    if (e.keyword === 'required') {
+      return e.params.missingProperty;
+    }
+
+    const path = e.instancePath.split('/');
+    return path[path.length - 1];
+  }
+
+  const rowBase = `/${childPath.replace(/\./g, '/')}`;
+
+  const fieldErrors = core?.errors
+    ?.filter((e) => e.instancePath === rowBase || e.instancePath.startsWith(rowBase + '/'))
+    .reduce((acc, e) => {
+      const field = resolveField(e);
+      acc[field] = humanizeAjvError(e, core.schema, core.uischema);  //e.message;
+      return acc;
+    }, {} as Record<string, string>);
+
+  const errorText =
+    fieldErrors && Object.values(fieldErrors).length > 0 ? Object.values(fieldErrors).join(', ') : undefined;
   return (
     <div key={childPath} data-testid={`object-array-main-item-${rowIndex}`}>
-      {rowErrors?.length ? (
-        <GoabFormItem error={rowErrors?.length ? rowErrors : null}>
+      {errorText ? (
+        <GoabFormItem error={errorText}>
           <MainItemComponent
             rowData={orderedRowData}
             childPath={childPath}
@@ -731,6 +746,8 @@ const ObjectArrayList = ({
     setCurrentIndex(index);
   };
 
+  const continueButtonTitle = uischema?.options?.componentProps?.listWithDetailsContinueButtonTitle;
+
   return (
     <ListContainer>
       <RowFlex>
@@ -750,6 +767,7 @@ const ObjectArrayList = ({
                   current={current}
                   setCurrentListPage={(index: number) => setCurrentListPage(index)}
                   uischema={uischema}
+                  schema={schema}
                 />
               );
             })}
@@ -783,7 +801,7 @@ const ObjectArrayList = ({
               }}
               testId="next-list-button"
             >
-              Continue
+              {continueButtonTitle ? continueButtonTitle : 'Continue'}
             </GoabButton>
           </UpdateListContainer>
         )}
