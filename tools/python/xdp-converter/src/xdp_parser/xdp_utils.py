@@ -187,3 +187,25 @@ def compute_full_xdp_path(node, parent_map):
         node = parent_map.get(node)
 
     return ".".join(parts)
+
+
+def js_unescape(s: str) -> str:
+    s = (
+        s.replace(r"\\", "\\")
+        .replace(r"\/", "/")
+        .replace(r"\'", "'")
+        .replace(r"\"", '"')
+        .replace(r"\n", "\n")
+        .replace(r"\r", "\r")
+        .replace(r"\t", "\t")
+        .replace(r"\b", "\b")
+        .replace(r"\f", "\f")
+    )
+
+    def _u(m):
+        try:
+            return chr(int(m.group(1), 16))
+        except Exception:
+            return m.group(0)
+
+    return re.sub(r"\\u([0-9a-fA-F]{4})", _u, s)

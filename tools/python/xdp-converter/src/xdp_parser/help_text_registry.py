@@ -20,8 +20,8 @@ class HelpTextRegistry:
         message_parser = JSHelpTextParser(tree)
         self._messages = message_parser.get_messages()
 
-    def hasAnnotation(self, label: str) -> bool:
+    def has_annotation(self, label: str) -> bool:
         return label in self._messages
 
-    def getAnnotation(self, label: str) -> str:
+    def get_annotation(self, label: str) -> str:
         return self._messages.get(label, "")
