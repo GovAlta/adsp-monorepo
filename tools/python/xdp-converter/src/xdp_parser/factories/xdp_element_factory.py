@@ -51,7 +51,7 @@ class XdpElementFactory(AbstractXdpFactory):
         return None
 
     def handle_help_text(self, elem, help_text):
-        return XdpHelpText(help_text, self.context)
+        return XdpHelpText(elem, help_text, self.context)
 
     # ----------------------------------------------------------------------
     # GROUP LOGIC

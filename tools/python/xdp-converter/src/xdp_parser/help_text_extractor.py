@@ -1,5 +1,6 @@
 import re
 import xml.etree.ElementTree as ET
+from schema_generator.html_to_markdown import html_to_markdown
 from xdp_parser.help_text_registry import HelpTextRegistry
 from xdp_parser.xdp_utils import js_unescape
 
@@ -25,8 +26,8 @@ class HelpTextExtractor:
         # ------------------------------------------------------------
         if tag in {"field", "exclgroup"}:
             msg = HelpTextExtractor._help_from_click_messagebox(node)
-            if msg:
-                msg = msg.strip()[:MAX_SIZE_EVENT]
+            if msg and msg.get("text"):
+                msg = msg["text"].strip()[:MAX_SIZE_EVENT]
                 if len(msg) >= MIN_SIZE_EVENT:
                     return msg
 
@@ -44,10 +45,12 @@ class HelpTextExtractor:
 
             exdata = node.find(".//{*}value/{*}exData[@contentType='text/html']")
             if exdata is not None:
-                text = " ".join(exdata.itertext()).strip()
-                text = re.sub(r"\s+", " ", text)
-                if len(text) >= MIN_SIZE_DRAW:
-                    return text
+                html = HelpTextExtractor._extract_html_from_exdata(exdata)
+                if html:
+                    md = html_to_markdown(html)
+                    md = re.sub(r"\n{3,}", "\n\n", md).strip()
+                    if len(md) >= MIN_SIZE_DRAW:
+                        return md
 
             text_node = node.find(".//{*}value/{*}text")
             if text_node is not None and (text_node.text or "").strip():
@@ -74,23 +77,19 @@ class HelpTextExtractor:
                 if not script_text:
                     continue
 
-                m = re.search(
-                    r"xfa\.host\.messageBox\s*\(\s*(?P<q>['\"])(?P<msg>(?:\\.|(?!\1).)*)\1",
-                    script_text,
-                    re.DOTALL,
-                )
-                if not m:
+                help = extract_messagebox(script_text)
+                if not help:
                     continue
 
-                raw = m.group("msg")
-                raw = raw.replace(r"\n", "\n").replace(r"\t", "\t").replace(r"\\", "\\")
-                raw = raw.replace(r"\'", "'").replace(r"\"", '"')
+                msg = help["text"]
+                msg = msg.replace(r"\n", "\n").replace(r"\t", "\t").replace(r"\\", "\\")
+                msg = msg.replace(r"\'", "'").replace(r"\"", '"')
 
                 # preserve newlines, normalize stray spaces
-                raw = re.sub(r"[ \t]+\n", "\n", raw)
-                raw = re.sub(r"\n[ \t]+", "\n", raw)
+                msg = re.sub(r"[ \t]+\n", "\n", msg)
+                msg = re.sub(r"\n[ \t]+", "\n", msg)
 
-                return raw
+                return {"text": msg, "title": help["title"]}
 
         return None
 
@@ -121,18 +120,9 @@ class HelpTextExtractor:
                 return {"title": key, "text": text, "source": "HelpTextRegistry"}
 
         # Inside a direct messageBox
-        m = re.search(
-            r"xfa\.host\.messageBox\s*\(\s*(?P<q1>['\"])(?P<msg>(?:\\.|(?!\1).)*)\1"
-            r"(?:\s*,\s*(?P<q2>['\"])(?P<title>(?:\\.|(?!\3).)*)\3)?",
-            js,
-            re.DOTALL,
-        )
+        m = extract_messagebox(js)
         if m:
-            msg = js_unescape(m.group("msg") or "").strip()
-            title = js_unescape(m.group("title") or "").strip() or None
-            if msg:
-                return {"title": title, "text": msg, "source": "messageBox"}
-
+            return m
         return None
 
     @staticmethod
@@ -187,3 +177,60 @@ class HelpTextExtractor:
         tiny = w is not None and h is not None and w <= 7.0 and h <= 7.0
 
         return (tiny and (iconish or name_hint)) or (name_hint and iconish)
+
+    @staticmethod
+    def _extract_html_from_exdata(exdata: ET.Element) -> str:
+        # If exData contains nested markup, preserve it
+        children = list(exdata)
+        if children:
+            return "".join(
+                ET.tostring(c, encoding="unicode", method="html") for c in children
+            ).strip()
+
+        # Otherwise it may just be raw text that *is* HTML
+        return (exdata.text or "").strip()
+
+
+MSGBOX_RE = re.compile(
+    r"""
+    xfa\.host\.messageBox\s*\(\s*
+    (?P<arg1>
+        "(?:\\.|[^"\\])*"         # double-quoted string literal
+      | '(?:\\.|[^'\\])*'         # single-quoted string literal
+      | [A-Za-z_$][\w$]*          # identifier (e.g., message)
+    )
+    (?:\s*,\s*
+        (?P<arg2>
+            "(?:\\.|[^"\\])*"
+          | '(?:\\.|[^'\\])*'
+          | [A-Za-z_$][\w$]*
+        )
+    )?
+    """,
+    re.VERBOSE | re.DOTALL,
+)
+
+
+def _unquote_js_string(token: str) -> str:
+    token = token.strip()
+    if len(token) >= 2 and token[0] == token[-1] and token[0] in ("'", '"'):
+        return token[1:-1]
+    return token  # identifier/expression
+
+
+def extract_messagebox(js: str):
+    # Cheap prefilter
+    if "xfa.host.messageBox" not in js:
+        return None
+
+    # Optional: window around first hit to limit scanning
+    i = js.find("xfa.host.messageBox")
+    window = js[i : i + 20000] if i != -1 else js
+
+    m = MSGBOX_RE.search(window)
+    if not m:
+        return None
+
+    text = _unquote_js_string(m.group("arg1"))
+    title = _unquote_js_string(m.group("arg2")) if m.group("arg2") else None
+    return {"text": text, "title": title}

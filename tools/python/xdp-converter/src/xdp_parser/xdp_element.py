@@ -168,6 +168,17 @@ class XdpGeometry:
         """
         curr = node
 
+        if node not in parent_map:
+            print(
+                "🔥 node not in parent_map:",
+                "tag=",
+                node.tag,
+                "name=",
+                node.get("name"),
+            )
+            # optional: print node attribs for sanity
+            print("attribs:", node.attrib)
+
         while curr is not None:
             raw_x = curr.get("x")
             raw_y = curr.get("y")

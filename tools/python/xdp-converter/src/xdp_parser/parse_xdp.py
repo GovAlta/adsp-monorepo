@@ -135,9 +135,9 @@ class XdpParser:
             if elem.tag == "field" and HelpTextExtractor.is_help_icon_field(elem):
                 payload = HelpTextExtractor.get_help_from_click_event(elem)
                 if payload:
-                    print(f"Help text from icon: {payload}")
                     control = self.factory.handle_help_text(elem, payload["text"])
                     if control:
+                        print(f"help text control with geometry: {control.geometry}")
                         controls.append(control)
                     i += 1
                     continue
@@ -145,9 +145,9 @@ class XdpParser:
             # Help text from a draw element
             help_text = HelpTextExtractor.get_help_from_draw(elem)
             if help_text:
-                print(f"Help text from draw: {help_text}")
                 control = self.factory.handle_help_text(elem, help_text)
                 if control:
+                    print(f"help text control with geometry: {control.geometry}")
                     controls.append(control)
                 i += 1
                 continue
