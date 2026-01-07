@@ -41,7 +41,6 @@ import {
   UpdateListContainer,
   TabName,
   IconPadding,
-  DetailMargin,
 } from './styled-components';
 import { Visible } from '../../util';
 import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
@@ -356,6 +355,7 @@ interface MainRowProps {
   // eslint-disable-next-line
   rowData?: Record<string, any>;
   uischema?: ControlElement;
+  schema?: JsonSchema;
 }
 
 const NonEmptyRowComponent = ({
@@ -614,18 +614,31 @@ const MainTab = ({
   const rowData = getDataAtPath(core?.data, childPath);
   const orderedRowData = orderRowData(rowData, uischema?.options?.detail);
 
-  const rowErrors = core?.errors
-    ?.filter((e) => {
-      const base = `/${childPath.replace(/\./g, '/')}`;
-      return e.instancePath === base || e.instancePath.startsWith(base + '/');
-    })
-    .filter((e) => (e?.message?.length || 0) > 0)
-    .map((e) => humanizeAjvError(e, core.schema, core.uischema))
-    .map((msg, index, arr) => `${msg}${index < arr.length - 1 ? ', ' : ''}`);
+  function resolveField(e: any): string {
+    if (e.keyword === 'required') {
+      return e.params.missingProperty;
+    }
+
+    const path = e.instancePath.split('/');
+    return path[path.length - 1];
+  }
+
+  const rowBase = `/${childPath.replace(/\./g, '/')}`;
+
+  const fieldErrors = core?.errors
+    ?.filter((e) => e.instancePath === rowBase || e.instancePath.startsWith(rowBase + '/'))
+    .reduce((acc, e) => {
+      const field = resolveField(e);
+      acc[field] = humanizeAjvError(e, core.schema, core.uischema); //e.message;
+      return acc;
+    }, {} as Record<string, string>);
+
+  const errorText =
+    fieldErrors && Object.values(fieldErrors).length > 0 ? Object.values(fieldErrors).join(', ') : undefined;
   return (
     <div key={childPath} data-testid={`object-array-main-item-${rowIndex}`}>
-      {rowErrors?.length ? (
-        <GoabFormItem error={rowErrors?.length ? rowErrors : null}>
+      {errorText ? (
+        <GoabFormItem error={errorText}>
           <MainItemComponent
             rowData={orderedRowData}
             childPath={childPath}
@@ -732,6 +745,8 @@ const ObjectArrayList = ({
     setCurrentIndex(index);
   };
 
+  const continueButtonTitle = uischema?.options?.componentProps?.listWithDetailsContinueButtonTitle;
+
   return (
     <ListContainer>
       <RowFlex>
@@ -751,6 +766,7 @@ const ObjectArrayList = ({
                   current={current}
                   setCurrentListPage={(index: number) => setCurrentListPage(index)}
                   uischema={uischema}
+                  schema={schema}
                 />
               );
             })}
@@ -784,7 +800,7 @@ const ObjectArrayList = ({
               }}
               testId="next-list-button"
             >
-              Continue
+              {continueButtonTitle ? continueButtonTitle : 'Continue'}
             </GoabButton>
           </UpdateListContainer>
         )}
@@ -850,67 +866,19 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
 
     return (
       <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
-        <DetailMargin>
-          <ToolBarHeader>
-            {listTitle && this.state.currentListPage === 0 && (
-              <MarginTop>
-                <ObjectArrayTitle>
-                  {listTitle} <span>{additionalProps.required && '(required)'}</span>
-                  {this.state.maxItemsError && (
-                    <span style={{ color: 'red', marginLeft: '1rem' }}>{this.state.maxItemsError}</span>
-                  )}
-                </ObjectArrayTitle>
-              </MarginTop>
-            )}
-            {this.state.currentListPage === 0 && data === 0 && (
-              <ObjectArrayToolBar
-                data={data}
-                errors={errors}
-                label={label}
-                addItem={(path, value) => () => {
-                  this.addItem(path, value);
-                }}
-                numColumns={0}
-                path={path}
-                uischema={controlElement}
-                schema={schema}
-                rootSchema={rootSchema}
-                enabled={enabled}
-                setCurrentListPage={(listPage: number) => {
-                  this.setState({
-                    currentListPage: listPage,
-                  });
-                }}
-                currentListPage={this.state.currentListPage}
-                buttonType="secondary"
-              />
-            )}
-          </ToolBarHeader>
-          <div>
-            <ObjectArrayList
-              path={path}
-              schema={schema}
-              uischema={uischema}
-              enabled={enabled}
-              openDeleteDialog={openDeleteDialog}
-              translations={{}}
-              data={data}
-              cells={cells}
-              config={config}
-              currentIndex={this.props.currentTab}
-              setCurrentIndex={this.props.setCurrentTab}
-              setCurrentListPage={(listPage: number) => {
-                this.setState({
-                  currentListPage: listPage,
-                });
-              }}
-              errors={errors}
-              currentListPage={this.state.currentListPage}
-              listTitle={listTitle}
-              {...additionalProps}
-            />
-          </div>
-          {this.state.currentListPage === 0 && data > 0 && (
+        <ToolBarHeader>
+          {listTitle && this.state.currentListPage === 0 && (
+            <MarginTop>
+              <ObjectArrayTitle>
+                {listTitle} <span>{additionalProps.required && '(required)'}</span>
+                {this.state.maxItemsError && (
+                  <span style={{ color: 'red', marginLeft: '1rem' }}>{this.state.maxItemsError}</span>
+                )}
+              </ObjectArrayTitle>
+            </MarginTop>
+          )}
+          {/* {this.state.currentListPage > 0 && <ObjectArrayTitle>{name}</ObjectArrayTitle>} */}
+          {this.state.currentListPage === 0 && data === 0 && (
             <ObjectArrayToolBar
               data={data}
               errors={errors}
@@ -930,10 +898,57 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
                 });
               }}
               currentListPage={this.state.currentListPage}
-              buttonType="tertiary"
+              buttonType="secondary"
             />
           )}
-        </DetailMargin>
+        </ToolBarHeader>
+        <div>
+          <ObjectArrayList
+            path={path}
+            schema={schema}
+            uischema={uischema}
+            enabled={enabled}
+            openDeleteDialog={openDeleteDialog}
+            translations={{}}
+            data={data}
+            cells={cells}
+            config={config}
+            currentIndex={this.props.currentTab}
+            setCurrentIndex={this.props.setCurrentTab}
+            setCurrentListPage={(listPage: number) => {
+              this.setState({
+                currentListPage: listPage,
+              });
+            }}
+            errors={errors}
+            currentListPage={this.state.currentListPage}
+            listTitle={listTitle}
+            {...additionalProps}
+          />
+        </div>
+        {this.state.currentListPage === 0 && data > 0 && (
+          <ObjectArrayToolBar
+            data={data}
+            errors={errors}
+            label={label}
+            addItem={(path, value) => () => {
+              this.addItem(path, value);
+            }}
+            numColumns={0}
+            path={path}
+            uischema={controlElement}
+            schema={schema}
+            rootSchema={rootSchema}
+            enabled={enabled}
+            setCurrentListPage={(listPage: number) => {
+              this.setState({
+                currentListPage: listPage,
+              });
+            }}
+            currentListPage={this.state.currentListPage}
+            buttonType="tertiary"
+          />
+        )}
       </Visible>
     );
   }
