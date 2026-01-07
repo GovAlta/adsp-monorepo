@@ -82,8 +82,6 @@ const EditorWrapper = (): JSX.Element => {
 
   const [intakePeriodModal, setIntakePeriodModal] = useState<boolean>(false);
 
-
-
   useEffect(() => {
     try {
       if (id) {
@@ -94,9 +92,9 @@ const EditorWrapper = (): JSX.Element => {
     }
   }, [id, dispatch]);
 
-    useEffect(() => {
-      dispatch(fetchTaskQueues());
-    }, [dispatch]);
+  useEffect(() => {
+    dispatch(fetchTaskQueues());
+  }, [dispatch]);
 
   const files = useSelector(filesSelector);
   const metadata = useSelector(metaDataSelector);
@@ -113,10 +111,11 @@ const EditorWrapper = (): JSX.Element => {
     )
   );
 
-    const selectedCoreEvent = useSelector(
-      (state: RootState) => state.calendarService?.coreCalendars?.['form-intake']?.selectedCalendarEvents
-    );
+  // const selectedCoreEvent = useSelector(
+  //   (state: RootState) => state.calendarService?.coreCalendars?.['form-intake']?.selectedCalendarEvents
+  // );
 
+  const selectedCoreEvent = useSelector((state: AppState) => state.calendar.formIntakeCalendar);
 
   useEffect(() => {
     if (intakePeriodModal) {
@@ -140,7 +139,7 @@ const EditorWrapper = (): JSX.Element => {
 
   useEffect(() => {
     if (tenantConfigDefinitions) {
-       dispatch(fetchRegisterData());
+      dispatch(fetchRegisterData());
     }
   }, [tenantConfigDefinitions]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -205,7 +204,7 @@ const EditorWrapper = (): JSX.Element => {
   const isFormUpdated = isFormUpdatedFunction();
 
   const updateFormDefinition = () => {
-    console.log("Updating form definition (saving): " + JSON.stringify(tempDefinition));
+    console.log('Updating form definition (saving): ' + JSON.stringify(tempDefinition));
     if (tempDefinition) {
       dispatch(updateDefinition(tempDefinition));
     }
@@ -376,6 +375,6 @@ const EditorWrapper = (): JSX.Element => {
       )}
     </div>
   );
-};;
+};
 
 export default EditorWrapper;

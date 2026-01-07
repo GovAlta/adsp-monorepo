@@ -1,8 +1,11 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { AppState } from '../store';
+
 import { CONFIGURATION_SERVICE_ID } from '../types';
 import { getAccessToken } from '../user/user.slice';
+import { getLocalISOString } from '../../utils/timeUtil';
+
 
 export const CALENDAR_FEATURE_KEY = 'calendar';
 
@@ -38,6 +41,18 @@ export const getDefaultSearchCriteria = (): CalendarEventSearchCriteria => {
   };
 };
 
+export const CalendarEventDefault = {
+  id: null,
+  name: '',
+  description: '',
+  start: getLocalISOString(new Date()),
+  end: getLocalISOString(new Date()),
+  isPublic: false,
+  isAllDay: false,
+  recordId: '',
+};
+
+
 
 
 
@@ -45,6 +60,99 @@ const CALENDAR_SERVICE_ID = 'urn:ads:platform:calendar-service';
 
 
 
+export const UpdateEventByCalendar = createAsyncThunk(
+  'calendar/update-event',
+  async (payload: { calendarName: string; eventId: string; payload: any }, { getState, rejectWithValue }) => {
+    const state = getState() as AppState;
+    const calendarBaseUrl = state.config.directory[CALENDAR_SERVICE_ID];
+    const token = await getAccessToken();
+
+    if (!(token && calendarBaseUrl)) {
+      return rejectWithValue({
+        message: 'Missing configuration URLs or token',
+      });
+    }
+
+    try {
+      const response = await axios.patch(
+        `${calendarBaseUrl}/calendar/v1/calendars/${payload.calendarName}/events/${payload.eventId}`,
+        payload.payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue({
+        status: err.response?.status,
+        message: err.response?.data?.errorMessage || err.message,
+      });
+    }
+  }
+);
+
+
+export const CreateEventByCalendar = createAsyncThunk(
+  'calendar/create-event',
+  async (payload: { calendarName: string; payload: any }, { getState, rejectWithValue }) => {
+    const state = getState() as AppState;
+    const calendarBaseUrl = state.config.directory[CALENDAR_SERVICE_ID];
+    const token = await getAccessToken();
+
+    if (!(token && calendarBaseUrl)) {
+      return rejectWithValue({
+        message: 'Missing configuration URLs or token',
+      });
+    }
+
+    try {
+      const response = await axios.post(
+        `${calendarBaseUrl}/calendar/v1/calendars/${payload.calendarName}/events`,
+        payload.payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue({
+        status: err.response?.status,
+        message: err.response?.data?.errorMessage || err.message,
+      });
+    }
+  }
+);
+
+
+export const DeleteCalendarEvent = createAsyncThunk(
+  'calendar/delete-event',
+  async (payload: { calendarName: string; eventId: string }, { getState, rejectWithValue }) => {
+    const state = getState() as AppState;
+    const calendarBaseUrl = state.config.directory[CALENDAR_SERVICE_ID];
+    const token = await getAccessToken();
+
+    if (!(token && calendarBaseUrl)) {
+      return rejectWithValue({
+        message: 'Missing configuration URLs or token',
+      });
+    }
+
+    try {
+      await axios.delete(`${calendarBaseUrl}/calendar/v1/calendars/${payload.calendarName}/events/${payload.eventId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return payload;
+    } catch (err: any) {
+      return rejectWithValue({
+        status: err.response?.status,
+        message: err.response?.data?.errorMessage || err.message,
+      });
+    }
+  }
+);
 
 
 export const fetchCalendar = createAsyncThunk(
@@ -120,6 +228,7 @@ const initialCalendarState: CalendarState = {
   busy: {
     loading: false,
   },
+  criteria: {}
 };
 
 const calendarSlice = createSlice({

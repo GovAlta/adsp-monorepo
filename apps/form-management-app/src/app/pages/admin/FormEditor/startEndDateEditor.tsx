@@ -1,15 +1,24 @@
 import React, { FunctionComponent, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { GoabButton, GoabFormItem, GoabInput, GoabInputTime, GoabButtonGroup, GoabGrid } from '@abgov/react-components';
-import { UpdateEventsByCalendar, CreateEventsByCalendar } from '@store/calendar/actions';
+import { UpdateEventsByCalendar, CreateEventsByCalendar,  } from '@store/calendar/actions';
 
-import { CalendarEvent, EventDeleteModalType } from '@store/calendar/models';
-
-import { getDateTime } from '@lib/timeUtil';
+import { CalendarEvent } from '@store/calendar/models';
 import { Margin } from '../styled-components';
+import { AppDispatch } from '../../../state';
 
-import { DeleteCalendarEvent } from '@store/calendar/actions';
+
+import { DeleteCalendarEvent } from '../../../state';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+
+export const getDateTime = (date, time) => {
+  const newDate = new Date(date);
+  const combinedDateTime = new Date(
+    newDate.getMonth() + 1 + '/' + newDate.getDate() + '/' + newDate.getFullYear() + ' ' + time
+  );
+  return combinedDateTime;
+};
+
 
 export interface startEndProps {
   event: CalendarEvent;
@@ -31,7 +40,7 @@ const setTimeString = (dateString, timeString?) => {
 export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, formId, closeIntake, newEvent }) => {
   const [edit, setEdit] = useState<boolean>(newEvent);
   const [deleteConfirm, setDeleteConfirm] = useState<boolean>(false);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   const [startTime, setStartTime] = useState<string>(new Date(event.start)?.toTimeString().split(' ')[0]);
   const [endTime, setEndTime] = useState<string>(new Date(event.end)?.toTimeString().split(' ')[0]);
@@ -132,7 +141,12 @@ export const StartEndDateEditor: FunctionComponent<startEndProps> = ({ event, fo
                   onClick={() => {
                     setDeleteConfirm(false);
 
-                    dispatch(DeleteCalendarEvent(`${event?.id}`, 'form-intake'));
+                   dispatch(
+                     DeleteCalendarEvent({
+                       calendarName: 'form-intake',
+                       eventId: `${event?.id}`,
+                     })
+                   );
                   }}
                 >
                   Confirm Delete
