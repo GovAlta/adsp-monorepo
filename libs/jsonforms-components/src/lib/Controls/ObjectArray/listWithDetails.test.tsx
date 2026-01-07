@@ -283,12 +283,8 @@ it('errors are visible', () => {
   const messageFormItem = baseElement.querySelector('goa-form-item');
   expect(messageFormItem).not.toBeNull();
 
-  // Select the error message inside the slot
-  const errorEl = messageFormItem!.querySelector('div[slot="error"]');
-  expect(errorEl).not.toBeNull();
-
   // Check the error text
-  expect(errorEl!.textContent).toContain('Message must be at most 5 characters');
+  expect(messageFormItem).toHaveAttribute('error', 'Message must be at most 5 characters');
 });
 it('required errors work', () => {
   const data = { messages: [] };
@@ -314,12 +310,8 @@ it('required errors work', () => {
   const messageFormItem = baseElement.querySelector('goa-form-item');
   expect(messageFormItem).not.toBeNull();
 
-  // Select the error message inside the slot
-  const errorEl = messageFormItem!.querySelector('div[slot="error"]');
-  expect(errorEl).not.toBeNull();
-
   // Check the error text
-  expect(errorEl!.textContent).toContain('Name is required');
+  expect(messageFormItem).toHaveAttribute('error', 'Special Name is required');
 });
 
 describe('findControlLabel', () => {
