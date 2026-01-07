@@ -20,7 +20,6 @@ export const CompletionStatus = styled.div`
 export const BarTop = styled.div`
   display: flex;
 
-
   .progress-text {
     margin-left: auto;
   }
@@ -55,8 +54,6 @@ export const Bar = styled.div`
 
     box-sizing: border-box;
   }
-
-
 `;
 export const Percentage = styled.div``;
 export const BadgeWrapper = styled.div`
@@ -200,6 +197,12 @@ export const PageStepperRow = styled.tr<PageStepperRowProps>`
 
           td {
             transition: background-color 0.2s ease-in-out;
+          }
+
+
+          &:focus-visible {
+            border-radius: 0.25rem;
+            outline: 3px solid var(--goa-color-interactive-focus);
           }
         `}
 `;
