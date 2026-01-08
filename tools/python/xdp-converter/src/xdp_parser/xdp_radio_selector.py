@@ -52,8 +52,8 @@ class XdpRadioSelector(XdpElement):
         options = []
         registry = HelpTextRegistry()
         for option in self.options:
-            if registry.hasAnnotation(option):
-                help_text = registry.getAnnotation(option)
+            if registry.has_annotation(option):
+                help_text = registry.get_annotation(option)
                 info = FormInformation(
                     self.get_name(),
                     help_text,
@@ -69,7 +69,7 @@ class XdpRadioSelector(XdpElement):
 
     def has_annotation(self) -> bool:
         for option in self.options:
-            if HelpTextRegistry().hasAnnotation(option):
+            if HelpTextRegistry().has_annotation(option):
                 return True
         return False
 

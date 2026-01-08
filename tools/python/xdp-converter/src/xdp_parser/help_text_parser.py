@@ -2,36 +2,33 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional, Tuple
 
-from xdp_parser.node_finder import NodeFinder
+from xdp_parser.xdp_utils import js_unescape
 
 
-##
-# Find help messages that are defined in javascript within the XDP file
-# (used for popup tooltips), by finding the <variables> nodes and checking the
-# <script> nodes within.
-# e.g., look for -> var messages = { key: "value", "key2": 'value2' };
-##
 class JSHelpTextParser:
-    HELP_OBJECT_NAME = "messages"
-
-    def __init__(self, root: ET.Element):
-        finder = NodeFinder(root)
-        self.variables = finder.find_first_node("variables")
-
-    # ---- Public API ---------------------------------------------------------
+    def __init__(
+        self,
+        root: ET.Element,
+        script_name: str = "soHelpButtons",
+        object_name: str = "messages",
+    ):
+        self.root = root
+        self.script_name = script_name
+        self.object_name = object_name
 
     def get_messages(self) -> Dict[str, str]:
         """
-        Parse <variables> element and return {key: value} from:
-            var messages = { key: "value", "key2": 'value2' };
+        Parse <script name="{script_name}"> and return {key: value} from:
+            var messages = { "key": "value", ... };
         """
-        if self.variables is None:
+        script_node = self._find_named_script(self.script_name)
+        if script_node is None:
             return {}
 
-        js = self._gather_js_text()
+        js = "".join(script_node.itertext()) or ""
         js = self._strip_js_comments(js)
 
-        obj_body = self._find_object_body(js, self.HELP_OBJECT_NAME)
+        obj_body = self._find_object_body(js, self.object_name)
         if obj_body is None:
             return {}
 
@@ -44,34 +41,26 @@ class JSHelpTextParser:
                 messages[k] = v
         return messages
 
-    # ---- Gathering & Cleanup -----------------------------------------------
+    # ---- Locate the script node --------------------------------------------
 
-    def _gather_js_text(self) -> str:
-        """Concatenate all JS from <script> descendants; fallback to raw text."""
-        script_texts: List[str] = []
-        for scr in self.variables.findall(".//script"):
-            txt = "".join(scr.itertext())
-            if txt:
-                script_texts.append(txt)
-        if not script_texts:
-            script_texts.append("".join(self.variables.itertext()))
-        return "\n".join(script_texts)
+    def _find_named_script(self, name: str) -> Optional[ET.Element]:
+        # Most XDPs: template/subform/variables/script[@name='...']
+        for scr in self.root.findall(".//{*}variables//{*}script"):
+            if (scr.get("name") or "").strip() == name:
+                return scr
+        return None
+
+    # ---- Cleanup ------------------------------------------------------------
 
     @staticmethod
     def _strip_js_comments(js: str) -> str:
-        """Remove /* ... */ and // ... comments."""
         js = re.sub(r"/\*.*?\*/", "", js, flags=re.S)
         js = re.sub(r"//[^\n\r]*", "", js)
         return js
 
-    # ---- Finding the object body -------------------------------------------
+    # ---- Finding object body ------------------------------------------------
 
     def _find_object_body(self, js: str, obj_name: str) -> Optional[str]:
-        """
-        Locate `obj_name = { ... }` and return the inner text (without braces).
-        Supports optional var/let/const.
-        """
-        # e.g., var messages = { ... }, let messages = { ... }, messages = { ... }
         pat = rf"\b(?:var|let|const)?\s*{re.escape(obj_name)}\s*=\s*{{"
         m = re.search(pat, js)
         if not m:
@@ -89,10 +78,6 @@ class JSHelpTextParser:
 
     @staticmethod
     def _brace_match(s: str, start_idx: int) -> Optional[int]:
-        """
-        Return index of the matching closing brace for s[start_idx] == '{'.
-        Respects quotes and escapes so braces inside strings are ignored.
-        """
         i = start_idx
         depth = 0
         in_str = False
@@ -121,14 +106,10 @@ class JSHelpTextParser:
             i += 1
         return None
 
-    # ---- Splitting & Parsing entries ---------------------------------------
+    # ---- Splitting & parsing ------------------------------------------------
 
     @staticmethod
     def _split_top_level_entries(obj_body: str) -> List[str]:
-        """
-        Split `{ a: "x", b: "y" }` into ["a: "x"", "b: "y""].
-        Ignores commas inside strings or nested {...}.
-        """
         entries: List[str] = []
         buf: List[str] = []
 
@@ -172,12 +153,6 @@ class JSHelpTextParser:
         return entries
 
     def _parse_entry(self, entry: str) -> Optional[Tuple[str, str]]:
-        """
-        Parse a single `key: "value"` entry. Supports:
-        - quoted/unquoted keys
-        - single/double-quoted values
-        Falls back to grabbing the first quoted literal from the value part.
-        """
         entry = entry.strip().rstrip(",;").strip()
         if not entry:
             return None
@@ -217,47 +192,19 @@ class JSHelpTextParser:
 
     @staticmethod
     def _parse_key(key_part: str) -> Optional[str]:
-        """Handle "quoted", 'quoted', or unquoted identifiers (take last segment after dots)."""
         if len(key_part) >= 2 and key_part[0] in "'\"" and key_part[-1] == key_part[0]:
-            return JSHelpTextParser._unescape_js_string(key_part[1:-1])
-        # Unquoted: allow a.b.c (take final identifier)
+            return js_unescape(key_part[1:-1])
+
         key = key_part.split(".")[-1].strip()
         return key or None
 
     @staticmethod
     def _parse_value(val_part: str) -> str:
-        """
-        Prefer a full quoted literal; otherwise grab first quoted chunk;
-        otherwise return raw text.
-        """
         if len(val_part) >= 2 and val_part[0] in "'\"" and val_part[-1] == val_part[0]:
-            return JSHelpTextParser._unescape_js_string(val_part[1:-1])
+            return js_unescape(val_part[1:-1])
 
         m = re.search(r'("([^"\\]|\\.)*"|\'([^\'\\]|\\.)*\')', val_part)
         if m:
             lit = m.group(0)
-            return JSHelpTextParser._unescape_js_string(lit[1:-1])
+            return js_unescape(lit[1:-1])
         return val_part
-
-    @staticmethod
-    def _unescape_js_string(s: str) -> str:
-        """Unescape common JS string escapes and \\uXXXX sequences."""
-        s = (
-            s.replace(r"\\", "\\")
-            .replace(r"\/", "/")
-            .replace(r"\'", "'")
-            .replace(r"\"", '"')
-            .replace(r"\n", "\n")
-            .replace(r"\r", "\r")
-            .replace(r"\t", "\t")
-            .replace(r"\b", "\b")
-            .replace(r"\f", "\f")
-        )
-
-        def _u(m):
-            try:
-                return chr(int(m.group(1), 16))
-            except Exception:
-                return m.group(0)
-
-        return re.sub(r"\\u([0-9a-fA-F]{4})", _u, s)

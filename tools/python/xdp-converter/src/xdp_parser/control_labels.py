@@ -3,132 +3,197 @@ import re
 from xml.etree import ElementTree as ET
 
 
+import re
+from xml.etree import ElementTree as ET
+
+
 class ControlLabels:
-    def __init__(self, container_node: ET.Element, context):
-        self.mapping: dict[str, str] = {}
+    """
+    Build a mapping { control_name: label_text } for all visible controls in a container.
+
+    Traversal is intentionally ignored (tab-order != label semantics).
+
+    Priority:
+      1) Inline caption (field only; exclGroup captions ignored)
+      2) Preceding <draw> sibling label (same parent; stop if another control encountered)
+      3) Fallback to cleaned control name (optional)
+
+    Notes:
+      - If a control truly has no label in the PDF, we prefer returning None (optional),
+        rather than inventing a label.
+      - Uses parent_map because ElementTree doesn't support getparent().
+    """
+
+    def __init__(
+        self,
+        container_node: ET.Element,
+        context,
+    ):
+        """
+        Args:
+            container_node: subform or container element to scan.
+            context: must expose `parent_map: dict[ET.Element, ET.Element]`
+        """
         self.context = context
-        self.controls_by_name = _control_index_by_name(
-            container_node, context.parent_map
+        self.parent_map = getattr(context, "parent_map", {}) or {}
+
+        self.use_name_fallback = False
+        self.return_none_for_unlabeled = True
+        # for debugging use
+        self.log = False
+
+        self.controls_by_name: dict[str, ET.Element] = _control_index_by_name(
+            container_node, self.parent_map
         )
-        self.labels = self._find_control_labels(container_node)
+
+        self.mapping: dict[str, str] = {}
+        self.labels: dict[str, str] = self._build_labels(container_node)
 
     def get(self, target: str) -> str | None:
-        return self.labels.get(target)
-
-    def _find_control_labels(self, container_node: ET.Element) -> dict[str, str]:
         """
-        Build { control_name: label } for every visible <field>/<exclGroup>.
-
-        Priority:
-        1. traversal-hints (strongest)
-        2. inline caption
-        3. preceding <draw> label
-        4. cleaned control name (fallback)
+        Returns:
+            Label string if present; otherwise None.
         """
+        val = self.labels.get(target)
+        if val is None:
+            return None
+        if isinstance(val, str) and val.strip() == "":
+            return None
+        return val
 
-        # 1) Traversal-based (strongest)
-        target, label = self._find_traversal_hints(container_node)
-        if target and label:
-            self.mapping[target] = label
+    # ----------------------------------------------------------------
+    # MAIN LABEL BUILD
+    # ----------------------------------------------------------------
 
-        # 2) Inline captions
+    def _build_labels(self, container_node: ET.Element) -> dict[str, str]:
+        if self.log:
+            print(
+                f"[LABEL] Building labels for container '{container_node.get('name')}'"
+            )
+
+        # 1) Inline captions (field only)
         for name, node in self.controls_by_name.items():
-            if name in self.mapping:
-                continue
             caption = inline_caption(node)
-            if caption:
-                self.mapping[name] = caption
+            if caption and caption.strip():
+                self.mapping[name] = caption.strip()
+                if self.log:
+                    print(f"[LABEL] '{name}' <- '{caption.strip()}' (inline caption)")
 
-        # 3) Preceding <draw> label fallback
+        # 2) Preceding <draw> sibling label (same parent)
         for name, node in self.controls_by_name.items():
             if name in self.mapping and self.mapping[name].strip():
                 continue
             draw_lbl = self._preceding_draw_label(node)
-            if draw_lbl:
-                self.mapping[name] = draw_lbl
+            if draw_lbl and draw_lbl.strip():
+                self.mapping[name] = draw_lbl.strip()
+                if self.log:
+                    print(
+                        f"[LABEL] '{name}' <- '{draw_lbl.strip()}' (preceding <draw>)"
+                    )
 
-        # 4) Control-name fallback
+        # 3) Optional fallback: cleaned control name OR leave unlabeled
         for name in self.controls_by_name.keys():
             if name in self.mapping and self.mapping[name].strip():
                 continue
-            self.mapping[name] = _control_name(name)
+
+            if self.return_none_for_unlabeled:
+                # Intentionally do not set a label. Caller sees None via get().
+                if self.log:
+                    print(f"[LABEL] '{name}' <- None (no label found)")
+                continue
+
+            if self.use_name_fallback:
+                fallback = _control_name(name)
+                self.mapping[name] = fallback
+                if self.log:
+                    print(f"[LABEL] '{name}' <- '{fallback}' (name fallback)")
+            else:
+                if self.log:
+                    print(f"[LABEL] '{name}' <- '' (no fallback)")
 
         return self.mapping
 
-    def _find_traversal_hints(
-        self, container_node: ET.Element
-    ) -> tuple[str | None, str | None]:
+    # ----------------------------------------------------------------
+    # PRECEDING DRAW LABELS
+    # ----------------------------------------------------------------
+
+    def _preceding_draw_label(self, node: ET.Element) -> str | None:
         """
-        Handle Adobe traversal-based labelling:
-        <traversal>
-          <traverse ref="...some.field.name..."/>
-        </traversal>
+        Finds the closest preceding <draw> sibling WITHIN THE SAME PARENT
+        that looks like a label. Stops if another control is encountered first.
+
+        Heuristics:
+          - Only accept <draw> elements with name starting 'lbl' or 'label'
+          - Require non-empty text content
         """
-        for element in container_node.iter():
-            traversal = element.find("{*}traversal")
-            if traversal is None:
-                continue
-
-            label_txt = _label_text_from_node(element)
-            if not label_txt:
-                continue
-
-            for traverse in traversal.findall("{*}traverse"):
-                ref = (traverse.attrib.get("ref") or "").strip()
-                target_name = _last_segment_name_from_ref(ref)
-                if not target_name:
-                    continue
-
-                target = self.controls_by_name.get(target_name)
-                if not target:
-                    continue  # traverse may point outside this container
-
-                prev = self.mapping.get(target_name, "")
-                if len(label_txt) > len(prev):
-                    return target_name, label_txt
-
-        return None, None
-
-    # ------------------------------------------------------------
-    # SIBLING DRAW LABELS (NEEDS PARENT MAP)
-    # ------------------------------------------------------------
-    def _preceding_draw_label(self, node):
-        """
-        Finds the closest preceding <draw> sibling WITHIN THE SAME PARENT,
-        using parent_map (since ElementTree lacks getparent()).
-        """
-        name = node.attrib.get("name", "")
-
-        parent = self.context.parent_map.get(node)
+        parent = self.parent_map.get(node)
         if parent is None:
             return None
 
         children = list(parent)
         try:
-            index = children.index(node)
+            idx = children.index(node)
         except ValueError:
             return None
 
-        # scan backwards for a <draw> that looks like a label
-        # scan backwards for a <draw> that looks like a label
-        for prev in reversed(children[:index]):
+        for prev in reversed(children[:idx]):
             ptag = prev.tag.split("}", 1)[-1].lower()
 
-            # NEW RULE: stop if we hit another control before a draw
+            # stop if we hit another control (label likely belongs to that control)
             if ptag in {"field", "exclgroup"}:
-                # This means the preceding <draw> belongs to that field, not us
                 break
 
-            if ptag == "draw":
-                nm = prev.get("name", "")
-                txt = _label_text_from_node(prev)
-                nm_low = nm.lower()
+            if ptag != "draw":
+                continue
 
-                # strict prefix match
-                if nm_low.startswith("lbl") or nm_low.startswith("label"):
-                    if txt and txt.strip():
-                        return txt.strip()
+            nm = (prev.get("name") or "").strip()
+            nm_low = nm.lower()
+            if not (nm_low.startswith("lbl") or nm_low.startswith("label")):
+                continue
+
+            txt = _draw_text(prev)
+            if txt:
+                return txt
+
         return None
+
+
+# ----------------------------------------------------------------
+# DRAW TEXT (strict)
+# ----------------------------------------------------------------
+
+
+def _draw_text(draw_node: ET.Element) -> str:
+    """
+    Extract text from a <draw> node *only* (not from fields).
+    This avoids confusing a field's <value> as "label text".
+
+    Handles:
+      - <value><text>...</text>
+      - fallback <text>...</text> if present
+      - exData inside caption/value (less common for draw, but safe)
+    """
+    # Common: draw/value/text
+    t = draw_node.find(".//{*}value/{*}text")
+    if t is not None and (t.text or "").strip():
+        return t.text.strip()
+
+    # Some draws may have <text> directly
+    t2 = draw_node.find(".//{*}text")
+    if t2 is not None and (t2.text or "").strip():
+        return t2.text.strip()
+
+    # exData fallback if used
+    caption = draw_node.find(".//caption/value")
+    if caption is not None:
+        exdata = caption.find("exData")
+        if exdata is not None:
+            raw_text = "".join(exdata.itertext())
+            raw_text = re.sub(r"\s+", " ", raw_text).strip()
+            if raw_text:
+                return raw_text
+
+    return ""
 
 
 # ----------------------------------------------------------------
@@ -212,25 +277,6 @@ def _control_name(name: str | None) -> str:
     return label.title()
 
 
-def _label_text_from_node(node):
-    label = node.find(".//{*}value/{*}text")
-    if label is not None and (label.text or "").strip():
-        return label.text.strip()
-
-    t = node.find(".//{*}text")
-    if t is not None and (t.text or "").strip():
-        return t.text.strip()
-
-    caption = node.find(".//caption/value")
-    if caption:
-        exdata = caption.find("exData")
-        if exdata is not None:
-            raw_text = "".join(exdata.itertext())
-            return re.sub(r"\s+", " ", raw_text).strip()
-
-    return node.attrib.get("name", "").strip()
-
-
 def _all_controls(container, parent_map=None):
     for element in container.iter():
         tag = element.tag.split("}", 1)[-1].lower()
@@ -265,10 +311,3 @@ def _control_index_by_name(container, parent_map):
         if name and name not in idx:
             idx[name] = element
     return idx
-
-
-def _last_segment_name_from_ref(ref):
-    if not ref:
-        return ""
-    seg = ref.split(".")[-1]
-    return re.sub(r"\[\d+\]$", "", seg)
