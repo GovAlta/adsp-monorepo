@@ -145,6 +145,4 @@ class XdpGroupingPass:
 
         if not elements:
             return None
-
-        # The factory will call resolve_group_label(subform, context)
         return self.factory.handle_group(subform, elements, "")

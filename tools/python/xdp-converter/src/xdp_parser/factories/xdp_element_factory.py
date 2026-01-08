@@ -2,8 +2,8 @@ import xml.etree.ElementTree as ET
 from typing import List, Optional
 
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
-from xdp_parser.group_label_resolver import resolve_group_label
 from xdp_parser.parse_context import ParseContext
+from xdp_parser.subform_label import get_subform_header_label
 from xdp_parser.xdp_element import XdpElement, XdpGeometry
 from xdp_parser.xdp_file_upload import XdpFileUpload
 from xdp_parser.xdp_group import XdpGroup
@@ -62,24 +62,11 @@ class XdpElementFactory(AbstractXdpFactory):
     def handle_group(
         self, subform: ET.Element, elements: List[XdpElement], _: str
     ) -> Optional[XdpElement]:
-        """
-        Build a logical group (FormGroup) from a subform.
 
-        • Sorts children by geometry
-        • Hoists section headers (ONLY for top-level subforms)
-        • Removes empty/help-only groups
-        • Computes group geometry
-        """
         if not elements:
             return None
 
-        # --------------------------------------------------
-        # 1) sort by (y, x)
-        # --------------------------------------------------
         elements = self._sort_by_geometry(elements)
-
-        # Pick a proper group label
-        resolved_label = resolve_group_label(subform, self.context)
 
         has_real_control = any(
             getattr(e, "is_control", lambda: False)()
@@ -87,9 +74,11 @@ class XdpElementFactory(AbstractXdpFactory):
             or getattr(e, "is_array", False)
             for e in elements
         )
-
         if not has_real_control:
             return None
+
+        # 🔑 Single source of truth
+        resolved_label = get_subform_header_label(subform)
 
         group = XdpGroup(subform, elements, self.context, resolved_label)
 
