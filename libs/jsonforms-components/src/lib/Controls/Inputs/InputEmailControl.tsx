@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   rankWith,
   and,
@@ -15,6 +15,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { onChangeForInputControl, onBlurForTextControl } from '../../util/inputControlUtils';
 import { FormFieldWrapper } from './style-component';
 import { Visible } from '../../util';
+import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
 
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 
@@ -33,7 +34,18 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const width = uischema?.options?.componentProps?.width ?? '100%';
 
+  const formStepperCtx = useContext(JsonFormsStepperContext);
+  const stepperState = (formStepperCtx as JsonFormsStepperContextProps)?.selectStepperState?.();
+  const currentCategory = stepperState?.categories?.[stepperState?.activeId];
+  const showReviewLink = currentCategory?.showReviewPageLink;
+
   const [isVisited, setIsVisited] = useState(false);
+
+  useEffect(() => {
+    if (showReviewLink === true) {
+      setIsVisited(true);
+    }
+  }, [showReviewLink]);
 
   const splitErrors = (errors ?? '')
     .split(/\r?\n/)
