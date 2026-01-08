@@ -5,10 +5,132 @@ from xdp_parser.help_text_registry import HelpTextRegistry
 from xdp_parser.xdp_utils import js_unescape
 
 
-class HelpTextExtractor:
+# ---------------------------------------------------------------------
+# Safe messageBox matcher (no catastrophic backtracking)
+# ---------------------------------------------------------------------
+MSGBOX_RE = re.compile(
+    r"""
+    xfa\.host\.messageBox\s*\(\s*
+    (?P<arg1>
+        "(?:\\.|[^"\\])*"         # double-quoted string literal
+      | '(?:\\.|[^'\\])*'         # single-quoted string literal
+      | [A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*  # identifier / dotted path
+    )
+    (?:\s*,\s*
+        (?P<arg2>
+            "(?:\\.|[^"\\])*"
+          | '(?:\\.|[^'\\])*'
+          | [A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*
+        )
+    )?
+    """,
+    re.VERBOSE | re.DOTALL,
+)
 
+
+def _parse_js_arg_token(token: str | None) -> tuple[str | None, bool]:
+    """
+    Returns (value, is_string_literal).
+    If token is quoted, value is inner (still escaped) string contents.
+    If token is identifier/path, value is the identifier text.
+    """
+    if token is None:
+        return None, False
+
+    t = token.strip()
+    if len(t) >= 2 and t[0] == t[-1] and t[0] in ("'", '"'):
+        return t[1:-1], True
+
+    return t, False
+
+
+def extract_messagebox(js: str) -> dict | None:
+    """
+    Extract first and optional second argument from xfa.host.messageBox(...).
+
+    Returns:
+      {
+        "text": <raw string contents OR identifier>,
+        "title": <raw string contents OR identifier OR None>,
+        "text_is_literal": bool,
+        "title_is_literal": bool,
+      }
+    """
+    if "xfa.host.messageBox" not in js:
+        return None
+
+    # Limit scan window to reduce worst-case cost on huge blobs
+    i = js.find("xfa.host.messageBox")
+    window = js[i : i + 20000] if i != -1 else js
+
+    m = MSGBOX_RE.search(window)
+    if not m:
+        return None
+
+    text_raw, text_is_lit = _parse_js_arg_token(m.group("arg1"))
+    title_raw, title_is_lit = _parse_js_arg_token(m.group("arg2"))
+
+    return {
+        "text": text_raw,
+        "title": title_raw,
+        "text_is_literal": text_is_lit,
+        "title_is_literal": title_is_lit,
+    }
+
+
+# ---------------------------------------------------------------------
+# JS string literal scanner (linear time, CodeQL-friendly)
+# ---------------------------------------------------------------------
+def iter_js_string_literals(js: str):
+    """
+    Yield raw (still-escaped) contents of JS single- or double-quoted string literals.
+
+    Notes:
+      - Permissive: doesn't try to skip comments or template strings.
+      - Safe: linear scan, respects backslash escapes.
+    """
+    i, n = 0, len(js)
+    while i < n:
+        q = js[i]
+        if q not in ("'", '"'):
+            i += 1
+            continue
+
+        i += 1  # move past opening quote
+        start = i
+        chunks: list[str] = []
+
+        while i < n:
+            c = js[i]
+            if c == "\\":  # escape sequence
+                if i + 1 < n:
+                    # flush preceding chunk, keep escape pair as-is
+                    if start < i:
+                        chunks.append(js[start:i])
+                    chunks.append(js[i : i + 2])
+                    i += 2
+                    start = i
+                    continue
+                # dangling backslash; stop this literal
+                i += 1
+                break
+
+            if c == q:  # closing quote
+                if start < i:
+                    chunks.append(js[start:i])
+                yield "".join(chunks)
+                i += 1
+                break
+
+            i += 1
+        else:
+            # Unterminated string literal; stop scanning
+            return
+
+
+class HelpTextExtractor:
     @staticmethod
-    def get_help_from_draw(node):
+    def get_help_from_draw(node: ET.Element) -> str | None:
         """
         Extract help/guidance text with correct priority:
 
@@ -27,10 +149,9 @@ class HelpTextExtractor:
         if tag in {"field", "exclgroup"}:
             msg = HelpTextExtractor._help_from_click_messagebox(node)
             if msg and msg.get("text"):
-                msg = msg["text"].strip()[:MAX_SIZE_EVENT]
-                if len(msg) >= MIN_SIZE_EVENT:
-                    return msg
-
+                text = msg["text"].strip()[:MAX_SIZE_EVENT]
+                if len(text) >= MIN_SIZE_EVENT:
+                    return text
             return None
 
         # ------------------------------------------------------------
@@ -66,9 +187,10 @@ class HelpTextExtractor:
         return None
 
     @staticmethod
-    def _help_from_click_messagebox(field_node):
+    def _help_from_click_messagebox(field_node: ET.Element) -> dict | None:
         """
         Extract the first string arg from xfa.host.messageBox("...") in click event scripts.
+        Only returns a result if the message is a literal string (static).
         """
         for ev in field_node.findall(".//{*}event[@activity='click']"):
             for script in ev.findall(".//{*}script"):
@@ -78,18 +200,27 @@ class HelpTextExtractor:
                     continue
 
                 help = extract_messagebox(script_text)
-                if not help:
+                if not help or not help.get("text"):
                     continue
 
-                msg = help["text"]
+                # If message is dynamic (identifier/expression), skip static extraction
+                if not help.get("text_is_literal"):
+                    continue
+
+                msg = js_unescape(help["text"] or "")
                 msg = msg.replace(r"\n", "\n").replace(r"\t", "\t").replace(r"\\", "\\")
                 msg = msg.replace(r"\'", "'").replace(r"\"", '"')
 
-                # preserve newlines, normalize stray spaces
+                # preserve newlines, normalize stray spaces around them
                 msg = re.sub(r"[ \t]+\n", "\n", msg)
                 msg = re.sub(r"\n[ \t]+", "\n", msg)
 
-                return {"text": msg, "title": help["title"]}
+                title = None
+                if help.get("title") and help.get("title_is_literal"):
+                    # keep title metadata, but decode it consistently
+                    title = js_unescape(help["title"]).strip()
+
+                return {"text": msg, "title": title}
 
         return None
 
@@ -97,9 +228,9 @@ class HelpTextExtractor:
     def get_help_from_click_event(field_node: ET.Element) -> dict | None:
         """
         Returns a help payload:
-          {"title": str | None, "text": str, "source": "messageBox"|"soHelpButtons.show"}
+          {"title": str | None, "text": str, "source": "..."}
         """
-        scripts = []
+        scripts: list[str] = []
         for ev in field_node.findall(".//{*}event[@activity='click']"):
             for script in ev.findall(".//{*}script"):
                 txt = "".join(script.itertext()).strip()
@@ -111,7 +242,7 @@ class HelpTextExtractor:
 
         js = "\n".join(scripts)
 
-        # Inside the help registry
+        # 1) Inside the help registry (most semantic)
         registry = HelpTextRegistry()
         key = HelpTextExtractor._find_help_key_literal(js, registry)
         if key:
@@ -119,10 +250,15 @@ class HelpTextExtractor:
             if text:
                 return {"title": key, "text": text, "source": "HelpTextRegistry"}
 
-        # Inside a direct messageBox
-        m = extract_messagebox(js)
-        if m:
-            return m
+        # 2) Inside a direct messageBox (static string only)
+        mb = extract_messagebox(js)
+        if mb and mb.get("text") and mb.get("text_is_literal"):
+            text = js_unescape(mb["text"]).strip()
+            title = None
+            if mb.get("title") and mb.get("title_is_literal"):
+                title = js_unescape(mb["title"]).strip()
+            return {"title": title, "text": text, "source": "messageBox"}
+
         return None
 
     @staticmethod
@@ -132,13 +268,12 @@ class HelpTextExtractor:
         Works for: soHelpButtons.show("Equipment to Transfer") and similar patterns.
 
         Strategy:
-          - Extract all string literals in the script
+          - Extract all string literals in the script (scanner, escape-aware)
           - Unescape them
           - Return the first one that exists in the registry
         """
-        # Find all JS string literals (single or double quotes), respecting escapes
-        for m in re.finditer(r'(?P<q>["\'])(?P<s>(?:\\.|(?!\1).)*)\1', js, re.DOTALL):
-            lit = js_unescape(m.group("s") or "").strip()
+        for raw in iter_js_string_literals(js):
+            lit = js_unescape(raw).strip()
             if lit and registry.has_annotation(lit):
                 return lit
         return None
@@ -167,7 +302,7 @@ class HelpTextExtractor:
         )
 
         # optional: size hint if present
-        def mm(attr):
+        def mm(attr: str):
             v = field_node.get(attr) or ""
             m = re.match(r"^\s*([0-9]*\.?[0-9]+)\s*mm\s*$", v, re.IGNORECASE)
             return float(m.group(1)) if m else None
@@ -189,48 +324,3 @@ class HelpTextExtractor:
 
         # Otherwise it may just be raw text that *is* HTML
         return (exdata.text or "").strip()
-
-
-MSGBOX_RE = re.compile(
-    r"""
-    xfa\.host\.messageBox\s*\(\s*
-    (?P<arg1>
-        "(?:\\.|[^"\\])*"         # double-quoted string literal
-      | '(?:\\.|[^'\\])*'         # single-quoted string literal
-      | [A-Za-z_$][\w$]*          # identifier (e.g., message)
-    )
-    (?:\s*,\s*
-        (?P<arg2>
-            "(?:\\.|[^"\\])*"
-          | '(?:\\.|[^'\\])*'
-          | [A-Za-z_$][\w$]*
-        )
-    )?
-    """,
-    re.VERBOSE | re.DOTALL,
-)
-
-
-def _unquote_js_string(token: str) -> str:
-    token = token.strip()
-    if len(token) >= 2 and token[0] == token[-1] and token[0] in ("'", '"'):
-        return token[1:-1]
-    return token  # identifier/expression
-
-
-def extract_messagebox(js: str):
-    # Cheap prefilter
-    if "xfa.host.messageBox" not in js:
-        return None
-
-    # Optional: window around first hit to limit scanning
-    i = js.find("xfa.host.messageBox")
-    window = js[i : i + 20000] if i != -1 else js
-
-    m = MSGBOX_RE.search(window)
-    if not m:
-        return None
-
-    text = _unquote_js_string(m.group("arg1"))
-    title = _unquote_js_string(m.group("arg2")) if m.group("arg2") else None
-    return {"text": text, "title": title}
