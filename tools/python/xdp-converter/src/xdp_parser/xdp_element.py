@@ -8,11 +8,7 @@ from importlib.resources.readers import remove_duplicates  # your existing impor
 
 from schema_generator.form_element import FormElement
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.xdp_utils import (
-    compute_full_xdp_path,
-    split_camel_case,
-    strip_label_prefix,
-)
+from xdp_parser.xdp_utils import compute_full_xdp_path
 
 
 class XdpElement(ABC):
@@ -55,30 +51,6 @@ class XdpElement(ABC):
     def is_help_text(self):
         return False  # default
 
-    # You can keep this for backward-compat if anything uses it
-    def extract_coordinate(self, coordinate: str) -> float:
-        """
-        Legacy helper; prefers geometry if available, falls back to raw attribute.
-        """
-        # Prefer geometry if we know which one we're asking for
-        if coordinate == "x" and self.geometry.x is not None:
-            return self.geometry.x
-        if coordinate == "y" and self.geometry.y is not None:
-            return self.geometry.y
-        if coordinate == "w" and self.geometry.w is not None:
-            return self.geometry.w
-        if coordinate == "h" and self.geometry.h is not None:
-            return self.geometry.h
-
-        # Fallback to raw attribute parsing
-        value = self.xdp_element.get(coordinate, "0")
-        if isinstance(value, str) and "mm" in value:
-            value = value.replace("mm", "")
-        try:
-            return float(value)
-        except ValueError:
-            return 0.0
-
     def get_name(self):
         return self.xdp_element.get("name", "")
 
@@ -86,10 +58,6 @@ class XdpElement(ABC):
         label = None
         if self.labels:
             label = self.labels.get(self.get_name())
-        # if not label:
-        #     label = strip_label_prefix(self.get_name())
-        #     if label:
-        #         label = split_camel_case(label)
         return label
 
     def get_enumeration_values(self):

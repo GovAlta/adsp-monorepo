@@ -8,12 +8,6 @@ class FormHelpText(FormElement):
         super().__init__("information", None, None, context)
         self.can_group_horizontally = False
         self.help = help_content
-        # if isinstance(help_content, str):
-        #     self.help = help_content
-        # elif hasattr(help_content, "text") and help_content.text:
-        #     self.help = help_content.text
-        # else:
-        #     self.help = html_to_markdown(help_content)
 
     def build_ui_schema(self):
         if not self.help:
