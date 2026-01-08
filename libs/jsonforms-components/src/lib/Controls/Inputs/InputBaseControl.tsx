@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { GoabFormItem } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { checkFieldValidity, convertToSentenceCase, getLabelText, getRequiredIfThen } from '../../util/stringUtils';
 import { Visible } from '../../util';
 import { JsonFormRegisterProvider } from '../../Context/register';
 import { FormFieldWrapper } from './style-component';
+import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
 
 export type GoabInputType =
   | 'text'
@@ -36,7 +37,19 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const labelToUpdate: string = convertToSentenceCase(getLabelText(uischema.scope, label || ''));
 
   let modifiedErrors = checkFieldValidity(props as ControlProps);
+
+  const formStepperCtx = useContext(JsonFormsStepperContext);
+  const stepperState = (formStepperCtx as JsonFormsStepperContextProps)?.selectStepperState?.();
+  const currentCategory = stepperState?.categories?.[stepperState?.activeId];
+  const showReviewLink = currentCategory?.showReviewPageLink;
+
   const [isVisited, setIsVisited] = useState(skipInitialValidation === true);
+
+  useEffect(() => {
+    if (showReviewLink === true && !isStepperReview) {
+      setIsVisited(true);
+    }
+  }, [showReviewLink, isStepperReview]);
 
   if (modifiedErrors === 'must be equal to one of the allowed values') {
     modifiedErrors = '';
