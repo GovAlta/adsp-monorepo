@@ -75,7 +75,7 @@
     "dotenv": "10.0.0",
     "envalid": "^7.1.0",
     "export-from-json": "^1.7.4",
-    "express": "4.21.2",
+    "express": "4.22.1",
     "express-healthcheck": "^0.1.0",
     "express-http-context": "^1.2.4",
     "express-http-proxy": "^2.0.0",
