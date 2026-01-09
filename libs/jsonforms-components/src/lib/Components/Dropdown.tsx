@@ -237,6 +237,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
           width="100%"
           value={inputText}
           testId={`${id}-input`}
+          ariaLabel={`${id}-input`}
           id={`${id}-input`}
           readonly={!isAutoCompletion}
           onChange={(detail: GoabInputOnChangeDetail) => {
