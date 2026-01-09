@@ -136,33 +136,6 @@ export function* fetchFormDefinitions(payload): SagaIterator {
   }
 }
 
-// export function* fetchFormDefinitionsRegisterId(payload): SagaIterator {
-//   const configBaseUrl: string = yield select(
-//     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
-//   );
-//   const token: string = yield call(getAccessToken);
-//   const registeredId = payload.registeredId;
-//   if (configBaseUrl && token) {
-//     try {
-//       const url = `${configBaseUrl}/configuration/v2/configuration/form-service?top=1&registeredId=${registeredId}`;
-//       const { results, page } = yield call(fetchFormDefinitionsApi, token, url);
-//       yield put(
-//         UpdateIndicator({
-//           show: true,
-//         })
-//       );
-
-//     } catch (err) {
-//       yield put(ErrorNotification({ error: err }));
-//       yield put(
-//         UpdateIndicator({
-//           show: false,
-//         })
-//       );
-//     }
-//   }
-// }
-
 export function* exportFormInfo(payload): SagaIterator {
   const exportBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.exportServiceUrl);
   const token: string = yield call(getAccessToken);
