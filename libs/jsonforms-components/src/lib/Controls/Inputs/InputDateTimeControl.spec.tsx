@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { GoADateTimeControl, GoabInputDateTimeProps, GoADateTimeInput } from './InputDateTimeControl';
+import { GoADateTimeControl, GoAInputDateTimeProps, GoADateTimeInput } from './InputDateTimeControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 
@@ -30,7 +30,7 @@ describe('input date time controls', () => {
     label: 'Date control test',
   };
 
-  const staticProps: GoabInputDateTimeProps = {
+  const staticProps: GoAInputDateTimeProps = {
     uischema: uiSchema,
     schema: dateSchema,
     rootSchema: dateSchema,

@@ -1,5 +1,5 @@
 import { CellProps, WithClassname, ControlProps, isDateControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoabInput } from '@abgov/react-components';
+import { GoabDatePicker } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -59,8 +59,8 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   }
 
   return (
-    <GoabInput
-      type="date"
+    <GoabDatePicker
+      type="calendar"
       error={isVisited && errors.length > 0}
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
