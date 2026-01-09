@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { GoADateInput, errMalformedDate } from './InputDateControl';
-import { GoabInputDateProps } from './InputDateControl';
+import { GoAInputDateProps } from './InputDateControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 
@@ -55,7 +55,7 @@ const uiSchema = (min: string, max: string): ControlElement => {
   };
 };
 
-const staticProps: GoabInputDateProps = {
+const staticProps: GoAInputDateProps = {
   uischema: uiSchema('2023-02-01', '2025-02-01'),
   schema: dateSchema,
   rootSchema: dateSchema,
@@ -80,7 +80,7 @@ describe('input control tests', () => {
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = baseElement.querySelector("goa-input[testId='My ID-input']");
+      const input = baseElement.querySelector("goa-date-picker[testId='My ID-input']");
       expect(input).toBeInTheDocument();
     });
 
@@ -91,7 +91,7 @@ describe('input control tests', () => {
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = baseElement.querySelector("goa-input[testId='My ID-input']");
+      const input = baseElement.querySelector("goa-date-picker[testId='My ID-input']");
       expect(input).toBeInTheDocument();
     });
 
@@ -102,7 +102,7 @@ describe('input control tests', () => {
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = baseElement.querySelector("goa-input[testId='My ID-input']");
+      const input = baseElement.querySelector("goa-date-picker[testId='My ID-input']");
       expect(input).toBeInTheDocument();
     });
   });
