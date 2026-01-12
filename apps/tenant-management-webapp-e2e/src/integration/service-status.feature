@@ -114,56 +114,56 @@ Feature: Service status
     And the user selects "Applications" tab for "Status"
     Then the user views the subscribe checkbox is "checked"
 
-# @TEST_CS-835 @REQ_CS-792 @regression
-# Scenario Outline: As a tenant admin, I can add, edit, publish, unpublish and delete a tenant level notice
-#   Given a tenant admin user is on status notices page
-#   When the user clicks Add notice button
-#   # Add a notice for the tenant
-#   Then the user views Add notice dialog
-#   When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
-#   And the user clicks Save as draft button
-#   And the user selects "Draft" filter by status radio button
-#   Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
-#   # Edit the notice from All to a service specific
-#   When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
-#   Then the user views Edit notice dialog
-#   When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
-#   And the user clicks Save as draft button
-#   Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-#   # Change the notice back to All
-#   # Because notices page refreshs every 30 seconds and the edit step randomly fails, add steps to go off and back to the notices page so that the edit step is done before the next refresh
-#   When the user selects the "Access" menu item
-#   And the user selects the "Status" menu item
-#   And the user selects "Notices" tab for "Status"
-#   And the user selects "Draft" filter by status radio button
-#   When the user clicks "edit" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-#   Then the user views Edit notice dialog
-#   When the user enters "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
-#   And the user clicks Save as draft button
-#   Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-#   # Publish the notice
-#   # Because notices page refreshs every 30 seconds and the following step randomly fails, add steps to go off and back to the notices page so that the following step is done before the next refresh
-#   When the user selects the "Access" menu item
-#   And the user selects the "Status" menu item
-#   And the user selects "Notices" tab for "Status"
-#   And the user selects "Draft" filter by status radio button
-#   When the user clicks "publish" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-#   And the user selects "Published" filter by status radio button
-#   Then the user "views" the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-#   # Unpublish the notice
-#   When the user clicks "unpublish" menu for the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-#   And the user selects "Draft" filter by status radio button
-#   Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-#   # Delete the notice
-#   And the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
-#   Then the user views delete "notice" confirmation modal for "<Description2>"
-#   When the user clicks Delete button in delete confirmation modal
-#   And the user selects "Active" filter by status radio button
-#   Then the user "should not view" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+  @TEST_CS-835 @REQ_CS-792 @regression
+  Scenario Outline: As a tenant admin, I can add, edit, publish, unpublish and delete a tenant level notice
+    Given a tenant admin user is on status notices page
+    When the user clicks Add notice button
+    # Add a notice for the tenant
+    Then the user views Add notice dialog
+    When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
+    And the user clicks Save as draft button
+    And the user selects "Draft" filter by status radio button
+    Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    # Edit the notice from All to a service specific
+    When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    Then the user views Edit notice dialog
+    When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
+    And the user clicks Save as draft button
+    Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    # Change the notice back to All
+    # Because notices page refreshs every 30 seconds and the edit step randomly fails, add steps to go off and back to the notices page so that the edit step is done before the next refresh
+    When the user selects the "Access" menu item
+    And the user selects the "Status" menu item
+    And the user selects "Notices" tab for "Status"
+    And the user selects "Draft" filter by status radio button
+    When the user clicks "edit" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    Then the user views Edit notice dialog
+    When the user enters "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
+    And the user clicks Save as draft button
+    Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    # Publish the notice
+    # Because notices page refreshs every 30 seconds and the following step randomly fails, add steps to go off and back to the notices page so that the following step is done before the next refresh
+    When the user selects the "Access" menu item
+    And the user selects the "Status" menu item
+    And the user selects "Notices" tab for "Status"
+    And the user selects "Draft" filter by status radio button
+    When the user clicks "publish" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    And the user selects "Published" filter by status radio button
+    Then the user "views" the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    # Unpublish the notice
+    When the user clicks "unpublish" menu for the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    And the user selects "Draft" filter by status radio button
+    Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    # Delete the notice
+    And the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+    Then the user views delete "notice" confirmation modal for "<Description2>"
+    When the user clicks Delete button in delete confirmation modal
+    And the user selects "Active" filter by status radio button
+    Then the user "should not view" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
 
-#   Examples:
-#     | Description           | Application | Start Date | Start Time | End Date | End Time | Description2               | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
-#     | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
+    Examples:
+      | Description           | Application | Start Date | Start Time | End Date | End Time | Description2               | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
+      | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
 
 # @TEST_CS-339 @REQ_CS-169 @regression
 # Scenario: As a tenant admin, I can add/edit/delete an application
