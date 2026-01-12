@@ -93,26 +93,26 @@ Feature: Service status
     When the user selects "Active" filter by status radio button
     Then the user views "Active" notices
 
-# @TEST_CS-936 @REQ_CS-907 @regression
-# Scenario: As a tenant admin, I can subscribe to health check notification type
-#   Given a tenant admin user is on status applications page
-#   # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
-#   When the user "selects" the subscribe checkbox for health check notification type
-#   Then the user views the subscribe checkbox is "checked"
-#   # Unsubscribe application health change notifications
-#   When the user "unselects" the subscribe checkbox for health check notification type
-#   Then the user views a notification message of "You are unsubscribed! You will no longer receive notifications for status-application-health-change"
-#   When the user selects the "Dashboard" menu item
-#   And the user selects the "Status" menu item
-#   And the user selects "Applications" tab for "Status"
-#   Then the user views the subscribe checkbox is "unchecked"
-#   # Subscribe application health change notifications
-#   When the user "selects" the subscribe checkbox for health check notification type
-#   Then the user views a notification message of "You are subscribed! You will receive notifications on adsp1.t@gov.ab.ca for status-application-health-change"
-#   When the user selects the "Dashboard" menu item
-#   And the user selects the "Status" menu item
-#   And the user selects "Applications" tab for "Status"
-#   Then the user views the subscribe checkbox is "checked"
+  @TEST_CS-936 @REQ_CS-907 @regression
+  Scenario: As a tenant admin, I can subscribe to health check notification type
+    Given a tenant admin user is on status applications page
+    # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views the subscribe checkbox is "checked"
+    # Unsubscribe application health change notifications
+    When the user "unselects" the subscribe checkbox for health check notification type
+    Then the user views a notification message of "You are unsubscribed! You will no longer receive notifications for status-application-health-change"
+    When the user selects the "Dashboard" menu item
+    And the user selects the "Status" menu item
+    And the user selects "Applications" tab for "Status"
+    Then the user views the subscribe checkbox is "unchecked"
+    # Subscribe application health change notifications
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views a notification message of "You are subscribed! You will receive notifications on adsp1.t@gov.ab.ca for status-application-health-change"
+    When the user selects the "Dashboard" menu item
+    And the user selects the "Status" menu item
+    And the user selects "Applications" tab for "Status"
+    Then the user views the subscribe checkbox is "checked"
 
 # @TEST_CS-835 @REQ_CS-792 @regression
 # Scenario Outline: As a tenant admin, I can add, edit, publish, unpublish and delete a tenant level notice
