@@ -1,6 +1,7 @@
+import { useRef } from 'react';
 import { GoabButton, GoabButtonGroup, GoabModal, GoabGrid } from '@abgov/react-components';
 import { Visible } from '../../util';
-import { PageBorder, PageRenderPadding, PageRenderPaddingBottom } from './styled-components';
+import { PageBorder, PageRenderPadding } from './styled-components';
 import FormStepperPageReviewer from './PageStepperReviewControl';
 import { RenderStepElements, StepProps } from './RenderStepElements';
 import { CategorizationElement, JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
@@ -35,6 +36,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   const saveForm = saveFormFunction && saveFormFunction();
 
   const [isOpen, setIsOpen] = useState(false);
+  const topElementRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = () => {
     if (submitForm) {
@@ -55,7 +57,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   };
 
   return (
-    <div data-testid="form-stepper-test-wrapper">
+    <div data-testid="form-stepper-test-wrapper" ref={topElementRef}>
       <Visible visible={visible}>
         <div id={`${path || `goa`}-form-pages`}>
           <PageBorder>
@@ -109,6 +111,9 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                                   prevId = prevId - 1;
                                 }
                                 if (prevId >= 0) {
+                                  if (topElementRef.current) {
+                                    topElementRef.current.scrollIntoView();
+                                  }
                                   goToPage(prevId);
                                 }
                               }}
@@ -129,6 +134,9 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                                 nextId = nextId + 1;
                               }
                               if (!(currentStep === totalSteps && hideSummary)) {
+                                if (topElementRef.current) {
+                                  topElementRef.current.scrollIntoView();
+                                }
                                 goToPage(nextId);
                               }
                             }}
