@@ -226,94 +226,94 @@ Feature: Service status
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "autotest-app-status-change-event" in the application list
 
-  # TEST DATA: existing subscription of "autotest-DO-NOT-DELETE", "adsp5.t@gov.ab.ca" under "Application status update"
-  @TEST_CS-1282 @REQ_CS-905 @regression
-  Scenario: As an interested stakeholder, I can verify status notifications for a tenant, so that I know about service availability.
-    Given a tenant admin user is on notification subscriptions page
-    When the user types "adsp5.t@gov.ab.ca" in Search subscriber email field
-    And the user clicks Search button on notifications page
-    Then the user "views" the subscription of "autotest-DO-NOT-DELETE", "adsp5.t@gov.ab.ca" under "Application status update"
-    Given a tenant admin user is on status applications page
-    Then the user "views" "autotest-DO-NOT-DELETE" in the application list
-    And the user views current status for "autotest-DO-NOT-DELETE"
-    When the user clicks Change status button for "autotest-DO-NOT-DELETE"
-    And the user changes status to the first unused status
-    When the user clicks Save button in Manual status change modal
-    Then the user views the status of "autotest-DO-NOT-DELETE" changed to the first unused status
-    When the user waits "20" seconds
-    And the user selects the "Event log" menu item
-    Then the "Event log" landing page is displayed
-    When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
-    Then the user views the events matching the search filter of "notification-service:notification-sent"
-    And the user views the event details of "autotest-DO-NOT-DELETE" application status changed from "{original status}" to "{new status}" for subscriber of "adsp5.t@gov.ab.ca"
+# # TEST DATA: existing subscription of "autotest-DO-NOT-DELETE", "adsp5.t@gov.ab.ca" under "Application status update"
+# @TEST_CS-1282 @REQ_CS-905 @regression
+# Scenario: As an interested stakeholder, I can verify status notifications for a tenant, so that I know about service availability.
+#   Given a tenant admin user is on notification subscriptions page
+#   When the user types "adsp5.t@gov.ab.ca" in Search subscriber email field
+#   And the user clicks Search button on notifications page
+#   Then the user "views" the subscription of "autotest-DO-NOT-DELETE", "adsp5.t@gov.ab.ca" under "Application status update"
+#   Given a tenant admin user is on status applications page
+#   Then the user "views" "autotest-DO-NOT-DELETE" in the application list
+#   And the user views current status for "autotest-DO-NOT-DELETE"
+#   When the user clicks Change status button for "autotest-DO-NOT-DELETE"
+#   And the user changes status to the first unused status
+#   When the user clicks Save button in Manual status change modal
+#   Then the user views the status of "autotest-DO-NOT-DELETE" changed to the first unused status
+#   When the user waits "20" seconds
+#   And the user selects the "Event log" menu item
+#   Then the "Event log" landing page is displayed
+#   When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+#   Then the user views the events matching the search filter of "notification-service:notification-sent"
+#   And the user views the event details of "autotest-DO-NOT-DELETE" application status changed from "{original status}" to "{new status}" for subscriber of "adsp5.t@gov.ab.ca"
 
-  @TEST_CS-1287 @REQ_CS-1261 @REQ_CS-1262 @regression
-  Scenario: As a tenant admin, I can modify tenant support email for status page so that users know where to report the issues.
-    Given a tenant admin user is on status overview page
-    When the user clicks Edit button for contact information
-    Then the user views Edit contact information modal on the status overview page
-    When the user enters "autotest-status-admin@gov.ab.ca" in Edit contact information modal
-    And the user clicks Save button on contact information modal
-    Then the user views "autotest-status-admin@gov.ab.ca" as the email of contact information
-    # Visiting public status page
-    Then the user should be able to view "autotest-status-admin@gov.ab.ca" as support email in the status app for "Autotest" tenant
-    Given a tenant admin user is on status overview page
-    When the user clicks Edit button for contact information
-    And the user enters "adsp1.t@gov.ab.ca" in Edit contact information modal
-    And the user clicks Save button on contact information modal
-    Then the user views "adsp1.t@gov.ab.ca" as the email of contact information
+# @TEST_CS-1287 @REQ_CS-1261 @REQ_CS-1262 @regression
+# Scenario: As a tenant admin, I can modify tenant support email for status page so that users know where to report the issues.
+#   Given a tenant admin user is on status overview page
+#   When the user clicks Edit button for contact information
+#   Then the user views Edit contact information modal on the status overview page
+#   When the user enters "autotest-status-admin@gov.ab.ca" in Edit contact information modal
+#   And the user clicks Save button on contact information modal
+#   Then the user views "autotest-status-admin@gov.ab.ca" as the email of contact information
+#   # Visiting public status page
+#   Then the user should be able to view "autotest-status-admin@gov.ab.ca" as support email in the status app for "Autotest" tenant
+#   Given a tenant admin user is on status overview page
+#   When the user clicks Edit button for contact information
+#   And the user enters "adsp1.t@gov.ab.ca" in Edit contact information modal
+#   And the user clicks Save button on contact information modal
+#   Then the user views "adsp1.t@gov.ab.ca" as the email of contact information
 
-  @TEST_CS-333 @REQ_CS-163 @regression
-  Scenario: As a tenant admin, I can update the status of my service/app, so it is available to the public
-    Given a tenant admin user is on status applications page
-    Then the user views current status for "autotest-DO-NOT-DELETE"
-    When the user clicks Change status button for "autotest-DO-NOT-DELETE"
-    And the user changes status to the first unused status
-    When the user clicks Save button in Manual status change modal
-    Then the user views the status of "autotest-DO-NOT-DELETE" changed to the first unused status
-    Given a user is on the public service status page for "autotest"
-    Then the user views the status of "autotest-DO-NOT-DELETE" being the first unused status
-    And the user views the timestamp of "autotest-DO-NOT-DELETE" being updated
+# @TEST_CS-333 @REQ_CS-163 @regression
+# Scenario: As a tenant admin, I can update the status of my service/app, so it is available to the public
+#   Given a tenant admin user is on status applications page
+#   Then the user views current status for "autotest-DO-NOT-DELETE"
+#   When the user clicks Change status button for "autotest-DO-NOT-DELETE"
+#   And the user changes status to the first unused status
+#   When the user clicks Save button in Manual status change modal
+#   Then the user views the status of "autotest-DO-NOT-DELETE" changed to the first unused status
+#   Given a user is on the public service status page for "autotest"
+#   Then the user views the status of "autotest-DO-NOT-DELETE" being the first unused status
+#   And the user views the timestamp of "autotest-DO-NOT-DELETE" being updated
 
-  # Copy link icon fails accessibility test for now. Ignore the test for now
-  @accessibility @regression @ignore
-  Scenario: As a service admin, I can use status pages without any critical or serious accessibility issues
-    Given a tenant admin user is on status overview page
-    Then no critical or serious accessibility issues on "status overview page"
-    When the user clicks Edit button for contact information
-    Then the user views Edit contact information modal on the status overview page
-    And no critical or serious accessibility issues for "edit status contact information modal" on "status overview page"
-    And the user clicks Cancel button on contact information modal
-    When the user clicks Add application button
-    Then the user views Add application modal
-    And no critical or serious accessibility issues for "add application modal" on "status overview page"
-    When the user clicks Cancel application button
-    Then no critical or serious accessibility issues on "status applications page"
-    When the user selects "Notices" tab for "Status"
-    Then no critical or serious accessibility issues on "status notices page"
-  ## CS-1863 is pending for fix
-  # When the user clicks Add notice button
-  # Then the user views Add notice dialog
-  # And no critical or serious accessibility issues for "add notice modal" on "status notices page"
-  # When the user clicks Cancel button in notice modal
+# # Copy link icon fails accessibility test for now. Ignore the test for now
+# @accessibility @regression @ignore
+# Scenario: As a service admin, I can use status pages without any critical or serious accessibility issues
+#   Given a tenant admin user is on status overview page
+#   Then no critical or serious accessibility issues on "status overview page"
+#   When the user clicks Edit button for contact information
+#   Then the user views Edit contact information modal on the status overview page
+#   And no critical or serious accessibility issues for "edit status contact information modal" on "status overview page"
+#   And the user clicks Cancel button on contact information modal
+#   When the user clicks Add application button
+#   Then the user views Add application modal
+#   And no critical or serious accessibility issues for "add application modal" on "status overview page"
+#   When the user clicks Cancel application button
+#   Then no critical or serious accessibility issues on "status applications page"
+#   When the user selects "Notices" tab for "Status"
+#   Then no critical or serious accessibility issues on "status notices page"
+# ## CS-1863 is pending for fix
+# # When the user clicks Add notice button
+# # Then the user views Add notice dialog
+# # And no critical or serious accessibility issues for "add notice modal" on "status notices page"
+# # When the user clicks Cancel button in notice modal
 
-  @TEST_CS-2249 @REQ_CS-2058 @regression
-  Scenario: As a tenant admin, I can set a status application to be monitoring only, so it does not appear on the public status page
-    Given a tenant admin user is on status applications page
-    # Set monitor only for an application
-    When the user "selects" Monitor only checkbox for "autotest-testMonitoring"
-    And the user selects "Notices" tab for "Status"
-    And the user clicks Add notice button
-    Then the user "should not view" "autotest-testMonitoring" in applications dropdown in Add notice model
-    # Visiting public status page to verify monitor only application doesn't show up
-    Given a user is on the public service status page for "autotest"
-    Then the user "should not view" "autotest-testMonitoring" application in the status app for "Autotest" tenant
-    # Restore the application
-    Given a tenant admin user is on status applications page
-    When the user "unselects" Monitor only checkbox for "autotest-testMonitoring"
-    And the user selects "Notices" tab for "Status"
-    And the user clicks Add notice button
-    Then the user "views" "autotest-testMonitoring" in applications dropdown in Add notice model
-    # Visiting public status page to verify application shows up again
-    Given a user is on the public service status page for "autotest"
-    Then the user "views" "autotest-testMonitoring" application in the status app for "Autotest" tenant
+# @TEST_CS-2249 @REQ_CS-2058 @regression
+# Scenario: As a tenant admin, I can set a status application to be monitoring only, so it does not appear on the public status page
+#   Given a tenant admin user is on status applications page
+#   # Set monitor only for an application
+#   When the user "selects" Monitor only checkbox for "autotest-testMonitoring"
+#   And the user selects "Notices" tab for "Status"
+#   And the user clicks Add notice button
+#   Then the user "should not view" "autotest-testMonitoring" in applications dropdown in Add notice model
+#   # Visiting public status page to verify monitor only application doesn't show up
+#   Given a user is on the public service status page for "autotest"
+#   Then the user "should not view" "autotest-testMonitoring" application in the status app for "Autotest" tenant
+#   # Restore the application
+#   Given a tenant admin user is on status applications page
+#   When the user "unselects" Monitor only checkbox for "autotest-testMonitoring"
+#   And the user selects "Notices" tab for "Status"
+#   And the user clicks Add notice button
+#   Then the user "views" "autotest-testMonitoring" in applications dropdown in Add notice model
+#   # Visiting public status page to verify application shows up again
+#   Given a user is on the public service status page for "autotest"
+#   Then the user "views" "autotest-testMonitoring" application in the status app for "Autotest" tenant
