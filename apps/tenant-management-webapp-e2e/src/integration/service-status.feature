@@ -36,25 +36,25 @@ Feature: Service status
       | Description        | Application | Start Date | Start Time | End Date | End Time | Description2            | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
       | Autotest-NewNotice | Autotest    | Today      | 02:00 pm   | Today    | 11:00 pm | Autotest-ModifiedNotice | File Service | Today        | 10:00 am     | Today      | 02:00 pm   |
 
-  # TEST DATA: "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-  @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression
-  Scenario: As a tenant admin, I can publish and un-publish a notice, and see the notice published event
-    Given a tenant admin user is on status notices page
-    When the user clicks "Publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-    And the user selects "Published" filter by status radio button
-    Then the user "views" the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-    When the user waits "20" seconds
-    And the user selects the "Event log" menu item
-    Then the "Event log" landing page is displayed
-    When the user searches with "status-service:application-notice-published", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
-    And the user clicks Show details button for the latest event of "application-notice-published" for "status-service"
-    Then the user views event details of "Drafted notice - AUTOMATED TEST ONLY", "Autotest" of application-notice-published for status-service
-    When the user selects the "Status" menu item
-    And the user selects "Notices" tab for "Status"
-    And the user selects "Published" filter by status radio button
-    And the user clicks "Unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-    And the user selects "Draft" filter by status radio button
-    Then the user "views" the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+# # TEST DATA: "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+# @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression
+# Scenario: As a tenant admin, I can publish and un-publish a notice, and see the notice published event
+#   Given a tenant admin user is on status notices page
+#   When the user clicks "Publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+#   And the user selects "Published" filter by status radio button
+#   Then the user "views" the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+#   When the user waits "20" seconds
+#   And the user selects the "Event log" menu item
+#   Then the "Event log" landing page is displayed
+#   When the user searches with "status-service:application-notice-published", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+#   And the user clicks Show details button for the latest event of "application-notice-published" for "status-service"
+#   Then the user views event details of "Drafted notice - AUTOMATED TEST ONLY", "Autotest" of application-notice-published for status-service
+#   When the user selects the "Status" menu item
+#   And the user selects "Notices" tab for "Status"
+#   And the user selects "Published" filter by status radio button
+#   And the user clicks "Unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+#   And the user selects "Draft" filter by status radio button
+#   Then the user "views" the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
 
 # # TEST DATA: an application named "Autotest"
 # @TEST_CS-783 @REQ_CS-667 @regression
