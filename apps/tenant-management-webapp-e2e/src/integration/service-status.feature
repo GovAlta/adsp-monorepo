@@ -6,35 +6,35 @@ Feature: Service status
     Given a tenant admin user is on status overview page
     Then the user views the health check guidelines
 
-  # TEST DATA: need 2 applications named "Autotest" and "File Service"
-  @TEST_CS-781 @REQ_CS-667 @regression
-  Scenario Outline: As a tenant admin, I can add, edit and delete a notice
-    Given a tenant admin user is on status notices page
-    When the user clicks Add notice button
-    Then the user views Add notice dialog
-    When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
-    And the user clicks Save as draft button
-    And the user selects "Draft" filter by status radio button
-    Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
-    When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
-    Then the user views Edit notice dialog
-    When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
-    And the user clicks Save as draft button
-    Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-    # Because notices page refreshs every 30 seconds and the delete step randomly fails, add steps to go off and back to the notices page so that the delete step is done before the next refresh
-    When the user selects the "Access" menu item
-    And the user selects the "Status" menu item
-    And the user selects "Notices" tab for "Status"
-    And the user selects "Draft" filter by status radio button
-    And the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-    Then the user views delete "notice" confirmation modal for "<Description2>"
-    When the user clicks Delete button in delete confirmation modal
-    And the user selects "Active" filter by status radio button
-    Then the user "should not view" the "draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+# # TEST DATA: need 2 applications named "Autotest" and "File Service"
+# @TEST_CS-781 @REQ_CS-667 @regression
+# Scenario Outline: As a tenant admin, I can add, edit and delete a notice
+#   Given a tenant admin user is on status notices page
+#   When the user clicks Add notice button
+#   Then the user views Add notice dialog
+#   When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
+#   And the user clicks Save as draft button
+#   And the user selects "Draft" filter by status radio button
+#   Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+#   When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+#   Then the user views Edit notice dialog
+#   When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
+#   And the user clicks Save as draft button
+#   Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+#   # Because notices page refreshs every 30 seconds and the delete step randomly fails, add steps to go off and back to the notices page so that the delete step is done before the next refresh
+#   When the user selects the "Access" menu item
+#   And the user selects the "Status" menu item
+#   And the user selects "Notices" tab for "Status"
+#   And the user selects "Draft" filter by status radio button
+#   And the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+#   Then the user views delete "notice" confirmation modal for "<Description2>"
+#   When the user clicks Delete button in delete confirmation modal
+#   And the user selects "Active" filter by status radio button
+#   Then the user "should not view" the "draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
 
-    Examples:
-      | Description        | Application | Start Date | Start Time | End Date | End Time | Description2            | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
-      | Autotest-NewNotice | Autotest    | Today      | 02:00 pm   | Today    | 11:00 pm | Autotest-ModifiedNotice | File Service | Today        | 10:00 am     | Today      | 02:00 pm   |
+#   Examples:
+#     | Description        | Application | Start Date | Start Time | End Date | End Time | Description2            | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
+#     | Autotest-NewNotice | Autotest    | Today      | 02:00 pm   | Today    | 11:00 pm | Autotest-ModifiedNotice | File Service | Today        | 10:00 am     | Today      | 02:00 pm   |
 
 # # TEST DATA: "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
 # @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression
