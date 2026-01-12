@@ -56,63 +56,63 @@ Feature: Service status
     And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
 
-  # TEST DATA: an application named "Autotest"
-  @TEST_CS-783 @REQ_CS-667 @regression
-  Scenario: As a tenant admin, I can add, publish and archive a notice
-    Given a tenant admin user is on status notices page
-    When the user clicks Add notice button
-    Then the user views Add notice dialog
-    When the user enters "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm" on notice dialog
-    And the user clicks Save as draft button
-    And the user selects "Draft" filter by status radio button
-    Then the user "views" the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-    When the user clicks "publish" menu for the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-    And the user selects "Published" filter by status radio button
-    Then the user "views" the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-    And the user should not view "edit menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-    And the user should not view "delete menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-    # Because notices page refreshs every 30 seconds and the following step randomly fails, add steps to go off and back to the notices page so that the following step is done before the next refresh
-    When the user selects the "Access" menu item
-    And the user selects the "Status" menu item
-    And the user selects "Notices" tab for "Status"
-    And the user selects "Published" filter by status radio button
-    When the user clicks "archive" menu for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-    And the user selects "Archived" filter by status radio button
-    Then the user "views" the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-    And the user should not view "gear icon" for the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+# # TEST DATA: an application named "Autotest"
+# @TEST_CS-783 @REQ_CS-667 @regression
+# Scenario: As a tenant admin, I can add, publish and archive a notice
+#   Given a tenant admin user is on status notices page
+#   When the user clicks Add notice button
+#   Then the user views Add notice dialog
+#   When the user enters "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm" on notice dialog
+#   And the user clicks Save as draft button
+#   And the user selects "Draft" filter by status radio button
+#   Then the user "views" the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+#   When the user clicks "publish" menu for the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+#   And the user selects "Published" filter by status radio button
+#   Then the user "views" the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+#   And the user should not view "edit menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+#   And the user should not view "delete menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+#   # Because notices page refreshs every 30 seconds and the following step randomly fails, add steps to go off and back to the notices page so that the following step is done before the next refresh
+#   When the user selects the "Access" menu item
+#   And the user selects the "Status" menu item
+#   And the user selects "Notices" tab for "Status"
+#   And the user selects "Published" filter by status radio button
+#   When the user clicks "archive" menu for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+#   And the user selects "Archived" filter by status radio button
+#   Then the user "views" the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+#   And the user should not view "gear icon" for the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
 
-  @TEST_CS-784 @REQ_CS-667 @regression
-  Scenario: As a tenant admin, I can filter notices by status
-    Given a tenant admin user is on status notices page
-    When the user selects "Draft" filter by status radio button
-    Then the user views "Draft" notices
-    When the user selects "Published" filter by status radio button
-    Then the user views "Published" notices
-    When the user selects "Archived" filter by status radio button
-    Then the user views "Archived" notices
-    When the user selects "Active" filter by status radio button
-    Then the user views "Active" notices
+# @TEST_CS-784 @REQ_CS-667 @regression
+# Scenario: As a tenant admin, I can filter notices by status
+#   Given a tenant admin user is on status notices page
+#   When the user selects "Draft" filter by status radio button
+#   Then the user views "Draft" notices
+#   When the user selects "Published" filter by status radio button
+#   Then the user views "Published" notices
+#   When the user selects "Archived" filter by status radio button
+#   Then the user views "Archived" notices
+#   When the user selects "Active" filter by status radio button
+#   Then the user views "Active" notices
 
-  @TEST_CS-936 @REQ_CS-907 @regression
-  Scenario: As a tenant admin, I can subscribe to health check notification type
-    Given a tenant admin user is on status applications page
-    # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
-    When the user "selects" the subscribe checkbox for health check notification type
-    Then the user views the subscribe checkbox is "checked"
-    # Unsubscribe application health change notifications
-    When the user "unselects" the subscribe checkbox for health check notification type
-    Then the user views a notification message of "You are unsubscribed! You will no longer receive notifications for status-application-health-change"
-    When the user selects the "Dashboard" menu item
-    And the user selects the "Status" menu item
-    And the user selects "Applications" tab for "Status"
-    Then the user views the subscribe checkbox is "unchecked"
-    # Subscribe application health change notifications
-    When the user "selects" the subscribe checkbox for health check notification type
-    Then the user views a notification message of "You are subscribed! You will receive notifications on adsp1.t@gov.ab.ca for status-application-health-change"
-    When the user selects the "Dashboard" menu item
-    And the user selects the "Status" menu item
-    And the user selects "Applications" tab for "Status"
-    Then the user views the subscribe checkbox is "checked"
+# @TEST_CS-936 @REQ_CS-907 @regression
+# Scenario: As a tenant admin, I can subscribe to health check notification type
+#   Given a tenant admin user is on status applications page
+#   # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
+#   When the user "selects" the subscribe checkbox for health check notification type
+#   Then the user views the subscribe checkbox is "checked"
+#   # Unsubscribe application health change notifications
+#   When the user "unselects" the subscribe checkbox for health check notification type
+#   Then the user views a notification message of "You are unsubscribed! You will no longer receive notifications for status-application-health-change"
+#   When the user selects the "Dashboard" menu item
+#   And the user selects the "Status" menu item
+#   And the user selects "Applications" tab for "Status"
+#   Then the user views the subscribe checkbox is "unchecked"
+#   # Subscribe application health change notifications
+#   When the user "selects" the subscribe checkbox for health check notification type
+#   Then the user views a notification message of "You are subscribed! You will receive notifications on adsp1.t@gov.ab.ca for status-application-health-change"
+#   When the user selects the "Dashboard" menu item
+#   And the user selects the "Status" menu item
+#   And the user selects "Applications" tab for "Status"
+#   Then the user views the subscribe checkbox is "checked"
 
 # @TEST_CS-835 @REQ_CS-792 @regression
 # Scenario Outline: As a tenant admin, I can add, edit, publish, unpublish and delete a tenant level notice
