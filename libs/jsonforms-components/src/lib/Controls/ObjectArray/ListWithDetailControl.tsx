@@ -3,7 +3,7 @@ import { JsonFormsStateContext, useJsonForms } from '@jsonforms/react';
 import { toDataPath } from '@jsonforms/core';
 
 import range from 'lodash/range';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import pluralize from 'pluralize';
 import { Resolve } from '@jsonforms/core';
 import type { ErrorObject } from 'ajv';
@@ -33,6 +33,7 @@ import {
   SideMenuItem,
   RowFlex,
   FlexTabs,
+  FlexTabsWithMargin,
   FlexForm,
   Trash,
   ListContainer,
@@ -44,7 +45,6 @@ import {
 } from './styled-components';
 import { Visible } from '../../util';
 import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
-import { JSONSchema } from '@apidevtools/json-schema-ref-parser';
 
 const getItemsTitle = (schema?: JsonSchema): string | undefined => {
   const items = schema?.items;
@@ -357,6 +357,20 @@ interface MainRowProps {
   uischema?: ControlElement;
   schema?: JsonSchema;
 }
+interface LeftRowProps {
+  childPath: string;
+  rowIndex: number;
+  enabled: boolean;
+  currentTab: number;
+  current: HTMLElement | null;
+  selectCurrentTab: (index: number) => void;
+  // eslint-disable-next-line
+  rowData?: Record<string, any>;
+  uischema?: ControlElement;
+  schema?: JsonSchema;
+  name: string;
+  translations: ArrayTranslations;
+}
 
 const NonEmptyRowComponent = ({
   childPath,
@@ -592,6 +606,55 @@ export function humanizeAjvError(error: ErrorObject, schema: JsonSchema, uischem
   }
 }
 
+const LeftTab = ({
+  childPath,
+  rowIndex,
+  openDeleteDialog,
+  selectCurrentTab,
+  enabled,
+  currentTab,
+  name,
+  current,
+}: LeftRowProps & WithDeleteDialogSupport) => {
+  return (
+    <div key={childPath}>
+      <SideMenuItem
+        style={currentTab === rowIndex ? { background: '#EFF8FF' } : {}}
+        onClick={() => selectCurrentTab(rowIndex)}
+        onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            if (current) {
+              const goa = current?.querySelector('goa-input, goa-button');
+              if (goa?.shadowRoot) {
+                const internal = goa.shadowRoot.querySelector('input, button');
+
+                (internal as HTMLElement)?.focus();
+                selectCurrentTab(rowIndex);
+              }
+            }
+          }
+        }}
+      >
+        <RowFlexMenu tabIndex={0}>
+          <TabName>{name}</TabName>
+          {enabled ? (
+            <Trash role="trash button">
+              <GoabIconButton
+                disabled={!enabled}
+                icon="trash"
+                title={'trash button'}
+                testId="remove the details"
+                onClick={() => openDeleteDialog(childPath, rowIndex, name)}
+              ></GoabIconButton>
+            </Trash>
+          ) : null}
+        </RowFlexMenu>
+      </SideMenuItem>
+    </div>
+  );
+};
+
 const MainTab = ({
   childPath,
   rowIndex,
@@ -704,29 +767,19 @@ const ObjectArrayList = ({
   errors,
 }: TableRowsProp & WithDeleteDialogSupport) => {
   const isEmptyList = data === 0;
-  const rightRef = useRef(null);
-  const current = rightRef.current as HTMLElement | null;
   const minHeight = 100;
-  const [rightHeight, setRightHeight] = useState<number | undefined>(minHeight);
+  const totalContentRef = useRef<HTMLDivElement | null>(null);
+  const leftRef = useRef<HTMLDivElement | null>(null);
+  const rightRef = useRef<HTMLDivElement | null>(null);
+  const current = totalContentRef.current as HTMLElement | null;
 
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver(() => {
-      if (rightHeight !== current?.offsetHeight && current?.offsetHeight)
-        setRightHeight(current?.offsetHeight > minHeight ? current?.offsetHeight : minHeight);
-    });
-
-    if (current) {
-      resizeObserver.observe(current);
+  useLayoutEffect(() => {
+    if (!leftRef.current || !rightRef.current) return;
+    const height = rightRef.current?.scrollHeight;
+    if (height && height > minHeight) {
+      leftRef.current.style.height = `${height}px`;
     }
-
-    return () => {
-      if (current) {
-        resizeObserver.unobserve(current);
-      }
-    };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, rightHeight, rightRef]);
+  }, [setCurrentListPage]);
 
   if (isEmptyList) {
     const noDataMessge = uischema.options?.noDataMessage ?? 'No data';
@@ -740,43 +793,43 @@ const ObjectArrayList = ({
   }
 
   const appliedUiSchemaOptions = merge({}, config, uischema.options);
-
   const selectCurrentTab = (index: number) => {
     setCurrentIndex(index);
   };
 
   const continueButtonTitle = uischema?.options?.componentProps?.listWithDetailsContinueButtonTitle;
+  const withLeftTab = uischema?.options?.componentProps?.withLeftTab;
 
   return (
     <ListContainer>
-      <RowFlex>
-        {currentListPage === 0 && (
-          <FlexTabs style={{ height: '100%' }}>
-            {range(data).map((index: number) => {
-              const childPath = Paths.compose(path, `${index}`);
-              return (
-                <MainTab
-                  key={childPath}
-                  childPath={childPath}
-                  rowIndex={index}
-                  currentTab={currentIndex}
-                  openDeleteDialog={openDeleteDialog}
-                  selectCurrentTab={selectCurrentTab}
-                  enabled={enabled}
-                  current={current}
-                  setCurrentListPage={(index: number) => setCurrentListPage(index)}
-                  uischema={uischema}
-                  schema={schema}
-                />
-              );
-            })}
-          </FlexTabs>
-        )}
-        {currentListPage > 0 && (
-          <UpdateListContainer>
-            <FlexForm ref={rightRef} tabIndex={-1}>
-              <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>
-
+      <div>
+        {withLeftTab ? (
+          <RowFlex ref={totalContentRef}>
+            <FlexTabsWithMargin ref={leftRef}>
+              <div>
+                {range(data).map((index: number) => {
+                  const childPath = Paths.compose(path, `${index}`);
+                  const name = appliedUiSchemaOptions?.itemLabel
+                    ? `${appliedUiSchemaOptions?.itemLabel} ${index + 1}`
+                    : `${path} ${index + 1}`;
+                  return (
+                    <LeftTab
+                      key={childPath}
+                      childPath={childPath}
+                      rowIndex={index}
+                      currentTab={currentIndex}
+                      name={name}
+                      openDeleteDialog={openDeleteDialog}
+                      selectCurrentTab={selectCurrentTab}
+                      enabled={enabled}
+                      current={current}
+                      translations={translations}
+                    />
+                  );
+                })}
+              </div>
+            </FlexTabsWithMargin>
+            <FlexForm tabIndex={-1} ref={rightRef}>
               <NonEmptyList
                 key={Paths.compose(path, `${currentIndex}`)}
                 childPath={Paths.compose(path, `${currentIndex}`)}
@@ -793,18 +846,66 @@ const ObjectArrayList = ({
                 translations={translations}
               />
             </FlexForm>
-            <GoabButton
-              type={'primary'}
-              onClick={() => {
-                setCurrentListPage(0);
-              }}
-              testId="next-list-button"
-            >
-              {continueButtonTitle ? continueButtonTitle : 'Continue'}
-            </GoabButton>
-          </UpdateListContainer>
+          </RowFlex>
+        ) : (
+          <RowFlex>
+            {currentListPage === 0 && (
+              <FlexTabs style={{ height: '100%' }}>
+                {range(data).map((index: number) => {
+                  const childPath = Paths.compose(path, `${index}`);
+                  return (
+                    <MainTab
+                      key={childPath}
+                      childPath={childPath}
+                      rowIndex={index}
+                      currentTab={currentIndex}
+                      openDeleteDialog={openDeleteDialog}
+                      selectCurrentTab={selectCurrentTab}
+                      enabled={enabled}
+                      current={current}
+                      setCurrentListPage={(index: number) => setCurrentListPage(index)}
+                      uischema={uischema}
+                      schema={schema}
+                    />
+                  );
+                })}
+              </FlexTabs>
+            )}
+            {currentListPage > 0 && (
+              <UpdateListContainer>
+                <FlexForm tabIndex={-1}>
+                  <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>
+
+                  <NonEmptyList
+                    key={Paths.compose(path, `${currentIndex}`)}
+                    childPath={Paths.compose(path, `${currentIndex}`)}
+                    rowIndex={currentIndex}
+                    schema={schema}
+                    openDeleteDialog={openDeleteDialog}
+                    showSortButtons={
+                      appliedUiSchemaOptions.showSortButtons || appliedUiSchemaOptions.showArrayTableSortButtons
+                    }
+                    enabled={enabled}
+                    cells={cells}
+                    path={path}
+                    uischema={uischema}
+                    translations={translations}
+                  />
+                </FlexForm>
+                <GoabButton
+                  type={'primary'}
+                  onClick={() => {
+                    setCurrentListPage(0);
+                  }}
+                  testId="next-list-button"
+                >
+                  {continueButtonTitle ? continueButtonTitle : 'Continue'}
+                </GoabButton>
+              </UpdateListContainer>
+            )}
+          </RowFlex>
         )}
-      </RowFlex>
+      </div>
     </ListContainer>
   );
 };
@@ -864,10 +965,15 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
     // eslint-disable-next-line
     const listTitle = uischema?.label ?? uischema?.options?.title ?? getItemsTitle(schema) ?? schema?.title ?? label;
 
+    const withLeftTab = uischema?.options?.componentProps?.withLeftTab;
+    const noLeftTabBlankButton = this.state.currentListPage === 0 && data === 0;
+    const showMainItems = withLeftTab || this.state.currentListPage === 0;
+    const showSecondaryButton = withLeftTab || noLeftTabBlankButton;
+
     return (
       <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
         <ToolBarHeader>
-          {listTitle && this.state.currentListPage === 0 && (
+          {listTitle && showMainItems && (
             <MarginTop>
               <ObjectArrayTitle>
                 {listTitle} <span>{additionalProps.required && '(required)'}</span>
@@ -877,8 +983,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
               </ObjectArrayTitle>
             </MarginTop>
           )}
-          {/* {this.state.currentListPage > 0 && <ObjectArrayTitle>{name}</ObjectArrayTitle>} */}
-          {this.state.currentListPage === 0 && data === 0 && (
+          {showSecondaryButton && (
             <ObjectArrayToolBar
               data={data}
               errors={errors}
