@@ -273,7 +273,7 @@ describe('Input Text Control tests', () => {
         </JsonFormsContext.Provider>
       );
 
-      expect(getByText('First name is required')).toBeTruthy();
+      expect(getByText('First Name is required')).toBeTruthy();
     });
     it('Check if the date is a valid date/time', () => {
       const date = new Date();
