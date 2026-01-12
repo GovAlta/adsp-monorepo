@@ -6,80 +6,83 @@ Feature: Service status
     Given a tenant admin user is on status overview page
     Then the user views the health check guidelines
 
-  # # TEST DATA: need 2 applications named "Autotest" and "File Service"
-  # @TEST_CS-781 @REQ_CS-667 @regression
-  # Scenario Outline: As a tenant admin, I can add, edit and delete a notice
-  #   Given a tenant admin user is on status notices page
-  #   When the user clicks Add notice button
-  #   Then the user views Add notice dialog
-  #   When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
-  #   And the user clicks Save as draft button
-  #   And the user selects "Draft" filter by status radio button
-  #   Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
-  #   When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
-  #   Then the user views Edit notice dialog
-  #   When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
-  #   And the user clicks Save as draft button
-  #   Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-  #   # Because notices page refreshs every 30 seconds and the delete step randomly fails, add steps to go off and back to the notices page so that the delete step is done before the next refresh
-  #   When the user selects the "Access" menu item
-  #   And the user selects the "Status" menu item
-  #   And the user selects "Notices" tab for "Status"
-  #   And the user selects "Draft" filter by status radio button
-  #   And the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-  #   Then the user views delete "notice" confirmation modal for "<Description2>"
-  #   When the user clicks Delete button in delete confirmation modal
-  #   And the user selects "Active" filter by status radio button
-  #   Then the user "should not view" the "draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+  # Ignore this test as it crashes the test suite
+  # TEST DATA: need 2 applications named "Autotest" and "File Service"
+  @TEST_CS-781 @REQ_CS-667 @regression @ignore
+  Scenario Outline: As a tenant admin, I can add, edit and delete a notice
+    Given a tenant admin user is on status notices page
+    When the user clicks Add notice button
+    Then the user views Add notice dialog
+    When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
+    And the user clicks Save as draft button
+    And the user selects "Draft" filter by status radio button
+    Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    Then the user views Edit notice dialog
+    When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
+    And the user clicks Save as draft button
+    Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    # Because notices page refreshs every 30 seconds and the delete step randomly fails, add steps to go off and back to the notices page so that the delete step is done before the next refresh
+    When the user selects the "Access" menu item
+    And the user selects the "Status" menu item
+    And the user selects "Notices" tab for "Status"
+    And the user selects "Draft" filter by status radio button
+    And the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    Then the user views delete "notice" confirmation modal for "<Description2>"
+    When the user clicks Delete button in delete confirmation modal
+    And the user selects "Active" filter by status radio button
+    Then the user "should not view" the "draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
 
-  #   Examples:
-  #     | Description        | Application | Start Date | Start Time | End Date | End Time | Description2            | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
-  #     | Autotest-NewNotice | Autotest    | Today      | 02:00 pm   | Today    | 11:00 pm | Autotest-ModifiedNotice | File Service | Today        | 10:00 am     | Today      | 02:00 pm   |
+    Examples:
+      | Description        | Application | Start Date | Start Time | End Date | End Time | Description2            | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
+      | Autotest-NewNotice | Autotest    | Today      | 02:00 pm   | Today    | 11:00 pm | Autotest-ModifiedNotice | File Service | Today        | 10:00 am     | Today      | 02:00 pm   |
 
-  # # TEST DATA: "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-  # @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression
-  # Scenario: As a tenant admin, I can publish and un-publish a notice, and see the notice published event
-  #   Given a tenant admin user is on status notices page
-  #   When the user clicks "Publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-  #   And the user selects "Published" filter by status radio button
-  #   Then the user "views" the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-  #   When the user waits "20" seconds
-  #   And the user selects the "Event log" menu item
-  #   Then the "Event log" landing page is displayed
-  #   When the user searches with "status-service:application-notice-published", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
-  #   And the user clicks Show details button for the latest event of "application-notice-published" for "status-service"
-  #   Then the user views event details of "Drafted notice - AUTOMATED TEST ONLY", "Autotest" of application-notice-published for status-service
-  #   When the user selects the "Status" menu item
-  #   And the user selects "Notices" tab for "Status"
-  #   And the user selects "Published" filter by status radio button
-  #   And the user clicks "Unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-  #   And the user selects "Draft" filter by status radio button
-  #   Then the user "views" the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+  # Ignore this test as it crashes the test suite
+  # TEST DATA: "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+  @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression @ignore
+  Scenario: As a tenant admin, I can publish and un-publish a notice, and see the notice published event
+    Given a tenant admin user is on status notices page
+    When the user clicks "Publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+    And the user selects "Published" filter by status radio button
+    Then the user "views" the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+    When the user waits "20" seconds
+    And the user selects the "Event log" menu item
+    Then the "Event log" landing page is displayed
+    When the user searches with "status-service:application-notice-published", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+    And the user clicks Show details button for the latest event of "application-notice-published" for "status-service"
+    Then the user views event details of "Drafted notice - AUTOMATED TEST ONLY", "Autotest" of application-notice-published for status-service
+    When the user selects the "Status" menu item
+    And the user selects "Notices" tab for "Status"
+    And the user selects "Published" filter by status radio button
+    And the user clicks "Unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+    And the user selects "Draft" filter by status radio button
+    Then the user "views" the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
 
-  # # TEST DATA: an application named "Autotest"
-  # @TEST_CS-783 @REQ_CS-667 @regression
-  # Scenario: As a tenant admin, I can add, publish and archive a notice
-  #   Given a tenant admin user is on status notices page
-  #   When the user clicks Add notice button
-  #   Then the user views Add notice dialog
-  #   When the user enters "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm" on notice dialog
-  #   And the user clicks Save as draft button
-  #   And the user selects "Draft" filter by status radio button
-  #   Then the user "views" the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-  #   When the user clicks "publish" menu for the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-  #   And the user selects "Published" filter by status radio button
-  #   Then the user "views" the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-  #   And the user should not view "edit menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-  #   And the user should not view "delete menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-  #   # Because notices page refreshs every 30 seconds and the following step randomly fails, add steps to go off and back to the notices page so that the following step is done before the next refresh
-  #   When the user selects the "Access" menu item
-  #   And the user selects the "Status" menu item
-  #   And the user selects "Notices" tab for "Status"
-  #   And the user selects "Published" filter by status radio button
-  #   When the user clicks "archive" menu for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-  #   And the user selects "Archived" filter by status radio button
-  #   Then the user "views" the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-  #   And the user should not view "gear icon" for the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+  # Ignore this test as it crashes the test suite
+  # TEST DATA: an application named "Autotest"
+  @TEST_CS-783 @REQ_CS-667 @regression @ignore
+  Scenario: As a tenant admin, I can add, publish and archive a notice
+    Given a tenant admin user is on status notices page
+    When the user clicks Add notice button
+    Then the user views Add notice dialog
+    When the user enters "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm" on notice dialog
+    And the user clicks Save as draft button
+    And the user selects "Draft" filter by status radio button
+    Then the user "views" the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    When the user clicks "publish" menu for the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    And the user selects "Published" filter by status radio button
+    Then the user "views" the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    And the user should not view "edit menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    And the user should not view "delete menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    # Because notices page refreshs every 30 seconds and the following step randomly fails, add steps to go off and back to the notices page so that the following step is done before the next refresh
+    When the user selects the "Access" menu item
+    And the user selects the "Status" menu item
+    And the user selects "Notices" tab for "Status"
+    And the user selects "Published" filter by status radio button
+    When the user clicks "archive" menu for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    And the user selects "Archived" filter by status radio button
+    Then the user "views" the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    And the user should not view "gear icon" for the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
 
   @TEST_CS-784 @REQ_CS-667 @regression
   Scenario: As a tenant admin, I can filter notices by status
