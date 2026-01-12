@@ -8,7 +8,7 @@ class CalendarPage {
   }
 
   addCalendarModalTitle() {
-    return cy.xpath('//goa-modal[@testid="add-calendar-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.get('goa-modal[testid="add-calendar-modal"][open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   calendarModalCancelButton() {
@@ -84,7 +84,12 @@ class CalendarPage {
   }
 
   eventsCalendarEventModalHeading() {
-    return cy.xpath('//goa-modal[@open="true"]/div[@slot="heading"]');
+    return cy
+      .get('goa-modal[testid="add-edit-calendar-event-modal"][open="true"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
+
+    // return cy.get('goa-modal[open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   eventsCalendarEventModalNameTextField() {
@@ -141,13 +146,17 @@ class CalendarPage {
 
   eventEditButton(rowNumber) {
     return cy.xpath(
-      `//*[@data-testid="calendar-event-tab"]//tbody/tr[${rowNumber}]/td[@headers="calendar-events-actions"]//goa-icon-button[@icon="create"]`
+      `//*[@data-testid="calendar-event-tab"]//tbody/tr[${
+        rowNumber + 1
+      }]/td[@headers="calendar-events-actions"]//goa-icon-button[@icon="create"]`
     );
   }
 
   eventDeleteButton(rowNumber) {
     return cy.xpath(
-      `//*[@data-testid="calendar-event-tab"]//tbody/tr[${rowNumber}]/td[@headers="calendar-events-actions"]//goa-icon-button[@icon="trash"]`
+      `//*[@data-testid="calendar-event-tab"]//tbody/tr[${
+        rowNumber + 1
+      }]/td[@headers="calendar-events-actions"]//goa-icon-button[@icon="trash"]`
     );
   }
 

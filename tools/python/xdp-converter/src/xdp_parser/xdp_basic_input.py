@@ -17,8 +17,6 @@ class XdpBasicInput(XdpElement):
             self.get_label(),
             self.context,
         )
-        fe.x = self.extract_coordinate("x")
-        fe.y = self.extract_coordinate("y")
         fe.enum = self.get_enumeration_values()
         fe.label = self.get_label()
         fe.format = self.get_format()

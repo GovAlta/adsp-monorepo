@@ -15,7 +15,7 @@ import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope, convertToEditorSuggestion } from '@lib/autoComplete';
-import { GoAButton, GoAFormItem, GoAButtonGroup, GoACircularProgress } from '@abgov/react-components';
+import { GoabButton, GoabFormItem, GoabButtonGroup, GoabCircularProgress } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
@@ -190,10 +190,10 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
             <hr />
 
             {pdfTemplate && <PDFConfigForm template={pdfTemplate} />}
-            <GoAFormItem label="">
+            <GoabFormItem label="">
               <Tabs activeIndex={0}>
                 <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
-                  <GoAFormItem error={errors?.header ?? ''} label="">
+                  <GoabFormItem error={errors?.header ?? ''} label="">
                     {pdfTemplate && (
                       <MonacoDivBody>
                         <MonacoEditor
@@ -208,10 +208,10 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                         />
                       </MonacoDivBody>
                     )}
-                  </GoAFormItem>
+                  </GoabFormItem>
                 </Tab>
                 <Tab testId={`pdf-edit-body`} label={<PdfEditorLabelWrapper>Body</PdfEditorLabelWrapper>}>
-                  <GoAFormItem error={errors?.body ?? null} label="">
+                  <GoabFormItem error={errors?.body ?? null} label="">
                     <MonacoDivBody>
                       <MonacoEditor
                         height={monacoHeight}
@@ -224,10 +224,10 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                         {...bodyEditorConfig}
                       />
                     </MonacoDivBody>
-                  </GoAFormItem>
+                  </GoabFormItem>
                 </Tab>
                 <Tab testId={`pdf-edit-footer`} label={<PdfEditorLabelWrapper>Footer</PdfEditorLabelWrapper>}>
-                  <GoAFormItem error={errors?.footer ?? ''} label="">
+                  <GoabFormItem error={errors?.footer ?? ''} label="">
                     <MonacoDivBody style={{ height: monacoHeight }}>
                       <MonacoEditor
                         language={'handlebars'}
@@ -239,10 +239,10 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                         {...bodyEditorConfig}
                       />
                     </MonacoDivBody>
-                  </GoAFormItem>
+                  </GoabFormItem>
                 </Tab>
                 <Tab testId={`pdf-edit-css`} label={<PdfEditorLabelWrapper>CSS</PdfEditorLabelWrapper>}>
-                  <GoAFormItem error={errors?.body ?? null} label="">
+                  <GoabFormItem error={errors?.body ?? null} label="">
                     <MonacoDivBody style={{ height: monacoHeight }}>
                       <MonacoEditor
                         language={'handlebars'}
@@ -254,10 +254,10 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                         {...bodyEditorConfig}
                       />
                     </MonacoDivBody>
-                  </GoAFormItem>
+                  </GoabFormItem>
                 </Tab>
                 <Tab testId={`pdf-test-generator`} label={<PdfEditorLabelWrapper>Test data</PdfEditorLabelWrapper>}>
-                  <GoAFormItem error={errors?.body ?? EditorError?.testData ?? null} label="">
+                  <GoabFormItem error={errors?.body ?? EditorError?.testData ?? null} label="">
                     <MonacoDivBody style={{ height: monacoHeight }}>
                       <MonacoEditor
                         data-testid="form-schema"
@@ -280,12 +280,12 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                         {...bodyEditorConfig}
                       />
                     </MonacoDivBody>
-                  </GoAFormItem>
+                  </GoabFormItem>
                 </Tab>
                 <Tab testId={`pdf-test-history`} label={<PdfEditorLabelWrapper>File history</PdfEditorLabelWrapper>}>
                   <GeneratorStyling style={{ height: fileHistHeight }}>
                     <ButtonRight>
-                      <GoAButton
+                      <GoabButton
                         type="secondary"
                         testId="pdf-delete-all-files"
                         size="compact"
@@ -295,7 +295,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                         disabled={pdfList === null || pdfList?.length === 0}
                       >
                         Delete all files
-                      </GoAButton>
+                      </GoabButton>
                     </ButtonRight>
                     <section className="scroll-bar">
                       {pdfTemplate?.id && <GeneratedPdfList templateId={pdfTemplate.id} />}
@@ -303,13 +303,13 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                   </GeneratorStyling>
                 </Tab>
               </Tabs>
-            </GoAFormItem>
+            </GoabFormItem>
           </section>
           <EditTemplateActions>
             <hr className="styled-hr styled-hr-bottom" />
             <PdfEditActionLayout>
-              <GoAButtonGroup alignment="start">
-                <GoAButton
+              <GoabButtonGroup alignment="start">
+                <GoabButton
                   disabled={!isPDFUpdated(tmpTemplate, pdfTemplate) || EditorError?.testData !== null}
                   onClick={() => {
                     setCustomIndicator(true);
@@ -319,8 +319,8 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                   testId="template-form-save"
                 >
                   Save
-                </GoAButton>
-                <GoAButton
+                </GoabButton>
+                <GoabButton
                   onClick={() => {
                     if (isPDFUpdated(tmpTemplate, pdfTemplate)) {
                       setSaveModal({ visible: true, closeEditor: false });
@@ -333,8 +333,8 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                   disabled={backButtonDisabled()}
                 >
                   Back
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             </PdfEditActionLayout>
           </EditTemplateActions>
         </EditorLHSWrapper>

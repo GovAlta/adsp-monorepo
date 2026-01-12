@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal, GoATextArea } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabFormItem, GoabModal, GoabTextArea } from '@abgov/react-components';
 
 import { Comment, TopicItem, defaultComment } from '@store/comment/model';
 import { wordMaxLengthCheck, isNotEmptyCheck } from '@lib/validation/checkInput';
@@ -8,7 +8,7 @@ import { useValidators } from '@lib/validation/useValidators';
 
 import { DescriptionItem } from '../styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
-
+import { GoabTextAreaOnKeyPressDetail, GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
 interface TopicModalProps {
   topic: TopicItem;
   selComment: Comment;
@@ -45,13 +45,13 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
   };
 
   return (
-    <GoAModal
+    <GoabModal
       heading={title}
       testId={`${isNew ? 'add' : 'edit'}-comment-modal`}
       open={open}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="comment-modal-cancel"
             onClick={() => {
@@ -61,8 +61,8 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="comment-modal-save"
             disabled={!comment?.content || validators.haveErrors()}
@@ -72,26 +72,26 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <div>
-        <GoAFormItem label="Comment">
+        <GoabFormItem label="Comment">
           <DescriptionItem>
-            <GoATextArea
+            <GoabTextArea
               name="commentContent"
               value={comment.content}
               width="100%"
               testId="content"
               aria-label="content"
-              onKeyPress={(name, value, key) => {
+              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
                 validators.remove('content');
-                validators['content'].check(value);
-                setComment({ ...comment, content: value });
+                validators['content'].check(detail.value);
+                setComment({ ...comment, content: detail.value });
               }}
               // eslint-disable-next-line
-              onChange={(name, value) => {}}
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
             />
             <HelpTextComponent
               length={comment?.content?.length || 0}
@@ -100,8 +100,8 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
               errorMsg={errors?.['content']}
             />
           </DescriptionItem>
-        </GoAFormItem>
+        </GoabFormItem>
       </div>
-    </GoAModal>
+    </GoabModal>
   );
 };

@@ -8,16 +8,22 @@ import type * as monacoNS from 'monaco-editor';
 import { Preview } from './Preview';
 import { FormDefinition } from '../../../state/types';
 import { SubmitButtonsBar } from './SubmitButtonsBar';
-import { GoATabs, GoATab } from '@abgov/react-components';
+import { GoabTabs, GoabTab } from '@abgov/react-components';
 import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
 import { UISchemaElement } from '@jsonforms/core';
 import { FileItem, FileMetadata, FileWithMetadata } from '../../../state/file/file.slice';
 import { PdfJobList } from '../../../state/pdf/pdf.slice';
-
+import { useMonaco } from '@monaco-editor/react';
 import { RoleContainer } from './RoleContainer';
 import { AppState } from '../../../state';
 import { useSelector } from 'react-redux';
 import { ClientElement } from '../../../state/keycloak/selectors';
+import { GoabTabsOnChangeDetail } from '@abgov/ui-components-common';
+import {
+  FormPropertyValueCompletionItemProvider,
+  FormDataSchemaElementCompletionItemProvider,
+  FormUISchemaElementCompletionItemProvider,
+} from '../../../utils/autoComplete/form';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -84,9 +90,8 @@ export const Editor: React.FC<EditorProps> = ({
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
 
-  const [activeIndex, setActiveIndex] = useState<number>(0);
-  const editorRefData = useRef(null);
-  const editorRefUi = useRef(null);
+  const editorRefData = useRef<monacoNS.editor.IStandaloneCodeEditor | null>(null);
+  const editorRefUi = useRef<monacoNS.editor.IStandaloneCodeEditor | null>(null);
 
   const [editorErrors, setEditorErrors] = useState<{
     uiSchema: string | null;
@@ -113,11 +118,69 @@ export const Editor: React.FC<EditorProps> = ({
     if (activeTab === 3) setRolesTabLoaded(true);
   }, [activeTab]);
 
+  const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
+  const [uiEditorLocation, setUiEditorLocation] = useState<number>(0);
+
   const getCurrentEditorRef = () => {
-    if (activeIndex === 0) return editorRefData.current; // Data schema tab
-    if (activeIndex === 1) return editorRefUi.current; // UI schema tab
+    if (activeTab === 1) return editorRefData.current; // Data schema tab
+    if (activeTab === 2) return editorRefUi.current; // UI schema tab
     return null;
   };
+
+  const handleEditorDidMountData = (editor: monacoNS.editor.IStandaloneCodeEditor) => {
+    editorRefData.current = editor;
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        editor.setScrollTop(dataEditorLocation);
+      }, 5);
+    });
+    editor.onDidScrollChange((e: monacoNS.IScrollEvent) => {
+      setDataEditorLocation(e.scrollTop);
+    });
+  };
+
+  const handleEditorDidMountUi = (editor: monacoNS.editor.IStandaloneCodeEditor) => {
+    editorRefUi.current = editor;
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        editor.setScrollTop(uiEditorLocation);
+      }, 5);
+    });
+
+    editor.onDidScrollChange((e: monacoNS.IScrollEvent) => {
+      setUiEditorLocation(e.scrollTop);
+    });
+  };
+
+  const monaco = useMonaco();
+
+  // Resolved data schema (with refs inlined) is used to generate suggestions.
+  useEffect(() => {
+    if (monaco) {
+      const valueProvider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormPropertyValueCompletionItemProvider(definition?.dataSchema as unknown as Record<string, unknown>)
+      );
+
+      const uiElementProvider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormUISchemaElementCompletionItemProvider(definition?.dataSchema as unknown as Record<string, unknown>)
+      );
+
+      const dataElementProvider = monaco.languages.registerCompletionItemProvider(
+        'json',
+        new FormDataSchemaElementCompletionItemProvider()
+      );
+
+      return function () {
+        valueProvider.dispose();
+        uiElementProvider.dispose();
+        dataElementProvider.dispose();
+      };
+    }
+  }, [monaco, definition]);
 
   const { isLoadingRoles } = useSelector((state: AppState) => ({
     isLoadingRoles: state.keycloak.loadingRealmRoles || state.keycloak.loadingKeycloakRoles,
@@ -126,31 +189,33 @@ export const Editor: React.FC<EditorProps> = ({
   return (
     <div className={styles['form-editor']}>
       <div className={styles['name-description-data-schema']}>
-        <GoATabs
-          onChange={(event) => {
-            !!event && setActiveTab(event);
+        <GoabTabs
+          onChange={(event: GoabTabsOnChangeDetail) => {
+            !!event && setActiveTab(event.tab);
           }}
           data-testid="form-editor-tabs"
         >
-          <GoATab heading="Data schema" data-testid="dcm-form-editor-data-schema-tab">
+          <GoabTab heading="Data schema" data-testid="dcm-form-editor-data-schema-tab">
             <DataEditorContainer
               errors={errors}
               editorErrors={editorErrors}
               tempDataSchema={definition?.dataSchema}
               setDraftDataSchema={setDraftDataSchema}
               setEditorErrors={setEditorErrors}
+              handleEditorDidMountData={handleEditorDidMountData}
             />
-          </GoATab>
-          <GoATab heading="UI schema" data-testid="dcm-form-editor-ui-schema-tab">
+          </GoabTab>
+          <GoabTab heading="UI schema" data-testid="dcm-form-editor-ui-schema-tab">
             <UIEditorContainer
               errors={errors}
               editorErrors={editorErrors}
               tempUiSchema={definition?.uiSchema}
               setDraftUiSchema={setDraftUiSchema}
               setEditorErrors={setEditorErrors}
+              handleEditorDidMountUi={handleEditorDidMountUi}
             />
-          </GoATab>
-          <GoATab heading="Roles" data-testid="dcm-form-editor-ui-schema-tab">
+          </GoabTab>
+          <GoabTab heading="Roles" data-testid="dcm-form-editor-ui-schema-tab">
             {rolesTabLoaded && (
               <div>
                 <RoleContainer
@@ -162,11 +227,11 @@ export const Editor: React.FC<EditorProps> = ({
                 {isLoadingRoles && <div className={styles.textLoadingIndicator}>Loading roles from access service</div>}
               </div>
             )}
-          </GoATab>
-        </GoATabs>
+          </GoabTab>
+        </GoabTabs>
         <SubmitButtonsBar
           getCurrentEditorRef={getCurrentEditorRef}
-          activeIndex={activeIndex}
+          activeIndex={activeTab - 1}
           editorErrors={editorErrors}
           definition={definition}
           updateFormDefinition={updateFormDefinition}

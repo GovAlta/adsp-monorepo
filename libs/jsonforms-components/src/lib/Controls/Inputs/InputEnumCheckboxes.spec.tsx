@@ -158,7 +158,7 @@ describe('Input Boolean Checkbox Control', () => {
     const data = { options: ['three'] };
     const renderer = render(getForm(dataSchema, uiSchema, data));
     const inputBox = renderer.container.querySelector('goa-input');
-    expect(inputBox?.getAttribute('disabled')).toBe('false');
+    expect(inputBox?.getAttribute('disabled')).toBeFalsy();
   });
   it('applies vertical orientation class', () => {
     const newUiSchema = { ...uiSchema };
@@ -175,14 +175,21 @@ describe('Input Boolean Checkbox Control', () => {
     const renderer = render(getForm(dataSchema, uiSchema, data));
     const checkboxGroup = renderer.getByTestId('testing-jsonforms-checkboxes');
     const option1Checkbox = checkboxGroup.children[0];
-    fireEvent.click(option1Checkbox);
+
+    fireEvent(
+      option1Checkbox,
+      new CustomEvent('_change', {
+        detail: { name: 'one', value: 'one', checked: true },
+      })
+    );
+
     expect(option1Checkbox.getAttribute('checked')).toBeTruthy();
     expect(option1Checkbox.getAttribute('text')).toBe('one');
   });
 
   it('calls handleChange and updates selected values when checkboxes are toggled', () => {
     const data = { options: ['one'] };
-    const { container, getByTestId } = render(getForm(dataSchema, uiSchema, data));
+    const { container } = render(getForm(dataSchema, uiSchema, data));
 
     const checkboxOne = container.querySelector('goa-checkbox[name="one"]');
     const checkboxTwo = container.querySelector('goa-checkbox[name="two"]');
@@ -303,6 +310,6 @@ describe('Input Boolean Checkbox Control', () => {
 
     // The otherSpecify field should be enabled when "four" is selected
     const inputBox = container.querySelector('goa-input');
-    expect(inputBox?.getAttribute('disabled')).toBe('false');
+    expect(inputBox?.getAttribute('disabled')).toBeFalsy();
   });
 });

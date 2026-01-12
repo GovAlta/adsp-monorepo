@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { GoAFormItem, GoAInput, GoAGrid } from '@abgov/react-components';
+import { GoabFormItem, GoabInput, GoabGrid } from '@abgov/react-components';
+import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 
 interface Data {
   firstName: string;
@@ -47,63 +48,63 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   };
 
   return (
-    <GoAGrid minChildWidth="0ch" gap="s" mb="m" testId="wrapper">
-      <GoAFormItem
+    <GoabGrid minChildWidth="0ch" gap="s" mb="m" testId="wrapper">
+      <GoabFormItem
         testId="form-item-first-name"
         label="First name"
         requirement={requiredFields?.includes('firstName') ? 'required' : undefined}
         error={errors?.['firstName'] ?? ''}
       >
-        <GoAInput
+        <GoabInput
           type="text"
           name="firstName"
           disabled={disabled}
           testId="name-form-first-name"
           ariaLabel={'name-form-first-name'}
           value={firstName || ''}
-          onChange={(name, value) => handleInputChange(name, value)}
-          onBlur={(name) => {
-            handleRequiredFieldBlur(name);
+          onChange={(detail: GoabInputOnChangeDetail) => handleInputChange(detail.name, detail.value)}
+          onBlur={(detail: GoabInputOnBlurDetail) => {
+            handleRequiredFieldBlur(detail.name);
           }}
           width="100%"
         />
-      </GoAFormItem>
-      <GoAFormItem
+      </GoabFormItem>
+      <GoabFormItem
         testId="form-item-middle-name"
         label="Middle name"
         requirement={requiredFields?.includes('middleName') ? 'required' : undefined}
       >
-        <GoAInput
+        <GoabInput
           type="text"
           name="middleName"
           disabled={disabled}
           testId="name-form-middle-name"
           ariaLabel={'name-form-middle-name'}
           value={middleName || ''}
-          onChange={(name, value) => handleInputChange(name, value)}
+          onChange={(detail: GoabInputOnChangeDetail) => handleInputChange(detail.name, detail.value)}
           width="100%"
         />
-      </GoAFormItem>
-      <GoAFormItem
+      </GoabFormItem>
+      <GoabFormItem
         testId="form-item-last-name"
         label="Last name"
         requirement={requiredFields?.includes('lastName') ? 'required' : undefined}
         error={errors?.['lastName'] ?? ''}
       >
-        <GoAInput
+        <GoabInput
           type="text"
           name="lastName"
           disabled={disabled}
           testId="name-form-last-name"
           ariaLabel={'name-form-last-name'}
           value={lastName || ''}
-          onChange={(name, value) => handleInputChange(name, value)}
-          onBlur={(name) => {
-            handleRequiredFieldBlur(name);
+          onChange={(detail: GoabInputOnChangeDetail) => handleInputChange(detail.name, detail.value)}
+          onBlur={(detail: GoabInputOnBlurDetail) => {
+            handleRequiredFieldBlur(detail.name);
           }}
           width="100%"
         />
-      </GoAFormItem>
-    </GoAGrid>
+      </GoabFormItem>
+    </GoabGrid>
   );
 };

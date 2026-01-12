@@ -1,4 +1,4 @@
-import { GoADate } from '@abgov/react-components';
+import { GoabDate } from '@abgov/ui-components-common';
 
 export interface EventDefinition {
   isCore: boolean;
@@ -47,8 +47,8 @@ export interface EventSearchCriteria {
 }
 
 export interface EventSearchCriteriaGoA {
-  timestampMax?: GoADate;
-  timestampMin?: GoADate;
+  timestampMax?: GoabDate;
+  timestampMin?: GoabDate;
   namespace?: string;
   name?: string;
   correlationId?: string;

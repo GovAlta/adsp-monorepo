@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import React, { useState, createRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAHeroBanner, GoAContainer, GoABlock } from '@abgov/react-components';
+import { GoabHeroBanner, GoabContainer, GoabBlock } from '@abgov/react-components';
 
 import bannerBackground from '@assets/BannerBackground.jpg';
 import Header from '@components/AppHeader';
@@ -64,7 +64,7 @@ const LandingPage = (): JSX.Element => {
       <Header serviceName="" />
       <Main>
         <HeroBannerLayout>
-          <GoAHeroBanner heading="" backgroundUrl={bannerBackground} minHeight="300px">
+          <GoabHeroBanner heading="" backgroundUrl={bannerBackground} minHeight="300px">
             <Container hs={1}>
               <Grid>
                 <GridItem md={1} />
@@ -84,7 +84,7 @@ const LandingPage = (): JSX.Element => {
                 <GridItem md={1} />
               </Grid>
             </Container>
-          </GoAHeroBanner>
+          </GoabHeroBanner>
         </HeroBannerLayout>
         <Section>
           <Container vs={3} hs={1}>
@@ -185,7 +185,7 @@ const LandingPage = (): JSX.Element => {
               <GridItem md={10}>
                 <Grid>
                   <GridItem md={4} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
+                    <GoabContainer accent="thin" type="interactive">
                       <CardLayout>
                         <h2>UI components</h2>
                         <CardContent maxHeight={rowOneMaxHeight}>
@@ -198,11 +198,11 @@ const LandingPage = (): JSX.Element => {
                           label="Learn more"
                         />
                       </CardLayout>
-                    </GoAContainer>
+                    </GoabContainer>
                   </GridItem>
 
                   <GridItem md={4} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
+                    <GoabContainer accent="thin" type="interactive">
                       <CardLayout>
                         <h2>Access</h2>
                         <CardContent maxHeight={rowOneMaxHeight}>
@@ -217,11 +217,11 @@ const LandingPage = (): JSX.Element => {
                           label="Learn more"
                         />
                       </CardLayout>
-                    </GoAContainer>
+                    </GoabContainer>
                   </GridItem>
 
                   <GridItem md={4} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
+                    <GoabContainer accent="thin" type="interactive">
                       <CardLayout>
                         <h2>File</h2>
                         <CardContent maxHeight={rowOneMaxHeight}>
@@ -237,7 +237,7 @@ const LandingPage = (): JSX.Element => {
                           label="Learn more"
                         />
                       </CardLayout>
-                    </GoAContainer>
+                    </GoabContainer>
                   </GridItem>
                 </Grid>
               </GridItem>
@@ -250,7 +250,7 @@ const LandingPage = (): JSX.Element => {
               <GridItem md={10}>
                 <Grid>
                   <GridItem md={4} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
+                    <GoabContainer accent="thin" type="interactive">
                       <CardLayout>
                         <h2>Event</h2>
                         <CardContent id="event-service-description" maxHeight={rowTwoMaxHeight}>
@@ -264,11 +264,11 @@ const LandingPage = (): JSX.Element => {
                           label="Learn more"
                         />
                       </CardLayout>
-                    </GoAContainer>
+                    </GoabContainer>
                   </GridItem>
 
                   <GridItem md={4} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
+                    <GoabContainer accent="thin" type="interactive">
                       <CardLayout>
                         <h2>Notification</h2>
                         <CardContent maxHeight={rowTwoMaxHeight}>
@@ -282,11 +282,11 @@ const LandingPage = (): JSX.Element => {
                           label="Learn more"
                         />
                       </CardLayout>
-                    </GoAContainer>
+                    </GoabContainer>
                   </GridItem>
 
                   <GridItem md={4} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
+                    <GoabContainer accent="thin" type="interactive">
                       <CardLayout>
                         <h2>Task</h2>
                         <CardContent maxHeight={rowTwoMaxHeight}>
@@ -303,7 +303,7 @@ const LandingPage = (): JSX.Element => {
                           label="Learn more"
                         />
                       </CardLayout>
-                    </GoAContainer>
+                    </GoabContainer>
                   </GridItem>
                   <GridItem md={4} hSpacing={0.5}></GridItem>
                 </Grid>

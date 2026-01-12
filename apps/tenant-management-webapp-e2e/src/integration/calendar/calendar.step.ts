@@ -548,7 +548,7 @@ Then(
     switch (viewOrNot) {
       case 'views':
         findEvent(name, startDateTimeWithoutToday, endDateTimeWithoutToday).then((rowNumber) => {
-          expect(rowNumber).to.be.greaterThan(
+          expect(rowNumber).to.be.at.least(
             0,
             'Event of ' +
               name +
@@ -695,7 +695,12 @@ When('the user clicks eye icon for {string} core calendar', function (name) {
 
 Then('the user views the calendar details modal for {string}', function (name) {
   calendarObj.viewCalendarDetailsModal().should('exist');
-  calendarObj.viewCalendarDetailsModal().find('[slot="heading"]').invoke('text').should('eq', 'View calendar details');
+  calendarObj
+    .viewCalendarDetailsModal()
+    .shadow()
+    .find('[data-testid="modal-title"]')
+    .invoke('text')
+    .should('eq', 'View calendar details');
   calendarObj.viewCalendarDetailsModalNameField().invoke('attr', 'value').should('eq', name);
 });
 

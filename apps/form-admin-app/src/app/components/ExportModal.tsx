@@ -1,15 +1,15 @@
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoAFormItem,
-  GoAModal,
-  GoARadioGroup,
-  GoARadioItem,
-  GoASpacer,
-  GoASpinner,
+  GoabButton,
+  GoabButtonGroup,
+  GoabFormItem,
+  GoabModal,
+  GoabRadioGroup,
+  GoabRadioItem,
+  GoabSpacer,
+  GoabSpinner,
 } from '@abgov/react-components';
 import { FunctionComponent, useState } from 'react';
-
+import { GoabRadioGroupOnChangeDetail } from '@abgov/ui-components-common';
 interface ExportModalProps {
   open: boolean;
   heading: string;
@@ -22,15 +22,15 @@ export const ExportModal: FunctionComponent<ExportModalProps> = ({ open, heading
   const [format, setFormat] = useState<'json' | 'csv'>('json');
 
   return (
-    <GoAModal heading={heading} open={open}>
+    <GoabModal heading={heading} open={open}>
       <form>
         {state.working ? (
           <>
             <div>
               <span>File download will be available once export is done. Export is in progress... </span>
             </div>
-            <GoASpacer vSpacing="m" />
-            <GoASpinner size="medium" type="infinite" />
+            <GoabSpacer vSpacing="m" />
+            <GoabSpinner size="medium" type="infinite" />
           </>
         ) : (
           <>
@@ -40,30 +40,34 @@ export const ExportModal: FunctionComponent<ExportModalProps> = ({ open, heading
                 export is complete.
               </span>
             </div>
-            <GoAFormItem label="Export format" mt="l">
-              <GoARadioGroup name="format" onChange={(_, value: 'json' | 'csv') => setFormat(value)} value={format}>
-                <GoARadioItem value="json" label="JSON" />
-                <GoARadioItem value="csv" label="CSV" />
-              </GoARadioGroup>
-            </GoAFormItem>
+            <GoabFormItem label="Export format" mt="l">
+              <GoabRadioGroup
+                name="format"
+                onChange={(detail: GoabRadioGroupOnChangeDetail) => setFormat(detail.value as 'json' | 'csv')}
+                value={format}
+              >
+                <GoabRadioItem value="json" label="JSON" />
+                <GoabRadioItem value="csv" label="CSV" />
+              </GoabRadioGroup>
+            </GoabFormItem>
           </>
         )}
         {state.dataUri && (
-          <GoAFormItem label="Last exported file" mt="l">
+          <GoabFormItem label="Last exported file" mt="l">
             <a href={state.dataUri} download={state.filename}>
               {state.filename}
             </a>
-          </GoAFormItem>
+          </GoabFormItem>
         )}
-        <GoAButtonGroup alignment="end" mt="2xl">
-          <GoAButton type="secondary" onClick={onClose}>
+        <GoabButtonGroup alignment="end" mt="2xl">
+          <GoabButton type="secondary" onClick={onClose}>
             Close
-          </GoAButton>
-          <GoAButton type="primary" onClick={() => onStartExport(format)} disabled={state.working}>
+          </GoabButton>
+          <GoabButton type="primary" onClick={() => onStartExport(format)} disabled={state.working}>
             Start export
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </form>
-    </GoAModal>
+    </GoabModal>
   );
 };

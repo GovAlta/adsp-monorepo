@@ -19,7 +19,7 @@ config:
     - path: './application.{{ $environment }}.csv'
       skipHeader: true
       fields:
-        - 'form-name'
+        - 'form-id'
   phases:
     - duration: 10
       arrivalRate: 5
@@ -50,5 +50,5 @@ scenarios:
     weight: 10
     flow:
       - get:
-          url: '/{{ form-name }}/{{ form-name }}'
+          url: '/{{ tenant_name }}/{{ form-id }}'
       - think: '{{ $randomNumber(15,20) }}' # stop for 20 seconds

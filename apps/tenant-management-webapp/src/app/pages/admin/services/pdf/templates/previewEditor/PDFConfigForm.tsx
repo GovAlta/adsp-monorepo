@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 
-import { GoAIconButton } from '@abgov/react-components';
+import { GoabIconButton } from '@abgov/react-components';
 
 import { Anchor, Edit, PdfConfigFormWrapper, Tooltip } from '../../styled-components';
 import { AddEditPdfTemplate } from '../addEditPdfTemplates';
@@ -104,7 +104,7 @@ export const PDFConfigForm = ({ template, isEdit = true }: PDFConfigFormProps) =
             <Anchor rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
               Edit
             </Anchor>
-            <GoAIconButton
+            <GoabIconButton
               icon="create"
               testId="pdf-template-information-edit-icon"
               title="Edit"

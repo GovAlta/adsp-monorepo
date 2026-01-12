@@ -1,4 +1,4 @@
-import { GoABadge, GoAButton, GoAButtonGroup, GoACallout, GoATable } from '@abgov/react-components';
+import { GoabBadge, GoabButton, GoabButtonGroup, GoabCallout, GoabTable } from '@abgov/react-components';
 import { RowLoadMore, RowSkeleton } from '@core-services/app-common';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,7 +24,7 @@ import { Tags } from './Tags';
 import { TagSearchFilter } from './TagSearchFilter';
 
 const FeatureBadge: FunctionComponent<{ feature: string; hasFeature?: boolean }> = ({ feature, hasFeature }) => {
-  return hasFeature && <GoABadge type="information" content={feature} mr="xs" mb="xs" icon={false} />;
+  return hasFeature && <GoabBadge type="information" content={feature} mr="xs" mb="xs" icon={false} />;
 };
 
 interface FormDefinitionRowProps {
@@ -52,11 +52,11 @@ export const FormDefinitionRow: FunctionComponent<FormDefinitionRowProps> = ({ d
         <FeatureBadge feature="Scheduled intakes" hasFeature={definition.scheduledIntakes} />
       </td>
       <td>
-        <GoAButtonGroup alignment="end">
-          <GoAButton type="secondary" size="compact" onClick={() => navigate(definition.id)}>
+        <GoabButtonGroup alignment="end">
+          <GoabButton type="secondary" size="compact" onClick={() => navigate(definition.id)}>
             Select
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </td>
     </tr>
   );
@@ -92,35 +92,35 @@ export const FormsDefinitions = () => {
               value={criteria.tag}
               onChange={(value) => dispatch(formActions.setDefinitionCriteria({ tag: value }))}
             />
-            <GoAButtonGroup alignment="end" mt="l">
-              <GoAButton
+            <GoabButtonGroup alignment="end" mt="l">
+              <GoabButton
                 type="secondary"
                 disabled={busy.loading}
                 onClick={() => dispatch(formActions.setDefinitionCriteria({}))}
               >
                 Reset filter
-              </GoAButton>
-              <GoAButton
+              </GoabButton>
+              <GoabButton
                 type="primary"
                 disabled={busy.loading}
                 onClick={() => dispatch(loadDefinitions({ tag: criteria.tag }))}
               >
                 Load definitions
-              </GoAButton>
-            </GoAButtonGroup>
+              </GoabButton>
+            </GoabButtonGroup>
           </form>
         ) : (
           <div>
-            <GoACallout heading="Access to listing not available" type="information">
+            <GoabCallout heading="Access to listing not available" type="information">
               You don't have permission to access the listing of Form definitions. Contact your administrator for
               access, or for links to the specific workspaces you need access to.
-            </GoACallout>
+            </GoabCallout>
           </div>
         )
       }
     >
       <ContentContainer>
-        <GoATable width="100%">
+        <GoabTable width="100%">
           <thead>
             <tr>
               <th>Name</th>
@@ -146,7 +146,7 @@ export const FormsDefinitions = () => {
               onLoadMore={(after) => dispatch(loadDefinitions({ after }))}
             />
           </tbody>
-        </GoATable>
+        </GoabTable>
       </ContentContainer>
       <AddTagModal
         open={!!showTagDefinition}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import GoALinkButton from '@components/LinkButton';
-import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components';
 
 export const SignInError = (): JSX.Element => {
   const [showModal, setShowModel] = useState(false);
@@ -18,14 +18,14 @@ export const SignInError = (): JSX.Element => {
           </li>
         </ul>
 
-        <GoAButton
+        <GoabButton
           type="secondary"
           onClick={() => {
             setShowModel(true);
           }}
         >
           I want to join an existing tenant
-        </GoAButton>
+        </GoabButton>
         <p>
           <i>Click here to learn how to request access from your tenant admin.</i>
         </p>
@@ -43,14 +43,14 @@ export const SignInError = (): JSX.Element => {
       <Aside>
         <SupportLinks />
       </Aside>
-      <GoAModal
+      <GoabModal
         testId="target-cache"
         open={showModal}
         heading={'Joining an existing tenant'}
-        width="640px"
+        maxWidth="640px"
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               testId="add-edit-cache-cancel"
               type="primary"
               onClick={() => {
@@ -58,15 +58,15 @@ export const SignInError = (): JSX.Element => {
               }}
             >
               Close
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <ul>
           <li>Contact your administrator or project lead for a login URL to their tenant.</li>
           <li>Tenant admins can copy the login URL from the tenant admin view.</li>
         </ul>
-      </GoAModal>
+      </GoabModal>
     </Page>
   );
 };

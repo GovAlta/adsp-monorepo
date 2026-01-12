@@ -42,10 +42,10 @@ import { TopicConfigTopicType } from './topicConfigTopicType';
 
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { GoAButtonGroup, GoAButton, GoAFormItem, GoADropdown, GoADropdownItem } from '@abgov/react-components';
+import { GoabButtonGroup, GoabButton, GoabFormItem, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
 import { useWindowDimensions } from '@lib/useWindowDimensions';
 import { CustomLoader } from '@components/CustomLoader';
-
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 const isCommentUpdated = (prev: CommentTopicTypes, next: CommentTopicTypes): boolean => {
   return (
     prev?.adminRoles !== next?.adminRoles ||
@@ -239,33 +239,32 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
 
             <EditorPadding>
               <div style={heightCover}>
-                <GoAFormItem error={errors?.['securityClassification']} label="Select a security classification">
-                  <GoADropdown
+                <GoabFormItem error={errors?.['securityClassification']} label="Select a security classification">
+                  <GoabDropdown
                     name="securityClassifications"
                     value={topicType?.securityClassification}
-                    onChange={(_n: string, value: SecurityClassification) => {
-                      validators['securityClassification'].check(value);
+                    onChange={(detail: GoabDropdownOnChangeDetail) => {
+                      validators['securityClassification'].check(detail.value);
                       setTopicType({
                         ...topicType,
-                        securityClassification: value,
+                        securityClassification: detail.value as SecurityClassification,
                       });
                     }}
-                    relative={true}
                     width="25rem"
                   >
-                    <GoADropdownItem value={SecurityClassification.public} label="Public" />
-                    <GoADropdownItem value={SecurityClassification.protectedA} label="Protected A" />
-                    <GoADropdownItem value={SecurityClassification.protectedB} label="Protected B" />
-                    <GoADropdownItem value={SecurityClassification.protectedC} label="Protected C" />
-                  </GoADropdown>
-                </GoAFormItem>
+                    <GoabDropdownItem value={SecurityClassification.public} label="Public" />
+                    <GoabDropdownItem value={SecurityClassification.protectedA} label="Protected A" />
+                    <GoabDropdownItem value={SecurityClassification.protectedB} label="Protected B" />
+                    <GoabDropdownItem value={SecurityClassification.protectedC} label="Protected C" />
+                  </GoabDropdown>
+                </GoabFormItem>
               </div>
             </EditorPadding>
 
             <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
-              <GoAButtonGroup alignment="start">
-                <GoAButton
+              <GoabButtonGroup alignment="start">
+                <GoabButton
                   type="primary"
                   testId="comment-save"
                   disabled={
@@ -297,8 +296,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                   }}
                 >
                   Save
-                </GoAButton>
-                <GoAButton
+                </GoabButton>
+                <GoabButton
                   testId="comment-cancel"
                   type="secondary"
                   onClick={() => {
@@ -311,8 +310,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                   }}
                 >
                   Back
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
           <CommentPermissions>

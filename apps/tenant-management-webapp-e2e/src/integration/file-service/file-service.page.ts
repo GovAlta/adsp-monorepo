@@ -26,7 +26,7 @@ class FileServicePage {
   }
 
   addFileTypeModalTitle() {
-    return cy.xpath('//*[@testid="file-type-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="file-type-modal" and @open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   addFileTypeModalNameField() {
@@ -130,15 +130,18 @@ class FileServicePage {
   }
 
   fileTypeDeleteModalTitle() {
-    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   fileTypeDeleteModalContent() {
-    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//div[3]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//div[2]');
   }
 
   fileTypeInUseModalTitle() {
-    return cy.xpath('//*[@testid="file-type-delete-modal" and @open="true"]//*[@slot="heading"]');
+    return cy
+      .xpath('//*[@testid="file-type-delete-modal" and @open="true"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   fileTypeInUseModalContent() {

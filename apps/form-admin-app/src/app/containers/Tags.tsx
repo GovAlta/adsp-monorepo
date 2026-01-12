@@ -1,10 +1,10 @@
-import { GoAFilterChip, GoAIconButton, GoASkeleton } from '@abgov/react-components';
+import { GoabFilterChip, GoabIconButton, GoabSkeleton } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { AppDispatch, AppState, directoryBusySelector, resourceTagsSelector, Tag, untagResource } from '../state';
 import { useDispatch, useSelector } from 'react-redux';
 
 const TagBadge: FunctionComponent<{ tag: Tag; onDelete: () => void }> = ({ tag, onDelete }) => {
-  return <GoAFilterChip content={tag.label} onClick={onDelete} mr="xs" mb="xs" />;
+  return <GoabFilterChip content={tag.label} onClick={onDelete} mr="xs" mb="xs" />;
 };
 
 interface TagsProps {
@@ -21,13 +21,13 @@ export const Tags: FunctionComponent<TagsProps> = ({ urn, onTag }) => {
   return (
     <>
       {loadingResourceTags[urn] ? (
-        <GoASkeleton type="text-small" />
+        <GoabSkeleton type="text-small" />
       ) : (
         tags?.map((tag) => (
           <TagBadge key={tag.value} tag={tag} onDelete={() => dispatch(untagResource({ urn, tag }))} />
         ))
       )}
-      <GoAIconButton title="add tag" icon="add-circle" variant="color" onClick={onTag} />
+      <GoabIconButton title="add tag" icon="add-circle" variant="color" onClick={onTag} />
     </>
   );
 };

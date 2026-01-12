@@ -1,10 +1,11 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber } from '@store/subscription/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoATextArea, GoAModal, GoAFormItem } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabInput, GoabTextArea, GoabModal, GoabFormItem } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { emailError, smsError } from '@lib/inputValidation';
+import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface NotificationTypeFormProps {
   initialValue?: Subscriber;
@@ -145,57 +146,57 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
 
   return (
     <EditStyles>
-      <GoAModal
+      <GoabModal
         testId="notification-types-form"
         open={open}
         heading="Edit subscriber"
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton testId="form-cancel" type="secondary" onClick={tryCancel}>
+          <GoabButtonGroup alignment="end">
+            <GoabButton testId="form-cancel" type="secondary" onClick={tryCancel}>
               Cancel
-            </GoAButton>
-            <GoAButton type="primary" testId="form-save" onClick={() => trySave(subscriber)}>
+            </GoabButton>
+            <GoabButton type="primary" testId="form-save" onClick={() => trySave(subscriber)}>
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <ErrorWrapper>
-          <GoAFormItem error={formErrors?.['name']} label="Address as">
-            <GoAInput
+          <GoabFormItem error={formErrors?.['name']} label="Address as">
+            <GoabInput
               type="text"
               name="name"
               width="100%"
               value={address}
               testId="form-name"
               aria-label="name"
-              onChange={(_name, value) => setAddress(value)}
+              onChange={(detail: GoabInputOnChangeDetail) => setAddress(detail.value)}
             />
-          </GoAFormItem>
-          <GoAFormItem error={formErrors?.['email'] || updateError} label="Email">
-            <GoAInput
+          </GoabFormItem>
+          <GoabFormItem error={formErrors?.['email'] || updateError} label="Email">
+            <GoabInput
               type="email"
               name="email"
               width="100%"
               testId="form-email"
               value={email}
               aria-label="email"
-              onChange={(_name, value) => {
-                setEmail(value);
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                setEmail(detail.value);
               }}
             />
-          </GoAFormItem>
-          <GoAFormItem error={formErrors?.['sms'] || updateError} label="Phone number">
+          </GoabFormItem>
+          <GoabFormItem error={formErrors?.['sms'] || updateError} label="Phone number">
             <div className="phoneInputStyle">
-              <GoAInput
+              <GoabInput
                 type="tel"
                 aria-label="sms"
                 name="sms"
                 width="100%"
                 value={phone}
                 testId="contact-sms-input"
-                onChange={(_, value) => {
-                  if (value) setPhone(value);
+                onChange={(detail: GoabInputOnChangeDetail) => {
+                  if (detail.value) setPhone(detail.value);
                 }}
                 trailingIcon="close"
                 onTrailingIconClick={() => {
@@ -203,26 +204,26 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                 }}
               />
             </div>
-          </GoAFormItem>
+          </GoabFormItem>
 
           {botIndex !== -1 && (
-            <GoAFormItem error={formErrors?.['slack'] || updateError} label="Slack">
-              <GoATextArea
+            <GoabFormItem error={formErrors?.['slack'] || updateError} label="Slack">
+              <GoabTextArea
                 name="slack"
                 testId="form-slack"
                 value={bot}
                 aria-label="slack"
                 width="100%"
-                onKeyPress={(name, value, key) => {
-                  setBot(value);
+                onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+                  setBot(detail.value);
                 }}
                 // eslint-disable-next-line
-                onChange={(name, value) => {}}
+                onChange={() => {}}
               />
-            </GoAFormItem>
+            </GoabFormItem>
           )}
         </ErrorWrapper>
-      </GoAModal>
+      </GoabModal>
     </EditStyles>
   );
 };

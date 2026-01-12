@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
 import { ControlProps, JsonSchema } from '@jsonforms/core';
-import { GoAFormItem, GoAInput } from '@abgov/react-components';
+import { GoabFormItem, GoabInput } from '@abgov/react-components';
 import { Visible } from '../../util';
 import { RankedTester, rankWith, and, schemaTypeIs, formatIs } from '@jsonforms/core';
 import { evaluateExpression, EvalResult, collectScopes } from './CalculationEngine';
@@ -45,8 +45,8 @@ const GoACalculation = (props: ControlProps) => {
 
   return (
     <Visible visible={visible}>
-      <GoAFormItem label={label} error={showError ? error : ''}>
-        <GoAInput
+      <GoabFormItem label={label} error={showError ? error : ''}>
+        <GoabInput
           name={`computed-input-${id}`}
           testId={`computed-input-${id}`}
           ariaLabel={id}
@@ -56,7 +56,7 @@ const GoACalculation = (props: ControlProps) => {
           disabled
           width="100%"
         />
-      </GoAFormItem>
+      </GoabFormItem>
     </Visible>
   );
 };

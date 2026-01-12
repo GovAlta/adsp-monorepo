@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { GoAIconButton } from '@abgov/react-components';
+import { GoabIconButton } from '@abgov/react-components';
 
 interface ExternalLinkProps {
   text: string;
@@ -37,7 +37,7 @@ export const DownloadLink = ({ text, testId, link }: ExternalLinkProps): JSX.Ele
     <ExternalLinkWrapper data-testid={`${testId}`}>
       <div className="link" onClick={() => link()}>
         <div className="text">{text}</div>
-        <GoAIconButton icon="download" testId="download-icon" title="Download" size="small" />
+        <GoabIconButton icon="download" testId="download-icon" title="Download" size="small" />
       </div>
     </ExternalLinkWrapper>
   );

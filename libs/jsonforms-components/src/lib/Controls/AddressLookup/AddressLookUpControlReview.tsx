@@ -3,7 +3,7 @@ import { ControlProps } from '@jsonforms/core';
 import { AddressViews } from './AddressViews';
 import { JsonFormsStepperContext } from '../FormStepper/context';
 import { PageReviewNameCol, PageReviewValueCol } from '../Inputs/style-component';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { JsonFormsStepperContextProvider } from '../FormStepper/context';
 
 type AddressViewProps = ControlProps;

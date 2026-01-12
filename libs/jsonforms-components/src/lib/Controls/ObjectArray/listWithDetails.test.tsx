@@ -159,7 +159,7 @@ describe('Object Array Renderer', () => {
     // Ensure delete modal is closed
     const closedDeleteModal = baseElement.querySelector("goa-modal[testId='object-array-modal']");
     expect(closedDeleteModal).toBeInTheDocument();
-    expect(closedDeleteModal!.getAttribute('open')).toBe('false');
+    expect(closedDeleteModal!.getAttribute('open')).toBeFalsy();
 
     // Open the delete Dialog
     const deleteBtn = baseElement.querySelector("goa-icon-button[icon='trash']");
@@ -209,7 +209,7 @@ describe('Object Array Renderer', () => {
     const closedDeleteModal = baseElement.querySelector("goa-modal[testId='object-array-modal']");
 
     expect(closedDeleteModal).toBeInTheDocument();
-    expect(closedDeleteModal!.getAttribute('open')).toBe('false');
+    expect(closedDeleteModal!.getAttribute('open')).toBeFalsy();
 
     // Ensure item still exists
     const item = baseElement.querySelector(`[data-testid="object-array-main-item-0"]`);
@@ -251,7 +251,7 @@ describe('Object Array Renderer', () => {
     // Ensure modal is closed
     const closedDeleteModal = baseElement.querySelector("goa-modal[testId='object-array-modal']");
     expect(closedDeleteModal).toBeInTheDocument();
-    expect(closedDeleteModal!.getAttribute('open')).toBe('false');
+    expect(closedDeleteModal!.getAttribute('open')).toBeFalsy();
 
     // Ensure item no longer exists
     const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input']");
@@ -283,12 +283,8 @@ it('errors are visible', () => {
   const messageFormItem = baseElement.querySelector('goa-form-item');
   expect(messageFormItem).not.toBeNull();
 
-  // Select the error message inside the slot
-  const errorEl = messageFormItem!.querySelector('div[slot="error"]');
-  expect(errorEl).not.toBeNull();
-
   // Check the error text
-  expect(errorEl!.textContent).toContain('Message must be at most 5 characters');
+  expect(messageFormItem).toHaveAttribute('error', 'Message must be at most 5 characters');
 });
 it('required errors work', () => {
   const data = { messages: [] };
@@ -314,12 +310,8 @@ it('required errors work', () => {
   const messageFormItem = baseElement.querySelector('goa-form-item');
   expect(messageFormItem).not.toBeNull();
 
-  // Select the error message inside the slot
-  const errorEl = messageFormItem!.querySelector('div[slot="error"]');
-  expect(errorEl).not.toBeNull();
-
   // Check the error text
-  expect(errorEl!.textContent).toContain('Name is required');
+  expect(messageFormItem).toHaveAttribute('error', 'Special Name is required');
 });
 
 describe('findControlLabel', () => {

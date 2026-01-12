@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { PageIndicator } from '@components/Indicator';
-import { GoAButton, GoABadge, GoAButtonGroup, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabBadge, GoabButtonGroup, GoabModal } from '@abgov/react-components';
 import { renderNoItem } from '@components/NoItem';
 import { FormatTimeWithAt } from '@lib/timeUtil';
 import { RevisionEditModal } from './revisionEditModal';
@@ -54,8 +54,8 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
           <div className="number-badge">
             {revision.revision}
             <div>
-              {isLatest && <GoABadge type="information" content="latest" icon={false} />}
-              {isActive && <GoABadge type="success" content="active" icon={false} />}
+              {isLatest && <GoabBadge type="information" content="latest" icon={false} />}
+              {isActive && <GoabBadge type="success" content="active" icon={false} />}
             </div>
           </div>
         </td>
@@ -209,24 +209,24 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
       {!indicator.show && revisions && revisions.length === 0 && isCore && renderNoItem(`revisions`)}
       {next && (
         <LoadMoreWrapper>
-          <GoAButton onClick={onNext} type="tertiary">
+          <GoabButton onClick={onNext} type="tertiary">
             Load more
-          </GoAButton>
+          </GoabButton>
         </LoadMoreWrapper>
       )}
-      <GoAModal
+      <GoabModal
         open={showCreateNewRevision}
         heading={`Create a revision for ${service} ?`}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               type="secondary"
               testId="revision-create-cancel-button"
               onClick={() => setShowCreateNewRevision(false)}
             >
               Cancel
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               testId="revision-create-button"
               onClick={() => {
                 setShowCreateNewRevision(false);
@@ -234,23 +234,23 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
               }}
             >
               Create
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       />
-      <GoAModal
+      <GoabModal
         open={showActiveRevision}
         heading={`Set active revision for ${service} revision ${selectedRevision?.revision}?`}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               type="secondary"
               testId="revision-active-cancel-button"
               onClick={() => setShowActiveRevision(false)}
             >
               Cancel
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               testId="revision-active-button"
               onClick={() => {
                 setShowActiveRevision(false);
@@ -258,8 +258,8 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
               }}
             >
               Set Active
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       />
       {showEditRevision && (

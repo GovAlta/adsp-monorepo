@@ -19,21 +19,27 @@ import { selectDefaultFormUrl } from '@store/form/selectors';
 import { renameAct } from '@store/form/action';
 
 import {
-  GoATextArea,
-  GoAInput,
-  GoAModal,
-  GoAButtonGroup,
-  GoAFormItem,
-  GoAButton,
-  GoACheckbox,
-  GoADropdown,
-  GoADropdownItem,
-  GoAIconButton,
-  GoATooltip,
-  GoAFilterChip,
+  GoabTextArea,
+  GoabInput,
+  GoabModal,
+  GoabButtonGroup,
+  GoabFormItem,
+  GoabButton,
+  GoabCheckbox,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabIconButton,
+  GoabTooltip,
+  GoabFilterChip,
 } from '@abgov/react-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import { ministryOptions } from './ministryOptions';
+import {
+  GoabTextAreaOnKeyPressDetail,
+  GoabInputOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+} from '@abgov/ui-components-common';
+
 interface AddEditFormDefinitionProps {
   open: boolean;
   isEdit: boolean;
@@ -230,14 +236,14 @@ export const AddEditFormDefinition = ({
   }, [open, definition?.programName]);
 
   return (
-    <GoAModal
+    <GoabModal
       testId="definition-form"
       open={open}
       heading={`${isEdit ? 'Edit' : 'Add'} definition`}
-      width="640px"
+      maxWidth="640px"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             testId="add-edit-form-cancel"
             type="secondary"
             onClick={() => {
@@ -246,8 +252,8 @@ export const AddEditFormDefinition = ({
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="form-save"
             disabled={!definition.name || validators.haveErrors()}
@@ -283,8 +289,8 @@ export const AddEditFormDefinition = ({
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       {spinner ? (
@@ -292,22 +298,22 @@ export const AddEditFormDefinition = ({
       ) : (
         <>
           <FormFormItem>
-            <GoAFormItem error={errors?.['name']} label="Name">
-              <GoAInput
+            <GoabFormItem error={errors?.['name']} label="Name">
+              <GoabInput
                 type="text"
                 name="form-definition-name"
                 value={definition.name}
                 testId="form-definition-name"
                 aria-label="form-definition-name"
                 width="100%"
-                onChange={(name, value) => {
+                onChange={(detail: GoabInputOnChangeDetail) => {
                   const validations = {
-                    name: value,
+                    name: detail.value,
                   };
 
                   if (!isEdit) {
                     validators.remove('name');
-                    validations['duplicate'] = value;
+                    validations['duplicate'] = detail.value;
 
                     if (!validators.checkAll(validations)) {
                       return;
@@ -321,7 +327,9 @@ export const AddEditFormDefinition = ({
                   }
 
                   setDefinition(
-                    isEdit ? { ...definition, name: value } : { ...definition, name: value, id: toKebabName(value) }
+                    isEdit
+                      ? { ...definition, name: detail.value }
+                      : { ...definition, name: detail.value, id: toKebabName(detail.value) }
                   );
                 }}
                 onBlur={() => {
@@ -334,11 +342,11 @@ export const AddEditFormDefinition = ({
                   validators.checkAll(validations);
                 }}
               />
-            </GoAFormItem>
+            </GoabFormItem>
           </FormFormItem>
-          <GoAFormItem label="Definition ID">
+          <GoabFormItem label="Definition ID">
             <FormFormItem>
-              <GoAInput
+              <GoabInput
                 name="form-definition-id"
                 value={definition.id}
                 testId="form-definition-id"
@@ -347,22 +355,22 @@ export const AddEditFormDefinition = ({
                 onChange={() => {}}
               />
             </FormFormItem>
-          </GoAFormItem>
+          </GoabFormItem>
 
-          <GoAFormItem label="Description">
+          <GoabFormItem label="Description">
             <DescriptionItem>
-              <GoATextArea
+              <GoabTextArea
                 name="form-definition-description"
                 value={definition.description}
                 width="100%"
                 testId="form-definition-description"
                 aria-label="form-definition-description"
-                onKeyPress={(name, value, key) => {
+                onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
                   validators.remove('description');
-                  validators['description'].check(value);
-                  setDefinition({ ...definition, description: value });
+                  validators['description'].check(detail.value);
+                  setDefinition({ ...definition, description: detail.value });
                 }}
-                onChange={(name, value) => {}}
+                onChange={() => {}}
               />
               <HelpTextComponent
                 length={definition?.description?.length || 0}
@@ -371,61 +379,61 @@ export const AddEditFormDefinition = ({
                 errorMsg={errors?.['description']}
               />
             </DescriptionItem>
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL" mt={'s'}>
+          </GoabFormItem>
+          <GoabFormItem error={errors?.['formDraftUrlTemplate']} label="Form template URL" mt={'s'}>
             <FormFormItem>
-              <GoAInput
+              <GoabInput
                 name="form-url-id"
                 value={definition?.formDraftUrlTemplate || defaultFormUrl}
                 testId="form-url-id"
                 disabled={!definition?.id?.length}
                 width="100%"
-                onChange={(name, value) => {
+                onChange={(detail: GoabInputOnChangeDetail) => {
                   validators.remove('formDraftUrlTemplate');
                   const validations = {
-                    formDraftUrlTemplate: value,
+                    formDraftUrlTemplate: detail.value,
                   };
                   validators.checkAll(validations);
 
-                  setDefinition({ ...definition, formDraftUrlTemplate: value });
+                  setDefinition({ ...definition, formDraftUrlTemplate: detail.value });
                 }}
               />
             </FormFormItem>
-          </GoAFormItem>
-          <GoAFormItem label="Ministry" mt="s">
+          </GoabFormItem>
+          <GoabFormItem label="Ministry" mt="s">
             <FormFormItem>
-              <GoADropdown
+              <GoabDropdown
                 value={definition?.ministry ?? ''}
-                onChange={(_, v) => {
-                  const value = Array.isArray(v) ? v[0] ?? '' : v;
+                onChange={(detail: GoabDropdownOnChangeDetail) => {
+                  const value = Array.isArray(detail.values) ? detail.values[0] ?? '' : detail.value;
                   setDefinition({ ...definition, ministry: value });
                 }}
                 width="100%"
               >
                 {ministryOptions.map((o) => (
-                  <GoADropdownItem key={o.value} value={o.value} label={o.label} />
+                  <GoabDropdownItem key={o.value} value={o.value} label={o.label} />
                 ))}
-              </GoADropdown>
+              </GoabDropdown>
             </FormFormItem>
-          </GoAFormItem>
+          </GoabFormItem>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <GoAFormItem label="Program (optional)">
+            <GoabFormItem label="Program (optional)">
               <FormFormItem>
-                <GoADropdown
+                <GoabDropdown
                   value={definition?.programName ?? ''}
-                  onChange={(_, v: string) => {
-                    const value = Array.isArray(v) ? (v[0] as string) : v;
+                  onChange={(detail: GoabDropdownOnChangeDetail) => {
+                    const value = Array.isArray(detail.values) ? (detail.values[0] as string) : detail.value;
                     setDefinition({ ...definition, programName: value || null });
                   }}
                   width="35ch"
                 >
-                  <GoADropdownItem value="" label="--Select--" />
+                  <GoabDropdownItem value="" label="--Select--" />
                   {programOptions.map((p) => (
-                    <GoADropdownItem key={p} value={p} label={p} />
+                    <GoabDropdownItem key={p} value={p} label={p} />
                   ))}
-                </GoADropdown>
+                </GoabDropdown>
               </FormFormItem>
-            </GoAFormItem>
+            </GoabFormItem>
 
             <div
               style={{
@@ -435,28 +443,28 @@ export const AddEditFormDefinition = ({
                 marginTop: '15px',
               }}
             >
-              <GoATooltip content="Add a new program" position="top">
-                <GoAIconButton
+              <GoabTooltip content="Add a new program" position="top">
+                <GoabIconButton
                   variant="color"
                   size="medium"
                   icon="add-circle"
                   ariaLabel="Add program"
                   onClick={() => setShowAddProgram(true)}
                 />
-              </GoATooltip>
+              </GoabTooltip>
 
-              <GoATooltip content="Remove existing program(s)" position="top">
-                <GoAIconButton
+              <GoabTooltip content="Remove existing program(s)" position="top">
+                <GoabIconButton
                   variant="color"
                   size="medium"
                   icon="remove-circle"
                   ariaLabel="Remove program(s)"
                   onClick={() => setShowRemoveProgram(true)}
                 />
-              </GoATooltip>
+              </GoabTooltip>
 
-              <GoATooltip content="Edit a selected program" position="top">
-                <GoAIconButton
+              <GoabTooltip content="Edit a selected program" position="top">
+                <GoabIconButton
                   variant="color"
                   size="medium"
                   icon="pencil"
@@ -468,12 +476,12 @@ export const AddEditFormDefinition = ({
                     setShowEditProgram(true);
                   }}
                 />
-              </GoATooltip>
+              </GoabTooltip>
             </div>
           </div>
 
           {!isEdit && (
-            <GoACheckbox
+            <GoabCheckbox
               name={'populate-form'}
               key={'populate-form'}
               ariaLabel={'populate-form-checkbox'}
@@ -484,34 +492,34 @@ export const AddEditFormDefinition = ({
               }}
             >
               Populate form with a default multi-page form
-            </GoACheckbox>
+            </GoabCheckbox>
           )}
-          <GoAFormItem error={errors?.['registeredId']} label="Registered ID">
-            <GoAInput
+          <GoabFormItem error={errors?.['registeredId']} label="Registered ID">
+            <GoabInput
               type="text"
               name="form-definition-registeredId"
               value={definition.registeredId}
               testId="form-definition-registeredId"
               aria-label="form-definition-registeredId"
               width="100%"
-              onChange={(name, value) => {
-                if (!value.trim()) {
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                if (!detail.value.trim()) {
                   const updated = { ...definition };
                   delete updated.registeredId;
                   validators.remove('registeredId');
                   setDefinition(updated);
                 } else {
                   const validations = {
-                    registeredId: value,
+                    registeredId: detail.value,
                   };
 
                   validators.remove('registeredId');
-                  validations['duplicateRegisteredId'] = value;
+                  validations['duplicateRegisteredId'] = detail.value;
                   validators.checkAll({
-                    duplicateRegisteredId: value,
+                    duplicateRegisteredId: detail.value,
                   });
 
-                  setDefinition({ ...definition, registeredId: value });
+                  setDefinition({ ...definition, registeredId: detail.value });
                 }
               }}
               onBlur={() => {
@@ -520,23 +528,23 @@ export const AddEditFormDefinition = ({
                 });
               }}
             />
-          </GoAFormItem>
-          <GoAFormItem label="Acts of Legislation" mt={'l'} error={actError ?? undefined}>
+          </GoabFormItem>
+          <GoabFormItem label="Acts of Legislation" mt={'l'} error={actError ?? undefined}>
             <div style={{ display: 'grid', gap: '0.5rem' }}>
-              <GoAInput
+              <GoabInput
                 error={!!actError}
                 name="new-act-input"
                 width="100%"
                 value={newAct}
                 placeholder="Type an Act"
-                onChange={(_, v) => {
-                  setNewAct(v);
+                onChange={(detail: GoabInputOnChangeDetail) => {
+                  setNewAct(detail.value);
                   if (actError) setActError(null);
                 }}
               />
-              <GoAButton type="secondary" onClick={addAct} disabled={!newAct.trim()}>
+              <GoabButton type="secondary" onClick={addAct} disabled={!newAct.trim()}>
                 Add
-              </GoAButton>
+              </GoabButton>
 
               {(definition.actsOfLegislation ?? []).length === 0 ? (
                 <div style={{ fontStyle: 'italic', color: '#666' }}>No Acts added.</div>
@@ -550,7 +558,7 @@ export const AddEditFormDefinition = ({
                         key={act}
                         style={{ display: 'inline-block', marginRight: '0.5rem', marginBottom: '0.5rem' }}
                       >
-                        <GoAFilterChip
+                        <GoabFilterChip
                           content={act}
                           testId={`act-chip-${act}`}
                           onClick={() => {
@@ -581,15 +589,15 @@ export const AddEditFormDefinition = ({
                 </div>
               )}
             </div>
-          </GoAFormItem>
+          </GoabFormItem>
 
-          <GoAModal
+          <GoabModal
             open={showAddProgram}
             heading="Add program"
             maxWidth="25%"
             actions={
-              <GoAButtonGroup alignment="end">
-                <GoAButton
+              <GoabButtonGroup alignment="end">
+                <GoabButton
                   type="secondary"
                   onClick={() => {
                     setShowAddProgram(false);
@@ -597,30 +605,30 @@ export const AddEditFormDefinition = ({
                   }}
                 >
                   Cancel
-                </GoAButton>
-                <GoAButton type="primary" onClick={addProgram}>
+                </GoabButton>
+                <GoabButton type="primary" onClick={addProgram}>
                   Add
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             }
           >
-            <GoAFormItem label="Program name">
-              <GoAInput
+            <GoabFormItem label="Program name">
+              <GoabInput
                 name="new-program-name"
                 width="100%"
                 value={newProgramName}
-                onChange={(_, v) => setNewProgramName(v)}
+                onChange={(detail: GoabInputOnChangeDetail) => setNewProgramName(detail.value)}
               />
-            </GoAFormItem>
-          </GoAModal>
+            </GoabFormItem>
+          </GoabModal>
 
-          <GoAModal
+          <GoabModal
             open={showRemoveProgram}
             heading="Remove program(s)"
             maxWidth="25%"
             actions={
-              <GoAButtonGroup alignment="end">
-                <GoAButton
+              <GoabButtonGroup alignment="end">
+                <GoabButton
                   type="secondary"
                   onClick={() => {
                     setRemoveSelections({});
@@ -628,11 +636,11 @@ export const AddEditFormDefinition = ({
                   }}
                 >
                   Cancel
-                </GoAButton>
-                <GoAButton type="primary" onClick={removePrograms}>
+                </GoabButton>
+                <GoabButton type="primary" onClick={removePrograms}>
                   Remove
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             }
           >
             <div style={{ display: 'grid', gap: '0.25rem' }}>
@@ -640,26 +648,26 @@ export const AddEditFormDefinition = ({
                 <div>No programs to remove.</div>
               ) : (
                 programOptions.map((opt) => (
-                  <GoACheckbox
+                  <GoabCheckbox
                     key={opt}
                     name={`rm-${opt}`}
                     checked={!!removeSelections[opt]}
-                    onChange={(_, checked) => setRemoveSelections((prev) => ({ ...prev, [opt]: checked }))}
+                    onChange={(detail) => setRemoveSelections((prev) => ({ ...prev, [opt]: detail.checked }))}
                   >
                     {opt}
-                  </GoACheckbox>
+                  </GoabCheckbox>
                 ))
               )}
             </div>
-          </GoAModal>
+          </GoabModal>
 
-          <GoAModal
+          <GoabModal
             open={showEditProgram}
             heading="Edit program"
             maxWidth="25%"
             actions={
-              <GoAButtonGroup alignment="end">
-                <GoAButton
+              <GoabButtonGroup alignment="end">
+                <GoabButton
                   type="secondary"
                   onClick={() => {
                     setShowEditProgram(false);
@@ -668,45 +676,45 @@ export const AddEditFormDefinition = ({
                   }}
                 >
                   Cancel
-                </GoAButton>
-                <GoAButton type="primary" onClick={startEditProgram}>
+                </GoabButton>
+                <GoabButton type="primary" onClick={startEditProgram}>
                   Save
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             }
           >
-            <GoAFormItem label="Choose program">
-              <GoADropdown
+            <GoabFormItem label="Choose program">
+              <GoabDropdown
                 value={editTarget}
-                onChange={(_, v: string) => {
-                  const value = Array.isArray(v) ? (v[0] as string) : v;
+                onChange={(detail: GoabDropdownOnChangeDetail) => {
+                  const value = Array.isArray(detail.values) ? (detail.values[0] as string) : detail.value;
                   setEditTarget(value);
                   setEditProgramName(value);
                 }}
                 width="100%"
               >
                 {programOptions.map((p) => (
-                  <GoADropdownItem key={p} value={p} label={p} />
+                  <GoabDropdownItem key={p} value={p} label={p} />
                 ))}
-              </GoADropdown>
-            </GoAFormItem>
+              </GoabDropdown>
+            </GoabFormItem>
 
-            <GoAFormItem label="New name">
-              <GoAInput
+            <GoabFormItem label="New name">
+              <GoabInput
                 name="edit-program-name"
                 width="100%"
                 value={editProgramName}
-                onChange={(_, v) => setEditProgramName(v)}
+                onChange={(detail: GoabInputOnChangeDetail) => setEditProgramName(detail.value)}
               />
-            </GoAFormItem>
-          </GoAModal>
-          <GoAModal
+            </GoabFormItem>
+          </GoabModal>
+          <GoabModal
             open={showEditAct}
             heading="Edit Act"
             maxWidth="25%"
             actions={
-              <GoAButtonGroup alignment="end">
-                <GoAButton
+              <GoabButtonGroup alignment="end">
+                <GoabButton
                   type="secondary"
                   onClick={() => {
                     setShowEditAct(false);
@@ -716,8 +724,8 @@ export const AddEditFormDefinition = ({
                   }}
                 >
                   Cancel
-                </GoAButton>
-                <GoAButton
+                </GoabButton>
+                <GoabButton
                   type="primary"
                   onClick={() => {
                     const newName = editActName.trim();
@@ -747,24 +755,24 @@ export const AddEditFormDefinition = ({
                   }}
                 >
                   Save
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             }
           >
-            <GoAFormItem label="New Act name" error={editActError ?? undefined}>
-              <GoAInput
+            <GoabFormItem label="New Act name" error={editActError ?? undefined}>
+              <GoabInput
                 name="edit-act-name"
                 width="100%"
                 value={editActName}
-                onChange={(_, v) => {
-                  setEditActName(v);
+                onChange={(detail: GoabInputOnChangeDetail) => {
+                  setEditActName(detail.value);
                   if (editActError) setEditActError(null);
                 }}
               />
-            </GoAFormItem>
-          </GoAModal>
+            </GoabFormItem>
+          </GoabModal>
         </>
       )}
-    </GoAModal>
+    </GoabModal>
   );
 };

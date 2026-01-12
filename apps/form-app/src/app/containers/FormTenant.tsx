@@ -1,4 +1,4 @@
-import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components';
+import { GoabAppHeader, GoabButton, GoabMicrositeHeader } from '@abgov/react-components';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
@@ -42,8 +42,8 @@ export const FormTenant = () => {
 
   return (
     <React.Fragment>
-      <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
-      <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Form`}>
+      <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
+      <GoabAppHeader url="/" heading={`${tenant?.name || tenantName} - Form`}>
         <>
           <span style={{ display: 'none' }}></span>
           {userInitialized && (
@@ -51,7 +51,7 @@ export const FormTenant = () => {
               {user && (
                 <>
                   <span className="username">{user?.name}</span>
-                  <GoAButton
+                  <GoabButton
                     ml="s"
                     type="tertiary"
                     data-testid="form-sign-out"
@@ -64,13 +64,13 @@ export const FormTenant = () => {
                     }}
                   >
                     Sign out
-                  </GoAButton>
+                  </GoabButton>
                 </>
               )}
             </AccountActionsDiv>
           )}
         </>
-      </GoAAppHeader>
+      </GoabAppHeader>
       <FeedbackNotification />
       <main>
         {userInitialized && (

@@ -20,7 +20,7 @@ import { RootState } from '@store/index';
 import { LocalTime } from '@components/Date';
 import moment from 'moment';
 import GoaLogo from '../../assets/goa-logo.svg';
-import { GoAButton, GoAInput, GoACallout, GoAFormItem, GoASkeleton } from '@abgov/react-components';
+import { GoabButton, GoabInput, GoabCallout, GoabFormItem, GoabSkeleton } from '@abgov/react-components';
 import { emailError } from '@lib/inputValidation';
 import {
   Title,
@@ -31,6 +31,8 @@ import {
   SkeletonLoading,
   HeaderContainer,
 } from './styled-components';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
@@ -121,7 +123,7 @@ const ServiceStatusPage = (): JSX.Element => {
             )}
           </Grid>
         </div>
-        {!applications && <GoASkeleton type="card" lineCount={15} />}
+        {!applications && <GoabSkeleton type="card" lineCount={15} />}
         <Grid>
           {noMonitorOnlyApplications &&
             noMonitorOnlyApplications.map((app, index) => {
@@ -163,10 +165,10 @@ const ServiceStatusPage = (): JSX.Element => {
   const PlatformLoading = () => {
     return (
       <SkeletonLoading>
-        <GoASkeleton type="header" size={4} />
-        <GoASkeleton type="paragraph" />
-        <GoASkeleton type="text" />
-        <GoASkeleton type="text-small" />
+        <GoabSkeleton type="header" size={'4'} />
+        <GoabSkeleton type="paragraph" />
+        <GoabSkeleton type="text" />
+        <GoabSkeleton type="text-small" />
         <br />
       </SkeletonLoading>
     );
@@ -176,7 +178,7 @@ const ServiceStatusPage = (): JSX.Element => {
     return (
       <div>
         <AllService />
-        <GoASkeleton type="card" lineCount={0} />
+        <GoabSkeleton type="card" lineCount={0} />
       </div>
     );
   };
@@ -224,16 +226,16 @@ const ServiceStatusPage = (): JSX.Element => {
         <AllService />
         <AllApplications>
           {allApplicationsNotices.map((notice) => {
-            if (!applications) return <GoASkeleton type="card" lineCount={60} maxWidth="800px" />;
+            if (!applications) return <GoabSkeleton type="card" lineCount={60} maxWidth="800px" />;
             else {
               return (
-                <GoACallout heading="Notice" type="important" key={`{notice-${notice.id}}`}>
+                <GoabCallout heading="Notice" type="important" key={`{notice-${notice.id}}`}>
                   <div data-testid="all-application-notice-message">{notice.message}</div>
                   <br />
                   <div data-testid="service-notice-date-range">
                     From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
                   </div>
-                </GoACallout>
+                </GoabCallout>
               );
             }
           })}
@@ -278,46 +280,46 @@ const ServiceStatusPage = (): JSX.Element => {
               <br />
               <div>
                 {!applications ? (
-                  <GoASkeleton type="paragraph" />
+                  <GoabSkeleton type="paragraph" />
                 ) : (
                   <>
                     <Grid>
                       <GridItem md={4.6}>
-                        <GoAFormItem
+                        <GoabFormItem
                           error={formErrors?.['email'] || error?.length > 0 ? formErrors?.['email'] : ''}
                           label="Enter your email to receive updates"
                         >
-                          <GoAInput
+                          <GoabInput
                             type="email"
                             id="email"
                             name="email"
                             value={email}
                             testId="email"
-                            onChange={setValue}
+                            onChange={(detail: GoabInputOnChangeDetail) => setValue(detail.name, detail.value)}
                             aria-label="email"
                             width="100%"
                           />
-                        </GoAFormItem>
+                        </GoabFormItem>
                       </GridItem>
                     </Grid>
                     <GoAFormActionOverwrite>
-                      <GoAButton type="primary" testId="subscribe" onClick={onSave}>
+                      <GoabButton type="primary" testId="subscribe" onClick={onSave}>
                         Submit
-                      </GoAButton>
+                      </GoabButton>
                     </GoAFormActionOverwrite>
                   </>
                 )}
               </div>
               {subscriber && indicator && !indicator.show && (
-                <GoACallout key="success" type="success" heading="You have signed up for notifications">
+                <GoabCallout key="success" type="success" heading="You have signed up for notifications">
                   Thank you for signing up. You will receive notifications regarding service statuses on{' '}
                   {subscriber.channels[emailIndex].address}.
-                </GoACallout>
+                </GoabCallout>
               )}
               {error && error.length > 0 && indicator && !indicator.show && (
-                <GoACallout key="error" type="emergency" heading="Your sign up attempt has failed">
+                <GoabCallout key="error" type="emergency" heading="Your sign up attempt has failed">
                   <p> {error[error.length - 1].message}</p>
-                </GoACallout>
+                </GoabCallout>
               )}
               {indicator && indicator.show && <IndicatorWithDelay message="Loading..." pageLock={false} />}
             </div>

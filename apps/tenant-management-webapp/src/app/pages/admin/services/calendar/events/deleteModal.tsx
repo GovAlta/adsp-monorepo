@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabModal, GoabButtonGroup } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { ResetModalState } from '@store/session/actions';
 import { DeleteCalendarEvent } from '@store/calendar/actions';
@@ -16,14 +16,14 @@ export const DeleteModal = ({ calendarName }: deleteModalProps) => {
   // eslint-disable-next-line
   useEffect(() => {}, [event]);
   return (
-    <GoAModal
+    <GoabModal
       testId="delete-confirmation"
       open={event !== null}
       heading={'Delete calendar event'}
-      width="640px"
+      maxWidth="640px"
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="delete-cancel"
             onClick={() => {
@@ -31,8 +31,8 @@ export const DeleteModal = ({ calendarName }: deleteModalProps) => {
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             variant="destructive"
             testId="delete-confirm"
@@ -42,11 +42,11 @@ export const DeleteModal = ({ calendarName }: deleteModalProps) => {
             }}
           >
             Delete
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       Are you sure you wish to delete <b>{`${event?.name}`}</b>?
-    </GoAModal>
+    </GoabModal>
   );
 };

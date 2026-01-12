@@ -4,7 +4,7 @@ class FormPage {
   }
 
   addDefinitionModalTitle() {
-    return cy.xpath('//*[@testid="definition-form" and @open="true"]/*[@slot="heading"]');
+    return cy.xpath('//*[@testid="definition-form" and @open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   addDefinitionModalCancelButton() {
@@ -28,9 +28,18 @@ class FormPage {
   }
 
   addDefinitionModalSaveButton() {
-    return cy.xpath(
-      '//goa-modal[@testid="definition-form" and @open="true"]/div[@slot="actions"]/goa-button-group/goa-button[text()="Save" and @disabled="false"]'
-    );
+    return cy
+      .get('goa-modal[testid="definition-form"][open="true"]')
+      .shadow()
+      .find('goa-button-group goa-button')
+      .shadow()
+      .find('button')
+      .contains('Save')
+      .should('not.be.disabled');
+
+    // return cy.xpath(
+    //   '//goa-modal[@testid="definition-form" and @open="true"]/div[@slot="actions"]/goa-button-group/goa-button[text()="Save" and @disabled="false"]'
+    // );
   }
 
   editorDefinitionNameValue() {
@@ -42,7 +51,8 @@ class FormPage {
   }
 
   editorSaveButtonEnabled() {
-    return cy.xpath('//*[@testid="definition-form-save" and @disabled="false"]');
+    return cy.get('goa-button[testid="definition-form-save"]').shadow().find('button').should('not.be.disabled');
+    //return cy.xpath('//*[@testid="definition-form-save" and @disabled="false"]');
   }
 
   editorSaveButton() {
@@ -50,7 +60,11 @@ class FormPage {
   }
 
   editorBackButton() {
-    return cy.xpath('//*[@testid="form-editor-cancel" and @disabled="false"]');
+    return cy
+      .get('goa-button[testid="form-editor-cancel"]')
+      .shadow()
+      .find('button[data-testid="form-editor-cancel"]')
+      .should('not.be.disabled');
   }
 
   editorCheckboxesTables() {
@@ -108,7 +122,10 @@ class FormPage {
   }
 
   definitionEditorEditDefinitionModalTitle() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="definition-form"]/*[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="definition-form"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   definitionEditorEditDefinitionModalNameInput() {
@@ -158,7 +175,7 @@ class FormPage {
   }
 
   definitionEditorSubmissionConfigDispositionStateModalTitle() {
-    return cy.xpath('//goa-modal[@open="true"]/div[@slot="heading"]');
+    return cy.xpath('//goa-modal[@open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   definitionEditorSubmissionConfigDispositionStateModalNameField() {
@@ -313,7 +330,10 @@ class FormPage {
   }
 
   definitionsAddTagsModalTitle() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="add-resource-tag-model"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="add-resource-tag-model"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   definitionsAddTagsModalDesc() {

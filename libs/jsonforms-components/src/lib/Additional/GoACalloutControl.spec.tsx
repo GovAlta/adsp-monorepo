@@ -2,13 +2,13 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { JsonFormsProps, UISchemaElement } from '@jsonforms/core';
 import GoACalloutControl from './GoACalloutControl';
-import { GoACalloutSize, GoACalloutType } from '@abgov/react-components';
+import { GoabCalloutSize, GoabCalloutType } from '@abgov/react-components';
 
 describe('callout control', () => {
   const uiSchema = (
     message: string,
-    type: GoACalloutType = 'important',
-    size: GoACalloutSize = 'medium'
+    type: GoabCalloutType = 'important',
+    size: GoabCalloutSize = 'medium'
   ): UISchemaElement => {
     return {
       type: 'Callout',

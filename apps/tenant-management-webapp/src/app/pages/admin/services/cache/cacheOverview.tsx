@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { NoPaddingH2 } from '@components/AppHeader';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 
 interface CacheOverviewProps {
   setOpenAddDefinition: (val: boolean) => void;
@@ -28,7 +28,7 @@ export const CacheOverview: FunctionComponent<CacheOverviewProps> = ({
           Targets are configured as service or API URNs and must be registered in directory service, and an associated
           TTL can be set.
         </p>
-        <GoAButton
+        <GoabButton
           testId="add-cache-target"
           onClick={() => {
             setActiveIndex(1);
@@ -36,7 +36,7 @@ export const CacheOverview: FunctionComponent<CacheOverviewProps> = ({
           }}
         >
           Add cache target
-        </GoAButton>
+        </GoabButton>
       </section>
     </div>
   );

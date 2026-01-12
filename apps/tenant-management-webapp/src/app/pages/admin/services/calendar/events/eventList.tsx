@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectSelectedCalendarEvents, selectSelectedCalendarNextEvents } from '@store/calendar/selectors';
 import { CalendarEvent, EventAddEditModalType, EventDeleteModalType } from '@store/calendar/models';
-import { GoABadge, GoAButton, GoASkeleton, GoACircularProgress } from '@abgov/react-components';
+import { GoabBadge, GoabButton, GoabSkeleton, GoabCircularProgress } from '@abgov/react-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { UpdateModalState } from '@store/session/actions';
 import { RootState } from '@store/index';
@@ -87,12 +87,12 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
   useEffect(() => {}, [indicator]);
 
   if (indicator?.show) {
-    return <GoASkeleton type="text" key={1} />;
+    return <GoabSkeleton type="text" key={1} />;
   }
 
   return next ? (
     <LoadMoreWrapper>
-      <GoAButton
+      <GoabButton
         testId="calendar-event-load-more-btn"
         key="calendar-event-load-more-btn"
         type="tertiary"
@@ -101,7 +101,7 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
         }}
       >
         Load more
-      </GoAButton>
+      </GoabButton>
     </LoadMoreWrapper>
   ) : null;
 };
@@ -119,7 +119,7 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
 
       {event?.isAllDay === true && (
         <div>
-          <GoABadge type="midtone" content="All day" icon={false} />
+          <GoabBadge type="midtone" content="All day" icon={false} />
         </div>
       )}
 
@@ -127,7 +127,7 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
 
       {event?.isPublic === true && (
         <div>
-          <GoABadge type="midtone" content=" Public " icon={false} />
+          <GoabBadge type="midtone" content=" Public " icon={false} />
         </div>
       )}
     </EventDetailTd>
@@ -209,7 +209,7 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
   if (!selectedEvents) {
     return (
       <ProgressWrapper>
-        <GoACircularProgress visible={true} size="small" />
+        <GoabCircularProgress visible={true} size="small" />
       </ProgressWrapper>
     );
   }

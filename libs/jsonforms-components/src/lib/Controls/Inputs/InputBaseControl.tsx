@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { GoAFormItem } from '@abgov/react-components';
+import React, { useState, useContext, useEffect } from 'react';
+import { GoabFormItem } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { checkFieldValidity, convertToSentenceCase, getLabelText, getRequiredIfThen } from '../../util/stringUtils';
 import { Visible } from '../../util';
 import { JsonFormRegisterProvider } from '../../Context/register';
 import { FormFieldWrapper } from './style-component';
+import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
 
-export type GoAInputType =
+export type GoabInputType =
   | 'text'
   | 'password'
   | 'email'
@@ -36,7 +37,19 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const labelToUpdate: string = convertToSentenceCase(getLabelText(uischema.scope, label || ''));
 
   let modifiedErrors = checkFieldValidity(props as ControlProps);
+
+  const formStepperCtx = useContext(JsonFormsStepperContext);
+  const stepperState = (formStepperCtx as JsonFormsStepperContextProps)?.selectStepperState?.();
+  const currentCategory = stepperState?.categories?.[stepperState?.activeId];
+  const showReviewLink = currentCategory?.showReviewPageLink;
+
   const [isVisited, setIsVisited] = useState(skipInitialValidation === true);
+
+  useEffect(() => {
+    if (showReviewLink === true && !isStepperReview) {
+      setIsVisited(true);
+    }
+  }, [showReviewLink, isStepperReview]);
 
   if (modifiedErrors === 'must be equal to one of the allowed values') {
     modifiedErrors = '';
@@ -46,7 +59,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
     <JsonFormRegisterProvider defaultRegisters={undefined}>
       <Visible visible={visible}>
         <FormFieldWrapper>
-          <GoAFormItem
+          <GoabFormItem
             requirement={
               uischema?.options?.componentProps?.requirement ??
               (required || getRequiredIfThen(props).length > 0 ? 'required' : undefined)
@@ -66,7 +79,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
                 },
               }}
             />
-          </GoAFormItem>
+          </GoabFormItem>
         </FormFieldWrapper>
       </Visible>
     </JsonFormRegisterProvider>

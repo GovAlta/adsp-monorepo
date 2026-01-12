@@ -1,0 +1,55 @@
+config:
+  environments:
+    dev:
+      target: 'https://pdf-service.adsp-dev.gov.ab.ca'
+    uat:
+      target: 'https://pdf-service.adsp-uat.alberta.ca'
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+      Accept: 'application/json'
+  payload:
+    - path: '../artillery.{{ $environment }}.csv'
+      skipHeader: true
+      fields:
+        - 'keycloak_url'
+        - 'realm_id'
+        - 'tenant_name'
+        - 'client_id'
+  phases:
+    - name: warm up
+      duration: 20
+      arrivalCount: 20
+    - name: load
+      duration: 10
+      arrivalCount: 10
+before:
+  flow:
+    - log: 'Getting the access token (tenant: {{ realm_id }}) for client {{ client_id }}'
+    - post:
+        url: '{{ keycloak_url }}/auth/realms/{{ realm_id }}/protocol/openid-connect/token'
+        headers:
+          Content-Type: 'application/x-www-form-urlencoded'
+          Accept: 'application/json'
+        form:
+          {
+            grant_type: 'client_credentials',
+            client_id: '{{ client_id }}',
+            client_secret: '{{ $processEnvironment.ARTILLERY_CLIENT_SECRET }}',
+          }
+        capture:
+          - json: '$.access_token'
+            as: token
+scenarios:
+  - name: Create new PDF jobs
+    weight: 1
+    flow:
+      - post:
+          url: '/pdf/v1/jobs'
+          headers:
+            authorization: 'Bearer {{ token }}'
+          json:
+            operation: generate
+            templateId: artillery-test
+            data: {}
+            filename: 'artillery-test.pdf'

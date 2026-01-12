@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { FetchNotificationMetrics } from '@store/notification/actions';
 import { NotificationMetrics } from './metrics';
 import { ContactInformation } from './contactInformation';
@@ -28,7 +28,7 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
     <OverviewLayout
       description={description}
       addButton={
-        <GoAButton
+        <GoabButton
           testId="add-notification-overview"
           disabled={disabled}
           onClick={() => {
@@ -36,7 +36,7 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
           }}
         >
           Add notification type
-        </GoAButton>
+        </GoabButton>
       }
       extra={
         <>

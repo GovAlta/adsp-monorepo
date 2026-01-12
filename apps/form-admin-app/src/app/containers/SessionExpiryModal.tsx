@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -40,7 +40,7 @@ export const SessionExpiryModal = () => {
 
   return (
     showAlert && (
-      <GoAModal heading="Continue working?" open={showAlert}>
+      <GoabModal heading="Continue working?" open={showAlert}>
         {seconds > 0 ? (
           <div>
             Your session will expire in <SecondsSpan>{seconds}</SecondsSpan> seconds. Do you want to continue working?
@@ -48,20 +48,20 @@ export const SessionExpiryModal = () => {
         ) : (
           <div>Your session has expired. Please logout, then sign in again if you would like to continue working.</div>
         )}
-        <GoAButtonGroup alignment="end" mt="l">
-          <GoAButton
+        <GoabButtonGroup alignment="end" mt="l">
+          <GoabButton
             type={seconds > 0 ? 'secondary' : 'primary'}
             onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
           >
             Logout
-          </GoAButton>
+          </GoabButton>
           {seconds > 0 && (
-            <GoAButton type="primary" onClick={() => dispatch(renewSession())}>
+            <GoabButton type="primary" onClick={() => dispatch(renewSession())}>
               Continue working
-            </GoAButton>
+            </GoabButton>
           )}
-        </GoAButtonGroup>
-      </GoAModal>
+        </GoabButtonGroup>
+      </GoabModal>
     )
   );
 };

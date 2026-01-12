@@ -1,6 +1,6 @@
 import { FunctionComponent, ReactNode } from 'react';
 import { TaskMetric } from '../state';
-import { GoAContainer } from '@abgov/react-components';
+import { GoabContainer } from '@abgov/react-components';
 
 interface MetricProps {
   metric: TaskMetric;
@@ -9,7 +9,7 @@ interface MetricProps {
 
 export const Metric: FunctionComponent<MetricProps> = ({ metric, children }) => {
   return (
-    <GoAContainer type="non-interactive" accent="thin" padding="compact">
+    <GoabContainer type="non-interactive" accent="thin" padding="compact">
       <label>{metric.name}</label>
       <div style={{ marginTop: 16 }}>
         {children || (
@@ -25,6 +25,6 @@ export const Metric: FunctionComponent<MetricProps> = ({ metric, children }) => 
         )}
         <div style={{ fontSize: 'smaller' }}>{metric.unit}</div>
       </div>
-    </GoAContainer>
+    </GoabContainer>
   );
 };

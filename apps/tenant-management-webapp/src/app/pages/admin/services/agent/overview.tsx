@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { NoPaddingH2 } from '@components/AppHeader';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { useNavigate } from 'react-router-dom';
 
 interface AgentOverviewProps {
@@ -21,7 +21,7 @@ export const AgentOverview: FunctionComponent<AgentOverviewProps> = ({ setOpenAd
         <NoPaddingH2>Agents</NoPaddingH2>
 
         <p></p>
-        <GoAButton
+        <GoabButton
           testId="add-agent"
           onClick={() => {
             setActiveIndex(1);
@@ -29,7 +29,7 @@ export const AgentOverview: FunctionComponent<AgentOverviewProps> = ({ setOpenAd
           }}
         >
           Add agent
-        </GoAButton>
+        </GoabButton>
       </section>
     </div>
   );

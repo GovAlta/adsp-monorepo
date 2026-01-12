@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { RootState } from '@store/index';
 
-import { GoANotification } from '@abgov/react-components';
+import { GoabNotification } from '@abgov/react-components';
 import { clearNotification } from '@store/notifications/actions';
 import styled from 'styled-components';
 
@@ -16,7 +16,7 @@ export function NotificationBanner({ loggedIn }: { loggedIn: boolean }): JSX.Ele
     <div>
       {notification ? (
         <div style={{ marginBottom: '10px' }}>
-          <GoANotification
+          <GoabNotification
             key={new Date().getMilliseconds()}
             onDismiss={() => {
               dispatch(clearNotification());
@@ -26,7 +26,7 @@ export function NotificationBanner({ loggedIn }: { loggedIn: boolean }): JSX.Ele
             <NotificationStyles>
               <div dangerouslySetInnerHTML={{ __html: notification.message }} />
             </NotificationStyles>
-          </GoANotification>
+          </GoabNotification>
         </div>
       ) : (
         ''

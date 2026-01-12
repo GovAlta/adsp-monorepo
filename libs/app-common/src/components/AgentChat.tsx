@@ -1,7 +1,8 @@
-import { GoAFormItem, GoASkeleton, GoATextArea } from '@abgov/react-components';
+import { GoabFormItem, GoabSkeleton, GoabTextArea } from '@abgov/react-components';
 import { FunctionComponent, useEffect, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import styled from 'styled-components';
+import { GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
 
 interface Message {
   id?: string;
@@ -81,7 +82,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({ disabled, threadI
         {messages.map((message) => (
           <MessageItem key={message.id} message={message} />
         ))}
-        {messages[messages.length - 1]?.from === 'user' && <GoASkeleton type="text" mb="l" mr="4xl" />}
+        {messages[messages.length - 1]?.from === 'user' && <GoabSkeleton type="text" mb="l" mr="4xl" />}
         <div ref={latestRef}></div>
       </div>
       <form
@@ -93,15 +94,15 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({ disabled, threadI
           }
         }}
       >
-        <GoAFormItem ml="xs" mr="xs">
-          <GoATextArea
+        <GoabFormItem ml="xs" mr="xs">
+          <GoabTextArea
             disabled={disabled}
             name="draft"
             width="100%"
             value={draft}
-            onChange={(_, value) => setDraft(value)}
+            onChange={(detail: GoabTextAreaOnChangeDetail) => setDraft(detail.value)}
           />
-        </GoAFormItem>
+        </GoabFormItem>
       </form>
     </ContainerDiv>
   );

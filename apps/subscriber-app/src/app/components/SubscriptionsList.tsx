@@ -1,4 +1,4 @@
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { Subscription, Subscriber, Channel, Channels } from '@store/subscription/models';
 import React from 'react';
 import { RootState } from '@store/index';
@@ -125,7 +125,7 @@ const SubscriptionsList = ({ subscriber, onUnsubscribe }: SubscriptionsListProps
               </td>
               <td>
                 {subscription.type?.manageSubscribe ? (
-                  <GoAButton
+                  <GoabButton
                     size="compact"
                     type="tertiary"
                     key={`${subscription.typeId}`}
@@ -133,7 +133,7 @@ const SubscriptionsList = ({ subscriber, onUnsubscribe }: SubscriptionsListProps
                     testId="unsubscribe-button"
                   >
                     Unsubscribe
-                  </GoAButton>
+                  </GoabButton>
                 ) : (
                   <UnsubscribeMessage />
                 )}

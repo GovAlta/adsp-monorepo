@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { isValidHref, isMailToHref } from '../Context/register/util';
-import { GoAFormItem, GoAIconButton } from '@abgov/react-components';
+import { GoabFormItem, GoabIconButton } from '@abgov/react-components';
 
 import { GoAContextMenuIcon } from '../Controls/FileUploader/ContextMenu';
 
@@ -54,7 +54,7 @@ export const RenderLink = (props: OptionProps): JSX.Element => {
     error = 'Invalid Link';
   }
   return (
-    <GoAFormItem error={error} label="">
+    <GoabFormItem error={error} label="">
       <div data-testid="link-jsonform">
         {linkUrl && linkValid ? (
           <div>
@@ -63,7 +63,7 @@ export const RenderLink = (props: OptionProps): JSX.Element => {
               {isMailToHref(link ?? '') ? (
                 <GoAContextMenuIcon type="mail" title="Email" testId="mail-icon" />
               ) : (
-                <GoAIconButton icon="open" title="Open" testId="open-icon" size="small" />
+                <GoabIconButton icon="open" title="Open" testId="open-icon" size="small" />
               )}
             </a>
           </div>
@@ -71,6 +71,6 @@ export const RenderLink = (props: OptionProps): JSX.Element => {
           linkLabel
         )}
       </div>
-    </GoAFormItem>
+    </GoabFormItem>
   );
 };

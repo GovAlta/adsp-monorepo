@@ -1,15 +1,15 @@
 import React, { FunctionComponent, useState } from 'react';
 
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoAInput,
-  GoAModal,
-  GoASkeleton,
-  GoATextArea,
+  GoabButton,
+  GoabButtonGroup,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabInput,
+  GoabModal,
+  GoabSkeleton,
+  GoabTextArea,
 } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { TopicItem, defaultTopic } from '@store/comment/model';
@@ -25,6 +25,12 @@ import { RootState } from '@store/index';
 
 import { DescriptionItem } from '../styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import {
+  GoabTextAreaOnKeyPressDetail,
+  GoabTextAreaOnChangeDetail,
+  GoabInputOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+} from '@abgov/ui-components-common';
 interface TopicModalProps {
   type: string;
 
@@ -106,13 +112,13 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
   };
 
   return (
-    <GoAModal
+    <GoabModal
       heading={title}
       testId="add-topic-modal"
       open={open}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="topic-modal-cancel"
             onClick={() => {
@@ -122,8 +128,8 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="topic-modal-save"
             disabled={!topic?.name || !topic?.resourceId || validators.haveErrors()}
@@ -133,46 +139,46 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <div>
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
+        <GoabFormItem error={errors?.['name']} label="Name">
+          <GoabInput
             type="text"
             name="name"
             value={topic?.name}
             testId={`topic-modal-name-input`}
             width="100%"
             aria-label="name"
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               validators.remove('name');
-              validators['name'].check(value);
+              validators['name'].check(detail.value);
 
-              setTopic({ ...topic, name: value });
+              setTopic({ ...topic, name: detail.value });
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
 
-        <GoAFormItem label="Select a topic type">
-          {indicator.show && Object.keys(topicTypes).length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}
+        <GoabFormItem label="Select a topic type">
+          {indicator.show && Object.keys(topicTypes).length === 0 && <GoabSkeleton type="text" key={1}></GoabSkeleton>}
           {Object.keys(topicTypes).length > 0 && (
-            <GoADropdown
+            <GoabDropdown
               name="TopicTypes"
               value={selectedTopicType}
-              onChange={(name, selectedTopicType: string) => {
-                setSelectedTopic(selectedTopicType);
+              onChange={(detail: GoabDropdownOnChangeDetail) => {
+                setSelectedTopic(detail.value as string);
                 validators.remove('typeId');
-                validators['typeId'].check(selectedTopicType);
-                setTopic({ ...topic, typeId: selectedTopicType });
+                validators['typeId'].check(detail.value);
+                setTopic({ ...topic, typeId: detail.value });
               }}
               aria-label="add-select-topicType-dropdown"
               width={'54ch'}
               testId="add-comment-select-topicType-dropdown"
             >
               {Object.keys(topicTypes).map((item) => (
-                <GoADropdownItem
+                <GoabDropdownItem
                   name="TopicTypes"
                   key={item}
                   label={item}
@@ -181,7 +187,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
                 />
               ))}
               {Object.keys(coreTopicTypes).map((item) => (
-                <GoADropdownItem
+                <GoabDropdownItem
                   name="CoreTopicTypes"
                   key={item}
                   label={item}
@@ -189,25 +195,25 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
                   testId={`${item}-get-comment-options`}
                 />
               ))}
-            </GoADropdown>
+            </GoabDropdown>
           )}
-        </GoAFormItem>
+        </GoabFormItem>
 
-        <GoAFormItem label="Description">
+        <GoabFormItem label="Description">
           <DescriptionItem>
-            <GoATextArea
+            <GoabTextArea
               name="description"
               value={topic?.description}
               width="100%"
               testId="description"
               aria-label="description"
-              onKeyPress={(name, value, key) => {
+              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
                 validators.remove('description');
-                validators['description'].check(value);
-                setTopic({ ...topic, description: value });
+                validators['description'].check(detail.value);
+                setTopic({ ...topic, description: detail.value });
               }}
               // eslint-disable-next-line
-              onChange={(name, value) => {}}
+              onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
             />
             <HelpTextComponent
               length={topic?.description?.length || 0}
@@ -216,23 +222,23 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
               errorMsg={errors?.['content']}
             />
           </DescriptionItem>
-        </GoAFormItem>
-        <GoAFormItem label="Resource ID">
-          <GoAInput
+        </GoabFormItem>
+        <GoabFormItem label="Resource ID">
+          <GoabInput
             type="text"
             name="resourceid"
             value={topic?.resourceId}
             testId={`topic-modal-resourceid-input`}
             width="100%"
             aria-label="resourceid"
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               validators.remove('resourceid');
 
-              setTopic({ ...topic, resourceId: value });
+              setTopic({ ...topic, resourceId: detail.value });
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
       </div>
-    </GoAModal>
+    </GoabModal>
   );
 };

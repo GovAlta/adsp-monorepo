@@ -2,16 +2,16 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { NotificationItem } from '@store/notification/models';
 import {
-  GoACheckbox,
-  GoATextArea,
-  GoAInput,
-  GoAButton,
-  GoAButtonGroup,
-  GoACallout,
-  GoAModal,
-  GoAFormItem,
-  GoARadioGroup,
-  GoARadioItem,
+  GoabCheckbox,
+  GoabTextArea,
+  GoabInput,
+  GoabButton,
+  GoabButtonGroup,
+  GoabCallout,
+  GoabModal,
+  GoabFormItem,
+  GoabRadioGroup,
+  GoabRadioItem,
 } from '@abgov/react-components';
 import { toKebabName } from '@lib/kebabName';
 import { Role } from '@store/tenant/models';
@@ -31,6 +31,12 @@ import { ConfigServiceRole } from '@store/access/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { areObjectsEqual } from '@lib/objectUtil';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import {
+  GoabTextAreaOnKeyPressDetail,
+  GoabInputOnChangeDetail,
+  GoabRadioGroupOnChangeDetail,
+} from '@abgov/ui-components-common';
+
 interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
   onCancel?: () => void;
@@ -176,13 +182,13 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
     .build();
   return (
     <EditStyles>
-      <GoAModal
+      <GoabModal
         heading={isNew ? 'Add notification type' : 'Edit notification type'}
         testId="notification-types-form"
         open={open}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               testId="form-cancel"
               type="secondary"
               onClick={() => {
@@ -194,35 +200,35 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               }}
             >
               Cancel
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               disabled={!addressPathChanged && (validators.haveErrors() || areObjectsEqual(type, initialValue))}
               type="primary"
               testId="form-save"
               onClick={handleSave}
             >
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
+        <GoabFormItem error={errors?.['name']} label="Name">
+          <GoabInput
             type="text"
             name="name"
             value={type.name}
             testId="form-name"
             aria-label="name"
             width="100%"
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               const validations = {
-                name: value,
+                name: detail.value,
               };
               if (!isEdit) {
                 validators.remove('name');
                 validators.checkAll(validations);
               }
-              setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) });
+              setType({ ...type, name: detail.value, id: isEdit ? type.id : toKebabName(detail.value) });
             }}
             onBlur={() => {
               if (!isEdit) {
@@ -232,29 +238,29 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               }
             }}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Type ID">
+        </GoabFormItem>
+        <GoabFormItem label="Type ID">
           <div style={{ display: 'flex', flexDirection: 'row' }}>
             <div style={{ margin: '3px 10px' }}>
               <IdField data-testid={`form-id`}>{type.id || ''}</IdField>
             </div>
           </div>
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['description']} label="Description">
-          <GoATextArea
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['description']} label="Description">
+          <GoabTextArea
             name="description"
             testId="form-description"
             value={type?.description}
             aria-label="description"
             width="100%"
-            onKeyPress={(name, value, key) => {
-              if (value) {
+            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+              if (detail.value) {
                 validators.remove('description');
-                validators['description'].check(value);
-                setType({ ...type, description: value });
+                validators['description'].check(detail.value);
+                setType({ ...type, description: detail.value });
               }
             }}
-            onChange={(name, value) => {}}
+            onChange={() => {}}
           />
           <HelpTextComponent
             length={type?.description?.length || 0}
@@ -262,15 +268,15 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             descErrMessage={descErrMessage}
             errorMsg={errors?.['description']}
           />
-        </GoAFormItem>
+        </GoabFormItem>
         {isNotifyAddressSetting === NotificationType.SUBSCRIBERS && (
-          <GoAFormItem error={errors?.['channels']} label="Select Notification Channels">
+          <GoabFormItem error={errors?.['channels']} label="Select Notification Channels">
             <div key="select channel" style={{ display: 'flex', flexDirection: 'row' }}>
               {channels.map((channel, key) => {
                 return (
                   <div key={key}>
                     <div style={{ paddingRight: '20px' }}>
-                      <GoACheckbox
+                      <GoabCheckbox
                         name={channel.value}
                         checked={
                           type.channels?.map((value) => value).includes(channel.value) || channel.value === 'email'
@@ -297,12 +303,12 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 );
               })}
             </div>
-          </GoAFormItem>
+          </GoabFormItem>
         )}
 
         <div data-testid="manage-subscriptions-checkbox-wrapper">
-          <GoAFormItem label="">
-            <GoACheckbox
+          <GoabFormItem label="">
+            <GoabCheckbox
               name="subscribe"
               checked={!!type.manageSubscribe}
               onChange={() => {
@@ -313,18 +319,18 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               ariaLabel={`manage-subscriptions-checkbox`}
             >
               My subscribers are allowed to manage their own subscription for this notification type
-            </GoACheckbox>
+            </GoabCheckbox>
             {type.manageSubscribe && (
               <div className="fitContent">
-                <GoACallout type="important">
+                <GoabCallout type="important">
                   This checkbox enables your subscribers to manage subscriptions on a self serve basis. Subscribers can
                   unsubscribe from the notification type without contacting the program area.
-                </GoACallout>
+                </GoabCallout>
               </div>
             )}
-          </GoAFormItem>
+          </GoabFormItem>
         </div>
-        <GoACheckbox
+        <GoabCheckbox
           checked={type.publicSubscribe}
           name="anonymousRead-checkbox"
           testId="anonymousRead-checkbox"
@@ -338,100 +344,100 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           text="Make notification public"
         />
 
-        <GoAFormItem label="Select Notify subscribers or Notify contact" error={errors?.['priority']}>
+        <GoabFormItem label="Select Notify subscribers or Notify contact" error={errors?.['priority']}>
           <div style={{ marginBottom: '1rem' }}>
-            <GoARadioGroup
+            <GoabRadioGroup
               name="notify"
               testId="select-type-notification-radio-group"
               ariaLabel="select-type-notification-radio-group"
               value={Object.keys(NotificationType).find((key) => NotificationType[key] === isNotifyAddressSetting)} //
-              onChange={(_, value) => {
-                setIsNotifyAddressSetting(NotificationType[value]);
+              onChange={(detail: GoabRadioGroupOnChangeDetail) => {
+                setIsNotifyAddressSetting(NotificationType[detail.value]);
               }}
             >
               {Object.keys(NotificationType).map((label, key) => (
-                <GoARadioItem key={key} name="notify" label={NotificationTypeValue[label]} value={label} />
+                <GoabRadioItem key={key} name="notify" label={NotificationTypeValue[label]} value={label} />
               ))}
-            </GoARadioGroup>
+            </GoabRadioGroup>
           </div>
-        </GoAFormItem>
+        </GoabFormItem>
         {isNotifyAddressSetting === NotificationType.CONTACT && (
-          <GoAFormItem label="Notify this contact" error={errors?.['address']}>
-            <GoAInput
+          <GoabFormItem label="Notify this contact" error={errors?.['address']}>
+            <GoabInput
               type="text"
               name="address"
               value={type.address}
               testId={`address-notification-modal-input`}
               aria-label="input-address"
               width="60%"
-              onChange={(_, value) => {
+              onChange={(detail: GoabInputOnChangeDetail) => {
                 const validations = {
-                  address: value,
+                  address: detail.value,
                 };
                 validators.remove('address');
                 validators.checkAll(validations);
-                type.address = value;
+                type.address = detail.value;
               }}
             />
-          </GoAFormItem>
+          </GoabFormItem>
         )}
         {isNotifyAddressSetting === NotificationType.CONTACT_EVENT_PAYLOAD && (
           <div>
-            <GoAFormItem label="Notify contact in event payload at Json schema path">
-              <GoAInput
+            <GoabFormItem label="Notify contact in event payload at Json schema path">
+              <GoabInput
                 type="text"
                 name="addressPath"
                 value={type.addressPath}
                 testId={`address-notification-modal-input`}
                 aria-label="input-path-address"
                 width="60%"
-                onChange={(_, value) => {
-                  setType({ ...type, addressPath: value });
-                  if (value !== initialValue?.addressPath) {
+                onChange={(detail: GoabInputOnChangeDetail) => {
+                  setType({ ...type, addressPath: detail.value });
+                  if (detail.value !== initialValue?.addressPath) {
                     setAddressPathChanged(true);
                   }
                 }}
               />
-            </GoAFormItem>
-            <GoAFormItem label="bcc in event payload at Json schema path">
-              <GoAInput
+            </GoabFormItem>
+            <GoabFormItem label="bcc in event payload at Json schema path">
+              <GoabInput
                 type="text"
                 name="bcc"
                 value={type.bccPath}
                 testId={`bccPath-notification-modal-input`}
                 aria-label="input-path-address"
                 width="60%"
-                onChange={(_, value) => {
-                  setType({ ...type, bccPath: value });
+                onChange={(detail: GoabInputOnChangeDetail) => {
+                  setType({ ...type, bccPath: detail.value });
                 }}
               />
-            </GoAFormItem>
-            <GoAFormItem label="cc in event payload at Json schema path">
-              <GoAInput
+            </GoabFormItem>
+            <GoabFormItem label="cc in event payload at Json schema path">
+              <GoabInput
                 type="text"
                 name="cc"
                 value={type.ccPath}
                 testId={`ccPath-notification-modal-input`}
                 aria-label="input-path-address"
                 width="60%"
-                onChange={(_, value) => {
-                  setType({ ...type, ccPath: value });
+                onChange={(detail: GoabInputOnChangeDetail) => {
+                  setType({ ...type, ccPath: detail.value });
                 }}
               />
-            </GoAFormItem>
-            <GoAFormItem label="attachment in event payload at Json schema path">
-              <GoAInput
+            </GoabFormItem>
+            <GoabFormItem label="attachment in event payload at Json schema path">
+              <GoabInput
                 type="text"
                 name="attachment"
                 value={type.attachmentPath}
                 testId={`attachmentPath-notification-modal-input`}
                 aria-label="input-path-address"
                 width="60%"
-                onChange={(_, value) => {
-                  setType({ ...type, attachmentPath: value });
+                onChange={(detail: GoabInputOnChangeDetail) => {
+                  setType({ ...type, attachmentPath: detail.value });
                 }}
               />
-            </GoAFormItem>
+            </GoabFormItem>
           </div>
         )}
         {tenantClients &&
@@ -440,7 +446,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           elements.map((e, key) => {
             return <SubscribeRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
           })}
-      </GoAModal>
+      </GoabModal>
     </EditStyles>
   );
 };

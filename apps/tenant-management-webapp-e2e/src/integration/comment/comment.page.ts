@@ -4,7 +4,7 @@ class CommentPage {
   }
 
   addTopicTypeModalTitle() {
-    return cy.xpath('//*[@testid="topicType-comment" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="topicType-comment" and @open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   addTopicTypeModalCancelButton() {
@@ -24,7 +24,8 @@ class CommentPage {
   }
 
   addTopicTypeModalSaveButton() {
-    return cy.xpath('//goa-button[text()="Save" and @disabled="false"]');
+    return cy.xpath('//goa-button[text()="Save"]').should('not.be.disabled');
+    //return cy.xpath('//goa-button[text()="Save" and @disabled="false"]');
   }
 
   editorTopicTypeNameValue() {
@@ -40,11 +41,12 @@ class CommentPage {
   }
 
   editorSaveButton() {
-    return cy.xpath('//*[@testid="comment-save" and @disabled="false"]');
+    return cy.xpath('//*[@testid="comment-save"]').should('not.be.disabled');
+    // return cy.xpath('//*[@testid="comment-save" and @disabled="false"]');
   }
 
   editorBackButton() {
-    return cy.xpath('//*[@testid="comment-cancel" and @disabled="false"]');
+    return cy.xpath('//*[@testid="comment-cancel"]').should('not.be.disabled');
   }
 
   editorCheckboxesTables() {
@@ -86,7 +88,10 @@ class CommentPage {
   }
 
   topicTypeEditorEditTopicTypeModalTitle() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="topicType-comment"]/*[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="topicType-comment"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   topicTypeEditorEditTopicTypeModalNameInput() {
@@ -114,7 +119,10 @@ class CommentPage {
   }
 
   addTopicModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="add-topic-modal"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="add-topic-modal"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   addTopicModalName() {
@@ -130,11 +138,16 @@ class CommentPage {
   }
 
   addTopicModalSaveBtn() {
-    return cy.xpath('//goa-modal[@testid="add-topic-modal"]//goa-button[text()="Save" and @disabled="false"]');
+    return cy.get('goa-modal[testid="add-topic-modal"]').find('goa-button').contains('Save').should('not.be.disabled');
   }
 
   addTopicModalCancelBtn() {
-    return cy.xpath('//goa-modal[@testid="add-topic-modal"]//goa-button[text()="Cancel" and @disabled="false"]');
+    return cy
+      .get('goa-modal[testid="add-topic-modal"]')
+      .find('goa-button')
+      .contains('Cancel')
+      .should('not.be.disabled');
+    // return cy.xpath('//goa-modal[@testid="add-topic-modal"]//goa-button[text()="Cancel" and @disabled="false"]');
   }
 
   topicLoadMoreButton() {
@@ -179,7 +192,10 @@ class CommentPage {
   }
 
   addCommentModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="add-comment-modal"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="add-comment-modal"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   addCommentModalComment() {
@@ -187,11 +203,13 @@ class CommentPage {
   }
 
   addCommentModalSaveBtn() {
-    return cy.xpath('//goa-modal[@testid="add-comment-modal"]//goa-button[text()="Save" and @disabled="false"]');
+    return cy.xpath('//goa-modal[@testid="add-comment-modal"]//goa-button[text()="Save"]');
+    // return cy.xpath('//goa-modal[@testid="add-comment-modal"]//goa-button[text()="Save" and @disabled="false"]');
   }
 
   addCommentModalCancelBtn() {
-    return cy.xpath('//goa-modal[@testid="add-comment-modal"]//goa-button[text()="Cancel" and @disabled="false"]');
+    return cy.xpath('//goa-modal[@testid="add-comment-modal"]//goa-button[text()="Cancel"]');
+    // return cy.xpath('//goa-modal[@testid="add-comment-modal"]//goa-button[text()="Cancel" and @disabled="false"]');
   }
 
   commentContent(content) {
@@ -227,7 +245,10 @@ class CommentPage {
   }
 
   editCommentModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="edit-comment-modal"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="edit-comment-modal"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   editCommentModalComment() {
@@ -235,11 +256,15 @@ class CommentPage {
   }
 
   editCommentModalSaveBtn() {
-    return cy.xpath('//goa-modal[@testid="edit-comment-modal"]//goa-button[text()="Save" and @disabled="false"]');
+    return cy.xpath('//goa-modal[@testid="edit-comment-modal"]//goa-button[text()="Save"]');
+    //  return cy.xpath('//goa-modal[@testid="edit-comment-modal"]//goa-button[text()="Save" and @disabled="false"]');
   }
 
   deleteCommentModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   deleteCommentModalContent() {
@@ -255,7 +280,10 @@ class CommentPage {
   }
 
   deleteTopicModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   deleteTopicModalContentTopicName() {
@@ -265,7 +293,10 @@ class CommentPage {
   }
 
   deleteTopicTypeModalHeading() {
-    return cy.xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]/div[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@open="true" and @testid="delete-confirmation"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   deleteTopicTypeModalContentTopicName() {

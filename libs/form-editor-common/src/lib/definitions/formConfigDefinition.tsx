@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FormDefinition } from '@store/form/model';
 
-import { GoAIconButton } from '@abgov/react-components';
+import { GoabIconButton } from '@abgov/react-components';
 
 import { updateFormDefinition } from '@store/form/action';
 
@@ -71,7 +71,7 @@ export const FormConfigDefinition = ({ definition }: PDFConfigFormProps) => {
           <Anchor rel="noopener noreferrer" onClick={() => setOpenEditFormTemplate(true)}>
             Edit
           </Anchor>
-          <GoAIconButton
+          <GoabIconButton
             icon="create"
             testId="form-template-information-edit-icon"
             title="Edit"

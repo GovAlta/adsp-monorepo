@@ -1,5 +1,5 @@
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
-import { GoAButton, GoAButtonGroup, GoACallout } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabCallout } from '@abgov/react-components';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { DateTime } from 'luxon';
@@ -57,10 +57,10 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
 
   const ButtonGroup = ({ showSubmit, canSubmit, onSubmit, form }): JSX.Element => {
     return (
-      <GoAButtonGroup alignment="end">
+      <GoabButtonGroup alignment="end">
         {showSubmit && (
           <div onMouseEnter={handleMouseEnter}>
-            <GoAButton
+            <GoabButton
               mt="s"
               mb="3xl"
               disabled={!canSubmit}
@@ -71,10 +71,10 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
               }}
             >
               Submit
-            </GoAButton>
+            </GoabButton>
           </div>
         )}
-      </GoAButtonGroup>
+      </GoabButtonGroup>
     );
   };
 
@@ -86,10 +86,10 @@ export const DraftFormWrapper: FunctionComponent<DraftFormProps> = ({
       <GridItem md={1} />
       <GridItem md={10}>
         {daysTilIntakeEnd <= 5 && (
-          <GoACallout type="information" heading="Intake closing soon">
+          <GoabCallout type="information" heading="Intake closing soon">
             Intake is closing in {daysTilIntakeEnd} days. Please complete and submit your form before{' '}
             {definition.intake.end.toFormat('LLLL d, yyyy')} to apply.
-          </GoACallout>
+          </GoabCallout>
         )}
         <DraftForm
           definition={definition}

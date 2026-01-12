@@ -4,9 +4,10 @@ import xml.etree.ElementTree as ET
 from typing import List
 
 from visibility_rules.pipeline_context import CTX_RADIO_GROUPS
-from xdp_parser.control_labels import ControlLabels, inline_caption
+from xdp_parser.control_labels import ControlLabels
 from xdp_parser.control_helpers import is_checkbox, is_radio_button
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
+from xdp_parser.help_text_extractor import HelpTextExtractor
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.parsing_helpers import is_object_array
 from xdp_parser.xdp_element import XdpElement
@@ -130,11 +131,23 @@ class XdpParser:
         while i < len(elements):
             elem = elements[i]
 
-            # Help text
-            help_text = XdpHelpText.get_help_text(elem)
+            # Help text from click-event
+            if elem.tag == "field" and HelpTextExtractor.is_help_icon_field(elem):
+                payload = HelpTextExtractor.get_help_from_click_event(elem)
+                if payload:
+                    control = self.factory.handle_help_text(elem, payload["text"])
+                    if control:
+                        print(f"help text control with geometry: {control.geometry}")
+                        controls.append(control)
+                    i += 1
+                    continue
+
+            # Help text from a draw element
+            help_text = HelpTextExtractor.get_help_from_draw(elem)
             if help_text:
                 control = self.factory.handle_help_text(elem, help_text)
                 if control:
+                    print(f"help text control with geometry: {control.geometry}")
                     controls.append(control)
                 i += 1
                 continue

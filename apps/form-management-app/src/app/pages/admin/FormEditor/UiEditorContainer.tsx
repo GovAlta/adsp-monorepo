@@ -1,9 +1,19 @@
 import React, { useRef, useState } from 'react';
 import styles from './Editor.module.scss';
 import { useWindowDimensions } from '../../../utils/useWindowDimensions';
-import { GoAFormItem } from '@abgov/react-components';
+import { GoabFormItem } from '@abgov/react-components';
 import MonacoEditor from '@monaco-editor/react';
 import { JsonSchema } from '@jsonforms/core';
+import type * as monaco from 'monaco-editor';
+
+export interface EditorScrollEvent {
+  scrollTop: number;
+}
+
+export interface EditorInstance {
+  setScrollTop(scrollTop: number): void;
+  onDidScrollChange(listener: (e: EditorScrollEvent) => void): void;
+}
 
 export interface UiEditorContainerProps {
   errors: Record<string, string | null>;
@@ -21,6 +31,7 @@ export interface UiEditorContainerProps {
       dataSchemaJSONSchema: string | null;
     }>
   >;
+  handleEditorDidMountUi: (editor: monaco.editor.IStandaloneCodeEditor) => void;
 }
 
 export const UIEditorContainer: React.FC<UiEditorContainerProps> = ({
@@ -29,41 +40,16 @@ export const UIEditorContainer: React.FC<UiEditorContainerProps> = ({
   tempUiSchema,
   setDraftUiSchema,
   setEditorErrors,
+  handleEditorDidMountUi,
 }): JSX.Element => {
-  const editorRefData = useRef(null);
-
-  const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
-
   const { height } = useWindowDimensions();
 
   const EditorHeight = height - 180;
 
   const isUseMiniMap = window.screen.availWidth >= 1920;
-  interface EditorScrollEvent {
-    scrollTop: number;
-  }
-
-  interface EditorInstance {
-    setScrollTop(scrollTop: number): void;
-    onDidScrollChange(listener: (e: EditorScrollEvent) => void): void;
-  }
-
-  const handleEditorDidMountUi = (editor: EditorInstance): void => {
-    (editorRefData as React.MutableRefObject<EditorInstance | null>).current = editor;
-
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        editor.setScrollTop(dataEditorLocation);
-      }, 5);
-    });
-
-    editor.onDidScrollChange((e: EditorScrollEvent) => {
-      setDataEditorLocation(e.scrollTop);
-    });
-  };
 
   return (
-    <GoAFormItem
+    <GoabFormItem
       error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
       label=""
     >
@@ -105,6 +91,6 @@ export const UIEditorContainer: React.FC<UiEditorContainerProps> = ({
           }}
         />
       </div>
-    </GoAFormItem>
+    </GoabFormItem>
   );
 };

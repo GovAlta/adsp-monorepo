@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styles from './Editor.module.scss';
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
 import { JSONFormPreviewer } from './JsonFormPreviewer';
-import { GoAFormItem, GoATabs, GoATab } from '@abgov/react-components';
+import { GoabFormItem, GoabTabs, GoabTab } from '@abgov/react-components';
 import { RegisterData } from '../../../../../../../libs/jsonforms-components/src';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { FileItem, FileMetadata } from '../../../state/file/file.slice';
@@ -55,58 +55,56 @@ export const Preview: React.FC<PreviewProps> = ({
   const [data, setData] = useState<any>({});
 
   return (
-    <div>
-      <GoATabs data-testid="preview-tabs">
-        <GoATab heading="Preview" data-testid="preview-view-tab">
-          <div className={styles['form-preview-scroll-pane']}>
-            <ContextProvider
-              fileManagement={{
-                fileList: fileList,
-                uploadFile: uploadFile,
-                downloadFile: downloadFile,
-                deleteFile: deleteFile,
-              }}
-              formUrl={formServiceApiUrl}
-            >
-              <GoAFormItem error={schemaError} label="">
-                <JSONFormPreviewer
-                  onChange={({ data }) => {
-                    setData(data);
-                  }}
-                  data={data}
-                  dataSchema={dataSchema}
-                  uiSchema={uiSchema}
-                  error={schemaError}
-                  registerData={registerData}
-                  nonAnonymous={nonAnonymous}
-                  dataList={dataList}
-                />
-              </GoAFormItem>
-            </ContextProvider>
-          </div>
-        </GoATab>
+    <GoabTabs data-testid="preview-tabs">
+      <GoabTab heading="Preview" data-testid="preview-view-tab">
+        <div className={styles['form-preview-scroll-pane']}>
+          <ContextProvider
+            fileManagement={{
+              fileList: fileList,
+              uploadFile: uploadFile,
+              downloadFile: downloadFile,
+              deleteFile: deleteFile,
+            }}
+            formUrl={formServiceApiUrl}
+          >
+            <GoabFormItem error={schemaError} label="">
+              <JSONFormPreviewer
+                onChange={({ data }) => {
+                  setData(data);
+                }}
+                data={data}
+                dataSchema={dataSchema}
+                uiSchema={uiSchema}
+                error={schemaError}
+                registerData={registerData}
+                nonAnonymous={nonAnonymous}
+                dataList={dataList}
+              />
+            </GoabFormItem>
+          </ContextProvider>
+        </div>
+      </GoabTab>
 
-        <GoATab heading="Data" data-testid="data-view">
-          <div className={styles['review-page-tab-wrapper']}>
-            {data && <div className={styles.PRE}>{JSON.stringify(data, null, 2)}</div>}
-          </div>
-        </GoATab>
-        <GoATab
-          heading={
-            <PreviewTop
-              title="PDF Preview"
-              downloadFile={() => {
-                downloadFile(pdfFile);
-              }}
-              currentPDF={currentPDF}
-              generateTemplate={() => generatePdf(data)}
-            />
-          }
-          data-testid="data-view"
-        >
-          <PDFPreviewTemplateCore jobList={jobList} currentPDF={currentPDF} loading={loading} />
-        </GoATab>
-      </GoATabs>
-    </div>
+      <GoabTab heading="Data" data-testid="data-view">
+        <div className={styles['review-page-tab-wrapper']}>
+          {data && <div className={styles.PRE}>{JSON.stringify(data, null, 2)}</div>}
+        </div>
+      </GoabTab>
+      <GoabTab
+        heading={
+          <PreviewTop
+            title="PDF Preview"
+            downloadFile={() => {
+              downloadFile(pdfFile);
+            }}
+            currentPDF={currentPDF}
+            generateTemplate={() => generatePdf(data)}
+          />
+        }
+        data-testid="data-view"
+      >
+        <PDFPreviewTemplateCore jobList={jobList} currentPDF={currentPDF} loading={loading} />
+      </GoabTab>
+    </GoabTabs>
   );
 };

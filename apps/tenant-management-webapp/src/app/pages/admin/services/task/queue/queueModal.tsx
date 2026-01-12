@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState } from 'react';
 
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAInput, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabFormItem, GoabInput, GoabModal } from '@abgov/react-components';
 
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,11 @@ import {
 } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 import { RootState } from '@store/index';
+import {
+  GoabTextAreaOnKeyPressDetail,
+  GoabInputOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+} from '@abgov/ui-components-common';
 
 interface QueueModalProps {
   initialValue?: TaskDefinition;
@@ -83,13 +88,13 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
   };
 
   return (
-    <GoAModal
+    <GoabModal
       testId="add-queue-modal"
       open={open}
       heading={title}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="queue-modal-cancel"
             onClick={() => {
@@ -98,8 +103,8 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="queue-modal-save"
             disabled={!queue.name || validators.haveErrors()}
@@ -108,12 +113,12 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
-      <GoAFormItem error={errors?.['namespace']} label="Namespace">
-        <GoAInput
+      <GoabFormItem error={errors?.['namespace']} label="Namespace">
+        <GoabInput
           type="text"
           name="namespace"
           value={queue.namespace}
@@ -121,24 +126,24 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
           data-testid={`queue-modal-namespace-input`}
           aria-label="namespace"
           disabled={!isNew}
-          onChange={(namespace, value) => {
-            const validations = { namespace: value };
+          onChange={(detail: GoabInputOnChangeDetail) => {
+            const validations = { namespace: detail.value };
             validators.remove('namespace');
             validators.remove('name');
             if (isNew) {
-              validations['namespace'] = value;
+              validations['namespace'] = detail.value;
             }
             validators.checkAll(validations);
 
-            setQueue({ ...queue, namespace: value });
+            setQueue({ ...queue, namespace: detail.value });
           }}
           onBlur={() => {
             validators.checkAll({ namespace: queue.namespace });
           }}
         />
-      </GoAFormItem>
-      <GoAFormItem error={errors?.['name']} label="Name">
-        <GoAInput
+      </GoabFormItem>
+      <GoabFormItem error={errors?.['name']} label="Name">
+        <GoabInput
           type="text"
           name="name"
           width="100%"
@@ -146,21 +151,21 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
           data-testid={`queue-modal-name-input`}
           aria-label="name"
           disabled={!isNew}
-          onChange={(name, value) => {
-            const validations = { name: value };
+          onChange={(detail: GoabInputOnChangeDetail) => {
+            const validations = { name: detail.value };
             validators.remove('name');
             if (isNew) {
-              validations['duplicated'] = value;
+              validations['duplicated'] = detail.value;
             }
             validators.checkAll(validations);
 
-            setQueue({ ...queue, name: value });
+            setQueue({ ...queue, name: detail.value });
           }}
           onBlur={() => {
             validators.checkAll({ name: queue.name });
           }}
         />
-      </GoAFormItem>
-    </GoAModal>
+      </GoabFormItem>
+    </GoabModal>
   );
 };

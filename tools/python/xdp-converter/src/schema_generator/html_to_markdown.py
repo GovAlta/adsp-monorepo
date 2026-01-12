@@ -8,13 +8,13 @@ from xml.etree import ElementTree as ET
 # commonly found in Adobe XDP help text.
 # Extend as new formatting oddities appear.
 ##
-def html_to_markdown(exdata: ET.Element) -> str:
-    body_node = exdata.find("./body")
-    if body_node is None:
-        return ""
+def html_to_markdown(html: ET.Element) -> str:
+    # body_node = exdata.find("./body")
+    # if body_node is None:
+    #     return ""
 
     # Serialize child nodes of <body> to HTML string
-    html = "".join(ET.tostring(e, encoding="unicode") for e in body_node)
+    # html = "".join(ET.tostring(e, encoding="unicode") for e in body_node)
     html = _clean_html_for_parse(html)
 
     # Normalize Adobe/XFA quirks

@@ -8,7 +8,10 @@ class valuePage {
   }
 
   valueAddDefinitionModalHeading() {
-    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]/*[@slot="heading"]');
+    return cy
+      .xpath('//goa-modal[@testid="definition-value" and @open="true"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   valueActiveTab() {

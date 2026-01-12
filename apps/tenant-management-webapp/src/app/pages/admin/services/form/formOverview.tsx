@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { fetchFormMetrics, fetchAllTags, getFormDefinitions } from '@store/form/action';
 import { useDispatch } from 'react-redux';
 import { FormMetrics } from './metrics';
@@ -42,7 +42,7 @@ const FormOverview = ({ setOpenAddDefinition, setActiveIndex }: FormOverviewProp
         </section>
       }
       addButton={
-        <GoAButton
+        <GoabButton
           testId="add-definition"
           onClick={() => {
             setActiveIndex(1);
@@ -50,7 +50,7 @@ const FormOverview = ({ setOpenAddDefinition, setActiveIndex }: FormOverviewProp
           }}
         >
           Add definition
-        </GoAButton>
+        </GoabButton>
       }
       extra={<FormMetrics />}
     />

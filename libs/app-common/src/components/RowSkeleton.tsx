@@ -1,4 +1,4 @@
-import { GoASkeleton } from '@abgov/react-components';
+import { GoabSkeleton } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 
 interface RowSkeletonProps {
@@ -13,7 +13,7 @@ export const RowSkeleton: FunctionComponent<RowSkeletonProps> = ({ columns, show
           .fill(1)
           .map((_, idx) => (
             <td key={idx}>
-              <GoASkeleton type="text-small" />
+              <GoabSkeleton type="text-small" />
             </td>
           ))}
       </tr>

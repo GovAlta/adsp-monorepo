@@ -17,7 +17,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { selectFormAppLink, selectFormResourceTags } from '@store/form/selectors';
 import { isValidUrl } from '@lib/validation/urlUtil';
 import { fetchFormResourceTags, openEditorForDefinition } from '@store/form/action';
-import { GoABadge, GoACircularProgress } from '@abgov/react-components';
+import { GoabBadge, GoabCircularProgress } from '@abgov/react-components';
 import { EntryDetail } from '../styled-components';
 import { UpdateSearchCriteriaAndFetchEvents, fetchCalendars } from '@store/calendar/actions';
 interface FormDefinitionItemProps {
@@ -68,7 +68,7 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
       <DetailsTagHeading>Tags</DetailsTagHeading>
       {resourceTags === undefined && (
         <CenterPositionProgressIndicator>
-          <GoACircularProgress visible={true} size="small" />
+          <GoabCircularProgress visible={true} size="small" />
         </CenterPositionProgressIndicator>
       )}
       {resourceTags && resourceTags?.length > 0 && (
@@ -77,7 +77,7 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
             ?.sort((a, b) => a.label?.toLowerCase().localeCompare(b.label?.toLowerCase()))
             .map((tag) => (
               <TagBadgePadding>
-                <GoABadge type={'midtone'} content={tag.label} testId={tag.label} mb="xs" mr="xs" icon={false} />
+                <GoabBadge type={'midtone'} content={tag.label} testId={tag.label} mb="xs" mr="xs" icon={false} />
               </TagBadgePadding>
             ))}
         </DetailsTagWrapper>

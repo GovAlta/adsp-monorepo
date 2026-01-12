@@ -3,7 +3,7 @@ import { Page, Main, Aside } from '@components/Html';
 import { fetchServiceStatusApps, fetchStatusMetrics, FETCH_SERVICE_STATUS_APPS_ACTION } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoACheckbox, GoAButton } from '@abgov/react-components';
+import { GoabCheckbox, GoabButton } from '@abgov/react-components';
 import ApplicationFormModal from './form';
 import { Application } from './applications/application';
 import { WebhookListTable } from './webhooks/webhooks';
@@ -109,14 +109,14 @@ function Status(): JSX.Element {
           <Tab label="Applications" data-testid="status-applications-tab">
             <section>
               <p>
-                <GoAButton testId="add-application" onClick={() => addApplication(true)} type="primary">
+                <GoabButton testId="add-application" onClick={() => addApplication(true)} type="primary">
                   Add application
-                </GoAButton>
+                </GoabButton>
               </p>
               <p>
                 <b>Do you want to subscribe and receive notifications for application health changes?</b>
               </p>
-              <GoACheckbox
+              <GoabCheckbox
                 name="subscribe"
                 checked={!!subscription}
                 onChange={() => {
@@ -127,7 +127,7 @@ function Status(): JSX.Element {
                 testId="subscribe-checkbox"
               >
                 I want to subscribe and receive notifications
-              </GoACheckbox>
+              </GoabCheckbox>
               {isApplicationsFetched === true && applications.length === 0 && renderNoItem('application')}
               <ApplicationList>
                 {applications.map((app) => (
@@ -140,7 +140,7 @@ function Status(): JSX.Element {
             <section>
               <p>The webhooks are listed here</p>
               <p>
-                <GoAButton
+                <GoabButton
                   testId="add-application"
                   onClick={() => {
                     dispatch(
@@ -154,7 +154,7 @@ function Status(): JSX.Element {
                   type="primary"
                 >
                   Add webhook
-                </GoAButton>
+                </GoabButton>
               </p>
 
               <WebhookListTable />
@@ -177,7 +177,7 @@ function Status(): JSX.Element {
                 This service allows for posting of application notices. This allows you to communicate with your
                 customers about upcoming maintenance windows or other events
               </p>
-              <GoAButton
+              <GoabButton
                 testId="add-notice"
                 onClick={() => {
                   setShowAddNoticeModal(true);
@@ -185,7 +185,7 @@ function Status(): JSX.Element {
                 type="primary"
               >
                 Add notice
-              </GoAButton>
+              </GoabButton>
               <NoticeList />
             </section>
           </Tab>

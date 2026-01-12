@@ -1,4 +1,4 @@
-import { GoADivider } from '@abgov/react-components';
+import { GoabDivider } from '@abgov/react-components';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
 
@@ -12,7 +12,7 @@ const QueuesHeaderComponent: FunctionComponent<QueuesHeaderProps> = ({ className
       <div className={className}>
         <span>Queues</span>
       </div>
-      <GoADivider />
+      <GoabDivider />
     </React.Fragment>
   );
 };

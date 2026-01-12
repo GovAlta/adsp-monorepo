@@ -12,8 +12,6 @@ class FormElement(ABC):
         self.qualified_name = qualified_name
         self.context = context
         self.is_leaf = True
-        self.y = 0
-        self.x = 0
         self.is_radio = False
         self.label = None
         self.format = None

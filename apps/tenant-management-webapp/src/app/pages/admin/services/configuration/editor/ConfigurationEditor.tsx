@@ -13,7 +13,7 @@ import { updateConfigurationDefinition } from '@store/configuration/action';
 import { isValidJSONCheck } from '@lib/validation/checkInput';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { RevisionTable } from '../revisions/revisionsTable';
-import { GoAButton, GoAFormItem, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabFormItem, GoabButtonGroup } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
 import { getConfigurationActive } from '@store/configuration/action';
@@ -117,11 +117,11 @@ export const ConfigurationEditor = (): JSX.Element => {
 
             {configurationTemplate && <ConfigForm template={configurationTemplate} id={id} />}
             <div style={{ height: `calc(100vh - ${Height}px)`, overflowY: 'auto' }}>
-              <GoAFormItem label="">
+              <GoabFormItem label="">
                 <Tabs activeIndex={0}>
                   <Tab testId={`pdf-edit-header`} label={<EditorLabelWrapper>Configuration schema</EditorLabelWrapper>}>
                     <div style={{ marginTop: '20px' }}>
-                      <GoAFormItem error={errors?.['payloadSchema']}>
+                      <GoabFormItem error={errors?.['payloadSchema']}>
                         <MonacoEditor
                           data-testid="form-schema"
                           height={monacoHeight}
@@ -151,23 +151,23 @@ export const ConfigurationEditor = (): JSX.Element => {
                             showFoldingControls: 'always',
                           }}
                         />
-                      </GoAFormItem>
+                      </GoabFormItem>
                     </div>
                   </Tab>
                   <Tab testId={`pdf-edit-footer`} label={<EditorLabelWrapper>Managing revisions</EditorLabelWrapper>}>
-                    <GoAFormItem error={errors?.footer ?? ''} label="">
+                    <GoabFormItem error={errors?.footer ?? ''} label="">
                       <RevisionTable service={id} />
-                    </GoAFormItem>
+                    </GoabFormItem>
                   </Tab>
                 </Tabs>
-              </GoAFormItem>
+              </GoabFormItem>
             </div>
           </section>
           <EditTemplateActions>
             <hr className="styled-hr styled-hr-bottom" />
             <EditActionLayout>
-              <GoAButtonGroup alignment="start">
-                <GoAButton
+              <GoabButtonGroup alignment="start">
+                <GoabButton
                   disabled={
                     !isConfigurationUpdated(tmpTemplate, configurationTemplate) ||
                     EditorError?.testData !== null ||
@@ -180,8 +180,8 @@ export const ConfigurationEditor = (): JSX.Element => {
                   testId="template-form-save"
                 >
                   Save
-                </GoAButton>
-                <GoAButton
+                </GoabButton>
+                <GoabButton
                   onClick={() => {
                     if (isConfigurationUpdated(tmpTemplate, configurationTemplate)) {
                       setSaveModal({ visible: true, closeEditor: false });
@@ -195,8 +195,8 @@ export const ConfigurationEditor = (): JSX.Element => {
                   disabled={backButtonDisabled()}
                 >
                   Back
-                </GoAButton>
-              </GoAButtonGroup>
+                </GoabButton>
+              </GoabButtonGroup>
             </EditActionLayout>
           </EditTemplateActions>
         </EditorLHSWrapper>

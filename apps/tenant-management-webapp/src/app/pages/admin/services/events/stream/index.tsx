@@ -7,7 +7,7 @@ import { CORE_TENANT } from '@store/tenant/models';
 import { PageIndicator } from '@components/Indicator';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { AddEditStream } from './addEditStream/addEditStream';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { initialStream } from '@store/stream/models';
 import { DeleteModal } from '@components/DeleteModal';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
@@ -43,7 +43,7 @@ export const EventStreams = (): JSX.Element => {
       <PageIndicator />
       {!indicator.show && (
         <>
-          <GoAButton
+          <GoabButton
             testId="add-stream"
             onClick={() => {
               dispatch(
@@ -56,7 +56,7 @@ export const EventStreams = (): JSX.Element => {
             }}
           >
             Add stream
-          </GoAButton>
+          </GoabButton>
           <br />
           <br />
 

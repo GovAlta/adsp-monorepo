@@ -6,16 +6,16 @@ import { RootState } from '@store/index';
 import { FeedbackListTable } from './feedbacksTable';
 import { renderNoItem } from '@components/NoItem';
 import {
-  GoABadge,
-  GoAButton,
-  GoAButtonGroup,
-  GoACircularProgress,
-  GoADropdown,
-  GoADropdownItem,
-  GoAFormItem,
-  GoAInputDate,
-  GoAModal,
-  GoASkeleton,
+  GoabBadge,
+  GoabButton,
+  GoabButtonGroup,
+  GoabCircularProgress,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabInput,
+  GoabModal,
+  GoabSkeleton,
 } from '@abgov/react-components';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { FeedbackSearchCriteria, getDefaultSearchCriteria } from '@store/feedback/models';
@@ -23,6 +23,7 @@ import { exportFeedbacks, getFeedbackSites, getFeedbacks } from '@store/feedback
 import { ExportDates, FeedbackFilterError, ProgressWrapper } from '../styled-components';
 import { transformedData } from '../ratings';
 import { FullScreenModalWrapper } from '../styled-components';
+import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 const Visible = styled.div<{ visible: boolean }>`
   visibility: ${(props) => (props.visible ? 'visible' : 'hidden')};
@@ -91,9 +92,9 @@ export const FeedbacksList = (): JSX.Element => {
     return (
       next && (
         <LoadMoreWrapper>
-          <GoAButton type="tertiary" onClick={onNext}>
+          <GoabButton type="tertiary" onClick={onNext}>
             Load more
-          </GoAButton>
+          </GoabButton>
         </LoadMoreWrapper>
       )
     );
@@ -111,49 +112,50 @@ export const FeedbacksList = (): JSX.Element => {
 
   const sharedFilterForm = (
     <div>
-      <GoAFormItem label="Registered sites">
-        {indicator.show && Object.keys(sites).length === 0 && <GoASkeleton type="text" />}
-        <GoADropdown
+      <GoabFormItem label="Registered sites">
+        {indicator.show && Object.keys(sites).length === 0 && <GoabSkeleton type="text" />}
+        <GoabDropdown
           name="Sites"
           value={selectedSite}
-          onChange={(name, site: string) => setSelectedSite(site)}
+          onChange={(detail: GoabDropdownOnChangeDetail) => setSelectedSite(detail.value)}
           width={expandView ? '60%' : '100%'}
           testId="sites-dropdown"
-          relative={true}
         >
           {sites.map((item) => (
-            <GoADropdownItem key={item.url} label={item.url} value={item.url} />
+            <GoabDropdownItem key={item.url} label={item.url} value={item.url} />
           ))}
-        </GoADropdown>
-      </GoAFormItem>
+        </GoabDropdown>
+      </GoabFormItem>
       <ExportDates>
-        <GoAFormItem label="Start date">
-          <GoAInputDate
+        <GoabFormItem label="Start date">
+          <GoabInput
+            type="date"
             width="30ch"
             name="feedback-filter-start-date"
-            value={selectedSite && searchCriteria.startDate}
+            value={selectedSite && new Date(searchCriteria.startDate).toISOString().slice(0, 10)}
             disabled={!selectedSite}
-            onChange={(name, value) => {
-              const updated = { ...searchCriteria, startDate: new Date(value).toISOString() };
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              const updated = { ...searchCriteria, startDate: new Date(detail.value).toISOString() };
               setSearchCriteria(updated);
               setShowDateError(!isSearchCriteriaValid(updated));
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
 
-        <GoAFormItem label="End date">
-          <GoAInputDate
+        <GoabFormItem label="End date">
+          <GoabInput
+            type="date"
             width="30ch"
             name="feedback-filter-end-date"
-            value={selectedSite && searchCriteria.endDate}
+            value={selectedSite && new Date(searchCriteria.endDate).toISOString().slice(0, 10)}
             disabled={!selectedSite}
-            onChange={(name, value) => {
-              const updated = { ...searchCriteria, endDate: new Date(value).toISOString() };
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              const updated = { ...searchCriteria, endDate: new Date(detail.value).toISOString() };
               setSearchCriteria(updated);
               setShowDateError(!isSearchCriteriaValid(updated));
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
       </ExportDates>
     </div>
   );
@@ -163,7 +165,7 @@ export const FeedbacksList = (): JSX.Element => {
       {expandView && (
         <FullScreenModalWrapper>
           <h2 style={{ margin: 0 }}>Feedback service</h2>
-          <GoAButton
+          <GoabButton
             type="tertiary"
             leadingIcon="arrow-back"
             size="compact"
@@ -172,21 +174,21 @@ export const FeedbacksList = (): JSX.Element => {
             onClick={() => setExpandView(false)}
           >
             Back to default view
-          </GoAButton>
+          </GoabButton>
           {sharedFilterForm}
 
-          <GoAButtonGroup alignment="start" gap="compact">
-            <GoAButton
+          <GoabButtonGroup alignment="start" gap="compact">
+            <GoabButton
               type="primary"
               onClick={exportToCsv}
               disabled={!selectedSite || showDateError || feedbacks.length === 0}
             >
               Export CSV
-            </GoAButton>
-            <GoAButton type="secondary" trailingIcon="contract" onClick={() => setExpandView(false)}>
+            </GoabButton>
+            <GoabButton type="secondary" trailingIcon="contract" onClick={() => setExpandView(false)}>
               Collapse view
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
 
           {!indicator.show && feedbacks.length === 0 && renderNoItem('feedbacks')}
           {feedbacks.length > 0 && <FeedbackListTable feedbacks={feedbacks} showDetailsToggle={false} />}
@@ -203,33 +205,33 @@ export const FeedbacksList = (): JSX.Element => {
 
           {showDateError && (
             <div>
-              <GoABadge type="emergency" icon />
+              <GoabBadge type="emergency" icon />
               <FeedbackFilterError>Start date must be before End date.</FeedbackFilterError>
             </div>
           )}
-          <GoAButtonGroup alignment="start" gap="compact">
-            <GoAButton
+          <GoabButtonGroup alignment="start" gap="compact">
+            <GoabButton
               type="primary"
               onClick={exportToCsv}
               disabled={!selectedSite || showDateError || feedbacks.length === 0}
             >
               Export CSV
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               type="secondary"
               trailingIcon="expand"
               onClick={() => setExpandView(true)}
               disabled={!selectedSite}
             >
               Expand view
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         </div>
       )}
 
       {!next && indicator.show && (
         <ProgressWrapper>
-          <GoACircularProgress visible={indicator.show} size="small" />
+          <GoabCircularProgress visible={indicator.show} size="small" />
         </ProgressWrapper>
       )}
 

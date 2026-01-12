@@ -77,7 +77,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
     }
 
     case 'update/category': {
-      const { id, ajv, errors = [], schema, data } = action.payload;
+      const { id, ajv, schema, data } = action.payload;
 
       ajv.validate(schema, data);
 
@@ -106,15 +106,6 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
           status,
         };
       });
-
-      if (!matched) {
-        console.warn(
-          '[stepper] update/category: no category matched id =',
-          id,
-          'categories:',
-          state.categories.map((c) => c.id)
-        );
-      }
 
       return { ...state, categories: newCategories };
     }

@@ -1,7 +1,7 @@
 import { GoAReviewRenderers, ContextProviderFactory } from '@abgov/jsonforms-components';
 import { UISchemaElement } from '@jsonforms/core';
 import { AppState } from '../state';
-import { GoACallout } from '@abgov/react-components';
+import { GoabCallout } from '@abgov/react-components';
 import { Grid, GridItem } from '@core-services/app-common';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useEffect } from 'react';
@@ -104,7 +104,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
     <Grid>
       <GridItem md={1} />
       <GridItem md={10}>
-        <GoACallout type="success" heading="We're processing your application">
+        <GoabCallout type="success" heading="We're processing your application">
           Your application was received on {form.submitted.toFormat('LLLL d, yyyy')} and we're working on it.
           {definition.generatesPdf && pdfFileExists && (
             <div>
@@ -114,7 +114,7 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
               />
             </div>
           )}
-        </GoACallout>
+        </GoabCallout>
         <Heading>The submitted form for your reference</Heading>
         <ContextProvider
           fileManagement={{

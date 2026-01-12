@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Role } from '@store/tenant/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabInput, GoabFormItem, GoabModal } from '@abgov/react-components';
 import { FileIdItem, ModalOverwrite } from '../styled-components';
 import { CreateFileTypeService } from '@store/file/actions';
 import { FileTypeItem, RetentionPolicy } from '@store/file/models';
@@ -13,6 +13,8 @@ import { useValidators } from '@lib/validation/useValidators';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { useNavigate } from 'react-router-dom';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+
 interface FileTypeModalProps {
   isOpen: boolean;
   initialValue?: FileTypeItem;
@@ -29,13 +31,7 @@ const validateRetentionPolicy = (type: FileTypeItem): boolean => {
   return true;
 };
 
-export const FileTypeModal = ({
-  initialValue,
-  isOpen,
-
-  fileTypeNames,
-  onCancel,
-}: FileTypeModalProps): JSX.Element => {
+export const FileTypeModal = ({ initialValue, isOpen, fileTypeNames, onCancel }: FileTypeModalProps): JSX.Element => {
   const [fileType, setFileType] = useState(initialValue);
   const title = 'Add file type';
   const navigate = useNavigate();
@@ -87,13 +83,13 @@ export const FileTypeModal = ({
 
   return (
     <ModalOverwrite>
-      <GoAModal
+      <GoabModal
         testId="file-type-modal"
         open={isOpen}
         heading={title}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               type="secondary"
               testId="file-type-modal-cancel"
               onClick={() => {
@@ -101,8 +97,8 @@ export const FileTypeModal = ({
               }}
             >
               Cancel
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               type="primary"
               disabled={!fileType?.name || validators.haveErrors() || !validateRetentionPolicy(fileType)}
               testId="file-type-modal-save"
@@ -123,28 +119,28 @@ export const FileTypeModal = ({
               }}
             >
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <>
-          <GoAFormItem error={errors?.['name']} label="Name">
-            <GoAInput
+          <GoabFormItem error={errors?.['name']} label="Name">
+            <GoabInput
               type="text"
               name="name"
               value={fileType.name}
               width="100%"
               testId={`file-type-modal-name-input`}
-              onChange={(name, value) => {
+              onChange={(detail: GoabInputOnChangeDetail) => {
                 const newFileType = {
                   ...fileType,
-                  name: value,
-                  id: toKebabName(value),
+                  name: detail.value,
+                  id: toKebabName(detail.value),
                 };
 
                 const validations = {
-                  name: value,
-                  duplicated: value,
+                  name: detail.value,
+                  duplicated: detail.value,
                 };
                 validators.remove('name');
 
@@ -156,10 +152,10 @@ export const FileTypeModal = ({
               }}
               aria-label="name"
             />
-          </GoAFormItem>
-          <GoAFormItem label="Type ID">
+          </GoabFormItem>
+          <GoabFormItem label="Type ID">
             <FileIdItem>
-              <GoAInput
+              <GoabInput
                 testId={`file-type-modal-id`}
                 value={fileType?.id}
                 disabled={true}
@@ -171,9 +167,9 @@ export const FileTypeModal = ({
                 onChange={() => {}}
               />
             </FileIdItem>
-          </GoAFormItem>
+          </GoabFormItem>
         </>
-      </GoAModal>
+      </GoabModal>
     </ModalOverwrite>
   );
 };

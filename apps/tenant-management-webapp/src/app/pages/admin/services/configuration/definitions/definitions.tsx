@@ -4,7 +4,7 @@ import { RootState } from '@store/index';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { ConfigurationDefinitionsTableComponent } from './definitionsList';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { defaultConfigDefinition } from '@store/configuration/model';
 import {
   updateConfigurationDefinition,
@@ -85,14 +85,14 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
   return (
     <>
       <br />
-      <GoAButton
+      <GoabButton
         testId="add-definition"
         onClick={() => {
           setOpenAddDefinition(true);
         }}
       >
         Add definition
-      </GoAButton>
+      </GoabButton>
 
       {/*Add/Edit definition */}
 

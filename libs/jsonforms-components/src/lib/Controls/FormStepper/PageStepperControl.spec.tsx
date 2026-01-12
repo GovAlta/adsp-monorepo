@@ -40,7 +40,7 @@ interface ButtonProps {
   children: React.ReactNode;
 }
 
-type GoAButton = React.ComponentType<ButtonProps>;
+type GoabButton = React.ComponentType<ButtonProps>;
 
 jest.mock('./RenderPages', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires -- required so mock factory can be self-contained for Jest

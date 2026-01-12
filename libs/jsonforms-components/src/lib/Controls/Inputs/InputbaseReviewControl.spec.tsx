@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { GoABaseInputReviewComponent } from './InputBaseReviewControl';
 import { CellProps, StatePropsOfControl } from '@jsonforms/core';
-import { GoAInputBaseTableReview } from './InputBaseTableReviewControl';
+import { GoAInputBaseTableReview } from '@abgov/jsonforms-components';
 
 describe('GoABaseInputReviewComponent', () => {
   const baseProps: CellProps & StatePropsOfControl & { id: string } = {

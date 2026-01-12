@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAFormItem, GoAGrid } from '@abgov/react-components';
+import { GoabFormItem, GoabGrid } from '@abgov/react-components';
 import { AddressIndent, TextWrap } from './styled-components';
 
 interface AddressInputsProps {
@@ -32,45 +32,45 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
   return (
     <>
       {withoutHeader !== true && (
-        <GoAGrid minChildWidth="0" gap="s">
-          <GoAFormItem label={`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}></GoAFormItem>
-        </GoAGrid>
+        <GoabGrid minChildWidth="0" gap="s">
+          <GoabFormItem label={`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}></GoabFormItem>
+        </GoabGrid>
       )}
       <AddressIndent>
-        <GoAGrid minChildWidth="0" gap="s">
-          <GoAFormItem
+        <GoabGrid minChildWidth="0" gap="s">
+          <GoabFormItem
             label="Address line 1"
             error={data?.addressLine1 === undefined ? 'Address line 1 is required' : ''}
             requirement="required"
           >
             <TextWrap>{data?.addressLine1}</TextWrap>
-          </GoAFormItem>
+          </GoabFormItem>
           {data?.addressLine2 && (
-            <GoAFormItem label="Address line 2">
+            <GoabFormItem label="Address line 2">
               <TextWrap>{data.addressLine2}</TextWrap>
-            </GoAFormItem>
+            </GoabFormItem>
           )}
-        </GoAGrid>
+        </GoabGrid>
         <br />
-        <GoAGrid minChildWidth="0ch" gap="s">
-          <GoAFormItem
+        <GoabGrid minChildWidth="0ch" gap="s">
+          <GoabFormItem
             error={data?.municipality === undefined ? 'City is required' : ''}
             label="City"
             requirement="required"
           >
             <TextWrap>{data?.municipality}</TextWrap>
-          </GoAFormItem>
-          <GoAFormItem
+          </GoabFormItem>
+          <GoabFormItem
             error={data?.postalCode === undefined ? 'Postal code is required' : ''}
             label="Postal Code"
             requirement="required"
           >
             <TextWrap>{data?.postalCode}</TextWrap>
-          </GoAFormItem>
-        </GoAGrid>
+          </GoabFormItem>
+        </GoabGrid>
         <br />
-        <GoAGrid minChildWidth="0" gap="s">
-          <GoAFormItem
+        <GoabGrid minChildWidth="0" gap="s">
+          <GoabFormItem
             label="Province"
             error={!isAlbertaAddress && data?.subdivisionCode === undefined ? 'Province is required' : ''}
             requirement="required"
@@ -81,11 +81,11 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
                 {provinces.find((p) => p.value === data?.subdivisionCode)?.label}
               </div>
             )}
-          </GoAFormItem>
-          <GoAFormItem label="Country">
+          </GoabFormItem>
+          <GoabFormItem label="Country">
             <div data-testid="address-form-country">Canada</div>
-          </GoAFormItem>
-        </GoAGrid>
+          </GoabFormItem>
+        </GoabGrid>
       </AddressIndent>
     </>
   );

@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { OverviewLayout } from './OverviewLayout';
 
 export interface AddButtonConfig {
@@ -35,14 +35,14 @@ interface OverviewProps {
 
 export const createAddButtonComponent = (config: AddButtonConfig, service: string): ReactNode => {
   return (
-    <GoAButton
+    <GoabButton
       type="primary"
       disabled={config?.disabled === true}
       onClick={config?.onClickCallback}
       testId={config?.testId || `overall-${service}-add-btn`}
     >
       {config?.text || `Add ${service}`}
-    </GoAButton>
+    </GoabButton>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoAContainer } from '@abgov/react-components';
+import { GoabButton, GoabContainer } from '@abgov/react-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Grid, GridItem } from '@core-services/app-common';
 import { NotificationTypeModalForm } from '../addEditNotification/addEditNotification';
@@ -378,7 +378,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         </p>
       </div>
       <Buttons>
-        <GoAButton
+        <GoabButton
           testId="add-notification"
           onClick={() => {
             setSelectedType(emptyNotificationType);
@@ -388,14 +388,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           }}
         >
           Add notification type
-        </GoAButton>
+        </GoabButton>
       </Buttons>
       {nonCoreCopiedNotifications &&
         Object.values(nonCoreCopiedNotifications)
           .sort((a, b) => (a.name < b.name ? -1 : 1))
           .map((notificationType) => (
             <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
-              <GoAContainer accent="thin" type="interactive">
+              <GoabContainer accent="thin" type="interactive">
                 <div>
                   <div className="rowFlex">
                     <h2 className="flex1">{notificationType.name}</h2>
@@ -533,7 +533,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <NotificationBorder className="padding">
                       <EventButtonWrapper>
-                        <GoAButton
+                        <GoabButton
                           type="secondary"
                           testId="add-event"
                           onClick={() => {
@@ -543,20 +543,20 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           }}
                         >
                           + Select an event
-                        </GoAButton>
+                        </GoabButton>
                       </EventButtonWrapper>
                       <div>Domain events represent key changes at a domain model level.</div>
                     </NotificationBorder>
                   </GridItem>
                 </Grid>
-              </GoAContainer>
+              </GoabContainer>
             </div>
           ))}
       <h2>Core notifications:</h2>
       {coreNotification &&
         Object.values(coreNotification).map((notificationType) => (
           <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
-            <GoAContainer accent="thin" type="interactive">
+            <GoabContainer accent="thin" type="interactive">
               <div>
                 <div className="rowFlex">
                   <h2 className="flex1">{notificationType.name}</h2>
@@ -662,7 +662,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   </GridItem>
                 ))}
               </Grid>
-            </GoAContainer>
+            </GoabContainer>
           </div>
         ))}
       {indicator && indicator.show && <IndicatorWithDelay message="Loading..." pageLock={false} />}

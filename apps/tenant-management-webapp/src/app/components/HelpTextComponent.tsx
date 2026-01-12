@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAIcon } from '@abgov/react-components';
+import { GoabIcon } from '@abgov/react-components';
 
 import { HelpText, ErrorMsg } from './styled-components';
 
@@ -16,7 +16,7 @@ export const HelpTextComponent: React.FC<HelpTextProps> = ({ length, maxLength, 
       <div>{descErrMessage}</div>
     ) : (
       <ErrorMsg>
-        <GoAIcon type="warning" size="small" theme="filled" ariaLabel="warning" />
+        <GoabIcon type="warning" size="small" theme="filled" ariaLabel="warning" />
         {`  ${errorMsg}`}
       </ErrorMsg>
     )}

@@ -3,13 +3,13 @@ import styled from 'styled-components';
 import { PageLoader } from '@core-services/app-common';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { CircularProgressVariant } from '@abgov/react-components';
+import { GoabCircularProgressVariant } from '@abgov/ui-components-common';
 
 interface IndicatorProps {
   delay?: number;
   message?: string;
   pageLock?: boolean;
-  variant?: CircularProgressVariant;
+  variant?: GoabCircularProgressVariant;
 }
 export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
   const [showIndicator, setShowIndicator] = useState<boolean>(false);

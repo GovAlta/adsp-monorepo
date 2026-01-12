@@ -1,14 +1,14 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoAFormItem,
-  GoAInput,
-  GoAModal,
-  GoARadioGroup,
-  GoARadioItem,
-  GoATextArea,
+  GoabButton,
+  GoabButtonGroup,
+  GoabFormItem,
+  GoabInput,
+  GoabModal,
+  GoabRadioGroup,
+  GoabRadioItem,
+  GoabTextArea,
 } from '@abgov/react-components';
 
 import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
@@ -17,6 +17,12 @@ import { useValidators } from '@lib/validation/useValidators';
 
 import { DescriptionItem } from '../styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import {
+  GoabTextAreaOnKeyPressDetail,
+  GoabInputOnChangeDetail,
+  GoabRadioGroupOnChangeDetail,
+} from '@abgov/ui-components-common';
+
 interface TaskModalProps {
   initialValue?: QueueTaskDefinition;
   type: string;
@@ -89,13 +95,13 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
   };
 
   return (
-    <GoAModal
+    <GoabModal
       heading={title}
       testId="add-task-modal"
       open={open}
       actions={
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="secondary"
             testId="task-modal-cancel"
             onClick={() => {
@@ -105,8 +111,8 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             }}
           >
             Cancel
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             type="primary"
             testId="task-modal-save"
             disabled={!task.name || !task.description || !task.priority || validators.haveErrors()}
@@ -116,42 +122,42 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             }}
           >
             Save
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       }
     >
       <div>
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
+        <GoabFormItem error={errors?.['name']} label="Name">
+          <GoabInput
             type="text"
             name="name"
             value={task?.name}
             testId={`task-modal-name-input`}
             width="100%"
             aria-label="name"
-            onChange={(name, value) => {
+            onChange={(detail: GoabInputOnChangeDetail) => {
               validators.remove('name');
-              validators['name'].check(value);
-              setTask({ ...task, name: value });
+              validators['name'].check(detail.value);
+              setTask({ ...task, name: detail.value });
             }}
           />
-        </GoAFormItem>
+        </GoabFormItem>
 
-        <GoAFormItem label="Description">
+        <GoabFormItem label="Description">
           <DescriptionItem>
-            <GoATextArea
+            <GoabTextArea
               name="description"
               value={task?.description}
               width="100%"
               testId="description"
               aria-label="description"
-              onKeyPress={(name, value, key) => {
+              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
                 validators.remove('description');
-                validators['description'].check(value);
-                setTask({ ...task, description: value });
+                validators['description'].check(detail.value);
+                setTask({ ...task, description: detail.value });
               }}
               // eslint-disable-next-line
-              onChange={(name, value) => {}}
+              onChange={() => {}}
             />
             <HelpTextComponent
               length={task?.description?.length || 0}
@@ -160,27 +166,27 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
               errorMsg={errors?.['description']}
             />
           </DescriptionItem>
-        </GoAFormItem>
-        <GoAFormItem label="Priority" error={errors?.['priority']}>
-          <GoARadioGroup
+        </GoabFormItem>
+        <GoabFormItem label="Priority" error={errors?.['priority']}>
+          <GoabRadioGroup
             name="priority"
             value={task?.priority}
-            onChange={(name, value) => {
+            onChange={(detail: GoabRadioGroupOnChangeDetail) => {
               if (type === 'new') {
                 validators.remove('priority');
-                validators['priority'].check(value);
-                setTask({ ...task, priority: value });
+                validators['priority'].check(detail.value);
+                setTask({ ...task, priority: detail.value });
               }
             }}
             testId="task-modal-priority-radio-group"
             aria-label="task-modal-priority-radio"
           >
-            <GoARadioItem name="priority" value="Normal" disabled={isNew} />
-            <GoARadioItem name="priority" value="High" disabled={isNew} />
-            <GoARadioItem name="priority" value="Urgent" disabled={isNew} />
-          </GoARadioGroup>
-        </GoAFormItem>
+            <GoabRadioItem name="priority" value="Normal" disabled={isNew} />
+            <GoabRadioItem name="priority" value="High" disabled={isNew} />
+            <GoabRadioItem name="priority" value="Urgent" disabled={isNew} />
+          </GoabRadioGroup>
+        </GoabFormItem>
       </div>
-    </GoAModal>
+    </GoabModal>
   );
 };

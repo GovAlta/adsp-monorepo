@@ -26,11 +26,12 @@ class DirectoryServicePage {
   }
 
   entryModalSaveButton() {
-    return cy.xpath('//*[@testid="directory-modal" and @open="true"]//*[@testid="directory-modal-save"]');
+    return cy.get('[testid="directory-modal-save"]');
   }
 
   entryModalCancelButton() {
-    return cy.xpath('//*[@testid="directory-modal" and @open="true"]//*[@testid="directory-modal-cancel"]');
+    return cy.get('[testid="directory-modal-cancel"]');
+    // return cy.xpath('//*[@testid="directory-modal" and @open="true"]//*[@testid="directory-modal-cancel"]');
   }
 
   entryModalServiceFieldErrorMsg() {
@@ -76,7 +77,7 @@ class DirectoryServicePage {
   }
 
   deleteModalTitle() {
-    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//*[@testid="delete-confirmation" and @open="true"]').shadow().find('[data-testid="modal-title"]');
   }
 
   deleteModalContent() {
@@ -122,7 +123,7 @@ class DirectoryServicePage {
   }
 
   entryModalTitle() {
-    return cy.xpath('//*[@testid="directory-modal" and @open="true"]//*[@slot="heading"]');
+    return cy.xpath('//goa-modal[@testid="directory-modal" and @open="true"]');
   }
 
   addTypeButton() {
@@ -130,7 +131,10 @@ class DirectoryServicePage {
   }
 
   resourceTypeModalTitle() {
-    return cy.xpath('//*[@testid="add-edit-resource-type-modal" and @open="true"]//*[@slot="heading"]');
+    return cy
+      .xpath('//*[@testid="add-edit-resource-type-modal" and @open="true"]')
+      .shadow()
+      .find('[data-testid="modal-title"]');
   }
 
   resourceTypeModalApiDropdown() {

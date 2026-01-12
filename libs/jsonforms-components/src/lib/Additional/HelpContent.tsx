@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
-import { GoADetails } from '@abgov/react-components';
+import { GoabDetails } from '@abgov/react-components';
 import { HelpContentDiv, InvalidMarkdown } from './styled-components';
 import { ControlProps, ControlElement } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
@@ -154,10 +154,10 @@ export const HelpContentComponent = ({
             RenderLink(uischema?.options)}
           {textVariant && renderHelp()}
           {uischema.options?.variant && uischema.options?.variant === 'details' && (
-            <GoADetails heading={label ? label : ''} mt="3xs" mb="none">
+            <GoabDetails heading={label ? label : ''} mt="3xs" mb="none">
               {renderHelp()}
               {uischema?.elements && uischema?.elements?.length > 0 && <HelpContents elements={uischema?.elements} />}
-            </GoADetails>
+            </GoabDetails>
           )}
           {uischema?.elements && uischema?.elements.length > 0 && uischema.options?.variant !== 'details' && (
             <HelpContents elements={uischema.elements} isParent={false} />

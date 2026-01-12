@@ -25,7 +25,7 @@ import { WithDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoAButton, GoAGrid, GoAIconButton, GoAFormItem } from '@abgov/react-components';
+import { GoabButton, GoabGrid, GoabIconButton, GoabFormItem } from '@abgov/react-components';
 import {
   ToolBarHeader,
   ObjectArrayTitle,
@@ -170,11 +170,11 @@ export interface EmptyListProps {
 }
 
 const EmptyList = ({ numColumns, noDataMessage }: EmptyListProps) => (
-  <GoAGrid minChildWidth="60ch">
+  <GoabGrid minChildWidth="60ch">
     <TextCenter>
       <b>{noDataMessage}</b>
     </TextCenter>
-  </GoAGrid>
+  </GoabGrid>
 );
 
 interface NonEmptyCellProps extends OwnPropsOfNonEmptyCell {
@@ -355,6 +355,7 @@ interface MainRowProps {
   // eslint-disable-next-line
   rowData?: Record<string, any>;
   uischema?: ControlElement;
+  schema?: JsonSchema;
 }
 
 const NonEmptyRowComponent = ({
@@ -369,9 +370,9 @@ const NonEmptyRowComponent = ({
   return (
     <div key={childPath}>
       {isHorizontal ? (
-        <GoAGrid minChildWidth="30ch">
+        <GoabGrid minChildWidth="30ch">
           {GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}
-        </GoAGrid>
+        </GoabGrid>
       ) : !isHorizontal ? (
         <>{GenerateRows(NonEmptyCell, schema, childPath, enabled, cells, uischema)}</>
       ) : null}
@@ -414,23 +415,23 @@ const MainItemComponent = ({
         <TabName>{displayName}</TabName>
         {enabled ? (
           <Trash>
-            <GoAIconButton
+            <GoabIconButton
               disabled={!enabled}
               icon="trash"
               title={'remove'}
               testId="remove the details"
               onClick={() => openDeleteDialog(childPath, rowIndex, displayName)}
-            ></GoAIconButton>
+            ></GoabIconButton>
           </Trash>
         ) : null}
         <IconPadding>
-          <GoAIconButton
+          <GoabIconButton
             disabled={!enabled}
             icon="create"
             title={'edit'}
             testId="edit button"
             onClick={() => setCurrentListPage(currentTab + 1)}
-          ></GoAIconButton>
+          ></GoabIconButton>
         </IconPadding>
       </RowFlexMenu>
     </SideMenuItem>
@@ -613,18 +614,31 @@ const MainTab = ({
   const rowData = getDataAtPath(core?.data, childPath);
   const orderedRowData = orderRowData(rowData, uischema?.options?.detail);
 
-  const rowErrors = core?.errors
-    ?.filter((e) => {
-      const base = `/${childPath.replace(/\./g, '/')}`;
-      return e.instancePath === base || e.instancePath.startsWith(base + '/');
-    })
-    .filter((e) => (e?.message?.length || 0) > 0)
-    .map((e) => humanizeAjvError(e, core.schema, core.uischema))
-    .map((msg, index, arr) => `${msg}${index < arr.length - 1 ? ', ' : ''}`);
+  function resolveField(e: any): string {
+    if (e.keyword === 'required') {
+      return e.params.missingProperty;
+    }
+
+    const path = e.instancePath.split('/');
+    return path[path.length - 1];
+  }
+
+  const rowBase = `/${childPath.replace(/\./g, '/')}`;
+
+  const fieldErrors = core?.errors
+    ?.filter((e) => e.instancePath === rowBase || e.instancePath.startsWith(rowBase + '/'))
+    .reduce((acc, e) => {
+      const field = resolveField(e);
+      acc[field] = humanizeAjvError(e, core.schema, core.uischema); //e.message;
+      return acc;
+    }, {} as Record<string, string>);
+
+  const errorText =
+    fieldErrors && Object.values(fieldErrors).length > 0 ? Object.values(fieldErrors).join(', ') : undefined;
   return (
     <div key={childPath} data-testid={`object-array-main-item-${rowIndex}`}>
-      {rowErrors?.length ? (
-        <GoAFormItem error={rowErrors?.length ? rowErrors : null}>
+      {errorText ? (
+        <GoabFormItem error={errorText}>
           <MainItemComponent
             rowData={orderedRowData}
             childPath={childPath}
@@ -636,7 +650,7 @@ const MainTab = ({
             current={current}
             setCurrentListPage={setCurrentListPage}
           />
-        </GoAFormItem>
+        </GoabFormItem>
       ) : (
         <MainItemComponent
           rowData={orderedRowData}
@@ -731,6 +745,8 @@ const ObjectArrayList = ({
     setCurrentIndex(index);
   };
 
+  const continueButtonTitle = uischema?.options?.componentProps?.listWithDetailsContinueButtonTitle;
+
   return (
     <ListContainer>
       <RowFlex>
@@ -750,6 +766,7 @@ const ObjectArrayList = ({
                   current={current}
                   setCurrentListPage={(index: number) => setCurrentListPage(index)}
                   uischema={uischema}
+                  schema={schema}
                 />
               );
             })}
@@ -776,15 +793,15 @@ const ObjectArrayList = ({
                 translations={translations}
               />
             </FlexForm>
-            <GoAButton
+            <GoabButton
               type={'primary'}
               onClick={() => {
                 setCurrentListPage(0);
               }}
               testId="next-list-button"
             >
-              Continue
-            </GoAButton>
+              {continueButtonTitle ? continueButtonTitle : 'Continue'}
+            </GoabButton>
           </UpdateListContainer>
         )}
       </RowFlex>

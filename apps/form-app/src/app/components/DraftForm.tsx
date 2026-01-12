@@ -6,7 +6,7 @@ import {
   JsonFormRegisterProvider,
   createDefaultAjv,
 } from '@abgov/jsonforms-components';
-import { GoABadge } from '@abgov/react-components';
+import { GoabBadge } from '@abgov/react-components';
 import { JsonSchema4, JsonSchema7 } from '@jsonforms/core';
 import { JsonForms } from '@jsonforms/react';
 import { FunctionComponent, useContext } from 'react';
@@ -171,7 +171,7 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
     <div>
       {!anonymousApply && (
         <SavingIndicator data-saving={saving}>
-          <GoABadge type="information" content="Saving..." icon={false} />
+          <GoabBadge type="information" content="Saving..." icon={false} />
         </SavingIndicator>
       )}
       <ContextProvider

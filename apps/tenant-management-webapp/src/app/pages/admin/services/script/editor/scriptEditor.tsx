@@ -32,7 +32,7 @@ import {
   retrieveScriptSuggestions,
 } from '@lib/luaCodeCompletion';
 import { buildSuggestions, luaTriggerInScope } from '@lib/autoComplete';
-import { GoAButton, GoAFormItem, GoACheckbox, GoASkeleton, GoACircularProgress } from '@abgov/react-components';
+import { GoabButton, GoabFormItem, GoabCheckbox, GoabSkeleton, GoabCircularProgress } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { ClientRoleTable } from '@components/RoleTable';
 import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';
@@ -343,7 +343,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             <hr className="hr-only-line" />
             <TombStone selectedScript={selectedScript} onSave={onSave} />
             <div style={{ paddingLeft: '4px' }}>
-              <GoACheckbox
+              <GoabCheckbox
                 checked={isServiceAccountChecked()}
                 name="script-use-service-account-checkbox"
                 testId="script-use-service-account-checkbox"
@@ -402,7 +402,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           </div>
           <EditScriptActions>
             <div>
-              <GoAButton
+              <GoabButton
                 onClick={() => {
                   setCustomIndicator(true);
                   updateScript();
@@ -414,9 +414,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 disabled={Object.keys(errors).length > 0 || !hasChanged()}
               >
                 Save
-              </GoAButton>
+              </GoabButton>
             </div>
-            <GoAButton
+            <GoabButton
               onClick={() => {
                 if (hasChanged()) {
                   setSaveModal(true);
@@ -429,7 +429,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               type="secondary"
             >
               Back
-            </GoAButton>
+            </GoabButton>
           </EditScriptActions>
         </ScriptEditorContainer>
         {/* Form */}
@@ -458,7 +458,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               <div className="flex-one">
                 <ScriptEditorTitle>Test input</ScriptEditorTitle>
                 <hr className="hr-resize" />
-                <GoAFormItem error={errors?.['payloadSchema']} label="">
+                <GoabFormItem error={errors?.['payloadSchema']} label="">
                   <TestInputDivBody data-testid="templated-editor-test">
                     <MonacoEditor
                       language={'json'}
@@ -469,10 +469,10 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                       }}
                     />
                   </TestInputDivBody>
-                </GoAFormItem>
+                </GoabFormItem>
               </div>
               <div className="execute-button">
-                <GoAButton
+                <GoabButton
                   onClick={() => {
                     const testItem: ScriptItem = {
                       testInputs: {
@@ -487,7 +487,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   type="secondary"
                 >
                   Execute
-                </GoAButton>
+                </GoabButton>
               </div>
 
               <ResponseTableStyles>
@@ -504,7 +504,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                     {loadingIndicator.show && (
                       <tr>
                         <td colSpan={3}>
-                          <GoASkeleton key={1} type="text" />
+                          <GoabSkeleton key={1} type="text" />
                         </td>
                       </tr>
                     )}

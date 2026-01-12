@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { OverviewLayout } from '@components/Overview';
 
 interface ValueOverviewProps {
@@ -21,7 +21,7 @@ export const ValueOverview: FunctionComponent<ValueOverviewProps> = (props) => {
     <OverviewLayout
       description={description}
       addButton={
-        <GoAButton
+        <GoabButton
           testId="add-definition"
           disabled={disabled}
           onClick={() => {
@@ -29,7 +29,7 @@ export const ValueOverview: FunctionComponent<ValueOverviewProps> = (props) => {
           }}
         >
           Add definition
-        </GoAButton>
+        </GoabButton>
       }
     />
   );

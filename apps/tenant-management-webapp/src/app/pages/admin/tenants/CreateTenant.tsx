@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
-import { GoANotification, GoAButton, GoAInput, GoAFormItem, GoAButtonGroup } from '@abgov/react-components';
+import { GoabNotification, GoabButton, GoabInput, GoabFormItem, GoabButtonGroup } from '@abgov/react-components';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
@@ -10,6 +10,8 @@ import SupportLinks from '@components/SupportLinks';
 import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
 import { TenantLogout } from '@store/tenant/actions';
 import { PageLoader } from '@core-services/app-common';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+
 const CreateRealm = (): JSX.Element => {
   const dispatch = useDispatch();
   const [name, setName] = useState('');
@@ -66,17 +68,17 @@ const CreateRealm = (): JSX.Element => {
 
     return (
       <div>
-        <GoANotification type="information">
+        <GoabNotification type="information">
           <Message />
-        </GoANotification>
+        </GoabNotification>
         <br />
-        <GoAButton
+        <GoabButton
           onClick={() => {
             dispatch(TenantLogout());
           }}
         >
           Back to main page
-        </GoAButton>
+        </GoabButton>
       </div>
     );
   };
@@ -85,13 +87,13 @@ const CreateRealm = (): JSX.Element => {
     return (
       <>
         <p>The '{name}' has been successfully created</p>
-        <GoAButton
+        <GoabButton
           onClick={() => {
             dispatch(TenantLogin(tenantRealm));
           }}
         >
           Tenant Login
-        </GoAButton>
+        </GoabButton>
       </>
     );
   };
@@ -108,9 +110,9 @@ const CreateRealm = (): JSX.Element => {
         >
           Back
         </GoALinkButton>
-        <GoAButton onClick={onCreateRealm} disabled={name.length === 0}>
+        <GoabButton onClick={onCreateRealm} disabled={name.length === 0}>
           Create tenant
-        </GoAButton>
+        </GoabButton>
       </>
     );
   };
@@ -138,24 +140,24 @@ const CreateRealm = (): JSX.Element => {
                       As a reminder, you are only able to create <b>one tenant</b> per user account.
                     </p>
 
-                    <GoAFormItem error={notifications[notifications.length - 1]?.message} label="Tenant name">
-                      <GoAInput
+                    <GoabFormItem error={notifications[notifications.length - 1]?.message} label="Tenant name">
+                      <GoabInput
                         name="name"
                         testId="name-input"
                         id="name"
                         type="text"
                         value={name}
                         width="100%"
-                        onChange={onChangeName}
+                        onChange={(detail: GoabInputOnChangeDetail) => onChangeName(detail.name, detail.value)}
                       />
-                    </GoAFormItem>
-                    <GoAButtonGroup alignment="start">
+                    </GoabFormItem>
+                    <GoabButtonGroup alignment="start">
                       {isLoaded ? (
                         <TenantCreateView />
                       ) : (
                         <PageLoader size="small" message={`Creating tenant for ${name} ... `} />
                       )}
-                    </GoAButtonGroup>
+                    </GoabButtonGroup>
                   </>
                 )}
               </>

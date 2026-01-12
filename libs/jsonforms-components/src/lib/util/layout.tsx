@@ -11,7 +11,7 @@ import {
   getAjv,
 } from '@jsonforms/core';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoAGrid } from '@abgov/react-components';
+import { GoabGrid } from '@abgov/react-components';
 import { Visible } from './style-component';
 import Ajv from 'ajv';
 export type Ajv8 = Ajv;
@@ -73,9 +73,9 @@ export const LayoutRenderer = ({
     if (direction === 'row') {
       return (
         <Visible visible={visible}>
-          <GoAGrid minChildWidth={width || '10ch'}>
+          <GoabGrid minChildWidth={width || '10ch'}>
             {renderLayoutElements(elements, schema, path, enabled, renderers, cells)}
-          </GoAGrid>
+          </GoabGrid>
         </Visible>
       );
     } else {

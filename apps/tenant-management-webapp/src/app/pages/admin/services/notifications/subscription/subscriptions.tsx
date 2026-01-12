@@ -8,7 +8,7 @@ import { DeleteModal } from '@components/DeleteModal';
 import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 import { Events } from '@store/subscription/models';
-import { GoACallout } from '@abgov/react-components';
+import { GoabCallout } from '@abgov/react-components';
 import { useHasRole } from '../subscription/useHasRole';
 
 export const Subscriptions: FunctionComponent = () => {
@@ -52,13 +52,13 @@ export const Subscriptions: FunctionComponent = () => {
 
   if (!hasSubscriptionAdmin) {
     return (
-      <GoACallout type="important" testId="check-role-callout">
+      <GoabCallout type="important" testId="check-role-callout">
         <h3>Access to subscriptions requires admin roles</h3>
         <p>
           You require the <strong>subscription-admin</strong> role to access notifications. Contact your administrator
           if you believe this is an error.
         </p>
-      </GoACallout>
+      </GoabCallout>
     );
   }
 

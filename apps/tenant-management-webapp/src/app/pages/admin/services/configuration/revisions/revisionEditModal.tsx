@@ -3,7 +3,7 @@ import Editor from '@monaco-editor/react';
 import { RootState } from '@store/index';
 import { Revision } from '@store/configuration/model';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabFormItem, GoabModal } from '@abgov/react-components';
 import { replaceConfigurationDataAction } from '@store/configuration/action';
 import styled from 'styled-components';
 
@@ -52,13 +52,13 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
 
   return (
     <ModalOverwrite>
-      <GoAModal
+      <GoabModal
         testId="definition-form"
         open={open}
         heading={`Edit Revision for ${service}`}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               testId="form-cancel"
               type="secondary"
               onClick={() => {
@@ -67,8 +67,8 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
               }}
             >
               Cancel
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               type="primary"
               testId="form-save"
               disabled={error?.length > 0 || !configuration}
@@ -90,11 +90,11 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
               }}
             >
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
-        <GoAFormItem error={error} label="">
+        <GoabFormItem error={error} label="">
           <Editor
             data-testid="form-schema"
             height={200}
@@ -120,8 +120,8 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
               showFoldingControls: 'always',
             }}
           />
-        </GoAFormItem>
-      </GoAModal>
+        </GoabFormItem>
+      </GoabModal>
     </ModalOverwrite>
   );
 };

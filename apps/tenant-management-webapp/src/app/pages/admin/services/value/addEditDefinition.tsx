@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import {
-  GoAButton,
-  GoAButtonGroup,
-  GoAInput,
-  GoAModal,
-  GoAFormItem,
-  GoATextArea,
-  GoASpacer,
+  GoabButton,
+  GoabButtonGroup,
+  GoabInput,
+  GoabModal,
+  GoabFormItem,
+  GoabTextArea,
+  GoabSpacer,
 } from '@abgov/react-components';
 import { ValueDefinition } from '@store/value/models';
 import { RootState } from '@store/index';
@@ -23,6 +23,7 @@ import {
 } from '@lib/validation/checkInput';
 import styled from 'styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddEditValueDefinitionProps {
   onSave: (definition: ValueDefinition) => void;
@@ -100,13 +101,13 @@ export const AddEditValueDefinition = ({
 
   return (
     <ModalOverwrite>
-      <GoAModal
+      <GoabModal
         testId="definition-value"
         open={open}
         heading={isEdit ? 'Edit definition' : 'Add definition'}
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
+          <GoabButtonGroup alignment="end">
+            <GoabButton
               testId="value-cancel"
               type="secondary"
               onClick={() => {
@@ -116,8 +117,8 @@ export const AddEditValueDefinition = ({
               }}
             >
               Cancel
-            </GoAButton>
-            <GoAButton
+            </GoabButton>
+            <GoabButton
               type="primary"
               testId="value-save"
               disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
@@ -130,12 +131,12 @@ export const AddEditValueDefinition = ({
               }}
             >
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
-        <GoAFormItem error={errors?.['namespace']} label="Namespace">
-          <GoAInput
+        <GoabFormItem error={errors?.['namespace']} label="Namespace">
+          <GoabInput
             type="text"
             name="namespace"
             value={definition.namespace}
@@ -143,20 +144,20 @@ export const AddEditValueDefinition = ({
             testId="value-namespace"
             aria-label="namespace"
             width="100%"
-            onChange={(key, value) => {
-              const updatedDefinition = { ...definition, namespace: value };
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              const updatedDefinition = { ...definition, namespace: detail.value };
               setDefinition(updatedDefinition);
               const updatedIdentifiers = values.map((v: ValueDefinition) => `${v.namespace}:${v.name}`);
               const currentIdentifier = `${updatedDefinition.namespace}:${updatedDefinition.name}`;
               validators.remove('duplicated');
               validators['duplicated'].check(currentIdentifier, updatedIdentifiers);
-              validators['namespace'].check(value);
+              validators['namespace'].check(detail.value);
             }}
             onBlur={() => validators.checkAll({ namespace: definition.namespace })}
           />
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['name']} label="Name">
+          <GoabInput
             type="text"
             name="name"
             value={definition.name}
@@ -164,32 +165,32 @@ export const AddEditValueDefinition = ({
             testId="value-name"
             aria-label="name"
             width="100%"
-            onChange={(key, value) => {
-              const updatedDefinition = { ...definition, name: value };
+            onChange={(detail: GoabInputOnChangeDetail) => {
+              const updatedDefinition = { ...definition, name: detail.value };
               setDefinition(updatedDefinition);
               const updatedIdentifiers = values.map((v: ValueDefinition) => `${v.namespace}:${v.name}`);
               const currentIdentifier = `${updatedDefinition.namespace}:${updatedDefinition.name}`;
               validators.remove('duplicated');
               validators['duplicated'].check(currentIdentifier, updatedIdentifiers);
-              validators['name'].check(value);
+              validators['name'].check(detail.value);
             }}
             onBlur={() => validators.checkAll({ name: definition.name })}
           />
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['description']} label="Description">
-          <GoATextArea
+        </GoabFormItem>
+        <GoabFormItem error={errors?.['description']} label="Description">
+          <GoabTextArea
             name="description"
             value={definition.description}
             testId="value-description"
             aria-label="description"
             width="100%"
-            onKeyPress={(name, value, key) => {
+            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
               validators.remove('description');
-              validators['description'].check(value);
-              setDefinition({ ...definition, description: value });
+              validators['description'].check(detail.value);
+              setDefinition({ ...definition, description: detail.value });
             }}
             // eslint-disable-next-line
-            onChange={(name, value) => {}}
+            onChange={() => {}}
           />
           <HelpTextComponent
             length={definition?.description?.length || 0}
@@ -197,9 +198,9 @@ export const AddEditValueDefinition = ({
             descErrMessage={descErrMessage}
             errorMsg={errors?.['description']}
           />
-        </GoAFormItem>
-        <GoASpacer vSpacing="xs"></GoASpacer>
-        <GoAFormItem error={errors?.['payloadSchema']} label="Payload schema">
+        </GoabFormItem>
+        <GoabSpacer vSpacing="xs"></GoabSpacer>
+        <GoabFormItem error={errors?.['payloadSchema']} label="Payload schema">
           <Editor
             data-testid="value-schema"
             height={200}
@@ -220,8 +221,8 @@ export const AddEditValueDefinition = ({
               showFoldingControls: 'always',
             }}
           />
-        </GoAFormItem>
-      </GoAModal>
+        </GoabFormItem>
+      </GoabModal>
     </ModalOverwrite>
   );
 };

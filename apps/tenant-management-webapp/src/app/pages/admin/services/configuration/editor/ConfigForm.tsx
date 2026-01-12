@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { ConfigDefinition } from '@store/configuration/model';
 
-import { GoAIconButton } from '@abgov/react-components';
+import { GoabIconButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
@@ -117,7 +117,7 @@ export const ConfigForm = ({ template, id, isEdit = true }: PDFConfigFormProps) 
             <Anchor rel="noopener noreferrer" onClick={() => setOpenEditTemplate(true)}>
               Edit
             </Anchor>
-            <GoAIconButton
+            <GoabIconButton
               icon="create"
               testId="pdf-template-information-edit-icon"
               title="Edit"

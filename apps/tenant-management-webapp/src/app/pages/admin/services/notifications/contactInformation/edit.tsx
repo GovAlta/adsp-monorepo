@@ -1,8 +1,9 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
 import styled from 'styled-components';
-import { GoATextArea, GoAInput, GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components';
+import { GoabTextArea, GoabInput, GoabButton, GoabButtonGroup, GoabFormItem, GoabModal } from '@abgov/react-components';
 import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
+import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface NotificationTypeFormProps {
   initialValue?: ContactInformation;
@@ -51,46 +52,46 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
 
   return (
     <EditStyles>
-      <GoAModal
+      <GoabModal
         testId="edit-contact-information-notification"
         open={open}
         heading="Edit contact information"
         actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton testId="form-cancel" type="secondary" onClick={tryCancel}>
+          <GoabButtonGroup alignment="end">
+            <GoabButton testId="form-cancel" type="secondary" onClick={tryCancel}>
               Cancel
-            </GoAButton>
-            <GoAButton type="primary" testId="form-save" onClick={() => trySave(contactInformation)}>
+            </GoabButton>
+            <GoabButton type="primary" testId="form-save" onClick={() => trySave(contactInformation)}>
               Save
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         }
       >
         <ErrorWrapper>
-          <GoAFormItem error={formErrors?.['email']} label="Email">
-            <GoAInput
+          <GoabFormItem error={formErrors?.['email']} label="Email">
+            <GoabInput
               type="email"
               name="email"
               width="100%"
               testId="form-email"
               value={contactInformation?.contactEmail || ''}
               aria-label="email"
-              onChange={(_, value) => {
-                setContactInformation({ ...contactInformation, contactEmail: value });
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                setContactInformation({ ...contactInformation, contactEmail: detail.value });
               }}
             />
-          </GoAFormItem>
-          <GoAFormItem error={formErrors?.['sms']} label="Phone number" requirement="optional">
-            <GoAInput
+          </GoabFormItem>
+          <GoabFormItem error={formErrors?.['sms']} label="Phone number" requirement="optional">
+            <GoabInput
               type="tel"
               aria-label="sms"
               name="sms"
               width="100%"
               value={contactInformation?.phoneNumber || ''}
               testId="contact-sms-input"
-              onChange={(_, value) => {
-                if (isSmsValid(value)) {
-                  setContactInformation({ ...contactInformation, phoneNumber: value.substring(0, 10) });
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                if (isSmsValid(detail.value)) {
+                  setContactInformation({ ...contactInformation, phoneNumber: detail.value.substring(0, 10) });
                 }
               }}
               trailingIcon="close"
@@ -98,24 +99,24 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
                 setContactInformation({ ...contactInformation, phoneNumber: '' });
               }}
             />
-          </GoAFormItem>
-          <GoAFormItem error={formErrors?.['supportInstructions']} label="Support instructions">
-            <GoATextArea
+          </GoabFormItem>
+          <GoabFormItem error={formErrors?.['supportInstructions']} label="Support instructions">
+            <GoabTextArea
               rows={7}
               name="supportInstruction"
               value={contactInformation?.supportInstructions || ''}
               testId="form-support-instructions"
               aria-label="name"
               width="100%"
-              onKeyPress={(name, value, key) => {
-                setContactInformation({ ...contactInformation, supportInstructions: value });
+              onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
+                setContactInformation({ ...contactInformation, supportInstructions: detail.value });
               }}
               // eslint-disable-next-line
-              onChange={(name, value) => {}}
+              onChange={() => {}}
             />
-          </GoAFormItem>
+          </GoabFormItem>
         </ErrorWrapper>
-      </GoAModal>
+      </GoabModal>
     </EditStyles>
   );
 };

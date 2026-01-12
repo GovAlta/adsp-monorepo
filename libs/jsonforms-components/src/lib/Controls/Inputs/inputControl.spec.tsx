@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { GoADateInput, errMalformedDate } from './InputDateControl';
-import { GoAInputDateProps } from './InputDateControl';
+import { GoabInputDateProps } from './InputDateControl';
 import { ControlElement, ControlProps } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 
@@ -55,7 +55,7 @@ const uiSchema = (min: string, max: string): ControlElement => {
   };
 };
 
-const staticProps: GoAInputDateProps = {
+const staticProps: GoabInputDateProps = {
   uischema: uiSchema('2023-02-01', '2025-02-01'),
   schema: dateSchema,
   rootSchema: dateSchema,

@@ -4,12 +4,12 @@ import { fetchEventStreams, startSocket } from '@store/stream/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';
 import { TextGoASkeleton } from '@core-services/app-common';
-import { GoADropdown, GoADropdownItem, GoAButton } from '@abgov/react-components';
+import { GoabDropdown, GoabDropdownItem, GoabButton } from '@abgov/react-components';
 import { Divider, StreamHeading, StreamsDropdown } from './styledComponents';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ReactComponent as Error } from '@icons/close-circle-outline.svg';
 import { StreamPayloadTable } from './streamPayloadTable';
-
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 const Icons = {
   greenCircleCheckMark: (
     <GreenCircleCheckMark
@@ -167,14 +167,13 @@ export const TestStream = (): JSX.Element => {
           <StreamHeading>Please select a stream to test</StreamHeading>
 
           <StreamsDropdown>
-            <GoADropdown
+            <GoabDropdown
               disabled={socketConnection}
               name="streams"
               value={selectedSteamId}
               width="100%"
-              relative={true}
-              onChange={(name, streamId: string | string[]) => {
-                setSelectedStreamId([streamId.toString()]);
+              onChange={(detail: GoabDropdownOnChangeDetail) => {
+                setSelectedStreamId(detail.value ? [detail.value] : []);
               }}
               aria-label="select-test-stream-dropdown"
             >
@@ -182,12 +181,12 @@ export const TestStream = (): JSX.Element => {
                 .filter((streamId) => streamId !== 'webhooks')
                 .sort(([a], [b]) => a.localeCompare(b))
                 .map((streamId) => (
-                  <GoADropdownItem label={streams[streamId].name} value={streamId} key={streamId} testId={streamId} />
+                  <GoabDropdownItem label={streams[streamId].name} value={streamId} key={streamId} testId={streamId} />
                 ))}
-            </GoADropdown>
+            </GoabDropdown>
           </StreamsDropdown>
           {socketStatus()}
-          <GoAButton
+          <GoabButton
             type="primary"
             disabled={disableConnectButton()}
             onClick={() => {
@@ -197,9 +196,9 @@ export const TestStream = (): JSX.Element => {
             }}
           >
             Connect
-          </GoAButton>
+          </GoabButton>
           <Divider />
-          <GoAButton
+          <GoabButton
             type="secondary"
             disabled={!socketConnection}
             onClick={() => {
@@ -207,7 +206,7 @@ export const TestStream = (): JSX.Element => {
             }}
           >
             Disconnect
-          </GoAButton>
+          </GoabButton>
           <br />
           <StreamPayloadTable streams={streamData} />
           {spinner && <TextGoASkeleton lineCount={1}></TextGoASkeleton>}

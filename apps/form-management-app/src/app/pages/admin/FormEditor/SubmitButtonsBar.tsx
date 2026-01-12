@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import styles from './Editor.module.scss';
-import { GoAButtonGroup, GoAButton } from '@abgov/react-components';
+import { GoabButtonGroup, GoabButton } from '@abgov/react-components';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SaveFormModal } from './saveModal';
 import type * as monacoNS from 'monaco-editor';
 import { FormDefinition } from '../../../state/types';
+import { ValidatorCollection } from './useValidators';
 
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
@@ -18,13 +19,11 @@ export interface EditorProps {
   };
   updateFormDefinition: () => void;
   activeIndex: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getCurrentEditorRef: () => any;
+  getCurrentEditorRef: () => IEditor | null;
   foldAll: (editor: IEditor) => void;
   unfoldAll: (editor: IEditor) => void;
   isFormUpdated: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  validators: any;
+  validators: ValidatorCollection;
 }
 
 export const SubmitButtonsBar: React.FC<EditorProps> = ({
@@ -34,6 +33,9 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
   updateFormDefinition,
   isFormUpdated,
   validators,
+  foldAll,
+  getCurrentEditorRef,
+  unfoldAll,
 }) => {
   const [saveModal, setSaveModal] = useState({ visible: false });
   const navigate = useNavigate();
@@ -46,8 +48,34 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
   return (
     <div>
       <div className={styles['final-button-padding']}>
-        <GoAButtonGroup alignment="end">
-          <GoAButton
+        <GoabButtonGroup alignment="start">
+          <GoabButton
+            type="tertiary"
+            testId="collapse-all"
+            onClick={() => {
+              const editor = getCurrentEditorRef();
+              if (editor) {
+                foldAll(editor);
+              }
+            }}
+            disabled={activeIndex > 1}
+          >
+            Collapse all
+          </GoabButton>
+          <GoabButton
+            testId="expand-all"
+            type="tertiary"
+            disabled={activeIndex > 1}
+            onClick={() => {
+              const editor = getCurrentEditorRef();
+              if (editor) unfoldAll(editor);
+            }}
+          >
+            Expand all
+          </GoabButton>
+        </GoabButtonGroup>
+        <GoabButtonGroup alignment="end">
+          <GoabButton
             type="primary"
             testId="definition-form-save"
             disabled={
@@ -63,8 +91,8 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
             }}
           >
             Save
-          </GoAButton>
-          <GoAButton
+          </GoabButton>
+          <GoabButton
             testId="form-editor-cancel"
             type="secondary"
             onClick={() => {
@@ -78,8 +106,8 @@ export const SubmitButtonsBar: React.FC<EditorProps> = ({
             }}
           >
             Back
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </div>
       <SaveFormModal
         open={saveModal.visible}

@@ -1,4 +1,4 @@
-import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components';
+import { GoabAppHeader, GoabButton, GoabMicrositeHeader } from '@abgov/react-components';
 import { useScripts } from '@core-services/app-common';
 import React, { Suspense, lazy, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -90,33 +90,33 @@ export const TaskTenant = () => {
 
   return (
     <React.Fragment>
-      <GoAMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
-      <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Task management`}>
+      <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
+      <GoabAppHeader url="/" heading={`${tenant?.name || tenantName} - Task management`}>
         {userInitialized && (
           <span>
             <span>{user?.name}</span>
             {user ? (
-              <GoAButton
+              <GoabButton
                 mt="s"
                 mr="s"
                 type="tertiary"
                 onClick={() => dispatch(logoutUser({ tenant, from: `${location.pathname}?logout=true` }))}
               >
                 Sign out
-              </GoAButton>
+              </GoabButton>
             ) : (
-              <GoAButton
+              <GoabButton
                 mt="s"
                 mr="s"
                 type="tertiary"
                 onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}
               >
                 Sign in
-              </GoAButton>
+              </GoabButton>
             )}
           </span>
         )}
-      </GoAAppHeader>
+      </GoabAppHeader>
       <FeedbackNotification />
       <main>
         <AuthorizeUser>

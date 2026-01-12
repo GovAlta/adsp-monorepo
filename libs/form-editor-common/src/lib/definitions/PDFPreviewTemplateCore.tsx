@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoAButton, GoAIconButton, GoACallout } from '@abgov/react-components';
+import { GoabButton, GoabIconButton, GoabCallout } from '@abgov/react-components';
 import _ from 'underscore';
 import {
   generatePdf,
@@ -143,9 +143,9 @@ export const PDFPreviewTemplateCore = (formName) => {
           </div>
         )}
         {!indicator?.show && hasError && (
-          <GoACallout type="emergency" heading="Error in PDF generation">
+          <GoabCallout type="emergency" heading="Error in PDF generation">
             {pdfGenerationError}
-          </GoACallout>
+          </GoabCallout>
         )}
       </>
     );
@@ -201,7 +201,7 @@ export const PreviewTop = ({ title, form, data, currentTab }) => {
         {currentTab === pdfPreviewTab && (
           <DisplayFlex>
             <ButtonIconPaddingThree>
-              <GoAButton
+              <GoabButton
                 type="secondary"
                 testId="generate-template"
                 size="compact"
@@ -210,10 +210,10 @@ export const PreviewTop = ({ title, form, data, currentTab }) => {
                 }}
               >
                 Generate PDF
-              </GoAButton>
+              </GoabButton>
             </ButtonIconPaddingThree>
             <ButtonIconPadding>
-              <GoAIconButton
+              <GoabIconButton
                 icon="download"
                 title="Download"
                 testId="download-template-icon"

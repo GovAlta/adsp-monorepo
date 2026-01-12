@@ -157,12 +157,11 @@ describe('Definitions Page', () => {
     fireEvent(editBtn, new CustomEvent('_click'));
     const confirmation = baseElement.querySelector('goa-modal');
     const actionContent = confirmation.querySelector("[slot='actions']");
-
     const cancelButton = actionContent.querySelector('goa-button');
     fireEvent(cancelButton, new CustomEvent('_click'));
 
     await waitFor(() => {
-      expect(confirmation.getAttribute('open')).toBe('false');
+      expect(confirmation.getAttribute('closable')).toBe('false');
     });
   });
 

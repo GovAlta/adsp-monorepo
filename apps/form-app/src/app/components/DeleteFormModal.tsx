@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 import { Form } from '../state';
 
@@ -18,19 +18,19 @@ export const DeleteFormModal: FunctionComponent<DeleteFormModalProps> = ({
   onClose,
 }) => {
   return (
-    <GoAModal heading="Delete draft" open={open} onClose={onClose}>
+    <GoabModal heading="Delete draft" open={open} onClose={onClose}>
       <form>
         <p>Are you sure you want to abandon this draft of {form?.definition?.name}?</p>{' '}
         <p>It will be permanently deleted and you won't be able to continue from the current version.</p>
-        <GoAButtonGroup alignment="end" mt="4xl">
-          <GoAButton type="secondary" onClick={onClose}>
+        <GoabButtonGroup alignment="end" mt="4xl">
+          <GoabButton type="secondary" onClick={onClose}>
             Cancel
-          </GoAButton>
-          <GoAButton type="primary" disabled={deleting} onClick={() => onDelete(form)}>
+          </GoabButton>
+          <GoabButton type="primary" disabled={deleting} onClick={() => onDelete(form)}>
             Delete
-          </GoAButton>
-        </GoAButtonGroup>
+          </GoabButton>
+        </GoabButtonGroup>
       </form>
-    </GoAModal>
+    </GoabModal>
   );
 };

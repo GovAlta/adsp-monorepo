@@ -8,7 +8,7 @@ import { ValueDefinitionsList } from './definitionsList';
 import { AddEditValueDefinition } from './addEditDefinition';
 import { deleteValueDefinition, getValueDefinitions, updateValueDefinition } from '@store/value/actions';
 import { PageIndicator } from '@components/Indicator';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { Buttons } from '../styled-components';
 import { DeleteModal } from '@components/DeleteModal';
 
@@ -57,14 +57,14 @@ export const ValueDefinitions: FunctionComponent<ValueDefinitionsComponentProps>
   return (
     <section>
       <Buttons>
-        <GoAButton
+        <GoabButton
           testId="value-add-definition"
           onClick={() => {
             setOpenAddDefinition(true);
           }}
         >
           Add definition
-        </GoAButton>
+        </GoabButton>
       </Buttons>
       {indicator.show && <PageIndicator />}
       {!indicator.show && tenantDefinitions.length === 0 && renderNoItem('tenant value')}

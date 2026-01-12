@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchDirectory } from '@store/directory/actions';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
-import { GoAButton } from '@abgov/react-components';
+import { GoabButton } from '@abgov/react-components';
 import { DirectoryModal } from './modals/editModal';
 import { ServiceTableComponent } from './serviceList';
 import { DirectoryDeleteModal } from './modals/deleteModal';
@@ -37,7 +37,7 @@ export const DirectoryService = (): JSX.Element => {
         <div>
           <p>Add your own entry so they can be found using the directory.</p>
 
-          <GoAButton
+          <GoabButton
             testId="add-directory-btn"
             onClick={() => {
               dispatch(
@@ -50,7 +50,7 @@ export const DirectoryService = (): JSX.Element => {
             }}
           >
             Add entry
-          </GoAButton>
+          </GoabButton>
           {!indicator.show && tenantDirectory?.length === 0 && renderNoItem('tenant directory')}
           {tenantDirectory?.length > 0 && (
             <>

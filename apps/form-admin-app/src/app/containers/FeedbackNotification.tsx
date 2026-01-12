@@ -1,8 +1,8 @@
-import { GoANotification, NotificationType } from '@abgov/react-components';
+import { GoabNotification } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { feedbackSelector, feedbackActions, FeedbackMessageLevel } from '../state';
-
-const notificationTypes: Record<FeedbackMessageLevel, NotificationType> = {
+import { GoabNotificationType } from '@abgov/ui-components-common';
+const notificationTypes: Record<FeedbackMessageLevel, GoabNotificationType> = {
   success: 'event',
   info: 'information',
   warn: 'important',
@@ -15,13 +15,13 @@ export const FeedbackNotification = () => {
 
   return (
     item && (
-      <GoANotification
+      <GoabNotification
         key={item.id}
         type={notificationTypes[item.level]}
         onDismiss={() => dispatch(feedbackActions.dismissItem())}
       >
         {item.message}
-      </GoANotification>
+      </GoabNotification>
     )
   );
 };

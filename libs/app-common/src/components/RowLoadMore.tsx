@@ -1,4 +1,4 @@
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup } from '@abgov/react-components';
 import { FunctionComponent } from 'react';
 
 interface RowLoadMoreProps {
@@ -13,11 +13,11 @@ export const RowLoadMore: FunctionComponent<RowLoadMoreProps> = ({ next, columns
     next && (
       <tr>
         <td colSpan={columns}>
-          <GoAButtonGroup alignment="center">
-            <GoAButton type="tertiary" disabled={loading} onClick={() => onLoadMore(next)}>
+          <GoabButtonGroup alignment="center">
+            <GoabButton type="tertiary" disabled={loading} onClick={() => onLoadMore(next)}>
               Load more
-            </GoAButton>
-          </GoAButtonGroup>
+            </GoabButton>
+          </GoabButtonGroup>
         </td>
       </tr>
     )

@@ -10,7 +10,7 @@ import {
   fileMetadataSelector,
 } from '../state';
 import { LoadingIndicator } from '../components/LoadingIndicator';
-import { GoADivider } from '@abgov/react-components';
+import { GoabDivider } from '@abgov/react-components';
 
 interface FileViewerProps {
   className?: string;
@@ -36,7 +36,7 @@ const FileViewerComponent: FunctionComponent<FileViewerProps> = ({ className, ur
         <object type={metadata.mimeType} name={metadata.filename} aria-label={metadata.filename} data={fileDataUrl} />
       )}
       <div>
-        <GoADivider mb="m" />
+        <GoabDivider mb="m" />
         <span>File Name: {metadata?.filename}</span>
       </div>
     </div>

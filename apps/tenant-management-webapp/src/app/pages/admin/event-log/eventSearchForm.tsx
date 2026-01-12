@@ -5,7 +5,7 @@ import type { EventSearchCriteria } from '@store/event/models';
 
 import { getEventDefinitions } from '@store/event/actions';
 import styled from 'styled-components';
-import { GoAButton, GoAIconButton, GoAButtonGroup, GoAGrid, GoAFormItem } from '@abgov/react-components';
+import { GoabButton, GoabIconButton, GoabButtonGroup, GoabGrid, GoabFormItem } from '@abgov/react-components';
 const initCriteria: EventSearchCriteria = {
   namespace: '',
   name: '',
@@ -127,9 +127,9 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
 
   return (
     <div>
-      <GoAGrid minChildWidth="30ch" gap="xs">
+      <GoabGrid minChildWidth="30ch" gap="xs">
         <SearchBox>
-          <GoAFormItem
+          <GoabFormItem
             helpText={error ? '' : message}
             error={error ? message : ''}
             label="Search event namespace and name"
@@ -159,7 +159,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                 }}
               />
 
-              <GoAIconButton
+              <GoabIconButton
                 icon={open ? 'close-circle' : 'chevron-down'}
                 title="dropdown"
                 size="medium"
@@ -193,9 +193,9 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                 })}
               </ul>
             )}
-          </GoAFormItem>
+          </GoabFormItem>
         </SearchBox>
-        <GoAFormItem label="Minimum timestamp">
+        <GoabFormItem label="Minimum timestamp">
           <DateTimeInput
             type="datetime-local"
             name="timestampMin"
@@ -205,8 +205,8 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             onChange={(e) => setValue('timestampMin', e.target.value)}
             onClick={() => setOpen(false)}
           />
-        </GoAFormItem>
-        <GoAFormItem label="Maximum timestamp">
+        </GoabFormItem>
+        <GoabFormItem label="Maximum timestamp">
           <DateTimeInput
             type="datetime-local"
             name="timestampMax"
@@ -216,10 +216,10 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             onChange={(e) => setValue('timestampMax', e.target.value)}
             onClick={() => setOpen(false)}
           />
-        </GoAFormItem>
-      </GoAGrid>
-      <GoAButtonGroup alignment="end">
-        <GoAButton
+        </GoabFormItem>
+      </GoabGrid>
+      <GoabButtonGroup alignment="end">
+        <GoabButton
           type="secondary"
           onClick={() => {
             setOpen(false);
@@ -230,9 +230,9 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           }}
         >
           Reset
-        </GoAButton>
+        </GoabButton>
 
-        <GoAButton
+        <GoabButton
           onClick={() => {
             setOpen(false);
             if (validation()) {
@@ -241,8 +241,8 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           }}
         >
           Search
-        </GoAButton>
-      </GoAButtonGroup>
+        </GoabButton>
+      </GoabButtonGroup>
     </div>
   );
 };

@@ -1,85 +1,80 @@
 config:
   environments:
     dev:
-      target: "https://file-service-core-services-dev.os99.gov.ab.ca"
-    test:
-      target: "https://file-service-core-services-test.os99.gov.ab.ca"
+      target: 'https://file-service.adsp-dev.gov.ab.ca'
     uat:
-      target: "https://file-service-uat.alpha.alberta.ca"
-  processor: "./functions.js"
+      target: 'https://file-service.adsp-uat.alberta.ca'
+  processor: './functions.js'
   defaults:
     headers:
-      Content-Type: "application/json"
-      Accept: "application/json"
+      Content-Type: 'application/json'
+      Accept: 'application/json'
   payload:
-    - path: "../artillery.{{ $environment }}.csv"
+    - path: '../artillery.{{ $environment }}.csv'
       skipHeader: true
       fields:
-        - "keycloak_url"
-        - "tenant_realm_id"
-        - "client_id"
-        - "client_secret"
-        - "username"
-        - "password"
-    - path: "./files.csv"
+        - 'keycloak_url'
+        - 'realm_id'
+        - 'tenant_name'
+        - 'client_id'
+    - path: './files.{{ $environment }}.csv'
       skipHeader: true
       fields:
-        - "file_id"
+        - 'file_id'
   variables:
     typeId:
-      - "public-files"
+      - 'artillery-load-test'
     filename:
-      - "logo.png"
+      - 'logo.png'
   phases:
     - name: warm up
       duration: 60
       arrivalCount: 50
     - name: load
-      duration: 120
-      arrivalCount: 500
+      duration: 1
+      arrivalCount: 1
 before:
   flow:
-    - log: "Getting the access token (tenant: {{ tenant_realm_id }}) for user {{ username }}"
+    - log: 'Getting the access token (tenant: {{ realm_id }}) for client {{ client_id }}'
     - post:
-        url: "{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token"
+        url: '{{ keycloak_url }}/auth/realms/{{ realm_id }}/protocol/openid-connect/token'
         headers:
-          Content-Type: "application/x-www-form-urlencoded"
-          Accept: "application/json"
+          Content-Type: 'application/x-www-form-urlencoded'
+          Accept: 'application/json'
         form:
           {
-            grant_type: "password",
-            client_id: "{{ client_id }}",
-            client_secret: "{{ client_secret }}",
-            username: "{{ username }}",
-            password: "{{ password }}",
+            grant_type: 'client_credentials',
+            client_id: '{{ client_id }}',
+            client_secret: '{{ $processEnvironment.ARTILLERY_CLIENT_SECRET }}',
           }
+
         capture:
-          - json: "$.access_token"
+          - json: '$.access_token'
             as: token
 scenarios:
   - name: read file metadata
-    weight: 20
+    weight: 1
     flow:
       - get:
-          url: "/file/v1/files/{{ file_id }}"
+          url: '/file/v1/files/{{ file_id }}'
           headers:
-            authorization: "Bearer {{ token }}"
+            authorization: 'Bearer {{ token }}'
   - name: read and download file
-    weight: 5
+    weight: 1
     flow:
       - get:
-          url: "/file/v1/files/{{ file_id }}"
+          url: '/file/v1/files/{{ file_id }}'
           headers:
-            authorization: "Bearer {{ token }}"
+            authorization: 'Bearer {{ token }}'
       - get:
-          url: "/file/v1/files/{{ file_id }}/download"
+          url: '/file/v1/files/{{ file_id }}/download'
           headers:
-            authorization: "Bearer {{ token }}"
+            authorization: 'Bearer {{ token }}'
   - name: upload a file
     weight: 1
     flow:
       - post:
-          url: "/file/v1/files"
+          url: '/file/v1/files'
           headers:
-            authorization: "Bearer {{ token }}"
-          beforeRequest: "setFormFile"
+            authorization: 'Bearer {{ token }}'
+          beforeRequest: 'setFormFile'
