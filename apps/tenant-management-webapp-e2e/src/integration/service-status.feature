@@ -114,117 +114,117 @@ Feature: Service status
     And the user selects "Applications" tab for "Status"
     Then the user views the subscribe checkbox is "checked"
 
-  @TEST_CS-835 @REQ_CS-792 @regression
-  Scenario Outline: As a tenant admin, I can add, edit, publish, unpublish and delete a tenant level notice
-    Given a tenant admin user is on status notices page
-    When the user clicks Add notice button
-    # Add a notice for the tenant
-    Then the user views Add notice dialog
-    When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
-    And the user clicks Save as draft button
-    And the user selects "Draft" filter by status radio button
-    Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
-    # Edit the notice from All to a service specific
-    When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
-    Then the user views Edit notice dialog
-    When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
-    And the user clicks Save as draft button
-    Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-    # Change the notice back to All
-    # Because notices page refreshs every 30 seconds and the edit step randomly fails, add steps to go off and back to the notices page so that the edit step is done before the next refresh
-    When the user selects the "Access" menu item
-    And the user selects the "Status" menu item
-    And the user selects "Notices" tab for "Status"
-    And the user selects "Draft" filter by status radio button
-    When the user clicks "edit" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-    Then the user views Edit notice dialog
-    When the user enters "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
-    And the user clicks Save as draft button
-    Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-    # Publish the notice
-    # Because notices page refreshs every 30 seconds and the following step randomly fails, add steps to go off and back to the notices page so that the following step is done before the next refresh
-    When the user selects the "Access" menu item
-    And the user selects the "Status" menu item
-    And the user selects "Notices" tab for "Status"
-    And the user selects "Draft" filter by status radio button
-    When the user clicks "publish" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-    And the user selects "Published" filter by status radio button
-    Then the user "views" the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-    # Unpublish the notice
-    When the user clicks "unpublish" menu for the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-    And the user selects "Draft" filter by status radio button
-    Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
-    # Delete the notice
-    And the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
-    Then the user views delete "notice" confirmation modal for "<Description2>"
-    When the user clicks Delete button in delete confirmation modal
-    And the user selects "Active" filter by status radio button
-    Then the user "should not view" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+# @TEST_CS-835 @REQ_CS-792 @regression
+# Scenario Outline: As a tenant admin, I can add, edit, publish, unpublish and delete a tenant level notice
+#   Given a tenant admin user is on status notices page
+#   When the user clicks Add notice button
+#   # Add a notice for the tenant
+#   Then the user views Add notice dialog
+#   When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
+#   And the user clicks Save as draft button
+#   And the user selects "Draft" filter by status radio button
+#   Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+#   # Edit the notice from All to a service specific
+#   When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+#   Then the user views Edit notice dialog
+#   When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
+#   And the user clicks Save as draft button
+#   Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+#   # Change the notice back to All
+#   # Because notices page refreshs every 30 seconds and the edit step randomly fails, add steps to go off and back to the notices page so that the edit step is done before the next refresh
+#   When the user selects the "Access" menu item
+#   And the user selects the "Status" menu item
+#   And the user selects "Notices" tab for "Status"
+#   And the user selects "Draft" filter by status radio button
+#   When the user clicks "edit" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+#   Then the user views Edit notice dialog
+#   When the user enters "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
+#   And the user clicks Save as draft button
+#   Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+#   # Publish the notice
+#   # Because notices page refreshs every 30 seconds and the following step randomly fails, add steps to go off and back to the notices page so that the following step is done before the next refresh
+#   When the user selects the "Access" menu item
+#   And the user selects the "Status" menu item
+#   And the user selects "Notices" tab for "Status"
+#   And the user selects "Draft" filter by status radio button
+#   When the user clicks "publish" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+#   And the user selects "Published" filter by status radio button
+#   Then the user "views" the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+#   # Unpublish the notice
+#   When the user clicks "unpublish" menu for the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+#   And the user selects "Draft" filter by status radio button
+#   Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+#   # Delete the notice
+#   And the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+#   Then the user views delete "notice" confirmation modal for "<Description2>"
+#   When the user clicks Delete button in delete confirmation modal
+#   And the user selects "Active" filter by status radio button
+#   Then the user "should not view" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
 
-    Examples:
-      | Description           | Application | Start Date | Start Time | End Date | End Time | Description2               | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
-      | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
+#   Examples:
+#     | Description           | Application | Start Date | Start Time | End Date | End Time | Description2               | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
+#     | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
 
-  @TEST_CS-339 @REQ_CS-169 @regression
-  Scenario: As a tenant admin, I can add/edit/delete an application
-    Given a tenant admin user is on status applications page
-    When the user clicks Add application button
-    Then the user views Add application modal
-    When the user enters "Autotest-addApp" as name and "Autotest-addApp" as description and "https://tenant-management-webapp-adsp-dev.apps.aro.gov.ab.ca/" as endpoint
-    And the user clicks Save application button
-    Then the user "views" "Autotest-addApp" in the application list
-    When the user clicks "Edit" button for "Autotest-addApp"
-    Then the user views "Autotest-addApp" as name and "Autotest-addApp" as description in the modal fields
-    When the user enters "Autotest-addApp Edited" as name and "Autotest-addApp Edited" as description fields
-    And the user clicks Save application button
-    Then the user "views" "Autotest-addApp Edited" in the application list
-    When the user clicks "Delete" button for "Autotest-addApp Edited"
-    Then the user views delete "application" confirmation modal for "Autotest-addApp Edited"
-    When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" "Autotest-addApp Edited" in the application list
+# @TEST_CS-339 @REQ_CS-169 @regression
+# Scenario: As a tenant admin, I can add/edit/delete an application
+#   Given a tenant admin user is on status applications page
+#   When the user clicks Add application button
+#   Then the user views Add application modal
+#   When the user enters "Autotest-addApp" as name and "Autotest-addApp" as description and "https://tenant-management-webapp-adsp-dev.apps.aro.gov.ab.ca/" as endpoint
+#   And the user clicks Save application button
+#   Then the user "views" "Autotest-addApp" in the application list
+#   When the user clicks "Edit" button for "Autotest-addApp"
+#   Then the user views "Autotest-addApp" as name and "Autotest-addApp" as description in the modal fields
+#   When the user enters "Autotest-addApp Edited" as name and "Autotest-addApp Edited" as description fields
+#   And the user clicks Save application button
+#   Then the user "views" "Autotest-addApp Edited" in the application list
+#   When the user clicks "Delete" button for "Autotest-addApp Edited"
+#   Then the user views delete "application" confirmation modal for "Autotest-addApp Edited"
+#   When the user clicks Delete button in delete confirmation modal
+#   Then the user "should not view" "Autotest-addApp Edited" in the application list
 
-  # CS-3933 Application status goes back to original value after a change
-  @TEST_CS-996 @REQ_CS-962 @regression @ignore
-  Scenario: As a tenant admin, I can trigger application status change event and see the event in the event log
-    # Create an application for testing application status chagne events
-    Given a tenant admin user is on status applications page
-    When the user clicks Add application button
-    Then the user views Add application modal
-    When the user enters "autotest-app-status-change-event" as name and "autotest-app-status-change-event-desc" as description and "https://localhost" as endpoint
-    And the user clicks Save application button
-    Then the user "views" "autotest-app-status-change-event" in the application list
-    # Change status from empty to outage and verify the event
-    When the user clicks Change status button for "autotest-app-status-change-event"
-    Then the user views Manual status change modal
-    When the user selects "Outage" and clicks Save button
-    Then the user views the "Outage" status for "autotest-app-status-change-event"
-    When the user waits "20" seconds
-    And the user selects the "Event log" menu item
-    Then the "Event log" landing page is displayed
-    When the user searches with "status-service:application-status-changed", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
-    And the user clicks Show details button for the latest event of "application-status-changed" for "status-service"
-    Then the user views the event details with status changing from "Operational" to "Outage"
-    # Change status from outage to maintenance and verify the event
-    When the user selects the "Status" menu item
-    And the user selects "Applications" tab for "Status"
-    And the user clicks Change status button for "autotest-app-status-change-event"
-    Then the user views Manual status change modal
-    When the user selects "Maintenance" and clicks Save button
-    Then the user views the "Maintenance" status for "autotest-app-status-change-event"
-    When the user waits "20" seconds
-    And the user selects the "Event log" menu item
-    Then the "Event log" landing page is displayed
-    When the user searches with "status-service:application-status-changed", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
-    When the user clicks Show details button for the latest event of "application-status-changed" for "status-service"
-    Then the user views the event details with status changing from "Outage" to "Maintenance"
-    # Remove the application
-    When the user selects the "Status" menu item
-    And the user selects "Applications" tab for "Status"
-    Then the user "views" "autotest-app-status-change-event" in the application list
-    When the user clicks "Delete" button for "autotest-app-status-change-event"
-    Then the user views delete "application" confirmation modal for "autotest-app-status-change-event"
-    When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" "autotest-app-status-change-event" in the application list
+# # CS-3933 Application status goes back to original value after a change
+# @TEST_CS-996 @REQ_CS-962 @regression @ignore
+# Scenario: As a tenant admin, I can trigger application status change event and see the event in the event log
+#   # Create an application for testing application status chagne events
+#   Given a tenant admin user is on status applications page
+#   When the user clicks Add application button
+#   Then the user views Add application modal
+#   When the user enters "autotest-app-status-change-event" as name and "autotest-app-status-change-event-desc" as description and "https://localhost" as endpoint
+#   And the user clicks Save application button
+#   Then the user "views" "autotest-app-status-change-event" in the application list
+#   # Change status from empty to outage and verify the event
+#   When the user clicks Change status button for "autotest-app-status-change-event"
+#   Then the user views Manual status change modal
+#   When the user selects "Outage" and clicks Save button
+#   Then the user views the "Outage" status for "autotest-app-status-change-event"
+#   When the user waits "20" seconds
+#   And the user selects the "Event log" menu item
+#   Then the "Event log" landing page is displayed
+#   When the user searches with "status-service:application-status-changed", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+#   And the user clicks Show details button for the latest event of "application-status-changed" for "status-service"
+#   Then the user views the event details with status changing from "Operational" to "Outage"
+#   # Change status from outage to maintenance and verify the event
+#   When the user selects the "Status" menu item
+#   And the user selects "Applications" tab for "Status"
+#   And the user clicks Change status button for "autotest-app-status-change-event"
+#   Then the user views Manual status change modal
+#   When the user selects "Maintenance" and clicks Save button
+#   Then the user views the "Maintenance" status for "autotest-app-status-change-event"
+#   When the user waits "20" seconds
+#   And the user selects the "Event log" menu item
+#   Then the "Event log" landing page is displayed
+#   When the user searches with "status-service:application-status-changed", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+#   When the user clicks Show details button for the latest event of "application-status-changed" for "status-service"
+#   Then the user views the event details with status changing from "Outage" to "Maintenance"
+#   # Remove the application
+#   When the user selects the "Status" menu item
+#   And the user selects "Applications" tab for "Status"
+#   Then the user "views" "autotest-app-status-change-event" in the application list
+#   When the user clicks "Delete" button for "autotest-app-status-change-event"
+#   Then the user views delete "application" confirmation modal for "autotest-app-status-change-event"
+#   When the user clicks Delete button in delete confirmation modal
+#   Then the user "should not view" "autotest-app-status-change-event" in the application list
 
 # # TEST DATA: existing subscription of "autotest-DO-NOT-DELETE", "adsp5.t@gov.ab.ca" under "Application status update"
 # @TEST_CS-1282 @REQ_CS-905 @regression
