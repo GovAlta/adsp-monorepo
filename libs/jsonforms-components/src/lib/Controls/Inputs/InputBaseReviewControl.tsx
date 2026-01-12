@@ -4,7 +4,7 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoabIcon } from '@abgov/react-components';
 import { RequiredTextLabel, WarningIconDiv } from './style-component';
-import { convertToSentenceCase, getLastSegmentFromPointer, to12HourFormat, UTCToFullLocalTime } from '../../util';
+import { getLastSegmentFromPointer, to12HourFormat, UTCToFullLocalTime } from '../../util';
 
 export type WithBaseInputReviewProps = CellProps & WithClassname & WithInputProps & StatePropsOfControl;
 
@@ -60,8 +60,7 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
   };
 
   if (isBoolean) {
-    const checkboxLabel =
-      uischema.options?.text?.trim() || convertToSentenceCase(getLastSegmentFromPointer(uischema.scope));
+    const checkboxLabel = uischema.options?.text?.trim() || getLastSegmentFromPointer(uischema.scope);
 
     if (uischema.options?.radio === true) {
       reviewText = data ? `Yes` : `No`;
@@ -82,8 +81,7 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
     reviewText = (
       <ul>
         {data.map((checkbox: string, index: number) => {
-          const checkboxLabel =
-            uischema?.options?.text?.trim() || convertToSentenceCase(getLastSegmentFromPointer(uischema.scope));
+          const checkboxLabel = uischema?.options?.text?.trim() || getLastSegmentFromPointer(uischema.scope);
           return <li key={index}>{checkbox.trim() || checkboxLabel.trim()}</li>;
         })}
       </ul>

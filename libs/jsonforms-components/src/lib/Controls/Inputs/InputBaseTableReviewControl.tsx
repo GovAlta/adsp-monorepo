@@ -2,20 +2,18 @@ import React from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { PageReviewNameCol, PageReviewValueCol } from './style-component';
-import { convertToSentenceCase, getLastSegmentFromPointer } from '../../util';
-import { getLabelText } from '../../util/stringUtils';
+import { getLastSegmentFromPointer } from '../../util';
 
 import { GoAReviewRenderers } from '../../../index';
 import { JsonFormsDispatch } from '@jsonforms/react';
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
   const { data, uischema, label, schema, path, errors, enabled, cells } = props;
-  const labelToUpdate: string = convertToSentenceCase(getLabelText(uischema.scope, label || ''));
+  const labelToUpdate: string = label || '';
   let reviewText = data;
   const isBoolean = typeof data === 'boolean';
   if (isBoolean) {
-    const checkboxLabel =
-      uischema.options?.text?.trim() || convertToSentenceCase(getLastSegmentFromPointer(uischema.scope));
+    const checkboxLabel = uischema.options?.text?.trim() || getLastSegmentFromPointer(uischema.scope);
 
     if (uischema.options?.radio === true) {
       reviewText = data ? `Yes` : `No`;
