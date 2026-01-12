@@ -18,3 +18,6 @@ class XdpSection(XdpElement):
             if fe:
                 nodes.append(fe)
         return FormSection(self.get_name(), self.full_path, title, nodes, self.context)
+
+    def iter_descendants_for_bbox(self):
+        return list(self.elements)

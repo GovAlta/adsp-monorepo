@@ -17,3 +17,6 @@ class XdpLayout(XdpElement):
         if nodes:
             return FormLayout(self.layoutType, nodes, self.context)
         return None
+
+    def iter_descendants_for_bbox(self):
+        return list(self.elements)

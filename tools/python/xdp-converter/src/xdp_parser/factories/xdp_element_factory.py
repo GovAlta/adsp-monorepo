@@ -1,3 +1,4 @@
+import re
 import xml.etree.ElementTree as ET
 from typing import List, Optional
 
@@ -60,13 +61,11 @@ class XdpElementFactory(AbstractXdpFactory):
     # GROUP LOGIC
     # ----------------------------------------------------------------------
     def handle_group(
-        self, subform: ET.Element, elements: List[XdpElement], _: str
+        self, subform: ET.Element, elements: List[XdpElement], parent_label: str | None
     ) -> Optional[XdpElement]:
 
         if not elements:
             return None
-
-        elements = self._sort_by_geometry(elements)
 
         has_real_control = any(
             getattr(e, "is_control", lambda: False)()
@@ -77,8 +76,17 @@ class XdpElementFactory(AbstractXdpFactory):
         if not has_real_control:
             return None
 
-        # 🔑 Single source of truth
+        # Single source of truth for group labels
         resolved_label = get_subform_header_label(subform)
+
+        # Prevent "Section 6" inside "Section 6"
+        if (
+            resolved_label
+            and parent_label
+            and self._normalize_label(resolved_label)
+            == self._normalize_label(parent_label)
+        ):
+            resolved_label = None
 
         group = XdpGroup(subform, elements, self.context, resolved_label)
 
@@ -86,21 +94,6 @@ class XdpElementFactory(AbstractXdpFactory):
         group.geometry = XdpGeometry.from_children(elements, fallback=base_geo)
 
         return group
-
-    # ----------------------------------------------------------------------
-    # GEOMETRY SORT
-    # ----------------------------------------------------------------------
-    def _sort_by_geometry(self, elements: List[XdpElement]) -> List[XdpElement]:
-        def key(el: XdpElement):
-            geo = el.geometry
-            if geo.y is None:
-                return (float("inf"), float("inf"))
-            x = geo.x if geo.x is not None else float("inf")
-            return (geo.y, x)
-
-        sorted_elements = sorted(elements, key=key)
-
-        return sorted_elements
 
     # ----------------------------------------------------------------------
     # AUTHORITATIVE top-level detection
@@ -116,3 +109,13 @@ class XdpElementFactory(AbstractXdpFactory):
     def is_file_upload_field(self, field_elem):
         ui = field_elem.find("ui")
         return ui is not None and any(child.tag in ("imageEdit",) for child in ui)
+
+    @staticmethod
+    def _normalize_label(s: str | None) -> str:
+        if not s:
+            return ""
+        s = s.strip()
+        s = re.sub(r"\s+", " ", s)
+        s = s.casefold()
+        s = s.rstrip(" .:;")
+        return s

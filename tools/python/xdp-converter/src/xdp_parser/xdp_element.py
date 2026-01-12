@@ -38,6 +38,83 @@ class XdpElement(ABC):
     def y(self):
         return self.geometry.y
 
+    @property
+    def w(self):
+        return self.geometry.w
+
+    @property
+    def h(self):
+        return self.geometry.h
+
+    # Element's bounding box
+    def bbox(self):
+        """(x1, y1, x2, y2) or None if insufficient geometry."""
+        if self.x is None or self.y is None or self.w is None or self.h is None:
+            return None
+        return (self.x, self.y, self.x + self.w, self.y + self.h)
+
+    # Center point of the element
+    def center(self):
+        b = self.bbox()
+        if not b:
+            return None
+        x1, y1, x2, y2 = b
+        return ((x1 + x2) / 2.0, (y1 + y2) / 2.0)
+
+    # Check if a point is within the bounding box, with tolerance
+    def bbox_contains(self, pt, tol=0.5):
+        """pt=(cx,cy). tol in mm."""
+        b = self.bbox()
+        if not b or not pt:
+            return False
+        x1, y1, x2, y2 = b
+        cx, cy = pt
+        return (x1 - tol) <= cx <= (x2 + tol) and (y1 - tol) <= cy <= (y2 + tol)
+
+    def iter_descendants_for_bbox(self):
+        # Default: no descendants
+        return []
+
+    def visual_bbox(self):
+        """
+        Prefer explicit bbox; otherwise derive bbox from descendants.
+        Returns (x1, y1, x2, y2) or None.
+        """
+        b = self.bbox()
+        if b:
+            return b
+
+        kids = list(self.iter_descendants_for_bbox())
+        if not kids:
+            return None
+
+        boxes = []
+        for k in kids:
+            kb = k.bbox()
+            if kb:
+                boxes.append(kb)
+
+        if not boxes:
+            return None
+
+        x1 = min(bb[0] for bb in boxes)
+        y1 = min(bb[1] for bb in boxes)
+        x2 = max(bb[2] for bb in boxes)
+        y2 = max(bb[3] for bb in boxes)
+        return (x1, y1, x2, y2)
+
+    def visual_height(self) -> float:
+        vb = self.visual_bbox()
+        if not vb:
+            return 0.0
+        _, y1, _, y2 = vb
+        return max(0.0, float(y2 - y1))
+
+    def effective_height(self) -> float:
+        if self.h is not None:
+            return float(self.h)
+        return float(self.visual_height())
+
     @abstractmethod
     def to_form_element(self) -> FormElement:
         pass
@@ -131,43 +208,38 @@ class XdpGeometry:
     @classmethod
     def resolve(cls, node, parent_map) -> "XdpGeometry":
         """
-        Adobe-style coordinate resolution:
-        Walk upward until we find a coordinate-bearing ancestor.
+        Compute absolute coordinates by accumulating relative offsets up the parent chain.
+        XFA children typically use x/y relative to their parent subform/container.
         """
         curr = node
+        acc_x = 0.0
+        acc_y = 0.0
+        saw_any = False
 
-        if node not in parent_map:
-            print(
-                "🔥 node not in parent_map:",
-                "tag=",
-                node.tag,
-                "name=",
-                node.get("name"),
-            )
-            # optional: print node attribs for sanity
-            print("attribs:", node.attrib)
+        # width/height/layout should come from the node itself (not from parents)
+        w = cls._parse_mm(node.get("w"))
+        h = cls._parse_mm(node.get("h"))
+        layout = node.get("layout")
 
+        # Walk from node up to root accumulating offsets
         while curr is not None:
             raw_x = curr.get("x")
             raw_y = curr.get("y")
-            if raw_x is not None and raw_y is not None:
-                return cls(
-                    x=cls._parse_mm(raw_x),
-                    y=cls._parse_mm(raw_y),
-                    w=cls._parse_mm(curr.get("w")),
-                    h=cls._parse_mm(curr.get("h")),
-                    layout=curr.get("layout"),
-                )
+
+            if raw_x is not None or raw_y is not None:
+                saw_any = True
+                # missing x or y treated as 0 offset
+                dx = cls._parse_mm(raw_x) or 0.0
+                dy = cls._parse_mm(raw_y) or 0.0
+                acc_x += dx
+                acc_y += dy
+
             curr = parent_map.get(curr)
 
-        # No coordinates found → bottom of list, but stable
-        return cls(
-            x=None,
-            y=None,
-            w=None,
-            h=None,
-            layout=node.get("layout"),
-        )
+        if not saw_any:
+            return cls(x=None, y=None, w=w, h=h, layout=layout)
+
+        return cls(x=acc_x, y=acc_y, w=w, h=h, layout=layout)
 
     @staticmethod
     def _parse_mm(raw: Any) -> Optional[float]:

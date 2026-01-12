@@ -1,5 +1,6 @@
 # tools/python/xdp-converter/src/xdp_parser/parse_xdp.py
 
+import re
 import xml.etree.ElementTree as ET
 from typing import List
 
@@ -10,8 +11,8 @@ from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
 from xdp_parser.help_text_extractor import HelpTextExtractor
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.parsing_helpers import is_object_array
+from xdp_parser.subform_label import get_subform_label
 from xdp_parser.xdp_element import XdpElement
-from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_radio_selector import extract_radio_button_labels
 from xdp_parser.xdp_utils import (
     remove_duplicates,
@@ -105,21 +106,19 @@ class XdpParser:
             return control
 
         # Normal container subform → placeholder with children
-        children = list(self.find_simple_controls(subform))
+        subform_label = get_subform_label(subform)
+
+        children = list(
+            self.find_simple_controls(subform, container_label=subform_label)
+        )
         if not children:
             return None
 
         return XdpSubformPlaceholder(subform, children, self.context)
 
-    def parse_subform(self, subform: ET.Element) -> List[XdpElement]:
-        """
-        Backwards-compatible helper; some older code may still call this.
-        Now it simply wraps _parse_subform_to_node.
-        """
-        node = self._parse_subform_to_node(subform)
-        return [node] if node is not None else []
-
-    def find_simple_controls(self, node: ET.Element) -> List[XdpElement]:
+    def find_simple_controls(
+        self, node: ET.Element, container_label: str | None = None
+    ) -> List[XdpElement]:
         """
         Traverse a subform and return a flat list of XdpElement controls
         and nested container nodes (XdpSubformPlaceholder).
@@ -145,6 +144,11 @@ class XdpParser:
             # Help text from a draw element
             help_text = HelpTextExtractor.get_help_from_draw(elem)
             if help_text:
+                # If the "help" is just the section title, don't emit HelpContent
+                if container_label and self._is_same_text(help_text, container_label):
+                    i += 1
+                    continue
+
                 control = self.factory.handle_help_text(elem, help_text)
                 if control:
                     print(f"help text control with geometry: {control.geometry}")
@@ -259,3 +263,19 @@ class XdpParser:
             return True
 
         return False
+
+    @staticmethod
+    def _normalize_text(s: str | None) -> str:
+        if not s:
+            return ""
+        s = s.strip()
+        s = re.sub(r"\s+", " ", s)  # collapse whitespace
+        s = s.casefold()  # better than lower() for unicode
+        s = s.rstrip(" .:;")  # titles often differ only by punctuation
+        return s
+
+    @classmethod
+    def _is_same_text(cls, a: str | None, b: str | None) -> bool:
+        return cls._normalize_text(a) != "" and cls._normalize_text(
+            a
+        ) == cls._normalize_text(b)
