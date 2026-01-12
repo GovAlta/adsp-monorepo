@@ -6,9 +6,10 @@ import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { Anchor, ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle } from './styled-components';
 import { getProperty } from './util/helpers';
 import { withAjvProps } from '../../util/layout';
-import { GoabGrid } from '@abgov/react-components';
+import { GoabGrid, GoabTable } from '@abgov/react-components';
 import { FormStepperComponentProps } from './types';
-import { GoAReviewRenderers } from '../../../index';
+import { GoAReviewRenderers, GoABaseTableReviewRenderers } from '../../../index';
+import { ReviewContext } from '../../Context/ReviewContext';
 
 export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, cells, enabled, navigationFunc } = props;
@@ -27,73 +28,68 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
           <ReviewItemSection key={index}>
             <ReviewItemHeader>
               <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
-              {navigationFunc && (
-                <Anchor
-                  onClick={() => {
-                    navigationFunc(index);
-                  }}
-                  data-testid={testId}
-                  onKeyDown={(e) => {
-                    if (!readOnly && (e.key === ' ' || e.key === 'Enter')) {
-                      e.preventDefault();
-                      navigationFunc(index);
-                    }
+            </ReviewItemHeader>
+            <GoabTable mt="l" width="100%">
+              <tbody>
+                <ReviewContext.Provider
+                  value={{
+                    onEdit: () => {
+                      if (navigationFunc) {
+                        navigationFunc(index);
+                      }
+                    },
                   }}
                 >
-                  {readOnly ? 'View' : 'Edit'}
-                </Anchor>
-              )}
-            </ReviewItemHeader>
-            <GoabGrid minChildWidth="100%">
-              {category.elements
-                .filter((field) => {
-                  // [TODO] we need to double check why we cannot hide the elements at the element level
-                  const conditionProps = field.rule?.condition as SchemaBasedCondition;
-                  /* istanbul ignore next */
-                  if (conditionProps && data) {
-                    const canHideControlParts = conditionProps?.scope?.split('/');
-                    const canHideControl = canHideControlParts && canHideControlParts[canHideControlParts?.length - 1];
-                    const isHidden = getProperty(data, canHideControl);
-                    if (!isHidden) {
-                      return field;
-                    }
-                  } else {
-                    return field;
-                  }
-                })
-                .map((e) => {
-                  const layout = e as Layout;
-                  if (
-                    rescopeMaps.some((scope) =>
-                      layout.elements
-                        ?.map((el) => {
-                          const element = el as unknown as Scoped;
-                          return element.scope;
-                        })
-                        .includes(scope)
-                    )
-                  ) {
-                    return layout.elements;
-                  } else {
-                    return e;
-                  }
-                })
-                .flat()
-                .map((element, index) => {
-                  return (
-                    <div key={`form-stepper-category-${index}`} className="element-style">
-                      <JsonFormsDispatch
-                        data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-                        schema={schema}
-                        uischema={element}
-                        enabled={enabled}
-                        renderers={GoAReviewRenderers}
-                        cells={cells}
-                      />
-                    </div>
-                  );
-                })}
-            </GoabGrid>
+                  {category.elements
+                    .filter((field) => {
+                      // [TODO] we need to double check why we cannot hide the elements at the element level
+                      const conditionProps = field.rule?.condition as SchemaBasedCondition;
+                      /* istanbul ignore next */
+                      if (conditionProps && data) {
+                        const canHideControlParts = conditionProps?.scope?.split('/');
+                        const canHideControl = canHideControlParts && canHideControlParts[canHideControlParts?.length - 1];
+                        const isHidden = getProperty(data, canHideControl);
+                        if (!isHidden) {
+                          return field;
+                        }
+                      } else {
+                        return field;
+                      }
+                    })
+                    .map((e) => {
+                      const layout = e as Layout;
+                      if (
+                        rescopeMaps.some((scope) =>
+                          layout.elements
+                            ?.map((el) => {
+                              const element = el as unknown as Scoped;
+                              return element.scope;
+                            })
+                            .includes(scope)
+                        )
+                      ) {
+                        return layout.elements;
+                      } else {
+                        return e;
+                      }
+                    })
+                    .flat()
+                    .map((element, index) => {
+                      return (
+                        <JsonFormsDispatch
+                          key={`form-stepper-category-${index}`}
+                          data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+                          schema={schema}
+                          uischema={element}
+                          enabled={enabled}
+                          renderers={GoABaseTableReviewRenderers}
+                          cells={cells}
+                        />
+                      );
+                    })}
+                </ReviewContext.Provider>
+              </tbody>
+            </GoabTable>
           </ReviewItemSection>
         );
       })}

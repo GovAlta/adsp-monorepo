@@ -2,22 +2,24 @@ import { Dispatch } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Category, UISchemaElement } from '@jsonforms/core';
-import { ContextProviderFactory, GoARenderers } from '../../../index';
+import { ContextProviderFactory, GoARenderers, GoABaseTableReviewRenderers, ReviewContext } from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
 
 import { CategorizationStepperLayoutRendererProps } from '../FormStepper/types';
 import { JsonFormsStepperContextProvider } from '../FormStepper/context';
 
-const getFormBase = (uiSchema: UISchemaElement, schema: object, data: object): JSX.Element => {
+const getFormBase = (uiSchema: UISchemaElement, schema: object, data: object, onEdit?: () => void): JSX.Element => {
   return (
-    <JsonForms
-      uischema={uiSchema}
-      data={data}
-      schema={schema}
-      ajv={new Ajv({ allErrors: true, verbose: true })}
-      renderers={GoARenderers}
-    />
+    <ReviewContext.Provider value={{ onEdit: onEdit || jest.fn() }}>
+      <JsonForms
+        uischema={uiSchema}
+        data={data}
+        schema={schema}
+        ajv={new Ajv({ allErrors: true, verbose: true })}
+        renderers={GoABaseTableReviewRenderers}
+      />
+    </ReviewContext.Provider>
   );
 };
 

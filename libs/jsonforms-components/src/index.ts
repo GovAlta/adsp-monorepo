@@ -80,8 +80,14 @@ import GoAErrorControl, { GoAErrorControlTester } from './lib/ErrorHandling/GoAE
 import GoACalloutControl, { GoACalloutControlTester, CalloutReviewControl } from './lib/Additional/GoACalloutControl';
 import { GoAGroupReviewControl, GoAGroupReviewLayoutTester } from './lib/layouts/GroupReviewControl';
 import { PhoneNumberWithTypeReviewControl } from './lib/Controls/PhoneNumber/PhoneNumberWithTypeReviewControl';
+import {
+  TableGroupLayoutRenderer,
+  TableHelpContentRenderer,
+  TableLayoutRenderer,
+} from './lib/layouts/TableLayoutRenderers';
 
 export * from './lib/Context';
+export * from './lib/Context/ReviewContext';
 export * from './lib/common';
 export * from './lib/Context/register';
 export * from './lib/Controls';
@@ -220,11 +226,11 @@ export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
 
   {
     tester: GoAHorizontalLayoutTester,
-    renderer: GoAInputBaseTableReviewControl,
+    renderer: TableLayoutRenderer,
   },
-  { tester: GoAlVerticalLayoutTester, renderer: GoAInputBaseTableReviewControl },
-  { tester: GoAGroupReviewLayoutTester, renderer: GoAInputBaseTableReviewControl },
-  { tester: HelpContentTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoAlVerticalLayoutTester, renderer: TableLayoutRenderer },
+  { tester: GoAGroupReviewLayoutTester, renderer: TableGroupLayoutRenderer },
+  { tester: HelpContentTester, renderer: TableHelpContentRenderer },
 ];
 
 export const GoAReviewRenderers: JsonFormsRendererRegistryEntry[] = [
