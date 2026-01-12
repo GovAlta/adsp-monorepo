@@ -74,9 +74,9 @@ describe('Cell controls', () => {
     const birthday = '2000-05-07';
     const props = getProps(schema, uiSchema, birthday);
     const { container } = render(<GoADateCell {...props}></GoADateCell>);
-    const element = container.querySelector('goa-input');
+    const element = container.querySelector('goa-date-picker');
     expect(element).toBeInTheDocument();
-    expect(element?.getAttribute('type')).toBe('date');
+    expect(element?.getAttribute('type')).toBe('calendar');
     expect(element?.getAttribute('value')).toBe(birthday);
   });
 
@@ -88,9 +88,9 @@ describe('Cell controls', () => {
     const noon = '05/07/2000T12:00:00';
     const props = getProps(schema, uiSchema, noon);
     const { container } = render(<GoATimeCell {...props}></GoATimeCell>);
-    const element = container.querySelector('goa-input');
+    const element = container.querySelector('goa-date-picker');
     expect(element).toBeInTheDocument();
     console.log(element?.outerHTML);
-    expect(element?.getAttribute('type')).toBe('date');
+    expect(element?.getAttribute('type')).toBe('calendar');
   });
 });
