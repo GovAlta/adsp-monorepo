@@ -102,7 +102,6 @@ class VisibilityScriptExtractor:
                                 "section3Seasonal",
                             ],
                         )
-                    # _debug_cbo_category(event)
 
         print(f"[Extractor] Extracted {len(parsed_rules)} visibility rules.")
         context[CTX_RAW_RULES] = parsed_rules
@@ -202,21 +201,3 @@ class VisibilityScriptExtractor:
             xpath=xpath,
             script_name=script_elem.get("name") or "",
         )
-
-
-def _debug_cbo_category(ev):
-    t = ev.trigger
-    # check atomic conditions anywhere in the trigger AST
-    for atom in t.iter_atomic():
-        if "cboCategory" in (atom.driver or "") or (atom.value or "") in {
-            str(i) for i in range(14, 22)
-        }:
-            print("\n[DEBUG cboCategory SOURCE]")
-            print(f"  xpath: {ev.metadata.xpath}")
-            print(f"  script: {ev.metadata.script_name}")
-            print(f"  trigger: {ev.trigger}")
-            raw = (ev.script_node.text or "").strip()
-            print("  --- script text ---")
-            print(raw[:800])  # enough to see what’s going on
-            print("  -------------------")
-            break
