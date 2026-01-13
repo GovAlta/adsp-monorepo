@@ -1,7 +1,13 @@
 import '@testing-library/jest-dom';
 import { ControlElement, ControlProps, JsonSchema7 } from '@jsonforms/core';
 
-import { capitalizeFirstLetter, convertToReadableFormat, getRequiredIfThen } from './stringUtils';
+import {
+  capitalizeFirstLetter,
+  convertToReadableFormat,
+  convertToSentenceCase,
+  getLastSegmentFromPointer,
+  getRequiredIfThen,
+} from './stringUtils';
 import { describe } from 'node:test';
 import { GoAInputTextProps } from '../Controls';
 
@@ -168,6 +174,41 @@ describe('stringUtils string tests', () => {
       const testValue: string = null;
       const returnValue = convertToReadableFormat(testValue);
       expect(returnValue).toBe(null);
+    });
+
+    it('convertToSentenceCase handles null input', () => {
+      const testValue: string = null;
+      const returnValue = convertToSentenceCase(testValue);
+      expect(returnValue).toBe(null);
+    });
+
+    it('convertToSentenceCase handles empty string', () => {
+      const returnValue = convertToSentenceCase('');
+      expect(returnValue).toBe('');
+    });
+
+    it('convertToSentenceCase converts camelCase correctly', () => {
+      const returnValue = convertToSentenceCase('firstName');
+      expect(returnValue).toBe('First name');
+    });
+
+    it('convertToSentenceCase converts PascalCase correctly', () => {
+      const returnValue = convertToSentenceCase('FirstName');
+      expect(returnValue).toBe('First name');
+    });
+
+    it('getLastSegmentFromPointer throws error for invalid pointer', () => {
+      expect(() => getLastSegmentFromPointer('invalid')).toThrow("Invalid JSON pointer. Must start with '#/'");
+    });
+
+    it('getLastSegmentFromPointer extracts last segment correctly', () => {
+      const result = getLastSegmentFromPointer('#/properties/firstName');
+      expect(result).toBe('firstName');
+    });
+
+    it('convertToReadableFormat handles empty string', () => {
+      const returnValue = convertToReadableFormat('');
+      expect(returnValue).toBe('');
     });
   });
 });

@@ -60,12 +60,19 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
   };
 
   if (isBoolean) {
-    const checkboxLabel = uischema.options?.text?.trim() || getLastSegmentFromPointer(uischema.scope);
+    let checkboxLabel = '';
+
+    if (uischema.options?.text?.trim()) {
+      checkboxLabel = uischema.options.text.trim();
+    } else if (uischema.scope && uischema.scope.startsWith('#/')) {
+      const fallbackLabel = getLastSegmentFromPointer(uischema.scope);
+      checkboxLabel = fallbackLabel.charAt(0).toUpperCase() + fallbackLabel.slice(1);
+    }
 
     if (uischema.options?.radio === true) {
       reviewText = data ? `Yes` : `No`;
     } else {
-      reviewText = data ? `Yes (${checkboxLabel.trim()})` : `No (${checkboxLabel.trim()})`;
+      reviewText = data ? `Yes (${checkboxLabel})` : `No (${checkboxLabel})`;
     }
   }
 
@@ -81,8 +88,18 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
     reviewText = (
       <ul>
         {data.map((checkbox: string, index: number) => {
-          const checkboxLabel = uischema?.options?.text?.trim() || getLastSegmentFromPointer(uischema.scope);
-          return <li key={index}>{checkbox.trim() || checkboxLabel.trim()}</li>;
+          let checkboxLabel = '';
+
+          // Use explicit text if provided, otherwise fall back to property name from scope
+          if (uischema?.options?.text?.trim()) {
+            checkboxLabel = uischema.options.text.trim();
+          } else if (uischema.scope && uischema.scope.startsWith('#/')) {
+            const fallbackLabel = getLastSegmentFromPointer(uischema.scope);
+            // Capitalize first letter only when falling back to property name from scope
+            checkboxLabel = fallbackLabel.charAt(0).toUpperCase() + fallbackLabel.slice(1);
+          }
+
+          return <li key={index}>{checkbox.trim() || checkboxLabel}</li>;
         })}
       </ul>
     );
