@@ -64,7 +64,7 @@ class PDFServicePage {
   }
 
   pdfTemplateDeleteConfirmationModalContent() {
-    return cy.xpath('//*[@testid="delete-confirmation" ]//div[3]');
+    return cy.xpath('//*[@testid="delete-confirmation" ]//div[2]');
   }
 
   pdfTemplateDeleteConfirmationModalDeleteBtn() {
