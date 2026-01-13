@@ -6,7 +6,11 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { onBlurForDateControl, onChangeForDateControl, onKeyPressForDateControl } from '../../util/inputControlUtils';
 import { callout } from '../../Additional/GoACalloutControl';
 import { standardizeDate } from '../../util/dateUtils';
-import { GoabInputOnChangeDetail, GoabInputOnBlurDetail, GoabInputOnKeyPressDetail } from '@abgov/ui-components-common';
+import {
+  GoabDatePickerOnChangeDetail,
+  GoabInputOnBlurDetail,
+  GoabInputOnKeyPressDetail,
+} from '@abgov/ui-components-common';
 
 export type GoAInputDateProps = CellProps & WithClassname & WithInputProps;
 export const errMalformedDate = (scope: string, type: string): string => {
@@ -70,13 +74,13 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
       readonly={readOnly}
       min={minDate && new Date(minDate)}
       max={maxDate && new Date(maxDate)}
-      onChange={(detail: GoabInputOnChangeDetail) => {
+      onChange={(detail: GoabDatePickerOnChangeDetail) => {
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
         onChangeForDateControl({
-          name: detail.name,
-          value: detail.value,
+          name: detail.name?? 'date',
+          value: detail.valueStr,
           controlProps: props as ControlProps,
         });
       }}

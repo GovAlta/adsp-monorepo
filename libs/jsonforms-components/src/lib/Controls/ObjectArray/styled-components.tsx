@@ -45,7 +45,8 @@ export const SideMenuItem = styled.div`
 
 export const RowFlex = styled.div`
   display: flex;
-  align-items: stretch;
+
+  align-items: flex-start;
 `;
 
 export const RowFlexMenu = styled.div`
@@ -60,10 +61,21 @@ export const FlexTabs = styled.div`
   flex: 1;
   overflow-y: auto !important;
 `;
+export const FlexTabsWithMargin = styled.div`
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto !important;
+  margin-right: 1.5rem;
+
+  flex-shrink: 1;
+  // max-height: 500px;
+`;
 
 export const FlexForm = styled.div`
   flex-direction: column;
   flex: 3;
+  flex-shrink: 0;
+  overflow-y: auto;
 `;
 
 export const TabName = styled.div`

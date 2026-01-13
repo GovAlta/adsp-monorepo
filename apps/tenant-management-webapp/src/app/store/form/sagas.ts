@@ -67,7 +67,6 @@ import {
   clearAllTags,
   INITIALIZE_FORM_EDITOR,
   FETCH_FORM_DEFINITIONS_REGISTER_ID_ACTION,
-  getFormDefinitionsRegisterIdSuccess,
 } from './action';
 import {
   fetchFormDefinitionsApi,
@@ -126,47 +125,6 @@ export function* fetchFormDefinitions(payload): SagaIterator {
         })
       );
       yield put(getFormDefinitionsSuccess(definitions, page.next, page.after));
-    } catch (err) {
-      yield put(ErrorNotification({ error: err }));
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
-      );
-    }
-  }
-}
-
-export function* fetchFormDefinitionsRegisterId(payload): SagaIterator {
-  const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
-  );
-  const token: string = yield call(getAccessToken);
-  const registeredId = payload.registeredId;
-  if (configBaseUrl && token) {
-    try {
-      const url = `${configBaseUrl}/configuration/v2/configuration/form-service?top=1&registeredId=${registeredId}`;
-      const { results, page } = yield call(fetchFormDefinitionsApi, token, url);
-      yield put(
-        UpdateIndicator({
-          show: true,
-        })
-      );
-      const definitions = results.reduce((acc, def) => {
-        if (def.latest?.configuration?.id) {
-          acc[def.latest.configuration.id] = def.latest.configuration;
-        } else {
-          acc[def.id] = def.latest.configuration;
-        }
-
-        return acc;
-      }, {});
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
-      );
-      yield put(getFormDefinitionsRegisterIdSuccess(definitions, page.next, page.after));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
@@ -674,7 +632,6 @@ function* initializeFormEditorSaga() {
 export function* watchFormSagas(): Generator {
   yield takeLatest(INITIALIZE_FORM_EDITOR, initializeFormEditorSaga);
   yield takeEvery(FETCH_FORM_DEFINITIONS_ACTION, fetchFormDefinitions);
-  yield takeEvery(FETCH_FORM_DEFINITIONS_REGISTER_ID_ACTION, fetchFormDefinitionsRegisterId);
   yield takeEvery(EXPORT_FORM_INFO_ACTION, exportFormInfo);
   yield takeEvery(UPDATE_FORM_DEFINITION_ACTION, updateFormDefinition);
   yield takeEvery(DELETE_FORM_DEFINITION_ACTION, deleteFormDefinition);

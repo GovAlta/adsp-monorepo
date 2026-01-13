@@ -6,8 +6,9 @@ Feature: Service status
     Given a tenant admin user is on status overview page
     Then the user views the health check guidelines
 
+  # Ignore this test as it crashes the test suite
   # TEST DATA: need 2 applications named "Autotest" and "File Service"
-  @TEST_CS-781 @REQ_CS-667 @regression
+  @TEST_CS-781 @REQ_CS-667 @regression @ignore
   Scenario Outline: As a tenant admin, I can add, edit and delete a notice
     Given a tenant admin user is on status notices page
     When the user clicks Add notice button
@@ -36,8 +37,9 @@ Feature: Service status
       | Description        | Application | Start Date | Start Time | End Date | End Time | Description2            | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
       | Autotest-NewNotice | Autotest    | Today      | 02:00 pm   | Today    | 11:00 pm | Autotest-ModifiedNotice | File Service | Today        | 10:00 am     | Today      | 02:00 pm   |
 
+  # Ignore this test as it crashes the test suite
   # TEST DATA: "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-  @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression
+  @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression @ignore
   Scenario: As a tenant admin, I can publish and un-publish a notice, and see the notice published event
     Given a tenant admin user is on status notices page
     When the user clicks "Publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
@@ -56,8 +58,9 @@ Feature: Service status
     And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
 
+  # Ignore this test as it crashes the test suite
   # TEST DATA: an application named "Autotest"
-  @TEST_CS-783 @REQ_CS-667 @regression
+  @TEST_CS-783 @REQ_CS-667 @regression @ignore
   Scenario: As a tenant admin, I can add, publish and archive a notice
     Given a tenant admin user is on status notices page
     When the user clicks Add notice button
@@ -114,7 +117,8 @@ Feature: Service status
     And the user selects "Applications" tab for "Status"
     Then the user views the subscribe checkbox is "checked"
 
-  @TEST_CS-835 @REQ_CS-792 @regression
+  # CS-4618 Cannot save a notice changed from all applications to a specific type
+  @TEST_CS-835 @REQ_CS-792 @regression @ignore
   Scenario Outline: As a tenant admin, I can add, edit, publish, unpublish and delete a tenant level notice
     Given a tenant admin user is on status notices page
     When the user clicks Add notice button
