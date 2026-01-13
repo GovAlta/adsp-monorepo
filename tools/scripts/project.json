@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "tools/scripts",
   "projectType": "library",
+  "tags": [],
   "generators": {},
   "targets": {
     "build-encodeSecrets": {
@@ -19,9 +20,7 @@
         "webpackConfig": "tools/scripts/webpack.config.js",
         "sourceMap": true
       },
-      "outputs": [
-        "{options.outputPath}"
-      ]
+      "outputs": ["{options.outputPath}"]
     },
     "build-tenantEventMetrics": {
       "executor": "@nx/webpack:webpack",
@@ -37,9 +36,7 @@
         "webpackConfig": "tools/scripts/webpack.config.js",
         "sourceMap": true
       },
-      "outputs": [
-        "{options.outputPath}"
-      ]
+      "outputs": ["{options.outputPath}"]
     },
     "run-encodeSecrets": {
       "executor": "nx:run-commands",
@@ -52,9 +49,7 @@
         ],
         "parallel": false
       },
-      "dependsOn": [
-        "build-encodeSecrets"
-      ]
+      "dependsOn": ["build-encodeSecrets"]
     },
     "run-tenantEventMetrics": {
       "executor": "nx:run-commands",
@@ -67,19 +62,14 @@
         ],
         "parallel": false
       },
-      "dependsOn": [
-        "build-tenantEventMetrics"
-      ]
+      "dependsOn": ["build-tenantEventMetrics"]
     },
     "test": {
       "executor": "@nx/jest:jest",
       "options": {
         "jestConfig": "tools/scripts/jest.config.ts"
       },
-      "outputs": [
-        "{workspaceRoot}/coverage/tools/scripts"
-      ]
+      "outputs": ["{workspaceRoot}/coverage/tools/scripts"]
     }
-  },
-  "tags": []
+  }
 }

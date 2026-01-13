@@ -4,6 +4,7 @@
   "sourceRoot": "apps/status-service/src",
   "projectType": "application",
   "prefix": "status-service",
+  "tags": [],
   "generators": {},
   "targets": {
     "build": {
@@ -43,6 +44,5 @@
         "runInBand": true
       }
     }
-  },
-  "tags": []
+  }
 }
