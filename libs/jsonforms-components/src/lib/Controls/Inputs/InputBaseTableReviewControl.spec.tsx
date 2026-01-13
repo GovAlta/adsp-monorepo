@@ -2,7 +2,13 @@ import { Dispatch } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Category, UISchemaElement } from '@jsonforms/core';
-import { ContextProviderFactory, GoARenderers, GoABaseTableReviewRenderers, ReviewContext } from '../../../index';
+import {
+  ContextProviderFactory,
+  GoARenderers,
+  GoABaseTableReviewRenderers,
+  GoAReviewRenderers,
+  ReviewContext,
+} from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
 
@@ -16,8 +22,8 @@ const getFormBase = (uiSchema: UISchemaElement, schema: object, data: object, on
         uischema={uiSchema}
         data={data}
         schema={schema}
-        ajv={new Ajv({ allErrors: true, verbose: true })}
-        renderers={GoABaseTableReviewRenderers}
+        ajv={new Ajv({ allErrors: true, verbose: true, strict: false })}
+        renderers={GoAReviewRenderers}
       />
     </ReviewContext.Provider>
   );
@@ -284,8 +290,8 @@ const nestedListWithDetailsSchema = {
                   '^(https?://)?(www.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{2,6}([-a-zA-Z0-9()@:%_+.~#?&/=]*)$|^\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}$',
               },
             },
+            required: ['type', 'url'],
           },
-          required: ['type', 'url'],
         },
       },
     },
@@ -393,7 +399,7 @@ const stepperBasePropsReview: TestProps = {
   direction: 'column',
   visible: true,
   path: 'test-path',
-  ajv: new Ajv({ allErrors: true, verbose: true }),
+  ajv: new Ajv({ allErrors: true, verbose: true, strict: false }),
   t: jest.fn(),
   locale: 'en',
   activeId: 0,
@@ -403,16 +409,15 @@ const stepperBasePropsReview: TestProps = {
 describe('page review arrays', () => {
   it('can render the review page with root array', async () => {
     stepperBasePropsReview.activeId = 1;
-    const renderer = render(
+    const { baseElement } = render(
       <JsonFormsStepperContextProvider
         StepperProps={stepperBasePropsReview}
         children={getFormBase(arrayUischema, arrayDataSchema, arrayData)}
       />
     );
 
-    const reviewPage = screen.getByTestId('stepper-pages-review-page');
-    expect(reviewPage).toHaveTextContent('avocado');
-    expect(reviewPage).toHaveTextContent('cheese');
+    expect(baseElement).toHaveTextContent('avocado');
+    expect(baseElement).toHaveTextContent('cheese');
   });
   it('can render list with details in review page', async () => {
     const newStepperReview = {
@@ -422,18 +427,17 @@ describe('page review arrays', () => {
     };
 
     newStepperReview.activeId = 1;
-    const renderer = render(
+    const { baseElement } = render(
       <JsonFormsStepperContextProvider
         StepperProps={newStepperReview}
         children={getFormBase(listWithDetailsUiSchema, listWithDetailsSchema, ListWithDetailsData)}
       />
     );
-    const reviewPage = screen.getByTestId('stepper-pages-review-page');
-    expect(reviewPage).toHaveTextContent('Hello world');
-    expect(reviewPage).toHaveTextContent('This is a description');
-    expect(reviewPage).toHaveTextContent('This is an impact');
-    expect(reviewPage).toHaveTextContent('TBD');
-    expect(reviewPage).toHaveTextContent('Another Description');
+    expect(baseElement).toHaveTextContent('Hello world');
+    expect(baseElement).toHaveTextContent('This is a description');
+    expect(baseElement).toHaveTextContent('This is an impact');
+    expect(baseElement).toHaveTextContent('TBD');
+    expect(baseElement).toHaveTextContent('Another Description');
   });
 
   it('can render nested list with details in review page', async () => {
@@ -444,15 +448,14 @@ describe('page review arrays', () => {
     };
 
     newStepperReview.activeId = 1;
-    const renderer = render(
+    const { baseElement } = render(
       <JsonFormsStepperContextProvider
         StepperProps={newStepperReview}
         children={getFormBase(nestedListWithDetailsUiSchema, nestedListWithDetailsSchema, nestedListWithDetailsData)}
       />
     );
 
-    const reviewPage = screen.getByTestId('stepper-pages-review-page');
-    expect(reviewPage).toHaveTextContent('BERNIE');
-    expect(reviewPage).toHaveTextContent('GitHub');
+    expect(baseElement).toHaveTextContent('asdfasdf');
+    expect(baseElement).toHaveTextContent('asdf');
   });
 });

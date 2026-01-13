@@ -181,8 +181,8 @@ describe('AddressLoopUpControlTableReview', () => {
   };
   it('should render the component with input fields', async () => {
     const { baseElement } = renderComponent();
-    expect(screen.getByText('Alberta')).toBeInTheDocument();
-    expect(screen.getByText('Canada')).toBeInTheDocument();
+    expect(screen.getByText('Alberta postal address')).toBeInTheDocument();
+    expect(screen.getByText('CAN')).toBeInTheDocument();
     expect(screen.getByText('Edmonton')).toBeInTheDocument();
     expect(screen.getByText('10111 111 ave')).toBeInTheDocument();
     expect(screen.getByText('T6G 1E1')).toBeInTheDocument();

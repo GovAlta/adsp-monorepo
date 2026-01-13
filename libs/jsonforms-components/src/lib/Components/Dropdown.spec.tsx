@@ -301,5 +301,88 @@ describe('Dropdown Component', () => {
     it('test isValidKey is false if it is not a shift key', () => {
       expect(isValidKey('Shift')).toBe(false);
     });
+    it('test isValidKey is false for non-matching character (space)', () => {
+      expect(isValidKey(' ')).toBe(false);
+    });
+  });
+
+  it('handles ArrowDown when getElementById returns null (non-autoCompletion fallback)', () => {
+    const items = [
+      { label: 'label-a', value: 'value-a' },
+      { label: 'label-b', value: 'value-b' },
+    ];
+
+    const origGetElementById = document.getElementById;
+    const origQuery = document.querySelectorAll;
+
+    // make getElementById return null to force fallback
+    // and provide a fake NodeList for querySelectorAll
+    // that mimics elements.item(0).children.item(1).innerText
+    // (used by the non-autoCompletion branch)
+    // @ts-ignore
+    document.getElementById = jest.fn().mockReturnValue(null);
+    // @ts-ignore
+    document.querySelectorAll = jest
+      .fn()
+      .mockReturnValue({ item: () => ({ children: { item: () => ({ innerText: 'label-b' }) } }) });
+
+    const { baseElement } = render(
+      <Dropdown
+        enabled={true}
+        label="mock-test"
+        items={items}
+        selected={items[0].value}
+        onChange={(value) => {}}
+        isAutoCompletion={false}
+        id="jsonforms-dropdown-mock-test"
+      />
+    );
+
+    const input = baseElement.querySelector("goa-input[testId='jsonforms-dropdown-mock-test-input']");
+    input.focus();
+
+    fireEvent.keyDown(input, { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, charCode: 40 });
+
+    // restore
+    document.getElementById = origGetElementById;
+    document.querySelectorAll = origQuery;
+  });
+
+  it('handles ArrowDown when getElementById returns null (autoCompletion fallback)', () => {
+    const items = [
+      { label: 'label-a', value: 'value-a' },
+      { label: 'label-b', value: 'value-b' },
+    ];
+
+    const origGetElementById = document.getElementById;
+    const origQuery = document.querySelectorAll;
+
+    // force getElementById null and provide NodeList for autoCompletion branch
+    // which uses elements[0].children[0]
+    // @ts-ignore
+    document.getElementById = jest.fn().mockReturnValue(null);
+    // @ts-ignore
+    document.querySelectorAll = jest.fn().mockReturnValue([{ children: [{ innerText: 'label-b' }] }]);
+
+    const { baseElement } = render(
+      <Dropdown
+        enabled={true}
+        label="mock-test"
+        items={items}
+        selected={items[0].value}
+        onChange={(value) => {}}
+        isAutoCompletion={true}
+        id="jsonforms-dropdown-mock-test"
+      />
+    );
+
+    const input = baseElement.querySelector("goa-input[testId='jsonforms-dropdown-mock-test-input']");
+    input.focus();
+
+    fireEvent.keyDown(input, { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, charCode: 40 });
+
+    // restore
+    document.getElementById = origGetElementById;
+    document.querySelectorAll = origQuery;
   });
 });
