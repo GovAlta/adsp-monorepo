@@ -1,50 +1,38 @@
-import { GoabFormItem, GoabGrid } from '@abgov/react-components';
+import React, { useContext } from 'react';
+import { GoabButton } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
-import { TextWrapDiv } from '../AddressLookup/styled-components';
+import { PageReviewNameCol, PageReviewValueCol } from '../Inputs/style-component';
+import { ReviewContext } from '../../Context/ReviewContext';
 
 type DateOfBirthReviewControlProps = ControlProps;
 
 export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): JSX.Element => {
-  const { data } = props;
+  const { data, id } = props;
+  const context = useContext(ReviewContext);
+
+  const renderRow = (label: string, value: string, testId: string) => (
+    <tr>
+      <PageReviewNameCol>
+        <strong>{label}</strong>
+      </PageReviewNameCol>
+      <PageReviewValueCol>
+        <div data-testid={testId}>{value}</div>
+      </PageReviewValueCol>
+      <td className="goa-table-width-limit">
+        <GoabButton type="tertiary" size="compact" onClick={() => context.onEdit()}>
+          Change
+        </GoabButton>
+      </td>
+    </tr>
+  );
+
   return (
     <>
-      <GoabGrid minChildWidth="0ch" gap="s" mb="m">
-        <GoabFormItem
-          label="First name"
-          error={data?.firstName === undefined ? 'First name is required' : ''}
-          requirement="required"
-        >
-          <TextWrapDiv>
-            <div data-testid={`firstName-control-${props.id}`}>{props.data?.firstName}</div>
-          </TextWrapDiv>
-        </GoabFormItem>
-        <GoabFormItem label="Middle name">
-          <TextWrapDiv>
-            <div data-testid={`middleName-control-${props.id}`}>{props.data?.middleName}</div>
-          </TextWrapDiv>
-        </GoabFormItem>
-        <GoabFormItem
-          label="Last name"
-          error={data?.lastName === undefined ? 'Last name is required' : ''}
-          requirement="required"
-        >
-          <TextWrapDiv>
-            <div data-testid={`lastName-control-${props.id}`}>{props.data?.lastName}</div>
-          </TextWrapDiv>
-        </GoabFormItem>
-      </GoabGrid>
-      <GoabGrid minChildWidth="0ch" gap="s">
-        <GoabFormItem
-          label="Date of birth"
-          error={data?.dateOfBirth === undefined ? 'Date of birth is required' : ''}
-          requirement="required"
-        >
-          <TextWrapDiv>
-            <div data-testid={`dob-control-${props.id}`}>{props.data?.dateOfBirth}</div>
-          </TextWrapDiv>
-        </GoabFormItem>
-      </GoabGrid>
+      {renderRow('First name', data?.firstName, `firstName-control-${id}`)}
+      {data?.middleName && renderRow('Middle name', data?.middleName, `middleName-control-${id}`)}
+      {renderRow('Last name', data?.lastName, `lastName-control-${id}`)}
+      {renderRow('Date of birth', data?.dateOfBirth, `dob-control-${id}`)}
     </>
   );
 };

@@ -4,6 +4,7 @@ import { JsonFormsDispatch, withJsonFormsLayoutProps, withTranslateProps } from 
 import { useContext } from 'react';
 import { GoABaseTableReviewRenderers } from '../../../index';
 import { withAjvProps } from '../../util/layout';
+import { ReviewContext } from '../../Context/ReviewContext';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from './context';
 import {
   TableReviewCategoryLabel,
@@ -30,18 +31,6 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
           <>
             <TableReviewPageTitleRow>
               <TableReviewCategoryLabel>{categoryLabel}</TableReviewCategoryLabel>
-              <GoabButton
-                type="tertiary"
-                testId={`page-review-change-${category.label}-btn`}
-                onClick={() => {
-                  if (formStepperCtx) {
-                    formStepperCtx.toggleShowReviewLink(category?.id);
-                    formStepperCtx.goToPage(category?.id);
-                  }
-                }}
-              >
-                Change
-              </GoabButton>
             </TableReviewPageTitleRow>
             <TableReviewItemSection key={index}>
               {category.uischema?.elements
@@ -82,14 +71,25 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
                   return (
                     <GoabTable width="100%" key={index}>
                       <tbody>
-                        <JsonFormsDispatch
-                          data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-                          schema={schema}
-                          uischema={{ ...element, options: { ...element?.options, categoryIndex: index } }}
-                          enabled={enabled}
-                          renderers={GoABaseTableReviewRenderers}
-                          cells={cells}
-                        />
+                        <ReviewContext.Provider
+                          value={{
+                            onEdit: () => {
+                              if (formStepperCtx) {
+                                formStepperCtx.toggleShowReviewLink(category?.id);
+                                formStepperCtx.goToPage(category?.id);
+                              }
+                            },
+                          }}
+                        >
+                          <JsonFormsDispatch
+                            data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+                            schema={schema}
+                            uischema={{ ...element, options: { ...element?.options, categoryIndex: index } }}
+                            enabled={enabled}
+                            renderers={GoABaseTableReviewRenderers}
+                            cells={cells}
+                          />
+                        </ReviewContext.Provider>
                       </tbody>
                     </GoabTable>
                   );

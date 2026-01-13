@@ -5,6 +5,7 @@ import { JsonFormsStepperContext } from '../FormStepper/context';
 import { PageReviewNameCol, PageReviewValueCol } from '../Inputs/style-component';
 import { GoabButton } from '@abgov/react-components';
 import { JsonFormsStepperContextProvider } from '../FormStepper/context';
+import { ReviewContext } from '../../Context/ReviewContext';
 
 type AddressViewProps = ControlProps;
 
@@ -17,11 +18,25 @@ export const AddressLookUpControlReview = (props: AddressViewProps): JSX.Element
 };
 
 export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.Element => {
-  const { data, schema, uischema } = props;
-
-  const categoryIndex = uischema.options?.categoryIndex;
-  const formStepperCtx = useContext(JsonFormsStepperContext);
+  const { data, schema } = props;
+  const context = useContext(ReviewContext);
   const isAlbertaAddress = schema?.properties?.subdivisionCode?.const === 'AB';
+
+  const renderRow = (label: string, value: string) => (
+    <tr>
+      <PageReviewNameCol>
+        <strong>{label}</strong>
+      </PageReviewNameCol>
+      <PageReviewValueCol>
+        <div>{value}</div>
+      </PageReviewValueCol>
+      <td className="goa-table-width-limit">
+        <GoabButton type="tertiary" size="compact" onClick={() => context.onEdit()}>
+          Change
+        </GoabButton>
+      </td>
+    </tr>
+  );
 
   return (
     <>
@@ -30,11 +45,12 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
           <strong>{`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}</strong>
         </PageReviewNameCol>
       </tr>
-      <tr>
-        <td colSpan={3}>
-          <AddressViews data={data} isAlbertaAddress={isAlbertaAddress} withoutHeader={true} />
-        </td>
-      </tr>
+      {renderRow('Address line 1', data?.addressLine1)}
+      {data?.addressLine2 && renderRow('Address line 2', data?.addressLine2)}
+      {renderRow('City', data?.municipality)}
+      {renderRow('Postal Code', data?.postalCode)}
+      {renderRow('Province', data?.subdivisionCode)}
+      {renderRow('Country', data?.country)}
     </>
   );
 };

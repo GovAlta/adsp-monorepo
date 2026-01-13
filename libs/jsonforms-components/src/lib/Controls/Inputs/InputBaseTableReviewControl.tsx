@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { PageReviewNameCol, PageReviewValueCol } from './style-component';
 import { convertToSentenceCase, getLastSegmentFromPointer } from '../../util';
 import { getLabelText } from '../../util/stringUtils';
+import { GoabButton } from '@abgov/react-components';
 
 import { GoAReviewRenderers } from '../../../index';
 import { JsonFormsDispatch } from '@jsonforms/react';
+import { ReviewContext } from '../../Context/ReviewContext';
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
   const { data, uischema, label, schema, path, errors, enabled, cells } = props;
+  const context = useContext(ReviewContext);
   const labelToUpdate: string = convertToSentenceCase(getLabelText(uischema.scope, label || ''));
   let reviewText = data;
   const isBoolean = typeof data === 'boolean';
@@ -49,6 +52,13 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
           />
         )}
       </PageReviewValueCol>
+      <td className="goa-table-number-col">
+        {context?.onEdit && (
+          <GoabButton type="tertiary" size="compact" onClick={() => context.onEdit()}>
+            Change
+          </GoabButton>
+        )}
+      </td>
     </tr>
   );
 };

@@ -21,15 +21,17 @@ export const RequiredTextLabel = styled.label`
 `;
 
 export const PageReviewNameCol = styled.td`
-  width: 5%;
+  width: 40%;
   padding-top: var(--goa-space-s);
   padding-bottom: var(--goa-space-s);
   padding-right: var(--goa-space-m);
+  vertical-align: top;
 `;
 
 export const PageReviewValueCol = styled.td`
-  width: 20%;
+  width: 40%;
   text-align: left;
+  vertical-align: top;
 `;
 
 //Check and unchecked are different heights otherwise
