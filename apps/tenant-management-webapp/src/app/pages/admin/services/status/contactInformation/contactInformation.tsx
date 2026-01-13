@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber } from '@store/subscription/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-import { Grid, GridItem, TextGoASkeleton } from '@core-services/app-common';
+import { TextGoASkeleton } from '@core-services/app-common';
 import {
   UpdateContactInformationService,
   FetchStatusConfigurationService,
@@ -14,7 +14,7 @@ import { ContactInformationModalForm } from './editContactInfo';
 import { ReactComponent as Edit } from '@icons/edit.svg';
 import { useActionStateCheck } from '@components/Indicator';
 import { NoPaddingH2 } from '@components/AppHeader';
-
+import {GoabGrid} from '@abgov/react-components';
 interface SubscribersProps {
   subscribers?: Subscriber[];
   readonly?: boolean;
@@ -78,13 +78,13 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
           report service issues.
         </p>
 
-        <Grid>
-          <GridItem data-testid="email" className="word-break contact-border" md={12} vSpacing={1} hSpacing={0.5}>
+        <GoabGrid minChildWidth='320' >
+          <div data-testid="email" className="word-break contact-border" >
             <h4>Contact email</h4>
             {!isFetchConfigCompleted && <TextGoASkeleton />}
             {isFetchConfigCompleted && contact?.contactEmail}
-          </GridItem>
-        </Grid>
+          </div>
+        </GoabGrid>
         <ContactInformationModalForm
           open={editContactInformation}
           initialValue={initialValue}
