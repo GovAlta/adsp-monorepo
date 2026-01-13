@@ -89,6 +89,21 @@ const getUiSchema = () => {
     },
   };
 };
+const getUiSchemaLeftTab = () => {
+  return {
+    type: 'ListWithDetail',
+    scope: '#/properties/messages',
+    elements: [],
+    options: {
+      componentProps: {
+        withLeftTab: true,
+      },
+      detail: {
+        elements: [],
+      },
+    },
+  };
+};
 
 const getForm = (formData: object) => {
   return (
@@ -96,6 +111,18 @@ const getForm = (formData: object) => {
       data={formData}
       schema={rootSchema}
       uischema={getUiSchema()}
+      ajv={new Ajv({ allErrors: true, verbose: true })}
+      renderers={GoARenderers}
+      cells={GoACells}
+    />
+  );
+};
+const getFormLeftTab = (formData: object) => {
+  return (
+    <JsonForms
+      data={formData}
+      schema={rootSchema}
+      uischema={getUiSchemaLeftTab()}
       ajv={new Ajv({ allErrors: true, verbose: true })}
       renderers={GoARenderers}
       cells={GoACells}
@@ -217,6 +244,33 @@ describe('Object Array Renderer', () => {
 
     expect(item).not.toBeNull();
     expect(item!.textContent).toContain('No data');
+  });
+
+  describe('Object Array Renderer old', () => {
+    it('can add a new item with left tab', () => {
+      const data = { messages: [] };
+      const { baseElement } = render(getFormLeftTab(data));
+
+      // Add a message
+      const addButton = baseElement.querySelector("goa-button[testId='object-array-toolbar-Messages']");
+      expect(addButton).toBeInTheDocument();
+      const shadowAddBtn = addButton!.shadowRoot?.querySelector('button');
+      expect(shadowAddBtn).not.toBeNull();
+      fireEvent(addButton!, new CustomEvent('_click'));
+
+      // populate Name
+      const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input']");
+      expect(nameInput).toBeInTheDocument();
+      fireEvent(nameInput!, new CustomEvent('_change', { detail: { value: 'Bob' } }));
+      expect(nameInput).toHaveAttribute('value', 'Bob');
+
+      // populate Message
+
+      const messageInput = baseElement.querySelector("goa-input[testId='#/properties/message-input']");
+      expect(messageInput).toBeInTheDocument();
+      fireEvent(messageInput!, new CustomEvent('_change', { detail: { value: 'The rain in Spain' } }));
+      expect(messageInput).toHaveAttribute('value', 'The rain in Spain');
+    });
   });
 
   it('can do a delete', () => {
