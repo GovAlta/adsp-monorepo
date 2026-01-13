@@ -201,7 +201,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           <GoabDropdown
             name="application"
             value={selectedApplications[0]?.name}
-            onChange={(detail: GoabDropdownOnChangeDetail) => onSelect(detail.name)}
+            onChange={(detail: GoabDropdownOnChangeDetail) => onSelect(detail.value)}
             width={'54ch'}
             testId="application-dropdown-list"
             aria-label="application-dropdown"
