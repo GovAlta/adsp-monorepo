@@ -319,9 +319,9 @@ describe('Dropdown Component', () => {
     // and provide a fake NodeList for querySelectorAll
     // that mimics elements.item(0).children.item(1).innerText
     // (used by the non-autoCompletion branch)
-    // @ts-ignore
+    // @ts-expect-error -- override DOM for fallback branch in test
     document.getElementById = jest.fn().mockReturnValue(null);
-    // @ts-ignore
+    // @ts-expect-error -- override DOM for fallback branch in test
     document.querySelectorAll = jest
       .fn()
       .mockReturnValue({ item: () => ({ children: { item: () => ({ innerText: 'label-b' }) } }) });
@@ -359,9 +359,9 @@ describe('Dropdown Component', () => {
 
     // force getElementById null and provide NodeList for autoCompletion branch
     // which uses elements[0].children[0]
-    // @ts-ignore
+    // @ts-expect-error -- override DOM for fallback branch in test
     document.getElementById = jest.fn().mockReturnValue(null);
-    // @ts-ignore
+    // @ts-expect-error -- override DOM for fallback branch in test
     document.querySelectorAll = jest.fn().mockReturnValue([{ children: [{ innerText: 'label-b' }] }]);
 
     const { baseElement } = render(

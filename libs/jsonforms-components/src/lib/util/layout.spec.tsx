@@ -1,3 +1,4 @@
+/* eslint-disable import/first, @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';

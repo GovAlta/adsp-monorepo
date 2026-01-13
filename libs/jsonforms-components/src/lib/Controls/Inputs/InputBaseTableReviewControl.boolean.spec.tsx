@@ -6,7 +6,7 @@ import { ReviewContext } from '../../Context/ReviewContext';
 
 describe('GoAInputBaseTableReview boolean rendering', () => {
   it('renders Yes/No when radio option true', () => {
-    const props: any = {
+    const props: Record<string, unknown> = {
       data: true,
       uischema: { scope: '#/properties/flag', options: { radio: true } },
       label: 'flag',
@@ -31,7 +31,7 @@ describe('GoAInputBaseTableReview boolean rendering', () => {
   });
 
   it('renders Yes (label) when checkbox label present and label is empty', () => {
-    const props: any = {
+    const props: Record<string, unknown> = {
       data: true,
       uischema: { scope: '#/properties/flag', options: { text: 'My Checkbox', radio: false } },
       label: '',
@@ -57,7 +57,7 @@ describe('GoAInputBaseTableReview boolean rendering', () => {
 
   it('renders Change button when review context has onEdit', () => {
     const onEdit = jest.fn();
-    const props: any = {
+    const props: Record<string, unknown> = {
       data: 'value',
       uischema: { scope: '#/properties/field' },
       label: 'Field',
