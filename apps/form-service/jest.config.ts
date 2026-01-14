@@ -1,4 +1,8 @@
 /* eslint-disable */
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+
 export default {
   displayName: 'form-service',
   preset: '../../jest-cover.preset.js',

@@ -7,7 +7,7 @@ import { JsonFormContext } from '../../Context';
 
 import { GoAContextMenu, GoAContextMenuIcon } from './ContextMenu';
 import { DeleteFileModal } from './DeleteFileModal';
-import { convertToSentenceCase, Visible } from '../../util';
+import { Visible } from '../../util';
 import { GoabFileUploadInputOnSelectFileDetail } from '@abgov/ui-components-common';
 interface FileUploadAdditionalProps {
   isStepperReview?: boolean;
@@ -137,7 +137,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     return <></>;
   }
   const helpText = uischema?.options?.help;
-  const sentenceCaseLabel = convertToSentenceCase(label);
+  const sentenceCaseLabel = label;
 
   const DownloadFileWidget = ({ index }: { index: number }): JSX.Element => {
     const [showFileDeleteConfirmation, setShowFileDeleteConfirmation] = useState(false);

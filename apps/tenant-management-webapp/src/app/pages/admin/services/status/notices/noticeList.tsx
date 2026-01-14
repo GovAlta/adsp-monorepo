@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { Grid, GridItem } from '@core-services/app-common';
 import { NoticeCard } from './noticeCard';
 import FilterIcon from '@assets/icons/filter-filled.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { GoabRadioItem, GoabRadioGroup } from '@abgov/react-components';
+import { GoabRadioItem, GoabRadioGroup,GoabGrid } from '@abgov/react-components';
 import { renderNoItem } from '@components/NoItem';
 import NoticeModal from './noticeModal';
 import { createSelector } from 'reselect';
@@ -124,8 +123,7 @@ export const NoticeList = (): JSX.Element => {
         noticeId={showEditModalId}
       />
 
-      <Grid>
-        <GridItem md={12} hSpacing={0.5}>
+      <GoabGrid minChildWidth='320'>
           {notices && notices?.length === 0 && renderNoItem('notice')}
           {notices && notices?.length !== 0 && (
             <NoticeListFilter
@@ -134,9 +132,8 @@ export const NoticeList = (): JSX.Element => {
               onSelect={(value) => {
                 filterOnSelectFn(value);
               }}
-            />
+           />
           )}
-        </GridItem>
 
         {notices &&
           notices
@@ -151,7 +148,7 @@ export const NoticeList = (): JSX.Element => {
               }
             })
             .map((notice) => (
-              <GridItem md={12} key={notice.id} vSpacing={0.75}>
+              <div >
                 <NoticeCard
                   key={notice.id}
                   notice={notice}
@@ -169,9 +166,9 @@ export const NoticeList = (): JSX.Element => {
                     )
                   }
                 />
-              </GridItem>
+              </div>
             ))}
-      </Grid>
+      </GoabGrid>
       {count === 0 && filerOption !== 'active' && notices.length > 0 && renderNoItem('notice')}
     </NoticeListContainer>
   );

@@ -355,7 +355,8 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
     tenantId?: AdspId
   ) {
     super(logger, templateService, fileService, type, tenantId);
-
+    
+    Object.assign(this, type);
     if (!this.addressPath && !this.address) {
       throw new InvalidOperationError('Direct notification type must include an addressPath or address.');
     }

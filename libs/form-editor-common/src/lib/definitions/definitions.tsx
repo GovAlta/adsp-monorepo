@@ -6,8 +6,6 @@ import {
   GoabDropdown,
   GoabDropdownItem,
   GoabFormItem,
-  GoabInput,
-  GoabButtonGroup,
 } from '@abgov/react-components';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,7 +22,6 @@ import {
   setSelectedTag,
   deleteResourceTags,
   resetRegisteredId,
-  getFormDefinitionsRegisterId,
 } from '@store/form/action';
 import { RootState } from '@store/index';
 import { ResourceTagFilterCriteria, ResourceTagResult, Service, Tag, ResourceTag } from '@store/directory/models';
@@ -38,7 +35,7 @@ import { LoadMoreWrapper } from './style-components';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
-import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -46,13 +43,6 @@ interface FormDefinitionsProps {
   showFormDefinitions: boolean;
   setOpenAddDefinition: (val: boolean) => void;
 }
-
-const titleCase = (s: string) =>
-  (s || '')
-    .replace(/[-_]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, (c) => c.toUpperCase());
 
 export const FormDefinitions = ({
   openAddDefinition,
@@ -72,25 +62,16 @@ export const FormDefinitions = ({
 
   const navigate = useNavigate();
   const location = useLocation();
-  const isNavigatedFromEdit = location.state?.isNavigatedFromEdit;
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
-  const [registerIdSearch, setRegisterIdSearch] = useState('');
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
-
-  const [ministryFilter, setMinistryFilter] = useState<string>('');
-  const [programFilter, setProgramFilter] = useState<string>('');
-  const [filteredVisibleCount, setFilteredVisibleCount] = useState<number>(10);
-  const [actSearch, setActSearch] = useState<string>('');
-
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
   const next = useSelector((state: RootState) => state.form.nextEntries);
   const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries) || null;
   const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
   const selectedTag = useSelector((state: RootState) => state.form?.formResourceTag?.selectedTag as Tag | null);
   const registerIdDefinition = useSelector((state: RootState) => state.form?.registerIdDefinition);
-
   const tagResources = formResourceTag.tagResources;
 
   const orderedFormDefinitions = (state: RootState) => {
@@ -120,25 +101,8 @@ export const FormDefinitions = ({
   const BASE_FORM_CONFIG_URN = `${resourceConfiguration.urn}:/configuration/form-service`;
   const dispatch = useDispatch();
 
-  const normalize = (s: string) =>
-    (s ?? '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-
-  const defHasActMatch = (def: any, q: string) => {
-    if (!q) return true;
-    const acts: string[] = Array.isArray(def?.actsOfLegislation) ? def.actsOfLegislation : [];
-    const n = normalize(q);
-    return acts.some((a) => normalize(a).includes(n));
-  };
-
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
-
-  const searchRegisterId = () => {
-    dispatch(getFormDefinitionsRegisterId(registerIdSearch));
-  };
 
   useEffect(() => {
     if (openAddDefinition) {
@@ -199,7 +163,6 @@ export const FormDefinitions = ({
   }, [indicator.show]);
 
   const getNextEntries = () => {
-    if (registerIdDefinition) return false;
     if (selectedTag) return tagNext;
     return next;
   };
@@ -229,95 +192,15 @@ export const FormDefinitions = ({
 
   const displayDefinitions = registerIdDefinition ? registerIdDefinition : selectedTag ? tagResources : formDefinitions;
 
-  const getProgramFromDef = (def: any): { id: string; label: string } => {
-    const id = def?.programId ?? def?.program?.id ?? def?.program ?? def?.programName ?? '';
-    const label =
-      def?.programName ??
-      def?.program?.name ??
-      (typeof def?.program === 'string' ? def.program : '') ??
-      (typeof id === 'string' ? id : '');
-    return { id: String(id ?? '').trim(), label: String(label ?? '').trim() };
-  };
-
-  const programOptions = useMemo(() => {
-    const seen = new Map<string, string>();
-    Object.values(displayDefinitions || {}).forEach((d: any) => {
-      const { id, label } = getProgramFromDef(d);
-      if (id) {
-        if (!seen.has(id) || (seen.get(id) || '').toLowerCase() === id.toLowerCase()) {
-          seen.set(id, label || id);
-        }
-      }
-    });
-    return Array.from(seen.entries())
-      .map(([id, label]) => ({ id, label }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [displayDefinitions]);
-
-  const ministryOptions = useMemo(() => {
-    const set = new Set<string>();
-    Object.values(displayDefinitions || {}).forEach((d: any) => {
-      if (d?.ministry) set.add(d.ministry);
-    });
-    return Array.from(set).sort((a, b) => titleCase(a).localeCompare(titleCase(b)));
-  }, [displayDefinitions]);
-
   const filteredDefinitions = useMemo(() => {
-    const entries = Object.entries(displayDefinitions || {});
-    const hasProgram = !!programFilter;
-    const hasMinistry = !!ministryFilter;
-    const hasActs = !!actSearch.trim();
-
-    if (!hasProgram && !hasMinistry && !hasActs) return displayDefinitions;
-
-    const q = actSearch.trim();
-
-    return entries.reduce((obj, [id, def]: [string, any]) => {
-      if (hasMinistry && def?.ministry !== ministryFilter) return obj;
-
-      if (hasProgram) {
-        const { id: progId } = getProgramFromDef(def);
-        if (!progId || progId !== programFilter) return obj;
-      }
-
-      if (hasActs && !defHasActMatch(def, q)) return obj;
-
-      obj[id] = def;
-      return obj;
-    }, {} as Record<string, any>);
-  }, [displayDefinitions, ministryFilter, programFilter, actSearch]);
-
-  useEffect(() => {
-    setFilteredVisibleCount(10);
-  }, [programFilter, ministryFilter, actSearch]);
-
-  const filteredEntriesAll = useMemo(() => Object.entries(filteredDefinitions || {}), [filteredDefinitions]);
-
-  const limitedFilteredDefinitions = useMemo(() => {
-    const entries = filteredEntriesAll;
-    const anyFilter = !!programFilter || !!ministryFilter || !!actSearch.trim();
-
-    if (!anyFilter) return filteredDefinitions;
-    if (entries.length <= filteredVisibleCount) return filteredDefinitions;
-
-    const sliced = entries.slice(0, filteredVisibleCount);
-    return sliced.reduce((obj, [id, def]) => {
-      obj[id] = def;
-      return obj;
-    }, {} as Record<string, any>);
-  }, [filteredDefinitions, filteredEntriesAll, programFilter, ministryFilter, actSearch, filteredVisibleCount]);
-
-  const hasMoreFiltered = useMemo(() => {
-    const anyFilter = !!programFilter || !!ministryFilter || !!actSearch.trim();
-    if (!anyFilter) return false;
-    return filteredEntriesAll.length > filteredVisibleCount;
-  }, [filteredEntriesAll, programFilter, ministryFilter, actSearch, filteredVisibleCount]);
+    return displayDefinitions || {};
+  }, [displayDefinitions]);
 
   return (
     <section>
       <GoabCircularProgress variant="fullscreen" size="small" message="Loading message..."></GoabCircularProgress>
 
-      <GoabFormItem label="Filter by tag" mb={'s'}>
+      <GoabFormItem label="Filter by tag" mb={'l'}>
         <GoabDropdown
           name="TagFilter"
           value={selectedTag?.value || ''}
@@ -343,72 +226,6 @@ export const FormDefinitions = ({
               <GoabDropdownItem key={tag.urn} value={tag.value} label={tag.label} />
             ))}
         </GoabDropdown>
-      </GoabFormItem>
-
-      <GoabFormItem label="Filter by program" mb={'s'}>
-        <GoabDropdown
-          name="ProgramFilter"
-          width="60ch"
-          value={programFilter}
-          onChange={(detail: GoabDropdownOnChangeDetail) => {
-            const value = Array.isArray(detail.values) ? detail.values[0] ?? '' : detail.value;
-            dispatch(resetRegisteredId());
-            setProgramFilter(value);
-          }}
-        >
-          <GoabDropdownItem value="" label="<No Program Filter>" />
-          {programOptions.map((p) => (
-            <GoabDropdownItem key={p.id} value={p.id} label={p.label || p.id} />
-          ))}
-        </GoabDropdown>
-      </GoabFormItem>
-
-      <GoabFormItem label="Filter by ministry" mb={'s'}>
-        <GoabDropdown
-          name="MinistryFilter"
-          width="60ch"
-          value={ministryFilter}
-          onChange={(detail: GoabDropdownOnChangeDetail) => {
-            const value = Array.isArray(detail.values) ? detail.values[0] ?? '' : detail.value;
-            setMinistryFilter(value);
-          }}
-        >
-          <GoabDropdownItem value="" label="<No Ministry Filter>" />
-          {ministryOptions.map((m) => (
-            <GoabDropdownItem key={m} value={m} label={titleCase(m)} />
-          ))}
-        </GoabDropdown>
-      </GoabFormItem>
-
-      <GoabFormItem label="Registered ID" mb="s">
-        <GoabButtonGroup alignment="start">
-          <GoabInput
-            type="text"
-            onChange={(detail: GoabInputOnChangeDetail) => setRegisterIdSearch(detail.value)}
-            value={registerIdSearch}
-            name="register Id Search"
-          />
-
-          <GoabButton type="primary" onClick={() => searchRegisterId()} disabled={registerIdSearch.length === 0}>
-            Search
-          </GoabButton>
-
-          <GoabButton type="secondary" onClick={() => dispatch(resetRegisteredId())} disabled={!registerIdDefinition}>
-            Reset
-          </GoabButton>
-        </GoabButtonGroup>
-      </GoabFormItem>
-      <GoabFormItem label="Search Acts of Legislation" mb={'l'}>
-        {/* please make sure the last filter or search should be l margin bottom */}
-        <GoabInput
-          type="search"
-          name="ActsSearch"
-          width="60ch"
-          value={actSearch}
-          testId="acts-search"
-          aria-label="Search Acts of Legislation"
-          onChange={(detail: GoabInputOnChangeDetail) => setActSearch(detail.value)}
-        />
       </GoabFormItem>
 
       {showFormDefinitions && (
@@ -453,7 +270,7 @@ export const FormDefinitions = ({
             {Object.keys(filteredDefinitions || {}).length > 0 ? (
               <>
                 <FormDefinitionsTable
-                  definitions={limitedFilteredDefinitions}
+                  definitions={filteredDefinitions}
                   baseResourceFormUrn={BASE_FORM_CONFIG_URN}
                   onDelete={(formDefinition) => {
                     setShowDeleteConfirmation(true);
@@ -464,25 +281,13 @@ export const FormDefinitions = ({
                     setCurrentDefinition(formDefinition);
                   }}
                 />
-                {getNextEntries() && !ministryFilter && !programFilter && !actSearch.trim() && (
+                {getNextEntries() && (
                   <LoadMoreWrapper>
                     <GoabButton
                       testId="form-event-load-more-btn"
                       key="form-event-load-more-btn"
                       type="tertiary"
                       onClick={onNext}
-                    >
-                      Load more
-                    </GoabButton>
-                  </LoadMoreWrapper>
-                )}
-                {(programFilter || ministryFilter || actSearch.trim()) && hasMoreFiltered && (
-                  <LoadMoreWrapper>
-                    <GoabButton
-                      testId="form-filtered-load-more-btn"
-                      key="form-filtered-load-more-btn"
-                      type="tertiary"
-                      onClick={() => setFilteredVisibleCount((c) => c + 10)}
                     >
                       Load more
                     </GoabButton>

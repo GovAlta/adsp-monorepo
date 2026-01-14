@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/form-management-app/src",
   "projectType": "application",
+  "tags": [],
   "generators": {},
   "targets": {
     "build": {
@@ -34,9 +35,7 @@
         ],
         "scripts": [],
         "stylePreprocessorOptions": {
-          "includePaths": [
-            "libs/stylesheets/scss/src/lib"
-          ]
+          "includePaths": ["libs/stylesheets/scss/src/lib"]
         },
         "extractCss": true,
         "styles": [],
@@ -73,9 +72,7 @@
           "vendorChunk": true
         }
       },
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production"
     },
     "serve": {
@@ -102,10 +99,7 @@
       "options": {
         "jestConfig": "apps/form-management-app/jest.config.ts"
       },
-      "outputs": [
-        "{workspaceRoot}/coverage/apps/form-management-app"
-      ]
+      "outputs": ["{workspaceRoot}/coverage/apps/form-management-app"]
     }
-  },
-  "tags": []
+  }
 }

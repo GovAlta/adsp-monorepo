@@ -24,7 +24,7 @@ import merge from 'lodash/merge';
 import range from 'lodash/range';
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import { GoAReviewRenderers } from '../../../index';
-import { capitalizeFirstLetter, convertToSentenceCase, isEmptyBoolean, isEmptyNumber, Visible } from '../../util';
+import { capitalizeFirstLetter, isEmptyBoolean, isEmptyNumber, Visible } from '../../util';
 import {
   ADD_DATA_ACTION,
   Categories,
@@ -230,7 +230,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                       return (
                         <th key={index}>
                           <p>
-                            {currentProperty?.title || convertToSentenceCase(index)}
+                            {currentProperty?.title || index}
                             {required?.includes(value) && <RequiredSpan>(required)</RequiredSpan>}
                           </p>
                         </th>
@@ -239,7 +239,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                     return (
                       <TableTHHeader key={index}>
                         <p>
-                          {`${currentProperty?.title || convertToSentenceCase(index)}`}
+                          {`${currentProperty?.title || index}`}
                           {required?.includes(value) && (
                             <RequiredSpan>
                               <br /> (required)
@@ -334,10 +334,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                   error={!!error?.message}
                                 >
                                   {!required?.includes(schemaName) && (
-                                    <GoabDropdownItem
-                                      value=""
-                                      label={`-- Select ${convertToSentenceCase(schemaName)} --`}
-                                    />
+                                    <GoabDropdownItem value="" label={`-- Select ${schemaName} --`} />
                                   )}
                                   {dataObject.enum.map((opt: string | number) => (
                                     <GoabDropdownItem key={String(opt)} value={String(opt)} label={String(opt)} />

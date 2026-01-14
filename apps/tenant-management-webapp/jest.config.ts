@@ -1,5 +1,11 @@
 /* eslint-disable */
-const { resolve } = require('path');
+import { createRequire } from 'node:module';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
 export default {
   displayName: 'tenant-management-webapp',
@@ -12,12 +18,12 @@ export default {
   coverageDirectory: '../../coverage/apps/tenant-management-webapp',
 
   moduleNameMapper: {
-    '^@components(.*)$': resolve(__dirname, './src/app/components/$1'),
-    '^@assets(.*)$': resolve(__dirname, './src/assets/$1'),
-    '^@icons(.*)$': resolve(__dirname, './src/assets/icons/$1'),
-    '^@lib(.*)$': resolve(__dirname, './src/app/lib/$1'),
-    '^@pages(.*)$': resolve(__dirname, './src/app/pages/$1'),
-    '^@store(.*)$': resolve(__dirname, './src/app/store/$1'),
+    '^@components(.*)$': path.resolve(__dirname, './src/app/components/$1'),
+    '^@assets(.*)$': path.resolve(__dirname, './src/assets/$1'),
+    '^@icons(.*)$': path.resolve(__dirname, './src/assets/icons/$1'),
+    '^@lib(.*)$': path.resolve(__dirname, './src/app/lib/$1'),
+    '^@pages(.*)$': path.resolve(__dirname, './src/app/pages/$1'),
+    '^@store(.*)$': path.resolve(__dirname, './src/app/store/$1'),
     '^uuid$': require.resolve('uuid'),
     //Need to stub mdx-js and ignore running tests against mdx-js library
     '@mdx-js/mdx': '../../libs/jsonforms-components/src/lib/.jest/mdx-js-stub.js',
