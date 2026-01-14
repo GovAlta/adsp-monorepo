@@ -135,7 +135,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@abgov/maven-semantic-release": "^2.0.0",
+    "@abgov/maven-semantic-release": "^2.1.0",
     "@abgov/nx-adsp": "^12.0.1",
     "@abgov/nx-oc": "^12.0.0",
     "@abgov/nx-release": "^12.0.0",
@@ -307,7 +307,6 @@
     "nx": "22.3.3",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "rxjs": "7.8.2",
-    "semantic-release": "^24.0.0"
+    "rxjs": "7.8.2"
   }
 }
