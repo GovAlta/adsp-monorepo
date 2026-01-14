@@ -133,7 +133,7 @@ class CalendarPage {
   }
 
   eventsCalendarEventModalSaveButton() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Save"]');
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Save" and not(@disabled)]');
   }
 
   eventsCalendarEventModalCancelButton() {
