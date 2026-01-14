@@ -4,4 +4,4 @@ export interface ReviewContextProps {
   onEdit: () => void;
 }
 
-export const ReviewContext = createContext<ReviewContextProps>(null);
+export const ReviewContext = createContext<ReviewContextProps | null>(null);
