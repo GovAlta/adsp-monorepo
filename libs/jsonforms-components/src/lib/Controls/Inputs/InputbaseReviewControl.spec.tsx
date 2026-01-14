@@ -206,6 +206,84 @@ describe('GoABaseInputReviewComponent', () => {
     const reviewControl = getByTestId('review-control-input-id');
     expect(reviewControl.textContent).toBe('');
   });
+
+  it('renders time format correctly', () => {
+    const props = {
+      ...baseProps,
+      data: '14:30:00',
+      schema: {
+        type: 'string',
+        format: 'time',
+      },
+    };
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl.textContent).toContain('2:30');
+  });
+
+  it('renders datetime format correctly', () => {
+    const props = {
+      ...baseProps,
+      data: '2024-01-15T14:30:00Z',
+      schema: {
+        type: 'string',
+        format: 'date-time',
+      },
+    };
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl).toBeTruthy();
+  });
+
+  it('renders array data with checkbox labels', () => {
+    const props = {
+      ...baseProps,
+      data: ['Option 1', 'Option 2'],
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/multiSelect',
+        options: {
+          text: 'Select Options',
+        },
+      },
+    };
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl.textContent).toContain('Option 1');
+    expect(reviewControl.textContent).toContain('Option 2');
+  });
+
+  it('renders array data with fallback labels from scope', () => {
+    const props = {
+      ...baseProps,
+      data: ['', ''],
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/checkboxGroup',
+        options: {},
+      },
+    };
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl.textContent).toContain('CheckboxGroup');
+  });
+
+  it('renders checkbox with empty label when scope is invalid', () => {
+    const props = {
+      ...baseProps,
+      data: true,
+      uischema: {
+        type: 'Control' as const,
+        scope: 'invalid-scope',
+        options: {
+          radio: false,
+        },
+      },
+    };
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl.textContent).toBe('Yes ()');
+  });
 });
 
 describe('Can render GoAInputBaseTableReview', () => {
@@ -213,7 +291,7 @@ describe('Can render GoAInputBaseTableReview', () => {
     id: 'mock-id-input',
     label: 'mock',
     uischema: {
-      type: 'Control',
+      type: 'Control' as const,
       scope: '#/properties/mock',
     },
     data: 'mock-data',
@@ -237,5 +315,60 @@ describe('Can render GoAInputBaseTableReview', () => {
     const { getByTestId } = render(<GoAInputBaseTableReview {...{ ...baseTableReviewProps, data: true }} />);
     const tableReviewRow = getByTestId('input-base-table-mock-row');
     expect(tableReviewRow?.textContent).toContain('Yes');
+  });
+
+  it('can render the GoAInputBaseTableReview with boolean false and no label', () => {
+    const props = {
+      ...baseTableReviewProps,
+      data: false,
+      label: '',
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/testField',
+        options: {
+          radio: false,
+        },
+      },
+    };
+    const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
+    const tableReviewRow = getByTestId('input-base-table--row');
+    expect(tableReviewRow?.textContent).toContain('No');
+    expect(tableReviewRow?.textContent).toContain('TestField');
+  });
+
+  it('can render the GoAInputBaseTableReview with radio boolean', () => {
+    const props = {
+      ...baseTableReviewProps,
+      data: true,
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/testField',
+        options: {
+          radio: true,
+        },
+      },
+    };
+    const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
+    const tableReviewRow = getByTestId('input-base-table-mock-row');
+    expect(tableReviewRow?.textContent).toBe('mockYes');
+  });
+
+  it('can render the GoAInputBaseTableReview with boolean and custom text', () => {
+    const props = {
+      ...baseTableReviewProps,
+      data: true,
+      label: '',
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/testField',
+        options: {
+          radio: false,
+          text: 'Custom Label Text',
+        },
+      },
+    };
+    const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
+    const tableReviewRow = getByTestId('input-base-table--row');
+    expect(tableReviewRow?.textContent).toContain('Yes (Custom Label Text)');
   });
 });

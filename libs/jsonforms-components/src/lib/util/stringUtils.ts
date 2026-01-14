@@ -134,7 +134,7 @@ export const getRequiredIfThen = (props: ControlProps) => {
  */
 export const checkFieldValidity = (props: ControlProps): string => {
   const { data, errors: ajvErrors, required, label, uischema, schema } = props;
-  const labelToUpdate = uischema?.scope ? convertToSentenceCase(getLabelText(uischema?.scope, label)) : label;
+  const labelToUpdate = label;
   const extraSchema = schema as JsonSchema & extractSchema;
 
   if (extraSchema && data && extraSchema?.title === sinTitle) {
