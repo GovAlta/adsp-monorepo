@@ -16,13 +16,13 @@ runs:
   steps:
     - name: Install
       shell: bash
-      run: npx nx affected --target=install --base=${{ inputs.affected-base }}
+      run: npx nx affected --parallel=5 --target=install --base=${{ inputs.affected-base }}
     - name: Lint
       shell: bash
-      run: npx nx affected --target=lint --base=${{ inputs.affected-base }}
+      run: npx nx affected --parallel=5 --target=lint --base=${{ inputs.affected-base }}
     - name: Test
       shell: bash
-      run: npx nx affected --target=test --base=${{ inputs.affected-base }}
+      run: npx nx affected --parallel=5 --target=test --base=${{ inputs.affected-base }}
     - name: Build
       shell: bash
       run: npx nx affected --configuration=production --target=build --base=${{ inputs.affected-base }}
