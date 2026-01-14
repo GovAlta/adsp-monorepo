@@ -530,7 +530,7 @@ When(
 );
 
 When('the user clicks Save button in calendar event modal', function () {
-  calendarObj.eventsCalendarEventModalSaveButton().shadow().find('button').click({ force: true });
+  calendarObj.eventsCalendarEventModalSaveButton().shadow().find('button').focus().wait(2000).click({ force: true });
   cy.wait(4000);
 });
 

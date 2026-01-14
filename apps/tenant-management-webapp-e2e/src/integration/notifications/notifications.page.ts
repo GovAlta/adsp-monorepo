@@ -392,7 +392,7 @@ class NotificationsPage {
   }
 
   editSubscriberModal() {
-    return cy.xpath('//goa-modal[@open="true"]/*[@slot="heading" and text()="Edit subscriber"]/parent::goa-modal');
+    return cy.xpath('//goa-modal[@open="true" and @heading="Edit subscriber"]');
   }
 
   editSubscriberModalSaveBtn() {
