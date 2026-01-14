@@ -3,6 +3,8 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/feedback-service/src",
   "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["adsp-feedback"],
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
@@ -59,7 +61,5 @@
         "jestConfig": "apps/feedback-service/jest.config.ts"
       }
     }
-  },
-  "tags": [],
-  "implicitDependencies": ["adsp-feedback"]
+  }
 }

@@ -608,7 +608,7 @@ describe('calendar router', () => {
       };
       const next = jest.fn();
 
-      repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve({id: 1, ...entity}));
+      repositoryMock.save.mockImplementationOnce((entity) => Promise.resolve({ ...entity, id: 1 }));
 
       const handler = createCalendarEvent(apiId, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);

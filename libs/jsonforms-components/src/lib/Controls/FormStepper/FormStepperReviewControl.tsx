@@ -15,7 +15,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
   const componentProps = (uischema.options?.componentProps as FormStepperComponentProps) ?? {};
   const readOnly = componentProps?.readOnly ?? false;
   const categorization = uischema as Categorization;
-  const categories = categorization.elements.filter((category) => isVisible(category, data, '', ajv));
+  const categories = categorization.elements.filter((category) => isVisible(category, data, '', ajv, undefined));
   const rescopeMaps = ['#/properties/albertaAddress', '#/properties/canadianAddress', '#/properties/sin'];
 
   return (

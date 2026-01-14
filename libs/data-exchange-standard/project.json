@@ -15,8 +15,7 @@
         "tsConfig": "libs/data-exchange-standard/tsconfig.lib.json",
         "project": "libs/data-exchange-standard/package.json",
         "entryFile": "libs/data-exchange-standard/src/index.ts",
-        "external": [
-        ],
+        "external": [],
         "rollupConfig": "libs/data-exchange-standard/rollup.config.js",
         "compiler": "babel",
         "assets": [

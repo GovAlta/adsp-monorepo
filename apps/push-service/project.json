@@ -4,6 +4,7 @@
   "sourceRoot": "apps/push-service/src",
   "projectType": "application",
   "prefix": "push-service",
+  "tags": [],
   "generators": {},
   "targets": {
     "build": {
@@ -45,6 +46,5 @@
       },
       "outputs": ["{workspaceRoot}/coverage/apps/push-service"]
     }
-  },
-  "tags": []
+  }
 }

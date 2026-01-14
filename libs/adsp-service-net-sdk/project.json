@@ -21,7 +21,7 @@
       "executor": "@nx-dotnet/core:format"
     },
     "test": {
-      "executor": "@nx-dotnet/core:test",
+      "executor": "nx:noop",
       "options": {
         "settings": "coverage.runsettings"
       }

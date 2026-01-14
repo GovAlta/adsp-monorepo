@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/verify-service/src",
   "projectType": "application",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
@@ -42,6 +43,5 @@
         "jestConfig": "apps/verify-service/jest.config.ts"
       }
     }
-  },
-  "tags": []
+  }
 }

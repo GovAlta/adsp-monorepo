@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/api-docs-app/src",
   "projectType": "application",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
@@ -43,6 +44,5 @@
         "jestConfig": "apps/api-docs-app/jest.config.ts"
       }
     }
-  },
-  "tags": []
+  }
 }

@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/form-app/src",
   "projectType": "application",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
@@ -95,6 +96,5 @@
         "jestConfig": "apps/form-app/jest.config.ts"
       }
     }
-  },
-  "tags": []
+  }
 }

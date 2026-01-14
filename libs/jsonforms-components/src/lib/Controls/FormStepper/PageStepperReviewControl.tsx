@@ -20,7 +20,7 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const categories = (formStepperCtx as JsonFormsStepperContextProps)
     .selectStepperState()
-    .categories.filter((category) => isVisible(category?.uischema as UISchemaElement, data, '', ajv));
+    .categories.filter((category) => isVisible(category?.uischema as UISchemaElement, data, '', ajv, undefined));
   return (
     <TableReviewItem>
       <h2>Review your answers</h2>

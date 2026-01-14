@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/tenant-management-webapp/src",
   "projectType": "application",
+  "tags": [],
   "generators": {},
   "targets": {
     "build": {
@@ -100,6 +101,5 @@
       },
       "outputs": ["{workspaceRoot}/coverage/apps/tenant-management-webapp"]
     }
-  },
-  "tags": []
+  }
 }
