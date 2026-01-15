@@ -175,6 +175,9 @@ class EnumMapFactory(AbstractXdpFactory):
     def handle_help_text(self, *_):
         return None
 
+    def handle_help_icon(self, *_):
+        return None
+
     def _get_saved_enum_map(self, field_node: ET.Element) -> Optional[dict[str, str]]:
         """
         For dropdown/list controls that encode the *saved* rawValue separately:

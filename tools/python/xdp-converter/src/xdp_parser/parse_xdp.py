@@ -11,7 +11,6 @@ from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
 from xdp_parser.help_text_extractor import HelpTextExtractor
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.parsing_helpers import is_object_array
-from xdp_parser.subform_label import get_subform_label
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_radio_selector import extract_radio_button_labels
 from xdp_parser.xdp_utils import (
@@ -105,20 +104,13 @@ class XdpParser:
             control = self.factory.handle_radio_subform(subform, self.control_labels)
             return control
 
-        # Normal container subform → placeholder with children
-        subform_label = get_subform_label(subform)
-
-        children = list(
-            self.find_simple_controls(subform, container_label=subform_label)
-        )
+        children = list(self.find_simple_controls(subform))
         if not children:
             return None
 
         return XdpSubformPlaceholder(subform, children, self.context)
 
-    def find_simple_controls(
-        self, node: ET.Element, container_label: str | None = None
-    ) -> List[XdpElement]:
+    def find_simple_controls(self, node: ET.Element) -> List[XdpElement]:
         """
         Traverse a subform and return a flat list of XdpElement controls
         and nested container nodes (XdpSubformPlaceholder).
@@ -134,9 +126,8 @@ class XdpParser:
             if elem.tag == "field" and HelpTextExtractor.is_help_icon_field(elem):
                 payload = HelpTextExtractor.get_help_from_click_event(elem)
                 if payload:
-                    control = self.factory.handle_help_text(elem, payload["text"])
+                    control = self.factory.handle_help_icon(elem, payload["text"])
                     if control:
-                        print(f"help text control with geometry: {control.geometry}")
                         controls.append(control)
                     i += 1
                     continue
@@ -144,14 +135,8 @@ class XdpParser:
             # Help text from a draw element
             help_text = HelpTextExtractor.get_help_from_draw(elem)
             if help_text:
-                # If the "help" is just the section title, don't emit HelpContent
-                if container_label and self._is_same_text(help_text, container_label):
-                    i += 1
-                    continue
-
                 control = self.factory.handle_help_text(elem, help_text)
                 if control:
-                    print(f"help text control with geometry: {control.geometry}")
                     controls.append(control)
                 i += 1
                 continue

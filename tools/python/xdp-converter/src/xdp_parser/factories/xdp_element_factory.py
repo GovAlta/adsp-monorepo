@@ -4,10 +4,10 @@ from typing import List, Optional
 
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.subform_label import get_subform_header_label
 from xdp_parser.xdp_element import XdpElement, XdpGeometry
 from xdp_parser.xdp_file_upload import XdpFileUpload
 from xdp_parser.xdp_group import XdpGroup
+from xdp_parser.xdp_help_icon import XdpHelpIcon
 from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_object_array import XdpObjectArray
 from xdp_parser.xdp_radio import XdpRadio
@@ -57,43 +57,44 @@ class XdpElementFactory(AbstractXdpFactory):
     def handle_help_text(self, elem, help_text):
         return XdpHelpText(elem, help_text, self.context)
 
+    def handle_help_icon(self, elem, help_text):
+        return XdpHelpIcon(elem, help_text, self.context)
+
     # ----------------------------------------------------------------------
     # GROUP LOGIC
     # ----------------------------------------------------------------------
     def handle_group(
-        self, subform: ET.Element, elements: List[XdpElement], parent_label: str | None
+        self,
+        subform: ET.Element,
+        elements: List[XdpElement],
+        resolved_label: str | None,
     ) -> Optional[XdpElement]:
 
         if not elements:
             return None
 
-        has_real_control = any(
-            getattr(e, "is_control", lambda: False)()
-            or getattr(e, "is_radio", False)
-            or getattr(e, "is_array", False)
-            for e in elements
-        )
+        has_real_control = any(e.is_control() for e in elements)
         if not has_real_control:
             return None
 
-        # Single source of truth for group labels
-        resolved_label = get_subform_header_label(subform)
-
-        # Prevent "Section 6" inside "Section 6"
-        if (
-            resolved_label
-            and parent_label
-            and self._normalize_label(resolved_label)
-            == self._normalize_label(parent_label)
-        ):
-            resolved_label = None
-
+        self._suppress_descendant_duplicate_group_labels(elements, resolved_label)
         group = XdpGroup(subform, elements, self.context, resolved_label)
 
         base_geo = XdpGeometry.resolve(subform, self.context.parent_map)
         group.geometry = XdpGeometry.from_children(elements, fallback=base_geo)
 
         return group
+
+    def _suppress_descendant_duplicate_group_labels(self, elements, parent_label):
+        if not parent_label:
+            return
+        for e in elements:
+            if isinstance(e, XdpGroup) and e.label:
+                print(f" element e {e.label} v.s. parent_label {parent_label}")
+                if self._normalize_label(e.label) == self._normalize_label(
+                    parent_label
+                ):
+                    e.label = None
 
     # ----------------------------------------------------------------------
     # AUTHORITATIVE top-level detection

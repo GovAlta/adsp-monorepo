@@ -9,4 +9,8 @@ class XdpHelpControlPair(XdpLayout):
             help_elem.xdp_element, "VerticalLayout", [help_elem, control_elem]
         )
         self.context = context
+        self.target = control_elem
         self.is_help_control_pair = True  # optional marker for debugging
+
+    def is_control(self) -> bool:
+        return self.target.is_control()

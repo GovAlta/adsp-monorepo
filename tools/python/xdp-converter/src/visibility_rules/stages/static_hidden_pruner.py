@@ -9,7 +9,7 @@ from visibility_rules.pipeline_context import (
 )
 from xdp_parser.xdp_utils import compute_full_xdp_path
 
-debug = True
+debug = False
 
 
 class StaticHiddenPruner:

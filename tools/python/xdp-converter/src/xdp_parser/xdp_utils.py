@@ -1,5 +1,5 @@
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
 
@@ -209,3 +209,45 @@ def js_unescape(s: str) -> str:
             return m.group(0)
 
     return re.sub(r"\\u([0-9a-fA-F]{4})", _u, s)
+
+
+_LEN_RE = re.compile(r"^\s*([+-]?\d+(?:\.\d+)?)\s*([a-zA-Z%]*)\s*$")
+
+
+def convert_to_mm(raw: Any) -> Optional[float]:
+    """
+    Parse XFA length strings into millimeters.
+
+    Supports: mm, cm, in, pt, pc, px, and bare numbers.
+    Unknown units -> None (fail closed).
+    """
+    if raw is None:
+        return None
+
+    s = str(raw).strip().lower()
+    if not s:
+        return None
+
+    m = _LEN_RE.match(s)
+    if not m:
+        return None
+
+    value = float(m.group(1))
+    unit = m.group(2) or ""  # "" means unitless
+
+    # Conversion factors to mm
+    if unit == "" or unit == "mm":
+        return value
+    if unit == "cm":
+        return value * 10.0
+    if unit == "in":
+        return value * 25.4
+    if unit == "pt":
+        return value * (25.4 / 72.0)  # 1pt = 1/72 in
+    if unit == "pc":
+        return value * (25.4 / 6.0)  # 1pc = 12pt = 1/6 in
+    if unit == "px":
+        return value * (25.4 / 96.0)  # assume 96 dpi
+
+    # unknown unit (%, em, etc.) -> not meaningful for layout geometry here
+    return None

@@ -2,12 +2,18 @@ import xml.etree.ElementTree as ET
 from typing import List, Optional, Tuple
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.subform_label import get_subform_header_label
+from xdp_parser.subform_label import (
+    get_subform_header,
+    strip_header_element,
+)
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_group import XdpGroup
 from xdp_parser.xdp_help_control_pair import XdpHelpControlPair
 from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_subform_placeholder import XdpSubformPlaceholder
+from xdp_parser.xdp_utils import convert_to_mm
+
+debug = True
 
 
 class XdpGroupingPass:
@@ -37,127 +43,166 @@ class XdpGroupingPass:
     def _group_node(
         self, node: XdpElement, parent_label: str | None
     ) -> List[XdpElement]:
-        if isinstance(node, XdpSubformPlaceholder):
-            subform = node.subform_elem
+        if not isinstance(node, XdpSubformPlaceholder):
+            return [node]
 
-            current_label = get_subform_header_label(subform)  # str | None
-            effective_parent_label = current_label or parent_label
+        subform = node.subform_elem
 
-            # Recursively group children first, but with the effective parent label
-            grouped_children: List[XdpElement] = []
-            for child in node.children:
-                grouped_children.extend(
-                    self._group_node(child, parent_label=effective_parent_label)
+        grouped_children: List[XdpElement] = []
+        for child in node.children:
+            grouped_children.extend(self._group_node(child, parent_label=parent_label))
+
+        # 1) Sort
+        grouped_children = self.sort_elements_for_subform(
+            subform, grouped_children, self.context.get("parent_map", {})
+        )
+
+        # 2) Extract header BEFORE pairing
+        resolved_label, header_index = get_subform_header(
+            subform, grouped_children, debug
+        )
+        if header_index is not None:
+            grouped_children = strip_header_element(grouped_children, header_index)
+
+        if debug:
+            print(f"[{subform.get('name')}] sorted order:")
+            for k, e in enumerate(grouped_children[:8]):
+                t = (
+                    "CTRL"
+                    if e.is_control()
+                    else ("HELP" if e.is_help_text() else "OTHER")
                 )
+                print(f"  {k:02d} {t:4} name={e.get_name()} x={e.x} y={e.y} h={e.h}")
 
-            layout = subform.get("layout")
-            grouped_children = self._sort_by_geometry(grouped_children, layout)
+        # 3) Pair help icons with controls
+        grouped_children = self._consolidate_help_control_pairs(grouped_children)
 
-            grouped_children = self._consolidate_help_control_pairs(grouped_children)
-            self.child_map[id(subform)] = grouped_children
+        self.child_map[id(subform)] = grouped_children
 
-            # Decide grouping
-            if self.should_group_subform(subform, grouped_children):
-                # When building THIS group, compare its label to the *actual* parent label
-                group = self._build_group_from_subform(
-                    subform, grouped_children, parent_label=parent_label
-                )
-                return [group] if group else grouped_children
+        # 4) Decide grouping using sorted children (header already handled)
+        if self.should_group_subform(subform, grouped_children):
+            group = self._build_group_from_subform(
+                subform, grouped_children, resolved_label
+            )
+            return [group] if group else grouped_children
 
-            return grouped_children
+        return grouped_children
 
-        return [node]
-
-    # ----------------------------------------------------------------------
-    # GEOMETRY SORT
-    # ----------------------------------------------------------------------
-    def _sort_by_geometry(
-        self, elements: List[XdpElement], container_layout: str | None
+    @staticmethod
+    def sort_elements_for_subform(
+        subform: ET.Element,
+        elements: List[XdpElement],
+        parent_map: dict,
     ) -> List[XdpElement]:
-        layout = (container_layout or "").strip().lower()
+        layout = XdpGroupingPass.resolve_effective_layout(subform, parent_map)
 
-        # Default sort (non-flow containers)
-        if layout != "tb":
+        if layout == "tb":
+            return XdpGroupingPass._flow_sort_tb(elements)
 
-            def key(e: XdpElement):
-                y = e.y if e.y is not None else float("inf")
-                x = e.x if e.x is not None else float("inf")
-                return (y, x)
+        if layout == "lr-tb":
+            return XdpGroupingPass._flow_sort_lr_tb(subform, elements)
 
-            return sorted(elements, key=key)
+        # Non-flow containers: geometry sort
+        return sorted(
+            elements,
+            key=lambda e: (
+                e.y if e.y is not None else float("inf"),
+                e.x if e.x is not None else float("inf"),
+            ),
+        )
 
-        # --- Flow-aware sort for layout="tb" ---
-        cursor_y = None
-        items = []
+    @staticmethod
+    def resolve_effective_layout(subform: ET.Element, parent_map: dict) -> str:
+        cur = subform
+        while cur is not None:
+            raw = cur.get("layout")
+            if raw:
+                return raw.strip().lower()
+            cur = parent_map.get(cur)
+        return "tb"  # XFA default-y behavior in practice for many templates
+
+    @staticmethod
+    def _flow_sort_lr_tb(
+        subform: ET.Element, elements: List["XdpElement"]
+    ) -> List["XdpElement"]:
+        sub_w = convert_to_mm(subform.get("w"))
+        if sub_w is None:
+            widths = [e.w for e in elements if e.w is not None]
+            sub_w = max(widths) if widths else 190.5
+
+        cursor_x = 0.0
+        cursor_y = 0.0
+        row_h = 0.0
+
+        placed: list[tuple[float, float, int, "XdpElement"]] = []
 
         for idx, e in enumerate(elements):
-            if getattr(e, "has_explicit_y", False) and e.y is not None:
-                # Explicitly positioned element defines where the flow cursor is
-                sy = e.y
-                cursor_y = sy + e.effective_height()
+            # positioned element (explicit x+y): honor it, but DON'T advance the flow cursor
+            if (
+                e.has_explicit_x
+                and e.has_explicit_y
+                and e.x is not None
+                and e.y is not None
+            ):
+                placed.append((float(e.y), float(e.x), idx, e))
+                continue
+
+            # flow element
+            w = float(e.w) if e.w is not None else float(sub_w)
+            h = float(e.effective_height())
+
+            if cursor_x > 0.0 and (cursor_x + w) > float(sub_w) + 0.01:
+                cursor_y += row_h
+                cursor_x = 0.0
+                row_h = 0.0
+
+            px = cursor_x
+            py = cursor_y
+            placed.append((py, px, idx, e))
+
+            cursor_x += w
+            row_h = max(row_h, h)
+
+        placed.sort(key=lambda t: (t[0], t[1], t[2]))
+        return [t[3] for t in placed]
+
+    @staticmethod
+    def _flow_sort_tb(elements: List["XdpElement"]) -> List["XdpElement"]:
+        """
+        tb layout:
+        - Elements with explicit Y are positioned (absolute-ish) and do NOT consume flow.
+        - Elements without explicit Y are flow items; they stack from the top in document order.
+        """
+        flow_cursor_y: float = 0.0
+        placed: List[Tuple[float, float, int, "XdpElement"]] = []
+
+        for idx, e in enumerate(elements):
+            if e.has_explicit_y and e.y is not None:
+                sy = float(e.y)  # positioned element: honor y
             else:
-                # Flow element: place it at cursor (or 0 if this is the first thing)
-                if cursor_y is None:
-                    sy = 0.0
-                    cursor_y = sy + e.effective_height()
-                else:
-                    sy = cursor_y
-                    cursor_y = sy + e.effective_height()
+                sy = flow_cursor_y  # flow element: place at flow cursor
+                flow_cursor_y += (
+                    e.effective_height()
+                )  # ONLY flow items advance the cursor
 
-            x = e.x if e.x is not None else float("inf")
-            items.append((sy, x, idx, e))
+            sx = float(e.x) if e.x is not None else float("inf")
+            placed.append((sy, sx, idx, e))
 
-        items.sort(key=lambda t: (t[0], t[1], t[2]))  # idx keeps stable order
-        return [t[3] for t in items]
+        placed.sort(key=lambda t: (t[0], t[1], t[2]))  # stable
+        return [t[3] for t in placed]
 
     # --------------------------------------------------
     # Grouping heuristics
     # --------------------------------------------------
     def should_group_subform(self, subform, elements):
-        """
-        Decide whether this <subform> should become a Group.
-
-        Criteria (ANY triggers grouping):
-          1. Visibility rules reference ≥2 children
-          2. 3+ real controls
-          3. Contains radio cluster or object array
-          4. Contains a section-style header (by TEXT)
-        """
-
-        # Filter real controls
-        real_controls = [
-            e
-            for e in elements
-            if e.is_control()
-            or getattr(e, "is_radio", False)
-            or getattr(e, "is_array", False)
-        ]
-
+        real_controls = [e for e in elements if e.is_control()]
         num_controls = len(real_controls)
-
-        # Flatten trivial wrappers
         if num_controls <= 1:
             return False
-
-        # 1) Visibility rules hitting multiple children
         if self._rules_target_subform(subform, real_controls):
             return True
-
-        # 2) Several real controls → semantic cluster
         if num_controls >= 3:
             return True
-
-        # 3) Radio cluster or array
-        if any(
-            getattr(e, "is_radio", False) or getattr(e, "is_array", False)
-            for e in elements
-        ):
-            return True
-
-        # 4) Help text that looks like a section header
-        if get_subform_header_label(subform) is not None:
-            return True
-
         return False
 
     def _rules_target_subform(self, subform, controls):
@@ -189,15 +234,15 @@ class XdpGroupingPass:
         return False
 
     def _build_group_from_subform(
-        self, subform: ET.Element, elements: list[XdpElement], parent_label: str | None
+        self,
+        subform: ET.Element,
+        elements: list[XdpElement],
+        resolved_label: str | None,
     ) -> XdpGroup | None:
         if not elements:
             return None
-        return self.factory.handle_group(subform, elements, parent_label)
+        return self.factory.handle_group(subform, elements, resolved_label)
 
-    # ----------------------------
-    # Public entry point
-    # ----------------------------
     def _consolidate_help_control_pairs(
         self, elements: List[XdpElement]
     ) -> List[XdpElement]:
@@ -215,7 +260,7 @@ class XdpGroupingPass:
         while i < len(elements):
             cur = elements[i]
 
-            if self._is_help(cur):
+            if cur.is_help_icon():
                 paired = self._try_pair_help(elements, out, i)
                 if paired is not None:
                     pair_elem, next_i, replace_prev = paired
@@ -265,7 +310,7 @@ class XdpGroupingPass:
             )
 
         # 2) overlap-based: pair with prev/next control if overlapping
-        res = self._pair_by_overlap(elements, out, i, help_el)
+        res = self._pair_by_proximity(elements, out, i, help_el)
         if res is not None:
             kind, j, target = res
             if kind == "next":
@@ -284,18 +329,6 @@ class XdpGroupingPass:
                 )
 
         return None
-
-    # ----------------------------
-    # Predicates
-    # ----------------------------
-    def _is_help(self, e: XdpElement) -> bool:
-        return isinstance(e, XdpHelpText) or getattr(e, "is_help_text", lambda: False)()
-
-    def _is_control(self, e: XdpElement) -> bool:
-        try:
-            return e.is_control()
-        except Exception:
-            return False
 
     # ----------------------------
     # Strategy 1: traversal-based association
@@ -319,63 +352,76 @@ class XdpGroupingPass:
     # ----------------------------
     # Strategy 2: prev/next bbox overlap with controls
     # ----------------------------
-    def _pair_by_overlap(
+    def _pair_by_proximity(
         self,
-        elements: List[XdpElement],
-        out: List[XdpElement],
+        elements: list[XdpElement],
+        out: list[XdpElement],
         i: int,
         help_el: XdpElement,
-    ) -> Optional[Tuple[str, int, XdpElement]]:
+    ) -> tuple[str, int, XdpElement] | None:
         """
         Returns:
-          ("prev", i-1, prev_el) or ("next", i+1, next_el)
-        where the chosen neighbor has the best overlap score.
+        ("prev", i-1, prev_el) or ("next", i+1, next_el)
+        based on adjacency/proximity (not bbox intersection).
         """
         prev_el = out[-1] if out else None
         next_el = elements[i + 1] if i + 1 < len(elements) else None
 
-        prev_score = (
-            self._overlap_score(help_el, prev_el)
-            if prev_el and self._is_control(prev_el)
-            else 0.0
-        )
-        next_score = (
-            self._overlap_score(help_el, next_el)
-            if next_el and self._is_control(next_el)
-            else 0.0
-        )
+        prev_score = 0.0
+        if prev_el is not None and prev_el.is_control():
+            prev_score = self._proximity_score(help_el, prev_el)
+
+        next_score = 0.0
+        if next_el is not None and next_el.is_control():
+            next_score = self._proximity_score(help_el, next_el)
 
         if prev_score <= 0.0 and next_score <= 0.0:
             return None
 
         if next_score > prev_score:
-            return "next", i + 1, next_el  # consume next
-        else:
-            return "prev", i - 1, prev_el  # replace prev in out
+            return "next", i + 1, next_el
+        return "prev", i - 1, prev_el
 
-    def _overlap_score(
-        self, help_elem: XdpElement, control_elem: Optional[XdpElement]
+    def _proximity_score(
+        self, help_elem: XdpElement, control_elem: XdpElement
     ) -> float:
-        if control_elem is None:
-            return 0.0
-
         hb = help_elem.bbox()
         cb = control_elem.bbox()
-        if not hb or not cb:
+        if hb is None or cb is None:
             return 0.0
 
         hx1, hy1, hx2, hy2 = hb
         cx1, cy1, cx2, cy2 = cb
 
-        ix1 = max(hx1, cx1)
-        iy1 = max(hy1, cy1)
-        ix2 = min(hx2, cx2)
-        iy2 = min(hy2, cy2)
-
-        if ix2 <= ix1 or iy2 <= iy1:
+        # vertical overlap fraction (same-row test)
+        overlap_y = min(hy2, cy2) - max(hy1, cy1)
+        if overlap_y <= 0.0:
             return 0.0
 
-        return (ix2 - ix1) * (iy2 - iy1)
+        help_h = hy2 - hy1
+        ctrl_h = cy2 - cy1
+        denom = min(help_h, ctrl_h) if min(help_h, ctrl_h) > 0.0 else 1.0
+        overlap_frac = overlap_y / denom
+
+        # require decent same-row overlap
+        if overlap_frac < 0.50:
+            return 0.0
+
+        # horizontal gap (touching edges => gap 0)
+        if hx1 >= cx2:
+            gap = hx1 - cx2  # help is to the right of control
+        elif cx1 >= hx2:
+            gap = cx1 - hx2  # help is to the left of control
+        else:
+            gap = 0.0  # they overlap horizontally (rare, but fine)
+
+        # we only want "nearby"
+        if gap > 6.0:  # mm, tune if needed
+            return 0.0
+
+        # score: prefer smaller gap + better vertical alignment
+        # (touching => highest)
+        return (1.0 / (1.0 + gap)) * 100.0 + overlap_frac * 20.0
 
     def _extract_traversal_target(self, help_elem: XdpHelpText) -> str | None:
         """
