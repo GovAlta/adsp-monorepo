@@ -133,7 +133,7 @@ class CalendarPage {
   }
 
   eventsCalendarEventModalSaveButton() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Save"]');
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Save" and not(@disabled)]');
   }
 
   eventsCalendarEventModalCancelButton() {
@@ -146,17 +146,13 @@ class CalendarPage {
 
   eventEditButton(rowNumber) {
     return cy.xpath(
-      `//*[@data-testid="calendar-event-tab"]//tbody/tr[${
-        rowNumber + 1
-      }]/td[@headers="calendar-events-actions"]//goa-icon-button[@icon="create"]`
+      `//*[@data-testid="calendar-event-tab"]//tbody/tr[${rowNumber}]/td[@headers="calendar-events-actions"]//goa-icon-button[@icon="create"]`
     );
   }
 
   eventDeleteButton(rowNumber) {
     return cy.xpath(
-      `//*[@data-testid="calendar-event-tab"]//tbody/tr[${
-        rowNumber + 1
-      }]/td[@headers="calendar-events-actions"]//goa-icon-button[@icon="trash"]`
+      `//*[@data-testid="calendar-event-tab"]//tbody/tr[${rowNumber}]/td[@headers="calendar-events-actions"]//goa-icon-button[@icon="trash"]`
     );
   }
 
