@@ -223,6 +223,11 @@ export const SectionHeaderRowTr = styled.tr`
 export const SummaryRowLink = styled.a`
   position: relative;
   top: var(--goa-space-xs);
+  &:focus-visible {
+    border-radius: 0.25rem;
+    outline: 3px solid var(--goa-color-interactive-focus);
+  }
+  padding: 0 var(--goa-space-s) var(--goa-space-xs); var(--goa-space-s);
 `;
 
 export const SummaryTd = styled.td`
