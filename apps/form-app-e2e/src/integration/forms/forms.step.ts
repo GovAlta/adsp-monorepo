@@ -94,7 +94,7 @@ When('the user enters {string} in a text field labelled {string}', function (tex
 });
 
 When('the user enters {string} in a date picker labelled {string}', function (date: string, label) {
-  formsObj.formDateInput(label).shadow().find('input').clear().type(date, { force: true });
+  formsObj.formDateInput(label).shadow().find('goa-input').shadow().find('input').clear().type(date, { force: true });
 });
 
 When('the user enters {string} in a dropdown labelled {string}', function (value: string, label) {
