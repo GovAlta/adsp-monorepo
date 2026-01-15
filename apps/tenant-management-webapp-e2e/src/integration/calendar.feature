@@ -84,7 +84,7 @@ Feature: Calendar
         Then the user "views" the event of "autotest-addEvent", "Today, 10:30 AM", "Today, 10:30 PM"
         When the user clicks "edit" icon of "autotest-addEvent", "Today, 10:30 AM", "Today, 10:30 PM"
         Then the user views Edit calendar event modal
-        When the user enters "autotest-editEvent", "autotest event desc edited", "no", "yes", "Today", "10:30 am", "Today", "10:30 pm" in calendar event modal
+        When the user enters "autotest-editEvent", "autotest event desc edited", "yes", "yes", "Today", "10:30 am", "Today", "10:30 pm" in calendar event modal
         And the user clicks Save button in calendar event modal
         Then the user "views" the event of "autotest-editEvent", "Today", "Today"
         # Delete event
