@@ -4,7 +4,7 @@ import { Request } from 'express';
 import { TargetProxy } from './target';
 import { AuthenticationClient } from './client';
 import { Logger } from 'winston';
-import { RequestOptions } from 'http';
+import { OutgoingHttpHeaders, RequestOptions } from 'http';
 import TraceParent = require('traceparent');
 
 jest.mock('@abgov/adsp-service-sdk', () => ({
@@ -152,7 +152,7 @@ describe('TargetProxy', () => {
       };
 
       const options = await proxy.decorateRequest({ headers: {} } as RequestOptions, req as unknown as Request);
-      expect(options.headers.Authorization).toBe('Bearer abc-123');
+      expect((options.headers as OutgoingHttpHeaders).Authorization).toBe('Bearer abc-123');
     });
 
     it('can add traceparent header', async () => {
@@ -175,7 +175,7 @@ describe('TargetProxy', () => {
       getContextTraceMock.mockReturnValueOnce(trace);
 
       const options = await proxy.decorateRequest({ headers: {} } as RequestOptions, req as unknown as Request);
-      expect(options.headers.traceparent).toBe(trace.toString());
+      expect((options.headers as string[])['traceparent']).toBe(trace.toString());
     });
   });
 

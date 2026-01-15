@@ -4,6 +4,7 @@
   "sourceRoot": "apps/tenant-management-api/src",
   "projectType": "application",
   "prefix": "tenant-management-api",
+  "tags": [],
   "generators": {},
   "targets": {
     "build": {
@@ -46,6 +47,5 @@
       },
       "outputs": ["{workspaceRoot}/coverage/apps/tenant-management-api"]
     }
-  },
-  "tags": []
+  }
 }

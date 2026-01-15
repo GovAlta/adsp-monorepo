@@ -3,7 +3,7 @@ import { InvalidOperationError } from '@core-services/core-common';
 import { Request, RequestHandler } from 'express';
 import 'express-session';
 import * as proxy from 'express-http-proxy';
-import { RequestOptions } from 'http';
+import { OutgoingHttpHeaders, RequestOptions } from 'http';
 import * as path from 'path';
 import { Logger } from 'winston';
 
@@ -39,7 +39,7 @@ export class TargetProxy {
 
   decorateRequest = async (opts: RequestOptions, req: Request): Promise<RequestOptions> => {
     const accessToken = await this.getUserToken(req);
-    opts.headers.Authorization = `Bearer ${accessToken}`;
+    (opts.headers as OutgoingHttpHeaders).Authorization = `Bearer ${accessToken}`;
 
     const trace = getContextTrace();
     if (trace) {

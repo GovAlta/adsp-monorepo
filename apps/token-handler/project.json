@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/token-handler/src",
   "projectType": "application",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
@@ -51,6 +52,5 @@
         "jestConfig": "apps/token-handler/jest.config.ts"
       }
     }
-  },
-  "tags": []
+  }
 }

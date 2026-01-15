@@ -3,12 +3,13 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/tenant-management-webapp-e2e/src",
   "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["tenant-management-webapp"],
   "targets": {
     "e2e": {
       "executor": "@nx/cypress:cypress",
       "options": {
         "cypressConfig": "apps/tenant-management-webapp-e2e/cypress.dev.json",
-        "tsConfig": "apps/tenant-management-webapp-e2e/tsconfig.e2e.json",
         "devServerTarget": "tenant-management-webapp:serve"
       },
       "configurations": {
@@ -20,7 +21,5 @@
     "lint": {
       "executor": "@nx/eslint:lint"
     }
-  },
-  "tags": [],
-  "implicitDependencies": ["tenant-management-webapp"]
+  }
 }

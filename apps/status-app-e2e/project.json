@@ -3,12 +3,13 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/status-app-e2e/src",
   "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["status-app"],
   "targets": {
     "e2e": {
       "executor": "@nx/cypress:cypress",
       "options": {
         "cypressConfig": "apps/status-app-e2e/cypress.json",
-        "tsConfig": "apps/status-app-e2e/tsconfig.e2e.json",
         "devServerTarget": "status-app:serve"
       },
       "configurations": {
@@ -20,7 +21,5 @@
     "lint": {
       "executor": "@nx/eslint:lint"
     }
-  },
-  "tags": [],
-  "implicitDependencies": ["status-app"]
+  }
 }
