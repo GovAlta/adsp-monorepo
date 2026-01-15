@@ -45,7 +45,7 @@ module.exports = defineConfig({
   fileServerFolder: '.',
   fixturesFolder: './src/fixtures',
   modifyObstructiveCode: false,
-  video: false,
+  video: true,
   videosFolder: '../../dist/cypress/apps/tenant-management-webapp-e2e/videos',
   screenshotsFolder: '../../dist/cypress/apps/tenant-management-webapp-e2e/screenshots',
   chromeWebSecurity: false,
