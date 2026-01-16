@@ -68,6 +68,7 @@ export const ConfigurationEditor = (): JSX.Element => {
     setPayloadSchema(JSON.stringify(configurationTemplate?.configurationSchema, null, 2));
     dispatch(getConfigurationActive(id));
     dispatch(getConfigurationRevisions(id));
+    //eslint-disable-next-line
   }, [configurationTemplate]);
 
   useEffect(() => {

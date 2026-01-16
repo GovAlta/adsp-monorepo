@@ -2,7 +2,6 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber } from '@store/subscription/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-import { Grid, GridItem } from '@core-services/app-common';
 import {
   UpdateContactInformationService,
   FetchNotificationConfigurationService,
@@ -16,6 +15,7 @@ import { phoneWrapper } from '@lib/wrappers';
 import { TextGoASkeleton } from '@core-services/app-common';
 import { useActionStateCheck } from '@components/Indicator';
 import { NoPaddingH2 } from '@components/AppHeader';
+import {GoabGrid} from '@abgov/react-components';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
@@ -82,26 +82,27 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
           management application so they know how to get support for notification related issues.
         </p>
 
-        <Grid>
-          <GridItem data-testid="email" className="word-break contact-border" md={8} vSpacing={1} hSpacing={0.5}>
+        <GoabGrid minChildWidth='25ch' gap='s'>
+          <div data-testid="email" className="word-break contact-border" >
             <h4>Contact email</h4>
             {isFetchLoading && <TextGoASkeleton key="email" />}
             {!isFetchLoading && contact?.contactEmail}
-          </GridItem>
-          <GridItem data-testid="phone" className="contact-border" md={4} vSpacing={1} hSpacing={0.5}>
+          </div>
+          <div data-testid="phone" className="contact-border" >
             <h4>Phone number</h4>
             {isFetchLoading && <TextGoASkeleton key="Phone" />}
 
             {!isFetchLoading && phoneWrapper(contact?.phoneNumber)}
-          </GridItem>
-        </Grid>
-        <Grid>
-          <GridItem data-testid="support-instructions" className="contact-border" md={12} vSpacing={1} hSpacing={0}>
+          </div>
+        </GoabGrid>
+        <br/>
+        <GoabGrid minChildWidth='320'>
+          <div data-testid="support-instructions" className="contact-border" >
             <h4>Support instructions</h4>
             {isFetchLoading && <TextGoASkeleton key="instructions" />}
             {!isFetchLoading && contact?.supportInstructions}
-          </GridItem>
-        </Grid>
+          </div>
+        </GoabGrid>
         <ContactInformationModalForm
           open={editContactInformation}
           initialValue={contact || initialValue}

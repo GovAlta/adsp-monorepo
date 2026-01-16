@@ -46,6 +46,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
             </ReviewItemHeader>
             <GoabGrid minChildWidth="100%">
               {category.elements
+                //eslint-disable-next-line
                 .filter((field) => {
                   // [TODO] we need to double check why we cannot hide the elements at the element level
                   const conditionProps = field.rule?.condition as SchemaBasedCondition;

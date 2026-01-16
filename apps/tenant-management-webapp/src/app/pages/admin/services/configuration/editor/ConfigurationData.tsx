@@ -91,13 +91,14 @@ export const ConfigurationData = (): JSX.Element => {
     setTmpTemplate(JSON.parse(JSON.stringify(configurationTemplate || '')));
     setPayloadSchema(JSON.stringify(configurationTemplate?.configurationSchema, null, 2));
     dispatch(getConfigurationActive(id));
-    dispatch(getConfigurationRevisions(id));
+    dispatch(getConfigurationRevisions(id)); //eslint-disable-next-line
   }, [configurationTemplate]);
 
   useEffect(() => {
     setCustomIndicator(false);
     setConfigurationData(JSON.stringify(configurationRevisions[id]?.revisions?.result[0]?.configuration, null, 2));
     setOldConfigurationData(JSON.stringify(configurationRevisions[id]?.revisions?.result[0]?.configuration, null, 2));
+    //eslint-disable-next-line
   }, [JSON.stringify(configurationRevisions)]);
 
   const navigate = useNavigate();
@@ -115,63 +116,61 @@ export const ConfigurationData = (): JSX.Element => {
   const Height = latestNotification && !latestNotification.disabled ? 341 : 250;
 
   return (
-    <>
-      <div>
-        <EditorLHSWrapper>
-          <section>
-            {customIndicator && <CustomLoader />}
-            <Title>Latest Revision Editor</Title>
-            <p>
-              Edit the latest configuration here using the defined schema. Previous revisions are read-only, but can be
-              activated.
-            </p>
-            <hr />
-            <div style={{ marginTop: '20px', height: `calc(100vh - ${Height}px)`, overflowY: 'auto' }}>
-              <GoabFormItem label="">
-                <GoabFormItem error={dataError} label="">
-                  <MonacoEditor
-                    height={monacoHeight}
-                    language={'json'}
-                    options={{
-                      automaticLayout: true,
-                      scrollBeyondLastLine: false,
-                      tabSize: 2,
-                      minimap: { enabled: false },
-                      folding: true,
-                      foldingStrategy: 'auto',
-                      showFoldingControls: 'always',
-                    }}
-                    value={configurationData}
-                    data-testid="templateForm-body"
-                    onChange={(value) => {
-                      setTmpTemplate({ ...tmpTemplate, template: value });
-                      setConfigurationData(value);
-                    }}
-                  />
-                </GoabFormItem>
-              </GoabFormItem>
-            </div>
-          </section>
-          <EditTemplateActions>
-            <hr className="styled-hr styled-hr-bottom" />
-            <EditActionLayout>
-              <GoabButtonGroup alignment="end">
-                <GoabButton
-                  disabled={!isConfigurationUpdated(tmpTemplate, configurationTemplate) || dataError.length > 0}
-                  onClick={() => {
-                    setCustomIndicator(true);
-                    saveConfigurationTemplate();
+    <div>
+      <EditorLHSWrapper>
+        <section>
+          {customIndicator && <CustomLoader />}
+          <Title>Latest Revision Editor</Title>
+          <p>
+            Edit the latest configuration here using the defined schema. Previous revisions are read-only, but can be
+            activated.
+          </p>
+          <hr />
+          <div style={{ marginTop: '20px', height: `calc(100vh - ${Height}px)`, overflowY: 'auto' }}>
+            <GoabFormItem label="">
+              <GoabFormItem error={dataError} label="">
+                <MonacoEditor
+                  height={monacoHeight}
+                  language={'json'}
+                  options={{
+                    automaticLayout: true,
+                    scrollBeyondLastLine: false,
+                    tabSize: 2,
+                    minimap: { enabled: false },
+                    folding: true,
+                    foldingStrategy: 'auto',
+                    showFoldingControls: 'always',
                   }}
-                  type="primary"
-                  testId="template-form-save"
-                >
-                  Save
-                </GoabButton>
-              </GoabButtonGroup>
-            </EditActionLayout>
-          </EditTemplateActions>
-        </EditorLHSWrapper>
-      </div>
-    </>
+                  value={configurationData}
+                  data-testid="templateForm-body"
+                  onChange={(value) => {
+                    setTmpTemplate({ ...tmpTemplate, template: value });
+                    setConfigurationData(value);
+                  }}
+                />
+              </GoabFormItem>
+            </GoabFormItem>
+          </div>
+        </section>
+        <EditTemplateActions>
+          <hr className="styled-hr styled-hr-bottom" />
+          <EditActionLayout>
+            <GoabButtonGroup alignment="end">
+              <GoabButton
+                disabled={!isConfigurationUpdated(tmpTemplate, configurationTemplate) || dataError.length > 0}
+                onClick={() => {
+                  setCustomIndicator(true);
+                  saveConfigurationTemplate();
+                }}
+                type="primary"
+                testId="template-form-save"
+              >
+                Save
+              </GoabButton>
+            </GoabButtonGroup>
+          </EditActionLayout>
+        </EditTemplateActions>
+      </EditorLHSWrapper>
+    </div>
   );
 };

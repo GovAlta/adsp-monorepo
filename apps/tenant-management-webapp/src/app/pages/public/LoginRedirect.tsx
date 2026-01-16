@@ -63,7 +63,7 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
     if (type === LOGIN_TYPES.tenantCreationInit) {
       const searchQuery = skipSSO ? '?kc_idp_hint=' : '';
       navigate(`/tenant/creation${searchQuery}`, { state: { from: props.location } });
-    }
+    } //eslint-disable-next-line
   }, [navigate, tenantRealm, isTenantAdmin, isAuthenticated, props.location, urlParams, realm]);
 
   return <Page></Page>;

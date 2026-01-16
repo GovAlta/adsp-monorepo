@@ -17,8 +17,8 @@ export const ResourceTypeComponent: FunctionComponent<ResourceTypeProps> = ({
   onDelete,
 }) => (
   <>
-    {resourceType.map((resource) => (
-      <ResourceItem key={resource.id} urn={urn} resource={resource} onEdit={onEdit} onDelete={onDelete} />
+    {resourceType.map((resource,index) => (
+      <ResourceItem key={index} urn={urn} resource={resource} onEdit={onEdit} onDelete={onDelete} />
     ))}
   </>
 );

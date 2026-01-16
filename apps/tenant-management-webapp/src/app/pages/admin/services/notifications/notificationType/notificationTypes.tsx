@@ -1,8 +1,7 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoabButton, GoabContainer } from '@abgov/react-components';
+import { GoabButton, GoabContainer, GoabGrid } from '@abgov/react-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-import { Grid, GridItem } from '@core-services/app-common';
 import { NotificationTypeModalForm } from '../addEditNotification/addEditNotification';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
@@ -459,96 +458,94 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 <DescriptionText>{`Description: ${notificationType.description}`}</DescriptionText>
                 <h2>Events:</h2>
 
-                <Grid>
+                <GoabGrid minChildWidth="25ch" gap="s">
                   {notificationType.events
                     .sort((a, b) => (a.name < b.name ? -1 : 1))
                     .map((event, key) => (
-                      <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
-                        <EventBorder>
-                          <div className="flex columnFlex gridBoxHeight">
-                            <div className="rowFlex">
-                              <div className="flex1">
-                                {event.namespace}:{event.name}
-                              </div>
-                              <div className="rowFlex">
-                                <MaxHeight height={34}>
-                                  <NotificationBorder className="smallPadding">
-                                    <GoAContextMenuIcon
-                                      type="trash"
-                                      title="Delete"
-                                      onClick={() => {
-                                        setSelectedEvent(event);
-                                        setSelectedType(notificationType);
-                                        setShowEventDeleteConfirmation(true);
-                                        setCoreEvent(false);
-                                      }}
-                                      testId="delete-event"
-                                    />
-                                  </NotificationBorder>
-                                </MaxHeight>
-                              </div>
+                      <EventBorder>
+                        <div className="flex columnFlex gridBoxHeight">
+                          <div className="rowFlex">
+                            <div className="flex1">
+                              {event.namespace}:{event.name}
                             </div>
-                            <div className="marginTopAuto">
-                              <div className="flex1 flex endAlign">
-                                <div className="flex3 endAlign">
-                                  <div className="flex rowFlex">
-                                    {notificationType.sortedChannels.map((channel) => (
-                                      <div
-                                        key={channel}
-                                        className="nonCoreIconPadding flex1"
-                                        data-testid={`tenant-${channel}-channel`}
-                                      >
-                                        {channelIcons[channel]}
-                                        {(event.templates[channel]?.subject?.length === 0 ||
-                                          event.templates[channel]?.body?.length === 0) && (
-                                          <div className="icon-badge" data-testid={`tenant-${channel}-channel-badge`}>
-                                            !
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div className="flex3 textAlignLastRight">
-                                  <Anchor
-                                    data-testid="edit-event"
+                            <div className="rowFlex">
+                              <MaxHeight height={34}>
+                                <NotificationBorder className="smallPadding">
+                                  <GoAContextMenuIcon
+                                    type="trash"
+                                    title="Delete"
                                     onClick={() => {
                                       setSelectedEvent(event);
                                       setSelectedType(notificationType);
-                                      setEventTemplateFormState(editEventTemplateContent);
-                                      setShowTemplateForm(true);
+                                      setShowEventDeleteConfirmation(true);
                                       setCoreEvent(false);
-                                      setCurrentChannel(notificationType.sortedChannels[0]);
                                     }}
-                                  >
-                                    Edit
-                                  </Anchor>
+                                    testId="delete-event"
+                                  />
+                                </NotificationBorder>
+                              </MaxHeight>
+                            </div>
+                          </div>
+                          <div className="marginTopAuto">
+                            <div className="flex1 flex endAlign">
+                              <div className="flex3 endAlign">
+                                <div className="flex rowFlex">
+                                  {notificationType.sortedChannels.map((channel) => (
+                                    <div
+                                      key={channel}
+                                      className="nonCoreIconPadding flex1"
+                                      data-testid={`tenant-${channel}-channel`}
+                                    >
+                                      {channelIcons[channel]}
+                                      {(event.templates[channel]?.subject?.length === 0 ||
+                                        event.templates[channel]?.body?.length === 0) && (
+                                        <div className="icon-badge" data-testid={`tenant-${channel}-channel-badge`}>
+                                          !
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
                                 </div>
+                              </div>
+                              <div className="flex3 textAlignLastRight">
+                                <Anchor
+                                  data-testid="edit-event"
+                                  onClick={() => {
+                                    setSelectedEvent(event);
+                                    setSelectedType(notificationType);
+                                    setEventTemplateFormState(editEventTemplateContent);
+                                    setShowTemplateForm(true);
+                                    setCoreEvent(false);
+                                    setCurrentChannel(notificationType.sortedChannels[0]);
+                                  }}
+                                >
+                                  Edit
+                                </Anchor>
                               </div>
                             </div>
                           </div>
-                        </EventBorder>
-                      </GridItem>
+                        </div>
+                      </EventBorder>
                     ))}
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <NotificationBorder className="padding">
-                      <EventButtonWrapper>
-                        <GoabButton
-                          type="secondary"
-                          testId="add-event"
-                          onClick={() => {
-                            setSelectedEvent(emptyEvent);
-                            manageEvents(notificationType);
-                            setEditEventOpen(true);
-                          }}
-                        >
-                          + Select an event
-                        </GoabButton>
-                      </EventButtonWrapper>
-                      <div>Domain events represent key changes at a domain model level.</div>
-                    </NotificationBorder>
-                  </GridItem>
-                </Grid>
+
+                  <NotificationBorder className="padding">
+                    <EventButtonWrapper>
+                      <GoabButton
+                        type="secondary"
+                        testId="add-event"
+                        onClick={() => {
+                          setSelectedEvent(emptyEvent);
+                          manageEvents(notificationType);
+                          setEditEventOpen(true);
+                        }}
+                      >
+                        + Select an event
+                      </GoabButton>
+                    </EventButtonWrapper>
+                    <div>Domain events represent key changes at a domain model level.</div>
+                  </NotificationBorder>
+                  <div></div>
+                </GoabGrid>
               </GoabContainer>
             </div>
           ))}
@@ -592,76 +589,75 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               <DescriptionText>{`Description: ${notificationType.description}`}</DescriptionText>
               <h2>Events:</h2>
 
-              <Grid>
+              <GoabGrid minChildWidth="25ch" gap={'s'}>
                 {notificationType?.events?.map((event, key) => (
-                  <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
-                    <EventBorder>
-                      <MaxHeight height={168}>
-                        <div className="flex columnFlex gridBoxHeight">
-                          <div className="rowFlex">
-                            <div className="flex1">
-                              {event.namespace}:{event.name}
-                            </div>
+                  <EventBorder>
+                    <MaxHeight height={168} style={{ width: '250px' }}>
+                      <div className="flex columnFlex gridBoxHeight">
+                        <div className="rowFlex">
+                          <div className="flex1">
+                            {event.namespace}:{event.name}
                           </div>
-                          <div className="marginTopAuto">
-                            <div className="flex1 flex endAlign">
-                              <div className="flex5 endAlign">
-                                <div className="flex rowFlex">
-                                  {notificationType.sortedChannels.map((channel) => (
-                                    <div
-                                      key={channel}
-                                      className="flex1 coreIconPadding"
-                                      data-testid={`core-${channel}-channel`}
-                                    >
-                                      {channelIcons[channel]}
-                                      {(event.templates[channel]?.subject?.length === 0 ||
-                                        event.templates[channel]?.body?.length === 0) && (
-                                        <div className="icon-badge" data-testid={`core-${channel}-channel-badge`}>
-                                          !
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                              <div className="flex4 textAlignLastRight">
-                                {event.customized && (
-                                  <Anchor
-                                    className="resetButton"
-                                    onClick={() => {
-                                      setSelectedEvent(event);
-                                      setSelectedType(notificationType);
-                                      setCoreEvent(true);
-                                      setShowEventDeleteConfirmation(true);
-                                    }}
-                                    data-testid="reset-button"
+                        </div>
+                        <div className="marginTopAuto">
+                          <div className="flex1 flex endAlign">
+                            <div className="flex5 endAlign">
+                              <div className="flex rowFlex">
+                                {notificationType.sortedChannels.map((channel) => (
+                                  <div
+                                    key={channel}
+                                    className="flex1 coreIconPadding"
+                                    data-testid={`core-${channel}-channel`}
                                   >
-                                    Reset
-                                  </Anchor>
-                                )}
+                                    {channelIcons[channel]}
+                                    {(event.templates[channel]?.subject?.length === 0 ||
+                                      event.templates[channel]?.body?.length === 0) && (
+                                      <div className="icon-badge" data-testid={`core-${channel}-channel-badge`}>
+                                        !
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex4 textAlignLastRight">
+                              {event.customized && (
                                 <Anchor
-                                  data-testid="edit-event"
-                                  className="coreEditButton"
+                                  className="resetButton"
                                   onClick={() => {
                                     setSelectedEvent(event);
                                     setSelectedType(notificationType);
-                                    setEventTemplateFormState(editEventTemplateContent);
-                                    setShowTemplateForm(true);
-                                    setCoreEvent(false);
-                                    setCurrentChannel(notificationType.sortedChannels[0]);
+                                    setCoreEvent(true);
+                                    setShowEventDeleteConfirmation(true);
                                   }}
+                                  data-testid="reset-button"
                                 >
-                                  Edit
+                                  Reset
                                 </Anchor>
-                              </div>
+                              )}
+                              <Anchor
+                                data-testid="edit-event"
+                                className="coreEditButton"
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setSelectedType(notificationType);
+                                  setEventTemplateFormState(editEventTemplateContent);
+                                  setShowTemplateForm(true);
+                                  setCoreEvent(false);
+                                  setCurrentChannel(notificationType.sortedChannels[0]);
+                                }}
+                              >
+                                Edit
+                              </Anchor>
                             </div>
                           </div>
                         </div>
-                      </MaxHeight>
-                    </EventBorder>
-                  </GridItem>
+                      </div>
+                    </MaxHeight>
+                  </EventBorder>
                 ))}
-              </Grid>
+                <div></div>
+              </GoabGrid>
             </GoabContainer>
           </div>
         ))}

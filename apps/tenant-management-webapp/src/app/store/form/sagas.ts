@@ -66,7 +66,7 @@ import {
   deleteResourceSuccessTags,
   clearAllTags,
   INITIALIZE_FORM_EDITOR,
-  FETCH_FORM_DEFINITIONS_REGISTER_ID_ACTION,
+
 } from './action';
 import {
   fetchFormDefinitionsApi,

@@ -180,6 +180,7 @@ export const JsonFormsStepperContextProvider = ({
         });
       },
     };
+    //eslint-disable-next-line
   }, [stepperDispatch, stepperState, ctx.core?.errors, ajv, schema, data]);
 
   /* istanbul ignore next */
@@ -194,6 +195,7 @@ export const JsonFormsStepperContextProvider = ({
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
+    //eslint-disable-next-line
   }, [stepperState]);
 
   useEffect(() => {
@@ -214,6 +216,7 @@ export const JsonFormsStepperContextProvider = ({
         context.goToPage(stepperState.activeId);
       }
     }
+    //eslint-disable-next-line
   }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema)]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;

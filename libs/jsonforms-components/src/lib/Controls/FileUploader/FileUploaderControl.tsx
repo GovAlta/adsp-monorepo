@@ -127,6 +127,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
     const timeoutId = setTimeout(delayedFunction, 1);
     return () => clearTimeout(timeoutId);
+    //eslint-disable-next-line
   }, [handleChange, fileList, propertyId]);
 
   const readOnly =
@@ -134,6 +135,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const maxFileSize = uischema?.options?.componentProps?.maxFileSize ?? '';
   const accept = uischema?.options?.componentProps?.accept ?? '';
   if (!enumerators) {
+    //eslint-disable-next-line
     return <></>;
   }
   const helpText = uischema?.options?.help;

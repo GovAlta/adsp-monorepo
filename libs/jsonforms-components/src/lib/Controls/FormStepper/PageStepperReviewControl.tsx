@@ -1,5 +1,5 @@
 import { GoabButton, GoabTable } from '@abgov/react-components';
-import { Categorization, isVisible, Layout, SchemaBasedCondition, Scoped, UISchemaElement } from '@jsonforms/core';
+import { isVisible, Layout, SchemaBasedCondition, Scoped, UISchemaElement } from '@jsonforms/core';
 import { JsonFormsDispatch, withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { useContext } from 'react';
 import { GoABaseTableReviewRenderers } from '../../../index';
@@ -45,6 +45,7 @@ export const FormStepperPageReviewer = (props: CategorizationStepperLayoutReview
             </TableReviewPageTitleRow>
             <TableReviewItemSection key={index}>
               {category.uischema?.elements
+                //eslint-disable-next-line
                 .filter((field) => {
                   // [TODO] we need to double check why we cannot hide the elements at the element level
                   const conditionProps = field.rule?.condition as SchemaBasedCondition;
