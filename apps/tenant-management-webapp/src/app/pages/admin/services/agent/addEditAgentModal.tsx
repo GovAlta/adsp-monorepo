@@ -33,6 +33,7 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
   onSave,
   open,
 }) => {
+  //eslint-disable-next-line
   const defaultValue = { name: '', instructions: defaultInstructions, userRoles: [] };
   const [agent, setAgent] = useState<Partial<AgentConfiguration>>(defaultValue);
   const dispatch = useDispatch();
@@ -45,7 +46,7 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
 
   useEffect(() => {
     setAgent(initialValue || defaultValue);
-  }, [initialValue]);
+  }, [initialValue, defaultValue]);
 
   const agentNames = useSelector(agentNamesSelector);
 

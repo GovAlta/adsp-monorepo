@@ -148,7 +148,7 @@ export const NoticeList = (): JSX.Element => {
               }
             })
             .map((notice) => (
-              <div >
+              <div  key={notice.id}>
                 <NoticeCard
                   key={notice.id}
                   notice={notice}

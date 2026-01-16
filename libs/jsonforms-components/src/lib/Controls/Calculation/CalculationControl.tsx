@@ -11,6 +11,7 @@ const GoACalculation = (props: ControlProps) => {
 
   const { core } = useJsonForms();
   const rootSchema = core?.schema as JsonSchema | undefined;
+  //eslint-disable-next-line
   const rootData = core?.data ?? {};
 
   const label = typeof uischema?.label === 'string' ? uischema.label : undefined;

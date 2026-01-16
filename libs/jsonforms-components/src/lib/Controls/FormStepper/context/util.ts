@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Ajv from 'ajv';
+
 import { toDataPath } from '@jsonforms/core';
 import get from 'lodash/get';
 import type { ErrorObject } from 'ajv';

@@ -97,6 +97,7 @@ describe('Ajv tests', () => {
     it('use default keyword', () => {
       const ajv = createDefaultAjv();
       const obj = {};
+      //eslint-disable-next-line
       const data = ajv.validate(testDefaultSchema, obj);
       expect(JSON.stringify(obj) !== '{}').toBe(true);
     });

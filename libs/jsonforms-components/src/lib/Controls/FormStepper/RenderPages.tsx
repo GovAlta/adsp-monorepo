@@ -69,89 +69,92 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
               }}
               testId="back-to-tasks"
             />
-            {categories?.map((category, index) => {
-              const categoryProps: StepProps = {
-                category: category.uischema as CategorizationElement,
-                categoryIndex: category.id,
-                visible: category?.visible as boolean,
-                enabled: category?.isEnabled as boolean,
-                path,
-                schema,
-                renderers,
-                cells,
-                data,
-              };
+            {
+              //eslint-disable-next-line
+              categories?.map((category, index) => {
+                const categoryProps: StepProps = {
+                  category: category.uischema as CategorizationElement,
+                  categoryIndex: category.id,
+                  visible: category?.visible as boolean,
+                  enabled: category?.isEnabled as boolean,
+                  path,
+                  schema,
+                  renderers,
+                  cells,
+                  data,
+                };
 
-              if (index === activeId && !isOnReview) {
-                const currentStep = index + 1 - categories.filter((c) => !c.visible && c.id < index).length;
-                const totalSteps = categories.filter((c) => c.visible).length;
+                if (index === activeId && !isOnReview) {
+                  const currentStep = index + 1 - categories.filter((c) => !c.visible && c.id < index).length;
+                  const totalSteps = categories.filter((c) => c.visible).length;
 
-                return (
-                  <div
-                    data-testid={`step_${index}-content-pages`}
-                    key={`${category.label}`}
-                    style={{ marginTop: '1.5rem' }}
-                  >
-                    <PageRenderPadding>
-                      <h3>
-                        Step {currentStep} of {totalSteps}
-                      </h3>
-                      <RenderStepElements {...categoryProps} />
-                    </PageRenderPadding>
-                    <PageRenderPadding>
-                      <GoabGrid minChildWidth="100px" gap="2xs">
-                        <GoabButtonGroup alignment="start">
-                          {activeId > 0 && (
+                  return (
+                    <div
+                      data-testid={`step_${index}-content-pages`}
+                      key={`${category.label}`}
+                      style={{ marginTop: '1.5rem' }}
+                    >
+                      <PageRenderPadding>
+                        <h3>
+                          Step {currentStep} of {totalSteps}
+                        </h3>
+                        <RenderStepElements {...categoryProps} />
+                      </PageRenderPadding>
+                      <PageRenderPadding>
+                        <GoabGrid minChildWidth="100px" gap="2xs">
+                          <GoabButtonGroup alignment="start">
+                            {activeId > 0 && (
+                              <GoabButton
+                                type="secondary"
+                                onClick={() => {
+                                  handleSave();
+                                  let prevId = activeId - 1;
+                                  while (prevId >= 0 && categories[prevId].visible === false) {
+                                    prevId = prevId - 1;
+                                  }
+                                  if (prevId >= 0) {
+                                    if (topElementRef.current) {
+                                      topElementRef.current.scrollIntoView();
+                                    }
+                                    goToPage(prevId);
+                                  }
+                                }}
+                                testId="pages-prev-btn"
+                              >
+                                Previous
+                              </GoabButton>
+                            )}{' '}
+                          </GoabButtonGroup>
+
+                          <GoabButtonGroup alignment="end">
                             <GoabButton
-                              type="secondary"
+                              type="submit"
                               onClick={() => {
                                 handleSave();
-                                let prevId = activeId - 1;
-                                while (prevId >= 0 && categories[prevId].visible === false) {
-                                  prevId = prevId - 1;
+                                let nextId = activeId + 1;
+                                while (nextId < categories.length && categories[nextId].visible === false) {
+                                  nextId = nextId + 1;
                                 }
-                                if (prevId >= 0) {
+                                if (!(currentStep === totalSteps && hideSummary)) {
                                   if (topElementRef.current) {
                                     topElementRef.current.scrollIntoView();
                                   }
-                                  goToPage(prevId);
+                                  goToPage(nextId);
                                 }
                               }}
-                              testId="pages-prev-btn"
+                              disabled={!enabled}
+                              testId="pages-save-continue-btn"
                             >
-                              Previous
+                              {currentStep === totalSteps ? submissionLabel : 'Next'}
                             </GoabButton>
-                          )}{' '}
-                        </GoabButtonGroup>
-
-                        <GoabButtonGroup alignment="end">
-                          <GoabButton
-                            type="submit"
-                            onClick={() => {
-                              handleSave();
-                              let nextId = activeId + 1;
-                              while (nextId < categories.length && categories[nextId].visible === false) {
-                                nextId = nextId + 1;
-                              }
-                              if (!(currentStep === totalSteps && hideSummary)) {
-                                if (topElementRef.current) {
-                                  topElementRef.current.scrollIntoView();
-                                }
-                                goToPage(nextId);
-                              }
-                            }}
-                            disabled={!enabled}
-                            testId="pages-save-continue-btn"
-                          >
-                            {currentStep === totalSteps ? submissionLabel : 'Next'}
-                          </GoabButton>
-                        </GoabButtonGroup>
-                      </GoabGrid>
-                    </PageRenderPadding>
-                  </div>
-                );
-              }
-            })}
+                          </GoabButtonGroup>
+                        </GoabGrid>
+                      </PageRenderPadding>
+                    </div>
+                  );
+                }
+              })
+            }
 
             {isOnReview && (
               <div data-testid="stepper-pages-review-page">

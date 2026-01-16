@@ -53,9 +53,9 @@ describe('Test the stepper utilities', () => {
   });
 
   it('can get stored value', async () => {
-    localStorage.setItem('http://localhost' + '_' + new Date().toISOString().slice(0, 10), '[true]');
+    localStorage.setItem(`http://localhost_${new Date().toISOString().slice(0, 10)}`, '[true]');
     expect((getIsVisitFromLocalStorage() as boolean[])[0]).toBe(true);
-    localStorage.setItem('http://localhost' + '_' + new Date().toISOString().slice(0, 10), '[tru]');
+    localStorage.setItem(`http://localhost_${new Date().toISOString().slice(0, 10)}`, '[tru]');
     expect(getIsVisitFromLocalStorage()).toBe(undefined);
   });
 

@@ -44,6 +44,7 @@ const GoACalloutController = (props: ControlProps) => {
 
 /* istanbul ignore next */
 export const CalloutReviewControl = () => {
+  //eslint-disable-next-line
   return <></>;
 };
 
