@@ -350,7 +350,7 @@ describe('Can render GoAInputBaseTableReview', () => {
     };
     const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
     const tableReviewRow = getByTestId('input-base-table-mock-row');
-    expect(tableReviewRow?.textContent).toBe('mockYes');
+    expect(tableReviewRow?.textContent).toBe('Mock Yes');
   });
 
   it('can render the GoAInputBaseTableReview with boolean and custom text', () => {
