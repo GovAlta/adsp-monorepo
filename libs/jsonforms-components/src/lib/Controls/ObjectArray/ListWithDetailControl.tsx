@@ -1032,7 +1032,8 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
             {...additionalProps}
           />
         </div>
-        {this.state.currentListPage === 0 && data > 0 && (
+
+        {!showSecondaryButton && (
           <ObjectArrayToolBar
             data={data}
             errors={errors}
