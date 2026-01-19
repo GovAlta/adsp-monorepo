@@ -10,14 +10,15 @@ class XdpBasicInput(XdpElement):
         return True
 
     def to_form_element(self):
+        labeling = self.get_label()
+        label = labeling.label if labeling else ""
         fe = FormInput(
             self.get_name(),
             self.full_path,
             self.get_type(),
-            self.get_label(),
+            label,
             self.context,
         )
         fe.enum = self.get_enumeration_values()
-        fe.label = self.get_label()
         fe.format = self.get_format()
         return fe

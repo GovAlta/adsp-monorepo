@@ -14,11 +14,11 @@ class FormCheckbox(FormElement):
         super().__init__("control", name, qualified_name, context)
         self.input_type: str = input_type
         self.format: str = None
-        self.desc: str = label
         self.x: float = None
         self.y: float = None
         self.is_radio = False
         self.label: str = ""
+        self.desc: str = label
 
     def has_json_schema(self):
         return True

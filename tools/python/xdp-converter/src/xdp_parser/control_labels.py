@@ -1,27 +1,17 @@
-from os import name
 import re
 from xml.etree import ElementTree as ET
-
-
-import re
-from xml.etree import ElementTree as ET
+from xdp_parser.parsing_helpers import split_label_and_help
+from xdp_parser.xdp_utils import Labeling
 
 
 class ControlLabels:
     """
     Build a mapping { control_name: label_text } for all visible controls in a container.
 
-    Traversal is intentionally ignored (tab-order != label semantics).
-
     Priority:
       1) Inline caption (field only; exclGroup captions ignored)
       2) Preceding <draw> sibling label (same parent; stop if another control encountered)
       3) Fallback to cleaned control name (optional)
-
-    Notes:
-      - If a control truly has no label in the PDF, we prefer returning None (optional),
-        rather than inventing a label.
-      - Uses parent_map because ElementTree doesn't support getparent().
     """
 
     def __init__(
@@ -36,28 +26,18 @@ class ControlLabels:
         """
         self.context = context
         self.parent_map = getattr(context, "parent_map", {}) or {}
-
-        self.use_name_fallback = False
-        self.return_none_for_unlabeled = True
-        # for debugging use
-        self.log = False
-
+        self.debug = True
+        self.mapping: dict[str, Labeling] = {}
         self.controls_by_name: dict[str, ET.Element] = _control_index_by_name(
             container_node, self.parent_map
         )
+        self.labels: dict[str, Labeling] = self._build_labels(container_node)
 
-        self.mapping: dict[str, str] = {}
-        self.labels: dict[str, str] = self._build_labels(container_node)
-
-    def get(self, target: str) -> str | None:
-        """
-        Returns:
-            Label string if present; otherwise None.
-        """
+    def get(self, target: str) -> Labeling | None:
         val = self.labels.get(target)
         if val is None:
             return None
-        if isinstance(val, str) and val.strip() == "":
+        if val.label.strip() == "":
             return None
         return val
 
@@ -65,51 +45,49 @@ class ControlLabels:
     # MAIN LABEL BUILD
     # ----------------------------------------------------------------
 
-    def _build_labels(self, container_node: ET.Element) -> dict[str, str]:
-        if self.log:
-            print(
-                f"[LABEL] Building labels for container '{container_node.get('name')}'"
-            )
+    def _build_labels(self, container_node: ET.Element) -> dict[str, Labeling]:
+        if self.debug:
+            print(f"[LABEL] Building labels for: '{container_node.get('name')}'")
 
-        # 1) Inline captions (field only)
+        # Inline captions (field only)
         for name, node in self.controls_by_name.items():
             caption = inline_caption(node)
             if caption and caption.strip():
-                self.mapping[name] = caption.strip()
-                if self.log:
+                self.mapping[name] = split_label_and_help(caption)
+                if self.debug:
                     print(f"[LABEL] '{name}' <- '{caption.strip()}' (inline caption)")
 
-        # 2) Preceding <draw> sibling label (same parent)
+        # Preceding <draw> sibling label (same parent)
         for name, node in self.controls_by_name.items():
-            if name in self.mapping and self.mapping[name].strip():
+            if name in self.mapping and self.mapping[name].label.strip():
                 continue
             draw_lbl = self._preceding_draw_label(node)
             if draw_lbl and draw_lbl.strip():
-                self.mapping[name] = draw_lbl.strip()
-                if self.log:
+                self.mapping[name] = split_label_and_help(draw_lbl)
+                if self.debug:
                     print(
                         f"[LABEL] '{name}' <- '{draw_lbl.strip()}' (preceding <draw>)"
                     )
 
-        # 3) Optional fallback: cleaned control name OR leave unlabeled
-        for name in self.controls_by_name.keys():
-            if name in self.mapping and self.mapping[name].strip():
-                continue
+        # # 3) Optional fallback: cleaned control name OR leave unlabeled
+        # for name in self.controls_by_name.keys():
+        #     if name in self.mapping and self.mapping[name].strip():
+        #         continue
 
-            if self.return_none_for_unlabeled:
-                # Intentionally do not set a label. Caller sees None via get().
-                if self.log:
-                    print(f"[LABEL] '{name}' <- None (no label found)")
-                continue
+        # if self.return_none_for_unlabeled:
+        #     # Intentionally do not set a label. Caller sees None via get().
+        #     if self.debug:
+        #         print(f"[LABEL] '{name}' <- None (no label found)")
+        #     continue
 
-            if self.use_name_fallback:
-                fallback = _control_name(name)
-                self.mapping[name] = fallback
-                if self.log:
-                    print(f"[LABEL] '{name}' <- '{fallback}' (name fallback)")
-            else:
-                if self.log:
-                    print(f"[LABEL] '{name}' <- '' (no fallback)")
+        # if self.use_name_fallback:
+        #     fallback = _control_name(name)
+        #     self.mapping[name] = fallback
+        #     if self.debug:
+        #         print(f"[LABEL] '{name}' <- '{fallback}' (name fallback)")
+        # else:
+        #     if self.debug:
+        #         print(f"[LABEL] '{name}' <- '' (no fallback)")
 
         return self.mapping
 

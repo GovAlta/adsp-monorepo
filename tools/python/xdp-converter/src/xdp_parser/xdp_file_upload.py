@@ -15,10 +15,9 @@ class XdpFileUpload(XdpElement):
             self.get_name(),
             self.full_path,
             self.get_type(),
-            self.get_label(),
+            self.get_label().label if self.get_label() else "",
             self.context,
         )
         fe.enum = self.get_enumeration_values()
-        fe.label = self.get_label()
         fe.format = self.get_format()
         return fe

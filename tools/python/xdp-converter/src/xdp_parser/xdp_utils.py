@@ -1,6 +1,13 @@
+from dataclasses import dataclass
 import re
 from typing import Any, Dict, List, Optional, Tuple
 import xml.etree.ElementTree as ET
+
+
+@dataclass
+class Labeling:
+    label: str
+    description: str
 
 
 def strip_namespace(tag: str) -> str:

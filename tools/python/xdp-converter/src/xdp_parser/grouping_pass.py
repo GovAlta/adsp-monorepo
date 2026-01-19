@@ -13,7 +13,7 @@ from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_subform_placeholder import XdpSubformPlaceholder
 from xdp_parser.xdp_utils import convert_to_mm
 
-debug = True
+debug = False
 
 
 class XdpGroupingPass:
@@ -52,12 +52,12 @@ class XdpGroupingPass:
         for child in node.children:
             grouped_children.extend(self._group_node(child, parent_label=parent_label))
 
-        # 1) Sort
+        # Sort
         grouped_children = self.sort_elements_for_subform(
             subform, grouped_children, self.context.get("parent_map", {})
         )
 
-        # 2) Extract header BEFORE pairing
+        # Extract header BEFORE pairing
         resolved_label, header_index = get_subform_header(
             subform, grouped_children, debug
         )
@@ -65,16 +65,14 @@ class XdpGroupingPass:
             grouped_children = strip_header_element(grouped_children, header_index)
 
         if debug:
-            print(f"[{subform.get('name')}] sorted order:")
-            for k, e in enumerate(grouped_children[:8]):
-                t = (
-                    "CTRL"
-                    if e.is_control()
-                    else ("HELP" if e.is_help_text() else "OTHER")
-                )
-                print(f"  {k:02d} {t:4} name={e.get_name()} x={e.x} y={e.y} h={e.h}")
+            print_subform_map(subform, grouped_children)
 
-        # 3) Pair help icons with controls
+        # Transform pseudo radio subforms into radio selectors
+        # grouped_children = self.pseudo_radio_transformer.transform(
+        #     subform, grouped_children
+        # )
+
+        # Pair help icons with controls
         grouped_children = self._consolidate_help_control_pairs(grouped_children)
 
         self.child_map[id(subform)] = grouped_children
@@ -385,8 +383,8 @@ class XdpGroupingPass:
     def _proximity_score(
         self, help_elem: XdpElement, control_elem: XdpElement
     ) -> float:
-        hb = help_elem.bbox()
-        cb = control_elem.bbox()
+        hb = help_elem.visual_bbox()
+        cb = control_elem.visual_bbox()
         if hb is None or cb is None:
             return 0.0
 
@@ -439,3 +437,10 @@ class XdpGroupingPass:
             return ref.split("[", 1)[0]
         except Exception:
             return None
+
+
+def print_subform_map(subform, grouped_children):
+    print(f"[{subform.get('name')}] sorted order:")
+    for k, e in enumerate(grouped_children[:8]):
+        t = "CTRL" if e.is_control() else ("HELP" if e.is_help_text() else "OTHER")
+        print(f"  {k:02d} {t:4} name={e.get_name()} x={e.x} y={e.y} h={e.h}")

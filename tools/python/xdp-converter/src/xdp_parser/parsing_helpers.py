@@ -1,8 +1,9 @@
+from dataclasses import dataclass
 import re
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional
 
-from xdp_parser.xdp_utils import has_repeater_occur, is_button, presence_hidden
+from xdp_parser.xdp_utils import Labeling, has_repeater_occur, is_button
 
 
 def is_object_array(node):
@@ -74,47 +75,46 @@ def _leaf_fields_excluding_buttons(subform: ET.Element) -> List[ET.Element]:
     return out
 
 
-def _is_calc_only(field: ET.Element) -> bool:
-    # Treat as calc-only if it has a <calculate> but no name and no bind (tweak as needed)
-    if field.find("./calculate") is None:
-        return False
-    has_name = bool(field.attrib.get("name"))
-    has_bind = field.find("./bind") is not None
-    return not (has_name or has_bind)
+# def _is_calc_only(field: ET.Element) -> bool:
+#     # Treat as calc-only if it has a <calculate> but no name and no bind (tweak as needed)
+#     if field.find("./calculate") is None:
+#         return False
+#     has_name = bool(field.attrib.get("name"))
+#     has_bind = field.find("./bind") is not None
+#     return not (has_name or has_bind)
 
 
-def _is_visible_input(field: ET.Element) -> bool:
-    if is_button(field):
-        return False
-    if presence_hidden(field):
-        return False
-    if _is_calc_only(field):
-        return False
-    return True
+# def _is_visible_input(field: ET.Element) -> bool:
+#     if is_button(field):
+#         return False
+#     if presence_hidden(field):
+#         return False
+#     if _is_calc_only(field):
+#         return False
+#     return True
 
 
-def find_input_fields(row_subform: ET.Element, max_depth: int = 1):
-    """
-    Yield input <field> nodes within the row subform.
-    Scans direct children and (by default) one wrapper level deep.
-    """
-    # direct fields
-    for fld in row_subform.findall("./field"):
-        if _is_visible_input(fld):
-            yield fld
+# def find_input_fields(row_subform: ET.Element, max_depth: int = 1):
+#     """
+#     Yield input <field> nodes within the row subform.
+#     Scans direct children and (by default) one wrapper level deep.
+#     """
+#     # direct fields
+#     for fld in row_subform.findall("./field"):
+#         if _is_visible_input(fld):
+#             yield fld
 
-    if max_depth >= 1:
-        # one-level wrapper subforms commonly used for layout
-        for wrap in row_subform.findall("./subform"):
-            # skip obvious control clusters like Add/Remove if present
-            name = (wrap.attrib.get("name") or "").lower()
-            if name in {"addremove", "controls", "toolbar"}:
-                continue
-            for fld in wrap.findall("./field"):
-                if _is_visible_input(fld):
-                    yield fld
-
-    # 1) Parse explicit targets (dotted or resolveNode("path"))
+#     if max_depth >= 1:
+#         # one-level wrapper subforms commonly used for layout
+#         for wrap in row_subform.findall("./subform"):
+#             # skip obvious control clusters like Add/Remove if present
+#             name = (wrap.attrib.get("name") or "").lower()
+#             if name in {"addremove", "controls", "toolbar"}:
+#                 continue
+#             for fld in wrap.findall("./field"):
+#                 if _is_visible_input(fld):
+#                     yield fld
+# 1) Parse explicit targets (dotted or resolveNode("path"))
 
 
 IM_TARGET_PAT = re.compile(
@@ -156,51 +156,51 @@ def count_parent_hops(button_field: ET.Element) -> int:
     return hops
 
 
-def resolve_name_in_scope(
-    root: ET.Element, scope: ET.Element, name: str
-) -> Optional[ET.Element]:
-    """
-    Resolve a simple subform name under current scope, falling back to the whole document.
-    """
-    # prefer nearest descendant with that name
-    for sf in scope.findall(".//subform"):
-        if (sf.attrib.get("name") or "") == name:
-            return sf
-    # fallback: any subform in doc
-    for sf in root.findall(".//subform"):
-        if (sf.attrib.get("name") or "") == name:
-            return sf
-    return None
+# def resolve_name_in_scope(
+#     root: ET.Element, scope: ET.Element, name: str
+# ) -> Optional[ET.Element]:
+#     """
+#     Resolve a simple subform name under current scope, falling back to the whole document.
+#     """
+#     # prefer nearest descendant with that name
+#     for sf in scope.findall(".//subform"):
+#         if (sf.attrib.get("name") or "") == name:
+#             return sf
+#     # fallback: any subform in doc
+#     for sf in root.findall(".//subform"):
+#         if (sf.attrib.get("name") or "") == name:
+#             return sf
+#     return None
 
 
-def resolve_som_path(root: ET.Element, som: str) -> Optional[ET.Element]:
-    """
-    Minimal SOM-ish resolver: handle absolute-ish "a/b/c" paths by name segments.
-    Good enough for most authoring patterns.
-    """
-    parts = [p for p in som.strip("/").split("/") if p]
-    if not parts:
-        return None
-    # start from root
-    cur = root
-    for part in parts:
-        nxt = None
-        for sf in cur.findall("./subform"):
-            if (sf.attrib.get("name") or "") == part:
-                nxt = sf
-                break
-        if nxt is None:
-            # search deeper if direct child not found
-            matches = [
-                sf
-                for sf in cur.findall(".//subform")
-                if (sf.attrib.get("name") or "") == part
-            ]
-            if not matches:
-                return None
-            nxt = matches[0]
-        cur = nxt
-    return cur
+# def resolve_som_path(root: ET.Element, som: str) -> Optional[ET.Element]:
+#     """
+#     Minimal SOM-ish resolver: handle absolute-ish "a/b/c" paths by name segments.
+#     Good enough for most authoring patterns.
+#     """
+#     parts = [p for p in som.strip("/").split("/") if p]
+#     if not parts:
+#         return None
+#     # start from root
+#     cur = root
+#     for part in parts:
+#         nxt = None
+#         for sf in cur.findall("./subform"):
+#             if (sf.attrib.get("name") or "") == part:
+#                 nxt = sf
+#                 break
+#         if nxt is None:
+#             # search deeper if direct child not found
+#             matches = [
+#                 sf
+#                 for sf in cur.findall(".//subform")
+#                 if (sf.attrib.get("name") or "") == part
+#             ]
+#             if not matches:
+#                 return None
+#             nxt = matches[0]
+#         cur = nxt
+#     return cur
 
 
 def ancestor_by_hops(
@@ -214,53 +214,53 @@ def ancestor_by_hops(
     return cur
 
 
-def extract_radio_button_labels(subform_elem):
-    """
-    Returns a list of radio button labels found in the subform.
-    Looks for <field> with <checkButton mark="circle">, then finds the next <draw> and extracts its label.
-    """
-    children = list(subform_elem)
-    labels = []
-    i = 0
-    while i < len(children):
-        child = children[i]
-        if child.tag == "field":
-            has_radio = any(
-                cb.tag == "checkButton" and cb.attrib.get("mark") == "circle"
-                for cb in child.iter()
-            )
-            if has_radio:
-                j = i + 1
-                while j < len(children):
-                    next_elem = children[j]
-                    if next_elem.tag == "draw":
-                        label = find_button_label(next_elem)
-                        if label:
-                            labels.append(label[0])
-                        break
-                    j += 1
-        i += 1
+# def extract_radio_button_labels(subform_elem):
+#     """
+#     Returns a list of radio button labels found in the subform.
+#     Looks for <field> with <checkButton mark="circle">, then finds the next <draw> and extracts its label.
+#     """
+#     children = list(subform_elem)
+#     labels = []
+#     i = 0
+#     while i < len(children):
+#         child = children[i]
+#         if child.tag == "field":
+#             has_radio = any(
+#                 cb.tag == "checkButton" and cb.attrib.get("mark") == "circle"
+#                 for cb in child.iter()
+#             )
+#             if has_radio:
+#                 j = i + 1
+#                 while j < len(children):
+#                     next_elem = children[j]
+#                     if next_elem.tag == "draw":
+#                         label = find_button_label(next_elem)
+#                         if label:
+#                             labels.append(label[0])
+#                         break
+#                     j += 1
+#         i += 1
 
-    return labels
-
-
-def find_button_label(draw):
-    value_elem = None
-    for elem in draw:
-        if elem.tag.endswith("value"):
-            value_elem = elem
-            break
-    if value_elem is not None:
-        text_elem = None
-        for elem in value_elem:
-            if elem.tag.endswith("text"):
-                text_elem = elem
-                break
-        if text_elem is not None and text_elem.text:
-            return split_label_and_help(text_elem.text.strip())
+#     return labels
 
 
-def split_label_and_help(label_text, min_space_count=2):
+# def find_button_label(draw):
+#     value_elem = None
+#     for elem in draw:
+#         if elem.tag.endswith("value"):
+#             value_elem = elem
+#             break
+#     if value_elem is not None:
+#         text_elem = None
+#         for elem in value_elem:
+#             if elem.tag.endswith("text"):
+#                 text_elem = elem
+#                 break
+#         if text_elem is not None and text_elem.text:
+#             return split_label_and_help(text_elem.text.strip())
+
+
+def split_label_and_help(label_text, min_space_count=2) -> Labeling:
     """
     Splits label_text into (label, help_text) using min_space_count consecutive spaces as separator.
     Returns (label, help_text). If no separator found, help_text is ''.
@@ -269,57 +269,6 @@ def split_label_and_help(label_text, min_space_count=2):
     pattern = r"\s{" + str(min_space_count) + r",}"
     parts = re.split(pattern, label_text, maxsplit=1)
     if len(parts) == 2:
-        return parts[0].strip(), parts[1].strip()
+        return Labeling(parts[0].strip(), parts[1].strip())
     else:
-        return label_text.strip(), ""
-
-
-def get_help_text(draw_node):
-    # Must be a <draw> with a text block (not a field)
-    if draw_node.tag != "draw":
-        return None
-    if draw_node.find(".//ui/textEdit") is None:
-        return None
-
-    # Must contain HTML text
-    exdata = draw_node.find(".//value/exData[@contentType='text/html']")
-    if exdata is None:
-        return None
-
-    # Ignore nodes that participate in data binding or scripting
-    if any(draw_node.findall(f".//{tag}") for tag in ("bind", "calculate", "event")):
-        return None
-
-    # Extract and normalize text
-    text = " ".join(exdata.itertext()).strip()
-    if len(text) < 50:
-        return None  # too short to be instructional
-
-    name = draw_node.get("name", "").lower()
-    width = float(draw_node.get("w", "0").replace("mm", "") or 0)
-    text_lower = text.lower()
-
-    # Name hint (labels, info, notes)
-    name_hint = any(prefix in name for prefix in ("lbl", "info", "note", "instr"))
-
-    # Keyword hint (common in help text)
-    keywords = [
-        "please",
-        "information",
-        "contact",
-        "fax",
-        "mail",
-        "submit",
-        "application",
-        "call",
-        "phone",
-        "provided",
-        "eligibility",
-    ]
-    keyword_hint = any(word in text_lower for word in keywords)
-
-    # Heuristic threshold: wide + long text or a strong hint
-    if width > 150 or name_hint or keyword_hint:
-        return text
-
-    return None
+        return Labeling(label_text.strip(), "")
