@@ -23,7 +23,7 @@ export const Agents: FunctionComponent<AgentsProps> = ({ openAddAgent, setOpenAd
   useEffect(() => {
     dispatch(getAgents());
     navigate('../agents', { replace: true });
-  }, [dispatch]);
+  }, [dispatch,navigate]);
 
   const tenantAgents = useSelector((state: RootState) => agentsSelector(state, false));
   const coreAgents = useSelector((state: RootState) => agentsSelector(state, true));

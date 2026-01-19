@@ -93,7 +93,7 @@ function* exportFeedbacks(payload: ExportFeedbacksAction) {
 
   if (configBaseUrl && token) {
     let allFeedbacks = [];
-    let page = 0;
+
     let nextPage: string = '';
     let hasMoreData: boolean = true;
     const pageSize = 5000;
@@ -114,7 +114,7 @@ function* exportFeedbacks(payload: ExportFeedbacksAction) {
         }
 
         allFeedbacks = allFeedbacks.concat(feedbacks);
-        page++;
+
       }
 
       yield put(exportFeedbacksSuccess(incrementRatingValue(allFeedbacks)));

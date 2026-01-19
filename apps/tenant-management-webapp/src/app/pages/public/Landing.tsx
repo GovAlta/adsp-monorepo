@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import React, { useState, createRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoabHeroBanner, GoabContainer, GoabBlock } from '@abgov/react-components';
+import { GoabHeroBanner, GoabContainer } from '@abgov/react-components';
 
 import bannerBackground from '@assets/BannerBackground.jpg';
 import Header from '@components/AppHeader';
@@ -14,7 +14,6 @@ import ClockIcon from '@assets/icons/clock.png';
 import DashboardScreenIcon from '@assets/icons/dashboard-screenshot.png';
 import GoALogo from '@assets/goa-logo.svg';
 
-// TODO: replace with ui-components open icon after updated the ui-components
 import {
   Section,
   CardContent,
@@ -44,6 +43,7 @@ const LandingPage = (): JSX.Element => {
   const yesterday = DateTime.now().minus({ days: 1 }).toUTC().startOf('day');
   useEffect(() => {
     dispatch(fetchDashboardMetrics(yesterday));
+    //eslint-disable-next-line
   }, []);
 
   useEffect(() => {

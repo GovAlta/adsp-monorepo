@@ -35,5 +35,6 @@ export function useSyncAutofillFields(
     });
 
     return () => cancelAnimationFrame(rAF);
+    //eslint-disable-next-line
   }, [formData]);
 }

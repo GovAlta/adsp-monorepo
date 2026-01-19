@@ -639,6 +639,7 @@ const LeftTab = ({
         <RowFlexMenu tabIndex={0}>
           <TabName>{name}</TabName>
           {enabled ? (
+            //eslint-disable-next-line
             <Trash role="trash button">
               <GoabIconButton
                 disabled={!enabled}
