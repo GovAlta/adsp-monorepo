@@ -91,8 +91,8 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
           enabled={enabled}
           selected={typeof data === 'object' ? _.get(data, valuePath) : data}
           width={width}
-          key={`jsonforms-${label}-dropdown`}
-          id={`jsonforms-${label}-dropdown`}
+          key={`jsonforms-${path}-dropdown`}
+          id={`jsonforms-${path}-dropdown`}
           label={label}
           isAutoCompletion={autoCompletion}
           onChange={(value: string) => {
