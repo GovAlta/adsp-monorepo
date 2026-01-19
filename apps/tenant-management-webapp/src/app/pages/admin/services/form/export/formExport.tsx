@@ -94,6 +94,7 @@ export const FormExport = (): JSX.Element => {
   // eslint-disable-next-line
   useEffect(() => {
     dispatch(getFormDefinitions());
+    //eslint-disable-next-line
   }, [dispatch, Object.keys(formDefinitions).length === 0]);
 
   // eslint-disable-next-line
@@ -113,7 +114,7 @@ export const FormExport = (): JSX.Element => {
   useEffect(() => {
     if (next) {
       dispatch(getFormDefinitions(next));
-    }
+    } //eslint-disable-next-line
   }, [dispatch, next === 'NTA=']);
 
   // eslint-disable-next-line
