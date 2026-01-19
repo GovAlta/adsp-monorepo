@@ -40,7 +40,7 @@ class FormPage {
   }
 
   editorSaveButtonEnabled() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Save" and not(@disabled)]');
+    return cy.xpath('//*[@testid="definition-form-save" and not(@disabled)]');
   }
 
   editorSaveButton() {

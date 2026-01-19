@@ -14,7 +14,6 @@ import {
   GoabDropdownItem,
   GoabFormItem,
   GoabInput,
-  GoabModal,
   GoabSkeleton,
 } from '@abgov/react-components';
 import { LoadMoreWrapper } from '@components/styled-components';
@@ -53,14 +52,14 @@ export const FeedbacksList = (): JSX.Element => {
     if (selectedSite) {
       const selectedSiteData = sites.find((s) => s.url === selectedSite);
       dispatch(getFeedbacks(selectedSiteData, searchCriteria));
-    }
+    } //eslint-disable-next-line
   }, [selectedSite]);
 
   useEffect(() => {
     if (selectedSite && searchCriteria.startDate && searchCriteria.endDate) {
       const selectedSiteData = sites.find((s) => s.url === selectedSite);
       dispatch(getFeedbacks(selectedSiteData, searchCriteria));
-    }
+    } //eslint-disable-next-line
   }, [searchCriteria]);
 
   const isSearchCriteriaValid = (criteria: FeedbackSearchCriteria) =>
@@ -107,7 +106,7 @@ export const FeedbacksList = (): JSX.Element => {
       const fileName = `${tenantName}-feedbacks`;
       exportFromJSON({ data, fileName, exportType: exportFromJSON.types.csv });
       setIsExport(false);
-    }
+    } //eslint-disable-next-line
   }, [exportData]);
 
   const sharedFilterForm = (

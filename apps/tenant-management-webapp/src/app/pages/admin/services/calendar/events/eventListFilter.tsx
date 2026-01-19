@@ -31,7 +31,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
       setStartDateValue(JSON.parse(JSON.stringify(criteria.startDate)));
       setEndDateValue(JSON.parse(JSON.stringify(criteria.endDate)));
     }
-  }, [calenderName]);
+  }, [calenderName,criteria.startDate,criteria.endDate]);
 
   const parsedStartDate = startDateValue && !isNaN(Date.parse(startDateValue)) ? new Date(startDateValue) : undefined;
   const parsedEndDate = endDateValue && !isNaN(Date.parse(endDateValue)) ? new Date(endDateValue) : undefined;

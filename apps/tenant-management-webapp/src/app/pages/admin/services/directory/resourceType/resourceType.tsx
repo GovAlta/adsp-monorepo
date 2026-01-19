@@ -33,7 +33,7 @@ export const ResourceTypePage = (): JSX.Element => {
     setOpenAddResourceType(false);
     setSelectedType(defaultResourceType);
   }, []);
-
+  //eslint-disable-next-line
   const groupResources = (data: Record<string, ResourceType[]>) => {
     Object.entries(data).forEach(([key, value]) => {
       if (key.includes(':platform:')) {

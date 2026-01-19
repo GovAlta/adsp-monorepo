@@ -58,35 +58,37 @@ class StatusServicePage {
   }
 
   noticeList() {
-    return cy.xpath('//*[@data-testid="notice-list"]/div/div');
+    return cy.xpath('//*[@data-testid="notice-list"]/goa-grid/div');
   }
 
   noticeCardMode(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@testid="notice-card-mode"]`);
+    return cy.xpath(`//*[@data-testid="notice-list"]/goa-grid/div[${index}]//*[@testid="notice-card-mode"]`);
   }
 
   noticeCardDesc(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-message"]`);
+    return cy.xpath(`//*[@data-testid="notice-list"]/goa-grid/div[${index}]//*[@data-testid="notice-card-message"]`);
   }
 
   noticeCardApp(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-application"]`);
+    return cy.xpath(
+      `//*[@data-testid="notice-list"]/goa-grid/div[${index}]//*[@data-testid="notice-card-application"]`
+    );
   }
 
   noticeCardStartDateTime(index) {
     return cy.xpath(
-      `//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-start-date"]/*[@class="time"]`
+      `//*[@data-testid="notice-list"]/goa-grid/div[${index}]//*[@data-testid="notice-card-start-date"]/*[@class="time"]`
     );
   }
 
   noticeCardEndDateTime(index) {
     return cy.xpath(
-      `//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-end-date"]/*[@class="time"]`
+      `//*[@data-testid="notice-list"]/goa-grid/div[${index}]//*[@data-testid="notice-card-end-date"]/*[@class="time"]`
     );
   }
 
   noticeCardGearButton(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@testid="notice-card-gear-button"]`);
+    return cy.xpath(`//*[@data-testid="notice-list"]/goa-grid/div[${index}]//*[@testid="notice-card-gear-button"]`);
   }
 
   noticeCardGearButtons() {
@@ -94,23 +96,29 @@ class StatusServicePage {
   }
 
   noticeCardEditMenu(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-menu-edit"]`);
+    return cy.xpath(`//*[@data-testid="notice-list"]/goa-grid/div[${index}]//*[@data-testid="notice-card-menu-edit"]`);
   }
 
   noticeCardDeleteMenu(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-menu-delete"]`);
+    return cy.xpath(`//*[@data-testid="notice-list"]/div[${index}]//*[@data-testid="notice-card-menu-delete"]`);
   }
 
   noticeCardPublishMenu(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-menu-publish"]`);
+    return cy.xpath(
+      `//*[@data-testid="notice-list"]/goa-grid/div[${index}]//*[@data-testid="notice-card-menu-publish"]`
+    );
   }
 
   noticeCardUnpublishMenu(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-menu-unpublish"]`);
+    return cy.xpath(
+      `//*[@data-testid="notice-list"]/goa-grid/div[${index}]//*[@data-testid="notice-card-menu-unpublish"]`
+    );
   }
 
   noticeCardArchiveMenu(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-menu-archive"]`);
+    return cy.xpath(
+      `//*[@data-testid="notice-list"]/goa-grid/div[${index}]//*[@data-testid="notice-card-menu-archive"]`
+    );
   }
 
   filterByStatusRadioGroup() {

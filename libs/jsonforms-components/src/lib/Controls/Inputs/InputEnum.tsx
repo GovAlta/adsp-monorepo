@@ -71,6 +71,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
     }
 
     return newOptions.filter((option) => option.value !== '');
+    //eslint-disable-next-line
   }, [registerData, options]);
 
   const width = uischema?.options?.componentProps?.width || '100%';

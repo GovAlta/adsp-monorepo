@@ -61,10 +61,6 @@ const categoryHasNoElements = {
   elements: [{ type: 'Category' }],
   options: { variant: 'stepper' },
 };
-const categorizationWithNoVariant = {
-  type: 'Categorization',
-  elements: [{ type: 'Category', elements: [] }],
-};
 
 describe('check error processing', () => {
   describe('categorization validation', () => {

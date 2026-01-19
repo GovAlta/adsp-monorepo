@@ -1,7 +1,9 @@
-import styled from 'styled-components';
-import { GoabButton } from '@abgov/react-components';
-import { ReactComponent as OpenIcon } from '@assets/icons/open.svg';
 import React from 'react';
+import styled from 'styled-components';
+import { GoabButton, GoabIcon } from '@abgov/react-components';
+
+import { GoAContextMenuIcon } from '@components/ContextMenu';
+
 // *****************
 // Styled Components
 // *****************
@@ -59,6 +61,8 @@ export const GrayBox = styled.div`
 
 export const DashBoardImg = styled.img`
   box-shadow: 1px 5px 28px 0px #00000033;
+  width: 90%;
+  height: 90%;
 `;
 
 export const HeroBannerLayout = styled.div`
@@ -96,36 +100,23 @@ export const ContentFootSeparator = styled.div`
 
 export const RedirectButton = ({ url, name, label }: RedirectButtonProps): JSX.Element => {
   const Content = styled.div`
-    display: grid;
-    grid-template-columns: 4fr 1fr;
-    grid-gap: 4px;
+    display: flex;
+    flex-direction: row;
+    gap: var(--goa-space-xs);
+  `;
 
-    svg {
-      width: 23px;
-      height: 24px;
-      position: relative;
-      top: -4px;
-      stroke: var(--color-primary);
-    }
-  `;
-  const ButtonContainer = styled.div`
-    :hover svg {
-      stroke: var(--color-primary-dark);
-    }
-  `;
   return (
-    <ButtonContainer>
-      <GoabButton
-        type="tertiary"
-        testId={`redirect-button-${name}`}
-        onClick={() => {
-          window.open(url, '_blank');
-        }}
-      >
-        <Content>
-          {label} <OpenIcon />
-        </Content>
-      </GoabButton>
-    </ButtonContainer>
+    <GoabButton
+      type="tertiary"
+      testId={`redirect-button-${name}`}
+      onClick={() => {
+        window.open(url, '_blank');
+      }}
+    >
+      <Content>
+        {label}
+        <GoabIcon type="create" size="medium" theme="outline"></GoabIcon>
+      </Content>
+    </GoabButton>
   );
 };

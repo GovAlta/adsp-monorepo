@@ -274,13 +274,13 @@ export function* fetchRegisterData(): SagaIterator {
 
     const anonymousRead =
       dataListObject
-        .filter(([name, config]) => {
+        .filter(([_, config]) => {
           // eslint-disable-next-line
           const _c = config as any;
 
           return _c.anonymousRead !== true;
         })
-        .map(([name, config]) => name.replace(':', '/')) || [];
+        .map(([name]) => name.replace(':', '/')) || [];
 
     for (const registerConfig of registerConfigs) {
       try {

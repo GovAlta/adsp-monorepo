@@ -144,7 +144,7 @@ export const AddEditTargetCache = ({
               }}
             >
               {tenantDirectory &&
-                tenantDirectory.map((directory) => <GoabDropdownItem value={directory.urn} label={directory.urn} />)}
+                tenantDirectory.map((directory,index) => <GoabDropdownItem value={directory.urn} label={directory.urn} key={index} />)}
             </GoabDropdown>
           </GoabFormItem>
 

@@ -639,6 +639,7 @@ const LeftTab = ({
         <RowFlexMenu tabIndex={0}>
           <TabName>{name}</TabName>
           {enabled ? (
+            //eslint-disable-next-line
             <Trash role="trash button">
               <GoabIconButton
                 disabled={!enabled}
@@ -1031,7 +1032,8 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
             {...additionalProps}
           />
         </div>
-        {this.state.currentListPage === 0 && data > 0 && (
+
+        {!showSecondaryButton && (
           <ObjectArrayToolBar
             data={data}
             errors={errors}
