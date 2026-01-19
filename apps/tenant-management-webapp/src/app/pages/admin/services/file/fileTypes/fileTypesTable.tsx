@@ -47,7 +47,7 @@ const FileTypeTableRow = ({
             title="Edit"
             testId={`file-type-row-edit-btn-${id}`}
             onClick={() => {
-              onEdit();
+              onEdit?.();
             }}
           />
           <GoAContextMenuIcon
@@ -56,7 +56,7 @@ const FileTypeTableRow = ({
             type="trash"
             onClick={() => {
               dispatch(checkFileTypeHasFile(id));
-              onDelete();
+              onDelete?.();
             }}
           />
         </GoAContextMenu>
@@ -180,7 +180,8 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
       )}
       {coreFileTypes && coreFileTypes.length > 0 && (
         <div>
-          <h2>Core file types</h2>
+          <h3>Core file types</h3>
+
           <TableLayout>
             <DataTable data-testid="file-types-table">
               <thead data-testid="file-types-table-header" id="file-types-table-core-header">
@@ -237,7 +238,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
       />
       <GoabModal
         testId="file-type-delete-modal"
-        open={deleteId && hasFile === true}
+        open={!!deleteId && hasFile === true}
         heading="File type current in use"
         actions={
           <GoabButtonGroup alignment="end">
