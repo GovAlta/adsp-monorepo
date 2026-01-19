@@ -169,7 +169,7 @@ Feature: Service status
       | Description           | Application | Start Date | Start Time | End Date | End Time | Description2               | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
       | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
 
-  @TEST_CS-339 @REQ_CS-169 @regression
+  @TEST_CS-339 @REQ_CS-169 @regression @prod
   Scenario: As a tenant admin, I can add/edit/delete an application
     Given a tenant admin user is on status applications page
     When the user clicks Add application button
@@ -267,7 +267,7 @@ Feature: Service status
     And the user clicks Save button on contact information modal
     Then the user views "adsp1.t@gov.ab.ca" as the email of contact information
 
-  @TEST_CS-333 @REQ_CS-163 @regression
+  @TEST_CS-333 @REQ_CS-163 @regression @prod
   Scenario: As a tenant admin, I can update the status of my service/app, so it is available to the public
     Given a tenant admin user is on status applications page
     Then the user views current status for "autotest-DO-NOT-DELETE"
@@ -301,7 +301,7 @@ Feature: Service status
   # And no critical or serious accessibility issues for "add notice modal" on "status notices page"
   # When the user clicks Cancel button in notice modal
 
-  @TEST_CS-2249 @REQ_CS-2058 @regression
+  @TEST_CS-2249 @REQ_CS-2058 @regression @prod
   Scenario: As a tenant admin, I can set a status application to be monitoring only, so it does not appear on the public status page
     Given a tenant admin user is on status applications page
     # Set monitor only for an application
