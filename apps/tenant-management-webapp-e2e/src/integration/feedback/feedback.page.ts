@@ -11,8 +11,20 @@ class feedbackPage {
     return cy.xpath('//*[@data-testid="feedbacks-overview-tab"]//h2[text()="Sites"]/following-sibling::p');
   }
 
-  feedbackOverviewFeedbackWidgetContent() {
+  feedbackOverviewFeedbackWidgetMainParagraph() {
     return cy.xpath('//*[@data-testid="feedbacks-overview-tab"]//h2[text()="Feedback widget"]/following-sibling::p');
+  }
+
+  feedbackOverviewFeedbackWidgetParagraphOne() {
+    return cy.xpath(
+      '//*[@data-testid="feedbacks-overview-tab"]//h2[text()="Feedback widget"]/following-sibling::div[1]/p'
+    );
+  }
+
+  feedbackOverviewFeedbackWidgetParagraphTwo() {
+    return cy.xpath(
+      '//*[@data-testid="feedbacks-overview-tab"]//h2[text()="Feedback widget"]/following-sibling::div[2]/p'
+    );
   }
 
   feedbackOverviewSummaryBlock() {

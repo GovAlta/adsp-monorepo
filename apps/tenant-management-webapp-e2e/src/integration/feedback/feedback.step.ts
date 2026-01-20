@@ -29,10 +29,20 @@ Then('the user views {string} section on feedback guidance page', function (sect
       break;
     case 'Feedback widget':
       feedbackObj
-        .feedbackOverviewFeedbackWidgetContent()
+        .feedbackOverviewFeedbackWidgetMainParagraph()
+        .invoke('text')
+        .should('contain', 'Include the feedback script in your site, and initialize it from javascript.');
+      feedbackObj
+        .feedbackOverviewFeedbackWidgetParagraphOne()
         .invoke('text')
         .should('contain', 'Reference the feedback widget script in <head> to set the adspFeedback global variable.');
-      feedbackObj.feedbackOverviewFeedbackWidgetContent().invoke('text').should('contain', 'adspFeedback.initialize');
+      feedbackObj
+        .feedbackOverviewFeedbackWidgetParagraphTwo()
+        .invoke('text')
+        .should(
+          'contain',
+          'nitialize the widget via the adspFeedback variable in <body> to identify your tenant and mount the widget element to DOM'
+        );
       break;
     default:
       expect(sectionName).to.be.oneOf(['description', 'Sites', 'Feedback widget']);
