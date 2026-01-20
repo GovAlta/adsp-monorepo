@@ -39,7 +39,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const prevCountRef = useRef(props.items);
 
   const trailingIcon = isOpen ? 'chevron-up' : 'chevron-down';
-  const textInputName = `dropdown-${label}`;
+  const textInputName = `dropdown-${label}-${id}`;
   const textInput = document.getElementsByName(textInputName)[0] ?? null;
 
   const PREFIX = 'jsonforms-dropdown';
@@ -233,7 +233,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       >
         <GoabInput
           disabled={!enabled}
-          name={`dropdown-${label}`}
+          name={`dropdown-${label}-${id}`}
           width="100%"
           value={inputText}
           testId={`${id}-input`}
