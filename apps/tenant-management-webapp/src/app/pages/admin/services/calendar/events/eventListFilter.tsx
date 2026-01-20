@@ -6,7 +6,7 @@ import { CalendarEventSearchCriteria } from '@store/calendar/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { CalendarEventFilterError } from './styled-components';
-import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
+import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface EventListFilterProps {
   calenderName?: string;
@@ -31,11 +31,11 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
       setStartDateValue(JSON.parse(JSON.stringify(criteria.startDate)));
       setEndDateValue(JSON.parse(JSON.stringify(criteria.endDate)));
     }
-  }, [calenderName,criteria.startDate,criteria.endDate]);
+  }, [calenderName, criteria.startDate, criteria.endDate]);
 
   const parsedStartDate = startDateValue && !isNaN(Date.parse(startDateValue)) ? new Date(startDateValue) : undefined;
   const parsedEndDate = endDateValue && !isNaN(Date.parse(endDateValue)) ? new Date(endDateValue) : undefined;
-  console.log('parsedStartDate', parsedStartDate);
+
   return (
     <EventFilterWrapper>
       <GoabGrid minChildWidth="20ch">

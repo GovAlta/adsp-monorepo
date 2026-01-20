@@ -39,11 +39,7 @@ interface LoadMoreEventsProps {
 const eventDateFormat = (dateString: string, isAllDay: boolean) => {
   const date = new Date(dateString);
   const time = date.toLocaleString('en-us', { hour: '2-digit', minute: '2-digit' });
-  if (isAllDay) {
-    return `${getDateString(date)}`;
-  } else {
-    return `${getDateString(date)}, ${time}`;
-  }
+  return isAllDay ? `${getDateString(date)}` : `${getDateString(date)}, ${time}`;
 };
 
 const getDateString = (date: Date): string => {
@@ -61,20 +57,21 @@ const EventDetailTime = (start: string, end: string, isAllDay: boolean): string 
   const startDateDateString = getDateString(startDate);
   const stateDateTimeString = startDate.toLocaleString('en-us', { hour: '2-digit', minute: '2-digit' });
   const endDateDateString = getDateString(endDate);
-  const endDateTimeString = startDate.toLocaleString('en-us', { hour: '2-digit', minute: '2-digit' });
-  if (startDate.getDate() === endDate.getDate()) {
-    if (isAllDay) {
-      return `${startWeekDay}, ${startDateDateString}`;
-    } else {
-      return `${startWeekDay}, ${startDateDateString}, ${stateDateTimeString} - ${endDateTimeString}`;
-    }
-  } else {
-    if (isAllDay) {
-      return `${startWeekDay}, ${startDateDateString} - ${endWeekDay}, ${endDateDateString}`;
-    } else {
-      return `${startWeekDay}, ${startDateDateString}, ${stateDateTimeString} - ${endWeekDay}, ${endDateDateString}, ${endDateTimeString}`;
-    }
+  const endDateTimeString = endDate.toLocaleString('en-us', { hour: '2-digit', minute: '2-digit' });
+  const isSameDay = startDate.getDate() === endDate.getDate();
+
+  const startPart = `${startWeekDay}, ${startDateDateString}`;
+  const endPart = isSameDay
+    ? endDateTimeString
+    : `${endWeekDay}, ${endDateDateString}${isAllDay ? '' : `, ${endDateTimeString}`}`;
+
+  if (isAllDay) {
+    return isSameDay ? startPart : `${startPart} - ${endPart}`;
   }
+
+  return isSameDay
+    ? `${startPart}, ${stateDateTimeString} - ${endDateTimeString}`
+    : `${startPart}, ${stateDateTimeString} - ${endPart}`;
 };
 
 const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Element => {
@@ -103,7 +100,9 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
         Load more
       </GoabButton>
     </LoadMoreWrapper>
-  ) : null;
+  ) : (
+    <div></div>
+  );
 };
 
 const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
@@ -227,7 +226,7 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
     <>
       <CalendarEventListWrapper>
         <DeleteModal calendarName={calendarName} />
-        <DataTable testId="calendar-selected-event-table">
+        <DataTable testid="calendar-selected-event-table">
           <thead>
             <tr>
               <th data-testid="event-name-th">Event name</th>
