@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { PageReviewNameCol, PageReviewValueCol } from './style-component';
-import { getLastSegmentFromPointer } from '../../util';
+import { convertToSentenceCase, getLastSegmentFromPointer } from '../../util';
+import { getLabelText } from '../../util/stringUtils';
+import { GoabButton } from '@abgov/react-components';
 
-import { GoAReviewRenderers } from '../../../index';
-import { JsonFormsDispatch } from '@jsonforms/react';
+import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
   const { data, uischema, label, schema, path, errors, enabled, cells } = props;
-  const labelToUpdate: string = label || '';
+  const context = useContext(JsonFormsStepperContext);
+  const jsonForms = useJsonForms();
+  const labelToUpdate: string = convertToSentenceCase(getLabelText(uischema.scope, label || ''));
   let reviewText = data;
   const isBoolean = typeof data === 'boolean';
   if (isBoolean) {
@@ -33,6 +37,9 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
     }
   }
 
+  // eslint-disable-next-line
+  const stepId = uischema.options?.stepId;
+
   return (
     <tr data-testid={`input-base-table-${label}-row`}>
       {labelToUpdate && (
@@ -41,7 +48,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
         </PageReviewNameCol>
       )}
       <PageReviewValueCol>
-        {typeof reviewText === 'string' ? (
+        {typeof reviewText === 'string' || typeof reviewText === 'number' ? (
           <div>{reviewText}</div>
         ) : (
           <JsonFormsDispatch
@@ -49,13 +56,19 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
             schema={schema}
             uischema={uischema}
             enabled={enabled}
-            renderers={GoAReviewRenderers}
+            renderers={jsonForms.renderers}
             cells={cells}
           />
         )}
       </PageReviewValueCol>
+      <td className="goa-table-number-col">
+        {stepId !== undefined && (
+          <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId)}>
+            Change
+          </GoabButton>
+        )}
+      </td>
     </tr>
   );
 };
-
 export const GoAInputBaseTableReviewControl = withJsonFormsControlProps(GoAInputBaseTableReview);

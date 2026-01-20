@@ -192,7 +192,7 @@ const HelpContents = ({ elements, isParent = false }: { elements: CustomControlE
   </div>
 );
 
-export const HelpContentTester: RankedTester = rankWith(1, uiTypeIs('HelpContent'));
+export const HelpContentTester: RankedTester = rankWith(5, uiTypeIs('HelpContent'));
 
 export const HelpContent = withJsonFormsControlProps(HelpContentComponent);
 export const HelpReviewContent = withJsonFormsControlProps(HelpContentReviewComponent);
