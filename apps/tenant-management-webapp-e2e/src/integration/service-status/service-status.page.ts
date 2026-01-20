@@ -100,7 +100,9 @@ class StatusServicePage {
   }
 
   noticeCardDeleteMenu(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div[${index}]//*[@data-testid="notice-card-menu-delete"]`);
+    return cy.xpath(
+      `//*[@data-testid="notice-list"]/goa-grid/div[${index}]//*[@data-testid="notice-card-menu-delete"]`
+    );
   }
 
   noticeCardPublishMenu(index) {

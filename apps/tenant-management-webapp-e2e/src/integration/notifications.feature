@@ -1,7 +1,7 @@
 @notifications
 Feature: Notifications
 
-  @TEST_CS-945 @REQ_CS-641 @REQ_CS-788 @REQ_CS-979 @REQ_CS-1068 @regression
+  @TEST_CS-945 @REQ_CS-641 @REQ_CS-788 @REQ_CS-979 @REQ_CS-1068 @regression @prod
   Scenario: As a tenant admin, I can add/edit/delete Notification Types
     Given a tenant admin user is on notification overview page
     When the user clicks Add notification type button
@@ -45,7 +45,7 @@ Feature: Notifications
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the event of "tenant-service:tenant-created" in "autotest-notificationType"
 
-  @TEST_CS-976 @REQ_CS-906 @regression
+  @TEST_CS-976 @REQ_CS-906 @regression @prod
   Scenario: Test the registration of notification type in status service for application health change
     Given a tenant admin user is on notification types page
     # Verify the type and its events
@@ -69,7 +69,7 @@ Feature: Notifications
   # Then the user gets "Cannot edit in read-only editor"
   # Verify the event is still there (had a bug of the event disappearing after preview)
 
-  @TEST_CS-1081 @REQ_CS-1029 @TEST_CS-1002 @REQ_CS-1027 @regression
+  @TEST_CS-1081 @REQ_CS-1029 @TEST_CS-1002 @REQ_CS-1027 @regression @prod
   Scenario: Test As a tenant admin, I can delete a subscription
     # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
     Given a tenant admin user is on status applications page

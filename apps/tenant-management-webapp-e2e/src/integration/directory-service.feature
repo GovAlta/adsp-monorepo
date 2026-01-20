@@ -13,7 +13,7 @@ Feature: Directory-service
       | Directory Name | URL          |
       | file-service   | env{fileApi} |
 
-  @TEST_CS-1294 @REQ_CS-1095 @regression
+  @TEST_CS-1294 @REQ_CS-1095 @regression @prod
   Scenario: As a tenant admin, I can add/edit/delete directory entries in a tenant namespace
     Given a tenant admin user is on directory entries page
     # Add a service entry
@@ -50,7 +50,7 @@ Feature: Directory-service
     When the user clicks Delete button in Entry modal
     Then the user "should not view" the entry of "autotest-addentry" in Service, "Empty" in API, "https://myServiceEntry-2.ca" in URL
 
-  @TEST_CS-1468 @REQ_CS-1095 @regression
+  @TEST_CS-1468 @REQ_CS-1095 @regression @prod
   Scenario: As a tenant admin, I can add/delete service API entries in a tenant namespace
     Given a tenant admin user is on directory entries page
     When the user clicks Add entry button
@@ -143,7 +143,9 @@ Feature: Directory-service
     When the user clicks Cancel button in Entry modal
     Then the user "should not view" Add entry modal
 
-  @TEST_CS-4002 @REQ_CS-3616 @TEST_CS-4018 @REQ_CS-3618 @TEST_CS-4017 @REQ_CS-3617 @TEST_CS-3988 @REQ_CS-3615 @regression
+  # TEST DATA: Directory entry of "autotest:autotest-resource-types:api:https://www.autotest.com" is created
+  # TEST DATA: Event definition of "Autotest:autotest-eventDefinition" is created
+  @TEST_CS-4002 @REQ_CS-3616 @TEST_CS-4018 @REQ_CS-3618 @TEST_CS-4017 @REQ_CS-3617 @TEST_CS-3988 @REQ_CS-3615 @regression @prod
   Scenario:  As a tenant admin, I can add/edit/delete/view configured resources types
     Given a tenant admin user is on resource types page
     # Add a resource type

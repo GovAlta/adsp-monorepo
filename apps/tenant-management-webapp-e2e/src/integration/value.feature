@@ -57,7 +57,7 @@ Feature: Value
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the value definition of "autotest", "addEditDeleteValueDef", "autotest desc modified"
 
-  @TEST_CS-3387 @REQ_CS-2899 @regression
+  @TEST_CS-3387 @REQ_CS-2899 @regression @prod
   Scenario: As a tenant admin, I can see core value definitions
     Given a tenant admin user is on value overview page
     When the user selects "Definitions" tab for "Value"
