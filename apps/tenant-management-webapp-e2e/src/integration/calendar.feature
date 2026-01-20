@@ -26,7 +26,7 @@ Feature: Calendar
         Then the user views Edit calendar modal
         And no critical or serious accessibility issues on "calendar edit calendar modal"
 
-    @TEST_CS-330 @REQ_CS-580 @REQ_CS-1652 @REQ_CS-1709 @regression
+    @TEST_CS-330 @REQ_CS-580 @REQ_CS-1652 @REQ_CS-1709 @regression @prod
     Scenario: As a tenant admin, I can add, edit and delete calendars in the tenant admin view
         Given a tenant admin user is on tenant admin page
         When the user selects the "Calendar" menu item
@@ -57,7 +57,7 @@ Feature: Calendar
         Then the user "should not view" the calendar of "autotest-addcalendar", "autotest calendar desc edit"
 
     #TEST DATA: precreated calendar of "autotest-calendar", "DO NOT DELETE", "auto-test-role1, auto-test-role2"
-    @TEST_CS-2460 @TEST_CS-2459 @TEST_CS-2477 @TEST_CS-2478 @REQ_CS-1675 @REQ_CS-1653 @REQ_CS-1677 @REQ_CS-1676 @regression
+    @TEST_CS-2460 @TEST_CS-2459 @TEST_CS-2477 @TEST_CS-2478 @REQ_CS-1675 @REQ_CS-1653 @REQ_CS-1677 @REQ_CS-1676 @regression @prod
     Scenario: As a tenant admin, I can add, edit and delete calendar-events
         Given a tenant admin user is on calendar service overview page
         When the user selects "Events" tab for "Calendar"

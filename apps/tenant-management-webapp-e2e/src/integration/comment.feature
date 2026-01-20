@@ -9,7 +9,7 @@ Feature: Comment
     And the user views the link of See the code for "comment-service"
     And the user views the link of "Get support" under Support
 
-  @TEST_CS-2441 @TEST_CS-2440 @TEST_CS-2442 @TEST_CS-2445 @TEST_CS-2524 @REQ_CS-2393 @REQ_CS-2395 @REQ_CS-22396 @REQ_CS-2394 @REQ_CS-2448 @regression
+  @TEST_CS-2441 @TEST_CS-2440 @TEST_CS-2442 @TEST_CS-2445 @TEST_CS-2524 @REQ_CS-2393 @REQ_CS-2395 @REQ_CS-22396 @REQ_CS-2394 @REQ_CS-2448 @regression @prod
   Scenario: As a tenant admin, I can add, edit and delete a comment topic type with data classification
     Given a tenant admin user is on comment service overview page
     When the user clicks Add topic type button on comment service overview page

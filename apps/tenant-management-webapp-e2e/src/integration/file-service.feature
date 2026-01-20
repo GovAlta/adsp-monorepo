@@ -159,7 +159,7 @@ Feature: File service
     When the user clicks Okay button on file type current in use modal
     Then the user "views" the file type of "autotest-type5", "empty", "N/A"
 
-  @TEST_CS-1411 @REQ_CS-1358 @FileTypes @regression
+  @TEST_CS-1411 @REQ_CS-1358 @FileTypes @regression @prod
   Scenario: As a tenant admin, can see core file types
     Given a service owner user is on Files overview page
     When the user selects "File types" tab for "File"
