@@ -117,8 +117,7 @@ Feature: Service status
     And the user selects "Applications" tab for "Status"
     Then the user views the subscribe checkbox is "checked"
 
-  # CS-4618 Cannot save a notice changed from all applications to a specific type
-  @TEST_CS-835 @REQ_CS-792 @regression @ignore
+  @TEST_CS-835 @REQ_CS-792 @regression @prod
   Scenario Outline: As a tenant admin, I can add, edit, publish, unpublish and delete a tenant level notice
     Given a tenant admin user is on status notices page
     When the user clicks Add notice button
