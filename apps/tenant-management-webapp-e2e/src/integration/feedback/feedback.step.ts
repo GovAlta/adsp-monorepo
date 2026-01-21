@@ -469,7 +469,7 @@ Then('the user views site URLs from sites page in Registered sites dropdown', fu
 
 When('the user selects the adsp site in Registered sites dropdown', function () {
   feedbackObj.feedbackFeedbackSitesDropdown().shadow().find('input').click({ force: true });
-  feedbackObj.feedbackFeedbackSitesDropdown().shadow().find('li').contains('https://adsp-').click({ force: true });
+  feedbackObj.feedbackFeedbackSitesDropdown().shadow().find('li').contains('https://adsp').click({ force: true });
   cy.wait(2000);
 });
 

@@ -11,7 +11,7 @@ export async function createSchemaTools() {
     id: 'get-schema-definition',
     description: 'Get the JSON schema definitions for common fields like email, full name, and address.',
     inputSchema: z.object({
-      url: z.string().describe('URL of the schema'),
+      url: z.string().describe('URL of the schema definition file'),
     }),
     outputSchema: z.object({
       jsonSchema: z.object({}),

@@ -179,7 +179,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
         </TableLayout>
       )}
       {coreFileTypes && coreFileTypes.length > 0 && (
-        <div>
+        <>
           <h3>Core file types</h3>
 
           <TableLayout>
@@ -218,7 +218,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
               </tbody>
             </DataTable>
           </TableLayout>
-        </div>
+        </>
       )}
       <DeleteModal
         title="Delete file type"

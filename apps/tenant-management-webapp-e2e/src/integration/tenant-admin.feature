@@ -66,7 +66,7 @@ Feature: Tenant admin
   # When the user selects the "Dashboard" menu item
   # Then no critical or serious accessibility issues on "tenant admin dashboard page"
 
-  @TEST_CS-588 @TEST_CS-745 @dashboard @regression
+  @TEST_CS-588 @TEST_CS-745 @dashboard @regression @prod
   Scenario: As a tenant admin, I should be able to see useful information on the landing page
     Given a tenant admin user is on tenant admin page
     Then the user views the tenant name of "autotest"
@@ -127,7 +127,7 @@ Feature: Tenant admin
     Then the user views a message stating the user needs administrator role for the tenant to access the app and that they can contact the tenant creator of "env{realmOwner}"
     Then the user should not have regular admin view
 
-  @TEST_CS-715 @REQ_CS-254 @regression
+  @TEST_CS-715 @REQ_CS-254 @regression @prod
   Scenario: As a tenant admin, I can search the event log, so I can find events of interest
     Given a tenant admin user is on tenant admin page
     # First create an event definition under events it will be used to verify the event log

@@ -26,7 +26,7 @@ Feature: Events
     Then the user views "Event service" API documentation
 
   # Test on Monaco editor for payload schema isn't included and will need to be tested in future
-  @TEST_CS-735 @REQ_CS-250 @regression
+  @TEST_CS-735 @REQ_CS-250 @regression @prod
   Scenario: As a tenant admin, I can see add, edit and delete an event definition
     Given a tenant admin user is on tenant admin page
     When the user selects the "Event" menu item
@@ -89,7 +89,7 @@ Feature: Events
     When the user clicks Cancel button on Definition modal
     Then the user exits the add definition dialog
 
-  @TEST_CS-930 @REQ_CS-897 @regression
+  @TEST_CS-930 @REQ_CS-897 @regression @prod
   Scenario: As a tenant admin, I can see health check event definitions for the status service, so that I know what events are available.
     Given a service owner user is on event definitions page
     Then the user "views" an event definition of "health-check-started" and "Signalled when an application health check is started." under "status-service"
@@ -114,7 +114,7 @@ Feature: Events
     When the user clicks eye icon of "PDF generation updates" under Core streams
     Then the user views the details of "PDF generation updates" under Core streams
 
-  @TEST_CS-1480 @REQ_CS-1352 @regression
+  @TEST_CS-1480 @REQ_CS-1352 @regression @prod
   Scenario: As a tenant admin, I can add, edit and delete an event stream
     Given a tenant admin user is on event streams page
     # Add a stream
