@@ -12,7 +12,7 @@ Feature: Form app
 
   # CS-4586: Ignore the test until the test is updated to work with the new summary page
   # New date picker doesn't allow type in date input, so date picker related tests are commented out for now
-  @TEST_CS-3110 @TEST_CS-3459 @REQ_CS-2909 @regression @ignore
+  @TEST_CS-3110 @TEST_CS-3459 @REQ_CS-2909 @regression @prod @ignore
   Scenario: As an authenticated user, I can log in to submit an application
     Given the user deletes any existing form from "Auto Test" for "autotest-testformapp"
     When an authenticated user is logged in to see "autotest-testformapp" application
@@ -68,7 +68,7 @@ Feature: Form app
 
   # CS-4586: Ignore the test until the test is updated to work with the new summary page
   # TEST DATA: autotest-anonymous-submission is created as a form definition with anonymous enabled
-  @TEST_CS-3571 @REQ_CS-3484 @REQ_CS-3485 @regression @ignore
+  @TEST_CS-3571 @REQ_CS-3484 @REQ_CS-3485 @regression @prod @ignore
   Scenario: As an anonymous applicant, I can see validation errors on missing required fields and cannot submit the form without all required fields being set
     Given an anonymous applicant goes to "autotest-anonymous-submission" application
     Then the user views an anonymous form draft of "autotest-anonymous-submission"
