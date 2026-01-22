@@ -3,7 +3,7 @@ import re
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional
 
-from xdp_parser.xdp_utils import Labeling, has_repeater_occur, is_button
+from xdp_parser.xdp_utils import DisplayText, has_repeater_occur, is_button
 
 
 def is_object_array(node):
@@ -260,7 +260,7 @@ def ancestor_by_hops(
 #             return split_label_and_help(text_elem.text.strip())
 
 
-def split_label_and_help(label_text, min_space_count=2) -> Labeling:
+def split_label_and_help(label_text, min_space_count=2) -> DisplayText:
     """
     Splits label_text into (label, help_text) using min_space_count consecutive spaces as separator.
     Returns (label, help_text). If no separator found, help_text is ''.
@@ -269,6 +269,6 @@ def split_label_and_help(label_text, min_space_count=2) -> Labeling:
     pattern = r"\s{" + str(min_space_count) + r",}"
     parts = re.split(pattern, label_text, maxsplit=1)
     if len(parts) == 2:
-        return Labeling(parts[0].strip(), parts[1].strip())
+        return DisplayText(parts[0].strip(), parts[1].strip())
     else:
-        return Labeling(label_text.strip(), "")
+        return DisplayText(label_text.strip(), "")

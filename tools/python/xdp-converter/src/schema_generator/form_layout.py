@@ -18,12 +18,6 @@ class FormLayout(FormElement):
                 ui_schema["elements"].append(child)
         return ui_schema
 
-    # def build_ui_schema(self):
-    #     schemas = []
-    #     for element in self.elements:
-    #         schemas.append(element.build_ui_schema())
-    #     return schemas
-
     def has_json_schema(self):
         return True
 
@@ -109,82 +103,3 @@ def group_horizontally(
     """
 
     return elements
-    # --- Input hardening ---
-    elements = list(elements or [])
-    tol = abs(float(tolerance_mm or 0.0))  # negative? None? no problem.
-    try:
-        max_per_row = int(max_per_row)
-    except (TypeError, ValueError):
-        max_per_row = 4
-    if max_per_row < 1:
-        max_per_row = 1
-
-    def safe_y(el):
-        """Return float(y) or None if unavailable/invalid."""
-        try:
-            y = getattr(el, "y", None)
-            return float(y) if y is not None else None
-        except (TypeError, ValueError):
-            return None
-
-    rows = []
-    current_row = []
-    y_last = None
-
-    for el in elements:
-        # Skip literal Nones quietly
-        if el is None:
-            continue
-
-        # VIP treatment: these always get a row of their own
-        if not el.can_group_horizontally:
-            if current_row:
-                rows.append(current_row)
-                current_row = []
-                y_last = None
-            rows.append([el])
-            continue
-
-        y = safe_y(el)
-
-        # If y is missing/invalid, isolate to avoid math errors/mis-grouping
-        if y is None:
-            if current_row:
-                rows.append(current_row)
-                current_row = []
-                y_last = None
-            rows.append([el])
-            continue
-
-        # Start a new row if needed
-        if not current_row:
-            current_row = [el]
-            y_last = y
-            continue
-
-        same_row = (abs((y_last if y_last is not None else y) - y) <= tol) and (
-            len(current_row) < max_per_row
-        )
-
-        if same_row:
-            current_row.append(el)
-        else:
-            rows.append(current_row)
-            current_row = [el]
-            y_last = y
-
-    # Flush last row
-    if current_row:
-        rows.append(current_row)
-
-    # Build groups: multi -> FormLayout, single -> element
-    groups = []
-    for row in rows:
-        row = [e for e in row if e is not None]  # double-safety
-        if not row:
-            continue
-        groups.append(
-            FormLayout("HorizontalLayout", row, context) if len(row) > 1 else row[0]
-        )
-
-    return groups

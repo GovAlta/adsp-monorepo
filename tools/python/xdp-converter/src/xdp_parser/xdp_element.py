@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-import re
-from typing import Optional, Any
+from typing import Optional
 
-from importlib.resources.readers import remove_duplicates  # your existing import
+from importlib.resources.readers import remove_duplicates
 
 from schema_generator.form_element import FormElement
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.xdp_utils import Labeling, compute_full_xdp_path, convert_to_mm
+from xdp_parser.xdp_utils import DisplayText, compute_full_xdp_path, convert_to_mm
 
 
 class XdpElement(ABC):
@@ -54,6 +53,16 @@ class XdpElement(ABC):
     @property
     def has_explicit_y(self) -> bool:
         return self.geometry.has_explicit_y
+
+    @property
+    def traversal_target_name(self) -> str | None:
+        traversal = self.xdp_element.find(".//traversal/traverse")
+        if traversal is None:
+            return None
+        ref = (traversal.get("ref") or "").strip()
+        if not ref:
+            return None
+        return ref.split("[", 1)[0]
 
     # Element's bounding box
     def bbox(self):
@@ -137,6 +146,9 @@ class XdpElement(ABC):
 
         return None
 
+    def is_circle_checkbutton(self) -> bool:
+        return False  # default implementation
+
     @abstractmethod
     def to_form_element(self) -> FormElement:
         pass
@@ -177,7 +189,7 @@ class XdpElement(ABC):
     def get_name(self):
         return self.xdp_element.get("name", "")
 
-    def get_label(self) -> Optional[Labeling]:
+    def get_label(self) -> Optional[DisplayText]:
         label = None
         if self.labels:
             label = self.labels.get(self.get_name())
@@ -212,15 +224,6 @@ class XdpElement(ABC):
         if isDate:
             return "date"
         return None
-
-    def traversal_target_name(self) -> str | None:
-        trav = self.xdp_element.find(".//traversal/traverse")
-        if trav is None:
-            return None
-        ref = (trav.get("ref") or "").strip()
-        if not ref:
-            return None
-        return ref.split("[", 1)[0]
 
 
 def matches_prefix(candidate: str, prefix: str) -> bool:

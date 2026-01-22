@@ -1,7 +1,7 @@
 from schema_generator.form_checkbox import FormCheckbox
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_element import XdpElement
-from xdp_parser.xdp_utils import Labeling
+from xdp_parser.xdp_utils import DisplayText
 
 
 class XdpCheckbox(XdpElement):
@@ -38,9 +38,9 @@ class XdpCheckbox(XdpElement):
         return scripts
 
 
-def get_label_with_description(labeling: Labeling) -> str:
-    if labeling and labeling.description:
-        return f"{labeling.label} - {labeling.description}"
-    elif labeling:
-        return labeling.label
+def get_label_with_description(display_text: DisplayText) -> str:
+    if display_text and display_text.description:
+        return f"{display_text.label} - {display_text.description}"
+    elif display_text:
+        return display_text.label
     return None

@@ -16,3 +16,6 @@ class XdpHelpText(XdpElement):
 
     def is_help_icon(self) -> bool:
         return False
+
+    def help_text(self) -> str:
+        return self.text

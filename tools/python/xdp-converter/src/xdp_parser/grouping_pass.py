@@ -1,7 +1,11 @@
 import xml.etree.ElementTree as ET
 from typing import List, Optional, Tuple
+from xdp_parser.control_description_extractor import ControlDescriptionExtractor
+from xdp_parser.control_labels import ControlLabels
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
+from xdp_parser.help_text_extractor import HelpTextExtractor
 from xdp_parser.parse_context import ParseContext
+from xdp_parser.pseudo_radio_transformer import transform_pseudo_radios_in_subform
 from xdp_parser.subform_label import (
     get_subform_header,
     strip_header_element,
@@ -13,7 +17,7 @@ from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_subform_placeholder import XdpSubformPlaceholder
 from xdp_parser.xdp_utils import convert_to_mm
 
-debug = False
+debug = True
 
 
 class XdpGroupingPass:
@@ -24,12 +28,18 @@ class XdpGroupingPass:
       - decides whether the subform should be a Group or be flattened
     """
 
-    def __init__(self, factory: AbstractXdpFactory, context: ParseContext) -> None:
+    def __init__(
+        self,
+        factory: AbstractXdpFactory,
+        control_labels: ControlLabels,
+        context: ParseContext,
+    ) -> None:
         self.factory = factory
         self.context = context
         self.child_map = {}
         # TODO get rid of this and pass context explicitly to resolve_group_label
         self.context.child_map = self.child_map
+        self.control_labels = control_labels
 
     # --------------------------------------------------
     # Public entry
@@ -61,19 +71,26 @@ class XdpGroupingPass:
         resolved_label, header_index = get_subform_header(
             subform, grouped_children, debug
         )
+
+        if debug:
+            print(f"[{subform.get('name')}] label='{resolved_label}'")
+
         if header_index is not None:
             grouped_children = strip_header_element(grouped_children, header_index)
 
         if debug:
             print_subform_map(subform, grouped_children)
 
-        # Transform pseudo radio subforms into radio selectors
-        # grouped_children = self.pseudo_radio_transformer.transform(
-        #     subform, grouped_children
-        # )
+        extractor = ControlDescriptionExtractor()
+        grouped_children = extractor.extract(grouped_children, self.control_labels)
 
         # Pair help icons with controls
         grouped_children = self._consolidate_help_control_pairs(grouped_children)
+
+        # # Transform pseudo radio subforms into radio selectors
+        grouped_children = transform_pseudo_radios_in_subform(
+            subform, grouped_children, self.context
+        )
 
         self.child_map[id(subform)] = grouped_children
 
@@ -297,7 +314,7 @@ class XdpGroupingPass:
         """
         help_el = elements[i]
 
-        # 1) traversal-based: pair with named target ahead
+        # Traversal-based: pair with named target ahead
         res = self._pair_by_traversal(elements, i, help_el)
         if res is not None:
             j, target = res
@@ -307,7 +324,7 @@ class XdpGroupingPass:
                 False,
             )
 
-        # 2) overlap-based: pair with prev/next control if overlapping
+        # Overlap-based: pair with prev/next control if overlapping
         res = self._pair_by_proximity(elements, out, i, help_el)
         if res is not None:
             kind, j, target = res

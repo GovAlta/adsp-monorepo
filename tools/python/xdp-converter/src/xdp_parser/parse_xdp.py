@@ -59,7 +59,7 @@ class XdpParser:
                 root_nodes.append(node)
 
         # 2) Run the single grouping pass over the placeholder tree
-        grouper = XdpGroupingPass(self.factory, self.context)
+        grouper = XdpGroupingPass(self.factory, self.control_labels, self.context)
         grouped_elements = grouper.group_placeholders(root_nodes)
 
         # 3) Convert to JSONForms elements

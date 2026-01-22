@@ -1,7 +1,7 @@
 import re
 from xml.etree import ElementTree as ET
 from xdp_parser.parsing_helpers import split_label_and_help
-from xdp_parser.xdp_utils import Labeling
+from xdp_parser.xdp_utils import DisplayText
 
 
 class ControlLabels:
@@ -26,14 +26,14 @@ class ControlLabels:
         """
         self.context = context
         self.parent_map = getattr(context, "parent_map", {}) or {}
-        self.debug = True
-        self.mapping: dict[str, Labeling] = {}
+        self.debug = False
+        self.mapping: dict[str, DisplayText] = {}
         self.controls_by_name: dict[str, ET.Element] = _control_index_by_name(
             container_node, self.parent_map
         )
-        self.labels: dict[str, Labeling] = self._build_labels(container_node)
+        self.labels: dict[str, DisplayText] = self._build_labels(container_node)
 
-    def get(self, target: str) -> Labeling | None:
+    def get(self, target: str) -> DisplayText | None:
         val = self.labels.get(target)
         if val is None:
             return None
@@ -41,11 +41,14 @@ class ControlLabels:
             return None
         return val
 
+    def set(self, target: str, display: DisplayText) -> None:
+        self.labels[target] = display
+
     # ----------------------------------------------------------------
     # MAIN LABEL BUILD
     # ----------------------------------------------------------------
 
-    def _build_labels(self, container_node: ET.Element) -> dict[str, Labeling]:
+    def _build_labels(self, container_node: ET.Element) -> dict[str, DisplayText]:
         if self.debug:
             print(f"[LABEL] Building labels for: '{container_node.get('name')}'")
 
@@ -68,26 +71,6 @@ class ControlLabels:
                     print(
                         f"[LABEL] '{name}' <- '{draw_lbl.strip()}' (preceding <draw>)"
                     )
-
-        # # 3) Optional fallback: cleaned control name OR leave unlabeled
-        # for name in self.controls_by_name.keys():
-        #     if name in self.mapping and self.mapping[name].strip():
-        #         continue
-
-        # if self.return_none_for_unlabeled:
-        #     # Intentionally do not set a label. Caller sees None via get().
-        #     if self.debug:
-        #         print(f"[LABEL] '{name}' <- None (no label found)")
-        #     continue
-
-        # if self.use_name_fallback:
-        #     fallback = _control_name(name)
-        #     self.mapping[name] = fallback
-        #     if self.debug:
-        #         print(f"[LABEL] '{name}' <- '{fallback}' (name fallback)")
-        # else:
-        #     if self.debug:
-        #         print(f"[LABEL] '{name}' <- '' (no fallback)")
 
         return self.mapping
 

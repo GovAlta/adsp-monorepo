@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 
 
 @dataclass
-class Labeling:
+class DisplayText:
     label: str
     description: str
 
