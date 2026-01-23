@@ -9,7 +9,7 @@ from xdp_parser.xdp_element import XdpElement
 
 
 # An XDP subform may contain multiple radio buttons representing a single selector
-class XdpRadioSelector(XdpElement):
+class XdpPseudoRadio(XdpElement):
     def __init__(self, xdp_element, options, messages: ControlLabels):
         super().__init__(xdp_element)
         self.options = options

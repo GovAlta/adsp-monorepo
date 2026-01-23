@@ -3,7 +3,6 @@ from typing import List, Optional, Tuple
 from xdp_parser.control_description_extractor import ControlDescriptionExtractor
 from xdp_parser.control_labels import ControlLabels
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
-from xdp_parser.help_text_extractor import HelpTextExtractor
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.pseudo_radio_transformer import transform_pseudo_radios_in_subform
 from xdp_parser.subform_label import (
@@ -17,7 +16,7 @@ from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_subform_placeholder import XdpSubformPlaceholder
 from xdp_parser.xdp_utils import convert_to_mm
 
-debug = True
+debug = False
 
 
 class XdpGroupingPass:
@@ -78,6 +77,8 @@ class XdpGroupingPass:
         if header_index is not None:
             grouped_children = strip_header_element(grouped_children, header_index)
 
+        self.control_labels.augment_labels_from_sorted_elements(grouped_children)
+
         if debug:
             print_subform_map(subform, grouped_children)
 
@@ -95,7 +96,7 @@ class XdpGroupingPass:
         self.child_map[id(subform)] = grouped_children
 
         # 4) Decide grouping using sorted children (header already handled)
-        if self.should_group_subform(subform, grouped_children):
+        if self.should_group_subform(subform, grouped_children, resolved_label):
             group = self._build_group_from_subform(
                 subform, grouped_children, resolved_label
             )
@@ -209,15 +210,28 @@ class XdpGroupingPass:
     # --------------------------------------------------
     # Grouping heuristics
     # --------------------------------------------------
-    def should_group_subform(self, subform, elements):
+    def should_group_subform(
+        self,
+        subform: ET.Element,
+        elements: list[XdpElement],
+        resolved_label: str | None,
+    ) -> bool:
+        # If we extracted a header, we must group — otherwise we have nowhere to render it
+        if resolved_label and resolved_label.strip():
+            return True
+
         real_controls = [e for e in elements if e.is_control()]
         num_controls = len(real_controls)
+
         if num_controls <= 1:
             return False
+
         if self._rules_target_subform(subform, real_controls):
             return True
+
         if num_controls >= 3:
             return True
+
         return False
 
     def _rules_target_subform(self, subform, controls):

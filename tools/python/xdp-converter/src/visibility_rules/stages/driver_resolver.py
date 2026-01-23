@@ -31,7 +31,8 @@ class DriverResolver:
     """
 
     def process(self, context):
-        print("\n[DriverResolver] Starting...")
+        if debug:
+            print("\n[DriverResolver] Starting...")
 
         events = context.get(CTX_RAW_RULES, []) or []
         radio_groups = context.get(CTX_RADIO_GROUPS, {}) or {}
@@ -79,8 +80,9 @@ class DriverResolver:
             resolved_events.append(ev2)
 
         context[CTX_RESOLVED_RULES] = resolved_events
-        print(f"[DriverResolver]: Resolved {len(resolved_events)} events")
-        print("[DriverResolver] Done.\n")
+        if debug:
+            print(f"[DriverResolver]: Resolved {len(resolved_events)} events")
+            print("[DriverResolver] Done.\n")
         return context
 
     # -------------------------

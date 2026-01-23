@@ -6,6 +6,8 @@ from visibility_rules.stages.driver_resolver import DriverResolver
 from visibility_rules.stages.rule_consolidator import RuleConsolidator
 from visibility_rules.stages.jsonforms_emitter import JsonFormsEmitter
 
+debug = False
+
 
 class VisibilityRulesPipeline:
     def __init__(self):
@@ -18,10 +20,13 @@ class VisibilityRulesPipeline:
         ]
 
     def run(self, context):
-        print("\n=== PIPELINE START ===")
+        if debug:
+            print("\n=== PIPELINE START ===")
         for stage in self.stages:
             name = stage.__class__.__name__
-            print(f"\n--- Stage: {name} ---")
+            if debug:
+                print(f"\n--- Stage: {name} ---")
             context = stage.process(context)
-        print("=== PIPELINE END ===\n")
+        if debug:
+            print("=== PIPELINE END ===\n")
         return context

@@ -5,7 +5,7 @@ from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_utils import DisplayText
 
-debug = True
+debug = False
 
 
 @dataclass(frozen=True)

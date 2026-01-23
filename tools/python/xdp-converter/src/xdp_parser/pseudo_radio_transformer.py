@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import List
 import xml.etree.ElementTree as ET
 
 from xdp_parser.parsing_helpers import split_label_and_help
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_checkbox import XdpCheckbox
 from xdp_parser.xdp_help_control_pair import XdpHelpControlPair
-from xdp_parser.xdp_radio_selector import XdpRadioSelector
+from xdp_parser.xdp_pseudo_radio import XdpPseudoRadio
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_utils import DisplayText
 
-debug = True
+debug = False
 
 
 @dataclass
@@ -64,36 +64,24 @@ def _collect_pseudo_radio_run(
     elements: list[XdpElement],
     start_index: int,
 ) -> tuple[list[PseudoRadioOption], int]:
-    """
-    Collect a consecutive run of circle-style checkButtons that form a pseudo-radio group.
 
-    Association rules (in priority order):
-      checkbox
-        -> traversal_target_name → help icon (XdpHelpIcon)
-            -> traversal_target_name → label/description draw (XdpHelpText)
-
-    All searches are bounded to the slice between this checkbox and the next
-    circle-checkbox to avoid cross-option contamination.
-    """
     options: list[PseudoRadioOption] = []
     i = start_index
 
     while i < len(elements):
         checkbox_elem = elements[i]
-
         if not _is_circle_checkbox(checkbox_elem):
             break
 
         checkbox: XdpCheckbox = checkbox_elem
 
-        # determine the slice that belongs to this option
         next_cb_index = _find_next_circle_checkbox_index(elements, i + 1)
         slice_end = next_cb_index if next_cb_index is not None else len(elements)
 
         # ---- follow traversal: checkbox -> help icon ----
-        help_icon = _find_help_icon_by_name(
+        help_icon = _find_help_icon_for_checkbox(
             elements,
-            name=checkbox.traversal_target_name,
+            checkbox=checkbox,
             start=i + 1,
             end=slice_end,
         )
@@ -108,26 +96,24 @@ def _collect_pseudo_radio_run(
                 end=slice_end,
             )
 
-        # ---- extract label + description ----
-        label = ""
-        description = ""
+        # ---- extract label + description (prefer draw) ----
+        label_dt: DisplayText | None = None
 
-        # preferred source: checkbox label (once your bug fix lands)
-        checkbox_label = checkbox.get_label()
-        if checkbox_label:
-            label = checkbox_label
-
-        # fallback: overloaded label draw text
         if label_draw is not None:
             raw = (label_draw.help_text() or "").strip()
             if raw:
-                lbl, desc = split_label_and_help(raw)
-                if not label:
-                    label = (lbl or "").strip()
-                description = (desc or "").strip()
+                label_dt = split_label_and_help(
+                    raw
+                )  # returns DisplayText(label, description)
 
-        if not label:
-            label = checkbox.get_name()
+        # fallback: checkbox label (legacy / heuristic)
+        if label_dt is None:
+            checkbox_label = checkbox.get_label()
+            if checkbox_label and checkbox_label.label.strip():
+                label_dt = checkbox_label
+
+        if label_dt is None:
+            label_dt = DisplayText(checkbox.get_name(), "")
 
         # ---- extract detail help (icon click text) ----
         detail_help = ""
@@ -137,7 +123,7 @@ def _collect_pseudo_radio_run(
         options.append(
             PseudoRadioOption(
                 checkbox=checkbox,
-                label=label,
+                label=label_dt,
                 detail_help=detail_help,
             )
         )
@@ -147,11 +133,37 @@ def _collect_pseudo_radio_run(
     return options, i
 
 
+def _find_help_icon_for_checkbox(
+    elements: list[XdpElement],
+    checkbox: XdpCheckbox,
+    start: int,
+    end: int,
+) -> XdpElement | None:
+    """
+    Prefer an explicit XdpHelpControlPair that targets this checkbox.
+    Fallback to traversal-based lookup by name.
+    """
+    # 1) If consolidation already happened, the icon may be wrapped
+    for e in elements[start:end]:
+        if isinstance(e, XdpHelpControlPair) and e.control is checkbox:
+            icon = e.help
+            if icon is not None and icon.is_help_icon():
+                return icon
+
+    # 2) Otherwise, find the standalone icon by traversal target name
+    return _find_help_icon_by_name(
+        elements,
+        name=checkbox.traversal_target_name,
+        start=start,
+        end=end,
+    )
+
+
 def _build_radio_selector_from_run(
     subform: ET.Element,
     options: list[PseudoRadioOption],
     context: ParseContext,
-) -> XdpRadioSelector:
+) -> XdpPseudoRadio:
     """
     Build a radio selector.
     - Radio enum values are option_value (text.label or fallback).
@@ -183,7 +195,7 @@ def _build_radio_selector_from_run(
             d = f" — {desc}" if desc else ""
             print(f"  [Pseudo-radio] option: '{value}'{d}")
 
-    radio = XdpRadioSelector(subform, option_values, context.help_text)
+    radio = XdpPseudoRadio(subform, option_values, context.help_text)
 
     # Choose names you like; these can be consumed later by to_form_element()
     radio.option_descriptions = option_description_by_value

@@ -28,7 +28,7 @@ def strip_header_element(
 def get_subform_header(
     subform: ET.Element,
     elements: list[XdpElement],
-    debug: bool = False,
+    debug: bool = True,
 ) -> tuple[str | None, int | None]:
     if not elements:
         return None, None

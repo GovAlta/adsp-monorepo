@@ -11,7 +11,7 @@ from xdp_parser.xdp_help_icon import XdpHelpIcon
 from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_object_array import XdpObjectArray
 from xdp_parser.xdp_radio import XdpRadio
-from xdp_parser.xdp_radio_selector import XdpRadioSelector, extract_radio_button_labels
+from xdp_parser.xdp_pseudo_radio import XdpPseudoRadio, extract_radio_button_labels
 from xdp_parser.xdp_checkbox import XdpCheckbox
 from xdp_parser.xdp_basic_input import XdpBasicInput
 
@@ -51,7 +51,7 @@ class XdpElementFactory(AbstractXdpFactory):
     def handle_radio_subform(self, element, labels):
         radio_labels = extract_radio_button_labels(element)
         if radio_labels:
-            return XdpRadioSelector(element, radio_labels, labels)
+            return XdpPseudoRadio(element, radio_labels, labels)
         return None
 
     def handle_help_text(self, elem, help_text):
@@ -90,7 +90,6 @@ class XdpElementFactory(AbstractXdpFactory):
             return
         for e in elements:
             if isinstance(e, XdpGroup) and e.label:
-                print(f" element e {e.label} v.s. parent_label {parent_label}")
                 if self._normalize_label(e.label) == self._normalize_label(
                     parent_label
                 ):

@@ -12,7 +12,7 @@ from xdp_parser.help_text_extractor import HelpTextExtractor
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.parsing_helpers import is_object_array
 from xdp_parser.xdp_element import XdpElement
-from xdp_parser.xdp_radio_selector import extract_radio_button_labels
+from xdp_parser.xdp_pseudo_radio import extract_radio_button_labels
 from xdp_parser.xdp_utils import (
     remove_duplicates,
     is_hidden,

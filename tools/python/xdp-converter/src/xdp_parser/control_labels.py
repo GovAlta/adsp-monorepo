@@ -1,6 +1,8 @@
 import re
 from xml.etree import ElementTree as ET
 from xdp_parser.parsing_helpers import split_label_and_help
+from xdp_parser.xdp_element import XdpElement
+from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_utils import DisplayText
 
 
@@ -19,11 +21,6 @@ class ControlLabels:
         container_node: ET.Element,
         context,
     ):
-        """
-        Args:
-            container_node: subform or container element to scan.
-            context: must expose `parent_map: dict[ET.Element, ET.Element]`
-        """
         self.context = context
         self.parent_map = getattr(context, "parent_map", {}) or {}
         self.debug = False
@@ -44,6 +41,19 @@ class ControlLabels:
     def set(self, target: str, display: DisplayText) -> None:
         self.labels[target] = display
 
+    def add(self, target: str, value: DisplayText) -> None:
+        if not target or not value or not value.label.strip():
+            return
+        existing = self.labels.get(target)
+
+        # ignore add request if label already exists
+        if existing and existing.label.strip():
+            if self.debug:
+                print(f"[LABEL] Skipping add for '{target}'='{value.label}'")
+                print(f"    already exists as '{existing.label}')")
+            return
+        self.labels[target] = value
+
     # ----------------------------------------------------------------
     # MAIN LABEL BUILD
     # ----------------------------------------------------------------
@@ -60,17 +70,17 @@ class ControlLabels:
                 if self.debug:
                     print(f"[LABEL] '{name}' <- '{caption.strip()}' (inline caption)")
 
-        # Preceding <draw> sibling label (same parent)
-        for name, node in self.controls_by_name.items():
-            if name in self.mapping and self.mapping[name].label.strip():
-                continue
-            draw_lbl = self._preceding_draw_label(node)
-            if draw_lbl and draw_lbl.strip():
-                self.mapping[name] = split_label_and_help(draw_lbl)
-                if self.debug:
-                    print(
-                        f"[LABEL] '{name}' <- '{draw_lbl.strip()}' (preceding <draw>)"
-                    )
+        # # Preceding <draw> sibling label (same parent)
+        # for name, node in self.controls_by_name.items():
+        #     if name in self.mapping and self.mapping[name].label.strip():
+        #         continue
+        #     draw_lbl = self._preceding_draw_label(node)
+        #     if draw_lbl and draw_lbl.strip():
+        #         self.mapping[name] = split_label_and_help(draw_lbl)
+        #         if self.debug:
+        #             print(
+        #                 f"[LABEL] '{name}' <- '{draw_lbl.strip()}' (preceding <draw>)"
+        #             )
 
         return self.mapping
 
@@ -115,6 +125,94 @@ class ControlLabels:
             txt = _draw_text(prev)
             if txt:
                 return txt
+
+        return None
+
+    def augment_labels_from_sorted_elements(self, elements: list[XdpElement]) -> None:
+        # Index elements by name for O(1) traversal hops
+        by_name: dict[str, XdpElement] = {}
+        for e in elements:
+            nm = e.get_name()
+            if nm:
+                by_name[nm] = e
+
+        # A) captions first (authoritative)
+        for e in elements:
+            if not e.is_control():
+                continue
+            cap = inline_caption(e.xdp_element)
+            if cap and cap.strip():
+                self.add(e.get_name(), split_label_and_help(cap))
+
+        # B) traversal-based labeling (authoritative when available)
+        for e in elements:
+            if not e.is_control():
+                continue
+
+            # Don't overwrite an existing label
+            if self.get(e.get_name()) is not None:
+                continue
+
+            dt = self._label_via_traversal(e, by_name)
+            if dt is not None:
+                self.add(e.get_name(), dt)
+
+        # C) ordered fallback: help-text draw before control
+        pending_forward: DisplayText | None = None
+        for e in elements:
+            if e.is_help_icon():
+                continue
+
+            if e.is_help_text() and not e.is_help_icon():
+                help_e: XdpHelpText = e
+                raw = (help_e.help_text() or "").strip()
+                pending_forward = split_label_and_help(raw) if raw else None
+                continue
+
+            if e.is_control():
+                if pending_forward:
+                    self.add(e.get_name(), pending_forward)
+                pending_forward = None
+                continue
+
+    def _label_via_traversal(
+        self,
+        control: XdpElement,
+        by_name: dict[str, XdpElement],
+    ) -> DisplayText | None:
+        """
+        Follow traversal chain to find label draw/help-text.
+
+        Common patterns:
+        control -> help_icon -> help_text_draw
+        control -> help_text_draw
+
+        Returns DisplayText(label, description) or None.
+        """
+        # hop 1
+        n1 = control.traversal_target_name
+        if not n1:
+            return None
+        e1 = by_name.get(n1)
+        if e1 is None:
+            return None
+
+        # If traversal points straight at a help-text draw, use it
+        if e1.is_help_text() and not e1.is_help_icon():
+            t1 = (e1.help_text() or "").strip()
+            return split_label_and_help(t1) if t1 else None
+
+        # If it points to a help icon, hop again
+        if e1.is_help_icon():
+            n2 = e1.traversal_target_name
+            if not n2:
+                return None
+            e2 = by_name.get(n2)
+            if e2 is None:
+                return None
+            if e2.is_help_text() and not e2.is_help_icon():
+                t2 = (e2.help_text() or "").strip()
+                return split_label_and_help(t2) if t2 else None
 
         return None
 

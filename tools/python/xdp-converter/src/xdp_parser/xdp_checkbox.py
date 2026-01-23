@@ -1,7 +1,10 @@
+from typing import Optional
 from schema_generator.form_checkbox import FormCheckbox
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_utils import DisplayText
+
+debug = False
 
 
 class XdpCheckbox(XdpElement):
@@ -27,6 +30,12 @@ class XdpCheckbox(XdpElement):
             if mark == "circle":
                 return True
         return False
+
+    def get_label(self) -> Optional[DisplayText]:
+        label = super().get_label()
+        if debug:
+            print(f"  Checkbox label: {label}")
+        return label
 
     def get_click_scripts(self) -> list[str]:
         scripts: list[str] = []
