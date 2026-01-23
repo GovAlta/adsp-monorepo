@@ -1,61 +1,54 @@
 import xml.etree.ElementTree as ET
-from xdp_parser.xdp_utils import tag_name
+from xdp_parser.xdp_element import XdpElement
+from xdp_parser.xdp_utils import convert_to_mm
+
+# ----------------------------
+# Tuning knobs (start here)
+# ----------------------------
+# Tuning knobs (keep them obvious and few)
+HEADER_MIN_SPAN_RATIO = 0.60  # must span 60% of container width
+HEADER_MAX_HEIGHT_MM = 12.0  # avoid multi-line instruction blocks
 
 
-def get_subform_label(subform) -> str | None:
+def strip_header_element(
+    elements: list[XdpElement],
+    header_index: int | None,
+) -> list[XdpElement]:
     """
-    Find the title for a <subform>.
-    Preference order:
-    1) direct child <draw name="lblHeader"> (strongest signal)
-    2) any descendant  <draw name="lblHeader"> (nearest is ok)
-    3) fallback: first <draw> that has a non-empty <value>/<text>
-    Returns the label string or None.
+    Returns a new list with the header removed
+    if header_index is valid.
     """
-    # 1) prefer a direct child draw named lblHeader
-    for child in list(subform):
-        if tag_name(child.tag).lower() != "draw":
-            continue
-        name_attr = child.attrib.get("name") or ""
-        if name_attr.lower() == "lblheader":
-            txt = text_of_value(child)
-            if txt:
-                return txt
-
-    # 2) else, any descendant draw named lblHeader (first hit wins)
-    for d in subform.iter():
-        if tag_name(d.tag).lower() != "draw":
-            continue
-        name_attr = d.attrib.get("name") or ""
-        if name_attr.lower() == "lblheader":
-            txt = text_of_value(d)
-            if txt:
-                return txt
-
-    # 3) fallback: first draw with usable <value>/<text>
-    for d in subform.iter():
-        if tag_name(d.tag).lower() != "draw":
-            continue
-        txt = text_of_value(d)
-        if txt:
-            return txt
-
-    return None
+    if header_index is None:
+        return elements
+    if header_index < 0 or header_index >= len(elements):
+        return elements
+    return elements[:header_index] + elements[header_index + 1 :]
 
 
-def text_of_value(draw_el: ET.Element) -> str:
-    """
-    Extract text from a <value> under <draw>, looking for any <text> child first,
-    otherwise the direct text content of <value>.
-    """
-    # handle namespaces generically by checking local-names
-    for child in draw_el:
-        if tag_name(child.tag).lower() == "value":
-            # prefer nested <text>
-            for g in child.iter():
-                if tag_name(g.tag).lower() == "text" and (g.text and g.text.strip()):
-                    return g.text.strip()
-            # else raw value text
-            if child.text and child.text.strip():
-                return child.text.strip()
-            break
-    return ""
+def get_subform_header(
+    subform: ET.Element,
+    elements: list[XdpElement],
+    debug: bool = True,
+) -> tuple[str | None, int | None]:
+    if not elements:
+        return None, None
+
+    if debug:
+        sub_name = subform.get("name") or "<?>"
+        print(f"\n[DEBUG] Find header for {sub_name}, ({len(elements)} elements)")
+
+    first = elements[0]
+    if not first.is_help_text():
+        if debug:
+            print("  First element is not help text")
+        return None, None
+
+    text = (getattr(first, "text", None) or "").strip()
+    if not text:
+        if debug:
+            print("  First element has no text")
+        return None, None
+
+    if debug:
+        print(f"  Header is '{text}'")
+    return text, 0

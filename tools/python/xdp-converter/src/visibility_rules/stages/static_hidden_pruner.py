@@ -9,7 +9,7 @@ from visibility_rules.pipeline_context import (
 )
 from xdp_parser.xdp_utils import compute_full_xdp_path
 
-debug = True
+debug = False
 
 
 class StaticHiddenPruner:
@@ -33,16 +33,15 @@ class StaticHiddenPruner:
         parent_map: dict[ET.Element, ET.Element] = context.get(CTX_PARENT_MAP) or {}
         jsonforms_rules: dict = context.get(CTX_JSONFORMS_RULES) or {}
 
-        print("\n[StaticHiddenPruner] Starting...")
-
         if root is None:
-            print("[StaticHiddenPruner] No XDP root in context; skipping.\n")
+            if debug:
+                print("[StaticHiddenPruner] No XDP root in context; skipping.\n")
             return context
 
         # Keys are fully-qualified targets like "Section3Default", "Section3Seasonal.Decals", etc.
         rule_keys = list(jsonforms_rules.keys())
-        print(f"[StaticHiddenPruner] Dynamic rule targets: {len(rule_keys)}")
         if debug:
+            print(f"[StaticHiddenPruner] Dynamic rule targets: {len(rule_keys)}")
             print("[StaticHiddenPruner] Sample rule keys:", rule_keys[:10])
 
         # Build a quick lookup to see if a name participates in any rule, either
@@ -87,7 +86,8 @@ class StaticHiddenPruner:
             # At this point: presence=hidden and no rules on self/descendants
             to_remove.append(el)
 
-        print(f"[StaticHiddenPruner] Candidates for removal: {len(to_remove)}")
+        if debug:
+            print(f"[StaticHiddenPruner] Candidates for removal: {len(to_remove)}")
 
         removed_count = 0
         for el in to_remove:
@@ -95,25 +95,28 @@ class StaticHiddenPruner:
             if parent is None:
                 # Don't remove the root, even if hidden
                 full_name = compute_full_xdp_path(el, parent_map)
-                print(
-                    f"  [SKIP] Wanted to remove '{full_name}' but it has no parent (root?)."
-                )
+                if debug:
+                    print(
+                        f"  [SKIP] Wanted to remove '{full_name}' but it has no parent (root?)."
+                    )
                 continue
 
             full_name = compute_full_xdp_path(el, parent_map)
             try:
                 parent.remove(el)
                 removed_count += 1
-                print(
-                    f"  [REMOVE] Statically hidden element '{full_name}' "
-                    f"(presence=hidden, no dynamic rules)."
-                )
+                if debug:
+                    print(
+                        f"  [REMOVE] Statically hidden element '{full_name}' "
+                        f"(presence=hidden, no dynamic rules)."
+                    )
             except Exception as ex:
-                print(f"  [WARN] Failed to remove '{full_name}': {ex!r}")
-
-        print(
-            f"[StaticHiddenPruner] Removed {removed_count} statically hidden elements.\n"
-        )
+                if debug:
+                    print(f"  [WARN] Failed to remove '{full_name}': {ex!r}")
+        if debug:
+            print(
+                f"[StaticHiddenPruner] Removed {removed_count} statically hidden elements.\n"
+            )
 
         # We don't need to modify CTX_JSONFORMS_RULES, since we only removed
         # elements that had no rules on them or their descendants.

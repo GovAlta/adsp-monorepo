@@ -13,6 +13,8 @@ from visibility_rules.stages.trigger_ast import (
 )
 from xdp_parser.xdp_utils import compute_full_xdp_path
 
+debug = False
+
 
 class JsonFormsEmitter:
     """
@@ -22,7 +24,8 @@ class JsonFormsEmitter:
     """
 
     def process(self, context):
-        print("\n[JsonFormsEmitter] Starting...")
+        if debug:
+            print("\n[JsonFormsEmitter] Starting...")
 
         rules = context.get(CTX_FINAL_RULES, []) or []
         enum_maps = context.get(CTX_ENUM_MAP, {}) or {}
@@ -30,7 +33,8 @@ class JsonFormsEmitter:
         parent_map = context.get(CTX_PARENT_MAP, {}) or {}
         xdp_root = context.get(CTX_XDP_ROOT)
 
-        print(f"[JsonFormsEmitter] IN rules: {len(rules)}")
+        if debug:
+            print(f"[JsonFormsEmitter] IN rules: {len(rules)}")
 
         emitted: dict[str, dict] = {}
         skipped = 0
@@ -64,8 +68,9 @@ class JsonFormsEmitter:
             emitted[key] = {"rule": jsonforms_rule}
 
         context[CTX_JSONFORMS_RULES] = emitted
-        print(f"[JsonFormsEmitter] OUT rules: {len(emitted)} (skipped={skipped})")
-        print("[JsonFormsEmitter] Done.\n")
+        if debug:
+            print(f"[JsonFormsEmitter] OUT rules: {len(emitted)} (skipped={skipped})")
+            print("[JsonFormsEmitter] Done.\n")
         return context
 
     # ------------------------------------------------------------------

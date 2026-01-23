@@ -36,8 +36,6 @@ class VisibilityScriptExtractor:
     """
 
     def process(self, context):
-        print("[VisibilityScriptExtractor] Starting...")
-
         xdp_root = context[CTX_XDP_ROOT]
         parent_map = context[CTX_PARENT_MAP]
         self.parent_map = parent_map
@@ -63,7 +61,8 @@ class VisibilityScriptExtractor:
 
             target_name = self._get_target(code, script_elem)
             if not target_name:
-                print(f"[EXTRACTOR] No target for script:\n{script_name} found")
+                if debug:
+                    print(f"[EXTRACTOR] No target for script:\n{script_name} found")
                 continue
 
             # Parse JS into trigger/action blocks
@@ -81,7 +80,8 @@ class VisibilityScriptExtractor:
                 metadata = self._extract_metadata(script_elem, target_name)
 
                 if not actions:
-                    print(f"[EXTRACTOR] No actions found in script:\n{script_name}")
+                    if debug:
+                        print(f"[EXTRACTOR] No actions found in script:\n{script_name}")
                     continue
 
                 # Create one RawRule per (target,effect) pair
@@ -102,9 +102,9 @@ class VisibilityScriptExtractor:
                                 "section3Seasonal",
                             ],
                         )
-                    # _debug_cbo_category(event)
 
-        print(f"[Extractor] Extracted {len(parsed_rules)} visibility rules.")
+        if debug:
+            print(f"[Extractor] Extracted {len(parsed_rules)} visibility rules.")
         context[CTX_RAW_RULES] = parsed_rules
         return context
 
@@ -202,21 +202,3 @@ class VisibilityScriptExtractor:
             xpath=xpath,
             script_name=script_elem.get("name") or "",
         )
-
-
-def _debug_cbo_category(ev):
-    t = ev.trigger
-    # check atomic conditions anywhere in the trigger AST
-    for atom in t.iter_atomic():
-        if "cboCategory" in (atom.driver or "") or (atom.value or "") in {
-            str(i) for i in range(14, 22)
-        }:
-            print("\n[DEBUG cboCategory SOURCE]")
-            print(f"  xpath: {ev.metadata.xpath}")
-            print(f"  script: {ev.metadata.script_name}")
-            print(f"  trigger: {ev.trigger}")
-            raw = (ev.script_node.text or "").strip()
-            print("  --- script text ---")
-            print(raw[:800])  # enough to see what’s going on
-            print("  -------------------")
-            break

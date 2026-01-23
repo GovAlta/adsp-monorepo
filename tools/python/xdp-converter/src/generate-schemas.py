@@ -28,6 +28,8 @@ from xdp_parser.parse_xdp import XdpParser
 from xdp_parser.xdp_utils import build_parent_map, strip_namespaces
 from visibility_rules.pipeline import VisibilityRulesPipeline
 
+debug = False
+
 
 def discover_xdp_files(inputs):
     files = []
@@ -61,16 +63,14 @@ def output_paths(input_file: Path, out_dir: Path):
     return schema_path, ui_path
 
 
-def process_one(
-    xdp_path: Path, out_dir: Path, overwrite: bool = False, quiet: bool = False
-):
+def process_one(xdp_path: Path, out_dir: Path, overwrite: bool = False):
     try:
         schema_out, ui_out = output_paths(xdp_path, out_dir)
 
         if not overwrite and (schema_out.exists() or ui_out.exists()):
             return (xdp_path, False, "exists")
 
-        if not quiet:
+        if debug:
             print(f"🧩 Parsing {xdp_path}…")
 
         # --- Parse XDP and strip namespaces ---
@@ -97,8 +97,6 @@ def process_one(
         normalized_enum_maps = normalize_enum_labels(
             traversal.factory.enum_maps, enum_factory.label_to_enum
         )
-
-        print(f"cboEnvDecalPack: {normalized_enum_maps.get('cboEnvDecalPack')}")
 
         # Keep the actual field names as the group members
         normalized_radio_groups = enum_context.radio_groups
@@ -190,9 +188,6 @@ def main():
     parser.add_argument(
         "--overwrite", action="store_true", help="Overwrite existing output files."
     )
-    parser.add_argument(
-        "-q", "--quiet", action="store_true", help="Reduce console output."
-    )
 
     args = parser.parse_args()
     out_dir = Path(args.out_dir)
@@ -203,7 +198,7 @@ def main():
         print("No .xdp files found from the provided inputs.", file=sys.stderr)
         sys.exit(1)
 
-    if not args.quiet:
+    if debug:
         print(f"Found {len(xdp_files)} XDP file(s). Writing to: {out_dir.resolve()}")
         print(f"Using {args.jobs} worker(s)…")
 
@@ -213,7 +208,7 @@ def main():
 
     with ThreadPoolExecutor(max_workers=args.jobs) as ex:
         futures = {
-            ex.submit(process_one, xdp, out_dir, args.overwrite, args.quiet): xdp
+            ex.submit(process_one, xdp, out_dir, args.overwrite): xdp
             for xdp in xdp_files
         }
         for fut in as_completed(futures):
@@ -222,19 +217,18 @@ def main():
             ok_path, ok, err = fut.result()
             if ok:
                 successes += 1
-                if not args.quiet:
+                if debug:
                     print(f"✅ {xdp_short}")
             else:
                 if err == "exists":
                     skipped += 1
-                    if not args.quiet:
+                    if debug:
                         print(f"⏭️  Skipped (exists): {xdp_short}")
                 else:
                     failures += 1
                     print(f"❌ {xdp_short}: {err}", file=sys.stderr)
 
-    if not args.quiet:
-        print(f"\nDone. ✅ {successes} ok, ⏭️ {skipped} skipped, ❌ {failures} failed.")
+    print(f"\nDone. ✅ {successes} ok, ⏭️ {skipped} skipped, ❌ {failures} failed.")
 
     sys.exit(0 if failures == 0 else 2)
 

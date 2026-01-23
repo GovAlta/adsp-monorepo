@@ -1,10 +1,8 @@
 # xdp_parser/factories/enum_map_factory.py
 from typing import Any, Optional
 import xml.etree.ElementTree as ET
-from xdp_parser.control_labels import ControlLabels
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
-from xdp_parser.xdp_radio_selector import extract_radio_button_labels
-from xdp_parser.xdp_utils import remove_duplicates
+from xdp_parser.xdp_pseudo_radio import extract_radio_button_labels
 
 
 class EnumMapFactory(AbstractXdpFactory):
@@ -14,7 +12,6 @@ class EnumMapFactory(AbstractXdpFactory):
         super().__init__(context)
         self.enum_maps: dict[str, dict[str, str]] = {}
         self.label_to_enum: dict[str, tuple[str, str]] = {}
-        print("EnumMapFactory initialized. Ready to collect enumeration maps.")
 
     def handle_basic_input(self, elem: ET.Element, control_labels):
         name = elem.attrib.get("name")
@@ -173,6 +170,9 @@ class EnumMapFactory(AbstractXdpFactory):
         return None
 
     def handle_help_text(self, *_):
+        return None
+
+    def handle_help_icon(self, *_):
         return None
 
     def _get_saved_enum_map(self, field_node: ET.Element) -> Optional[dict[str, str]]:

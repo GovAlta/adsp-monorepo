@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Any
+from typing import Optional
 
-from importlib.resources.readers import remove_duplicates  # your existing import
+from importlib.resources.readers import remove_duplicates
 
 from schema_generator.form_element import FormElement
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.xdp_utils import compute_full_xdp_path
+from xdp_parser.xdp_utils import DisplayText, compute_full_xdp_path, convert_to_mm
 
 
 class XdpElement(ABC):
@@ -38,6 +38,117 @@ class XdpElement(ABC):
     def y(self):
         return self.geometry.y
 
+    @property
+    def w(self):
+        return self.geometry.w
+
+    @property
+    def h(self):
+        return self.geometry.h
+
+    @property
+    def has_explicit_x(self) -> bool:
+        return self.geometry.has_explicit_x
+
+    @property
+    def has_explicit_y(self) -> bool:
+        return self.geometry.has_explicit_y
+
+    @property
+    def traversal_target_name(self) -> str | None:
+        traversal = self.xdp_element.find(".//traversal/traverse")
+        if traversal is None:
+            return None
+        ref = (traversal.get("ref") or "").strip()
+        if not ref:
+            return None
+        return ref.split("[", 1)[0]
+
+    # Element's bounding box
+    def bbox(self):
+        """(x1, y1, x2, y2) or None if insufficient geometry."""
+        if self.x is None or self.y is None or self.w is None or self.h is None:
+            return None
+        return (self.x, self.y, self.x + self.w, self.y + self.h)
+
+    # Center point of the element
+    def center(self):
+        b = self.bbox()
+        if not b:
+            return None
+        x1, y1, x2, y2 = b
+        return ((x1 + x2) / 2.0, (y1 + y2) / 2.0)
+
+    # Check if a point is within the bounding box, with tolerance
+    def bbox_contains(self, pt, tol=0.5):
+        """pt=(cx,cy). tol in mm."""
+        b = self.bbox()
+        if not b or not pt:
+            return False
+        x1, y1, x2, y2 = b
+        cx, cy = pt
+        return (x1 - tol) <= cx <= (x2 + tol) and (y1 - tol) <= cy <= (y2 + tol)
+
+    def iter_descendants_for_bbox(self):
+        # Default: no descendants
+        return []
+
+    def visual_bbox(self):
+        """
+        Prefer explicit bbox; otherwise derive bbox from descendants.
+        Returns (x1, y1, x2, y2) or None.
+        """
+        b = self.bbox()
+        if b:
+            return b
+
+        kids = list(self.iter_descendants_for_bbox())
+        if not kids:
+            return None
+
+        boxes = []
+        for k in kids:
+            kb = k.bbox()
+            if kb:
+                boxes.append(kb)
+
+        if not boxes:
+            return None
+
+        x1 = min(bb[0] for bb in boxes)
+        y1 = min(bb[1] for bb in boxes)
+        x2 = max(bb[2] for bb in boxes)
+        y2 = max(bb[3] for bb in boxes)
+        return (x1, y1, x2, y2)
+
+    def visual_height(self) -> float:
+        vb = self.visual_bbox()
+        if not vb:
+            return 0.0
+        _, y1, _, y2 = vb
+        return max(0.0, float(y2 - y1))
+
+    def effective_height(self) -> float:
+        if self.h is not None:
+            return float(self.h)
+        return float(self.visual_height())
+
+    def effective_width(self) -> float | None:
+        # prefer explicit width if already computed
+        if self.w is not None:
+            return float(self.w)
+
+        # try visual bbox width (handles descendants)
+        vb = self.visual_bbox()
+        if vb:
+            x1, _, x2, _ = vb
+            return float(x2 - x1)
+
+        return None
+
+    def is_circle_checkbutton(self) -> bool:
+        return False  # default implementation
+
     @abstractmethod
     def to_form_element(self) -> FormElement:
         pass
@@ -48,13 +159,37 @@ class XdpElement(ABC):
     def is_control(self):
         return False  # default
 
+    def is_actionable_control(e: XdpElement) -> bool:
+        if not e.is_control():
+            return False
+
+        # Needs XdpElement to expose the underlying ET.Element, or properties extracted from it.
+        elem = e.elem  # or e.node, e.source_elem, however you store it
+
+        access = (elem.get("access") or "").lower()
+        if access in ("protected", "readonly"):
+            return False
+
+        relevant = (elem.get("relevant") or "").lower()
+        if "-print" in relevant:
+            return False
+
+        presence = (elem.get("presence") or "").lower()
+        if presence == "hidden":
+            return False
+
+        return True
+
     def is_help_text(self):
+        return False  # default
+
+    def is_help_icon(self):
         return False  # default
 
     def get_name(self):
         return self.xdp_element.get("name", "")
 
-    def get_label(self):
+    def get_label(self) -> Optional[DisplayText]:
         label = None
         if self.labels:
             label = self.labels.get(self.get_name())
@@ -127,61 +262,57 @@ class XdpGeometry:
     w: Optional[float] = None
     h: Optional[float] = None
     layout: Optional[str] = None
+    has_explicit_x: bool = False
+    has_explicit_y: bool = False
 
     @classmethod
     def resolve(cls, node, parent_map) -> "XdpGeometry":
-        """
-        Adobe-style coordinate resolution:
-        Walk upward until we find a coordinate-bearing ancestor.
-        """
         curr = node
+        acc_x = 0.0
+        acc_y = 0.0
+        saw_any = False
 
-        if node not in parent_map:
-            print(
-                "🔥 node not in parent_map:",
-                "tag=",
-                node.tag,
-                "name=",
-                node.get("name"),
-            )
-            # optional: print node attribs for sanity
-            print("attribs:", node.attrib)
+        # these are "explicit on THIS node"
+        explicit_x = node.get("x") is not None
+        explicit_y = node.get("y") is not None
+
+        w = convert_to_mm(node.get("w"))
+        h = convert_to_mm(node.get("h"))
+        layout = node.get("layout")
 
         while curr is not None:
             raw_x = curr.get("x")
             raw_y = curr.get("y")
-            if raw_x is not None and raw_y is not None:
-                return cls(
-                    x=cls._parse_mm(raw_x),
-                    y=cls._parse_mm(raw_y),
-                    w=cls._parse_mm(curr.get("w")),
-                    h=cls._parse_mm(curr.get("h")),
-                    layout=curr.get("layout"),
-                )
+
+            if raw_x is not None or raw_y is not None:
+                saw_any = True
+                dx = convert_to_mm(raw_x) or 0.0
+                dy = convert_to_mm(raw_y) or 0.0
+                acc_x += dx
+                acc_y += dy
+
             curr = parent_map.get(curr)
 
-        # No coordinates found → bottom of list, but stable
-        return cls(
-            x=None,
-            y=None,
-            w=None,
-            h=None,
-            layout=node.get("layout"),
-        )
+        if not saw_any:
+            return cls(
+                x=None,
+                y=None,
+                w=w,
+                h=h,
+                layout=layout,
+                has_explicit_x=explicit_x,
+                has_explicit_y=explicit_y,
+            )
 
-    @staticmethod
-    def _parse_mm(raw: Any) -> Optional[float]:
-        if raw is None:
-            return None
-        s = str(raw).strip()
-        if not s:
-            return None
-        if s.endswith("mm"):
-            s = s[:-2]
-        try:
-            return float(s)
-        except ValueError:
-            return None
+        return cls(
+            x=acc_x,
+            y=acc_y,
+            w=w,
+            h=h,
+            layout=layout,
+            has_explicit_x=explicit_x,
+            has_explicit_y=explicit_y,
+        )
 
     @classmethod
     def from_xdp(cls, xdp) -> "XdpGeometry":
@@ -190,11 +321,11 @@ class XdpGeometry:
         Missing attributes stay as None so we can detect them.
         """
         return cls(
-            x=cls._parse_mm(xdp.get("x")),
-            y=cls._parse_mm(xdp.get("y")),
-            w=cls._parse_mm(xdp.get("w")),
-            h=cls._parse_mm(xdp.get("h")),
-            layout=xdp.get("layout"),  # ← 🔥 ADDED
+            x=convert_to_mm(xdp.get("x")),
+            y=convert_to_mm(xdp.get("y")),
+            w=convert_to_mm(xdp.get("w")),
+            h=convert_to_mm(xdp.get("h")),
+            layout=xdp.get("layout"),
         )
 
     @classmethod

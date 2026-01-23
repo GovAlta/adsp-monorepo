@@ -1,7 +1,6 @@
 from schema_generator.form_help_text import FormHelpText
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_element import XdpElement
-import xml.etree.ElementTree as ET
 
 
 class XdpHelpText(XdpElement):
@@ -10,7 +9,13 @@ class XdpHelpText(XdpElement):
         super().__init__(anchor_element, context=context)
 
     def to_form_element(self):
-        return FormHelpText(self.text, self.context)
+        return FormHelpText(self.get_name(), self.full_path, self.text, self.context)
 
     def is_help_text(self):
         return True
+
+    def is_help_icon(self) -> bool:
+        return False
+
+    def help_text(self) -> str:
+        return self.text

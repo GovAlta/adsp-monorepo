@@ -9,12 +9,14 @@ from xdp_parser.xdp_element import XdpElement
 
 
 # An XDP subform may contain multiple radio buttons representing a single selector
-class XdpRadioSelector(XdpElement):
+class XdpPseudoRadio(XdpElement):
     def __init__(self, xdp_element, options, messages: ControlLabels):
         super().__init__(xdp_element)
         self.options = options
         self.is_leaf = True
         self.messages = messages
+        self.option_description_by_value: dict[str, str] = {}
+        self.option_detail_help_by_value: dict[str, str] = {}
 
     def is_control(self):
         return True
@@ -44,8 +46,8 @@ class XdpRadioSelector(XdpElement):
         )
         control.enum = []
         for option in self.options:
-            label, _ = split_label_and_help(option)
-            control.enum.append(label)
+            display_text = split_label_and_help(option)
+            control.enum.append(display_text.label)
         return control
 
     def _to_help_messages(self):

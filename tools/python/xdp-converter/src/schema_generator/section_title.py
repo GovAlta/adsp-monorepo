@@ -16,7 +16,7 @@ class SectionTitle(FormElement):
             ui_schema["label"] = f"{self.label}"
         if self.help:
             ui_schema["options"] = {
-                "markdown": "true",
+                "markdown": True,
                 "help": f"## {self.help}",
             }
         return ui_schema

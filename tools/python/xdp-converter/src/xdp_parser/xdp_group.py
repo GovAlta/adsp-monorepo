@@ -17,7 +17,7 @@ class XdpGroup(XdpElement):
         self.elements = elements
         # Capture layout from subform (<subform layout="...">)
         self.layout = subform.get("layout", "").lower() if subform is not None else ""
-        self.label = label or ""
+        self.label: str | None = label
 
         # If the subform itself has no coordinates, infer from children
         self.inheritGeometry(elements)
@@ -43,7 +43,10 @@ class XdpGroup(XdpElement):
         return FormGroup(
             self.get_name(),
             self.full_path,
-            self.label,
+            self.label or "",  # FormGroup expects a string
             group_elements,
             self.context,
         )
+
+    def iter_descendants_for_bbox(self):
+        return list(self.elements)
