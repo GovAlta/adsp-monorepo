@@ -202,7 +202,8 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
       }
 
       if (Object.entries(contextObj).length > 0) {
-        eventUrl = `${eventUrl}&context=${JSON.stringify(contextObj)}`;
+        //eventUrl = `${eventUrl}&context=${JSON.stringify(contextObj)}`;
+        eventUrl = `${eventUrl}&context=${encodeURIComponent(JSON.stringify(contextObj))}`;
       }
 
       if (action.searchCriteria.timestampMax) {
