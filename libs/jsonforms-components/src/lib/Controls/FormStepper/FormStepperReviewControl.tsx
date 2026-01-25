@@ -6,9 +6,142 @@ import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { Anchor, ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle } from './styled-components';
 import { getProperty } from './util/helpers';
 import { withAjvProps } from '../../util/layout';
-import { GoabGrid } from '@abgov/react-components';
+import { GoabTable } from '@abgov/react-components';
 import { FormStepperComponentProps } from './types';
-import { GoAReviewRenderers } from '../../../index';
+
+import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
+import { withJsonFormsControlProps } from '@jsonforms/react';
+
+import { FullNameTester } from '../FullName/FullNameTester';
+import { GoAInputBaseFullNameControlReview } from '../FullName/FullNameControlReview';
+import { FullNameDobTester } from '../FullNameDOB/FullNameDobTester';
+import { GoAInputBaseFullNameDobControlReview } from '../FullNameDOB/FullNameDobReviewControl';
+
+import {
+  GoAEnumControlTester,
+  GoAIntegerControlTester,
+  GoANumberControlTester,
+  GoATextControlTester,
+  GoADateControlTester,
+  GoADateTimeControlTester,
+  GoATimeControlTester,
+  GoARadioGroupControlTester,
+  GoACheckoutGroupControlTester,
+  GoABooleanControlTester,
+  GoABooleanRadioControlTester,
+  MultiLineTextControlTester,
+} from '../Inputs';
+import { GoAArrayControlTester } from '../ObjectArray/ObjectArray';
+import { GoAListWithDetailsTester } from '../ObjectArray/listWithDetails';
+
+import { GoAInputBaseTableReviewControl } from '../Inputs/InputBaseTableReviewControl';
+import { GoAInputBaseReviewControl } from '../Inputs/InputBaseReviewControl';
+
+import { AddressLookUpTester } from '../AddressLookup/AddressLookupTester';
+import { AddressLoopUpControlTableReview, AddressLookUpControlReview } from '../AddressLookup/AddressLookUpControlReview';
+
+import { GoAHorizontalLayoutTester, GoAHorizontalReviewLayout } from '../../layouts/HorizontalLayoutControl';
+import { GoAlVerticalLayoutTester, GoAVerticalLayout } from '../../layouts/VerticalLayoutControl';
+
+import { GoAGroupReviewLayoutTester } from '../../layouts/GroupReviewControl';
+import { HelpContentTester } from '../../Additional/HelpContent';
+import { TableGroupLayoutRenderer, TableHelpContentRenderer, TableLayoutRenderer } from '../../layouts/TableLayoutRenderers';
+
+export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
+  // controls
+  { tester: FullNameTester, renderer: GoAInputBaseFullNameControlReview },
+  { tester: FullNameDobTester, renderer: GoAInputBaseFullNameDobControlReview },
+
+  { tester: GoAEnumControlTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoAIntegerControlTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoANumberControlTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoATextControlTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoADateControlTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoADateTimeControlTester, renderer: GoAInputBaseTableReviewControl },
+  { tester: GoATimeControlTester, renderer: GoAInputBaseTableReviewControl },
+  {
+    tester: GoARadioGroupControlTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  {
+    tester: GoACheckoutGroupControlTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  { tester: GoABooleanControlTester, renderer: GoAInputBaseTableReviewControl },
+
+  { tester: GoABooleanRadioControlTester, renderer: GoAInputBaseTableReviewControl },
+  {
+    tester: MultiLineTextControlTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  {
+    tester: GoAArrayControlTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  {
+    tester: GoAListWithDetailsTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  {
+    tester: FullNameDobTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLoopUpControlTableReview) },
+
+  {
+    tester: GoAHorizontalLayoutTester,
+    renderer: TableLayoutRenderer,
+  },
+  { tester: GoAlVerticalLayoutTester, renderer: TableLayoutRenderer },
+  { tester: GoAGroupReviewLayoutTester, renderer: TableGroupLayoutRenderer },
+  { tester: HelpContentTester, renderer: TableHelpContentRenderer },
+];
+
+export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
+  // controls
+  { tester: FullNameTester, renderer: GoAInputBaseFullNameControlReview },
+  { tester: FullNameDobTester, renderer: GoAInputBaseFullNameDobControlReview },
+
+  { tester: GoAEnumControlTester, renderer: GoAInputBaseReviewControl },
+  { tester: GoAIntegerControlTester, renderer: GoAInputBaseReviewControl },
+  { tester: GoANumberControlTester, renderer: GoAInputBaseReviewControl },
+  { tester: GoATextControlTester, renderer: GoAInputBaseReviewControl },
+  { tester: GoADateControlTester, renderer: GoAInputBaseReviewControl },
+  { tester: GoADateTimeControlTester, renderer: GoAInputBaseReviewControl },
+  { tester: GoATimeControlTester, renderer: GoAInputBaseReviewControl },
+  {
+    tester: GoARadioGroupControlTester,
+    renderer: GoAInputBaseReviewControl,
+  },
+  {
+    tester: GoACheckoutGroupControlTester,
+    renderer: GoAInputBaseReviewControl,
+  },
+  { tester: GoABooleanControlTester, renderer: GoAInputBaseReviewControl },
+
+  { tester: GoABooleanRadioControlTester, renderer: GoAInputBaseReviewControl },
+  {
+    tester: MultiLineTextControlTester,
+    renderer: GoAInputBaseReviewControl,
+  },
+  {
+    tester: GoAArrayControlTester,
+    renderer: GoAInputBaseTableReviewControl, // Array might still need table or custom grid
+  },
+  {
+    tester: GoAListWithDetailsTester,
+    renderer: GoAInputBaseTableReviewControl, // List with details is complex
+  },
+  { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControlReview) },
+
+  {
+    tester: GoAHorizontalLayoutTester,
+    renderer: GoAHorizontalReviewLayout,
+  },
+  { tester: GoAlVerticalLayoutTester, renderer: GoAVerticalLayout },
+  { tester: GoAGroupReviewLayoutTester, renderer: TableGroupLayoutRenderer },
+  { tester: HelpContentTester, renderer: TableHelpContentRenderer },
+];
 
 export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, cells, enabled, navigationFunc } = props;
@@ -20,31 +153,15 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
 
   return (
     <ReviewItem>
-      {categories.map((category, index) => {
+      {categories.map((category, categoryIndex) => {
         const categoryLabel = category.label || category.i18n || 'Unknown Category';
         const testId = `${categoryLabel}-review-link`;
         return (
-          <ReviewItemSection key={index}>
-            <ReviewItemHeader>
-              <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
-              {navigationFunc && (
-                <Anchor
-                  onClick={() => {
-                    navigationFunc(index);
-                  }}
-                  data-testid={testId}
-                  onKeyDown={(e) => {
-                    if (!readOnly && (e.key === ' ' || e.key === 'Enter')) {
-                      e.preventDefault();
-                      navigationFunc(index);
-                    }
-                  }}
-                >
-                  {readOnly ? 'View' : 'Edit'}
-                </Anchor>
-              )}
-            </ReviewItemHeader>
-            <GoabGrid minChildWidth="100%">
+          <ReviewItemSection key={categoryIndex}>
+              <ReviewItemHeader>
+                <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
+              </ReviewItemHeader>
+
               {category.elements
                 //eslint-disable-next-line
                 .filter((field) => {
@@ -80,21 +197,25 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
                   }
                 })
                 .flat()
-                .map((element, index) => {
+                .map((element, elementIndex) => {
+                  const stepperElement = { ...element };
+                  stepperElement.options = { ...stepperElement.options, stepId: categoryIndex };
                   return (
-                    <div key={`form-stepper-category-${index}`} className="element-style">
-                      <JsonFormsDispatch
-                        data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-                        schema={schema}
-                        uischema={element}
-                        enabled={enabled}
-                        renderers={GoAReviewRenderers}
-                        cells={cells}
-                      />
-                    </div>
+                    <GoabTable width="100%" key={elementIndex} mb="m">
+                      <tbody>
+                        <JsonFormsDispatch
+                          data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+                          schema={schema}
+                          uischema={stepperElement}
+                          enabled={enabled}
+                          renderers={GoABaseTableReviewRenderers}
+                          cells={cells}
+                        />
+                      </tbody>
+                    </GoabTable>
                   );
                 })}
-            </GoabGrid>
+
           </ReviewItemSection>
         );
       })}

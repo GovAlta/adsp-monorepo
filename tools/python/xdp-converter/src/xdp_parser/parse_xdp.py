@@ -1,5 +1,6 @@
 # tools/python/xdp-converter/src/xdp_parser/parse_xdp.py
 
+import re
 import xml.etree.ElementTree as ET
 from typing import List
 
@@ -11,8 +12,7 @@ from xdp_parser.help_text_extractor import HelpTextExtractor
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.parsing_helpers import is_object_array
 from xdp_parser.xdp_element import XdpElement
-from xdp_parser.xdp_help_text import XdpHelpText
-from xdp_parser.xdp_radio_selector import extract_radio_button_labels
+from xdp_parser.xdp_pseudo_radio import extract_radio_button_labels
 from xdp_parser.xdp_utils import (
     remove_duplicates,
     is_hidden,
@@ -59,7 +59,7 @@ class XdpParser:
                 root_nodes.append(node)
 
         # 2) Run the single grouping pass over the placeholder tree
-        grouper = XdpGroupingPass(self.factory, self.context)
+        grouper = XdpGroupingPass(self.factory, self.control_labels, self.context)
         grouped_elements = grouper.group_placeholders(root_nodes)
 
         # 3) Convert to JSONForms elements
@@ -98,26 +98,17 @@ class XdpParser:
             )
             return control
 
-        # Implicit radio subform (checkButton cluster) → radio selector
-        radio_labels = extract_radio_button_labels(subform)
-        if radio_labels:
-            control = self.factory.handle_radio_subform(subform, self.control_labels)
-            return control
+        # # Pseudo radio subform (checkButton cluster) → radio selector
+        # radio_labels = extract_radio_button_labels(subform)
+        # if radio_labels:
+        #     control = self.factory.handle_radio_subform(subform, self.control_labels)
+        #     return control
 
-        # Normal container subform → placeholder with children
         children = list(self.find_simple_controls(subform))
         if not children:
             return None
 
         return XdpSubformPlaceholder(subform, children, self.context)
-
-    def parse_subform(self, subform: ET.Element) -> List[XdpElement]:
-        """
-        Backwards-compatible helper; some older code may still call this.
-        Now it simply wraps _parse_subform_to_node.
-        """
-        node = self._parse_subform_to_node(subform)
-        return [node] if node is not None else []
 
     def find_simple_controls(self, node: ET.Element) -> List[XdpElement]:
         """
@@ -135,9 +126,8 @@ class XdpParser:
             if elem.tag == "field" and HelpTextExtractor.is_help_icon_field(elem):
                 payload = HelpTextExtractor.get_help_from_click_event(elem)
                 if payload:
-                    control = self.factory.handle_help_text(elem, payload["text"])
+                    control = self.factory.handle_help_icon(elem, payload["text"])
                     if control:
-                        print(f"help text control with geometry: {control.geometry}")
                         controls.append(control)
                     i += 1
                     continue
@@ -147,7 +137,6 @@ class XdpParser:
             if help_text:
                 control = self.factory.handle_help_text(elem, help_text)
                 if control:
-                    print(f"help text control with geometry: {control.geometry}")
                     controls.append(control)
                 i += 1
                 continue
@@ -259,3 +248,19 @@ class XdpParser:
             return True
 
         return False
+
+    @staticmethod
+    def _normalize_text(s: str | None) -> str:
+        if not s:
+            return ""
+        s = s.strip()
+        s = re.sub(r"\s+", " ", s)  # collapse whitespace
+        s = s.casefold()  # better than lower() for unicode
+        s = s.rstrip(" .:;")  # titles often differ only by punctuation
+        return s
+
+    @classmethod
+    def _is_same_text(cls, a: str | None, b: str | None) -> bool:
+        return cls._normalize_text(a) != "" and cls._normalize_text(
+            a
+        ) == cls._normalize_text(b)

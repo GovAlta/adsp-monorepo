@@ -10,7 +10,7 @@ Feature: PDF service
     And the user views the link of "Get support" under Support
 
   ## Edit test steps are commented out due to being failed only in nightly run, but not on local development env or manual testing.
-  @TEST_CS-1461 @REQ_CS-1360 @REQ_CS-1361 @REQ_CS-1736 @REQ_CS-1636 @regression
+  @TEST_CS-1461 @REQ_CS-1360 @REQ_CS-1361 @REQ_CS-1736 @REQ_CS-1636 @regression @prod
   Scenario: As a tenant admin, I can add, edit, preview and delete a PDF template
     Given a tenant admin user is on PDF service overview page
     # Add a PDF template
@@ -53,7 +53,7 @@ Feature: PDF service
     Then the user views "autotest-accessibility-test", "autotest-accessibility-test" and "DO-NOT-DELETE" in PDF template editor
     And no critical or serious accessibility issues on "PDF template editor page"
 
-  @TEST_CS-2063 @regression
+  @TEST_CS-2063 @regression @prod
   Scenario: As a tenant admin, I can edit templates in header, footer,body and CSS section, and generate pdf files.
     Given a tenant admin user is on PDF service templates page
     When the user clicks "Edit" icon of "autotest-generatepdf-test", "autotest-generatepdf-test" and "DO-NOT-DELETE" on PDF templates page

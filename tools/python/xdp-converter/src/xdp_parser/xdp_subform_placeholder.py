@@ -46,3 +46,6 @@ class XdpSubformPlaceholder(XdpElement):
         They must be consumed by the grouping pass.
         """
         return None
+
+    def iter_descendants_for_bbox(self):
+        return list(self.children)

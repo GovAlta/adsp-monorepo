@@ -33,3 +33,6 @@ class XdpObjectArray(XdpElement):
             return FormObjectArray(self.name, self.full_path, children, self.context)
         print(f"[DEBUG] Object array {self.name} has no valid columns")
         return None
+
+    def iter_descendants_for_bbox(self):
+        return list(self.columns)

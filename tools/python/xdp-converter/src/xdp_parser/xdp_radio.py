@@ -24,7 +24,7 @@ class XdpRadio(XdpElement):
                 self.get_name(),
                 self.full_path,
                 self.get_type(),
-                self.get_label(),
+                self.get_label().label if self.get_label() else None,
                 self.context,
             )
             fe.enum = options

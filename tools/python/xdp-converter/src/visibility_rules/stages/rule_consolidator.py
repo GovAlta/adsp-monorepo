@@ -28,8 +28,9 @@ class RuleConsolidator:
 
     def process(self, context):
         events = context.get(CTX_RESOLVED_RULES, []) or []
-        print("\n[RuleConsolidator] Starting...")
-        print(f"[RuleConsolidator] IN events: {len(events)}")
+        if debug:
+            print("\n[RuleConsolidator] Starting...")
+            print(f"[RuleConsolidator] IN events: {len(events)}")
 
         grouped: Dict[Tuple[str, str], List[Trigger]] = {}
         rep_xpath: Dict[Tuple[str, str], Optional[str]] = {}
@@ -72,10 +73,11 @@ class RuleConsolidator:
 
             consolidated.append(rule)
 
-        print(
-            f"\n[RuleConsolidator] OUT rules: {len(consolidated)} "
-            f"(groups={len(grouped)}, skipped_events={skipped})\n"
-        )
+        if debug:
+            print(
+                f"\n[RuleConsolidator] OUT rules: {len(consolidated)} "
+                f"(groups={len(grouped)}, skipped_events={skipped})\n"
+            )
         context[CTX_FINAL_RULES] = consolidated
         return context
 

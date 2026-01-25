@@ -1,5 +1,4 @@
 from typing import List
-from visibility_rules.pipeline_context import CTX_JSONFORMS_RULES
 from schema_generator.form import Form
 from schema_generator.form_element import FormElement
 from schema_generator.prune_ui_schema import prune_ui_schema

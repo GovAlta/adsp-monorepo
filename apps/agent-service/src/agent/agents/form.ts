@@ -25,7 +25,7 @@ export const formGenerationAgent: AgentConfiguration = {
     Use the formConfigurationUpdateTool to update form configuration.
 
     Use the schemaDefinitionTool to load schema definitions from https://adsp.alberta.ca/common.v1.schema.json, and reference
-    them in the data schema where applicable.
+    them in the data schema where applicable. Always get the definitions via the tool so that the retrieved definitions are current.
 
     In the UI schema, use this documentation for reference: https://govalta.github.io/adsp-monorepo/tutorials/form-service/cheat-sheet.html
     In the UI schema, also use the documentation below as a reference.

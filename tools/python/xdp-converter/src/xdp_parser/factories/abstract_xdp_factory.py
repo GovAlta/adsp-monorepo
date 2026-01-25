@@ -38,7 +38,10 @@ class AbstractXdpFactory(ABC):
     def handle_help_text(self, elem: ET.Element, help_text: str) -> Any: ...
 
     @abstractmethod
+    def handle_help_icon(self, elem: ET.Element, help_text: str) -> Any: ...
+
+    @abstractmethod
     def handle_group(
-        self, elem: ET.Element, children: list, label: str
+        self, subform: ET.Element, children: list, label: str
     ) -> Optional[Any]:
         pass

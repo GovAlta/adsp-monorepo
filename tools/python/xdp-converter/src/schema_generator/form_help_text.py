@@ -4,8 +4,10 @@ from xdp_parser.parse_context import ParseContext
 
 
 class FormHelpText(FormElement):
-    def __init__(self, help_content, context: ParseContext):
-        super().__init__("information", None, None, context)
+    def __init__(
+        self, name: str, qualified_name: str, help_content, context: ParseContext
+    ):
+        super().__init__("information", name, qualified_name, context)
         self.can_group_horizontally = False
         self.help = help_content
 
@@ -14,7 +16,7 @@ class FormHelpText(FormElement):
             return None
         ui_schema = {"type": "HelpContent"}
         ui_schema["options"] = {
-            "markdown": "true",
+            "markdown": True,
             "help": self.help,
         }
         return ui_schema
@@ -24,15 +26,3 @@ class FormHelpText(FormElement):
 
     def to_json_schema(self):
         return None
-
-
-def split_camel_case(s):
-    words = re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)", s)
-    return " ".join(words)
-
-
-def capitalize_first(s: str) -> str:
-    s = s.strip()
-    if not s:
-        return s
-    return s[0].upper() + s[1:]

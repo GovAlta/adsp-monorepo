@@ -137,7 +137,7 @@ class HelpTextExtractor:
         1) Click script payload (e.g., xfa.host.messageBox("..."))
         2) Draw/exData blocks (static guidance)
         """
-        MIN_SIZE_DRAW = 20
+        MIN_SIZE_DRAW = 1
         MIN_SIZE_EVENT = 5
         MAX_SIZE_EVENT = 2000
 

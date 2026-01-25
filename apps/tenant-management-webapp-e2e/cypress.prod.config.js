@@ -35,6 +35,7 @@ module.exports = defineConfig({
     subscriptionAppUrl: 'https://subscription.adsp.alberta.ca',
     formServiceApiUrl: '',
     formAppUrl: 'https://form.adsp.alberta.ca/',
+    taskServiceApiUrl: '',
     valueServiceApiUrl: '',
   },
   retries: 1,

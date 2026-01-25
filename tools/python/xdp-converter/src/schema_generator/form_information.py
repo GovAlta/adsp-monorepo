@@ -18,7 +18,7 @@ class FormInformation(FormElement):
         if self.element_name:
             ui_schema["label"] = f"{self.element_name}"
         ui_schema["options"] = {
-            "markdown": "true",
+            "markdown": True,
             "variant": "detail",
             "help": f"{self.style}{capitalize_first(self.help)}",
         }

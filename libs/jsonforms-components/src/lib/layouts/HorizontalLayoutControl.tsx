@@ -15,14 +15,15 @@ export const GoAHorizontalLayoutComponent = ({
   visible,
 }: LayoutProps) => {
   const layout = uischema as HorizontalLayout;
+  const hasHelpContent = layout.elements?.some((element) => element.type === 'HelpContent');
   const childProps: LayoutRendererProps = {
     elements: layout.elements,
     schema,
     path,
     enabled,
-    direction: 'row',
+    direction: hasHelpContent ? 'column' : 'row',
     visible,
-    width: '10ch',
+    width: uischema?.options?.width || '300px',
     option: {
       space: 'xl',
     },

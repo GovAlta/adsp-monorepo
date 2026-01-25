@@ -11,7 +11,7 @@ Feature: Feedback
     And the user views "Sites" section on feedback guidance page
     And the user views "Feedback widget" section on feedback guidance page
 
-  @TEST_CS-3119 @TEST_CS-3169 @TEST_CS-3165 @REQ_CS-3020 @REQ_CS-3022 @REQ_CS-3023 @regression
+  @TEST_CS-3119 @TEST_CS-3169 @TEST_CS-3165 @REQ_CS-3020 @REQ_CS-3022 @REQ_CS-3023 @regression @prod
   Scenario: As a tenant admin, I can add, edit and delete sites to the feedback service configuration
     Given a tenant admin user is on Feedback Sites page
     # Add a site
@@ -68,7 +68,7 @@ Feature: Feedback
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "https://abctest.com", "No" on Sites page
 
-  @TEST_CS-3196 @REQ_CS-3031 @REQ_CS-3369 @regression
+  @TEST_CS-3196 @REQ_CS-3031 @REQ_CS-3369 @regression @prod
   Scenario: As a site visitor, I can access and complete a feedback form, so that I can share my feedback
     Given a tenant admin user is on tenant admin page
     When the user clicks the Feedback badge
@@ -108,7 +108,7 @@ Feature: Feedback
     When the user clicks toggle details icon on the latest feedback
     Then the user views feedback details with timestamp, rating, comments, technical issues
 
-  @TEST_CS-4295 @REQ_CS-4265 @REQ_4304 @regression
+  @TEST_CS-4295 @REQ_CS-4265 @REQ_4304 @regression @prod
   Scenario: As an admin user, I want to see all the feedback for my tenant in the Tenant Management App with a maximum view
     Given a tenant admin user is on Feedback service Feedback page
     When the user selects the adsp site in Registered sites dropdown
