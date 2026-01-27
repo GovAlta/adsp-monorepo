@@ -242,4 +242,91 @@ describe('TaskList Component', () => {
     fireEvent.click(summaryLink);
     expect(mockOnClick).toHaveBeenCalledWith(1);
   });
+
+  it('should render additional instructions when provided', () => {
+    const categories = [createCategory('Category 1')] as unknown as CategoryState[];
+    const props = {
+      ...baseProps,
+      categories,
+      additionalInstructions: 'Please review carefully before submitting',
+    };
+
+    const { getByText } = render(<TaskList {...props} />);
+    expect(getByText('Please review carefully before submitting')).toBeInTheDocument();
+  });
+
+  it('should not render additional instructions when not provided', () => {
+    const categories = [createCategory('Category 1')] as unknown as CategoryState[];
+    const props = {
+      ...baseProps,
+      categories,
+    };
+
+    const { queryByText } = render(<TaskList {...props} />);
+    expect(queryByText('Please review carefully before submitting')).not.toBeInTheDocument();
+  });
+
+  it('should render additional instructions with specified callout type', () => {
+    const categories = [createCategory('Category 1')] as unknown as CategoryState[];
+    const props = {
+      ...baseProps,
+      categories,
+      additionalInstructions: 'Important notice',
+      additionalInstructionsType: 'important' as const,
+    };
+
+    const { getByText } = render(<TaskList {...props} />);
+    expect(getByText('Important notice')).toBeInTheDocument();
+  });
+
+  it('should render section titles when categories have sectionTitle option', () => {
+    const categories = [
+      {
+        ...createCategory('Category 1'),
+        uischema: {
+          type: 'Category',
+          elements: [],
+          options: { sectionTitle: 'Section One' },
+        },
+      },
+      {
+        ...createCategory('Category 2'),
+        uischema: {
+          type: 'Category',
+          elements: [],
+          options: { sectionTitle: 'Section Two' },
+        },
+      },
+    ] as unknown as CategoryState[];
+
+    const props = {
+      ...baseProps,
+      categories,
+    };
+
+    const { getByText } = render(<TaskList {...props} />);
+    expect(getByText('1. Section One')).toBeInTheDocument();
+    expect(getByText('2. Section Two')).toBeInTheDocument();
+  });
+
+  it('should not render section titles for hidden categories', () => {
+    const categories = [
+      {
+        ...createCategory('Category 1', false, true, true, true, false),
+        uischema: {
+          type: 'Category',
+          elements: [],
+          options: { sectionTitle: 'Hidden Section', showInTaskList: false },
+        },
+      },
+    ] as unknown as CategoryState[];
+
+    const props = {
+      ...baseProps,
+      categories,
+    };
+
+    const { queryByText } = render(<TaskList {...props} />);
+    expect(queryByText('1. Hidden Section')).not.toBeInTheDocument();
+  });
 });

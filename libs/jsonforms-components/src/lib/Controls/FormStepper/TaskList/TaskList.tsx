@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { GoabTable, GoabText } from '@abgov/react-components';
+import { GoabCalloutType } from '@abgov/ui-components-common';
 import { PageBorder } from '../styled-components';
 import { CategoriesState, CategoryState } from '../context';
 import { ApplicationStatus } from '../ApplicationStatus';
@@ -8,6 +9,7 @@ import { getCategorySections, SectionMap } from './categorySections';
 import { SectionHeaderRow } from './sectionHeaderRow';
 import { CategoryRow } from './categoryRow';
 import { SummaryRow } from './summaryRow';
+import { AdditionalInstructionsRow } from './additionalInstructionsRow';
 
 export interface TocProps {
   categories: CategoriesState;
@@ -16,6 +18,8 @@ export interface TocProps {
   subtitle?: string;
   isValid: boolean;
   hideSummary: boolean;
+  additionalInstructions?: string;
+  additionalInstructionsType?: GoabCalloutType;
 }
 
 function mergeOrphanSections(sections: SectionMap[]): SectionMap[] {
@@ -70,7 +74,16 @@ function updateCompletion(group: CategoryState[], index: number): CategoryState 
   };
 }
 
-export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subtitle, isValid, hideSummary }) => {
+export const TaskList: React.FC<TocProps> = ({
+  categories,
+  onClick,
+  title,
+  subtitle,
+  isValid,
+  hideSummary,
+  additionalInstructions,
+  additionalInstructionsType,
+}) => {
   const testid = 'table-of-contents';
 
   // Merge and expand sections
@@ -135,6 +148,13 @@ export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subti
                 })}
               </React.Fragment>
             ))}
+            {additionalInstructions && (
+              <AdditionalInstructionsRow
+                key="additional-instructions"
+                additionalInstructions={additionalInstructions}
+                calloutType={additionalInstructionsType}
+              />
+            )}
             {!hideSummary ? (
               <SummaryRow index={globalIndex} isValid={isValid} onClick={onClick} key="task-list-table-summary" />
             ) : null}
