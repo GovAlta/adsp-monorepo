@@ -48,11 +48,9 @@ import { GoAlVerticalLayoutTester, GoAVerticalLayout } from '../../layouts/Verti
 
 import { GoAGroupReviewLayoutTester } from '../../layouts/GroupReviewControl';
 import { HelpContentTester } from '../../Additional/HelpContent';
-import {
-  TableGroupLayoutRenderer,
-  TableHelpContentRenderer,
-  TableLayoutRenderer,
-} from '../../layouts/TableLayoutRenderers';
+import { TableGroupLayoutRenderer, TableLayoutRenderer } from '../../layouts/TableLayoutRenderers';
+
+const EmptyHelpContentRenderer = () => null;
 
 export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
@@ -101,7 +99,7 @@ export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   },
   { tester: GoAlVerticalLayoutTester, renderer: TableLayoutRenderer },
   { tester: GoAGroupReviewLayoutTester, renderer: TableGroupLayoutRenderer },
-  { tester: HelpContentTester, renderer: TableHelpContentRenderer },
+  { tester: HelpContentTester, renderer: EmptyHelpContentRenderer },
 ];
 
 export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
@@ -147,7 +145,8 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   },
   { tester: GoAlVerticalLayoutTester, renderer: GoAVerticalLayout },
   { tester: GoAGroupReviewLayoutTester, renderer: TableGroupLayoutRenderer },
-  { tester: HelpContentTester, renderer: TableHelpContentRenderer },
+
+  { tester: HelpContentTester, renderer: EmptyHelpContentRenderer },
 ];
 
 export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
