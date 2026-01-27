@@ -11,6 +11,14 @@ import { CategoryRow } from './categoryRow';
 import { SummaryRow } from './summaryRow';
 import { AdditionalInstructionsRow } from './additionalInstructionsRow';
 
+export interface AdditionalInstructionsConfig {
+  content: string;
+  componentProps?: {
+    type?: GoabCalloutType | string;
+    [key: string]: unknown;
+  };
+}
+
 export interface TocProps {
   categories: CategoriesState;
   onClick: (id: number) => void;
@@ -18,8 +26,7 @@ export interface TocProps {
   subtitle?: string;
   isValid: boolean;
   hideSummary: boolean;
-  additionalInstructions?: string;
-  additionalInstructionsType?: GoabCalloutType;
+  additionalInstructions?: string | AdditionalInstructionsConfig;
 }
 
 function mergeOrphanSections(sections: SectionMap[]): SectionMap[] {
@@ -82,9 +89,18 @@ export const TaskList: React.FC<TocProps> = ({
   isValid,
   hideSummary,
   additionalInstructions,
-  additionalInstructionsType,
 }) => {
   const testid = 'table-of-contents';
+
+  const instructionsConfig = useMemo(() => {
+    if (!additionalInstructions) return null;
+
+    if (typeof additionalInstructions === 'string') {
+      return { content: additionalInstructions, componentProps: {} };
+    }
+
+    return additionalInstructions;
+  }, [additionalInstructions]);
 
   // Merge and expand sections
   const mergedSections = useMemo(() => {
@@ -148,11 +164,11 @@ export const TaskList: React.FC<TocProps> = ({
                 })}
               </React.Fragment>
             ))}
-            {additionalInstructions && (
+            {instructionsConfig && (
               <AdditionalInstructionsRow
                 key="additional-instructions"
-                additionalInstructions={additionalInstructions}
-                calloutType={additionalInstructionsType}
+                additionalInstructions={instructionsConfig.content}
+                componentProps={instructionsConfig.componentProps}
               />
             )}
             {!hideSummary ? (

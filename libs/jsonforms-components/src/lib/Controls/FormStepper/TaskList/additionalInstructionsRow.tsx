@@ -4,20 +4,26 @@ import { GoabCalloutType } from '@abgov/ui-components-common';
 
 interface AdditionalInstructionsRowProps {
   additionalInstructions: string;
-  calloutType?: GoabCalloutType | string;
+  componentProps?: {
+    type?: GoabCalloutType | string;
+    [key: string]: unknown;
+  };
 }
 
 export const AdditionalInstructionsRow: React.FC<AdditionalInstructionsRowProps> = ({
   additionalInstructions,
-  calloutType = 'information',
+  componentProps,
 }) => {
   const validTypes: GoabCalloutType[] = ['information', 'important', 'emergency', 'success', 'event'];
+  const calloutType = componentProps?.type || 'information';
   const type = (validTypes.includes(calloutType as GoabCalloutType) ? calloutType : 'information') as GoabCalloutType;
+
+  const { type: _, ...otherProps } = componentProps || {};
 
   return (
     <tr>
       <td colSpan={2}>
-        <GoabCallout type={type} mt="xl" mb="l">
+        <GoabCallout type={type} mt="xl" mb="l" {...otherProps}>
           {additionalInstructions}
         </GoabCallout>
       </td>

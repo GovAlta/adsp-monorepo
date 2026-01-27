@@ -15,7 +15,9 @@ describe('TaskList Component', () => {
     visible: boolean = true,
     showInTaskList: boolean = true
   ): CategoryState => ({
+    id: 0,
     label,
+    scopes: [],
     isCompleted,
     isValid,
     isEnabled,
@@ -23,6 +25,7 @@ describe('TaskList Component', () => {
     visible,
     uischema: {
       type: 'Category',
+      label,
       elements: [],
       options: { showInTaskList },
     },
@@ -243,12 +246,27 @@ describe('TaskList Component', () => {
     expect(mockOnClick).toHaveBeenCalledWith(1);
   });
 
-  it('should render additional instructions when provided', () => {
+  it('should render additional instructions when provided as string', () => {
     const categories = [createCategory('Category 1')] as unknown as CategoryState[];
     const props = {
       ...baseProps,
       categories,
       additionalInstructions: 'Please review carefully before submitting',
+    };
+
+    const { getByText } = render(<TaskList {...props} />);
+    expect(getByText('Please review carefully before submitting')).toBeInTheDocument();
+  });
+
+  it('should render additional instructions when provided as object', () => {
+    const categories = [createCategory('Category 1')] as unknown as CategoryState[];
+    const props = {
+      ...baseProps,
+      categories,
+      additionalInstructions: {
+        content: 'Please review carefully before submitting',
+        componentProps: { type: 'information' },
+      },
     };
 
     const { getByText } = render(<TaskList {...props} />);
@@ -271,8 +289,10 @@ describe('TaskList Component', () => {
     const props = {
       ...baseProps,
       categories,
-      additionalInstructions: 'Important notice',
-      additionalInstructionsType: 'important' as const,
+      additionalInstructions: {
+        content: 'Important notice',
+        componentProps: { type: 'important' },
+      },
     };
 
     const { getByText } = render(<TaskList {...props} />);
@@ -285,6 +305,7 @@ describe('TaskList Component', () => {
         ...createCategory('Category 1'),
         uischema: {
           type: 'Category',
+          label: 'Category 1',
           elements: [],
           options: { sectionTitle: 'Section One' },
         },
@@ -293,6 +314,7 @@ describe('TaskList Component', () => {
         ...createCategory('Category 2'),
         uischema: {
           type: 'Category',
+          label: 'Category 2',
           elements: [],
           options: { sectionTitle: 'Section Two' },
         },
@@ -315,6 +337,7 @@ describe('TaskList Component', () => {
         ...createCategory('Category 1', false, true, true, true, false),
         uischema: {
           type: 'Category',
+          label: 'Category 1',
           elements: [],
           options: { sectionTitle: 'Hidden Section', showInTaskList: false },
         },

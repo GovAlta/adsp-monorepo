@@ -121,7 +121,6 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
       isValid: completedCount === visibleCats.length,
       hideSummary: props.uischema?.options?.hideSummary,
       additionalInstructions: props.uischema?.options?.additionalInstructions,
-      additionalInstructionsType: props.uischema?.options?.additionalInstructionsType,
     };
     return <TaskList {...tocProps} />;
   }

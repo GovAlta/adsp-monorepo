@@ -16,11 +16,14 @@ describe('AdditionalInstructionsRow Component', () => {
     expect(container.querySelector('[type="information"]')).toBeInTheDocument();
   });
 
-  it('should render additional instructions with information callout type', () => {
+  it('should render additional instructions with information callout type via componentProps', () => {
     const { container } = render(
       <table>
         <tbody>
-          <AdditionalInstructionsRow additionalInstructions="Test instructions" calloutType="information" />
+          <AdditionalInstructionsRow
+            additionalInstructions="Test instructions"
+            componentProps={{ type: 'information' }}
+          />
         </tbody>
       </table>
     );
@@ -32,7 +35,10 @@ describe('AdditionalInstructionsRow Component', () => {
     const { container } = render(
       <table>
         <tbody>
-          <AdditionalInstructionsRow additionalInstructions="Important message" calloutType="important" />
+          <AdditionalInstructionsRow
+            additionalInstructions="Important message"
+            componentProps={{ type: 'important' }}
+          />
         </tbody>
       </table>
     );
@@ -44,7 +50,10 @@ describe('AdditionalInstructionsRow Component', () => {
     const { container } = render(
       <table>
         <tbody>
-          <AdditionalInstructionsRow additionalInstructions="Emergency message" calloutType="emergency" />
+          <AdditionalInstructionsRow
+            additionalInstructions="Emergency message"
+            componentProps={{ type: 'emergency' }}
+          />
         </tbody>
       </table>
     );
@@ -56,7 +65,7 @@ describe('AdditionalInstructionsRow Component', () => {
     const { container } = render(
       <table>
         <tbody>
-          <AdditionalInstructionsRow additionalInstructions="Success message" calloutType="success" />
+          <AdditionalInstructionsRow additionalInstructions="Success message" componentProps={{ type: 'success' }} />
         </tbody>
       </table>
     );
@@ -68,7 +77,7 @@ describe('AdditionalInstructionsRow Component', () => {
     const { container } = render(
       <table>
         <tbody>
-          <AdditionalInstructionsRow additionalInstructions="Event message" calloutType="event" />
+          <AdditionalInstructionsRow additionalInstructions="Event message" componentProps={{ type: 'event' }} />
         </tbody>
       </table>
     );
@@ -80,12 +89,31 @@ describe('AdditionalInstructionsRow Component', () => {
     const { container } = render(
       <table>
         <tbody>
-          <AdditionalInstructionsRow additionalInstructions="Test instructions" calloutType="invalid-type" />
+          <AdditionalInstructionsRow
+            additionalInstructions="Test instructions"
+            componentProps={{ type: 'invalid-type' }}
+          />
         </tbody>
       </table>
     );
     expect(screen.getByText('Test instructions')).toBeInTheDocument();
     expect(container.querySelector('[type="information"]')).toBeInTheDocument();
+  });
+
+  it('should render with long text content', () => {
+    const longText =
+      'This is a very long instruction text that should be displayed properly in the callout component. '.repeat(5);
+    const { container } = render(
+      <table>
+        <tbody>
+          <AdditionalInstructionsRow additionalInstructions={longText} />
+        </tbody>
+      </table>
+    );
+    // Check that the callout contains the text (web components may handle whitespace differently)
+    const callout = container.querySelector('goa-callout');
+    expect(callout).toBeInTheDocument();
+    expect(callout?.textContent).toContain('This is a very long instruction text');
   });
 
   it('should render as table row with correct colspan', () => {
@@ -98,5 +126,22 @@ describe('AdditionalInstructionsRow Component', () => {
     );
     const td = container.querySelector('td');
     expect(td).toHaveAttribute('colSpan', '2');
+  });
+
+  it('should pass additional props from componentProps to GoabCallout', () => {
+    const { container } = render(
+      <table>
+        <tbody>
+          <AdditionalInstructionsRow
+            additionalInstructions="Test instructions"
+            componentProps={{ type: 'information', mt: 'm', mb: 's' }}
+          />
+        </tbody>
+      </table>
+    );
+    const callout = container.querySelector('goa-callout');
+    expect(callout).toBeInTheDocument();
+    expect(callout).toHaveAttribute('mt', 'm');
+    expect(callout).toHaveAttribute('mb', 's');
   });
 });
