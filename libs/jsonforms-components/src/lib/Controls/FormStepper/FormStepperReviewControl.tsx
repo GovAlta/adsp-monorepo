@@ -38,14 +38,21 @@ import { GoAInputBaseTableReviewControl } from '../Inputs/InputBaseTableReviewCo
 import { GoAInputBaseReviewControl } from '../Inputs/InputBaseReviewControl';
 
 import { AddressLookUpTester } from '../AddressLookup/AddressLookupTester';
-import { AddressLoopUpControlTableReview, AddressLookUpControlReview } from '../AddressLookup/AddressLookUpControlReview';
+import {
+  AddressLoopUpControlTableReview,
+  AddressLookUpControlReview,
+} from '../AddressLookup/AddressLookUpControlReview';
 
 import { GoAHorizontalLayoutTester, GoAHorizontalReviewLayout } from '../../layouts/HorizontalLayoutControl';
 import { GoAlVerticalLayoutTester, GoAVerticalLayout } from '../../layouts/VerticalLayoutControl';
 
 import { GoAGroupReviewLayoutTester } from '../../layouts/GroupReviewControl';
 import { HelpContentTester } from '../../Additional/HelpContent';
-import { TableGroupLayoutRenderer, TableHelpContentRenderer, TableLayoutRenderer } from '../../layouts/TableLayoutRenderers';
+import {
+  TableGroupLayoutRenderer,
+  TableHelpContentRenderer,
+  TableLayoutRenderer,
+} from '../../layouts/TableLayoutRenderers';
 
 export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
@@ -158,64 +165,63 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
         const testId = `${categoryLabel}-review-link`;
         return (
           <ReviewItemSection key={categoryIndex}>
-              <ReviewItemHeader>
-                <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
-              </ReviewItemHeader>
+            <ReviewItemHeader>
+              <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
+            </ReviewItemHeader>
 
-              {category.elements
-                //eslint-disable-next-line
-                .filter((field) => {
-                  // [TODO] we need to double check why we cannot hide the elements at the element level
-                  const conditionProps = field.rule?.condition as SchemaBasedCondition;
-                  /* istanbul ignore next */
-                  if (conditionProps && data) {
-                    const canHideControlParts = conditionProps?.scope?.split('/');
-                    const canHideControl = canHideControlParts && canHideControlParts[canHideControlParts?.length - 1];
-                    const isHidden = getProperty(data, canHideControl);
-                    if (!isHidden) {
-                      return field;
-                    }
-                  } else {
+            {category.elements
+              //eslint-disable-next-line
+              .filter((field) => {
+                // [TODO] we need to double check why we cannot hide the elements at the element level
+                const conditionProps = field.rule?.condition as SchemaBasedCondition;
+                /* istanbul ignore next */
+                if (conditionProps && data) {
+                  const canHideControlParts = conditionProps?.scope?.split('/');
+                  const canHideControl = canHideControlParts && canHideControlParts[canHideControlParts?.length - 1];
+                  const isHidden = getProperty(data, canHideControl);
+                  if (!isHidden) {
                     return field;
                   }
-                })
-                .map((e) => {
-                  const layout = e as Layout;
-                  if (
-                    rescopeMaps.some((scope) =>
-                      layout.elements
-                        ?.map((el) => {
-                          const element = el as unknown as Scoped;
-                          return element.scope;
-                        })
-                        .includes(scope)
-                    )
-                  ) {
-                    return layout.elements;
-                  } else {
-                    return e;
-                  }
-                })
-                .flat()
-                .map((element, elementIndex) => {
-                  const stepperElement = { ...element };
-                  stepperElement.options = { ...stepperElement.options, stepId: categoryIndex };
-                  return (
-                    <GoabTable width="100%" key={elementIndex} mb="m">
-                      <tbody>
-                        <JsonFormsDispatch
-                          data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-                          schema={schema}
-                          uischema={stepperElement}
-                          enabled={enabled}
-                          renderers={GoABaseTableReviewRenderers}
-                          cells={cells}
-                        />
-                      </tbody>
-                    </GoabTable>
-                  );
-                })}
-
+                } else {
+                  return field;
+                }
+              })
+              .map((e) => {
+                const layout = e as Layout;
+                if (
+                  rescopeMaps.some((scope) =>
+                    layout.elements
+                      ?.map((el) => {
+                        const element = el as unknown as Scoped;
+                        return element.scope;
+                      })
+                      .includes(scope)
+                  )
+                ) {
+                  return layout.elements;
+                } else {
+                  return e;
+                }
+              })
+              .flat()
+              .map((element, elementIndex) => {
+                const stepperElement = { ...element };
+                stepperElement.options = { ...stepperElement.options, stepId: categoryIndex };
+                return (
+                  <GoabTable width="100%" key={elementIndex} mb="m">
+                    <tbody>
+                      <JsonFormsDispatch
+                        data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+                        schema={schema}
+                        uischema={stepperElement}
+                        enabled={enabled}
+                        renderers={GoABaseTableReviewRenderers}
+                        cells={cells}
+                      />
+                    </tbody>
+                  </GoabTable>
+                );
+              })}
           </ReviewItemSection>
         );
       })}
