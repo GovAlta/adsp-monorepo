@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { GoabTable, GoabText } from '@abgov/react-components';
+import { GoabCalloutType } from '@abgov/ui-components-common';
 import { PageBorder } from '../styled-components';
 import { CategoriesState, CategoryState } from '../context';
 import { ApplicationStatus } from '../ApplicationStatus';
@@ -8,6 +9,15 @@ import { getCategorySections, SectionMap } from './categorySections';
 import { SectionHeaderRow } from './sectionHeaderRow';
 import { CategoryRow } from './categoryRow';
 import { SummaryRow } from './summaryRow';
+import { AdditionalInstructionsRow } from './additionalInstructionsRow';
+
+export interface AdditionalInstructionsConfig {
+  content: string;
+  componentProps?: {
+    type?: GoabCalloutType | string;
+    [key: string]: unknown;
+  };
+}
 
 export interface TocProps {
   categories: CategoriesState;
@@ -16,6 +26,7 @@ export interface TocProps {
   subtitle?: string;
   isValid: boolean;
   hideSummary: boolean;
+  additionalInstructions?: string | AdditionalInstructionsConfig;
 }
 
 function mergeOrphanSections(sections: SectionMap[]): SectionMap[] {
@@ -70,8 +81,26 @@ function updateCompletion(group: CategoryState[], index: number): CategoryState 
   };
 }
 
-export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subtitle, isValid, hideSummary }) => {
+export const TaskList: React.FC<TocProps> = ({
+  categories,
+  onClick,
+  title,
+  subtitle,
+  isValid,
+  hideSummary,
+  additionalInstructions,
+}) => {
   const testid = 'table-of-contents';
+
+  const instructionsConfig = useMemo(() => {
+    if (!additionalInstructions) return null;
+
+    if (typeof additionalInstructions === 'string') {
+      return { content: additionalInstructions, componentProps: {} };
+    }
+
+    return additionalInstructions;
+  }, [additionalInstructions]);
 
   // Merge and expand sections
   const mergedSections = useMemo(() => {
@@ -135,6 +164,13 @@ export const TaskList: React.FC<TocProps> = ({ categories, onClick, title, subti
                 })}
               </React.Fragment>
             ))}
+            {instructionsConfig && (
+              <AdditionalInstructionsRow
+                key="additional-instructions"
+                additionalInstructions={instructionsConfig.content}
+                componentProps={instructionsConfig.componentProps}
+              />
+            )}
             {!hideSummary ? (
               <SummaryRow index={globalIndex} isValid={isValid} onClick={onClick} key="task-list-table-summary" />
             ) : null}
