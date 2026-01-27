@@ -71,7 +71,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
     return timeString ? timeString.substring(0, 8) : '';
   };
   const setTimeString = (dateString, timeString?) => {
-    const dateDate = new Date(dateString);
+    const dateDate = new Date(parseLocalDate(dateString));
     if (timeString) {
       dateDate.setHours(timeString?.split(':')[0]);
       dateDate.setMinutes(timeString?.split(':')[1]);
@@ -79,7 +79,10 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
     }
     return dateDate.toISOString();
   };
-
+  const parseLocalDate = (dateString: string): Date => {
+    const [y, m, d] = dateString.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
   const modalTitle = `${isEdit ? 'Edit' : 'Add'} calendar event`;
   useEffect(() => {
     setCalendarEvent(initCalendarEvent);
@@ -90,6 +93,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
       setStartDate(initCalendarEvent?.start);
       setEndDate(initCalendarEvent?.end);
     }
+    setEndDateError('');
   }, [initCalendarEvent]);
 
   const dispatch = useDispatch();
@@ -242,7 +246,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           <GoabInput
             type="date"
             name="StartDate"
-            value={(calendarEvent?.start ? new Date(calendarEvent.start) : new Date()).toISOString().slice(0, 10)}
+            value={(calendarEvent?.start ? new Date(calendarEvent.start) : new Date()).toLocaleDateString('en-CA')}
             width="100%"
             disabled={readOnlyCalendars.includes(calendarName)}
             testId="calendar-event-modal-start-date-input"
@@ -273,7 +277,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           <GoabInput
             type="date"
             name="endDate"
-            value={(calendarEvent?.end ? new Date(calendarEvent?.end) : new Date()).toISOString().slice(0, 10)}
+            value={(calendarEvent?.end ? new Date(calendarEvent?.end) : new Date()).toLocaleDateString('en-CA')}
             width="100%"
             disabled={readOnlyCalendars.includes(calendarName)}
             testId="calendar-event-modal-end-date-input"
@@ -297,7 +301,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             onChange={(detail: GoabInputOnChangeDetail) => {
               setEndDateError('');
               setEndTime(detail.value);
-              setCalendarEvent({ ...calendarEvent, end: setTimeString(endDate, detail.value) });
+              setCalendarEvent({ ...calendarEvent, end: setTimeString(endDate, detail.value.toLocaleString()) });
             }}
           />
         </GoabFormItem>
