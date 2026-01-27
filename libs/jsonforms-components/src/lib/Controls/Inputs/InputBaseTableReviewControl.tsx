@@ -42,11 +42,8 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
 
   return (
     <tr data-testid={`input-base-table-${label}-row`}>
-      {labelToUpdate && (
-        <PageReviewNameCol>
-          <strong>{labelToUpdate}</strong>
-        </PageReviewNameCol>
-      )}
+      <PageReviewNameCol>{labelToUpdate && <strong>{labelToUpdate}</strong>}</PageReviewNameCol>
+
       <PageReviewValueCol>
         {typeof reviewText === 'string' || typeof reviewText === 'number' ? (
           <div>{reviewText}</div>
