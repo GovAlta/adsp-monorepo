@@ -72,14 +72,14 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "cachetools"
-version = "6.2.3"
+version = "6.2.5"
 description = "Extensible memoizing collections and decorators"
 optional = false
 python-versions = ">=3.9"
 groups = ["main", "dev"]
 files = [
-    {file = "cachetools-6.2.3-py3-none-any.whl", hash = "sha256:3fde34f7033979efb1e79b07ae529c2c40808bdd23b0b731405a48439254fba5"},
-    {file = "cachetools-6.2.3.tar.gz", hash = "sha256:64e0a4ddf275041dd01f5b873efa87c91ea49022b844b8c5d1ad3407c0f42f1f"},
+    {file = "cachetools-6.2.5-py3-none-any.whl", hash = "sha256:db3ae5465e90befb7c74720dd9308d77a09b7cf13433570e07caa0845c30d5fe"},
+    {file = "cachetools-6.2.5.tar.gz", hash = "sha256:6d8bfbba1ba94412fb9d9196c4da7a87e9d4928fffc5e93542965dca4740c77f"},
 ]
 
 [[package]]
@@ -1029,4 +1029,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "2ca84d52fc0c855d5c308da40c050478205fb8b994b1fb48bf5218d3e02fc100"
+content-hash = "ba343c2ecaa4e8b970de996d7d5ca4ec135fb79099b080f8a786e05006051611"
