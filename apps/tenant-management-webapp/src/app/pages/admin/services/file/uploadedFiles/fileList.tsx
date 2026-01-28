@@ -199,8 +199,8 @@ const FileList = (): JSX.Element => {
           </button>
 
           <div className="margin-left">
-            {fileName?.current?.value
-              ? fileName.current.value.split('\\').pop()
+            {selectedFile && (selectedFile as any).name
+              ? (selectedFile as any).name
               : hasUploadingFileCompleted || isUploadingFile
               ? 'Please choose another file'
               : 'No file was chosen'}
@@ -215,7 +215,7 @@ const FileList = (): JSX.Element => {
             width="100%"
             testId="file-type-name-dropdown-1"
             onChange={(detail: GoabDropdownOnChangeDetail) => {
-              setUploadFileType(detail.values.toString());
+              setUploadFileType(detail.value as string);
             }}
           >
             {getFileTypesValues().map((item, key) => (
