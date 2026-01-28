@@ -3,7 +3,7 @@ from xdp_parser.parse_context import ParseContext
 
 
 class FormLayout(FormElement):
-    def __init__(self, type, elements, context: ParseContext):
+    def __init__(self, type: str, elements: list[FormElement], context: ParseContext):
         super().__init__("layout", None, None, context)
         self.type = type
         self.elements = elements

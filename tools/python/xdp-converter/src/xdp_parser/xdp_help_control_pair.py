@@ -28,5 +28,8 @@ class XdpHelpControlPair(XdpLayout):
     def is_control(self) -> bool:
         return self.control_elem.is_control()
 
+    def footprint(self):
+        return self.control.footprint()
+
     def to_form_element(self):
         return super().to_form_element()

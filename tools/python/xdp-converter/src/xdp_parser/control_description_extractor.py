@@ -11,7 +11,7 @@ debug = False
 @dataclass(frozen=True)
 class ControlBox:
     control: XdpElement
-    bbox: Tuple[float, float, float, float]
+    footprint: Tuple[float, float, float, float]
 
 
 class ControlDescriptionExtractor:
@@ -50,11 +50,11 @@ class ControlDescriptionExtractor:
             if not e.is_control():
                 continue
 
-            bb = e.visual_bbox()
+            bb = e.extended_footprint()
             if bb is None:
                 continue
 
-            controls.append(ControlBox(control=e, bbox=bb))
+            controls.append(ControlBox(control=e, footprint=bb))
 
         if not controls:
             return elements[:]  # nothing to do
@@ -75,7 +75,7 @@ class ControlDescriptionExtractor:
                     out.append(e)
                     continue
 
-                e_bb = e.visual_bbox()
+                e_bb = e.extended_footprint()
                 if e_bb is None:
                     out.append(e)
                     continue
@@ -106,7 +106,7 @@ class ControlDescriptionExtractor:
 
     @staticmethod
     def _best_overlap(
-        e_bbox: tuple[float, float, float, float],
+        e_footprint: tuple[float, float, float, float],
         controls: list[ControlBox],
         min_intersection_area: float,
     ):
@@ -114,7 +114,9 @@ class ControlDescriptionExtractor:
         best_area = 0.0
 
         for cb in controls:
-            area = ControlDescriptionExtractor._intersection_area(e_bbox, cb.bbox)
+            area = ControlDescriptionExtractor._intersection_area(
+                e_footprint, cb.footprint
+            )
             if area > best_area:
                 best_area = area
                 best = cb

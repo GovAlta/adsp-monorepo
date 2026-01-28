@@ -34,5 +34,5 @@ class XdpObjectArray(XdpElement):
         print(f"[DEBUG] Object array {self.name} has no valid columns")
         return None
 
-    def iter_descendants_for_bbox(self):
+    def iter_descendants_for_footprint(self):
         return list(self.columns)

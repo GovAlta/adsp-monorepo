@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 from typing import List, Optional, Tuple
+from xdp_parser.row_maker import RowMaker
 from xdp_parser.control_description_extractor import ControlDescriptionExtractor
 from xdp_parser.control_labels import ControlLabels
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
@@ -66,21 +67,14 @@ class XdpGroupingPass:
             subform, grouped_children, self.context.get("parent_map", {})
         )
 
-        # Extract header BEFORE pairing
+        # Extract headers
         resolved_label, header_index = get_subform_header(
             subform, grouped_children, debug
         )
-
-        if debug:
-            print(f"[{subform.get('name')}] label='{resolved_label}'")
-
         if header_index is not None:
             grouped_children = strip_header_element(grouped_children, header_index)
 
         self.control_labels.augment_labels_from_sorted_elements(grouped_children)
-
-        if debug:
-            print_subform_map(subform, grouped_children)
 
         extractor = ControlDescriptionExtractor()
         grouped_children = extractor.extract(grouped_children, self.control_labels)
@@ -88,19 +82,24 @@ class XdpGroupingPass:
         # Pair help icons with controls
         grouped_children = self._consolidate_help_control_pairs(grouped_children)
 
-        # # Transform pseudo radio subforms into radio selectors
+        row_maker = RowMaker()
+        grouped_children = row_maker.consolidate_rows(
+            subform, grouped_children, self.context
+        )
+
+        # Transform pseudo radio subforms into radio selectors
         grouped_children = transform_pseudo_radios_in_subform(
             subform, grouped_children, self.context
         )
 
         self.child_map[id(subform)] = grouped_children
 
-        # 4) Decide grouping using sorted children (header already handled)
-        if self.should_group_subform(subform, grouped_children, resolved_label):
-            group = self._build_group_from_subform(
-                subform, grouped_children, resolved_label
-            )
-            return [group] if group else grouped_children
+        # Decide grouping using sorted children (header already handled)
+        # if self.should_group_subform(subform, grouped_children, resolved_label):
+        #     group = self._build_group_from_subform(
+        #         subform, grouped_children, resolved_label
+        #     )
+        #     return [group] if group else grouped_children
 
         return grouped_children
 
@@ -281,7 +280,7 @@ class XdpGroupingPass:
 
         Strategy:
           1) traversal-based association (help.traversal -> target name)
-          2) bbox-overlap association with prev/next *control* neighbors
+          2) footprint-overlap association with prev/next *control* neighbors
         """
         out: List[XdpElement] = []
         i = 0
@@ -379,7 +378,7 @@ class XdpGroupingPass:
         return None
 
     # ----------------------------
-    # Strategy 2: prev/next bbox overlap with controls
+    # Strategy 2: prev/next footprint overlap with controls
     # ----------------------------
     def _pair_by_proximity(
         self,
@@ -391,7 +390,7 @@ class XdpGroupingPass:
         """
         Returns:
         ("prev", i-1, prev_el) or ("next", i+1, next_el)
-        based on adjacency/proximity (not bbox intersection).
+        based on adjacency/proximity (not footprint intersection).
         """
         prev_el = out[-1] if out else None
         next_el = elements[i + 1] if i + 1 < len(elements) else None
@@ -414,8 +413,8 @@ class XdpGroupingPass:
     def _proximity_score(
         self, help_elem: XdpElement, control_elem: XdpElement
     ) -> float:
-        hb = help_elem.visual_bbox()
-        cb = control_elem.visual_bbox()
+        hb = help_elem.extended_footprint()
+        cb = control_elem.extended_footprint()
         if hb is None or cb is None:
             return 0.0
 

@@ -64,8 +64,7 @@ class XdpElement(ABC):
             return None
         return ref.split("[", 1)[0]
 
-    # Element's bounding box
-    def bbox(self):
+    def footprint(self):
         """(x1, y1, x2, y2) or None if insufficient geometry."""
         if self.x is None or self.y is None or self.w is None or self.h is None:
             return None
@@ -73,56 +72,55 @@ class XdpElement(ABC):
 
     # Center point of the element
     def center(self):
-        b = self.bbox()
+        b = self.footprint()
         if not b:
             return None
         x1, y1, x2, y2 = b
         return ((x1 + x2) / 2.0, (y1 + y2) / 2.0)
 
     # Check if a point is within the bounding box, with tolerance
-    def bbox_contains(self, pt, tol=0.5):
+    def footprint_contains(self, pt, tol=0.5):
         """pt=(cx,cy). tol in mm."""
-        b = self.bbox()
+        b = self.footprint()
         if not b or not pt:
             return False
         x1, y1, x2, y2 = b
         cx, cy = pt
         return (x1 - tol) <= cx <= (x2 + tol) and (y1 - tol) <= cy <= (y2 + tol)
 
-    def iter_descendants_for_bbox(self):
+    def iter_descendants_for_footprint(self):
         # Default: no descendants
         return []
 
-    def visual_bbox(self):
+    def extended_footprint(self):
         """
-        Prefer explicit bbox; otherwise derive bbox from descendants.
-        Returns (x1, y1, x2, y2) or None.
+        Includes the element's footprint plus any 'decorators' such as help icons/text.
         """
-        b = self.bbox()
-        if b:
-            return b
+        fp = self.footprint()
+        if fp:
+            return fp
 
-        kids = list(self.iter_descendants_for_bbox())
+        kids = list(self.iter_descendants_for_footprint())
         if not kids:
             return None
 
-        boxes = []
+        footprints = []
         for k in kids:
-            kb = k.bbox()
+            kb = k.footprint()
             if kb:
-                boxes.append(kb)
+                footprints.append(kb)
 
-        if not boxes:
+        if not footprints:
             return None
 
-        x1 = min(bb[0] for bb in boxes)
-        y1 = min(bb[1] for bb in boxes)
-        x2 = max(bb[2] for bb in boxes)
-        y2 = max(bb[3] for bb in boxes)
+        x1 = min(fp[0] for fp in footprints)
+        y1 = min(fp[1] for fp in footprints)
+        x2 = max(fp[2] for fp in footprints)
+        y2 = max(fp[3] for fp in footprints)
         return (x1, y1, x2, y2)
 
-    def visual_height(self) -> float:
-        vb = self.visual_bbox()
+    def extended_height(self) -> float:
+        vb = self.extended_footprint()
         if not vb:
             return 0.0
         _, y1, _, y2 = vb
@@ -131,15 +129,15 @@ class XdpElement(ABC):
     def effective_height(self) -> float:
         if self.h is not None:
             return float(self.h)
-        return float(self.visual_height())
+        return float(self.extended_height())
 
     def effective_width(self) -> float | None:
         # prefer explicit width if already computed
         if self.w is not None:
             return float(self.w)
 
-        # try visual bbox width (handles descendants)
-        vb = self.visual_bbox()
+        # try extended footprint width (handles descendants)
+        vb = self.extended_footprint()
         if vb:
             x1, _, x2, _ = vb
             return float(x2 - x1)
@@ -244,10 +242,6 @@ def get_caption_text(xdp_element):
             return caption_text
 
     return None
-
-
-from dataclasses import dataclass
-from typing import Optional, Any
 
 
 @dataclass

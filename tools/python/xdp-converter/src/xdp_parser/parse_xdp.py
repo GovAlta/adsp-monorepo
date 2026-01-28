@@ -98,12 +98,6 @@ class XdpParser:
             )
             return control
 
-        # # Pseudo radio subform (checkButton cluster) → radio selector
-        # radio_labels = extract_radio_button_labels(subform)
-        # if radio_labels:
-        #     control = self.factory.handle_radio_subform(subform, self.control_labels)
-        #     return control
-
         children = list(self.find_simple_controls(subform))
         if not children:
             return None
