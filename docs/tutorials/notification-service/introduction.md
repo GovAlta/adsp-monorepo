@@ -34,3 +34,4 @@ Defining events and message templates is an easy, one step, process done through
 - Learn how to [configure notifications](/adsp-monorepo/tutorials/notification-service/notification-types.html)
 - Learn how to [manage subscribers](/adsp-monorepo/tutorials/notification-service/subscribers.html)
 - Learn how to [configure and trigger domain events](/adsp-monorepo/tutorials/notification-service/events.html)
+- Learn how to [add an email attachment to your notification](/adsp-monorepo/tutorials/notification-service/emailAttachment.html)
