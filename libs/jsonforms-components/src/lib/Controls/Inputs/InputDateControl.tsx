@@ -1,29 +1,17 @@
 import { CellProps, WithClassname, ControlProps, isDateControl, RankedTester, rankWith } from '@jsonforms/core';
-import { GoabDatePicker } from '@abgov/react-components';
+import { GoabInput } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { onBlurForDateControl, onChangeForDateControl, onKeyPressForDateControl } from '../../util/inputControlUtils';
 import { callout } from '../../Additional/GoACalloutControl';
 import { standardizeDate } from '../../util/dateUtils';
-import {
-  GoabDatePickerOnChangeDetail,
-  GoabInputOnBlurDetail,
-  GoabInputOnKeyPressDetail,
-} from '@abgov/ui-components-common';
+import { GoabInputOnChangeDetail, GoabInputOnBlurDetail, GoabInputOnKeyPressDetail } from '@abgov/ui-components-common';
+import { useEffect, useRef } from 'react';
 
 export type GoAInputDateProps = CellProps & WithClassname & WithInputProps;
 export const errMalformedDate = (scope: string, type: string): string => {
   return `${type}-date for variable '${scope}' has an incorrect format.`;
-};
-
-const isValidDateFormat = (date: string): boolean => {
-  const standardized = standardizeDate(date);
-  return standardized !== undefined;
-};
-
-const invalidDateFormat = (scope: string, type: string): JSX.Element => {
-  return callout({ message: errMalformedDate(scope, type) });
 };
 
 // eslint-disable-next-line
@@ -51,20 +39,47 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   let minDate = uischema?.options?.componentProps?.min;
   let maxDate = uischema?.options?.componentProps?.max;
 
-  // Only apply if not both are true
+  const todayLocalYmd = (): string => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
   if (allowPastDate && !allowFutureDate) {
-    // Only allow today and past dates
-    const today = new Date();
-    maxDate = today.toISOString().split('T')[0];
+    maxDate = todayLocalYmd();
   } else if (!allowPastDate && allowFutureDate) {
-    // Only allow today and future dates
-    const today = new Date();
-    minDate = today.toISOString().split('T')[0];
+    minDate = todayLocalYmd();
   }
 
+  const ensureGoaDatePointerCursor = (host: Element | null) => {
+    if (!host) return;
+    const sr = (host as HTMLElement).shadowRoot;
+    if (!sr) return;
+
+    if (sr.getElementById('goa-date-cursor-style')) return;
+
+    const style = document.createElement('style');
+    style.id = 'goa-date-cursor-style';
+    style.textContent = `
+    input[type="date"] { cursor: pointer !important; }
+    input[type="date"]:disabled { cursor: not-allowed !important; }
+  `;
+    sr.appendChild(style);
+  };
+  const hostRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const host = hostRef.current ?? document.querySelector('goa-input[type="date"]');
+    host?.shadowRoot?.querySelector('input[type="date"]');
+    ensureGoaDatePointerCursor(host);
+  }, [appliedUiSchemaOptions?.name, id]);
+
   return (
-    <GoabDatePicker
-      type="calendar"
+    <GoabInput
+      type="date"
+      ref={hostRef}
       error={isVisited && errors.length > 0}
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
@@ -72,15 +87,15 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       disabled={!enabled}
       readonly={readOnly}
-      min={minDate && new Date(minDate)}
-      max={maxDate && new Date(maxDate)}
-      onChange={(detail: GoabDatePickerOnChangeDetail) => {
+      min={minDate ? standardizeDate(minDate) || undefined : undefined}
+      max={maxDate ? standardizeDate(maxDate) || undefined : undefined}
+      onChange={(detail: GoabInputOnChangeDetail) => {
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
         onChangeForDateControl({
-          name: detail.name?? 'date',
-          value: detail.valueStr,
+          name: detail.name ?? 'date',
+          value: detail.value,
           controlProps: props as ControlProps,
         });
       }}
