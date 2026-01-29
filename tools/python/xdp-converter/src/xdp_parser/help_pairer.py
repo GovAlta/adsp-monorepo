@@ -1,15 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple, Set
 
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_help_control_pair import XdpHelpControlPair
-from dataclasses import dataclass
-from typing import List, Optional, Tuple
-
-
-debug = True
 
 
 @dataclass(frozen=True)
@@ -22,7 +17,7 @@ class _IndexedCandidate:
 class HelpPairer:
     def __init__(
         self,
-        debug=False,
+        debug: bool = False,
         min_intersection_area: float = 0.5,  # mm^2 (tune)
         max_center_distance_mm: float = 60.0,  # safety clamp (tune)
         require_same_row_overlap_frac: float = 0.30,
@@ -37,8 +32,20 @@ class HelpPairer:
         elements: List["XdpElement"],
         context,
     ) -> List["XdpElement"]:
+        candidates = self._build_candidates(elements)
+        if not candidates:
+            return elements[:]
 
-        # Precompute eligible targets with their *indices* in the list
+        # Pass 1: plan pairings (help_idx -> target_idx)
+        plan = self._plan_pairs(elements, candidates)
+
+        # Pass 2: emit
+        return self._emit_from_plan(elements, plan, context)
+
+    # ---------------- pass 1 ----------------
+    def _build_candidates(
+        self, elements: List["XdpElement"]
+    ) -> list[_IndexedCandidate]:
         candidates: list[_IndexedCandidate] = []
         for idx, e in enumerate(elements):
             if not self._is_pair_target(e):
@@ -47,56 +54,79 @@ class HelpPairer:
             if bb is None:
                 continue
             candidates.append(_IndexedCandidate(idx=idx, element=e, bb=bb))
+        return candidates
 
-        if not candidates:
-            return elements[:]
+    def _plan_pairs(
+        self,
+        elements: List["XdpElement"],
+        candidates: list[_IndexedCandidate],
+    ) -> Dict[int, int]:
+        """
+        Returns mapping: help_idx -> target_idx.
+        Rule: first help icon in element order wins any contested target.
+        """
+        target_taken: Set[int] = set()
+        plan: Dict[int, int] = {}
 
-        consumed_indices: set[int] = set()
-        out: list["XdpElement"] = []
-
-        for i, e in enumerate(elements):
-            if i in consumed_indices:
-                continue
-
+        for help_idx, e in enumerate(elements):
             if not e.is_help_icon():
-                out.append(e)
                 continue
 
             hb = e.extended_footprint()
             if hb is None:
-                out.append(e)
                 continue
 
             best = self._best_overlap_target(hb, candidates)
             if best is None:
-                out.append(e)
                 continue
 
             target_idx, target = best
 
-            # If the target is already consumed (paired by an earlier help icon),
-            # treat this help as unpaired.
-            if target_idx in consumed_indices or target_idx == i:
-                out.append(e)
+            # can't pair to itself; and only one help icon may claim a target
+            if target_idx == help_idx or target_idx in target_taken:
                 continue
 
-            # Consume the target so it doesn't get emitted later
-            consumed_indices.add(target_idx)
-
-            pair = XdpHelpControlPair(e, target, context=context)
-            out.append(pair)
+            plan[help_idx] = target_idx
+            target_taken.add(target_idx)
 
             if self.debug:
                 print(
-                    f"[PAIR:overlap] help={e.get_name()} -> target={target.get_name()}"
+                    f"[PAIR:plan] help={e.get_name()}(idx={help_idx}) -> "
+                    f"target={target.get_name()}(idx={target_idx})"
                 )
+
+        return plan
+
+    # ---------------- pass 2 ----------------
+    def _emit_from_plan(
+        self,
+        elements: List["XdpElement"],
+        plan: Dict[int, int],
+        context,
+    ) -> List["XdpElement"]:
+        paired_targets: Set[int] = set(plan.values())
+        out: list["XdpElement"] = []
+
+        for idx, e in enumerate(elements):
+            # If this is a help icon with a plan, emit the pair (and do NOT emit the icon separately)
+            target_idx = plan.get(idx)
+            if target_idx is not None:
+                target = elements[target_idx]
+                out.append(XdpHelpControlPair(e, target, context=context))
+                continue
+
+            # If this element is a target of some help icon, suppress it
+            if idx in paired_targets:
+                continue
+
+            # Otherwise emit normally
+            out.append(e)
 
         return out
 
     # ---------------- eligibility ----------------
     def _is_pair_target(self, e: "XdpElement") -> bool:
-        # Controls only for now (you can add groups/headers later)
-        return e.is_control()
+        return e.is_control() or e.is_header()
 
     # ---------------- scoring ----------------
     def _best_overlap_target(
@@ -135,7 +165,10 @@ class HelpPairer:
 
             score = area * 1000.0 + (1.0 / (1.0 + dist)) * 10.0 + overlap_frac * 5.0
 
-            if score > best_score:
+            # Optional deterministic tie-break: prefer earlier target index
+            if score > best_score or (
+                score == best_score and best_idx is not None and c.idx < best_idx
+            ):
                 best_score = score
                 best_idx = c.idx
                 best_el = c.element

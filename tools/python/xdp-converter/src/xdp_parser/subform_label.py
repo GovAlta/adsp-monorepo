@@ -25,13 +25,13 @@ def strip_header_element(
     return elements[:header_index] + elements[header_index + 1 :]
 
 
-def get_subform_header(
+def promote_group_headers(
     subform: ET.Element,
     elements: list[XdpElement],
     debug: bool = True,
-) -> tuple[str | None, int | None]:
+):
     if not elements:
-        return None, None
+        return
 
     if debug:
         sub_name = subform.get("name") or "<?>"
@@ -41,14 +41,15 @@ def get_subform_header(
     if not first.is_help_text():
         if debug:
             print("  First element is not help text")
-        return None, None
+        return
 
     text = (getattr(first, "text", None) or "").strip()
     if not text:
         if debug:
             print("  First element has no text")
-        return None, None
+        return
 
     if debug:
+        first.promote_to_header()
         print(f"  Header is '{text}'")
-    return text, 0
+    return

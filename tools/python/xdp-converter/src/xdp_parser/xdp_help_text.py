@@ -9,7 +9,9 @@ class XdpHelpText(XdpElement):
         super().__init__(anchor_element, context=context)
 
     def to_form_element(self):
-        return FormHelpText(self.get_name(), self.full_path, self.text, self.context)
+        return FormHelpText(
+            self.get_name(), self.full_path, self.text, self.is_header(), self.context
+        )
 
     def is_help_text(self):
         return True
@@ -19,3 +21,6 @@ class XdpHelpText(XdpElement):
 
     def help_text(self) -> str:
         return self.text
+
+    def can_promote_to_header(self) -> bool:
+        return True

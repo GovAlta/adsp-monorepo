@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ET
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 from xdp_parser.help_pairer import HelpPairer
 from xdp_parser.row_maker import RowMaker
 from xdp_parser.control_description_extractor import ControlDescriptionExtractor
@@ -7,13 +7,9 @@ from xdp_parser.control_labels import ControlLabels
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.pseudo_radio_transformer import transform_pseudo_radios_in_subform
-from xdp_parser.subform_label import (
-    get_subform_header,
-    strip_header_element,
-)
+from xdp_parser.subform_label import promote_group_headers
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_group import XdpGroup
-from xdp_parser.xdp_help_control_pair import XdpHelpControlPair
 from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_subform_placeholder import XdpSubformPlaceholder
 from xdp_parser.xdp_utils import convert_to_mm
@@ -68,19 +64,17 @@ class XdpGroupingPass:
             subform, grouped_children, self.context.get("parent_map", {})
         )
 
-        # Extract headers
-        resolved_label, header_index = get_subform_header(
-            subform, grouped_children, debug
-        )
-        if header_index is not None:
-            grouped_children = strip_header_element(grouped_children, header_index)
+        # Identify headers
+        promote_group_headers(subform, grouped_children, debug=False)
 
-        self.control_labels.augment_labels_from_sorted_elements(grouped_children)
+        self.control_labels.augment_labels_with_iconic_help(grouped_children)
 
         extractor = ControlDescriptionExtractor()
-        grouped_children = extractor.extract(grouped_children, self.control_labels)
+        grouped_children = extractor.update_control_descriptions(
+            grouped_children, self.control_labels
+        )
 
-        # Pair help icons with controls
+        # Pair help icons
         pairer = HelpPairer(debug=True)
         grouped_children = pairer.consolidate_help_pairs(
             grouped_children,
@@ -99,7 +93,7 @@ class XdpGroupingPass:
 
         self.child_map[id(subform)] = grouped_children
 
-        # Decide grouping using sorted children (header already handled)
+        # Decide grouping using sorted children
         # if self.should_group_subform(subform, grouped_children, resolved_label):
         #     group = self._build_group_from_subform(
         #         subform, grouped_children, resolved_label
@@ -246,25 +240,6 @@ class XdpGroupingPass:
         names = {c.get_name() for c in controls}
         hits = sum(1 for n in names if n in rules)
         return hits >= 2
-
-    def _is_section_header(self, help_elem: XdpHelpText) -> bool:
-        """
-        Does the help text *look* like a meaningful header?
-        """
-
-        text = (help_elem.text or "").strip()
-        if not text:
-            return False
-
-        # Very strong signal: "Section N:"
-        if text.startswith("Section "):
-            return True
-
-        # Header heuristic: short and ends with colon
-        if text.endswith(":") and len(text) <= 60:
-            return True
-
-        return False
 
     def _build_group_from_subform(
         self,

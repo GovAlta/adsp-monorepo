@@ -4,13 +4,13 @@ from dataclasses import dataclass
 from typing import List
 import xml.etree.ElementTree as ET
 
+from xdp_parser.display_text import DisplayText
 from xdp_parser.parsing_helpers import split_label_and_help
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_checkbox import XdpCheckbox
 from xdp_parser.xdp_help_control_pair import XdpHelpControlPair
 from xdp_parser.xdp_pseudo_radio import XdpPseudoRadio
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.xdp_utils import DisplayText
 
 debug = False
 

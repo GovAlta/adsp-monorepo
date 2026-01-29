@@ -7,8 +7,9 @@ from typing import Optional
 from importlib.resources.readers import remove_duplicates
 
 from schema_generator.form_element import FormElement
+from xdp_parser.display_text import DisplayText
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.xdp_utils import DisplayText, compute_full_xdp_path, convert_to_mm
+from xdp_parser.xdp_utils import compute_full_xdp_path, convert_to_mm
 
 
 class XdpElement(ABC):
@@ -19,6 +20,7 @@ class XdpElement(ABC):
         self.parent_map = context.get("parent_map", {}) if context else {}
         self.geometry: XdpGeometry = XdpGeometry.resolve(xdp, self.parent_map)
         self.presence = xdp.get("presence", "").strip().lower()
+        self.is_header_element = False
 
     def get_full_path(self) -> str:
         return compute_full_xdp_path(self.xdp_element, self.parent_map)
@@ -156,6 +158,17 @@ class XdpElement(ABC):
 
     def is_control(self):
         return False  # default
+
+    def is_header(self) -> bool:
+        return self.is_header_element
+
+    # override in subclasses as needed
+    def can_promote_to_header(self) -> bool:
+        return False
+
+    def promote_to_header(self):
+        if self.can_promote_to_header():
+            self.is_header_element = True
 
     def is_actionable_control(e: XdpElement) -> bool:
         if not e.is_control():

@@ -1,18 +1,6 @@
-from dataclasses import dataclass
 import re
 from typing import Any, Dict, List, Optional, Tuple
 import xml.etree.ElementTree as ET
-
-
-@dataclass
-class DisplayText:
-    label: str
-    description: str
-
-
-def strip_namespace(tag: str) -> str:
-    """Remove namespace from XML tag."""
-    return tag.split("}")[-1] if "}" in tag else tag
 
 
 _LABEL_PREFIXES = ["txt", "btn", "chk", "dte", "lbl", "cbo", "rb"]

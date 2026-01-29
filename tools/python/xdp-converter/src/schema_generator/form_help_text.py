@@ -5,19 +5,29 @@ from xdp_parser.parse_context import ParseContext
 
 class FormHelpText(FormElement):
     def __init__(
-        self, name: str, qualified_name: str, help_content, context: ParseContext
+        self,
+        name: str,
+        qualified_name: str,
+        help_content,
+        is_header: bool,
+        context: ParseContext,
     ):
         super().__init__("information", name, qualified_name, context)
         self.can_group_horizontally = False
         self.help = help_content
+        self.is_header = is_header
 
     def build_ui_schema(self):
         if not self.help:
             return None
         ui_schema = {"type": "HelpContent"}
+        header_text = self.help
+        if self.is_header:
+            header_text = f"## {self.help}"
+
         ui_schema["options"] = {
             "markdown": True,
-            "help": self.help,
+            "help": header_text,
         }
         return ui_schema
 
