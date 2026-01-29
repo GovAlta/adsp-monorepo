@@ -1,3 +1,11 @@
+---
+title: Events
+layout: page
+nav_order: 5
+parent: Notification Service
+grand_parent: Tutorials
+---
+
 ### Email attachments
 
 You can include file attachments in notification emails. This allows an email with one or more attachments to be sent automatically when a specific event is triggered. The steps below walk through how to define the required event schema, configure a notification to include attachments, and trigger the event.
