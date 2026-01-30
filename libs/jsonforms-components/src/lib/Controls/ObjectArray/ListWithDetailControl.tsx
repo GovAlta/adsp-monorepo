@@ -639,7 +639,7 @@ const LeftTab = ({
         <RowFlexMenu tabIndex={0}>
           <TabName>{name}</TabName>
           {enabled ? (
-            <Trash role="trash button">
+            <Trash>
               <GoabIconButton
                 disabled={!enabled}
                 icon="trash"

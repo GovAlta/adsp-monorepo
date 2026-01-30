@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { ControlProps } from '@jsonforms/core';
+import { ErrorObject } from 'ajv';
 import { AddressViews } from './AddressViews';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import {
@@ -62,10 +63,10 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
     // We need to return the message of the MATCHED error, but findError above returns boolean (mostly) or message if I refactor.
     // Let's refactor to return the error object or message.
 
-    const findMatchingError = (errors: any[] | undefined): any => {
+    const findMatchingError = (errors: ErrorObject[] | undefined): ErrorObject | undefined => {
       if (!errors) return undefined;
       for (const e of errors) {
-        const rawErrorPath = (e as any).dataPath || (e as any).instancePath || '';
+        const rawErrorPath = (e as ErrorObject & { dataPath?: string }).dataPath || e.instancePath || '';
         const errorPath = normalizePath(rawErrorPath);
         const currentPath = normalizePath(path || '');
         const dotPath = currentPath ? `${currentPath}.${propName}` : propName;

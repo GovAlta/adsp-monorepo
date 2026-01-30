@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { ControlProps } from '@jsonforms/core';
+import { ErrorObject } from 'ajv';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   PageReviewContainer,
@@ -57,12 +58,12 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
       .replace(/^\./, '')
       .replace(/\//g, '.');
 
-  const findMatchingError = (currentErrors: any[] | undefined): string | undefined => {
+  const findMatchingError = (currentErrors: ErrorObject[] | undefined): string | undefined => {
     if (!currentErrors) return undefined;
     const normalizedPropPath = normalizePath(path || '');
 
     for (const e of currentErrors) {
-      const errorPath = normalizePath((e as any).dataPath || (e as any).instancePath || '');
+      const errorPath = normalizePath((e as ErrorObject & { dataPath?: string }).dataPath || e.instancePath || '');
       if (errorPath === normalizedPropPath) {
         return e.message;
       }

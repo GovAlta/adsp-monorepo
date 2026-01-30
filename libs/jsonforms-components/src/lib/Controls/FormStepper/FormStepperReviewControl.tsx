@@ -1,6 +1,6 @@
 import React from 'react';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { Categorization, Layout, SchemaBasedCondition, isVisible, Scoped } from '@jsonforms/core';
+import { Categorization, Layout, SchemaBasedCondition, isVisible, Scoped, UISchemaElement } from '@jsonforms/core';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { Anchor, ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle } from './styled-components';
@@ -164,7 +164,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
     <ReviewItem>
       {categories.map((category, categoryIndex) => {
         const categoryLabel = category.label || category.i18n || 'Unknown Category';
-        const hasVisibleContent = (element: any): boolean => {
+        const hasVisibleContent = (element: UISchemaElement & { elements?: UISchemaElement[] }): boolean => {
           if (!isVisible(element, data, '', ajv, undefined)) {
             return false;
           }
@@ -172,7 +172,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
             return false;
           }
           if (element.elements && Array.isArray(element.elements)) {
-            return element.elements.some((child: any) => hasVisibleContent(child));
+            return element.elements.some((child) => hasVisibleContent(child));
           }
 
           return true;
