@@ -16,7 +16,7 @@ export const AddressLookUpControlReview = (props: AddressViewProps): JSX.Element
 };
 
 export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.Element => {
-  const { data, schema, uischema } = props;
+  const { data, schema, uischema, path } = props;
 
   // eslint-disable-next-line
   const stepId = uischema.options?.stepId;
@@ -48,7 +48,13 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
       <PageReviewNameCol>{label}</PageReviewNameCol>
       <PageReviewNameCol>{value}</PageReviewNameCol>
       <td className="goa-table-width-limit">
-        <GoabButton type="tertiary" size="compact" onClick={() => formStepperCtx?.goToPage(stepId)}>
+        <GoabButton
+          type="tertiary"
+          size="compact"
+          onClick={() => {
+            if (formStepperCtx) formStepperCtx.goToPage(stepId, undefined, path);
+          }}
+        >
           Change
         </GoabButton>
       </td>

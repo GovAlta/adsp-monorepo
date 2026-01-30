@@ -10,6 +10,7 @@ type FullNameControlReviewProps = ControlProps;
 export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.Element => {
   const context = useContext(JsonFormsStepperContext);
   const stepId = props.uischema?.options?.stepId;
+  const { path } = props;
 
   const renderRow = (label: string, value: string, testId: string) => (
     <tr>
@@ -20,7 +21,13 @@ export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.El
         <div data-testid={testId}>{value}</div>
       </PageReviewValueCol>
       <td className="goa-table-width-limit">
-        <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId)}>
+        <GoabButton
+          type="tertiary"
+          size="compact"
+          onClick={() => {
+            if (context) context.goToPage(stepId, undefined, path);
+          }}
+        >
           Change
         </GoabButton>
       </td>
@@ -30,8 +37,7 @@ export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.El
   return (
     <>
       {renderRow('First name', props.data?.firstName, `firstName-control-${props.id}`)}
-      {props.data?.middleName &&
-        renderRow('Middle name', props.data?.middleName, `middleName-control-${props.id}`)}
+      {props.data?.middleName && renderRow('Middle name', props.data?.middleName, `middleName-control-${props.id}`)}
       {renderRow('Last name', props.data?.lastName, `lastName-control-${props.id}`)}
     </>
   );

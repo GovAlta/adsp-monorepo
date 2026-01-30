@@ -8,7 +8,7 @@ import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 type DateOfBirthReviewControlProps = ControlProps;
 
 export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): JSX.Element => {
-  const { data, id, uischema } = props;
+  const { data, id, uischema, path } = props;
   const context = useContext(JsonFormsStepperContext);
   const stepId = uischema?.options?.stepId;
 
@@ -21,7 +21,13 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
         <div data-testid={testId}>{value}</div>
       </PageReviewValueCol>
       <td className="goa-table-width-limit">
-        <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId)}>
+        <GoabButton
+          type="tertiary"
+          size="compact"
+          onClick={() => {
+            if (context) context.goToPage(stepId, undefined, path);
+          }}
+        >
           Change
         </GoabButton>
       </td>
