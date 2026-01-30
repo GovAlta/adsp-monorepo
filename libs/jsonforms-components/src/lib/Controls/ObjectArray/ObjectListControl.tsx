@@ -1,4 +1,5 @@
 import {
+  GoabButton,
   GoabCallout,
   GoabContainer,
   GoabDropdown,
@@ -22,7 +23,8 @@ import { ErrorObject } from 'ajv';
 import isEmpty from 'lodash/isEmpty';
 import merge from 'lodash/merge';
 import range from 'lodash/range';
-import React, { useCallback, useEffect, useReducer, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useReducer, useState } from 'react';
+import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { GoAReviewRenderers } from '../../../index';
 import { capitalizeFirstLetter, isEmptyBoolean, isEmptyNumber, Visible } from '../../util';
 import {
@@ -60,6 +62,7 @@ import {
   ToolBarHeader,
   ListWithDetailsReviewCellDiv,
 } from './styled-components';
+import { PageReviewContainer, ReviewHeader, ReviewLabel } from '../Inputs/style-component';
 import { DataProperty } from './ObjectListControlTypes';
 import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
@@ -125,11 +128,11 @@ const getValidColumnProps = (scopedSchema: JsonSchema) => {
 };
 
 const EmptyList = ({ numColumns, noDataMessage, translations }: EmptyListProps) => (
-  <GoabGrid minChildWidth="30ch">
+  <div style={{ width: '100%', padding: '1rem 0' }}>
     <TextCenter>
       <b>{noDataMessage}</b>
     </TextCenter>
-  </GoabGrid>
+  </div>
 );
 
 const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOfNonEmptyCell): NonEmptyCellProps => {
@@ -191,6 +194,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
       Object.keys(properties).forEach((item) => {
         if (Object.keys(tableKeys).includes(item)) {
           tempTableKeys[item] = tableKeys[item];
+        } else {
+          // If the property is not in the tableKeys (e.g. it was a nested object in the UI schema),
+          // we still need a header for it to maintain alignment.
+          // Use the property title from the schema, or capitalize the property name.
+          tempTableKeys[item] = properties[item].title || capitalizeFirstLetter(item);
         }
       });
     tableKeys = tempTableKeys;
@@ -258,6 +266,14 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
               </thead>
               <tbody>
                 {range(count || 0).map((num, i) => {
+                  // Skip rendering empty rows in review mode
+                  if (
+                    isInReview === true &&
+                    (data === undefined || data[num] === undefined || Object.keys(data[num]).length === 0)
+                  ) {
+                    return null;
+                  }
+
                   const errorRow = errors?.find((error: ErrorObject) =>
                     error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`)
                   ) as { message: string };
@@ -298,7 +314,10 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                 style={{ display: 'block' }}
                               >
                                 {renderCellColumn({
-                                  data: currentData ? String(currentData) : undefined,
+                                  data:
+                                    currentData !== '' && currentData !== null && currentData !== undefined
+                                      ? currentData
+                                      : undefined,
                                   error: error?.message,
                                   isRequired: required?.includes(tableKeys[element]) ?? false,
                                   errors: errors !== undefined ? errors : [],
@@ -435,7 +454,7 @@ const NonEmptyRowComponent = ({
   return (
     <div key={childPath}>
       {enabled ? (
-        <GoabContainer>
+        isInReview ? (
           <div>
             <div>
               {GenerateRows(
@@ -453,7 +472,27 @@ const NonEmptyRowComponent = ({
               )}
             </div>
           </div>
-        </GoabContainer>
+        ) : (
+          <GoabContainer>
+            <div>
+              <div>
+                {GenerateRows(
+                  NonEmptyCell,
+                  schema,
+                  childPath,
+                  enabled,
+                  openDeleteDialog,
+                  handleChange,
+                  cells,
+                  uischema,
+                  isInReview,
+                  count,
+                  data
+                )}
+              </div>
+            </div>
+          </GoabContainer>
+        )
       ) : null}
     </div>
   );
@@ -517,6 +556,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   const [open, setOpen] = useState(false);
   const [rowData, setRowData] = useState<number>(0);
   const [maxItemsError, setMaxItemsError] = useState('');
+  const context = useContext(JsonFormsStepperContext);
 
   const {
     label,
@@ -649,11 +689,12 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   const listTitle = label || uischema.options?.title;
   const isInReview = isStepperReview === true;
   const isListWithDetail = (controlElement.type as string) === 'ListWithDetail';
-  return (
-    <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
-      <ToolBarHeader>
-        {isInReview ? (
-          listTitle ? (
+
+  if (isInReview) {
+    return (
+      <tr>
+        <PageReviewContainer colSpan={3}>
+          {listTitle ? (
             isListWithDetail && additionalProps.required && (data === null || data === undefined) ? (
               <b>
                 <ListWithDetailWarningIconDiv>
@@ -662,33 +703,65 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
                 </ListWithDetailWarningIconDiv>
               </b>
             ) : (
-              <b>
-                {listTitle} <span>{additionalProps.required && '(required)'}</span>
-                {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
-              </b>
+              <ReviewHeader
+                style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center' }}
+              >
+                <ReviewLabel>
+                  {listTitle} <span>{additionalProps.required && '(required)'}</span>
+                  {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
+                </ReviewLabel>
+                {uischema.options?.stepId !== undefined && (
+                  <GoabButton
+                    type="tertiary"
+                    size="compact"
+                    onClick={() => context?.goToPage(uischema.options?.stepId as number)}
+                  >
+                    Change
+                  </GoabButton>
+                )}
+              </ReviewHeader>
             )
-          ) : null
-        ) : (
-          listTitle && (
-            <ObjectArrayTitle>
-              {listTitle} <span>{additionalProps.required && '(required)'}</span>
-              {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
-            </ObjectArrayTitle>
-          )
-        )}
-        {!isInReview && (
-          <ObjectArrayToolBar
-            errors={errors}
-            label={label}
-            addItem={(a, b) => () => addItem(a, b)}
-            numColumns={0}
+          ) : null}
+          <ObjectArrayList
             path={path}
-            uischema={controlElement}
             schema={schema}
-            rootSchema={rootSchema}
+            uischema={uischema}
             enabled={enabled}
+            openDeleteDialog={openDeleteDialog}
+            translations={{}}
+            count={registers.categories[path]?.count || Object.keys(data || []).length}
+            data={data || registers.categories[path]?.data}
+            cells={cells}
+            config={config}
+            isInReview={isInReview}
+            handleChange={handleChangeWithData}
+            {...additionalProps}
           />
+        </PageReviewContainer>
+      </tr>
+    );
+  }
+
+  const content = (
+    <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
+      <ToolBarHeader>
+        {listTitle && (
+          <ObjectArrayTitle>
+            {listTitle} <span>{additionalProps.required && '(required)'}</span>
+            {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
+          </ObjectArrayTitle>
         )}
+        <ObjectArrayToolBar
+          errors={errors}
+          label={label}
+          addItem={(a, b) => () => addItem(a, b)}
+          numColumns={0}
+          path={path}
+          uischema={controlElement}
+          schema={schema}
+          rootSchema={rootSchema}
+          enabled={enabled}
+        />
       </ToolBarHeader>
       <div>
         <ObjectArrayList
@@ -716,4 +789,6 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
       </div>
     </Visible>
   );
+
+  return content;
 };

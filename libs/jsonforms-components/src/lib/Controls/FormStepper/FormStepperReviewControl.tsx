@@ -1,6 +1,6 @@
 import React from 'react';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { Categorization, Layout, SchemaBasedCondition, isVisible, Scoped } from '@jsonforms/core';
+import { Categorization, Layout, SchemaBasedCondition, isVisible, Scoped, UISchemaElement } from '@jsonforms/core';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { Anchor, ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle } from './styled-components';
@@ -31,7 +31,7 @@ import {
   GoABooleanRadioControlTester,
   MultiLineTextControlTester,
 } from '../Inputs';
-import { GoAArrayControlTester } from '../ObjectArray/ObjectArray';
+import { GoAArrayControlTester, GoAArrayControlReviewRenderer } from '../ObjectArray/ObjectArray';
 import { GoAListWithDetailsTester } from '../ObjectArray/listWithDetails';
 
 import { GoAInputBaseTableReviewControl } from '../Inputs/InputBaseTableReviewControl';
@@ -48,6 +48,7 @@ import { GoAlVerticalLayoutTester, GoAVerticalLayout } from '../../layouts/Verti
 
 import { GoAGroupReviewLayoutTester } from '../../layouts/GroupReviewControl';
 import { HelpContentTester } from '../../Additional/HelpContent';
+import { GoACalloutControlTester, CalloutReviewControl } from '../../Additional/GoACalloutControl';
 import { TableGroupLayoutRenderer, TableLayoutRenderer } from '../../layouts/TableLayoutRenderers';
 
 const EmptyHelpContentRenderer = () => null;
@@ -81,11 +82,11 @@ export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   },
   {
     tester: GoAArrayControlTester,
-    renderer: GoAInputBaseTableReviewControl,
+    renderer: GoAArrayControlReviewRenderer,
   },
   {
     tester: GoAListWithDetailsTester,
-    renderer: GoAInputBaseTableReviewControl,
+    renderer: GoAArrayControlReviewRenderer,
   },
   {
     tester: FullNameDobTester,
@@ -100,6 +101,7 @@ export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: GoAlVerticalLayoutTester, renderer: TableLayoutRenderer },
   { tester: GoAGroupReviewLayoutTester, renderer: TableGroupLayoutRenderer },
   { tester: HelpContentTester, renderer: EmptyHelpContentRenderer },
+  { tester: GoACalloutControlTester, renderer: CalloutReviewControl },
 ];
 
 export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
@@ -131,11 +133,11 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   },
   {
     tester: GoAArrayControlTester,
-    renderer: GoAInputBaseTableReviewControl, // Array might still need table or custom grid
+    renderer: GoAArrayControlReviewRenderer, // Array might still need table or custom grid
   },
   {
     tester: GoAListWithDetailsTester,
-    renderer: GoAInputBaseTableReviewControl, // List with details is complex
+    renderer: GoAArrayControlReviewRenderer, // List with details is complex
   },
   { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControlReview) },
 
@@ -147,6 +149,7 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: GoAGroupReviewLayoutTester, renderer: TableGroupLayoutRenderer },
 
   { tester: HelpContentTester, renderer: EmptyHelpContentRenderer },
+  { tester: GoACalloutControlTester, renderer: CalloutReviewControl },
 ];
 
 export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
@@ -161,66 +164,86 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
     <ReviewItem>
       {categories.map((category, categoryIndex) => {
         const categoryLabel = category.label || category.i18n || 'Unknown Category';
-        const testId = `${categoryLabel}-review-link`;
+        const hasVisibleContent = (element: UISchemaElement & { elements?: UISchemaElement[] }): boolean => {
+          if (!isVisible(element, data, '', ajv, undefined)) {
+            return false;
+          }
+          if (element.type === 'HelpContent' || element.type === 'Callout') {
+            return false;
+          }
+          if (element.elements && Array.isArray(element.elements)) {
+            return element.elements.some((child) => hasVisibleContent(child));
+          }
+
+          return true;
+        };
+
+        const elementsToRender = category.elements
+          //eslint-disable-next-line
+          .filter((field) => {
+            if (!hasVisibleContent(field)) {
+              return false;
+            }
+            const conditionProps = field.rule?.condition as SchemaBasedCondition;
+            /* istanbul ignore next */
+            if (conditionProps && data) {
+              const canHideControlParts = conditionProps?.scope?.split('/');
+              const canHideControl = canHideControlParts && canHideControlParts[canHideControlParts?.length - 1];
+              const isHidden = getProperty(data, canHideControl);
+              if (!isHidden) {
+                return field;
+              }
+              return false;
+            }
+            return true;
+          })
+          .map((e) => {
+            const layout = e as Layout;
+            if (
+              rescopeMaps.some((scope) =>
+                layout.elements
+                  ?.map((el) => {
+                    const element = el as unknown as Scoped;
+                    return element.scope;
+                  })
+                  .includes(scope)
+              )
+            ) {
+              return layout.elements;
+            } else {
+              return e;
+            }
+          })
+          .flat();
+
+        if (elementsToRender.length === 0) {
+          return null;
+        }
+
         return (
           <ReviewItemSection key={categoryIndex}>
             <ReviewItemHeader>
               <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
             </ReviewItemHeader>
 
-            {category.elements
-              //eslint-disable-next-line
-              .filter((field) => {
-                // [TODO] we need to double check why we cannot hide the elements at the element level
-                const conditionProps = field.rule?.condition as SchemaBasedCondition;
-                /* istanbul ignore next */
-                if (conditionProps && data) {
-                  const canHideControlParts = conditionProps?.scope?.split('/');
-                  const canHideControl = canHideControlParts && canHideControlParts[canHideControlParts?.length - 1];
-                  const isHidden = getProperty(data, canHideControl);
-                  if (!isHidden) {
-                    return field;
-                  }
-                } else {
-                  return field;
-                }
-              })
-              .map((e) => {
-                const layout = e as Layout;
-                if (
-                  rescopeMaps.some((scope) =>
-                    layout.elements
-                      ?.map((el) => {
-                        const element = el as unknown as Scoped;
-                        return element.scope;
-                      })
-                      .includes(scope)
-                  )
-                ) {
-                  return layout.elements;
-                } else {
-                  return e;
-                }
-              })
-              .flat()
-              .map((element, elementIndex) => {
-                const stepperElement = { ...element };
-                stepperElement.options = { ...stepperElement.options, stepId: categoryIndex };
-                return (
-                  <GoabTable width="100%" key={elementIndex} mb="m">
-                    <tbody>
-                      <JsonFormsDispatch
-                        data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-                        schema={schema}
-                        uischema={stepperElement}
-                        enabled={enabled}
-                        renderers={GoABaseTableReviewRenderers}
-                        cells={cells}
-                      />
-                    </tbody>
-                  </GoabTable>
-                );
-              })}
+            {elementsToRender.map((element, elementIndex) => {
+              const stepperElement = { ...element };
+              stepperElement.options = { ...stepperElement.options, stepId: categoryIndex };
+              return (
+                <GoabTable width="100%" key={elementIndex} mb="m">
+                  <tbody>
+                    <JsonFormsDispatch
+                      data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+                      schema={schema}
+                      uischema={stepperElement}
+                      enabled={enabled}
+                      renderers={GoABaseTableReviewRenderers}
+                      cells={cells}
+                    />
+                  </tbody>
+                </GoabTable>
+              );
+            })}
           </ReviewItemSection>
         );
       })}

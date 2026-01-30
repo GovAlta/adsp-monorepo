@@ -133,7 +133,7 @@ export const getRequiredIfThen = (props: ControlProps) => {
  * @returns error message
  */
 export const checkFieldValidity = (props: ControlProps): string => {
-  const { data, errors: ajvErrors, required, label, uischema, schema } = props;
+  const { data, errors: ajvErrors, required, label, schema } = props;
   const labelToUpdate = label;
   const extraSchema = schema as JsonSchema & extractSchema;
 

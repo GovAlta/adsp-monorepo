@@ -10,5 +10,6 @@ export const VerticalLayout = styled.div`
 export const Visible = styled.div<{
   visible: boolean | undefined;
 }>`
-  display: ${(p) => (p.visible ? 'initial' : 'none')};
+  display: ${(p) => (p.visible ? 'block' : 'none')};
+  width: 100%;
 `;
