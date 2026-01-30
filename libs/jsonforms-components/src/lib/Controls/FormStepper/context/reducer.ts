@@ -9,7 +9,7 @@ export type JsonFormStepperDispatch = Dispatch<StepperAction>;
 export type StepperAction =
   | { type: 'page/next' }
   | { type: 'page/prev' }
-  | { type: 'page/to/index'; payload: { id: number } }
+  | { type: 'page/to/index'; payload: { id: number; controlPath?: string } }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | { type: 'update/category'; payload: { errors?: ErrorObject[]; id: number; ajv: Ajv; schema: any; data: any } }
   | { type: 'validate/form'; payload: { errors?: ErrorObject[] } }
@@ -58,7 +58,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
     }
 
     case 'page/to/index': {
-      const { id } = action.payload;
+      const { id, controlPath } = action.payload;
       const newActive = id;
 
       const newCategories = categories.map((c, idx) => (idx === id ? { ...c, isVisited: true } : c));
@@ -73,6 +73,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
         hasNextButton: !isOnReview,
         hasPrevButton: newActive !== 0,
         maxReachedStep: Math.max(state.maxReachedStep, activeId),
+        controlPathToFocus: controlPath,
       };
     }
 
@@ -80,7 +81,6 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
       const { id, ajv, schema, data } = action.payload;
 
       ajv.validate(schema, data);
-
 
       const newCategories = state.categories.map((cat) => {
         // ✅ compare against cat.id, not the index

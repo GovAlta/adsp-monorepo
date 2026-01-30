@@ -60,7 +60,13 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
       </PageReviewValueCol>
       <td className="goa-table-number-col">
         {stepId !== undefined && (
-          <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId)}>
+          <GoabButton
+            type="tertiary"
+            size="compact"
+            onClick={() => {
+              if (context) context.goToPage(stepId, undefined, path);
+            }}
+          >
             Change
           </GoabButton>
         )}

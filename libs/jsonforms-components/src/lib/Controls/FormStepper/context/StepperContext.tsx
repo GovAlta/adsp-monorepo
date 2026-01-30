@@ -23,7 +23,7 @@ export interface JsonFormsStepperContextProps {
   selectIsActive: (id: number) => boolean;
   selectPath: () => string;
   selectCategory: (id: number) => CategoryState;
-  goToPage: (id: number, updateCategoryId?: number) => void;
+  goToPage: (id: number, updateCategoryId?: number, controlPath?: string) => void;
   goToTableOfContext: () => void;
   toggleShowReviewLink: (id: number) => void;
   validatePage: (id: number) => void;
@@ -64,8 +64,8 @@ const createStepperContextInitData = (
       isVisited: status !== 'NotStarted',
       status,
       uischema: c,
-      isEnabled: isEnabled(c, data, '', ajv, undefined),
-      visible: isVisible(c, data, '', ajv, undefined),
+      isEnabled: isEnabled(c, data, '', ajv),
+      visible: isVisible(c, data, '', ajv),
     };
   });
 
@@ -117,8 +117,8 @@ export const JsonFormsStepperContextProvider = ({
           categories: stepperState.categories?.map((c) => {
             return {
               ...c,
-              visible: c?.uischema && isVisible(c.uischema, data, '', ajv, undefined),
-              isEnabled: c?.uischema && isEnabled(c.uischema, data, '', ajv, undefined),
+              visible: c?.uischema && isVisible(c.uischema, data, '', ajv),
+              isEnabled: c?.uischema && isEnabled(c.uischema, data, '', ajv),
             };
           }),
         };
@@ -137,7 +137,7 @@ export const JsonFormsStepperContextProvider = ({
             cat?.uischema &&
             (cat?.uischema?.options?.showInTaskList || cat?.uischema?.options?.showInTaskList === undefined) &&
             cat?.uischema &&
-            isVisible(cat.uischema, data, '', ajv, undefined)
+            isVisible(cat.uischema, data, '', ajv)
               ? 1
               : 0),
           0
@@ -157,7 +157,7 @@ export const JsonFormsStepperContextProvider = ({
       },
 
       validatePage: doValidatePage,
-      goToPage: (id: number) => {
+      goToPage: (id: number, updateCategoryId?: number, controlPath?: string) => {
         ajv.validate(schema, ctx.core?.data || {});
         // Only update the current category
         if (!stepperState.isOnReview && id < stepperState.categories.length) {
@@ -171,7 +171,10 @@ export const JsonFormsStepperContextProvider = ({
           type: 'validate/form',
           payload: { errors: ctx?.core?.errors },
         });
-        stepperDispatch({ type: 'page/to/index', payload: { id } });
+        stepperDispatch({
+          type: 'page/to/index',
+          payload: { id, controlPath } as { id: number; controlPath?: string },
+        });
       },
       toggleShowReviewLink: (id: number) => {
         stepperDispatch({

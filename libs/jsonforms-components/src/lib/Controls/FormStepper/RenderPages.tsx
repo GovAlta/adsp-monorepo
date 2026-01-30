@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { GoabButton, GoabButtonGroup, GoabModal, GoabGrid } from '@abgov/react-components';
 import { Visible } from '../../util';
 import { PageBorder, PageRenderPadding } from './styled-components';
@@ -21,9 +21,8 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const { goToPage, toggleShowReviewLink, goToTableOfContext, validatePage } =
     formStepperCtx as JsonFormsStepperContextProps;
-  const { categories, isOnReview, isValid, activeId } = (
-    formStepperCtx as JsonFormsStepperContextProps
-  ).selectStepperState();
+  const stepperState = (formStepperCtx as JsonFormsStepperContextProps).selectStepperState();
+  const { categories, isOnReview, isValid, activeId, controlPathToFocus } = stepperState;
 
   const hideSubmit = props.categoryProps.uischema.options?.hideSubmit ?? false;
   const toAppOverviewLabel = props.categoryProps.uischema.options?.toAppOverviewLabel ?? 'Back to application overview';
@@ -37,6 +36,45 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
 
   const [isOpen, setIsOpen] = useState(false);
   const topElementRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (controlPathToFocus && !isOnReview) {
+      const timeoutId = setTimeout(() => {
+        const formItem = document.querySelector(`goa-form-item[testid="${controlPathToFocus}"]`);
+
+        if (formItem) {
+          formItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+          const inputElement =
+            formItem.querySelector('goa-input') ||
+            formItem.querySelector('goa-textarea') ||
+            formItem.querySelector('goa-dropdown') ||
+            formItem.querySelector('goa-radio-group') ||
+            formItem.querySelector('goa-checkbox-group') ||
+            formItem.querySelector('goa-checkbox') ||
+            formItem.querySelector('input') ||
+            formItem.querySelector('textarea') ||
+            formItem.querySelector('select');
+
+          if (inputElement) {
+            if (inputElement.shadowRoot) {
+              const shadowInput =
+                inputElement.shadowRoot.querySelector('input') ||
+                inputElement.shadowRoot.querySelector('textarea') ||
+                inputElement.shadowRoot.querySelector('select');
+              if (shadowInput) {
+                (shadowInput as HTMLElement).focus();
+              }
+            } else {
+              (inputElement as HTMLElement).focus();
+            }
+          }
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [controlPathToFocus, isOnReview, activeId]);
 
   const handleSubmit = () => {
     if (submitForm) {
