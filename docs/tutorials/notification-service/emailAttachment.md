@@ -1,5 +1,5 @@
 ---
-title: Events
+title: Email attachments
 layout: page
 nav_order: 5
 parent: Notification Service
