@@ -1,64 +1,34 @@
-import { CellProps, WithClassname, ControlProps, StatePropsOfControl } from '@jsonforms/core';
-import { WithInputProps } from './type';
-import { GoAInputBaseControl } from './InputBaseControl';
+import React, { useContext } from 'react';
+import type { ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoabIcon } from '@abgov/react-components';
-import { RequiredTextLabel, WarningIconDiv } from './style-component';
-import { getLastSegmentFromPointer, to12HourFormat, UTCToFullLocalTime } from '../../util';
+import {
+  PageReviewContainer,
+  ReviewHeader,
+  ReviewLabel,
+  ReviewValue,
+  WarningIconDiv,
+  RequiredTextLabel,
+} from './style-component';
+import { convertToSentenceCase, getLastSegmentFromPointer } from '../../util';
+import { getLabelText } from '../../util/stringUtils';
+import { GoabButton, GoabIcon } from '@abgov/react-components';
 
-export type WithBaseInputReviewProps = CellProps & WithClassname & WithInputProps & StatePropsOfControl;
+import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
 
-const warningIcon = (errorMessage: string) => {
-  return (
-    <WarningIconDiv>
-      <GoabIcon type="warning" size="small" theme="filled" mt="2xs" ariaLabel="warning"></GoabIcon>
-      {errorMessage}
-    </WarningIconDiv>
-  );
-};
-
-export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JSX.Element => {
-  // eslint-disable-next-line
-  const { data, id, uischema, schema, required, label } = props;
+export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
+  const { data, uischema, label, schema, path, errors, enabled, cells, required } = props;
+  const context = useContext(JsonFormsStepperContext);
+  const jsonForms = useJsonForms();
+  let labelToUpdate: string = uischema.options?.reviewLabel
+    ? (uischema.options.reviewLabel as string)
+    : convertToSentenceCase(getLabelText(uischema.scope, label || ''));
+  if (labelToUpdate === '') {
+    const scopeName = uischema.scope ? getLastSegmentFromPointer(uischema.scope) : '';
+    labelToUpdate = convertToSentenceCase(scopeName);
+  }
   let reviewText = data;
   const isBoolean = typeof data === 'boolean';
-  const isTime = schema?.type === 'string' && schema?.format === 'time';
-  const isDateTime = schema?.type === 'string' && schema?.format === 'date-time';
-
-  const getRequiredLabelText = () => {
-    let label = '';
-    if (uischema?.options?.text) {
-      label = uischema?.options?.text;
-    } else if (schema?.title) {
-      label = schema?.title;
-    } else if (schema?.description) {
-      label = schema?.description;
-    } else if (uischema?.label) {
-      label = (uischema?.label as string) || '';
-    }
-    return `${label} ${required ? 'is required' : ''}`;
-  };
-
-  const renderRequiredLabel = () => {
-    if (label !== '' && uischema.options?.text !== '') return null;
-
-    return data !== undefined && schema.type === 'boolean' && required ? (
-      <RequiredTextLabel>{` (required)`}</RequiredTextLabel>
-    ) : null;
-  };
-
-  const requiredText = getRequiredLabelText();
-
-  const renderWarningMessage = () => {
-    if (uischema.options?.radio) return null;
-
-    if (schema.type === 'boolean' && required && (data === undefined || data === false)) {
-      return warningIcon(requiredText.trim());
-    }
-
-    return null;
-  };
-
   if (isBoolean) {
     let checkboxLabel = '';
 
@@ -72,54 +42,92 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
     if (uischema.options?.radio === true) {
       reviewText = data ? `Yes` : `No`;
     } else {
-      reviewText = data ? `Yes (${checkboxLabel})` : `No (${checkboxLabel})`;
+      if (label !== '' || typeof label === 'boolean') {
+        reviewText = data ? `Yes` : `No`;
+      } else {
+        reviewText = data ? `Yes (${checkboxLabel})` : `No (${checkboxLabel})`;
+      }
     }
   }
 
-  if (isTime) {
-    reviewText = reviewText && to12HourFormat(reviewText);
-  }
+  // Helper to extract errors manually from global state, bypassing "touched" filter
+  const normalizePath = (p: string) =>
+    p
+      .replace(/\[(\d+)\]/g, '.$1')
+      .replace(/^\./, '')
+      .replace(/\//g, '.');
 
-  if (isDateTime) {
-    reviewText = reviewText && UTCToFullLocalTime(reviewText);
-  }
+  const findMatchingError = (currentErrors: any[] | undefined): string | undefined => {
+    if (!currentErrors) return undefined;
+    const normalizedPropPath = normalizePath(path || '');
 
-  if (Array.isArray(data) && data.length > 0) {
-    reviewText = (
-      <ul>
-        {data.map((checkbox: string, index: number) => {
-          let checkboxLabel = '';
-
-          // Use explicit text if provided, otherwise fall back to property name from scope
-          if (uischema?.options?.text?.trim()) {
-            checkboxLabel = uischema.options.text.trim();
-          } else if (uischema.scope && uischema.scope.startsWith('#/')) {
-            const fallbackLabel = getLastSegmentFromPointer(uischema.scope);
-            // Capitalize first letter only when falling back to property name from scope
-            checkboxLabel = fallbackLabel.charAt(0).toUpperCase() + fallbackLabel.slice(1);
+    for (const e of currentErrors) {
+      const errorPath = normalizePath((e as any).dataPath || (e as any).instancePath || '');
+      if (errorPath === normalizedPropPath) {
+        return e.message;
+      }
+      if (e.keyword === 'required') {
+        const missing = e.params?.missingProperty;
+        if (missing) {
+          const missingPath = errorPath ? `${errorPath}.${missing}` : missing;
+          if (missingPath === normalizedPropPath) {
+            return e.message;
           }
-
-          return <li key={index}>{checkbox.trim() || checkboxLabel}</li>;
-        })}
-      </ul>
-    );
+        }
+      }
+      if (e.keyword === 'errorMessage' && e.params?.errors) {
+        const nested = findMatchingError(e.params.errors);
+        if (nested) return e.message;
+      }
+    }
+    return undefined;
+  };
+  let activeError = findMatchingError(jsonForms.core?.errors);
+  if (required && (data === undefined || data === null || data === '') && !activeError) {
+    activeError = `${labelToUpdate} is required`;
+  } else if (activeError?.includes('is a required property') || activeError?.includes('must have required property')) {
+    activeError = `${labelToUpdate} is required`;
   }
+
+  // eslint-disable-next-line
+  const stepId = uischema.options?.stepId;
 
   return (
-    <div style={{ fontWeight: '400', textWrap: 'wrap', wordBreak: 'break-word' }} data-testid={`review-control-${id}`}>
-      {reviewText}
-      {renderRequiredLabel()}
-      {renderWarningMessage()}
-    </div>
+    <tr data-testid={`input-base-table-${label}-row`}>
+      <PageReviewContainer colSpan={3}>
+        <ReviewHeader>
+          <ReviewLabel>
+            {labelToUpdate}
+            {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
+          </ReviewLabel>
+          {stepId !== undefined && (
+            <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId)}>
+              Change
+            </GoabButton>
+          )}
+        </ReviewHeader>
+        <ReviewValue>
+          {typeof reviewText === 'string' || typeof reviewText === 'number' ? (
+            <div data-testid={`review-value-${label}`}>{reviewText}</div>
+          ) : (
+            <JsonFormsDispatch
+              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+              schema={schema}
+              uischema={uischema}
+              enabled={enabled}
+              renderers={jsonForms.renderers}
+              cells={cells}
+            />
+          )}
+          {activeError && (
+            <WarningIconDiv>
+              <GoabIcon type="warning" size="small" />
+              {activeError}
+            </WarningIconDiv>
+          )}
+        </ReviewValue>
+      </PageReviewContainer>
+    </tr>
   );
 };
-export const GoInputBaseReview = (props: ControlProps) => (
-  <GoAInputBaseControl
-    {...props}
-    input={GoABaseInputReviewComponent}
-    isStepperReview={true}
-    skipInitialValidation={true}
-  />
-);
-
-export const GoAInputBaseReviewControl = withJsonFormsControlProps(GoInputBaseReview);
+export const GoAInputBaseTableReviewControl = withJsonFormsControlProps(GoAInputBaseTableReview);

@@ -106,9 +106,10 @@ export const renderCellColumn = ({
   };
 
   if ((data === undefined && isRequired) || (error !== '' && error !== undefined)) {
-    return renderWarningCell(data);
+    const message = error || (isRequired && data === undefined ? 'Required' : data);
+    return renderWarningCell(message);
   } else if (data !== undefined && isRequired && error) {
-    return renderWarningCell(data);
+    return renderWarningCell(error);
   }
 
   const path = `/${rowPath}/${index}/${element}/${index === 0 ? index : index - 1}`;
@@ -121,6 +122,14 @@ export const renderCellColumn = ({
     const result = Object.keys(data);
 
     if (!isRequired && nestedErrors.length === 0) {
+      if (
+        'year' in (data as Record<string, unknown>) &&
+        'month' in (data as Record<string, unknown>) &&
+        'day' in (data as Record<string, unknown>)
+      ) {
+        const dateObj = data as { year: number; month: number; day: number };
+        return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
+      }
       return <pre>{JSON.stringify(data, null, 2)}</pre>;
     } else if (result.length === 0) {
       return renderWarningCell();
