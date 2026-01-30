@@ -1,0 +1,183 @@
+components:
+  schemas:
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+    MessageContent:
+      oneOf:
+        - type: string
+        - type: array
+          items:
+            oneOf:
+              - type: string
+              - type: object
+                properties:
+                  urn:
+                    type: string
+    Message:
+      type: object
+      properties:
+        hash:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        message:
+          $ref: "#/components/schemas/MessageContent"
+        room:
+          type: string
+        from:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+
+/chat/v1/rooms:
+  get:
+    tags:
+      - Chat
+    description: Gets available rooms.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Room"
+/chat/v1/rooms/{roomId}:
+  get:
+    tags:
+      - Chat
+    description: Get information about a room.
+    parameters:
+      - name: roomId
+        description: ID of the room to get information for.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Room"
+  put:
+    tags:
+      - Chat
+    description: Creates or updates a room.
+    parameters:
+      - name: roomId
+        description: ID of the room to create or update.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Room"
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Room"
+  delete:
+    tags:
+      - Chat
+    description: Deletes a room.
+    parameters:
+      - name: roomId
+        description: ID of the room to delete.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+
+/chat/v1/rooms/{roomId}/messages:
+  get:
+    tags:
+      - Chat
+    description: Gets messages in a room.
+    parameters:
+      - name: roomId
+        description: ID of the room to get messages for.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Message"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number
+  post:
+    tags:
+      - Chat
+    description: Sends a message to a room.
+    parameters:
+      - name: roomId
+        description: ID of the room to send message to.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                $ref: "#/components/schemas/MessageContent"
+            required:
+              - message
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Message"

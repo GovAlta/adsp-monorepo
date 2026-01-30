@@ -1,5 +1,5 @@
 import { standardV1JsonSchema, commonV1JsonSchema } from '@abgov/data-exchange-standard';
-import { createTool } from '@mastra/core';
+import { createTool } from '@mastra/core/tools';
 import * as z from 'zod';
 
 export async function createSchemaTools() {
@@ -16,8 +16,8 @@ export async function createSchemaTools() {
     outputSchema: z.object({
       jsonSchema: z.object({}),
     }),
-    execute: async ({ context }) => {
-      return { jsonSchema: schemas[context.url] };
+    execute: async (input) => {
+      return { jsonSchema: schemas[input.url] };
     },
   });
   return { schemaDefinitionTool };

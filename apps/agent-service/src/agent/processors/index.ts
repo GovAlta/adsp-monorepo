@@ -1,14 +1,15 @@
+import { ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { type InputProcessor, PromptInjectionDetector } from '@mastra/core/processors';
-import { environment } from '../../environments/environment';
-import { RuntimeContext } from '@mastra/core/runtime-context';
+import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
+import { environment } from '../../environments/environment';
 import { BrokerInputProcessor } from '../types';
 import { FileServiceDownloadProcessor } from './file';
-import { ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+
 
 interface InputProcessorProps {
   logger: Logger;
-  runtimeContext: RuntimeContext<Record<string, unknown>>;
+  requestContext: RequestContext<Record<string, unknown>>;
 }
 
 export function createInputProcessors(_prop: InputProcessorProps): InputProcessor[] {

@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: chat
+        component: app
+      name: chat-app
+    data:
+      configuration: |-
+        {
+          "production": true,
+          "directory": {
+            "url": "https://directory-service.adsp-dev.gov.ab.ca"
+          },
+          "access": {
+            "url": "https://access.adsp-dev.gov.ab.ca",
+            "realm": "",
+            "client_id": "urn:ads:demo:chat-app"
+          }
+        }

@@ -1,8 +1,9 @@
 import { AdspId, adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
-import { createTool } from '@mastra/core';
+import { createTool } from '@mastra/core/tools';
 import axios from 'axios';
 import type { Logger } from 'winston';
 import z from 'zod';
+import { AdspRequestContext } from '../types';
 
 interface FormConfigurationToolsProps {
   directory: ServiceDirectory;
@@ -24,9 +25,9 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       applicantRoles: z.array(z.string()),
       assessorRoles: z.array(z.string()),
     }),
-    execute: async ({ runtimeContext }) => {
-      const tenantId = runtimeContext.get('tenantId') as AdspId;
-      const formDefinitionId = runtimeContext.get('formDefinitionId') as string;
+    execute: async (_, { requestContext }: { requestContext: AdspRequestContext<{ formDefinitionId: string }> }) => {
+      const tenantId = requestContext.get('tenantId') as AdspId;
+      const formDefinitionId = requestContext.get('formDefinitionId') as string;
 
       const formDefinitionUrl = new URL(
         `v2/configuration/form-service/${formDefinitionId}/latest`,
@@ -64,11 +65,11 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       dataSchema: z.object({}),
       uiSchema: z.object({}),
     }),
-    execute: async ({ context, runtimeContext }) => {
-      const { formDefinitionName, dataSchema, uiSchema, anonymousApply, applicantRoles, assessorRoles } = context;
+    execute: async (inputData, { requestContext }: { requestContext: AdspRequestContext<{ formDefinitionId: string }> }) => {
+      const { formDefinitionName, dataSchema, uiSchema, anonymousApply, applicantRoles, assessorRoles } = inputData;
 
-      const tenantId = runtimeContext.get('tenantId') as AdspId;
-      const formDefinitionId = runtimeContext.get('formDefinitionId') as string;
+      const tenantId = requestContext.get('tenantId') as AdspId;
+      const formDefinitionId = requestContext.get('formDefinitionId') as string;
       const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
       const formDefinitionUrl = new URL(`v2/configuration/form-service/${formDefinitionId}`, configurationServiceUrl);
 
