@@ -15,13 +15,7 @@
         "outputPath": "dist/apps/chat-service",
         "main": "samples/chat-service/src/main.ts",
         "tsConfig": "samples/chat-service/tsconfig.app.json",
-        "assets": [
-          {
-            "glob": "Dockerfile",
-            "input": "samples/chat-service",
-            "output": "./"
-          }
-        ],
+        "assets": [],
         "webpackConfig": "samples/chat-service/webpack.config.js",
         "generatePackageJson": true
       },
