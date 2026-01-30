@@ -59,7 +59,8 @@ describe('input date controls', () => {
   describe('date input control tests', () => {
     it('can create base control', () => {
       const props = { ...staticProps };
-      const baseControl = render(GoADateInput(props));
+      // eslint-disable-next-line
+      const baseControl = render(<GoADateInput {...(props as any)} />);
       expect(baseControl).toBeDefined();
     });
 
@@ -81,7 +82,7 @@ describe('input date controls', () => {
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const myDateId = baseElement.querySelector("goa-date-picker[testId='myDateId-input']");
+      const myDateId = baseElement.querySelector("goa-input[testId='myDateId-input']");
       expect(myDateId.getAttribute('error')).toBe('true');
     });
 
@@ -92,7 +93,7 @@ describe('input date controls', () => {
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const myDateId = baseElement.querySelector("goa-date-picker[testId='-input']");
+      const myDateId = baseElement.querySelector("goa-input[testId='-input']");
       expect(myDateId.getAttribute('name')).toBe('mytestInput-input');
     });
 
@@ -107,7 +108,7 @@ describe('input date controls', () => {
         </JsonFormsContext.Provider>
       );
 
-      const myDateId = baseElement.querySelector("goa-date-picker[testId='myDateId-input']");
+      const myDateId = baseElement.querySelector("goa-input[testId='myDateId-input']");
 
       const blurred = fireEvent.blur(myDateId);
 
@@ -132,7 +133,7 @@ describe('input date controls', () => {
         </JsonFormsContext.Provider>
       );
       //todo: there is issue to fire event when change the input date value, will discuss with design team.
-      const input = baseElement.querySelector("goa-date-picker[testId='myDateId-input']");
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
       input.setAttribute('value', '01/01/2025');
       fireEvent(
         input,
@@ -153,7 +154,7 @@ describe('input date controls', () => {
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = baseElement.querySelector("goa-date-picker[testId='myDateId-input']");
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
       fireEvent(input, new CustomEvent('_keyPress', { detail: { name: '1', value: '1', key: '1' } }));
 
       fireEvent.change(
@@ -183,7 +184,7 @@ describe('input date controls', () => {
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = baseElement.querySelector("goa-date-picker[testId='myDateId-input']");
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
       const blurred = fireEvent.blur(input);
 
       expect(blurred).toBe(true);
@@ -197,7 +198,7 @@ describe('input date controls', () => {
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = baseElement.querySelector("goa-date-picker[testId='myDateId-input']");
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
       input?.setAttribute('value', '01/01/2025');
       expect(input.getAttribute('value')).toBe('01/01/2025');
     });
@@ -209,7 +210,7 @@ describe('input date controls', () => {
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = baseElement.querySelector("goa-date-picker[testId='myDateId-input']");
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
 
       const mockBlurHandler = jest.fn();
       input.addEventListener('blur', mockBlurHandler);
