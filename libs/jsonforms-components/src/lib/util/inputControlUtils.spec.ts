@@ -93,7 +93,6 @@ describe('onChangeForNumericControl', () => {
     });
 
     it('should call handleChange with null when value is null', () => {
-        // @ts-ignore
         onChangeForNumericControl({
             value: null,
             controlProps: baseControlProps as ControlProps
