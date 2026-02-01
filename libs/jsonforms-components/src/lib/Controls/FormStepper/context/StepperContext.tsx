@@ -36,10 +36,9 @@ const createStepperContextInitData = (
 ): StepperContextDataType => {
   const { uischema, data, schema, ajv, t, path } = props;
   const categorization = uischema as Categorization;
-
+  const filteredErrors = ajv.errors && ajv.errors.filter((error) => error?.data != null);
   // run validation once, capture errors
   const valid = ajv.validate(schema, data || {});
-  const schemaErrors = ajv.errors ?? [];
 
   const isPage = uischema?.options?.variant === 'pages';
   const isCacheStatus = uischema.options?.cacheStatus;
@@ -51,7 +50,7 @@ const createStepperContextInitData = (
     const status = getStepStatus({
       scopes,
       data,
-      errors: ajv.errors ?? [],
+      errors: filteredErrors ?? [],
       schema,
     });
 
