@@ -9,7 +9,7 @@ export type JsonFormStepperDispatch = Dispatch<StepperAction>;
 export type StepperAction =
   | { type: 'page/next' }
   | { type: 'page/prev' }
-  | { type: 'page/to/index'; payload: { id: number } }
+  | { type: 'page/to/index'; payload: { id: number; targetScope?: string } }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | { type: 'update/category'; payload: { errors?: ErrorObject[]; id: number; ajv: Ajv; schema: any; data: any } }
   | { type: 'validate/form'; payload: { errors?: ErrorObject[] } }
@@ -39,6 +39,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
         isOnReview,
         hasNextButton: !isOnReview,
         hasPrevButton: newActive !== 0,
+        targetScope: undefined,
       };
     }
 
@@ -54,11 +55,12 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
         isOnReview: false,
         hasNextButton: true,
         hasPrevButton: newActive !== 0,
+        targetScope: undefined,
       };
     }
 
     case 'page/to/index': {
-      const { id } = action.payload;
+      const { id, targetScope } = action.payload;
       const newActive = id;
 
       const newCategories = categories.map((c, idx) => (idx === id ? { ...c, isVisited: true } : c));
@@ -73,6 +75,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
         hasNextButton: !isOnReview,
         hasPrevButton: newActive !== 0,
         maxReachedStep: Math.max(state.maxReachedStep, activeId),
+        targetScope,
       };
     }
 

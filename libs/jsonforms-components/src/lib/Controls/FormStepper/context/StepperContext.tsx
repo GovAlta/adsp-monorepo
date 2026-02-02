@@ -23,7 +23,7 @@ export interface JsonFormsStepperContextProps {
   selectIsActive: (id: number) => boolean;
   selectPath: () => string;
   selectCategory: (id: number) => CategoryState;
-  goToPage: (id: number, updateCategoryId?: number) => void;
+  goToPage: (id: number, targetScope?: string) => void;
   goToTableOfContext: () => void;
   toggleShowReviewLink: (id: number) => void;
   validatePage: (id: number) => void;
@@ -156,7 +156,7 @@ export const JsonFormsStepperContextProvider = ({
       },
 
       validatePage: doValidatePage,
-      goToPage: (id: number) => {
+      goToPage: (id: number, targetScope?: string) => {
         ajv.validate(schema, ctx.core?.data || {});
         // Only update the current category
         if (!stepperState.isOnReview && id < stepperState.categories.length) {
@@ -170,7 +170,7 @@ export const JsonFormsStepperContextProvider = ({
           type: 'validate/form',
           payload: { errors: ctx?.core?.errors },
         });
-        stepperDispatch({ type: 'page/to/index', payload: { id } });
+        stepperDispatch({ type: 'page/to/index', payload: { id, targetScope } });
       },
       toggleShowReviewLink: (id: number) => {
         stepperDispatch({

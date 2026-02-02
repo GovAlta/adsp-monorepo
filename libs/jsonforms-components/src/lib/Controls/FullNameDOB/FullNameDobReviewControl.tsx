@@ -21,7 +21,7 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
         <div data-testid={testId}>{value}</div>
       </PageReviewValueCol>
       <td className="goa-table-width-limit">
-        <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId)}>
+        <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId, uischema.scope)}>
           Change
         </GoabButton>
       </td>
