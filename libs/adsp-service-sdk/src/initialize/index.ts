@@ -16,9 +16,10 @@ type Options = Omit<PlatformOptions, 'realm'>;
 export async function initializePlatform(
   options: Options,
   logOptions: Logger | LogOptions,
-  services?: Partial<PlatformServices>
+  services?: Partial<PlatformServices>,
 ): Promise<PlatformCapabilities> {
   return await baseInitialize({ ...options, realm: 'core' }, logOptions, services);
 }
 
 export { initializeService } from './service';
+export { PlatformCapabilities } from './types';

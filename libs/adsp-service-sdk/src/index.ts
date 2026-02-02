@@ -31,4 +31,4 @@ export type { ValueDefinition } from './value';
 export type { ServiceRegistration, ServiceRole } from './registration';
 export { benchmark, startBenchmark, ServiceMetricsValueDefinition } from './metrics';
 export { getContextTrace, instrumentAxios } from './trace';
-export { initializePlatform, initializeService } from './initialize';
+export { initializePlatform, initializeService, PlatformCapabilities } from './initialize';
