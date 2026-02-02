@@ -64,8 +64,8 @@ const createStepperContextInitData = (
       isVisited: status !== 'NotStarted',
       status,
       uischema: c,
-      isEnabled: isEnabled(c, data, '', ajv),
-      visible: isVisible(c, data, '', ajv),
+      isEnabled: isEnabled(c, data, '', ajv, undefined),
+      visible: isVisible(c, data, '', ajv, undefined),
     };
   });
 
@@ -117,8 +117,8 @@ export const JsonFormsStepperContextProvider = ({
           categories: stepperState.categories?.map((c) => {
             return {
               ...c,
-              visible: c?.uischema && isVisible(c.uischema, data, '', ajv),
-              isEnabled: c?.uischema && isEnabled(c.uischema, data, '', ajv),
+              visible: c?.uischema && isVisible(c.uischema, data, '', ajv, undefined),
+              isEnabled: c?.uischema && isEnabled(c.uischema, data, '', ajv, undefined),
             };
           }),
         };
@@ -137,7 +137,7 @@ export const JsonFormsStepperContextProvider = ({
             cat?.uischema &&
             (cat?.uischema?.options?.showInTaskList || cat?.uischema?.options?.showInTaskList === undefined) &&
             cat?.uischema &&
-            isVisible(cat.uischema, data, '', ajv)
+            isVisible(cat.uischema, data, '', ajv, undefined)
               ? 1
               : 0),
           0
