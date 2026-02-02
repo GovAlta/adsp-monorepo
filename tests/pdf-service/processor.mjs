@@ -7,6 +7,8 @@
  * 3. Attach token to Artillery context for use in scenarios
  */
 
+/* global console, process */
+
 import axios from 'axios';
 import { URLSearchParams } from 'url';
 

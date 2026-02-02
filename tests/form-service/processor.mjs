@@ -7,6 +7,8 @@
  * 3. Decide per-VU behavior (update / submit percentages)
  */
 
+/* global console, process */
+
 import axios from 'axios';
 import { URLSearchParams } from 'url';
 

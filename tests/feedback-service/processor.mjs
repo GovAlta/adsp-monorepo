@@ -7,6 +7,8 @@
  * 3. Expose token to scenarios via context.vars.token
  */
 
+/* global console, process */
+
 import axios from 'axios';
 import { URLSearchParams } from 'url';
 
