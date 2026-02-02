@@ -112,7 +112,11 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
               {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
             </ReviewLabel>
             {showButton && (
-              <GoabButton type="tertiary" size="compact" onClick={() => formStepperCtx?.goToPage(stepId)}>
+              <GoabButton
+                type="tertiary"
+                size="compact"
+                onClick={() => formStepperCtx?.goToPage(stepId, uischema.scope)}
+              >
                 Change
               </GoabButton>
             )}

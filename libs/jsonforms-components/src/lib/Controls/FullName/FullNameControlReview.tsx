@@ -17,14 +17,14 @@ type FullNameControlReviewProps = ControlProps;
 export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.Element => {
   const context = useContext(JsonFormsStepperContext);
   const stepId = props.uischema?.options?.stepId;
-  const { label, errors, required } = props;
+  const { label, errors, required, uischema } = props;
 
   const renderRow = (label: string, value: string, testId: string) => (
     <tr>
       <PageReviewContainer colSpan={3}>
         <ReviewHeader>
           <ReviewLabel>{label}</ReviewLabel>
-          <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId)}>
+          <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId, uischema.scope)}>
             Change
           </GoabButton>
         </ReviewHeader>

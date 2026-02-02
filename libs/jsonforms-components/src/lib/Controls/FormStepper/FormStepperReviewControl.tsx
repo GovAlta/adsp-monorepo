@@ -157,7 +157,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
   const componentProps = (uischema.options?.componentProps as FormStepperComponentProps) ?? {};
   const readOnly = componentProps?.readOnly ?? false;
   const categorization = uischema as Categorization;
-  const categories = categorization.elements.filter((category) => isVisible(category, data, '', ajv, undefined));
+  const categories = categorization.elements.filter((category) => isVisible(category, data, '', ajv));
   const rescopeMaps = ['#/properties/albertaAddress', '#/properties/canadianAddress', '#/properties/sin'];
 
   return (
@@ -165,7 +165,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
       {categories.map((category, categoryIndex) => {
         const categoryLabel = category.label || category.i18n || 'Unknown Category';
         const hasVisibleContent = (element: UISchemaElement & { elements?: UISchemaElement[] }): boolean => {
-          if (!isVisible(element, data, '', ajv, undefined)) {
+          if (!isVisible(element, data, '', ajv)) {
             return false;
           }
           if (element.type === 'HelpContent' || element.type === 'Callout') {
