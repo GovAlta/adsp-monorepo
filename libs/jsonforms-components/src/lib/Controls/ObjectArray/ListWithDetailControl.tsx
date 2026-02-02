@@ -4,7 +4,6 @@ import { toDataPath } from '@jsonforms/core';
 
 import range from 'lodash/range';
 import React, { useRef, useLayoutEffect } from 'react';
-import pluralize from 'pluralize';
 import { Resolve } from '@jsonforms/core';
 import type { ErrorObject } from 'ajv';
 

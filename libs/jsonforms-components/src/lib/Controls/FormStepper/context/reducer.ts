@@ -81,17 +81,16 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
 
       ajv.validate(schema, data);
 
-
       const newCategories = state.categories.map((cat) => {
         // ✅ compare against cat.id, not the index
         if (cat.id !== id) {
           return cat;
         }
-
+        const filteredErrors = ajv.errors && ajv.errors.filter((error) => error?.data != null);
         const status = getStepStatus({
           scopes: cat.scopes,
           data,
-          errors: ajv.errors ?? [],
+          errors: filteredErrors ?? [],
           schema,
         });
 
