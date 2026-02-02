@@ -3,9 +3,6 @@ import styled from 'styled-components';
 export const ReviewItem = styled.div`
   display: flex;
   flex-direction: column;
-  div:empty {
-    display: none;
-  }
 `;
 
 export const CompletionStatus = styled.div`

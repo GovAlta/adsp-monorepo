@@ -30,7 +30,8 @@ import { NoPaddingH2 } from '@components/AppHeader';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 const FileList = (): JSX.Element => {
-  const [selectedFile, setSelectFile] = useState<FileItem>(null);
+  const [selectedFile, setSelectFile] = useState<File | null>(null);
+  const [deletedFile, setDeletedFile] = useState<FileItem | null>(null);
   const [uploadFileType, setUploadFileType] = useState<string>('');
   const [filterFileType, setFilterFileType] = useState<string>('');
   const [resetFilter, setResetFilter] = useState<string>('visible');
@@ -85,8 +86,8 @@ const FileList = (): JSX.Element => {
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
   };
-  const onDeleteFile = (file) => {
-    setSelectFile(file);
+  const onDeleteFile = (file: FileItem) => {
+    setDeletedFile(file);
     setShowDeleteConfirmation(true);
   };
 
@@ -163,13 +164,13 @@ const FileList = (): JSX.Element => {
           title="Delete file"
           content={
             <div>
-              Are you sure you wish to delete <b> {selectedFile?.filename}</b>?
+              Are you sure you wish to delete <b> {deletedFile?.filename}</b>?
             </div>
           }
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
             setShowDeleteConfirmation(false);
-            dispatch(DeleteFileService(selectedFile?.id));
+            dispatch(DeleteFileService(deletedFile?.id));
           }}
         />
       </FileTableStyles>
@@ -199,8 +200,8 @@ const FileList = (): JSX.Element => {
           </button>
 
           <div className="margin-left">
-            {fileName?.current?.value
-              ? fileName.current.value.split('\\').pop()
+            {selectedFile && selectedFile.name
+              ? selectedFile.name
               : hasUploadingFileCompleted || isUploadingFile
               ? 'Please choose another file'
               : 'No file was chosen'}
@@ -215,7 +216,7 @@ const FileList = (): JSX.Element => {
             width="100%"
             testId="file-type-name-dropdown-1"
             onChange={(detail: GoabDropdownOnChangeDetail) => {
-              setUploadFileType(detail.values.toString());
+              setUploadFileType(detail.value as string);
             }}
           >
             {getFileTypesValues().map((item, key) => (

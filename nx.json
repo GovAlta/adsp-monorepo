@@ -33,10 +33,10 @@
     },
     "@nx/react": {
       "application": {
+        "babel": true,
         "style": "scss",
         "linter": "eslint",
-        "bundler": "webpack",
-        "babel": true
+        "bundler": "webpack"
       },
       "library": {
         "style": "scss",

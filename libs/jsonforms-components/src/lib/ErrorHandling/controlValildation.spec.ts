@@ -1,4 +1,10 @@
-import { errMalformedScope, errMissingScope, errUnknownScope, getUISchemaErrors } from './schemaValidation';
+import {
+  errMalformedScope,
+  errMissingRegister,
+  errMissingScope,
+  errUnknownScope,
+  getUISchemaErrors,
+} from './schemaValidation';
 
 const dataSchema = {
   type: 'object',
@@ -52,6 +58,18 @@ describe('check error processing', () => {
     it('has missing scope', () => {
       const err = getUISchemaErrors(missingScope, dataSchema);
       expect(err).toBe(errMissingScope);
+    });
+
+    it('has missing register', () => {
+      const missingRegister = {
+        type: 'Control',
+        scope: '#/properties/firstName',
+        options: {
+          format: 'enum',
+        },
+      };
+      const err = getUISchemaErrors(missingRegister, dataSchema);
+      expect(err).toBe(errMissingRegister);
     });
   });
 });

@@ -61,6 +61,24 @@ describe('PhoneNumberWithTypeControl', () => {
     });
   });
 
+  it('initializes with empty object when data is undefined', () => {
+    const props = { ...defaultProps, data: undefined };
+    const { container } = render(<PhoneNumberWithTypeControl {...props} />);
+    const numberInput = container.querySelector('goa-input[name="number"]');
+    // Value might be empty or controlled, checking it renders without error
+    expect(numberInput).toBeInTheDocument();
+  });
+
+  it('passes required prop to input components', () => {
+    const props = { ...defaultProps, required: true };
+    const { container } = render(<PhoneNumberWithTypeControl {...props} />);
+    const formItem = container.querySelector('goa-form-item[label="Phone number"]');
+    const typeDropdown = container.querySelector('goa-form-item[label="Phone type"]');
+
+    expect(formItem).toHaveAttribute('requirement', 'required');
+    expect(typeDropdown).toHaveAttribute('requirement', 'required');
+  });
+
   it('renders with empty data gracefully', () => {
     const props = { ...defaultProps, data: {} };
     const { container } = render(<PhoneNumberWithTypeControl {...props} />);
@@ -104,6 +122,16 @@ describe('PhoneNumberWithTypeControl', () => {
       number: '(825) 111-2222',
       type: 'Work',
     });
+  });
+
+  it('shows error when invalid phone number is entered', () => {
+    const { container } = render(<PhoneNumberWithTypeControl {...defaultProps} />);
+    const numberInput = screen.getByPlaceholderText('(000) 000-0000');
+
+    fireEvent(numberInput, new CustomEvent('_change', { detail: { name: 'number', value: '123' } }));
+
+    const formItem = container.querySelector('goa-form-item[label="Phone number"]');
+    expect(formItem).toHaveAttribute('error', 'Enter a valid phone number (e.g., (780) 123-4567)');
   });
 });
 

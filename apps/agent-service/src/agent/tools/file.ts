@@ -1,8 +1,9 @@
 import { AdspId, adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
-import { createTool } from '@mastra/core';
+import { createTool } from '@mastra/core/tools';
 import type { Logger } from 'winston';
 import z from 'zod';
 import { createFileServiceClient } from '../clients';
+import { AdspRequestContext} from '../types';
 
 interface FileToolsProps {
   directory: ServiceDirectory;
@@ -23,9 +24,9 @@ export async function createFileTools({ directory, tokenProvider, logger }: File
     outputSchema: z.object({
       content: z.string(),
     }),
-    execute: async ({ context, runtimeContext }) => {
-      const tenantId = runtimeContext.get('tenantId') as AdspId;
-      const { fileId } = context;
+    execute: async (inputData, { requestContext }: {requestContext: AdspRequestContext}) => {
+      const tenantId = requestContext.get('tenantId') as AdspId;
+      const { fileId } = inputData;
 
       const { data } = await fileServiceClient.getFileAndMetadata(
         tenantId,

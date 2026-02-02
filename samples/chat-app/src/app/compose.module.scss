@@ -1,0 +1,55 @@
+.compose {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid #333;
+  top: 20px;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.composeContent {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px 8px 0 0;
+  flex: 1;
+  overflow-y: auto;
+  textarea, p {
+    min-height: 2.8rem;
+    flex-shrink: 0;
+    border: 0;
+    resize: none;
+    flex: 1;
+    padding: 8px;
+  }
+  img {
+    width: 20%;
+  }
+}
+
+.composeActions {
+  background-color: #eee;    
+  border-radius: 0 0 8px 8px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  padding: 8px;
+  :first-child {
+    margin-right: auto;
+  }
+  button:last-child {
+    margin-left: 16px;
+  }
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba($color: #fff, $alpha: 0.7);
+}

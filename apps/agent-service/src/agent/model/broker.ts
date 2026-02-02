@@ -1,15 +1,14 @@
 import { isAllowedUser, UnauthorizedUserError, type AdspId, type User } from '@abgov/adsp-service-sdk';
-import type { CoreUserMessage, Metric } from '@mastra/core';
 import type { Agent, ToolsInput } from '@mastra/core/agent';
-import { RuntimeContext } from '@mastra/core/runtime-context';
+import type { CoreUserMessage } from '@mastra/core/llm';
+import { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
 import { AgentConfiguration } from '../configuration';
 import { BrokerInputProcessor } from '../types';
 
 export class AgentBroker<
   TAgentId extends string = string,
-  TTools extends ToolsInput = ToolsInput,
-  TMetrics extends Record<string, Metric> = Record<string, Metric>
+  TTools extends ToolsInput = ToolsInput
 > {
   private userRoles: string[];
   public get Agent() {
@@ -20,7 +19,7 @@ export class AgentBroker<
     private logger: Logger,
     private tenantId: AdspId,
     private inputProcessors: BrokerInputProcessor[],
-    private agent: Agent<TAgentId, TTools, TMetrics>,
+    private agent: Agent<TAgentId, TTools>,
     { userRoles }: Partial<AgentConfiguration>
   ) {
     this.userRoles = userRoles || [];
@@ -30,26 +29,26 @@ export class AgentBroker<
     user: User,
     input: CoreUserMessage | CoreUserMessage[],
     context: Record<string, unknown> = {}
-  ): Promise<RuntimeContext<Record<string, unknown>>> {
+  ): Promise<RequestContext<Record<string, unknown>>> {
     if (this.userRoles.length > 0 && !isAllowedUser(user, this.tenantId, this.userRoles)) {
       throw new UnauthorizedUserError('use agent', user);
     }
 
-    const runtimeContext = new RuntimeContext<Record<string, unknown>>();
-    runtimeContext.set('tenantId', this.tenantId);
-    runtimeContext.set('user', user);
+    const requestContext = new RequestContext<Record<string, unknown>>();
+    requestContext.set('tenantId', this.tenantId);
+    requestContext.set('user', user);
 
     for (const [key, value] of Object.entries(context || {})) {
-      runtimeContext.set(key, value);
+      requestContext.set(key, value);
     }
 
     // This is necessarily because normal Mastra input processors run after message normalization.
     // For example, assets already downloaded, so we cannot use an input processor to download files with a credential.
     for (const inputProcessor of this.inputProcessors) {
-      await inputProcessor.processInput(runtimeContext, input);
+      await inputProcessor.processInput(requestContext, input);
     }
 
-    return runtimeContext;
+    return requestContext;
   }
 
   public async stream(
@@ -58,11 +57,10 @@ export class AgentBroker<
     input: CoreUserMessage | CoreUserMessage[],
     context: Record<string, unknown> = {}
   ) {
-    const runtimeContext = await this.prepareAgentRequest(user, input, context);
+    const requestContext = await this.prepareAgentRequest(user, input, context);
 
     return this.agent.stream(input, {
-      format: 'mastra',
-      runtimeContext: runtimeContext as RuntimeContext<unknown>,
+      requestContext,
       memory: { thread: threadId, resource: user.id },
       onStepFinish: ({ finishReason, usage }) => {
         this.logger.debug(
@@ -79,11 +77,10 @@ export class AgentBroker<
     input: CoreUserMessage | CoreUserMessage[],
     context: Record<string, unknown> = {}
   ) {
-    const runtimeContext = await this.prepareAgentRequest(user, input, context);
+    const requestContext = await this.prepareAgentRequest(user, input, context);
 
     return this.agent.generate(input, {
-      format: 'mastra',
-      runtimeContext: runtimeContext as RuntimeContext<unknown>,
+      requestContext,
       memory: { thread: threadId, resource: user.id },
       onStepFinish: ({ finishReason, usage }) => {
         this.logger.debug(

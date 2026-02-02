@@ -1,4 +1,5 @@
-import { onChangeForCheckboxData } from './inputControlUtils';
+import { onChangeForCheckboxData, onChangeForNumericControl } from './inputControlUtils';
+import { ControlProps } from '@jsonforms/core';
 
 describe('onChangeForCheckboxData', () => {
   it('should add a checkbox value when data is an array with other values', () => {
@@ -45,4 +46,57 @@ describe('onChangeForCheckboxData', () => {
     const result = onChangeForCheckboxData(data, name, value);
     expect(result).toEqual(['Option2', 'Option3']);
   });
+});
+
+describe('onChangeForNumericControl', () => {
+    const mockHandleChange = jest.fn();
+    const baseControlProps: Partial<ControlProps> = {
+        handleChange: mockHandleChange,
+        path: 'testPath',
+        data: undefined
+    };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('should call handleChange with number when input is valid string number', () => {
+        onChangeForNumericControl({
+            value: '123',
+            controlProps: baseControlProps as ControlProps
+        });
+        expect(mockHandleChange).toHaveBeenCalledWith('testPath', 123);
+    });
+
+    it('should call handleChange with undefined when input is empty string', () => {
+        onChangeForNumericControl({
+            value: '',
+            controlProps: baseControlProps as ControlProps
+        });
+        expect(mockHandleChange).toHaveBeenCalledWith('testPath', undefined);
+    });
+
+    it('should NOT call handleChange when value is same as data', () => {
+        onChangeForNumericControl({
+            value: '123',
+            controlProps: { ...baseControlProps, data: 123 } as ControlProps
+        });
+        expect(mockHandleChange).not.toHaveBeenCalled();
+    });
+
+    it('should call handleChange with 0 when value is 0 (number)', () => {
+        onChangeForNumericControl({
+            value: 0,
+            controlProps: baseControlProps as ControlProps
+        });
+        expect(mockHandleChange).toHaveBeenCalledWith('testPath', 0);
+    });
+
+    it('should call handleChange with null when value is null', () => {
+        onChangeForNumericControl({
+            value: null,
+            controlProps: baseControlProps as ControlProps
+        });
+        expect(mockHandleChange).toHaveBeenCalledWith('testPath', null);
+    });
 });
