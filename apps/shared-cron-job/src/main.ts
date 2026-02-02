@@ -4,6 +4,7 @@ import { AdspId, initializePlatform, PlatformCapabilities, adspId } from '@abgov
 import { environment } from './environments/environment';
 import { createLogger } from '@core-services/core-common';
 import axios from 'axios';
+import { debug } from 'node:console';
 
 const serviceId = AdspId.parse(environment.CLIENT_ID);
 
@@ -40,7 +41,7 @@ let platformHelper: PlatformCapabilities = null;
   );
 })();
 
-async function fetchLastWeekFeedback(platformHelper: PlatformCapabilities) {
+async function runFeedbackWeeklySummary(platformHelper: PlatformCapabilities) {
   const { directory, tokenProvider } = platformHelper;
   const feedbackServiceId: AdspId = adspId`urn:ads:platform:feedback-service`;
 
@@ -49,7 +50,7 @@ async function fetchLastWeekFeedback(platformHelper: PlatformCapabilities) {
 
   logger.debug(`access token: ${accessToken}`);
 
-  const tenants = platformHelper.tenantService.getTenants();
+  const tenants = await platformHelper.tenantService.getTenants();
 
   const feedbackHost = await directory.getServiceUrl(feedbackServiceId);
 
@@ -59,7 +60,6 @@ async function fetchLastWeekFeedback(platformHelper: PlatformCapabilities) {
   const params = {
     start: new Date().toISOString(),
     end: lastWeek.toISOString(),
-    tenant: 'autotest',
   };
 
   const lastWeekFeedback = await axios.get(`${feedbackHost}feedback/v1/feedback`, {
@@ -69,20 +69,24 @@ async function fetchLastWeekFeedback(platformHelper: PlatformCapabilities) {
     params,
   });
 
-  const sites = await platformHelper.configurationService.getConfiguration(
-    feedbackServiceId,
-    accessToken,
-    adspId`urn:ads:platform:tenant-service:v2:/tenants/61e9adcc9423490012a9ae46`,
-  );
+  for (const tenant of tenants) {
+    logger.debug(`Processing tenant: ${tenant.name} (${tenant.id})`);
+    const sites = await platformHelper.configurationService.getConfiguration(
+      feedbackServiceId,
+      accessToken,
+      adspId`${tenant.id}`,
+    );
 
-  logger.debug(`sites: ${JSON.stringify(sites)}`);
+    logger.debug(`sites: ${JSON.stringify(sites)}`);
 
-  logger.debug(`Last feedback for : ${lastWeekFeedback}`);
+    logger.debug(`Last feedback for : ${lastWeekFeedback}`);
+  }
 }
 
+// put the weekly summary into on minute cron for testing purpose
 cron.schedule('* * * * *', async () => {
   logger.info('Start to run ');
-  await fetchLastWeekFeedback(platformHelper);
+  await runFeedbackWeeklySummary(platformHelper);
 });
 
 const host = process.env.HOST ?? 'localhost';
