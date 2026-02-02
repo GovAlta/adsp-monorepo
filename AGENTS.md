@@ -163,7 +163,7 @@ BREAKING CHANGE: initializePlatform now requires serviceId as AdspId instead of 
 feat(form-service): add draft form submission endpoint
 fix(adsp-service-sdk): resolve token refresh race condition
 docs(event-service): update API documentation for v2 endpoints
-refactor(tenant-service): extract tenant resolution middleware
+refactor(tenant-management-api): extract tenant resolution middleware
 ```
 
 ### SDK Usage
@@ -311,7 +311,7 @@ These foundational services form the core of ADSP and are dependencies for other
 
 | Service | Description |
 |---------|-------------|
-| tenant-service | Foundation for multi-tenancy. Maintains the registry of tenants and maps each to a Keycloak realm (JWT issuer). All other services use this to resolve tenant context from request tokens. |
+| tenant-management-api | Foundation for multi-tenancy (implements `tenant-service`). Maintains the registry of tenants and maps each to a Keycloak realm (JWT issuer). All other services use this to resolve tenant context from request tokens. Exposed as `urn:ads:platform:tenant-service`. |
 | directory-service | Service discovery. Maps logical URNs to service URLs, allowing clients to find capabilities without hardcoding endpoints. Essential for environment portability. |
 | configuration-service | Configuration management. Provides tenant-scoped configuration storage and retrieval. Services register their configuration schemas here on startup. |
 | event-service | Domain event routing and logging. Receives events via API, routes them over RabbitMQ, and maintains the event log for audit trails. |
