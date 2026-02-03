@@ -94,6 +94,16 @@ export interface FeedbackContext {
 ```
 
 ### Send feedback
+The `rating` field accepts one of the following values:
+
+| Value | Description |
+|:-|:-|
+| terrible | Very Difficult |
+| bad | Difficult |
+| neutral | Neutral |
+| good | Easy |
+| delightful | Very Easy |
+
 ```typescript
   const feedback = {
     tenant: 'My Tenant',
