@@ -1,7 +1,7 @@
 import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { convertUint8ArrayToBase64, FilePart, ImagePart } from '@ai-sdk/provider-utils-v5';
-import { CoreUserMessage } from '@mastra/core';
-import { RuntimeContext } from '@mastra/core/runtime-context';
+import type { CoreUserMessage } from '@mastra/core/llm';
+import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
 import { BrokerInputProcessor } from '../types';
 import { createFileServiceClient } from '../clients';
@@ -15,10 +15,10 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
   }
 
   async processInput(
-    runtimeContext: RuntimeContext<Record<string, unknown>>,
+    requestContext: RequestContext<Record<string, unknown>>,
     input: CoreUserMessage | CoreUserMessage[]
   ): Promise<CoreUserMessage | CoreUserMessage[]> {
-    const tenantId = runtimeContext.get<'tenantId', AdspId>('tenantId');
+    const tenantId = requestContext.get<'tenantId', AdspId>('tenantId');
 
     const messages = Array.isArray(input) ? input : [input];
     for (const message of messages) {
@@ -46,7 +46,7 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
     return input;
   }
 
-  private async processContentData(tenantId: AdspId, content: FilePart | ImagePart): Promise<FilePart | ImagePart> {
+  private async processContentData(tenantId: AdspId, content: Partial<FilePart> | ImagePart): Promise<FilePart | ImagePart> {
     const data = content.type === 'file' ? content.data : content.image;
     if (typeof data === 'string' && AdspId.isAdspId(data)) {
       const resourceId = AdspId.parse(data);

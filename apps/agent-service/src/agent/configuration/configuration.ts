@@ -1,7 +1,7 @@
 import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
-import { RuntimeContext } from '@mastra/core/runtime-context';
+import type { RequestContext } from '@mastra/core/request-context';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
 import { Logger } from 'winston';
@@ -68,6 +68,7 @@ export class AgentServiceConfiguration {
               return {
                 ...agents,
                 [key]: new Agent({
+                  id: key,
                   name: configuration.name,
                   description: configuration.description,
                   instructions: configuration.instructions,
@@ -114,13 +115,14 @@ export class AgentServiceConfiguration {
                     }, {}) || {},
                   memory: new Memory({
                     storage: new LibSQLStore({
+                      id: 'memoryStore',
                       url: ':memory:',
                     }),
                   }),
-                  inputProcessors: ({ runtimeContext }) =>
+                  inputProcessors: ({ requestContext }) =>
                     createInputProcessors({
                       logger: this.logger,
-                      runtimeContext: runtimeContext as RuntimeContext<Record<string, unknown>>,
+                      requestContext: requestContext as RequestContext<Record<string, unknown>>,
                     }),
                 }),
               };
@@ -133,7 +135,7 @@ export class AgentServiceConfiguration {
         directory: this.directory,
         tokenProvider: this.tokenProvider,
       });
-      this.brokers = Object.entries(this.mastra.getAgents()).reduce(
+      this.brokers = Object.entries(this.mastra.listAgents()).reduce(
         (brokers, [key, agent]) => ({
           ...brokers,
           [key]: new AgentBroker(this.logger, tenantId, inputProcessors, agent, configuration[key] || {}),

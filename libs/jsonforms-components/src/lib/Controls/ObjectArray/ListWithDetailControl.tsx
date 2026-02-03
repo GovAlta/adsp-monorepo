@@ -4,7 +4,6 @@ import { toDataPath } from '@jsonforms/core';
 
 import range from 'lodash/range';
 import React, { useRef, useLayoutEffect } from 'react';
-import pluralize from 'pluralize';
 import { Resolve } from '@jsonforms/core';
 import type { ErrorObject } from 'ajv';
 
@@ -639,8 +638,7 @@ const LeftTab = ({
         <RowFlexMenu tabIndex={0}>
           <TabName>{name}</TabName>
           {enabled ? (
-            //eslint-disable-next-line
-            <Trash role="trash button">
+            <Trash>
               <GoabIconButton
                 disabled={!enabled}
                 icon="trash"
@@ -681,6 +679,8 @@ const MainTab = ({
   function resolveField(e: any): string {
     if (e.keyword === 'required') {
       return e.params.missingProperty;
+    } else if (e.keyword === 'errorMessage' && e.params?.errors[0].params.missingProperty) {
+      return e.params.errors[0].params.missingProperty;
     }
 
     const path = e.instancePath.split('/');
@@ -689,16 +689,37 @@ const MainTab = ({
 
   const rowBase = `/${childPath.replace(/\./g, '/')}`;
 
+  type FieldErrors = {
+    fields: Record<string, string>;
+    row?: string;
+  };
   const fieldErrors = core?.errors
     ?.filter((e) => e.instancePath === rowBase || e.instancePath.startsWith(rowBase + '/'))
-    .reduce((acc, e) => {
-      const field = resolveField(e);
-      acc[field] = humanizeAjvError(e, core.schema, core.uischema); //e.message;
-      return acc;
-    }, {} as Record<string, string>);
+    .reduce<FieldErrors>(
+      (acc, e) => {
+        const field = resolveField(e);
+
+        if (e.keyword === 'errorMessage' && e.params?.errors) {
+          if (field) {
+            acc.fields[field] = e.message || 'Unknown error';
+          } else {
+            acc.row = e?.message || 'Unknown error';
+            return acc;
+          }
+        }
+
+        if (!acc.fields[field]) {
+          acc.fields[field] = humanizeAjvError(e, core.schema, core.uischema);
+        }
+        return acc;
+      },
+      { fields: {} }
+    );
 
   const errorText =
-    fieldErrors && Object.values(fieldErrors).length > 0 ? Object.values(fieldErrors).join(', ') : undefined;
+    fieldErrors && Object.values(fieldErrors.fields).length > 0
+      ? Object.values(fieldErrors.fields).join(', ')
+      : fieldErrors?.row;
   return (
     <div key={childPath} data-testid={`object-array-main-item-${rowIndex}`}>
       {errorText ? (
@@ -1032,8 +1053,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
             {...additionalProps}
           />
         </div>
-
-        {!showSecondaryButton && (
+        {this.state.currentListPage === 0 && data > 0 && (
           <ObjectArrayToolBar
             data={data}
             errors={errors}

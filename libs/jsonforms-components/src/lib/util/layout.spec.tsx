@@ -92,6 +92,30 @@ describe('Layout utilities', () => {
       expect(container).toBeTruthy();
     });
 
+    it('should render with row direction and default width', () => {
+      const elements: UISchemaElement[] = [
+        {
+          type: 'Control',
+          scope: '#/properties/test',
+        },
+      ];
+
+      const { container } = render(
+        <LayoutRenderer
+          elements={elements}
+          schema={{}}
+          path="test"
+          enabled={true}
+          direction="row"
+          renderers={[]}
+          cells={[]}
+          visible={true}
+        />
+      );
+
+      expect(container).toBeTruthy();
+    });
+
     it('should render with hidden visibility', () => {
       const elements: UISchemaElement[] = [
         {

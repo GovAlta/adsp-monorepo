@@ -80,7 +80,7 @@ describe('input control tests', () => {
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = baseElement.querySelector("goa-date-picker[testId='My ID-input']");
+      const input = baseElement.querySelector("goa-input[testId='My ID-input']");
       expect(input).toBeInTheDocument();
     });
 
@@ -91,7 +91,7 @@ describe('input control tests', () => {
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = baseElement.querySelector("goa-date-picker[testId='My ID-input']");
+      const input = baseElement.querySelector("goa-input[testId='My ID-input']");
       expect(input).toBeInTheDocument();
     });
 
@@ -102,7 +102,7 @@ describe('input control tests', () => {
           <GoADateInput {...props} />
         </JsonFormsContext.Provider>
       );
-      const input = baseElement.querySelector("goa-date-picker[testId='My ID-input']");
+      const input = baseElement.querySelector("goa-input[testId='My ID-input']");
       expect(input).toBeInTheDocument();
     });
   });

@@ -54,6 +54,41 @@ const getUiSchema = () => {
       {
         type: 'Control',
         scope: '#/properties/messages',
+        options: {
+          detail: {
+            type: 'Group',
+            elements: [
+              {
+                type: 'Control',
+                scope: '#/properties/firstName',
+                label: 'First Name',
+              },
+              {
+                type: 'Control',
+                scope: '#/properties/lastName',
+                label: 'Last Name',
+              },
+              {
+                type: 'Control',
+                scope: '#/properties/email',
+              },
+              {
+                type: 'Group',
+                elements: [
+                  {
+                    type: 'Control',
+                    scope: '#/properties/address/properties/city',
+                    label: 'City',
+                  },
+                  {
+                    type: 'Control',
+                    scope: '#/properties/address/properties/postalCode',
+                  },
+                ],
+              },
+            ],
+          },
+        },
       },
     ],
   };

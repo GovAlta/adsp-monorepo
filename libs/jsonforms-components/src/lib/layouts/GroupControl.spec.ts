@@ -244,5 +244,43 @@ describe('Group Layout tests', () => {
       expect(!validAccentNames.includes(accentAttribute)).toBe(true);
       expect(!validPaddingNames.includes(relaxedAttribute)).toBe(true);
     });
+    it('should render without label when componentProps present and no accent', () => {
+      const uischema = {
+        type: 'Group',
+        label: undefined, // Explicitly undefined
+        elements: [],
+        options: {
+          componentProps: {
+            padding: 'relaxed',
+          },
+        },
+      };
+      const props = { ...staticProps, uischema };
+      const { container } = render(GoAGroupControlComponent(props));
+      expect(container.querySelector('h3')).toBeNull();
+    });
+
+    it('should render without label when no componentProps', () => {
+      const uischema = {
+        type: 'Group',
+        label: undefined,
+        elements: [],
+      };
+      const props = { ...staticProps, uischema };
+      const { container } = render(GoAGroupControlComponent(props));
+      expect(container.querySelector('h3')).toBeNull();
+    });
+
+    it('should render in stepper review mode', () => {
+      const uischema = {
+        type: 'Group',
+        label: 'Test Group',
+        elements: [],
+      };
+      const props = { ...staticProps, uischema, isStepperReview: true };
+      const { container } = render(GoAGroupControlComponent(props));
+      // Should not contain GoabContainer if isStepperReview is true
+      expect(container.querySelector('goa-container')).toBeNull();
+    });
   });
 });

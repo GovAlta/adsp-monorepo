@@ -10,6 +10,7 @@ import {
   hasDataInScopes,
   saveIsVisitFromLocalStorage,
   getIsVisitFromLocalStorage,
+  isErrorPathIncluded,
 } from './util';
 import type { ErrorObject } from 'ajv';
 
@@ -286,5 +287,52 @@ describe('localStorage helpers', () => {
   it('getIsVisitFromLocalStorage returns undefined if missing or invalid', () => {
     const restored = getIsVisitFromLocalStorage();
     expect(restored).toBeUndefined();
+  });
+});
+
+describe('isErrorPathIncluded', () => {
+  it('returns true when path exactly matches an errorPath (case A)', () => {
+    expect(isErrorPathIncluded(['name'], 'name')).toBe(true);
+  });
+
+  it('returns true when path is a descendant of an errorPath (case B)', () => {
+    expect(isErrorPathIncluded(['name'], 'name.firstName')).toBe(true);
+    expect(isErrorPathIncluded(['name'], 'name.firstName.middle')).toBe(true);
+  });
+
+  it('returns false when path is not included by any errorPath', () => {
+    expect(isErrorPathIncluded(['name'], 'other')).toBe(false);
+    expect(isErrorPathIncluded(['name'], 'names')).toBe(false);
+    expect(isErrorPathIncluded(['name'], 'nameX.firstName')).toBe(false);
+    expect(isErrorPathIncluded(['name'], 'na.me')).toBe(false);
+  });
+
+  it('handles multiple errorPaths (any match makes it true)', () => {
+    expect(isErrorPathIncluded(['a', 'b', 'c'], 'b')).toBe(true);
+    expect(isErrorPathIncluded(['a', 'b', 'c'], 'c.child')).toBe(true);
+    expect(isErrorPathIncluded(['a', 'b', 'c'], 'd.child')).toBe(false);
+  });
+
+  it('does not treat similar prefixes as included (must be dot-boundary)', () => {
+    expect(isErrorPathIncluded(['name'], 'name2.first')).toBe(false);
+
+    expect(isErrorPathIncluded(['name'], 'names.first')).toBe(false);
+  });
+
+  it('returns false when errorPaths is empty', () => {
+    expect(isErrorPathIncluded([], 'name')).toBe(false);
+  });
+
+  it('supports nested errorPath matching deeper descendants', () => {
+    expect(isErrorPathIncluded(['a.b'], 'a.b')).toBe(true);
+    expect(isErrorPathIncluded(['a.b'], 'a.b.c')).toBe(true);
+    expect(isErrorPathIncluded(['a.b'], 'a.bc')).toBe(false);
+    expect(isErrorPathIncluded(['a.b'], 'a.bx.c')).toBe(false);
+  });
+
+  it('treats empty string errorPath as matching any non-empty path that starts with "." (current behavior)', () => {
+    expect(isErrorPathIncluded([''], '')).toBe(true);
+    expect(isErrorPathIncluded([''], 'name')).toBe(false);
+    expect(isErrorPathIncluded([''], 'name.first')).toBe(false);
   });
 });

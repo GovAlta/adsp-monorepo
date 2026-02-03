@@ -1,10 +1,11 @@
 import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
-import { createTool } from '@mastra/core';
+import { createTool } from '@mastra/core/tools';
 import axios, { isAxiosError } from 'axios';
 import { parseTemplate } from 'url-template';
 import { Logger } from 'winston';
 import { ApiRequestToolConfiguration } from '../configuration';
+import { AdspRequestContext } from '../types';
 
 interface ApiToolProps {
   logger: Logger;
@@ -30,9 +31,9 @@ export function createApiRequestTool(
     inputSchema: inputSchema as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     outputSchema: outputSchema as any,
-    execute: async ({ context, runtimeContext }) => {
-      const tenantId = runtimeContext.get('tenantId') as AdspId;
-      const user = runtimeContext.get('user') as User;
+    execute: async (inputData: Record<string, unknown>, { requestContext }: { requestContext: AdspRequestContext }) => {
+      const tenantId = requestContext.get('tenantId') as AdspId;
+      const user = requestContext.get('user') as User;
 
       logger.debug(`Tool '${id}' ${method} request to ${apiId}:${path}...`, {
         context: 'ApiRequestTool',
@@ -41,17 +42,17 @@ export function createApiRequestTool(
       });
 
       try {
-        const { tenantId: _t, user: _u, ...additionalContext } = runtimeContext.toJSON();
-        const resourceId = adspId`${api}:${pathTemplate.expand({ ...context, ...additionalContext })}`;
+        const { tenantId: _t, user: _u, ...additionalContext } = requestContext.toJSON();
+        const resourceId = adspId`${api}:${pathTemplate.expand({ ...inputData, ...additionalContext })}`;
         const resourceUrl = await directory.getResourceUrl(resourceId);
 
         const params = {
-          ...(method === 'GET' ? context : {}),
+          ...(method === 'GET' ? inputData : {}),
           tenantId: tenantId.toString(),
         };
 
         const requestData = {
-          ...(method !== 'GET' ? context : {}),
+          ...(method !== 'GET' ? inputData : {}),
         };
 
         const token = userContext ? user.token.bearer : await tokenProvider.getAccessToken();
@@ -74,8 +75,7 @@ export function createApiRequestTool(
         return data;
       } catch (err) {
         logger.warn(
-          `Error encountered for tool '${id}' ${method} request to ${apiId}:${path}: ${
-            isAxiosError(err) && typeof err.response?.data === 'object' ? JSON.stringify(err.response.data) : err
+          `Error encountered for tool '${id}' ${method} request to ${apiId}:${path}: ${isAxiosError(err) && typeof err.response?.data === 'object' ? JSON.stringify(err.response.data) : err
           }`,
           {
             context: 'ApiRequestTool',
