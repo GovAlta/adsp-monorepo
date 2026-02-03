@@ -4,46 +4,42 @@ config:
       target: 'https://pdf-service.adsp-dev.gov.ab.ca'
     uat:
       target: 'https://pdf-service.adsp-uat.alberta.ca'
+
+  # Processor handles Keycloak authentication & token caching
+  processor: ./processor.mjs
+
   defaults:
     headers:
       Content-Type: 'application/json'
       Accept: 'application/json'
+
+  # CSV payload containing Keycloak + tenant info
   payload:
     - path: '../artillery.{{ $environment }}.csv'
       skipHeader: true
       fields:
-        - 'keycloak_url'
-        - 'realm_id'
-        - 'tenant_name'
-        - 'client_id'
+        - keycloak_url
+        - realm_id
+        - tenant_name
+        - client_id
+
+  # Load phases
   phases:
     - name: warm up
-      duration: 20
-      arrivalCount: 20
-    - name: load
       duration: 10
-      arrivalCount: 10
-before:
-  flow:
-    - log: 'Getting the access token (tenant: {{ realm_id }}) for client {{ client_id }}'
-    - post:
-        url: '{{ keycloak_url }}/auth/realms/{{ realm_id }}/protocol/openid-connect/token'
-        headers:
-          Content-Type: 'application/x-www-form-urlencoded'
-          Accept: 'application/json'
-        form:
-          {
-            grant_type: 'client_credentials',
-            client_id: '{{ client_id }}',
-            client_secret: '{{ $processEnvironment.ARTILLERY_CLIENT_SECRET }}',
-          }
-        capture:
-          - json: '$.access_token'
-            as: token
+      arrivalCount: 20
+
+    - name: load
+      duration: 3600
+      arrivalCount: 10000
+
 scenarios:
   - name: Create new PDF jobs
     weight: 1
+    beforeScenario: beforeScenario
+
     flow:
+      # Create a PDF job using the PDF service endpoint
       - post:
           url: '/pdf/v1/jobs'
           headers:
