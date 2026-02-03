@@ -94,6 +94,54 @@ const getUiSchema = () => {
   };
 };
 
+const getUiSchemaMax = () => {
+  return {
+    type: 'VerticalLayout',
+    elements: [
+      {
+        type: 'Control',
+        scope: '#/properties/messages',
+        options: {
+          detail: {
+            type: 'Group',
+            elements: [
+              {
+                type: 'Control',
+                scope: '#/properties/firstName',
+                label: 'First Name',
+              },
+              {
+                type: 'Control',
+                scope: '#/properties/lastName',
+                label: 'Last Name',
+              },
+              {
+                type: 'Control',
+                scope: '#/properties/email',
+              },
+              {
+                type: 'Group',
+                elements: [
+                  {
+                    type: 'Control',
+                    scope: '#/properties/address/properties/city',
+                    label: 'City',
+                  },
+                  {
+                    type: 'Control',
+                    scope: '#/properties/address/properties/postalCode',
+                  },
+                ],
+              },
+            ],
+            maxItems: 1,
+          },
+        },
+      },
+    ],
+  };
+};
+
 const getForm = (formData: object) => {
   return (
     <JsonForms
@@ -118,6 +166,18 @@ const getReviewForm = (formData: object) => {
     />
   );
 };
+const getMaxForm = (formData: object) => {
+  return (
+    <JsonForms
+      uischema={getUiSchemaMax()}
+      data={formData}
+      schema={rootSchema}
+      ajv={new Ajv({ allErrors: true, verbose: true })}
+      renderers={GoARenderers}
+      cells={GoACells}
+    />
+  );
+};
 
 describe('Object Array Renderer', () => {
   it('can add multiple items', async () => {
@@ -132,6 +192,7 @@ describe('Object Array Renderer', () => {
     expect(shadowAddBtn).not.toBeNull();
 
     fireEvent(addButton, new CustomEvent('_click'));
+
     // populate Name
     const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input-0']");
 
@@ -173,6 +234,53 @@ describe('Object Array Renderer', () => {
     );
     name2?.setAttribute('value', 'Jim');
     expect(name2?.getAttribute('value')).toBe('Jim');
+  });
+
+  it('can not add more items than the max items limit', async () => {
+    const data = { messages: [] };
+    const { baseElement } = render(getMaxForm(data));
+
+    // Add a message
+    const addButton = baseElement.querySelector("goa-button[testId='object-array-toolbar-Messages']");
+
+    expect(addButton).toBeInTheDocument();
+    const shadowAddBtn = addButton.shadowRoot?.querySelector('button');
+    expect(shadowAddBtn).not.toBeNull();
+
+    fireEvent(addButton, new CustomEvent('_click'));
+
+    // populate Name
+    const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input-0']");
+
+    expect(nameInput).toBeInTheDocument();
+
+    fireEvent(
+      nameInput,
+      new CustomEvent('_change', {
+        detail: { value: 'Bob' },
+      })
+    );
+    nameInput?.setAttribute('value', 'Bob');
+    expect(nameInput?.getAttribute('value')).toBe('Bob');
+
+    // populate Message
+    const messageInput = baseElement.querySelector("goa-input[testId='#/properties/message-input-0']");
+
+    expect(messageInput).toBeInTheDocument();
+    messageInput?.setAttribute('value', 'The rain in Spain');
+    fireEvent.change(
+      messageInput,
+      new CustomEvent('_change', {
+        detail: { value: 'The rain in Spain' },
+      })
+    );
+
+    // add another button
+
+    fireEvent(addButton, new CustomEvent('_click'));
+
+    const name2 = baseElement.querySelector("goa-input[testId='#/properties/name-input-1']");
+    expect(name2).not.toBeInTheDocument();
   });
 
   it('read from existing data', () => {
