@@ -5,7 +5,7 @@ const require = createRequire(import.meta.url);
 
 export default {
   displayName: 'notification-service',
-  preset: '../../jest-cover.preset.js',
+  preset: './jest.preset.js',
   globals: {},
   coverageDirectory: '../../coverage/apps/notification-service',
   testEnvironment: 'node',
