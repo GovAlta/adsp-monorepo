@@ -1,6 +1,6 @@
 from typing import List
 
-from schema_generator.form_element import FormElement
+from schema_generator.form_element import FormElement, JsonSchemaElement
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_element import XdpElement
 
@@ -20,10 +20,10 @@ class FormObjectArray(FormElement):
         self.elements = columns
         self.can_group_horizontally = False
 
-    def has_json_schema(self):
+    def has_json_schema(self) -> bool:
         return True
 
-    def to_json_schema(self):
+    def to_json_schema(self) -> JsonSchemaElement:
         items = {}
         for element in self.elements:
             if element.has_json_schema() and element.name:
@@ -32,7 +32,7 @@ class FormObjectArray(FormElement):
         return {"type": "array", "items": item_props}
         # return {self.name: {"type": "array", "items": items}}
 
-    def build_ui_schema(self):
+    def build_ui_schema(self) -> JsonSchemaElement:
         detail_elements = []
 
         for child in self.elements:
@@ -59,8 +59,3 @@ class FormObjectArray(FormElement):
                 }
             },
         }
-
-    # def build_ui_schema(self):
-    #     control = {"type": "Control", "scope": f"#/properties/{self.name}"}
-    #     control["label"] = self.label if self.label else self.name
-    #     return control

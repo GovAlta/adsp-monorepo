@@ -1,5 +1,5 @@
 import re
-from schema_generator.form_element import FormElement
+from schema_generator.form_element import FormElement, JsonSchemaElement
 from xdp_parser.parse_context import ParseContext
 
 
@@ -17,7 +17,7 @@ class FormHelpText(FormElement):
         self.help = help_content
         self.is_header = is_header
 
-    def build_ui_schema(self):
+    def build_ui_schema(self) -> JsonSchemaElement:
         if not self.help:
             return None
         ui_schema = {"type": "HelpContent"}
@@ -34,5 +34,5 @@ class FormHelpText(FormElement):
     def has_json_schema(self):
         return False
 
-    def to_json_schema(self):
+    def to_json_schema(self) -> JsonSchemaElement:
         return None

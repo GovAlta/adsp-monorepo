@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 from typing import List, Tuple
 from xdp_parser.help_pairer import HelpPairer
-from xdp_parser.row_maker import RowMaker
+from xdp_parser.horizontal_grouper import HorizontalGrouper
 from xdp_parser.control_description_extractor import ControlDescriptionExtractor
 from xdp_parser.control_labels import ControlLabels
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
@@ -75,14 +75,14 @@ class XdpGroupingPass:
         )
 
         # Pair help icons
-        pairer = HelpPairer(debug=True)
+        pairer = HelpPairer(debug=False)
         grouped_children = pairer.consolidate_help_pairs(
             grouped_children,
             context=self.context,
         )
 
-        row_maker = RowMaker()
-        grouped_children = row_maker.consolidate_rows(
+        horizontal_grouper = HorizontalGrouper()
+        grouped_children = horizontal_grouper.consolidate_rows(
             subform, grouped_children, self.context
         )
 

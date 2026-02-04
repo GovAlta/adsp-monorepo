@@ -4,12 +4,9 @@ def prune_ui_schema(schema: dict):
 
     elements = schema.get("elements")
     if isinstance(elements, list):
-        # Recurse first
         for i, child in enumerate(elements):
             if isinstance(child, dict):
                 elements[i] = prune_ui_schema(child)
-
-        # Then apply dedupe at this level
         _remove_duplicate_help(elements)
 
     return schema

@@ -4,7 +4,7 @@ from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_row import XdpRow
 
 
-class RowMaker:
+class HorizontalGrouper:
 
     def __init__(
         self,

@@ -3,8 +3,9 @@ from abc import ABC, abstractmethod
 from visibility_rules.pipeline_context import CTX_JSONFORMS_RULES
 from xdp_parser.parse_context import ParseContext
 
+type JsonSchemaElement = dict[str, str]
 
-# Abstract form element, can be one of FormInput or Guidance
+
 class FormElement(ABC):
     def __init__(self, type: str, name, qualified_name, context: ParseContext):
         self.type = type
@@ -24,12 +25,15 @@ class FormElement(ABC):
         pass
 
     @abstractmethod
-    def to_json_schema():
+    def to_json_schema() -> JsonSchemaElement:
         pass
 
     @abstractmethod
-    def build_ui_schema():
+    def build_ui_schema() -> JsonSchemaElement:
         pass
+
+    def update_label(self, label: str):
+        self.label = label
 
     def _find_visibility_rule(self, rules: dict) -> dict | None:
         fq = getattr(self, "qualified_name", None)
