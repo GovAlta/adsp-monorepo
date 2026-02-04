@@ -21,6 +21,7 @@ import { HelpContentComponent } from '../../Additional';
 import { useDebounce } from '../../util/useDebounce';
 import { Visible } from '../../util';
 import { GoabInputOnBlurDetail, GoabInputOnChangeDetail, GoabInputOnKeyPressDetail } from '@abgov/ui-components-common';
+import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 
 type AddressLookUpProps = ControlProps;
 
@@ -31,10 +32,12 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const isAlbertaAddress = schema?.properties?.subdivisionCode?.const === 'AB';
   const formCtx = useContext(JsonFormContext);
+  const formStepperCtx = useContext(JsonFormsStepperContext);
   const formHost = formCtx?.formUrl;
   const formUrl = `${formHost}/${ADDRESS_PATH}`;
   const autocompletion = uischema?.options?.autocomplete !== false;
   const [open, setOpen] = useState(false);
+  const addressContainerRef = useRef<HTMLDivElement>(null);
 
   const label = typeof uischema?.label === 'string' && uischema.label ? uischema.label : '';
   let defaultAddress = {};
@@ -176,9 +179,33 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     }
   }, [activeIndex]);
 
+  // Handle focus when navigated from review page
+  useEffect(() => {
+    const stepperState = formStepperCtx?.selectStepperState?.();
+    if (stepperState?.targetScope && uischema?.scope && stepperState.targetScope === uischema.scope && addressContainerRef.current) {
+      const addressInput = addressContainerRef.current.querySelector('goa-input[name="addressLine1"]');
+      if (addressInput) {
+        addressContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          if (typeof (addressInput as any).focus === 'function') {
+            (addressInput as any).focus();
+          }
+          const shadowRoot = (addressInput as any).shadowRoot;
+          if (shadowRoot) {
+            const actualInput = shadowRoot.querySelector('input');
+            if (actualInput instanceof HTMLElement) {
+              actualInput.focus();
+            }
+          }
+        }, 300);
+      }
+    }
+  }, [formStepperCtx?.selectStepperState?.()?.targetScope, uischema?.scope]);
+
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   return (
     <Visible visible={visible}>
+      <div ref={addressContainerRef}>
       {renderHelp()}
       <h3>{label}</h3>
       <GoabFormItem
@@ -261,6 +288,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
         handleOnBlur={handleRequiredFieldBlur}
         requiredFields={requiredFields}
       />
+      </div>
     </Visible>
   );
 };

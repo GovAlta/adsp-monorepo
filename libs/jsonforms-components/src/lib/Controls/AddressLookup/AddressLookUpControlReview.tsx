@@ -25,10 +25,9 @@ export const AddressLookUpControlReview = (props: AddressViewProps): JSX.Element
 };
 
 export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.Element => {
-  const { data, schema, uischema, path } = props;
+  const { data, schema, uischema, path, label, required } = props;
   const jsonForms = useJsonForms();
 
-  // eslint-disable-next-line
   const stepId = uischema.options?.stepId;
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const isAlbertaAddress = schema?.properties?.subdivisionCode?.const === 'AB';
@@ -95,7 +94,10 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
     return schema?.required?.includes(propName);
   };
 
-  const renderRow = (label: string, value: string | undefined, propName: string, showButton = true) => {
+  // Build the target scope for the address control
+  const targetScope = uischema?.scope || (path ? `#/properties/${path}` : undefined);
+
+  const renderRow = (label: string, value: string | undefined, propName: string, showButton = false) => {
     let error = getError(propName);
     const required = isRequired(propName);
 
@@ -104,18 +106,19 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
     }
 
     return (
-      <tr>
+      <tr key={propName}>
         <PageReviewContainer colSpan={3}>
           <ReviewHeader>
             <ReviewLabel>
               {label}
               {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
             </ReviewLabel>
-            {showButton && (
+            {showButton && stepId !== undefined && (
               <GoabButton
                 type="tertiary"
                 size="compact"
-                onClick={() => formStepperCtx?.goToPage(stepId, uischema.scope)}
+                onClick={() => formStepperCtx?.goToPage(stepId, targetScope)}
+                testId="address-change-btn"
               >
                 Change
               </GoabButton>
@@ -144,11 +147,11 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
           <ReviewLabel>{`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}</ReviewLabel>
         </PageReviewContainer>
       </tr>
-      {renderRow('Address line 1', data?.addressLine1, 'addressLine1')}
-      {data?.addressLine2 && renderRow('Address line 2', data.addressLine2, 'addressLine2')}
-      {renderRow('City', data?.municipality, 'municipality')}
-      {renderRow('Postal Code', data?.postalCode, 'postalCode')}
-      {renderRow('Province', provinceLabel, 'subdivisionCode')}
+      {renderRow('Address line 1', data?.addressLine1, 'addressLine1', true)}
+      {data?.addressLine2 && renderRow('Address line 2', data.addressLine2, 'addressLine2', false)}
+      {renderRow('City', data?.municipality, 'municipality', false)}
+      {renderRow('Postal Code', data?.postalCode, 'postalCode', false)}
+      {renderRow('Province', provinceLabel, 'subdivisionCode', false)}
       {renderRow('Country', 'Canada', 'country', false)}
     </>
   );
