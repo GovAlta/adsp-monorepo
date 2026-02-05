@@ -182,15 +182,20 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   // Handle focus when navigated from review page
   useEffect(() => {
     const stepperState = formStepperCtx?.selectStepperState?.();
-    if (stepperState?.targetScope && uischema?.scope && stepperState.targetScope === uischema.scope && addressContainerRef.current) {
+    if (
+      stepperState?.targetScope &&
+      uischema?.scope &&
+      stepperState.targetScope === uischema.scope &&
+      addressContainerRef.current
+    ) {
       const addressInput = addressContainerRef.current.querySelector('goa-input[name="addressLine1"]');
       if (addressInput) {
         addressContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setTimeout(() => {
-          if (typeof (addressInput as any).focus === 'function') {
-            (addressInput as any).focus();
+          if (typeof (addressInput as HTMLElement & { focus?: () => void }).focus === 'function') {
+            (addressInput as HTMLElement & { focus?: () => void }).focus();
           }
-          const shadowRoot = (addressInput as any).shadowRoot;
+          const shadowRoot = (addressInput as HTMLElement & { shadowRoot?: ShadowRoot }).shadowRoot;
           if (shadowRoot) {
             const actualInput = shadowRoot.querySelector('input');
             if (actualInput instanceof HTMLElement) {
@@ -200,94 +205,94 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
         }, 300);
       }
     }
-  }, [formStepperCtx?.selectStepperState?.()?.targetScope, uischema?.scope]);
+  }, [formStepperCtx, uischema?.scope]);
 
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   return (
     <Visible visible={visible}>
       <div ref={addressContainerRef}>
-      {renderHelp()}
-      <h3>{label}</h3>
-      <GoabFormItem
-        requirement={'required'}
-        label={'Street address or P.O. box'}
-        error={errors?.['addressLine1'] ?? ''}
-        data-testId="form-address-line1"
-      >
-        <SearchBox>
-          <div className="input-container">
-            <GoabInput
-              leadingIcon={autocompletion && enabled ? 'search' : undefined}
-              id="goaInput"
-              name="addressLine1"
-              testId="address-form-address1"
-              readonly={readOnly}
-              disabled={!enabled}
-              ariaLabel={'address-form-address1'}
-              placeholder="Start typing the first line of your address, required."
-              value={address?.addressLine1 || ''}
-              onChange={(detail: GoabInputOnChangeDetail) => handleDropdownChange(detail.value)}
-              onBlur={(detail: GoabInputOnBlurDetail) => handleRequiredFieldBlur(detail.name)}
-              width="100%"
-              onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
-                if (open) {
-                  const newIndex = handleAddressKeyDown(
-                    detail.key,
-                    detail.value,
-                    activeIndex,
-                    suggestions,
-                    (val) => handleInputChange('addressLine1', val),
-                    (suggestion) => handleSuggestionClick(suggestion)
-                  );
-                  setActiveIndex(newIndex);
-                }
-              }}
-            />
+        {renderHelp()}
+        <h3>{label}</h3>
+        <GoabFormItem
+          requirement={'required'}
+          label={'Street address or P.O. box'}
+          error={errors?.['addressLine1'] ?? ''}
+          data-testId="form-address-line1"
+        >
+          <SearchBox>
+            <div className="input-container">
+              <GoabInput
+                leadingIcon={autocompletion && enabled ? 'search' : undefined}
+                id="goaInput"
+                name="addressLine1"
+                testId="address-form-address1"
+                readonly={readOnly}
+                disabled={!enabled}
+                ariaLabel={'address-form-address1'}
+                placeholder="Start typing the first line of your address, required."
+                value={address?.addressLine1 || ''}
+                onChange={(detail: GoabInputOnChangeDetail) => handleDropdownChange(detail.value)}
+                onBlur={(detail: GoabInputOnBlurDetail) => handleRequiredFieldBlur(detail.name)}
+                width="100%"
+                onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
+                  if (open) {
+                    const newIndex = handleAddressKeyDown(
+                      detail.key,
+                      detail.value,
+                      activeIndex,
+                      suggestions,
+                      (val) => handleInputChange('addressLine1', val),
+                      (suggestion) => handleSuggestionClick(suggestion)
+                    );
+                    setActiveIndex(newIndex);
+                  }
+                }}
+              />
 
-            {loading && (
-              <div className="input-spinner">
-                <GoabSpinner type="infinite" size="small"></GoabSpinner>
-              </div>
+              {loading && (
+                <div className="input-spinner">
+                  <GoabSpinner type="infinite" size="small"></GoabSpinner>
+                </div>
+              )}
+            </div>
+            {!loading && suggestions && autocompletion && (
+              <ul ref={dropdownRef} className="suggestions">
+                {suggestions &&
+                  autocompletion &&
+                  open &&
+                  suggestions.map((suggestion, index) => (
+                    <ListItem
+                      data-index={index}
+                      key={index}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={() => {
+                        handleSuggestionClick(suggestion);
+                      }}
+                      selected={activeIndex}
+                      index={index}
+                      data-testId={`listItem-${index}`}
+                    >
+                      {`${suggestion.Text}  ${suggestion.Description}`}
+                    </ListItem>
+                  ))}
+              </ul>
             )}
-          </div>
-          {!loading && suggestions && autocompletion && (
-            <ul ref={dropdownRef} className="suggestions">
-              {suggestions &&
-                autocompletion &&
-                open &&
-                suggestions.map((suggestion, index) => (
-                  <ListItem
-                    data-index={index}
-                    key={index}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onClick={() => {
-                      handleSuggestionClick(suggestion);
-                    }}
-                    selected={activeIndex}
-                    index={index}
-                    data-testId={`listItem-${index}`}
-                  >
-                    {`${suggestion.Text}  ${suggestion.Description}`}
-                  </ListItem>
-                ))}
-            </ul>
-          )}
-        </SearchBox>
-      </GoabFormItem>
-      <br />
-      <AddressInputs
-        address={address}
-        errors={errors}
-        readOnly={readOnly}
-        enabled={enabled}
-        handleInputChange={handleInputChange}
-        isAlbertaAddress={isAlbertaAddress}
-        handleOnBlur={handleRequiredFieldBlur}
-        requiredFields={requiredFields}
-      />
+          </SearchBox>
+        </GoabFormItem>
+        <br />
+        <AddressInputs
+          address={address}
+          errors={errors}
+          readOnly={readOnly}
+          enabled={enabled}
+          handleInputChange={handleInputChange}
+          isAlbertaAddress={isAlbertaAddress}
+          handleOnBlur={handleRequiredFieldBlur}
+          requiredFields={requiredFields}
+        />
       </div>
     </Visible>
   );
