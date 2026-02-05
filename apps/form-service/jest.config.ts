@@ -5,7 +5,7 @@ const require = createRequire(import.meta.url);
 
 export default {
   displayName: 'form-service',
-  preset: '../../jest-cover.preset.js',
+  preset: './jest.preset.js',
   globals: {},
   testEnvironment: 'node',
   transform: {

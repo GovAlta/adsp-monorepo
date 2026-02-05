@@ -40,7 +40,10 @@ debug.log
 .DS_Store
 Thumbs.db
 
-# Dataa
+# jest-mongodb generated config
+globalConfig.json
+
+# Data
 /data
 
 # env file
