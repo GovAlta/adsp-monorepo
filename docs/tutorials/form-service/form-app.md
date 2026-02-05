@@ -57,3 +57,16 @@ When checked you will see a PDF Preview tab in on the right-hand pane of the edi
 ![](/adsp-monorepo/assets/form-service/PDF-download.png){: width="400" }
 
 **NOTE**: The download capability is only available to forms that require login. It is not available to anonymous forms.
+
+### ADSP form-app client audience
+
+To fetch summary PDF file, aud of the access token used in the form app must include <b>urn:ads:platform:form-service</b> and <b>urn:ads:platform:form-gateway</b>. Otherwise, the user will see 401 error message on the submission summary page.
+
+Based on the business logic, there are different ways to add the two audiences into access token. The most widely used method is to add the two audiences on <b>urn:ads:platform:form-app</b>. The following are the details:
+
+- Navigate to the client configuration of the <b>urn:ads:platform:form-app</b> client.
+- Click the <b>Client scopes</b> and choose the <b>urn:ads:platform:form-app-dedicated</b> scope.
+  ![](/adsp-monorepo/assets/form-service/form-app-client-scope.png){: width="600" }
+- Add the two audience mappers in the <b>urn:ads:platform:form-app-dedicated</b> scope. The configurations of the two audiences mappers are shown as follows.
+  ![](/adsp-monorepo/assets/form-service/form-service-aud-mapper.png){: width="400" }
+  ![](/adsp-monorepo/assets/form-service/form-gateway-aud-mapper.png){: width="400" }
