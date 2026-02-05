@@ -62,8 +62,8 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       assessorRoles: z.array(z.string()).default([]),
     }),
     outputSchema: z.object({
-      dataSchema: z.object({}),
-      uiSchema: z.object({}),
+      dataSchema: z.record(z.string(), z.unknown()),
+      uiSchema: z.record(z.string(), z.unknown()),
     }),
     execute: async (inputData, { requestContext }: { requestContext: AdspRequestContext<{ formDefinitionId: string }> }) => {
       const { formDefinitionName, dataSchema, uiSchema, anonymousApply, applicantRoles, assessorRoles } = inputData;
@@ -100,7 +100,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
         context: 'formConfigurationUpdateTool',
         tenant: tenantId?.toString(),
       });
-      return data;
+      return data?.latest?.configuration;
     },
   });
 

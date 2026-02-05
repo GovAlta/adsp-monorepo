@@ -30,6 +30,13 @@ export const formGenerationAgent: AgentConfiguration = {
     In the UI schema, use this documentation for reference: https://govalta.github.io/adsp-monorepo/tutorials/form-service/cheat-sheet.html
     In the UI schema, also use the documentation below as a reference.
 
+    Use the vertical layout as the root layout for simple forms and the pages layout for complex forms.
+
+    User may provide a procedure manual or help guide for the program by sending a file ID or URN;
+    file ID is expected to be a UUID, and URN is expected to be in the format urn:ads:platform:file-service:v1:/files/<file ID>.
+
+    Use the fileDownloadTool to download a file.
+
     # UI Schema Examples
     ## Text area
     Controls bound to string properties can be configured to show textarea instead of textbox using the \`multi\` option.
@@ -177,12 +184,30 @@ export const formGenerationAgent: AgentConfiguration = {
     }
     \`\`\`
 
-    Use the vertical layout as the root layout for simple forms and the pages layout for complex forms.
+    ## File upload
+    File upload is supported with a data schema with string property and format of \`file-urn\`.
 
-    User may provide a procedure manual or help guide for the program by sending a file ID or URN;
-    file ID is expected to be a UUID, and URN is expected to be in the format urn:ads:platform:file-service:v1:/files/<file ID>.
+    ### Data schema
+    \`\`\`json
+    {
+      "type": "object",
+      "properties": {
+        "photo": {
+          "type": "string",
+          "format": "file-urn"
+        }
+      }
+    }
+    \`\`\`
+    
+    ### UI schema
+    \`\`\`json
+    {
+      "type": "Control",
+      "scope": "#/properties/photo"
+    }
+    \`\`\`
 
-    Use the fileDownloadTool to download a file.
   `,
   tools: ['schemaDefinitionTool', 'formConfigurationRetrievalTool', 'formConfigurationUpdateTool', 'fileDownloadTool'],
   userRoles: ['urn:ads:platform:configuration-service:configuration-admin'],
