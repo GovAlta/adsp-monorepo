@@ -46,7 +46,7 @@ describe('FullNameControlReview', () => {
     render(
       <table>
         <tbody>
-          <JsonFormsStepperContext.Provider value={stepperContextValue as any}>
+          <JsonFormsStepperContext.Provider value={stepperContextValue}>
             <FullNameControlReview {...defaultProps} />
           </JsonFormsStepperContext.Provider>
         </tbody>
@@ -61,7 +61,7 @@ describe('FullNameControlReview', () => {
     render(
       <table>
         <tbody>
-          <JsonFormsStepperContext.Provider value={stepperContextValue as any}>
+          <JsonFormsStepperContext.Provider value={stepperContextValue}>
             <FullNameControlReview {...defaultProps} />
           </JsonFormsStepperContext.Provider>
         </tbody>
@@ -80,7 +80,7 @@ describe('FullNameControlReview', () => {
     render(
       <table>
         <tbody>
-          <JsonFormsStepperContext.Provider value={stepperContextValue as any}>
+          <JsonFormsStepperContext.Provider value={stepperContextValue}>
             <FullNameControlReview {...defaultProps} />
           </JsonFormsStepperContext.Provider>
         </tbody>
@@ -103,7 +103,7 @@ describe('FullNameControlReview', () => {
     render(
       <table>
         <tbody>
-          <JsonFormsStepperContext.Provider value={stepperContextValue as any}>
+          <JsonFormsStepperContext.Provider value={stepperContextValue}>
             <FullNameControlReview {...propsWithoutMiddleName} />
           </JsonFormsStepperContext.Provider>
         </tbody>
@@ -124,7 +124,7 @@ describe('FullNameControlReview', () => {
     render(
       <table>
         <tbody>
-          <JsonFormsStepperContext.Provider value={stepperContextValue as any}>
+          <JsonFormsStepperContext.Provider value={stepperContextValue}>
             <FullNameControlReview {...propsWithError} />
           </JsonFormsStepperContext.Provider>
         </tbody>
@@ -146,7 +146,7 @@ describe('FullNameControlReview', () => {
     render(
       <table>
         <tbody>
-          <JsonFormsStepperContext.Provider value={stepperContextValue as any}>
+          <JsonFormsStepperContext.Provider value={stepperContextValue}>
             <FullNameControlReview {...propsWithoutStepId} />
           </JsonFormsStepperContext.Provider>
         </tbody>
@@ -165,7 +165,7 @@ describe('FullNameControlReview', () => {
     render(
       <table>
         <tbody>
-          <JsonFormsStepperContext.Provider value={stepperContextValue as any}>
+          <JsonFormsStepperContext.Provider value={stepperContextValue}>
             <FullNameControlReview {...propsNotRequired} />
           </JsonFormsStepperContext.Provider>
         </tbody>
