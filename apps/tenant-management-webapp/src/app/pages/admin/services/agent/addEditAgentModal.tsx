@@ -27,6 +27,7 @@ interface AddEditAgentModalProps {
   open: boolean;
 }
 
+const defaultValue = { name: '', instructions: defaultInstructions, userRoles: [] };
 export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
   agent: initialValue,
   onCancel,
@@ -34,7 +35,6 @@ export const AddEditAgentModal: FunctionComponent<AddEditAgentModalProps> = ({
   open,
 }) => {
   //eslint-disable-next-line
-  const defaultValue = { name: '', instructions: defaultInstructions, userRoles: [] };
   const [agent, setAgent] = useState<Partial<AgentConfiguration>>(defaultValue);
   const dispatch = useDispatch();
   const roles = useSelector(selectRoleList);
