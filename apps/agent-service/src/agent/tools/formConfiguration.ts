@@ -19,8 +19,8 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
     description: 'Retrieve the JSON form configuration for a given form definition ID.',
     inputSchema: z.object({}),
     outputSchema: z.object({
-      dataSchema: z.object({}),
-      uiSchema: z.object({}),
+      dataSchema: z.record(z.string(), z.unknown()),
+      uiSchema: z.record(z.string(), z.unknown()),
       anonymousApply: z.boolean(),
       applicantRoles: z.array(z.string()),
       assessorRoles: z.array(z.string()),
@@ -42,7 +42,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
           Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
         },
       });
-      logger.info(`Form configuration for definition with ID ${formDefinitionId} retrieved.`, {
+      logger.info(`Form configuration for definition with ID ${formDefinitionId} retrieved: ${JSON.stringify(Object.keys(data))}.`, {
         context: 'formConfigurationUpdateTool',
         tenant: tenantId?.toString(),
       });
