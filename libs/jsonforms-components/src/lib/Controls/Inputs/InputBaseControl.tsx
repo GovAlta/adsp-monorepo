@@ -2,12 +2,13 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { GoabFormItem } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
-import { checkFieldValidity, getRequiredIfThen } from '../../util/stringUtils';
+import { checkFieldValidity } from '../../util/stringUtils';
 import { Visible } from '../../util';
 import { JsonFormRegisterProvider } from '../../Context/register';
 import { FormFieldWrapper } from './style-component';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
-
+import { isRequiredBySchema } from '../../util/requiredUtil';
+import { useJsonForms } from '@jsonforms/react';
 export type GoabInputType =
   | 'text'
   | 'password'
@@ -46,7 +47,8 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const showReviewLink = currentCategory?.showReviewPageLink;
 
   const [isVisited, setIsVisited] = useState(skipInitialValidation === true);
-
+  const { core } = useJsonForms();
+  const rootData = core?.data as any;
   useEffect(() => {
     if (showReviewLink === true && !isStepperReview) {
       setIsVisited(true);
@@ -87,16 +89,18 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   if (modifiedErrors === 'must be equal to one of the allowed values') {
     modifiedErrors = '';
   }
+  const requiredNow =
+    required ||
+    isRequiredBySchema(props.rootSchema as any, rootData, props.path, {
+      strategy: 'bestMatch',
+    });
 
   return (
     <JsonFormRegisterProvider defaultRegisters={undefined}>
       <Visible visible={visible}>
         <FormFieldWrapper ref={controlRef}>
           <GoabFormItem
-            requirement={
-              uischema?.options?.componentProps?.requirement ??
-              (required || getRequiredIfThen(props).length > 0 ? 'required' : undefined)
-            }
+            requirement={uischema?.options?.componentProps?.requirement ?? (requiredNow ? 'required' : undefined)}
             error={isVisited === true ? modifiedErrors : undefined}
             testId={isStepperReview === true ? `review-base-${path}` : path}
             label={props?.noLabel === true ? '' : labelToUpdate}
