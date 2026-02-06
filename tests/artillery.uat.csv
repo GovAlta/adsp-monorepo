@@ -1,2 +1,2 @@
 keycloak_url,realm_id,tenant_name,client_id,username
-https://access-uat.alberta.ca,2ef492af-0a16-470b-9ea5-c8bfa7b08a7c,autotest,artillery-cli,artillery-tester
+https://access-uat.alberta.ca,2ef492af-0a16-470b-9ea5-c8bfa7b08a7c,autotest,artillery-cli,artillery-user

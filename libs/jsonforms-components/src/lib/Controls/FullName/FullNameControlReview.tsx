@@ -17,16 +17,13 @@ type FullNameControlReviewProps = ControlProps;
 export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.Element => {
   const context = useContext(JsonFormsStepperContext);
   const stepId = props.uischema?.options?.stepId;
-  const { label, errors, required } = props;
+  const { label, errors, required, uischema, data, id } = props;
 
-  const renderRow = (label: string, value: string, testId: string) => (
-    <tr>
+  const renderRow = (fieldLabel: string, value: string, testId: string) => (
+    <tr key={testId}>
       <PageReviewContainer colSpan={3}>
         <ReviewHeader>
-          <ReviewLabel>{label}</ReviewLabel>
-          <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId)}>
-            Change
-          </GoabButton>
+          <ReviewLabel>{fieldLabel}</ReviewLabel>
         </ReviewHeader>
         <ReviewValue>
           <div data-testid={testId}>{value}</div>
@@ -39,10 +36,22 @@ export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.El
     <>
       <tr data-testid="full-name-header">
         <PageReviewContainer colSpan={3}>
-          <ReviewLabel>
-            {label}
-            {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
-          </ReviewLabel>
+          <ReviewHeader>
+            <ReviewLabel>
+              {label}
+              {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
+            </ReviewLabel>
+            {stepId !== undefined && (
+              <GoabButton
+                type="tertiary"
+                size="compact"
+                onClick={() => context?.goToPage(stepId, uischema.scope)}
+                testId="full-name-change-btn"
+              >
+                Change
+              </GoabButton>
+            )}
+          </ReviewHeader>
           {errors && (
             <WarningIconDiv>
               <GoabIcon type="warning" size="small" />
@@ -51,9 +60,9 @@ export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.El
           )}
         </PageReviewContainer>
       </tr>
-      {renderRow('First name', props.data?.firstName, `firstName-control-${props.id}`)}
-      {props.data?.middleName && renderRow('Middle name', props.data?.middleName, `middleName-control-${props.id}`)}
-      {renderRow('Last name', props.data?.lastName, `lastName-control-${props.id}`)}
+      {renderRow('First name', data?.firstName, `firstName-control-${id}`)}
+      {data?.middleName && renderRow('Middle name', data?.middleName, `middleName-control-${id}`)}
+      {renderRow('Last name', data?.lastName, `lastName-control-${id}`)}
     </>
   );
 };

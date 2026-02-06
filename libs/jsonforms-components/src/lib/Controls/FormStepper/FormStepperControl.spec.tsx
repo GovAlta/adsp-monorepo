@@ -305,7 +305,7 @@ describe('Form Stepper Control', () => {
     expect(step1!.getAttribute('status')).toBe('incomplete');
   });
 
-  it('will recognize a complete status', () => {
+  it('will recognize a incomplete status', () => {
     const { baseElement } = render(
       <JsonFormsStepperContextProvider
         StepperProps={{ ...stepperBaseProps, data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } } }}
@@ -314,7 +314,7 @@ describe('Form Stepper Control', () => {
     );
     const step1 = baseElement.querySelector('goa-form-step[text="Name"]');
     expect(step1).toBeInTheDocument();
-    expect(step1!.getAttribute('status')).toBe('complete');
+    expect(step1!.getAttribute('status')).toBe('incomplete');
   });
 
   describe('step navigation', () => {

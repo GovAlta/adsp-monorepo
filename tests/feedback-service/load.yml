@@ -4,46 +4,43 @@ config:
       target: 'https://feedback-service.adsp-dev.gov.ab.ca'
     uat:
       target: 'https://feedback-service.adsp-uat.alberta.ca'
+
+  # Processor handles Keycloak authentication + token caching
+  processor: ./processor.mjs
+
   defaults:
     headers:
       Content-Type: 'application/json'
       Accept: 'application/json'
+
+  # CSV payload containing Keycloak + tenant + user credentials
   payload:
-    - path: '../artillery.{{ $environment }}.csv'
+    - path: './artillery.{{ $environment }}.csv'
       skipHeader: true
       fields:
         - 'keycloak_url'
         - 'realm_id'
         - 'tenant_name'
         - 'client_id'
+        - 'username'
+
+  # Load phases
   phases:
     - name: warm up
-      duration: 2
-      arrivalCount: 22
+      duration: 10
+      arrivalCount: 20
+
     - name: load
-      duration: 2
-      arrivalCount: 2
-before:
-  flow:
-    - log: 'Getting the access token (tenant: {{ realm_id }}) for client {{ client_id }}'
-    - post:
-        url: '{{ keycloak_url }}/auth/realms/{{ realm_id }}/protocol/openid-connect/token'
-        headers:
-          Content-Type: 'application/x-www-form-urlencoded'
-          Accept: 'application/json'
-        form:
-          {
-            grant_type: 'client_credentials',
-            client_id: '{{ client_id }}',
-            client_secret: '{{ $processEnvironment.ARTILLERY_CLIENT_SECRET }}',
-          }
-        capture:
-          - json: '$.access_token'
-            as: token
+      duration: 1200
+      arrivalCount: 10000
+
 scenarios:
   - name: Submit a new comment to the artillery test website
     weight: 1
+    beforeScenario: beforeScenario
+
     flow:
+      # POST request to create feedback entry
       - post:
           url: '/feedback/v1/feedback'
           headers:

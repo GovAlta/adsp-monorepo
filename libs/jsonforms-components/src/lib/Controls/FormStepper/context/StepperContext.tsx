@@ -23,7 +23,7 @@ export interface JsonFormsStepperContextProps {
   selectIsActive: (id: number) => boolean;
   selectPath: () => string;
   selectCategory: (id: number) => CategoryState;
-  goToPage: (id: number, updateCategoryId?: number) => void;
+  goToPage: (id: number, targetScope?: string) => void;
   goToTableOfContext: () => void;
   toggleShowReviewLink: (id: number) => void;
   validatePage: (id: number) => void;
@@ -36,10 +36,9 @@ const createStepperContextInitData = (
 ): StepperContextDataType => {
   const { uischema, data, schema, ajv, t, path } = props;
   const categorization = uischema as Categorization;
-
+  const filteredErrors = ajv.errors && ajv.errors.filter((error) => error?.data != null);
   // run validation once, capture errors
   const valid = ajv.validate(schema, data || {});
-  const schemaErrors = ajv.errors ?? [];
 
   const isPage = uischema?.options?.variant === 'pages';
   const isCacheStatus = uischema.options?.cacheStatus;
@@ -51,7 +50,7 @@ const createStepperContextInitData = (
     const status = getStepStatus({
       scopes,
       data,
-      errors: ajv.errors ?? [],
+      errors: filteredErrors ?? [],
       schema,
     });
 
@@ -157,7 +156,7 @@ export const JsonFormsStepperContextProvider = ({
       },
 
       validatePage: doValidatePage,
-      goToPage: (id: number) => {
+      goToPage: (id: number, targetScope?: string) => {
         ajv.validate(schema, ctx.core?.data || {});
         // Only update the current category
         if (!stepperState.isOnReview && id < stepperState.categories.length) {
@@ -171,7 +170,7 @@ export const JsonFormsStepperContextProvider = ({
           type: 'validate/form',
           payload: { errors: ctx?.core?.errors },
         });
-        stepperDispatch({ type: 'page/to/index', payload: { id } });
+        stepperDispatch({ type: 'page/to/index', payload: { id, targetScope } });
       },
       toggleShowReviewLink: (id: number) => {
         stepperDispatch({

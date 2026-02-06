@@ -20,7 +20,7 @@ Platform services integrate into the foundational capabilities via a Software De
 Note that the SDK provides friendly interfaces on top of APIs. It is intended to speed up service development but is not the only way to access platform capabilities.
 
 ```bash
-npm i @govalta/adsp-service-sdk
+npm i @abgov/adsp-service-sdk
 ```
 
 ## Generating service
@@ -350,7 +350,7 @@ Parse and convert urns:
 ### Role-based authorization
 
 ### Platform health check
-Include platform service checks in the service health check endpoint.
+Include platform service checks in the service health check endpoint:
 ```typescript
   const {
     healthCheck,
@@ -363,18 +363,11 @@ Include platform service checks in the service health check endpoint.
   });
 ```
 
-### Errors and error handler
-Use a standard error handler:
-```typescript
-  import { createErrorHandler } from '@abgov/adsp-service-sdk';
-
-  const errorHandler = createErrorHandler(logger);
-  app.use(errorHandler);
-```
-
 ### Logging
 Import a standard logger for platform services:
 ```typescript
-  import { createLogger } from '@abgov/adsp-service-sdk';
-  const logger = createLogger('my-service', environment.LOG_LEVEL);
+  const {
+    logger,
+    ...sdkCapabilities,
+  } = await initializePlatform(parameters);
 ```

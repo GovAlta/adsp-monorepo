@@ -187,4 +187,100 @@ describe('AddressLoopUpControlTableReview', () => {
     expect(screen.getByText('10111 111 ave')).toBeInTheDocument();
     expect(screen.getByText('T6G 1E1')).toBeInTheDocument();
   });
+
+  it('should render Change button when stepId is provided', () => {
+    const propsWithStepId = {
+      ...defaultProps,
+      uischema: {
+        ...defaultProps.uischema,
+        options: {
+          ...defaultProps.uischema.options,
+          stepId: 'step-address',
+        },
+      },
+    };
+    renderComponent(propsWithStepId);
+    expect(screen.getByText('Change')).toBeInTheDocument();
+  });
+
+  it('should not render Change button when stepId is undefined', () => {
+    renderComponent();
+    expect(screen.queryByText('Change')).not.toBeInTheDocument();
+  });
+
+  it('should display required indicator for required fields', () => {
+    renderComponent();
+    const requiredLabels = screen.getAllByText(/\(required\)/);
+    expect(requiredLabels.length).toBeGreaterThan(0);
+  });
+
+  it('should render non-Alberta province correctly', () => {
+    const bcProps = {
+      data: {
+        addressLine1: '123 Test St',
+        municipality: 'Vancouver',
+        subdivisionCode: 'ON',
+        postalCode: 'M5H 2N2',
+        country: 'CAN',
+      },
+      schema: {
+        properties: {
+          subdivisionCode: {},
+        },
+      },
+    };
+    renderComponent(bcProps);
+    expect(screen.getByText('Ontario')).toBeInTheDocument();
+  });
+
+  it('should handle missing optional fields gracefully', () => {
+    const propsWithMissingOptional = {
+      data: {
+        addressLine1: '123 Test St',
+        municipality: 'Calgary',
+        subdivisionCode: 'AB',
+        postalCode: 'T2P 1A1',
+        country: 'CAN',
+        // addressLine2 is missing
+      },
+    };
+    renderComponent(propsWithMissingOptional);
+    expect(screen.getByText('123 Test St')).toBeInTheDocument();
+    expect(screen.getByText('Calgary')).toBeInTheDocument();
+  });
+
+  it('should display error messages when validation fails', () => {
+    const propsWithErrors = {
+      ...defaultProps,
+      data: {
+        addressLine1: '',
+        municipality: '',
+        subdivisionCode: 'AB',
+        postalCode: '',
+        country: 'CAN',
+      },
+    };
+    renderComponent(propsWithErrors);
+    // Component should still render without crashing
+    expect(screen.getByText('Alberta')).toBeInTheDocument();
+  });
+
+  it('should render with unknown province code', () => {
+    const propsWithUnknownProvince = {
+      data: {
+        addressLine1: '123 Test St',
+        municipality: 'Some City',
+        subdivisionCode: 'XX',
+        postalCode: 'A1A 1A1',
+        country: 'CAN',
+      },
+      schema: {
+        properties: {
+          subdivisionCode: {},
+        },
+      },
+    };
+    renderComponent(propsWithUnknownProvince);
+    expect(screen.getByText('XX')).toBeInTheDocument();
+  });
 });

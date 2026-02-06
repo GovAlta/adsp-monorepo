@@ -4,7 +4,6 @@ import { toDataPath } from '@jsonforms/core';
 
 import range from 'lodash/range';
 import React, { useRef, useLayoutEffect } from 'react';
-import pluralize from 'pluralize';
 import { Resolve } from '@jsonforms/core';
 import type { ErrorObject } from 'ajv';
 
@@ -1054,7 +1053,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
             {...additionalProps}
           />
         </div>
-        {this.state.currentListPage === 0 && data > 0 && (
+        {!showSecondaryButton && (
           <ObjectArrayToolBar
             data={data}
             errors={errors}

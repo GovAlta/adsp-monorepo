@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import { ControlProps, isEnabled } from '@jsonforms/core';
 import { GoabFormItem, GoabGrid } from '@abgov/react-components';
 import { NameInputs } from './FullNameInputs';
 import { TextWrapDiv } from '../AddressLookup/styled-components';
 import { Visible } from '../../util';
+import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
 
 type FullNameProps = ControlProps;
 export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
@@ -49,10 +51,14 @@ export const FullNameReviewControl = (props: FullNameProps): JSX.Element => {
 };
 
 export const FullNameControl = (props: FullNameProps): JSX.Element => {
-  const { data, path, schema, handleChange, enabled, visible } = props;
+  const { data, path, schema, handleChange, enabled, visible, uischema } = props;
   const requiredFields = (schema as { required: string[] }).required;
   const defaultName = {};
   const [nameData, setNameData] = useState(data || defaultName);
+  const controlRef = useRef<HTMLDivElement>(null);
+
+  const formStepperCtx = useContext(JsonFormsStepperContext);
+  const stepperState = (formStepperCtx as JsonFormsStepperContextProps)?.selectStepperState?.();
 
   const updateFormData = (updatedData: object) => {
     updatedData = Object.fromEntries(Object.entries(updatedData).filter(([_, value]) => value !== ''));
@@ -65,17 +71,48 @@ export const FullNameControl = (props: FullNameProps): JSX.Element => {
     updateFormData(updatedName);
   };
 
+  /* istanbul ignore next */
+  useEffect(() => {
+    if (stepperState?.targetScope && stepperState.targetScope === uischema.scope && controlRef.current) {
+      const inputElement = controlRef.current.querySelector('input, goa-input');
+
+      if (inputElement) {
+        controlRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        setTimeout(() => {
+          if (inputElement.tagName?.toLowerCase().startsWith('goa-')) {
+            (inputElement as any).focused = true;
+            if (typeof (inputElement as any).focus === 'function') {
+              (inputElement as any).focus();
+            }
+            const shadowRoot = (inputElement as any).shadowRoot;
+            if (shadowRoot) {
+              const actualInput = shadowRoot.querySelector('input');
+              if (actualInput instanceof HTMLElement) {
+                actualInput.focus();
+              }
+            }
+          } else if (inputElement instanceof HTMLElement) {
+            inputElement.focus();
+          }
+        }, 300);
+      }
+    }
+  }, [stepperState?.targetScope, uischema.scope]);
+
   return (
     <Visible visible={visible}>
-      <NameInputs
-        firstName={nameData.firstName}
-        middleName={nameData.middleName}
-        lastName={nameData.lastName}
-        handleInputChange={handleInputChange}
-        data={data}
-        disabled={!enabled}
-        requiredFields={requiredFields}
-      />
+      <div ref={controlRef}>
+        <NameInputs
+          firstName={nameData.firstName}
+          middleName={nameData.middleName}
+          lastName={nameData.lastName}
+          handleInputChange={handleInputChange}
+          data={data}
+          disabled={!enabled}
+          requiredFields={requiredFields}
+        />
+      </div>
     </Visible>
   );
 };
