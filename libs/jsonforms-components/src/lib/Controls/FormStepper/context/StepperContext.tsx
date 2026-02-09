@@ -79,6 +79,7 @@ const createStepperContextInitData = (
     isOnReview: activeId === categories?.length,
     isValid: valid === true,
     maxReachedStep: 0,
+    validationTrigger: 0,
   };
 };
 
@@ -157,19 +158,6 @@ export const JsonFormsStepperContextProvider = ({
 
       validatePage: doValidatePage,
       goToPage: (id: number, targetScope?: string) => {
-        ajv.validate(schema, ctx.core?.data || {});
-        // Only update the current category
-        if (!stepperState.isOnReview && id < stepperState.categories.length) {
-          stepperDispatch({
-            type: 'update/category',
-            payload: { errors: ctx?.core?.errors, id, ajv, schema, data },
-          });
-        }
-
-        stepperDispatch({
-          type: 'validate/form',
-          payload: { errors: ctx?.core?.errors },
-        });
         stepperDispatch({ type: 'page/to/index', payload: { id, targetScope } });
       },
       toggleShowReviewLink: (id: number) => {
