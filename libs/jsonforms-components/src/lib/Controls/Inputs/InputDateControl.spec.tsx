@@ -220,5 +220,124 @@ describe('input date controls', () => {
 
       expect(mockBlurHandler).toHaveBeenCalled();
     });
+
+    it('can set max date when allowPastDate is true and allowFutureDate is false', () => {
+      const props = {
+        ...staticProps,
+        uischema: {
+          ...staticProps.uischema,
+          options: {
+            ...staticProps.uischema.options,
+            allowPastDate: true,
+            allowFutureDate: false,
+          },
+        },
+      };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+      expect(input).toBeDefined();
+      expect(input.getAttribute('max')).toBeDefined();
+    });
+
+    it('can set min date when allowPastDate is false and allowFutureDate is true', () => {
+      const props = {
+        ...staticProps,
+        uischema: {
+          ...staticProps.uischema,
+          options: {
+            ...staticProps.uischema.options,
+            allowPastDate: false,
+            allowFutureDate: true,
+          },
+        },
+      };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+      expect(input).toBeDefined();
+      expect(input.getAttribute('min')).toBeDefined();
+    });
+
+    it('can handle min date with standardizeDate', () => {
+      const props = {
+        ...staticProps,
+        uischema: {
+          ...staticProps.uischema,
+          options: {
+            ...staticProps.uischema.options,
+            componentProps: {
+              min: '2023-02-01',
+              max: '2025-02-01',
+            },
+          },
+        },
+      };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+      expect(input).toBeDefined();
+      expect(input.getAttribute('min')).toBeDefined();
+      expect(input.getAttribute('max')).toBeDefined();
+    });
+
+    it('can handle when readonly is set', () => {
+      const props = {
+        ...staticProps,
+        uischema: {
+          ...staticProps.uischema,
+          options: {
+            ...staticProps.uischema.options,
+            componentProps: {
+              min: '2023-02-01',
+              max: '2025-02-01',
+              readOnly: true,
+            },
+          },
+        },
+      };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+      expect(input).toBeDefined();
+      expect(input.getAttribute('readonly')).toBe('true');
+    });
+
+    it('can handle when width is set', () => {
+      const props = {
+        ...staticProps,
+        uischema: {
+          ...staticProps.uischema,
+          options: {
+            ...staticProps.uischema.options,
+            componentProps: {
+              min: '2023-02-01',
+              max: '2025-02-01',
+              width: '50%',
+            },
+          },
+        },
+      };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoADateInput {...props} />
+        </JsonFormsContext.Provider>
+      );
+      const input = baseElement.querySelector("goa-input[testId='myDateId-input']");
+      expect(input).toBeDefined();
+      expect(input.getAttribute('width')).toBe('50%');
+    });
   });
 });
