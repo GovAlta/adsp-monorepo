@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ET
-from typing import List, Tuple
+from typing import List, Tuple, Any
 from xdp_parser.help_pairer import HelpPairer
 from xdp_parser.horizontal_grouper import HorizontalGrouper
 from xdp_parser.control_description_extractor import ControlDescriptionExtractor
@@ -8,11 +8,16 @@ from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.pseudo_radio_transformer import transform_pseudo_radios_in_subform
 from xdp_parser.subform_label import promote_group_headers
+from xdp_parser.visibility_rule_xformer import (
+    rewrite_rules_after_pseudo_radio_transform,
+)
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_group import XdpGroup
 from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_subform_placeholder import XdpSubformPlaceholder
 from xdp_parser.xdp_utils import convert_to_mm
+from xdp_parser.xdp_pseudo_radio import XdpPseudoRadio
+from visibility_rules.pipeline_context import CTX_JSONFORMS_RULES
 
 debug = False
 
@@ -90,6 +95,9 @@ class XdpGroupingPass:
         grouped_children = transform_pseudo_radios_in_subform(
             subform, grouped_children, self.context
         )
+        # Pseudo-radio transformation changes the data model (checkboxes -> radio).
+        # If rules were generated earlier against the checkbox model, rewrite them now.
+        rewrite_rules_after_pseudo_radio_transform(grouped_children, self.context)
 
         self.child_map[id(subform)] = grouped_children
 

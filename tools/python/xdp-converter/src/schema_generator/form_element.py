@@ -35,20 +35,18 @@ class FormElement(ABC):
     def update_label(self, label: str):
         self.label = label
 
-    def _find_visibility_rule(self, rules: dict) -> dict | None:
-        fq = getattr(self, "qualified_name", None)
-
+    def _find_visibility_rule(self, qualified_name: str, rules: dict) -> dict | None:
         # No path? No rule.
-        if not fq:
+        if not qualified_name:
             return None
 
         # Direct match
-        if fq in rules:
-            return rules[fq]
+        if qualified_name in rules:
+            return rules[qualified_name]
 
         # Prefix match (rule applies to a parent subform)
         for key, rule in rules.items():
-            if key and fq.startswith(key + "."):
+            if key and qualified_name.startswith(key + "."):
                 return rule
         return None
 
@@ -57,7 +55,7 @@ class FormElement(ABC):
         if not schema:
             return None
         rules = self.context.get(CTX_JSONFORMS_RULES) or {}
-        rule_entry = self._find_visibility_rule(rules)
+        rule_entry = self._find_visibility_rule(self.qualified_name, rules)
         if rule_entry is not None:
             schema["rule"] = rule_entry["rule"]
         return schema

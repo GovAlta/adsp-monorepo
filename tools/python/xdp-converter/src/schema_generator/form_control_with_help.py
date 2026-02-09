@@ -15,13 +15,19 @@ class FormControlWithHelp(FormElement):
         return self.control.build_ui_schema()
 
     def has_json_schema(self) -> bool:
+        # if self.control.has_json_schema():
+        #     print(f"{self.control.name} DATA schema found")
+        # else:
+        #     print(f"{self.control.name} DATA schema NOT found")
         return self.control.has_json_schema()
 
     def to_json_schema(self) -> JsonSchemaElement:
+        #        print(f"    writing data schema for {self.control.name}")
         return self.control.to_json_schema()
 
     def get_modified_control(self, control: XdpElement, _: XdpElement) -> FormElement:
         fe = control.to_form_element()
-        label = f"{control.get_label().label} ℹ️"
-        fe.update_label(label)
+        if control.get_label():
+            label = f"{control.get_label().label} ℹ️"
+            fe.update_label(label)
         return fe

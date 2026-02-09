@@ -1,7 +1,7 @@
 from schema_generator.form_element import FormElement
 from schema_generator.form_control_with_help import FormControlWithHelp
 from xdp_parser.xdp_help_text import XdpHelpText
-from xdp_parser.xdp_layout import XdpLayout  # wherever it lives
+from xdp_parser.xdp_layout import XdpLayout
 from xdp_parser.xdp_element import XdpElement
 
 debug = False

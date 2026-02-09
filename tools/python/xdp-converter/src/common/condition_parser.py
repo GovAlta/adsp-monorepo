@@ -6,7 +6,7 @@ Lightweight, pipeline-style condition parser for Adobe XDP JavaScript snippets.
 
 from dataclasses import dataclass
 import re
-from typing import Optional, List, Tuple
+from typing import Optional, List
 
 
 @dataclass

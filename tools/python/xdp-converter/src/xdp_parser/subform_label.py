@@ -49,7 +49,7 @@ def promote_group_headers(
             print("  First element has no text")
         return
 
+    first.promote_to_header()
     if debug:
-        first.promote_to_header()
         print(f"  Header is '{text}'")
     return

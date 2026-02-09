@@ -31,7 +31,6 @@ class XdpObjectArray(XdpElement):
                 children.append(fe)
         if children:
             return FormObjectArray(self.name, self.full_path, children, self.context)
-        print(f"[DEBUG] Object array {self.name} has no valid columns")
         return None
 
     def iter_descendants_for_footprint(self):
