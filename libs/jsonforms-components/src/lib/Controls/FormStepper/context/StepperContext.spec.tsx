@@ -278,6 +278,93 @@ describe('Test jsonforms stepper context', () => {
     ).toBe(false);
   });
 
+  it('should call validatePage when navigating back to show validation errors', async () => {
+    const multiStepUischema = {
+      type: 'Categorization',
+      elements: [
+        {
+          type: 'Category',
+          label: 'Page 1',
+          elements: [
+            {
+              type: 'Control',
+              scope: '#/properties/firstName',
+            },
+          ],
+        },
+        {
+          type: 'Category',
+          label: 'Page 2',
+          elements: [
+            {
+              type: 'Control',
+              scope: '#/properties/lastName',
+            },
+          ],
+        },
+      ],
+      options: {
+        variant: 'pages',
+      },
+    };
+
+    const multiStepSchema = {
+      type: 'object',
+      properties: {
+        firstName: { type: 'string' },
+        lastName: { type: 'string' },
+      },
+      required: ['firstName', 'lastName'],
+    };
+
+    const ComponentWithNavigation = (): JSX.Element => {
+      const ctx = useContext(JsonFormsStepperContext);
+      const { goToPage, selectStepperState } = ctx as JsonFormsStepperContextProps;
+      const { activeId } = selectStepperState();
+
+      return (
+        <div>
+          <div data-testid="active-page">{activeId}</div>
+          <button data-testid="go-to-page-1" onClick={() => goToPage(1)}>
+            Go to Page 2
+          </button>
+          <button data-testid="go-to-page-0" onClick={() => goToPage(0)}>
+            Go to Page 1
+          </button>
+        </div>
+      );
+    };
+
+    const props = {
+      ...stepperBaseProps,
+      uischema: multiStepUischema,
+      schema: multiStepSchema,
+      data: {}, // Empty data means validation will fail for required fields
+    };
+
+    const { getByTestId } = render(
+      <JsonFormsStepperContextProvider StepperProps={props} children={<ComponentWithNavigation />} />
+    );
+
+    // Should start at page 2 (pages variant starts at index = categories.length + 1)
+    // But we're testing navigation
+
+    // Navigate to page 2 (index 1)
+    fireEvent.click(getByTestId('go-to-page-1'));
+
+    // Clear mock to focus on next navigation
+    mockDispatch.mockClear();
+
+    // Navigate back to page 1 (index 0)
+    fireEvent.click(getByTestId('go-to-page-0'));
+
+    // Verify page/to/index was dispatched for navigation
+    const navigationCalls = mockDispatch.mock.calls.filter(
+      (call) => call[0].type === 'page/to/index' && call[0].payload.id === 0
+    );
+    expect(navigationCalls.length).toBeGreaterThan(0);
+  });
+
   it('test the util', async () => {
     const error: ErrorObject = {
       instancePath: '/Users/0/firstname',

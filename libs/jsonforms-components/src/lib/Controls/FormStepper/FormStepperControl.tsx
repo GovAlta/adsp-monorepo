@@ -55,7 +55,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
   const enumerators = useContext(JsonFormContext);
   const formStepperCtx = useContext(JsonFormsStepperContext);
 
-  const { activeId, categories, hasNextButton, hasPrevButton, isOnReview, isValid } = (
+  const { activeId, categories, hasNextButton, hasPrevButton, isOnReview, isValid, validationTrigger } = (
     formStepperCtx as JsonFormsStepperContextProps
   ).selectStepperState();
 
@@ -120,6 +120,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
                 renderers,
                 cells,
                 data,
+                validationTrigger,
               };
 
               return (

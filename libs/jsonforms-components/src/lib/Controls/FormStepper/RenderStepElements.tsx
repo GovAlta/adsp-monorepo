@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { JsonFormsCellRendererRegistryEntry, JsonFormsRendererRegistryEntry, JsonSchema } from '@jsonforms/core';
 import { JsonFormsDispatch } from '@jsonforms/react';
@@ -15,15 +15,18 @@ export interface StepProps {
   renderers: JsonFormsRendererRegistryEntry[] | undefined;
   cells: JsonFormsCellRendererRegistryEntry[] | undefined;
   data: Record<string, unknown>;
+  validationTrigger?: number;
 }
 export const RenderStepElements = (props: StepProps): JSX.Element => {
+  const memoizedSchema = useMemo(() => ({ ...props.schema }), [props.schema, props.validationTrigger]);
+
   return (
-    <Visible visible={props.visible} date-testid={`${props.path}-categories-${props.categoryIndex}`}>
+    <Visible visible={props.visible} data-testid={`${props.path}-categories-${props.categoryIndex}`}>
       {props.category.elements.map((uiSchema, index) => {
         return (
           <JsonFormsDispatch
             key={`${props.path}-category-page-${index}`}
-            schema={props.schema}
+            schema={memoizedSchema}
             uischema={uiSchema}
             renderers={props.renderers}
             cells={props.cells}
