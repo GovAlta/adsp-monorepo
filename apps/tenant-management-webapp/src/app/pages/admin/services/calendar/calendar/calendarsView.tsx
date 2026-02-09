@@ -11,6 +11,8 @@ import { fetchEventStreams } from '@store/stream/actions';
 import { ActionState } from '@store/session/models';
 import { DeleteConfirmationsView } from './deleteConfirmationsView';
 import { FetchEventsByCalendar } from '@store/calendar/actions';
+import { FetchRealmRoles } from '@store/tenant/actions';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 interface AddEditCalendarProps {
   activeEdit: boolean;
 }
@@ -24,6 +26,8 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
   useEffect(() => {
     dispatch(fetchCalendars());
     dispatch(fetchEventStreams());
+    dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
   }, [dispatch]);
 
   const { calendars } = useSelector((state: RootState) => state.calendarService);
