@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { ControlProps } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { AddressViews } from './AddressViews';
+import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import {
   PageReviewContainer,
@@ -52,6 +53,13 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
     ? 'Alberta'
     : provinces.find((p) => p.value === data?.subdivisionCode)?.label || data?.subdivisionCode;
 
+  function prettify(prop: string) {
+    return prop
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/[_-]/g, ' ')
+      .replace(/^./, (c) => c.toUpperCase());
+  }
+
   const getError = (propName: string) => {
     const normalizePath = (p: string) =>
       p
@@ -87,7 +95,22 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
       return undefined;
     };
 
-    return findMatchingError(jsonForms.core?.errors)?.message;
+    const matched = findMatchingError(jsonForms.core?.errors);
+    if (!matched) return undefined;
+
+    try {
+      return humanizeAjvError(matched, jsonForms.core?.schema as any, jsonForms.core?.uischema as any);
+    } catch (err) {
+      // fallback to parsing the raw message
+      const raw = matched.message;
+      if (raw?.includes("must have required property") || raw?.includes('is a required property')) {
+        const propertyMatch = raw.match(/'([^']+)'/);
+        if (propertyMatch && propertyMatch[1]) {
+          return prettify(propertyMatch[1]) + ' is required';
+        }
+      }
+      return raw;
+    }
   };
 
   const isRequired = (propName: string) => {

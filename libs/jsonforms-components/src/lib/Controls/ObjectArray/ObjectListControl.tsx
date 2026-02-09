@@ -27,6 +27,7 @@ import React, { useCallback, useContext, useEffect, useReducer, useState } from 
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { GoAReviewRenderers } from '../../../index';
 import { capitalizeFirstLetter, isEmptyBoolean, isEmptyNumber, Visible } from '../../util';
+import { humanizeAjvError } from './ListWithDetailControl';
 import {
   ADD_DATA_ACTION,
   Categories,
@@ -298,12 +299,44 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                           return y?.message?.includes(element) || y.instancePath.includes(element);
                         }) as { message: string };
 
+                        function prettify(prop: string) {
+                          return prop
+                            .replace(/([A-Z])/g, ' $1')
+                            .replace(/[_-]/g, ' ')
+                            .replace(/^./, (c) => c.toUpperCase());
+                        }
+
+                        // Create a human-friendly error message for rendering
+                        let humanMessage: string | undefined;
+                        if (error) {
+                          try {
+                            humanMessage = humanizeAjvError(error as ErrorObject, schema, uischema as any);
+                            if (
+                              typeof humanMessage === 'string' &&
+                              (humanMessage.includes("must have required property") || humanMessage.includes('is a required property'))
+                            ) {
+                              const propertyMatch = humanMessage.match(/'([^']+)'/);
+                              if (propertyMatch && propertyMatch[1]) {
+                                humanMessage = prettify(propertyMatch[1]) + ' is required';
+                              }
+                            }
+                          } catch (err) {
+                            const raw = (error as any).message as string;
+                            const propertyMatch = raw?.match(/'([^']+)'/);
+                            if (propertyMatch && propertyMatch[1]) {
+                              humanMessage = prettify(propertyMatch[1]) + ' is required';
+                            } else {
+                              humanMessage = raw;
+                            }
+                          }
+                        }
+
                         if (
-                          error?.message.includes('must NOT have fewer') &&
+                          (error as any)?.message?.includes('must NOT have fewer') &&
                           required.find((r) => r === schemaName) &&
                           (isEmptyBoolean(schema, currentData) || isEmptyNumber(schema, currentData))
                         ) {
-                          error.message = `${capitalizeFirstLetter(schemaName)} is required`;
+                          humanMessage = `${capitalizeFirstLetter(schemaName)} is required`;
                         }
 
                         if (isInReview === true) {
@@ -318,7 +351,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                     currentData !== '' && currentData !== null && currentData !== undefined
                                       ? currentData
                                       : undefined,
-                                  error: error?.message,
+                                  error: humanMessage,
                                   isRequired: required?.includes(tableKeys[element]) ?? false,
                                   errors: errors !== undefined ? errors : [],
                                   count: count !== undefined ? count : -1,
@@ -333,7 +366,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
 
                         return (
                           <td key={ix}>
-                            <GoabFormItem error={error?.message ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
+                            <GoabFormItem error={humanMessage ?? ''} mb={(errorRow && !error && '2xl') || 'xs'}>
                               {dataObject.enum ? (
                                 <GoabDropdown
                                   id={schemaName}
@@ -350,7 +383,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                   }}
                                   width="100%"
                                   ariaLabel={schemaName}
-                                  error={!!error?.message}
+                                  error={!!humanMessage}
                                 >
                                   {!required?.includes(schemaName) && (
                                     <GoabDropdownItem value="" label={`-- Select ${schemaName} --`} />
@@ -361,7 +394,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                 </GoabDropdown>
                               ) : dataObject.type === 'number' || (dataObject.type === 'string' && !dataObject.enum) ? (
                                 <GoabInput
-                                  error={error?.message.length > 0}
+                                  error={humanMessage ? humanMessage.length > 0 : false}
                                   type={dataObject.type === 'number' ? 'number' : 'text'}
                                   id={schemaName}
                                   name={schemaName}

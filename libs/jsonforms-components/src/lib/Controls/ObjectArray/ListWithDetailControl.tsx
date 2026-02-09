@@ -700,16 +700,59 @@ const MainTab = ({
         const field = resolveField(e);
 
         if (e.keyword === 'errorMessage' && e.params?.errors) {
+          const nestedErrors = e.params.errors as ErrorObject[];
           if (field) {
-            acc.fields[field] = e.message || 'Unknown error';
+            try {
+              acc.fields[field] = nestedErrors
+                .map((ne) => humanizeAjvError(ne, core.schema, core.uischema))
+                .join(', ');
+            } catch (err) {
+              // Fallback: if nestedErrors contain a missingProperty, use it
+              const missingFromNested = nestedErrors?.[0]?.params?.missingProperty;
+              if (missingFromNested) {
+                acc.fields[field] = prettify(missingFromNested) + ' is required';
+              } else {
+                const raw = e.message as string | undefined;
+                if (raw && (raw.includes("must have required property") || raw.includes('is a required property'))) {
+                  const m = raw.match(/'([^']+)'/);
+                  if (m && m[1]) acc.fields[field] = prettify(m[1]) + ' is required';
+                  else acc.fields[field] = raw;
+                } else {
+                  acc.fields[field] = raw || 'Unknown error';
+                }
+              }
+            }
           } else {
-            acc.row = e?.message || 'Unknown error';
+            try {
+              acc.row = nestedErrors.map((ne) => humanizeAjvError(ne, core.schema, core.uischema)).join(', ');
+            } catch (err) {
+              const missingFromNested = nestedErrors?.[0]?.params?.missingProperty;
+              if (missingFromNested) {
+                acc.row = prettify(missingFromNested) + ' is required';
+              } else {
+                const raw = e?.message as string | undefined;
+                if (raw && (raw.includes("must have required property") || raw.includes('is a required property'))) {
+                  const m = raw.match(/'([^']+)'/);
+                  if (m && m[1]) acc.row = prettify(m[1]) + ' is required';
+                  else acc.row = raw;
+                } else {
+                  acc.row = raw || 'Unknown error';
+                }
+              }
+            }
             return acc;
           }
         }
 
         if (!acc.fields[field]) {
-          acc.fields[field] = humanizeAjvError(e, core.schema, core.uischema);
+          let msg = humanizeAjvError(e, core.schema, core.uischema);
+          if (typeof msg === 'string' && (msg.includes('must have required property') || msg.includes("is a required property"))) {
+            const propertyMatch = msg.match(/'([^']+)'/);
+            if (propertyMatch && propertyMatch[1]) {
+              msg = prettify(propertyMatch[1]) + ' is required';
+            }
+          }
+          acc.fields[field] = msg;
         }
         return acc;
       },

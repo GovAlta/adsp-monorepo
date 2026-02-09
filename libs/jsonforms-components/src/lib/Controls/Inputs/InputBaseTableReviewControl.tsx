@@ -12,6 +12,7 @@ import {
 } from './style-component';
 import { convertToSentenceCase, getLastSegmentFromPointer } from '../../util';
 import { getLabelText } from '../../util/stringUtils';
+import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { GoabButton, GoabIcon } from '@abgov/react-components';
 
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
@@ -58,35 +59,56 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
       .replace(/^\./, '')
       .replace(/\//g, '.');
 
-  const findMatchingError = (currentErrors: ErrorObject[] | undefined): string | undefined => {
+  const findMatchingError = (currentErrors: ErrorObject[] | undefined): ErrorObject | undefined => {
     if (!currentErrors) return undefined;
     const normalizedPropPath = normalizePath(path || '');
 
     for (const e of currentErrors) {
       const errorPath = normalizePath((e as ErrorObject & { dataPath?: string }).dataPath || e.instancePath || '');
       if (errorPath === normalizedPropPath) {
-        return e.message;
+        return e;
       }
       if (e.keyword === 'required') {
         const missing = e.params?.missingProperty;
         if (missing) {
           const missingPath = errorPath ? `${errorPath}.${missing}` : missing;
           if (missingPath === normalizedPropPath) {
-            return e.message;
+            return e;
           }
         }
       }
       if (e.keyword === 'errorMessage' && e.params?.errors) {
-        const nested = findMatchingError(e.params.errors);
-        if (nested) return e.message;
+        const nested = findMatchingError(e.params.errors as ErrorObject[]);
+        if (nested) return nested;
       }
     }
     return undefined;
   };
-  let activeError = findMatchingError(jsonForms.core?.errors);
+
+  const matchedError = findMatchingError(jsonForms.core?.errors);
+  let activeError: string | undefined;
+  if (matchedError) {
+    try {
+      activeError = humanizeAjvError(matchedError, schema as any, uischema as any);
+    } catch (err) {
+      // Fallback: try to extract missing property name and create a friendly message
+      if (matchedError.keyword === 'required' && matchedError.params?.missingProperty) {
+        const missing = matchedError.params.missingProperty as string;
+        const missingPropertyLabel = convertToSentenceCase(missing);
+        activeError = `${missingPropertyLabel} is required`;
+      } else {
+        const propertyMatch = matchedError.message?.match(/'([^']+)'/);
+        if (propertyMatch && propertyMatch[1]) {
+          const missingPropertyLabel = convertToSentenceCase(propertyMatch[1]);
+          activeError = `${missingPropertyLabel} is required`;
+        } else {
+          activeError = matchedError.message;
+        }
+      }
+    }
+  }
+
   if (required && (data === undefined || data === null || data === '') && !activeError) {
-    activeError = `${labelToUpdate} is required`;
-  } else if (activeError?.includes('is a required property') || activeError?.includes('must have required property')) {
     activeError = `${labelToUpdate} is required`;
   }
 
