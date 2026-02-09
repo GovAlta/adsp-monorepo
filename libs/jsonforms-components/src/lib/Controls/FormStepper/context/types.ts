@@ -31,6 +31,7 @@ export interface StepperContextDataType {
   isValid: boolean;
   maxReachedStep: number; // track the max step reached
   targetScope?: string;
+  validationTrigger?: number;
 }
 
 export type CategorizationElement = Category | Categorization;

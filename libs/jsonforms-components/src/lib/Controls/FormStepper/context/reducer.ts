@@ -76,6 +76,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
         hasPrevButton: newActive !== 0,
         maxReachedStep: Math.max(state.maxReachedStep, activeId),
         targetScope,
+        validationTrigger: (state.validationTrigger || 0) + 1,
       };
     }
 

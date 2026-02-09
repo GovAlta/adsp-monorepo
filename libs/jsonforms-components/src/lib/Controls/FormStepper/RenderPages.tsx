@@ -21,7 +21,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const { goToPage, toggleShowReviewLink, goToTableOfContext, validatePage } =
     formStepperCtx as JsonFormsStepperContextProps;
-  const { categories, isOnReview, isValid, activeId } = (
+  const { categories, isOnReview, isValid, activeId, validationTrigger } = (
     formStepperCtx as JsonFormsStepperContextProps
   ).selectStepperState();
 
@@ -82,18 +82,16 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                   renderers,
                   cells,
                   data,
+                  validationTrigger,
                 };
 
-                if (index === activeId && !isOnReview) {
-                  const currentStep = index + 1 - categories.filter((c) => !c.visible && c.id < index).length;
-                  const totalSteps = categories.filter((c) => c.visible).length;
+                const currentStep = index + 1 - categories.filter((c) => !c.visible && c.id < index).length;
+                const totalSteps = categories.filter((c) => c.visible).length;
+                const isActive = index === activeId && !isOnReview;
 
-                  return (
-                    <div
-                      data-testid={`step_${index}-content-pages`}
-                      key={`${category.label}`}
-                      style={{ marginTop: '1.5rem' }}
-                    >
+                return (
+                  <Visible visible={isActive} key={`page-${category.id}`}>
+                    <div data-testid={`step_${index}-content-pages`} style={{ marginTop: '1.5rem' }}>
                       <PageRenderPadding>
                         <h3>
                           Step {currentStep} of {totalSteps}
@@ -151,8 +149,8 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                         </GoabGrid>
                       </PageRenderPadding>
                     </div>
-                  );
-                }
+                  </Visible>
+                );
               })
             }
 
