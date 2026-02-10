@@ -333,10 +333,8 @@ describe('Form Stepper Control', () => {
 
       fireEvent(nextButton!, new CustomEvent('_click'));
 
-      expect(mockDispatch.mock.calls[1][0].type === 'update/category');
-      expect(mockDispatch.mock.calls[1][0].payload.id === 0);
-      expect(mockDispatch.mock.calls[3][0].type === 'page/to/index');
-      expect(mockDispatch.mock.calls[3][0].id === 1);
+      const navigationDispatches = mockDispatch.mock.calls.filter((call) => call[0].type === 'page/to/index');
+      expect(navigationDispatches.length).toBeGreaterThan(0);
     });
 
     it('will hide Prev Nav button on 1st step', () => {

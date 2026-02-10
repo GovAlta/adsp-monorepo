@@ -2,7 +2,7 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import type { EventSearchCriteria } from '@store/event/models';
-
+import { distance } from 'fastest-levenshtein';
 import { getEventDefinitions } from '@store/event/actions';
 import styled from 'styled-components';
 import { GoabButton, GoabIconButton, GoabButtonGroup, GoabGrid, GoabFormItem } from '@abgov/react-components';
@@ -29,7 +29,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   const today = new Date().toLocaleDateString().split('/').reverse().join('-');
   const message = 'Use a colon (:) between namespace and name';
   const dispatch = useDispatch();
-
+  const [freeTextQuery, setFreeTextQuery] = useState('');
   useEffect(() => {
     dispatch(getEventDefinitions());
   }, [dispatch]);
@@ -39,31 +39,38 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
 
   const suggestionOnChange = (e) => {
     const userInput = e.target.value;
-    const unLinked = autoCompleteList.filter(
-      (suggestion) => suggestion.toLowerCase().indexOf(userInput.toLowerCase()) > -1
-    );
+
     setSearchBox(userInput);
-    setFilteredSuggestions(unLinked);
+    setFreeTextQuery(userInput);
+    setOpen(true);
+    setError(false);
+
+    const next = getSuggestions(autoCompleteList, userInput, 80);
+    setFilteredSuggestions(next);
     setActiveSuggestionIndex(0);
 
-    if (userInput.indexOf(':') === 0) {
-      setSearchCriteria({ ...searchCriteria, namespace: '', name: userInput.substr(1) });
-    } else if (userInput.indexOf(':') > 0) {
-      const nameAndSpace = userInput.split(':');
-      setSearchCriteria({ ...searchCriteria, namespace: nameAndSpace[0], name: nameAndSpace[1] });
+    if (userInput.includes(':')) {
+      const [ns, nm] = userInput.split(':');
+      setSearchCriteria({ ...searchCriteria, namespace: (ns ?? '').trim(), name: (nm ?? '').trim() });
     } else {
       setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
     }
   };
 
-  const setValue = (name: string, value: string) => {
-    setSearchCriteria({ ...searchCriteria, [name]: value });
-  };
-
   const selectSuggestion = (selectedValue: string) => {
+    if (!selectedValue) return;
+
     setSearchBox(selectedValue);
-    const nameAndSpace = selectedValue.split(':');
-    setSearchCriteria({ ...searchCriteria, namespace: nameAndSpace[0], name: nameAndSpace[1] });
+
+    const idx = selectedValue.indexOf(':');
+    const ns = idx >= 0 ? selectedValue.slice(0, idx) : '';
+    const nm = idx >= 0 ? selectedValue.slice(idx + 1) : selectedValue;
+
+    setSearchCriteria({
+      ...searchCriteria,
+      namespace: ns.trim(),
+      name: nm.trim(),
+    });
   };
 
   function handleItemOnClick(e, suggestion: string) {
@@ -72,6 +79,30 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     setFilteredSuggestions([suggestion]);
     setOpen(false);
   }
+  const resolveCriteriaFromInput = (input: string): EventSearchCriteria | null => {
+    const raw = (input ?? '').trim();
+    if (!raw) return null;
+
+    // If user typed namespace:name explicitly
+    if (raw.includes(':')) {
+      const idx = raw.indexOf(':');
+      const ns = raw.slice(0, idx).trim();
+      const nm = raw.slice(idx + 1).trim();
+      if (!ns || !nm) return null;
+      return { ...searchCriteria, namespace: ns, name: nm };
+    }
+
+    // Free-text: pick best fuzzy suggestion
+    const best = getSuggestions(autoCompleteList, raw, 1)[0];
+    if (!best) return null;
+
+    const idx = best.indexOf(':');
+    const ns = idx >= 0 ? best.slice(0, idx).trim() : '';
+    const nm = idx >= 0 ? best.slice(idx + 1).trim() : best.trim();
+    if (!ns || !nm) return null;
+
+    return { ...searchCriteria, namespace: ns, name: nm };
+  };
 
   const onKeyDown = (e) => {
     setError(false);
@@ -79,9 +110,21 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     if (e.keyCode === 9) {
       setOpen(false);
     } else if (e.keyCode === 13) {
-      setActiveSuggestionIndex(0);
+      e.preventDefault();
       setOpen(false);
-      selectSuggestion(filteredSuggestions[activeSuggestionIndex]);
+      setError(false);
+
+      const inputValue = (e.currentTarget as HTMLInputElement).value;
+
+      const resolved = resolveCriteriaFromInput(inputValue);
+
+      if (!resolved) {
+        setError(true);
+        return;
+      }
+      setSearchCriteria(resolved);
+      setSearchBox(`${resolved.namespace}:${resolved.name}`);
+      onSearch?.(resolved);
     } else if (e.keyCode === 38) {
       if (activeSuggestionIndex === 0) {
         return;
@@ -95,34 +138,108 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     }
   };
 
-  const validation = () => {
-    if (searchBox && searchBox.indexOf(':') < 0) {
-      setError(true);
-      return false;
+  function normalize(s: string): string {
+    return s
+      .toLowerCase()
+      // eslint-disable-next-line
+      .replace(/[_:\-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function scoreMatch(queryRaw: string, candidateRaw: string): number {
+    const q = normalize(queryRaw);
+    const c = normalize(candidateRaw);
+    const levenshteinAccuracyThread = 0.4;
+    if (!q) return 0;
+
+    const qTokens = q.split(' ').filter(Boolean);
+    const cTokens = c.split(' ').filter(Boolean);
+
+    // 1) Exact normalized substring (best)
+    if (c.includes(q)) return 100;
+
+    // 2) Prefix match on any token (makes "log" work for "login")
+    // Boost if matches earlier tokens
+    let prefixHits = 0;
+    for (const qt of qTokens) {
+      for (let i = 0; i < cTokens.length; i++) {
+        if (cTokens[i].startsWith(qt)) {
+          prefixHits++;
+          break;
+        }
+      }
     }
-    return true;
-  };
+    if (prefixHits > 0) return 80 + prefixHits * 5;
+
+    // 3) Loose contains match per token (for "train" in "training")
+    let containsHits = 0;
+    for (const qt of qTokens) {
+      if (c.includes(qt)) {
+        containsHits++;
+      }
+    }
+    if (containsHits > 0) return 60 + containsHits * 8;
+
+    // 4) Evaluate the similarity between the words to handle simple typo of search criteria.
+    if (q.length > 3) {
+      const word_distance = distance(q, c.slice(0, q.length));
+      const accuracy = 1 - word_distance / q.length;
+      if (accuracy > levenshteinAccuracyThread) {
+        return accuracy * 100;
+      }
+
+    }
+
+    return 0;
+  }
+
+  function getSuggestions(list: string[], input: string, limit = 50): string[] {
+    const q = input.trim();
+    if (!q) return list.slice(0, limit);
+
+    return list
+      .map((s) => ({ s, score: scoreMatch(q, s) }))
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map((x) => x.s);
+  }
 
   const renderHighlight = (suggestion) => {
-    const suggestIndex = suggestion.indexOf(searchBox);
-    if (suggestIndex === 0) {
+    if (!searchBox) return <span>{suggestion}</span>;
+
+    const hay = suggestion.toLowerCase();
+    const needle = searchBox.toLowerCase();
+    const i = hay.indexOf(needle);
+
+    if (i >= 0) {
       return (
         <span>
-          <strong>{suggestion.substr(0, searchBox.length)}</strong>
-          {suggestion.substr(searchBox.length)}
+          {suggestion.substr(0, i)}
+          <strong>{suggestion.substr(i, searchBox.length)}</strong>
+          {suggestion.substr(i + searchBox.length)}
         </span>
       );
-    } else if (suggestIndex > 0) {
-      return (
-        <span>
-          {suggestion.substr(0, suggestIndex)}
-          <strong>{suggestion.substr(suggestIndex, searchBox.length)}</strong>
-          {suggestion.substr(searchBox.length + suggestIndex)}
-        </span>
-      );
-    } else {
-      return;
     }
+    return <span>{suggestion}</span>;
+  };
+  const resolveCriteriaForSearch = (): EventSearchCriteria | null => {
+    // If already selected
+    if (searchCriteria.namespace?.trim() && searchCriteria.name?.trim()) return searchCriteria;
+
+    // Colon typed: rely on current parsing/validation
+    if (searchBox.includes(':')) return searchCriteria;
+
+    // Free-text: pick best suggestion
+    const best = getSuggestions(autoCompleteList, searchBox, 1)[0];
+    if (!best) return null;
+
+    const idx = best.indexOf(':');
+    const ns = idx >= 0 ? best.slice(0, idx).trim() : '';
+    const nm = idx >= 0 ? best.slice(idx + 1).trim() : best.trim();
+
+    return { ...searchCriteria, namespace: ns, name: nm };
   };
 
   return (
@@ -195,7 +312,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             )}
           </GoabFormItem>
         </SearchBox>
-        <GoabFormItem label="Minimum timestamp">
+        {/* <GoabFormItem label="Minimum timestamp">
           <DateTimeInput
             type="datetime-local"
             name="timestampMin"
@@ -216,7 +333,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             onChange={(e) => setValue('timestampMax', e.target.value)}
             onClick={() => setOpen(false)}
           />
-        </GoabFormItem>
+        </GoabFormItem> */}
       </GoabGrid>
       <GoabButtonGroup alignment="end">
         <GoabButton
@@ -231,13 +348,21 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
         >
           Reset
         </GoabButton>
-
         <GoabButton
           onClick={() => {
             setOpen(false);
-            if (validation()) {
-              onSearch(searchCriteria);
+            setError(false);
+
+            const resolved = resolveCriteriaFromInput(searchBox);
+
+            if (!resolved) {
+              setError(true);
+              return;
             }
+
+            setSearchCriteria(resolved);
+            setSearchBox(`${resolved.namespace}:${resolved.name}`);
+            onSearch?.(resolved);
           }}
         >
           Search
