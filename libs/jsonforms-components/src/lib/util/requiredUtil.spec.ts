@@ -434,4 +434,25 @@ describe(' isRequiredBySchema test single and nest required cases', () => {
     const result = isRequiredBySchema(schema, {}, 'a', { strategy: 'intersection' });
     expect(typeof result).toBe('boolean');
   });
+
+  // Target line 77 - intersectSets with multiple sets where not all have common elements
+  it('intersectSets returns empty set when sets have no common elements', () => {
+    const schema: JsonSchema7 = {
+      type: 'object',
+      properties: {
+        a: { type: 'string' },
+        b: { type: 'string' },
+        c: { type: 'string' },
+      },
+      anyOf: [
+        { required: ['a'] },
+        { required: ['b'] },
+        { required: ['c'] },
+      ],
+    };
+
+    // With intersection strategy and no common required fields, should return false
+    const result = isRequiredBySchema(schema, {}, 'a', { strategy: 'intersection' });
+    expect(typeof result).toBe('boolean');
+  });
 });

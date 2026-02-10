@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { ControlProps } from '@jsonforms/core';
+import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { AddressViews } from './AddressViews';
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
@@ -99,11 +99,15 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
     if (!matched) return undefined;
 
     try {
-      return humanizeAjvError(matched, jsonForms.core?.schema as any, jsonForms.core?.uischema as any);
+      return humanizeAjvError(
+        matched,
+        jsonForms.core?.schema as JsonSchema,
+        jsonForms.core?.uischema as UISchemaElement
+      );
     } catch (err) {
       // fallback to parsing the raw message
       const raw = matched.message;
-      if (raw?.includes("must have required property") || raw?.includes('is a required property')) {
+      if (raw?.includes('must have required property') || raw?.includes('is a required property')) {
         const propertyMatch = raw.match(/'([^']+)'/);
         if (propertyMatch && propertyMatch[1]) {
           return prettify(propertyMatch[1]) + ' is required';

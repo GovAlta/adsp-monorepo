@@ -310,10 +310,11 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                         let humanMessage: string | undefined;
                         if (error) {
                           try {
-                            humanMessage = humanizeAjvError(error as ErrorObject, schema, uischema as any);
+                            humanMessage = humanizeAjvError(error as ErrorObject, schema, uischema as UISchemaElement);
                             if (
                               typeof humanMessage === 'string' &&
-                              (humanMessage.includes("must have required property") || humanMessage.includes('is a required property'))
+                              (humanMessage.includes('must have required property') ||
+                                humanMessage.includes('is a required property'))
                             ) {
                               const propertyMatch = humanMessage.match(/'([^']+)'/);
                               if (propertyMatch && propertyMatch[1]) {
@@ -321,7 +322,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                               }
                             }
                           } catch (err) {
-                            const raw = (error as any).message as string;
+                            const raw = (error as unknown as { message?: string }).message as string;
                             const propertyMatch = raw?.match(/'([^']+)'/);
                             if (propertyMatch && propertyMatch[1]) {
                               humanMessage = prettify(propertyMatch[1]) + ' is required';
@@ -332,7 +333,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                         }
 
                         if (
-                          (error as any)?.message?.includes('must NOT have fewer') &&
+                          (error as unknown as { message?: string })?.message?.includes('must NOT have fewer') &&
                           required.find((r) => r === schemaName) &&
                           (isEmptyBoolean(schema, currentData) || isEmptyNumber(schema, currentData))
                         ) {

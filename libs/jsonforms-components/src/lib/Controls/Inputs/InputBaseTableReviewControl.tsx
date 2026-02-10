@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { ControlProps } from '@jsonforms/core';
+import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
@@ -89,7 +89,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
   let activeError: string | undefined;
   if (matchedError) {
     try {
-      activeError = humanizeAjvError(matchedError, schema as any, uischema as any);
+      activeError = humanizeAjvError(matchedError, schema as JsonSchema, uischema as UISchemaElement);
     } catch (err) {
       // Fallback: try to extract missing property name and create a friendly message
       if (matchedError.keyword === 'required' && matchedError.params?.missingProperty) {

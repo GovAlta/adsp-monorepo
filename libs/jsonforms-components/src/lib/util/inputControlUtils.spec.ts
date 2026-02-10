@@ -780,7 +780,7 @@ describe('onChangeForDateTimeControl', () => {
 
   it('should not call handleChange for null datetime value', () => {
     onChangeForDateTimeControl({
-      value: null as any,
+      value: null as unknown as string,
       controlProps: { ...baseControlProps } as ControlProps,
     });
   });
@@ -795,14 +795,14 @@ describe('onChangeForDateTimeControl', () => {
 
   it('should skip for numeric value datetime', () => {
     onChangeForDateTimeControl({
-      value: 123 as any,
+      value: 123 as unknown as string,
       controlProps: { ...baseControlProps } as ControlProps,
     });
   });
 
   it('should not call handleChange for undefined datetime value', () => {
     onChangeForDateTimeControl({
-      value: undefined as any,
+      value: undefined as unknown as string,
       controlProps: { ...baseControlProps } as ControlProps,
     });
   });
@@ -824,5 +824,15 @@ describe('onChangeForDateTimeControl', () => {
       controlProps: { ...baseControlProps, data: '2023-12-31T00:00:00.000Z' } as ControlProps,
     });
     expect(mockHandleChange).toHaveBeenCalled();
+  });
+
+  // Target line 202 - numeric control with null value
+  it('should handle null value in numeric control by calling handleChange with null', () => {
+    mockHandleChange.mockClear();
+    onChangeForNumericControl({
+      value: null,
+      controlProps: { ...baseControlProps, data: 42 } as ControlProps,
+    });
+    expect(mockHandleChange).toHaveBeenCalledWith('testPath', null);
   });
 });
