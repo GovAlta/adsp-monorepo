@@ -508,7 +508,7 @@ describe('humanizeAjvError', () => {
       params: { limit: 18 },
       message: '',
     };
-    expect(humanizeAjvError(error, schema, uischema)).toBe('Age must be ≥ 18');
+    expect(humanizeAjvError(error, schema, uischema)).toBe('Age must be greater than or equal to 18');
   });
 
   it('should handle "maximum" keyword', () => {
@@ -519,7 +519,7 @@ describe('humanizeAjvError', () => {
       params: { limit: 100 },
       message: '',
     };
-    expect(humanizeAjvError(error, schema, uischema)).toBe('Score must be ≤ 100');
+    expect(humanizeAjvError(error, schema, uischema)).toBe('Score must be less than or equal to 100');
   });
 
   it('should handle "type" keyword', () => {

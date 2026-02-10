@@ -18,7 +18,7 @@ export interface StepProps {
   validationTrigger?: number;
 }
 export const RenderStepElements = (props: StepProps): JSX.Element => {
-  const memoizedSchema = useMemo(() => ({ ...props.schema }), [props.schema, props.validationTrigger]);
+  const memoizedSchema = useMemo(() => ({ ...props.schema }), [props.schema]);
 
   return (
     <Visible visible={props.visible} data-testid={`${props.path}-categories-${props.categoryIndex}`}>
