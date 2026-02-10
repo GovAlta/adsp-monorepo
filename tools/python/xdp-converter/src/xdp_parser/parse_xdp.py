@@ -93,11 +93,6 @@ class XdpParser:
         # List-With-Detail
         if is_object_array(subform):
             row_fields = list(self.find_simple_controls(subform))
-            print(
-                f"find simple controls found {len(row_fields)} in subform {subform.get('name')}"
-            )
-            for e in row_fields:
-                print(f"  - {e.get_name()} ({type(e).__name__})")
             control = self.factory.handle_object_array(
                 subform, self.control_labels, row_fields
             )

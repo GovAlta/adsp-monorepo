@@ -10,18 +10,17 @@ class HorizontalGrouper:
         self,
         y_fuzz_mm=3.0,
         max_gap_mm=35.0,
-        debug=False,
     ):
         self.y_fuzz_mm = y_fuzz_mm
         self.max_gap_mm = max_gap_mm
-        self.debug = debug
 
     def consolidate_rows(
         self,
-        subform: ET.Element,
+        container: ET.Element,
         elements: list[XdpElement],
         context: ParseContext,
-    ):
+        debug=False,
+    ) -> list[XdpElement]:
         out = []
         row = []
         row_y = None
@@ -32,7 +31,7 @@ class HorizontalGrouper:
             if not row:
                 return
             if len(row) >= 2:
-                out.append(XdpRow(subform, row, context))
+                out.append(XdpRow(container, row, context))
             else:
                 out.append(row[0])
             row = []
@@ -40,22 +39,44 @@ class HorizontalGrouper:
             row_y = None
 
         for e in elements:
+
+            # Only controls can be row members; non-controls break the flow and get emitted as-is.
+            # This also means that containers that aren't explicitly marked as flow (e.g. subforms)
+            # won't get rowified, which is probably good since they often have more complex
+            # layouts that don't fit well into a simple row model.
             if not e.is_control():
+                if debug:
+                    print(f" {e.get_name()} is not a control, breaking flow")
+                flush_row()
+                out.append(e)
+                continue
+
+            # group container's elements, but don't consider them to be part of a row themselves.
+            if e.is_container() and e.has_children():
+                grouped_children = self.consolidate_rows(
+                    e.xdp_element, e.get_children(), context
+                )
+                e.set_children(grouped_children)
                 flush_row()
                 out.append(e)
                 continue
 
             bb = e.extended_footprint()
+            if debug:
+                print(f"    {e.get_name()} footprint: {bb}")
             if bb is None:
-                # can't rowify reliably; keep it as its own thing
                 flush_row()
                 out.append(e)
+                if debug:
+                    print(f"    {e.get_name()} has no footprint")
                 continue
 
             my = self.mid_y(e)
             lx = self.left_x(e)
 
             if not row:
+                if debug:
+                    print(f"    Starting new row with {e.get_name()} at y={my}")
                 row = [e]
                 row_y = my
                 prev = e
@@ -82,6 +103,10 @@ class HorizontalGrouper:
                 row.append(e)
                 prev = e
             else:
+                if debug:
+                    print(
+                        f"    Flushing row of {len(row)} elements due to new element {e.get_name()} at y={my} (ok_y={ok_y}, ok_gap={ok_gap}, ok_lr={ok_lr})"
+                    )
                 flush_row()
                 row = [e]
                 row_y = my

@@ -12,20 +12,23 @@ class XdpObjectArray(XdpElement):
         self,
         node,
         name: str,
-        columns: List[XdpElement],
+        children: List[XdpElement],
         labels: ControlLabels,
         context: ParseContext,
     ):
         super().__init__(node, labels, context)
         self.name = name
-        self.columns = columns
+        self.children = children
 
     def is_control(self):
         return True
 
+    def is_container(self):
+        return True
+
     def to_form_element(self) -> FormElement:
         children = []
-        for col in self.columns:
+        for col in self.children:
             fe = col.to_form_element()
             if fe:
                 children.append(fe)
@@ -34,4 +37,4 @@ class XdpObjectArray(XdpElement):
         return None
 
     def iter_descendants_for_footprint(self):
-        return list(self.columns)
+        return list(self.children)

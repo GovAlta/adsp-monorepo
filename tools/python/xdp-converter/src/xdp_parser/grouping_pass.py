@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ET
-from typing import List, Tuple, Any
+from typing import List, Tuple
 from xdp_parser.help_pairer import HelpPairer
 from xdp_parser.horizontal_grouper import HorizontalGrouper
 from xdp_parser.control_description_extractor import ControlDescriptionExtractor
@@ -13,11 +13,9 @@ from xdp_parser.visibility_rule_xformer import (
 )
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_group import XdpGroup
-from xdp_parser.xdp_help_text import XdpHelpText
+from xdp_parser.xdp_object_array import XdpObjectArray
 from xdp_parser.xdp_subform_placeholder import XdpSubformPlaceholder
 from xdp_parser.xdp_utils import convert_to_mm
-from xdp_parser.xdp_pseudo_radio import XdpPseudoRadio
-from visibility_rules.pipeline_context import CTX_JSONFORMS_RULES
 
 debug = False
 
@@ -58,19 +56,19 @@ class XdpGroupingPass:
         if not isinstance(node, XdpSubformPlaceholder):
             return [node]
 
-        subform = node.subform_elem
+        container = node.subform_elem
 
         grouped_children: List[XdpElement] = []
         for child in node.children:
             grouped_children.extend(self._group_node(child, parent_label=parent_label))
 
         # Sort
-        grouped_children = self.sort_elements_for_subform(
-            subform, grouped_children, self.context.get("parent_map", {})
+        grouped_children = self.sort_xdp_elements(
+            container, grouped_children, self.context.get("parent_map", {})
         )
 
         # Identify headers
-        promote_group_headers(subform, grouped_children, debug=False)
+        promote_group_headers(container, grouped_children, debug=False)
 
         self.control_labels.augment_labels_with_iconic_help(grouped_children)
 
@@ -88,18 +86,18 @@ class XdpGroupingPass:
 
         horizontal_grouper = HorizontalGrouper()
         grouped_children = horizontal_grouper.consolidate_rows(
-            subform, grouped_children, self.context
+            container, grouped_children, self.context
         )
 
         # Transform pseudo radio subforms into radio selectors
         grouped_children = transform_pseudo_radios_in_subform(
-            subform, grouped_children, self.context
+            container, grouped_children, self.context
         )
         # Pseudo-radio transformation changes the data model (checkboxes -> radio).
         # If rules were generated earlier against the checkbox model, rewrite them now.
         rewrite_rules_after_pseudo_radio_transform(grouped_children, self.context)
 
-        self.child_map[id(subform)] = grouped_children
+        self.child_map[id(container)] = grouped_children
 
         # Decide grouping using sorted children
         # if self.should_group_subform(subform, grouped_children, resolved_label):
@@ -110,19 +108,39 @@ class XdpGroupingPass:
 
         return grouped_children
 
-    @staticmethod
-    def sort_elements_for_subform(
-        subform: ET.Element,
+    def sort_xdp_elements(
+        self,
+        container: ET.Element,
         elements: List[XdpElement],
         parent_map: dict,
+        debug: bool = False,
     ) -> List[XdpElement]:
-        layout = XdpGroupingPass.resolve_effective_layout(subform, parent_map)
+
+        # Pre-sort ListWithDetail's internal fields
+        for e in elements:
+            if e.is_container() and e.has_children():
+                detail_container: ET.Element = e.xdp_element
+                detail_fields: List[XdpElement] = e.children
+                if debug:
+                    print(f"Before sort of {e.get_name()}")
+                    for c in e.get_children():
+                        print(f"    {c.get_name()} x={c.x} y={c.y} w={c.w} h={c.h}")
+                children = self.sort_xdp_elements(
+                    detail_container, detail_fields, parent_map, 1
+                )
+                e.set_children(children)
+                if debug:
+                    print(f"After sort of {e.get_name()}")
+                    for c in e.get_children():
+                        print(f"    {c.get_name()} x={c.x} y={c.y} w={c.w} h={c.h}")
+
+        layout = XdpGroupingPass.resolve_effective_layout(container, parent_map)
 
         if layout == "tb":
             return XdpGroupingPass._flow_sort_tb(elements)
 
         if layout == "lr-tb":
-            return XdpGroupingPass._flow_sort_lr_tb(subform, elements)
+            return XdpGroupingPass._flow_sort_lr_tb(container, elements)
 
         # Non-flow containers: geometry sort
         return sorted(
@@ -134,8 +152,8 @@ class XdpGroupingPass:
         )
 
     @staticmethod
-    def resolve_effective_layout(subform: ET.Element, parent_map: dict) -> str:
-        cur = subform
+    def resolve_effective_layout(container: ET.Element, parent_map: dict) -> str:
+        cur = container
         while cur is not None:
             raw = cur.get("layout")
             if raw:
@@ -145,9 +163,9 @@ class XdpGroupingPass:
 
     @staticmethod
     def _flow_sort_lr_tb(
-        subform: ET.Element, elements: List["XdpElement"]
+        container: ET.Element, elements: List["XdpElement"]
     ) -> List["XdpElement"]:
-        sub_w = convert_to_mm(subform.get("w"))
+        sub_w = convert_to_mm(container.get("w"))
         if sub_w is None:
             widths = [e.w for e in elements if e.w is not None]
             sub_w = max(widths) if widths else 190.5
@@ -166,6 +184,8 @@ class XdpGroupingPass:
                 and e.x is not None
                 and e.y is not None
             ):
+                e.computed_x = float(e.geometry.x)
+                e.computed_y = float(e.geometry.y)
                 placed.append((float(e.y), float(e.x), idx, e))
                 continue
 
@@ -180,6 +200,9 @@ class XdpGroupingPass:
 
             px = cursor_x
             py = cursor_y
+            e.computed_x = px
+            e.computed_y = py
+
             placed.append((py, px, idx, e))
 
             cursor_x += w
@@ -192,22 +215,33 @@ class XdpGroupingPass:
     def _flow_sort_tb(elements: List["XdpElement"]) -> List["XdpElement"]:
         """
         tb layout:
-        - Elements with explicit Y are positioned (absolute-ish) and do NOT consume flow.
-        - Elements without explicit Y are flow items; they stack from the top in document order.
+        - Elements with explicit Y are positioned and do NOT consume flow.
+        - Elements with explicit X (columnar layouts) are also treated as positioned.
+        - Elements with neither explicit X nor explicit Y are true flow items.
         """
         flow_cursor_y: float = 0.0
         placed: List[Tuple[float, float, int, "XdpElement"]] = []
 
         for idx, e in enumerate(elements):
-            if e.has_explicit_y and e.y is not None:
-                sy = float(e.y)  # positioned element: honor y
-            else:
-                sy = flow_cursor_y  # flow element: place at flow cursor
-                flow_cursor_y += (
-                    e.effective_height()
-                )  # ONLY flow items advance the cursor
+            is_positioned = (e.has_explicit_y and e.y is not None) or (
+                e.has_explicit_x and e.x is not None
+            )
 
-            sx = float(e.x) if e.x is not None else float("inf")
+            if is_positioned:
+                # Keep the resolved geometry coordinates (accumulated from ancestors).
+                sy = float(e.y) if e.y is not None else flow_cursor_y
+            else:
+                # True flow item: stack vertically
+                sy = flow_cursor_y
+                flow_cursor_y += e.effective_height()
+
+            # For TB: missing X means "left edge", not infinity
+            sx = float(e.x) if e.x is not None else 0.0
+
+            # Persist computed positions for footprint fallback
+            e.computed_y = sy
+            e.computed_x = sx
+
             placed.append((sy, sx, idx, e))
 
         placed.sort(key=lambda t: (t[0], t[1], t[2]))  # stable

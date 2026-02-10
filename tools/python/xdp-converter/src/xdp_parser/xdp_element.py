@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
@@ -13,14 +13,17 @@ from xdp_parser.xdp_utils import compute_full_xdp_path, convert_to_mm
 
 
 class XdpElement(ABC):
-    def __init__(self, xdp, labels=None, context: ParseContext = None):
+    def __init__(self, xdp: ET.Element, labels=None, context: ParseContext = None):
         self.xdp_element = xdp
+        self.children: list[ET.Element] = []
         self.labels = labels
         self.context = context or {}
         self.parent_map = context.get("parent_map", {}) if context else {}
         self.geometry: XdpGeometry = XdpGeometry.resolve(xdp, self.parent_map)
         self.presence = xdp.get("presence", "").strip().lower()
         self.is_header_element = False
+        self.computed_x: float | None = None
+        self.computed_y: float | None = None
 
     def get_full_path(self) -> str:
         return compute_full_xdp_path(self.xdp_element, self.parent_map)
@@ -68,9 +71,17 @@ class XdpElement(ABC):
 
     def footprint(self):
         """(x1, y1, x2, y2) or None if insufficient geometry."""
-        if self.x is None or self.y is None or self.w is None or self.h is None:
+        g = self.geometry
+
+        x = g.x if g and g.x is not None else self.computed_x
+        y = g.y if g and g.y is not None else self.computed_y
+        w = g.w if g else None
+        h = g.h if g else None
+
+        if x is None or y is None or w is None or h is None:
             return None
-        return (self.x, self.y, self.x + self.w, self.y + self.h)
+
+        return (x, y, x + w, y + h)
 
     # Center point of the element
     def center(self):
@@ -102,13 +113,13 @@ class XdpElement(ABC):
         if fp:
             return fp
 
-        kids = list(self.iter_descendants_for_footprint())
+        kids: list[XdpElement] = list(self.iter_descendants_for_footprint())
         if not kids:
             return None
 
         footprints = []
         for k in kids:
-            kb = k.footprint()
+            kb = k.extended_footprint()
             if kb:
                 footprints.append(kb)
 
@@ -156,11 +167,23 @@ class XdpElement(ABC):
     def get_type(self):
         return "string"
 
+    def get_children(self) -> list[XdpElement]:
+        return self.children
+
+    def set_children(self, children: list[XdpElement]):
+        self.children = children
+
+    def has_children(self) -> bool:
+        return len(self.children) > 0
+
     def is_control(self):
         return False  # default
 
     def is_header(self) -> bool:
         return self.is_header_element
+
+    def is_container(self):
+        return False
 
     # override in subclasses as needed
     def can_promote_to_header(self) -> bool:
@@ -273,15 +296,15 @@ class XdpGeometry:
     has_explicit_y: bool = False
 
     @classmethod
-    def resolve(cls, node, parent_map) -> "XdpGeometry":
+    def resolve(cls, node: ET.Element, parent_map: dict) -> "XdpGeometry":
         curr = node
         acc_x = 0.0
         acc_y = 0.0
         saw_any = False
 
         # these are "explicit on THIS node"
-        explicit_x = node.get("x") is not None
-        explicit_y = node.get("y") is not None
+        has_explicit_x = node.get("x") is not None
+        has_explicit_y = node.get("y") is not None
 
         w = convert_to_mm(node.get("w"))
         h = convert_to_mm(node.get("h"))
@@ -307,8 +330,8 @@ class XdpGeometry:
                 w=w,
                 h=h,
                 layout=layout,
-                has_explicit_x=explicit_x,
-                has_explicit_y=explicit_y,
+                has_explicit_x=has_explicit_x,
+                has_explicit_y=has_explicit_y,
             )
 
         return cls(
@@ -317,8 +340,8 @@ class XdpGeometry:
             w=w,
             h=h,
             layout=layout,
-            has_explicit_x=explicit_x,
-            has_explicit_y=explicit_y,
+            has_explicit_x=has_explicit_x,
+            has_explicit_y=has_explicit_y,
         )
 
     @classmethod
@@ -333,6 +356,8 @@ class XdpGeometry:
             w=convert_to_mm(xdp.get("w")),
             h=convert_to_mm(xdp.get("h")),
             layout=xdp.get("layout"),
+            has_explicit_x=xdp.get("x") is not None,
+            has_explicit_y=xdp.get("y") is not None,
         )
 
     @classmethod
