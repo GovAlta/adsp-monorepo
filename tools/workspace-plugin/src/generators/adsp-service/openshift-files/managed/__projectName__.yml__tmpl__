@@ -107,11 +107,11 @@ objects:
                     name: ${APP_NAME}
               env:
                 - name: PORT
-                  value: "3333"
+                  value: "<%= port %>"
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               ports:
-                - containerPort: 3333
+                - containerPort: <%= port %>
                   name: http
                   protocol: TCP
               resources:
@@ -148,9 +148,9 @@ objects:
     spec:
       ports:
         - name: http
-          port: 3333
+          port: <%= port %>
           protocol: TCP
-          targetPort: 3333
+          targetPort: <%= port %>
       selector:
         app: ${APP_NAME}
         component: api

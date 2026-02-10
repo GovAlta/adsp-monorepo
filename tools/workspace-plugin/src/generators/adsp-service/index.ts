@@ -9,7 +9,6 @@ import {
   readProjectConfiguration,
 } from '@nx/devkit';
 import { applicationGenerator } from '@nx/express';
-import { Linter } from '@nx/eslint';
 import * as path from 'path';
 import { NormalizedSchema, Schema } from './schema';
 
@@ -52,8 +51,9 @@ export default async function (host: Tree, { name, displayName, port }: Schema) 
     skipPackageJson: true,
     js: false,
     unitTestRunner: 'jest',
-    linter: Linter.EsLint,
+    linter: 'eslint',
     pascalCaseFiles: false,
+    e2eTestRunner: 'none',
   } as Parameters<typeof applicationGenerator>[1]);
 
   host.delete(`${projectRoot}/src/environments/environment.prod.ts`);

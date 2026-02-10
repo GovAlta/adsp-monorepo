@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { GoabButton, GoabButtonGroup, GoabModal, GoabTextArea, GoabInput, GoabFormItem } from '@abgov/react-components';
 import { CalendarItem } from '@store/calendar/models';
 import { useSelector, useDispatch } from 'react-redux';
@@ -39,21 +39,36 @@ export const CalendarModal = ({
   const isNew = !((calendarName?.length ?? 0) > 0);
   const initialValue = useSelector((state: RootState) => selectCalendarsByName(state, calendarName));
 
-  const [calendar, setCalendar] = useState<CalendarItem>(initialValue);
+  const [calendar, setCalendar] = useState<CalendarItem>(
+    () =>
+      initialValue || {
+        name: '',
+        displayName: '',
+        description: '',
+        readRoles: [],
+        updateRoles: [],
+      }
+  );
   const dispatch = useDispatch();
   const roles = useSelector(selectRoleList);
   const scrollPaneRef = useRef<HTMLDivElement>(null);
   const descErrMessage = 'Calendar description can not be over 180 characters';
+
   useEffect(() => {
-    dispatch(FetchRealmRoles());
-    dispatch(fetchKeycloakServiceRoles());
-  }, [dispatch]);
+    if (initialValue) {
+      setCalendar(initialValue);
+    }
+  }, [initialValue]);
 
   const calendars = useSelector((state: RootState) => {
     return state?.calendarService?.calendars;
   });
 
-  const calendarNames = calendars ? Object.values(calendars).map((c) => c.displayName) : [];
+  const calendarNames = useMemo(
+    () => (calendars ? Object.values(calendars).map((c) => c.displayName) : []),
+    [calendars]
+  );
+
   const title = isNew ? 'Add calendar' : tenantMode ? 'Edit calendar' : 'View calendar details';
 
   const { errors, validators } = useValidators(
@@ -94,33 +109,32 @@ export const CalendarModal = ({
     }
     validators.clear();
   };
-  const ClientRole = ({ roleNames, clientId }) => {
-    return (
-      <ClientRoleTable
-        roles={roleNames}
-        clientId={clientId}
-        roleSelectFunc={(roles, type) => {
-          if (type === 'read') {
-            setCalendar({
-              ...calendar,
-              readRoles: roles,
-            });
-          } else {
-            setCalendar({
-              ...calendar,
-              updateRoles: roles,
-            });
-          }
-        }}
-        nameColumnWidth={80}
-        service="Calendar"
-        checkedRoles={[
-          { title: 'read', selectedRoles: calendar?.readRoles, disabled: !tenantMode },
-          { title: 'modify', selectedRoles: calendar?.updateRoles, disabled: !tenantMode },
-        ]}
-      />
-    );
-  };
+  const handleRoleSelect = useCallback((roles, type) => {
+    if (type === 'read') {
+      setCalendar((prev) => ({
+        ...prev,
+        readRoles: roles,
+      }));
+    } else {
+      setCalendar((prev) => ({
+        ...prev,
+        updateRoles: roles,
+      }));
+    }
+  }, []);
+
+  const roleTableProps = useMemo(
+    () => ({
+      roleSelectFunc: handleRoleSelect,
+      nameColumnWidth: 80,
+      service: 'Calendar',
+      checkedRoles: [
+        { title: 'read', selectedRoles: calendar?.readRoles, disabled: !tenantMode },
+        { title: 'modify', selectedRoles: calendar?.updateRoles, disabled: !tenantMode },
+      ],
+    }),
+    [handleRoleSelect, calendar?.readRoles, calendar?.updateRoles, tenantMode]
+  );
 
   const handleCancelClick = () => {
     setCalendar(initialValue);
@@ -211,7 +225,9 @@ export const CalendarModal = ({
 
         {Array.isArray(roles) &&
           roles.length !== 0 &&
-          roles.map((r) => <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />)}
+          roles.map((r) => (
+            <ClientRoleTable key={r.clientId} roles={r.roleNames} clientId={r.clientId} {...roleTableProps} />
+          ))}
 
         {Array.isArray(roles) && roles.length === 0 && <TextGoASkeleton />}
       </div>
