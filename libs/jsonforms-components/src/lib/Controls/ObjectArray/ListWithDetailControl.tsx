@@ -131,7 +131,7 @@ const GenerateRows = (
   rowPath: string,
   enabled: boolean,
   cells?: JsonFormsCellRendererRegistryEntry[],
-  uischema?: ControlElement
+  uischema?: ControlElement,
 ) => {
   if (schema?.type === 'object') {
     const props = {
@@ -272,41 +272,37 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
 
   return (
     <>
-      {
-        // eslint-disable-next-line
-        (uischema as Layout)?.elements?.map((element: UISchemaElement, index) => {
-          return (
-            <JsonFormsDispatch
-              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-              key={`${rowPath}-${index}`}
-              schema={schema}
-              uischema={element}
-              path={`${rowPath}`}
-              enabled={enabled}
-              renderers={renderers}
-              cells={cells}
-            />
-          );
-        })
-      }
+      {// eslint-disable-next-line
+      (uischema as Layout)?.elements?.map((element: UISchemaElement, index) => {
+        return (
+          <JsonFormsDispatch
+            data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+            key={`${rowPath}-${index}`}
+            schema={schema}
+            uischema={element}
+            path={`${rowPath}`}
+            enabled={enabled}
+            renderers={renderers}
+            cells={cells}
+          />
+        );
+      })}
 
-      {
-        // eslint-disable-next-line
-        (uischema as Layout)?.options?.detail?.elements?.map((element: UISchemaElement, index: number) => {
-          return (
-            <JsonFormsDispatch
-              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-              key={`${rowPath}-${index}`}
-              schema={schema}
-              uischema={element}
-              path={rowPath}
-              enabled={enabled}
-              renderers={renderers}
-              cells={cells}
-            />
-          );
-        })
-      }
+      {// eslint-disable-next-line
+      (uischema as Layout)?.options?.detail?.elements?.map((element: UISchemaElement, index: number) => {
+        return (
+          <JsonFormsDispatch
+            data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+            key={`${rowPath}-${index}`}
+            schema={schema}
+            uischema={element}
+            path={rowPath}
+            enabled={enabled}
+            renderers={renderers}
+            cells={cells}
+          />
+        );
+      })}
 
       {hasNoElements() && uiSchemaElementsForNotDefined?.elements?.length > 0 && (
         <JsonFormsDispatch
@@ -480,7 +476,7 @@ function getValue(obj: unknown, path: string): unknown {
     .split('.')
     .reduce<unknown>(
       (acc, key) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined),
-      obj
+      obj,
     );
 }
 
@@ -713,7 +709,7 @@ const MainTab = ({
         }
         return acc;
       },
-      { fields: {} }
+      { fields: {} },
     );
 
   const errorText =
@@ -821,6 +817,7 @@ const ObjectArrayList = ({
 
   const continueButtonTitle = uischema?.options?.componentProps?.listWithDetailsContinueButtonTitle;
   const withLeftTab = uischema?.options?.componentProps?.withLeftTab;
+  const containerOverflow = uischema?.options?.componentProps?.containerOverflow || 'auto';
 
   return (
     <ListContainer>
@@ -851,7 +848,7 @@ const ObjectArrayList = ({
                 })}
               </div>
             </FlexTabsWithMargin>
-            <FlexForm tabIndex={-1} ref={rightRef}>
+            <FlexForm tabIndex={-1} ref={rightRef} overflow={containerOverflow}>
               <NonEmptyList
                 key={Paths.compose(path, `${currentIndex}`)}
                 childPath={Paths.compose(path, `${currentIndex}`)}
@@ -895,7 +892,7 @@ const ObjectArrayList = ({
             )}
             {currentListPage > 0 && (
               <UpdateListContainer>
-                <FlexForm tabIndex={-1}>
+                <FlexForm tabIndex={-1} overflow={containerOverflow}>
                   <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>
 
                   <NonEmptyList
@@ -946,7 +943,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
   addItem = (path: string, value: any) => {
     const { data, addItem, setCurrentTab, uischema } = this.props;
     const isNonEmpty = data !== undefined && data !== null;
-    const newIndex = isNonEmpty ? data ?? 0 : 0;
+    const newIndex = isNonEmpty ? (data ?? 0) : 0;
     const maxItems = uischema?.options?.detail?.maxItems ?? DEFAULT_MAX_ITEMS;
     if (data < maxItems) {
       if (addItem) {
