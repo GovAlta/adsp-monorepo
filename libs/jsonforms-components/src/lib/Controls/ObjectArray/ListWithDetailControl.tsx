@@ -871,7 +871,6 @@ const ObjectArrayList = ({
 
   const continueButtonTitle = uischema?.options?.componentProps?.listWithDetailsContinueButtonTitle;
   const withLeftTab = uischema?.options?.componentProps?.withLeftTab;
-  const containerOverflow = uischema?.options?.componentProps?.containerOverflow || 'auto';
 
   return (
     <ListContainer>
@@ -902,7 +901,7 @@ const ObjectArrayList = ({
                 })}
               </div>
             </FlexTabsWithMargin>
-            <FlexForm tabIndex={-1} ref={rightRef} overflow={containerOverflow}>
+            <FlexForm tabIndex={-1} ref={rightRef}>
               <NonEmptyList
                 key={Paths.compose(path, `${currentIndex}`)}
                 childPath={Paths.compose(path, `${currentIndex}`)}
@@ -946,7 +945,7 @@ const ObjectArrayList = ({
             )}
             {currentListPage > 0 && (
               <UpdateListContainer>
-                <FlexForm tabIndex={-1} overflow={containerOverflow}>
+                <FlexForm tabIndex={-1}>
                   <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>
 
                   <NonEmptyList
