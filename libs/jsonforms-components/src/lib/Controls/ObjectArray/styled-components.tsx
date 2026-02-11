@@ -71,11 +71,15 @@ export const FlexTabsWithMargin = styled.div`
   // max-height: 500px;
 `;
 
-export const FlexForm = styled.div`
+interface FlexFormProps {
+  overflow: string;
+}
+
+export const FlexForm = styled.div<FlexFormProps>`
   flex-direction: column;
   flex: 3;
   flex-shrink: 0;
-  overflow-y: auto;
+  overflow-y: ${(props: FlexFormProps) => props.overflow};
 `;
 
 export const TabName = styled.div`
