@@ -41,7 +41,7 @@ export default async function (host: Tree, { name, displayName, port }: Schema) 
     projectRoot,
     displayName: serviceDisplayName,
     api,
-    port: port ? parseInt(port) : 3333,
+    port: port || 3333,
   };
 
   await applicationGenerator(host, {

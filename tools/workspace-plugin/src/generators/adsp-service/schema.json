@@ -18,7 +18,7 @@
       "x-prompt": "What is the display name of the service? (e.g. Value service)"
     },
     "port": {
-      "type": "string",
+      "type": "number",
       "description": "Local port number for the service.",
       "x-prompt": "What port should it run on locally? (e.g. 3333)"
     }

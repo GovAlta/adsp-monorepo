@@ -1,7 +1,7 @@
 export interface Schema {
   name: string;
   displayName: string;
-  port: string;
+  port: number;
 }
 
 export interface NormalizedSchema {
