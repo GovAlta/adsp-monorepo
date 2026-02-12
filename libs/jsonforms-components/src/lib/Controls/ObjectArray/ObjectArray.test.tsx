@@ -403,3 +403,64 @@ describe('Object Array Renderer', () => {
     expect(name).toBeNull();
   });
 });
+
+const primitiveSchema = {
+  type: 'object',
+  properties: {
+    files: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
+  },
+};
+
+const primitiveUiSchema = {
+  type: 'VerticalLayout',
+  elements: [
+    {
+      type: 'Control',
+      scope: '#/properties/files',
+      label: 'Files',
+      options: {
+        variant: 'file-array',
+      },
+    },
+  ],
+};
+
+const getPrimitiveForm = (formData: object, enabled = true) => {
+  return (
+    <JsonForms
+      uischema={primitiveUiSchema}
+      data={formData}
+      schema={primitiveSchema}
+      ajv={new Ajv({ allErrors: true, verbose: true })}
+      renderers={GoARenderers}
+      cells={GoACells}
+      readonly={!enabled}
+    />
+  );
+};
+
+it('shows empty state when no items', () => {
+  const data = { files: [] };
+  const { baseElement } = render(getPrimitiveForm(data));
+
+  expect(baseElement.textContent).toContain('No files added');
+});
+
+it('can add a primitive item', () => {
+  const data = { files: [] };
+  const { baseElement } = render(getPrimitiveForm(data));
+
+  const addButton = baseElement.querySelector('goa-button');
+  expect(addButton).toBeInTheDocument();
+
+  fireEvent(addButton, new CustomEvent('_click'));
+
+  // after add, first input should exist
+  const firstInput = baseElement.querySelector("[data-testid$='-0'], goa-input");
+  expect(firstInput).toBeInTheDocument();
+});

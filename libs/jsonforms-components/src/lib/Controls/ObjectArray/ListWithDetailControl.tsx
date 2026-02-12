@@ -897,7 +897,6 @@ const ObjectArrayList = ({
               <UpdateListContainer>
                 <FlexForm tabIndex={-1}>
                   <ObjectArrayTitle>{listTitle}</ObjectArrayTitle>
-
                   <NonEmptyList
                     key={Paths.compose(path, `${currentIndex}`)}
                     childPath={Paths.compose(path, `${currentIndex}`)}
