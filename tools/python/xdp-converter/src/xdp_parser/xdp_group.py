@@ -48,5 +48,5 @@ class XdpGroup(XdpElement):
             self.context,
         )
 
-    def iter_descendants_for_bbox(self):
+    def iter_descendants_for_footprint(self):
         return list(self.elements)

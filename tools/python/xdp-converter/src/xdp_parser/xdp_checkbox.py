@@ -1,8 +1,8 @@
 from typing import Optional
 from schema_generator.form_checkbox import FormCheckbox
+from xdp_parser.display_text import DisplayText
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_element import XdpElement
-from xdp_parser.xdp_utils import DisplayText
 
 debug = False
 

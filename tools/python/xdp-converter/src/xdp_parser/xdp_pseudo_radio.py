@@ -17,6 +17,7 @@ class XdpPseudoRadio(XdpElement):
         self.messages = messages
         self.option_description_by_value: dict[str, str] = {}
         self.option_detail_help_by_value: dict[str, str] = {}
+        self.checkbox_to_value: dict[str, str] = {}
 
     def is_control(self):
         return True
