@@ -1,6 +1,6 @@
 import { User } from '@abgov/adsp-service-sdk';
 import * as hasha from 'hasha';
-import fetch from 'node-fetch';
+import { Readable } from 'stream';
 import { ScanService, ServiceUserRoles, FileEntity } from '../file';
 import { ScanProps } from './index';
 
@@ -29,8 +29,9 @@ export const createMetaDefenderScan = ({ host, port }: ScanProps): ScanService =
         filename: file.filename,
         source: `${file.createdBy.name} (ID: ${file.createdBy.id})`,
       },
-      body: fileStream,
-    });
+      body: Readable.toWeb(fileStream) as ReadableStream,
+      duplex: 'half',
+    } as RequestInit);
 
     const { data_id: scanId } = await scanResponse.json();
 

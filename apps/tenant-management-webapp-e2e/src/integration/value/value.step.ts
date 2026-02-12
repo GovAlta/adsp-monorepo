@@ -260,6 +260,7 @@ When(
       method: requestType,
       url: valueServiceGetEventURL,
       failOnStatusCode: false,
+      timeout: 60000, //CS-4675: Increase timeout for value service API request until the performance issue is resolved
       auth: {
         bearer: Cypress.env('autotest-admin-token'),
       },
