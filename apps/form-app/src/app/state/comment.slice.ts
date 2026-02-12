@@ -41,6 +41,15 @@ interface NewComment {
 const COMMENT_SERVICE_ID = 'urn:ads:platform:comment-service';
 
 let socket: Socket;
+
+export const disconnectStream = createAsyncThunk('comment/disconnectStream', async (_, { dispatch }) => {
+  if (socket && socket.connected) {
+    socket.disconnect();
+    socket = null;
+    dispatch(commentActions.streamConnectionChanged(false));
+  }
+});
+
 export const connectStream = createAsyncThunk(
   'comment/connectStream',
   async (

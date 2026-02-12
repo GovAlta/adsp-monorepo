@@ -11,6 +11,7 @@ import {
   canSubmitSelector,
   dataSelector,
   definitionSelector,
+  disconnectStream,
   fileBusySelector,
   filesSelector,
   formSelector,
@@ -51,7 +52,14 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   });
 
   useEffect(() => {
+    // loadForm dispatches comment connectStream internally (see form.slice.ts)
+    // when the form has a support topic configured
     dispatch(loadForm(formId));
+
+    // Cleanup comment stream socket on unmount
+    return () => {
+      dispatch(disconnectStream());
+    };
   }, [dispatch, formId]);
 
   const [showComments, setShowComments] = useState(false);
