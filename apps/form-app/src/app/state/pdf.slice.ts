@@ -43,9 +43,16 @@ function connectSocket(pushServiceUrl, tenantId, token, jobId, dispatch) {
   }
 }
 
-export const streamPdfSocket = createAsyncThunk(
-  'pdf/stream-pdf-socket',
-  async ({ disconnect, jobId }: { disconnect: boolean; jobId: string }, { getState, rejectWithValue, dispatch }) => {
+function disconnectSocket() {
+  if (socket && socket.connected) {
+    socket.disconnect();
+    socket = null;
+  }
+}
+
+export const connectPdfStream = createAsyncThunk(
+  'pdf/connect-stream',
+  async (jobId: string, { getState, rejectWithValue, dispatch }) => {
     try {
       const { config, user } = getState() as AppState;
       const tenantId = user.tenant.id;
@@ -53,11 +60,7 @@ export const streamPdfSocket = createAsyncThunk(
       const pushServiceUrl = `${config.directory[PUSH_SERVICE_ID]}`;
       const token = await getAccessToken();
 
-      if (disconnect === true) {
-        socket.disconnect();
-      } else {
-        connectSocket(pushServiceUrl, tenantId, token, jobId, dispatch);
-      }
+      connectSocket(pushServiceUrl, tenantId, token, jobId, dispatch);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({
@@ -70,6 +73,10 @@ export const streamPdfSocket = createAsyncThunk(
     }
   }
 );
+
+export const disconnectPdfStream = createAsyncThunk('pdf/disconnect-stream', async () => {
+  disconnectSocket();
+});
 
 interface PdfState {
   socketChannel: Record<string, string>;
