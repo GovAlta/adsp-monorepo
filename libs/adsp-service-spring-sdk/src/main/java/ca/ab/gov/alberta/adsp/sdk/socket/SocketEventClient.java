@@ -1,9 +1,11 @@
 package ca.ab.gov.alberta.adsp.sdk.socket;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -27,6 +29,9 @@ class SocketEventClient {
 
   private final Object socketLock = new Object();
   private Socket socket;
+  private final AtomicBoolean intentionalDisconnect = new AtomicBoolean(false);
+
+  private static final Duration RECONNECT_DELAY = Duration.ofSeconds(5);
 
   public SocketEventClient(ServiceDirectory directory, TokenProvider tokenProvider, String streamId,
       Collection<SocketEventListenerAdapter> adapters) {
@@ -38,6 +43,7 @@ class SocketEventClient {
   }
 
   public Mono<Void> connect() {
+    this.intentionalDisconnect.set(false);
     return Mono.zip(
         this.directory.getServiceUrl(PlatformServices.PushServiceId),
         this.tokenProvider.getAccessToken()).map(values -> {
@@ -55,6 +61,8 @@ class SocketEventClient {
                   .setQuery("stream=" + streamId)
                   .setSecure(true)
                   .setExtraHeaders(headers)
+                  // Disable auto-reconnect; we handle reconnection explicitly with fresh token.
+                  .setReconnection(false)
                   // Setting transport to websocket since long polling seems to have issues.
                   .setTransports(new String[] { "websocket" })
                   .build())
@@ -68,6 +76,17 @@ class SocketEventClient {
           });
           socket.on(Socket.EVENT_DISCONNECT, e -> {
             this.logger.info("Disconnected from stream {}.", this.streamId);
+            synchronized (this.socketLock) {
+              this.socket = null;
+            }
+            // Reconnect with fresh token unless disconnect was intentional.
+            if (!this.intentionalDisconnect.get()) {
+              this.logger.info("Reconnecting to stream {} in {} seconds...", this.streamId, RECONNECT_DELAY.toSeconds());
+              Mono.delay(RECONNECT_DELAY)
+                  .then(this.connect())
+                  .doOnError(err -> this.logger.error("Error reconnecting to stream {}: {}", this.streamId, err.getMessage()))
+                  .subscribe();
+            }
           });
           socket.onAnyIncoming((args) -> this.onIncoming((String) args[0], (JSONObject) args[1]));
           synchronized (this.socketLock) {
@@ -85,9 +104,11 @@ class SocketEventClient {
 
   public Mono<Void> disconnect() {
     return Mono.defer(() -> {
+      this.intentionalDisconnect.set(true);
       Socket socket;
       synchronized (this.socketLock) {
         socket = this.socket;
+        this.socket = null;
       }
 
       if (socket != null) {
