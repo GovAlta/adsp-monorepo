@@ -139,13 +139,19 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   };
 
   function normalize(s: string): string {
-    return s
-      .toLowerCase()
-      // eslint-disable-next-line
-      .replace(/[_:\-]+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    return (
+      s
+        .toLowerCase()
+        // eslint-disable-next-line
+        .replace(/[_:\-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    );
   }
+
+  const setValue = (name: string, value: string) => {
+    setSearchCriteria({ ...searchCriteria, [name]: value });
+  };
 
   function scoreMatch(queryRaw: string, candidateRaw: string): number {
     const q = normalize(queryRaw);
@@ -188,7 +194,6 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
       if (accuracy > levenshteinAccuracyThread) {
         return accuracy * 100;
       }
-
     }
 
     return 0;
@@ -312,7 +317,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             )}
           </GoabFormItem>
         </SearchBox>
-        {/* <GoabFormItem label="Minimum timestamp">
+        <GoabFormItem label="Minimum timestamp">
           <DateTimeInput
             type="datetime-local"
             name="timestampMin"
@@ -333,7 +338,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             onChange={(e) => setValue('timestampMax', e.target.value)}
             onClick={() => setOpen(false)}
           />
-        </GoabFormItem> */}
+        </GoabFormItem>
       </GoabGrid>
       <GoabButtonGroup alignment="end">
         <GoabButton
@@ -403,7 +408,9 @@ const SearchBox = styled.div`
     position: absolute;
 
     background: var(--color-white);
-    box-shadow: 0 8px 8px rgb(0 0 0 / 20%), 0 4px 4px rgb(0 0 0 / 10%);
+    box-shadow:
+      0 8px 8px rgb(0 0 0 / 20%),
+      0 4px 4px rgb(0 0 0 / 10%);
     z-index: 99;
     padding-left: 0px;
 
