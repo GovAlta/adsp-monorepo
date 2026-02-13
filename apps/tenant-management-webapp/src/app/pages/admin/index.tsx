@@ -40,7 +40,7 @@ const TenantManagement = (): JSX.Element => {
     setTitle('Alberta Digital Service Platform - Tenant management');
     const feedback = globalThis['adspFeedback'];
     if (config.feedback && feedback) {
-      feedback.initialize({ tenant: config.feedback.tenant, name: 'adsp', email: 'adsp@gov.ab.ca' });
+      feedback.initialize({ tenant: config.feedback.tenant });
     }
   }, [setTitle, config]);
 
