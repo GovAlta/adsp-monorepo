@@ -224,7 +224,11 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
         }
 
         return (
-          <ReviewItemSection key={categoryIndex}>
+          <ReviewItemSection
+            key={categoryIndex}
+            className="jsonforms-table-review-section"
+            id={`jsonforms-table-review-section-${categoryIndex}`}
+          >
             <ReviewItemHeader>
               <ReviewItemTitle>{categoryLabel}</ReviewItemTitle>
             </ReviewItemHeader>
