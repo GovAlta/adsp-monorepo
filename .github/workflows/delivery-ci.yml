@@ -89,7 +89,7 @@ jobs:
           redhat-io-username: ${{ secrets.REGISTRY_REDHAT_IO_USER }}
           redhat-io-password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
           build-context: './'
-          container-file: ${{ hashFiles(format('./apps/{0}/Dockerfile', matrix.app)) && format('./apps/{0}/Dockerfile', matrix.app) || hashFiles(format('./dist/apps/{0}/nginx.conf', matrix.app)) && './.openshift/app/Dockerfile' || './.openshift/service/Dockerfile' }}
+          container-file: ${{ hashFiles(format('./apps/{0}/Dockerfile', matrix.app)) && format('./apps/{0}/Dockerfile', matrix.app) || hashFiles(format('./dist/apps/{0}/index.html', matrix.app)) && './.openshift/app/Dockerfile' || './.openshift/service/Dockerfile' }}
           ghcr-token: ${{ secrets.GITHUB_TOKEN }}
 
   deployDev:

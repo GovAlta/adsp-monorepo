@@ -22,11 +22,6 @@
             "glob": "silent-check-sso.html",
             "input": "apps/task-app/src/",
             "output": "./"
-          },
-          {
-            "glob": "nginx.conf",
-            "input": "./",
-            "output": "./"
           }
         ],
         "styles": [],
