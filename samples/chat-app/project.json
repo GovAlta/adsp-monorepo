@@ -20,7 +20,7 @@
           "samples/chat-app/src/favicon.ico", 
           "samples/chat-app/src/assets",
           {
-            "glob": "nginx.conf",
+            "glob": "api.conf",
             "input": "samples/chat-app",
             "output": "./"
           }

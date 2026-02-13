@@ -20,7 +20,7 @@
           "apps/subscriber-app/src/favicon.ico",
           "apps/subscriber-app/src/assets",
           {
-            "glob": "nginx.conf",
+            "glob": "api.conf",
             "input": "apps/subscriber-app/",
             "output": "./"
           }
