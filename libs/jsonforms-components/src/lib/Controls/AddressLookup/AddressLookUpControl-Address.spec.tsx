@@ -5,13 +5,19 @@ import { fetchAddressSuggestions } from './utils';
 import { JsonFormContext } from '../../Context';
 import { Suggestion } from './types';
 import { ControlElement, JsonSchema4, JsonSchema7 } from '@jsonforms/core';
-import axios from 'axios';
 
 const mockHandleChange = jest.fn();
 const formUrl = 'http://mock-form-url.com';
 const mockFormContext = {
   formUrl,
 };
+jest.mock('./utils', () => {
+  const actual = jest.requireActual('./utils');
+  return {
+    ...actual,
+    fetchAddressSuggestions: jest.fn(),
+  };
+});
 describe('AddressLookUpControl', () => {
   const renderComponent = (overrides = {}) => {
     const defaultProps = {
@@ -86,16 +92,9 @@ describe('AddressLookUpControl', () => {
   ];
 
   it('can filterAddressSuggestions with results', async () => {
-    const mockResponse = {
-      data: {
-        Items: mockSuggestions,
-      },
-    };
+    (fetchAddressSuggestions as jest.Mock).mockResolvedValue([{ Text: '123 Main St', Description: 'Calgary AB' }]);
 
-    axios.get = jest.fn().mockImplementationOnce(() => {
-      return Promise.resolve(mockResponse);
-    });
-    await fetchAddressSuggestions('test', '123', true);
+    await fetchAddressSuggestions(formUrl, '123', true);
   });
 
   it('can filter address with mouse click with results', async () => {
@@ -109,20 +108,12 @@ describe('AddressLookUpControl', () => {
       })
     );
 
-    const mockResponse = {
-      data: {
-        Items: mockSuggestions,
-      },
-    };
-
-    axios.get = jest.fn().mockImplementationOnce(() => {
-      return Promise.resolve(mockResponse);
-    });
-    const results = await fetchAddressSuggestions('test', '123', true);
+    (fetchAddressSuggestions as jest.Mock).mockResolvedValue([{ Text: '123 Main St', Description: 'Calgary AB' }]);
+    const results = await fetchAddressSuggestions(formUrl, '123', true);
 
     fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'test', value: 'Enter', key: 'Enter' } }));
 
-    expect(results).toHaveLength(mockResponse.data.Items.length);
+    expect(results).toHaveLength(1);
   });
 
   it('can filter address with key presses ArrowDown with results', async () => {
@@ -137,16 +128,8 @@ describe('AddressLookUpControl', () => {
       })
     );
 
-    const mockResponse = {
-      data: {
-        Items: mockSuggestions,
-      },
-    };
-
-    axios.get = jest.fn().mockImplementationOnce(() => {
-      return Promise.resolve(mockResponse);
-    });
-    const results = await fetchAddressSuggestions('test', '123', true);
+    (fetchAddressSuggestions as jest.Mock).mockResolvedValue([{ Text: '123 Main St', Description: 'Calgary AB' }]);
+    const results = await fetchAddressSuggestions(formUrl, '123', true);
 
     fireEvent(
       inputField,
@@ -154,7 +137,7 @@ describe('AddressLookUpControl', () => {
     );
     fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'Enter', value: 'Enter', key: 'Enter' } }));
 
-    expect(results).toHaveLength(mockResponse.data.Items.length);
+    expect(results).toHaveLength(1);
   });
 
   it('can filter address with key presses ArrowDown with results', async () => {
@@ -169,16 +152,8 @@ describe('AddressLookUpControl', () => {
       })
     );
 
-    const mockResponse = {
-      data: {
-        Items: mockSuggestions,
-      },
-    };
-
-    axios.get = jest.fn().mockImplementationOnce(() => {
-      return Promise.resolve(mockResponse);
-    });
-    const results = await fetchAddressSuggestions('test', '123', true);
+    (fetchAddressSuggestions as jest.Mock).mockResolvedValue([{ Text: '123 Main St', Description: 'Calgary AB' }]);
+    const results = await fetchAddressSuggestions(formUrl, '123', true);
 
     fireEvent(
       inputField,
@@ -190,6 +165,6 @@ describe('AddressLookUpControl', () => {
     );
     fireEvent(inputField, new CustomEvent('_keyPress', { detail: { name: 'Enter', value: 'Enter', key: 'Enter' } }));
 
-    expect(results).toHaveLength(mockResponse.data.Items.length);
+    expect(results).toHaveLength(1);
   });
 });

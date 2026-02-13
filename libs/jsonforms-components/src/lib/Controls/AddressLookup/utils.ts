@@ -1,27 +1,45 @@
-import axios from 'axios';
 import { Address, Suggestion } from './types';
 
-export const fetchAddressSuggestions = async (
+export async function fetchAddressSuggestions(
   formUrl: string,
-  searchTerm: string,
-  isAlbertaAddress?: boolean
-): Promise<Suggestion[]> => {
-  const params = {
-    country: 'CAN',
-    languagePreference: 'en',
-    lastId: '',
-    maxSuggestions: isAlbertaAddress ? '50' : '10',
-    searchTerm: searchTerm,
-  };
+  query: string,
+  isAlberta: boolean,
+  opts?: { signal?: AbortSignal }
+): Promise<Suggestion[]> {
+  const url = new URL(formUrl);
+  url.searchParams.set('searchTerm', query);
+  url.searchParams.set('languagePreference', 'en');
+  url.searchParams.set('lastId', '');
+  url.searchParams.set('maxSuggestions', isAlberta ? '50' : '10');
+  url.searchParams.set('country', 'CAN');
 
-  try {
-    const response = await axios.get(formUrl, { params });
-    return response.data.Items;
-  } catch (error) {
-    console.error('Error fetching address suggestions:', error);
-    return [];
+  const res = await fetch(url.toString(), { signal: opts?.signal });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+  const json = await res.json();
+
+  // ✅ Normalize common API shapes:
+  if (!json) return [];
+
+  // Direct array
+  if (Array.isArray(json)) {
+    return json as Suggestion[];
   }
-};
+
+  if (typeof json === 'object') {
+    const obj = json as Record<string, unknown>;
+
+    const candidateKeys = ['suggestions', 'items', 'Items'];
+
+    for (const key of candidateKeys) {
+      if (Array.isArray(obj[key])) {
+        return obj[key] as Suggestion[];
+      }
+    }
+  }
+
+  return [];
+}
 
 export const filterAlbertaAddresses = (suggestions: Suggestion[]): Suggestion[] => {
   return suggestions.filter((suggestion) => suggestion.Description.includes('AB')).slice(0, 10);
