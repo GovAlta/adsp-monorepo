@@ -101,7 +101,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
         <FormFieldWrapper
           ref={controlRef}
           className="jsonforms-elements-wrapper"
-          id={isStepperReview === true ? `review-base-${path}-element-wrapper` : `${path}-element-wrappe`}
+          id={isStepperReview === true ? `review-base-${path}-element-wrapper` : `${path}-element-wrapper`}
         >
           <GoabFormItem
             requirement={uischema?.options?.componentProps?.requirement ?? (requiredNow ? 'required' : undefined)}
