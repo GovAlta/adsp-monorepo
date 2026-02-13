@@ -153,69 +153,72 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
 ];
 
 export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
-  const { uischema, data, schema, ajv, cells, enabled, navigationFunc } = props;
+  const { uischema, data, schema, ajv, cells, enabled } = props;
+
   const componentProps = (uischema.options?.componentProps as FormStepperComponentProps) ?? {};
-  const readOnly = componentProps?.readOnly ?? false;
   const categorization = uischema as Categorization;
-  const categories = categorization.elements.filter((category) => isVisible(category, data, '', ajv, undefined));
+  const categories = categorization.elements;
   const rescopeMaps = ['#/properties/albertaAddress', '#/properties/canadianAddress', '#/properties/sin'];
+
+  const hasVisibleContent = (element: UISchemaElement & { elements?: UISchemaElement[] }): boolean => {
+    if (!isVisible(element, data, '', ajv, undefined)) {
+      return false;
+    }
+
+    // Exclude non-reviewable types
+    if (element.type === 'HelpContent' || element.type === 'Callout') {
+      return false;
+    }
+
+    // Recurse into layouts
+    if (element.elements && Array.isArray(element.elements)) {
+      return element.elements.some((child) => hasVisibleContent(child));
+    }
+
+    return true;
+  };
 
   return (
     <ReviewItem>
       {categories.map((category, categoryIndex) => {
+        // Preserve index stability
+        if (!isVisible(category, data, '', ajv, undefined)) {
+          return null;
+        }
+
         const categoryLabel = category.label || category.i18n || 'Unknown Category';
-        const hasVisibleContent = (element: UISchemaElement & { elements?: UISchemaElement[] }): boolean => {
-          if (!isVisible(element, data, '', ajv, undefined)) {
-            return false;
-          }
-          if (element.type === 'HelpContent' || element.type === 'Callout') {
-            return false;
-          }
-          if (element.elements && Array.isArray(element.elements)) {
-            return element.elements.some((child) => hasVisibleContent(child));
-          }
 
-          return true;
-        };
-
+        // Build visible elements list
         const elementsToRender = category.elements
-          //eslint-disable-next-line
           .filter((field) => {
             if (!hasVisibleContent(field)) {
               return false;
             }
+
             const conditionProps = field.rule?.condition as SchemaBasedCondition;
-            /* istanbul ignore next */
+
             if (conditionProps && data) {
-              const canHideControlParts = conditionProps?.scope?.split('/');
-              const canHideControl = canHideControlParts && canHideControlParts[canHideControlParts?.length - 1];
-              const isHidden = getProperty(data, canHideControl);
-              if (!isHidden) {
-                return field;
-              }
-              return false;
+              const parts = conditionProps.scope?.split('/');
+              const property = parts?.[parts.length - 1];
+              const isHidden = getProperty(data, property);
+
+              return !isHidden;
             }
+
             return true;
           })
           .map((e) => {
             const layout = e as Layout;
-            if (
-              rescopeMaps.some((scope) =>
-                layout.elements
-                  ?.map((el) => {
-                    const element = el as unknown as Scoped;
-                    return element.scope;
-                  })
-                  .includes(scope)
-              )
-            ) {
+
+            if (rescopeMaps.some((scope) => layout.elements?.map((el) => (el as Scoped).scope).includes(scope))) {
               return layout.elements;
-            } else {
-              return e;
             }
+
+            return e;
           })
           .flat();
 
+        // Do not render empty categories
         if (elementsToRender.length === 0) {
           return null;
         }
@@ -227,13 +230,19 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
             </ReviewItemHeader>
 
             {elementsToRender.map((element, elementIndex) => {
-              const stepperElement = { ...element };
-              stepperElement.options = { ...stepperElement.options, stepId: categoryIndex };
+              const stepperElement = {
+                ...element,
+                options: {
+                  ...element.options,
+                  stepId: categoryIndex,
+                },
+              };
+
               return (
                 <GoabTable width="100%" key={elementIndex} mb="m">
                   <tbody>
                     <JsonFormsDispatch
-                      data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+                      data-testid="jsonforms-object-list-defined-elements-dispatch"
                       schema={schema}
                       uischema={stepperElement}
                       enabled={enabled}
