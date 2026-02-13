@@ -206,7 +206,7 @@ describe('AddEditConfigDefinition', () => {
     );
 
     const saveButton = baseElement.querySelector("goa-button[testId='form-save']");
-    fireEvent.click(saveButton);
+    fireEvent(saveButton, new CustomEvent('_click'));
 
     await waitFor(() => {
       expect(mockOnSave).toHaveBeenCalledWith(
@@ -237,7 +237,7 @@ describe('AddEditConfigDefinition', () => {
     );
 
     const cancelButton = baseElement.querySelector("goa-button[testId='form-cancel']");
-    fireEvent.click(cancelButton);
+    fireEvent(cancelButton, new CustomEvent('_click'));
 
     expect(mockOnClose).toHaveBeenCalled();
   });
@@ -281,7 +281,7 @@ describe('AddEditConfigDefinition', () => {
     );
 
     const saveButton = baseElement.querySelector("goa-button[testId='form-save']");
-    fireEvent.click(saveButton);
+    fireEvent(saveButton, new CustomEvent('_click'));
 
     // Should show duplicate error
     await waitFor(() => {

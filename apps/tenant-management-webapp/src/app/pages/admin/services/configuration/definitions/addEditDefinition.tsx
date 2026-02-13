@@ -168,7 +168,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
             onBlur={() => validators.checkAll({ namespace: definition.namespace })}
           />
         </GoabFormItem>
-        <GoabFormItem error={errors?.['name']} label="Name">
+        <GoabFormItem error={errors?.['name'] || errors?.['duplicated']} label="Name">
           <GoabInput
             type="text"
             name="name"
