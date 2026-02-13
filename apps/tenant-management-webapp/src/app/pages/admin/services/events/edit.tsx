@@ -15,6 +15,7 @@ import { useValidators } from '@lib/validation/useValidators';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import { NamespaceDropdown } from '@components/NamespaceDropdown';
 import styled from 'styled-components';
 import {
   GoabTextAreaOnKeyPressDetail,
@@ -48,6 +49,10 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   const forbiddenWords = coreNamespaces.concat('platform');
   const checkForConflicts = wordCheck(forbiddenWords);
   const identifiers = Object.keys(definitions);
+
+  const existingNamespaces = Object.values(definitions)
+    .map((def: EventDefinition) => def?.namespace)
+    .filter((ns): ns is string => !!ns);
   const namespaceCheck = (): Validator => {
     return (namespace: string) => {
       return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
@@ -124,19 +129,17 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
         }
       >
         <GoabFormItem error={errors?.['namespace']} label="Namespace">
-          <GoabInput
-            type="text"
-            name="namespace"
+          <NamespaceDropdown
             value={definition.namespace}
             disabled={isEdit}
-            width="100%"
             testId="form-namespace"
-            aria-label="nameSpace"
-            onChange={(detail: GoabInputOnChangeDetail) => {
+            existingNamespaces={existingNamespaces}
+            onChange={(value: string) => {
               validators.remove('namespace');
-              validators['namespace'].check(detail.value);
-              setDefinition({ ...definition, namespace: detail.value });
+              validators['namespace'].check(value);
+              setDefinition({ ...definition, namespace: value });
             }}
+            onBlur={() => validators.checkAll({ namespace: definition.namespace })}
           />
         </GoabFormItem>
         <GoabFormItem error={errors?.['name']} label="Name">
