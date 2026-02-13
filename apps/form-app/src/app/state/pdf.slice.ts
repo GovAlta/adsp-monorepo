@@ -18,7 +18,7 @@ const PUSH_SERVICE_ID = 'urn:ads:platform:push-service';
 
 let socket;
 
-function connectSocket(pushServiceUrl, tenantId, token, jobId, dispatch) {
+function connectSocket(pushServiceUrl, tenantId, jobId, dispatch) {
   if (!socket || !socket.connected) {
     socket = io(`${pushServiceUrl}`, {
       query: {
@@ -26,8 +26,13 @@ function connectSocket(pushServiceUrl, tenantId, token, jobId, dispatch) {
       },
       path: '/socket.io',
       withCredentials: true,
-      extraHeaders: {
-        Authorization: `Bearer ${token}`,
+      auth: async (cb) => {
+        try {
+          const token = await getAccessToken();
+          cb({ token });
+        } catch (err) {
+          cb({});
+        }
       },
     });
 
@@ -58,9 +63,8 @@ export const connectPdfStream = createAsyncThunk(
       const tenantId = user.tenant.id;
 
       const pushServiceUrl = `${config.directory[PUSH_SERVICE_ID]}`;
-      const token = await getAccessToken();
 
-      connectSocket(pushServiceUrl, tenantId, token, jobId, dispatch);
+      connectSocket(pushServiceUrl, tenantId, jobId, dispatch);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({

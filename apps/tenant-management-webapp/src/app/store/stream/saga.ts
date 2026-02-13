@@ -133,14 +133,18 @@ export function* deleteEventStream({ eventStreamId }: DeleteEventStreamAction): 
 }
 
 export function* startSocket({ url, stream }: StartStreamAction): SagaIterator {
-  const token: string = yield call(getAccessToken);
   const socket: Socket = io(url, {
     query: {
       stream: stream,
     },
     withCredentials: true,
-    extraHeaders: {
-      Authorization: `Bearer ${token}`,
+    auth: async (cb) => {
+      try {
+        const token = await getAccessToken();
+        cb({ token });
+      } catch (err) {
+        cb({});
+      }
     },
   });
   yield put(startSocketSuccess(socket));

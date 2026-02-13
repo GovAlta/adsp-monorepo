@@ -159,7 +159,7 @@ export function* deletePdfFilesService(action: DeletePdfFilesServiceAction): Sag
 // wrapping function for socket.on
 let socket;
 
-const connect = (pushServiceUrl, token, stream) => {
+const connect = (pushServiceUrl, stream) => {
   return new Promise((resolve) => {
     socket = io(`${pushServiceUrl}`, {
       query: {
@@ -168,7 +168,14 @@ const connect = (pushServiceUrl, token, stream) => {
       path: '/socket.io',
       secure: true,
       withCredentials: true,
-      extraHeaders: { Authorization: `Bearer ${token}` },
+      auth: async (cb) => {
+        try {
+          const token = await getAccessToken();
+          cb({ token });
+        } catch (err) {
+          cb({});
+        }
+      },
     });
 
     socket.on('connect', () => {
@@ -271,7 +278,6 @@ export function* deletePdfTemplate({ template }: DeletePdfTemplatesAction): Saga
 
 export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIterator {
   const pushServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pushServiceApiUrl);
-  const token: string = yield call(getAccessToken);
 
   // This is how a channel is created
   const createSocketChannel = (socket) =>
@@ -302,7 +308,7 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
   if (disconnect === true) {
     socket.disconnect();
   } else {
-    const sk = yield call(connect, pushServiceUrl, token, 'pdf-generation-updates');
+    const sk = yield call(connect, pushServiceUrl, 'pdf-generation-updates');
     const socketChannel = yield call(createSocketChannel, sk);
     yield put({ socketChannel: true, type: SOCKET_CHANNEL });
 
