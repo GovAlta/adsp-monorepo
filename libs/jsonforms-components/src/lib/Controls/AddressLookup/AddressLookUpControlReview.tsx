@@ -61,7 +61,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
 
     // We need to return the message of the MATCHED error, but findError above returns boolean (mostly) or message if I refactor.
     // Let's refactor to return the error object or message.
-
+    /* istanbul ignore next */
     const findMatchingError = (errors: ErrorObject[] | undefined): ErrorObject | undefined => {
       if (!errors) return undefined;
       for (const e of errors) {

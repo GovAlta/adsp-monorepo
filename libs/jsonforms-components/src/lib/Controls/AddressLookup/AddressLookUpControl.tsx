@@ -68,7 +68,13 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const [activeIndex, setActiveIndex] = useState<number>(0);
 
   const dropdownRef = useRef<HTMLUListElement>(null);
+  const debouncedTerm = useDebounce(searchTerm, 500);
 
+  const abortRef = useRef<AbortController | null>(null);
+  const lastQueryRef = useRef<string>('');
+  const cacheRef = useRef<Map<string, Suggestion[]>>(new Map());
+
+  const spinnerTimerRef = useRef<number | null>(null);
   const handleInputChange = (field: string, value: string) => {
     if (field === 'addressLine1') {
       setDropdownSelected(false);
@@ -100,11 +106,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const renderHelp = () => {
     return <HelpContentComponent {...props} isParent={true} showLabel={false} />;
   };
-
-  useEffect(() => {
-    if (!debouncedRenderAddress) return;
-    handleInputChange('addressLine1', debouncedRenderAddress);
-  }, [debouncedRenderAddress]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -139,10 +140,16 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     };
 
     fetchSuggestions();
-  }, [debouncedRenderAddress]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [debouncedTerm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDropdownChange = (value: string) => {
+    setDropdownSelected(false);
     setSearchTerm(value);
+
+    // keep form data updated immediately (so user sees their input reflected)
+    const newAddress = { ...address, addressLine1: value };
+    setAddress(newAddress);
+    updateFormData(newAddress);
   };
 
   /* istanbul ignore next */
@@ -178,8 +185,85 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
       }
     }
   }, [activeIndex]);
+  /* istanbul ignore next */
+  useEffect(() => {
+    const q = formatPostalCodeIfNeeded(debouncedTerm.trim());
+
+    // Reset when query is short or dropdown selected
+    if (!q || q.length <= 2 || dropdownSelected) {
+      abortRef.current?.abort();
+      setSuggestions([]);
+      setOpen(false);
+      setLoading(false);
+      lastQueryRef.current = '';
+      return;
+    }
+
+    // Prevent repeated calls for same query
+    if (q === lastQueryRef.current) {
+      return;
+    }
+    lastQueryRef.current = q;
+
+    // Serve from cache instantly
+    const cached = cacheRef.current.get(q);
+    if (cached) {
+      setSuggestions(isAlbertaAddress ? filterAlbertaAddresses(cached) : cached);
+      setOpen(true);
+      setLoading(false);
+      return;
+    }
+
+    // Abort any in-flight request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setOpen(true);
+
+    // spinner delay (optional but helps perceived performance)
+    if (spinnerTimerRef.current) window.clearTimeout(spinnerTimerRef.current);
+    spinnerTimerRef.current = window.setTimeout(() => setLoading(true), 150);
+
+    (async () => {
+      try {
+        const response = await fetchAddressSuggestions(
+          formUrl,
+          q,
+          isAlbertaAddress,
+          { signal: controller.signal } //update util to accept signal
+        );
+
+        const filtered = filterSuggestionsWithoutAddressCount(response);
+        const finalList = isAlbertaAddress ? filterAlbertaAddresses(filtered) : filtered;
+
+        cacheRef.current.set(q, finalList);
+        setSuggestions(finalList);
+        // eslint-disable-next-line
+      } catch (e: any) {
+        if (e?.name !== 'AbortError') {
+          console.error('Address fetch failed:', e);
+        }
+      } finally {
+        if (spinnerTimerRef.current) {
+          window.clearTimeout(spinnerTimerRef.current);
+          spinnerTimerRef.current = null;
+        }
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      controller.abort();
+      if (spinnerTimerRef.current) {
+        window.clearTimeout(spinnerTimerRef.current);
+        spinnerTimerRef.current = null;
+      }
+    };
+  }, [debouncedTerm, dropdownSelected, formUrl, isAlbertaAddress]);
 
   // Handle focus when navigated from review page
+
   useEffect(() => {
     const stepperState = formStepperCtx?.selectStepperState?.();
     if (
