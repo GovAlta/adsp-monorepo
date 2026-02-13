@@ -1,6 +1,6 @@
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateElementIndicator, UpdateIndicator } from '@store/session/actions';
-import { RootState } from '../index';
+import { RootState, store } from '../index';
 import { select, call, put, takeEvery, take, apply, fork } from 'redux-saga/effects';
 import { eventChannel } from 'redux-saga';
 import { ErrorNotification } from '@store/notifications/actions';
@@ -39,6 +39,7 @@ import {
 } from './action';
 import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
+import { getAccessToken as getAccessTokenThunk } from '@store/tenant/actions';
 import { getAccessToken } from '@store/tenant/sagas';
 import { PdfGenerationResponse, PdfTemplate, UpdatePdfConfig, DeletePdfConfig, CreatePdfConfig } from './model';
 import {
@@ -170,7 +171,7 @@ const connect = (pushServiceUrl, stream) => {
       withCredentials: true,
       auth: async (cb) => {
         try {
-          const token = await getAccessToken();
+          const token = await store.dispatch(getAccessTokenThunk());
           cb({ token });
         } catch (err) {
           cb({});

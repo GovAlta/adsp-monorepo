@@ -1,5 +1,5 @@
 import { put, select, call, takeEvery, all } from 'redux-saga/effects';
-import { RootState } from '@store/index';
+import { RootState, store } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
   DeleteEventStreamAction,
@@ -18,6 +18,7 @@ import { SagaIterator } from '@redux-saga/core';
 import axios from 'axios';
 import { UpdateIndicator } from '@store/session/actions';
 import { io, Socket } from 'socket.io-client';
+import { getAccessToken as getAccessTokenThunk } from '@store/tenant/actions';
 import { getAccessToken } from '@store/tenant/sagas';
 
 function selectConfigBaseUrl(state: RootState): string {
@@ -140,7 +141,7 @@ export function* startSocket({ url, stream }: StartStreamAction): SagaIterator {
     withCredentials: true,
     auth: async (cb) => {
       try {
-        const token = await getAccessToken();
+        const token = await store.dispatch(getAccessTokenThunk());
         cb({ token });
       } catch (err) {
         cb({});
