@@ -99,7 +99,6 @@ export const renderCellColumn = ({
       <HilightCellWarning>
         <ObjectArrayWarningIconDiv>
           <GoabIcon type="warning" title="warning" size="small" theme="filled" ml="2xs" mt="2xs"></GoabIcon>
-          {data}
         </ObjectArrayWarningIconDiv>
       </HilightCellWarning>
     );
