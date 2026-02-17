@@ -1,6 +1,7 @@
 import React, { FunctionComponent, useState } from 'react';
 
 import { GoabButton, GoabButtonGroup, GoabFormItem, GoabInput, GoabModal } from '@abgov/react-components';
+import { NamespaceDropdown } from '@components/NamespaceDropdown';
 
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -44,6 +45,14 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
     return state?.task?.queues;
   });
   const queueNames = queues ? Object.keys(queues) : [];
+
+  // Get existing namespaces from queues
+  const existingNamespaces = queues
+    ? Object.values(queues)
+        .map((q: TaskDefinition) => q?.namespace)
+        .filter((ns): ns is string => !!ns)
+    : [];
+
   const title = isNew ? 'Add queue' : 'Edit queue';
   const namespaceCheck = (): Validator => {
     return (namespace: string) => {
@@ -118,24 +127,21 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
       }
     >
       <GoabFormItem error={errors?.['namespace']} label="Namespace">
-        <GoabInput
-          type="text"
-          name="namespace"
+        <NamespaceDropdown
           value={queue.namespace}
-          width="100%"
-          data-testid={`queue-modal-namespace-input`}
-          aria-label="namespace"
           disabled={!isNew}
-          onChange={(detail: GoabInputOnChangeDetail) => {
-            const validations = { namespace: detail.value };
+          testId="queue-modal-namespace-input"
+          existingNamespaces={existingNamespaces}
+          onChange={(value: string) => {
+            const validations = { namespace: value };
             validators.remove('namespace');
             validators.remove('name');
             if (isNew) {
-              validations['namespace'] = detail.value;
+              validations['namespace'] = value;
             }
             validators.checkAll(validations);
 
-            setQueue({ ...queue, namespace: detail.value });
+            setQueue({ ...queue, namespace: value });
           }}
           onBlur={() => {
             validators.checkAll({ namespace: queue.namespace });

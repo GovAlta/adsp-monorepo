@@ -23,6 +23,7 @@ import {
 } from '@lib/validation/checkInput';
 import styled from 'styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import { NamespaceDropdown } from '@components/NamespaceDropdown';
 import { GoabTextAreaOnKeyPressDetail, GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 
 interface AddEditValueDefinitionProps {
@@ -46,6 +47,10 @@ export const AddEditValueDefinition = ({
   const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.jsonSchema, null, 2));
   const [spinner, setSpinner] = useState<boolean>(false);
   const identifiers = values && Object.values(values).map((v: ValueDefinition) => `${v.namespace}:${v.name}`);
+
+  const existingNamespaces = values
+    ? values.map((v: ValueDefinition) => v?.namespace).filter((ns): ns is string => !!ns)
+    : [];
   const loadingIndicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -136,22 +141,19 @@ export const AddEditValueDefinition = ({
         }
       >
         <GoabFormItem error={errors?.['namespace']} label="Namespace">
-          <GoabInput
-            type="text"
-            name="namespace"
+          <NamespaceDropdown
             value={definition.namespace}
             disabled={isEdit}
             testId="value-namespace"
-            aria-label="namespace"
-            width="100%"
-            onChange={(detail: GoabInputOnChangeDetail) => {
-              const updatedDefinition = { ...definition, namespace: detail.value };
+            existingNamespaces={existingNamespaces}
+            onChange={(value: string) => {
+              const updatedDefinition = { ...definition, namespace: value };
               setDefinition(updatedDefinition);
               const updatedIdentifiers = values.map((v: ValueDefinition) => `${v.namespace}:${v.name}`);
               const currentIdentifier = `${updatedDefinition.namespace}:${updatedDefinition.name}`;
               validators.remove('duplicated');
               validators['duplicated'].check(currentIdentifier, updatedIdentifiers);
-              validators['namespace'].check(detail.value);
+              validators['namespace'].check(value);
             }}
             onBlur={() => validators.checkAll({ namespace: definition.namespace })}
           />
