@@ -397,7 +397,7 @@ Then(
   ) {
     const cardTextArray = [
       'Access allows',
-      'The agent services provides',
+      'The agent service provides',
       'Cache service provides',
       'The calendar service provides',
       'Comment service',
