@@ -3,8 +3,9 @@ from abc import ABC, abstractmethod
 from visibility_rules.pipeline_context import CTX_JSONFORMS_RULES
 from xdp_parser.parse_context import ParseContext
 
+type JsonSchemaElement = dict[str, str]
 
-# Abstract form element, can be one of FormInput or Guidance
+
 class FormElement(ABC):
     def __init__(self, type: str, name, qualified_name, context: ParseContext):
         self.type = type
@@ -24,27 +25,28 @@ class FormElement(ABC):
         pass
 
     @abstractmethod
-    def to_json_schema():
+    def to_json_schema() -> JsonSchemaElement:
         pass
 
     @abstractmethod
-    def build_ui_schema():
+    def build_ui_schema() -> JsonSchemaElement:
         pass
 
-    def _find_visibility_rule(self, rules: dict) -> dict | None:
-        fq = getattr(self, "qualified_name", None)
+    def update_label(self, label: str):
+        self.label = label
 
+    def _find_visibility_rule(self, qualified_name: str, rules: dict) -> dict | None:
         # No path? No rule.
-        if not fq:
+        if not qualified_name:
             return None
 
         # Direct match
-        if fq in rules:
-            return rules[fq]
+        if qualified_name in rules:
+            return rules[qualified_name]
 
         # Prefix match (rule applies to a parent subform)
         for key, rule in rules.items():
-            if key and fq.startswith(key + "."):
+            if key and qualified_name.startswith(key + "."):
                 return rule
         return None
 
@@ -53,7 +55,7 @@ class FormElement(ABC):
         if not schema:
             return None
         rules = self.context.get(CTX_JSONFORMS_RULES) or {}
-        rule_entry = self._find_visibility_rule(rules)
+        rule_entry = self._find_visibility_rule(self.qualified_name, rules)
         if rule_entry is not None:
             schema["rule"] = rule_entry["rule"]
         return schema

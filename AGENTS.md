@@ -109,26 +109,27 @@ apps/<service-name>/
 
 ## Development Guidelines
 
-### Nx Commands
+### Nx Build System
+
+Nx CLI is installed local to the project. Use `npx` to run `nx` cli commands.
+
+> **📚 Full Nx reference**: See [.github/agents/nx.md](.github/agents/nx.md) for comprehensive Nx commands, troubleshooting, and best practices.
+
+**Quick commands:**
 ```bash
-# Build a specific project
-nx build <project-name>
-
-# Serve a service locally
-nx serve <service-name>
-
-# Run tests for a project
-nx test <project-name>
-
-# Run affected tests (changed projects only)
-nx affected --target=test
-
-# Lint a project
-nx lint <project-name>
-
-# View dependency graph
-nx dep-graph
+nx build <project-name>        # Build a project
+nx serve <service-name>        # Serve locally with hot reload
+nx test <project-name>         # Run tests
+nx affected -t test            # Test only changed projects
+nx show projects               # List all projects
+nx show project <name>         # View project details and targets
 ```
+
+**ADSP-specific notes:**
+- **Multi-language workspace**: This repo includes Node.js, .NET, Python, and Spring Boot projects via Nx plugins (`@nx-dotnet/core`, `@nxlv/python`, `@nxrocks/nx-spring-boot`)
+- **Custom targets**: Libraries like `adsp-service-sdk` have a `release` target for semantic-release publishing
+- **58+ projects**: Use `nx show projects --pattern "*-service"` to filter
+- **Workspace plugins** Use `nx list workspace-plugin` to list workspace specific generators
 
 ### Code Style
 - **TypeScript**: Use strict mode, prefer interfaces over types for public APIs

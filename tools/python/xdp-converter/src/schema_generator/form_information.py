@@ -1,4 +1,4 @@
-from schema_generator.form_element import FormElement
+from schema_generator.form_element import FormElement, JsonSchemaElement
 import re
 
 
@@ -11,7 +11,7 @@ class FormInformation(FormElement):
         self.hidden = hidden
         self.option = option
 
-    def build_ui_schema(self):
+    def build_ui_schema(self) -> JsonSchemaElement:
         if not self.help:
             return None
         ui_schema = {"type": "HelpContent"}
@@ -32,10 +32,10 @@ class FormInformation(FormElement):
             "condition": {"scope": f"#/properties/{name}", "schema": {"const": value}},
         }
 
-    def has_json_schema(self):
+    def has_json_schema(self) -> bool:
         return False
 
-    def to_json_schema(self):
+    def to_json_schema(self) -> JsonSchemaElement:
         return None
 
 

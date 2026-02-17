@@ -10,7 +10,7 @@ import { Form, FormDefinition, metaDataSelector, AppDispatch, downloadFile, down
 import { useDispatch, useSelector } from 'react-redux';
 import { checkPdfFileSelector, getSocketChannel } from '../state';
 import { DownloadLink } from '../containers/DownloadLink';
-import { streamPdfSocket } from '../state/pdf.slice';
+import { connectPdfStream, disconnectPdfStream } from '../state/pdf.slice';
 import { checkPdfFile, checkExistingPdfFile } from '../state/file.slice';
 export const ContextProvider = ContextProviderFactory();
 
@@ -82,23 +82,31 @@ export const SubmittedForm: FunctionComponent<ApplicationStatusProps> = ({ defin
     element.click();
   };
 
-  // do immediate check on load, in case this is a subsequent page reload
+  // Mount-only effect: Check if PDF already exists (e.g., from a previous session or page reload).
+  // Empty deps are intentional - we only want this initial check once, not on every state change.
+  // Subsequent PDF status updates come through the socket stream, not this effect.
   useEffect(() => {
     if (definition.generatesPdf) {
       if (pdfFileExists === null && form?.urn) {
         dispatch(checkPdfFile(form.submission?.id ? form.submission.urn : form?.urn));
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const metadata = useSelector(metaDataSelector);
 
   useEffect(() => {
     if (!socketChannel && definition.generatesPdf) {
-      dispatch(streamPdfSocket({ disconnect: false, jobId: form.jobId }));
+      dispatch(connectPdfStream(form.jobId));
     }
-  }, [socketChannel, dispatch, definition]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Cleanup socket on unmount
+    return () => {
+      if (definition.generatesPdf) {
+        dispatch(disconnectPdfStream());
+      }
+    };
+  }, [socketChannel, dispatch, definition, form.jobId]);
 
   return (
     <Grid>

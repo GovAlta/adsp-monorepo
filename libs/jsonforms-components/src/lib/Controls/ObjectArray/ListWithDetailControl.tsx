@@ -131,7 +131,7 @@ const GenerateRows = (
   rowPath: string,
   enabled: boolean,
   cells?: JsonFormsCellRendererRegistryEntry[],
-  uischema?: ControlElement
+  uischema?: ControlElement,
 ) => {
   if (schema?.type === 'object') {
     const props = {
@@ -272,41 +272,37 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
 
   return (
     <>
-      {
-        // eslint-disable-next-line
-        (uischema as Layout)?.elements?.map((element: UISchemaElement, index) => {
-          return (
-            <JsonFormsDispatch
-              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-              key={`${rowPath}-${index}`}
-              schema={schema}
-              uischema={element}
-              path={`${rowPath}`}
-              enabled={enabled}
-              renderers={renderers}
-              cells={cells}
-            />
-          );
-        })
-      }
+      {// eslint-disable-next-line
+      (uischema as Layout)?.elements?.map((element: UISchemaElement, index) => {
+        return (
+          <JsonFormsDispatch
+            data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+            key={`${rowPath}-${index}`}
+            schema={schema}
+            uischema={element}
+            path={`${rowPath}`}
+            enabled={enabled}
+            renderers={renderers}
+            cells={cells}
+          />
+        );
+      })}
 
-      {
-        // eslint-disable-next-line
-        (uischema as Layout)?.options?.detail?.elements?.map((element: UISchemaElement, index: number) => {
-          return (
-            <JsonFormsDispatch
-              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-              key={`${rowPath}-${index}`}
-              schema={schema}
-              uischema={element}
-              path={rowPath}
-              enabled={enabled}
-              renderers={renderers}
-              cells={cells}
-            />
-          );
-        })
-      }
+      {// eslint-disable-next-line
+      (uischema as Layout)?.options?.detail?.elements?.map((element: UISchemaElement, index: number) => {
+        return (
+          <JsonFormsDispatch
+            data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+            key={`${rowPath}-${index}`}
+            schema={schema}
+            uischema={element}
+            path={rowPath}
+            enabled={enabled}
+            renderers={renderers}
+            cells={cells}
+          />
+        );
+      })}
 
       {hasNoElements() && uiSchemaElementsForNotDefined?.elements?.length > 0 && (
         <JsonFormsDispatch
@@ -480,7 +476,7 @@ function getValue(obj: unknown, path: string): unknown {
     .split('.')
     .reduce<unknown>(
       (acc, key) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined),
-      obj
+      obj,
     );
 }
 
@@ -574,30 +570,40 @@ export function findControlLabel(uischema: UISchemaElement, scope: string): stri
   return;
 }
 
+const VALIDATION_KEYWORDS = {
+  REQUIRED: 'required',
+  MIN_LENGTH: 'minLength',
+  MAX_LENGTH: 'maxLength',
+  FORMAT: 'format',
+  MINIMUM: 'minimum',
+  MAXIMUM: 'maximum',
+  TYPE: 'type',
+};
+
 export function humanizeAjvError(error: ErrorObject, schema: JsonSchema, uischema?: UISchemaElement): string {
   const path = getEffectiveInstancePath(error);
   const label = resolveLabel(path, schema, uischema);
 
   switch (error.keyword) {
-    case 'required':
+    case VALIDATION_KEYWORDS.REQUIRED:
       return `${label} is required`;
 
-    case 'minLength':
+    case VALIDATION_KEYWORDS.MIN_LENGTH:
       return `${label} must be at least ${error.params.limit} characters`;
 
-    case 'maxLength':
+    case VALIDATION_KEYWORDS.MAX_LENGTH:
       return `${label} must be at most ${error.params.limit} characters`;
 
-    case 'format':
+    case VALIDATION_KEYWORDS.FORMAT:
       return `${label} must be a valid ${error.params.format}`;
 
-    case 'minimum':
-      return `${label} must be ≥ ${error.params.limit}`;
+    case VALIDATION_KEYWORDS.MINIMUM:
+      return `${label} must be greater than or equal to ${error.params.limit}`;
 
-    case 'maximum':
-      return `${label} must be ≤ ${error.params.limit}`;
+    case VALIDATION_KEYWORDS.MAXIMUM:
+      return `${label} must be less than or equal to ${error.params.limit}`;
 
-    case 'type':
+    case VALIDATION_KEYWORDS.TYPE:
       return `${label} must be a ${error.params.type}`;
 
     default:
@@ -700,20 +706,64 @@ const MainTab = ({
         const field = resolveField(e);
 
         if (e.keyword === 'errorMessage' && e.params?.errors) {
+          const nestedErrors = e.params.errors as ErrorObject[];
           if (field) {
-            acc.fields[field] = e.message || 'Unknown error';
+            try {
+              acc.fields[field] = nestedErrors.map((ne) => humanizeAjvError(ne, core.schema, core.uischema)).join(', ');
+            } catch (err) {
+              // Fallback: if nestedErrors contain a missingProperty, use it
+              const missingFromNested = nestedErrors?.[0]?.params?.missingProperty;
+              if (missingFromNested) {
+                acc.fields[field] = prettify(missingFromNested) + ' is required';
+              } else {
+                const raw = e.message as string | undefined;
+                if (raw && (raw.includes('must have required property') || raw.includes('is a required property'))) {
+                  const m = raw.match(/'([^']+)'/);
+                  if (m && m[1]) acc.fields[field] = prettify(m[1]) + ' is required';
+                  else acc.fields[field] = raw;
+                } else {
+                  acc.fields[field] = raw || 'Unknown error';
+                }
+              }
+            }
           } else {
-            acc.row = e?.message || 'Unknown error';
+            try {
+              acc.row = nestedErrors.map((ne) => humanizeAjvError(ne, core.schema, core.uischema)).join(', ');
+            } catch (err) {
+              const missingFromNested = nestedErrors?.[0]?.params?.missingProperty;
+              if (missingFromNested) {
+                acc.row = prettify(missingFromNested) + ' is required';
+              } else {
+                const raw = e?.message as string | undefined;
+                if (raw && (raw.includes('must have required property') || raw.includes('is a required property'))) {
+                  const m = raw.match(/'([^']+)'/);
+                  if (m && m[1]) acc.row = prettify(m[1]) + ' is required';
+                  else acc.row = raw;
+                } else {
+                  acc.row = raw || 'Unknown error';
+                }
+              }
+            }
             return acc;
           }
         }
 
         if (!acc.fields[field]) {
-          acc.fields[field] = humanizeAjvError(e, core.schema, core.uischema);
+          let msg = humanizeAjvError(e, core.schema, core.uischema);
+          if (
+            typeof msg === 'string' &&
+            (msg.includes('must have required property') || msg.includes('is a required property'))
+          ) {
+            const propertyMatch = msg.match(/'([^']+)'/);
+            if (propertyMatch && propertyMatch[1]) {
+              msg = prettify(propertyMatch[1]) + ' is required';
+            }
+          }
+          acc.fields[field] = msg;
         }
         return acc;
       },
-      { fields: {} }
+      { fields: {} },
     );
 
   const errorText =
@@ -946,7 +996,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
   addItem = (path: string, value: any) => {
     const { data, addItem, setCurrentTab, uischema } = this.props;
     const isNonEmpty = data !== undefined && data !== null;
-    const newIndex = isNonEmpty ? data ?? 0 : 0;
+    const newIndex = isNonEmpty ? (data ?? 0) : 0;
     const maxItems = uischema?.options?.detail?.maxItems ?? DEFAULT_MAX_ITEMS;
     if (data < maxItems) {
       if (addItem) {

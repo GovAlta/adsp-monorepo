@@ -1,13 +1,10 @@
 import { Service, Directory } from '../types';
-import { IsNotEmpty } from 'class-validator';
 import { DirectoryRepository } from '../repository';
 import { Update } from '@core-services/core-common';
 
 export class DirectoryEntity implements Directory {
   id: string;
-  @IsNotEmpty()
   name: string;
-  @IsNotEmpty()
   services: Service[];
   constructor(private repository: DirectoryRepository, directory: Directory) {
     this.name = directory.name;

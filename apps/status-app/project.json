@@ -20,7 +20,7 @@
           "apps/status-app/src/favicon.ico",
           "apps/status-app/src/assets",
           {
-            "glob": "nginx.conf",
+            "glob": "api.conf",
             "input": "apps/status-app/",
             "output": "./"
           }

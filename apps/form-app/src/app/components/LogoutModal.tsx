@@ -14,7 +14,13 @@ export const LogoutModal = (): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
   const ref = useRef(null);
   const countDownRef = useRef(null);
+  const openRef = useRef(open);
   const tenant = useSelector(tenantSelector);
+
+  // Keep ref synced with state so interval callbacks can read the latest value
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
 
   useEffect(() => {
     // windows.worker is added to avoid affecting the spec files
@@ -26,7 +32,8 @@ export const LogoutModal = (): JSX.Element => {
           dispatch(logoutUser({ tenant, from: `${location.pathname}` }));
         }
 
-        if (expiryInSecs <= 4 * 60 && expiryInSecs > 60 && open === false) {
+        // Use ref to avoid stale closure - state value would be captured at interval creation time
+        if (expiryInSecs <= 4 * 60 && expiryInSecs > 60 && openRef.current === false) {
           setOpen(true);
         }
       }, 1000 * 60);
@@ -37,7 +44,7 @@ export const LogoutModal = (): JSX.Element => {
         clearInterval(ref.current);
       }
     };
-  }, [dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dispatch, tenant, location.pathname]);
 
   useEffect(() => {
     if (open) {

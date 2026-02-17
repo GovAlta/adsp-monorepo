@@ -1,17 +1,17 @@
 from dataclasses import dataclass
 from typing import List, Tuple
 from xdp_parser.control_labels import ControlLabels
+from xdp_parser.display_text import DisplayText
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_help_text import XdpHelpText
-from xdp_parser.xdp_utils import DisplayText
 
 debug = False
 
 
 @dataclass(frozen=True)
-class ControlBox:
+class ControlFootprint:
     control: XdpElement
-    bbox: Tuple[float, float, float, float]
+    footprint: Tuple[float, float, float, float]
 
 
 class ControlDescriptionExtractor:
@@ -28,7 +28,7 @@ class ControlDescriptionExtractor:
         self.max_description_chars = max_description_chars
         self.min_intersection_area = min_intersection_area
 
-    def extract(
+    def update_control_descriptions(
         self,
         elements: List[XdpElement],
         control_labels: ControlLabels,
@@ -38,23 +38,23 @@ class ControlDescriptionExtractor:
         overlap controls, and extract them as descriptions for those controls' labels.
 
         Modifies:
-            control_labels: updates labels with extracted descriptions.
+            control-display-text: updates labels with extracted descriptions.
 
         Returns:
             elements: removes extracted help-text elements.
         """
 
-        # Candidate controls (with usable bounding-boxes)
-        controls: list[ControlBox] = []
+        # Candidate controls (with usable footprints)
+        controls: list[ControlFootprint] = []
         for e in elements:
             if not e.is_control():
                 continue
 
-            bb = e.visual_bbox()
-            if bb is None:
+            fp = e.extended_footprint()
+            if fp is None:
                 continue
 
-            controls.append(ControlBox(control=e, bbox=bb))
+            controls.append(ControlFootprint(control=e, footprint=fp))
 
         if not controls:
             return elements[:]  # nothing to do
@@ -75,12 +75,12 @@ class ControlDescriptionExtractor:
                     out.append(e)
                     continue
 
-                e_bb = e.visual_bbox()
-                if e_bb is None:
+                efp = e.extended_footprint()
+                if efp is None:
                     out.append(e)
                     continue
 
-                target = self._best_overlap(e_bb, controls, self.min_intersection_area)
+                target = self._best_overlap(efp, controls, self.min_intersection_area)
                 if target is None:
                     out.append(e)
                     continue
@@ -88,11 +88,7 @@ class ControlDescriptionExtractor:
                 target_name = target.get_name()
 
                 existing = control_labels.get(target_name) or DisplayText("", "")
-                merged = DisplayText(
-                    label=existing.label,
-                    description=description,
-                )
-                control_labels.set(target_name, merged)
+                existing.add_description(description)
 
                 if debug:
                     print(f"[EXTRACT DESCRIPTION] '{description}' -> {target_name}")
@@ -106,15 +102,17 @@ class ControlDescriptionExtractor:
 
     @staticmethod
     def _best_overlap(
-        e_bbox: tuple[float, float, float, float],
-        controls: list[ControlBox],
+        e_footprint: tuple[float, float, float, float],
+        controls: list[ControlFootprint],
         min_intersection_area: float,
     ):
-        best: ControlBox | None = None
+        best: ControlFootprint | None = None
         best_area = 0.0
 
         for cb in controls:
-            area = ControlDescriptionExtractor._intersection_area(e_bbox, cb.bbox)
+            area = ControlDescriptionExtractor._intersection_area(
+                e_footprint, cb.footprint
+            )
             if area > best_area:
                 best_area = area
                 best = cb

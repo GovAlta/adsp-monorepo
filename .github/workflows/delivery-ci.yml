@@ -15,8 +15,9 @@ on:
 jobs:
   build:
     permissions:
-      id-token: write  # Required for OIDC to NPM for publishing
-      contents: write
+      id-token: write # Required for OIDC to NPM for publishing
+      contents: write # Required for release tagging
+      packages: write # Required for GitHub packages (nuget and maven for SDKs)
     runs-on: ubuntu-22.04
     outputs:
       affected_apps: ${{ steps.set_outputs.outputs.affected_apps }}
@@ -88,8 +89,8 @@ jobs:
           app: ${{ matrix.app }}
           redhat-io-username: ${{ secrets.REGISTRY_REDHAT_IO_USER }}
           redhat-io-password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
-          build-context: ${{ hashFiles(format('./dist/apps/{0}/nginx.conf', matrix.app)) && format('./dist/apps/{0}', matrix.app) || './' }}
-          container-file: ${{ hashFiles(format('./apps/{0}/Dockerfile', matrix.app)) && format('./apps/{0}/Dockerfile', matrix.app) || './.openshift/service/Dockerfile' }}
+          build-context: './'
+          container-file: ${{ hashFiles(format('./apps/{0}/Dockerfile', matrix.app)) && format('./apps/{0}/Dockerfile', matrix.app) || hashFiles(format('./dist/apps/{0}/index.html', matrix.app)) && './.openshift/app/Dockerfile' || './.openshift/service/Dockerfile' }}
           ghcr-token: ${{ secrets.GITHUB_TOKEN }}
 
   deployDev:

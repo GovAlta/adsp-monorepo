@@ -1,4 +1,4 @@
-from schema_generator.form_element import FormElement
+from schema_generator.form_element import FormElement, JsonSchemaElement
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_utils import strip_label_prefix
 
@@ -21,10 +21,10 @@ class FormInput(FormElement):
         self.is_radio = False
         self.label: str = label
 
-    def has_json_schema(self):
+    def has_json_schema(self) -> bool:
         return True
 
-    def to_json_schema(self):
+    def to_json_schema(self) -> JsonSchemaElement:
         json_schema = {"type": self.input_type}
         if self.label:
             json_schema["title"] = strip_label_prefix(self.label)
@@ -34,7 +34,7 @@ class FormInput(FormElement):
             json_schema["format"] = self.format
         return json_schema
 
-    def build_ui_schema(self):
+    def build_ui_schema(self) -> JsonSchemaElement:
         control = {"type": "Control", "scope": f"#/properties/{self.name}"}
         control["label"] = strip_label_prefix(self.label) if self.label else ""
         if self.is_radio:

@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
@@ -7,18 +7,23 @@ from typing import Optional
 from importlib.resources.readers import remove_duplicates
 
 from schema_generator.form_element import FormElement
+from xdp_parser.display_text import DisplayText
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.xdp_utils import DisplayText, compute_full_xdp_path, convert_to_mm
+from xdp_parser.xdp_utils import compute_full_xdp_path, convert_to_mm
 
 
 class XdpElement(ABC):
-    def __init__(self, xdp, labels=None, context: ParseContext = None):
+    def __init__(self, xdp: ET.Element, labels=None, context: ParseContext = None):
         self.xdp_element = xdp
+        self.children: list[ET.Element] = []
         self.labels = labels
         self.context = context or {}
         self.parent_map = context.get("parent_map", {}) if context else {}
         self.geometry: XdpGeometry = XdpGeometry.resolve(xdp, self.parent_map)
         self.presence = xdp.get("presence", "").strip().lower()
+        self.is_header_element = False
+        self.computed_x: float | None = None
+        self.computed_y: float | None = None
 
     def get_full_path(self) -> str:
         return compute_full_xdp_path(self.xdp_element, self.parent_map)
@@ -64,65 +69,71 @@ class XdpElement(ABC):
             return None
         return ref.split("[", 1)[0]
 
-    # Element's bounding box
-    def bbox(self):
+    def footprint(self):
         """(x1, y1, x2, y2) or None if insufficient geometry."""
-        if self.x is None or self.y is None or self.w is None or self.h is None:
+        g = self.geometry
+
+        x = g.x if g and g.x is not None else self.computed_x
+        y = g.y if g and g.y is not None else self.computed_y
+        w = g.w if g else None
+        h = g.h if g else None
+
+        if x is None or y is None or w is None or h is None:
             return None
-        return (self.x, self.y, self.x + self.w, self.y + self.h)
+
+        return (x, y, x + w, y + h)
 
     # Center point of the element
     def center(self):
-        b = self.bbox()
+        b = self.footprint()
         if not b:
             return None
         x1, y1, x2, y2 = b
         return ((x1 + x2) / 2.0, (y1 + y2) / 2.0)
 
     # Check if a point is within the bounding box, with tolerance
-    def bbox_contains(self, pt, tol=0.5):
+    def footprint_contains(self, pt, tol=0.5):
         """pt=(cx,cy). tol in mm."""
-        b = self.bbox()
+        b = self.footprint()
         if not b or not pt:
             return False
         x1, y1, x2, y2 = b
         cx, cy = pt
         return (x1 - tol) <= cx <= (x2 + tol) and (y1 - tol) <= cy <= (y2 + tol)
 
-    def iter_descendants_for_bbox(self):
+    def iter_descendants_for_footprint(self):
         # Default: no descendants
         return []
 
-    def visual_bbox(self):
+    def extended_footprint(self):
         """
-        Prefer explicit bbox; otherwise derive bbox from descendants.
-        Returns (x1, y1, x2, y2) or None.
+        Includes the element's footprint plus any 'decorators' such as help icons/text.
         """
-        b = self.bbox()
-        if b:
-            return b
+        fp = self.footprint()
+        if fp:
+            return fp
 
-        kids = list(self.iter_descendants_for_bbox())
+        kids: list[XdpElement] = list(self.iter_descendants_for_footprint())
         if not kids:
             return None
 
-        boxes = []
+        footprints = []
         for k in kids:
-            kb = k.bbox()
+            kb = k.extended_footprint()
             if kb:
-                boxes.append(kb)
+                footprints.append(kb)
 
-        if not boxes:
+        if not footprints:
             return None
 
-        x1 = min(bb[0] for bb in boxes)
-        y1 = min(bb[1] for bb in boxes)
-        x2 = max(bb[2] for bb in boxes)
-        y2 = max(bb[3] for bb in boxes)
+        x1 = min(fp[0] for fp in footprints)
+        y1 = min(fp[1] for fp in footprints)
+        x2 = max(fp[2] for fp in footprints)
+        y2 = max(fp[3] for fp in footprints)
         return (x1, y1, x2, y2)
 
-    def visual_height(self) -> float:
-        vb = self.visual_bbox()
+    def extended_height(self) -> float:
+        vb = self.extended_footprint()
         if not vb:
             return 0.0
         _, y1, _, y2 = vb
@@ -131,15 +142,15 @@ class XdpElement(ABC):
     def effective_height(self) -> float:
         if self.h is not None:
             return float(self.h)
-        return float(self.visual_height())
+        return float(self.extended_height())
 
     def effective_width(self) -> float | None:
         # prefer explicit width if already computed
         if self.w is not None:
             return float(self.w)
 
-        # try visual bbox width (handles descendants)
-        vb = self.visual_bbox()
+        # try extended footprint width (handles descendants)
+        vb = self.extended_footprint()
         if vb:
             x1, _, x2, _ = vb
             return float(x2 - x1)
@@ -156,8 +167,31 @@ class XdpElement(ABC):
     def get_type(self):
         return "string"
 
+    def get_children(self) -> list[XdpElement]:
+        return self.children
+
+    def set_children(self, children: list[XdpElement]):
+        self.children = children
+
+    def has_children(self) -> bool:
+        return len(self.children) > 0
+
     def is_control(self):
         return False  # default
+
+    def is_header(self) -> bool:
+        return self.is_header_element
+
+    def is_container(self):
+        return False
+
+    # override in subclasses as needed
+    def can_promote_to_header(self) -> bool:
+        return False
+
+    def promote_to_header(self):
+        if self.can_promote_to_header():
+            self.is_header_element = True
 
     def is_actionable_control(e: XdpElement) -> bool:
         if not e.is_control():
@@ -246,10 +280,6 @@ def get_caption_text(xdp_element):
     return None
 
 
-from dataclasses import dataclass
-from typing import Optional, Any
-
-
 @dataclass
 class XdpGeometry:
     """
@@ -266,15 +296,15 @@ class XdpGeometry:
     has_explicit_y: bool = False
 
     @classmethod
-    def resolve(cls, node, parent_map) -> "XdpGeometry":
+    def resolve(cls, node: ET.Element, parent_map: dict) -> "XdpGeometry":
         curr = node
         acc_x = 0.0
         acc_y = 0.0
         saw_any = False
 
         # these are "explicit on THIS node"
-        explicit_x = node.get("x") is not None
-        explicit_y = node.get("y") is not None
+        has_explicit_x = node.get("x") is not None
+        has_explicit_y = node.get("y") is not None
 
         w = convert_to_mm(node.get("w"))
         h = convert_to_mm(node.get("h"))
@@ -300,8 +330,8 @@ class XdpGeometry:
                 w=w,
                 h=h,
                 layout=layout,
-                has_explicit_x=explicit_x,
-                has_explicit_y=explicit_y,
+                has_explicit_x=has_explicit_x,
+                has_explicit_y=has_explicit_y,
             )
 
         return cls(
@@ -310,8 +340,8 @@ class XdpGeometry:
             w=w,
             h=h,
             layout=layout,
-            has_explicit_x=explicit_x,
-            has_explicit_y=explicit_y,
+            has_explicit_x=has_explicit_x,
+            has_explicit_y=has_explicit_y,
         )
 
     @classmethod
@@ -326,6 +356,8 @@ class XdpGeometry:
             w=convert_to_mm(xdp.get("w")),
             h=convert_to_mm(xdp.get("h")),
             layout=xdp.get("layout"),
+            has_explicit_x=xdp.get("x") is not None,
+            has_explicit_y=xdp.get("y") is not None,
         )
 
     @classmethod

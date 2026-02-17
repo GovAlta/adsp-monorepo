@@ -66,6 +66,9 @@ class JsonFormsEmitter:
                 continue
 
             emitted[key] = {"rule": jsonforms_rule}
+            if debug:
+                print(f"Rule for {key} is:")
+                print(f"    {jsonforms_rule}\n")
 
         context[CTX_JSONFORMS_RULES] = emitted
         if debug:

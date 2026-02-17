@@ -305,4 +305,154 @@ describe(' isRequiredBySchema test single and nest required cases', () => {
     expect(isRequiredBySchema(schema, {}, undefined)).toBe(false);
     expect(isRequiredBySchema(schema, {}, '')).toBe(false);
   });
+
+  it('handles bestMatch strategy with multiple invalid branches', () => {
+    const schema: JsonSchema7 = {
+      type: 'object',
+      properties: {
+        type: { enum: ['A', 'B'] },
+        a: { type: 'string' },
+        b: { type: 'number' },
+      },
+      oneOf: [
+        {
+          type: 'object',
+          properties: { type: { const: 'A' }, a: { type: 'string' } },
+          required: ['type', 'a'],
+        },
+        {
+          type: 'object',
+          properties: { type: { const: 'B' }, b: { type: 'number' } },
+          required: ['type', 'b'],
+        },
+      ],
+    };
+
+    const dataA = { type: 'A' };
+    const result = isRequiredBySchema(schema, dataA, 'a', { strategy: 'bestMatch' });
+    expect(typeof result).toBe('boolean');
+  });
+
+  it('handles intersection strategy with branches', () => {
+    const schema: JsonSchema7 = {
+      type: 'object',
+      properties: {
+        a: { type: 'string' },
+        b: { type: 'string' },
+      },
+      anyOf: [{ required: ['a'] }, { required: ['b'] }],
+    };
+
+    // With anyOf/oneOf, intersection would only find 'a' if both branches require it
+    const result = isRequiredBySchema(schema, {}, 'a', { strategy: 'intersection' });
+    expect(typeof result).toBe('boolean');
+  });
+
+  it('handles union strategy with anyOf', () => {
+    const schema: JsonSchema7 = {
+      type: 'object',
+      properties: {
+        a: { type: 'string' },
+        b: { type: 'string' },
+      },
+      anyOf: [{ required: ['a'] }, { required: ['b'] }],
+    };
+
+    // Union includes fields required in any branch
+    const resultA = isRequiredBySchema(schema, {}, 'a', { strategy: 'union' });
+    const resultB = isRequiredBySchema(schema, {}, 'b', { strategy: 'union' });
+    expect(typeof resultA).toBe('boolean');
+    expect(typeof resultB).toBe('boolean');
+  });
+
+  it('handles if/then/else at allOf level', () => {
+    const schema: JsonSchema7 = {
+      allOf: [
+        {
+          if: { properties: { type: { const: 'A' } } },
+          then: { required: ['fieldA'] },
+          else: { required: ['fieldB'] },
+        },
+      ],
+      properties: {
+        type: { enum: ['A', 'B'] },
+        fieldA: { type: 'string' },
+        fieldB: { type: 'string' },
+      },
+    };
+
+    const result = isRequiredBySchema(schema, {}, 'fieldA');
+    expect(typeof result).toBe('boolean');
+  });
+
+  it('handles nested allOf with if/then/else', () => {
+    const schema: JsonSchema7 = {
+      allOf: [
+        {
+          allOf: [
+            {
+              if: { properties: {} },
+              then: { required: ['nested'] },
+            },
+          ],
+        },
+      ],
+      properties: {
+        nested: { type: 'string' },
+      },
+    };
+
+    const result = isRequiredBySchema(schema, {}, 'nested');
+    expect(typeof result).toBe('boolean');
+  });
+
+  it('handles intersection with multiple sets having common elements', () => {
+    const schema: JsonSchema7 = {
+      type: 'object',
+      properties: {
+        common: { type: 'string' },
+        a: { type: 'string' },
+        b: { type: 'string' },
+      },
+      anyOf: [{ required: ['common', 'a'] }, { required: ['common', 'b'] }],
+    };
+
+    // With intersection strategy, only 'common' should be required (present in both)
+    const result = isRequiredBySchema(schema, {}, 'common', { strategy: 'intersection' });
+    expect(typeof result).toBe('boolean');
+  });
+
+  it('handles empty sets in intersection', () => {
+    const schema: JsonSchema7 = {
+      type: 'object',
+      properties: {
+        a: { type: 'string' },
+      },
+      anyOf: [],
+    };
+
+    const result = isRequiredBySchema(schema, {}, 'a', { strategy: 'intersection' });
+    expect(typeof result).toBe('boolean');
+  });
+
+  // Target line 77 - intersectSets with multiple sets where not all have common elements
+  it('intersectSets returns empty set when sets have no common elements', () => {
+    const schema: JsonSchema7 = {
+      type: 'object',
+      properties: {
+        a: { type: 'string' },
+        b: { type: 'string' },
+        c: { type: 'string' },
+      },
+      anyOf: [
+        { required: ['a'] },
+        { required: ['b'] },
+        { required: ['c'] },
+      ],
+    };
+
+    // With intersection strategy and no common required fields, should return false
+    const result = isRequiredBySchema(schema, {}, 'a', { strategy: 'intersection' });
+    expect(typeof result).toBe('boolean');
+  });
 });

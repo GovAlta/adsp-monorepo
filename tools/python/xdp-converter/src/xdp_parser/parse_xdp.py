@@ -90,19 +90,13 @@ class XdpParser:
         ):
             return None
 
-        # Object-array (List-With-Detail) → single logical control
+        # List-With-Detail
         if is_object_array(subform):
             row_fields = list(self.find_simple_controls(subform))
             control = self.factory.handle_object_array(
                 subform, self.control_labels, row_fields
             )
             return control
-
-        # # Pseudo radio subform (checkButton cluster) → radio selector
-        # radio_labels = extract_radio_button_labels(subform)
-        # if radio_labels:
-        #     control = self.factory.handle_radio_subform(subform, self.control_labels)
-        #     return control
 
         children = list(self.find_simple_controls(subform))
         if not children:

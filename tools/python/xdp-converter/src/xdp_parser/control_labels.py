@@ -1,9 +1,9 @@
 import re
 from xml.etree import ElementTree as ET
+from xdp_parser.display_text import DisplayText
 from xdp_parser.parsing_helpers import split_label_and_help
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_help_text import XdpHelpText
-from xdp_parser.xdp_utils import DisplayText
 
 
 class ControlLabels:
@@ -70,18 +70,6 @@ class ControlLabels:
                 if self.debug:
                     print(f"[LABEL] '{name}' <- '{caption.strip()}' (inline caption)")
 
-        # # Preceding <draw> sibling label (same parent)
-        # for name, node in self.controls_by_name.items():
-        #     if name in self.mapping and self.mapping[name].label.strip():
-        #         continue
-        #     draw_lbl = self._preceding_draw_label(node)
-        #     if draw_lbl and draw_lbl.strip():
-        #         self.mapping[name] = split_label_and_help(draw_lbl)
-        #         if self.debug:
-        #             print(
-        #                 f"[LABEL] '{name}' <- '{draw_lbl.strip()}' (preceding <draw>)"
-        #             )
-
         return self.mapping
 
     # ----------------------------------------------------------------
@@ -128,7 +116,7 @@ class ControlLabels:
 
         return None
 
-    def augment_labels_from_sorted_elements(self, elements: list[XdpElement]) -> None:
+    def augment_labels_with_iconic_help(self, elements: list[XdpElement]) -> None:
         # Index elements by name for O(1) traversal hops
         by_name: dict[str, XdpElement] = {}
         for e in elements:

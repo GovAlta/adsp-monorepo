@@ -75,7 +75,7 @@ export const FlexForm = styled.div`
   flex-direction: column;
   flex: 3;
   flex-shrink: 0;
-  overflow-y: auto;
+  overflow-y: visible;
 `;
 
 export const TabName = styled.div`

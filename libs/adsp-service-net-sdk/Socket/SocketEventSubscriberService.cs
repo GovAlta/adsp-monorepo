@@ -22,6 +22,9 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
   private readonly string? _realm;
   private readonly bool _enabled;
   private SocketIOClient.SocketIO? _client;
+  private volatile bool _intentionalDisconnect;
+
+  private static readonly TimeSpan ReconnectDelay = TimeSpan.FromSeconds(5);
 
   public SocketEventSubscriberService(
     string streamId,
@@ -58,6 +61,8 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
       return;
     }
 
+    _intentionalDisconnect = false;
+
     if (_client == null)
     {
       _client = await CreateSocketClient();
@@ -76,6 +81,7 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
 
   public void Disconnect()
   {
+    _intentionalDisconnect = true;
     var client = _client;
     if (client != null)
     {
@@ -117,11 +123,18 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
     {
       _logger.LogInformation("Disconnected from stream {StreamId}.", _streamId);
 
-      // Update the token and reconnect.
-      var token = await _tokenProvider.GetAccessToken();
-      client.Options.Auth = new Dictionary<string, string> { { "token", token } };
+      // Only reconnect if disconnect was not intentional.
+      if (!_intentionalDisconnect)
+      {
+        _logger.LogInformation("Reconnecting to stream {StreamId} in {Seconds} seconds...", _streamId, ReconnectDelay.TotalSeconds);
+        await Task.Delay(ReconnectDelay);
 
-      await client.ConnectAsync();
+        // Update the token and reconnect.
+        var token = await _tokenProvider.GetAccessToken();
+        client.Options.Auth = new Dictionary<string, string> { { "token", token } };
+
+        await client.ConnectAsync();
+      }
     };
     client.OnError += (_s, e) =>
     {

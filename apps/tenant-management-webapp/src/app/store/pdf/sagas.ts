@@ -1,6 +1,6 @@
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateElementIndicator, UpdateIndicator } from '@store/session/actions';
-import { RootState } from '../index';
+import { RootState, store } from '../index';
 import { select, call, put, takeEvery, take, apply, fork } from 'redux-saga/effects';
 import { eventChannel } from 'redux-saga';
 import { ErrorNotification } from '@store/notifications/actions';
@@ -39,6 +39,7 @@ import {
 } from './action';
 import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
+import { getAccessToken as getAccessTokenThunk } from '@store/tenant/actions';
 import { getAccessToken } from '@store/tenant/sagas';
 import { PdfGenerationResponse, PdfTemplate, UpdatePdfConfig, DeletePdfConfig, CreatePdfConfig } from './model';
 import {
@@ -159,7 +160,7 @@ export function* deletePdfFilesService(action: DeletePdfFilesServiceAction): Sag
 // wrapping function for socket.on
 let socket;
 
-const connect = (pushServiceUrl, token, stream) => {
+const connect = (pushServiceUrl, stream) => {
   return new Promise((resolve) => {
     socket = io(`${pushServiceUrl}`, {
       query: {
@@ -168,7 +169,14 @@ const connect = (pushServiceUrl, token, stream) => {
       path: '/socket.io',
       secure: true,
       withCredentials: true,
-      extraHeaders: { Authorization: `Bearer ${token}` },
+      auth: async (cb) => {
+        try {
+          const token = await store.dispatch(getAccessTokenThunk());
+          cb({ token });
+        } catch (err) {
+          cb({});
+        }
+      },
     });
 
     socket.on('connect', () => {
@@ -271,7 +279,6 @@ export function* deletePdfTemplate({ template }: DeletePdfTemplatesAction): Saga
 
 export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIterator {
   const pushServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pushServiceApiUrl);
-  const token: string = yield call(getAccessToken);
 
   // This is how a channel is created
   const createSocketChannel = (socket) =>
@@ -302,7 +309,7 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
   if (disconnect === true) {
     socket.disconnect();
   } else {
-    const sk = yield call(connect, pushServiceUrl, token, 'pdf-generation-updates');
+    const sk = yield call(connect, pushServiceUrl, 'pdf-generation-updates');
     const socketChannel = yield call(createSocketChannel, sk);
     yield put({ socketChannel: true, type: SOCKET_CHANNEL });
 
