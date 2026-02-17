@@ -13,6 +13,8 @@ interface ClamScan {
 }
 
 const CLAM_FILE_MAX_SIZE = 500 * 1e6;
+const CLAM_TIMEOUT_MS = 600000; // 10 minutes for large file scans
+
 export const createClamScan = ({ host, port }: ScanProps): ScanService => {
   const user = { id: 'clam-scan-service', isCore: true, roles: [ServiceUserRoles.Admin] } as User;
 
@@ -21,7 +23,7 @@ export const createClamScan = ({ host, port }: ScanProps): ScanService => {
       socket: false,
       host,
       port,
-      timeout: 300000,
+      timeout: CLAM_TIMEOUT_MS,
     },
   });
 
