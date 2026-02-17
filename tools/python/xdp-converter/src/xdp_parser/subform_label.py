@@ -28,7 +28,7 @@ def strip_header_element(
 def promote_group_headers(
     subform: ET.Element,
     elements: list[XdpElement],
-    debug: bool = True,
+    debug: bool = False,
 ):
     if not elements:
         return

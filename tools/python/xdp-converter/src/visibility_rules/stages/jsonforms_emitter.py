@@ -292,9 +292,9 @@ class JsonFormsEmitter:
         """
         s = str(value).strip()
 
-        # Special token you introduced earlier
+        # Special token
         if s == "<blank>":
-            return ""  # treat blank selection as empty string in JSON data
+            return ""
 
         # 1) label_to_enum mapping
         if s in label_to_enum:

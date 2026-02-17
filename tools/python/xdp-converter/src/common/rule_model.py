@@ -45,15 +45,4 @@ class VisibilityRule:
         print("[Visibility Rule]")
         print(f"    Target: {self.target} -> (effect: {self.effect})")
         print(f"    Trigger: {trig_str}")
-
-
-# @dataclass
-# class RawRule:
-#     """
-#     Represents all scripts related to a single XDP target (field/subform).
-#     Shared structure for both visibility and calculation pipelines.
-#     """
-
-#     target: str
-#     xpath: str
-#     events: List[EventDescription] = field(default_factory=list)
+        print(f"    Xpath: {self.xpath}")
