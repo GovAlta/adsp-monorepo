@@ -77,13 +77,13 @@ Feature: Value
 
   @TEST_CS-4226 @regression
   Scenario: As a developer, I can use value service to get events with different intervals
-    When a developer sends a value service get events request with "<Request endpoint>", "<Request Type>" and "<Interval>"
+    When a developer sends a value service get events request with "<Request endpoint>", "<Request Type>" and "<Interval>" for the last "<Hours>" hours
     Then "<Status Code>" is returned with top 5 events in the response
 
     Examples:
-      | Request endpoint                                                       | Request Type | Interval     | Status Code |
-      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | one_minute   | 200         |
-      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | five_minutes | 200         |
-      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | hourly       | 200         |
-      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | daily        | 200         |
-      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | weekly       | 200         |
+      | Request endpoint                                                       | Request Type | Interval     | Hours | Status Code |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | one_minute   | 5     | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | five_minutes | 10    | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | hourly       | 24    | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | daily        | 96    | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | weekly       | 336   | 200         |
