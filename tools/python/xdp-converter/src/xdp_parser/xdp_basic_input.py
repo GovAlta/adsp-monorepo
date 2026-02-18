@@ -10,8 +10,6 @@ class XdpBasicInput(XdpElement):
         return True
 
     def to_form_element(self):
-        display_label = self.get_label()
-        label = display_label.label if display_label else ""
         fe = FormInput(
             self.get_name(),
             self.full_path,

@@ -1,4 +1,4 @@
-from common.rule_model import EventDescription
+from visibility_rules.stages.rule_model import EventDescription
 from visibility_rules.stages.trigger_ast import (
     AtomicCondition,
     CompoundCondition,
@@ -8,17 +8,14 @@ from visibility_rules.stages.trigger_ast import (
 
 #     Trigger: Section2 == 1 || Section2.chkAdditional.rawValue == 1 || Section2.chkEmergency.rawValue == 1
 def print_event(event: EventDescription, targets=None):
-    trigger = event.trigger
     action = event.action
-    metadata = event.metadata
     do_print = targets is None or action.target.lower() in [t.lower() for t in targets]
     if do_print:
         print("[EXTRACTOR EVENT]")
         print(f"    Target: {action.target} -> ({'HIDE' if action.hide else 'SHOW'})")
         print(f"    Action: {'HIDE' if action.hide else 'SHOW'}")
-        print(f"    Owner: {metadata.owner} ({metadata.owner_type})")
-        print(f"    XPath: {metadata.xpath}")
-        print(f"    Trigger: {trigger_to_str(trigger)}")
+        print(f"    Trigger: {trigger_to_str(event.trigger)}")
+        print(f"    Owner: {event.owner}")
 
 
 def trigger_to_str(t: Trigger) -> str:

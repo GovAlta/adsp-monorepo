@@ -47,5 +47,5 @@ class XdpSubformPlaceholder(XdpElement):
         """
         return None
 
-    def iter_descendants_for_bbox(self):
+    def iter_descendants_for_footprint(self):
         return list(self.children)

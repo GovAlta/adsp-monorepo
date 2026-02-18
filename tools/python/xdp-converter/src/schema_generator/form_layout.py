@@ -1,29 +1,29 @@
-from schema_generator.form_element import FormElement
+from schema_generator.form_element import FormElement, JsonSchemaElement
 from xdp_parser.parse_context import ParseContext
 
 
 class FormLayout(FormElement):
-    def __init__(self, type, elements, context: ParseContext):
+    def __init__(self, type: str, children: list[FormElement], context: ParseContext):
         super().__init__("layout", None, None, context)
         self.type = type
-        self.elements = elements
+        self.children = children
         self.is_leaf = False
 
-    def build_ui_schema(self):
+    def build_ui_schema(self) -> JsonSchemaElement:
         ui_schema = {"type": self.type}
         ui_schema["elements"] = []
-        for element in self.elements:
+        for element in self.children:
             child = element.to_ui_schema()
             if child:
                 ui_schema["elements"].append(child)
         return ui_schema
 
-    def has_json_schema(self):
+    def has_json_schema(self) -> bool:
         return True
 
-    def to_json_schema(self):
+    def to_json_schema(self) -> JsonSchemaElement:
         schemas = []
-        for element in self.elements:
+        for element in self.children:
             if element.has_json_schema():
                 schemas.append(element.to_json_schema())
         return schemas

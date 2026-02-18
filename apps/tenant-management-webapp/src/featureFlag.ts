@@ -9,8 +9,7 @@ const completeServiceVariables = [
   {
     name: 'Agent',
     link: 'services/agent',
-    description:
-      'The agent services provides configurable AI agents.',
+    description: 'The agent service provides configurable AI agents.',
     beta: true,
   },
   {

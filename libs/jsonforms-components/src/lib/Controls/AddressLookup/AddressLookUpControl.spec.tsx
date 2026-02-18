@@ -10,9 +10,6 @@ import {
   filterAlbertaAddresses,
   mapSuggestionToAddress,
   filterSuggestionsWithoutAddressCount,
-  formatPostalCode,
-  handlePostalCodeValidation,
-  formatPostalCodeIfNeeded,
 } from './utils';
 import { JsonFormContext } from '../../Context';
 import { Suggestion, Address } from './types';

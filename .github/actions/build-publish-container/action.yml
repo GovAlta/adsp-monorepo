@@ -28,18 +28,8 @@ runs:
         registry: registry.redhat.io
         username: ${{ inputs.redhat-io-username }}
         password: ${{ inputs.redhat-io-password }}
-    - if: ${{ contains(inputs.build-context, 'dist') }}
-      name: Build app image
-      id: build_app_image
-      uses: redhat-actions/s2i-build@v2
-      with:
-        path_context: ${{ inputs.build-context }}
-        builder_image: "registry.access.redhat.com/ubi8/nginx-118:latest"
-        image: ${{ inputs.app }}
-        tags: latest ${{ github.sha }}
-    - if: ${{ !contains(inputs.build-context, 'dist') }}
-      name: Build service image
-      id: build_service_image
+    - name: Build service image
+      id: build_image
       uses: redhat-actions/buildah-build@v2
       with:
         image: ${{ inputs.app }}
@@ -54,8 +44,8 @@ runs:
     - name: Push to GitHub container registry
       uses: redhat-actions/push-to-registry@v2
       with:
-        image: ${{ steps.build_app_image.outputs.image || steps.build_service_image.outputs.image }}
-        tags: ${{ steps.build_app_image.outputs.tags || steps.build_service_image.outputs.tags }}
+        image: ${{ steps.build_app_image.outputs.image || steps.build_image.outputs.image }}
+        tags: ${{ steps.build_app_image.outputs.tags || steps.build_image.outputs.tags }}
         registry: ghcr.io/govalta
         username: ${{ github.actor }}
         password: ${{ inputs.ghcr-token }}

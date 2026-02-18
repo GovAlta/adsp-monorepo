@@ -24,6 +24,7 @@ import {
 } from '@lib/validation/checkInput';
 import styled from 'styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
+import { NamespaceDropdown } from '@components/NamespaceDropdown';
 import {
   GoabTextAreaOnKeyPressDetail,
   GoabTextAreaOnChangeDetail,
@@ -50,6 +51,10 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
   const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.configurationSchema, null, 2));
   const [spinner, setSpinner] = useState<boolean>(false);
   const identifiers = Object.keys(configurations);
+
+  const existingNamespaces = Object.values(configurations)
+    .map((config) => (config as ConfigDefinition)?.namespace)
+    .filter((ns): ns is string => !!ns);
   const loadingIndicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -141,29 +146,29 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
         }
       >
         <GoabFormItem error={errors?.['namespace']} label="Namespace">
-          <GoabInput
-            type="text"
-            name="namespace"
+          <NamespaceDropdown
             value={definition.namespace}
             disabled={isEdit}
             testId="form-namespace"
-            aria-label="namespace"
-            width="100%"
-            onChange={(detail: GoabInputOnChangeDetail) => {
-              const updatedDefinition = { ...definition, namespace: detail.value };
+            existingNamespaces={existingNamespaces}
+            onChange={(value: string) => {
+              const updatedDefinition = { ...definition, namespace: value };
               setDefinition(updatedDefinition);
               const updatedIdentifiers = Object.keys(configurations).map(
-                (key) => `${configurations[key]?.namespace}:${configurations[key]?.name}`
+                (key) =>
+                  `${(configurations[key] as ConfigDefinition)?.namespace}:${
+                    (configurations[key] as ConfigDefinition)?.name
+                  }`
               );
               const currentIdentifier = `${updatedDefinition.namespace}:${updatedDefinition.name}`;
               validators.remove('duplicated');
               validators['duplicated'].check(currentIdentifier, updatedIdentifiers);
-              validators['namespace'].check(detail.value);
+              validators['namespace'].check(value);
             }}
             onBlur={() => validators.checkAll({ namespace: definition.namespace })}
           />
         </GoabFormItem>
-        <GoabFormItem error={errors?.['name']} label="Name">
+        <GoabFormItem error={errors?.['name'] || errors?.['duplicated']} label="Name">
           <GoabInput
             type="text"
             name="name"
@@ -176,7 +181,10 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               const updatedDefinition = { ...definition, name: detail.value };
               setDefinition(updatedDefinition);
               const updatedIdentifiers = Object.keys(configurations).map(
-                (key) => `${configurations[key]?.namespace}:${configurations[key]?.name}`
+                (key) =>
+                  `${(configurations[key] as ConfigDefinition)?.namespace}:${
+                    (configurations[key] as ConfigDefinition)?.name
+                  }`
               );
               const currentIdentifier = `${updatedDefinition.namespace}:${updatedDefinition.name}`;
               validators.remove('duplicated');

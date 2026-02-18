@@ -17,7 +17,8 @@ class UiSchemaGenerator:
         schema = self._consolidate_help_blocks(schema)
         schema = self._lift_rules_to_group(schema)
 
-        return prune_ui_schema(schema)
+        schema = prune_ui_schema(schema)
+        return schema
 
     def _consolidate_help_blocks(self, node):
         """

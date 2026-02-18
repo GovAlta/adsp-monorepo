@@ -13,8 +13,6 @@ import { ratings } from './ratings';
 export class AdspFeedback implements AdspFeedbackApi {
   private tenant?: string;
   private apiUrl?: URL;
-  private name?: string;
-  private email?: string;
   private getAccessToken?: () => Promise<string>;
   private getContext: () => Promise<FeedbackContext>;
 
@@ -554,7 +552,7 @@ export class AdspFeedback implements AdspFeedbackApi {
     this.openStartForm();
   }
 
-  public initialize({ apiUrl, tenant, name, email, getAccessToken, getContext }: FeedbackOptions) {
+  public initialize({ apiUrl, tenant, getAccessToken, getContext }: FeedbackOptions) {
     if (apiUrl && typeof apiUrl === 'string') {
       this.apiUrl = new URL(apiUrl);
     }
@@ -577,12 +575,6 @@ export class AdspFeedback implements AdspFeedbackApi {
 
     if (typeof getContext === 'function') {
       this.getContext = getContext;
-    }
-    if (this.name) {
-      this.name = name;
-    }
-    if (this.email) {
-      this.email = email;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -4,6 +4,8 @@ import { pdfActions } from "./pdf.slice";
 
 let socket: Socket | null = null;
 
+export type TokenGetter = () => Promise<string>;
+
 export function disconnectPdfSocket() {
   if (socket && socket.connected) {
     socket.disconnect();
@@ -11,15 +13,20 @@ export function disconnectPdfSocket() {
   }
 }
 
-export function connectPdfSocket(pushServiceUrl: string, token: string, dispatch: AppDispatch) {
+export function connectPdfSocket(pushServiceUrl: string, getToken: TokenGetter, dispatch: AppDispatch) {
   if (socket && socket.connected) return socket;
 
   socket = io(pushServiceUrl, {
     query: { stream: "pdf-generation-updates" },
     path: "/socket.io",
     withCredentials: true,
-    extraHeaders: {
-      Authorization: `Bearer ${token}`,
+    auth: async (cb) => {
+      try {
+        const token = await getToken();
+        cb({ token });
+      } catch (err) {
+        cb({});
+      }
     },
   });
 

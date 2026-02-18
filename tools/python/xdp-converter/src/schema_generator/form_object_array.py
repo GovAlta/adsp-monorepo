@@ -1,8 +1,7 @@
-from typing import List
+from typing import Dict, List
 
-from schema_generator.form_element import FormElement
+from schema_generator.form_element import FormElement, JsonSchemaElement
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.xdp_element import XdpElement
 
 
 class FormObjectArray(FormElement):
@@ -10,42 +9,63 @@ class FormObjectArray(FormElement):
         self,
         name: str,
         qualified_name,
-        columns: List[XdpElement],
+        columns: List[FormElement],
         context: ParseContext,
     ):
         super().__init__("object_array", name, qualified_name, context)
         self.name = name
-        # treating this as a leaf node, as it will translate into a single JSON object
         self.is_leaf = True
         self.elements = columns
         self.can_group_horizontally = False
+        self.debug = False
+        if self.debug:
+            self.whoAmI()
 
-    def has_json_schema(self):
+    def whoAmI(self):
+        print(f"[LWD]: {self.name} has {len(self.elements)}")
+
+    def has_json_schema(self) -> bool:
         return True
 
-    def to_json_schema(self):
-        items = {}
-        for element in self.elements:
-            if element.has_json_schema() and element.name:
-                items[element.name] = element.to_json_schema()
+    def to_json_schema(self) -> JsonSchemaElement:
+        items = self.collect_item_properties(self.elements)
         item_props = {"type": "object", "properties": items}
         return {"type": "array", "items": item_props}
-        # return {self.name: {"type": "array", "items": items}}
 
-    def build_ui_schema(self):
+    def collect_item_properties(
+        self, elements: List[FormElement]
+    ) -> Dict[str, JsonSchemaElement]:
+        props: Dict[str, JsonSchemaElement] = {}
+
+        for element in elements:
+            if element.has_children():
+                child_props = self.collect_item_properties(element.get_children())
+                for key, val in child_props.items():
+                    if key in props:
+                        raise ValueError(
+                            f"Duplicate property '{key}' while building schema for object array '{self.name}'. "
+                        )
+                    props[key] = val
+                continue
+
+            # Case 2: normal leaf control -> use its name as property key
+            if element.is_leaf and element.has_json_schema():
+                if not element.name:
+                    raise ValueError(
+                        f"Element '{element.get_name()}' inside object array '{self.name}' "
+                        f"claims it has JSON schema but has no name to use as a property key."
+                    )
+                props[element.name] = element.to_json_schema()
+
+        return props
+
+    def build_ui_schema(self) -> JsonSchemaElement:
         detail_elements = []
 
         for child in self.elements:
-            child_ui = child.build_ui_schema()
-
-            # 🔥 Rewrite the child scope so it lives under the array's item schema
-            if isinstance(child_ui, dict) and "scope" in child_ui:
-                original = child_ui["scope"]  # e.g., "#/properties/cboForestryCode"
-                name = original.split("/")[-1]  # e.g., "cboForestryCode"
-
-                # Inject correct array path
-                child_ui["scope"] = f"#/properties/{self.name}/items/properties/{name}"
-
+            # its important to call to_ui_schema on the child here, because it may have
+            # rules that need to be included in the output
+            child_ui = child.to_ui_schema()
             detail_elements.append(child_ui)
 
         return {
@@ -59,8 +79,3 @@ class FormObjectArray(FormElement):
                 }
             },
         }
-
-    # def build_ui_schema(self):
-    #     control = {"type": "Control", "scope": f"#/properties/{self.name}"}
-    #     control["label"] = self.label if self.label else self.name
-    #     return control

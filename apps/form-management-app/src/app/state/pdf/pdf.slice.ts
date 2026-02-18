@@ -67,14 +67,13 @@ export const streamPdfSocket = createAsyncThunk(
       const { config } = getState() as AppState;
 
       const pushServiceUrl = config.directory[PUSH_SERVICE_ID];
-      const token = await getAccessToken();
 
       if (disconnect) {
         disconnectPdfSocket();
         return;
       }
 
-      connectPdfSocket(pushServiceUrl, token, dispatch as import('../store').AppDispatch);
+      connectPdfSocket(pushServiceUrl, getAccessToken, dispatch as import('../store').AppDispatch);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue({

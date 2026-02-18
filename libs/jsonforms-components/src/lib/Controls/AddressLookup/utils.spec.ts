@@ -9,11 +9,14 @@ import {
   detectPostalCodeType,
   formatPostalCodeIfNeeded,
   handleAddressKeyDown,
+  runAddressLookupEffect,
+  normalizeQuery,
+  shouldReset,
 } from './utils';
-import axios from 'axios';
+
 import { Suggestion, Address } from './types';
 jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+
 const mockSuggestions: Suggestion[] = [
   {
     Id: 'CA|CP|A|10010614',
@@ -33,32 +36,137 @@ const mockSuggestions: Suggestion[] = [
   },
 ];
 describe('fetchAddressSuggestions', () => {
-  const formUrl = 'http://mockapi.com/address';
-  const searchTerm = 'Main St';
+  const baseUrl = 'https://example.com';
+  const formUrl = `${baseUrl}/api/gateway/v1/address/v1/find`;
 
-  it('should return suggestions on successful API call', async () => {
-    const mockResponse = {
-      data: {
-        Items: [{ Id: '1', Text: '123 Main St', Description: 'AB, Canada' }],
-      },
-    };
-    mockedAxios.get.mockResolvedValueOnce(mockResponse);
+  const sample: Suggestion = {
+    // add minimal fields your Suggestion type requires
+    // If your type is different, adjust this object
+    Text: '123 Main St',
+    Description: 'Calgary AB',
+  } as unknown as Suggestion;
+  // eslint-disable-next-line
+  const makeFetchResponse = (ok: boolean, status: number, jsonValue: any) => {
+    return {
+      ok,
+      status,
+      json: jest.fn().mockResolvedValue(jsonValue),
+      // eslint-disable-next-line
+    } as any;
+  };
 
-    await fetchAddressSuggestions(formUrl, searchTerm, true).then((result) => {
-      expect(result).toEqual(mockResponse.data.Items);
-    });
+  beforeEach(() => {
+    global.fetch = jest.fn();
   });
 
-  it('should return an empty array on API error', async () => {
-    // Suppress console.error for this test case
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
 
-    mockedAxios.get.mockRejectedValueOnce(new Error('API Error'));
-    const result = await fetchAddressSuggestions(formUrl, searchTerm);
+  it('builds the correct URL query params (isAlberta=true -> maxSuggestions=50)', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(makeFetchResponse(true, 200, [sample]));
+
+    await fetchAddressSuggestions(formUrl, 'abc', true);
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    const [calledUrl, options] = (global.fetch as jest.Mock).mock.calls[0];
+
+    expect(typeof calledUrl).toBe('string');
+    const url = new URL(calledUrl);
+
+    expect(url.origin).toBe(baseUrl);
+    expect(url.pathname).toBe('/api/gateway/v1/address/v1/find');
+
+    expect(url.searchParams.get('searchTerm')).toBe('abc');
+    expect(url.searchParams.get('languagePreference')).toBe('en');
+    expect(url.searchParams.get('lastId')).toBe('');
+    expect(url.searchParams.get('maxSuggestions')).toBe('50');
+    expect(url.searchParams.get('country')).toBe('CAN');
+
+    // signal not provided in this call
+    expect(options).toEqual({ signal: undefined });
+  });
+
+  it('builds the correct URL query params (isAlberta=false -> maxSuggestions=10)', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(makeFetchResponse(true, 200, [sample]));
+
+    await fetchAddressSuggestions(formUrl, 'abc', false);
+
+    const [calledUrl] = (global.fetch as jest.Mock).mock.calls[0];
+    const url = new URL(calledUrl);
+
+    expect(url.searchParams.get('maxSuggestions')).toBe('10');
+  });
+
+  it('passes AbortSignal to fetch when provided', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(makeFetchResponse(true, 200, [sample]));
+
+    const controller = new AbortController();
+    await fetchAddressSuggestions(formUrl, 'abc', true, { signal: controller.signal });
+
+    const [, options] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(options.signal).toBe(controller.signal);
+  });
+
+  it('throws error when response is not ok', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(makeFetchResponse(false, 500, { anything: true }));
+
+    await expect(fetchAddressSuggestions(formUrl, 'abc', true)).rejects.toThrow('HTTP 500');
+  });
+
+  it('returns [] if json is null/undefined', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(makeFetchResponse(true, 200, null));
+
+    const result = await fetchAddressSuggestions(formUrl, 'abc', true);
     expect(result).toEqual([]);
+  });
 
-    // Restore console.error after the test
-    consoleErrorSpy.mockRestore();
+  it('returns array directly when json is an array', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(makeFetchResponse(true, 200, [sample]));
+
+    const result = await fetchAddressSuggestions(formUrl, 'abc', true);
+    expect(result).toEqual([sample]);
+  });
+
+  it('returns json.suggestions when present', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(makeFetchResponse(true, 200, { suggestions: [sample] }));
+
+    const result = await fetchAddressSuggestions(formUrl, 'abc', true);
+    expect(result).toEqual([sample]);
+  });
+
+  it('returns json.items when present', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(makeFetchResponse(true, 200, { items: [sample] }));
+
+    const result = await fetchAddressSuggestions(formUrl, 'abc', true);
+    expect(result).toEqual([sample]);
+  });
+
+  it('returns json.Items when present', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(makeFetchResponse(true, 200, { Items: [sample] }));
+
+    const result = await fetchAddressSuggestions(formUrl, 'abc', true);
+    expect(result).toEqual([sample]);
+  });
+
+  it('returns [] when json is an object with no matching array keys', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(makeFetchResponse(true, 200, { foo: 'bar' }));
+
+    const result = await fetchAddressSuggestions(formUrl, 'abc', true);
+    expect(result).toEqual([]);
+  });
+
+  it('prefers candidateKeys order: suggestions -> items -> Items', async () => {
+    // eslint-disable-next-line
+    const other: Suggestion = { Text: 'X', Description: 'Y' } as any;
+
+    (global.fetch as jest.Mock).mockResolvedValue(
+      makeFetchResponse(true, 200, { items: [other], suggestions: [sample], Items: [other] })
+    );
+
+    const result = await fetchAddressSuggestions(formUrl, 'abc', true);
+    expect(result).toEqual([sample]); // because 'suggestions' is checked first
   });
 });
 describe('filterAlbertaAddresses', () => {

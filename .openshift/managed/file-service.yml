@@ -166,6 +166,9 @@ objects:
             - name: file-av-db-volume
               persistentVolumeClaim:
                 claimName: file-av-db
+            - name: file-av-config
+              configMap:
+                name: file-av-scanner
           containers:
             - name: file-av-scanner
               command:
@@ -186,6 +189,9 @@ objects:
               volumeMounts:
                 - name: file-av-db-volume
                   mountPath: /var/lib/clamav
+                - name: file-av-config
+                  mountPath: /etc/clamav/clamd.conf
+                  subPath: clamd.conf
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
               imagePullPolicy: IfNotPresent

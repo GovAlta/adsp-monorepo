@@ -4,13 +4,13 @@ from dataclasses import dataclass
 from typing import List
 import xml.etree.ElementTree as ET
 
+from xdp_parser.display_text import DisplayText
 from xdp_parser.parsing_helpers import split_label_and_help
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_checkbox import XdpCheckbox
 from xdp_parser.xdp_help_control_pair import XdpHelpControlPair
 from xdp_parser.xdp_pseudo_radio import XdpPseudoRadio
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.xdp_utils import DisplayText
 
 debug = False
 
@@ -164,15 +164,12 @@ def _build_radio_selector_from_run(
     options: list[PseudoRadioOption],
     context: ParseContext,
 ) -> XdpPseudoRadio:
-    """
-    Build a radio selector.
-    - Radio enum values are option_value (text.label or fallback).
-    - Description + detail help are attached so the UI layer can render them.
-    """
-
     option_values: list[str] = []
     option_description_by_value: dict[str, str] = {}
     option_detail_help_by_value: dict[str, str] = {}
+
+    # Mapping from checkbox field name -> radio enum value
+    checkbox_to_value: dict[str, str] = {}
 
     for opt in options:
         # enum value
@@ -182,7 +179,12 @@ def _build_radio_selector_from_run(
 
         option_values.append(value)
 
-        # metadata for UI rendering
+        # NEW: store mapping
+        cb_name = (opt.checkbox.get_name() or "").strip()
+        if cb_name:
+            checkbox_to_value[cb_name] = value
+
+        # metadata (existing)
         desc = (opt.label.description or "").strip()
         if desc:
             option_description_by_value[value] = desc
@@ -191,15 +193,14 @@ def _build_radio_selector_from_run(
         if help_text:
             option_detail_help_by_value[value] = help_text
 
-        if debug:
-            d = f" — {desc}" if desc else ""
-            print(f"  [Pseudo-radio] option: '{value}'{d}")
-
     radio = XdpPseudoRadio(subform, option_values, context.help_text)
 
-    # Choose names you like; these can be consumed later by to_form_element()
-    radio.option_descriptions = option_description_by_value
-    radio.option_detail_help = option_detail_help_by_value
+    # NEW: attach mapping so the rewrite step can use it
+    radio.checkbox_to_value = checkbox_to_value
+
+    # IMPORTANT: match your class attribute names
+    radio.option_description_by_value = option_description_by_value
+    radio.option_detail_help_by_value = option_detail_help_by_value
 
     return radio
 

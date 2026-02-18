@@ -1,5 +1,4 @@
-from visibility_rules.pipeline_context import CTX_JSONFORMS_RULES
-from schema_generator.form_element import FormElement
+from schema_generator.form_element import FormElement, JsonSchemaElement
 from xdp_parser.parse_context import ParseContext
 
 
@@ -9,7 +8,7 @@ class Form(FormElement):
         self.sections = sections
         self.is_leaf = False
 
-    def build_ui_schema(self):
+    def build_ui_schema(self) -> JsonSchemaElement:
         ui_schema = {"type": "VerticalLayout"}
         ui_schema["elements"] = []
         for section in self.sections:
@@ -18,12 +17,10 @@ class Form(FormElement):
                 ui_schema["elements"].append(child)
         return ui_schema
 
-    def has_json_schema(self):
+    def has_json_schema(self) -> bool:
         return True
 
-    def to_json_schema(self):
-        rules = self.context.get(CTX_JSONFORMS_RULES) or {}
-
+    def to_json_schema(self) -> JsonSchemaElement:
         schemas = []
         for element in self.sections:
             if element.has_json_schema():
