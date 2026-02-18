@@ -3,16 +3,16 @@ from xdp_parser.parse_context import ParseContext
 
 
 class FormLayout(FormElement):
-    def __init__(self, type: str, elements: list[FormElement], context: ParseContext):
+    def __init__(self, type: str, children: list[FormElement], context: ParseContext):
         super().__init__("layout", None, None, context)
         self.type = type
-        self.elements = elements
+        self.children = children
         self.is_leaf = False
 
     def build_ui_schema(self) -> JsonSchemaElement:
         ui_schema = {"type": self.type}
         ui_schema["elements"] = []
-        for element in self.elements:
+        for element in self.children:
             child = element.to_ui_schema()
             if child:
                 ui_schema["elements"].append(child)
@@ -23,7 +23,7 @@ class FormLayout(FormElement):
 
     def to_json_schema(self) -> JsonSchemaElement:
         schemas = []
-        for element in self.elements:
+        for element in self.children:
             if element.has_json_schema():
                 schemas.append(element.to_json_schema())
         return schemas

@@ -168,7 +168,7 @@ def _build_radio_selector_from_run(
     option_description_by_value: dict[str, str] = {}
     option_detail_help_by_value: dict[str, str] = {}
 
-    # NEW: mapping from checkbox field name -> radio enum value
+    # Mapping from checkbox field name -> radio enum value
     checkbox_to_value: dict[str, str] = {}
 
     for opt in options:

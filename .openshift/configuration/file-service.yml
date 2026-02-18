@@ -11,6 +11,8 @@ items:
     data:
       clamd.conf: |
         # ClamAV daemon configuration
+        User clamav
+        LocalSocket /tmp/clamd.sock
         TCPSocket 3310
         TCPAddr 0.0.0.0
         MaxScanSize 500M

@@ -23,5 +23,5 @@ class JsonSchemaGenerator:
                 #     required.append(element.name)
         else:
             # This is a layout: get props for its children
-            for e in element.elements:
+            for e in element.children:
                 self.get_properties(e, properties, required)
