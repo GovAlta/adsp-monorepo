@@ -1,7 +1,5 @@
-# visibility_rules/stages/visibility_script_extractor.py
-
 import re
-from common.rule_model import Action, EventDescription, EventMetadata
+from visibility_rules.stages.rule_model import Action, EventDescription
 from visibility_rules.pipeline_context import (
     CTX_PARENT_MAP,
     CTX_RAW_RULES,
@@ -41,7 +39,7 @@ class VisibilityScriptExtractor:
         self.parent_map = parent_map
         self.subform_map = context[CTX_SUBFORM_MAP]
 
-        parsed_rules = []
+        parsed_rules: list[EventDescription] = []
         trigger_parser = TriggerParser()
 
         # Iterate over <script> tags, not <event> tags
@@ -77,7 +75,7 @@ class VisibilityScriptExtractor:
 
                 trigger = trigger_parser.parse(r_rule.trigger.strip())
                 actions = self._extract_events(r_rule.actions, script_elem)
-                metadata = self._extract_metadata(script_elem, target_name)
+                owner = self._extract_owner(script_elem)
 
                 if not actions:
                     if debug:
@@ -90,7 +88,7 @@ class VisibilityScriptExtractor:
                         action=action,
                         trigger=trigger,
                         script_node=script_elem,
-                        metadata=metadata,
+                        owner=owner,
                     )
                     parsed_rules.append(event)
                     if debug:
@@ -189,16 +187,7 @@ class VisibilityScriptExtractor:
         # Reverse to get root → leaf order
         return "/" + "/".join(reversed(path_parts))
 
-    def _extract_metadata(self, script_elem, target_name: str) -> EventMetadata:
+    def _extract_owner(self, script_elem) -> str:
         control = self._find_enclosing_control(script_elem)
         owner = control.get("name") if control is not None else "unknown"
-        owner_type = control.tag if control is not None else ""
-        target_is_subform = target_name and target_name in self.subform_map
-        xpath = self._get_xpath(script_elem, self.parent_map)
-        return EventMetadata(
-            owner=owner,
-            owner_type=owner_type,
-            target_is_subform=target_is_subform,
-            xpath=xpath,
-            script_name=script_elem.get("name") or "",
-        )
+        return owner

@@ -5,6 +5,8 @@ from xdp_parser.parse_context import ParseContext
 
 type JsonSchemaElement = dict[str, str]
 
+debug = False
+
 
 class FormElement(ABC):
     def __init__(self, type: str, name, qualified_name, context: ParseContext):
@@ -32,6 +34,12 @@ class FormElement(ABC):
     def build_ui_schema() -> JsonSchemaElement:
         pass
 
+    def has_children(self):
+        return not self.is_leaf and self.children
+
+    def get_children(self):
+        return self.children
+
     def update_label(self, label: str):
         self.label = label
 
@@ -42,6 +50,9 @@ class FormElement(ABC):
 
         # Direct match
         if qualified_name in rules:
+            if debug:
+                print(f"Found rule for: {qualified_name}")
+                print(f"    Rule details: {rules[qualified_name]}")
             return rules[qualified_name]
 
         # Prefix match (rule applies to a parent subform)
@@ -59,3 +70,12 @@ class FormElement(ABC):
         if rule_entry is not None:
             schema["rule"] = rule_entry["rule"]
         return schema
+
+    def print_form_element(self):
+        print("Element properties:")
+        print(f"    type: {self.type}")
+        print(f"    leaf: {self.is_leaf}")
+        print(f"    has Json schema: {self.has_json_schema()}")
+        print(f"    name: {self.name}")
+        print(f"    qualified name: {self.qualified_name}")
+        print(f"    label: {self.label}")

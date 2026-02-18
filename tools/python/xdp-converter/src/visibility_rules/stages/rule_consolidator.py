@@ -1,12 +1,10 @@
-# visibility_rules/stages/rule_consolidator.py
-
 from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple
 
 from visibility_rules.pipeline_context import CTX_RESOLVED_RULES, CTX_FINAL_RULES
 from visibility_rules.stages.trigger_ast import Trigger, BooleanOp
-from common.rule_model import VisibilityRule
+from visibility_rules.stages.rule_model import EventDescription, VisibilityRule
 
 debug = False
 
@@ -27,13 +25,12 @@ class RuleConsolidator:
     _SPECIAL_TARGETS = {"this"}
 
     def process(self, context):
-        events = context.get(CTX_RESOLVED_RULES, []) or []
+        events: list[EventDescription] = context.get(CTX_RESOLVED_RULES, []) or []
         if debug:
             print("\n[RuleConsolidator] Starting...")
             print(f"[RuleConsolidator] IN events: {len(events)}")
 
         grouped: Dict[Tuple[str, str], List[Trigger]] = {}
-        rep_xpath: Dict[Tuple[str, str], Optional[str]] = {}
 
         skipped = 0
 
@@ -52,9 +49,6 @@ class RuleConsolidator:
 
             grouped.setdefault(key, []).append(ev.trigger)
 
-            if key not in rep_xpath:
-                rep_xpath[key] = getattr(getattr(ev, "metadata", None), "xpath", None)
-
         consolidated: List[VisibilityRule] = []
 
         for (target, effect), triggers in grouped.items():
@@ -65,7 +59,6 @@ class RuleConsolidator:
                 target=target,
                 effect=effect,
                 trigger=combined,
-                xpath=rep_xpath.get((target, effect)),
             )
 
             if debug:

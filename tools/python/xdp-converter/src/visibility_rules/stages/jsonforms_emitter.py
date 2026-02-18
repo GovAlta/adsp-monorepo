@@ -65,14 +65,25 @@ class JsonFormsEmitter:
                 skipped += 1
                 continue
 
-            emitted[key] = {"rule": jsonforms_rule}
+            if debug:
+                print(
+                    f"[Emitter] target={getattr(rule,'target',None)!r}  effect={effect}  key={key}"
+                )
+
+            emitted.setdefault(key, []).append(jsonforms_rule)
             if debug:
                 print(f"Rule for {key} is:")
                 print(f"    {jsonforms_rule}\n")
 
-        context[CTX_JSONFORMS_RULES] = emitted
+        final_emitted = {}
+        for key, rule_list in emitted.items():
+            merged = self.merge_rules_for_target(rule_list)
+            final_emitted[key] = {"rule": merged}
+
+        context[CTX_JSONFORMS_RULES] = final_emitted
         if debug:
-            print(f"[JsonFormsEmitter] OUT rules: {len(emitted)} (skipped={skipped})")
+            print(f"[JsonFormsEmitter] OUT rules: {len(final_emitted)}")
+            print(f"    skipped={skipped})")
             print("[JsonFormsEmitter] Done.\n")
         return context
 
@@ -292,9 +303,9 @@ class JsonFormsEmitter:
         """
         s = str(value).strip()
 
-        # Special token you introduced earlier
+        # Special token
         if s == "<blank>":
-            return ""  # treat blank selection as empty string in JSON data
+            return ""
 
         # 1) label_to_enum mapping
         if s in label_to_enum:
@@ -356,3 +367,105 @@ class JsonFormsEmitter:
             if el.attrib.get("name") == name:
                 return el
         return None
+
+    def merge_rules_for_target(self, rules: list[dict]) -> dict:
+        """
+        Merge multiple JSONForms rule dicts for ONE target into a single rule.
+
+        Policy:
+        - Prefer HIDE when both HIDE and SHOW exist.
+        - Merge same-effect schemas using OR semantics (anyOf).
+        - Flatten nested anyOf.
+        - Remove duplicates.
+        """
+
+        if not rules:
+            return {
+                "effect": "SHOW",
+                "condition": {"scope": "#", "schema": {}},
+            }
+
+        grouped = self._group_rules_by_effect(rules)
+
+        if "HIDE" in grouped:
+            merged_schema = self._merge_schemas_or(grouped["HIDE"])
+            return {
+                "effect": "HIDE",
+                "condition": {"scope": "#", "schema": merged_schema},
+            }
+
+        if "SHOW" in grouped:
+            merged_schema = self._merge_schemas_or(grouped["SHOW"])
+            return {
+                "effect": "SHOW",
+                "condition": {"scope": "#", "schema": merged_schema},
+            }
+
+        # fallback for DISABLE / ENABLE etc.
+        effect = next(iter(grouped.keys()))
+        merged_schema = self._merge_schemas_or(grouped[effect])
+        return {
+            "effect": effect,
+            "condition": {"scope": "#", "schema": merged_schema},
+        }
+
+    def _group_rules_by_effect(self, rules: list[dict]) -> dict[str, list[dict]]:
+        grouped: dict[str, list[dict]] = {}
+
+        for r in rules:
+            effect = (r.get("effect") or "SHOW").upper()
+            schema = ((r.get("condition") or {}).get("schema")) or {}
+
+            if not schema:
+                continue
+
+            grouped.setdefault(effect, []).append(schema)
+
+        return grouped
+
+    def _merge_schemas_or(self, schemas: list[dict]) -> dict:
+        flat = self._flatten_schema_list(schemas)
+        unique = self._dedupe_schemas(flat)
+
+        if not unique:
+            return {}
+
+        if len(unique) == 1:
+            return unique[0]
+
+        return {"anyOf": unique}
+
+    def _flatten_schema_list(self, schemas: list[dict]) -> list[dict]:
+        flat: list[dict] = []
+
+        for schema in schemas:
+            flat.extend(self._flatten_schema(schema))
+
+        return flat
+
+    def _flatten_schema(self, schema: dict) -> list[dict]:
+        if (
+            isinstance(schema, dict)
+            and "anyOf" in schema
+            and len(schema) == 1
+            and isinstance(schema["anyOf"], list)
+        ):
+            result: list[dict] = []
+            for branch in schema["anyOf"]:
+                result.extend(self._flatten_schema(branch))
+            return result
+
+        return [schema]
+
+    def _dedupe_schemas(self, schemas: list[dict]) -> list[dict]:
+        unique: list[dict] = []
+        seen: set[str] = set()
+
+        for schema in schemas:
+            key = repr(schema)
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(schema)
+
+        return unique

@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from schema_generator.form_element import FormElement, JsonSchemaElement
 from xdp_parser.parse_context import ParseContext
@@ -17,21 +17,47 @@ class FormObjectArray(FormElement):
         self.is_leaf = True
         self.elements = columns
         self.can_group_horizontally = False
+        self.debug = False
+        if self.debug:
+            self.whoAmI()
 
     def whoAmI(self):
-        return
         print(f"[LWD]: {self.name} has {len(self.elements)}")
 
     def has_json_schema(self) -> bool:
         return True
 
     def to_json_schema(self) -> JsonSchemaElement:
-        items = {}
-        for element in self.elements:
-            if element.has_json_schema() and element.name:
-                items[element.name] = element.to_json_schema()
+        items = self.collect_item_properties(self.elements)
         item_props = {"type": "object", "properties": items}
         return {"type": "array", "items": item_props}
+
+    def collect_item_properties(
+        self, elements: List[FormElement]
+    ) -> Dict[str, JsonSchemaElement]:
+        props: Dict[str, JsonSchemaElement] = {}
+
+        for element in elements:
+            if element.has_children():
+                child_props = self.collect_item_properties(element.get_children())
+                for key, val in child_props.items():
+                    if key in props:
+                        raise ValueError(
+                            f"Duplicate property '{key}' while building schema for object array '{self.name}'. "
+                        )
+                    props[key] = val
+                continue
+
+            # Case 2: normal leaf control -> use its name as property key
+            if element.is_leaf and element.has_json_schema():
+                if not element.name:
+                    raise ValueError(
+                        f"Element '{element.get_name()}' inside object array '{self.name}' "
+                        f"claims it has JSON schema but has no name to use as a property key."
+                    )
+                props[element.name] = element.to_json_schema()
+
+        return props
 
     def build_ui_schema(self) -> JsonSchemaElement:
         detail_elements = []
