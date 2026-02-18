@@ -1,3 +1,5 @@
+import xml.etree.ElementTree as ET
+from typing import Optional
 from visibility_rules.pipeline_context import (
     CTX_ENUM_MAP,
     CTX_RADIO_GROUPS,
@@ -5,14 +7,18 @@ from visibility_rules.pipeline_context import (
     CTX_RESOLVED_RULES,
     CTX_SUBFORM_MAP,
     CTX_TARGETED_GROUPS,
+    CTX_PARENT_MAP,
+    CTX_XDP_ROOT,
 )
 
 from visibility_rules.stages.print_event import print_event
+from visibility_rules.stages.rule_model import Action, EventDescription
 from visibility_rules.stages.trigger_ast import (
     AtomicCondition,
     CompoundCondition,
     Trigger,
 )
+from xdp_parser.xdp_utils import compute_full_xdp_path
 
 debug = False
 
@@ -34,27 +40,29 @@ class DriverResolver:
         if debug:
             print("\n[DriverResolver] Starting...")
 
-        events = context.get(CTX_RAW_RULES, []) or []
+        events: list[EventDescription] = context.get(CTX_RAW_RULES, []) or []
         radio_groups = context.get(CTX_RADIO_GROUPS, {}) or {}
         enum_maps = context.get(CTX_ENUM_MAP, {}) or {}
         subform_map = context.get(CTX_SUBFORM_MAP, {}) or {}
+        parent_map = context.get(CTX_PARENT_MAP, {}) or {}
+        xdp_root = context.get(CTX_XDP_ROOT)
 
         targeted_subforms = context.get(CTX_TARGETED_GROUPS)
         if targeted_subforms is None:
             targeted_subforms = set()
             context[CTX_TARGETED_GROUPS] = targeted_subforms
 
-        resolved_events = []
+        resolved_events: list[EventDescription] = []
         for ev in events:
             if not ev or not ev.trigger or not ev.action:
                 continue
 
-            # 1) mark subform targets
+            # Mark subform targets
             tgt = ev.action.target
             if tgt and tgt in subform_map:
                 targeted_subforms.add(tgt)
 
-            # 2) rewrite trigger AST
+            # Rewrite trigger AST
             new_trigger = self._rewrite_trigger(
                 ev.trigger,
                 ev,
@@ -62,19 +70,40 @@ class DriverResolver:
                 enum_maps,
             )
 
-            ev2 = type(ev)(
+            # Resolve action target to fully-qualified SOM path
+            tgt_qualified = self._resolve_action_target(ev, parent_map, xdp_root)
+            if not tgt_qualified:
+                if debug:
+                    print(f"[DriverResolver] WARN: could not resolve target {tgt}")
+                continue
+
+            # --- Adjust effect relative to initial presence ---
+            baseline_hidden = self._is_initially_hidden(
+                tgt_qualified, parent_map, xdp_root
+            )
+
+            script_hide = ev.action.hide
+
+            # Convert script action into effective rule effect
+            if baseline_hidden:
+                if script_hide:
+                    continue  # hiding something already hidden -> no-op
+                effective_hide = False
+            else:
+                # Field starts visible
+                if not script_hide:
+                    continue  # showing something already visible -> no-op
+                effective_hide = True  # this becomes a HIDE rule
+
+            new_action = Action(target=tgt_qualified, hide=effective_hide)
+            ev2 = EventDescription(
                 trigger=new_trigger,
-                action=ev.action,
-                metadata=ev.metadata,
+                action=new_action,
                 script_node=ev.script_node,
+                owner=ev.owner,
             )
 
             if debug:
-                events_of_interest = {
-                    "Section3Default",
-                    "Section3Emergency",
-                    "Section3Seasonal",
-                }
                 print_event(ev2, None)
 
             resolved_events.append(ev2)
@@ -104,7 +133,7 @@ class DriverResolver:
 
         raise TypeError(f"Unknown Trigger node type: {type(node)}")
 
-    def _rewrite_atomic(self, atom, ev, radio_groups, enum_maps):
+    def _rewrite_atomic(self, atom, ev: EventDescription, radio_groups, enum_maps):
         """
         Rewrite one AtomicCondition:
         - resolve driver 'this' -> owner
@@ -120,12 +149,12 @@ class DriverResolver:
         if ".rawValue" in driver:
             raise ValueError(
                 f"[DriverResolver] Contract violation: '.rawValue' leaked into DriverResolver: {driver!r} "
-                f"(owner={getattr(ev.metadata, 'owner', None)!r})"
+                f"(owner={ev.owner})"
             )
 
         # --- Resolve 'this' driver using metadata owner ---
         if driver.lower() == "this":
-            owner = getattr(ev.metadata, "owner", None)
+            owner = ev.owner
             if not owner:
                 raise ValueError(
                     "[DriverResolver] Cannot resolve 'this': missing metadata.owner"
@@ -140,22 +169,19 @@ class DriverResolver:
         if group:
             driver = group
             value = self._member_value_to_label(
-                group, leaf, value, enum_maps, radio_groups, atom
+                group, leaf, value, enum_maps, radio_groups
             )
-
-            # IMPORTANT: in the member-collapse case, the value you returned is *usually already a label*,
-            # but sometimes it's still numeric. We'll run generic enum mapping too (safe).
             value = self._resolve_enum_value(driver, value, enum_maps)
 
         else:
-            # Not a member: normalize driver to leaf (matches your old behaviour)
+            # Not a member: normalize driver to leaf
             driver = leaf
 
-            # Old behaviour: if driver itself is a known radio group, map numeric -> label
+            # If driver itself is a known radio group, map numeric -> label
             if driver in radio_groups:
                 value = self._index_to_label(driver, value, enum_maps)
 
-            # NEW behaviour: if driver is any enum-backed control (dropdowns like cboCategory),
+            # If driver is any enum-backed control,
             # map numeric/save-value -> label.
             value = self._resolve_enum_value(driver, value, enum_maps)
 
@@ -172,7 +198,7 @@ class DriverResolver:
         return None
 
     def _member_value_to_label(
-        self, group: str, member_leaf: str, value, enum_maps, radio_groups, atom
+        self, group: str, member_leaf: str, value, enum_maps, radio_groups
     ):
         """
         If we collapsed member->group, turn the value into a label where possible.
@@ -240,3 +266,84 @@ class DriverResolver:
             return (label or "").strip()
 
         return value
+
+    def _resolve_action_target(
+        self,
+        ev: EventDescription,
+        parent_map: dict[ET.Element, ET.Element],
+        xdp_root: Optional[ET.Element],
+    ) -> str:
+        raw = (ev.action.target or "").strip()
+        if not raw:
+            return ""
+
+        # Already qualified? Great.
+        if "." in raw:
+            return raw
+
+        if xdp_root is None or ev.script_node is None:
+            return ""
+
+        # Resolve within the nearest subform containing this script
+        scope = self._nearest_subform_ancestor(ev.script_node, parent_map)
+        if scope is not None:
+            hit = self._find_descendant_by_name(scope, raw)
+            if hit is not None:
+                return compute_full_xdp_path(hit, parent_map)
+
+        # If not found in local scope, only fall back globally if UNIQUE
+        matches = self._find_all_by_name(xdp_root, raw)
+        if len(matches) == 1:
+            return compute_full_xdp_path(matches[0], parent_map)
+
+        # Ambiguous or missing -> fail (better than mis-attaching)
+        return ""
+
+    def _nearest_subform_ancestor(
+        self,
+        node: ET.Element,
+        parent_map: dict[ET.Element, ET.Element],
+    ) -> Optional[ET.Element]:
+        cur: Optional[ET.Element] = node
+        while cur is not None:
+            tag = (cur.tag or "").split("}")[-1]
+            if tag == "subform":
+                return cur
+            cur = parent_map.get(cur)
+        return None
+
+    def _find_descendant_by_name(
+        self, scope: ET.Element, name: str
+    ) -> Optional[ET.Element]:
+        for el in scope.iter():
+            if el.attrib.get("name") == name:
+                return el
+        return None
+
+    def _find_all_by_name(self, root: ET.Element, name: str) -> list[ET.Element]:
+        out: list[ET.Element] = []
+        for el in root.iter():
+            if el.attrib.get("name") == name:
+                out.append(el)
+        return out
+
+    def _is_initially_hidden(
+        self,
+        qualified_target: str,
+        parent_map,
+        xdp_root,
+    ) -> bool:
+        if not qualified_target or xdp_root is None:
+            return False
+
+        # Find node by full SOM path
+        for el in xdp_root.iter():
+            name = el.attrib.get("name")
+            if not name:
+                continue
+
+            full = compute_full_xdp_path(el, parent_map)
+            if full == qualified_target:
+                return (el.attrib.get("presence") or "").strip().lower() == "hidden"
+
+        return False

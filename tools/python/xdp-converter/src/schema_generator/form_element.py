@@ -5,6 +5,8 @@ from xdp_parser.parse_context import ParseContext
 
 type JsonSchemaElement = dict[str, str]
 
+debug = False
+
 
 class FormElement(ABC):
     def __init__(self, type: str, name, qualified_name, context: ParseContext):
@@ -48,6 +50,9 @@ class FormElement(ABC):
 
         # Direct match
         if qualified_name in rules:
+            if debug:
+                print(f"Found rule for: {qualified_name}")
+                print(f"    Rule details: {rules[qualified_name]}")
             return rules[qualified_name]
 
         # Prefix match (rule applies to a parent subform)

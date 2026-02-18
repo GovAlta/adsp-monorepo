@@ -17,7 +17,7 @@ class FormObjectArray(FormElement):
         self.is_leaf = True
         self.elements = columns
         self.can_group_horizontally = False
-        self.debug = True
+        self.debug = False
         if self.debug:
             self.whoAmI()
 

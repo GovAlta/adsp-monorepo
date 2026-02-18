@@ -117,6 +117,10 @@ def process_one(xdp_path: Path, out_dir: Path, overwrite: bool = False):
         pipeline_output = pipeline.run(pipeline_context)
         jsonforms_rules = pipeline_output.get(CTX_JSONFORMS_RULES, {})
 
+        if debug:
+            print(f"Generated visibility rules for {len(jsonforms_rules)} element(s).")
+            print(jsonforms_rules)
+
         top_subforms = set(id(sf) for sf in XdpParser.find_top_subforms(root))
         context = ParseContext(
             root=root,
