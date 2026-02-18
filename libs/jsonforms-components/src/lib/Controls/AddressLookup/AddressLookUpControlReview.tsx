@@ -171,10 +171,22 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
     <>
       <tr data-testid="address-lookup-table-review">
         <PageReviewContainer colSpan={3}>
-          <ReviewLabel>{`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}</ReviewLabel>
+          <ReviewHeader>
+            <ReviewLabel>{`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}</ReviewLabel>
+            {stepId !== undefined && (
+              <GoabButton
+                type="tertiary"
+                size="compact"
+                onClick={() => formStepperCtx?.goToPage(stepId, targetScope)}
+                testId="address-change-btn"
+              >
+                Change
+              </GoabButton>
+            )}
+          </ReviewHeader>
         </PageReviewContainer>
       </tr>
-      {renderRow('Address line 1', data?.addressLine1, 'addressLine1', true)}
+      {renderRow('Address line 1', data?.addressLine1, 'addressLine1', false)}
       {data?.addressLine2 && renderRow('Address line 2', data.addressLine2, 'addressLine2', false)}
       {renderRow('City', data?.municipality, 'municipality', false)}
       {renderRow('Postal Code', data?.postalCode, 'postalCode', false)}

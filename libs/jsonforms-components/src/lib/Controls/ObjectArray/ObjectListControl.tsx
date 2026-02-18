@@ -267,13 +267,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
               </thead>
               <tbody>
                 {range(count || 0).map((num, i) => {
-                  // Skip rendering empty rows in review mode
-                  if (
-                    isInReview === true &&
-                    (data === undefined || data[num] === undefined || Object.keys(data[num]).length === 0)
-                  ) {
-                    return null;
-                  }
+
 
                   const errorRow = errors?.find((error: ErrorObject) =>
                     error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`)
@@ -353,7 +347,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                                       ? currentData
                                       : undefined,
                                   error: humanMessage,
-                                  isRequired: required?.includes(tableKeys[element]) ?? false,
+                                  isRequired: required?.includes(element) ?? false,
                                   errors: errors !== undefined ? errors : [],
                                   count: count !== undefined ? count : -1,
                                   element,
