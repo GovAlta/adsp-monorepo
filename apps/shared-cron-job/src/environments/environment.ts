@@ -16,6 +16,8 @@ export const environment = envalid.cleanEnv(
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:shared-cron-job' }),
     CLIENT_SECRET: envalid.str({ default: '' }),
     DIRECTORY_URL: envalid.str({ default: 'https://directory-service.adsp-dev.gov.ab.ca' }),
+    TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    PORT: envalid.num({ default: 3334 }),
   },
   {
     reporter: ({ errors }) => {
