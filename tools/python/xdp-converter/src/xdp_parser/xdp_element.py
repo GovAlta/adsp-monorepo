@@ -242,14 +242,12 @@ class XdpElement(ABC):
             if presence == "hidden":
                 continue  # skip saved-value list
 
-            # Collect the human-readable labels
+            # Collect the labels
             for text_el in items_el.findall("./text"):
                 txt = "".join(text_el.itertext()).strip()
-                if txt:
-                    enum_values.append(txt)
+                enum_values.append(txt)
 
         if enum_values:
-            # keep your existing stable-order de-dupe
             return [str(v) for v in remove_duplicates(enum_values)]
         return None
 

@@ -252,15 +252,25 @@ Then('the user views {string} namespace under Core definitions heading', functio
 });
 
 When(
-  'a developer sends a value service get events request with {string}, {string} and {string}',
-  function (requestEndpoint: string, requestType: string, interval) {
+  'a developer sends a value service get events request with {string}, {string} and {string} for the last {string} hours',
+  function (requestEndpoint: string, requestType: string, interval, hours: string) {
     const valueServiceGetEventEndPoint = requestEndpoint.replace('<interval>', interval as string);
-    const valueServiceGetEventURL = Cypress.env('valueServiceApiUrl') + valueServiceGetEventEndPoint;
+    const currentTime = new Date();
+    const intervalMax = currentTime.toISOString();
+    const intervalMin = new Date(currentTime.getTime() - parseInt(hours) * 60 * 60 * 1000).toISOString(); // n hours ago
+    const valueServiceGetEventURL =
+      Cypress.env('valueServiceApiUrl') +
+      valueServiceGetEventEndPoint +
+      '&criteria={"intervalMin":"' +
+      intervalMin +
+      '","intervalMax":"' +
+      intervalMax +
+      '"}';
     cy.request({
       method: requestType,
       url: valueServiceGetEventURL,
       failOnStatusCode: false,
-      timeout: 60000, //CS-4675: Increase timeout for value service API request until the performance issue is resolved
+      timeout: 30000,
       auth: {
         bearer: Cypress.env('autotest-admin-token'),
       },
@@ -272,5 +282,6 @@ When(
 
 Then('{string} is returned with top 5 events in the response', function (statusCode: string) {
   expect(responseObj.status).to.equal(parseInt(statusCode));
-  expect(responseObj.body.page.size).to.be.eq(5);
+  expect(responseObj.body.page.size).to.be.lte(5);
+  expect(responseObj.body.page.size).to.be.gte(1);
 });

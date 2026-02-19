@@ -1,6 +1,7 @@
 import React from 'react';
 import { GoabCallout } from '@abgov/react-components';
 import { GoabCalloutType } from '@abgov/ui-components-common';
+import { sanitizeHtml } from '../../../common/sanitize';
 
 interface AdditionalInstructionsRowProps {
   additionalInstructions: string;
@@ -20,11 +21,13 @@ export const AdditionalInstructionsRow: React.FC<AdditionalInstructionsRowProps>
 
   const { type: _, ...otherProps } = componentProps || {};
 
+  const sanitizedHtml = sanitizeHtml(additionalInstructions);
+
   return (
     <tr>
       <td colSpan={2}>
         <GoabCallout type={type} mt="xl" mb="l" {...otherProps}>
-          {additionalInstructions}
+          <div dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
         </GoabCallout>
       </td>
     </tr>
