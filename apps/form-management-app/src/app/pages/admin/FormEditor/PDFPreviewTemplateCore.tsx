@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { GoabButton, GoabIconButton, GoabCallout } from '@abgov/react-components';
-import { useDispatch } from 'react-redux';
-import { UpdateIndicator } from '@store/session/actions';
 import styles from './Editor.module.scss';
 import { PdfPageIndicator } from '../../../state/pdf/PdfIndicator';
 import { PdfJobList } from '../../../state/pdf/pdf.slice';
@@ -104,24 +102,15 @@ export const PreviewTop = ({
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const previousLoadingRef = React.useRef(false);
   const previousPdfRef = React.useRef<string | null>(null);
-  const dispatch = useDispatch();
 
   useEffect(() => {
     if (loading) {
       setIsButtonDisabled(true);
       previousLoadingRef.current = true;
 
+      // Set timeout to 60 seconds - re-enable button if generation takes too long
       timeoutRef.current = setTimeout(() => {
         setIsButtonDisabled(false);
-        dispatch(
-          UpdateIndicator({
-            show: true,
-            message: 'PDF generation is taking longer than expected. Button has been re-enabled.',
-          })
-        );
-        setTimeout(() => {
-          dispatch(UpdateIndicator({ show: false }));
-        }, 3000);
       }, 60000); // 60 seconds
     } else if (previousLoadingRef.current && !loading && currentPDF && currentPDF !== previousPdfRef.current) {
       if (timeoutRef.current) {
@@ -131,17 +120,6 @@ export const PreviewTop = ({
       setIsButtonDisabled(false);
       previousLoadingRef.current = false;
       previousPdfRef.current = currentPDF;
-
-      dispatch(
-        UpdateIndicator({
-          show: true,
-          message: 'PDF generated successfully',
-        })
-      );
-
-      setTimeout(() => {
-        dispatch(UpdateIndicator({ show: false }));
-      }, 2000);
     }
 
     return () => {
@@ -149,7 +127,7 @@ export const PreviewTop = ({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [loading, currentPDF, dispatch]);
+  }, [loading, currentPDF]);
 
   return (
     <div>
