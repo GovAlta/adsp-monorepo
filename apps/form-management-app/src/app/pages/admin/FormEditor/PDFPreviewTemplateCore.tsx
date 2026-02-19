@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GoabButton, GoabIconButton, GoabCallout } from '@abgov/react-components';
+import { useDispatch } from 'react-redux';
+import { UpdateIndicator } from '@store/session/actions';
 import styles from './Editor.module.scss';
 import { PdfPageIndicator } from '../../../state/pdf/PdfIndicator';
 import { PdfJobList } from '../../../state/pdf/pdf.slice';
@@ -77,7 +79,7 @@ export const PDFPreviewTemplateCore = ({ jobList, currentPDF, loading }: HasForm
   };
 
   return (
-    jobList.length > 0 && (
+    (jobList.length > 0 || loading) && (
       <div className={styles['preview-container']}>
         <PdfPreview />
       </div>
@@ -90,41 +92,97 @@ export const PreviewTop = ({
   downloadFile,
   currentPDF,
   generateTemplate,
+  loading,
 }: {
   title: string;
   downloadFile: () => void;
   currentPDF: string;
   generateTemplate: () => void;
+  loading?: boolean;
 }) => {
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const previousLoadingRef = React.useRef(false);
+  const previousPdfRef = React.useRef<string | null>(null);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (loading) {
+      setIsButtonDisabled(true);
+      previousLoadingRef.current = true;
+
+      timeoutRef.current = setTimeout(() => {
+        setIsButtonDisabled(false);
+        dispatch(
+          UpdateIndicator({
+            show: true,
+            message: 'PDF generation is taking longer than expected. Button has been re-enabled.',
+          })
+        );
+        setTimeout(() => {
+          dispatch(UpdateIndicator({ show: false }));
+        }, 3000);
+      }, 60000); // 60 seconds
+    } else if (previousLoadingRef.current && !loading && currentPDF && currentPDF !== previousPdfRef.current) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      setIsButtonDisabled(false);
+      previousLoadingRef.current = false;
+      previousPdfRef.current = currentPDF;
+
+      dispatch(
+        UpdateIndicator({
+          show: true,
+          message: 'PDF generated successfully',
+        })
+      );
+
+      setTimeout(() => {
+        dispatch(UpdateIndicator({ show: false }));
+      }, 2000);
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [loading, currentPDF, dispatch]);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'row' }}>
-      <div style={{ marginRight: '0.5rem' }} className={styles['form-title']}>
-        {title}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'row', marginBottom: '-8px' }}>
-        <div style={{ scale: '86%', marginTop: '-2px' }}>
-          <GoabButton
-            type="secondary"
-            testId="generate-template"
-            size="compact"
-            onClick={() => {
-              generateTemplate();
-            }}
-          >
-            Generate PDF
-          </GoabButton>
+    <div>
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+        <div style={{ marginRight: '0.5rem' }} className={styles['form-title']}>
+          {title}
         </div>
-        <div style={{ scale: '86%', marginTop: '-3px' }}>
-          <GoabIconButton
-            icon="download"
-            title="Download"
-            testId="download-template-icon"
-            size="medium"
-            disabled={!currentPDF}
-            onClick={() => {
-              downloadFile();
-            }}
-          />
+        <div style={{ display: 'flex', flexDirection: 'row', marginBottom: '-8px', alignItems: 'center' }}>
+          <div style={{ scale: '86%', marginTop: '-2px' }}>
+            <GoabButton
+              type="secondary"
+              testId="generate-template"
+              size="compact"
+              disabled={isButtonDisabled}
+              onClick={() => {
+                generateTemplate();
+              }}
+            >
+              Generate PDF
+            </GoabButton>
+          </div>
+          <div style={{ scale: '86%', marginTop: '-3px' }}>
+            <GoabIconButton
+              icon="download"
+              title="Download"
+              testId="download-template-icon"
+              size="medium"
+              disabled={!currentPDF}
+              onClick={() => {
+                downloadFile();
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>
