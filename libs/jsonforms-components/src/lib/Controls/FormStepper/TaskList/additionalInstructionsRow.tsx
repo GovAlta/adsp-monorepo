@@ -24,7 +24,7 @@ export const AdditionalInstructionsRow: React.FC<AdditionalInstructionsRowProps>
     <tr>
       <td colSpan={2}>
         <GoabCallout type={type} mt="xl" mb="l" {...otherProps}>
-          {additionalInstructions}
+          <div dangerouslySetInnerHTML={{ __html: additionalInstructions }} />
         </GoabCallout>
       </td>
     </tr>
