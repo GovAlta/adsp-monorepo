@@ -43,10 +43,15 @@ def promote_group_headers(
             print("  First element is not help text")
         return
 
-    text = (getattr(first, "text", None) or "").strip()
+    text = first.help_text().strip()
     if not text:
         if debug:
             print("  First element has no text")
+        return
+
+    if len(text) > 50:  # sanity check to avoid promoting huge blocks of text
+        if debug:
+            print("  First element is too long to be a header")
         return
 
     first.promote_to_header()
