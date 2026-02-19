@@ -77,7 +77,7 @@ dompurify.addHook('afterSanitizeAttributes', function (node) {
   }
 });
 
-export function hasXSS(html) {
+export function hasXSS(html: string): boolean {
   const wordsToEscape = ['<!DOCTYPE html>', '<!doctype html>'];
   for (const word of wordsToEscape) {
     html = (html || '').replace(word, '');
@@ -88,7 +88,7 @@ export function hasXSS(html) {
   return sanitized !== html;
 }
 
-export const htmlSanitized = (html) => {
+export const htmlSanitized = (html: string): string => {
   return dompurify.sanitize(html, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'] });
 };
 
