@@ -61,6 +61,7 @@ import {
   PhoneNumberWithTypeControl,
   GoACalculationControlTester,
   GoACalculationControl,
+  GoAPrimitiveArrayTester,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -80,6 +81,7 @@ import GoAErrorControl, { GoAErrorControlTester } from './lib/ErrorHandling/GoAE
 import GoACalloutControl, { GoACalloutControlTester, CalloutReviewControl } from './lib/Additional/GoACalloutControl';
 import { GoAGroupReviewControl, GoAGroupReviewLayoutTester } from './lib/layouts/GroupReviewControl';
 import { PhoneNumberWithTypeReviewControl } from './lib/Controls/PhoneNumber/PhoneNumberWithTypeReviewControl';
+import { GoAPrimitiveArrayRenderer } from './lib/Controls';
 
 export * from './lib/Context';
 export * from './lib/common';
@@ -130,6 +132,10 @@ export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
     renderer: MultiLineTextControl,
   },
   {
+    tester: GoAPrimitiveArrayTester,
+    renderer: GoAPrimitiveArrayRenderer,
+  },
+  {
     tester: HelpContentTester,
     renderer: HelpContent,
   },
@@ -167,6 +173,7 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
     tester: GoAListWithDetailsTester,
     renderer: GoAArrayControlReviewRenderer,
   },
+
   {
     tester: GoAHorizontalLayoutTester,
     renderer: GoAHorizontalReviewLayout,
