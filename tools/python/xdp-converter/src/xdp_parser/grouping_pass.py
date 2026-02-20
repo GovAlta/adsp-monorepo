@@ -13,7 +13,6 @@ from xdp_parser.visibility_rule_xformer import (
 )
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_group import XdpGroup
-from xdp_parser.xdp_object_array import XdpObjectArray
 from xdp_parser.xdp_subform_placeholder import XdpSubformPlaceholder
 from xdp_parser.xdp_utils import convert_to_mm
 
@@ -62,22 +61,19 @@ class XdpGroupingPass:
         for child in node.children:
             grouped_children.extend(self._group_node(child, parent_label=parent_label))
 
-        # Sort
         grouped_children = self.sort_xdp_elements(
             container, grouped_children, self.context.get("parent_map", {})
         )
 
-        # Identify headers
         promote_group_headers(container, grouped_children, debug=False)
 
-        self.control_labels.augment_labels_with_iconic_help(grouped_children)
+        grouped_children = self.control_labels.resolve_control_labels(grouped_children)
 
         extractor = ControlDescriptionExtractor()
         grouped_children = extractor.update_control_descriptions(
             grouped_children, self.control_labels
         )
 
-        # Pair help icons
         pairer = HelpPairer(debug=False)
         grouped_children = pairer.consolidate_help_pairs(
             grouped_children,
