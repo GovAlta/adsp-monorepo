@@ -3,7 +3,7 @@ import { GoabFormItem, GoabGrid, GoabInput } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { useState, useRef, useEffect, useContext } from 'react';
 import { useSyncAutofillFields } from '../../util/useSyncAutofillFields';
-import { Visible } from '../../util';
+import { Visible, ensureGoaDatePointerCursor } from '../../util';
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
 
@@ -75,6 +75,13 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
     updateFormData,
     handleRequiredFieldBlur
   );
+  const hostRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const host = hostRef.current ?? document.querySelector('goa-input[type="date"]');
+    host?.shadowRoot?.querySelector('input[type="date"]');
+    ensureGoaDatePointerCursor(host);
+  }, []);
 
   /* istanbul ignore next */
   useEffect(() => {

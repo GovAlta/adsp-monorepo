@@ -219,3 +219,19 @@ export const onChangeForNumericControl = (props: EventChangeControlProps) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const onChangeForCheckboxData = (data: any, name: string, value: string) =>
   data ? (!value ? data?.filter((item: string | []) => item !== name) : [...data, name]) : [name];
+
+export const ensureGoaDatePointerCursor = (host: Element | null) => {
+  if (!host) return;
+  const sr = (host as HTMLElement).shadowRoot;
+  if (!sr) return;
+
+  if (sr.getElementById('goa-date-cursor-style')) return;
+
+  const style = document.createElement('style');
+  style.id = 'goa-date-cursor-style';
+  style.textContent = `
+    input[type="date"] { cursor: pointer !important; }
+    input[type="date"]:disabled { cursor: not-allowed !important; }
+  `;
+  sr.appendChild(style);
+};
