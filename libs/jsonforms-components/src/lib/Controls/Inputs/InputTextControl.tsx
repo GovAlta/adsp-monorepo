@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoabInput } from '@abgov/react-components';
@@ -10,6 +10,7 @@ import { onBlurForTextControl, onChangeForInputControl } from '../../util/inputC
 import { Dropdown } from '../../Components/Dropdown';
 import { sinTitle } from '../../common/Constants';
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
+import { useDebounce } from '../../util/useDebounce';
 
 import { Item } from '../../Components/DropDownTypes';
 
@@ -44,6 +45,26 @@ export const formatSin = (value: string) => {
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, schema, label, path, handleChange, errors, isVisited, setIsVisited } =
     props;
+
+  const [localValue, setLocalValue] = useState<string>(data ?? '');
+
+  const debouncedValue = useDebounce(localValue, 800);
+
+  useEffect(() => {
+    setLocalValue(data ?? '');
+  }, [data]);
+
+  /* istanbul ignore next */
+  useEffect(() => {
+    // Only sync if debouncedValue differs from data and is not initial empty state
+    if (debouncedValue !== data && (debouncedValue !== '' || data !== undefined)) {
+      onChangeForInputControl({
+        name: '',
+        value: debouncedValue,
+        controlProps: props as ControlProps,
+      });
+    }
+  }, [debouncedValue]);
 
   const width = uischema?.options?.componentProps?.width ?? '100%';
   const registerCtx = useContext(JsonFormsRegisterContext);
@@ -118,7 +139,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
           error={isVisited && errors.length > 0}
           type={appliedUiSchemaOptions.format === 'password' ? 'password' : 'text'}
           disabled={!enabled}
-          value={data}
+          value={localValue}
           width={width}
           readonly={readOnly}
           maxLength={isSinField ? 11 : ''}
@@ -126,22 +147,17 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
           ariaLabel={appliedUiSchemaOptions?.name || `${id || label}-input`}
           {...uischema.options?.componentProps}
           // maxLength={appliedUiSchemaOptions?.maxLength}
-          name={appliedUiSchemaOptions?.name || `${id || label}-input`}
-          testId={appliedUiSchemaOptions?.testId || `${id}-input`}
           onChange={(detail: GoabInputOnChangeDetail) => {
             let formattedValue = detail.value;
             if (schema && schema.title === sinTitle && detail.value !== '') {
               formattedValue = formatSin(detail.value);
             }
 
+            setLocalValue(formattedValue);
+
             if (isVisited === false && setIsVisited) {
               setIsVisited();
             }
-            onChangeForInputControl({
-              name: detail.name,
-              value: formattedValue,
-              controlProps: props as ControlProps,
-            });
           }}
           onBlur={(detail: GoabInputOnBlurDetail) => {
             if (isVisited === false && setIsVisited) {

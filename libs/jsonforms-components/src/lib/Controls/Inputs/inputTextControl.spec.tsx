@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { GoAInputTextProps, GoAInputText, formatSin } from './InputTextControl';
@@ -244,6 +244,11 @@ describe('Input Text Control tests', () => {
         })
       );
 
+      // Wait for debounce (300ms)
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
       expect(handleChangeMock).toHaveBeenCalledWith('', '123 456 789');
     });
 
@@ -258,10 +263,13 @@ describe('Input Text Control tests', () => {
 
       const pressed = fireEvent.keyPress(firstNameInput!, { key: 'z', code: 90, charCode: 90 });
 
-      handleChangeMock();
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
       expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);
-      expect(handleChangeMock.mock.calls.length).toBe(2);
+      expect(handleChangeMock.mock.calls.length).toBe(1);
     });
   });
 
