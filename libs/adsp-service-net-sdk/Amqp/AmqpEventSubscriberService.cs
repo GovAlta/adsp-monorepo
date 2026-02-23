@@ -52,12 +52,12 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     };
   }
 
-  public void Connect()
+  public Task StartAsync(CancellationToken cancellationToken)
   {
     if (!_enabled)
     {
       _logger.LogInformation("Queue event subscriber for queue {Queue} is not enabled and will not be connecting.", _queueName);
-      return;
+      return Task.CompletedTask;
     }
 
     _connection = _connectionFactory.CreateConnection();
@@ -70,9 +70,11 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
 
     _channel.BasicConsume(_queueName, false, consumer);
     _logger.LogInformation("Connected to {Hostname} on queue {Queue} for domain events.", _connectionFactory.HostName, _queueName);
+
+    return Task.CompletedTask;
   }
 
-  public void Disconnect()
+  public Task StopAsync(CancellationToken cancellationToken)
   {
     IConnection? connection = _connection;
     IModel? channel = _channel;
@@ -81,6 +83,8 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     connection?.Dispose();
 
     _logger.LogInformation("Disconnected from {Hostname} and queue {Queue}.", _connectionFactory.HostName, _queueName);
+
+    return Task.CompletedTask;
   }
 
   protected void DeclareQueueConfiguration(IModel channel)
@@ -155,7 +159,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     {
       if (disposing)
       {
-        Disconnect();
+        StopAsync(CancellationToken.None).Wait();
       }
       _disposed = true;
     }

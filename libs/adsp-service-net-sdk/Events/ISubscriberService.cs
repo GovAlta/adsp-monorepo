@@ -3,7 +3,7 @@ namespace Adsp.Sdk.Events;
 
 internal interface ISubscriberService
 {
-  void Connect();
+  Task StartAsync(CancellationToken cancellationToken);
 
-  void Disconnect();
+  Task StopAsync(CancellationToken cancellationToken);
 }

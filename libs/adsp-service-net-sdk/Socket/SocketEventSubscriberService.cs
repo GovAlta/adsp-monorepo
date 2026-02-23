@@ -48,12 +48,7 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
     _enabled = enabled;
   }
 
-  public void Connect()
-  {
-    ConnectAsync().Wait();
-  }
-
-  private async Task ConnectAsync()
+  public async Task StartAsync(CancellationToken cancellationToken)
   {
     if (!_enabled)
     {
@@ -70,7 +65,7 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
 
     try
     {
-      await _client.ConnectAsync();
+      await _client.ConnectAsync(cancellationToken);
     }
     catch (Exception e)
     {
@@ -79,7 +74,7 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
     }
   }
 
-  public void Disconnect()
+  public async Task StopAsync(CancellationToken cancellationToken)
   {
     _intentionalDisconnect = true;
     var client = _client;
@@ -87,7 +82,7 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
     {
       if (client.Connected)
       {
-        client.DisconnectAsync().Wait();
+        await client.DisconnectAsync();
       }
     }
   }
@@ -161,7 +156,7 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
     var client = _client;
     if (client != null)
     {
-      Disconnect();
+      StopAsync(CancellationToken.None).Wait();
       client.Dispose();
     }
   }
