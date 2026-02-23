@@ -81,7 +81,8 @@ When('the user enters {string} in namespace field in configuration definition mo
     .shadow()
     .find('input')
     .clear()
-    .type(namespace, { delay: 50, force: true });
+    .type(namespace, { delay: 50, force: true })
+    .press(Cypress.Keyboard.Keys.TAB); // Get out of the namespace field to avoid existing namespace selection dropdown blocking the name field
 });
 
 When('the user enters {string} in name field in configuration definition modal', function (name: string) {
@@ -122,7 +123,8 @@ When(
       .shadow()
       .find('input')
       .clear({ force: true })
-      .type(namespace, { delay: 100, force: true });
+      .type(namespace, { delay: 100, force: true })
+      .press(Cypress.Keyboard.Keys.TAB); // Get out of the namespace field to avoid existing namespace selection dropdown blocking the name field
     configurationObj
       .addConfigurationDefinitionModalNameField()
       .shadow()

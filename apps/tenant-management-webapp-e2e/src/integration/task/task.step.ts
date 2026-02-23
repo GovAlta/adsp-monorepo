@@ -29,7 +29,13 @@ When('the user clicks Add queue button on Queues page', function () {
 });
 
 When('the user enters {string}, {string} in Add queue modal', function (namespace: string, name: string) {
-  taskObj.namespaceTextField().shadow().find('input').clear().type(namespace, { force: true, delay: 200 });
+  taskObj
+    .namespaceTextField()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(namespace, { force: true, delay: 200 })
+    .press(Cypress.Keyboard.Keys.TAB); // Get out of the namespace field to avoid existing namespace selection dropdown blocking the name field
   taskObj.nameTextField().shadow().find('input').clear().type(name, { force: true, delay: 200 });
 });
 

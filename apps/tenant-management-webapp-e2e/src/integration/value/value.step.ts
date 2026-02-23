@@ -57,7 +57,8 @@ Then(
         .shadow()
         .find('input')
         .clear()
-        .type(namespace, { delay: 200, force: true });
+        .type(namespace, { delay: 200, force: true })
+        .press(Cypress.Keyboard.Keys.TAB); // Get out of the namespace field to avoid existing namespace selection dropdown blocking the name field
     }
     if (name !== 'N/A') {
       valueObj
