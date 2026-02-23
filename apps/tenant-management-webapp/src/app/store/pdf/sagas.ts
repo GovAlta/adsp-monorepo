@@ -342,7 +342,7 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
-      message: 'Generating PDF...',
+      message: 'Processing may take a while. Please wait...',
     })
   );
 
@@ -375,6 +375,11 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
       const data = yield call(createPdfJobApi, token, createJobUrl, body);
       const pdfResponse = { ...body, ...data };
       yield put(generatePdfSuccess(pdfResponse, saveBody.update));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(

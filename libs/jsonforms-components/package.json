@@ -10,6 +10,8 @@
     "@jsonforms/core": "^3.1.0",
     "@jsonforms/react": "^3.1.0",
     "react": "^18.0.0",
+    "dompurify": "^3.2.4",
+    "xss": "^1.0.15",
     "ajv": "^8.6.1",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",

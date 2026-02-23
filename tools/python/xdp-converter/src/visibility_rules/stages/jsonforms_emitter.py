@@ -198,8 +198,16 @@ class JsonFormsEmitter:
         add(left)
         add(right)
 
+        if debug:
+            print("OR branches:")
+            for b in branches:
+                print(b)
+
         # Try to collapse simple OR chains into enum
         collapsed = self._collapse_anyof_to_enum(branches)
+        if debug:
+            print("Collapsed:", collapsed)
+
         if collapsed is not None:
             return collapsed
 

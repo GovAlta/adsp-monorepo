@@ -25,7 +25,9 @@ export const CategoryRow: React.FC<CategoryRowProps> = ({ category, index, onCli
       onKeyDown={(e) => e.key === 'Enter' && onClick(index)}
       data-testid={`page-ref-${index}`}
     >
-      <td key={`task-list-${index}-stepper-row-label`}>{category.label}</td>
+      <td key={`task-list-${index}-stepper-row-label`}>
+        <a href="#">{category.label}</a>
+      </td>
       <CategoryStatus>
         <Center>{getCategoryStatusBadge(category)}</Center>
       </CategoryStatus>

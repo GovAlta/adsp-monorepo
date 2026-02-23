@@ -5,25 +5,32 @@ export const isNullSchema = (schema: unknown): boolean => {
 };
 
 export const isValidScope = (uiSchema: UISchemaElement, schema: JsonSchema): boolean => {
-  if (!('scope' in uiSchema)) {
+  if (!('scope' in uiSchema) || typeof uiSchema.scope !== 'string') {
     return false;
   }
-  const scopeComponents = (uiSchema.scope as string).split('/');
-  // get rid of the '#' at the beginning of scope
-  scopeComponents.shift();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let obj = schema as any;
-  // iterate through the schema to ensure each property exists
+  const scopeStr = uiSchema.scope;
+
+  if (scopeStr === '#') return true;
+
+  const scopeComponents = scopeStr.split('/');
+  if (scopeComponents[0] === '#') scopeComponents.shift();
+
+  let obj: unknown = schema;
+
   for (const key of scopeComponents) {
-    if (obj && typeof obj === 'object' && key in obj) {
-      obj = obj[key];
-    } else {
+    if (!isRecord(obj) || !(key in obj)) {
       return false;
     }
+    obj = obj[key];
   }
+
   return true;
 };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object';
+}
 
 export const isLayoutType = (schema: UISchemaElement): boolean => {
   return (
@@ -49,8 +56,7 @@ export const isListWithDetail = (schema: UISchemaElement): boolean => {
 };
 
 export const isScopedPrefixed = (scope: string): boolean => {
-  const scopeComponents = scope.split('/');
-  return scopeComponents.length > 1 && scopeComponents[0] === '#';
+  return scope.startsWith('#');
 };
 
 export const isEmptyObject = (schema: object): boolean => {

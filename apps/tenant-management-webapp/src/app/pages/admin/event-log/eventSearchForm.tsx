@@ -81,7 +81,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   }
   const resolveCriteriaFromInput = (input: string): EventSearchCriteria | null => {
     const raw = (input ?? '').trim();
-    if (!raw) return null;
+    if (!raw) return { ...searchCriteria, namespace: '', name: '' };
 
     // If user typed namespace:name explicitly
     if (raw.includes(':')) {
@@ -229,23 +229,6 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     }
     return <span>{suggestion}</span>;
   };
-  const resolveCriteriaForSearch = (): EventSearchCriteria | null => {
-    // If already selected
-    if (searchCriteria.namespace?.trim() && searchCriteria.name?.trim()) return searchCriteria;
-
-    // Colon typed: rely on current parsing/validation
-    if (searchBox.includes(':')) return searchCriteria;
-
-    // Free-text: pick best suggestion
-    const best = getSuggestions(autoCompleteList, searchBox, 1)[0];
-    if (!best) return null;
-
-    const idx = best.indexOf(':');
-    const ns = idx >= 0 ? best.slice(0, idx).trim() : '';
-    const nm = idx >= 0 ? best.slice(idx + 1).trim() : best.trim();
-
-    return { ...searchCriteria, namespace: ns, name: nm };
-  };
 
   return (
     <div>
@@ -357,16 +340,16 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           onClick={() => {
             setOpen(false);
             setError(false);
-
             const resolved = resolveCriteriaFromInput(searchBox);
-
             if (!resolved) {
               setError(true);
               return;
             }
-
             setSearchCriteria(resolved);
-            setSearchBox(`${resolved.namespace}:${resolved.name}`);
+
+            if (searchBox) {
+              setSearchBox(`${resolved.namespace}:${resolved.name}`);
+            }
             onSearch?.(resolved);
           }}
         >

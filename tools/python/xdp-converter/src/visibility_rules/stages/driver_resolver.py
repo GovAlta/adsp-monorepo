@@ -336,14 +336,56 @@ class DriverResolver:
         if not qualified_target or xdp_root is None:
             return False
 
-        # Find node by full SOM path
         for el in xdp_root.iter():
             name = el.attrib.get("name")
             if not name:
                 continue
 
             full = compute_full_xdp_path(el, parent_map)
-            if full == qualified_target:
-                return (el.attrib.get("presence") or "").strip().lower() == "hidden"
+            if full != qualified_target:
+                continue
+
+            presence = (el.attrib.get("presence") or "").strip().lower()
+            if presence == "hidden":
+                return True
+            if presence == "visible":
+                return False
+
+            # No explicit presence attribute → infer from docReady/initialize presence scripts.
+            return self._baseline_hidden_from_startup_script(el)
 
         return False
+
+    def _baseline_hidden_from_startup_script(self, el) -> bool:
+        # Look for events on this element that run at open.
+        # You already skip initialize in extractor, but baseline inference SHOULD consider it.
+        for ev in el.findall("./event"):
+            activity = (ev.attrib.get("activity") or "").strip().lower()
+            name = (ev.attrib.get("name") or "").strip().lower()
+
+            is_startup = (
+                (activity == "docready")
+                or (name == "event__docready")
+                or (name == "event__initialize")
+            )
+            if not is_startup:
+                continue
+
+            script_node = ev.find("./script")
+            if script_node is None:
+                continue
+
+            code = script_node.text or ""
+            if not code:
+                continue
+
+            # Very small / robust signal: startup script explicitly hides "this".
+            # That implies baseline hidden unless you can prove otherwise (you can't at compile-time).
+            if self._contains_this_presence_hidden(code):
+                return True
+
+        return False
+
+    def _contains_this_presence_hidden(self, code: str) -> bool:
+        c = code.lower()
+        return "this.presence" in c and '"hidden"' in c

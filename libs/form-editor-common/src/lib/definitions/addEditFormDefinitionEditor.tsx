@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import { ContextProviderFactory } from '@abgov/jsonforms-components';
 import {
   GoabButtonGroup,
@@ -168,7 +168,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
   const editorRefUi = useRef(null);
 
   const uploadFile = (file: File, propertyId: string) => {
-    const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId.split('.')?.[0] };
+    const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId };
     dispatch(UploadFileService(fileInfo));
   };
   const downloadFile = (file) => {

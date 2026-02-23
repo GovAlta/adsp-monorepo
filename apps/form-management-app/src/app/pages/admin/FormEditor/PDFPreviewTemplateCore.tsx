@@ -77,7 +77,7 @@ export const PDFPreviewTemplateCore = ({ jobList, currentPDF, loading }: HasForm
   };
 
   return (
-    jobList.length > 0 && (
+    (jobList.length > 0 || loading) && (
       <div className={styles['preview-container']}>
         <PdfPreview />
       </div>
@@ -90,41 +90,77 @@ export const PreviewTop = ({
   downloadFile,
   currentPDF,
   generateTemplate,
+  loading,
 }: {
   title: string;
   downloadFile: () => void;
   currentPDF: string;
   generateTemplate: () => void;
+  loading?: boolean;
 }) => {
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const previousLoadingRef = React.useRef(false);
+  const previousPdfRef = React.useRef<string | null>(null);
+
+  useEffect(() => {
+    if (loading) {
+      setIsButtonDisabled(true);
+      previousLoadingRef.current = true;
+
+      // Set timeout to 60 seconds - re-enable button if generation takes too long
+      timeoutRef.current = setTimeout(() => {
+        setIsButtonDisabled(false);
+      }, 60000); // 60 seconds
+    } else if (previousLoadingRef.current && !loading && currentPDF && currentPDF !== previousPdfRef.current) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      setIsButtonDisabled(false);
+      previousLoadingRef.current = false;
+      previousPdfRef.current = currentPDF;
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [loading, currentPDF]);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'row' }}>
-      <div style={{ marginRight: '0.5rem' }} className={styles['form-title']}>
-        {title}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'row', marginBottom: '-8px' }}>
-        <div style={{ scale: '86%', marginTop: '-2px' }}>
-          <GoabButton
-            type="secondary"
-            testId="generate-template"
-            size="compact"
-            onClick={() => {
-              generateTemplate();
-            }}
-          >
-            Generate PDF
-          </GoabButton>
+    <div>
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+        <div style={{ marginRight: '0.5rem' }} className={styles['form-title']}>
+          {title}
         </div>
-        <div style={{ scale: '86%', marginTop: '-3px' }}>
-          <GoabIconButton
-            icon="download"
-            title="Download"
-            testId="download-template-icon"
-            size="medium"
-            disabled={!currentPDF}
-            onClick={() => {
-              downloadFile();
-            }}
-          />
+        <div style={{ display: 'flex', flexDirection: 'row', marginBottom: '-8px', alignItems: 'center' }}>
+          <div style={{ scale: '86%', marginTop: '-2px' }}>
+            <GoabButton
+              type="secondary"
+              testId="generate-template"
+              size="compact"
+              disabled={isButtonDisabled}
+              onClick={() => {
+                generateTemplate();
+              }}
+            >
+              Generate PDF
+            </GoabButton>
+          </div>
+          <div style={{ scale: '86%', marginTop: '-3px' }}>
+            <GoabIconButton
+              icon="download"
+              title="Download"
+              testId="download-template-icon"
+              size="medium"
+              disabled={!currentPDF}
+              onClick={() => {
+                downloadFile();
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

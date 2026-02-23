@@ -99,6 +99,7 @@ export const Preview: React.FC<PreviewProps> = ({
             }}
             currentPDF={currentPDF}
             generateTemplate={() => generatePdf(data)}
+            loading={loading}
           />
         }
         data-testid="data-view"

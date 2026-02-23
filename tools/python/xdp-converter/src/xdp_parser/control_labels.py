@@ -52,6 +52,8 @@ class ControlLabels:
                 print(f"[LABEL] Skipping add for '{target}'='{value.label}'")
                 print(f"    already exists as '{existing.label}')")
             return
+        if self.debug:
+            print(f"[LABEL] Adding '{target}'='{value.label}'")
         self.labels[target] = value
 
     # ----------------------------------------------------------------
@@ -116,7 +118,7 @@ class ControlLabels:
 
         return None
 
-    def augment_labels_with_iconic_help(self, elements: list[XdpElement]) -> None:
+    def resolve_control_labels(self, elements: list[XdpElement]) -> list[XdpElement]:
         # Index elements by name for O(1) traversal hops
         by_name: dict[str, XdpElement] = {}
         for e in elements:
@@ -136,32 +138,69 @@ class ControlLabels:
         for e in elements:
             if not e.is_control():
                 continue
-
-            # Don't overwrite an existing label
             if self.get(e.get_name()) is not None:
                 continue
-
             dt = self._label_via_traversal(e, by_name)
             if dt is not None:
                 self.add(e.get_name(), dt)
 
-        # C) ordered fallback: help-text draw before control
+        # C) ordered fallback: help-text draw before control (CONSUMING)
+        out: list[XdpElement] = []
         pending_forward: DisplayText | None = None
+        pending_help_el: XdpElement | None = None
+
         for e in elements:
             if e.is_help_icon():
+                out.append(e)
                 continue
 
             if e.is_help_text() and not e.is_help_icon():
+                # If it's been promoted to a header, do NOT treat it as a forward label
+                if e.is_header():
+                    out.append(e)
+                    pending_forward = None
+                    pending_help_el = None
+                    continue
+
                 help_e: XdpHelpText = e
                 raw = (help_e.help_text() or "").strip()
                 pending_forward = split_label_and_help(raw) if raw else None
+                pending_help_el = e if pending_forward else None
                 continue
 
             if e.is_control():
-                if pending_forward:
-                    self.add(e.get_name(), pending_forward)
-                pending_forward = None
+                if pending_forward and pending_help_el is not None:
+                    # Only consume if it's not a header
+                    if (
+                        not pending_help_el.is_header()
+                        and self.get(e.get_name()) is None
+                    ):
+                        self.add(e.get_name(), pending_forward)
+                        # Consume
+                        pending_forward = None
+                        pending_help_el = None
+                    else:
+                        out.append(pending_help_el)
+                        pending_forward = None
+                        pending_help_el = None
+
+                out.append(e)
                 continue
+            # Non-control, non-help-text element:
+            # if we had a pending help text, it wasn't used as a label (something intervened),
+            # so we must keep it.
+            if pending_help_el is not None:
+                out.append(pending_help_el)
+                pending_help_el = None
+                pending_forward = None
+
+            out.append(e)
+
+        # If the list ends and we still have a pending help element, keep it
+        if pending_help_el is not None:
+            out.append(pending_help_el)
+
+        return out
 
     def _label_via_traversal(
         self,

@@ -9,6 +9,7 @@ import {
   getCorePdfTemplates,
   updateTempTemplate,
 } from '@store/pdf/action';
+import { UpdateIndicator } from '@store/session/actions';
 
 import {
   SpinnerPadding,
@@ -143,7 +144,7 @@ export const PDFPreviewTemplateCore = (formName) => {
           </div>
         )}
         {!indicator?.show && hasError && (
-          <GoabCallout type="emergency" heading="Error in PDF generation">
+          <GoabCallout type="important" heading="Error in PDF generation">
             {pdfGenerationError}
           </GoabCallout>
         )}
@@ -152,7 +153,7 @@ export const PDFPreviewTemplateCore = (formName) => {
   };
 
   return (
-    jobList.length > 0 && (
+    (jobList.length > 0 || indicator?.show) && (
       <PreviewContainer>
         <PdfPreview />
       </PreviewContainer>
@@ -168,12 +169,19 @@ export const PreviewTop = ({ title, form, data, currentTab }) => {
   const pdfTemplate = useSelector((state: RootState) => state.pdf?.corePdfTemplates['submitted-form']);
   const fileList = useSelector((state: RootState) => state?.fileService?.fileList);
   const pdfList = useSelector((state: RootState) => state.pdf.jobs, _.isEqual);
+  const indicator = useSelector((state: RootState) => state.session?.indicator);
 
   const currentId = useSelector((state: RootState) => state?.pdf?.currentId);
   const files = useSelector((state: RootState) => state?.pdf.files);
 
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const previousJobCountRef = React.useRef(0);
+
   const pdfPreviewTab = 2;
   const dispatch = useDispatch();
+
   useEffect(() => {
     dispatch(getCorePdfTemplates());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -182,17 +190,76 @@ export const PreviewTop = ({ title, form, data, currentTab }) => {
     dispatch(updateTempTemplate(pdfTemplate));
   }, [pdfTemplate]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (
+      isGenerating &&
+      indicator?.show === false &&
+      pdfList.length >= previousJobCountRef.current &&
+      pdfList.length > 0 &&
+      files[currentId]
+    ) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      setIsButtonDisabled(false);
+      setIsGenerating(false);
+
+      dispatch(
+        UpdateIndicator({
+          show: true,
+          message: 'PDF generated successfully',
+        })
+      );
+
+      setTimeout(() => {
+        dispatch(UpdateIndicator({ show: false }));
+      }, 2000);
+    }
+  }, [indicator, pdfList, isGenerating, files, currentId, dispatch]);
+
   const generateTemplate = () => {
+    const fileName = getFileName(form.name);
     const payload = {
       templateId: PDF_FORM_TEMPLATE_ID,
       data: { definition: form },
-      fileName: getFileName(form.name),
+      fileName: fileName,
       formId: form.name,
       inputData: data,
     };
 
+    setIsButtonDisabled(true);
+    setIsGenerating(true);
+    previousJobCountRef.current = pdfList.length;
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setIsButtonDisabled(false);
+      dispatch(
+        UpdateIndicator({
+          show: true,
+          message: 'PDF generation is taking longer than expected. Button has been re-enabled.',
+        })
+      );
+      setTimeout(() => {
+        dispatch(UpdateIndicator({ show: false }));
+      }, 3000);
+    }, 60000); // 60 seconds
+
     dispatch(generatePdf(payload));
   };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <PreviewTopStyleWrapper>
@@ -205,6 +272,7 @@ export const PreviewTop = ({ title, form, data, currentTab }) => {
                 type="secondary"
                 testId="generate-template"
                 size="compact"
+                disabled={isButtonDisabled}
                 onClick={() => {
                   generateTemplate();
                 }}

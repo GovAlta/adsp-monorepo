@@ -61,15 +61,15 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   const noDownloadButtonInReview = uischema?.options?.format?.review?.noDownloadButton;
   const noDeleteButton = uischema?.options?.format?.review?.noDeleteButton;
   const [deleteHide, setDeleteHide] = useState(false);
-  const fileListLength = (fileList && fileList[props.i18nKeyPrefix as string]?.length) || 0;
+  const fileListLength = (fileList && fileList[path as string]?.length) || 0;
 
   const maxFiles = uischema?.options?.componentProps?.maximum ?? 1;
+
   const isMultiFile = maxFiles > 1;
 
   function uploadFile(file: File) {
     if (!uploadTrigger) return;
 
-    const maxFiles = uischema?.options?.componentProps?.maximum ?? 1;
     const fileListLength = (fileList && fileList[propertyId]?.length) || 0;
 
     if (fileListLength >= maxFiles) {
@@ -79,7 +79,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
 
     setUploadError(undefined);
     setLoadingFileName(file?.name);
-    uploadTrigger(file, `${propertyId}.${fileListLength}`);
+    uploadTrigger(file, path);
     setDeleteHide(false);
   }
 
@@ -100,35 +100,37 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
   }
 
   function getFile(index: number) {
-    return fileList?.[props.i18nKeyPrefix as string]?.[index];
+    return fileList?.[path as string]?.[index];
   }
+
+  type UploadedFile = {
+    urn: string;
+  };
 
   useEffect(() => {
     if (loadingFileName !== undefined) {
       setLoadingFileName(undefined);
     }
 
-    // UseEffect is required because not having it causes a react update error, but
-    // it doesn't function correctly within jsonforms unless there is a minor delay here
     const delayedFunction = () => {
-      const files = [];
-      for (let i = 0; i < fileListLength; i++) {
-        files.push(getFile(i));
-      }
-      if (fileList) {
-        const data = files.map((f) => f.urn).join(';');
-        if (data === '') {
-          handleChange(path, undefined);
-        } else {
-          handleChange(path, data);
-        }
+      if (!fileList) return;
+
+      const filesForControl: UploadedFile[] = fileList?.[path] || [];
+
+      const urns = filesForControl.map((f) => f.urn);
+      if (urns.length === 0) {
+        handleChange(path, undefined);
+      } else if (isMultiFile) {
+        handleChange(path, urns);
+      } else {
+        handleChange(path, urns[0]);
       }
     };
 
     const timeoutId = setTimeout(delayedFunction, 1);
     return () => clearTimeout(timeoutId);
     //eslint-disable-next-line
-  }, [handleChange, fileList, propertyId]);
+  }, [fileList, propertyId]);
 
   const readOnly =
     uischema?.options?.componentProps?.readOnly === true || props?.isStepperReview === true || user === null;
@@ -231,7 +233,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
           ) : (
             <div>
               {fileList && isMultiFile
-                ? (fileList[props.i18nKeyPrefix as string] || []).map((_: File, index: number) => (
+                ? (fileList[path as string] || []).map((_: File, index: number) => (
                     <DownloadFileWidget key={index} index={index} />
                   ))
                 : !deleteHide &&
