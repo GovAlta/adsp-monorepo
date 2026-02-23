@@ -126,7 +126,7 @@ class HelpPairing:
 
     # ---------------- eligibility ----------------
     def _is_pair_target(self, e: "XdpElement") -> bool:
-        return e.is_control() or e.is_header()
+        return e.is_control()  # or e.is_header()
 
     # ---------------- scoring ----------------
     def _best_overlap_target(

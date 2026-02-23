@@ -1,4 +1,3 @@
-from asyncio import events
 import re
 from xml.etree import ElementTree as ET
 from typing import Dict, Optional
