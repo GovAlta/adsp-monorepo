@@ -46,7 +46,7 @@ class XdpRefinementPass:
     # --------------------------------------------------
     # Public entry
     # --------------------------------------------------
-    def refine_xdp(self, roots: List[XdpElement]) -> List[XdpElement]:
+    def refine(self, roots: List[XdpElement]) -> List[XdpElement]:
         result: List[XdpElement] = []
         for node in roots:
             result.extend(self._refine_node(node, parent_label=None))

@@ -118,7 +118,43 @@ class ControlLabels:
 
         return None
 
+    def _looks_like_forward_label(self, raw: str) -> bool:
+        """
+        Heuristic: only treat a preceding help-text draw as a label when it
+        resembles a label, not body/help paragraphs.
+        """
+        t = raw.strip()
+        if not t:
+            return False
+
+        # Bullet/list/dash starts are almost certainly body text.
+        if t.startswith(("●", "•", "▪", "–", "-", "—")):
+            return False
+
+        # Long text is usually body/help, not a label.
+        if len(t) > 60:
+            return False
+
+        # If it's sentence-like and not short, it's probably body text.
+        # if len(t) > 60 and ("." in t or "!" in t or "?" in t):
+        #     return False
+
+        return True
+
     def resolve_control_labels(self, elements: list[XdpElement]) -> list[XdpElement]:
+        """
+        Resolve labels for controls.
+
+        A) Inline captions (authoritative)
+        B) Traversal-based labeling (authoritative when available)
+        C) Ordered fallback: help-text draw immediately before a control can be
+        treated as label/help (CONSUMING), but only when it looks label-like.
+
+        Fixes:
+        - Do not overwrite a pending help element without emitting it.
+        - Do not consume bullet/paragraph help text as a control label.
+        """
+
         # Index elements by name for O(1) traversal hops
         by_name: dict[str, XdpElement] = {}
         for e in elements:
@@ -144,7 +180,7 @@ class ControlLabels:
             if dt is not None:
                 self.add(e.get_name(), dt)
 
-        # C) ordered fallback: help-text draw before control (CONSUMING)
+        # C) ordered fallback: help-text draw before control (guarded consuming)
         out: list[XdpElement] = []
         pending_forward: DisplayText | None = None
         pending_help_el: XdpElement | None = None
@@ -155,40 +191,58 @@ class ControlLabels:
                 continue
 
             if e.is_help_text() and not e.is_help_icon():
-                # If it's been promoted to a header, do NOT treat it as a forward label
+                # Headers are never forward labels
                 if e.is_header():
+                    # If something was pending, it wasn't used; keep it.
+                    if pending_help_el is not None:
+                        out.append(pending_help_el)
+                        pending_help_el = None
+                        pending_forward = None
+
                     out.append(e)
-                    pending_forward = None
-                    pending_help_el = None
                     continue
+
+                # NEW FIX #1: if we already had a pending help element and we hit another help text,
+                # flush the previous pending element (don't silently drop it).
+                if pending_help_el is not None:
+                    out.append(pending_help_el)
+                    pending_help_el = None
+                    pending_forward = None
 
                 help_e: XdpHelpText = e
                 raw = (help_e.help_text() or "").strip()
-                pending_forward = split_label_and_help(raw) if raw else None
-                pending_help_el = e if pending_forward else None
+
+                # NEW FIX #2: only treat it as a forward label if it looks label-like.
+                if raw and self._looks_like_forward_label(raw):
+                    pending_forward = split_label_and_help(raw)
+                    pending_help_el = e
+                else:
+                    out.append(e)
+                    pending_forward = None
+                    pending_help_el = None
+
                 continue
 
             if e.is_control():
-                if pending_forward and pending_help_el is not None:
-                    # Only consume if it's not a header
-                    if (
-                        not pending_help_el.is_header()
-                        and self.get(e.get_name()) is None
+                if pending_forward is not None and pending_help_el is not None:
+                    if (not pending_help_el.is_header()) and (
+                        self.get(e.get_name()) is None
                     ):
+                        # Consume: attach pending forward label/help to this control
                         self.add(e.get_name(), pending_forward)
-                        # Consume
                         pending_forward = None
                         pending_help_el = None
                     else:
+                        # Can't/shouldn't consume -> keep pending help element
                         out.append(pending_help_el)
                         pending_forward = None
                         pending_help_el = None
 
                 out.append(e)
                 continue
+
             # Non-control, non-help-text element:
-            # if we had a pending help text, it wasn't used as a label (something intervened),
-            # so we must keep it.
+            # If we had something pending, it wasn't used; keep it.
             if pending_help_el is not None:
                 out.append(pending_help_el)
                 pending_help_el = None
@@ -196,7 +250,7 @@ class ControlLabels:
 
             out.append(e)
 
-        # If the list ends and we still have a pending help element, keep it
+        # If the list ends and we still have a pending help element, keep it.
         if pending_help_el is not None:
             out.append(pending_help_el)
 

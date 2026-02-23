@@ -56,10 +56,10 @@ class XdpParser:
             if node:
                 root_nodes.append(node)
 
-        grouper = XdpRefinementPass(self.factory, self.control_labels, self.context)
-        grouped_elements = grouper.refine_xdp(root_nodes)
+        refiner = XdpRefinementPass(self.factory, self.control_labels, self.context)
+        refined_elements = refiner.refine(root_nodes)
 
-        return remove_duplicates(self.to_form_elements(grouped_elements))
+        return remove_duplicates(self.to_form_elements(refined_elements))
 
     def to_form_elements(self, xdp_elements: List[XdpElement]) -> List[dict]:
         form_elements: List[dict] = []
@@ -116,34 +116,34 @@ class XdpParser:
             if elem.tag == "field" and HelpTextExtractor.is_help_icon_field(elem):
                 payload = HelpTextExtractor.get_help_from_click_event(elem)
                 if payload:
-                    control = self.factory.handle_help_icon(elem, payload["text"])
-                    if control:
-                        controls.append(control)
+                    help_content = self.factory.handle_help_icon(elem, payload["text"])
+                    if help_content:
+                        controls.append(help_content)
                     i += 1
                     continue
 
             # Help text from a draw element
             help_text = HelpTextExtractor.get_help_from_draw(elem)
             if help_text:
-                control = self.factory.handle_help_text(elem, help_text)
-                if control:
-                    controls.append(control)
+                help_content = self.factory.handle_help_text(elem, help_text)
+                if help_content:
+                    controls.append(help_content)
                 i += 1
                 continue
 
             # Explicit or implicit radio groups (exclGroup or radio-like fields)
             if is_radio_button(elem):
-                control = self.factory.handle_radio(elem, self.control_labels)
-                if control:
-                    controls.append(control)
+                help_content = self.factory.handle_radio(elem, self.control_labels)
+                if help_content:
+                    controls.append(help_content)
                 i += 1
                 continue
 
             # Checkboxes
             if is_checkbox(elem):
-                control = self.factory.handle_checkbox(elem, self.control_labels)
-                if control:
-                    controls.append(control)
+                help_content = self.factory.handle_checkbox(elem, self.control_labels)
+                if help_content:
+                    controls.append(help_content)
                 i += 1
                 continue
 
@@ -158,9 +158,11 @@ class XdpParser:
                     i += 1
                     continue
 
-                control = self.factory.handle_basic_input(elem, self.control_labels)
-                if control:
-                    controls.append(control)
+                help_content = self.factory.handle_basic_input(
+                    elem, self.control_labels
+                )
+                if help_content:
+                    controls.append(help_content)
                 i += 1
                 continue
 

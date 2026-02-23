@@ -107,9 +107,29 @@ def _style_marks(style: str) -> tuple[str, str]:
 
 def _detect_list(style: str, text: str) -> str | None:
     """Guess if this paragraph looks like a bullet/numbered list item."""
-    if not text.strip():
+    t = text.strip()
+    if not t:
         return None
+
     s = style.lower() if style else ""
-    if "text-indent" in s or text.strip().startswith(("•", "-", "*")):
-        return f"- {text.strip()}\n"
+
+    # If the author already included a bullet glyph, keep it as-is.
+    # This prevents "- ● ..." which renders as a double bullet in Markdown.
+    if t.startswith(("●", "•", "▪")):
+        return f"{t}\n"
+
+    # If it already starts with a Markdown list marker, keep it.
+    if t.startswith(("- ", "* ")):
+        return f"{t}\n"
+
+    # If it starts with a plain "-" or "*" with no space, treat as list-ish,
+    # but normalize to "- " to keep output consistent.
+    if t.startswith(("-", "*")):
+        return f"- {t.lstrip('-*').lstrip()}\n"
+
+    # Heuristic: hanging indent often indicates list formatting.
+    # Only apply this if there isn't already a bullet glyph.
+    if "text-indent" in s:
+        return f"- {t}\n"
+
     return None
