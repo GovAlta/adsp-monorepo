@@ -14,7 +14,7 @@ import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import { promisify } from 'util';
 import { environment } from './environments/environment';
-import { CronJobServiceRoles } from './cron-job';
+import { CronJobServiceRoles, applyCronJobMiddleware, configurationSchema } from './cron-job';
 import { readFile } from 'fs';
 
 const logger = createLogger('cron-job-service', environment.LOG_LEVEL || 'info');
@@ -39,7 +39,6 @@ const initializeApp = async (): Promise<Server> => {
     tenantStrategy,
     coreStrategy,
     configurationHandler,
-    clearCached,
     healthCheck,
     configurationService,
     directory,
@@ -58,30 +57,10 @@ const initializeApp = async (): Promise<Server> => {
           inTenantAdmin: true,
         },
       ],
-      // configuration: {
-      //   description: 'Streams available by websocket with configuration of the included events.',
-      //   schema: configurationSchema,
-      // },
-      // combineConfiguration: (tenant: PushServiceConfiguration, core: PushServiceConfiguration, tenantId) =>
-      //   Object.entries({ ...tenant, ...core }).reduce((c, [k, s]) => {
-      //     return k === 'webhooks'
-      //       ? {
-      //           ...c,
-      //           webhooks: Object.entries(s as Record<string, Webhook>)
-      //             .filter(([_hk, hv]) => hv)
-      //             .reduce(
-      //               (hs, [hk, hv]) => ({
-      //                 ...hs,
-      //                 [hk]: isAppStatusWebhook(hv)
-      //                   ? new AppStatusWebhookEntity(logger, hv)
-      //                   : new WebhookEntity(logger, hv),
-      //               }),
-      //               {} as Record<string, WebhookEntity>,
-      //             ),
-      //         }
-      //       : { ...c, [k]: new StreamEntity(logger, tenantId, s as Stream) };
-      //   }, {}),
-      // events: [WebhookTriggeredDefinition],
+      configuration: {
+        description: 'Configuration for the ',
+        schema: configurationSchema,
+      },
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -106,69 +85,15 @@ const initializeApp = async (): Promise<Server> => {
 
   app.use('/cron-job', passport.authenticate(['core', 'jwt', 'anonymous'], { session: false }), configurationHandler);
 
-  // const { REDIS_HOST, REDIS_PORT, REDIS_PASSWORD } = environment;
-  // const credentials = REDIS_PASSWORD ? `:${REDIS_PASSWORD}@` : '';
-  // const redisClient = createRedisClient(`redis://${credentials}${REDIS_HOST}:${REDIS_PORT}/0`);
-
-  // const ioServer = new IoServer(server, {
-  //   serveClient: false,
-  //   cors: {
-  //     credentials: true,
-  //     origin: true,
-  //   },
-  // });
-  // ioServer.adapter(createIoAdapter(redisClient, redisClient.duplicate()));
-
-  // const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) => {
-  //   const request = socket.request as express.Request;
-  //   request[REQ_SOCKET_PROP] = socket;
-
-  //   handler(
-  //     request,
-  //     {
-  //       // Passport JS calls end w/ 401 when all authenticators fail.
-  //       end: () => next(new UnauthorizedError('User not authorized to connect.')),
-  //     } as unknown as express.Response,
-  //     next,
-  //   );
-  // };
-
-  // // Connections on default namespace for cross-tenant.
-  // const defaultIo = ioServer.of('/');
-  // defaultIo.use(wrapForIo(passport.initialize()));
-  // defaultIo.use(wrapForIo(passport.authenticate(['core', 'jwt'], { session: false })));
-  // defaultIo.use(wrapForIo(configurationHandler));
-
-  // // Connections on namespace correspond to tenants.
-  // const io = ioServer.of(/^\/[a-zA-Z0-9- ]+$/);
-  // io.use(wrapForIo(passport.initialize()));
-  // io.use(wrapForIo(passport.authenticate(['core', 'jwt', 'anonymous'], { session: false })));
-  // io.use(wrapForIo(configurationHandler));
-
-  // const eventServiceAmp = await createAmqpEventService({ ...environment, logger });
-
-  // const eventServiceAmpWebhooks = await createAmqpEventServiceWebhooks({
-  //   ...environment,
-  //   queue: 'webhooks',
-  //   logger,
-  // });
-
-  // applyPushMiddleware(app, [defaultIo, io], {
-  //   logger,
-  //   eventServiceAmp,
-  //   eventServiceAmpWebhooks,
-  //   tenantService,
-  //   configurationService,
-  //   directory,
-  //   tokenProvider,
-  //   eventService,
-  //   serviceId,
-  // });
-
-  // const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
-  // app.use('/swagger/docs/v1', (_req, res) => {
-  //   res.json(swagger);
-  // });
+  applyCronJobMiddleware(app, {
+    logger,
+    tenantService,
+    configurationService,
+    tokenProvider,
+    eventService,
+    serviceId,
+    directory,
+  });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
