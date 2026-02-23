@@ -156,25 +156,20 @@ def process_one(xdp_path: Path, out_dir: Path, overwrite: bool = False):
         return (xdp_path, False, str(e))
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         prog="generate_schemas.py",
-        description="""Generate JSON and UI schemas from XDP files.
+        description="""Generate JSON and UI schemas from ONE XDP file.
 
-    You can pass individual files, whole directories, or glob patterns.
-    For large batches, set --jobs to use multiple workers.
-
-    Examples:
-    python3 generate_schemas.py form1.xdp
-    python3 generate_schemas.py forms/ -o out/
-    python3 generate_schemas.py "forms/**/*.xdp" -j 8 --overwrite
-    """,
+Example:
+  python3 generate_schemas.py form1.xdp -o out/ --overwrite
+""",
         formatter_class=argparse.RawTextHelpFormatter,
     )
+
     parser.add_argument(
-        "inputs",
-        nargs="+",
-        help="Input XDP files, directories, or glob patterns (e.g., forms/*.xdp).",
+        "xdp_file",
+        help="Input XDP file path (exactly one).",
     )
     parser.add_argument(
         "-o",
@@ -183,58 +178,45 @@ def main():
         help="Directory to write outputs (default: current dir).",
     )
     parser.add_argument(
-        "-j",
-        "--jobs",
-        type=int,
-        default=os.cpu_count() or 4,
-        help="Parallel workers (default: number of CPUs).",
-    )
-    parser.add_argument(
-        "--overwrite", action="store_true", help="Overwrite existing output files."
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing output files.",
     )
 
     args = parser.parse_args()
+
+    xdp_path = Path(args.xdp_file)
+    if not xdp_path.exists():
+        print(f"Input file not found: {xdp_path}", file=sys.stderr)
+        raise SystemExit(1)
+    if xdp_path.is_dir():
+        print(f"Input must be a file, not a directory: {xdp_path}", file=sys.stderr)
+        raise SystemExit(1)
+    if xdp_path.suffix.lower() != ".xdp":
+        print(f"Input must be a .xdp file: {xdp_path}", file=sys.stderr)
+        raise SystemExit(1)
+
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    xdp_files = discover_xdp_files(args.inputs)
-    if not xdp_files:
-        print("No .xdp files found from the provided inputs.", file=sys.stderr)
-        sys.exit(1)
-
     if debug:
-        print(f"Found {len(xdp_files)} XDP file(s). Writing to: {out_dir.resolve()}")
-        print(f"Using {args.jobs} worker(s)…")
+        print(f"Input:  {xdp_path.resolve()}")
+        print(f"Output: {out_dir.resolve()}")
+        if args.overwrite:
+            print("Overwrite: enabled")
 
-    successes = 0
-    skipped = 0
-    failures = 0
+    _, ok, err = process_one(xdp_path, out_dir, args.overwrite)
 
-    with ThreadPoolExecutor(max_workers=args.jobs) as ex:
-        futures = {
-            ex.submit(process_one, xdp, out_dir, args.overwrite): xdp
-            for xdp in xdp_files
-        }
-        for fut in as_completed(futures):
-            xdp = futures[fut]
-            xdp_short = xdp.name
-            ok_path, ok, err = fut.result()
-            if ok:
-                successes += 1
-                if debug:
-                    print(f"✅ {xdp_short}")
-            else:
-                if err == "exists":
-                    skipped += 1
-                    if debug:
-                        print(f"⏭️  Skipped (exists): {xdp_short}")
-                else:
-                    failures += 1
-                    print(f"❌ {xdp_short}: {err}", file=sys.stderr)
+    if ok:
+        print("Done. ✅ ok")
+        raise SystemExit(0)
 
-    print(f"\nDone. ✅ {successes} ok, ⏭️ {skipped} skipped, ❌ {failures} failed.")
+    if err == "exists":
+        print("Done. ⏭️  skipped (output exists). Use --overwrite to replace.")
+        raise SystemExit(0)
 
-    sys.exit(0 if failures == 0 else 2)
+    print(f"Done. ❌ failed: {err}", file=sys.stderr)
+    raise SystemExit(2)
 
 
 if __name__ == "__main__":
