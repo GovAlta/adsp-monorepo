@@ -24,7 +24,7 @@ readme = 'README.md'
 
   [tool.poetry.dependencies]
   python = ">=3.9,<3.12"
-  cachetools = "^6.2.3"
+  cachetools = "^6.2.6"
   types-cachetools = "^6.2.0.20251022"
   httpx = "^0.28.1"
   more-itertools = "^10.8.0"
@@ -32,7 +32,7 @@ readme = 'README.md'
 
     [tool.poetry.dependencies.pyjwt]
     extras = [ "crypto" ]
-    version = "^2.10.1"
+    version = "^2.11.0"
 
   [tool.poetry.group.dev.dependencies]
   flake8 = "^7.3.0"
