@@ -14,7 +14,7 @@ class _IndexedCandidate:
     bb: tuple[float, float, float, float]
 
 
-class HelpPairer:
+class HelpPairing:
     def __init__(
         self,
         debug: bool = False,

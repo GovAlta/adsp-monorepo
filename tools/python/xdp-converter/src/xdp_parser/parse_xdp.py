@@ -12,7 +12,6 @@ from xdp_parser.help_text_extractor import HelpTextExtractor
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.parsing_helpers import is_object_array
 from xdp_parser.xdp_element import XdpElement
-from xdp_parser.xdp_pseudo_radio import extract_radio_button_labels
 from xdp_parser.xdp_utils import (
     remove_duplicates,
     is_hidden,
@@ -20,7 +19,7 @@ from xdp_parser.xdp_utils import (
     tag_name,
 )
 from xdp_parser.orphaned_list_controls import is_add_remove_container
-from xdp_parser.grouping_pass import XdpGroupingPass
+from xdp_parser.refinement_pass import XdpRefinementPass
 from xdp_parser.xdp_subform_placeholder import XdpSubformPlaceholder
 
 
@@ -57,8 +56,8 @@ class XdpParser:
             if node:
                 root_nodes.append(node)
 
-        grouper = XdpGroupingPass(self.factory, self.control_labels, self.context)
-        grouped_elements = grouper.group_placeholders(root_nodes)
+        grouper = XdpRefinementPass(self.factory, self.control_labels, self.context)
+        grouped_elements = grouper.refine_xdp(root_nodes)
 
         return remove_duplicates(self.to_form_elements(grouped_elements))
 
