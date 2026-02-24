@@ -4,7 +4,7 @@ WORKDIR /opt/app-root/src
 USER 0
 
 RUN dnf makecache \
-  && dnf -y install curl cmake make gcc \
+  && dnf -y install cmake make gcc \
   && dnf -y clean all  \
   && rm -rf /var/cache
 
