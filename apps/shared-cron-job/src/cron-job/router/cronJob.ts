@@ -13,6 +13,7 @@ import 'compression'; // For unit tests to load the type extensions.
 import { NextFunction, Request, RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
 import { CronJobServiceConfiguration } from '../configuration';
+import { CronJobConfig } from '../types';
 
 interface CronJobRouterProps {
   logger: Logger;
@@ -36,7 +37,9 @@ export const getCronJobs = async (
   //const tenantId = (tenant && (await tenantService.getTenantByName(tenant.replace(/-/g, ' '))))?.id || user?.tenantId;
   const tenants = await tenantService.getTenants();
   const getCronJobsPromises = tenants.map(async (tenant) => {
-    return await req.getConfiguration<CronJobServiceConfiguration, CronJobServiceConfiguration>(tenant.id);
+    return await req.getConfiguration<{ jobs: Record<string, CronJobConfig> }, { jobs: Record<string, CronJobConfig> }>(
+      tenant.id,
+    );
   });
 
   const cronJobs = await Promise.all(getCronJobsPromises);
