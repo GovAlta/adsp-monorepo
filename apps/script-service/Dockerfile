@@ -1,11 +1,11 @@
-FROM registry.access.redhat.com/ubi8/ubi AS builder
+FROM registry.access.redhat.com/ubi9/ubi AS builder
 
 WORKDIR /opt/app-root/src
 USER 0
 
-RUN yum makecache \
-  && yum -y install curl cmake make gcc \
-  && yum -y clean all  \
+RUN dnf makecache \
+  && dnf -y install cmake make gcc \
+  && dnf -y clean all  \
   && rm -rf /var/cache
 
 RUN curl -LJO https://github.com/NLua/lua/tarball/75f9788 \
@@ -15,7 +15,7 @@ RUN curl -LJO https://github.com/NLua/lua/tarball/75f9788 \
 
 USER 1001:0
 
-FROM registry.access.redhat.com/ubi8/dotnet-90-runtime
+FROM registry.access.redhat.com/ubi9/dotnet-100-runtime
 
 ARG SERVICE
 

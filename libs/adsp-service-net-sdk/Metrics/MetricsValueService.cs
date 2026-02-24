@@ -25,7 +25,7 @@ internal sealed class MetricsValueService : IMetricsValueService
     IServiceDirectory directory,
     ITokenProvider tokenProvider,
     IOptions<AdspOptions> options,
-    RestClient? client = null
+    IRestClient client
   )
   {
     if (options.Value.ServiceId == null)
@@ -37,7 +37,7 @@ internal sealed class MetricsValueService : IMetricsValueService
     _directory = directory;
     _tokenProvider = tokenProvider;
     _serviceId = options.Value.ServiceId;
-    _client = client ?? new RestClient();
+    _client = client;
   }
 
   public async Task WriteServiceMetrics(HttpContext context, IDictionary<string, decimal> values)

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
 
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
 
     <Nullable>enable</Nullable>
 
@@ -30,7 +30,7 @@
 
   <ItemGroup>
 
-    <PackageReference Include="NJsonSchema" Version="11.1.0" />
+    <PackageReference Include="NJsonSchema" Version="11.5.2" />
 
     <PackageReference Include="NLua" Version="1.7.3" />
 
@@ -42,11 +42,6 @@
 
     <ProjectReference Include="../../libs/adsp-service-net-sdk/adsp-service-net-sdk.csproj" />
 
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Moq" Version="4.18.1" />
-    <PackageReference Include="RichardSzalay.MockHttp" Version="6.0.0" />
   </ItemGroup>
 
   <Target Name="CheckNxModuleBoundaries" BeforeTargets="Build">

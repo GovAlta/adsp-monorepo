@@ -6,7 +6,7 @@ using RestSharp;
 
 namespace Adsp.Sdk.Events;
 
-internal sealed class EventService : IEventService, IDisposable
+internal sealed class EventService : IEventService
 {
   private static readonly AdspId EVENT_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:event-service:v1");
 
@@ -23,7 +23,7 @@ internal sealed class EventService : IEventService, IDisposable
     IServiceDirectory serviceDirectory,
     ITokenProvider tokenProvider,
     IOptions<AdspOptions> options,
-    RestClient? client = null
+    IRestClient client
   )
   {
     if (options.Value.ServiceId?.Service == null)
@@ -36,7 +36,7 @@ internal sealed class EventService : IEventService, IDisposable
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
     _namespace = options.Value.ServiceId.Service;
-    _client = client ?? new RestClient();
+    _client = client;
   }
 
   public async Task Send<TPayload>(DomainEvent<TPayload> @event, AdspId? tenantId = null) where TPayload : class
@@ -68,8 +68,4 @@ internal sealed class EventService : IEventService, IDisposable
     }
   }
 
-  public void Dispose()
-  {
-    _client.Dispose();
-  }
 }

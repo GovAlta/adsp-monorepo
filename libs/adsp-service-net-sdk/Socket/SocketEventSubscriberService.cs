@@ -3,9 +3,8 @@ using Adsp.Sdk.Events;
 using Adsp.Sdk.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using SocketIO.Serializer.SystemTextJson;
 using SocketIOClient;
-using SocketIOClient.Transport;
+using SocketIOClient.Common;
 
 namespace Adsp.Sdk.Socket;
 
@@ -21,7 +20,7 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
   private readonly IEventSubscriber<TPayload> _subscriber;
   private readonly string? _realm;
   private readonly bool _enabled;
-  private SocketIOClient.SocketIO? _client;
+  private SocketIO? _client;
   private volatile bool _intentionalDisconnect;
 
   private static readonly TimeSpan ReconnectDelay = TimeSpan.FromSeconds(5);
@@ -87,7 +86,7 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
     }
   }
 
-  private async Task<SocketIOClient.SocketIO> CreateSocketClient()
+  private async Task<SocketIO> CreateSocketClient()
   {
     var tenant = _realm != null ? await _tenantService.GetTenantByRealm(_realm) : null;
 
@@ -96,19 +95,21 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
 
     var serializerOptions = new JsonSerializerOptions();
     serializerOptions.Converters.Add(new DictionaryJsonConverter());
-    var client = new SocketIOClient.SocketIO(
+
+    var client = new SocketIO(
       pushServiceUrl,
       new SocketIOOptions
       {
         Reconnection = false,
         Transport = TransportProtocol.WebSocket,
-        Query = new Dictionary<string, string> { { "stream", _streamId } },
+        Query = new System.Collections.Specialized.NameValueCollection { { "stream", _streamId } },
         Auth = new Dictionary<string, string> { { "token", token } }
+      },
+      services =>
+      {
+        services.AddSystemTextJson(serializerOptions);
       }
-    )
-    {
-      Serializer = new SystemTextJsonSerializer(serializerOptions)
-    };
+    );
 
     client.OnConnected += (_s, _e) =>
     {
@@ -139,13 +140,14 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
     {
       _logger.LogDebug("Received event {Name} from stream {StreamId}.", name, _streamId);
 
-      var received = response.GetValue<FullDomainEvent<TPayload>>();
+      var received = response.GetValue<FullDomainEvent<TPayload>>(0);
       if (received.TenantId == null && tenant != null)
       {
         received.TenantId = tenant.Id;
       }
 
       _subscriber.OnEvent(received);
+      return Task.CompletedTask;
     });
 
     return client;

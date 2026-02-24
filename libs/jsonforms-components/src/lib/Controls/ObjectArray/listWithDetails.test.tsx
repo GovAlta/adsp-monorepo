@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { JsonForms } from '@jsonforms/react';
 import Ajv, { ErrorObject } from 'ajv';
@@ -247,7 +247,7 @@ describe('Object Array Renderer', () => {
   });
 
   describe('Object Array Renderer old', () => {
-    it('can add a new item with left tab', () => {
+    it('can add a new item with left tab', async () => {
       const data = { messages: [] };
       const { baseElement } = render(getFormLeftTab(data));
 
@@ -258,9 +258,14 @@ describe('Object Array Renderer', () => {
       expect(shadowAddBtn).not.toBeNull();
       fireEvent(addButton!, new CustomEvent('_click'));
 
+      // Wait for inputs to render after adding a new item
+      await waitFor(() => {
+        const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input']");
+        expect(nameInput).toBeInTheDocument();
+      });
+
       // populate Name
       const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input']");
-      expect(nameInput).toBeInTheDocument();
       fireEvent(nameInput!, new CustomEvent('_change', { detail: { value: 'Bob' } }));
       expect(nameInput).toHaveAttribute('value', 'Bob');
 
@@ -313,7 +318,7 @@ describe('Object Array Renderer', () => {
   });
 });
 
-it('errors are visible', () => {
+it('errors are visible', async () => {
   const data = { messages: [] };
   const { baseElement } = render(getForm(data));
 
@@ -324,8 +329,13 @@ it('errors are visible', () => {
   expect(shadowAddBtn).not.toBeNull();
   fireEvent(addButton!, new CustomEvent('_click'));
 
+  // Wait for inputs to render after adding a new item
+  await waitFor(() => {
+    const messageInput = baseElement.querySelector("goa-input[testId='#/properties/message-input']");
+    expect(messageInput).toBeInTheDocument();
+  });
+
   const messageInput = baseElement.querySelector("goa-input[testId='#/properties/message-input']");
-  expect(messageInput).toBeInTheDocument();
   fireEvent(messageInput!, new CustomEvent('_change', { detail: { value: 'The rain in Spain' } }));
   expect(messageInput).toHaveAttribute('value', 'The rain in Spain');
 
@@ -340,7 +350,7 @@ it('errors are visible', () => {
   // Check the error text
   expect(messageFormItem).toHaveAttribute('error', 'Message must be at most 5 characters');
 });
-it('required errors work', () => {
+it('required errors work', async () => {
   const data = { messages: [] };
   const { baseElement } = render(getFormRequired(data));
 
@@ -351,8 +361,13 @@ it('required errors work', () => {
   expect(shadowAddBtn).not.toBeNull();
   fireEvent(addButton!, new CustomEvent('_click'));
 
+  // Wait for inputs to render after adding a new item
+  await waitFor(() => {
+    const messageInput = baseElement.querySelector("goa-input[testId='#/properties/message-input']");
+    expect(messageInput).toBeInTheDocument();
+  });
+
   const messageInput = baseElement.querySelector("goa-input[testId='#/properties/message-input']");
-  expect(messageInput).toBeInTheDocument();
   fireEvent(messageInput!, new CustomEvent('_change', { detail: { value: 'The rain in Spain' } }));
   expect(messageInput).toHaveAttribute('value', 'The rain in Spain');
 
