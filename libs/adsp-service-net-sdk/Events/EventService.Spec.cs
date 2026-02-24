@@ -32,7 +32,8 @@ public class EventServiceTests
           ServiceId = serviceId,
         }
       );
-    using var middleware = new EventService(logger.Object, registrar.Object, serviceDirectory.Object, tokenProvider.Object, options.Object);
+    var client = Mock.Of<IRestClient>();
+    var middleware = new EventService(logger.Object, registrar.Object, serviceDirectory.Object, tokenProvider.Object, options.Object, client);
     middleware.Should().NotBeNull();
   }
 
@@ -78,7 +79,7 @@ public class EventServiceTests
           ServiceId = serviceId,
         }
       );
-    using var middleware = new EventService(logger.Object, registrar.Object, serviceDirectory.Object, tokenProvider.Object, options.Object, client);
+    var middleware = new EventService(logger.Object, registrar.Object, serviceDirectory.Object, tokenProvider.Object, options.Object, client);
     mockHttp.Expect(HttpMethod.Post, "https://event-service/v1/events").Respond(HttpStatusCode.OK);
     await middleware.Send(domainEvent, serviceId);
     mockHttp.VerifyNoOutstandingExpectation();
@@ -122,7 +123,7 @@ public class EventServiceTests
           ServiceId = serviceId,
         }
       );
-    using var middleware = new EventService(logger.Object, registrar.Object, serviceDirectory.Object, tokenProvider.Object, options.Object, client);
+    var middleware = new EventService(logger.Object, registrar.Object, serviceDirectory.Object, tokenProvider.Object, options.Object, client);
     InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => middleware.Send(domainEvent, serviceId));
     ex.Message.Should().Be($"Specified event 'testEvent' is not recognized. Event definition must be registered.");
   }
@@ -140,9 +141,10 @@ public class EventServiceTests
     options
       .Setup(o => o.Value)
       .Returns(new AdspOptions { });
+    var client = Mock.Of<IRestClient>();
     ArgumentException ex = Assert.Throws<ArgumentException>(() =>
     {
-      using var middleware = new EventService(logger.Object, registrar.Object, serviceDirectory.Object, tokenProvider.Object, options.Object);
+      var middleware = new EventService(logger.Object, registrar.Object, serviceDirectory.Object, tokenProvider.Object, options.Object, client);
     });
     ex.Message.Should().Contain("Provided options must ADSP service URN value for ServiceId.");
   }

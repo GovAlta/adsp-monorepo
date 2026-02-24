@@ -32,9 +32,9 @@ public class ConfigurationServiceTests
         }
       );
 
-    var service = new ConfigurationService(logger, cache, serviceDirectory, tokenProvider, options.Object);
+    var client = Mock.Of<IRestClient>();
+    var service = new ConfigurationService(logger, cache, serviceDirectory, tokenProvider, options.Object, client);
     service.Should().NotBeNull();
-    service.Dispose();
   }
 
   [Fact]
@@ -93,11 +93,9 @@ public class ConfigurationServiceTests
 
     var serviceId = AdspId.Parse("urn:ads:test:test-service");
     var tenantId = AdspId.Parse("urn:ads:platform:tenant-service:v2:/tenants/test");
-    using (var service = new ConfigurationService(logger, cache.Object, serviceDirectory.Object, tokenProvider.Object, options.Object, client))
-    {
-      var (tenant, core) = await service.GetConfiguration<object>(serviceId, tenantId);
-      tenant?.ToString().Should().BeEquivalentTo(mockedHttpResponse);
-      core?.ToString().Should().BeEquivalentTo(mockedHttpResponse);
-    }
+    var service = new ConfigurationService(logger, cache.Object, serviceDirectory.Object, tokenProvider.Object, options.Object, client);
+    var (tenant, core) = await service.GetConfiguration<object>(serviceId, tenantId);
+    tenant?.ToString().Should().BeEquivalentTo(mockedHttpResponse);
+    core?.ToString().Should().BeEquivalentTo(mockedHttpResponse);
   }
 }

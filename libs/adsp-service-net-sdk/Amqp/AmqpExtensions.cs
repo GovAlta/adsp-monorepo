@@ -79,7 +79,7 @@ public static class AmqpExtensions
         );
   }
 
-  internal static T? GetHeaderValueOrDefault<T>(this IBasicProperties properties, string key, JsonSerializerOptions options)
+  internal static T? GetHeaderValueOrDefault<T>(this IReadOnlyBasicProperties properties, string key, JsonSerializerOptions options)
   {
     T? result = default;
     if (properties.Headers?.TryGetValue(key, out var raw) == true)

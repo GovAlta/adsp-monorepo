@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using RestSharp;
 
 namespace Adsp.Sdk;
 
@@ -22,6 +23,7 @@ public static class AdspServiceCollectionExtensions
     }
 
     services.AddMemoryCache();
+    services.AddSingleton<IRestClient>(_ => new RestClient());
     services.AddSingleton<ITokenProvider, TokenProvider>();
     services.AddSingleton<IServiceDirectory, ServiceDirectory>();
     services.AddSingleton<ITenantService, TenantService>();
