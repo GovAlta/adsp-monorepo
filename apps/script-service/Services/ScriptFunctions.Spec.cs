@@ -53,7 +53,7 @@ public sealed class ScriptFunctionsTests : IDisposable
     using var RestClient = TestUtil.GetRestClient(FormServiceId, endpoint, HttpMethod.Get, expectedResult: null, success: false);
     var ScriptFunctions = new ScriptFunctions(Tenant, TestUtil.GetServiceUrl(FormServiceId), TestUtil.GetMockToken(), RestClient);
     var ex = Assert.ThrowsAny<Exception>(() => ScriptFunctions.GetFormSubmission(FormId, SubmissionId));
-    Assert.Contains("404", ex.Message);
+    Assert.Contains("404", ex.Message, StringComparison.Ordinal);
   }
 
   [Fact]
@@ -215,7 +215,7 @@ public sealed class ScriptFunctionsTests : IDisposable
     Assert.NotNull(actual?.data);
     Assert.NotNull(actual?.data?["inventory"]);
     Assert.Equal(3, ((List<object>)actual?.data?["inventory"]!).Count);
-    Assert.Equal(1, actual.files!.Count);
+    Assert.Single(actual.files!);
   }
 
   [Fact]

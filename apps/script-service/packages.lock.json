@@ -222,8 +222,8 @@
       },
       "RabbitMQ.Client": {
         "type": "Transitive",
-        "resolved": "6.8.1",
-        "contentHash": "jNsmGgmCNw2S/NzskeN2ijtGywtH4Sk/G6jWUTD5sY9SrC27Xz6BsLIiB8hdsfjeyWCa4j4GvCIGkpE8wrjU1Q=="
+        "resolved": "7.2.0",
+        "contentHash": "PPQ7cF7lwbhqC4up6en1bTUZlz06YqQwJecOJzsguTtyhNA7oL5uNDZIx/h6ZfcyPZV4V3DYKSCxfm4RUFLcbA=="
       },
       "RestSharp": {
         "type": "Transitive",
@@ -356,7 +356,7 @@
           "Moq": "[4.20.72, )",
           "NJsonSchema": "[11.5.2, )",
           "Polly": "[8.6.5, )",
-          "RabbitMQ.Client": "[6.8.1, )",
+          "RabbitMQ.Client": "[7.2.0, )",
           "ReportGenerator": "[5.5.1, )",
           "RestSharp": "[113.1.0, )",
           "RichardSzalay.MockHttp": "[7.0.0, )",

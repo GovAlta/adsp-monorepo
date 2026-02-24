@@ -15,7 +15,7 @@ public class ServiceDirectoryTests
   public async Task CanGetServiceUrl()
   {
     var logger = Mock.Of<ILogger<ServiceDirectory>>();
-    var cache = new MemoryCache(new MemoryCacheOptions());
+    using var cache = new MemoryCache(new MemoryCacheOptions());
     var serviceDirectory = new Mock<IServiceDirectory>();
 
     var requestBaseUrl = new Uri("https://directory-service/");
@@ -55,7 +55,7 @@ public class ServiceDirectoryTests
   public async Task NoServiceUrlArgumentException()
   {
     var logger = Mock.Of<ILogger<ServiceDirectory>>();
-    var cache = new MemoryCache(new MemoryCacheOptions());
+    using var cache = new MemoryCache(new MemoryCacheOptions());
     var serviceDirectory = new Mock<IServiceDirectory>();
 
     var requestBaseUrl = new Uri("https://directory-service/");
