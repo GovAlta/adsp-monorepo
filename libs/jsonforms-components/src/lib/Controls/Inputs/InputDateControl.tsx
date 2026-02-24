@@ -3,8 +3,12 @@ import { GoabInput } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { onBlurForDateControl, onChangeForDateControl, onKeyPressForDateControl } from '../../util/inputControlUtils';
-import { callout } from '../../Additional/GoACalloutControl';
+import {
+  onBlurForDateControl,
+  onChangeForDateControl,
+  onKeyPressForDateControl,
+  ensureGoaDatePointerCursor,
+} from '../../util/inputControlUtils';
 import { standardizeDate } from '../../util/dateUtils';
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail, GoabInputOnKeyPressDetail } from '@abgov/ui-components-common';
 import { useEffect, useRef } from 'react';
@@ -52,22 +56,6 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   } else if (!allowPastDate && allowFutureDate) {
     minDate = todayLocalYmd();
   }
-
-  const ensureGoaDatePointerCursor = (host: Element | null) => {
-    if (!host) return;
-    const sr = (host as HTMLElement).shadowRoot;
-    if (!sr) return;
-
-    if (sr.getElementById('goa-date-cursor-style')) return;
-
-    const style = document.createElement('style');
-    style.id = 'goa-date-cursor-style';
-    style.textContent = `
-    input[type="date"] { cursor: pointer !important; }
-    input[type="date"]:disabled { cursor: not-allowed !important; }
-  `;
-    sr.appendChild(style);
-  };
   const hostRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {

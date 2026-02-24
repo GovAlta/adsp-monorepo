@@ -44,25 +44,22 @@ class XdpParser:
     # ----------------------------------------------------------------------
     def parse_xdp(self) -> List[XdpElement]:
         """
-        Parse the XDP, returning a structured list of factory-built controls/sections.
+        Parse the XDP, returning a list of controls.
         """
 
         form_root = self.find_form_root(self.context.get("root"))
         subforms = self.find_top_subforms(form_root)
         self.control_labels = ControlLabels(form_root, self.context)
 
-        # 1) Build a tree of placeholders + controls (NO grouping yet)
         root_nodes: List[XdpElement] = []
         for subform in subforms:
             node = self._parse_subform_to_node(subform)
             if node:
                 root_nodes.append(node)
 
-        # 2) Run the single grouping pass over the placeholder tree
         grouper = XdpGroupingPass(self.factory, self.control_labels, self.context)
         grouped_elements = grouper.group_placeholders(root_nodes)
 
-        # 3) Convert to JSONForms elements
         return remove_duplicates(self.to_form_elements(grouped_elements))
 
     def to_form_elements(self, xdp_elements: List[XdpElement]) -> List[dict]:

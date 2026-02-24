@@ -166,6 +166,7 @@ Then('no critical or serious accessibility issues for {string} on {string}', fun
 
 When('the user selects the {string} menu item', function (menuItem) {
   commonlib.tenantAdminMenuItem(menuItem, 2000);
+  cy.viewport(1920, 1080);
 });
 
 Then('the user views the link of API docs for {string}', function (serviceName) {
@@ -335,7 +336,8 @@ When(
       .shadow()
       .find('input')
       .clear()
-      .type(namespace, { delay: 100, force: true });
+      .type(namespace, { delay: 100, force: true })
+      .press(Cypress.Keyboard.Keys.TAB); // Get out of the namespace field to avoid existing namespace selection dropdown blocking the name field
     eventsObj.definitionModalNameField().shadow().find('input').clear().type(name, { delay: 50, force: true });
     eventsObj.definitionModalDescriptionField().shadow().find('textarea').type(desc);
   }
@@ -491,7 +493,7 @@ When(
   'the user searches with {string}, {string} as minimum timestamp, {string} as maximum timestamp',
   function (namespaceName: string, submin, addmin) {
     tenantAdminObj.eventLogSearchBox().click();
-    tenantAdminObj.eventLogSearchBox().type(namespaceName);
+    tenantAdminObj.eventLogSearchBox().type(namespaceName).press(Cypress.Keyboard.Keys.TAB); // Get out of the namespace field to avoid existing namespace selection dropdown blocking the other fields
 
     const timestampMin = timestampUtil(submin);
     const timestampMax = timestampUtil(addmin);
@@ -499,7 +501,7 @@ When(
     cy.log(timestampMin);
     cy.log(timestampMax);
 
-    tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
+    tenantAdminObj.eventLogMinTimeStamp().focus().type(timestampMin);
     tenantAdminObj.eventLogMaxTimeStamp().type(timestampMax);
     tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
     cy.wait(2000);

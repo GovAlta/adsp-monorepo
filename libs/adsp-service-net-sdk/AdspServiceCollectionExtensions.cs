@@ -6,6 +6,7 @@ using Adsp.Sdk.Metrics;
 using Adsp.Sdk.Registration;
 using Adsp.Sdk.Tenancy;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -35,7 +36,7 @@ public static class AdspServiceCollectionExtensions
   }
 
   /// <summary>
-  /// Registers services needed to initialize ADSP platform service.
+  /// Registers services needed to initialize ADSP tenant service.
   /// </summary>
   /// <param name="services">Service collection.</param>
   /// <param name="configureOptions">Configure options action.</param>
@@ -49,13 +50,12 @@ public static class AdspServiceCollectionExtensions
   {
     services.AddAdspSdkServices(configureOptions);
 
-    var providers = services.BuildServiceProvider();
-    var tenantService = providers.GetRequiredService<ITenantService>();
-    var options = providers.GetRequiredService<IOptions<AdspOptions>>();
+    // Register options configuration - services are resolved lazily when JwtBearerOptions are needed
+    services.AddSingleton<IConfigureOptions<JwtBearerOptions>, RealmJwtBearerOptionsConfiguration>();
 
     var authenticationBuilder = services
       .AddAuthentication(AdspAuthenticationSchemes.Tenant)
-      .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Tenant, tenantService, options.Value);
+      .AddJwtBearer(AdspAuthenticationSchemes.Tenant);
 
     configureAuthentication?.Invoke(authenticationBuilder);
 
@@ -63,7 +63,7 @@ public static class AdspServiceCollectionExtensions
   }
 
   /// <summary>
-  /// Registers services needed to initialize ADSP tenant service.
+  /// Registers services needed to initialize ADSP platform service.
   /// </summary>
   /// <param name="services">Service collection.</param>
   /// <param name="configureOptions">Configure options action.</param>
@@ -77,16 +77,14 @@ public static class AdspServiceCollectionExtensions
   {
     services.AddAdspSdkServices(configureOptions);
 
-    var providers = services.BuildServiceProvider();
-    var tenantService = providers.GetRequiredService<ITenantService>();
-    var issuerCache = providers.GetRequiredService<IIssuerCache>();
-    var keyProvider = providers.GetRequiredService<ITenantKeyProvider>();
-    var options = providers.GetRequiredService<IOptions<AdspOptions>>();
+    // Register options configurations - services are resolved lazily when JwtBearerOptions are needed
+    services.AddSingleton<IConfigureOptions<JwtBearerOptions>, RealmJwtBearerOptionsConfiguration>();
+    services.AddSingleton<IConfigureOptions<JwtBearerOptions>, TenantJwtBearerOptionsConfiguration>();
 
     var authenticationBuilder = services
       .AddAuthentication()
-      .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Core, tenantService, options.Value)
-      .AddTenantJwtAuthentication(AdspAuthenticationSchemes.Tenant, issuerCache, keyProvider, options.Value);
+      .AddJwtBearer(AdspAuthenticationSchemes.Core)
+      .AddJwtBearer(AdspAuthenticationSchemes.Tenant);
 
     configureAuthentication?.Invoke(authenticationBuilder);
 
