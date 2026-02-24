@@ -47,16 +47,13 @@ public sealed class ScriptFunctionsTests : IDisposable
     var FormServiceId = AdspId.Parse("urn:ads:platform:form-service");
     var FormId = "my-form";
     var SubmissionId = "my-submission";
-    var endpoint = $"/form/v1/forms/{FormId}/submissions/invalid-submission-id";
+    var endpoint = $"/form/v1/forms/{FormId}/submissions/{SubmissionId}";
     var Tenant = AdspId.Parse("urn:ads:platform:my-tenant");
-    var ServiceDirectory = TestUtil.GetServiceUrl(FormServiceId);
-    var StubFunctions = new StubScriptFunctions(Tenant, ServiceDirectory, TestUtil.GetMockToken());
 
-    var Expected = StubFunctions.GetFormSubmission(FormId, SubmissionId);
-    using var RestClient = TestUtil.GetRestClient(FormServiceId, endpoint, HttpMethod.Get, Expected);
+    using var RestClient = TestUtil.GetRestClient(FormServiceId, endpoint, HttpMethod.Get, expectedResult: null, success: false);
     var ScriptFunctions = new ScriptFunctions(Tenant, TestUtil.GetServiceUrl(FormServiceId), TestUtil.GetMockToken(), RestClient);
-    var Actual = ScriptFunctions.GetFormSubmission(FormId, SubmissionId);
-    Assert.Null(Actual);
+    var ex = Assert.ThrowsAny<Exception>(() => ScriptFunctions.GetFormSubmission(FormId, SubmissionId));
+    Assert.Contains("404", ex.Message, StringComparison.Ordinal);
   }
 
   [Fact]
@@ -218,7 +215,7 @@ public sealed class ScriptFunctionsTests : IDisposable
     Assert.NotNull(actual?.data);
     Assert.NotNull(actual?.data?["inventory"]);
     Assert.Equal(3, ((List<object>)actual?.data?["inventory"]!).Count);
-    Assert.Equal(1, actual.files!.Count);
+    Assert.Single(actual.files!);
   }
 
   [Fact]

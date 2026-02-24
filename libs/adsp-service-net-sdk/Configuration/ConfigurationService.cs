@@ -5,7 +5,7 @@ using RestSharp;
 
 namespace Adsp.Sdk.Configuration;
 
-internal sealed class ConfigurationService : IConfigurationService, IDisposable
+internal sealed class ConfigurationService : IConfigurationService
 {
   private static readonly AdspId CONFIGURATION_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:configuration-service:v2");
   private readonly ILogger<ConfigurationService> _logger;
@@ -21,7 +21,7 @@ internal sealed class ConfigurationService : IConfigurationService, IDisposable
     IServiceDirectory serviceDirectory,
     ITokenProvider tokenProvider,
     IOptions<AdspOptions> options,
-    RestClient? client = null
+    IRestClient client
   )
   {
     _logger = logger;
@@ -29,7 +29,7 @@ internal sealed class ConfigurationService : IConfigurationService, IDisposable
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
     _combine = options.Value.Configuration?.CombineConfiguration;
-    _client = client ?? new RestClient();
+    _client = client;
   }
 
   public void ClearCached(AdspId serviceId, AdspId? tenantId = null)
@@ -110,8 +110,4 @@ internal sealed class ConfigurationService : IConfigurationService, IDisposable
     return configuration;
   }
 
-  public void Dispose()
-  {
-    _client.Dispose();
-  }
 }

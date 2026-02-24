@@ -19,7 +19,7 @@ public class TenantServiceTests
     var tokenProvider = Mock.Of<ITokenProvider>();
     var client = Mock.Of<IRestClient>();
 
-    using var middleware = new TenantService(logger, cache, serviceDirectory, tokenProvider, client);
+    var middleware = new TenantService(logger, cache, serviceDirectory, tokenProvider, client);
     middleware.Should().NotBeNull();
   }
 
@@ -55,7 +55,7 @@ public class TenantServiceTests
         ConfigureMessageHandler = _ => mockHttp
       }
     );
-    using var middleware = new TenantService(logger, cache, serviceDirectory.Object, tokenProvider.Object, client);
+    var middleware = new TenantService(logger, cache, serviceDirectory.Object, tokenProvider.Object, client);
     var tenants = await middleware.GetTenants();
     tenants.Should().Contain((t) => t.Id!.Equals(tenantId));
   }
@@ -92,7 +92,7 @@ public class TenantServiceTests
         ConfigureMessageHandler = _ => mockHttp
       }
     );
-    using var middleware = new TenantService(logger, cache, serviceDirectory.Object, tokenProvider.Object, client);
+    var middleware = new TenantService(logger, cache, serviceDirectory.Object, tokenProvider.Object, client);
     var tenant = await middleware.GetTenant(tenantId);
     tenant!.Id.Should().Be(tenantId);
   }
@@ -130,7 +130,7 @@ public class TenantServiceTests
         ConfigureMessageHandler = _ => mockHttp
       }
     );
-    using var middleware = new TenantService(logger, cache, serviceDirectory.Object, tokenProvider.Object, client);
+    var middleware = new TenantService(logger, cache, serviceDirectory.Object, tokenProvider.Object, client);
     var tenant = await middleware.GetTenantByRealm("test");
     tenant!.Id.Should().Be(tenantId);
   }

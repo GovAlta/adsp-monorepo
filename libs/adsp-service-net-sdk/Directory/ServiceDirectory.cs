@@ -6,15 +6,19 @@ using RestSharp;
 
 namespace Adsp.Sdk.Directory;
 
-internal sealed class ServiceDirectory : IServiceDirectory, IDisposable
+internal sealed class ServiceDirectory : IServiceDirectory
 {
   private readonly ILogger<ServiceDirectory> _logger;
   private readonly IMemoryCache _cache;
   private readonly IRestClient _client;
   private readonly AsyncPolicy _retryPolicy;
 
-  public ServiceDirectory(ILogger<ServiceDirectory> logger, IMemoryCache cache, IOptions<AdspOptions> options, IRestClient? client = null
-)
+  public ServiceDirectory(
+    ILogger<ServiceDirectory> logger,
+    IMemoryCache cache,
+    IOptions<AdspOptions> options,
+    IRestClient client
+  )
   {
     if (options.Value.DirectoryUrl == null)
     {
@@ -23,7 +27,7 @@ internal sealed class ServiceDirectory : IServiceDirectory, IDisposable
 
     _logger = logger;
     _cache = cache;
-    _client = client ?? new RestClient(options.Value.DirectoryUrl);
+    _client = client;
     _retryPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(
       10,
       retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -79,8 +83,4 @@ internal sealed class ServiceDirectory : IServiceDirectory, IDisposable
     return entries;
   }
 
-  public void Dispose()
-  {
-    _client.Dispose();
-  }
 }
