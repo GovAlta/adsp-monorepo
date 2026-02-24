@@ -430,6 +430,7 @@ Given('an admin user is on event log page', function () {
     Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('Event log', 4000);
+  cy.viewport(1920, 1080);
 });
 
 When('the user searches with {string}', function (namespaceName: string) {
