@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Moq;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Http;
@@ -150,150 +151,115 @@ public class AccessExtensionsTests
 
 
   [Fact]
-  public void CanAddRealmJwtAuthentication()
+  public void CanConfigureRealmJwtBearerOptions()
   {
-
-    var tenantScheme = AdspAuthenticationSchemes.Tenant;
-    var fakeAuthBuilder = CreateFakeAuthenticationBuilder();
-    var adspOptions = CreateFakeOptions();
     var tenantService = CreateFakeTenantService();
+    var adspOptions = CreateFakeOptions();
+    var optionsMock = new Mock<IOptions<AdspOptions>>();
+    optionsMock.Setup(o => o.Value).Returns(adspOptions);
 
-    var builder = AccessExtensions.AddRealmJwtAuthentication(
-        fakeAuthBuilder,
-        tenantScheme,
-        tenantService,
-        adspOptions
-    );
+    var configuration = new RealmJwtBearerOptionsConfiguration(tenantService, optionsMock.Object);
+    var jwtOptions = new JwtBearerOptions();
 
-    builder.Should().NotBeNull();
+    configuration.Configure(AdspAuthenticationSchemes.Tenant, jwtOptions);
+
+    jwtOptions.Authority.Should().Contain("fake-realm");
+    jwtOptions.Audience.Should().NotBeNullOrEmpty();
+    jwtOptions.Events.Should().NotBeNull();
   }
 
   [Fact]
-  public void CanAddTenantJwtAuthentication()
+  public void CanConfigureTenantJwtBearerOptions()
   {
-    var fakeAuthBuilder = CreateFakeAuthenticationBuilder();
-    var tenantScheme = AdspAuthenticationSchemes.Tenant;
-    var tenantService = CreateFakeTenantService();
-    var tenantKeyProvider = CreateFakeKeyProvider();
     var issuerCache = CreateFakeIssuerCache();
-    var adspOptions = CreateFakeOptions();
+    var tenantKeyProvider = CreateFakeKeyProvider();
+    var adspOptions = new AdspOptions()
+    {
+      AccessServiceUrl = new Uri("http://www.mock-test.com/"),
+      ServiceId = AdspId.Parse("urn:ads:platform:tenant-service:v2:/tenants/test"),
+      // No realm set - platform service scenario
+    };
+    var optionsMock = new Mock<IOptions<AdspOptions>>();
+    optionsMock.Setup(o => o.Value).Returns(adspOptions);
 
-    var builder = AccessExtensions.AddTenantJwtAuthentication(
-        fakeAuthBuilder,
-        tenantScheme,
-        issuerCache,
-        tenantKeyProvider,
-        adspOptions
-    );
-    builder.Should().NotBeNull();
+    var configuration = new TenantJwtBearerOptionsConfiguration(issuerCache, tenantKeyProvider, optionsMock.Object);
+    var jwtOptions = new JwtBearerOptions();
+
+    configuration.Configure(AdspAuthenticationSchemes.Tenant, jwtOptions);
+
+    jwtOptions.Audience.Should().NotBeNullOrEmpty();
+    jwtOptions.TokenValidationParameters.Should().NotBeNull();
+    jwtOptions.Events.Should().NotBeNull();
   }
 
   [Fact]
-  public void WillThrowExceptionForInvalidOptionsInAddTenantJwtAuthentication()
+  public void WillThrowExceptionForInvalidOptionsInTenantJwtBearerOptionsConfiguration()
   {
-
-    var fakeAuthBuilder = CreateFakeAuthenticationBuilder();
-    var tenantScheme = AdspAuthenticationSchemes.Tenant;
-    var tenantService = CreateFakeTenantService();
-    var tenantKeyProvider = CreateFakeKeyProvider();
     var issuerCache = CreateFakeIssuerCache();
+    var tenantKeyProvider = CreateFakeKeyProvider();
 
     Action NoServiceIdInOptionAction = () =>
     {
-
       AdspOptions adspOptions = new AdspOptions()
       {
         AccessServiceUrl = new Uri("http://www.mock-test.com/"),
-        Realm = "fake-realm"
+        // No Realm - platform service scenario
       };
+      var optionsMock = new Mock<IOptions<AdspOptions>>();
+      optionsMock.Setup(o => o.Value).Returns(adspOptions);
 
-      AccessExtensions.AddTenantJwtAuthentication(
-          fakeAuthBuilder,
-          tenantScheme,
-          issuerCache,
-          tenantKeyProvider,
-          adspOptions
-      );
+      var configuration = new TenantJwtBearerOptionsConfiguration(issuerCache, tenantKeyProvider, optionsMock.Object);
+      var jwtOptions = new JwtBearerOptions();
+      configuration.Configure(AdspAuthenticationSchemes.Tenant, jwtOptions);
     };
 
     NoServiceIdInOptionAction.Should()
-  .Throw<System.ArgumentException>()
-  .Where(e => e.Message.StartsWith("Provided options must include value for ServiceId."));
+      .Throw<System.InvalidOperationException>()
+      .Where(e => e.Message.Contains("ServiceId"));
   }
 
-
-
   [Fact]
-  public void WillThrowExceptionForInvalidOptionsInAddRealmJwtAuthentication()
+  public void WillThrowExceptionForInvalidOptionsInRealmJwtBearerOptionsConfiguration()
   {
-    var tenantScheme = AdspAuthenticationSchemes.Tenant;
-    var fakeAuthBuilder = CreateFakeAuthenticationBuilder();
     var tenantService = CreateFakeTenantService();
 
     Action NoAccessServiceUrlInOptionAction = () =>
     {
-
       AdspOptions adspOptions = new AdspOptions()
       {
         ServiceId = AdspId.Parse("urn:ads:platform:tenant-service:v2:/tenants/test"),
         Realm = "fake-realm"
       };
+      var optionsMock = new Mock<IOptions<AdspOptions>>();
+      optionsMock.Setup(o => o.Value).Returns(adspOptions);
 
-      AccessExtensions.AddRealmJwtAuthentication(
-        fakeAuthBuilder,
-        tenantScheme,
-        tenantService,
-        adspOptions
-      );
+      var configuration = new RealmJwtBearerOptionsConfiguration(tenantService, optionsMock.Object);
+      var jwtOptions = new JwtBearerOptions();
+      configuration.Configure(AdspAuthenticationSchemes.Tenant, jwtOptions);
     };
 
     NoAccessServiceUrlInOptionAction.Should()
-      .Throw<System.ArgumentException>()
-      .Where(e => e.Message.StartsWith("Provided options must include value for AccessServiceUrl"));
-
+      .Throw<System.InvalidOperationException>()
+      .Where(e => e.Message.Contains("AccessServiceUrl"));
 
     Action NoServerIdInOptionAction = () =>
     {
-
       AdspOptions adspOptions = new AdspOptions()
       {
         AccessServiceUrl = new Uri("http://www.mock-test.com/"),
         Realm = "fake-realm"
       };
+      var optionsMock = new Mock<IOptions<AdspOptions>>();
+      optionsMock.Setup(o => o.Value).Returns(adspOptions);
 
-      AccessExtensions.AddRealmJwtAuthentication(
-        fakeAuthBuilder,
-        tenantScheme,
-        tenantService,
-        adspOptions
-      );
+      var configuration = new RealmJwtBearerOptionsConfiguration(tenantService, optionsMock.Object);
+      var jwtOptions = new JwtBearerOptions();
+      configuration.Configure(AdspAuthenticationSchemes.Tenant, jwtOptions);
     };
 
     NoServerIdInOptionAction.Should()
-      .Throw<System.ArgumentException>()
-      .Where(e => e.Message.StartsWith("Provided options must include value for ServiceId."));
-
-
-    Action NoRealmInOptionAction = () =>
-    {
-
-      AdspOptions adspOptions = new AdspOptions()
-      {
-        AccessServiceUrl = new Uri("http://www.mock-test.com/"),
-        ServiceId = AdspId.Parse("urn:ads:platform:tenant-service:v2:/tenants/test"),
-
-      };
-
-      AccessExtensions.AddRealmJwtAuthentication(
-      fakeAuthBuilder,
-      tenantScheme,
-      tenantService,
-      adspOptions);
-    };
-
-    NoRealmInOptionAction.Should()
-      .Throw<System.ArgumentException>()
-      .Where(e => e.Message.StartsWith("Provided options must include tenant realm for tenant authentication scheme."));
+      .Throw<System.InvalidOperationException>()
+      .Where(e => e.Message.Contains("ServiceId"));
   }
 
   [Fact]

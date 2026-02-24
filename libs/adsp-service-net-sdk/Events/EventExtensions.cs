@@ -1,6 +1,6 @@
 
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Adsp.Sdk.Events;
 
@@ -15,9 +15,9 @@ internal static class EventExtensions
 
   internal static IServiceCollection TryAddSubscriberServices(this IServiceCollection services)
   {
-    if (!services.ContainsService<IStartupFilter, EventSubscriberStartupFilter>())
+    if (!services.ContainsService<IHostedService, EventSubscriberHostedService>())
     {
-      services.AddTransient<IStartupFilter, EventSubscriberStartupFilter>();
+      services.AddSingleton<IHostedService, EventSubscriberHostedService>();
     }
 
     return services;

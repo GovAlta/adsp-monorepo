@@ -21,11 +21,14 @@ export const RenderStepElements = (props: StepProps): JSX.Element => {
   const memoizedSchema = useMemo(() => ({ ...props.schema }), [props.schema]);
 
   return (
-    <Visible visible={props.visible} data-testid={`${props.path}-categories-${props.categoryIndex}`}>
+    <Visible
+      visible={props.visible}
+      data-testid={`${props?.path || props.category?.label}-categories-${props.categoryIndex}`}
+    >
       {props.category.elements.map((uiSchema, index) => {
         return (
           <JsonFormsDispatch
-            key={`${props.path}-category-page-${index}`}
+            key={`${props?.path || props.category?.label}-category-page-${index}`}
             schema={memoizedSchema}
             uischema={uiSchema}
             renderers={props.renderers}

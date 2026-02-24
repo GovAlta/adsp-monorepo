@@ -1,9 +1,6 @@
 using System.Security.Claims;
 using System.Text.Json;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Adsp.Sdk.Access;
 
@@ -91,114 +88,5 @@ internal static class AccessExtensions
     );
 
     return context;
-  }
-
-  internal static AuthenticationBuilder AddRealmJwtAuthentication(
-    this AuthenticationBuilder builder,
-    string authenticationScheme,
-    ITenantService tenantService,
-    AdspOptions options
-  )
-  {
-
-    if (options.AccessServiceUrl == null)
-    {
-      throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
-    }
-
-    if (options.ServiceId == null)
-    {
-      throw new ArgumentException("Provided options must include value for ServiceId.", nameof(options));
-    }
-
-    if (
-      String.Equals(AdspAuthenticationSchemes.Tenant, authenticationScheme, StringComparison.Ordinal) &&
-      String.IsNullOrEmpty(options.Realm)
-    )
-    {
-      throw new ArgumentException("Provided options must include tenant realm for tenant authentication scheme.");
-    }
-    var isCore = String.Equals(AdspAuthenticationSchemes.Core, authenticationScheme, StringComparison.Ordinal);
-    var realm = isCore ? AccessConstants.CoreRealm : options.Realm;
-
-
-    builder.AddJwtBearer(
-      authenticationScheme,
-      jwt =>
-      {
-        jwt.Authority = new Uri(options.AccessServiceUrl, $"/auth/realms/{realm}").AbsoluteUri;
-        jwt.Audience = $"{options.ServiceId}";
-        jwt.Events = new JwtBearerEvents
-        {
-          OnTokenValidated = async (TokenValidatedContext context) =>
-          {
-            Tenant? tenant = null;
-            if (String.Equals(AdspAuthenticationSchemes.Tenant, authenticationScheme, StringComparison.Ordinal))
-            {
-              tenant = await tenantService.GetTenantByRealm(options.Realm!);
-              if (tenant == null)
-              {
-                throw new InvalidOperationException($"Failed to find tenant matching realm '{options.Realm}'.");
-              }
-            }
-            context.AddAdspContext(options.ServiceId, isCore, tenant);
-          }
-        };
-      }
-    );
-
-    return builder;
-  }
-
-  internal static AuthenticationBuilder AddTenantJwtAuthentication(
-    this AuthenticationBuilder builder,
-    string authenticationScheme,
-    IIssuerCache issuerCache,
-    ITenantKeyProvider keyProvider,
-    AdspOptions options
-  )
-  {
-    if (options.ServiceId == null)
-    {
-      throw new ArgumentException("Provided options must include value for ServiceId.", nameof(options));
-    }
-
-    builder.AddJwtBearer(authenticationScheme, jwt =>
-    {
-      jwt.TokenValidationParameters = new TokenValidationParameters
-      {
-        IssuerValidator = (issuer, token, parameters) =>
-        {
-          var tenant = issuerCache.GetTenantByIssuer(issuer).Result;
-          return tenant != null ? issuer : null;
-        },
-        IssuerSigningKeyResolver = (token, securityToken, kid, validationParameters) =>
-        {
-          var keys = new List<SecurityKey>();
-          var signingKey = keyProvider.ResolveSigningKey(securityToken.Issuer, kid).Result;
-          if (signingKey != null)
-          {
-            keys.Add(signingKey);
-          }
-
-          return keys;
-        },
-      };
-
-      jwt.Audience = $"{options.ServiceId}";
-      jwt.Events = new JwtBearerEvents
-      {
-        OnTokenValidated = async (TokenValidatedContext context) =>
-        {
-          var tenant = await issuerCache.GetTenantByIssuer(context.SecurityToken.Issuer);
-          if (tenant?.Id != null)
-          {
-            context.AddAdspContext(options.ServiceId, false, tenant);
-          }
-        }
-      };
-    });
-
-    return builder;
   }
 }
