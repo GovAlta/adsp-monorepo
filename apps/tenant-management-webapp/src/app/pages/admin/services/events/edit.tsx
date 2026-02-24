@@ -51,6 +51,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   const identifiers = Object.keys(definitions);
 
   const existingNamespaces = Object.values(definitions)
+    .filter((def: EventDefinition) => !def.isCore)
     .map((def: EventDefinition) => def?.namespace)
     .filter((ns): ns is string => !!ns);
   const namespaceCheck = (): Validator => {
@@ -70,7 +71,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
     badCharsCheckNoSpace,
     checkForConflicts,
     wordMaxLengthCheck(32, 'Namespace'),
-    isNotEmptyCheck('namespace')
+    isNotEmptyCheck('namespace'),
   )
     .add('name', 'name', badCharsCheckNoSpace, wordMaxLengthCheck(32, 'Name'), isNotEmptyCheck('name'))
     .add('duplicated', 'name', duplicateNameCheck(identifiers, 'Event'))
@@ -134,6 +135,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
             disabled={isEdit}
             testId="form-namespace"
             existingNamespaces={existingNamespaces}
+            excludedNamespaces={forbiddenWords}
             onChange={(value: string) => {
               validators.remove('namespace');
               validators['namespace'].check(value);
