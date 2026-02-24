@@ -144,7 +144,9 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
           readonly={readOnly}
           maxLength={isSinField ? 11 : ''}
           placeholder={placeholder}
+          name={appliedUiSchemaOptions?.name || `${id || label}-input`}
           ariaLabel={appliedUiSchemaOptions?.name || `${id || label}-input`}
+          testId={appliedUiSchemaOptions?.testId || `${id}-input`}
           {...uischema.options?.componentProps}
           // maxLength={appliedUiSchemaOptions?.maxLength}
           onChange={(detail: GoabInputOnChangeDetail) => {
