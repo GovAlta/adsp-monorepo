@@ -6,14 +6,15 @@ using RestSharp;
 
 namespace Adsp.Sdk.Access;
 
-internal sealed class TenantKeyProvider : ITenantKeyProvider, IDisposable
+internal sealed class TenantKeyProvider : ITenantKeyProvider
 {
   private readonly ILogger<TenantKeyProvider> _logger;
   private readonly IMemoryCache _cache;
   private readonly IIssuerCache _issuerCache;
+  private readonly Uri _accessServiceUrl;
   private readonly IRestClient _client;
 
-  public TenantKeyProvider(ILogger<TenantKeyProvider> logger, IMemoryCache cache, IIssuerCache issuerCache, IOptions<AdspOptions> options, IRestClient? client = null)
+  public TenantKeyProvider(ILogger<TenantKeyProvider> logger, IMemoryCache cache, IIssuerCache issuerCache, IOptions<AdspOptions> options, IRestClient client)
   {
     if (options.Value.AccessServiceUrl == null)
     {
@@ -23,7 +24,8 @@ internal sealed class TenantKeyProvider : ITenantKeyProvider, IDisposable
     _logger = logger;
     _cache = cache;
     _issuerCache = issuerCache;
-    _client = client ?? new RestClient(options.Value.AccessServiceUrl);
+    _accessServiceUrl = options.Value.AccessServiceUrl;
+    _client = client;
   }
 
   public async Task<SecurityKey?> ResolveSigningKey(string issuer, string kid)
@@ -46,13 +48,14 @@ internal sealed class TenantKeyProvider : ITenantKeyProvider, IDisposable
     {
       try
       {
+        var metadataUrl = new Uri(_accessServiceUrl, $"/auth/realms/{tenant.Realm}/.well-known/openid-configuration");
         var metadata = await _client.GetAsync<MetadataResponse>(
-          new RestRequest($"/auth/realms/{tenant.Realm}/.well-known/openid-configuration")
+          new RestRequest(metadataUrl.AbsoluteUri)
         );
 
         if (metadata != null && String.Equals(issuer, metadata.Issuer, StringComparison.Ordinal) && metadata.JwksUri != null)
         {
-          var jwksResponse = await _client.GetAsync(new RestRequest(metadata.JwksUri.AbsolutePath));
+          var jwksResponse = await _client.GetAsync(new RestRequest(metadata.JwksUri.AbsoluteUri));
           var keySet = new JsonWebKeySet(jwksResponse.Content);
 
           var keys = keySet.GetSigningKeys();
@@ -75,10 +78,5 @@ internal sealed class TenantKeyProvider : ITenantKeyProvider, IDisposable
     }
 
     return result;
-  }
-
-  public void Dispose()
-  {
-    _client.Dispose();
   }
 }
