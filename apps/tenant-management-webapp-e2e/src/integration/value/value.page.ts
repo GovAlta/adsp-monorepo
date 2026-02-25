@@ -57,7 +57,11 @@ class valuePage {
   }
 
   valueDefinitionsDefinitionModalNameFormItem() {
-    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]//goa-form-item[@label="Name"]');
+    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]//goa-form-item[@label="Names"]');
+  }
+
+  valueDefinitionsDefinitionModalNamespaceFormItem() {
+    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]//goa-form-item[@label="Namespace"]');
   }
 
   valueDefinitionsDefinitionDeleteBtn(namespace, name, desc) {
