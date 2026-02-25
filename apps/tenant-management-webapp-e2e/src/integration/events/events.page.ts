@@ -58,7 +58,7 @@ class eventsPage {
   }
 
   definitionModalNamespaceFormItem() {
-    return cy.xpath('//goa-modal[@open="true"]//goa-input[@testid="form-namespace"]/parent::goa-form-item');
+    return cy.xpath('//goa-modal[@open="true"]//goa-input[@testid="form-namespace"]/ancestor::goa-form-item');
   }
 
   definitionModalNamespaceField() {

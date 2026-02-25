@@ -60,6 +60,10 @@ class valuePage {
     return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]//goa-form-item[@label="Name"]');
   }
 
+  valueDefinitionsDefinitionModalNamespaceFormItem() {
+    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]//goa-form-item[@label="Namespace"]');
+  }
+
   valueDefinitionsDefinitionDeleteBtn(namespace, name, desc) {
     return cy.xpath(
       `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="values-definitions-table"]/tbody/tr/td[@data-testid="name" and text()="${name}"]/following-sibling::td[@data-testid="description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@testid="delete-details"]`
