@@ -26,40 +26,33 @@ interface AgentToolCallProps {
   className?: string;
   toolCall: ToolCall;
 }
-const AgentToolCall = memo(styled(({ className, toolCall }: AgentToolCallProps) => {
-  const argsJson = useMemo(() => JSON.stringify(toolCall.args, null, 2), [toolCall.args]);
-  const resultJson = useMemo(
-    () => (toolCall.result ? JSON.stringify(toolCall.result, null, 2) : null),
-    [toolCall.result]
-  );
-  const errorJson = useMemo(
-    () => (toolCall.error ? JSON.stringify(toolCall.error, null, 2) : null),
-    [toolCall.error]
-  );
 
+const AgentToolCallBase: FunctionComponent<AgentToolCallProps> = ({ className, toolCall }) => {
   return (
     <div className={className}>
       <GoabDetails heading={`Called ${toolCall.toolName} tool`}>
         <div>
           <span>Input</span>
-          <pre>{argsJson}</pre>
-          {resultJson && (
+          <pre>{JSON.stringify(toolCall.args, null, 2)}</pre>
+          {toolCall.result && (
             <>
               <span>Result</span>
-              <pre>{resultJson}</pre>
+              <pre>{JSON.stringify(toolCall.result, null, 2)}</pre>
             </>
           )}
-          {errorJson && (
+          {toolCall.error && (
             <>
               <span>Error</span>
-              <pre>{errorJson}</pre>
+              <pre>{JSON.stringify(toolCall.error, null, 2)}</pre>
             </>
           )}
         </div>
       </GoabDetails>
     </div>
   );
-})`
+};
+
+const AgentToolCall = memo(styled(AgentToolCallBase)`
   margin: var(--goa-space-xl);
   & pre {
     background: var(--goa-color-greyscale-100);
