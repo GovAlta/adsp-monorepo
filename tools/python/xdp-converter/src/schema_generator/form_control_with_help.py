@@ -12,7 +12,7 @@ class FormControlWithHelp(FormElement):
         self.control: FormElement = self.get_modified_control(control, help_text)
 
     def build_ui_schema(self) -> JsonSchemaElement:
-        return self.control.build_ui_schema()
+        return self.control.to_ui_schema()
 
     def has_json_schema(self) -> bool:
         return self.control.has_json_schema()
