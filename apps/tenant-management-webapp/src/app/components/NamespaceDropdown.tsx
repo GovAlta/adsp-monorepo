@@ -11,6 +11,7 @@ interface NamespaceDropdownProps {
   error?: string;
   testId?: string;
   existingNamespaces?: string[];
+  excludedNamespaces?: string[];
   label?: string;
 }
 
@@ -46,12 +47,6 @@ const DropdownItem = styled.li<{ isHighlighted: boolean }>`
   }
 `;
 
-const NoResults = styled.div`
-  padding: 8px 12px;
-  color: var(--color-gray-600, #666);
-  font-style: italic;
-`;
-
 export const NamespaceDropdown: React.FC<NamespaceDropdownProps> = ({
   value,
   onChange,
@@ -60,6 +55,7 @@ export const NamespaceDropdown: React.FC<NamespaceDropdownProps> = ({
   error,
   testId = 'namespace-dropdown',
   existingNamespaces = [],
+  excludedNamespaces = [],
   label = 'Namespace',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -68,7 +64,9 @@ export const NamespaceDropdown: React.FC<NamespaceDropdownProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const uniqueNamespaces = Array.from(new Set(existingNamespaces)).sort();
+  const uniqueNamespaces = Array.from(new Set(existingNamespaces))
+    .filter((ns) => !excludedNamespaces.includes(ns))
+    .sort();
 
   useEffect(() => {
     if (value) {
@@ -77,7 +75,7 @@ export const NamespaceDropdown: React.FC<NamespaceDropdownProps> = ({
     } else {
       setFilteredNamespaces(uniqueNamespaces);
     }
-  }, [value, existingNamespaces.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [value, existingNamespaces.join(','), excludedNamespaces.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -178,26 +176,18 @@ export const NamespaceDropdown: React.FC<NamespaceDropdownProps> = ({
           autoComplete="off"
         />
       </div>
-      {isOpen && !disabled && (
+      {isOpen && !disabled && filteredNamespaces.length > 0 && (
         <DropdownList>
-          {filteredNamespaces.length > 0 ? (
-            filteredNamespaces.map((namespace, index) => (
-              <DropdownItem
-                key={namespace}
-                isHighlighted={index === highlightedIndex}
-                onClick={() => handleSelectNamespace(namespace)}
-                onMouseEnter={() => setHighlightedIndex(index)}
-              >
-                {namespace}
-              </DropdownItem>
-            ))
-          ) : (
-            <NoResults>
-              {value
-                ? `No existing namespaces match "${value}". Press Enter to use this value.`
-                : 'No namespaces available'}
-            </NoResults>
-          )}
+          {filteredNamespaces.map((namespace, index) => (
+            <DropdownItem
+              key={namespace}
+              isHighlighted={index === highlightedIndex}
+              onClick={() => handleSelectNamespace(namespace)}
+              onMouseEnter={() => setHighlightedIndex(index)}
+            >
+              {namespace}
+            </DropdownItem>
+          ))}
         </DropdownList>
       )}
     </DropdownContainer>

@@ -6,15 +6,20 @@ using RestSharp;
 
 namespace Adsp.Sdk.Directory;
 
-internal sealed class ServiceDirectory : IServiceDirectory, IDisposable
+internal sealed class ServiceDirectory : IServiceDirectory
 {
   private readonly ILogger<ServiceDirectory> _logger;
   private readonly IMemoryCache _cache;
+  private readonly Uri _directoryUrl;
   private readonly IRestClient _client;
   private readonly AsyncPolicy _retryPolicy;
 
-  public ServiceDirectory(ILogger<ServiceDirectory> logger, IMemoryCache cache, IOptions<AdspOptions> options, IRestClient? client = null
-)
+  public ServiceDirectory(
+    ILogger<ServiceDirectory> logger,
+    IMemoryCache cache,
+    IOptions<AdspOptions> options,
+    IRestClient client
+  )
   {
     if (options.Value.DirectoryUrl == null)
     {
@@ -23,7 +28,8 @@ internal sealed class ServiceDirectory : IServiceDirectory, IDisposable
 
     _logger = logger;
     _cache = cache;
-    _client = client ?? new RestClient(options.Value.DirectoryUrl);
+    _directoryUrl = options.Value.DirectoryUrl;
+    _client = client;
     _retryPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(
       10,
       retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -54,7 +60,8 @@ internal sealed class ServiceDirectory : IServiceDirectory, IDisposable
     var entries = await _retryPolicy.ExecuteAsync(async () =>
     {
       var entries = new Dictionary<AdspId, Uri>();
-      var results = await _client.GetAsync<DirectoryEntry[]>(new RestRequest($"/directory/v2/namespaces/{@namespace}/entries"));
+      var requestUrl = new Uri(_directoryUrl, $"directory/v2/namespaces/{@namespace}/entries");
+      var results = await _client.GetAsync<DirectoryEntry[]>(new RestRequest(requestUrl.AbsoluteUri));
       if (results != null)
       {
         foreach (var result in results)
@@ -77,10 +84,5 @@ internal sealed class ServiceDirectory : IServiceDirectory, IDisposable
     }
 
     return entries;
-  }
-
-  public void Dispose()
-  {
-    _client.Dispose();
   }
 }

@@ -26,6 +26,7 @@ export interface TocProps {
   subtitle?: string;
   isValid: boolean;
   hideSummary: boolean;
+  hideProgress: boolean;
   additionalInstructions?: string | AdditionalInstructionsConfig;
 }
 
@@ -88,6 +89,7 @@ export const TaskList: React.FC<TocProps> = ({
   subtitle,
   isValid,
   hideSummary,
+  hideProgress,
   additionalInstructions,
 }) => {
   const testid = 'table-of-contents';
@@ -138,7 +140,7 @@ export const TaskList: React.FC<TocProps> = ({
             {subtitle}
           </GoabText>
         )}
-        <ApplicationStatus completedGroups={completedPages} totalGroups={totalPages} />
+        {!hideProgress && <ApplicationStatus completedGroups={completedPages} totalGroups={totalPages} />}
 
         <GoabTable width="100%">
           <tbody>

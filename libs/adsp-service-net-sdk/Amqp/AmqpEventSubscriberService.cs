@@ -10,7 +10,7 @@ using RabbitMQ.Client.Events;
 
 namespace Adsp.Sdk.Amqp;
 
-internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberService, IDisposable
+internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberService, IAsyncDisposable
   where TPayload : class
   where TSubscriber : IEventSubscriber<TPayload>
 {
@@ -22,7 +22,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
   private readonly bool _enabled;
 
   private IConnection? _connection;
-  private IModel? _channel;
+  private IChannel? _channel;
   private bool _disposed;
 
   public AmqpEventSubscriberService(
@@ -44,7 +44,6 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
 
     _connectionFactory = new ConnectionFactory
     {
-      DispatchConsumersAsync = true,
       HostName = options.Value.Hostname,
       UserName = options.Value.Username,
       Password = options.Value.Password,
@@ -52,54 +51,59 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     };
   }
 
-  public Task StartAsync(CancellationToken cancellationToken)
+  public async Task StartAsync(CancellationToken cancellationToken)
   {
     if (!_enabled)
     {
       _logger.LogInformation("Queue event subscriber for queue {Queue} is not enabled and will not be connecting.", _queueName);
-      return Task.CompletedTask;
+      return;
     }
 
-    _connection = _connectionFactory.CreateConnection();
-    _channel = _connection.CreateModel();
+    _connection = await _connectionFactory.CreateConnectionAsync(cancellationToken);
+    _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
-    DeclareQueueConfiguration(_channel);
+    await DeclareQueueConfigurationAsync(_channel, cancellationToken);
 
     var consumer = new AsyncEventingBasicConsumer(_channel);
-    consumer.Received += HandleEvent;
+    consumer.ReceivedAsync += HandleEventAsync;
 
-    _channel.BasicConsume(_queueName, false, consumer);
+    await _channel.BasicConsumeAsync(_queueName, false, consumer, cancellationToken);
     _logger.LogInformation("Connected to {Hostname} on queue {Queue} for domain events.", _connectionFactory.HostName, _queueName);
-
-    return Task.CompletedTask;
   }
 
-  public Task StopAsync(CancellationToken cancellationToken)
+  public async Task StopAsync(CancellationToken cancellationToken)
   {
     IConnection? connection = _connection;
-    IModel? channel = _channel;
+    IChannel? channel = _channel;
 
-    channel?.Dispose();
-    connection?.Dispose();
+    if (channel != null)
+    {
+      await channel.CloseAsync(cancellationToken);
+      await channel.DisposeAsync();
+    }
+    if (connection != null)
+    {
+      await connection.CloseAsync(cancellationToken);
+      await connection.DisposeAsync();
+    }
 
     _logger.LogInformation("Disconnected from {Hostname} and queue {Queue}.", _connectionFactory.HostName, _queueName);
-
-    return Task.CompletedTask;
   }
 
-  protected void DeclareQueueConfiguration(IModel channel)
+  protected async Task DeclareQueueConfigurationAsync(IChannel channel, CancellationToken cancellationToken)
   {
-    channel.ExchangeDeclare($"{_queueName}-dead-letter", "topic", durable: true, autoDelete: false);
-    channel.QueueDeclare(
+    await channel.ExchangeDeclareAsync($"{_queueName}-dead-letter", "topic", durable: true, autoDelete: false, cancellationToken: cancellationToken);
+    await channel.QueueDeclareAsync(
       $"undelivered-{_queueName}",
       autoDelete: false,
       exclusive: false,
       durable: true,
-      arguments: new Dictionary<string, object?> { { "x-queue-type", "quorum" } }
+      arguments: new Dictionary<string, object?> { { "x-queue-type", "quorum" } },
+      cancellationToken: cancellationToken
     );
-    channel.QueueBind($"undelivered-{_queueName}", $"{_queueName}-dead-letter", "#");
+    await channel.QueueBindAsync($"undelivered-{_queueName}", $"{_queueName}-dead-letter", "#", cancellationToken: cancellationToken);
 
-    channel.QueueDeclare(
+    await channel.QueueDeclareAsync(
       _queueName,
       autoDelete: false,
       exclusive: false,
@@ -107,21 +111,22 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
       arguments: new Dictionary<string, object?> {
         { "x-queue-type", "quorum" },
         { "x-dead-letter-exchange", $"{_queueName}-dead-letter" }
-      }
+      },
+      cancellationToken: cancellationToken
     );
 
-    channel.ExchangeDeclare("domain-events", "topic", durable: true, autoDelete: false);
-    channel.QueueBind(_queueName, "domain-events", "#");
+    await channel.ExchangeDeclareAsync("domain-events", "topic", durable: true, autoDelete: false, cancellationToken: cancellationToken);
+    await channel.QueueBindAsync(_queueName, "domain-events", "#", cancellationToken: cancellationToken);
   }
 
-  private async Task HandleEvent(object sender, BasicDeliverEventArgs args)
+  private async Task HandleEventAsync(object sender, BasicDeliverEventArgs args)
   {
     _logger.LogDebug("Processing domain event with delivery tag {Tag}...", args.DeliveryTag);
 
-    IModel channel = ((IAsyncBasicConsumer)sender).Model!;
+    IChannel channel = ((IAsyncBasicConsumer)sender).Channel;
     try
     {
-      TPayload payload = ConvertMessage(new Dictionary<string, object?>(args.BasicProperties.Headers), args.Body);
+      TPayload payload = ConvertMessage(new Dictionary<string, object?>(args.BasicProperties.Headers ?? new Dictionary<string, object?>()), args.Body);
       var received = new FullDomainEvent<TPayload>(
         AdspId.Parse(args.BasicProperties.GetHeaderValueOrDefault<string>("tenantId", _serializerOptions)),
         args.BasicProperties.GetHeaderValueOrDefault<string>("namespace", _serializerOptions)!,
@@ -136,12 +141,12 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
 
       await _subscriber.OnEvent(received);
 
-      channel.BasicAck(args.DeliveryTag, false);
+      await channel.BasicAckAsync(args.DeliveryTag, false);
       _logger.LogInformation("Processed domain event {Namespace}:{Name} with delivery tag {Tag}.", received.Namespace, received.Name, args.DeliveryTag);
     }
     catch (Exception e)
     {
-      channel.BasicNack(args.DeliveryTag, false, !args.Redelivered);
+      await channel.BasicNackAsync(args.DeliveryTag, false, !args.Redelivered);
       _logger.LogWarning(e, "Failed processing domain event with delivery tag {Tag} and requeue: {Requeue}.", args.DeliveryTag, !args.Redelivered);
     }
   }
@@ -153,21 +158,13 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
       : result;
   }
 
-  protected virtual void Dispose(bool disposing)
+  public async ValueTask DisposeAsync()
   {
     if (!_disposed)
     {
-      if (disposing)
-      {
-        StopAsync(CancellationToken.None).Wait();
-      }
+      await StopAsync(CancellationToken.None);
       _disposed = true;
     }
-  }
-
-  public void Dispose()
-  {
-    Dispose(disposing: true);
     GC.SuppressFinalize(this);
   }
 }

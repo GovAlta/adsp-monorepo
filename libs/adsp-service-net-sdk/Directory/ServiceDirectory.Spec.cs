@@ -15,7 +15,7 @@ public class ServiceDirectoryTests
   public async Task CanGetServiceUrl()
   {
     var logger = Mock.Of<ILogger<ServiceDirectory>>();
-    var cache = new MemoryCache(new MemoryCacheOptions());
+    using var cache = new MemoryCache(new MemoryCacheOptions());
     var serviceDirectory = new Mock<IServiceDirectory>();
 
     var requestBaseUrl = new Uri("https://directory-service/");
@@ -46,7 +46,7 @@ public class ServiceDirectoryTests
           DirectoryUrl = requestBaseUrl,
         }
       );
-    using var middleware = new ServiceDirectory(logger, cache, options.Object, client);
+    var middleware = new ServiceDirectory(logger, cache, options.Object, client);
     var tenantUrl = await middleware.GetServiceUrl(tenantId);
     tenantUrl!.AbsoluteUri.Should().Be(tenantUrlExpected.AbsoluteUri);
   }
@@ -55,7 +55,7 @@ public class ServiceDirectoryTests
   public async Task NoServiceUrlArgumentException()
   {
     var logger = Mock.Of<ILogger<ServiceDirectory>>();
-    var cache = new MemoryCache(new MemoryCacheOptions());
+    using var cache = new MemoryCache(new MemoryCacheOptions());
     var serviceDirectory = new Mock<IServiceDirectory>();
 
     var requestBaseUrl = new Uri("https://directory-service/");
@@ -85,7 +85,7 @@ public class ServiceDirectoryTests
           DirectoryUrl = requestBaseUrl,
         }
       );
-    using var middleware = new ServiceDirectory(logger, cache, options.Object, client);
+    var middleware = new ServiceDirectory(logger, cache, options.Object, client);
     ArgumentException ex = await Assert.ThrowsAsync<ArgumentException>(() => middleware.GetServiceUrl(tenantId));
     ex.Message.Should().Be($"No service url for {tenantId}");
   }
@@ -125,7 +125,7 @@ public class ServiceDirectoryTests
     ArgumentException ex = Assert.Throws<ArgumentException>(() =>
     {
       var cache = new MemoryCache(new MemoryCacheOptions());
-      using var middleware = new ServiceDirectory(logger, cache, options.Object, client);
+      var middleware = new ServiceDirectory(logger, cache, options.Object, client);
     });
     ex.Message.Should().Contain("Provided options must include value for DirectoryUrl.");
   }

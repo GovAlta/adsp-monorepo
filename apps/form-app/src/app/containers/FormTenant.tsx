@@ -6,9 +6,11 @@ import styled from 'styled-components';
 import {
   AppDispatch,
   configInitializedSelector,
+  definitionSelector,
   formSelector,
   initializeTenant,
   logoutUser,
+  selectedDefinition,
   tenantSelector,
   userSelector,
 } from '../state';
@@ -32,18 +34,27 @@ export const FormTenant = () => {
 
   const configInitialized = useSelector(configInitializedSelector);
   const { initialized: userInitialized, user } = useSelector(userSelector);
+  const { definitionId } = useParams();
 
   useEffect(() => {
     if (configInitialized) {
       dispatch(initializeTenant(tenantName));
     }
   }, [configInitialized, tenantName, dispatch]);
+
+  useEffect(() => {
+    if (tenant) {
+      dispatch(selectedDefinition(definitionId));
+    }
+  }, [dispatch, definitionId, tenant]);
   useFeedbackLinkHandler();
+
+  const { definition } = useSelector(definitionSelector);
 
   return (
     <React.Fragment>
       <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
-      <GoabAppHeader url="/" heading={`${tenant?.name || tenantName} - Form`}>
+      <GoabAppHeader url="/" heading={definition?.uiSchema?.options?.mainTitle}>
         <>
           <span style={{ display: 'none' }}></span>
           {userInitialized && (

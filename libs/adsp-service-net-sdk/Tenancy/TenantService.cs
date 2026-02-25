@@ -6,7 +6,7 @@ using RestSharp;
 
 namespace Adsp.Sdk.Tenancy;
 
-internal sealed class TenantService : ITenantService, IDisposable
+internal sealed class TenantService : ITenantService
 {
   private static readonly AdspId TENANT_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:tenant-service:v2");
 
@@ -24,14 +24,14 @@ internal sealed class TenantService : ITenantService, IDisposable
     IMemoryCache cache,
     IServiceDirectory serviceDirectory,
     ITokenProvider tokenProvider,
-    IRestClient? client = null
+    IRestClient client
   )
   {
     _logger = logger;
     _cache = cache;
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
-    _client = client ?? new RestClient();
+    _client = client;
     _retryPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(
       10,
       retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -117,8 +117,4 @@ internal sealed class TenantService : ITenantService, IDisposable
     return tenants ?? Enumerable.Empty<Tenant>();
   }
 
-  public void Dispose()
-  {
-    _client.Dispose();
-  }
 }

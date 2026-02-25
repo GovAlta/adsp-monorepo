@@ -27,7 +27,7 @@ public class TokenProviderTests
       );
     var client = Mock.Of<IRestClient>();
 
-    using var provider = new TokenProvider(logger, options.Object, client);
+    var provider = new TokenProvider(logger, options.Object, client);
     provider.Should().NotBeNull();
   }
 
@@ -121,7 +121,7 @@ public class TokenProviderTests
       }
     );
 
-    using var provider = new TokenProvider(logger, options.Object, client);
+    var provider = new TokenProvider(logger, options.Object, client);
     var result = await provider.GetAccessToken();
     result.Should().Be("token");
   }
@@ -156,7 +156,7 @@ public class TokenProviderTests
       }
     );
 
-    using var provider = new TokenProvider(logger, options.Object, client);
+    var provider = new TokenProvider(logger, options.Object, client);
     var result = await provider.GetAccessToken();
     result = await provider.GetAccessToken();
     result.Should().Be("token");

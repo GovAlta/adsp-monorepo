@@ -21,6 +21,7 @@ import {
   duplicateNameCheck,
   wordMaxLengthCheck,
   badCharsCheck,
+  wordCheck,
 } from '@lib/validation/checkInput';
 import styled from 'styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
@@ -52,9 +53,21 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
   const [spinner, setSpinner] = useState<boolean>(false);
   const identifiers = Object.keys(configurations);
 
-  const existingNamespaces = Object.values(configurations)
-    .map((config) => (config as ConfigDefinition)?.namespace)
+  const coreNamespaces = Object.keys(configurations)
+    .filter((key) => !key.includes(':') || key.startsWith('platform:'))
+    .map((key) => {
+      return key.includes(':') ? key.split(':')[0] : key;
+    })
     .filter((ns): ns is string => !!ns);
+
+  const existingNamespaces = Object.keys(configurations)
+    .filter((key) => key.includes(':') && !key.startsWith('platform:'))
+    .map((key) => key.split(':')[0])
+    .filter((ns): ns is string => !!ns);
+
+  const forbiddenWords = coreNamespaces.concat('platform');
+  const checkForConflicts = wordCheck(forbiddenWords);
+
   const loadingIndicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -70,8 +83,9 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     'namespace',
     badCharsCheck,
     namespaceCheck(),
+    checkForConflicts,
     isNotEmptyCheck('namespace'),
-    wordMaxLengthCheck(32, 'Namespace')
+    wordMaxLengthCheck(32, 'Namespace'),
   )
     .add('name', 'name', badCharsCheck, isNotEmptyCheck('name'), wordMaxLengthCheck(32, 'Name'))
     .add('duplicated', 'name', duplicateNameCheck(identifiers, 'Configuration'))
@@ -151,6 +165,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
             disabled={isEdit}
             testId="form-namespace"
             existingNamespaces={existingNamespaces}
+            excludedNamespaces={forbiddenWords}
             onChange={(value: string) => {
               const updatedDefinition = { ...definition, namespace: value };
               setDefinition(updatedDefinition);
@@ -158,7 +173,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                 (key) =>
                   `${(configurations[key] as ConfigDefinition)?.namespace}:${
                     (configurations[key] as ConfigDefinition)?.name
-                  }`
+                  }`,
               );
               const currentIdentifier = `${updatedDefinition.namespace}:${updatedDefinition.name}`;
               validators.remove('duplicated');
@@ -184,7 +199,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                 (key) =>
                   `${(configurations[key] as ConfigDefinition)?.namespace}:${
                     (configurations[key] as ConfigDefinition)?.name
-                  }`
+                  }`,
               );
               const currentIdentifier = `${updatedDefinition.namespace}:${updatedDefinition.name}`;
               validators.remove('duplicated');
