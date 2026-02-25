@@ -479,17 +479,21 @@ function generateSummaryPairs(
   const paths = extractPaths(detailUiSchema);
 
   if (paths.length === 0) {
-    return Object.entries(rowData).map(([key, value]) => ({
-      label: findLabelForPath(key, detailUiSchema, schema),
-      value,
-    }));
+    return Object.entries(rowData)
+      .filter(([, value]) => value !== undefined && value !== null && value !== '')
+      .map(([key, value]) => ({
+        label: findLabelForPath(key, detailUiSchema, schema),
+        value,
+      }));
   }
 
-  return paths.map((path) => {
-    const value = getValue(rowData, path);
-    const label = findLabelForPath(path, detailUiSchema, schema);
-    return { label, value };
-  });
+  return paths
+    .map((path) => {
+      const value = getValue(rowData, path);
+      const label = findLabelForPath(path, detailUiSchema, schema);
+      return { label, value };
+    })
+    .filter(({ value }) => value !== undefined && value !== null && value !== '');
 }
 
 interface SummaryDisplayProps {
