@@ -1026,6 +1026,9 @@ export class AdspFeedback implements AdspFeedbackApi {
             color: #333333;
             font-size: 18px;
           }
+          .errorButton {
+            padding-top: 4px;
+          }
           .successButton {
             margin-top: 24px;
           }
@@ -1448,7 +1451,7 @@ export class AdspFeedback implements AdspFeedbackApi {
                             we are experiencing an issue trying to load this page. Please try again in a few minutes. We
                             apologize for the inconvenience.
                           </p>
-                          <div>
+                          <div class="errorButton">
                             <button
                               ${ref(this.feedbackCloseErrorButton)}
                               @click=${this.closeErrorForm}
