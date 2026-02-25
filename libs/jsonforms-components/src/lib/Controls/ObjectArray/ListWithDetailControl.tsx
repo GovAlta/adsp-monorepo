@@ -24,7 +24,7 @@ import { WithDeleteDialogSupport } from './DeleteDialog';
 import ObjectArrayToolBar from './ObjectArrayToolBar';
 import merge from 'lodash/merge';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { GoabButton, GoabGrid, GoabIconButton, GoabFormItem } from '@abgov/react-components';
+import { GoabButton, GoabGrid, GoabIconButton, GoabFormItem, GoabTable } from '@abgov/react-components';
 import {
   ToolBarHeader,
   ObjectArrayTitle,
@@ -40,7 +40,9 @@ import {
   MarginTop,
   UpdateListContainer,
   TabName,
-  IconPadding,
+  NoDataMessage,
+  IconsContainer,
+  TableContentContainer,
 } from './styled-components';
 import { Visible } from '../../util';
 import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
@@ -131,7 +133,7 @@ const GenerateRows = (
   rowPath: string,
   enabled: boolean,
   cells?: JsonFormsCellRendererRegistryEntry[],
-  uischema?: ControlElement,
+  uischema?: ControlElement
 ) => {
   if (schema?.type === 'object') {
     const props = {
@@ -272,37 +274,41 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
 
   return (
     <>
-      {// eslint-disable-next-line
-      (uischema as Layout)?.elements?.map((element: UISchemaElement, index) => {
-        return (
-          <JsonFormsDispatch
-            data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-            key={`${rowPath}-${index}`}
-            schema={schema}
-            uischema={element}
-            path={`${rowPath}`}
-            enabled={enabled}
-            renderers={renderers}
-            cells={cells}
-          />
-        );
-      })}
+      {
+        // eslint-disable-next-line
+        (uischema as Layout)?.elements?.map((element: UISchemaElement, index) => {
+          return (
+            <JsonFormsDispatch
+              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+              key={`${rowPath}-${index}`}
+              schema={schema}
+              uischema={element}
+              path={`${rowPath}`}
+              enabled={enabled}
+              renderers={renderers}
+              cells={cells}
+            />
+          );
+        })
+      }
 
-      {// eslint-disable-next-line
-      (uischema as Layout)?.options?.detail?.elements?.map((element: UISchemaElement, index: number) => {
-        return (
-          <JsonFormsDispatch
-            data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-            key={`${rowPath}-${index}`}
-            schema={schema}
-            uischema={element}
-            path={rowPath}
-            enabled={enabled}
-            renderers={renderers}
-            cells={cells}
-          />
-        );
-      })}
+      {
+        // eslint-disable-next-line
+        (uischema as Layout)?.options?.detail?.elements?.map((element: UISchemaElement, index: number) => {
+          return (
+            <JsonFormsDispatch
+              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+              key={`${rowPath}-${index}`}
+              schema={schema}
+              uischema={element}
+              path={rowPath}
+              enabled={enabled}
+              renderers={renderers}
+              cells={cells}
+            />
+          );
+        })
+      }
 
       {hasNoElements() && uiSchemaElementsForNotDefined?.elements?.length > 0 && (
         <JsonFormsDispatch
@@ -389,64 +395,6 @@ const NonEmptyRowComponent = ({
   );
 };
 
-const MainItemComponent = ({
-  childPath,
-  rowIndex,
-  openDeleteDialog,
-  selectCurrentTab,
-  enabled,
-  currentTab,
-  current,
-  setCurrentListPage,
-  rowData,
-}: MainRowProps & WithDeleteDialogSupport) => {
-  const displayName = Object.keys(rowData ?? {}).length === 0 ? 'No data' : Object.values(rowData || {}).join(', ');
-
-  return (
-    <SideMenuItem
-      onClick={() => selectCurrentTab(rowIndex)}
-      onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-        if (e.key === 'ArrowRight') {
-          e.preventDefault();
-          if (current) {
-            const goa = current?.querySelector('goa-input, goa-button');
-            if (goa?.shadowRoot) {
-              const internal = goa.shadowRoot.querySelector('input, button');
-
-              (internal as HTMLElement)?.focus();
-              selectCurrentTab(rowIndex);
-            }
-          }
-        }
-      }}
-    >
-      <RowFlexMenu tabIndex={0}>
-        <TabName>{displayName}</TabName>
-        {enabled ? (
-          <Trash>
-            <GoabIconButton
-              disabled={!enabled}
-              icon="trash"
-              title={'remove'}
-              testId="remove the details"
-              onClick={() => openDeleteDialog(childPath, rowIndex, displayName)}
-            ></GoabIconButton>
-          </Trash>
-        ) : null}
-        <IconPadding>
-          <GoabIconButton
-            disabled={!enabled}
-            icon="create"
-            title={'edit'}
-            testId="edit button"
-            onClick={() => setCurrentListPage(currentTab + 1)}
-          ></GoabIconButton>
-        </IconPadding>
-      </RowFlexMenu>
-    </SideMenuItem>
-  );
-};
-
 function isControlElement(element: UISchemaElement): element is ControlElement {
   return element.type === 'Control';
 }
@@ -473,28 +421,186 @@ function extractPaths(uiSchema?: UISchemaElement): string[] {
 
 function getValue(obj: unknown, path: string): unknown {
   return path
+    .replace(/^\./, '')
     .split('.')
-    .reduce<unknown>(
-      (acc, key) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined),
-      obj,
-    );
+    .reduce((acc: unknown, part: string) => {
+      if (acc && typeof acc === 'object' && part in acc) {
+        return (acc as Record<string, unknown>)[part];
+      }
+      return undefined;
+    }, obj);
 }
 
-function orderRowData(rowData: Record<string, unknown>, detailUiSchema?: UISchemaElement): Record<string, unknown> {
-  const orderedPaths = extractPaths(detailUiSchema);
+function findLabelForPath(path: string, uiSchema?: UISchemaElement, schema?: JsonSchema): string {
+  if (!uiSchema) {
+    return path;
+  }
 
-  const ordered: Record<string, unknown> = {};
-
-  for (const path of orderedPaths) {
-    const value = getValue(rowData, path);
-
-    if (value !== undefined) {
-      ordered[path] = value;
+  if (isControlElement(uiSchema)) {
+    const controlPath = uiSchema.scope ? toDataPath(uiSchema.scope) : '';
+    if (controlPath === path) {
+      const label = uiSchema.label;
+      if (typeof label === 'string') {
+        return label;
+      } else if (typeof label === 'object' && label !== null && 'text' in label) {
+        return label.text || path;
+      }
+      return path;
     }
   }
 
-  return ordered;
+  if (isLayoutElement(uiSchema)) {
+    for (const element of uiSchema.elements) {
+      const label = findLabelForPath(path, element, schema);
+      if (label !== path) {
+        return label;
+      }
+    }
+  }
+
+  if (schema?.properties) {
+    const propertyKey = path.split('.').pop();
+    if (propertyKey && schema.properties[propertyKey]) {
+      const property = schema.properties[propertyKey];
+      if (typeof property === 'object' && 'title' in property) {
+        return String(property.title) || path;
+      }
+    }
+  }
+
+  return path;
 }
+
+function generateSummaryPairs(
+  rowData: Record<string, unknown>,
+  detailUiSchema?: UISchemaElement,
+  schema?: JsonSchema
+): Array<{ label: string; value: unknown }> {
+  const paths = extractPaths(detailUiSchema);
+
+  if (paths.length === 0) {
+    return Object.entries(rowData).map(([key, value]) => ({
+      label: findLabelForPath(key, detailUiSchema, schema),
+      value,
+    }));
+  }
+
+  return paths.map((path) => {
+    const value = getValue(rowData, path);
+    const label = findLabelForPath(path, detailUiSchema, schema);
+    return { label, value };
+  });
+}
+
+interface SummaryDisplayProps {
+  rowData: Record<string, unknown> | undefined;
+  uischema?: UISchemaElement;
+  schema?: JsonSchema;
+}
+
+const SummaryDisplay = ({ rowData, uischema, schema }: SummaryDisplayProps) => {
+  if (!rowData || Object.keys(rowData).length === 0) {
+    return <NoDataMessage>No data</NoDataMessage>;
+  }
+
+  const pairs = generateSummaryPairs(rowData, uischema?.options?.detail as UISchemaElement | undefined, schema);
+
+  if (pairs.length === 0) {
+    return <NoDataMessage>No data</NoDataMessage>;
+  }
+
+  return (
+    <GoabTable width="100%" mb="none" variant="relaxed">
+      <tbody>
+        {pairs.map((pair, index) => (
+          <tr key={`${pair.label}-${index}`} style={{ borderBottom: 'none' }}>
+            <td
+              style={{
+                width: '50%',
+                fontWeight: '600',
+                border: 'none',
+                paddingTop: 'var(--goa-space-xs)',
+                paddingBottom: 'var(--goa-space-xs)',
+              }}
+            >
+              {pair.label}
+            </td>
+            <td
+              style={{
+                width: '50%',
+                border: 'none',
+                paddingTop: 'var(--goa-space-xs)',
+                paddingBottom: 'var(--goa-space-xs)',
+              }}
+            >
+              {String(pair.value)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </GoabTable>
+  );
+};
+
+const MainItemComponent = ({
+  childPath,
+  rowIndex,
+  openDeleteDialog,
+  selectCurrentTab,
+  enabled,
+  currentTab,
+  current,
+  setCurrentListPage,
+  rowData,
+  uischema,
+  schema,
+}: MainRowProps & WithDeleteDialogSupport) => {
+  const displayName = Object.keys(rowData ?? {}).length === 0 ? 'No data' : Object.values(rowData || {}).join(', ');
+
+  return (
+    <SideMenuItem
+      onClick={() => selectCurrentTab(rowIndex)}
+      onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          if (current) {
+            const goa = current?.querySelector('goa-input, goa-button');
+            if (goa?.shadowRoot) {
+              const internal = goa.shadowRoot.querySelector('input, button');
+
+              (internal as HTMLElement)?.focus();
+              selectCurrentTab(rowIndex);
+            }
+          }
+        }
+      }}
+    >
+      <IconsContainer>
+        <GoabIconButton
+          disabled={!enabled}
+          icon="create"
+          title={'Edit'}
+          testId="edit button"
+          onClick={() => setCurrentListPage(currentTab + 1)}
+        />
+        {enabled ? (
+          <GoabIconButton
+            disabled={!enabled}
+            icon="trash"
+            title={'Delete'}
+            testId="delete button"
+            onClick={() => openDeleteDialog(childPath, rowIndex, displayName)}
+          />
+        ) : null}
+      </IconsContainer>
+      <RowFlexMenu tabIndex={0}>
+        <TableContentContainer>
+          <SummaryDisplay rowData={rowData} uischema={uischema} schema={schema} />
+        </TableContentContainer>
+      </RowFlexMenu>
+    </SideMenuItem>
+  );
+};
 
 function getEffectiveInstancePath(error: ErrorObject) {
   if (error.keyword === 'required' && error.params?.missingProperty) {
@@ -670,6 +776,7 @@ const MainTab = ({
   current,
   setCurrentListPage,
   uischema,
+  schema,
 }: MainRowProps & WithDeleteDialogSupport) => {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const getDataAtPath = (data: any, path: string) =>
@@ -680,7 +787,6 @@ const MainTab = ({
 
   const { core } = useJsonForms();
   const rowData = getDataAtPath(core?.data, childPath);
-  const orderedRowData = orderRowData(rowData, uischema?.options?.detail);
 
   function resolveField(e: any): string {
     if (e.keyword === 'required') {
@@ -763,7 +869,7 @@ const MainTab = ({
         }
         return acc;
       },
-      { fields: {} },
+      { fields: {} }
     );
 
   const errorText =
@@ -775,7 +881,7 @@ const MainTab = ({
       {errorText ? (
         <GoabFormItem error={errorText}>
           <MainItemComponent
-            rowData={orderedRowData}
+            rowData={rowData}
             childPath={childPath}
             rowIndex={rowIndex}
             openDeleteDialog={openDeleteDialog}
@@ -784,11 +890,13 @@ const MainTab = ({
             currentTab={currentTab}
             current={current}
             setCurrentListPage={setCurrentListPage}
+            uischema={uischema}
+            schema={schema}
           />
         </GoabFormItem>
       ) : (
         <MainItemComponent
-          rowData={orderedRowData}
+          rowData={rowData}
           childPath={childPath}
           rowIndex={rowIndex}
           openDeleteDialog={openDeleteDialog}
@@ -797,6 +905,8 @@ const MainTab = ({
           currentTab={currentTab}
           current={current}
           setCurrentListPage={setCurrentListPage}
+          uischema={uischema}
+          schema={schema}
         />
       )}
     </div>
@@ -995,7 +1105,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
   addItem = (path: string, value: any) => {
     const { data, addItem, setCurrentTab, uischema } = this.props;
     const isNonEmpty = data !== undefined && data !== null;
-    const newIndex = isNonEmpty ? (data ?? 0) : 0;
+    const newIndex = isNonEmpty ? data ?? 0 : 0;
     const maxItems = uischema?.options?.detail?.maxItems ?? DEFAULT_MAX_ITEMS;
     if (data < maxItems) {
       if (addItem) {
