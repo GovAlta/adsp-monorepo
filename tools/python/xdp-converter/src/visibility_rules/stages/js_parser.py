@@ -1,12 +1,13 @@
 import re
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
 class RuleBlock:
     # a trigger consists of a driver, a comparison operator, and a value
     # e.g. "thisField.value == 'Yes'"
-    trigger: str
+    trigger: Optional[str]
 
     # if or elseif implies trigger must evaluate to true
     # else implies the trigger must evaluate to false

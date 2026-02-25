@@ -174,13 +174,14 @@ class HelpTextExtractor:
                         return md
 
             text_node = node.find(".//{*}value/{*}text")
-            if text_node is not None and (text_node.text or "").strip():
+            if text_node is not None and text_node.text is not None:
                 text = text_node.text.strip()
                 if len(text) >= MIN_SIZE_DRAW:
                     return text
 
-            if (node.text or "").strip() and len(node.text.strip()) >= MIN_SIZE_DRAW:
-                return node.text.strip()
+            help = node.text.strip() if node.text is not None and node.text.strip() else None
+            if help is not None and len(help) >= MIN_SIZE_DRAW:
+                return help
 
             return None
 

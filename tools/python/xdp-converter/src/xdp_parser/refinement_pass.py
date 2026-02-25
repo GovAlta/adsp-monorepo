@@ -12,7 +12,6 @@ from xdp_parser.visibility_rule_xformer import (
     rewrite_rules_after_pseudo_radio_transform,
 )
 from xdp_parser.xdp_element import XdpElement
-from xdp_parser.xdp_group import XdpGroup
 from xdp_parser.xdp_subform_placeholder import XdpSubformPlaceholder
 from xdp_parser.xdp_utils import convert_to_mm
 
@@ -38,9 +37,6 @@ class XdpRefinementPass:
     ) -> None:
         self.factory = factory
         self.context = context
-        self.child_map = {}
-        # TODO get rid of this and pass context explicitly to resolve_group_label
-        self.context.child_map = self.child_map
         self.control_labels = control_labels
 
     # --------------------------------------------------
@@ -65,7 +61,7 @@ class XdpRefinementPass:
             children.extend(self._refine_node(child, parent_label))
 
         children = self.sort_xdp_elements(
-            container, children, self.context.get("parent_map", {})
+            container, children, self.context.get_parent_map()
         )
 
         promote_group_headers(container, children, debug=False)
@@ -92,14 +88,8 @@ class XdpRefinementPass:
         # If rules were generated earlier against the checkbox model, rewrite them now.
         rewrite_rules_after_pseudo_radio_transform(children, self.context)
 
-        self.child_map[id(container)] = children
-
         # Decide grouping using sorted children
-        # if self.should_group_subform(subform, grouped_children, resolved_label):
-        #     group = self._build_group_from_subform(
-        #         subform, grouped_children, resolved_label
-        #     )
-        #     return [group] if group else grouped_children
+        # TODO do the grouping here.
 
         return children
 
@@ -121,7 +111,7 @@ class XdpRefinementPass:
                     for c in e.get_children():
                         print(f"    {c.get_name()} x={c.x} y={c.y} w={c.w} h={c.h}")
                 children = self.sort_xdp_elements(
-                    detail_container, detail_fields, parent_map, 1
+                    detail_container, detail_fields, parent_map
                 )
                 e.set_children(children)
                 if debug:
@@ -179,8 +169,8 @@ class XdpRefinementPass:
                 and e.x is not None
                 and e.y is not None
             ):
-                e.computed_x = float(e.geometry.x)
-                e.computed_y = float(e.geometry.y)
+                e.computed_x = float(e.x)
+                e.computed_y = float(e.y)
                 placed.append((float(e.y), float(e.x), idx, e))
                 continue
 
@@ -277,16 +267,6 @@ class XdpRefinementPass:
         names = {c.get_name() for c in controls}
         hits = sum(1 for n in names if n in rules)
         return hits >= 2
-
-    def _build_group_from_subform(
-        self,
-        subform: ET.Element,
-        elements: list[XdpElement],
-        resolved_label: str | None,
-    ) -> XdpGroup | None:
-        if not elements:
-            return None
-        return self.factory.handle_group(subform, elements, resolved_label)
 
 
 def print_subform_map(subform, grouped_children):

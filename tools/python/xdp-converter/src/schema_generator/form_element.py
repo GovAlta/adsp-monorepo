@@ -1,15 +1,21 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
-
-from visibility_rules.pipeline_context import CTX_JSONFORMS_RULES
+from visibility_rules.stages.context_types import (
+    JsonFormsRuleEntry,
+    JsonSchemaElement,
+    UISchema,
+)
 from xdp_parser.parse_context import ParseContext
+from typing import Optional
 
-type JsonSchemaElement = dict[str, str]
 
 debug = False
 
 
 class FormElement(ABC):
-    def __init__(self, type: str, name, qualified_name, context: ParseContext):
+    def __init__(
+        self, type: str, name: str, qualified_name: Optional[str], context: ParseContext
+    ):
         self.type = type
         self.name = name
         self.qualified_name = qualified_name
@@ -17,25 +23,25 @@ class FormElement(ABC):
         self.is_leaf = True
         self.is_radio = False
         self.label = None
-        self.format = None
-        self.enum = None
-        self.children = None
+        self.format: Optional[str] = None
+        self.enum: list[str] = []
+        self.children = []
         self.can_group_horizontally = True
 
     @abstractmethod
-    def has_json_schema(self):
+    def has_json_schema(self) -> bool:
         pass
 
     @abstractmethod
-    def to_json_schema() -> JsonSchemaElement:
+    def to_json_schema(self) -> list[JsonSchemaElement]:
         pass
 
     @abstractmethod
-    def build_ui_schema() -> JsonSchemaElement:
+    def build_ui_schema(self) -> Optional[UISchema]:
         pass
 
-    def has_children(self):
-        return not self.is_leaf and self.children
+    def has_children(self) -> bool:
+        return not self.is_leaf and self.children is not None and len(self.children) > 0
 
     def get_children(self):
         return self.children
@@ -43,9 +49,11 @@ class FormElement(ABC):
     def update_label(self, label: str):
         self.label = label
 
-    def _find_visibility_rule(self, qualified_name: str, rules: dict) -> dict | None:
+    def _find_visibility_rule(
+        self, qualified_name: Optional[str], rules: dict[str, JsonFormsRuleEntry]
+    ) -> Optional[JsonFormsRuleEntry]:
         # No path? No rule.
-        if not qualified_name:
+        if qualified_name is None or rules is None:
             return None
 
         # Direct match
@@ -61,11 +69,11 @@ class FormElement(ABC):
                 return rule
         return None
 
-    def to_ui_schema(self):
+    def to_ui_schema(self) -> Optional[UISchema]:
         schema = self.build_ui_schema()
         if not schema:
             return None
-        rules = self.context.get(CTX_JSONFORMS_RULES) or {}
+        rules = self.context.get_jsonforms_rules()
         rule_entry = self._find_visibility_rule(self.qualified_name, rules)
         if rule_entry is not None:
             schema["rule"] = rule_entry["rule"]

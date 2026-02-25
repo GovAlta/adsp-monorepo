@@ -64,7 +64,7 @@ class ControlDescriptionExtractor:
         for e in elements:
             # We only care about draw-style help text
             if e.is_help_text() and not e.is_help_icon():
-                helpContent: XdpHelpText = e
+                helpContent = e
                 description = (helpContent.help_text() or "").strip()
                 if not description:
                     out.append(e)
@@ -117,7 +117,11 @@ class ControlDescriptionExtractor:
                 best_area = area
                 best = cb
 
-        return best.control if best_area >= min_intersection_area else None
+        return (
+            best.control
+            if best is not None and best_area >= min_intersection_area
+            else None
+        )
 
     @staticmethod
     def _intersection_area(a, b) -> float:

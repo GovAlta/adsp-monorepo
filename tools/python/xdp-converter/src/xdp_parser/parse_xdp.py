@@ -4,6 +4,7 @@ import re
 import xml.etree.ElementTree as ET
 from typing import List
 
+from schema_generator.form_element import FormElement
 from visibility_rules.pipeline_context import CTX_RADIO_GROUPS
 from xdp_parser.control_labels import ControlLabels
 from xdp_parser.control_helpers import is_checkbox, is_radio_button
@@ -13,7 +14,6 @@ from xdp_parser.parse_context import ParseContext
 from xdp_parser.parsing_helpers import is_object_array
 from xdp_parser.xdp_element import XdpElement
 from xdp_parser.xdp_utils import (
-    remove_duplicates,
     is_hidden,
     is_subform,
     tag_name,
@@ -36,17 +36,17 @@ class XdpParser:
     def __init__(self, factory: AbstractXdpFactory, context: ParseContext):
         self.factory = factory
         self.context = context
-        self.control_labels: ControlLabels | None = None
+        self.control_labels: ControlLabels
 
     # ----------------------------------------------------------------------
     # Entry point
     # ----------------------------------------------------------------------
-    def parse_xdp(self) -> List[XdpElement]:
+    def parse_xdp(self) -> List[FormElement]:
         """
         Parse the XDP, returning a list of controls.
         """
 
-        form_root = self.find_form_root(self.context.get("root"))
+        form_root = self.find_form_root(self.context.get_root())
         subforms = self.find_top_subforms(form_root)
         self.control_labels = ControlLabels(form_root, self.context)
 
@@ -59,10 +59,10 @@ class XdpParser:
         refiner = XdpRefinementPass(self.factory, self.control_labels, self.context)
         refined_elements = refiner.refine(root_nodes)
 
-        return remove_duplicates(self.to_form_elements(refined_elements))
+        return self.to_form_elements(refined_elements)
 
-    def to_form_elements(self, xdp_elements: List[XdpElement]) -> List[dict]:
-        form_elements: List[dict] = []
+    def to_form_elements(self, xdp_elements: List[XdpElement]) -> List[FormElement]:
+        form_elements: List[FormElement] = []
         for xdp_element in xdp_elements:
             form_element = xdp_element.to_form_element()
             if form_element:
@@ -82,7 +82,7 @@ class XdpParser:
 
         # Skip Add/Remove containers entirely
         if is_add_remove_container(
-            subform, self.context.get("root"), self.context.get("parent_map")
+            subform, self.context.get_root(), self.context.get_parent_map()
         ):
             return None
 
@@ -184,13 +184,13 @@ class XdpParser:
     def find_form_root(self, root: ET.Element) -> ET.Element:
         """Find <template>/<subform>/<subform>."""
         template = next((el for el in root.iter() if el.tag == "template"), None)
-        if not template:
+        if template is None:
             raise ValueError("Template node not found")
         level1 = next((el for el in template if el.tag == "subform"), None)
         level2 = (
             next((el for el in level1 if el.tag == "subform"), None) if level1 else None
         )
-        if not level2:
+        if level2 is None:
             raise ValueError("Form root not found")
         return level2
 
@@ -213,7 +213,7 @@ class XdpParser:
         if not name:
             return False
 
-        radio_groups = self.context.get(CTX_RADIO_GROUPS, {})
+        radio_groups = self.context.get_radio_groups() or {}
         if name in radio_groups:
             return True
 

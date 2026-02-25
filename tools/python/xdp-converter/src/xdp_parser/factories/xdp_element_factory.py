@@ -1,12 +1,9 @@
 import re
 import xml.etree.ElementTree as ET
-from typing import List, Optional
 
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
 from xdp_parser.parse_context import ParseContext
-from xdp_parser.xdp_element import XdpElement, XdpGeometry
 from xdp_parser.xdp_file_upload import XdpFileUpload
-from xdp_parser.xdp_group import XdpGroup
 from xdp_parser.xdp_help_icon import XdpHelpIcon
 from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_object_array import XdpObjectArray
@@ -51,7 +48,7 @@ class XdpElementFactory(AbstractXdpFactory):
     def handle_radio_subform(self, element, labels):
         radio_labels = extract_radio_button_labels(element)
         if radio_labels:
-            return XdpPseudoRadio(element, radio_labels, labels)
+            return XdpPseudoRadio(element, radio_labels, self.context)
         return None
 
     def handle_help_text(self, elem, help_text):
@@ -61,45 +58,12 @@ class XdpElementFactory(AbstractXdpFactory):
         return XdpHelpIcon(elem, help_text, self.context)
 
     # ----------------------------------------------------------------------
-    # GROUP LOGIC
-    # ----------------------------------------------------------------------
-    def handle_group(
-        self,
-        subform: ET.Element,
-        elements: List[XdpElement],
-        resolved_label: str | None,
-    ) -> Optional[XdpElement]:
-
-        if not elements:
-            return None
-
-        has_real_control = any(e.is_control() for e in elements)
-        if not has_real_control:
-            return None
-
-        self._suppress_descendant_duplicate_group_labels(elements, resolved_label)
-        group = XdpGroup(subform, elements, self.context, resolved_label)
-
-        base_geo = XdpGeometry.resolve(subform, self.context.parent_map)
-        group.geometry = XdpGeometry.from_children(elements, fallback=base_geo)
-
-        return group
-
-    def _suppress_descendant_duplicate_group_labels(self, elements, parent_label):
-        if not parent_label:
-            return
-        for e in elements:
-            if isinstance(e, XdpGroup) and e.label:
-                if self._normalize_label(e.label) == self._normalize_label(
-                    parent_label
-                ):
-                    e.label = None
-
-    # ----------------------------------------------------------------------
     # AUTHORITATIVE top-level detection
     # ----------------------------------------------------------------------
     def _is_top_level_subform(self, subform: ET.Element) -> bool:
         top = self.context.get("top_subforms", set())
+        if top is None:
+            return False
         return id(subform) in top
 
     def _is_static_hidden(self, subform: ET.Element) -> bool:

@@ -47,9 +47,11 @@ class XdpCheckbox(XdpElement):
         return scripts
 
 
-def get_label_with_description(display_text: DisplayText) -> str:
+def get_label_with_description(display_text: Optional[DisplayText]) -> str:
+    if display_text is None:
+        return ""
     if display_text and display_text.description:
         return f"{display_text.label} - {display_text.description}"
     elif display_text:
         return display_text.label
-    return None
+    return ""

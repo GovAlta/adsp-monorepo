@@ -1,9 +1,7 @@
 import argparse
 import json
 import sys
-import os
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import traceback
 from visibility_rules.pipeline_context import (
     CTX_ENUM_MAP,
@@ -74,8 +72,8 @@ def process_one(xdp_path: Path, out_dir: Path, overwrite: bool = False):
             print(f"🧩 Parsing {xdp_path}…")
 
         # --- Parse XDP and strip namespaces ---
-        tree = strip_namespaces(ET.parse(xdp_path))
-        root = tree.getroot()
+        tree = ET.parse(xdp_path)
+        root = strip_namespaces(tree.getroot())
 
         # --- Build parent map ---
         parent_map = build_parent_map(root)
@@ -85,7 +83,7 @@ def process_one(xdp_path: Path, out_dir: Path, overwrite: bool = False):
         registry = HelpTextRegistry()
         registry.load_messages(root)
 
-        help_text_parser = JSHelpTextParser(tree)
+        help_text_parser = JSHelpTextParser(root)
         help_text = help_text_parser.get_messages()
 
         # --- Extract enum maps ---
@@ -95,7 +93,7 @@ def process_one(xdp_path: Path, out_dir: Path, overwrite: bool = False):
         traversal.parse_xdp()
 
         normalized_enum_maps = normalize_enum_labels(
-            traversal.factory.enum_maps, enum_factory.label_to_enum
+            traversal.factory.get_enum_maps(), enum_factory.label_to_enum
         )
 
         # Keep the actual field names as the group members

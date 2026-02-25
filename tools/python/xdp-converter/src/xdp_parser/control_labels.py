@@ -209,8 +209,7 @@ class ControlLabels:
                     pending_help_el = None
                     pending_forward = None
 
-                help_e: XdpHelpText = e
-                raw = (help_e.help_text() or "").strip()
+                raw = (e.help_text() or "").strip()
 
                 # NEW FIX #2: only treat it as a forward label if it looks label-like.
                 if raw and self._looks_like_forward_label(raw):
@@ -315,12 +314,12 @@ def _draw_text(draw_node: ET.Element) -> str:
     """
     # Common: draw/value/text
     t = draw_node.find(".//{*}value/{*}text")
-    if t is not None and (t.text or "").strip():
+    if t is not None and t.text is not None:
         return t.text.strip()
 
     # Some draws may have <text> directly
     t2 = draw_node.find(".//{*}text")
-    if t2 is not None and (t2.text or "").strip():
+    if t2 is not None and t2.text is not None:
         return t2.text.strip()
 
     # exData fallback if used

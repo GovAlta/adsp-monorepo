@@ -139,7 +139,7 @@ class HelpPairing:
         hcx, hcy = (hx1 + hx2) / 2.0, (hy1 + hy2) / 2.0
         hh = max(hy2 - hy1, 0.0001)
 
-        best_idx = None
+        best_idx: int = -1
         best_el = None
         best_score = 0.0
 
@@ -167,7 +167,7 @@ class HelpPairing:
 
             # Optional deterministic tie-break: prefer earlier target index
             if score > best_score or (
-                score == best_score and best_idx is not None and c.idx < best_idx
+                score == best_score and best_idx != -1 and c.idx < best_idx
             ):
                 best_score = score
                 best_idx = c.idx

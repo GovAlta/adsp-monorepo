@@ -1,6 +1,5 @@
 from typing import List
-from schema_generator.form import Form
-from schema_generator.form_element import FormElement
+from schema_generator.form_element import FormElement, JsonSchemaElement, UISchema
 from schema_generator.prune_ui_schema import prune_ui_schema
 from xdp_parser.parse_context import ParseContext
 
@@ -11,14 +10,20 @@ class UiSchemaGenerator:
         self.context = context
 
     def to_schema(self):
-        the_form = Form(self.sections, self.context)
-        schema = the_form.to_ui_schema()
-
+        schema = self.build_raw_schema()
         schema = self._consolidate_help_blocks(schema)
         schema = self._lift_rules_to_group(schema)
-
         schema = prune_ui_schema(schema)
         return schema
+
+    def build_raw_schema(self) -> JsonSchemaElement:
+        ui_schema: UISchema = {"type": "VerticalLayout"}
+        ui_schema["elements"] = []
+        for section in self.sections:
+            child = section.to_ui_schema()
+            if child:
+                ui_schema["elements"].append(child)
+        return ui_schema
 
     def _consolidate_help_blocks(self, node):
         """

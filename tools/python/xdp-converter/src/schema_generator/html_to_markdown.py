@@ -8,7 +8,7 @@ from xml.etree import ElementTree as ET
 # commonly found in Adobe XDP help text.
 # Extend as new formatting oddities appear.
 ##
-def html_to_markdown(html: ET.Element) -> str:
+def html_to_markdown(html: str) -> str:
     # body_node = exdata.find("./body")
     # if body_node is None:
     #     return ""

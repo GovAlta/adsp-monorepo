@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from schema_generator.form_element import FormElement
 from schema_generator.form_object_array import FormObjectArray
 from xdp_parser.control_labels import ControlLabels
@@ -23,10 +23,10 @@ class XdpObjectArray(XdpElement):
     def is_control(self):
         return True
 
-    def is_container(self):
+    def is_container(self) -> bool:
         return True
 
-    def to_form_element(self) -> FormElement:
+    def to_form_element(self) -> Optional[FormElement]:
         children = []
         for col in self.children:
             fe = col.to_form_element()
