@@ -20,7 +20,6 @@ import { AppDispatch, RootState } from '@store/index';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import {
-  agentAgentsSelector,
   agentConnectedSelector,
   availableAgentsSelector,
   availableToolsSelector,
