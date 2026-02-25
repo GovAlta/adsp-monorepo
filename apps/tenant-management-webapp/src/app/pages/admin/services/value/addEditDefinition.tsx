@@ -20,6 +20,7 @@ import {
   duplicateNameCheck,
   wordMaxLengthCheck,
   badCharsCheck,
+  wordCheck,
 } from '@lib/validation/checkInput';
 import styled from 'styled-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
@@ -48,9 +49,23 @@ export const AddEditValueDefinition = ({
   const [spinner, setSpinner] = useState<boolean>(false);
   const identifiers = values && Object.values(values).map((v: ValueDefinition) => `${v.namespace}:${v.name}`);
 
-  const existingNamespaces = values
-    ? values.map((v: ValueDefinition) => v?.namespace).filter((ns): ns is string => !!ns)
+  const coreNamespaces = values
+    ? values
+        .filter((v: ValueDefinition) => v.isCore)
+        .map((v: ValueDefinition) => v?.namespace)
+        .filter((ns): ns is string => !!ns)
     : [];
+
+  const existingNamespaces = values
+    ? values
+        .filter((v: ValueDefinition) => !v.isCore)
+        .map((v: ValueDefinition) => v?.namespace)
+        .filter((ns): ns is string => !!ns)
+    : [];
+
+  const forbiddenWords = coreNamespaces.concat('platform');
+  const checkForConflicts = wordCheck(forbiddenWords);
+
   const loadingIndicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -66,8 +81,9 @@ export const AddEditValueDefinition = ({
     'namespace',
     badCharsCheck,
     namespaceCheck(),
+    checkForConflicts,
     isNotEmptyCheck('namespace'),
-    wordMaxLengthCheck(32, 'Namespace')
+    wordMaxLengthCheck(32, 'Namespace'),
   )
     .add('name', 'name', badCharsCheck, isNotEmptyCheck('name'), wordMaxLengthCheck(32, 'Name'))
     .add('duplicated', 'name', duplicateNameCheck(identifiers, 'Value'))
@@ -146,6 +162,7 @@ export const AddEditValueDefinition = ({
             disabled={isEdit}
             testId="value-namespace"
             existingNamespaces={existingNamespaces}
+            excludedNamespaces={forbiddenWords}
             onChange={(value: string) => {
               const updatedDefinition = { ...definition, namespace: value };
               setDefinition(updatedDefinition);

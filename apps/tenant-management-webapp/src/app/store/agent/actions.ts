@@ -60,11 +60,78 @@ export interface MessageAgentAction {
   content: string;
 }
 
+export const TEXT_DELTA = 'text-delta';
+interface TextDeltaChunk {
+  type: typeof TEXT_DELTA;
+  payload: {
+    text: string;
+  }
+}
+
+export const TOOL_CALL = 'tool-call';
+interface ToolCallChunk {
+  type: typeof TOOL_CALL;
+  payload: {
+    toolCallId: string;
+    toolName: string;
+  }
+}
+
+export const TOOL_CALL_RESULT = 'tool-result';
+interface ToolCallResultChunk {
+  type: typeof TOOL_CALL_RESULT;
+  payload: {
+    toolCallId: string;
+    toolName: string;
+    args: Record<string, unknown>;
+    result: unknown;
+  }
+}
+
+
+export const TOOL_CALL_ERROR = 'tool-error';
+interface ToolCallErrorChunk {
+  type: typeof TOOL_CALL_ERROR;
+  payload: {
+    toolCallId: string;
+    toolName: string;
+    args: Record<string, unknown>;
+    error: unknown;
+  }
+}
+
+export const REASONING_START = 'reasoning-start';
+interface ReasoningStartChunk {
+  type: typeof REASONING_START,
+  payload: {
+    id: string;
+  }
+}
+
+export const REASONING_DELTA = 'reasoning-delta';
+interface ReasoningDeltaChunk {
+  type: typeof REASONING_DELTA,
+  payload: {
+    id: string;
+    text: string;
+  }
+}
+
+export const REASONING_END = 'reasoning-end';
+interface ReasoningEndChunk {
+  type: typeof REASONING_END,
+  payload: {
+    id: string;
+  }
+}
+
 export interface AgentResponseAction {
   type: typeof AGENT_RESPONSE_ACTION;
   threadId: string;
   messageId: string;
-  content: string;
+  chunk?: TextDeltaChunk |
+    ToolCallChunk | ToolCallResultChunk | ToolCallErrorChunk |
+    ReasoningStartChunk | ReasoningDeltaChunk | ReasoningEndChunk;
   done: boolean;
 }
 
@@ -162,8 +229,8 @@ export function connectAgent() {
       dispatch({ type: DISCONNECT_AGENT_SUCCESS_ACTION });
     });
     socket.on('stream', (message) => {
-      const { threadId, messageId, content, done } = message;
-      dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, content: content || '', done });
+      const { threadId, messageId, chunk, done } = message;
+      dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, chunk, done });
     });
     socket.on('error', (err) => {
       dispatch(ErrorNotification({ message: err }));
@@ -193,7 +260,7 @@ export function messageAgent(threadId: string, context: Record<string, unknown>,
     const { agent } = getState();
     const thread = agent.threads[threadId];
     if (thread) {
-      socket.send({ threadId, messageId, agent: thread.agent, content, context });
+      socket.send({ threadId, messageId, agent: thread.agent, content, context, rawChunks: true });
     }
   };
 }

@@ -33,7 +33,7 @@ export function onIoConnection(logger: Logger) {
           if (typeof payload !== 'object') {
             throw new InvalidOperationError('payload for message must be a JSON object.');
           } else {
-            const { agent, threadId: threadIdValue, messageId: messageIdValue, content, context } = payload;
+            const { agent, threadId: threadIdValue, messageId: messageIdValue, content, context, rawChunks } = payload;
             const threadId = threadIdValue || uuid();
             const messageId = messageIdValue || uuid();
 
@@ -48,11 +48,6 @@ export function onIoConnection(logger: Logger) {
               user: `${user.name} (ID: ${user.id})`,
             });
 
-            // TODO: form definition ID is specific to the form agent and should be abstracted away.
-            // const runtimeContext = new RuntimeContext<Record<string, unknown>>();
-            // runtimeContext.set('tenant', tenant);
-            // runtimeContext.set('formDefinitionId', context?.formDefinitionId);
-
             const result = await aiAgent.stream(
               user,
               threadId,
@@ -63,16 +58,29 @@ export function onIoConnection(logger: Logger) {
               context
             );
             const replyId = uuid();
-            for await (const content of result.textStream) {
-              socket.emit('stream', {
-                agent,
-                threadId,
-                messageId: replyId,
-                replyTo: messageId,
-                content,
-              });
-            }
 
+            if (rawChunks === true) {
+              for await (const chunk of result.fullStream) {
+                socket.emit('stream', {
+                  agent,
+                  threadId,
+                  messageId: replyId,
+                  replyTo: messageId,
+                  chunk,
+                });
+              }
+            } else {              
+              for await (const content of result.textStream) {
+                socket.emit('stream', {
+                  agent,
+                  threadId,
+                  messageId: replyId,
+                  replyTo: messageId,
+                  content,
+                });
+              }
+            }
+            
             socket.emit('stream', {
               agent,
               threadId,

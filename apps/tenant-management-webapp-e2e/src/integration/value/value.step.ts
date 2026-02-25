@@ -143,6 +143,15 @@ Then('the user views a validation error of duplicate value name', function () {
     .should('contain', 'Duplicate Value name');
 });
 
+Then('the user views a validation error of {string} is forbidden', function (serviceName) {
+  valueObj
+    .valueDefinitionsDefinitionModalNamespaceFormItem()
+    .shadow()
+    .find('.error-msg')
+    .invoke('text')
+    .should('contain', serviceName + ' is forbidden');
+});
+
 When(
   'the user clicks {string} button of the value definition of {string}, {string}, {string}',
   function (buttonName: string, namespace, name, desc) {

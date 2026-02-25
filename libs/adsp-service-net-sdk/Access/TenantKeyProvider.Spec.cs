@@ -111,9 +111,9 @@ public class TenantKeyProviderTests
     var logger = Mock.Of<ILogger<TenantKeyProvider>>();
     var cache = Mock.Of<IMemoryCache>();
     var options = CreateFakeOptions();
-    var tenantTokenProvider = new TenantKeyProvider(logger, cache, issuerCache, options);
+    var client = Mock.Of<IRestClient>();
+    var tenantTokenProvider = new TenantKeyProvider(logger, cache, issuerCache, options, client);
     tenantTokenProvider.Should().NotBeNull();
-    tenantTokenProvider.Dispose();
   }
 
   [Fact]
@@ -124,9 +124,10 @@ public class TenantKeyProviderTests
     var logger = Mock.Of<ILogger<TenantKeyProvider>>();
     var cache = Mock.Of<IMemoryCache>();
     var options = Options.Create(new AdspOptions() { });
+    var client = Mock.Of<IRestClient>();
     Action newTokenProviderAction = () =>
     {
-      _ = new TenantKeyProvider(logger, cache, issuerCache, options);
+      _ = new TenantKeyProvider(logger, cache, issuerCache, options, client);
     };
 
     newTokenProviderAction.Should()
@@ -145,11 +146,11 @@ public class TenantKeyProviderTests
     var fakeIssuer = "fake-issuer";
     var fakeKid = "fake-kid";
     cache.Set((fakeIssuer, fakeKid), CreateFakeSecurityKey());
-    var tenantTokenProvider = new TenantKeyProvider(logger, cache, issuerCache, options);
+    var client = Mock.Of<IRestClient>();
+    var tenantTokenProvider = new TenantKeyProvider(logger, cache, issuerCache, options, client);
 
     var keyFromCache = await tenantTokenProvider.ResolveSigningKey("fake-issuer", "fake-kid");
     keyFromCache?.KeySize.Should().Be(224);
-    tenantTokenProvider.Dispose();
 
   }
 
@@ -173,7 +174,6 @@ public class TenantKeyProviderTests
     var keyFromCache = await tenantTokenProvider.ResolveSigningKey("fake-issuer", fakeKid);
 
     keyFromCache?.KeySize.Should().Be(2048);
-    tenantTokenProvider.Dispose();
   }
 
   [Fact]
@@ -193,7 +193,6 @@ public class TenantKeyProviderTests
 
     var keyFromCache = await tenantTokenProvider.RetrieveSigningKey("fake-issuer", fakeKid);
     keyFromCache?.KeySize.Should().Be(2048);
-    tenantTokenProvider.Dispose();
 
   }
 
@@ -217,7 +216,6 @@ public class TenantKeyProviderTests
 
     Console.WriteLine(keyFromCache);
     keyFromCache.Should().BeNull();
-    tenantTokenProvider.Dispose();
   }
 
   [Fact]
@@ -238,6 +236,5 @@ public class TenantKeyProviderTests
     var keyFromCache = await tenantTokenProvider.RetrieveSigningKey("fake-issuer", fakeKid);
 
     keyFromCache.Should().BeNull();
-    tenantTokenProvider.Dispose();
   }
 }

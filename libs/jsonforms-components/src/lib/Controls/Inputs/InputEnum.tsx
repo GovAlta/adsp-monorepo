@@ -85,31 +85,8 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
       {error.length > 0 ? (
         callout({ message: error })
       ) : (
-        // <Dropdown
-        //   items={mergedOptions as unknown as Item[]}
-        //   enabled={enabled}
-        //   selected={typeof data === 'object' ? _.get(data, valuePath) : data}
-        //   width={width}
-        //   key={`jsonforms-${path}-dropdown`}
-        //   id={`jsonforms-${path}-dropdown`}
-        //   label={label}
-        //   isAutoCompletion={autoCompletion}
-        //   onChange={(value: string) => {
-        //     if (schema.type === 'object') {
-        //       handleChange(
-        //         path,
-        //         registerData.find((o) => {
-        //           return _.get(o, valuePath) === value;
-        //         })
-        //       );
-        //     } else {
-        //       handleChange(path, value);
-        //     }
-        //   }}
-        // />
-
         <GoabDropdown
-          name="Sites"
+          name={`jsonforms-${path}-dropdown`}
           value={typeof data === 'object' ? _.get(data, valuePath) : data}
           disabled={!enabled}
           key={`jsonforms-${path}-dropdown`}
@@ -128,10 +105,15 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
             }
           }}
           width={width}
-          testId="sites-dropdown"
+          testId={`jsonforms-${path}-dropdown`}
         >
           {mergedOptions.map((item) => (
-            <GoabDropdownItem key={item.label} label={item.label} value={item.value} />
+            <GoabDropdownItem
+              testId={`jsonforms-${path}-dropdown-${item.label}`}
+              key={item.label}
+              label={item.label}
+              value={item.value}
+            />
           ))}
         </GoabDropdown>
       )}
