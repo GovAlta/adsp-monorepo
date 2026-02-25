@@ -57,7 +57,7 @@ class valuePage {
   }
 
   valueDefinitionsDefinitionModalNameFormItem() {
-    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]//goa-form-item[@label="Names"]');
+    return cy.xpath('//goa-modal[@testid="definition-value" and @open="true"]//goa-form-item[@label="Name"]');
   }
 
   valueDefinitionsDefinitionModalNamespaceFormItem() {
