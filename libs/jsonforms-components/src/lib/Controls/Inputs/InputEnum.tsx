@@ -8,11 +8,9 @@ import { EnumCellProps, WithClassname } from '@jsonforms/core';
 import { RegisterDataType } from '../../Context/register';
 import { callout } from '../../Additional/GoACalloutControl';
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
-import { Dropdown } from '../../Components/Dropdown';
-import { Item } from '../../Components/DropDownTypes';
 import _ from 'lodash';
-import { isContext } from 'node:vm';
-
+import { GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
+import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 type EnumSelectProps = EnumCellProps & WithClassname & TranslateProps & WithInputProps & ControlProps;
 
 function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undefined): RegisterConfig | undefined {
@@ -87,28 +85,55 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
       {error.length > 0 ? (
         callout({ message: error })
       ) : (
-        <Dropdown
-          items={mergedOptions as unknown as Item[]}
-          enabled={enabled}
-          selected={typeof data === 'object' ? _.get(data, valuePath) : data}
-          width={width}
+        // <Dropdown
+        //   items={mergedOptions as unknown as Item[]}
+        //   enabled={enabled}
+        //   selected={typeof data === 'object' ? _.get(data, valuePath) : data}
+        //   width={width}
+        //   key={`jsonforms-${path}-dropdown`}
+        //   id={`jsonforms-${path}-dropdown`}
+        //   label={label}
+        //   isAutoCompletion={autoCompletion}
+        //   onChange={(value: string) => {
+        //     if (schema.type === 'object') {
+        //       handleChange(
+        //         path,
+        //         registerData.find((o) => {
+        //           return _.get(o, valuePath) === value;
+        //         })
+        //       );
+        //     } else {
+        //       handleChange(path, value);
+        //     }
+        //   }}
+        // />
+
+        <GoabDropdown
+          name="Sites"
+          value={typeof data === 'object' ? _.get(data, valuePath) : data}
+          disabled={!enabled}
           key={`jsonforms-${path}-dropdown`}
           id={`jsonforms-${path}-dropdown`}
-          label={label}
-          isAutoCompletion={autoCompletion}
-          onChange={(value: string) => {
+          filterable={autoCompletion}
+          onChange={(detail: GoabDropdownOnChangeDetail) => {
             if (schema.type === 'object') {
               handleChange(
                 path,
                 registerData.find((o) => {
-                  return _.get(o, valuePath) === value;
+                  return _.get(o, valuePath) === detail.value;
                 })
               );
             } else {
-              handleChange(path, value);
+              handleChange(path, detail.value);
             }
           }}
-        />
+          width={width}
+          testId="sites-dropdown"
+        >
+          {mergedOptions.map((item) => (
+            <GoabDropdownItem key={item.label} label={item.label} value={item.value} />
+          ))}
+        </GoabDropdown>
       )}
     </div>
   );
