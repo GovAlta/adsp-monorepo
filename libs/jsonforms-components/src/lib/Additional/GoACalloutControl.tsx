@@ -4,6 +4,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoabCallout } from '@abgov/react-components';
 import { Visible } from '../util';
 import { GoabCalloutSize, GoabCalloutType } from '@abgov/ui-components-common';
+import { sanitizeHtml } from '../common/sanitize';
 export interface CalloutProps {
   size?: GoabCalloutSize;
   type?: GoabCalloutType;
@@ -19,9 +20,11 @@ export const callout = (props: CalloutProps): JSX.Element => {
     ...props,
   };
   const testid = componentProps.message?.replace(/\s/g, '');
+  const sanitizedHtml = sanitizeHtml(componentProps.message || '');
+
   return (
     <GoabCallout {...componentProps} data-testid={testid}>
-      {componentProps?.message}
+      <div dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
     </GoabCallout>
   );
 };
