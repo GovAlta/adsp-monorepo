@@ -13,6 +13,7 @@ import { Server as IoServer, Socket } from 'socket.io';
 import { promisify } from 'util';
 import { environment } from './environments/environment';
 import {
+  AgentAttachmentsFileType,
   AgentConfigurations,
   AgentServiceConfiguration,
   applyAgentMiddleware,
@@ -73,6 +74,7 @@ const initializeApp = async (): Promise<Server> => {
         },
       ],
       events: [],
+      fileTypes: [AgentAttachmentsFileType],
       values: [ServiceMetricsValueDefinition],
       configuration: {
         schema: configurationSchema,

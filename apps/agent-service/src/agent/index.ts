@@ -7,6 +7,7 @@ import { createAgentRouter } from './router';
 
 export * from './agents';
 export * from './configuration';
+export * from './fileTypes';
 export * from './roles';
 
 interface AgentMiddlewareProps {
