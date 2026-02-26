@@ -1,5 +1,5 @@
 import { isAllowedUser, Tenant, TenantService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, InvalidValueError, NotFoundError } from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
 import { Namespace as IoNamespace, Socket } from 'socket.io';
 import { v4 as uuid } from 'uuid';
@@ -7,6 +7,7 @@ import { Logger } from 'winston';
 import { ServiceRoles } from './roles';
 import { AgentServiceConfiguration } from './configuration';
 import { AgentBroker } from './model';
+import { CoreUserMessage } from '@mastra/core/llm';
 
 export function onIoConnection(logger: Logger) {
   return async (socket: Socket): Promise<void> => {
@@ -48,12 +49,21 @@ export function onIoConnection(logger: Logger) {
               user: `${user.name} (ID: ${user.id})`,
             });
 
+            let userContent: CoreUserMessage['content'];
+            if (Array.isArray(content)) {
+              userContent = content;
+            } else if (typeof content === 'string') {
+              userContent = [{type: 'text',  text: content}];
+            } else {
+              throw new InvalidValueError('content', 'content must string or array of text, image, or file parts.');
+            }
+
             const result = await aiAgent.stream(
               user,
               threadId,
               {
                 role: 'user',
-                content,
+                content: userContent,
               },
               context
             );
