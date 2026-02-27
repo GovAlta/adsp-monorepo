@@ -14,6 +14,7 @@ import {
   CHECK_FILE_TYPE_HAS_FILE_SUCCESS,
   CLEAR_NEW_FILE_LIST,
   UPLOAD_FILE_FAILED,
+  CACHE_FILE,
 } from './actions';
 import { FILE_INIT, FileService } from './models';
 
@@ -44,6 +45,15 @@ function deleteFile(fileList, id) {
 }
 export default function (state = FILE_INIT, action: ActionTypes): FileService {
   switch (action.type) {
+    case CACHE_FILE: {
+      return {
+        ...state,
+        downloadedFiles: {
+          ...state.downloadedFiles,
+          [action.payload.fileId]: action.payload.dataUrl,
+        },
+      };
+    }
     case UPLOAD_FILE_SUCCESSES: {
       // add file to fileList
       const propertyId = action.payload.result.propertyId;

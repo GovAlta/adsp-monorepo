@@ -28,6 +28,7 @@ import { UPLOAD_FILE } from '@store/file/actions';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { NoPaddingH2 } from '@components/AppHeader';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { AnyAction } from 'redux';
 
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<File | null>(null);
@@ -70,7 +71,7 @@ const FileList = (): JSX.Element => {
 
   const onUploadSubmit = () => {
     const fileInfo = { file: selectedFile, type: uploadFileType };
-    dispatch(UploadFileService(fileInfo));
+    dispatch(UploadFileService(fileInfo) as unknown as AnyAction);
     setSelectFile(null);
     fileName.current.value = '';
   };

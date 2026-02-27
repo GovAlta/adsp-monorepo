@@ -12,8 +12,41 @@ const USER_FROM = 'user';
 export interface UserMessage {
   id: string;
   threadId: string;
-  content: string;
+  content: UserContent;
   from: typeof USER_FROM;
+}
+
+export interface TextPart {
+  type: 'text';
+  text: string;
+}
+export interface ImagePart {
+  type: 'image';
+  image: string;
+}
+export interface FilePart {
+  type: 'file';
+  data: string;
+}
+export type UserContent = Array<TextPart | ImagePart | FilePart>;
+
+// Resolved types with metadata from file service
+export interface ResolvedImagePart extends ImagePart {
+  filename?: string;
+  mediaType?: string;
+}
+export interface ResolvedFilePart extends FilePart {
+  filename?: string;
+  mediaType?: string;
+}
+export type ResolvedUserContent = Array<TextPart | ResolvedImagePart | ResolvedFilePart>;
+
+
+export interface Attachment {
+  urn: string;
+  filename: string;
+  type: 'file' | 'image';
+  thumbnailUrl?: string;
 }
 
 export interface Reasoning {
