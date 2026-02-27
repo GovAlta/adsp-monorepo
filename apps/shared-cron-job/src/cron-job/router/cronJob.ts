@@ -1,19 +1,14 @@
 import {
-  adspId,
   TenantService,
-  UnauthorizedUserError,
-  User,
   TokenProvider,
   EventService,
   ConfigurationService,
   AdspId,
 } from '@abgov/adsp-service-sdk';
 
-import 'compression'; // For unit tests to load the type extensions.
-import { NextFunction, Request, RequestHandler, Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import { Logger } from 'winston';
-import { CronJobServiceConfiguration } from '../configuration';
-import { CronJobConfig } from '../types';
+import { CronJobService } from '../cronJobService';
 
 interface CronJobRouterProps {
   logger: Logger;
@@ -22,40 +17,26 @@ interface CronJobRouterProps {
   eventService: EventService;
   configurationService: ConfigurationService;
   serviceId: AdspId;
+  cronJobService: CronJobService;
 }
 
 export const getCronJobs = async (
   logger: Logger,
   tenantService: TenantService,
+  cronJobService: CronJobService,
   req: Request,
-  res,
+  res: Response,
   next: NextFunction,
 ) => {
-  const user = req.user as User;
-  const tenant = req.query.tenant as string;
-  logger.info(`Get the tenant: ${tenant}`);
-  //const tenantId = (tenant && (await tenantService.getTenantByName(tenant.replace(/-/g, ' '))))?.id || user?.tenantId;
-  const tenants = await tenantService.getTenants();
-  const getCronJobsPromises = tenants.map(async (tenant) => {
-    return await req.getConfiguration<{ jobs: Record<string, CronJobConfig> }, { jobs: Record<string, CronJobConfig> }>(
-      tenant.id,
-    );
-  });
-
-  const cronJobs = await Promise.all(getCronJobsPromises);
-
-  res.send(cronJobs);
+  const tenantName = req.query.tenant as string;
+  logger.info(`Get cron jobs for tenant: ${tenantName}`);
+  const tenant = await tenantService.getTenantByName(tenantName.replace(/-/g, ' '));
+  const jobs = tenant ? cronJobService.getJobsByTenant(tenant.id) : [];
+  res.send(jobs);
 };
-export const createCronJobRouter = ({
-  logger,
-  tenantService,
-  tokenProvider,
-  eventService,
-  configurationService,
-  serviceId,
-}: CronJobRouterProps): Router => {
+export const createCronJobRouter = ({ logger, tenantService, cronJobService }: CronJobRouterProps): Router => {
   const cronJobRouter = Router();
-  cronJobRouter.get('/jobs', (req, _res, next) => getCronJobs(logger, tenantService, req, _res, next));
+  cronJobRouter.get('/jobs', (req, res, next) => getCronJobs(logger, tenantService, cronJobService, req, res, next));
 
   return cronJobRouter;
 };
