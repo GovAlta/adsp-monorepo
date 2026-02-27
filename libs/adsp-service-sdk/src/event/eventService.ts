@@ -35,7 +35,7 @@ export class EventServiceImpl implements EventService {
     private readonly directory: ServiceDirectory,
     private readonly tokenProvider: TokenProvider,
     serviceId: AdspId,
-    events: DomainEventDefinition[]
+    events: DomainEventDefinition[],
   ) {
     this.namespace = serviceId.service;
     this.definitions = events?.map((e) => e.name) || [];
@@ -62,7 +62,7 @@ export class EventServiceImpl implements EventService {
         this.isCore
           ? { ...event, namespace: this.namespace, tenantId: `${tenantId}` }
           : { ...event, namespace: this.namespace },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       this.logger.info(`Sent domain event ${this.namespace}:${event.name}.`, {
@@ -77,7 +77,7 @@ export class EventServiceImpl implements EventService {
 
       if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
         this.logger.debug(
-          `Event send failed with request status ${err.response.status} and error and message: ${err.response.data.errorMessage}`
+          `Event send failed with request status ${err.response.status} and error and message: ${err.response.data.errorMessage}`,
         );
       }
     }

@@ -1,4 +1,4 @@
-import { CronJob } from './types';
+import { CronJobConfig } from './types';
 
 export const configurationSchema = {
   type: 'object',
@@ -9,10 +9,7 @@ export const configurationSchema = {
         id: { type: 'string' },
         name: { type: 'string' },
         description: { type: ['string', 'null'] },
-        webhook: { type: 'string' },
         schedule: { type: 'string' },
-        payload: { type: 'object' },
-        metadata: { type: 'object' },
         triggerEvents: {
           type: ['array', 'null'],
           items: {
@@ -20,6 +17,7 @@ export const configurationSchema = {
             properties: {
               namespace: { type: 'string' },
               name: { type: 'string' },
+              payload: { type: ['object', 'null'] },
             },
           },
         },
@@ -28,4 +26,4 @@ export const configurationSchema = {
   },
 };
 
-export type CronJobServiceConfiguration = Record<string, CronJob>;
+export type CronJobServiceConfiguration = Record<string, CronJobConfig>;
