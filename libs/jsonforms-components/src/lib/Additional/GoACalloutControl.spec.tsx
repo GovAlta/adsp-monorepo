@@ -8,7 +8,7 @@ describe('callout control', () => {
   const uiSchema = (
     message: string,
     type: GoabCalloutType = 'important',
-    size: GoabCalloutSize = 'medium'
+    size: GoabCalloutSize = 'medium',
   ): UISchemaElement => {
     return {
       type: 'Callout',
@@ -37,25 +37,28 @@ describe('callout control', () => {
       const message = 'toot!';
       const props = { ...staticProps, uischema: uiSchema(message) };
       const renderer = render(<GoACalloutControl {...props} />);
-      const component = renderer.getByText(message);
-      expect(component.getAttribute('type')).toBe('important');
-      expect(component.getAttribute('size')).toBe('medium');
+      renderer.getByText(message);
+      const callout = renderer.container.querySelector('goa-callout');
+      expect(callout?.getAttribute('type')).toBe('important');
+      expect(callout?.getAttribute('size')).toBe('medium');
     });
 
     it('will change default type', () => {
       const message = 'woof';
       const props = { ...staticProps, uischema: uiSchema(message, 'information') };
-      const { getByText } = render(<GoACalloutControl {...props} />);
-      const component = getByText(message);
-      expect(component.getAttribute('type')).toBe('information');
+      const { getByText, container } = render(<GoACalloutControl {...props} />);
+      getByText(message);
+      const callout = container.querySelector('goa-callout');
+      expect(callout?.getAttribute('type')).toBe('information');
     });
 
     it('will change default size', () => {
       const message = 'woof';
       const props = { ...staticProps, uischema: uiSchema(message, 'information', 'large') };
-      const { getByText } = render(<GoACalloutControl {...props} />);
-      const component = getByText(message);
-      expect(component.getAttribute('size')).toBe('large');
+      const { getByText, container } = render(<GoACalloutControl {...props} />);
+      getByText(message);
+      const callout = container.querySelector('goa-callout');
+      expect(callout?.getAttribute('size')).toBe('large');
     });
 
     it('will hide the component when visible is false', () => {
@@ -71,9 +74,10 @@ describe('callout control', () => {
       const props = { ...staticProps, uischema: uiSchema(message, 'information', 'large') };
       props.uischema.options = undefined;
 
-      const { getByText } = render(<GoACalloutControl {...{ ...props, visible: false }} />);
-      const component = getByText('unknown');
-      expect(component.getAttribute('size')).toBe('medium');
+      const { getByText, container } = render(<GoACalloutControl {...{ ...props, visible: false }} />);
+      getByText('unknown');
+      const callout = container.querySelector('goa-callout');
+      expect(callout?.getAttribute('size')).toBe('medium');
     });
   });
 });

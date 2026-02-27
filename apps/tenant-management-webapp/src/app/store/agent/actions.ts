@@ -1,3 +1,4 @@
+import { UserContent } from '@core-services/app-common';
 import { Dispatch } from 'redux';
 import { io, Socket } from 'socket.io-client';
 import { v4 as uuid } from 'uuid';
@@ -57,7 +58,7 @@ export interface MessageAgentAction {
   threadId: string;
   messageId: string;
   context: Record<string, unknown>;
-  content: string;
+  content: UserContent;
 }
 
 export const TEXT_DELTA = 'text-delta';
@@ -252,7 +253,7 @@ export function startThread(agent: string, threadId: string) {
   return { type: START_THREAD_ACTION, agent, threadId };
 }
 
-export function messageAgent(threadId: string, context: Record<string, unknown>, content: string) {
+export function messageAgent(threadId: string, context: Record<string, unknown>, content: UserContent) {
   return async (dispatch: Dispatch, getState: () => RootState) => {
     const messageId = uuid();
     dispatch({ type: MESSAGE_AGENT_ACTION, threadId, messageId, content, context });

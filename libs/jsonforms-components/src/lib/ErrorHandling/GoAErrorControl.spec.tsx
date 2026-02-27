@@ -42,6 +42,6 @@ describe('GoA Error Control', () => {
     const renderer = render(form);
     const callout = renderer.container.querySelector('goa-callout');
     expect(callout).not.toBeNull();
-    expect(callout?.innerHTML).toBe(errMalformedScope('/properties/foo'));
+    expect(callout?.innerHTML).toBe(`<div>${errMalformedScope('/properties/foo')}</div>`);
   });
 });

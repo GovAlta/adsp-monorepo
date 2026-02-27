@@ -122,21 +122,8 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   return (
     <div>
       {mergedOptions.length > 0 ? (
-        // <Dropdown
-        //   items={mergedOptions as unknown as Item[]}
-        //   enabled={enabled}
-        //   selected={data}
-        //   key={`jsonforms-${label}-dropdown`}
-        //   id={`jsonforms-${label}-dropdown`}
-        //   label={label || ''}
-        //   width={width}
-        //   isAutoCompletion={autoCompletion}
-        //   onChange={(value: string) => {
-        //     handleChange(path, value);
-        //   }}
-        // />
         <GoabDropdown
-          name="Sites"
+          name={`jsonforms-${path}-dropdown`}
           value={data}
           disabled={!enabled}
           key={`jsonforms-${path}-dropdown`}
@@ -144,6 +131,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
           filterable={autoCompletion}
           onChange={(detail: GoabDropdownOnChangeDetail) => handleChange(path, detail.value)}
           width={width}
+          testId={`jsonforms-${path}-dropdown`}
         >
           {mergedOptions.map((item) => (
             <GoabDropdownItem key={item.label} label={item.label} value={item.value ? item.value : ''} />
@@ -161,7 +149,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
           placeholder={placeholder}
           name={appliedUiSchemaOptions?.name || `${id || label}-input`}
           ariaLabel={appliedUiSchemaOptions?.name || `${id || label}-input`}
-          data-testid={appliedUiSchemaOptions?.testId || `${id}-input`}
+          testId={appliedUiSchemaOptions?.testId || `${id}-input`}
           {...uischema.options?.componentProps}
           // maxLength={appliedUiSchemaOptions?.maxLength}
           onChange={(detail: GoabInputOnChangeDetail) => {
