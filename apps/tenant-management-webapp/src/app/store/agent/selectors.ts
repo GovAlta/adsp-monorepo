@@ -8,7 +8,7 @@ const extractFileIdFromUrn = (urn: string): string | null => {
   if (!urn || !urn.includes('file-service')) {
     return null;
   }
-  const match = urn.match(/\/files\/([a-f0-9\-]+)$/i);
+  const match = urn.match(/\/files\/([a-f0-9-]+)$/i);
   return match ? match[1] : null;
 };
 
