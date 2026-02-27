@@ -6,7 +6,7 @@ import {
   GoabIconButton,
   GoabTable,
 } from '@abgov/react-components';
-import { AgentChat } from '@core-services/app-common';
+import { AgentChat, Attachment } from '@core-services/app-common';
 import MonacoEditor from '@monaco-editor/react';
 import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -37,6 +37,7 @@ import {
   startThread,
   updateAgent,
 } from '@store/agent/actions';
+import { UploadFileService } from '@store/file/actions';
 import { ApiToolConfiguration } from '@store/agent/model';
 import { connectConfigurationUpdates, disconnectConfigurationUpdates } from '@store/configuration/action';
 import { fetchDirectory } from '@store/directory/actions';
@@ -46,6 +47,7 @@ import { AddEditApiToolModal } from './addEditApiToolModal';
 import { AddBuiltInToolModal } from './addBuiltInToolModal';
 import { AddEditAgentModal } from './addEditAgentModal';
 import { AddToolAgentModal } from './addToolAgentModal';
+import { AnyAction } from 'redux';
 
 const ChatContainerDiv = styled.div`
   flex: 1;
@@ -88,6 +90,7 @@ export const AgentEditor: FunctionComponent = () => {
   );
 
   const dispatch = useDispatch<AppDispatch>();
+
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
@@ -119,6 +122,25 @@ export const AgentEditor: FunctionComponent = () => {
       dispatch(disconnectAgent());
     };
   }, [dispatch, id, threadId]);
+
+  const handleAttachmentUpload = async (file: File): Promise<Attachment> => {
+    const type = file.type.startsWith('image/') ? 'image' : 'file';
+    
+    const { uploadedFile, dataUrl } = await dispatch(
+      UploadFileService({
+        type: 'agent-attachments',
+        file,
+        recordId: agent.id,
+      }) as unknown as AnyAction
+    );
+
+    return {
+      urn: uploadedFile.urn,
+      filename: uploadedFile.filename || file.name,
+      type,
+      thumbnailUrl: type === 'image' ? dataUrl : undefined,
+    };
+  };
 
   return (
     <FullScreenEditor
@@ -378,6 +400,7 @@ export const AgentEditor: FunctionComponent = () => {
               context={{}}
               messages={messages}
               onSend={(threadId, context, content) => dispatch(messageAgent(threadId, context, content))}
+              onAttachmentUpload={handleAttachmentUpload}
             />
           </ChatContainerDiv>
         </>

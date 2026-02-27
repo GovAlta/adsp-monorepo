@@ -10,4 +10,10 @@ export const AgentAttachmentsFileType: FileType = {
   securityClassification: SecurityClassifications.ProtectedB,
   readRoles: [`urn:ads:platform:agent-service:${ServiceRoles.AgentTool}`],
   updateRoles: [`urn:ads:platform:agent-service:${ServiceRoles.AgentUser}`],
+  rules: {
+    retention: {
+      active: true,
+      deleteInDays: 7,
+    },
+  },
 };
