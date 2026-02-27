@@ -112,7 +112,7 @@ export const FeedbacksList = (): JSX.Element => {
   const sharedFilterForm = (
     <div>
       <GoabFormItem label="Registered sites">
-        {indicator.show && Object.keys(sites).length === 0 && <GoabSkeleton type="text" />}
+        {indicator.show && (!sites || Object.keys(sites).length === 0) && <GoabSkeleton type="text" />}
         <GoabDropdown
           name="Sites"
           value={selectedSite}
