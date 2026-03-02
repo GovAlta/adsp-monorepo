@@ -73,3 +73,48 @@ export const ToolTipAdjust = styled.div`
 export const AddRemoveResourceTagSpacing = styled.div`
   margin-bottom: var(--goa-space-m);
 `;
+
+export const DataRegisterNameDiv = styled.div`
+  margin-top: 1rem;
+  font-size: var(--goa-font-size-7);
+  font-weight: var(--fw-bold);
+  padding-left: 0.4rem;
+  padding-bottom: 0.5rem;
+`;
+
+export const DataRegisterIconDiv = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+`;
+
+export const DataRegisterEntryDetail = styled.div`
+  background: #f3f3f3;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: var(--goa-font-size-1);
+  line-height: var(--goa-space-m);
+  padding: var(--goa-space-m);
+  text-align: left;
+`;
+
+export const DataRegisterEditorWrapper = styled.div`
+  padding: var(--goa-space-m) 0;
+`;
+
+export const DataRegisterMonacoDiv = styled.div`
+  display: flex;
+  border: 1px solid var(--color-gray-700);
+  border-radius: 3px;
+  padding: 0.15rem 0.15rem;
+`;
+
+export const DataRegisterTableWrapper = styled.div`
+  max-height: 400px;
+  overflow-y: auto;
+`;
+
+export const DataRegisterContainer = styled.div`
+  min-height: 450px;
+`;

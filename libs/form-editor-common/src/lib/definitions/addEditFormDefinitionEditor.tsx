@@ -83,6 +83,9 @@ import { CalendarEventDefault } from '@store/calendar/models';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
 import { DefinitionAgentChat } from './DefinitionAgentChat';
+import { DataRegisters } from './dataRegisters';
+import { updateConfigurationDefinition } from '@store/configuration/action';
+import { DATA_REGISTER_NAMESPACE } from '@store/configuration/model';
 import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
 import { startThread } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
@@ -106,7 +109,7 @@ export const onSaveDispositionForModal = (
   newDisposition: boolean,
   currentDisposition: Disposition,
   definition: FormDefinition,
-  selectedEditModalIndex: number | null
+  selectedEditModalIndex: number | null,
 ): [FormDefinition, number | null] => {
   const currentDispositionStates = [...definition.dispositionStates];
   if (newDisposition) {
@@ -158,7 +161,14 @@ const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdat
 
 const NO_TASK_CREATED_OPTION = `No task created`;
 
-export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fileTypes }): JSX.Element {
+export function AddEditFormDefinitionEditor({
+  definition,
+  roles,
+  queueTasks,
+  fileTypes,
+  registerData = undefined,
+  showDataRegister = false,
+}): JSX.Element {
   const fileList = useSelector((state: RootState) => {
     return state?.fileService.newFileList;
   });
@@ -201,7 +211,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
   const schemaError = useSelector(schemaErrorSelector);
 
   const selectedCoreEvent = useSelector(
-    (state: RootState) => state.calendarService?.coreCalendars?.['form-intake']?.selectedCalendarEvents
+    (state: RootState) => state.calendarService?.coreCalendars?.['form-intake']?.selectedCalendarEvents,
   );
 
   const { isFormUpdated, latestNotification, isLoadingRoles, indicator, formServiceApiUrl } = useSelector(
@@ -211,7 +221,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
       isLoadingRoles: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] === ActionState.inProcess,
       indicator: state.session?.indicator,
       formServiceApiUrl: state.config?.serviceUrls?.formServiceApiUrl,
-    })
+    }),
   );
 
   const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
@@ -244,7 +254,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
         UpdateSearchCriteriaAndFetchEvents({
           recordId: `urn:ads:platform:configuration-service:v2:/configuration/form-service/${definition.id}`,
           calendarName: 'form-intake',
-        })
+        }),
       );
     }
   }, [intakePeriodModal]);
@@ -259,17 +269,17 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
     if (monaco) {
       const valueProvider = monaco.languages.registerCompletionItemProvider(
         'json',
-        new FormPropertyValueCompletionItemProvider(dataSchema)
+        new FormPropertyValueCompletionItemProvider(dataSchema),
       );
 
       const uiElementProvider = monaco.languages.registerCompletionItemProvider(
         'json',
-        new FormUISchemaElementCompletionItemProvider(dataSchema)
+        new FormUISchemaElementCompletionItemProvider(dataSchema),
       );
 
       const dataElementProvider = monaco.languages.registerCompletionItemProvider(
         'json',
-        new FormDataSchemaElementCompletionItemProvider()
+        new FormDataSchemaElementCompletionItemProvider(),
       );
 
       return function () {
@@ -320,7 +330,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
@@ -915,6 +925,12 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                   </div>
                 </BorderBottom>
               </Tab>
+
+              {showDataRegister && (
+                <Tab label="Data Registers" data-testid="form-data-registers-tab" isTightContent={true}>
+                  <DataRegisters registerData={registerData} />
+                </Tab>
+              )}
             </Tabs>
 
             <FinalButtonPadding>
@@ -1072,7 +1088,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
             newDisposition,
             currentDispositions,
             definition,
-            selectedEditModalIndex
+            selectedEditModalIndex,
           );
           setDefinition(updatedDefinition);
           setSelectedDeleteDispositionIndex(index);

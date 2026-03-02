@@ -49,17 +49,18 @@ import { getAccessToken } from '@store/tenant/sagas';
 import { RegisterConfigData } from '@abgov/jsonforms-components';
 import { AdspId } from '@lib/adspId';
 import { toServiceKey } from '@pages/admin/services/configuration/export/ServiceConfiguration';
+import { DATA_REGISTER_NAMESPACE } from './model';
 
 export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefinitionsAction): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
       message: 'Loading...',
-    })
+    }),
   );
 
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
 
   const token: string = yield call(getAccessToken);
@@ -84,12 +85,12 @@ export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefini
             ...core.data,
             latest: { ...core.data?.latest, configuration: core.data?.latest?.configuration },
           },
-        })
+        }),
       );
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
 
       yield put(getRegisterDataAction());
@@ -98,7 +99,7 @@ export function* fetchConfigurationDefinitions(_action: FetchConfigurationDefini
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -127,11 +128,11 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
     UpdateIndicator({
       show: true,
       message: 'Loading...',
-    })
+    }),
   );
 
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
 
   const token: string = yield call(getAccessToken);
@@ -151,11 +152,11 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
 
             return call(axios.get, fetchUrl, { headers: { Authorization: `Bearer ${token}` } });
           }
-        })
+        }),
       );
 
       const { coreConfigDefinitions, tenantConfigDefinitions } = yield select(
-        (state: RootState) => state.configuration
+        (state: RootState) => state.configuration,
       );
       const definitions = { ...tenantConfigDefinitions?.configuration, ...coreConfigDefinitions?.configuration };
       yield put(
@@ -171,20 +172,20 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
               }
               return c.data;
             })
-            .flat()
-        )
+            .flat(),
+        ),
       );
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -194,10 +195,10 @@ export function* fetchConfigurationRevisions(action: FetchConfigurationRevisions
     UpdateIndicator({
       show: true,
       message: 'Loading...',
-    })
+    }),
   );
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
   const service = action.service.split(':');
@@ -212,14 +213,14 @@ export function* fetchConfigurationRevisions(action: FetchConfigurationRevisions
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(getConfigurationRevisionsSuccess([], action.service));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -230,13 +231,13 @@ export function* fetchRegisterData(): SagaIterator {
     take(FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION);
 
     const configBaseUrl: string = yield select(
-      (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+      (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
     );
 
     const tenantId: AdspId = yield select((state: RootState) => state.tenant.id);
 
     const tenantConfigDefinition = yield select(
-      (state: RootState) => state?.configuration?.tenantConfigDefinitions?.configuration || {}
+      (state: RootState) => state?.configuration?.tenantConfigDefinitions?.configuration || {},
     );
 
     const token: string = yield call(getAccessToken);
@@ -249,13 +250,10 @@ export function* fetchRegisterData(): SagaIterator {
         .filter(([name, config]) => {
           // eslint-disable-next-line
           const _c = config as any;
-          return (
-            _c?.configurationSchema?.type === 'array' &&
-            (_c?.configurationSchema?.items?.type === 'string' || _c?.configurationSchema?.items?.type === 'object')
-          );
+          return name.split(':')[0] === DATA_REGISTER_NAMESPACE && _c?.configurationSchema?.type === 'array';
         })
         // eslint-disable-next-line
-        .map(([name, config]) => name) || [];
+        .map(([name, config]) => ({ name, description: (config as any)?.description ?? '' })) || [];
 
     const dataListObject = tenantConfigs
       // eslint-disable-next-line
@@ -284,7 +282,7 @@ export function* fetchRegisterData(): SagaIterator {
 
     for (const registerConfig of registerConfigs) {
       try {
-        const [namespace, service] = registerConfig.split(':');
+        const [namespace, service] = registerConfig.name.split(':');
         const url = `${configBaseUrl}/configuration/v2/configuration/${namespace}/${service}/active`;
         const { data } = yield call(axios.get, url, {
           params: { orLatest: true, tenant: tenantId },
@@ -294,6 +292,7 @@ export function* fetchRegisterData(): SagaIterator {
         if (data?.configuration && data?.configuration) {
           registerData.push({
             urn: `urn:ads:platform:configuration:v2:/configuration/${namespace}/${service}`,
+            description: registerConfig.description,
             data: data?.configuration,
           });
         }
@@ -310,7 +309,7 @@ export function* fetchRegisterData(): SagaIterator {
 
 export function* fetchConfigurationActiveRevision(action: FetchConfigurationActionRevisionAction): SagaIterator {
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
   const service = action.service.split(':');
@@ -358,8 +357,8 @@ export function* updateConfigurationDefinition({
             ...latest,
           },
           isAddedFromOverviewPage,
-          currentId
-        )
+          currentId,
+        ),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -381,7 +380,7 @@ export function* deleteConfigurationDefinition({ definitionName }: DeleteConfigu
         { operation: 'DELETE', property: definitionName },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       yield put(deleteConfigurationDefinitionSuccess({ ...latest }));
@@ -406,7 +405,7 @@ export function* setConfigurationRevision(action: SetConfigurationRevisionAction
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       yield put(setConfigurationRevisionSuccessAction(action.service, revision));
@@ -431,7 +430,7 @@ export function* setConfigurationRevisionActive(action: SetConfigurationRevision
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       yield put(setConfigurationRevisionActiveSuccessAction(action.service, revision));
@@ -445,7 +444,7 @@ let replaceErrorConfiguration = [];
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const coreConfig: Record<string, unknown> = yield select(
-    (state: RootState) => state.configuration.coreConfigDefinitions.configuration
+    (state: RootState) => state.configuration.coreConfigDefinitions.configuration,
   );
   const token: string = yield call(getAccessToken);
   let service = `${action.configuration.namespace}:${action.configuration.name}`;
@@ -466,7 +465,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           definition = coreConfig[service];
         } else {
           const tenantConfig: string = yield select(
-            (state: RootState) => state.configuration.tenantConfigDefinitions.configuration || {}
+            (state: RootState) => state.configuration.tenantConfigDefinitions.configuration || {},
           );
           definition = tenantConfig[service];
           if (!definition) {
@@ -476,7 +475,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
         // Check if configuration item following definition
         const jsonSchemaValidation = jsonSchemaCheck(
           definition.configurationSchema,
-          action.configuration.configuration
+          action.configuration.configuration,
         );
         if (!jsonSchemaValidation) {
           replaceErrorConfiguration.push({
@@ -496,7 +495,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
             },
             {
               headers: { Authorization: `Bearer ${token}` },
-            }
+            },
           );
 
           yield put(setConfigurationRevisionSuccessAction(service, revision));
@@ -509,12 +508,12 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           body,
           {
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          }
+          },
         );
         yield put(
           UpdateIndicator({
             show: false,
-          })
+          }),
         );
         if (action.isImportConfiguration) {
           yield put(replaceConfigurationDataSuccessAction(revision));

@@ -103,3 +103,5 @@ export interface Revision {
   created: string;
   configuration: Record<string, SchemaType>;
 }
+
+export const DATA_REGISTER_NAMESPACE = 'data-register';
