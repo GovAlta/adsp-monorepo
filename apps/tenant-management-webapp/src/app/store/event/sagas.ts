@@ -27,11 +27,11 @@ export function* fetchEventDefinitions(_action: FetchEventDefinitionsAction): Sa
     UpdateIndicator({
       show: true,
       message: 'Loading...',
-    })
+    }),
   );
 
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
 
@@ -42,7 +42,7 @@ export function* fetchEventDefinitions(_action: FetchEventDefinitionsAction): Sa
         `${configBaseUrl}/configuration/v2/configuration/platform/event-service/latest`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       const tenantDefinitions = Object.getOwnPropertyNames(configuration || {}).reduce((defs, namespace) => {
         Object.getOwnPropertyNames(configuration[namespace].definitions).forEach((name) => {
@@ -56,7 +56,7 @@ export function* fetchEventDefinitions(_action: FetchEventDefinitionsAction): Sa
         `${configBaseUrl}/configuration/v2/configuration/platform/event-service/latest?core`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const serviceDefinitions = Object.getOwnPropertyNames(serviceData).reduce((defs, namespace) => {
@@ -70,14 +70,14 @@ export function* fetchEventDefinitions(_action: FetchEventDefinitionsAction): Sa
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -94,7 +94,7 @@ export function* updateEventDefinition({ definition }: UpdateEventDefinitionActi
         `${baseUrl}/configuration/v2/configuration/platform/event-service/latest`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const namespaceUpdate = {
@@ -117,7 +117,7 @@ export function* updateEventDefinition({ definition }: UpdateEventDefinitionActi
         { operation: 'UPDATE', update: { [definition.namespace]: namespaceUpdate } },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       yield put(
@@ -125,7 +125,7 @@ export function* updateEventDefinition({ definition }: UpdateEventDefinitionActi
           ...latest.configuration[definition.namespace].definitions[definition.name],
           namespace: definition.namespace,
           isCore: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -144,7 +144,7 @@ export function* deleteEventDefinition({ definition }: UpdateEventDefinitionActi
         `${baseUrl}/configuration/v2/configuration/platform/event-service/latest`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const headers = { Authorization: `Bearer ${token}` };
@@ -160,7 +160,7 @@ export function* deleteEventDefinition({ definition }: UpdateEventDefinitionActi
           { operation: 'DELETE', property: definition.namespace },
           {
             headers,
-          }
+          },
         );
       } else {
         yield call(
@@ -169,7 +169,7 @@ export function* deleteEventDefinition({ definition }: UpdateEventDefinitionActi
           { operation: 'UPDATE', update: { [definition.namespace]: namespaceUpdate } },
           {
             headers,
-          }
+          },
         );
       }
 
@@ -229,10 +229,11 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
         UpdateIndicator({
           show: true,
           message: 'Loading...',
-        })
+        }),
       );
       const { data } = yield call(axios.get, eventUrl, {
         headers: { Authorization: `Bearer ${token}` },
+        timeout: 30000,
       });
 
       yield put(getEventLogEntriesSucceeded(data['event-service']['event'], data.page.after, data.page.next));
@@ -240,14 +241,20 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
-      yield put(ErrorNotification({ error: err }));
+      yield put(
+        ErrorNotification({
+          error: {
+            message: 'Search request timed out. Try narrowing your search criteria or using a different time range.',
+          },
+        }),
+      );
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -265,10 +272,10 @@ export function* fetchEventMetrics(): SagaIterator {
         fetchEventMetricsSucceeded({
           totalEvents: sum,
           avgPerDay: data?.values.length ? sum / data?.values.length : 0,
-        })
+        }),
       );
     },
-    'daily'
+    'daily',
   );
 }
 
