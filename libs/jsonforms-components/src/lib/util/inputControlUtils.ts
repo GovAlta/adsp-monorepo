@@ -229,9 +229,22 @@ export const ensureGoaDatePointerCursor = (host: Element | null) => {
 
   const style = document.createElement('style');
   style.id = 'goa-date-cursor-style';
+
   style.textContent = `
-    input[type="date"] { cursor: pointer !important; }
-    input[type="date"]:disabled { cursor: not-allowed !important; }
+    /* keep text cursor in field */
+    input[type="date"] {
+      cursor: text;
+    }
+
+    /* 👇 hand cursor ONLY on calendar icon */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+    }
+
+    input[type="date"]:disabled::-webkit-calendar-picker-indicator {
+      cursor: not-allowed;
+    }
   `;
+
   sr.appendChild(style);
 };

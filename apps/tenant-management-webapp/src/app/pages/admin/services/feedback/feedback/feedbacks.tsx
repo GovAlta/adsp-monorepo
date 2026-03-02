@@ -102,7 +102,7 @@ export const FeedbacksList = (): JSX.Element => {
   useEffect(() => {
     if (isExport) {
       const transformData = transformedData(exportData);
-      const data = flattenJSON(transformData);
+      const data = transformData && typeof transformData === 'object' ? flattenJSON(transformData) : {};
       const fileName = `${tenantName}-feedbacks`;
       exportFromJSON({ data, fileName, exportType: exportFromJSON.types.csv });
       setIsExport(false);
@@ -112,17 +112,19 @@ export const FeedbacksList = (): JSX.Element => {
   const sharedFilterForm = (
     <div>
       <GoabFormItem label="Registered sites">
-        {indicator.show && Object.keys(sites).length === 0 && <GoabSkeleton type="text" />}
+        {indicator.show && (!sites || Object.keys(sites).length === 0) && <GoabSkeleton type="text" />}
         <GoabDropdown
           name="Sites"
           value={selectedSite}
-          onChange={(detail: GoabDropdownOnChangeDetail) => setSelectedSite(detail.value)}
+          onChange={(detail: GoabDropdownOnChangeDetail) =>
+            setSelectedSite(Array.isArray(detail.value) ? detail.value[0] : detail?.value)
+          }
           width={expandView ? '60%' : '100%'}
           testId="sites-dropdown"
         >
-          {sites.map((item) => (
-            <GoabDropdownItem key={item.url} label={item.url} value={item.url} />
-          ))}
+          {Array.isArray(sites) &&
+            sites &&
+            sites.map((item) => <GoabDropdownItem key={item.url} label={item.url} value={item.url} />)}
         </GoabDropdown>
       </GoabFormItem>
       <ExportDates>

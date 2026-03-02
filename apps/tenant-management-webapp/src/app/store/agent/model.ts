@@ -1,10 +1,4 @@
-interface Message {
-  id: string;
-  threadId: string;
-  content: string;
-  streaming?: boolean;
-  from: 'user' | 'agent';
-}
+import { Message } from '@core-services/app-common';
 
 interface Thread {
   id: string;

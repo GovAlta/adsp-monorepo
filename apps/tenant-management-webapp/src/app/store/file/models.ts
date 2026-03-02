@@ -58,6 +58,7 @@ export interface FileItem {
   created?: string;
   lastAccessed?: string;
   propertyId?: string;
+  mimeType?: string;
 }
 
 export interface RequestBodyProperties {
@@ -95,6 +96,7 @@ export interface FileService {
   coreFileTypes: Array<FileTypeItem>;
   metrics: FileMetrics;
   hasFile: Record<string, boolean>;
+  downloadedFiles: Record<string, string>; // Map of fileId to base64 data URL
 }
 
 export const FILE_INIT: FileService = {
@@ -106,4 +108,5 @@ export const FILE_INIT: FileService = {
   coreFileTypes: null,
   metrics: {},
   hasFile: {},
+  downloadedFiles: {},
 };

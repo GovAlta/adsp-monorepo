@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { ConfigState, FileApi as FileApiConfig } from '@store/config/models';
-import { FileService, FileCriteria } from './models';
+import { FileService, FileCriteria, FileItem } from './models';
 
 export class FileApi {
   private http: AxiosInstance;
@@ -20,7 +20,7 @@ export class FileApi {
     });
   }
 
-  async uploadFile(formData: FormData): Promise<FileService> {
+  async uploadFile(formData: FormData): Promise<FileItem> {
     const url = this.fileConfig.endpoints.fileAdmin;
     const res = await this.http.post(url, formData);
     return res.data;
