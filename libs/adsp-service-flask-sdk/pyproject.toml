@@ -34,7 +34,7 @@ readme = "README.md"
 flake8 = "^7.3.0"
 pytest = "^8.4.2"
 pytest-coverage = "^0.0"
-pytest-html = "^4.1.1"
+pytest-html = "^4.2.0"
 black = "^25.11.0"
 tox = "^4.27.0"
 
