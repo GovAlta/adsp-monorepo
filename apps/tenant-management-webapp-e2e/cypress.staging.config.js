@@ -38,7 +38,7 @@ module.exports = defineConfig({
     taskServiceApiUrl: '',
     valueServiceApiUrl: '',
   },
-  retries: 1,
+  retries: 0,
   defaultCommandTimeout: 10000,
   numTestsKeptInMemory: 0,
   experimentalMemoryManagement: true,
