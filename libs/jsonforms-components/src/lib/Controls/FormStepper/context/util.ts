@@ -9,7 +9,7 @@ function getValueAtPath(obj: any, path: string) {
   return path.split('.').reduce((acc, key) => acc?.[key], obj);
 }
 
-function hasMeaningfulValue(val: any): boolean {
+export function hasMeaningfulValue(val: any): boolean {
   if (val === undefined || val === null) return false;
   if (typeof val === 'string') return val.trim() !== '';
   if (Array.isArray(val)) return val.length > 0;
@@ -74,7 +74,6 @@ function anyRequiredFieldEmpty(scopes: string[], data: any, required: string[], 
       (Array.isArray(value) && value.length === 0)
     ) {
       if (required.includes(path[path.length - 1])) {
-        console.log('we are true');
         return true;
       }
     }

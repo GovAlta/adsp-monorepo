@@ -69,6 +69,8 @@ jobs:
           echo "affected_apps_array=$(echo ${{ steps.production-build.outputs.affected-apps }} | sed -e "s/ /\",\"/g" -e "s/^/[\"/" -e "s/$/\"]/")" >> $GITHUB_OUTPUT
 
   buildContainers:
+    permissions:
+      packages: write # Required for GitHub container registry
     runs-on: ubuntu-24.04
     needs: build
     if: needs.build.outputs.affected_apps

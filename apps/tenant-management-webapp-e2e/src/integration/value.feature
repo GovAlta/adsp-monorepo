@@ -61,12 +61,11 @@ Feature: Value
   Scenario: As a tenant admin, I can see core value definitions
     Given a tenant admin user is on value overview page
     When the user selects "Definitions" tab for "Value"
-    # Validate no duplicate name as core definition name is allowed
+    # Validate core service namespace is NOT allowed
     When the user clicks Add definition button on value definitions page
     Then the user views Add value definition modal
     When the user enters "comment-service", "service-metrics", "Low level metrics of the service.", "N/A" in value definition modal
-    And the user clicks Save button in value definition modal
-    Then the user views a validation error of duplicate value name
+    Then the user views a validation error of "comment-service" is forbidden
     When the user clicks Cancel button in value definition modal
     # Validate core value definitions heading
     Then the user views "cache-service" namespace under Core definitions heading

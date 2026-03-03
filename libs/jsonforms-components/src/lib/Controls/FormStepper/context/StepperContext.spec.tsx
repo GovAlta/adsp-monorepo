@@ -8,6 +8,7 @@ import { StepperContextDataType } from './types';
 import Ajv, { ErrorObject } from 'ajv';
 import { stepperReducer } from './reducer';
 import { subErrorInParent, hasDataInScopes } from './util';
+import { hasMeaningfulValue } from './util';
 
 describe('Test jsonforms stepper context', () => {
   const ajvInstance = new Ajv({ allErrors: true, verbose: true, strict: false });
@@ -223,6 +224,19 @@ describe('Test jsonforms stepper context', () => {
         }
       ).categories[0].isValid
     ).toBe(true);
+    expect(hasMeaningfulValue(123)).toBe(true);
+
+    // boolean
+    expect(hasMeaningfulValue(true)).toBe(true);
+
+    // symbol
+    expect(hasMeaningfulValue(Symbol('x'))).toBe(true);
+
+    // bigint
+    expect(hasMeaningfulValue(10n)).toBe(true);
+
+    // function
+    expect(hasMeaningfulValue(() => {})).toBe(true);
 
     // once visited return true
     expect(

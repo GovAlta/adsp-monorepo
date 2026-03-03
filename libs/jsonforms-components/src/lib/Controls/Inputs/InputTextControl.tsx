@@ -1,18 +1,19 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoabInput } from '@abgov/react-components';
+import { GoabInput, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { RegisterDataType } from '../../Context/register';
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
 import { onBlurForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
-import { Dropdown } from '../../Components/Dropdown';
 import { sinTitle } from '../../common/Constants';
-import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
+import {
+  GoabInputOnChangeDetail,
+  GoabInputOnBlurDetail,
+  GoabDropdownOnChangeDetail,
+} from '@abgov/ui-components-common';
 import { useDebounce } from '../../util/useDebounce';
-
-import { Item } from '../../Components/DropDownTypes';
 
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
@@ -121,19 +122,21 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   return (
     <div>
       {mergedOptions.length > 0 ? (
-        <Dropdown
-          items={mergedOptions as unknown as Item[]}
-          enabled={enabled}
-          selected={data}
-          key={`jsonforms-${label}-dropdown`}
-          id={`jsonforms-${label}-dropdown`}
-          label={label || ''}
+        <GoabDropdown
+          name={`jsonforms-${path}-dropdown`}
+          value={data}
+          disabled={!enabled}
+          key={`jsonforms-${path}-dropdown`}
+          id={`jsonforms-${path}-dropdown`}
+          filterable={autoCompletion}
+          onChange={(detail: GoabDropdownOnChangeDetail) => handleChange(path, detail.value)}
           width={width}
-          isAutoCompletion={autoCompletion}
-          onChange={(value: string) => {
-            handleChange(path, value);
-          }}
-        />
+          testId={`jsonforms-${path}-dropdown`}
+        >
+          {mergedOptions.map((item) => (
+            <GoabDropdownItem key={item.label} label={item.label} value={item.value ? item.value : ''} />
+          ))}
+        </GoabDropdown>
       ) : (
         <GoabInput
           error={isVisited && errors.length > 0}

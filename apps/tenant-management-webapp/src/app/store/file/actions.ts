@@ -1,4 +1,7 @@
 import { FileCriteria, FileItem, FileMetrics, FileTypeItem, Result } from './models';
+import { AppDispatch, RootState } from '@store/index';
+import { FileApi } from './api';
+import { getAccessToken } from '../tenant/actions';
 
 export const UPLOAD_FILE = 'tenant/file-service/upload';
 export const UPLOAD_FILE_SUCCESSES = 'tenant/file-service/upload/success';
@@ -17,7 +20,7 @@ export const DELETE_FILE_SUCCESSES = 'tenant/file-service/file/delete/success';
 export const DELETE_FILE_FAILED = 'tenant/file-service/file/delete/fail';
 
 export const DOWNLOAD_FILE = 'tenant/file-service/file/download';
-export const DOWNLOAD_FILE_SUCCESSES = 'tenant/file-service/file/download/success';
+export const CACHE_FILE = 'tenant/file-service/file/cache';
 export const DOWNLOAD_FILE_FAILED = 'tenant/file-service/file/download/fail';
 
 export const FETCH_FILE_TYPE = 'tenant/file-service/fileType/fetch';
@@ -43,6 +46,17 @@ export const CHECK_FILE_TYPE_HAS_FILE_SUCCESS = 'tenant/file-service/fileType/ha
 export const CLEAR_NEW_FILE_LIST = 'tenant/file-service/CLEAR_NEW_FILE_LIST';
 
 // =============
+// Payload Types
+// =============
+
+export interface FileUploadPayload {
+  type: string; // File type ID
+  file: File;
+  recordId?: string;
+  propertyId?: string;
+}
+
+// =============
 // Actions Types
 // =============
 
@@ -59,7 +73,7 @@ export type ActionTypes =
   | DeleteFileSuccessAction
   | DeleteFileFailedAction
   | DownloadFileAction
-  | DownloadFileSuccessAction
+  | CacheFileAction
   | DownloadFileFailedAction
   | FetchFileTypeSucceededAction
   | DeleteFileTypeSucceededAction
@@ -105,7 +119,7 @@ export const ClearNewFileList = (): ClearNewFileListAction => ({
 // | SetupFileAction;
 export interface UploadFileAction {
   type: typeof UPLOAD_FILE;
-  payload: { data: Record<string, unknown> };
+  payload: { data: FileUploadPayload };
 }
 interface UploadFileSuccessAction {
   type: typeof UPLOAD_FILE_SUCCESSES;
@@ -169,9 +183,12 @@ export interface DownloadFileAction {
   type: typeof DOWNLOAD_FILE;
   payload: { data: string };
 }
-interface DownloadFileSuccessAction {
-  type: typeof DOWNLOAD_FILE_SUCCESSES;
-  payload: { data: string };
+interface CacheFileAction {
+  type: typeof CACHE_FILE;
+  payload: { 
+    fileId: string;
+    dataUrl: string;
+  };
 }
 interface DownloadFileFailedAction {
   type: typeof DOWNLOAD_FILE_FAILED;
@@ -247,12 +264,76 @@ export interface FetchFileMetricsSucceededAction {
 // Action Methods
 // ==============
 
-export const UploadFileService = (data: Record<string, unknown>): UploadFileAction => ({
-  type: UPLOAD_FILE,
-  payload: {
-    data,
-  },
-});
+export const UploadFileService = (data: FileUploadPayload) => 
+  async (dispatch: AppDispatch, getState: () => RootState) => {
+    try {
+      dispatch({
+        type: UPLOAD_FILE,
+        payload: { data },
+      });
+
+      const state = getState();
+      const token = await dispatch(getAccessToken());
+      const config = state.config;
+      
+      if (!token || !config) {
+        throw new Error('Missing authentication or configuration');
+      }
+
+      const api = new FileApi(config, token);
+      
+      // Build FormData
+      const formData = new FormData();
+      formData.append('type', data.type);
+      formData.append('file', data.file);
+      if (data.recordId) {
+        formData.append('recordId', data.recordId);
+      }
+
+      // Upload file
+      const uploadedFile = await api.uploadFile(formData);
+
+      // Cache the file if it's small enough (< 1MB)
+      const MAX_CACHE_SIZE = 1048576; // 1MB in bytes
+      let dataUrl: string | undefined;
+      if (data.file.size < MAX_CACHE_SIZE) {
+        dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(data.file);
+        });
+        
+        dispatch(CacheFileService(uploadedFile.id, dataUrl));
+      }
+
+      // Dispatch success with the uploaded file
+      dispatch({
+        type: UPLOAD_FILE_SUCCESSES,
+        payload: {
+          result: {
+            id: uploadedFile.id,
+            urn: uploadedFile.urn,
+            filename: uploadedFile.filename,
+            fileURN: uploadedFile.urn,
+            size: uploadedFile.size,
+            recordId: uploadedFile.recordId,
+            created: uploadedFile.created,
+            typeName: data.type,
+            propertyId: data.propertyId,
+          } as FileItem,
+        },
+      });
+
+      return { uploadedFile, dataUrl };
+    } catch (error) {
+      dispatch({
+        type: UPLOAD_FILE_FAILED,
+        payload: { result: { propertyId: data.propertyId } },
+      });
+      throw error;
+    }
+  };
 export const UploadFileSuccessService = (result: FileItem): UploadFileSuccessAction => ({
   type: UPLOAD_FILE_SUCCESSES,
   payload: {
@@ -336,10 +417,11 @@ export const DownloadFileService = (data: string): DownloadFileAction => ({
   },
 });
 
-export const DownloadFileSuccessService = (data: string): DownloadFileSuccessAction => ({
-  type: DOWNLOAD_FILE_SUCCESSES,
+export const CacheFileService = (fileId: string, dataUrl: string): CacheFileAction => ({
+  type: CACHE_FILE,
   payload: {
-    data,
+    fileId,
+    dataUrl,
   },
 });
 

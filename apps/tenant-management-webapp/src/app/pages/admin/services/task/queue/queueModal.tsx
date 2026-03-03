@@ -12,6 +12,7 @@ import {
   isNotEmptyCheck,
   duplicateNameCheck,
   Validator,
+  wordCheck,
 } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 import { RootState } from '@store/index';
@@ -46,12 +47,18 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
   });
   const queueNames = queues ? Object.keys(queues) : [];
 
-  // Get existing namespaces from queues
+  // For task service, assume no core namespaces or filter differently if needed
+  const coreNamespaces: string[] = [];
+
+  // Get all existing namespaces from queues for dropdown
   const existingNamespaces = queues
     ? Object.values(queues)
         .map((q: TaskDefinition) => q?.namespace)
         .filter((ns): ns is string => !!ns)
     : [];
+
+  const forbiddenWords = coreNamespaces.concat('platform');
+  const checkForConflicts = wordCheck(forbiddenWords);
 
   const title = isNew ? 'Add queue' : 'Edit queue';
   const namespaceCheck = (): Validator => {
@@ -64,8 +71,9 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
     'name',
     badCharsCheck,
     namespaceCheck(),
+    checkForConflicts,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicated', 'name', isNotEmptyCheck('name'), duplicateNameCheck(queueNames, 'Queue'))
     .add(
@@ -73,11 +81,11 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
       'namespace',
       isNotEmptyCheck('namespace'),
       wordMaxLengthCheck(32, 'Namespace'),
-      duplicateNameCheck(queueNames, 'Queue')
+      duplicateNameCheck(queueNames, 'Queue'),
     )
     .build();
   const validationCheck = () => {
-    const validations = {
+    const validations: Record<string, string> = {
       name: queue.name,
       namespace: queue.namespace,
     };
@@ -92,7 +100,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
     onSave(queue);
 
     navigate(`edit/${queue.namespace}:${queue.name}`, { state: queue });
-    onCancel();
+    onCancel?.();
     validators.clear();
   };
 
@@ -108,7 +116,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
             testId="queue-modal-cancel"
             onClick={() => {
               validators.clear();
-              onCancel();
+              onCancel?.();
             }}
           >
             Cancel
@@ -132,6 +140,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
           disabled={!isNew}
           testId="queue-modal-namespace-input"
           existingNamespaces={existingNamespaces}
+          excludedNamespaces={forbiddenWords}
           onChange={(value: string) => {
             const validations = { namespace: value };
             validators.remove('namespace');
@@ -158,7 +167,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
           aria-label="name"
           disabled={!isNew}
           onChange={(detail: GoabInputOnChangeDetail) => {
-            const validations = { name: detail.value };
+            const validations: Record<string, string> = { name: detail.value };
             validators.remove('name');
             if (isNew) {
               validations['duplicated'] = detail.value;
