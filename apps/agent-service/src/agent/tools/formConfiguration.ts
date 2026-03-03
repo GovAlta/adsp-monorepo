@@ -55,8 +55,8 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
     description: 'Update the JSON form configuration for a given form definition ID.',
     inputSchema: z.object({
       formDefinitionName: z.string().describe('The name of the form definition.'),
-      dataSchema: z.string().describe('The data schema for the form.'),
-      uiSchema: z.string().describe('The UI schema for the form.'),
+      dataSchema: z.record(z.string(), z.unknown()).describe('The data schema for the form.'),
+      uiSchema: z.record(z.string(), z.unknown()).describe('The UI schema for the form.'),
       anonymousApply: z.boolean().default(false),
       applicantRoles: z.array(z.string()).default([]),
       assessorRoles: z.array(z.string()).default([]),
@@ -80,8 +80,8 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
           update: {
             id: formDefinitionId,
             name: formDefinitionName,
-            dataSchema: JSON.parse(dataSchema),
-            uiSchema: JSON.parse(uiSchema),
+            dataSchema,
+            uiSchema,
             anonymousApply,
             applicantRoles,
             assessorRoles,
