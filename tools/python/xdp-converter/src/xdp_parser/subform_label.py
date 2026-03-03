@@ -43,7 +43,7 @@ def promote_group_headers(
             print("  First element is not help text")
         return
 
-    text = first.help_text().strip()
+    text = first.help_text()
     if not text:
         if debug:
             print("  First element has no text")

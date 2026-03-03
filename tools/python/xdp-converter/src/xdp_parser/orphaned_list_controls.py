@@ -1,4 +1,3 @@
-from asyncio import events
 import re
 from xml.etree import ElementTree as ET
 from typing import Dict, Optional
@@ -96,7 +95,9 @@ def _resolve_som_path(root: ET.Element, som: str) -> Optional[ET.Element]:
 
 
 def is_sibling_container(
-    subform: ET.Element, root: ET.Element, parent_map: Dict[ET.Element, ET.Element]
+    subform: ET.Element,
+    root: ET.Element,
+    parent_map: Dict[ET.Element, Optional[ET.Element]],
 ) -> bool:
     """
     True if 'subform' is a controls-only block for some repeating row subform,
@@ -177,7 +178,7 @@ def is_child_container(sf: ET.Element) -> bool:
 
 
 def is_add_remove_container(
-    sf: ET.Element, root: ET.Element, parent_map: Dict[ET.Element, ET.Element]
+    sf: ET.Element, root: ET.Element, parent_map: Dict[ET.Element, Optional[ET.Element]]
 ) -> bool:
     """
     Unified detector for all forms of Add/Remove control blocks.

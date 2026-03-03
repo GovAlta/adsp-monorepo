@@ -1,20 +1,22 @@
-from schema_generator.form_element import FormElement, JsonSchemaElement
+from typing import Optional
+
+from schema_generator.form_element import FormElement, JsonSchemaElement, UISchema
 import re
 
 
 class FormInformation(FormElement):
     def __init__(self, element_name, text, option, context, style="", hidden=False):
-        super().__init__("information", None, None, context)
+        super().__init__("information", "", None, context)
         self.help = text
         self.element_name = element_name
         self.style = style
         self.hidden = hidden
         self.option = option
 
-    def build_ui_schema(self) -> JsonSchemaElement:
+    def build_ui_schema(self) -> Optional[UISchema]:
         if not self.help:
             return None
-        ui_schema = {"type": "HelpContent"}
+        ui_schema: UISchema = {"type": "HelpContent"}
         if self.element_name:
             ui_schema["label"] = f"{self.element_name}"
         ui_schema["options"] = {
@@ -35,8 +37,8 @@ class FormInformation(FormElement):
     def has_json_schema(self) -> bool:
         return False
 
-    def to_json_schema(self) -> JsonSchemaElement:
-        return None
+    def to_json_schema(self) -> list[JsonSchemaElement]:
+        return []
 
 
 def split_camel_case(s):

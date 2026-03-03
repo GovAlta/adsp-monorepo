@@ -1,4 +1,8 @@
 # Extracted from scripts but not normalized
+from visibility_rules.stages.context_types import JsonFormsRule, JsonFormsRuleEntry
+from visibility_rules.stages.rule_model import VisibilityRule
+
+
 CTX_RAW_RULES = "raw_visibility_rules"
 
 # After DriverResolver + ValueResolver (these feed ConditionNormalizer)
@@ -28,5 +32,13 @@ class PipelineContext(dict):
     Mutable staging dictionary used during visibility rule extraction.
     Pipeline stages freely read/write into this
     """
+
+    final_rules: list[JsonFormsRule]
+
+    def get_final_rules(self) -> list[VisibilityRule]:
+        return self.get(CTX_FINAL_RULES, [])
+
+    def get_jsonforms_rules(self) -> dict[str, JsonFormsRuleEntry]:
+        return self.get(CTX_JSONFORMS_RULES, {})
 
     pass

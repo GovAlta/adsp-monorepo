@@ -1,5 +1,4 @@
 from schema_generator.form_file_upload import FormFileUpload
-from schema_generator.form_input import FormInput
 from xdp_parser.xdp_element import XdpElement
 
 
@@ -11,11 +10,12 @@ class XdpFileUpload(XdpElement):
         return True
 
     def to_form_element(self):
+        control_description = self.get_label()
         fe = FormFileUpload(
             self.get_name(),
             self.full_path,
             self.get_type(),
-            self.get_label().label if self.get_label() else "",
+            control_description.label if control_description else "",
             self.context,
         )
         fe.enum = self.get_enumeration_values()

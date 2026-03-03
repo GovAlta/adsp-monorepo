@@ -6,7 +6,7 @@ from xdp_parser.xdp_element import XdpElement
 class XdpHelpText(XdpElement):
     def __init__(self, anchor_element, help_content: str, context: ParseContext):
         self.text = help_content
-        super().__init__(anchor_element, context=context)
+        super().__init__(anchor_element, None, context=context)
 
     def to_form_element(self):
         return FormHelpText(
@@ -20,7 +20,7 @@ class XdpHelpText(XdpElement):
         return False
 
     def help_text(self) -> str:
-        return self.text
+        return self.text.strip()
 
     def can_promote_to_header(self) -> bool:
         return True

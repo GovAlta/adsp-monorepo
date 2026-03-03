@@ -1,8 +1,9 @@
 # xdp_parser/xdp_subform_placeholder.py
 
-from typing import List
+from typing import List, Optional
 import xml.etree.ElementTree as ET
 
+from schema_generator.form_element import FormElement
 from xdp_parser.xdp_element import XdpElement, XdpGeometry
 from xdp_parser.parse_context import ParseContext
 
@@ -23,7 +24,7 @@ class XdpSubformPlaceholder(XdpElement):
         children: List[XdpElement],
         context: ParseContext,
     ) -> None:
-        super().__init__(subform_elem, context)
+        super().__init__(subform_elem, None, context)
         self.subform_elem = subform_elem
         self.children: List[XdpElement] = children
         self._name = subform_elem.get("name") or ""
@@ -40,7 +41,7 @@ class XdpSubformPlaceholder(XdpElement):
     def iter_children(self) -> List[XdpElement]:
         return list(self.children)
 
-    def to_form_element(self) -> dict | None:
+    def to_form_element(self) -> Optional[FormElement]:
         """
         Placeholders are never emitted directly to UI.
         They must be consumed by the grouping pass.

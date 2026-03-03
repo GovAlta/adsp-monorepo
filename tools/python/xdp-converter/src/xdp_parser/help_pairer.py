@@ -14,7 +14,7 @@ class _IndexedCandidate:
     bb: tuple[float, float, float, float]
 
 
-class HelpPairer:
+class HelpPairing:
     def __init__(
         self,
         debug: bool = False,
@@ -126,7 +126,7 @@ class HelpPairer:
 
     # ---------------- eligibility ----------------
     def _is_pair_target(self, e: "XdpElement") -> bool:
-        return e.is_control() or e.is_header()
+        return e.is_control()  # or e.is_header()
 
     # ---------------- scoring ----------------
     def _best_overlap_target(
@@ -139,7 +139,7 @@ class HelpPairer:
         hcx, hcy = (hx1 + hx2) / 2.0, (hy1 + hy2) / 2.0
         hh = max(hy2 - hy1, 0.0001)
 
-        best_idx = None
+        best_idx: int = -1
         best_el = None
         best_score = 0.0
 
@@ -167,7 +167,7 @@ class HelpPairer:
 
             # Optional deterministic tie-break: prefer earlier target index
             if score > best_score or (
-                score == best_score and best_idx is not None and c.idx < best_idx
+                score == best_score and best_idx != -1 and c.idx < best_idx
             ):
                 best_score = score
                 best_idx = c.idx

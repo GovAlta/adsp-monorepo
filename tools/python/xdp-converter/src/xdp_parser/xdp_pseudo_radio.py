@@ -1,25 +1,31 @@
+import xml.etree.ElementTree as ET
 from schema_generator.annotated_control import AnnotatedControl
 from schema_generator.form_information import FormInformation
 from schema_generator.form_input import FormInput
 from schema_generator.form_layout import FormLayout
 from xdp_parser.control_labels import ControlLabels
 from xdp_parser.help_text_registry import HelpTextRegistry
+from xdp_parser.parse_context import ParseContext
 from xdp_parser.parsing_helpers import split_label_and_help
 from xdp_parser.xdp_element import XdpElement
 
 
 # An XDP subform may contain multiple radio buttons representing a single selector
 class XdpPseudoRadio(XdpElement):
-    def __init__(self, xdp_element, options, messages: ControlLabels):
-        super().__init__(xdp_element)
+    def __init__(
+        self,
+        xdp_element: ET.Element,
+        options: list[str],
+        context: ParseContext,
+    ):
+        super().__init__(xdp_element, None, context)
         self.options = options
         self.is_leaf = True
-        self.messages = messages
         self.option_description_by_value: dict[str, str] = {}
         self.option_detail_help_by_value: dict[str, str] = {}
         self.checkbox_to_value: dict[str, str] = {}
 
-    def is_control(self):
+    def is_control(self) -> bool:
         return True
 
     def to_form_element(self):
@@ -29,11 +35,12 @@ class XdpPseudoRadio(XdpElement):
             return self._to_simple_control()
 
     def _to_simple_control(self):
+        label = self.get_label()
         fe = FormInput(
             self.xdp_element.get("name", ""),
             self.full_path,
             self.get_type(),
-            self.get_label(),
+            label.label if label else "",
             self.context,
         )
         fe.enum = self.options
@@ -114,8 +121,8 @@ def extract_radio_button_labels(subform_elem):
                     next_elem = children[j]
                     if next_elem.tag == "draw":
                         label = find_button_label(next_elem)
-                        if label:
-                            labels.append(label[0])
+                        if label is not None:
+                            labels.append(label.label)
                         break
                     j += 1
         i += 1

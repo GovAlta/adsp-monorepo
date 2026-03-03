@@ -1,10 +1,19 @@
+from typing import Optional
+
 from visibility_rules.pipeline_context import (
     CTX_ENUM_MAP,
-    CTX_FINAL_RULES,
     CTX_JSONFORMS_RULES,
     CTX_LABEL_TO_ENUM,
     CTX_PARENT_MAP,
     CTX_XDP_ROOT,
+    PipelineContext,
+)
+from visibility_rules.stages.context_types import (
+    JsonFormsRule,
+    JsonFormsRuleEntry,
+    JsonSchemaElement,
+    JsonValue,
+    SimpleSchema,
 )
 from visibility_rules.stages.trigger_ast import (
     AtomicCondition,
@@ -23,11 +32,11 @@ class JsonFormsEmitter:
       - OR  => schema.anyOf = [branch1, branch2, ...]
     """
 
-    def process(self, context):
+    def process(self, context: PipelineContext) -> PipelineContext:
         if debug:
             print("\n[JsonFormsEmitter] Starting...")
 
-        rules = context.get(CTX_FINAL_RULES, []) or []
+        rules = context.get_final_rules()
         enum_maps = context.get(CTX_ENUM_MAP, {}) or {}
         label_to_enum = context.get(CTX_LABEL_TO_ENUM, {}) or {}
         parent_map = context.get(CTX_PARENT_MAP, {}) or {}
@@ -36,7 +45,7 @@ class JsonFormsEmitter:
         if debug:
             print(f"[JsonFormsEmitter] IN rules: {len(rules)}")
 
-        emitted: dict[str, dict] = {}
+        emitted: dict[str, list[JsonFormsRule]] = {}
         skipped = 0
 
         for rule in rules:
@@ -52,7 +61,7 @@ class JsonFormsEmitter:
                 skipped += 1
                 continue
 
-            jsonforms_rule = {
+            jsonforms_rule: JsonFormsRule = {
                 "effect": effect,
                 "condition": {
                     "scope": "#",
@@ -75,7 +84,7 @@ class JsonFormsEmitter:
                 print(f"Rule for {key} is:")
                 print(f"    {jsonforms_rule}\n")
 
-        final_emitted = {}
+        final_emitted: dict[str, JsonFormsRuleEntry] = {}
         for key, rule_list in emitted.items():
             merged = self.merge_rules_for_target(rule_list)
             final_emitted[key] = {"rule": merged}
@@ -93,15 +102,19 @@ class JsonFormsEmitter:
 
     def _trigger_to_schema(
         self, trigger: Trigger, enum_maps, label_to_enum
-    ) -> dict | None:
+    ) -> Optional[JsonSchemaElement]:
         node = trigger.node
 
         if isinstance(node, AtomicCondition):
             return self._atomic_to_schema(node, enum_maps, label_to_enum)
 
         if isinstance(node, CompoundCondition):
-            left = self._trigger_to_schema(node.left, enum_maps, label_to_enum)
-            right = self._trigger_to_schema(node.right, enum_maps, label_to_enum)
+            left: Optional[JsonSchemaElement] = self._trigger_to_schema(
+                node.left, enum_maps, label_to_enum
+            )
+            right: Optional[JsonSchemaElement] = self._trigger_to_schema(
+                node.right, enum_maps, label_to_enum
+            )
             if not left or not right:
                 return left or right
 
@@ -109,9 +122,10 @@ class JsonFormsEmitter:
 
             if op == "AND":
                 merged = self._merge_and(left, right)
-                return merged or {
-                    "allOf": [left, right]
-                }  # fallback if merge impossible
+                if isinstance(merged, dict):
+                    return merged
+                all_of: list[JsonValue] = [left, right]
+                return {"allOf": all_of}
 
             if op == "OR":
                 return self._merge_or(left, right)
@@ -122,7 +136,7 @@ class JsonFormsEmitter:
 
     def _atomic_to_schema(
         self, atom: AtomicCondition, enum_maps, label_to_enum
-    ) -> dict | None:
+    ) -> Optional[JsonSchemaElement]:
         drv = (atom.driver or "").split(".")[-1].strip()
         if not drv:
             return None
@@ -148,16 +162,33 @@ class JsonFormsEmitter:
             "required": [drv],
         }
 
-    def _merge_and(self, left: dict, right: dict) -> dict | None:
-        """
-        Merge two AND branches into a single {properties, required} object
-        when both are "simple" schemas.
-        """
+    def _merge_and(
+        self, left: JsonSchemaElement, right: JsonSchemaElement
+    ) -> Optional[JsonValue]:
         if not self._is_simple(left) or not self._is_simple(right):
             return None
 
-        lp = dict(left.get("properties", {}))
-        rp = right.get("properties", {})
+        # --- Narrow and normalize properties ---
+        left_props_val = left.get("properties")
+        right_props_val = right.get("properties")
+        if not isinstance(left_props_val, dict) or not isinstance(
+            right_props_val, dict
+        ):
+            return None
+
+        lp: dict[str, JsonValue] = {}
+        for k, v in left_props_val.items():
+            if isinstance(k, str) and isinstance(v, dict):
+                lp[k] = v
+            else:
+                return None
+
+        rp: dict[str, JsonValue] = {}
+        for k, v in right_props_val.items():
+            if isinstance(k, str) and isinstance(v, dict):
+                rp[k] = v
+            else:
+                return None
 
         # If same property appears twice with different constraints, don't guess.
         for k, v in rp.items():
@@ -165,20 +196,35 @@ class JsonFormsEmitter:
                 return None
             lp[k] = v
 
-        req = []
-        for r in left.get("required", []):
-            if r not in req:
-                req.append(r)
-        for r in right.get("required", []):
+        # --- Narrow and normalize required ---
+        req: list[str] = []
+
+        left_req_val = left.get("required", [])
+        if left_req_val is not None and not isinstance(left_req_val, list):
+            return None
+        for r in left_req_val or []:
+            if not isinstance(r, str):
+                return None
             if r not in req:
                 req.append(r)
 
-        out = {"properties": lp}
+        right_req_val = right.get("required", [])
+        if right_req_val is not None and not isinstance(right_req_val, list):
+            return None
+        for r in right_req_val or []:
+            if not isinstance(r, str):
+                return None
+            if r not in req:
+                req.append(r)
+
+        out: JsonSchemaElement = {"properties": lp}
         if req:
             out["required"] = req
         return out
 
-    def _merge_or(self, left: dict, right: dict) -> dict:
+    def _merge_or(
+        self, left: JsonSchemaElement, right: JsonSchemaElement
+    ) -> JsonSchemaElement:
         """
         OR => anyOf. Flatten nested anyOf to keep output tidy.
         Then try to collapse anyOf of the form:
@@ -186,17 +232,26 @@ class JsonFormsEmitter:
         into:
             X in [a,b,...]  (enum)
         """
-        branches: list[dict] = []
+        branches: list[JsonValue] = []
 
-        def add(branch: dict):
-            if isinstance(branch, dict) and "anyOf" in branch and len(branch) == 1:
-                for b in branch.get("anyOf") or []:
-                    branches.append(b)
-            else:
-                branches.append(branch)
+        def add(branch: JsonSchemaElement) -> None:
+            anyof = branch.get("anyOf")
+            # Flatten only the canonical wrapper: {"anyOf": [...]}
+            if isinstance(anyof, list) and len(branch) == 1:
+                for b in anyof:
+                    # Only keep schema-object branches
+                    if isinstance(b, dict):
+                        branches.append(b)
+                return
+            branches.append(branch)
 
         add(left)
         add(right)
+
+        # Narrowing list for enum collapsing: only dicts
+        schema_branches: list[JsonSchemaElement] = [
+            b for b in branches if isinstance(b, dict)
+        ]
 
         if debug:
             print("OR branches:")
@@ -204,7 +259,8 @@ class JsonFormsEmitter:
                 print(b)
 
         # Try to collapse simple OR chains into enum
-        collapsed = self._collapse_anyof_to_enum(branches)
+        collapsed = self._collapse_anyof_to_enum(schema_branches)
+
         if debug:
             print("Collapsed:", collapsed)
 
@@ -213,7 +269,9 @@ class JsonFormsEmitter:
 
         return {"anyOf": branches}
 
-    def _collapse_anyof_to_enum(self, branches: list[dict]) -> dict | None:
+    def _collapse_anyof_to_enum(
+        self, branches: list[JsonSchemaElement]
+    ) -> Optional[JsonSchemaElement]:
         """
         Collapse:
         anyOf: [
@@ -223,28 +281,39 @@ class JsonFormsEmitter:
         ]
         into:
         {properties:{X:{enum:[a,b,...]}}, required:[X]}
-
-        Returns the collapsed SIMPLE schema, or None if not applicable.
         """
-        if not branches or not isinstance(branches, list):
+        if not branches:
             return None
 
-        driver = None
-        values = []
+        driver: str | None = None
+        values: list[JsonValue] = []
 
         for br in branches:
             if not self._is_simple(br):
                 return None
 
-            props = br.get("properties") or {}
-            req = br.get("required") or []
+            props_val = br.get("properties")
+            req_val = br.get("required")
 
-            if len(props) != 1 or len(req) != 1:
+            if not isinstance(props_val, dict):
+                return None
+            if not isinstance(req_val, list):
                 return None
 
-            ((drv, drv_schema),) = props.items()
+            # `required` must be a list[str] for our pattern
+            req_strs: list[str] = []
+            for item in req_val:
+                if not isinstance(item, str):
+                    return None
+                req_strs.append(item)
 
-            if req[0] != drv:
+            # Need exactly one property and exactly one required entry
+            if len(props_val) != 1 or len(req_strs) != 1:
+                return None
+
+            ((drv, drv_schema),) = props_val.items()
+
+            if req_strs[0] != drv:
                 return None
 
             if not isinstance(drv_schema, dict):
@@ -253,11 +322,12 @@ class JsonFormsEmitter:
             # Accept either {"const": v} or {"enum": [v1,v2,...]} — nothing else.
             keys = set(drv_schema.keys())
             if keys == {"const"}:
-                vals = [drv_schema["const"]]
-            elif keys == {"enum"} and isinstance(drv_schema.get("enum"), list):
-                vals = list(drv_schema["enum"])
-                if not vals:
+                vals: list[JsonValue] = [drv_schema["const"]]
+            elif keys == {"enum"}:
+                enum_val = drv_schema.get("enum")
+                if not isinstance(enum_val, list) or not enum_val:
                     return None
+                vals = list(enum_val)
             else:
                 return None
 
@@ -272,8 +342,8 @@ class JsonFormsEmitter:
             return None
 
         # de-dupe, keep order
-        uniq = []
-        seen = set()
+        uniq: list[JsonValue] = []
+        seen: set[tuple[str, str]] = set()
         for v in values:
             key = ("s", v) if isinstance(v, str) else ("o", repr(v))
             if key in seen:
@@ -282,12 +352,11 @@ class JsonFormsEmitter:
             uniq.append(v)
 
         if len(uniq) == 1:
-            # technically could just return the one branch, but this is fine & clean
             return {"properties": {driver: {"const": uniq[0]}}, "required": [driver]}
 
         return {"properties": {driver: {"enum": uniq}}, "required": [driver]}
 
-    def _is_simple(self, schema: dict) -> bool:
+    def _is_simple(self, schema: JsonSchemaElement) -> bool:
         if not isinstance(schema, dict):
             return False
         allowed = {"properties", "required"}
@@ -417,21 +486,27 @@ class JsonFormsEmitter:
             "condition": {"scope": "#", "schema": merged_schema},
         }
 
-    def _group_rules_by_effect(self, rules: list[dict]) -> dict[str, list[dict]]:
-        grouped: dict[str, list[dict]] = {}
+    def _group_rules_by_effect(
+        self, rules: list[JsonFormsRule]
+    ) -> dict[str, list[JsonSchemaElement]]:
+        grouped: dict[str, list[JsonSchemaElement]] = {}
 
         for r in rules:
-            effect = (r.get("effect") or "SHOW").upper()
-            schema = ((r.get("condition") or {}).get("schema")) or {}
+            effect_val = r.get("effect")
+            effect = effect_val.upper() if isinstance(effect_val, str) else "SHOW"
+            cond = r.get("condition")
+            if not isinstance(cond, dict):
+                continue
 
-            if not schema:
+            schema = cond.get("schema")
+            if not isinstance(schema, dict) or not schema:
                 continue
 
             grouped.setdefault(effect, []).append(schema)
 
         return grouped
 
-    def _merge_schemas_or(self, schemas: list[dict]) -> dict:
+    def _merge_schemas_or(self, schemas: list[JsonSchemaElement]) -> JsonSchemaElement:
         flat = self._flatten_schema_list(schemas)
         unique = self._dedupe_schemas(flat)
 
@@ -441,32 +516,39 @@ class JsonFormsEmitter:
         if len(unique) == 1:
             return unique[0]
 
-        return {"anyOf": unique}
+        any_of: list[JsonValue] = list(unique)
+        return {"anyOf": any_of}
 
-    def _flatten_schema_list(self, schemas: list[dict]) -> list[dict]:
-        flat: list[dict] = []
+    def _flatten_schema_list(
+        self, schemas: list[JsonSchemaElement]
+    ) -> list[JsonSchemaElement]:
+        flat: list[JsonSchemaElement] = []
 
         for schema in schemas:
             flat.extend(self._flatten_schema(schema))
 
         return flat
 
-    def _flatten_schema(self, schema: dict) -> list[dict]:
+    def _flatten_schema(self, schema: JsonValue) -> list[JsonSchemaElement]:
         if (
             isinstance(schema, dict)
             and "anyOf" in schema
             and len(schema) == 1
             and isinstance(schema["anyOf"], list)
         ):
-            result: list[dict] = []
+            result: list[JsonSchemaElement] = []
             for branch in schema["anyOf"]:
                 result.extend(self._flatten_schema(branch))
             return result
 
-        return [schema]
+        if isinstance(schema, dict):
+            return [schema]
+        return []
 
-    def _dedupe_schemas(self, schemas: list[dict]) -> list[dict]:
-        unique: list[dict] = []
+    def _dedupe_schemas(
+        self, schemas: list[JsonSchemaElement]
+    ) -> list[JsonSchemaElement]:
+        unique: list[JsonSchemaElement] = []
         seen: set[str] = set()
 
         for schema in schemas:

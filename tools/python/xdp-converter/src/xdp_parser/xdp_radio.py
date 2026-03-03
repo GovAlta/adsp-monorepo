@@ -104,11 +104,12 @@ class XdpRadio(XdpElement):
                 options.append(button_text)
 
         if options:
+            control_description = self.get_label()
             fe = FormInput(
                 self.get_name(),
                 self.full_path,
                 self.get_type(),
-                self.get_label().label if self.get_label() else None,
+                control_description.label if control_description is not None else "",
                 self.context,
             )
             fe.enum = options

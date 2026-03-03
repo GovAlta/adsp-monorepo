@@ -15,13 +15,16 @@ class JsonSchemaGenerator:
         if isinstance(element, list):
             for e in element:
                 self.get_properties(e, properties, required)
-        elif element.is_leaf:
+            return
+
+        if element.is_leaf:
             if element.has_json_schema() and element.name:
-                properties[element.name] = element.to_json_schema()
-                # Don't enforce required fields until we understand it better
-                # if element.name not in required:
-                #     required.append(element.name)
-        else:
-            # This is a layout: get props for its children
-            for e in element.get_children():
-                self.get_properties(e, properties, required)
+                schemas = element.to_json_schema()  # list now
+                if not schemas:
+                    return
+                # leaf should only ever yield one schema
+                properties[element.name] = schemas[0]
+            return
+
+        for e in element.get_children():
+            self.get_properties(e, properties, required)

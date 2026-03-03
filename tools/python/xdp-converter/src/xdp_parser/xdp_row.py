@@ -33,8 +33,10 @@ class XdpRow(XdpElement):
         return False
 
     def to_form_element(self) -> FormElement:
+        children = [c.to_form_element() for c in self.children]
+        filtered_children = [child for child in children if child is not None]
         return FormLayout(
             "HorizontalLayout",
-            [c.to_form_element() for c in self.children],
+            filtered_children,
             self.context,
         )
