@@ -252,6 +252,7 @@ export const FormTemplateEditorContainer = styled.div`
 
 export const NameDescriptionDataSchema = styled.div`
   flex: 6;
+  min-width: 0; /* Allow flex item to shrink below content width */
   padding-right: 3rem;
 
   .life-cycle-auto-scroll {
