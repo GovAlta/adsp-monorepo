@@ -72,7 +72,12 @@ export class AgentServiceConfiguration {
                   name: configuration.name,
                   description: configuration.description,
                   instructions: configuration.instructions,
-                  model: environment.MODEL,
+                  model: environment.MODEL_URL ? {
+                    id: `custom/${environment.MODEL}`,
+                    modelId: environment.MODEL,
+                    url: environment.MODEL_URL,
+                    apiKey: environment.MODEL_API_KEY,
+                  } : environment.MODEL,
                   agents: () => {
                     const toolAgents = {};
                     for (const agent of configuration.agents || []) {

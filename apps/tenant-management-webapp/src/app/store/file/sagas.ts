@@ -15,6 +15,7 @@ import {
   FetchFileTypeSucceededService,
   UpdateFileTypeSucceededService,
   DeleteFileSuccessService,
+  CacheFileService,
   FetchFileTypeHasFileSucceededService,
   FetchFileTypeService,
   DeleteFileAction,
@@ -31,7 +32,6 @@ import {
   FETCH_FILE,
   FETCH_FILE_TYPE_HAS_FILE,
   UPDATE_FILE_TYPE,
-  UPLOAD_FILE,
   FetchFileMetricsSucceeded,
   FETCH_FILE_METRICS,
   FetchFilesAction,
@@ -39,7 +39,6 @@ import {
   CHECK_FILE_TYPE_HAS_FILE,
   CheckFileTypeHasFileAction,
   CHECK_FILE_TYPE_HAS_FILE_SUCCESS,
-  UploadFileFailureService,
 } from './actions';
 import { FileApi } from './api';
 import { FileTypeItem } from './models';
@@ -60,50 +59,6 @@ export function* checkFileTypeHasFileSaga(action: CheckFileTypeHasFileAction): S
     });
   } catch (err) {
     // Handle error
-    yield put(ErrorNotification({ error: err }));
-  }
-}
-
-// eslint-disable-next-line
-export function* uploadFile(file) {
-  const state = yield select();
-  const token = yield call(getAccessToken);
-  const api = yield new FileApi(state.config, token);
-
-  const formData = new FormData();
-  formData.append('type', file.payload.data.type);
-  formData.append('filename', file.payload.data.file.name);
-  formData.append('file', file.payload.data.file);
-
-  try {
-    yield put(
-      UpdateLoadingState({
-        name: UPLOAD_FILE,
-        state: 'start',
-      })
-    );
-
-    const uploadFile = yield api.uploadFile(formData);
-
-    uploadFile.propertyId = file.payload.data.propertyId;
-    yield put(UploadFileSuccessService(uploadFile));
-
-    yield put(
-      UpdateLoadingState({
-        name: UPLOAD_FILE,
-        state: 'completed',
-      })
-    );
-  } catch (err) {
-    yield put(
-      UpdateLoadingState({
-        name: UPLOAD_FILE,
-        state: 'error',
-      })
-    );
-
-    yield put(UploadFileFailureService({ error: err.message, propertyId: file.payload.data.propertyId }));
-
     yield put(ErrorNotification({ error: err }));
   }
 }
@@ -181,12 +136,45 @@ export function* deleteFile(file: DeleteFileAction): SagaIterator {
 export function* downloadFile(file) {
   const state = yield select();
   try {
-    const token = yield call(getAccessToken);
-    const api = yield new FileApi(state.config, token);
-    const files = yield api.downloadFiles(file.payload.data.id, token);
+    const fileId = file.payload.data.id;
+    const filename = file.payload.data.filename;
+    
+    // Check if file is already cached
+    const cachedDataUrl = state.fileService.downloadedFiles?.[fileId];
+    
+    let blob: Blob;
+    
+    if (cachedDataUrl) {
+      // Use cached data URL - convert back to blob for download
+      const response = yield fetch(cachedDataUrl);
+      blob = yield response.blob();
+    } else {
+      // Download from API
+      const token = yield call(getAccessToken);
+      const api = yield new FileApi(state.config, token);
+      const files = yield api.downloadFiles(fileId, token);
+      blob = new Blob([files]);
+      
+      // Only cache files smaller than 1MB to avoid memory issues
+      const MAX_CACHE_SIZE = 1048576; // 1MB in bytes
+      if (blob.size < MAX_CACHE_SIZE) {
+        // Convert blob to data URL for storage
+        const dataUrl = yield new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        
+        // Store in state for reuse (e.g., thumbnails)
+        yield put(CacheFileService(fileId, dataUrl));
+      }
+    }
+    
+    // Trigger browser download
     const element = document.createElement('a');
-    element.href = URL.createObjectURL(new Blob([files]));
-    element.download = file.payload.data.filename;
+    element.href = URL.createObjectURL(blob);
+    element.download = filename;
     document.body.appendChild(element);
     element.click();
   } catch (err) {
@@ -362,7 +350,7 @@ export function* fetchFileMetrics(): SagaIterator {
 
 export function* watchFileSagas(): Generator {
   //file service
-  yield takeEvery(UPLOAD_FILE, uploadFile);
+  // Note: UPLOAD_FILE is now handled by a thunk in actions.ts, not a saga
   yield takeEvery(DOWNLOAD_FILE, downloadFile);
   yield takeEvery(DELETE_FILE, deleteFile);
   yield takeEvery(FETCH_FILE_LIST, fetchFiles);

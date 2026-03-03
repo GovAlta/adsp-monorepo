@@ -38,9 +38,7 @@ export const TextCenter = styled.div`
 `;
 
 export const SideMenuItem = styled.div`
-  &:hover {
-    background: #f1f1f1;
-  }
+  margin-top: 1rem;
 `;
 
 export const RowFlex = styled.div`
@@ -51,9 +49,20 @@ export const RowFlex = styled.div`
 
 export const RowFlexMenu = styled.div`
   display: flex;
-  flex-direction: row;
-  border: 1px solid #dcdcdc;
-  margin-top: 1rem;
+  flex-direction: column;
+  align-items: stretch;
+  border: 1px solid var(--goa-color-greyscale-300);
+  border-radius: var(--goa-border-radius-m);
+  margin-top: var(--goa-space-xs);
+  background-color: var(--goa-color-greyscale-white);
+  padding: 0;
+  gap: 0;
+  position: relative;
+  overflow: visible;
+
+  &:hover {
+    border-color: var(--goa-color-greyscale-400);
+  }
 `;
 
 export const FlexTabs = styled.div`
@@ -96,10 +105,6 @@ export const ListContainer = styled.div`
 `;
 export const DetailMargin = styled.div`
   padding: 0 0 var(--goa-space-l) 0;
-`;
-
-export const IconPadding = styled.div`
-  padding: 0.9rem 0.5rem 0 0;
 `;
 
 export const UpdateListContainer = styled.div`
@@ -168,4 +173,26 @@ export const ListWithDetailsReviewCellDiv = styled.div`
   display: 'flex';
   flex-direction: 'column';
   text-align: 'start';
+`;
+
+export const IconsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--goa-space-xs);
+  padding-bottom: var(--goa-space-xs);
+`;
+
+export const TableContentContainer = styled.div`
+  padding: var(--goa-space-l);
+`;
+export const NoDataMessage = styled.div`
+  padding: var(--goa-space-xl) var(--goa-space-l);
+  color: var(--goa-color-greyscale-700);
+  font: var(--goa-typography-body-m);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
 `;

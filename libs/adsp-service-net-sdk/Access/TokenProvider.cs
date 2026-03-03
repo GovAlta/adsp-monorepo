@@ -4,7 +4,7 @@ using RestSharp;
 
 namespace Adsp.Sdk.Access;
 
-internal sealed class TokenProvider : ITokenProvider, IDisposable
+internal sealed class TokenProvider : ITokenProvider
 {
   private readonly Lock _lock = new();
   private string? _token;
@@ -16,7 +16,7 @@ internal sealed class TokenProvider : ITokenProvider, IDisposable
   private readonly string _clientId;
   private readonly string _clientSecret;
 
-  public TokenProvider(ILogger<TokenProvider> logger, IOptions<AdspOptions> options, IRestClient? client = null)
+  public TokenProvider(ILogger<TokenProvider> logger, IOptions<AdspOptions> options, IRestClient client)
   {
     if (options.Value.AccessServiceUrl == null)
     {
@@ -38,7 +38,7 @@ internal sealed class TokenProvider : ITokenProvider, IDisposable
       options.Value.AccessServiceUrl,
       $"/auth/realms/{options.Value.Realm ?? AccessConstants.CoreRealm}/protocol/openid-connect/token"
     );
-    _client = client ?? new RestClient(_authUrl);
+    _client = client;
     _clientId = options.Value.ServiceId.ToString();
     _clientSecret = options.Value.ClientSecret;
   }
@@ -75,7 +75,7 @@ internal sealed class TokenProvider : ITokenProvider, IDisposable
 
       try
       {
-        var request = new RestRequest("", Method.Post)
+        var request = new RestRequest(_authUrl, Method.Post)
           .AddParameter("grant_type", "client_credentials")
           .AddParameter("client_id", _clientId, ParameterType.GetOrPost)
           .AddParameter("client_secret", _clientSecret, ParameterType.GetOrPost);
@@ -97,10 +97,5 @@ internal sealed class TokenProvider : ITokenProvider, IDisposable
 
       return token!;
     }
-  }
-
-  public void Dispose()
-  {
-    _client.Dispose();
   }
 }

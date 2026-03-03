@@ -1,5 +1,5 @@
 import { isAllowedUser, Tenant, TenantService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, InvalidValueError, NotFoundError } from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
 import { Namespace as IoNamespace, Socket } from 'socket.io';
 import { v4 as uuid } from 'uuid';
@@ -7,6 +7,7 @@ import { Logger } from 'winston';
 import { ServiceRoles } from './roles';
 import { AgentServiceConfiguration } from './configuration';
 import { AgentBroker } from './model';
+import { CoreUserMessage } from '@mastra/core/llm';
 
 export function onIoConnection(logger: Logger) {
   return async (socket: Socket): Promise<void> => {
@@ -33,7 +34,7 @@ export function onIoConnection(logger: Logger) {
           if (typeof payload !== 'object') {
             throw new InvalidOperationError('payload for message must be a JSON object.');
           } else {
-            const { agent, threadId: threadIdValue, messageId: messageIdValue, content, context } = payload;
+            const { agent, threadId: threadIdValue, messageId: messageIdValue, content, context, rawChunks } = payload;
             const threadId = threadIdValue || uuid();
             const messageId = messageIdValue || uuid();
 
@@ -48,31 +49,48 @@ export function onIoConnection(logger: Logger) {
               user: `${user.name} (ID: ${user.id})`,
             });
 
-            // TODO: form definition ID is specific to the form agent and should be abstracted away.
-            // const runtimeContext = new RuntimeContext<Record<string, unknown>>();
-            // runtimeContext.set('tenant', tenant);
-            // runtimeContext.set('formDefinitionId', context?.formDefinitionId);
+            let userContent: CoreUserMessage['content'];
+            if (Array.isArray(content)) {
+              userContent = content;
+            } else if (typeof content === 'string') {
+              userContent = [{type: 'text',  text: content}];
+            } else {
+              throw new InvalidValueError('content', 'content must string or array of text, image, or file parts.');
+            }
 
             const result = await aiAgent.stream(
               user,
               threadId,
               {
                 role: 'user',
-                content,
+                content: userContent,
               },
               context
             );
             const replyId = uuid();
-            for await (const content of result.textStream) {
-              socket.emit('stream', {
-                agent,
-                threadId,
-                messageId: replyId,
-                replyTo: messageId,
-                content,
-              });
-            }
 
+            if (rawChunks === true) {
+              for await (const chunk of result.fullStream) {
+                socket.emit('stream', {
+                  agent,
+                  threadId,
+                  messageId: replyId,
+                  replyTo: messageId,
+                  chunk,
+                });
+              }
+            } else {              
+              for await (const content of result.textStream) {
+                socket.emit('stream', {
+                  agent,
+                  threadId,
+                  messageId: replyId,
+                  replyTo: messageId,
+                  content,
+                });
+              }
+            }
+            
             socket.emit('stream', {
               agent,
               threadId,

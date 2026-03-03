@@ -11,5 +11,6 @@ export * from './components/RowSkeleton';
 export * from './components/RowLoadMore';
 export * from './components/AgentChat';
 
+export * from './types/agent';
 export * from './utils';
 export * from './useScripts';

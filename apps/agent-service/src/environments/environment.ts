@@ -12,6 +12,8 @@ export const environment = envalid.cleanEnv(
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:agent-service' }),
     CLIENT_SECRET: envalid.str(),
     MODEL: envalid.str({ default: 'github-models/openai/gpt-4.1' }),
+    MODEL_URL: envalid.str(),
+    MODEL_API_KEY: envalid.str(),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3380 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
