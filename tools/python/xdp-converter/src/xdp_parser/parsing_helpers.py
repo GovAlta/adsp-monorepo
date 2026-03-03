@@ -115,7 +115,7 @@ def count_parent_hops(button_field: ET.Element) -> int:
 
 
 def ancestor_by_hops(
-    node: ET.Element, parent_map: Dict[ET.Element, ET.Element], hops: int
+    node: ET.Element, parent_map: Dict[ET.Element, Optional[ET.Element]], hops: int
 ) -> Optional[ET.Element]:
     cur = node
     for _ in range(hops):

@@ -2,7 +2,6 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
-
 _LABEL_PREFIXES = ["txt", "btn", "chk", "dte", "lbl", "cbo", "rb"]
 
 
@@ -23,11 +22,6 @@ def split_camel_case(s: str) -> str:
     # Insert space before numbers if preceded by letters (e.g. Is100 -> Is 100)
     s = re.sub(r"(?<=[a-zA-Z])(?=\d)", " ", s)
     return s
-
-
-def remove_duplicates(seq):
-    seen = set()
-    return [x for x in seq if not (x in seen or seen.add(x))]
 
 
 def name_to_scope(name: str) -> Optional[str]:
@@ -67,14 +61,14 @@ def node_name(el: Optional[ET.Element]) -> Optional[str]:
     return el.attrib.get("name") or el.attrib.get("id") or tag_name(el.tag)
 
 
-def strip_namespaces(elem):
+def strip_namespaces(elem: ET.Element) -> ET.Element:
     for el in elem.iter():
         if el.tag.startswith("{"):
             el.tag = el.tag.split("}", 1)[1]  # keep localname only
     return elem
 
 
-def strip_units(value: str) -> Optional[float]:
+def strip_units(value: str) -> Optional[str]:
     if not value:
         return None
     return (
@@ -94,21 +88,7 @@ def is_help_button(name: str) -> bool:
     return bool(re.match(r"^btn.*Help.*$", name))
 
 
-def remove_duplicates(elems):
-    seen = set()
-    results = []
-    for e in elems:
-        # XdpElement has get_name(); if not, fall back to None
-        name = getattr(e, "get_name", lambda: None)()
-        if name and name in seen:
-            continue
-        if name:
-            seen.add(name)
-        results.append(e)
-    return results
-
-
-def is_hidden(node):
+def is_hidden(node) -> bool:
     return node.get("presence", "").lower() == "hidden"
 
 
@@ -140,7 +120,7 @@ def has_repeater_occur(subform: ET.Element) -> bool:
         return True
 
 
-def build_parent_map(root) -> Dict[ET.Element, Optional[ET.Element]]:
+def build_parent_map(root: ET.Element) -> Dict[ET.Element, Optional[ET.Element]]:
     parent_map: Dict[ET.Element, Optional[ET.Element]] = {root: None}
     for parent in root.iter():
         for child in parent:
@@ -153,7 +133,7 @@ def presence_hidden(node: ET.Element) -> bool:
     return presence in {"hidden", "invisible"}
 
 
-def get_field_caption(field: ET.Element) -> Optional[ET.Element]:
+def get_field_caption(field: ET.Element) -> Optional[str]:
     caption = field.find(".//caption/value")
     if caption is not None:
         # Case 1: plain <text> node

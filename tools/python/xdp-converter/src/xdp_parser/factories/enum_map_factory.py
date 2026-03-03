@@ -1,6 +1,7 @@
 # xdp_parser/factories/enum_map_factory.py
 from typing import Any, Optional
 import xml.etree.ElementTree as ET
+from xdp_parser.control_labels import ControlLabels
 from xdp_parser.factories.abstract_xdp_factory import AbstractXdpFactory
 from xdp_parser.xdp_pseudo_radio import extract_radio_button_labels
 
@@ -13,12 +14,17 @@ class EnumMapFactory(AbstractXdpFactory):
         self.enum_maps: dict[str, dict[str, str]] = {}
         self.label_to_enum: dict[str, tuple[str, str]] = {}
 
-    def handle_basic_input(self, elem: ET.Element, control_labels):
-        name = elem.attrib.get("name")
+    def get_enum_maps(self) -> dict[str, dict[str, str]]:
+        return self.enum_maps
+
+    def handle_basic_input(
+        self, field: ET.Element, labels: ControlLabels
+    ) -> Optional[Any]:
+        name = field.attrib.get("name")
         if not name:
             return None
 
-        enum_map = self._get_enum_map(elem)  # dict[str,str] | None
+        enum_map = self._get_enum_map(field)
         if not enum_map:
             return None
 
@@ -34,7 +40,7 @@ class EnumMapFactory(AbstractXdpFactory):
         if not name:
             return None
 
-        fields = []
+        fields: list[str] = []
         values = []
 
         for field_el in elem.findall("./field"):
@@ -77,18 +83,15 @@ class EnumMapFactory(AbstractXdpFactory):
         return None
 
     # other handle_* remain no-ops
-    def handle_checkbox(self, *_):
+    def handle_checkbox(self, field: ET.Element, labels: ControlLabels):
         return None
 
-    def handle_object_array(self, *_):
+    def handle_object_array(
+        self, container: ET.Element, labels: ControlLabels, row_fields: list
+    ):
         return None
 
-    def handle_group(
-        self, elem: ET.Element, children: list, label: str
-    ) -> Optional[Any]:
-        return None
-
-    def handle_radio_subform(self, elem: ET.Element, _):
+    def handle_radio_subform(self, element: ET.Element, labels):
         """
         Handle faux-radio-groups: subforms containing checkButtons marked with "circle".
         Extract radio labels using extract_radio_button_labels(), which matches what the
@@ -101,14 +104,14 @@ class EnumMapFactory(AbstractXdpFactory):
         - context.radio_groups[group_name] = [field1, field2, ...]
         """
 
-        group_name = elem.attrib.get("name")
+        group_name = element.attrib.get("name")
         if not group_name:
             return None
 
         # ------------------------------------------------------------
         # 1) Extract labels exactly as UI-stage does
         # ------------------------------------------------------------
-        extracted_labels = extract_radio_button_labels(elem)
+        extracted_labels = extract_radio_button_labels(element)
         if not extracted_labels or len(extracted_labels) < 2:
             return None  # not an actual radio group
 
@@ -116,7 +119,7 @@ class EnumMapFactory(AbstractXdpFactory):
         # 2) Collect the corresponding fields in order
         # ------------------------------------------------------------
         fields: list[str] = []
-        for field_el in elem.findall("./field"):
+        for field_el in element.findall("./field"):
             field_name = field_el.attrib.get("name")
             if not field_name:
                 continue
@@ -169,10 +172,10 @@ class EnumMapFactory(AbstractXdpFactory):
 
         return None
 
-    def handle_help_text(self, *_):
+    def handle_help_text(self, elem: ET.Element, help_text: str):
         return None
 
-    def handle_help_icon(self, *_):
+    def handle_help_icon(self, elem: ET.Element, help_text: str):
         return None
 
     def _get_saved_enum_map(self, field_node: ET.Element) -> Optional[dict[str, str]]:

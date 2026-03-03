@@ -31,4 +31,4 @@ class XdpBasicInput(XdpElement):
             elif label:
                 return label
 
-        return None
+        return ""

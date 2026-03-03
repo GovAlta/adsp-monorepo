@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 
 
-def map_subforms(root: ET):
+def map_subforms(root: ET.Element) -> dict[str, ET.Element]:
     subform_map = {}
     for elem in root.iter():
         if elem.tag == "subform":

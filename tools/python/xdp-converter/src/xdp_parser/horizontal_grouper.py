@@ -1,3 +1,4 @@
+from typing import Optional
 import xml.etree.ElementTree as ET
 from xdp_parser.parse_context import ParseContext
 from xdp_parser.xdp_element import XdpElement
@@ -24,7 +25,7 @@ class HorizontalGrouper:
         out = []
         row = []
         row_y = None
-        prev = None
+        prev: Optional[XdpElement] = None
 
         def flush_row():
             nonlocal row, prev, row_y
@@ -89,6 +90,9 @@ class HorizontalGrouper:
                 and abs(my - row_y) <= self.y_fuzz_mm
             )
 
+            # `row` is non-empty here; ensure `prev` is a concrete element for type checkers.
+            if prev is None:
+                prev = row[-1]
             prev_rx = self.right_x(prev)
             ok_gap = True
             if prev_rx is not None and lx is not None:

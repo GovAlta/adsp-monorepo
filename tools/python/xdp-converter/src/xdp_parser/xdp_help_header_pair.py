@@ -1,3 +1,5 @@
+from xdp_parser.parse_context import ParseContext
+from xdp_parser.xdp_help_text import XdpHelpText
 from xdp_parser.xdp_layout import XdpLayout
 from xdp_parser.xdp_element import XdpElement
 
@@ -5,16 +7,18 @@ debug = False
 
 
 class XdpHelpHeaderPair(XdpLayout):
-    def __init__(self, help_elem: XdpElement, header_elem: XdpElement, context):
+    def __init__(
+        self, help_elem: XdpHelpText, header_elem: XdpHelpText, context: ParseContext
+    ):
         super().__init__(
-            help_elem.xdp_element, "VerticalLayout", [header_elem, help_elem]
+            help_elem.xdp_element, "VerticalLayout", [header_elem, help_elem], context
         )
         self.context = context
         self.header_elem = header_elem
         self.help_elem = help_elem
         if debug:
             name = header_elem.get_name()
-            text = help_elem.help
+            text = help_elem.help_text()
             print(f"[XdpHelpHeaderPair] Created pair: {name} -> {text}")
 
     @property

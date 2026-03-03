@@ -193,7 +193,7 @@ def _build_radio_selector_from_run(
         if help_text:
             option_detail_help_by_value[value] = help_text
 
-    radio = XdpPseudoRadio(subform, option_values, context.help_text)
+    radio = XdpPseudoRadio(subform, option_values, context)
 
     # NEW: attach mapping so the rewrite step can use it
     radio.checkbox_to_value = checkbox_to_value

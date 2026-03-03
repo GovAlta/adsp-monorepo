@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 from visibility_rules.stages.rule_model import Action, EventDescription
 from visibility_rules.pipeline_context import (
     CTX_PARENT_MAP,
@@ -154,7 +155,7 @@ class VisibilityScriptExtractor:
 
         return ""
 
-    def _get_target(self, code: str, event_elem) -> str:
+    def _get_target(self, code: str, event_elem) -> Optional[str]:
         # 1. Try to find a target from code like "Section2.presence = ..."
         m = re.search(r"([A-Za-z0-9_.]+)\.presence\s*=", code)
         if m and m.group(1).lower() != "this":

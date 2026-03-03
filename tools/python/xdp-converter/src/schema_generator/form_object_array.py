@@ -27,10 +27,10 @@ class FormObjectArray(FormElement):
     def has_json_schema(self) -> bool:
         return True
 
-    def to_json_schema(self) -> JsonSchemaElement:
+    def to_json_schema(self) -> list[JsonSchemaElement]:
         items = self.collect_item_properties(self.elements)
         item_props = {"type": "object", "properties": items}
-        return {"type": "array", "items": item_props}
+        return [{"type": "array", "items": item_props}]
 
     def collect_item_properties(
         self, elements: List[FormElement]
@@ -52,10 +52,12 @@ class FormObjectArray(FormElement):
             if element.is_leaf and element.has_json_schema():
                 if not element.name:
                     raise ValueError(
-                        f"Element '{element.get_name()}' inside object array '{self.name}' "
+                        f"Element inside object array '{self.name}' "
                         f"claims it has JSON schema but has no name to use as a property key."
                     )
-                props[element.name] = element.to_json_schema()
+                element_props = element.to_json_schema()
+                if element_props:
+                    props[element.name] = element_props[0]
 
         return props
 

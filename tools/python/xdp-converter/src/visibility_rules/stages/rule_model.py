@@ -14,7 +14,7 @@ class Action:
 class EventDescription:
     trigger: Trigger
     action: Action
-    script_node: ET
+    script_node: ET.Element
     owner: str
 
 

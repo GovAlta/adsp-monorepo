@@ -2,10 +2,11 @@ from abc import ABC, abstractmethod
 import xml.etree.ElementTree as ET
 from typing import Any, Optional
 from xdp_parser.control_labels import ControlLabels
+from xdp_parser.parse_context import ParseContext
 
 
 class AbstractXdpFactory(ABC):
-    def __init__(self, context=None):
+    def __init__(self, context: ParseContext):
         self.context = context
 
     @abstractmethod
@@ -40,8 +41,6 @@ class AbstractXdpFactory(ABC):
     @abstractmethod
     def handle_help_icon(self, elem: ET.Element, help_text: str) -> Any: ...
 
-    @abstractmethod
-    def handle_group(
-        self, subform: ET.Element, children: list, label: str
-    ) -> Optional[Any]:
-        pass
+    def get_enum_maps(self) -> Optional[dict[str, dict[str, str]]]:
+        """Override if your factory needs enum maps."""
+        return None
