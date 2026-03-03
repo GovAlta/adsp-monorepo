@@ -17,7 +17,7 @@ export const GoabInputInteger = (props: GoabInputIntegerProps): JSX.Element => {
   const InputValue = data && data !== undefined ? data : '';
   const [localValue, setLocalValue] = useState<string | number>(InputValue);
 
-  const debouncedValue = useDebounce(localValue, 800);
+  const debouncedValue = useDebounce(localValue, 300);
 
   useEffect(() => {
     const newValue = data !== undefined ? data : '';
