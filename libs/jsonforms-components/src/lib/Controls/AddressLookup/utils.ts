@@ -1,5 +1,7 @@
 import { Address, Suggestion } from './types';
 
+import axios from 'axios';
+
 export async function fetchAddressSuggestions(
   formUrl: string,
   query: string,
@@ -13,32 +15,26 @@ export async function fetchAddressSuggestions(
   url.searchParams.set('maxSuggestions', isAlberta ? '50' : '10');
   url.searchParams.set('country', 'CAN');
 
-  const res = await fetch(url.toString(), { signal: opts?.signal });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  try {
+    const res = await axios.get(url.toString(), { signal: opts?.signal });
+    const json = res.data;
 
-  const json = await res.json();
+    if (!json) return [];
+    if (Array.isArray(json)) return json as Suggestion[];
 
-  // ✅ Normalize common API shapes:
-  if (!json) return [];
-
-  // Direct array
-  if (Array.isArray(json)) {
-    return json as Suggestion[];
-  }
-
-  if (typeof json === 'object') {
-    const obj = json as Record<string, unknown>;
-
-    const candidateKeys = ['suggestions', 'items', 'Items'];
-
-    for (const key of candidateKeys) {
-      if (Array.isArray(obj[key])) {
-        return obj[key] as Suggestion[];
+    if (typeof json === 'object') {
+      const obj = json as Record<string, unknown>;
+      for (const key of ['suggestions', 'items', 'Items']) {
+        if (Array.isArray(obj[key])) return obj[key] as Suggestion[];
       }
     }
+    return [];
+    // eslint-disable-next-line
+  } catch (err: any) {
+    // axios throws on abort too; treat as “no results”
+    if (err?.code === 'ERR_CANCELED') return [];
+    throw err;
   }
-
-  return [];
 }
 
 export const filterAlbertaAddresses = (suggestions: Suggestion[]): Suggestion[] => {
