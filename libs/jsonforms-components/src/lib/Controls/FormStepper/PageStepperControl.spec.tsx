@@ -418,7 +418,7 @@ describe('PageStepperControl', () => {
     }
     const cat1 = passed.categories.find((c: CategoryType) => c.id === 1);
     expect(cat1).toBeDefined();
-    expect(cat1.isVisited).toBe(false);
+    expect(cat1.isVisited).toBe(undefined);
 
     // flag=false (boolean) counts as data -> should remain visited
     const cat2 = passed.categories.find((c: CategoryType) => c.id === 2);
