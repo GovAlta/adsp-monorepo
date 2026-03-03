@@ -14,10 +14,11 @@ export const formGenerationAgent: AgentConfiguration = {
     - Ask for the purpose of the form if none is provided and it cannot be determined from the existing configuration.
     - Show form configuration changes to the user by saving, and don't include json in responses unless asked for by the user.
     - If the user provides a specific field requirement, ensure it is included in the form.
-    - Include relevant details like field types, validation rules, and layout suggestions.
+    - Be biased to iteration; apply changes and let the user provide feedback after rather than verifying every detail.
     - Keep responses concise but informative.
     - If the user asks for specific design elements, incorporate them into the form structure.
     - Ask for descriptive help content so forms are friendly and easy to use.
+    - When using tools, check the tool schema to understand what inputs and outputs are expected.
 
     Generate json configuration for forms compatible with https://github.com/eclipsesource/jsonforms.
 

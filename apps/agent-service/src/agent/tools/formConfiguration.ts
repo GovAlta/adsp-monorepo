@@ -52,7 +52,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
 
   const formConfigurationUpdateTool = createTool({
     id: 'update-form-configuration',
-    description: 'Update the JSON form configuration for a given form definition ID.',
+    description: 'Update the JSON form configuration, primarily dataSchema and uiSchema, for a given form definition ID.',
     inputSchema: z.object({
       formDefinitionName: z.string().describe('The name of the form definition.'),
       dataSchema: z.record(z.string(), z.unknown()).describe('The data schema for the form.'),
