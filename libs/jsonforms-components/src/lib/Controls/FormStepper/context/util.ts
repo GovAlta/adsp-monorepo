@@ -5,29 +5,112 @@ import get from 'lodash/get';
 import type { ErrorObject } from 'ajv';
 import { buildConditionalDeps } from '../util/conditionalDeps';
 
+function getValueAtPath(obj: any, path: string) {
+  return path.split('.').reduce((acc, key) => acc?.[key], obj);
+}
+
+function hasMeaningfulValue(val: any): boolean {
+  if (val === undefined || val === null) return false;
+  if (typeof val === 'string') return val.trim() !== '';
+  if (Array.isArray(val)) return val.length > 0;
+  if (typeof val === 'object') return Object.keys(val).length > 0;
+  return true;
+}
+
+function isStepStarted(normalizedScopes: string[], data: any): boolean {
+  return normalizedScopes.some((path) => {
+    return hasMeaningfulValue(getValueAtPath(data, path));
+  });
+}
+
+function getSubSchema(schema: any, path: string): any {
+  const parts = path
+    .replace(/^#\//, '')
+    .split('/')
+    .filter((p) => p !== 'properties') // remove 'properties' segments
+    .slice(0, -1);
+
+  let current: any = schema;
+  for (const part of parts) {
+    if (!current) return undefined;
+
+    if (current.properties && current.properties[part]) {
+      current = current.properties[part];
+    } else if (current.items) {
+      current = current.items;
+    } else {
+      return undefined;
+    }
+  }
+  return current;
+}
+
+function anyRequiredFieldEmpty(scopes: string[], data: any, required: string[], schema: any): boolean {
+  for (const scope of scopes) {
+    const path = scope
+      .replace(/^#\//, '')
+      .split('/')
+      .filter((p) => p !== 'properties');
+
+    const subSchema = getSubSchema(schema, scope);
+    let value = data;
+    const requiredSubset = subSchema;
+
+    for (const key of path) {
+      if (value && key in value) {
+        value = value[key];
+      } else {
+        value = undefined;
+        break;
+      }
+    }
+
+    required = required.concat(requiredSubset?.required || []);
+
+    if (
+      value === undefined ||
+      value === null ||
+      (typeof value === 'string' && value.trim() === '') ||
+      (Array.isArray(value) && value.length === 0)
+    ) {
+      if (required.includes(path[path.length - 1])) {
+        console.log('we are true');
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
 export function getStepStatus(opts: {
   scopes: string[];
   data: any;
   errors: AjvError[];
   schema: any;
+  visited: boolean;
 }): 'Completed' | 'InProgress' | 'NotStarted' {
-  const { scopes, errors, schema } = opts;
-
-  const incompleteInStep = getIncompletePaths(errors, scopes);
-  if (incompleteInStep.length > 0) return 'InProgress';
-
+  const { scopes, errors, schema, data, visited } = opts;
   const normalizedScopes = scopes.map(normalizeSchemaPath).filter(Boolean);
-  const deps = buildConditionalDeps(schema);
+  const started = isStepStarted(normalizedScopes, data);
+  const incompleteInStep = getIncompletePaths(errors, scopes);
 
+  if (incompleteInStep.length > 0) {
+    return 'InProgress';
+  }
+  const required = schema.required || [];
+  if (anyRequiredFieldEmpty(scopes, data, required, schema)) {
+    return 'InProgress';
+  }
+  const deps = buildConditionalDeps(schema);
   const controllersInStep = normalizedScopes.filter((s) => deps.has(s));
-  if (controllersInStep.length === 0) return 'Completed';
+
+  if (controllersInStep.length === 0) return visited || started ? 'Completed' : 'NotStarted';
 
   const affected = new Set<string>();
   for (const c of controllersInStep) {
     for (const p of deps.get(c) || []) affected.add(p);
   }
-
-  if (affected.size === 0) return 'Completed';
+  if (affected.size === 0) return visited || started ? 'Completed' : 'NotStarted';
 
   const affectedPaths = [...affected];
 
@@ -39,7 +122,7 @@ export function getStepStatus(opts: {
     }
   }
 
-  return 'Completed';
+  return visited || started ? 'Completed' : 'NotStarted';
 }
 export const isErrorPathIncluded = (errorPaths: string[], path: string): boolean => {
   return errorPaths.some((ePath) => {

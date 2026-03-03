@@ -32,6 +32,10 @@ describe('Test jsonforms stepper context', () => {
     required: ['firstName'],
   };
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const uischema = {
     type: 'Categorization',
     elements: [
@@ -141,22 +145,6 @@ describe('Test jsonforms stepper context', () => {
     expect(screen.getByTestId('number-of-category').textContent).toContain('Found');
   });
 
-  it('can go to category with required', async () => {
-    const { getByTestId } = render(
-      <JsonFormsStepperContextProvider
-        StepperProps={{ ...stepperBaseProps, schema: schemaWithRequired }}
-        children={<ComponentForTestWithGoToPage />}
-      />
-    );
-    const to0CategoryBtn = getByTestId('go-to-0');
-    const to0CategoryBtnWithUpdate = getByTestId('go-to-0-0');
-
-    fireEvent.click(to0CategoryBtn);
-    fireEvent.click(to0CategoryBtnWithUpdate);
-
-    expect(mockDispatch.mock.calls[4][0].type === 'page/to/index');
-  });
-
   it('can run reducer actions ', async () => {
     const stateOneCategory: StepperContextDataType = {
       activeId: 0,
@@ -230,12 +218,13 @@ describe('Test jsonforms stepper context', () => {
             id: 0,
             errors: [],
             schema: { type: 'object', properties: {} },
-            data: {},
+            data: { firstName: 'test' },
           },
         }
       ).categories[0].isValid
     ).toBe(true);
 
+    // once visited return true
     expect(
       stepperReducer(
         { ...stateTwoCategory, activeId: 0 },
@@ -243,21 +232,84 @@ describe('Test jsonforms stepper context', () => {
           type: 'update/category',
           payload: {
             ajv: ajvInstance,
-            id: 1,
-            errors: [
-              {
-                keyword: 'required',
-                instancePath: '/secondName',
-                schemaPath: '',
-                params: {},
-              },
-            ],
+            id: 0,
+            errors: [],
             schema: { type: 'object', properties: {} },
             data: {},
           },
         }
-      ).categories[1].isValid
+      ).categories[0].isValid
     ).toBe(true);
+
+    const yyy = stepperReducer(
+      { ...stateTwoCategory, activeId: 0 },
+      {
+        type: 'update/category',
+        payload: {
+          ajv: ajvInstance,
+          id: 1,
+          errors: [
+            {
+              keyword: 'required',
+              instancePath: '/secondName',
+              schemaPath: '',
+              params: {},
+            },
+          ],
+          schema: { type: 'object', properties: {} },
+          data: { firstName: 'test' },
+        },
+      }
+    );
+
+    const noData = stepperReducer(
+      { ...stateTwoCategory, activeId: 0 },
+      {
+        type: 'update/category',
+        payload: {
+          ajv: ajvInstance,
+          id: 1,
+          errors: [
+            {
+              keyword: 'required',
+              instancePath: '/secondName',
+              schemaPath: '',
+              params: {},
+            },
+          ],
+          schema: { type: 'object', properties: {} },
+          data: {},
+        },
+      }
+    );
+
+    expect(noData.categories[1].isVisited).toBe(true);
+    expect(noData.categories[1].isValid).toBe(true);
+
+    const filledOut = stepperReducer(
+      { ...stateTwoCategory, activeId: 0 },
+      {
+        type: 'update/category',
+        payload: {
+          ajv: ajvInstance,
+          id: 1,
+          errors: [
+            {
+              keyword: 'required',
+              instancePath: '/secondName',
+              schemaPath: '',
+              params: {},
+            },
+          ],
+          schema: { type: 'object', properties: {} },
+          data: { secondName: 'test' },
+        },
+      }
+    );
+
+    expect(filledOut.categories[1].isVisited).toBe(true);
+    expect(filledOut.categories[1].isValid).toBe(true);
+
     expect(
       stepperReducer(
         { ...stateTwoCategory, activeId: 0 },
@@ -276,6 +328,22 @@ describe('Test jsonforms stepper context', () => {
         }
       ).isValid
     ).toBe(false);
+  });
+
+  it('can go to category with required', async () => {
+    const { getByTestId } = render(
+      <JsonFormsStepperContextProvider
+        StepperProps={{ ...stepperBaseProps, schema: schemaWithRequired }}
+        children={<ComponentForTestWithGoToPage />}
+      />
+    );
+    const to0CategoryBtn = getByTestId('go-to-0');
+    const to0CategoryBtnWithUpdate = getByTestId('go-to-0-0');
+
+    fireEvent.click(to0CategoryBtn);
+    fireEvent.click(to0CategoryBtnWithUpdate);
+
+    expect(mockDispatch.mock.calls[4][0].type === 'page/to/index');
   });
 
   it('should call validatePage when navigating back to show validation errors', async () => {
