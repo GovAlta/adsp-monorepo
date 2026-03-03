@@ -239,18 +239,6 @@ describe('Form Stepper Control', () => {
     const renderer = render(
       <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={getForm(formData)} />
     );
-    // const step1 = renderer.getByTestId('step_0-content');
-    // expect(step1).toBeInTheDocument();
-    // expect(step1).toBeVisible();
-
-    // const step2 = renderer.getByTestId('step_1-content');
-    // expect(step2).toBeInTheDocument();
-
-    // const step3 = renderer.queryByTestId('step_2-content');
-    // expect(step3).toBeNull();
-
-    // const summaryStep = renderer.getByTestId('summary_step-content');
-    // expect(summaryStep).toBeInTheDocument();
   });
 
   it('can render a nested Categorization', () => {
@@ -292,7 +280,7 @@ describe('Form Stepper Control', () => {
     expect(firstName?.getAttribute('value')).toBe('Bob');
   });
 
-  it('will recognize an incomplete status', () => {
+  it('will recognize status as not-started because its unvisited', () => {
     const { baseElement } = render(
       <JsonFormsStepperContextProvider
         StepperProps={stepperBaseProps}
@@ -302,10 +290,10 @@ describe('Form Stepper Control', () => {
 
     const step1 = baseElement.querySelector('goa-form-step[text="Name"]');
     expect(step1).toBeInTheDocument();
-    expect(step1!.getAttribute('status')).toBe('incomplete');
+    expect(step1!.getAttribute('status')).toBe(null);
   });
 
-  it('will recognize a incomplete status', () => {
+  it('will recognize status as not-started because unvisited', () => {
     const { baseElement } = render(
       <JsonFormsStepperContextProvider
         StepperProps={{ ...stepperBaseProps, data: { ...formData, name: { firstName: 'Bob', lastName: 'Bing' } } }}
@@ -314,7 +302,7 @@ describe('Form Stepper Control', () => {
     );
     const step1 = baseElement.querySelector('goa-form-step[text="Name"]');
     expect(step1).toBeInTheDocument();
-    expect(step1!.getAttribute('status')).toBe('incomplete');
+    expect(step1!.getAttribute('status')).toBe(null);
   });
 
   describe('step navigation', () => {

@@ -91,11 +91,13 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
           return cat;
         }
         const filteredErrors = ajv.errors && ajv.errors.filter((error) => error?.data != null);
+        const visited = true;
         const status = getStepStatus({
           scopes: cat.scopes,
           data,
           errors: filteredErrors ?? [],
           schema,
+          visited,
         });
 
         return {
