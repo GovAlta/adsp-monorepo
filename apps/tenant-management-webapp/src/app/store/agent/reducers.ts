@@ -1,4 +1,4 @@
-import { AgentMessage } from '@core-services/app-common';
+import { AgentMessage, ToolCall } from '@core-services/app-common';
 import {
   AGENT_RESPONSE_ACTION,
   AgentActionTypes,
@@ -9,6 +9,7 @@ import {
   DISCONNECT_AGENT_ACTION,
   DISCONNECT_AGENT_SUCCESS_ACTION,
   EDIT_AGENT_ACTION,
+  ERROR,
   GET_AGENTS_ACTION,
   GET_AGENTS_SUCCESS_ACTION,
   MESSAGE_AGENT_ACTION,
@@ -19,8 +20,10 @@ import {
   START_EDIT_AGENT_ACTION,
   START_THREAD_ACTION,
   TEXT_DELTA,
+  TOOL_CALL,
   TOOL_CALL_ERROR,
   TOOL_CALL_RESULT,
+  TRIPWIRE,
   UPDATE_AGENT_ACTION,
   UPDATE_AGENT_SUCCESS_ACTION,
 } from './actions';
@@ -80,7 +83,8 @@ function processResponseChunk(message: AgentMessage, action: AgentResponseAction
         content: message.content + action.chunk.payload.text,
         streaming: !action.done,
       }
-    case TOOL_CALL_RESULT:
+    case TOOL_CALL:
+      // Tool is being invoked - create pending entry
       return {
         ...message,
         toolCalls: [
@@ -88,24 +92,72 @@ function processResponseChunk(message: AgentMessage, action: AgentResponseAction
           {
             toolCallId: action.chunk.payload.toolCallId,
             toolName: action.chunk.payload.toolName,
-            args: action.chunk.payload.args,
-            result: action.chunk.payload.result,
+            args: {},
           }
         ]
       }
-    case TOOL_CALL_ERROR:
-      return {
-        ...message,
-        toolCalls: [
-          ...message.toolCalls,
-          {
-            toolCallId: action.chunk.payload.toolCallId,
-            toolName: action.chunk.payload.toolName,
-            args: action.chunk.payload.args,
-            error: action.chunk.payload.error,
-          }
-        ]
+    case TOOL_CALL_RESULT: {
+      // Update existing tool call with result, or add new one if not found
+      if (!action.chunk || action.chunk.type !== TOOL_CALL_RESULT) return message;
+      
+      const { toolCallId, toolName, args, result } = action.chunk.payload;
+      const existingResultIndex = message.toolCalls.findIndex(
+        (tc: ToolCall) => tc.toolCallId === toolCallId
+      );
+      if (existingResultIndex >= 0) {
+        const updatedToolCalls = [...message.toolCalls];
+        updatedToolCalls[existingResultIndex] = {
+          ...updatedToolCalls[existingResultIndex],
+          args,
+          result,
+        };
+        return { ...message, toolCalls: updatedToolCalls };
+      } else {
+        return {
+          ...message,
+          toolCalls: [
+            ...message.toolCalls,
+            {
+              toolCallId,
+              toolName,
+              args,
+              result,
+            }
+          ]
+        };
       }
+    }
+    case TOOL_CALL_ERROR: {
+      // Update existing tool call with error, or add new one if not found
+      if (!action.chunk || action.chunk.type !== TOOL_CALL_ERROR) return message;
+      
+      const { toolCallId, toolName, args, error } = action.chunk.payload;
+      const existingErrorIndex = message.toolCalls.findIndex(
+        (tc: ToolCall) => tc.toolCallId === toolCallId
+      );
+      if (existingErrorIndex >= 0) {
+        const updatedToolCalls = [...message.toolCalls];
+        updatedToolCalls[existingErrorIndex] = {
+          ...updatedToolCalls[existingErrorIndex],
+          args,
+          error,
+        };
+        return { ...message, toolCalls: updatedToolCalls };
+      } else {
+        return {
+          ...message,
+          toolCalls: [
+            ...message.toolCalls,
+            {
+              toolCallId,
+              toolName,
+              args,
+              error,
+            }
+          ]
+        };
+      }
+    }
     case REASONING_START:
       return {
         ...message,
@@ -131,6 +183,23 @@ function processResponseChunk(message: AgentMessage, action: AgentResponseAction
           streaming: false
         } : message.reasoning
       }
+    case ERROR:
+    case TRIPWIRE: {
+      // Add error to the errors array
+      if (!action.chunk || (action.chunk.type !== ERROR && action.chunk.type !== TRIPWIRE)) return message;
+      
+      return {
+        ...message,
+        errors: [
+          ...(message.errors || []),
+          {
+            type: action.chunk.type,
+            message: action.chunk.payload.message,
+            details: action.chunk.payload.details,
+          }
+        ]
+      };
+    }
     default:
       return message;
   }
