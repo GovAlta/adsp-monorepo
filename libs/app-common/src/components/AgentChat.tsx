@@ -4,7 +4,7 @@ import { FunctionComponent, memo, useMemo, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import styled from 'styled-components';
 import { useAutoScroll } from '../hooks';
-import { AgentMessage, AgentError, Reasoning, Message, ToolCall, UserMessage, UserContent, Attachment, ResolvedImagePart, ResolvedFilePart } from '../types/agent';
+import { AgentMessage, AgentError as AgentErrorType, Reasoning, Message, ToolCall, UserMessage, UserContent, Attachment, ResolvedImagePart, ResolvedFilePart } from '../types/agent';
 
 // ========================================
 // Type Definitions
@@ -41,7 +41,7 @@ interface AgentReasoningProps {
 
 interface AgentErrorProps {
   className?: string;
-  error: AgentError;
+  error: AgentErrorType;
 }
 
 // ========================================
