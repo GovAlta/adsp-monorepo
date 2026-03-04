@@ -285,6 +285,7 @@ export const UploadFileService = (data: FileUploadPayload) =>
       // Build FormData
       const formData = new FormData();
       formData.append('type', data.type);
+      formData.append('filename', data.file.name); // Explicit filename to avoid encoding issues
       formData.append('file', data.file);
       if (data.recordId) {
         formData.append('recordId', data.recordId);

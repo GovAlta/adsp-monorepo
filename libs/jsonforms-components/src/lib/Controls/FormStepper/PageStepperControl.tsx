@@ -104,17 +104,11 @@ export const FormPagesView = (props: CategorizationStepperLayoutRendererProps): 
   };
 
   if (categories.length + 1 === activeId) {
-    const patchedCategories = categories.map((c) => {
-      const scopes = getCategoryScopes(c);
-      const hasData = hasDataInScopes(data, scopes);
-      return hasData ? c : { ...c, isVisited: false, isCompleted: false, isValid: false };
-    });
-
-    const visibleCats = patchedCategories.filter((c) => c.visible);
+    const visibleCats = categories.filter((c) => c.visible);
     const completedCount = visibleCats.filter((c) => c.isValid && c.isCompleted).length;
 
     const tocProps: TocProps = {
-      categories: patchedCategories,
+      categories: categories,
       onClick: handleGoToPage,
       title: props.uischema?.options?.title,
       subtitle: props.uischema?.options?.subtitle,

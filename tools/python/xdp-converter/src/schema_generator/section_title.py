@@ -1,4 +1,6 @@
-from schema_generator.form_element import FormElement
+from typing import Optional
+
+from schema_generator.form_element import FormElement, JsonSchemaElement, UISchema
 import re
 
 from xdp_parser.parse_context import ParseContext
@@ -6,12 +8,12 @@ from xdp_parser.parse_context import ParseContext
 
 class SectionTitle(FormElement):
     def __init__(self, text, context: ParseContext):
-        super().__init__("guidance", None, None, context)
+        super().__init__("guidance", "", None, context)
         self.help = text
         self.label = None
 
-    def build_ui_schema(self):
-        ui_schema = {"type": "HelpContent"}
+    def build_ui_schema(self) -> Optional[UISchema]:
+        ui_schema: UISchema = {"type": "HelpContent"}
         if self.label:
             ui_schema["label"] = f"{self.label}"
         if self.help:
@@ -24,8 +26,8 @@ class SectionTitle(FormElement):
     def has_json_schema(self):
         return False
 
-    def to_json_schema(self):
-        return None
+    def to_json_schema(self) -> list[JsonSchemaElement]:
+        return []
 
 
 def split_camel_case(s):

@@ -2,7 +2,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, cast
 
 from importlib.resources.readers import remove_duplicates
 
@@ -13,12 +13,12 @@ from xdp_parser.xdp_utils import compute_full_xdp_path, convert_to_mm
 
 
 class XdpElement(ABC):
-    def __init__(self, xdp: ET.Element, labels=None, context: ParseContext = None):
+    def __init__(self, xdp: ET.Element, labels, context: ParseContext):
         self.xdp_element = xdp
-        self.children: list[ET.Element] = []
+        self.children: list[XdpElement] = []
         self.labels = labels
         self.context = context or {}
-        self.parent_map = context.get("parent_map", {}) if context else {}
+        self.parent_map = cast(dict, context.get_parent_map() if context else {})
         self.geometry: XdpGeometry = XdpGeometry.resolve(xdp, self.parent_map)
         self.presence = xdp.get("presence", "").strip().lower()
         self.is_header_element = False
@@ -161,7 +161,7 @@ class XdpElement(ABC):
         return False  # default implementation
 
     @abstractmethod
-    def to_form_element(self) -> FormElement:
+    def to_form_element(self) -> Optional[FormElement]:
         pass
 
     def get_type(self):
@@ -176,13 +176,16 @@ class XdpElement(ABC):
     def has_children(self) -> bool:
         return len(self.children) > 0
 
-    def is_control(self):
+    def is_control(self) -> bool:
         return False  # default
 
     def is_header(self) -> bool:
         return self.is_header_element
 
-    def is_container(self):
+    def help_text(self) -> Optional[str]:
+        return None  # default
+
+    def is_container(self) -> bool:
         return False
 
     # override in subclasses as needed
@@ -193,34 +196,13 @@ class XdpElement(ABC):
         if self.can_promote_to_header():
             self.is_header_element = True
 
-    def is_actionable_control(e: XdpElement) -> bool:
-        if not e.is_control():
-            return False
-
-        # Needs XdpElement to expose the underlying ET.Element, or properties extracted from it.
-        elem = e.elem  # or e.node, e.source_elem, however you store it
-
-        access = (elem.get("access") or "").lower()
-        if access in ("protected", "readonly"):
-            return False
-
-        relevant = (elem.get("relevant") or "").lower()
-        if "-print" in relevant:
-            return False
-
-        presence = (elem.get("presence") or "").lower()
-        if presence == "hidden":
-            return False
-
-        return True
-
-    def is_help_text(self):
+    def is_help_text(self) -> bool:
         return False  # default
 
-    def is_help_icon(self):
+    def is_help_icon(self) -> bool:
         return False  # default
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.xdp_element.get("name", "")
 
     def get_label(self) -> Optional[DisplayText]:
@@ -229,7 +211,7 @@ class XdpElement(ABC):
             label = self.labels.get(self.get_name())
         return label
 
-    def get_enumeration_values(self):
+    def get_enumeration_values(self) -> list[str]:
         """
         Return de-duped human-readable choices from <items><text>...</text></items>,
         ignoring any <items> blocks with presence="hidden".
@@ -249,7 +231,7 @@ class XdpElement(ABC):
 
         if enum_values:
             return [str(v) for v in remove_duplicates(enum_values)]
-        return None
+        return []
 
     def get_format(self):
         isDate = matches_prefix(self.get_name(), "dte")

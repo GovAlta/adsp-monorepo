@@ -49,7 +49,7 @@ export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   const [localValue, setLocalValue] = useState<string>(data ?? '');
 
-  const debouncedValue = useDebounce(localValue, 800);
+  const debouncedValue = useDebounce(localValue, 300);
 
   useEffect(() => {
     setLocalValue(data ?? '');

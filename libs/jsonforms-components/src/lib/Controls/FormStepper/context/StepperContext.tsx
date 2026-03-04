@@ -47,11 +47,14 @@ const createStepperContextInitData = (
   const categories = categorization.elements?.map((c, id) => {
     const scopes = pickPropertyValues(c, 'scope', 'ListWithDetail');
 
+    const visited = false;
+
     const status = getStepStatus({
       scopes,
       data,
       errors: filteredErrors ?? [],
       schema,
+      visited,
     });
 
     return {
@@ -60,7 +63,7 @@ const createStepperContextInitData = (
       scopes,
       isCompleted: status === 'Completed',
       isValid: status === 'Completed',
-      isVisited: status !== 'NotStarted',
+      isVisited: status === 'Completed',
       status,
       uischema: c,
       isEnabled: isEnabled(c, data, '', ajv, undefined),

@@ -169,16 +169,16 @@ describe('getStepStatus (with mocked conditional deps)', () => {
       errorMessageErr('/whichOfThemApplies', '#/properties/whichOfThemApplies/errorMessage', 'required'),
     ];
 
-    const status = getStepStatus({ scopes, data: {}, errors, schema: {} });
+    const status = getStepStatus({ scopes, data: {}, errors, schema: {}, visited: false });
     expect(status).toBe('InProgress');
   });
 
-  it('returns Completed when no errors in step AND no controllers in step', () => {
+  it('returns NotStarted when no errors in step AND no controllers in step', () => {
     (buildConditionalDeps as jest.Mock).mockReturnValue(new Map());
 
     const scopes = ['#/properties/applicantContactDetails/properties/firstName'];
-    const status = getStepStatus({ scopes, data: {}, errors: [], schema: {} });
-    expect(status).toBe('Completed');
+    const status = getStepStatus({ scopes, data: {}, errors: [], schema: {}, visited: false });
+    expect(status).toBe('NotStarted');
   });
 
   it('returns InProgress when step contains a controller that triggers missing required in affected path', () => {
@@ -193,7 +193,13 @@ describe('getStepStatus (with mocked conditional deps)', () => {
     // error is outside this step scope, but is under affectedPaths => should make controller step InProgress
     const errors: AjvError[] = [requiredErr('', 'applicantContactDetails', '#/allOf/0/then/required')];
 
-    const status = getStepStatus({ scopes, data: { fillingApplicationOnbehalf: 'No' }, errors, schema: {} });
+    const status = getStepStatus({
+      scopes,
+      data: { fillingApplicationOnbehalf: 'No' },
+      errors,
+      schema: {},
+      visited: false,
+    });
     expect(status).toBe('InProgress');
   });
 
@@ -208,7 +214,13 @@ describe('getStepStatus (with mocked conditional deps)', () => {
       errorMessageErr('/whichOfThemApplies', '#/properties/whichOfThemApplies/errorMessage', 'required'),
     ];
 
-    const status = getStepStatus({ scopes, data: { fillingApplicationOnbehalf: 'No' }, errors, schema: {} });
+    const status = getStepStatus({
+      scopes,
+      data: { fillingApplicationOnbehalf: 'No' },
+      errors,
+      schema: {},
+      visited: false,
+    });
     expect(status).toBe('Completed');
   });
 });

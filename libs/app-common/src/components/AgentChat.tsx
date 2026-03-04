@@ -76,10 +76,19 @@ const ContainerDiv = styled.div`
   
   & .content {
     margin: var(--goa-space-m) var(--goa-space-xs) var(--goa-space-l) var(--goa-space-xs);
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
   
   & .content[data-from='agent'] {
     margin-right: var(--goa-space-l);
+  }
+  
+  & .content pre,
+  & .content code {
+    max-width: 100%;
+    overflow-x: auto;
   }
 `;
 

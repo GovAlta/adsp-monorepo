@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 from typing import List, Tuple
-from xdp_parser.help_pairer import HelpPairer
+from xdp_parser.help_pairer import HelpPairing
 from xdp_parser.horizontal_grouper import HorizontalGrouper
 from xdp_parser.control_description_extractor import ControlDescriptionExtractor
 from xdp_parser.control_labels import ControlLabels
@@ -12,19 +12,21 @@ from xdp_parser.visibility_rule_xformer import (
     rewrite_rules_after_pseudo_radio_transform,
 )
 from xdp_parser.xdp_element import XdpElement
-from xdp_parser.xdp_group import XdpGroup
 from xdp_parser.xdp_subform_placeholder import XdpSubformPlaceholder
 from xdp_parser.xdp_utils import convert_to_mm
 
 debug = False
 
 
-class XdpGroupingPass:
+class XdpRefinementPass:
     """
-    Single-responsibility pass that:
-      - consumes XdpSubformPlaceholder nodes
-      - recursively groups their children
-      - decides whether the subform should be a Group or be flattened
+    Applies semantic refinement to the raw XDP parse tree, including:
+        - Sorting children according to layout rules (flow vs geometry)
+        - Promoting subform labels to group headers
+        - Resolving control labels and descriptions
+        - Pairing help icons with their associated help text
+        - Consolidating horizontal rows of controls
+        - Transforming pseudo-radio subforms into real radio selectors
     """
 
     def __init__(
@@ -35,21 +37,18 @@ class XdpGroupingPass:
     ) -> None:
         self.factory = factory
         self.context = context
-        self.child_map = {}
-        # TODO get rid of this and pass context explicitly to resolve_group_label
-        self.context.child_map = self.child_map
         self.control_labels = control_labels
 
     # --------------------------------------------------
     # Public entry
     # --------------------------------------------------
-    def group_placeholders(self, roots: List[XdpElement]) -> List[XdpElement]:
+    def refine(self, roots: List[XdpElement]) -> List[XdpElement]:
         result: List[XdpElement] = []
         for node in roots:
-            result.extend(self._group_node(node, parent_label=None))
+            result.extend(self._refine_node(node, parent_label=None))
         return result
 
-    def _group_node(
+    def _refine_node(
         self, node: XdpElement, parent_label: str | None
     ) -> List[XdpElement]:
         if not isinstance(node, XdpSubformPlaceholder):
@@ -57,52 +56,42 @@ class XdpGroupingPass:
 
         container = node.subform_elem
 
-        grouped_children: List[XdpElement] = []
+        children: List[XdpElement] = []
         for child in node.children:
-            grouped_children.extend(self._group_node(child, parent_label=parent_label))
+            children.extend(self._refine_node(child, parent_label))
 
-        grouped_children = self.sort_xdp_elements(
-            container, grouped_children, self.context.get("parent_map", {})
+        children = self.sort_xdp_elements(
+            container, children, self.context.get_parent_map()
         )
 
-        promote_group_headers(container, grouped_children, debug=False)
+        promote_group_headers(container, children, debug=False)
 
-        grouped_children = self.control_labels.resolve_control_labels(grouped_children)
+        children = self.control_labels.resolve_control_labels(children)
 
         extractor = ControlDescriptionExtractor()
-        grouped_children = extractor.update_control_descriptions(
-            grouped_children, self.control_labels
-        )
+        children = extractor.update_control_descriptions(children, self.control_labels)
 
-        pairer = HelpPairer(debug=False)
-        grouped_children = pairer.consolidate_help_pairs(
-            grouped_children,
+        pairing = HelpPairing(debug=False)
+        children = pairing.consolidate_help_pairs(
+            children,
             context=self.context,
         )
 
         horizontal_grouper = HorizontalGrouper()
-        grouped_children = horizontal_grouper.consolidate_rows(
-            container, grouped_children, self.context
+        children = horizontal_grouper.consolidate_rows(
+            container, children, self.context
         )
 
         # Transform pseudo radio subforms into radio selectors
-        grouped_children = transform_pseudo_radios_in_subform(
-            container, grouped_children, self.context
-        )
+        children = transform_pseudo_radios_in_subform(container, children, self.context)
         # Pseudo-radio transformation changes the data model (checkboxes -> radio).
         # If rules were generated earlier against the checkbox model, rewrite them now.
-        rewrite_rules_after_pseudo_radio_transform(grouped_children, self.context)
-
-        self.child_map[id(container)] = grouped_children
+        rewrite_rules_after_pseudo_radio_transform(children, self.context)
 
         # Decide grouping using sorted children
-        # if self.should_group_subform(subform, grouped_children, resolved_label):
-        #     group = self._build_group_from_subform(
-        #         subform, grouped_children, resolved_label
-        #     )
-        #     return [group] if group else grouped_children
+        # TODO do the grouping here.
 
-        return grouped_children
+        return children
 
     def sort_xdp_elements(
         self,
@@ -122,7 +111,7 @@ class XdpGroupingPass:
                     for c in e.get_children():
                         print(f"    {c.get_name()} x={c.x} y={c.y} w={c.w} h={c.h}")
                 children = self.sort_xdp_elements(
-                    detail_container, detail_fields, parent_map, 1
+                    detail_container, detail_fields, parent_map
                 )
                 e.set_children(children)
                 if debug:
@@ -130,13 +119,13 @@ class XdpGroupingPass:
                     for c in e.get_children():
                         print(f"    {c.get_name()} x={c.x} y={c.y} w={c.w} h={c.h}")
 
-        layout = XdpGroupingPass.resolve_effective_layout(container, parent_map)
+        layout = XdpRefinementPass.resolve_effective_layout(container, parent_map)
 
         if layout == "tb":
-            return XdpGroupingPass._flow_sort_tb(elements)
+            return XdpRefinementPass._flow_sort_tb(elements)
 
         if layout == "lr-tb":
-            return XdpGroupingPass._flow_sort_lr_tb(container, elements)
+            return XdpRefinementPass._flow_sort_lr_tb(container, elements)
 
         # Non-flow containers: geometry sort
         return sorted(
@@ -180,8 +169,8 @@ class XdpGroupingPass:
                 and e.x is not None
                 and e.y is not None
             ):
-                e.computed_x = float(e.geometry.x)
-                e.computed_y = float(e.geometry.y)
+                e.computed_x = float(e.x)
+                e.computed_y = float(e.y)
                 placed.append((float(e.y), float(e.x), idx, e))
                 continue
 
@@ -278,16 +267,6 @@ class XdpGroupingPass:
         names = {c.get_name() for c in controls}
         hits = sum(1 for n in names if n in rules)
         return hits >= 2
-
-    def _build_group_from_subform(
-        self,
-        subform: ET.Element,
-        elements: list[XdpElement],
-        resolved_label: str | None,
-    ) -> XdpGroup | None:
-        if not elements:
-            return None
-        return self.factory.handle_group(subform, elements, resolved_label)
 
 
 def print_subform_map(subform, grouped_children):

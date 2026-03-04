@@ -9,6 +9,7 @@ class AnnotatedControl(FormLayout):
 
     def __init__(self, elements, context: ParseContext):
         super().__init__("HorizontalLayout", elements, context)
+        self.enum: list[str] = []
 
     def has_json_schema(self):
         return True
