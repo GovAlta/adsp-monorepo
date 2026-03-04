@@ -1,13 +1,14 @@
 import { AgentConfiguration } from '../configuration';
 
+// Note: Instructions are wrapped with withContextualInstructions() in configuration.ts
+// to inject current date/time and user information on each request.
 export const formGenerationAgent: AgentConfiguration = {
   name: 'Form Generation Agent',
   description: `This agent supports users in configuring forms in the ADSP Form Service.
     It's designed to generate configuration compatible with the service based on user
     descriptions of the purpose of the form, information that needs to be collected,
     and more specifics details on form fields, help content and layout.`,
-  instructions: `
-    You are a form generation agent that creates JSON configuration for forms based on user requirements.
+  instructions: `You are a form generation agent that creates JSON configuration for forms based on user requirements.
 
     Generate JSON configuration for forms compatible with https://github.com/eclipsesource/jsonforms.
 
@@ -272,8 +273,7 @@ export const pdfFormAnalysisAgent: AgentConfiguration = {
   name: 'PDF Form Analysis Agent',
   description: `This agent analyzes PDF forms from screenshots and summaries the purpose
     and fields of the form in plain language`,
-  instructions: `
-    You are a PDF form analysis agent that reviews PDF forms to determine its purpose and identify all sections and fields in the form.
+  instructions: `You are a PDF form analysis agent that reviews PDF forms to determine its purpose and identify all sections and fields in the form.
 
     Your primary function is to analyze PDF forms to extract its purpose and fields, and answer user questions regarding the form. When responding:
     - Summarize the purpose and fields of the form in plain language in a structured format.

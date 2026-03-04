@@ -1,4 +1,4 @@
-import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
 import type { RequestContext } from '@mastra/core/request-context';
@@ -9,6 +9,30 @@ import { environment } from '../../environments/environment';
 import { AgentBroker } from '../model';
 import { createApiRequestTool, createTools } from '../tools';
 import { createBrokerInputProcessors, createInputProcessors } from '../processors';
+
+/**
+ * Wraps agent instructions to automatically inject contextual information on each request.
+ * Includes current date/time and user information to help agents with temporal awareness
+ * and personalized responses. Returns a function matching Mastra's DynamicArgument signature,
+ * evaluated per-request.
+ */
+function withContextualInstructions(instructions: string) {
+  return ({ requestContext }: { requestContext: RequestContext<Record<string, unknown>> }) => {
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const currentDateTime = now.toISOString();
+    const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
+    
+    const user = requestContext.get('user') as User | undefined;
+    const userName = user?.name || 'User';
+    
+    return `Current date: ${currentDate} (${dayOfWeek})
+Current time: ${currentDateTime}
+User: ${userName}
+
+${instructions}`;
+  };
+}
 
 interface TypedToolConfiguration {
   id: string;
@@ -71,7 +95,7 @@ export class AgentServiceConfiguration {
                   id: key,
                   name: configuration.name,
                   description: configuration.description,
-                  instructions: configuration.instructions,
+                  instructions: withContextualInstructions(configuration.instructions),
                   model: environment.MODEL_URL ? {
                     id: `custom/${environment.MODEL}`,
                     modelId: environment.MODEL,
