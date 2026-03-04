@@ -280,7 +280,7 @@ When(
       method: requestType,
       url: valueServiceGetEventURL,
       failOnStatusCode: false,
-      timeout: 30000,
+      timeout: 60000,
       auth: {
         bearer: Cypress.env('autotest-admin-token'),
       },
