@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { FunctionComponent, useState, useEffect, useRef } from 'react';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import type { EventSearchCriteria } from '@store/event/models';
@@ -26,6 +26,9 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const [searchBox, setSearchBox] = useState('');
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLUListElement>(null);
   const today = new Date().toLocaleDateString().split('/').reverse().join('-');
   const message = 'Use a colon (:) between namespace and name';
   const dispatch = useDispatch();
@@ -33,6 +36,27 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   useEffect(() => {
     dispatch(getEventDefinitions());
   }, [dispatch]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (open && searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !suggestionsRef.current) return;
+
+    const activeItem = suggestionsRef.current.querySelector('.suggestion-active') as HTMLLIElement | null;
+    activeItem?.scrollIntoView({ block: 'nearest' });
+  }, [activeSuggestionIndex, open, filteredSuggestions]);
+
   const events = useSelector((state: RootState) => state.event.definitions);
 
   const autoCompleteList = Object.keys(events).sort((a, b) => (a < b ? -1 : 1));
@@ -78,6 +102,16 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     selectSuggestion(suggestion);
     setFilteredSuggestions([suggestion]);
     setOpen(false);
+
+    const resolved = resolveCriteriaFromInput(suggestion);
+    if (!resolved) {
+      setError(true);
+      return;
+    }
+    setError(false);
+    setSearchCriteria(resolved);
+    setSearchBox(`${resolved.namespace}:${resolved.name}`);
+    onSearch?.(resolved);
   }
   const resolveCriteriaFromInput = (input: string): EventSearchCriteria | null => {
     const raw = (input ?? '').trim();
@@ -107,12 +141,28 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   const onKeyDown = (e) => {
     setError(false);
     setOpen(true);
-    if (e.keyCode === 9) {
+    if (e.key === 'Tab' || e.keyCode === 9) {
       setOpen(false);
-    } else if (e.keyCode === 13) {
+    } else if (e.key === 'Escape' || e.keyCode === 27) {
+      setOpen(false);
+    } else if (e.key === 'Enter' || e.keyCode === 13) {
       e.preventDefault();
       setOpen(false);
       setError(false);
+
+      if (filteredSuggestions.length > 0) {
+        const selected = filteredSuggestions[activeSuggestionIndex] ?? filteredSuggestions[0];
+        selectSuggestion(selected);
+        const resolved = resolveCriteriaFromInput(selected);
+        if (!resolved) {
+          setError(true);
+          return;
+        }
+        setSearchCriteria(resolved);
+        setSearchBox(`${resolved.namespace}:${resolved.name}`);
+        onSearch?.(resolved);
+        return;
+      }
 
       const inputValue = (e.currentTarget as HTMLInputElement).value;
 
@@ -125,16 +175,28 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
       setSearchCriteria(resolved);
       setSearchBox(`${resolved.namespace}:${resolved.name}`);
       onSearch?.(resolved);
-    } else if (e.keyCode === 38) {
-      if (activeSuggestionIndex === 0) {
+    } else if (e.key === 'ArrowUp' || e.keyCode === 38) {
+      e.preventDefault();
+      const suggestions =
+        filteredSuggestions.length > 0 ? filteredSuggestions : getSuggestions(autoCompleteList, searchBox || '', 80);
+      if (filteredSuggestions.length === 0) {
+        setFilteredSuggestions(suggestions);
+      }
+      if (suggestions.length === 0) {
         return;
       }
-      setActiveSuggestionIndex(activeSuggestionIndex - 1);
-    } else if (e.keyCode === 40) {
-      if (activeSuggestionIndex === filteredSuggestions.length - 1) {
+      setActiveSuggestionIndex((index) => (index > 0 ? index - 1 : 0));
+    } else if (e.key === 'ArrowDown' || e.keyCode === 40) {
+      e.preventDefault();
+      const suggestions =
+        filteredSuggestions.length > 0 ? filteredSuggestions : getSuggestions(autoCompleteList, searchBox || '', 80);
+      if (filteredSuggestions.length === 0) {
+        setFilteredSuggestions(suggestions);
+      }
+      if (suggestions.length === 0) {
         return;
       }
-      setActiveSuggestionIndex(activeSuggestionIndex + 1);
+      setActiveSuggestionIndex((index) => (index < suggestions.length - 1 ? index + 1 : suggestions.length - 1));
     }
   };
 
@@ -239,65 +301,87 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             error={error ? message : ''}
             label="Search event namespace and name"
           >
-            <div
-              className={open ? 'search search-open' : 'search'}
-              onKeyDown={(e) => {
-                if (e.keyCode === 9) {
-                  setOpen(false);
-                }
-              }}
-            >
-              <input
-                type="text"
-                name="searchBox"
-                value={searchBox}
-                onChange={suggestionOnChange}
-                onKeyDown={onKeyDown}
-                aria-label="Search"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setError(false);
-                  setOpen(!open);
-                  if (!open && searchBox.length === 0) {
-                    setFilteredSuggestions(autoCompleteList);
+            <div ref={searchRef}>
+              <div
+                className={open ? 'search search-open' : 'search'}
+                onKeyDown={(e) => {
+                  if (e.keyCode === 9) {
+                    setOpen(false);
                   }
                 }}
-              />
+              >
+                <input
+                  ref={inputRef}
+                  type="text"
+                  name="searchBox"
+                  value={searchBox}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  onChange={suggestionOnChange}
+                  onKeyDown={onKeyDown}
+                  aria-label="Search"
+                  onFocus={() => {
+                    setOpen(true);
+                    if (searchBox.length === 0) {
+                      setFilteredSuggestions(autoCompleteList);
+                      setActiveSuggestionIndex(0);
+                    }
+                  }}
+                  onClick={(e) => {
+                    setError(false);
+                    setOpen(true);
+                    if (searchBox.length === 0) {
+                      setFilteredSuggestions(autoCompleteList);
+                      setActiveSuggestionIndex(0);
+                    }
+                  }}
+                />
 
-              <GoabIconButton
-                icon={open ? 'close-circle' : 'chevron-down'}
-                title="dropdown"
-                size="medium"
-                testId="menu-open-close"
-                variant="dark"
-                onClick={() => {
-                  if (!open && searchBox.length === 0) {
-                    setFilteredSuggestions(autoCompleteList);
-                  }
-                  if (open && searchBox.length > 0) {
-                    setSearchBox('');
-                    setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
-                  }
-                  setOpen(!open);
-                }}
-              />
+                <GoabIconButton
+                  icon={open ? 'close-circle' : 'chevron-down'}
+                  title="dropdown"
+                  size="medium"
+                  testId="menu-open-close"
+                  variant="dark"
+                  onClick={() => {
+                    if (!open && searchBox.length === 0) {
+                      setFilteredSuggestions(autoCompleteList);
+                      setActiveSuggestionIndex(0);
+                    }
+                    if (open && searchBox.length > 0) {
+                      setSearchBox('');
+                      setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
+                    }
+                    const nextOpen = !open;
+                    setOpen(nextOpen);
+                    if (nextOpen) {
+                      setTimeout(() => inputRef.current?.focus(), 0);
+                    }
+                  }}
+                />
+              </div>
+              {open && autoCompleteList && (
+                <ul ref={suggestionsRef} className="suggestions">
+                  {filteredSuggestions.map((suggestion, index) => {
+                    let className;
+                    if (index === activeSuggestionIndex) {
+                      className = 'suggestion-active';
+                    }
+                    return (
+                      <li
+                        className={className}
+                        key={index}
+                        onMouseEnter={() => setActiveSuggestionIndex(index)}
+                        onMouseDown={(e) => handleItemOnClick(e, suggestion)}
+                      >
+                        {renderHighlight(suggestion)}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
-
-            {open && autoCompleteList && (
-              <ul className="suggestions">
-                {filteredSuggestions.map((suggestion, index) => {
-                  let className;
-                  if (index === activeSuggestionIndex) {
-                    className = 'suggestion-active';
-                  }
-                  return (
-                    <li className={className} key={index} onClick={(e) => handleItemOnClick(e, suggestion)}>
-                      {renderHighlight(suggestion)}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
           </GoabFormItem>
         </SearchBox>
         <GoabFormItem label="Minimum timestamp">
@@ -408,6 +492,11 @@ const SearchBox = styled.div`
     background-color: var(--color-primary);
     color: var(--color-white);
     cursor: pointer;
+    font-weight: var(--fw-bold);
+  }
+  .suggestions .suggestion-active {
+    background-color: var(--color-primary);
+    color: var(--color-white);
     font-weight: var(--fw-bold);
   }
 `;
