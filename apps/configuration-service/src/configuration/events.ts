@@ -28,6 +28,10 @@ export const ConfigurationUpdatedDefinition: DomainEventDefinition = {
           data: {},
         },
       },
+      sizeBytes: {
+        type: 'number',
+        description: 'Size of the configuration document in bytes',
+      },
       updatedBy: {
         type: 'object',
         properties: {
@@ -83,6 +87,10 @@ export const RevisionCreatedDefinition: DomainEventDefinition = {
         type: 'string',
         format: 'date-time',
       },
+      sizeBytes: {
+        type: 'number',
+        description: 'Size of the configuration document in bytes',
+      },
       createdBy: {
         type: 'object',
         properties: {
@@ -132,7 +140,8 @@ export const configurationUpdated = (
   name: string,
   revision: number,
   lastUpdated: string,
-  update: { operation: string; data: unknown }
+  update: { operation: string; data: unknown },
+  sizeBytes?: number
 ): DomainEvent => ({
   name: CONFIGURATION_UPDATED,
   timestamp: new Date(),
@@ -148,6 +157,7 @@ export const configurationUpdated = (
     revision,
     lastUpdated,
     update,
+    sizeBytes,
     updatedBy: {
       name: updatedBy.name,
       id: updatedBy.id,
@@ -188,7 +198,8 @@ export const revisionCreated = (
   namespace: string,
   name: string,
   created: string,
-  revision: number
+  revision: number,
+  sizeBytes?: number
 ): DomainEvent => ({
   name: REVISION_CREATED,
   timestamp: new Date(),
@@ -203,6 +214,7 @@ export const revisionCreated = (
     name,
     created,
     revision,
+    sizeBytes,
     createdBy: {
       name: createdBy.name,
       id: createdBy.id,
