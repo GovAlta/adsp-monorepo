@@ -55,6 +55,12 @@ export interface Reasoning {
   content: string;
 }
 
+export interface AgentError {
+  type: 'error' | 'tripwire';
+  message: string;
+  details?: unknown;
+}
+
 const AGENT_FROM = 'agent';
 export interface AgentMessage {
   id: string;
@@ -64,4 +70,5 @@ export interface AgentMessage {
   streaming: boolean;
   toolCalls: ToolCall[];
   reasoning?: Reasoning;
+  errors?: AgentError[];
 }

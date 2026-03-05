@@ -126,13 +126,32 @@ interface ReasoningEndChunk {
   }
 }
 
+export const ERROR = 'error';
+interface ErrorChunk {
+  type: typeof ERROR,
+  payload: {
+    message: string;
+    details?: unknown;
+  }
+}
+
+export const TRIPWIRE = 'tripwire';
+interface TripwireChunk {
+  type: typeof TRIPWIRE,
+  payload: {
+    message: string;
+    details?: unknown;
+  }
+}
+
 export interface AgentResponseAction {
   type: typeof AGENT_RESPONSE_ACTION;
   threadId: string;
   messageId: string;
   chunk?: TextDeltaChunk |
     ToolCallChunk | ToolCallResultChunk | ToolCallErrorChunk |
-    ReasoningStartChunk | ReasoningDeltaChunk | ReasoningEndChunk;
+    ReasoningStartChunk | ReasoningDeltaChunk | ReasoningEndChunk |
+    ErrorChunk | TripwireChunk;
   done: boolean;
 }
 
