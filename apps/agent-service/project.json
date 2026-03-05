@@ -3,10 +3,23 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/agent-service/src",
   "projectType": "application",
+  "implicitDependencies": ["jsonforms-components"],
   "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
+      "dependsOn": [
+        "^build",
+        {
+          "projects": ["jsonforms-components"],
+          "target": "generate-renderer-catalog"
+        }
+      ],
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/dist/libs/jsonforms-components/renderer-catalog.json"
+      ],
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
@@ -15,7 +28,13 @@
         "outputPath": "dist/apps/agent-service",
         "main": "apps/agent-service/src/main.ts",
         "tsConfig": "apps/agent-service/tsconfig.app.json",
-        "assets": [],
+        "assets": [
+          {
+            "glob": "renderer-catalog.json",
+            "input": "dist/libs/jsonforms-components",
+            "output": "."
+          }
+        ],
         "webpackConfig": "apps/agent-service/webpack.config.js",
         "generatePackageJson": true
       },

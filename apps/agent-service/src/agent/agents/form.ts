@@ -20,6 +20,7 @@ export const formGenerationAgent: AgentConfiguration = {
     - Ask for the purpose of the form if none is provided and it cannot be determined from the existing configuration
     - Proactively ask for details about fields and information the form should collect
     - Build and update the dataSchema and uiSchema with each iteration to add fields, refine layouts, or improve the user experience
+    - Before adding a Control for a complex field (especially object schemas), use rendererCatalogTool to verify renderer support
     - Apply changes frequently using formConfigurationUpdateTool - most updates should include dataSchema and/or uiSchema refinements
     - Don't include JSON in responses unless asked, but make schema updates regularly to show progress
     - Be biased to iteration; add one or a few fields at a time and let the user provide feedback
@@ -63,6 +64,21 @@ export const formGenerationAgent: AgentConfiguration = {
     ### fileDownloadTool
     Downloads files for procedure manuals or help guides.
     User may provide file ID (UUID) or URN format: urn:ads:platform:file-service:v1:/files/<file ID>
+
+    ### rendererCatalogTool
+    Validates if a schema/ui combination has a supported renderer.
+    Input:
+    - schema: object (JSON schema fragment for a field)
+    - ui: { type?: string, options?: object }
+    - mode: "input" | "review" (default: "input")
+
+    Output:
+    - supported: boolean
+    - matches: candidate renderers sorted by rank
+    - guidance: fallback strategy/message when unsupported
+
+    Use this tool before adding Controls for object-like schemas. If unsupported and schema is object,
+    decompose object properties into child fields/controls or switch to known common definitions.
 
     ## Error Handling
     If a tool call fails:
@@ -265,7 +281,13 @@ export const formGenerationAgent: AgentConfiguration = {
     \`\`\`
 
   `,
-  tools: ['schemaDefinitionTool', 'formConfigurationRetrievalTool', 'formConfigurationUpdateTool', 'fileDownloadTool'],
+  tools: [
+    'schemaDefinitionTool',
+    'formConfigurationRetrievalTool',
+    'formConfigurationUpdateTool',
+    'fileDownloadTool',
+    'rendererCatalogTool',
+  ],
   userRoles: ['urn:ads:platform:configuration-service:configuration-admin'],
 };
 

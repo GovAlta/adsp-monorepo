@@ -59,6 +59,12 @@ const defaultState: AgentState = {
         'Tool for updating Form Definition configuration. Note that formDefinitionId is ' +
         'passed via the runtime context rather than via the input.',
     },
+    {
+      id: 'rendererCatalogTool',
+      description:
+        'Tool for validating that schema and UI combinations have matching JSONForms renderers. ' +
+        'Returns matching renderers with their constraints and provides fallback guidance when no renderer is available.',
+    },
   ],
   agents: {},
   editor: {

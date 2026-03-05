@@ -1,0 +1,61 @@
+{
+  "GoAEnumControlTester": {
+    "match": {
+      "schema": {
+        "enum": true
+      }
+    },
+    "ui": {
+      "type": "Control",
+      "options": {
+        "optional": {
+          "format": [
+            "enum"
+          ]
+        }
+      }
+    },
+    "notes": [
+      "Matches standard enum controls and object-backed enum configuration when options.format=enum."
+    ]
+  },
+  "CategorizationStepperRendererTester": {
+    "kind": "layout",
+    "ui": {
+      "type": "Categorization",
+      "options": {
+        "optional": {
+          "variant": [
+            "stepper"
+          ]
+        }
+      }
+    },
+    "notes": [
+      "Requires Categorization with valid Category children; default variant behaves as stepper."
+    ]
+  },
+  "CategorizationPagesRendererTester": {
+    "kind": "layout",
+    "ui": {
+      "type": "Categorization",
+      "options": {
+        "required": {
+          "variant": "pages"
+        }
+      }
+    },
+    "notes": [
+      "Requires Categorization with options.variant=pages and valid Category children."
+    ]
+  },
+  "GoAListWithDetailsTester": {
+    "kind": "custom",
+    "ui": {
+      "type": "ListWithDetail"
+    },
+    "notes": [
+      "Custom UI schema type used for array item detail views."
+    ]
+  }
+}
