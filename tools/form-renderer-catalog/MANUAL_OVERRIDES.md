@@ -66,6 +66,7 @@ The file is a JSON object keyed by **tester symbol names** (the exported tester 
 - **`ui.options.required`**: UI schema options that **must** be present with specific values for this renderer to match
 - **`ui.options.optional`**: UI schema options that **may** be present; values are arrays of acceptable values
 - **`rank`**: Tester rank/priority (higher ranks win in JSONForms resolution)
+- **`internal`**: Boolean flag marking renderers that should be excluded from catalog tool results (e.g., error renderers used only for invalid configurations)
 - **`notes`**: Array of explanatory strings describing renderer behavior, edge cases, or usage guidance
 
 ## How Overrides Are Applied
@@ -217,6 +218,23 @@ The generator uses **deep merge** semantics:
   }
 }
 ```
+
+### GoAErrorControlTester
+
+**Why needed**: This is an internal error renderer displayed when configuration is invalid. It should not be suggested as a valid renderer option in the catalog tool.
+
+```json
+{
+  "GoAErrorControlTester": {
+    "internal": true,
+    "notes": [
+      "Error renderer displayed when configuration is invalid. Should not be suggested as a valid renderer option."
+    ]
+  }
+}
+```
+
+**Note**: The `internal: true` flag causes the renderer catalog tool to exclude this renderer from results. This prevents AI agents from receiving the error renderer as a valid suggestion when building forms.
 
 ## Best Practices
 

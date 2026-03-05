@@ -57,5 +57,11 @@
     "notes": [
       "Custom UI schema type used for array item detail views."
     ]
+  },
+  "GoAErrorControlTester": {
+    "internal": true,
+    "notes": [
+      "Error renderer displayed when configuration is invalid. Should not be suggested as a valid renderer option."
+    ]
   }
 }
