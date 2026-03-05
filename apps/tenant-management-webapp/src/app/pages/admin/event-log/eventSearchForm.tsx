@@ -102,6 +102,16 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     selectSuggestion(suggestion);
     setFilteredSuggestions([suggestion]);
     setOpen(false);
+
+    const resolved = resolveCriteriaFromInput(suggestion);
+    if (!resolved) {
+      setError(true);
+      return;
+    }
+    setError(false);
+    setSearchCriteria(resolved);
+    setSearchBox(`${resolved.namespace}:${resolved.name}`);
+    onSearch?.(resolved);
   }
   const resolveCriteriaFromInput = (input: string): EventSearchCriteria | null => {
     const raw = (input ?? '').trim();
@@ -305,6 +315,9 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                   type="text"
                   name="searchBox"
                   value={searchBox}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
                   onChange={suggestionOnChange}
                   onKeyDown={onKeyDown}
                   aria-label="Search"
@@ -348,28 +361,27 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                   }}
                 />
               </div>
-            </div>
-
               {open && autoCompleteList && (
                 <ul ref={suggestionsRef} className="suggestions">
-                {filteredSuggestions.map((suggestion, index) => {
-                  let className;
-                  if (index === activeSuggestionIndex) {
-                    className = 'suggestion-active';
-                  }
-                  return (
+                  {filteredSuggestions.map((suggestion, index) => {
+                    let className;
+                    if (index === activeSuggestionIndex) {
+                      className = 'suggestion-active';
+                    }
+                    return (
                       <li
                         className={className}
                         key={index}
                         onMouseEnter={() => setActiveSuggestionIndex(index)}
-                        onClick={(e) => handleItemOnClick(e, suggestion)}
+                        onMouseDown={(e) => handleItemOnClick(e, suggestion)}
                       >
-                      {renderHighlight(suggestion)}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+                        {renderHighlight(suggestion)}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
           </GoabFormItem>
         </SearchBox>
         <GoabFormItem label="Minimum timestamp">
