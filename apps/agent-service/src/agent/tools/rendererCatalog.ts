@@ -62,6 +62,7 @@ const rendererDefinitionSchema = z.object({
     })
     .default({ file: null }),
   notes: z.array(z.string()).default([]),
+  internal: z.boolean().optional().default(false),
 });
 
 const rendererCatalogSchema = z.object({
@@ -133,6 +134,7 @@ export async function createRendererCatalogTools({ logger }: RendererCatalogTool
 
       const matches = catalog.renderers
         .filter((renderer) => renderer.supports[mode])
+        .filter((renderer) => !renderer.internal) // Exclude internal/error renderers
         .map((renderer) => {
           const evaluation = evaluateRenderer(renderer, schema, ui?.type, ui?.options ?? {});
           return {
