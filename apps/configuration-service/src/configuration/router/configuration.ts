@@ -24,6 +24,7 @@ import { configurationUpdated, revisionCreated, activeRevisionSet, configuration
 import { ConfigurationEntity } from '../model';
 import { ConfigurationRepository, Repositories } from '../repository';
 import { ConfigurationDefinition, ConfigurationDefinitions, ConfigurationRevision } from '../types';
+import { calculateConfigurationSize } from '../utils';
 import {
   OPERATION_DELETE,
   OPERATION_REPLACE,
@@ -341,7 +342,16 @@ export const patchConfigurationRevision =
         updated = await entity.update(user, update);
         end();
         res.send(mapConfiguration(apiId, updated));
+        
+        // Send event with size calculation (non-blocking)
         if (updated.tenantId) {
+          const sizeBytes = calculateConfigurationSize(
+            logger,
+            updated.namespace,
+            updated.name,
+            updated.latest?.configuration
+          );
+
           eventService.send(
             configurationUpdated(
               apiId,
@@ -354,7 +364,8 @@ export const patchConfigurationRevision =
               {
                 operation: request.operation,
                 data: updateData,
-              }
+              },
+              sizeBytes
             )
           );
         }
@@ -430,7 +441,16 @@ export const configurationOperations =
           const updated = await configuration.createRevision(user);
 
           res.send(mapConfiguration(apiId, updated));
+          
+          // Send event with size calculation (non-blocking)
           if (updated.tenantId) {
+            const sizeBytes = calculateConfigurationSize(
+              logger,
+              updated.namespace,
+              updated.name,
+              updated.latest?.configuration
+            );
+
             eventService.send(
               revisionCreated(
                 user,
@@ -438,7 +458,8 @@ export const configurationOperations =
                 updated.namespace,
                 updated.name,
                 updated.latest?.created.toISOString(),
-                updated.latest?.revision
+                updated.latest?.revision,
+                sizeBytes
               )
             );
           }
