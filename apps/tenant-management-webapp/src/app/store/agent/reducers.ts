@@ -82,13 +82,16 @@ const defaultState: AgentState = {
 };
 
 function processResponseChunk(message: AgentMessage, action: AgentResponseAction): AgentMessage {
+  if (action.done) {
+    message = { ...message, streaming: false };
+  }
+
   switch (action.chunk?.type) {
     case TEXT_DELTA:
       return {
         ...message,
         content: message.content + action.chunk.payload.text,
-        streaming: !action.done,
-      }
+      };
     case TOOL_CALL:
       // Tool is being invoked - create pending entry
       return {
@@ -99,17 +102,15 @@ function processResponseChunk(message: AgentMessage, action: AgentResponseAction
             toolCallId: action.chunk.payload.toolCallId,
             toolName: action.chunk.payload.toolName,
             args: {},
-          }
-        ]
-      }
+          },
+        ],
+      };
     case TOOL_CALL_RESULT: {
       // Update existing tool call with result, or add new one if not found
       if (!action.chunk || action.chunk.type !== TOOL_CALL_RESULT) return message;
-      
+
       const { toolCallId, toolName, args, result } = action.chunk.payload;
-      const existingResultIndex = message.toolCalls.findIndex(
-        (tc: ToolCall) => tc.toolCallId === toolCallId
-      );
+      const existingResultIndex = message.toolCalls.findIndex((tc: ToolCall) => tc.toolCallId === toolCallId);
       if (existingResultIndex >= 0) {
         const updatedToolCalls = [...message.toolCalls];
         updatedToolCalls[existingResultIndex] = {
@@ -128,19 +129,17 @@ function processResponseChunk(message: AgentMessage, action: AgentResponseAction
               toolName,
               args,
               result,
-            }
-          ]
+            },
+          ],
         };
       }
     }
     case TOOL_CALL_ERROR: {
       // Update existing tool call with error, or add new one if not found
       if (!action.chunk || action.chunk.type !== TOOL_CALL_ERROR) return message;
-      
+
       const { toolCallId, toolName, args, error } = action.chunk.payload;
-      const existingErrorIndex = message.toolCalls.findIndex(
-        (tc: ToolCall) => tc.toolCallId === toolCallId
-      );
+      const existingErrorIndex = message.toolCalls.findIndex((tc: ToolCall) => tc.toolCallId === toolCallId);
       if (existingErrorIndex >= 0) {
         const updatedToolCalls = [...message.toolCalls];
         updatedToolCalls[existingErrorIndex] = {
@@ -159,8 +158,8 @@ function processResponseChunk(message: AgentMessage, action: AgentResponseAction
               toolName,
               args,
               error,
-            }
-          ]
+            },
+          ],
         };
       }
     }
@@ -170,30 +169,36 @@ function processResponseChunk(message: AgentMessage, action: AgentResponseAction
         reasoning: {
           id: action.chunk.payload.id,
           streaming: true,
-          content: ''
-        }
-      }
+          content: '',
+        },
+      };
     case REASONING_DELTA:
       return {
         ...message,
-        reasoning: action.chunk.payload.id === message.reasoning.id ? {
-          ...message.reasoning,
-          content: message.reasoning.content + action.chunk.payload.text
-        } : message.reasoning
-      }
+        reasoning:
+          action.chunk.payload.id === message.reasoning.id
+            ? {
+                ...message.reasoning,
+                content: message.reasoning.content + action.chunk.payload.text,
+              }
+            : message.reasoning,
+      };
     case REASONING_END:
       return {
         ...message,
-        reasoning: action.chunk.payload.id === message.reasoning.id ? {
-          ...message.reasoning,
-          streaming: false
-        } : message.reasoning
-      }
+        reasoning:
+          action.chunk.payload.id === message.reasoning.id
+            ? {
+                ...message.reasoning,
+                streaming: false,
+              }
+            : message.reasoning,
+      };
     case ERROR:
     case TRIPWIRE: {
       // Add error to the errors array
       if (!action.chunk || (action.chunk.type !== ERROR && action.chunk.type !== TRIPWIRE)) return message;
-      
+
       return {
         ...message,
         errors: [
@@ -202,8 +207,8 @@ function processResponseChunk(message: AgentMessage, action: AgentResponseAction
             type: action.chunk.type,
             message: action.chunk.payload.message,
             details: action.chunk.payload.details,
-          }
-        ]
+          },
+        ],
       };
     }
     default:
@@ -268,14 +273,17 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
       const messages = { ...state.messages };
       if (!state.threadMessages[action.threadId].includes(action.messageId)) {
         threadMessages[action.threadId].push(action.messageId);
-        messages[action.messageId] = processResponseChunk({
-          id: action.messageId,
-          threadId: action.threadId,
-          from: 'agent',
-          content: '',
-          toolCalls: [],
-          streaming: true,
-        }, action);
+        messages[action.messageId] = processResponseChunk(
+          {
+            id: action.messageId,
+            threadId: action.threadId,
+            from: 'agent',
+            content: '',
+            toolCalls: [],
+            streaming: true,
+          },
+          action,
+        );
       } else {
         const message = messages[action.messageId];
         messages[action.messageId] = processResponseChunk(message as AgentMessage, action);
@@ -303,10 +311,10 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
         editor:
           state.editor.agent?.id === action.agent.id
             ? {
-              ...state.editor,
-              agent: action.agent,
-              hasChanges: false,
-            }
+                ...state.editor,
+                agent: action.agent,
+                hasChanges: false,
+              }
             : state.editor,
       };
     case DELETE_AGENT_SUCCESS_ACTION: {
