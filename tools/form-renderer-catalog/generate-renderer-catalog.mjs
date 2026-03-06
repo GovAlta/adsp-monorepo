@@ -42,7 +42,7 @@ function main() {
     const override = manualOverrides[testerSymbol] || {};
 
     const base = {
-      id: toKebabCase(testerSymbol.replace(/Tester$/, '')),
+      id: toKebabCase(testerSymbol.replace(/Tester$/, '').replace(/^GoA/, 'Goa')),
       tester: testerSymbol,
       kind: inferred.kind,
       ui: inferred.ui,
@@ -83,7 +83,7 @@ function main() {
   writeJson(distCatalogPath, catalog);
 
   process.stdout.write(
-    `Generated renderer catalog with ${sortedRenderers.length} entries at ${relativeToRoot(distCatalogPath)}\n`
+    `Generated renderer catalog with ${sortedRenderers.length} entries at ${relativeToRoot(distCatalogPath)}\n`,
   );
 }
 
@@ -159,10 +159,9 @@ function inferFromDefinition(definition, helperDefinitions) {
     schema.exactProperties = helper.exact;
   }
 
-  const helperRefs = Array.from(
-    matcherExpression.matchAll(/\b([A-Za-z0-9_]+)\b/g),
-    (match) => match[1]
-  ).filter((symbol) => helperDefinitions.has(symbol));
+  const helperRefs = Array.from(matcherExpression.matchAll(/\b([A-Za-z0-9_]+)\b/g), (match) => match[1]).filter(
+    (symbol) => helperDefinitions.has(symbol),
+  );
 
   if (helperRefs.length > 0) {
     const helper = helperDefinitions.get(helperRefs[0]);
@@ -175,7 +174,10 @@ function inferFromDefinition(definition, helperDefinitions) {
     ui.options.required.variant = 'pages';
   }
 
-  if (matcherExpression.includes("uischema.options?.variant === 'stepper'") || matcherExpression.includes("variant === undefined")) {
+  if (
+    matcherExpression.includes("uischema.options?.variant === 'stepper'") ||
+    matcherExpression.includes('variant === undefined')
+  ) {
     ui.options.optional.variant = ['stepper'];
   }
 
@@ -183,7 +185,14 @@ function inferFromDefinition(definition, helperDefinitions) {
     notes.push('Requires Categorization with valid Category children.');
   }
 
-  if (schema.type === null && schema.format === null && schema.enum === null && schema.requiredProperties.length === 0 && optionMatches.length === 0 && !uiType) {
+  if (
+    schema.type === null &&
+    schema.format === null &&
+    schema.enum === null &&
+    schema.requiredProperties.length === 0 &&
+    optionMatches.length === 0 &&
+    !uiType
+  ) {
     inference = 'manual-required';
     notes.push('Could not fully infer matcher constraints from tester expression.');
   }
@@ -218,7 +227,9 @@ function readTesterDefinitions(root) {
   for (const filePath of files) {
     const content = fs.readFileSync(filePath, 'utf8');
 
-    const matches = content.matchAll(/export const\s+([A-Za-z0-9_]+)(?::\s*RankedTester)?\s*=\s*rankWith\(\s*(\d+)\s*,\s*([\s\S]*?)\)\s*;/g);
+    const matches = content.matchAll(
+      /export const\s+([A-Za-z0-9_]+)(?::\s*RankedTester)?\s*=\s*rankWith\(\s*(\d+)\s*,\s*([\s\S]*?)\)\s*;/g,
+    );
     for (const match of matches) {
       const symbol = match[1];
       const rank = Number(match[2]);
@@ -241,7 +252,7 @@ function readSchemaMatchHelpers(root) {
   for (const filePath of files) {
     const content = fs.readFileSync(filePath, 'utf8');
     const matches = content.matchAll(
-      /export const\s+([A-Za-z0-9_]+)\s*=\s*createSchemaMatchTester\(\s*\[([\s\S]*?)\]\s*(?:,\s*(true|false))?\s*\)/g
+      /export const\s+([A-Za-z0-9_]+)\s*=\s*createSchemaMatchTester\(\s*\[([\s\S]*?)\]\s*(?:,\s*(true|false))?\s*\)/g,
     );
 
     for (const match of matches) {

@@ -125,7 +125,7 @@ export async function createRendererCatalogTools({ logger }: RendererCatalogTool
   const rendererCatalogTool = createTool({
     id: 'get-renderer-catalog-match',
     description:
-      'Checks whether a schema/ui combination has a matching JSONForms renderer and returns fallback guidance when unsupported.',
+      'Checks whether a schema/ui combination has a matching JSONForms renderer and returns fallback guidance when unsupported. Use this before adding Controls for objects, arrays, custom formats, or any field with uncertain renderer support.',
     inputSchema: rendererCatalogInputSchema,
     outputSchema: rendererCatalogOutputSchema,
     execute: async (inputData) => {
