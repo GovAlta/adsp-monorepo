@@ -161,7 +161,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       setIsOpen(true);
       const firstItem = props.items.at(0);
 
-      let index = 0;
+      const index = 0;
       let el = document.getElementById(`${PREFIX}-${label}-${props.items.at(index)?.value}`);
 
       if (el === null && !isAutoCompletion) {
@@ -193,7 +193,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       setInputTextFocus();
     }
 
-    let index = items.findIndex((val) => {
+    const index = items.findIndex((val) => {
       return val.label === e.currentTarget.innerText;
     });
 
