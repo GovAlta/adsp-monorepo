@@ -19,7 +19,7 @@ export async function createFileTools({ directory, tokenProvider, logger }: File
     id: 'download-file',
     description: 'Downloads a file from the file service based on a file ID.',
     inputSchema: z.object({
-      fileId: z.string(),
+      fileId: z.string().describe('UUID of the file. If user provides a URN (urn:ads:platform:file-service:v1:/files/<id>), extract and pass only the UUID.'),
     }),
     outputSchema: z.object({
       content: z.string(),

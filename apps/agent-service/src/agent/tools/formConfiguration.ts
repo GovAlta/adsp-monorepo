@@ -16,7 +16,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
 
   const formConfigurationRetrievalTool = createTool({
     id: 'get-form-configuration',
-    description: 'Retrieve the JSON form configuration for a given form definition ID.',
+    description: 'Retrieve the JSON form configuration. The form definition ID comes from request context (no input required).',
     inputSchema: z.object({}),
     outputSchema: z.object({
       dataSchema: z.record(z.string(), z.unknown()),
@@ -93,7 +93,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
 
   const formConfigurationUpdateTool = createTool({
     id: 'update-form-configuration',
-    description: 'Update the JSON form configuration.',
+    description: 'Update the JSON form configuration. The form definition ID comes from request context. Typically update both dataSchema and uiSchema together in a single call.',
     inputSchema: z.object({
       name: z.string().optional().describe('The name of the form.'),
       dataSchema: z.record(z.string(), z.unknown()).optional().describe('The data schema for the JSON form.'),

@@ -8,6 +8,8 @@ import {
   WithClassname,
   ControlProps,
   JsonSchema,
+  schemaTypeIs,
+  formatIs,
 } from '@jsonforms/core';
 import { GoabInput, GoabFormItem } from '@abgov/react-components';
 import { WithInputProps } from './type';
@@ -108,9 +110,7 @@ export const GoAEmailControl = (props: ControlProps & WithClassname) => <GoAEmai
 
 export const GoAEmailControlTester: RankedTester = rankWith(
   4,
-  and(
-    isControl,
-    schemaMatches((schema) => schema.format === 'email')
-  )
+  and(isControl, schemaTypeIs('string'), formatIs('email')),
 );
+
 export const GoAInputEmailControl = withJsonFormsControlProps(GoAEmailControl);

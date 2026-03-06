@@ -22,13 +22,18 @@ function withContextualInstructions(instructions: string) {
     const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
     const currentDateTime = now.toISOString();
     const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
-    
+
     const user = requestContext.get('user') as User | undefined;
     const userName = user?.name || 'User';
-    
+
     return `Current date: ${currentDate} (${dayOfWeek})
 Current time: ${currentDateTime}
 User: ${userName}
+
+Tool call contract:
+- Before each tool call, verify required input fields and types.
+- If required input is missing, ask a concise clarifying question first.
+- Use exact schema field names and provide complete input objects.
 
 ${instructions}`;
   };
@@ -70,7 +75,7 @@ export class AgentServiceConfiguration {
     private tokenProvider: TokenProvider,
     tenantId: AdspId,
     tenant: AgentConfigurations,
-    core: AgentConfigurations
+    core: AgentConfigurations,
   ) {
     const configuration = { ...tenant, ...core };
     this.initializeBrokers(tenantId, configuration);
@@ -88,74 +93,79 @@ export class AgentServiceConfiguration {
         agents: {
           ...Object.entries(configuration)
             .sort(([_xk, x], [_yk, y]) => (x?.agents?.length || 0) - (y?.agents?.length || 0)) // Sort the agents with agents to later.
-            .reduce((agents, [key, configuration]) => {
-              return {
-                ...agents,
-                [key]: new Agent({
-                  id: key,
-                  name: configuration.name,
-                  description: configuration.description,
-                  instructions: withContextualInstructions(configuration.instructions),
-                  model: environment.MODEL_URL ? {
-                    id: `custom/${environment.MODEL}`,
-                    modelId: environment.MODEL,
-                    url: environment.MODEL_URL,
-                    apiKey: environment.MODEL_API_KEY,
-                  } : environment.MODEL,
-                  agents: () => {
-                    const toolAgents = {};
-                    for (const agent of configuration.agents || []) {
-                      const toolAgent = agents[agent];
-                      if (toolAgent) {
-                        toolAgents[agent] = toolAgent;
-                      } else {
-                        this.logger.warn(
-                          `Agent '${agent}' not found and cannot be provided to agent '${configuration.name}'.`,
-                          {
-                            context: 'AgentServiceConfiguration',
-                            tenant: tenantId?.toString(),
-                          }
-                        );
-                      }
-                    }
-
-                    return toolAgents;
-                  },
-                  tools:
-                    configuration.tools?.reduce((tools, toolConfig) => {
-                      if (typeof toolConfig === 'string' && availableTools[toolConfig]) {
-                        tools[toolConfig] = availableTools[toolConfig];
-                      } else if (typeof toolConfig === 'object') {
-                        switch (toolConfig.type) {
-                          case 'api': {
-                            tools[toolConfig.id] = createApiRequestTool(
-                              {
-                                logger: this.logger,
-                                directory: this.directory,
-                                tokenProvider: this.tokenProvider,
-                              },
-                              toolConfig
-                            );
-                            break;
-                          }
+            .reduce(
+              (agents, [key, configuration]) => {
+                return {
+                  ...agents,
+                  [key]: new Agent({
+                    id: key,
+                    name: configuration.name,
+                    description: configuration.description,
+                    instructions: withContextualInstructions(configuration.instructions),
+                    model: environment.MODEL_URL
+                      ? {
+                          id: `custom/${environment.MODEL}`,
+                          modelId: environment.MODEL,
+                          url: environment.MODEL_URL,
+                          apiKey: environment.MODEL_API_KEY,
+                        }
+                      : environment.MODEL,
+                    agents: () => {
+                      const toolAgents = {};
+                      for (const agent of configuration.agents || []) {
+                        const toolAgent = agents[agent];
+                        if (toolAgent) {
+                          toolAgents[agent] = toolAgent;
+                        } else {
+                          this.logger.warn(
+                            `Agent '${agent}' not found and cannot be provided to agent '${configuration.name}'.`,
+                            {
+                              context: 'AgentServiceConfiguration',
+                              tenant: tenantId?.toString(),
+                            },
+                          );
                         }
                       }
-                      return tools;
-                    }, {}) || {},
-                  memory: new Memory({
-                    storage: new LibSQLStore({
-                      id: 'memoryStore',
-                      url: ':memory:',
+
+                      return toolAgents;
+                    },
+                    tools:
+                      configuration.tools?.reduce((tools, toolConfig) => {
+                        if (typeof toolConfig === 'string' && availableTools[toolConfig]) {
+                          tools[toolConfig] = availableTools[toolConfig];
+                        } else if (typeof toolConfig === 'object') {
+                          switch (toolConfig.type) {
+                            case 'api': {
+                              tools[toolConfig.id] = createApiRequestTool(
+                                {
+                                  logger: this.logger,
+                                  directory: this.directory,
+                                  tokenProvider: this.tokenProvider,
+                                },
+                                toolConfig,
+                              );
+                              break;
+                            }
+                          }
+                        }
+                        return tools;
+                      }, {}) || {},
+                    memory: new Memory({
+                      storage: new LibSQLStore({
+                        id: 'memoryStore',
+                        url: ':memory:',
+                      }),
                     }),
+                    inputProcessors: ({ requestContext }) =>
+                      createInputProcessors({
+                        logger: this.logger,
+                        requestContext: requestContext as RequestContext<Record<string, unknown>>,
+                      }),
                   }),
-                  inputProcessors: ({ requestContext }) =>
-                    createInputProcessors({
-                      logger: this.logger,
-                      requestContext: requestContext as RequestContext<Record<string, unknown>>,
-                    }),
-                }),
-              };
-            }, {} as Record<string, Agent>),
+                };
+              },
+              {} as Record<string, Agent>,
+            ),
         },
       });
 
@@ -169,7 +179,7 @@ export class AgentServiceConfiguration {
           ...brokers,
           [key]: new AgentBroker(this.logger, tenantId, inputProcessors, agent, configuration[key] || {}),
         }),
-        {}
+        {},
       );
     } catch (err) {
       this.logger.error('Error encountered initializing agent brokers.', {
