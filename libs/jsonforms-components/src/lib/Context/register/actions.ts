@@ -8,6 +8,7 @@ export interface RegisterConfig {
   urn?: string;
   url?: string;
   name?: string;
+  description?: string;
   env?: string;
   token?: string;
   responsePrefixPath?: string;
