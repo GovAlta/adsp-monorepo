@@ -17,8 +17,8 @@ const rendererDefinitionSchema = z.object({
       type: z.string(),
       options: z
         .object({
-          required: z.record(z.string(), z.unknown()).default({}),
-          optional: z.record(z.string(), z.unknown()).default({}),
+          required: z.object({}).passthrough().default({}),
+          optional: z.object({}).passthrough().default({}),
         })
         .default({ required: {}, optional: {} }),
     })
@@ -75,11 +75,11 @@ const rendererCatalogSchema = z.object({
 });
 
 const rendererCatalogInputSchema = z.object({
-  schema: z.record(z.string(), z.unknown()).describe('JSON schema for the field or object to evaluate.'),
+  schema: z.object({}).passthrough().describe('JSON schema for the field or object to evaluate.'),
   ui: z
     .object({
       type: z.string().optional().describe('Optional JSONForms UI schema type hint, e.g., Control or Categorization.'),
-      options: z.record(z.string(), z.unknown()).optional().describe('Optional UI schema options to validate.'),
+      options: z.object({}).passthrough().optional().describe('Optional UI schema options to validate.'),
     })
     .optional(),
   mode: z.enum(['input', 'review']).default('input').describe('Whether to check input renderers or review renderers.'),
@@ -106,10 +106,10 @@ const rendererCatalogOutputSchema = z.object({
         requiredProperties: z.array(z.string()),
         exactProperties: z.boolean().nullable(),
         arrayItemType: z.string().nullable(),
-        requiredOptions: z.record(z.string(), z.unknown()),
+        requiredOptions: z.object({}).passthrough(),
       }),
       reason: z.string(),
-    })
+    }),
   ),
   guidance: z.object({
     strategy: z.string(),
@@ -200,9 +200,7 @@ function loadCatalog(logger: Logger): RendererCatalog {
   const catalogPath = path.resolve(process.cwd(), 'dist/apps/agent-service/renderer-catalog.json');
 
   if (!fs.existsSync(catalogPath)) {
-    throw new Error(
-      'Renderer catalog file not found. Expected: dist/apps/agent-service/renderer-catalog.json'
-    );
+    throw new Error('Renderer catalog file not found. Expected: dist/apps/agent-service/renderer-catalog.json');
   }
 
   const raw = fs.readFileSync(catalogPath, 'utf8');
@@ -223,7 +221,7 @@ function evaluateRenderer(
   renderer: RendererCatalog['renderers'][number],
   schema: Record<string, unknown>,
   uiType?: string,
-  uiOptions: Record<string, unknown> = {}
+  uiOptions: Record<string, unknown> = {},
 ): { matches: boolean; reason: string; score: number } {
   const mismatchReasons: string[] = [];
 
@@ -258,7 +256,10 @@ function evaluateRenderer(
 
   if (renderer.match.schema.exactProperties === true) {
     const expected = renderer.match.schema.requiredProperties;
-    if (schemaProperties.length !== expected.length || expected.some((property) => !schemaProperties.includes(property))) {
+    if (
+      schemaProperties.length !== expected.length ||
+      expected.some((property) => !schemaProperties.includes(property))
+    ) {
       mismatchReasons.push('schema.properties does not exactly match requiredProperties');
     }
   }
@@ -266,7 +267,9 @@ function evaluateRenderer(
   if (renderer.match.schema.arrayItemType) {
     const itemType = getArrayItemType(schema);
     if (itemType !== renderer.match.schema.arrayItemType) {
-      mismatchReasons.push(`array item type '${itemType ?? 'unknown'}' does not satisfy '${renderer.match.schema.arrayItemType}'`);
+      mismatchReasons.push(
+        `array item type '${itemType ?? 'unknown'}' does not satisfy '${renderer.match.schema.arrayItemType}'`,
+      );
     }
   }
 
@@ -306,7 +309,8 @@ function defaultGuidance(schema: Record<string, unknown>): { strategy: string; m
 
   return {
     strategy: 'unsupported',
-    message: 'No compatible renderer found for the provided schema/ui combination. Adjust schema format/options or use a supported UI type.',
+    message:
+      'No compatible renderer found for the provided schema/ui combination. Adjust schema format/options or use a supported UI type.',
   };
 }
 
