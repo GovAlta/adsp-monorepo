@@ -20,6 +20,8 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       'Retrieve the JSON form configuration. The form definition ID comes from request context (no input required).',
     inputSchema: z.object({}),
     outputSchema: z.object({
+      name: z.string(),
+      description: z.string(),
       dataSchema: z.object({}).passthrough(),
       uiSchema: z.object({}).passthrough(),
       anonymousApply: z.boolean(),
@@ -96,20 +98,17 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       'Update the JSON form configuration. The form definition ID comes from request context. Typically update both dataSchema and uiSchema together in a single call.',
     inputSchema: z.object({
       name: z.string().optional().describe('The name of the form.'),
+      description: z.string().optional().describe('The description of the form.'),
       dataSchema: z.object({}).passthrough().optional().describe('The data schema for the JSON form.'),
       uiSchema: z.object({}).passthrough().optional().describe('The UI schema for the JSON form.'),
       anonymousApply: z
         .boolean()
         .optional()
         .describe('Flag indicating if form can be submit by unauthenticated users.'),
-      applicantRoles: z.array(z.string()).optional().describe('Collection of roles permitted to submit a form.'),
-      assessorRoles: z
-        .array(z.string())
-        .optional()
-        .describe('Collection of roles permitted to review submitted forms.'),
     }),
     outputSchema: z.object({
       name: z.string().describe('The name of the form.'),
+      description: z.string().describe('The description of the form.'),
       dataSchema: z.object({}).passthrough().describe('The data schema for the JSON form.'),
       uiSchema: z.object({}).passthrough().describe('The UI schema for the JSON form.'),
       anonymousApply: z.boolean().describe('Flag indicating if form can be submit by unauthenticated users.'),
@@ -120,7 +119,7 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       inputData,
       { requestContext }: { requestContext: AdspRequestContext<{ formDefinitionId: string }> },
     ) => {
-      const { name, dataSchema, uiSchema, anonymousApply, applicantRoles, assessorRoles } = inputData;
+      const { name, dataSchema, uiSchema, anonymousApply } = inputData;
 
       const tenantId = requestContext.get('tenantId') as AdspId;
       const formDefinitionId = requestContext.get('formDefinitionId') as string;
@@ -141,8 +140,6 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
               dataSchema,
               uiSchema,
               anonymousApply,
-              applicantRoles,
-              assessorRoles,
             },
           },
           {

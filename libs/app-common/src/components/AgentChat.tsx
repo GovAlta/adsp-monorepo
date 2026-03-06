@@ -4,7 +4,18 @@ import { FunctionComponent, memo, useMemo, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import styled from 'styled-components';
 import { useAutoScroll } from '../hooks';
-import { AgentMessage, AgentError as AgentErrorType, Reasoning, Message, ToolCall, UserMessage, UserContent, Attachment, ResolvedImagePart, ResolvedFilePart } from '../types/agent';
+import {
+  AgentMessage,
+  AgentError as AgentErrorType,
+  Reasoning,
+  Message,
+  ToolCall,
+  UserMessage,
+  UserContent,
+  Attachment,
+  ResolvedImagePart,
+  ResolvedFilePart,
+} from '../types/agent';
 
 // ========================================
 // Type Definitions
@@ -66,35 +77,36 @@ const ContainerDiv = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
-  
+
   & > :first-child {
     overflow: auto;
     flex: 1;
-    
+
     > :last-child {
       padding-top: var(--goa-space-l);
     }
   }
-  
+
   & > :last-child {
     flex: 0;
   }
-  
+
   & .content {
     margin: var(--goa-space-m) var(--goa-space-xs) var(--goa-space-l) var(--goa-space-xs);
     max-width: 100%;
     overflow-wrap: break-word;
     word-break: break-word;
   }
-  
+
   & .content[data-from='agent'] {
     margin-right: var(--goa-space-l);
   }
-  
+
   & .content pre,
   & .content code {
     max-width: 100%;
     overflow-x: auto;
+    font-size: var(--goa-font-size-2);
   }
 `;
 
@@ -194,9 +206,7 @@ const AgentErrorBase: FunctionComponent<AgentErrorProps> = ({ className, error }
   return (
     <div className={className}>
       <strong>{label}:</strong> {error.message}
-      {error.details && (
-        <pre>{JSON.stringify(error.details, null, 2)}</pre>
-      )}
+      {error.details && <pre>{JSON.stringify(error.details, null, 2)}</pre>}
     </div>
   );
 };
@@ -211,11 +221,11 @@ const AgentError = memo(styled(AgentErrorBase)`
   font-size: var(--goa-font-size-1);
   line-height: var(--goa-space-m);
   text-align: left;
-  
+
   & strong {
     color: var(--goa-color-emergency-default);
   }
-  
+
   & pre {
     background: var(--goa-color-greyscale-100);
     border: 1px solid var(--goa-color-greyscale-200);
@@ -232,7 +242,7 @@ const AgentError = memo(styled(AgentErrorBase)`
 
 /**
  * AgentToolCall component - Displays tool execution status and results
- * 
+ *
  * States:
  * - Pending: Tool has been called but no result/error yet (shows loading indicator)
  * - Complete: Tool returned a result (green border, shows result)
@@ -241,7 +251,7 @@ const AgentError = memo(styled(AgentErrorBase)`
 const AgentToolCallBase: FunctionComponent<AgentToolCallProps> = ({ className, toolCall }) => {
   const isPending = !toolCall.result && !toolCall.error;
   const hasArgs = toolCall.args && Object.keys(toolCall.args).length > 0;
-  
+
   const getHeading = () => {
     if (isPending) {
       return `Calling ${toolCall.toolName} tool...`;
@@ -251,7 +261,7 @@ const AgentToolCallBase: FunctionComponent<AgentToolCallProps> = ({ className, t
       return `Called ${toolCall.toolName} tool`;
     }
   };
-  
+
   return (
     <div className={className} data-status={isPending ? 'pending' : toolCall.error ? 'error' : 'complete'}>
       <GoabDetails heading={getHeading()}>
@@ -288,32 +298,32 @@ const AgentToolCallBase: FunctionComponent<AgentToolCallProps> = ({ className, t
 
 const AgentToolCall = memo(styled(AgentToolCallBase)`
   margin: 0 var(--goa-space-xl) var(--goa-space-l) var(--goa-space-xl);
-  
+
   &[data-status='pending'] {
     opacity: 0.8;
   }
-  
+
   &[data-status='error'] {
     border-left: 3px solid var(--goa-color-emergency-default);
   }
-  
+
   &[data-status='complete'] {
     border-left: 3px solid var(--goa-color-success-default);
   }
-  
+
   & .pending-indicator {
     display: flex;
     flex-direction: column;
     gap: var(--goa-space-xs);
     padding: var(--goa-space-s) 0;
-    
+
     & span {
       color: var(--goa-color-text-secondary);
       font-style: italic;
       font-size: var(--goa-font-size-1);
     }
   }
-  
+
   & pre {
     background: var(--goa-color-greyscale-100);
     white-space: pre-wrap;
@@ -326,7 +336,7 @@ const AgentToolCall = memo(styled(AgentToolCallBase)`
     max-height: 250px;
     overflow: auto;
   }
-  
+
   & pre.error-output {
     background: var(--goa-color-emergency-light);
     border-left: 2px solid var(--goa-color-emergency-default);
@@ -334,8 +344,26 @@ const AgentToolCall = memo(styled(AgentToolCallBase)`
 `);
 
 const AgentMessageItem = memo(styled(({ className, message }: AgentMessageItemProps) => {
+  const hasText = message.content?.trim().length > 0;
+  const hasReasoning = Boolean(message.reasoning?.content?.trim());
+  const hasToolCalls = message.toolCalls.length > 0;
+  const hasErrors = Boolean(message.errors?.length);
+  const hasPendingToolCall = message.toolCalls.some((toolCall) => !toolCall.result && !toolCall.error);
+
+  // Show explicit feedback if the stream has started but no visible output has arrived yet.
+  const isThinking = message.streaming && !hasText && !hasReasoning && !hasToolCalls && !hasErrors;
+
+  // Show a subtle continuation hint for quiet streaming gaps between visible updates.
+  const showStreamingContinuation = message.streaming && !isThinking && !hasPendingToolCall;
+
   return (
     <div className={className} data-from={message.from}>
+      {isThinking && (
+        <div className="activity-indicator" data-kind="thinking">
+          <GoabSkeleton type="text" />
+          <span>Agent is thinking...</span>
+        </div>
+      )}
       {message.reasoning && <AgentReasoning reasoning={message.reasoning} />}
       <Markdown className="content" data-from={message.from}>
         {message.content}
@@ -343,13 +371,33 @@ const AgentMessageItem = memo(styled(({ className, message }: AgentMessageItemPr
       {message.toolCalls.map((toolCall) => (
         <AgentToolCall key={toolCall.toolCallId} toolCall={toolCall} />
       ))}
-      {message.errors && message.errors.map((error, index) => (
-        <AgentError key={index} error={error} />
-      ))}
+      {showStreamingContinuation && (
+        <div className="activity-indicator" data-kind="continuing">
+          <span>Generating response...</span>
+        </div>
+      )}
+      {message.errors && message.errors.map((error, index) => <AgentError key={index} error={error} />)}
     </div>
   );
 })`
   text-align: left;
+
+  & .activity-indicator {
+    margin: var(--goa-space-m) var(--goa-space-xl) var(--goa-space-l) var(--goa-space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--goa-space-xs);
+
+    & span {
+      color: var(--goa-color-text-secondary);
+      font-style: italic;
+      font-size: var(--goa-font-size-1);
+    }
+  }
+
+  & .activity-indicator[data-kind='continuing'] {
+    margin-top: 0;
+  }
 `);
 
 // ========================================
@@ -368,13 +416,13 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   const [draft, setDraft] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [uploading, setUploading] = useState(false);
-  
+
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Hooks
   const { scrollContainerRef, targetElementRef, onScroll, resetScroll } = useAutoScroll([messages]);
-  
+
   // Computed values
   const welcomeMessage = useMemo(() => createWelcomeMessage(threadId), [threadId]);
   const isWaitingForResponse = useMemo(() => messages[messages.length - 1]?.from === 'user', [messages]);
@@ -393,7 +441,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
         setUploading(false);
       }
     }
-    
+
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -464,9 +512,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
             />
             {attachments.map((attachment) => (
               <AttachmentItemDiv key={attachment.urn}>
-                {attachment.thumbnailUrl && (
-                  <img src={attachment.thumbnailUrl} alt={attachment.filename} />
-                )}
+                {attachment.thumbnailUrl && <img src={attachment.thumbnailUrl} alt={attachment.filename} />}
                 <span>{attachment.filename}</span>
                 <GoabIconButton
                   icon="trash"
@@ -485,7 +531,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
             />
           </AttachmentListDiv>
         )}
-        
+
         <form onKeyDown={handleKeyDown}>
           <GoabFormItem ml="xs" mr="xs">
             <GoabTextArea
