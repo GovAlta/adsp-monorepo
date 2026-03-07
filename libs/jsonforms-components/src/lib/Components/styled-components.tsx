@@ -90,4 +90,7 @@ export const GoADropdownListOption = styled.div<GoADropdownListOptionProps>`
 
 export const LabelItem = styled.span`
   font: var(--goa-dropdown-typography);
+  display: inline-block;
+  min-height: 1.5em;
+  width: 100%;
 `;

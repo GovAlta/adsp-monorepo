@@ -11,6 +11,7 @@ import { selectFormAppHost } from '@store/form/selectors';
 import { FormExport } from './export/formExport';
 import FormOverview from './formOverview';
 import { FormDefinitions } from '@form-editor-common';
+import { getConfigurationDefinitions } from '@store/configuration/action';
 import { HeadingDiv } from '../styled-components';
 
 const HelpLink = (): JSX.Element => {
@@ -41,6 +42,7 @@ export const Form: FunctionComponent = () => {
       setActiveIndex(1);
       setActivateEditState(true);
     }
+    dispatch(getConfigurationDefinitions());
   }, [isNavigatedFromEditor]);
 
   return (

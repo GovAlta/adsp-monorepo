@@ -11,12 +11,12 @@ export async function createSchemaTools() {
     id: 'get-schema-definition',
     description: 'Get the JSON schema definitions for common fields like email, full name, and address.',
     inputSchema: z.object({
-      url: z.string().describe(
-        'URL of the schema definition file. URL fragment to specific definition is not supported.'
-      ),
+      url: z
+        .string()
+        .describe('URL of the schema definition file. URL fragment to specific definition is not supported.'),
     }),
     outputSchema: z.object({
-      jsonSchema: z.record(z.string(), z.unknown()),
+      jsonSchema: z.object({}).passthrough(),
     }),
     execute: async (input) => {
       return { jsonSchema: schemas[input.url] };

@@ -65,7 +65,6 @@ export const CONNECT_CONFIGURATION_UPDATES_SUCCESS_ACTION = 'configuration/CONNE
 export const DISCONNECT_CONFIGURATION_UPDATES_ACTION = 'configuration/DISCONNECT_CONFIGURATION_UPDATES';
 export const DISCONNECT_CONFIGURATION_UPDATES_SUCCESS_ACTION = 'configuration/DISCONNECT_CONFIGURATION_UPDATES_SUCCESS';
 export const CONFIGURATION_UPDATES_EVENT_ACTION = 'configuration/CONFIGURATION_UPDATES_EVENT_ACTION';
-
 export interface DeleteConfigurationDefinitionAction {
   type: typeof DELETE_CONFIGURATION_DEFINITION_ACTION;
   definitionName: string;
@@ -266,7 +265,7 @@ export const deleteConfigurationDefinition = (definitionName: string): DeleteCon
 });
 
 export const deleteConfigurationDefinitionSuccess = (
-  definition: ServiceSchemas
+  definition: ServiceSchemas,
 ): DeleteConfigurationDefinitionSuccessAction => ({
   type: DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS,
   payload: definition,
@@ -275,7 +274,7 @@ export const deleteConfigurationDefinitionSuccess = (
 export const updateConfigurationDefinition = (
   definition: ConfigDefinition,
   isAddedFromOverviewPage: boolean,
-  openEditor?: boolean
+  openEditor?: boolean,
 ): UpdateConfigurationDefinitionAction => ({
   type: UPDATE_CONFIGURATION_DEFINITION_ACTION,
   definition,
@@ -285,7 +284,7 @@ export const updateConfigurationDefinition = (
 export const updateConfigurationDefinitionSuccess = (
   definition: ServiceSchemas,
   isAddedFromOverviewPage: boolean,
-  currentId: string
+  currentId: string,
 ): UpdateConfigurationDefinitionSuccessAction => ({
   type: UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION,
   payload: definition,
@@ -297,7 +296,7 @@ export const getConfigurationDefinitions = (): FetchConfigurationDefinitionsActi
 });
 
 export const getConfigurationDefinitionsSuccess = (
-  results: ServiceConfigurationTypes
+  results: ServiceConfigurationTypes,
 ): FetchConfigurationDefinitionsSuccessAction => ({
   type: FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
   payload: results,
@@ -312,7 +311,7 @@ export const getConfigurationRevisionsSuccess = (
   results: Revision[],
   service: string,
   after?: string,
-  next?: string
+  next?: string,
 ): FetchConfigurationRevisionsSuccessAction => ({
   type: FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION,
   payload: results,
@@ -327,7 +326,7 @@ export const getConfigurationActive = (service: string): FetchConfigurationActio
 
 export const getConfigurationActiveSuccess = (
   payload: Revision,
-  service: string
+  service: string,
 ): FetchConfigurationActiveRevisionSuccessAction => ({
   type: FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION,
   payload: payload,
@@ -341,7 +340,7 @@ export const setConfigurationRevisionSuccessAction = (
   service: string,
   payload: {
     data: ServiceConfiguration;
-  }
+  },
 ): SetConfigurationRevisionSuccessAction => ({
   type: SET_CONFIGURATION_REVISION_SUCCESS_ACTION,
   service: service,
@@ -350,7 +349,7 @@ export const setConfigurationRevisionSuccessAction = (
 
 export const setConfigurationRevisionActive = (
   service: string,
-  setActiveRevision: number
+  setActiveRevision: number,
 ): SetConfigurationRevisionActiveAction => ({
   type: SET_CONFIGURATION_REVISION_ACTIVE_ACTION,
   service: service,
@@ -360,7 +359,7 @@ export const setConfigurationRevisionActiveSuccessAction = (
   service: string,
   payload: {
     data: ServiceConfiguration;
-  }
+  },
 ): SetConfigurationRevisionActiveSuccessAction => ({
   type: SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION,
   service: service,
@@ -369,7 +368,7 @@ export const setConfigurationRevisionActiveSuccessAction = (
 
 export const replaceConfigurationDataAction = (
   configuration: ReplaceConfiguration,
-  isImportConfiguration
+  isImportConfiguration,
 ): ReplaceConfigurationDataAction => ({
   type: REPLACE_CONFIGURATION_DATA_ACTION,
   configuration,
@@ -397,7 +396,7 @@ export const replaceConfigurationDataSuccessAction = (payload: {
 });
 
 export const updateLatestRevisionSuccessAction = (
-  payload: ReplaceConfiguration
+  payload: ReplaceConfiguration,
 ): UpdateLatestRevisionSuccessAction => ({
   type: UPDATE_LATEST_REVISION_SUCCESS_ACTION,
   payload,
@@ -417,7 +416,7 @@ export const getReplaceConfigurationErrorAction = (): GetReplaceConfigurationErr
 });
 
 export const getReplaceConfigurationErrorSuccessAction = (
-  replacedConfiguration: { name: string; error: string }[]
+  replacedConfiguration: { name: string; error: string }[],
 ): GetReplaceConfigurationErrorSuccessAction => ({
   type: REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION,
   payload: replacedConfiguration,
@@ -426,7 +425,7 @@ export const getReplaceConfigurationErrorSuccessAction = (
 export const getRegisterDataSuccessAction = (
   registerData: RegisterData,
   dataList: string[],
-  anonymousRead: string[]
+  anonymousRead: string[],
 ): FetchRegisterDataSuccessAction => ({
   type: FETCH_REGISTER_DATA_SUCCESS_ACTION,
   payload: registerData,
@@ -441,7 +440,7 @@ export const getRegisterDataAction = (): FetchRegisterDataAction => ({
 export const configurationUpdateEvent = (
   namespace: string,
   name: string,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
 ): ConfigurationUpdatesEventAction => ({
   type: CONFIGURATION_UPDATES_EVENT_ACTION,
   namespace,
