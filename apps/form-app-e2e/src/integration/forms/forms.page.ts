@@ -20,11 +20,11 @@ class FormsPage {
   }
 
   formDateInput(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-date-picker`);
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="date"]`);
   }
 
   formDropdown(label) {
-    return cy.xpath(`//goa-form-item[@label="${label}"]//div[contains(@data-testid, "dropdown")]`);
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-dropdown`);
   }
 
   formNextButton() {
@@ -48,7 +48,11 @@ class FormsPage {
   }
 
   formListWithDetailDependantDateInput(label) {
-    return cy.xpath(`//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[@label="${label} "]//goa-input`);
+    return cy.xpath(`//*[contains(@data-testid, "object-list-wrapper")]//goa-form-item[@label="${label}"]//goa-input`);
+  }
+
+  formListWithDetailContinueButton() {
+    return cy.xpath('//*[contains(@data-testid, "object-list-wrapper")]//goa-button[@testid="next-list-button"]');
   }
 
   formSuccessCallout() {
@@ -64,16 +68,36 @@ class FormsPage {
   //pageName is case sensitive and arrayName is lower case
   formSummaryPageListWithDetailItems(pageName, arrayName) {
     return cy.xpath(
-      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/parent::div/following-sibling::div//h3[text()="${arrayName}"]/following-sibling::div/div`
+      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${arrayName}")]/ancestor::td//goa-table/table/tbody/tr`
+    );
+  }
+
+  formSummaryPageSectionRows(pageName) {
+    return cy.xpath(
+      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr`
+    );
+  }
+
+  formSummaryPageSectionRowLabel(pageName, label) {
+    return cy.xpath(
+      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]`
+    );
+  }
+
+  formSummaryPageSectionRowValue(pageName, label) {
+    return cy.xpath(
+      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]/ancestor::td//div[contains(@data-testid,"review-value")]`
+    );
+  }
+
+  formSummaryPageValidationError(pageName, label) {
+    return cy.xpath(
+      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]//div[text()="${label}"]/ancestor::td//goa-icon[@type="warning"]/parent::div`
     );
   }
 
   formRadioGroup(question) {
     return cy.xpath(`//goa-form-item[@label="${question}"]//goa-radio-group`);
-  }
-
-  formFieldFormItem(label) {
-    return cy.xpath(`//h3[text()="Summary"]/following-sibling::div//goa-form-item[@label="${label}"]`);
   }
 
   formSummaryPagePDFDownloadLinkIcon() {
