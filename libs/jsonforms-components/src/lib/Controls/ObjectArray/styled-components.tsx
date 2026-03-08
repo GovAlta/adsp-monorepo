@@ -47,9 +47,27 @@ export const RowFlex = styled.div`
   align-items: flex-start;
 `;
 
-export const RowFlexMenu = styled.div`
+export const RowFlexMenuMain = styled.div`
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  border: 1px solid var(--goa-color-greyscale-300);
+  border-radius: var(--goa-border-radius-m);
+  margin-top: var(--goa-space-xs);
+  background-color: var(--goa-color-greyscale-white);
+  padding: 0;
+  gap: 0;
+  position: relative;
+  overflow: visible;
+
+  &:hover {
+    border-color: var(--goa-color-greyscale-400);
+  }
+`;
+
+export const RowFlexMenuLeft = styled.div`
+  display: flex;
+  flex-direction: row;
   align-items: stretch;
   border: 1px solid var(--goa-color-greyscale-300);
   border-radius: var(--goa-border-radius-m);
