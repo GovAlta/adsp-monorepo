@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { render, act } from '@testing-library/react';
+import { render, act, screen } from '@testing-library/react';
 import { useSyncAutofillFields } from './useSyncAutofillFields';
+import { useDebounce } from './useDebounce';
 import { jest } from '@jest/globals';
 
 // Create a test component that uses the hook
@@ -132,5 +133,66 @@ describe('useSyncAutofillFields', () => {
 
     expect(spyRAF).toHaveBeenCalled();
     expect(spyCancel).toHaveBeenCalled();
+  });
+});
+
+const DebounceHarness = ({ value, delay }: { value: string; delay: number }) => {
+  const debounced = useDebounce(value, delay);
+  return <div data-testid="debounced-value">{debounced}</div>;
+};
+
+describe('useDebounce (covered in existing spec file)', () => {
+  const originalNodeEnv = process.env.NODE_ENV;
+  const originalJestWorker = process.env.JEST_WORKER_ID;
+
+  afterEach(() => {
+    jest.useRealTimers();
+    process.env.NODE_ENV = originalNodeEnv;
+
+    if (originalJestWorker === undefined) {
+      delete process.env.JEST_WORKER_ID;
+    } else {
+      process.env.JEST_WORKER_ID = originalJestWorker;
+    }
+  });
+
+  it('updates immediately in test environment', () => {
+    process.env.NODE_ENV = 'test';
+    process.env.JEST_WORKER_ID = '1';
+
+    const { rerender } = render(<DebounceHarness value="a" delay={100} />);
+    expect(screen.getByTestId('debounced-value').textContent).toBe('a');
+
+    rerender(<DebounceHarness value="b" delay={100} />);
+    expect(screen.getByTestId('debounced-value').textContent).toBe('b');
+  });
+
+  it('updates immediately when JEST_WORKER_ID is set even if NODE_ENV is not test', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.JEST_WORKER_ID = '9';
+
+    const { rerender } = render(<DebounceHarness value="x" delay={100} />);
+    expect(screen.getByTestId('debounced-value').textContent).toBe('x');
+
+    rerender(<DebounceHarness value="y" delay={100} />);
+    expect(screen.getByTestId('debounced-value').textContent).toBe('y');
+  });
+
+  it('updates after timeout outside test environment', () => {
+    jest.useFakeTimers();
+    process.env.NODE_ENV = 'production';
+    delete process.env.JEST_WORKER_ID;
+
+    const { rerender } = render(<DebounceHarness value="first" delay={100} />);
+    expect(screen.getByTestId('debounced-value').textContent).toBe('first');
+
+    rerender(<DebounceHarness value="second" delay={100} />);
+    expect(screen.getByTestId('debounced-value').textContent).toBe('first');
+
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+
+    expect(screen.getByTestId('debounced-value').textContent).toBe('second');
   });
 });
