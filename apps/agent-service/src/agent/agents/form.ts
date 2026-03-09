@@ -80,176 +80,33 @@ export const formGenerationAgent: AgentConfiguration = {
     Additional UI schema guidance: https://govalta.github.io/adsp-monorepo/tutorials/form-service/cheat-sheet.html
 
     # UI Schema Examples
-    ## Text area
-    Controls bound to string properties can be configured to show textarea instead of textbox using the \`multi\` option.
+    Quick reference for ADSP-specific form renderer features. Data schema snippets show property definitions; UI schema snippets show corresponding controls.
 
-    ### UI schema
-    \`\`\`json
-    {
-      "type": "Control",
-      "scope": "#/properties/message",
-      "options": {
-        "multi": true
-      }
-    }
-    \`\`\`
+    **Text area**: Use \`options.multi\` for textarea: \`{ "type": "Control", "scope": "#/properties/message", "options": { "multi": true } }\`
 
-    ## Inline help content
-    Inline help content can be added in options.help for Controls.
+    **Inline help**: Add help text via \`options.help\`: \`{ "type": "Control", "scope": "#/properties/firstName", "options": { "help": "Enter your first name..." } }\`
 
-    ### UI schema
-    \`\`\`json
-    {
-      "type": "Control",
-      "scope": "#/properties/firstName",
-      "options": {
-        "help": "Please enter your first name as it appears on your official documents."
-      }
-    }
-    \`\`\`
+    **HelpContent element**: Use for notices with markdown support (use arrays for multiple lines):
+    \`{ "type": "HelpContent", "options": { "markdown": true, "help": ["#### Notice:", "Details here..."] } }\`
 
-    ### Help content
-    Descriptive help can be added in HelpContent elements which support markdown strings. Use arrays to separate content into multiple lines.
+    **Pages layout**: Use Categorization with \`variant: "pages"\` for multi-page forms:
+    \`{ "type": "Categorization", "options": { "variant": "pages" }, "elements": [{ "type": "Category", "label": "Page 1", "elements": [...] }] }\`
 
-    ### UI schema
-    \`\`\`json
-    {
-      "type": "HelpContent",
-      "options": {
-        "markdown": true,
-        "help": [
-          "#### Notice of Collection:",
-          "The personal information on this form is collected under the authority of Section 33(c) of the Freedom of Information and Protection of Privacy Act (FOIP) and will be used for the purpose of administering the Alberta Approved Farmers’ Market Program. If you have any questions about the collection and use of your information, please contact the Farmers’ Market Specialist, Alberta Agriculture, Forestry and Rural Development at [ab.approvedfarmersmarket@gov.ab.ca](ab.approvedfarmersmarket@gov.ab.ca) or telephone: 780-581-4107."
-        ]
-      }
-    }
-    \`\`\`
+    **Full name**: Use $ref to common definition in data schema:
+    \`{ "yourName": { "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/personFullName" } }\`
+    UI: \`{ "type": "Control", "scope": "#/properties/yourName" }\`
 
-    ## Pages layout
-    Categorization with a variant of "pages" can be used to create a multi-page form layout.
+    **Address with lookup**: Use $ref to address definition in data schema:
+    \`{ "yourAddress": { "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressAlberta" } }\`
+    UI: \`{ "type": "Control", "scope": "#/properties/yourAddress" }\`
 
-    ### Data schema
-    \`\`\`json
-    {
-      "type": "object",
-      "properties": {
-        "firstName": { "type": "string" },
-        "lastName": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "phoneNumber": { "type": "string" }
-      }
-    }
-    \`\`\`
+    **File upload**: Use \`format: "file-urn"\` in data schema:
+    \`{ "photo": { "type": "string", "format": "file-urn" } }\`
+    UI: \`{ "type": "Control", "scope": "#/properties/photo" }\`
 
-    ### UI schema
-    \`\`\`json
-    {
-      "type": "Categorization",
-      "options": { "variant": "pages" },
-      "elements": [
-        {
-          "type": "Category",
-          "label": "Personal Information",
-          "elements": [
-            {
-              "type": "Control",
-              "scope": "#/properties/firstName"
-            },
-            {
-              "type": "Control",
-              "scope": "#/properties/lastName"
-            }
-          ]
-        },
-        {
-          "type": "Category",
-          "label": "Contact Information",
-          "elements": [
-            {
-              "type": "Control",
-              "scope": "#/properties/email"
-            },
-            {
-              "type": "Control",
-              "scope": "#/properties/phoneNumber"
-            }
-          ]
-        }
-      ]
-    }
-    \`\`\`
-
-    ## Full name fields
-    Data schema properties that reference the common definition for full name can be used directly with a Control element for a full name
-    input control.
-
-    ### Data schema
-    \`\`\`json
-    {
-      "type": "object",
-      "properties": {
-        "yourFullNameProperty": {
-          "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/fullName"
-        }
-      }
-    }
-    \`\`\`
-
-    ### UI schema
-    \`\`\`json
-    {
-      "type": "Control",
-      "scope": "#/properties/yourFullNameProperty"
-    }
-    \`\`\`
-
-    ## Address fields
-    Data schema properties that reference the common definition for address can be used directly with a Control element for an address
-    input control with address lookup.
-
-    ### Data schema
-    \`\`\`json
-    {
-      "type": "object",
-      "properties": {
-        "yourAddressProperty": {
-          "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/address"
-        }
-      }
-    }
-    \`\`\`
-    ### UI schema
-    \`\`\`json
-    {
-      "type": "Control",
-      "scope": "#/properties/yourAddressProperty"
-    }
-    \`\`\`
-
-    ## File upload
-    File upload is supported with a data schema with string property and format of \`file-urn\`.
-
-    ### Data schema
-    \`\`\`json
-    {
-      "type": "object",
-      "properties": {
-        "photo": {
-          "type": "string",
-          "format": "file-urn"
-        }
-      }
-    }
-    \`\`\`
-
-    ### UI schema
-    \`\`\`json
-    {
-      "type": "Control",
-      "scope": "#/properties/photo"
-    }
-    \`\`\`
-
+    **Arrays of objects**: Use ListWithDetail with detail layout:
+    Data: \`{ "items": { "type": "array", "items": { "type": "object", "properties": {...} } } }\`
+    UI: \`{ "type": "ListWithDetail", "scope": "#/properties/items", "options": { "detail": { "type": "VerticalLayout", "elements": [...] } } }\`
   `,
   tools: [
     'schemaDefinitionTool',

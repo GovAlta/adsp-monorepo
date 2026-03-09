@@ -55,6 +55,12 @@ const parseUrn = (urn: string): { namespace: string; name: string } => {
   };
 };
 
+const urnCompare = (a: RegisterConfigData, b: RegisterConfigData): number => {
+  const aName = parseUrn(a.urn ?? '').name;
+  const bName = parseUrn(b.urn ?? '').name;
+  return aName.localeCompare(bName);
+};
+
 interface RegisterItemProps {
   entry: RegisterConfigData;
   onUpdate?: (entry: RegisterConfigData) => void;
@@ -245,7 +251,6 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
 
   const handleAddSave = () => {
     const newEntry: RegisterConfigData = { urn: newName, name: newName, description: newDescription, data: [] };
-    setCurrentRegister((prev: RegisterData | null) => [...(prev ?? []), newEntry]);
     dispatch(
       updateConfigurationDefinition(
         {
@@ -267,8 +272,10 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
         false,
       ),
     );
+
     onAdd?.(newName);
     setIsAddModalOpen(false);
+    setCurrentRegister((prev: RegisterData | null) => [...(prev ?? []), newEntry]);
   };
 
   const handleAddCancel = () => {
@@ -289,13 +296,19 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
           <GoabTable testId="data-registers-table" width="100%">
             <thead data-testid="data-registers-table-header">
               <tr>
-                <th data-testid="data-registers-table-header-name" style={{ width: '30%' }}>Name</th>
-                <th data-testid="data-registers-table-header-description" style={{ width: '60%' }}>Description</th>
-                <th data-testid="data-registers-table-header-action" style={{ width: '10%' }}>Action</th>
+                <th data-testid="data-registers-table-header-name" style={{ width: '30%' }}>
+                  Name
+                </th>
+                <th data-testid="data-registers-table-header-description" style={{ width: '60%' }}>
+                  Description
+                </th>
+                <th data-testid="data-registers-table-header-action" style={{ width: '10%' }}>
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody>
-              {currentRegister.map((entry) => (
+              {[...currentRegister].sort(urnCompare).map((entry) => (
                 <RegisterItem
                   key={entry.urn}
                   entry={entry}
