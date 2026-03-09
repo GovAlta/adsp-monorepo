@@ -17,7 +17,7 @@ export const CategoryRow: React.FC<CategoryRowProps> = ({ category, index, onCli
       disabled={!category?.isEnabled}
       role="button"
       key={`task-list-${index}-stepper-row`}
-      tabIndex={0}
+      tabIndex={-1}
       onClick={(e) => {
         e.preventDefault();
         if (category?.isEnabled) onClick(index);
@@ -29,7 +29,7 @@ export const CategoryRow: React.FC<CategoryRowProps> = ({ category, index, onCli
         <a href="#">{category.label}</a>
       </td>
       <CategoryStatus>
-        <Center>{getCategoryStatusBadge(category)}</Center>
+        <Center tabIndex={-1}>{getCategoryStatusBadge(category)}</Center>
       </CategoryStatus>
     </PageStepperRow>
   ) : null;

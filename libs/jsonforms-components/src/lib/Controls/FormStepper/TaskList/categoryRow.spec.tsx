@@ -172,7 +172,7 @@ describe('CategoryRow Component', () => {
       </table>
     );
     const row = getByTestId('page-ref-0');
-    expect(row).toHaveAttribute('tabIndex', '0');
+    expect(row).toHaveAttribute('tabIndex', '-1');
   });
 
   it('should have role button', () => {
