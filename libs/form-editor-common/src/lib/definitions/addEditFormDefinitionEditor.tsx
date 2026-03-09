@@ -87,6 +87,7 @@ import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
 import { startThread } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
 import { GoabCheckboxOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { autoPopulatePropertiesMonaco } from '../../../../jsonforms-components/src/lib/util/autoPopulate';
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
 export const ContextProvider = ContextProviderFactory();
@@ -106,7 +107,7 @@ export const onSaveDispositionForModal = (
   newDisposition: boolean,
   currentDisposition: Disposition,
   definition: FormDefinition,
-  selectedEditModalIndex: number | null
+  selectedEditModalIndex: number | null,
 ): [FormDefinition, number | null] => {
   const currentDispositionStates = [...definition.dispositionStates];
   if (newDisposition) {
@@ -201,7 +202,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
   const schemaError = useSelector(schemaErrorSelector);
 
   const selectedCoreEvent = useSelector(
-    (state: RootState) => state.calendarService?.coreCalendars?.['form-intake']?.selectedCalendarEvents
+    (state: RootState) => state.calendarService?.coreCalendars?.['form-intake']?.selectedCalendarEvents,
   );
 
   const { isFormUpdated, latestNotification, isLoadingRoles, indicator, formServiceApiUrl } = useSelector(
@@ -211,7 +212,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
       isLoadingRoles: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] === ActionState.inProcess,
       indicator: state.session?.indicator,
       formServiceApiUrl: state.config?.serviceUrls?.formServiceApiUrl,
-    })
+    }),
   );
 
   const [dataEditorLocation, setDataEditorLocation] = useState<number>(0);
@@ -244,7 +245,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
         UpdateSearchCriteriaAndFetchEvents({
           recordId: `urn:ads:platform:configuration-service:v2:/configuration/form-service/${definition.id}`,
           calendarName: 'form-intake',
-        })
+        }),
       );
     }
   }, [intakePeriodModal]);
@@ -259,23 +260,53 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
     if (monaco) {
       const valueProvider = monaco.languages.registerCompletionItemProvider(
         'json',
-        new FormPropertyValueCompletionItemProvider(dataSchema)
+        new FormPropertyValueCompletionItemProvider(dataSchema),
       );
 
       const uiElementProvider = monaco.languages.registerCompletionItemProvider(
         'json',
-        new FormUISchemaElementCompletionItemProvider(dataSchema)
+        new FormUISchemaElementCompletionItemProvider(dataSchema),
       );
 
       const dataElementProvider = monaco.languages.registerCompletionItemProvider(
         'json',
-        new FormDataSchemaElementCompletionItemProvider()
+        new FormDataSchemaElementCompletionItemProvider(),
       );
+
+      const propertyKeyWatcher = monaco.languages.registerCompletionItemProvider('json', {
+        triggerCharacters: ['"'],
+
+        provideCompletionItems: function (model, position) {
+          const fullText = model.getValue();
+
+          const beforeCursor = fullText.slice(0, model.getOffsetAt(position));
+
+          if (!beforeCursor.includes('"properties"')) {
+            return { suggestions: [] };
+          }
+
+          return {
+            suggestions: autoPopulatePropertiesMonaco.map((prop) => ({
+              label: prop.label,
+              kind: monaco.languages.CompletionItemKind.Property,
+              insertText: prop.insertText,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              range: {
+                startLineNumber: position.lineNumber,
+                startColumn: position.column,
+                endLineNumber: position.lineNumber,
+                endColumn: position.column,
+              },
+            })),
+          };
+        },
+      });
 
       return function () {
         valueProvider.dispose();
         uiElementProvider.dispose();
         dataElementProvider.dispose();
+        propertyKeyWatcher.dispose();
       };
     }
   }, [monaco, dataSchema]);
@@ -320,7 +351,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
@@ -455,6 +486,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                       }}
                       language="json"
                       options={{
+                        autoClosingQuotes: 'never',
                         automaticLayout: true,
                         scrollBeyondLastLine: false,
                         lineNumbersMinChars: 2,
@@ -1072,7 +1104,7 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
             newDisposition,
             currentDispositions,
             definition,
-            selectedEditModalIndex
+            selectedEditModalIndex,
           );
           setDefinition(updatedDefinition);
           setSelectedDeleteDispositionIndex(index);

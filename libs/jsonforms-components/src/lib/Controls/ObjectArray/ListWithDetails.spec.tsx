@@ -240,4 +240,25 @@ describe('Object List component', () => {
     const scopes = extractScopesFromUISchema(uiSchema);
     expect(scopes.length).toBe(1);
   });
+
+  describe('extractScopesFromUISchema', () => {
+    it('extracts scopes from a simple Control', () => {
+      const uischema = {
+        type: 'Control',
+        scope: '#/properties/comments',
+      };
+      expect(extractScopesFromUISchema(uischema)).toEqual([]);
+    });
+
+    it('extracts scopes from a Layout with nested Controls', () => {
+      const uischema = {
+        type: 'VerticalLayout',
+        elements: [
+          { type: 'Control', scope: '#/properties/first' },
+          { type: 'Control', scope: '#/properties/second' },
+        ],
+      };
+      expect(extractScopesFromUISchema(uischema)).toEqual(['#/properties/first', '#/properties/second']);
+    });
+  });
 });

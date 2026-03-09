@@ -9,6 +9,7 @@ import { FormFieldWrapper } from './style-component';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
 import { isRequiredBySchema } from '../../util/requiredUtil';
 import { useJsonForms } from '@jsonforms/react';
+
 export type GoabInputType =
   | 'text'
   | 'password'
