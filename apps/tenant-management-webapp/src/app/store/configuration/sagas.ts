@@ -289,7 +289,7 @@ export function* fetchRegisterData(): SagaIterator {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (data?.configuration && data?.configuration) {
+        if (data?.configuration) {
           registerData.push({
             urn: `urn:ads:platform:configuration:v2:/configuration/${namespace}/${service}`,
             description: registerConfig.description,
