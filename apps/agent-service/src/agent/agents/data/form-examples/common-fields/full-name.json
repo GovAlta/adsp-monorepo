@@ -1,0 +1,29 @@
+{
+  "id": "full-name",
+  "name": "Full Name (Common Field)",
+  "category": "common-field",
+  "summary": "Reusable full name field using the ADSP common schema $ref definition for person name",
+  "whenToUse": [
+    "Any form that collects a person's full name",
+    "When you need first name, middle name, and last name subfields handled automatically"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "yourFullNameProperty": {
+        "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/personFullName"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/yourFullNameProperty"
+  },
+  "notes": [
+    "Use the schemaDefinitionTool to load the common schema definitions first",
+    "The definition is `personFullName` — not `fullName`",
+    "Reference definitions with `$ref` — this renders firstName, middleName, lastName subfields",
+    "Replace `yourFullNameProperty` with a meaningful property name like `applicantName`",
+    "For name + date of birth together, use `personFullNameAndDob` instead"
+  ]
+}

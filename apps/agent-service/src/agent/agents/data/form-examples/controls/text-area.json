@@ -1,0 +1,27 @@
+{
+  "id": "text-area",
+  "name": "Text Area",
+  "category": "control",
+  "summary": "Multi-line text input using the `multi` option on a string Control",
+  "whenToUse": [
+    "Collecting longer text responses like descriptions, comments, or messages",
+    "When single-line input is insufficient for the expected content"
+  ],
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/message",
+    "options": {
+      "multi": true
+    }
+  },
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "message": { "type": "string" }
+    }
+  },
+  "notes": [
+    "Set `options.multi` to `true` on any Control bound to a string property",
+    "The textarea will grow based on content by default"
+  ]
+}

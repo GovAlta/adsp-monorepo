@@ -1,0 +1,30 @@
+{
+  "id": "dropdown-select",
+  "name": "Dropdown Select",
+  "category": "control",
+  "summary": "Dropdown menu for selecting from a predefined list using `enum` in the data schema",
+  "whenToUse": [
+    "Selecting one option from a list of 4+ predefined choices",
+    "Province/state selection, categories, or any fixed list of values"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "province": {
+        "type": "string",
+        "enum": ["Alberta", "British Columbia", "Saskatchewan", "Manitoba", "Ontario", "Quebec"]
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/province",
+    "label": "Select your province"
+  },
+  "notes": [
+    "Define the options in `enum` array on the data schema property — renders as a dropdown by default",
+    "For 3 or fewer options, consider using radio buttons instead for better UX",
+    "The label on the UI schema overrides the auto-generated label from the property name",
+    "For dynamic lists loaded from an API or configuration, use data registers instead of enum"
+  ]
+}

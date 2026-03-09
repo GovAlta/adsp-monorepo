@@ -1,0 +1,108 @@
+{
+  "id": "multi-criteria-rule",
+  "name": "Multi-Criteria Rule (AND / OR Logic)",
+  "category": "rule",
+  "summary": "Show, hide, enable, or disable an element based on multiple field values using `scope: \"#\"` with a full JSON Schema condition",
+  "whenToUse": [
+    "Hide a field when two or more conditions are met simultaneously (AND logic)",
+    "Show a section only when field A has value X AND field B has value Y",
+    "Show a field when ANY of several conditions is true (OR logic with anyOf)"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "employmentStatus": {
+        "type": "string",
+        "enum": ["employed", "self-employed", "unemployed", "retired"]
+      },
+      "province": {
+        "type": "string",
+        "enum": ["Alberta", "British Columbia", "Ontario", "Other"]
+      },
+      "annualIncome": { "type": "number" },
+      "albertaEmployeeBenefitInfo": { "type": "string" },
+      "retirementPlanDetails": { "type": "string" }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/employmentStatus",
+        "label": "Employment Status"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/province",
+        "label": "Province"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/annualIncome",
+        "label": "Annual Income ($)"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/albertaEmployeeBenefitInfo",
+        "label": "Alberta Employee Benefit Details",
+        "options": {
+          "help": "This field only appears when you are employed AND in Alberta."
+        },
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#",
+            "schema": {
+              "properties": {
+                "employmentStatus": { "const": "employed" },
+                "province": { "const": "Alberta" }
+              },
+              "required": ["employmentStatus", "province"]
+            }
+          }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/retirementPlanDetails",
+        "label": "Retirement Plan Details",
+        "options": {
+          "help": "This field appears when you are retired OR self-employed."
+        },
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#",
+            "schema": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "employmentStatus": { "const": "retired" }
+                  },
+                  "required": ["employmentStatus"]
+                },
+                {
+                  "properties": {
+                    "employmentStatus": { "const": "self-employed" }
+                  },
+                  "required": ["employmentStatus"]
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "notes": [
+    "For AND logic: set `condition.scope` to `\"#\"` (root) and provide a JSON Schema with multiple `properties` and `required`",
+    "All listed properties must match for the condition to be true — this is AND logic",
+    "For OR logic: use `anyOf` inside the condition schema — the condition is true if ANY sub-schema matches",
+    "IMPORTANT: Include `required` in the condition schema to ensure fields must be present for the condition to match",
+    "You can combine AND and OR: `{ properties: { a: ... }, required: [...], anyOf: [...] }`",
+    "This works with all effects: SHOW, HIDE, ENABLE, DISABLE",
+    "For negation (NOT): wrap in `not: { properties: { ... }, required: [...] }` inside the condition schema",
+    "The single-field `condition.scope: \"#/properties/fieldName\"` pattern only checks ONE field — use `scope: \"#\"` for multi-field conditions"
+  ]
+}

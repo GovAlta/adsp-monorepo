@@ -1,0 +1,82 @@
+{
+  "id": "enable-disable-rule",
+  "name": "Enable/Disable Rule",
+  "category": "rule",
+  "summary": "ENABLE or DISABLE a field based on another field's value — field remains visible but read-only when disabled",
+  "whenToUse": [
+    "Graying out a field until a prerequisite is completed",
+    "Making a 'Kind of death' field editable only when 'Is dead' is checked",
+    "When you want the field visible for context but not editable",
+    "Disabling a submit section until all required information is provided"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "isDead": { "type": "boolean" },
+      "kindOfDead": { "type": "string" },
+      "hasLicense": { "type": "boolean" },
+      "licenseNumber": { "type": "string" },
+      "licenseExpiry": { "type": "string", "format": "date" }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/isDead",
+        "label": "Is Dead?"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/kindOfDead",
+        "label": "Kind of dead",
+        "rule": {
+          "effect": "ENABLE",
+          "condition": {
+            "scope": "#/properties/isDead",
+            "schema": { "const": true }
+          }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/hasLicense",
+        "label": "Do you have a licence?"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/licenseNumber",
+        "label": "Licence Number",
+        "rule": {
+          "effect": "ENABLE",
+          "condition": {
+            "scope": "#/properties/hasLicense",
+            "schema": { "const": true }
+          }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/licenseExpiry",
+        "label": "Licence Expiry Date",
+        "rule": {
+          "effect": "ENABLE",
+          "condition": {
+            "scope": "#/properties/hasLicense",
+            "schema": { "const": true }
+          }
+        }
+      }
+    ]
+  },
+  "notes": [
+    "ENABLE: field starts disabled, becomes enabled when condition is TRUE",
+    "DISABLE: field starts enabled, becomes disabled when condition is TRUE — the INVERSE of ENABLE",
+    "Use ENABLE/DISABLE when you want the field to remain visible but toggled between editable and read-only",
+    "Disabled fields display their current value but don't accept input",
+    "Unlike SHOW/HIDE, the field is always visible — use this for fields that provide context",
+    "Choose ENABLE vs DISABLE based on the default state: use ENABLE when disabled-by-default, DISABLE when enabled-by-default",
+    "You can combine ENABLE/DISABLE with conditional required validation (if/then) to make a field required only when it is enabled"
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "id": "stepper-with-sections",
+  "name": "Page Stepper with Section Titles",
+  "category": "layout",
+  "summary": "Multi-page form using Categorization with `variant: pages`, section titles, and nested object scopes",
+  "whenToUse": [
+    "Large government application forms with distinct logical sections",
+    "When you want a task-list view with section groupings and progress tracking"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "object",
+        "properties": {
+          "firstName": { "type": "string", "minLength": 2 },
+          "lastName": { "type": "string", "minLength": 2 },
+          "initial": { "type": "string", "maxLength": 1 }
+        }
+      },
+      "address": {
+        "type": "object",
+        "properties": {
+          "street": { "type": "string" },
+          "city": { "type": "string" }
+        }
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Categorization",
+    "options": {
+      "variant": "pages",
+      "title": "Application Form",
+      "subtitle": "Tell us about yourself"
+    },
+    "elements": [
+      {
+        "type": "Category",
+        "label": "Name",
+        "options": {
+          "sectionTitle": "Identification"
+        },
+        "elements": [
+          {
+            "type": "VerticalLayout",
+            "elements": [
+              { "type": "Control", "scope": "#/properties/name/properties/firstName" },
+              { "type": "Control", "scope": "#/properties/name/properties/lastName" },
+              { "type": "Control", "scope": "#/properties/name/properties/initial" }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Category",
+        "label": "Address",
+        "options": {
+          "sectionTitle": "Residence"
+        },
+        "elements": [
+          {
+            "type": "VerticalLayout",
+            "elements": [
+              { "type": "Control", "scope": "#/properties/address/properties/street" },
+              { "type": "Control", "scope": "#/properties/address/properties/city" }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "notes": [
+    "Use `options.variant: \"pages\"` for the Design System's preferred page stepper pattern",
+    "Use `options.variant: \"stepper\"` for the simple stepper (navigation bar at top)",
+    "Each Category becomes a page; `sectionTitle` groups categories into sections on the task list",
+    "For nested objects, scopes must use the full path: `#/properties/name/properties/firstName`",
+    "A Summary page is automatically appended by the GoA renderer for applicant review",
+    "Use `options.title` and `options.subtitle` on Categorization for the task list header"
+  ]
+}

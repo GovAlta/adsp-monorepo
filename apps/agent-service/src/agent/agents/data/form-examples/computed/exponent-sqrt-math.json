@@ -1,0 +1,129 @@
+{
+  "id": "exponent-sqrt-math",
+  "name": "Exponents, Square Root, and Advanced Math",
+  "category": "computed",
+  "summary": "Use `^` exponentiation, `sqrt()`, `pow()`, `abs()`, and constants like `PI` for scientific calculations",
+  "whenToUse": [
+    "Engineering or scientific forms requiring power/root calculations",
+    "Area or distance calculations (e.g., circle area = PI * r^2)",
+    "Absolute difference calculations"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "radius": {
+        "type": "number",
+        "title": "Radius (m)"
+      },
+      "circleArea": {
+        "type": "string",
+        "format": "computed",
+        "description": "roundTo(PI * #/properties/radius ^ 2, 2)"
+      },
+      "circumference": {
+        "type": "string",
+        "format": "computed",
+        "description": "roundTo(2 * PI * #/properties/radius, 2)"
+      },
+      "sideA": {
+        "type": "number",
+        "title": "Side A (m)"
+      },
+      "sideB": {
+        "type": "number",
+        "title": "Side B (m)"
+      },
+      "hypotenuse": {
+        "type": "string",
+        "format": "computed",
+        "description": "roundTo(sqrt(#/properties/sideA ^ 2 + #/properties/sideB ^ 2), 2)"
+      },
+      "valueA": {
+        "type": "number",
+        "title": "Value A"
+      },
+      "valueB": {
+        "type": "number",
+        "title": "Value B"
+      },
+      "absoluteDiff": {
+        "type": "string",
+        "format": "computed",
+        "description": "abs(#/properties/valueA - #/properties/valueB)"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "HelpContent",
+        "options": {
+          "help": ["Circle Calculations"]
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/radius"
+      },
+      {
+        "type": "Control",
+        "label": "Area (PI × r²)",
+        "scope": "#/properties/circleArea"
+      },
+      {
+        "type": "Control",
+        "label": "Circumference (2 × PI × r)",
+        "scope": "#/properties/circumference"
+      },
+      {
+        "type": "HelpContent",
+        "options": {
+          "help": ["Pythagorean Theorem"]
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/sideA"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/sideB"
+      },
+      {
+        "type": "Control",
+        "label": "Hypotenuse (√(a² + b²))",
+        "scope": "#/properties/hypotenuse"
+      },
+      {
+        "type": "HelpContent",
+        "options": {
+          "help": ["Absolute Difference"]
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/valueA"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/valueB"
+      },
+      {
+        "type": "Control",
+        "label": "Absolute Difference |A - B|",
+        "scope": "#/properties/absoluteDiff"
+      }
+    ]
+  },
+  "notes": [
+    "`^` is the exponentiation operator (NOT bitwise XOR like in JavaScript): `x ^ 2` = x squared",
+    "`pow(x, y)` is equivalent to `x ^ y` — use whichever is more readable",
+    "`sqrt(x)` — square root; returns NaN for negative numbers (triggers error)",
+    "`cbrt(x)` — cube root (available but less common)",
+    "`abs(x)` — absolute value, useful for difference calculations",
+    "`hypot(a, b)` or `pyt(a, b)` — built-in hypotenuse shortcut (equivalent to sqrt(a^2 + b^2))",
+    "Constants: `PI` (3.14159...) and `E` (2.71828...) are available",
+    "`exp(x)` — e^x (Euler's number raised to x)"
+  ]
+}

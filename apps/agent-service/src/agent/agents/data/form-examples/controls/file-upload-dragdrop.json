@@ -1,0 +1,33 @@
+{
+  "id": "file-upload-dragdrop",
+  "name": "File Upload (Drag & Drop)",
+  "category": "control",
+  "summary": "Drag and drop file upload variant using `file-urn` format and `variant: dragdrop`",
+  "whenToUse": [
+    "When a more prominent upload area is desired over a simple button",
+    "Forms where file upload is a primary action, not a secondary one"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "certificateOfOwnership": {
+        "type": "string",
+        "format": "file-urn"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/certificateOfOwnership",
+    "options": {
+      "variant": "dragdrop"
+    }
+  },
+  "notes": [
+    "Set `variant: \"dragdrop\"` in UI schema options for the drag-and-drop upload area",
+    "The default variant is `\"button\"` which renders a 'Choose file' button",
+    "Also set the `variant` property on the data schema for the upload style: `\"button\"` (default) or `\"dragdrop\"`",
+    "Uploaded files are stored in Azure Blob storage via the ADSP File Service",
+    "The field value becomes a file URN like `urn:ads:platform:file-service:v1:/files/<uuid>`"
+  ]
+}
