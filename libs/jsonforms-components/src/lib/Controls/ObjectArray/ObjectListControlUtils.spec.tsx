@@ -1,5 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react';
+import { ErrorObject } from 'ajv';
 import { extractNames, extractNestedFields, isObjectArrayEmpty, renderCellColumn } from './ObjectListControlUtils';
 import { objectListReducer } from './arrayData/reducer';
 import { ADD_DATA_ACTION, SET_DATA_ACTION, INCREMENT_ACTION, DELETE_ACTION, ObjectArrayActions } from './arrayData/actions';
@@ -189,10 +190,17 @@ describe('renderCellColumn', () => {
   });
 
   it('renders warning when nested errors exist for array data', () => {
+    const nestedError: ErrorObject = {
+      instancePath: '/messages/0/name/0',
+      keyword: 'required',
+      params: {},
+      schemaPath: '',
+    };
+
     const result = renderCellColumn({
       data: [{ name: '' }],
       error: '',
-      errors: [{ instancePath: '/messages/0/name/0', keyword: 'required', params: {}, schemaPath: '' } as any],
+      errors: [nestedError],
       index: 0,
       rowPath: 'messages',
       element: 'name',

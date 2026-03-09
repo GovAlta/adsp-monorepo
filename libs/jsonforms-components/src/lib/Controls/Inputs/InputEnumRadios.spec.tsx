@@ -117,14 +117,14 @@ describe('Input Boolean Radio Control', () => {
 
   it('returns rank only for radio format enum controls', () => {
     const ranked = GoARadioGroupControlTester(
-      { type: 'Control', scope: '#/properties/options', options: { format: 'radio' } } as any,
-      { type: 'object', properties: { options: { type: 'string', enum: ['one'] } } } as any,
-      undefined as any
+      { type: 'Control', scope: '#/properties/options', options: { format: 'radio' } } as unknown as UISchemaElement,
+      { type: 'object', properties: { options: { type: 'string', enum: ['one'] } } } as unknown as object,
+      undefined as unknown as object
     );
     const notRanked = GoARadioGroupControlTester(
-      { type: 'Control', scope: '#/properties/options', options: { format: 'select' } } as any,
-      { type: 'object', properties: { options: { type: 'string', enum: ['one'] } } } as any,
-      undefined as any
+      { type: 'Control', scope: '#/properties/options', options: { format: 'select' } } as unknown as UISchemaElement,
+      { type: 'object', properties: { options: { type: 'string', enum: ['one'] } } } as unknown as object,
+      undefined as unknown as object
     );
 
     expect(ranked).toBe(20);

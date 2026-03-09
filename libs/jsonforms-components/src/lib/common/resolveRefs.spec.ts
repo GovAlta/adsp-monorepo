@@ -160,28 +160,28 @@ describe('schema match testers', () => {
     const exactTester = createSchemaMatchTester(['firstName'], true);
 
     const partialScore = partialTester(
-      {} as any,
+      {} as unknown as object,
       {
         type: 'object',
         properties: { firstName: { type: 'string' }, lastName: { type: 'string' } },
       } as JsonSchema,
-      undefined as any
+      undefined as unknown as object
     );
     const exactScore = exactTester(
-      {} as any,
+      {} as unknown as object,
       {
         type: 'object',
         properties: { firstName: { type: 'string' } },
       } as JsonSchema,
-      undefined as any
+      undefined as unknown as object
     );
     const missScore = exactTester(
-      {} as any,
+      {} as unknown as object,
       {
         type: 'object',
         properties: { firstName: { type: 'string' }, lastName: { type: 'string' } },
       } as JsonSchema,
-      undefined as any
+      undefined as unknown as object
     );
 
     expect(typeof partialScore).toBe('boolean');
@@ -192,12 +192,12 @@ describe('schema match testers', () => {
   it('returns ranked score for matching schema', () => {
     const rankedTester = createSchemaMatchRankedTester(['email']);
     const ranked = rankedTester(
-      {} as any,
+      {} as unknown as object,
       {
         type: 'object',
         properties: { email: { type: 'string' } },
       } as JsonSchema,
-      undefined as any
+      undefined as unknown as object
     );
 
     expect(typeof ranked).toBe('number');

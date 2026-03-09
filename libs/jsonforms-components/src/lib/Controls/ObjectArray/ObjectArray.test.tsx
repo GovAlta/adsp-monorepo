@@ -390,7 +390,8 @@ it('can add a primitive item', () => {
 });
 
 it('returns null for hidden array review', () => {
-  const { container } = render(<ArrayControlReview visible={false} /> as any);
+  const reviewProps = { visible: false } as unknown as Parameters<typeof ArrayControlReview>[0];
+  const { container } = render(<ArrayControlReview {...reviewProps} />);
   expect(container.firstChild).toBeNull();
 });
 
