@@ -240,4 +240,5 @@ describe('Object List component', () => {
     const scopes = extractScopesFromUISchema(uiSchema);
     expect(scopes.length).toBe(1);
   });
+
 });
