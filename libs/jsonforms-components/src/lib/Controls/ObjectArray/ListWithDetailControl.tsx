@@ -36,7 +36,8 @@ import {
   FlexForm,
   Trash,
   ListContainer,
-  RowFlexMenu,
+  RowFlexMenuMain,
+  RowFlexMenuLeft,
   MarginTop,
   UpdateListContainer,
   TabName,
@@ -615,11 +616,11 @@ const MainItemComponent = ({
           />
         ) : null}
       </IconsContainer>
-      <RowFlexMenu tabIndex={0}>
+      <RowFlexMenuMain tabIndex={0}>
         <TableContentContainer>
           <SummaryDisplay rowData={rowData} uischema={uischema} schema={schema} />
         </TableContentContainer>
-      </RowFlexMenu>
+      </RowFlexMenuMain>
     </SideMenuItem>
   );
 };
@@ -762,7 +763,7 @@ const LeftTab = ({
           }
         }}
       >
-        <RowFlexMenu tabIndex={0}>
+        <RowFlexMenuLeft tabIndex={0}>
           <TabName>{name}</TabName>
           {enabled ? (
             <Trash>
@@ -775,7 +776,7 @@ const LeftTab = ({
               ></GoabIconButton>
             </Trash>
           ) : null}
-        </RowFlexMenu>
+        </RowFlexMenuLeft>
       </SideMenuItem>
     </div>
   );
