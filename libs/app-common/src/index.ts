@@ -14,3 +14,4 @@ export * from './components/AgentChat';
 export * from './types/agent';
 export * from './utils';
 export * from './useScripts';
+export * from './hooks';
