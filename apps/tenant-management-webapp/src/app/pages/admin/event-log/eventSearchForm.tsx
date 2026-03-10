@@ -23,11 +23,10 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   const [searchCriteria, setSearchCriteria] = useState(initCriteria);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState(false);
-  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [searchBox, setSearchBox] = useState('');
-  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const searchRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLUListElement>(null);
   const today = new Date().toLocaleDateString().split('/').reverse().join('-');
   const message = 'Use a colon (:) between namespace and name';
@@ -39,8 +38,9 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (open && searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setOpen(false);
+        setActiveSuggestionIndex(-1);
       }
     };
 
@@ -48,30 +48,41 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [open]);
+  }, []);
 
   useEffect(() => {
     if (!open || !suggestionsRef.current) return;
 
     const activeItem = suggestionsRef.current.querySelector('.suggestion-active') as HTMLLIElement | null;
     activeItem?.scrollIntoView({ block: 'nearest' });
-  }, [activeSuggestionIndex, open, filteredSuggestions]);
+  }, [activeSuggestionIndex, open]);
 
   const events = useSelector((state: RootState) => state.event.definitions);
 
   const autoCompleteList = Object.keys(events).sort((a, b) => (a < b ? -1 : 1));
+
+  const getCurrentSuggestions = (value: string) => {
+    return value.trim().length === 0 ? autoCompleteList.slice(0, 80) : getSuggestions(autoCompleteList, value, 80);
+  };
+
+  const openSuggestions = (value: string) => {
+    const next = getCurrentSuggestions(value);
+    setFilteredSuggestions(next);
+    setOpen(true);
+    setActiveSuggestionIndex((prev) => (prev >= 0 ? prev : next.length > 0 ? 0 : -1));
+  };
 
   const suggestionOnChange = (e) => {
     const userInput = e.target.value;
 
     setSearchBox(userInput);
     setFreeTextQuery(userInput);
-    setOpen(true);
     setError(false);
 
-    const next = getSuggestions(autoCompleteList, userInput, 80);
+    const next = getCurrentSuggestions(userInput);
     setFilteredSuggestions(next);
-    setActiveSuggestionIndex(0);
+    setOpen(true);
+    setActiveSuggestionIndex(next.length > 0 ? 0 : -1);
 
     if (userInput.includes(':')) {
       const [ns, nm] = userInput.split(':');
@@ -102,16 +113,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     selectSuggestion(suggestion);
     setFilteredSuggestions([suggestion]);
     setOpen(false);
-
-    const resolved = resolveCriteriaFromInput(suggestion);
-    if (!resolved) {
-      setError(true);
-      return;
-    }
-    setError(false);
-    setSearchCriteria(resolved);
-    setSearchBox(`${resolved.namespace}:${resolved.name}`);
-    onSearch?.(resolved);
+    setActiveSuggestionIndex(-1);
   }
   const resolveCriteriaFromInput = (input: string): EventSearchCriteria | null => {
     const raw = (input ?? '').trim();
@@ -140,33 +142,91 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
 
   const onKeyDown = (e) => {
     setError(false);
-    setOpen(true);
-    if (e.key === 'Tab' || e.keyCode === 9) {
+    const key = e.key || '';
+    const keyCode = e.keyCode || e.which;
+
+    const isTab = key === 'Tab' || keyCode === 9;
+    const isEscape = key === 'Escape' || keyCode === 27;
+    const isArrowDown = key === 'ArrowDown' || keyCode === 40;
+    const isArrowUp = key === 'ArrowUp' || keyCode === 38;
+    const isEnter = key === 'Enter' || keyCode === 13;
+
+    if (isTab) {
       setOpen(false);
-    } else if (e.key === 'Escape' || e.keyCode === 27) {
-      setOpen(false);
-    } else if (e.key === 'Enter' || e.keyCode === 13) {
+      setActiveSuggestionIndex(-1);
+      return;
+    }
+
+    if (isEscape) {
       e.preventDefault();
       setOpen(false);
-      setError(false);
+      setActiveSuggestionIndex(-1);
+      return;
+    }
 
-      if (filteredSuggestions.length > 0) {
-        const selected = filteredSuggestions[activeSuggestionIndex] ?? filteredSuggestions[0];
-        selectSuggestion(selected);
-        const resolved = resolveCriteriaFromInput(selected);
-        if (!resolved) {
-          setError(true);
-          return;
-        }
-        setSearchCriteria(resolved);
-        setSearchBox(`${resolved.namespace}:${resolved.name}`);
-        onSearch?.(resolved);
+    if (isArrowDown) {
+      e.preventDefault();
+
+      const suggestions = getCurrentSuggestions(searchBox);
+
+      if (suggestions.length === 0) {
         return;
       }
 
-      const inputValue = (e.currentTarget as HTMLInputElement).value;
+      if (!open) {
+        setFilteredSuggestions(suggestions);
+        setOpen(true);
+        setActiveSuggestionIndex(0);
+        return;
+      }
 
-      const resolved = resolveCriteriaFromInput(inputValue);
+      setFilteredSuggestions(suggestions);
+      setActiveSuggestionIndex((prev) => {
+        if (prev < 0) return 0;
+        return prev < suggestions.length - 1 ? prev + 1 : prev;
+      });
+      return;
+    }
+
+    if (isArrowUp) {
+      e.preventDefault();
+
+      const suggestions = getCurrentSuggestions(searchBox);
+
+      if (suggestions.length === 0) {
+        return;
+      }
+
+      if (!open) {
+        setFilteredSuggestions(suggestions);
+        setOpen(true);
+        setActiveSuggestionIndex(suggestions.length - 1);
+        return;
+      }
+
+      setFilteredSuggestions(suggestions);
+      setActiveSuggestionIndex((prev) => {
+        if (prev < 0) return suggestions.length - 1;
+        return prev > 0 ? prev - 1 : 0;
+      });
+      return;
+    }
+
+    if (isEnter) {
+      if (open && activeSuggestionIndex >= 0 && filteredSuggestions[activeSuggestionIndex]) {
+        e.preventDefault();
+        const selected = filteredSuggestions[activeSuggestionIndex];
+        selectSuggestion(selected);
+        setOpen(false);
+        setActiveSuggestionIndex(-1);
+        return;
+      }
+
+      e.preventDefault();
+      setOpen(false);
+      setActiveSuggestionIndex(-1);
+
+      const resolved = resolveCriteriaFromInput(searchBox);
 
       if (!resolved) {
         setError(true);
@@ -175,40 +235,15 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
       setSearchCriteria(resolved);
       setSearchBox(`${resolved.namespace}:${resolved.name}`);
       onSearch?.(resolved);
-    } else if (e.key === 'ArrowUp' || e.keyCode === 38) {
-      e.preventDefault();
-      const suggestions =
-        filteredSuggestions.length > 0 ? filteredSuggestions : getSuggestions(autoCompleteList, searchBox || '', 80);
-      if (filteredSuggestions.length === 0) {
-        setFilteredSuggestions(suggestions);
-      }
-      if (suggestions.length === 0) {
-        return;
-      }
-      setActiveSuggestionIndex((index) => (index > 0 ? index - 1 : 0));
-    } else if (e.key === 'ArrowDown' || e.keyCode === 40) {
-      e.preventDefault();
-      const suggestions =
-        filteredSuggestions.length > 0 ? filteredSuggestions : getSuggestions(autoCompleteList, searchBox || '', 80);
-      if (filteredSuggestions.length === 0) {
-        setFilteredSuggestions(suggestions);
-      }
-      if (suggestions.length === 0) {
-        return;
-      }
-      setActiveSuggestionIndex((index) => (index < suggestions.length - 1 ? index + 1 : suggestions.length - 1));
     }
   };
-
   function normalize(s: string): string {
-    return (
-      s
-        .toLowerCase()
-        // eslint-disable-next-line
-        .replace(/[_:\-]+/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-    );
+    return s
+      .toLowerCase()
+      // eslint-disable-next-line
+      .replace(/[_:\-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   const setValue = (name: string, value: string) => {
@@ -304,36 +339,18 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             <div ref={searchRef}>
               <div
                 className={open ? 'search search-open' : 'search'}
-                onKeyDown={(e) => {
-                  if (e.keyCode === 9) {
-                    setOpen(false);
-                  }
-                }}
+                onKeyDownCapture={onKeyDown}
               >
                 <input
-                  ref={inputRef}
                   type="text"
                   name="searchBox"
                   value={searchBox}
-                  spellCheck={false}
-                  autoCorrect="off"
-                  autoCapitalize="off"
                   onChange={suggestionOnChange}
-                  onKeyDown={onKeyDown}
                   aria-label="Search"
                   onFocus={() => {
-                    setOpen(true);
-                    if (searchBox.length === 0) {
-                      setFilteredSuggestions(autoCompleteList);
-                      setActiveSuggestionIndex(0);
-                    }
-                  }}
-                  onClick={(e) => {
                     setError(false);
-                    setOpen(true);
-                    if (searchBox.length === 0) {
-                      setFilteredSuggestions(autoCompleteList);
-                      setActiveSuggestionIndex(0);
+                    if (!open) {
+                      openSuggestions(searchBox);
                     }
                   }}
                 />
@@ -345,29 +362,25 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                   testId="menu-open-close"
                   variant="dark"
                   onClick={() => {
-                    if (!open && searchBox.length === 0) {
-                      setFilteredSuggestions(autoCompleteList);
-                      setActiveSuggestionIndex(0);
-                    }
-                    if (open && searchBox.length > 0) {
-                      setSearchBox('');
-                      setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
-                    }
-                    const nextOpen = !open;
-                    setOpen(nextOpen);
-                    if (nextOpen) {
-                      setTimeout(() => inputRef.current?.focus(), 0);
+                    if (open) {
+                      if (searchBox.length > 0) {
+                        setSearchBox('');
+                        setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
+                      }
+                      setOpen(false);
+                      setFilteredSuggestions([]);
+                      setActiveSuggestionIndex(-1);
+                    } else {
+                      openSuggestions(searchBox);
                     }
                   }}
                 />
               </div>
-              {open && autoCompleteList && (
+              {open && filteredSuggestions.length > 0 && (
                 <ul ref={suggestionsRef} className="suggestions">
                   {filteredSuggestions.map((suggestion, index) => {
-                    let className;
-                    if (index === activeSuggestionIndex) {
-                      className = 'suggestion-active';
-                    }
+                    const className = index === activeSuggestionIndex ? 'suggestion-active' : '';
+
                     return (
                       <li
                         className={className}
@@ -415,7 +428,9 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             setError(false);
             setSearchCriteria(initCriteria);
             setSearchBox('');
-            onCancel();
+            setFilteredSuggestions([]);
+            setActiveSuggestionIndex(-1);
+            onCancel?.();
           }}
         >
           Reset
@@ -484,21 +499,21 @@ const SearchBox = styled.div`
     overflow: hidden auto;
   }
   .suggestions li {
-    padding: 0.5rem;
-    color: var(--color-gray-900);
-  }
+  padding: 0.5rem;
+  color: var(--color-gray-900);
+}
 
-  .suggestions li:hover {
+.suggestions li:hover {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  cursor: pointer;
+  font-weight: var(--fw-bold);
+}
+.suggestions .suggestion-active {
     background-color: var(--color-primary);
     color: var(--color-white);
-    cursor: pointer;
-    font-weight: var(--fw-bold);
-  }
-  .suggestions .suggestion-active {
-    background-color: var(--color-primary);
-    color: var(--color-white);
-    font-weight: var(--fw-bold);
-  }
+  font-weight: var(--fw-bold);
+}
 `;
 
 const DateTimeInput = styled.input`
