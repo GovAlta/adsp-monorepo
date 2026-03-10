@@ -156,7 +156,7 @@ export const HasErrorLabel = styled.div`
 `;
 
 export const HilightCellWarning = styled.div`
-  background-color: var(--goa-color-warning-default);
+  background-color: transparent;
 `;
 
 export const FixTableHeaderAlignment = styled.div`
