@@ -100,3 +100,10 @@ Feature: Form app
   Scenario: As a form applicant, I cannot apply outside an open intake period
     When an authenticated user is logged in to see "autotest-closed-submitted" application
     Then the user views a success callout message of "We're processing your application"
+
+  # TEST DATA: autotest-form-tester-role is created as a form definition with an open intake period in the future
+  # TEST DATA: autotest user 3 <email3>/<password3> is assigned with "form-tester" role which has access to see the form definition outside intake period
+  @TEST_CS-4314 @REQ_CS-2955 @regression
+  Scenario: As a form tester, I can access and use forms not yet opened for submissions
+    When autotest user 3 is logged in to see "autotest-form-tester-role" application
+    Then the user views a form page with primary application button enabled for "autotest-form-tester-role"
