@@ -8,6 +8,7 @@ export interface CategorizationStepperLayoutRendererProps extends StatePropsOfLa
 
 export interface CategorizationStepperLayoutReviewRendererProps extends CategorizationStepperLayoutRendererProps {
   navigationFunc?: (index: number) => void;
+  isInStepperReview?: boolean;
 }
 
 export interface FormStepperComponentProps {

@@ -130,18 +130,8 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
           )}
         </ReviewHeader>
         <ReviewValue>
-          {typeof reviewText === 'string' || typeof reviewText === 'number' ? (
-            <div data-testid={`review-value-${label}`}>{reviewText}</div>
-          ) : (
-            <JsonFormsDispatch
-              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-              schema={schema}
-              uischema={uischema}
-              enabled={enabled}
-              renderers={jsonForms.renderers}
-              cells={cells}
-            />
-          )}
+          {typeof reviewText === 'string' ||
+            (typeof reviewText === 'number' && <div data-testid={`review-value-${label}`}>{reviewText}</div>)}
           {activeError && (
             <WarningIconDiv>
               <GoabIcon type="warning" size="small" />

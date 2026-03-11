@@ -104,54 +104,6 @@ export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: GoACalloutControlTester, renderer: CalloutReviewControl },
 ];
 
-export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
-  // controls
-  { tester: FullNameTester, renderer: GoAInputBaseFullNameControlReview },
-  { tester: FullNameDobTester, renderer: GoAInputBaseFullNameDobControlReview },
-
-  { tester: GoAEnumControlTester, renderer: GoAInputBaseReviewControl },
-  { tester: GoAIntegerControlTester, renderer: GoAInputBaseReviewControl },
-  { tester: GoANumberControlTester, renderer: GoAInputBaseReviewControl },
-  { tester: GoATextControlTester, renderer: GoAInputBaseReviewControl },
-  { tester: GoADateControlTester, renderer: GoAInputBaseReviewControl },
-  { tester: GoADateTimeControlTester, renderer: GoAInputBaseReviewControl },
-  { tester: GoATimeControlTester, renderer: GoAInputBaseReviewControl },
-  {
-    tester: GoARadioGroupControlTester,
-    renderer: GoAInputBaseReviewControl,
-  },
-  {
-    tester: GoACheckoutGroupControlTester,
-    renderer: GoAInputBaseReviewControl,
-  },
-  { tester: GoABooleanControlTester, renderer: GoAInputBaseReviewControl },
-
-  { tester: GoABooleanRadioControlTester, renderer: GoAInputBaseReviewControl },
-  {
-    tester: MultiLineTextControlTester,
-    renderer: GoAInputBaseReviewControl,
-  },
-  {
-    tester: GoAArrayControlTester,
-    renderer: GoAArrayControlReviewRenderer, // Array might still need table or custom grid
-  },
-  {
-    tester: GoAListWithDetailsTester,
-    renderer: GoAArrayControlReviewRenderer, // List with details is complex
-  },
-  { tester: AddressLookUpTester, renderer: withJsonFormsControlProps(AddressLookUpControlReview) },
-
-  {
-    tester: GoAHorizontalLayoutTester,
-    renderer: GoAHorizontalReviewLayout,
-  },
-  { tester: GoAlVerticalLayoutTester, renderer: GoAVerticalLayout },
-  { tester: GoAGroupReviewLayoutTester, renderer: TableGroupLayoutRenderer },
-
-  { tester: HelpContentTester, renderer: EmptyHelpContentRenderer },
-  { tester: GoACalloutControlTester, renderer: CalloutReviewControl },
-];
-
 export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRendererProps): JSX.Element => {
   const { uischema, data, schema, ajv, cells, enabled } = props;
 
@@ -238,7 +190,8 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
                 ...element,
                 options: {
                   ...element.options,
-                  stepId: categoryIndex,
+                  // Pass stepId only if we're in the review section of the stepper to avoid conflicts with non-stepper review contexts
+                  stepId: props?.isInStepperReview ? categoryIndex : undefined,
                 },
               };
 
