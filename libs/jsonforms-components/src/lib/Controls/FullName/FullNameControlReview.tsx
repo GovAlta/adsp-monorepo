@@ -1,13 +1,12 @@
 import React, { useContext } from 'react';
 import { ControlProps } from '@jsonforms/core';
-import { GoabButton, GoabIcon } from '@abgov/react-components';
+import { GoabButton, GoabFormItem } from '@abgov/react-components';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import {
   PageReviewContainer,
   ReviewHeader,
   ReviewLabel,
   ReviewValue,
-  WarningIconDiv,
   RequiredTextLabel,
 } from '../Inputs/style-component';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
@@ -53,10 +52,10 @@ export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.El
             )}
           </ReviewHeader>
           {errors && (
-            <WarningIconDiv>
-              <GoabIcon type="warning" size="small" />
-              {errors?.includes('is a required property') ? `${label} is required` : errors}
-            </WarningIconDiv>
+            <GoabFormItem
+              error={errors?.includes('is a required property') ? `${label} is required` : errors}
+              label=""
+            ></GoabFormItem>
           )}
         </PageReviewContainer>
       </tr>

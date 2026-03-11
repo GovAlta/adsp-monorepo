@@ -126,7 +126,7 @@ describe('FullNameDobReviewControl', () => {
       errors: 'Full Name and Date of Birth is a required property',
     };
 
-    render(
+    const { baseElement } = render(
       <table>
         <tbody>
           <JsonFormsStepperContext.Provider value={stepperContextValue}>
@@ -136,7 +136,10 @@ describe('FullNameDobReviewControl', () => {
       </table>
     );
 
-    expect(screen.getByText('Full Name and Date of Birth is required')).toBeInTheDocument();
+    const errorFormItem = baseElement.querySelector(
+      'goa-form-item[error="Full Name and Date of Birth is required"]'
+    );
+    expect(errorFormItem).toBeInTheDocument();
   });
 
   it('does not render Change button when stepId is undefined', () => {

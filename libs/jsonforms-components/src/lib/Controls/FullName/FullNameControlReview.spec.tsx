@@ -121,7 +121,7 @@ describe('FullNameControlReview', () => {
       errors: 'Full Name is a required property',
     };
 
-    render(
+    const { baseElement } = render(
       <table>
         <tbody>
           <JsonFormsStepperContext.Provider value={stepperContextValue}>
@@ -131,7 +131,8 @@ describe('FullNameControlReview', () => {
       </table>
     );
 
-    expect(screen.getByText('Full Name is required')).toBeInTheDocument();
+    const errorFormItem = baseElement.querySelector('goa-form-item[error="Full Name is required"]');
+    expect(errorFormItem).toBeInTheDocument();
   });
 
   it('does not render Change button when stepId is undefined', () => {
