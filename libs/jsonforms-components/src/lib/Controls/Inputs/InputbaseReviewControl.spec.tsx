@@ -284,6 +284,78 @@ describe('GoABaseInputReviewComponent', () => {
     const reviewControl = getByTestId('review-control-input-id');
     expect(reviewControl.textContent).toBe('Yes ()');
   });
+
+  it('uses schema title in required warning text when options text is missing', () => {
+    const props = {
+      ...baseProps,
+      data: false,
+      required: true,
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/consent',
+        options: {
+          radio: false,
+        },
+      },
+      schema: {
+        type: 'boolean',
+        title: 'Consent',
+      },
+      label: '',
+    };
+
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl.textContent).toContain('Consent is required');
+  });
+
+  it('uses schema description in required warning text when title is missing', () => {
+    const props = {
+      ...baseProps,
+      data: false,
+      required: true,
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/consent',
+        options: {
+          radio: false,
+        },
+      },
+      schema: {
+        type: 'boolean',
+        description: 'Accept terms',
+      },
+      label: '',
+    };
+
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl.textContent).toContain('Accept terms is required');
+  });
+
+  it('uses uischema label in required warning text when title and description are missing', () => {
+    const props = {
+      ...baseProps,
+      data: false,
+      required: true,
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/consent',
+        label: 'Agreement',
+        options: {
+          radio: false,
+        },
+      },
+      schema: {
+        type: 'boolean',
+      },
+      label: '',
+    };
+
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    const reviewControl = getByTestId('review-control-input-id');
+    expect(reviewControl.textContent).toContain('Agreement is required');
+  });
 });
 
 describe('Can render GoAInputBaseTableReview', () => {
@@ -401,4 +473,30 @@ describe('Can render GoAInputBaseTableReview', () => {
     expect(tableReviewRow?.textContent).toContain('Monetary sanctions imposed by a corporation');
     expect(tableReviewRow?.textContent).toContain('Access to condominium documents');
   });
+
+  it('renders required error for empty table review data', () => {
+    const props = {
+      ...baseTableReviewProps,
+      label: 'Email',
+      data: '',
+      required: true,
+    };
+
+    const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
+    const tableReviewRow = getByTestId('input-base-table-Email-row');
+
+    expect(tableReviewRow?.textContent).toMatch(/Email\s+is required/);
+  });
+
+  it('renders JsonFormsDispatch for non-primitive review values', () => {
+    const props = {
+      ...baseTableReviewProps,
+      label: 'Nested object',
+      data: { key: 'value' },
+    };
+
+    const { getByText } = render(<GoAInputBaseTableReview {...props} />);
+    expect(getByText('No applicable renderer found.')).toBeTruthy();
+  });
+
 });
