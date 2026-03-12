@@ -1,66 +1,66 @@
 // Import JSON data files directly — webpack bundles them at build time
 // Controls
-import * as textArea from './data/form-examples/controls/text-area.json';
-import * as inlineHelp from './data/form-examples/controls/inline-help.json';
-import * as fileUpload from './data/form-examples/controls/file-upload.json';
-import * as dateInput from './data/form-examples/controls/date-input.json';
-import * as integerInput from './data/form-examples/controls/integer-input.json';
-import * as booleanRadio from './data/form-examples/controls/boolean-radio.json';
-import * as dropdownSelect from './data/form-examples/controls/dropdown-select.json';
-import * as radioButtons from './data/form-examples/controls/radio-buttons.json';
-import * as checkboxRequired from './data/form-examples/controls/checkbox-required.json';
-import * as requiredTextWorkaround from './data/form-examples/controls/required-text-workaround.json';
-import * as fileUploadDragdrop from './data/form-examples/controls/file-upload-dragdrop.json';
+import * as textArea from '../data/form-examples/controls/text-area.json';
+import * as inlineHelp from '../data/form-examples/controls/inline-help.json';
+import * as fileUpload from '../data/form-examples/controls/file-upload.json';
+import * as dateInput from '../data/form-examples/controls/date-input.json';
+import * as integerInput from '../data/form-examples/controls/integer-input.json';
+import * as booleanRadio from '../data/form-examples/controls/boolean-radio.json';
+import * as dropdownSelect from '../data/form-examples/controls/dropdown-select.json';
+import * as radioButtons from '../data/form-examples/controls/radio-buttons.json';
+import * as checkboxRequired from '../data/form-examples/controls/checkbox-required.json';
+import * as requiredTextWorkaround from '../data/form-examples/controls/required-text-workaround.json';
+import * as fileUploadDragdrop from '../data/form-examples/controls/file-upload-dragdrop.json';
 // Layouts
-import * as pagesLayout from './data/form-examples/layouts/pages-layout.json';
-import * as verticalLayout from './data/form-examples/layouts/vertical-layout.json';
-import * as horizontalLayout from './data/form-examples/layouts/horizontal-layout.json';
-import * as mixedLayout from './data/form-examples/layouts/mixed-layout.json';
-import * as groupLayout from './data/form-examples/layouts/group-layout.json';
-import * as stepperWithSections from './data/form-examples/layouts/stepper-with-sections.json';
+import * as pagesLayout from '../data/form-examples/layouts/pages-layout.json';
+import * as verticalLayout from '../data/form-examples/layouts/vertical-layout.json';
+import * as horizontalLayout from '../data/form-examples/layouts/horizontal-layout.json';
+import * as mixedLayout from '../data/form-examples/layouts/mixed-layout.json';
+import * as groupLayout from '../data/form-examples/layouts/group-layout.json';
+import * as stepperWithSections from '../data/form-examples/layouts/stepper-with-sections.json';
 // Common fields
-import * as fullName from './data/form-examples/common-fields/full-name.json';
-import * as address from './data/form-examples/common-fields/address.json';
+import * as fullName from '../data/form-examples/common-fields/full-name.json';
+import * as address from '../data/form-examples/common-fields/address.json';
 // Content
-import * as helpContent from './data/form-examples/content/help-content.json';
-import * as markdownHelp from './data/form-examples/content/markdown-help.json';
-import * as detailsCollapsible from './data/form-examples/content/details-collapsible.json';
-import * as markdownImage from './data/form-examples/content/image-content.json';
-import * as markdownLink from './data/form-examples/content/hyperlink-content.json';
+import * as helpContent from '../data/form-examples/content/help-content.json';
+import * as markdownHelp from '../data/form-examples/content/markdown-help.json';
+import * as detailsCollapsible from '../data/form-examples/content/details-collapsible.json';
+import * as markdownImage from '../data/form-examples/content/image-content.json';
+import * as markdownLink from '../data/form-examples/content/hyperlink-content.json';
 // Repeating items
-import * as listWithDetail from './data/form-examples/repeating/list-with-detail.json';
-import * as objectArray from './data/form-examples/repeating/object-array.json';
+import * as listWithDetail from '../data/form-examples/repeating/list-with-detail.json';
+import * as objectArray from '../data/form-examples/repeating/object-array.json';
 // Rules
-import * as showHideRule from './data/form-examples/rules/show-hide-rule.json';
-import * as enableDisableRule from './data/form-examples/rules/enable-disable-rule.json';
-import * as ruleEnumMatch from './data/form-examples/rules/rule-enum-match.json';
-import * as multiCriteriaRule from './data/form-examples/rules/multi-criteria-rule.json';
-import * as ruleOnGroupWrapper from './data/form-examples/rules/rule-on-group-wrapper.json';
+import * as showHideRule from '../data/form-examples/rules/show-hide-rule.json';
+import * as enableDisableRule from '../data/form-examples/rules/enable-disable-rule.json';
+import * as ruleEnumMatch from '../data/form-examples/rules/rule-enum-match.json';
+import * as multiCriteriaRule from '../data/form-examples/rules/multi-criteria-rule.json';
+import * as ruleOnGroupWrapper from '../data/form-examples/rules/rule-on-group-wrapper.json';
 // Validation
-import * as conditionalRequired from './data/form-examples/validation/conditional-required.json';
-import * as multipleConditions from './data/form-examples/validation/multiple-conditions.json';
-import * as customErrorMessages from './data/form-examples/validation/custom-error-messages.json';
+import * as conditionalRequired from '../data/form-examples/validation/conditional-required.json';
+import * as multipleConditions from '../data/form-examples/validation/multiple-conditions.json';
+import * as customErrorMessages from '../data/form-examples/validation/custom-error-messages.json';
 // Data registers
-import * as configServiceDropdown from './data/form-examples/data-registers/config-service-dropdown.json';
-import * as apiEndpointDropdown from './data/form-examples/data-registers/api-endpoint-dropdown.json';
+import * as configServiceDropdown from '../data/form-examples/data-registers/config-service-dropdown.json';
+import * as apiEndpointDropdown from '../data/form-examples/data-registers/api-endpoint-dropdown.json';
 // Complex scenarios
-import * as governmentApplication from './data/form-examples/complex/government-application.json';
-import * as contactFormWithRules from './data/form-examples/complex/contact-form-with-rules.json';
-import * as vendorRegistration from './data/form-examples/complex/vendor-registration.json';
+import * as governmentApplication from '../data/form-examples/complex/government-application.json';
+import * as contactFormWithRules from '../data/form-examples/complex/contact-form-with-rules.json';
+import * as vendorRegistration from '../data/form-examples/complex/vendor-registration.json';
 // Computed fields (format: "computed" with expr-eval expressions)
-import * as basicArithmetic from './data/form-examples/computed/basic-arithmetic.json';
-import * as conditionalComputed from './data/form-examples/computed/conditional-computed.json';
-import * as sumArrayAggregate from './data/form-examples/computed/sum-array-aggregate.json';
-import * as roundingFunctions from './data/form-examples/computed/rounding-functions.json';
-import * as minMaxComparison from './data/form-examples/computed/min-max-comparison.json';
-import * as percentageRatio from './data/form-examples/computed/percentage-ratio.json';
-import * as nestedTernaryLogic from './data/form-examples/computed/nested-ternary-logic.json';
-import * as grantEligibilityCalculator from './data/form-examples/computed/grant-eligibility-calculator.json';
-import * as exponentSqrtMath from './data/form-examples/computed/exponent-sqrt-math.json';
-import * as mixedComputedOverview from './data/form-examples/computed/mixed-computed-overview.json';
+import * as basicArithmetic from '../data/form-examples/computed/basic-arithmetic.json';
+import * as conditionalComputed from '../data/form-examples/computed/conditional-computed.json';
+import * as sumArrayAggregate from '../data/form-examples/computed/sum-array-aggregate.json';
+import * as roundingFunctions from '../data/form-examples/computed/rounding-functions.json';
+import * as minMaxComparison from '../data/form-examples/computed/min-max-comparison.json';
+import * as percentageRatio from '../data/form-examples/computed/percentage-ratio.json';
+import * as nestedTernaryLogic from '../data/form-examples/computed/nested-ternary-logic.json';
+import * as grantEligibilityCalculator from '../data/form-examples/computed/grant-eligibility-calculator.json';
+import * as exponentSqrtMath from '../data/form-examples/computed/exponent-sqrt-math.json';
+import * as mixedComputedOverview from '../data/form-examples/computed/mixed-computed-overview.json';
 // Best practices and anti-patterns
-import * as bestPractices from './data/form-examples/best-practices.json';
-import * as antiPatterns from './data/form-examples/anti-patterns.json';
+import * as bestPractices from '../data/form-examples/best-practices.json';
+import * as antiPatterns from '../data/form-examples/anti-patterns.json';
 
 interface FormExample {
   id: string;
@@ -147,11 +147,19 @@ const layoutExamples: FormExample[] = [
 ] as FormExample[];
 const commonFieldExamples: FormExample[] = [fullName, address] as FormExample[];
 const contentExamples: FormExample[] = [
-  helpContent, markdownHelp, detailsCollapsible, markdownLink, markdownImage,
+  helpContent,
+  markdownHelp,
+  detailsCollapsible,
+  markdownLink,
+  markdownImage,
 ] as FormExample[];
 const repeatingExamples: FormExample[] = [listWithDetail, objectArray] as FormExample[];
 const ruleExamples: FormExample[] = [
-  showHideRule, enableDisableRule, ruleEnumMatch, multiCriteriaRule, ruleOnGroupWrapper,
+  showHideRule,
+  enableDisableRule,
+  ruleEnumMatch,
+  multiCriteriaRule,
+  ruleOnGroupWrapper,
 ] as FormExample[];
 const validationExamples: FormExample[] = [
   conditionalRequired,

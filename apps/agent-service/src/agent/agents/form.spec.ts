@@ -1,4 +1,4 @@
-import { loadFormExamples } from './loadFormExamples';
+import { loadFormExamples } from './utils/loadFormExamples';
 
 describe('loadFormExamples', () => {
   let result: string;
@@ -220,8 +220,8 @@ describe('formGenerationAgent', () => {
 
   it('retains core instruction sections alongside examples', () => {
     const instructions = formGenerationAgent.instructions;
-    // Workflow guidelines
-    expect(instructions).toContain('Workflow Guidelines');
+    // Workflow
+    expect(instructions).toContain('## Workflow');
     expect(instructions).toContain('formConfigurationRetrievalTool');
     // Tool usage
     expect(instructions).toContain('Tool Usage');
@@ -241,6 +241,7 @@ describe('formGenerationAgent', () => {
       'formConfigurationRetrievalTool',
       'formConfigurationUpdateTool',
       'fileDownloadTool',
+      'rendererCatalogTool',
     ]);
   });
 
