@@ -39,9 +39,11 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
 
     const itemSchema = (schema as JsonSchema)?.items as JsonSchema | undefined;
     const oneOf = (itemSchema?.oneOf ?? []) as Array<{ const?: string; title?: string }>;
-    const titleByConst = new Map<string, string>(
-      oneOf.filter((option) => option?.const).map((option) => [option.const as string, option.title || option.const])
-    );
+    const titleByConst = new Map<string, string>();
+    oneOf.forEach((option) => {
+      if (!option?.const) return;
+      titleByConst.set(option.const, option.title ?? option.const);
+    });
 
     return data.map((value) => {
       const raw = typeof value === 'string' ? value : String(value);
