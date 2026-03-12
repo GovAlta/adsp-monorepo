@@ -10,6 +10,7 @@ import {
   RequiredTextLabel,
 } from '../Inputs/style-component';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 type FullNameControlReviewProps = ControlProps;
 
@@ -53,7 +54,7 @@ export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.El
           </ReviewHeader>
           {errors && (
             <GoabFormItem
-              error={errors?.includes('is a required property') ? `${label} is required` : errors}
+              error={errors?.includes(REQUIRED_PROPERTY_ERROR) ? `${label} is required` : errors}
               label=""
             ></GoabFormItem>
           )}

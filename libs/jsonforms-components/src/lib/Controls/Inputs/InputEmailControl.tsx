@@ -18,6 +18,7 @@ import { onChangeForInputControl, onBlurForTextControl } from '../../util/inputC
 import { FormFieldWrapper } from './style-component';
 import { Visible } from '../../util';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
+import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 
@@ -56,7 +57,7 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
 
   const primaryLabel = defaultSchema?.label || defaultLabel;
 
-  const splintIndex = splitErrors.findIndex((e) => e === 'is a required property');
+  const splintIndex = splitErrors.findIndex((e) => e === REQUIRED_PROPERTY_ERROR);
   splitErrors[splintIndex] = `${primaryLabel} is required`;
 
   const finalErrors = splitErrors.join('\n');

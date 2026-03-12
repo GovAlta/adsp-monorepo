@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import { FullNameControlReview } from './FullNameControlReview';
 import { ControlProps } from '@jsonforms/core';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 describe('FullNameControlReview', () => {
   const mockGoToPage = jest.fn();
@@ -118,7 +119,7 @@ describe('FullNameControlReview', () => {
   it('displays error message when errors prop is provided', () => {
     const propsWithError = {
       ...defaultProps,
-      errors: 'Full Name is a required property',
+      errors: `Full Name ${REQUIRED_PROPERTY_ERROR}`,
     };
 
     const { baseElement } = render(
