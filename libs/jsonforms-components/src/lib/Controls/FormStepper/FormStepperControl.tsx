@@ -36,7 +36,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps) => 
     () => ({
       ...props, // this ensures direction, enabled, visible, locale, t come through
     }),
-    [props]
+    [props],
   );
   /**
    * StepperCtx can only be provided once to prevent issues from categorization in categorization
@@ -131,7 +131,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
             })}
             <div data-testid="summary_step-content">
               <FormStepperSummaryH3>{summaryLabel}</FormStepperSummaryH3>
-              <FormStepperReviewer {...{ ...props, navigationFunc: goToPage }} />
+              <FormStepperReviewer {...{ ...props, navigationFunc: goToPage, isInStepperReview: true }} />
             </div>
           </GoabPages>
           <GoabGrid minChildWidth="100px">

@@ -80,7 +80,7 @@ const GenerateRows = (
   isInReview?: boolean,
   count?: number,
   data?: StateData,
-  errors?: ErrorObject[]
+  errors?: ErrorObject[],
 ) => {
   if (schema?.type === 'object') {
     const props = {
@@ -151,7 +151,7 @@ const ctxToNonEmptyCellProps = (ctx: JsonFormsStateContext, ownProps: OwnPropsOf
 };
 
 export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
-  props: NonEmptyRowComponentProps & HandleChangeProps
+  props: NonEmptyRowComponentProps & HandleChangeProps,
 ) {
   const {
     schema,
@@ -267,10 +267,8 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
               </thead>
               <tbody>
                 {range(count || 0).map((num, i) => {
-
-
                   const errorRow = errors?.find((error: ErrorObject) =>
-                    error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`)
+                    error.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`),
                   ) as { message: string };
 
                   return (
@@ -287,7 +285,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                           errors?.filter(
                             (e: ErrorObject) =>
                               e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}/${element}` ||
-                              e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`
+                              e.instancePath === `/${props.rowPath.replace(/\./g, '/')}/${i}`,
                           ) as { message: string; instancePath: string; data: { key: string; value: string } }[]
                         ).find((y) => {
                           return y?.message?.includes(element) || y.instancePath.includes(element);
@@ -496,7 +494,7 @@ const NonEmptyRowComponent = ({
                 uischema,
                 isInReview,
                 count,
-                data
+                data,
               )}
             </div>
           </div>
@@ -515,7 +513,7 @@ const NonEmptyRowComponent = ({
                   uischema,
                   isInReview,
                   count,
-                  data
+                  data,
                 )}
               </div>
             </div>
@@ -608,14 +606,16 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   const latestData: StateData = Array.isArray(data)
     ? (Object.fromEntries(parsedData.map((item, index) => [String(index), item])) as StateData)
     : (registers.categories[path]?.data ?? {});
-  const latestCount = Array.isArray(data) ? parsedData.length : registers.categories[path]?.count ?? Object.keys(latestData).length;
+  const latestCount = Array.isArray(data)
+    ? parsedData.length
+    : (registers.categories[path]?.count ?? Object.keys(latestData).length);
 
   const openDeleteDialog = useCallback(
     (rowIndex: number, name: string) => {
       setOpen(true);
       setRowData(rowIndex);
     },
-    [setOpen, setRowData]
+    [setOpen, setRowData],
   );
   const deleteCancel = useCallback(() => setOpen(false), [setOpen]);
 
@@ -751,7 +751,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
                   {listTitle} <span>{additionalProps.required && '(required)'}</span>
                   {maxItemsError && <span style={{ color: 'red', marginLeft: '1rem' }}>{maxItemsError}</span>}
                 </ReviewLabel>
-                {uischema.options?.stepId !== undefined && (
+                {
                   <GoabButton
                     type="tertiary"
                     size="compact"
@@ -759,7 +759,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
                   >
                     Change
                   </GoabButton>
-                )}
+                }
               </ReviewHeader>
             )
           ) : null}
