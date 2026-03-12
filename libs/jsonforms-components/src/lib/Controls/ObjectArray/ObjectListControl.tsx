@@ -65,7 +65,7 @@ import {
 } from './styled-components';
 import { PageReviewContainer, ReviewHeader, ReviewLabel } from '../Inputs/style-component';
 import { DataProperty } from './ObjectListControlTypes';
-import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
+import { DEFAULT_MAX_ITEMS, REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 const GenerateRows = (
@@ -308,7 +308,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                             if (
                               typeof humanMessage === 'string' &&
                               (humanMessage.includes('must have required property') ||
-                                humanMessage.includes('is a required property'))
+                                humanMessage.includes(REQUIRED_PROPERTY_ERROR))
                             ) {
                               const propertyMatch = humanMessage.match(/'([^']+)'/);
                               if (propertyMatch && propertyMatch[1]) {
@@ -604,7 +604,11 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
     ...additionalProps
   } = props;
 
-  const parsedData = data as Record<string, string>[];
+  const parsedData = Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+  const latestData: StateData = Array.isArray(data)
+    ? (Object.fromEntries(parsedData.map((item, index) => [String(index), item])) as StateData)
+    : (registers.categories[path]?.data ?? {});
+  const latestCount = Array.isArray(data) ? parsedData.length : registers.categories[path]?.count ?? Object.keys(latestData).length;
 
   const openDeleteDialog = useCallback(
     (rowIndex: number, name: string) => {
@@ -703,15 +707,24 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   useEffect(() => {
     const updatedData = Object.fromEntries((parsedData || []).map((item, index) => [index, item]));
     const count = Object.keys(updatedData).length;
-    const dispatchData = { [path]: { count: count, data: updatedData } } as unknown as Categories;
-    if (Object.keys(updatedData).length > 0) {
-      dispatch({
-        type: SET_DATA_ACTION,
-        payload: dispatchData,
-      });
+    const currentCategory = registers.categories[path];
+    const hasSameCount = currentCategory?.count === count;
+    const hasSameData = JSON.stringify(currentCategory?.data || {}) === JSON.stringify(updatedData);
+
+    if (hasSameCount && hasSameData) {
+      return;
     }
-    // eslint-disable-next-line
-  }, []);
+
+    const dispatchData = {
+      ...registers.categories,
+      [path]: { count: count, data: updatedData },
+    } as Categories;
+
+    dispatch({
+      type: SET_DATA_ACTION,
+      payload: dispatchData,
+    });
+  }, [parsedData, path]);
   const controlElement = uischema as ControlElement;
 
   const listTitle = label || uischema.options?.title;
@@ -757,8 +770,8 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
             enabled={enabled}
             openDeleteDialog={openDeleteDialog}
             translations={{}}
-            count={registers.categories[path]?.count || Object.keys(data || []).length}
-            data={data || registers.categories[path]?.data}
+            count={latestCount}
+            data={latestData}
             cells={cells}
             config={config}
             isInReview={isInReview}
@@ -799,8 +812,8 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
           enabled={enabled}
           openDeleteDialog={openDeleteDialog}
           translations={{}}
-          count={registers.categories[path]?.count || Object.keys(data || []).length}
-          data={data || registers.categories[path]?.data}
+          count={latestCount}
+          data={latestData}
           cells={cells}
           config={config}
           isInReview={isInReview}

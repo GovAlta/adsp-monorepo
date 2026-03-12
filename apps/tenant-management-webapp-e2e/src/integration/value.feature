@@ -85,4 +85,4 @@ Feature: Value
       | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | five_minutes | 10    | 200         |
       | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | hourly       | 24    | 200         |
       | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | daily        | 96    | 200         |
-      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | weekly       | 336   | 200         |
+      | /value/v1/event-service/values/event/metrics?interval=<interval>&top=5 | GET          | weekly       | 96    | 200         |

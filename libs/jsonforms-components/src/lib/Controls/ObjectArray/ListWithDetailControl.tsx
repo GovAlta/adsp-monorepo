@@ -36,7 +36,8 @@ import {
   FlexForm,
   Trash,
   ListContainer,
-  RowFlexMenu,
+  RowFlexMenuMain,
+  RowFlexMenuLeft,
   MarginTop,
   UpdateListContainer,
   TabName,
@@ -45,7 +46,7 @@ import {
   TableContentContainer,
 } from './styled-components';
 import { Visible } from '../../util';
-import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
+import { DEFAULT_MAX_ITEMS, REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 const getItemsTitle = (schema?: JsonSchema): string | undefined => {
   const items = schema?.items;
@@ -431,44 +432,62 @@ function getValue(obj: unknown, path: string): unknown {
     }, obj);
 }
 
+function prettify(prop: string) {
+  return prop
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/[_-]/g, ' ')
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
 function findLabelForPath(path: string, uiSchema?: UISchemaElement, schema?: JsonSchema): string {
+  const propertyKey = path.split('.').pop() || path;
+  const fallbackLabel = prettify(propertyKey);
+
   if (!uiSchema) {
-    return path;
+    return fallbackLabel;
   }
 
   if (isControlElement(uiSchema)) {
     const controlPath = uiSchema.scope ? toDataPath(uiSchema.scope) : '';
     if (controlPath === path) {
       const label = uiSchema.label;
-      if (typeof label === 'string') {
+
+      if (typeof label === 'string' && label.trim()) {
         return label;
       } else if (typeof label === 'object' && label !== null && 'text' in label) {
-        return label.text || path;
+        return label.text?.trim() || fallbackLabel;
       }
-      return path;
+
+      if (propertyKey && schema?.properties?.[propertyKey]) {
+        const property = schema.properties[propertyKey];
+        if (typeof property === 'object' && 'title' in property && property.title) {
+          return String(property.title);
+        }
+      }
+
+      return fallbackLabel;
     }
   }
 
   if (isLayoutElement(uiSchema)) {
     for (const element of uiSchema.elements) {
       const label = findLabelForPath(path, element, schema);
-      if (label !== path) {
+      if (label !== fallbackLabel) {
         return label;
       }
     }
   }
 
   if (schema?.properties) {
-    const propertyKey = path.split('.').pop();
     if (propertyKey && schema.properties[propertyKey]) {
       const property = schema.properties[propertyKey];
-      if (typeof property === 'object' && 'title' in property) {
-        return String(property.title) || path;
+      if (typeof property === 'object' && 'title' in property && property.title) {
+        return String(property.title);
       }
     }
   }
 
-  return path;
+  return fallbackLabel;
 }
 
 function generateSummaryPairs(
@@ -597,11 +616,11 @@ const MainItemComponent = ({
           />
         ) : null}
       </IconsContainer>
-      <RowFlexMenu tabIndex={0}>
+      <RowFlexMenuMain tabIndex={0}>
         <TableContentContainer>
           <SummaryDisplay rowData={rowData} uischema={uischema} schema={schema} />
         </TableContentContainer>
-      </RowFlexMenu>
+      </RowFlexMenuMain>
     </SideMenuItem>
   );
 };
@@ -612,13 +631,6 @@ function getEffectiveInstancePath(error: ErrorObject) {
   }
 
   return error.instancePath;
-}
-
-function prettify(prop: string) {
-  return prop
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/[_-]/g, ' ')
-    .replace(/^./, (c) => c.toUpperCase());
 }
 
 function resolveLabel(instancePath: string, schema: JsonSchema, uischema?: UISchemaElement) {
@@ -751,7 +763,7 @@ const LeftTab = ({
           }
         }}
       >
-        <RowFlexMenu tabIndex={0}>
+        <RowFlexMenuLeft tabIndex={0}>
           <TabName>{name}</TabName>
           {enabled ? (
             <Trash>
@@ -764,7 +776,7 @@ const LeftTab = ({
               ></GoabIconButton>
             </Trash>
           ) : null}
-        </RowFlexMenu>
+        </RowFlexMenuLeft>
       </SideMenuItem>
     </div>
   );
@@ -827,7 +839,7 @@ const MainTab = ({
                 acc.fields[field] = prettify(missingFromNested) + ' is required';
               } else {
                 const raw = e.message as string | undefined;
-                if (raw && (raw.includes('must have required property') || raw.includes('is a required property'))) {
+                if (raw && (raw.includes('must have required property') || raw.includes(REQUIRED_PROPERTY_ERROR))) {
                   const m = raw.match(/'([^']+)'/);
                   if (m && m[1]) acc.fields[field] = prettify(m[1]) + ' is required';
                   else acc.fields[field] = raw;
@@ -845,7 +857,7 @@ const MainTab = ({
                 acc.row = prettify(missingFromNested) + ' is required';
               } else {
                 const raw = e?.message as string | undefined;
-                if (raw && (raw.includes('must have required property') || raw.includes('is a required property'))) {
+                if (raw && (raw.includes('must have required property') || raw.includes(REQUIRED_PROPERTY_ERROR))) {
                   const m = raw.match(/'([^']+)'/);
                   if (m && m[1]) acc.row = prettify(m[1]) + ' is required';
                   else acc.row = raw;
@@ -862,7 +874,7 @@ const MainTab = ({
           let msg = humanizeAjvError(e, core.schema, core.uischema);
           if (
             typeof msg === 'string' &&
-            (msg.includes('must have required property') || msg.includes('is a required property'))
+            (msg.includes('must have required property') || msg.includes(REQUIRED_PROPERTY_ERROR))
           ) {
             const propertyMatch = msg.match(/'([^']+)'/);
             if (propertyMatch && propertyMatch[1]) {
