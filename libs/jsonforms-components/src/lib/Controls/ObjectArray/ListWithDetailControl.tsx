@@ -46,7 +46,7 @@ import {
   TableContentContainer,
 } from './styled-components';
 import { Visible } from '../../util';
-import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
+import { DEFAULT_MAX_ITEMS, REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 const getItemsTitle = (schema?: JsonSchema): string | undefined => {
   const items = schema?.items;
@@ -839,7 +839,7 @@ const MainTab = ({
                 acc.fields[field] = prettify(missingFromNested) + ' is required';
               } else {
                 const raw = e.message as string | undefined;
-                if (raw && (raw.includes('must have required property') || raw.includes('is a required property'))) {
+                if (raw && (raw.includes('must have required property') || raw.includes(REQUIRED_PROPERTY_ERROR))) {
                   const m = raw.match(/'([^']+)'/);
                   if (m && m[1]) acc.fields[field] = prettify(m[1]) + ' is required';
                   else acc.fields[field] = raw;
@@ -857,7 +857,7 @@ const MainTab = ({
                 acc.row = prettify(missingFromNested) + ' is required';
               } else {
                 const raw = e?.message as string | undefined;
-                if (raw && (raw.includes('must have required property') || raw.includes('is a required property'))) {
+                if (raw && (raw.includes('must have required property') || raw.includes(REQUIRED_PROPERTY_ERROR))) {
                   const m = raw.match(/'([^']+)'/);
                   if (m && m[1]) acc.row = prettify(m[1]) + ' is required';
                   else acc.row = raw;
@@ -874,7 +874,7 @@ const MainTab = ({
           let msg = humanizeAjvError(e, core.schema, core.uischema);
           if (
             typeof msg === 'string' &&
-            (msg.includes('must have required property') || msg.includes('is a required property'))
+            (msg.includes('must have required property') || msg.includes(REQUIRED_PROPERTY_ERROR))
           ) {
             const propertyMatch = msg.match(/'([^']+)'/);
             if (propertyMatch && propertyMatch[1]) {
