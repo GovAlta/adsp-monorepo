@@ -1,7 +1,8 @@
 import { AgentConfigurations } from '../configuration';
-import { formGenerationAgent, pdfFormAnalysisAgent } from './form';
+import { formGenerationAgent, formUpdateAgent, pdfFormAnalysisAgent } from './form';
 
 export const CoreAgents: AgentConfigurations = {
   formGenerationAgent,
+  formUpdateAgent,
   pdfFormAnalysisAgent,
 };

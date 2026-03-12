@@ -53,7 +53,7 @@ export interface ApiRequestToolConfiguration extends TypedToolConfiguration {
   method: 'GET' | 'POST' | 'PUT';
   api: string;
   path: string;
-  userContext?: boolean;
+  useServiceAccount?: boolean;
 }
 type ToolConfiguration = string | ApiRequestToolConfiguration;
 
