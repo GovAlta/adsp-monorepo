@@ -16,6 +16,7 @@ export const CategoryRow: React.FC<CategoryRowProps> = ({ category, index, onCli
     <PageStepperRow
       disabled={!category?.isEnabled}
       role="button"
+      className={'task-list-stepper-row-wrapper'}
       key={`task-list-${index}-stepper-row`}
       tabIndex={-1}
       onClick={(e) => {
@@ -25,7 +26,7 @@ export const CategoryRow: React.FC<CategoryRowProps> = ({ category, index, onCli
       onKeyDown={(e) => e.key === 'Enter' && onClick(index)}
       data-testid={`page-ref-${index}`}
     >
-      <td key={`task-list-${index}-stepper-row-label`}>
+      <td key={`task-list-${index}-stepper-row-label`} className="task-list-stepper-row">
         <a href="#">{category.label}</a>
       </td>
       <CategoryStatus>
