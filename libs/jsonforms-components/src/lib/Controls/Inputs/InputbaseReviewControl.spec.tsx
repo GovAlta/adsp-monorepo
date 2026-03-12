@@ -482,10 +482,13 @@ describe('Can render GoAInputBaseTableReview', () => {
       required: true,
     };
 
-    const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
+    const { getByTestId, baseElement } = render(<GoAInputBaseTableReview {...props} />);
     const tableReviewRow = getByTestId('input-base-table-Email-row');
 
-    expect(tableReviewRow?.textContent).toMatch(/Email\s+is required/);
+    expect(tableReviewRow?.textContent).toContain('Email');
+    const errorFormItem = baseElement.querySelector('goa-form-item[error]');
+    expect(errorFormItem).toBeTruthy();
+    expect(errorFormItem?.getAttribute('error')).toMatch(/required/i);
   });
 
   it('renders JsonFormsDispatch for non-primitive review values', () => {
