@@ -371,4 +371,34 @@ describe('Can render GoAInputBaseTableReview', () => {
     const tableReviewRow = getByTestId('input-base-table--row');
     expect(tableReviewRow?.textContent).toContain('Yes (Custom Label Text)');
   });
+
+  it('renders array values in table review using oneOf titles', () => {
+    const props = {
+      ...baseTableReviewProps,
+      label: 'Dispute type',
+      data: ['monetary-sanction', 'documents'],
+      schema: {
+        type: 'array',
+        items: {
+          type: 'string',
+          oneOf: [
+            { const: 'monetary-sanction', title: 'Monetary sanctions imposed by a corporation' },
+            { const: 'documents', title: 'Access to condominium documents' },
+          ],
+        },
+      },
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/whichOfThemApplies',
+        options: {
+          format: 'checkbox',
+        },
+      },
+    };
+
+    const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
+    const tableReviewRow = getByTestId('input-base-table-Dispute type-row');
+    expect(tableReviewRow?.textContent).toContain('Monetary sanctions imposed by a corporation');
+    expect(tableReviewRow?.textContent).toContain('Access to condominium documents');
+  });
 });
