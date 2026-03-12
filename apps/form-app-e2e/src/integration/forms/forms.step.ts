@@ -51,6 +51,20 @@ When('an authenticated user is logged in to see {string} application', function 
   cy.wait(8000); // Wait all the redirects to settle down
 });
 
+When('autotest user 3 is logged in to see {string} application', function (formDefinition) {
+  cy.visit('/' + Cypress.env('tenantName') + '/' + formDefinition + '/login?kc_idp_hint=');
+  // Enter user name and password and click log in button
+  formsObj.usernameEmailField().type(Cypress.env('email3'));
+  formsObj.passwordField().type(Cypress.env('password3'));
+  formsObj.loginButton().click();
+  cy.wait(8000); // Wait all the redirects to settle down
+});
+
+Then('the user views a form page with primary application button enabled for {string}', function (formName) {
+  formsObj.formLandingPagePrimaryButton().shadow().find('button').should('be.enabled');
+  formsObj.formLandingPageSubtitle().should('contain.text', formName);
+});
+
 Given('an anonymous applicant goes to {string} application', function (formDefinition) {
   cy.visit('/' + Cypress.env('tenantName') + '/' + formDefinition);
   cy.wait(8000); // Wait all the redirects to settle down
