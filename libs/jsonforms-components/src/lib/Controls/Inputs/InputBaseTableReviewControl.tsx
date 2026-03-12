@@ -30,6 +30,26 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
   }
   let reviewText = data;
   const isBoolean = typeof data === 'boolean';
+
+  const getArrayDisplayValues = (): string[] => {
+    if (!Array.isArray(data)) {
+      return [];
+    }
+
+    const itemSchema = (schema as JsonSchema)?.items as JsonSchema | undefined;
+    const oneOf = (itemSchema?.oneOf ?? []) as Array<{ const?: string; title?: string }>;
+    const titleByConst = new Map<string, string>();
+    oneOf.forEach((option) => {
+      if (!option?.const) return;
+      titleByConst.set(option.const, option.title ?? option.const);
+    });
+
+    return data.map((value) => {
+      const raw = typeof value === 'string' ? value : String(value);
+      return titleByConst.get(raw) || raw;
+    });
+  };
+
   if (isBoolean) {
     let checkboxLabel = '';
 
@@ -49,6 +69,17 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
         reviewText = data ? `Yes (${checkboxLabel})` : `No (${checkboxLabel})`;
       }
     }
+  }
+
+  if (Array.isArray(data) && data.length > 0) {
+    const displayValues = getArrayDisplayValues();
+    reviewText = (
+      <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+        {displayValues.map((value, index) => (
+          <li key={`${value}-${index}`}>{value}</li>
+        ))}
+      </ul>
+    );
   }
 
   // Helper to extract errors manually from global state, bypassing "touched" filter
@@ -129,7 +160,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
           )}
         </ReviewHeader>
         <ReviewValue>
-          {typeof reviewText === 'string' || typeof reviewText === 'number' ? (
+          {typeof reviewText === 'string' || typeof reviewText === 'number' || React.isValidElement(reviewText) ? (
             <div data-testid={`review-value-${label}`}>{reviewText}</div>
           ) : (
             <JsonFormsDispatch
