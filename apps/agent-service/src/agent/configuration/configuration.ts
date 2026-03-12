@@ -4,6 +4,7 @@ import { Agent } from '@mastra/core/agent';
 import type { RequestContext } from '@mastra/core/request-context';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
+import { PostgresStore } from '@mastra/pg';
 import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
 import { AgentBroker } from '../model';
@@ -90,6 +91,16 @@ export class AgentServiceConfiguration {
       });
 
       this.mastra = new Mastra({
+        storage: environment.DB_HOST ? new PostgresStore({
+          host: environment.DB_HOST,
+          port: environment.DB_PORT,
+          user: environment.DB_USER,
+          password: environment.DB_PASSWORD,
+          ssl: environment.DB_TLS,
+        }) : new LibSQLStore({
+          id: 'memoryStore',
+          url: ':memory:',
+        }),
         agents: {
           ...Object.entries(configuration)
             .sort(([_xk, x], [_yk, y]) => (x?.agents?.length || 0) - (y?.agents?.length || 0)) // Sort the agents with agents to later.
@@ -104,11 +115,11 @@ export class AgentServiceConfiguration {
                     instructions: withContextualInstructions(configuration.instructions),
                     model: environment.MODEL_URL
                       ? {
-                          id: `custom/${environment.MODEL}`,
-                          modelId: environment.MODEL,
-                          url: environment.MODEL_URL,
-                          apiKey: environment.MODEL_API_KEY,
-                        }
+                        id: `custom/${environment.MODEL}`,
+                        modelId: environment.MODEL,
+                        url: environment.MODEL_URL,
+                        apiKey: environment.MODEL_API_KEY,
+                      }
                       : environment.MODEL,
                     agents: () => {
                       const toolAgents = {};
@@ -150,12 +161,7 @@ export class AgentServiceConfiguration {
                         }
                         return tools;
                       }, {}) || {},
-                    memory: new Memory({
-                      storage: new LibSQLStore({
-                        id: 'memoryStore',
-                        url: ':memory:',
-                      }),
-                    }),
+                    memory: new Memory(),
                     inputProcessors: ({ requestContext }) =>
                       createInputProcessors({
                         logger: this.logger,
