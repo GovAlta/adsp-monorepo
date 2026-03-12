@@ -1,4 +1,4 @@
-import { AdspId, adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { createTool } from '@mastra/core/tools';
 import axios, { isAxiosError } from 'axios';
 import type { Logger } from 'winston';
@@ -29,8 +29,8 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
       assessorRoles: z.array(z.string()),
     }),
     execute: async (_, { requestContext }: { requestContext: AdspRequestContext<{ formDefinitionId: string }> }) => {
-      const tenantId = requestContext.get('tenantId') as AdspId;
-      const formDefinitionId = requestContext.get('formDefinitionId') as string;
+      const tenantId = requestContext.get('tenantId');
+      const formDefinitionId = requestContext.get('formDefinitionId');
 
       try {
         const formDefinitionUrl = new URL(
@@ -121,8 +121,8 @@ export async function createFormConfigurationTools({ directory, tokenProvider, l
     ) => {
       const { name, dataSchema, uiSchema, anonymousApply } = inputData;
 
-      const tenantId = requestContext.get('tenantId') as AdspId;
-      const formDefinitionId = requestContext.get('formDefinitionId') as string;
+      const tenantId = requestContext.get('tenantId');
+      const formDefinitionId = requestContext.get('formDefinitionId');
 
       try {
         const configurationServiceUrl = await directory.getServiceUrl(

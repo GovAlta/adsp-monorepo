@@ -25,7 +25,7 @@ export async function createFileTools({ directory, tokenProvider, logger }: File
       content: z.string(),
     }),
     execute: async (inputData, { requestContext }: {requestContext: AdspRequestContext}) => {
-      const tenantId = requestContext.get('tenantId') as AdspId;
+      const tenantId = requestContext.get('tenantId');
       const { fileId } = inputData;
 
       const { data } = await fileServiceClient.getFileAndMetadata(
