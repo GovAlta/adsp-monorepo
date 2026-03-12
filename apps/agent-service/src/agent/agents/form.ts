@@ -1,5 +1,5 @@
 import { AgentConfiguration } from '../configuration';
-import { loadFormExamples } from './loadFormExamples';
+import { loadFormExamples } from './utils/loadFormExamples';
 
 const formExamplesText = loadFormExamples();
 
