@@ -1,0 +1,28 @@
+{
+  "id": "markdown-link",
+  "name": "Markdown Link in Form",
+  "category": "content",
+  "summary": "Add clickable hyperlinks inside a form using markdown HelpContent with `[text](url)` syntax",
+  "whenToUse": [
+    "Linking to external resources, policies, or reference documents",
+    "Providing 'Learn more' links within instructional sections",
+    "Adding privacy policy or terms-of-service links"
+  ],
+  "uiSchema": {
+    "type": "HelpContent",
+    "options": {
+      "markdown": true,
+      "help": [
+        "Please review the [Alberta Privacy Policy](https://www.alberta.ca/privacy-policy) before submitting.",
+        "For more details, visit [Alberta.ca](https://www.alberta.ca)."
+      ]
+    }
+  },
+  "notes": [
+    "Use standard markdown link syntax: `[link text](url)`",
+    "Set `options.markdown` to `true` to enable markdown rendering",
+    "Multiple links can appear in the same help entry or across entries",
+    "Links open in a new tab by default",
+    "The old `variant: hyperlink` approach is deprecated — always use markdown links"
+  ]
+}

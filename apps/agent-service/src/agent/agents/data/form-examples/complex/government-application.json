@@ -1,0 +1,158 @@
+{
+  "id": "government-application",
+  "name": "Full Government Application Form",
+  "category": "complex",
+  "summary": "Complete multi-page government application with conditional fields, file uploads, common fields, FOIP notice, and declaration checkbox",
+  "whenToUse": [
+    "Complex government service applications (permits, licenses, benefits)",
+    "Reference for how to combine multiple form features into a cohesive application"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "applicantName": {
+        "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/personFullName"
+      },
+      "email": { "type": "string", "format": "email", "minLength": 1 },
+      "phone": { "type": "string", "minLength": 1 },
+      "mailingAddress": {
+        "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressAlberta"
+      },
+      "applicationType": {
+        "type": "string",
+        "enum": ["New Application", "Renewal", "Amendment"]
+      },
+      "hasSupplementaryDocs": { "type": "boolean" },
+      "supplementaryDocument": { "type": "string", "format": "file-urn" },
+      "additionalNotes": { "type": "string" },
+      "iDeclare": {
+        "type": "boolean",
+        "allOf": [{ "enum": [true] }]
+      }
+    },
+    "required": ["email", "phone", "applicationType", "iDeclare"],
+    "if": {
+      "properties": {
+        "hasSupplementaryDocs": { "const": true }
+      }
+    },
+    "then": {
+      "required": ["supplementaryDocument"]
+    }
+  },
+  "uiSchema": {
+    "type": "Categorization",
+    "options": {
+      "variant": "pages",
+      "title": "Government Service Application",
+      "subtitle": "Apply for the program"
+    },
+    "elements": [
+      {
+        "type": "Category",
+        "label": "Personal Information",
+        "options": { "sectionTitle": "About You" },
+        "elements": [
+          {
+            "type": "HelpContent",
+            "options": {
+              "markdown": true,
+              "help": ["Please provide your contact information. All fields marked with * are required."]
+            }
+          },
+          { "type": "Control", "scope": "#/properties/applicantName" },
+          {
+            "type": "HorizontalLayout",
+            "elements": [
+              {
+                "type": "Control",
+                "scope": "#/properties/email",
+                "options": { "help": "We'll use this to send you updates on your application." }
+              },
+              {
+                "type": "Control",
+                "scope": "#/properties/phone",
+                "options": { "help": "Include area code (e.g., 780-555-0123)." }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Category",
+        "label": "Mailing Address",
+        "options": { "sectionTitle": "About You" },
+        "elements": [{ "type": "Control", "scope": "#/properties/mailingAddress" }]
+      },
+      {
+        "type": "Category",
+        "label": "Application Details",
+        "options": { "sectionTitle": "Your Application" },
+        "elements": [
+          {
+            "type": "Control",
+            "scope": "#/properties/applicationType",
+            "options": { "format": "radio" }
+          },
+          {
+            "type": "Control",
+            "scope": "#/properties/hasSupplementaryDocs",
+            "label": "Do you have supplementary documents to upload?"
+          },
+          {
+            "type": "Control",
+            "scope": "#/properties/supplementaryDocument",
+            "options": { "variant": "dragdrop" },
+            "rule": {
+              "effect": "SHOW",
+              "condition": {
+                "scope": "#/properties/hasSupplementaryDocs",
+                "schema": { "const": true }
+              }
+            }
+          },
+          {
+            "type": "Control",
+            "scope": "#/properties/additionalNotes",
+            "options": {
+              "multi": true,
+              "help": "Provide any additional information relevant to your application."
+            }
+          }
+        ]
+      },
+      {
+        "type": "Category",
+        "label": "Review & Submit",
+        "options": { "sectionTitle": "Submission" },
+        "elements": [
+          {
+            "type": "HelpContent",
+            "options": {
+              "markdown": true,
+              "help": [
+                "#### Notice of Collection",
+                "The personal information on this form is collected under the authority of Section 33(c) of the *Freedom of Information and Protection of Privacy Act* (FOIP). If you have any questions contact us at [support@gov.ab.ca](mailto:support@gov.ab.ca)."
+              ]
+            }
+          },
+          {
+            "type": "Control",
+            "scope": "#/properties/iDeclare",
+            "options": {
+              "text": "I declare that the information I have provided is true and correct to the best of my knowledge."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "notes": [
+    "This combines: multi-page stepper, common fields ($ref), conditional file upload, FOIP notice, and declaration",
+    "Section titles group related categories (pages) on the task list",
+    "The if/then conditional makes supplementaryDocument required only when hasSupplementaryDocs is true",
+    "Always pair SHOW/HIDE rules with matching if/then conditional validation in the data schema",
+    "Use schemaDefinitionTool to load common schema definitions before using $ref for fullName and address",
+    "The FOIP notice and declaration checkbox are required on most Alberta government forms"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "id": "multiple-conditions",
+  "name": "Multiple Conditional Validations (allOf)",
+  "category": "validation",
+  "summary": "Multiple if/then blocks wrapped in `allOf` for forms with several conditional required fields",
+  "whenToUse": [
+    "Forms with two or more separate conditional validation rules",
+    "Complex government forms where different sections become required based on different triggers"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "hasChildren": { "type": "boolean" },
+      "childsFirstName": { "type": "string", "minLength": 1 },
+      "childsLastName": { "type": "string", "minLength": 1 },
+      "category": {
+        "type": "string",
+        "enum": ["General Inquiry", "Highway Issues", "Environmental Concern"]
+      },
+      "highwayIssueDetails": { "type": "string", "minLength": 1 }
+    },
+    "required": ["category"],
+    "allOf": [
+      {
+        "if": {
+          "properties": {
+            "hasChildren": { "const": true }
+          }
+        },
+        "then": {
+          "required": ["childsFirstName", "childsLastName"]
+        }
+      },
+      {
+        "if": {
+          "properties": {
+            "category": { "const": "Highway Issues" }
+          }
+        },
+        "then": {
+          "required": ["highwayIssueDetails"]
+        }
+      }
+    ]
+  },
+  "notes": [
+    "Wrap multiple if/then blocks in `allOf` at the root level of the data schema",
+    "You can add as many conditional validation blocks as needed inside `allOf`",
+    "Each `if/then` is independent — they don't interfere with each other",
+    "You can conditionally specify ANY JSON Schema validation: required, pattern, minLength, format, etc.",
+    "Be sure to pair each conditional validation with a matching SHOW/HIDE rule in the UI schema"
+  ]
+}

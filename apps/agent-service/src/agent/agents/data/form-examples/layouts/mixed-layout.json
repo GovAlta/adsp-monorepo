@@ -1,0 +1,48 @@
+{
+  "id": "mixed-layout",
+  "name": "Mixed Nested Layout",
+  "category": "layout",
+  "summary": "VerticalLayout containing a HorizontalLayout to mix row and column arrangements",
+  "whenToUse": [
+    "Forms that need some fields side-by-side and others stacked vertically",
+    "Combining first/last name on one row with a multi-line textarea below"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "firstName": { "type": "string" },
+      "lastName": { "type": "string" },
+      "reasonForLeaving": { "type": "string" }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "HorizontalLayout",
+        "elements": [
+          {
+            "type": "Control",
+            "scope": "#/properties/firstName"
+          },
+          {
+            "type": "Control",
+            "scope": "#/properties/lastName"
+          }
+        ]
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/reasonForLeaving",
+        "options": {
+          "multi": true
+        }
+      }
+    ]
+  },
+  "notes": [
+    "Nest a HorizontalLayout inside a VerticalLayout to create mixed arrangements",
+    "This is the most common layout pattern for forms with name fields + longer inputs",
+    "Layouts can be nested up to several levels deep, but keep it simple for readability"
+  ]
+}

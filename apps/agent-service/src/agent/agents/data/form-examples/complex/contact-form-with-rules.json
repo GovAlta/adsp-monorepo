@@ -1,0 +1,134 @@
+{
+  "id": "contact-form-with-rules",
+  "name": "Contact/Feedback Form with Conditional Routing",
+  "category": "complex",
+  "summary": "Simple feedback form with category-based conditional fields and custom validation messages",
+  "whenToUse": [
+    "Contact us, feedback, or complaint forms with category-based follow-up questions",
+    "Simple forms that still need conditional logic and good validation"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "fullName": { "type": "string", "minLength": 1 },
+      "email": { "type": "string", "format": "email", "minLength": 1 },
+      "category": {
+        "type": "string",
+        "enum": ["General Inquiry", "Technical Issue", "Complaint", "Suggestion"]
+      },
+      "urgency": {
+        "type": "string",
+        "enum": ["Low", "Medium", "High", "Critical"]
+      },
+      "issueDescription": {
+        "type": "string",
+        "minLength": 10,
+        "errorMessage": {
+          "minLength": "Please provide at least 10 characters describing your issue."
+        }
+      },
+      "stepsToReproduce": { "type": "string" },
+      "preferredResolution": { "type": "string" }
+    },
+    "required": ["fullName", "email", "category", "issueDescription"],
+    "allOf": [
+      {
+        "if": {
+          "properties": { "category": { "const": "Technical Issue" } }
+        },
+        "then": {
+          "required": ["stepsToReproduce"]
+        }
+      },
+      {
+        "if": {
+          "properties": { "category": { "const": "Complaint" } }
+        },
+        "then": {
+          "required": ["urgency", "preferredResolution"]
+        }
+      }
+    ]
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "HelpContent",
+        "options": {
+          "markdown": true,
+          "help": ["### Contact Us", "Please fill out the form below and we'll get back to you within 2 business days."]
+        }
+      },
+      {
+        "type": "HorizontalLayout",
+        "elements": [
+          { "type": "Control", "scope": "#/properties/fullName" },
+          { "type": "Control", "scope": "#/properties/email" }
+        ]
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/category",
+        "options": { "format": "radio" }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/urgency",
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/category",
+            "schema": { "const": "Complaint" }
+          }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/issueDescription",
+        "options": {
+          "multi": true,
+          "help": "Describe your inquiry in detail. Be specific about what happened."
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/stepsToReproduce",
+        "label": "Steps to reproduce the issue",
+        "options": {
+          "multi": true,
+          "help": "List the steps someone would follow to encounter this issue."
+        },
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/category",
+            "schema": { "const": "Technical Issue" }
+          }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/preferredResolution",
+        "options": {
+          "multi": true,
+          "help": "Tell us how you'd like this resolved."
+        },
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/category",
+            "schema": { "const": "Complaint" }
+          }
+        }
+      }
+    ]
+  },
+  "notes": [
+    "This demonstrates a single-page form with allOf conditional validation and category-based SHOW rules",
+    "Each category shows different follow-up fields: Technical Issue → steps to reproduce, Complaint → urgency + resolution",
+    "Custom errorMessage on issueDescription provides better guidance than default AJV messages",
+    "Always pair SHOW rules with if/then conditional required in the data schema",
+    "Uses HorizontalLayout for name/email on one row, radio buttons for category selection"
+  ]
+}

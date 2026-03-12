@@ -1,0 +1,110 @@
+{
+  "id": "min-max-comparison",
+  "name": "Min/Max Scalar Comparison",
+  "category": "computed",
+  "summary": "Use `min()` and `max()` functions to compute bounded values, caps, and floors",
+  "whenToUse": [
+    "Capping a reimbursement at a maximum allowance",
+    "Ensuring a computed value doesn't go below a minimum threshold",
+    "Choosing the lesser or greater of two user-entered values"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "requestedAmount": {
+        "type": "number",
+        "title": "Requested Amount ($)"
+      },
+      "maxAllowance": {
+        "type": "number",
+        "title": "Maximum Allowance ($)"
+      },
+      "approvedAmount": {
+        "type": "string",
+        "format": "computed",
+        "description": "min(#/properties/requestedAmount, #/properties/maxAllowance)"
+      },
+      "bidA": {
+        "type": "number",
+        "title": "Bid A ($)"
+      },
+      "bidB": {
+        "type": "number",
+        "title": "Bid B ($)"
+      },
+      "bidC": {
+        "type": "number",
+        "title": "Bid C ($)"
+      },
+      "lowestBid": {
+        "type": "string",
+        "format": "computed",
+        "description": "min(#/properties/bidA, #/properties/bidB, #/properties/bidC)"
+      },
+      "highestBid": {
+        "type": "string",
+        "format": "computed",
+        "description": "max(#/properties/bidA, #/properties/bidB, #/properties/bidC)"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "HelpContent",
+        "options": {
+          "help": ["Reimbursement Calculator"]
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/requestedAmount"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/maxAllowance"
+      },
+      {
+        "type": "Control",
+        "label": "Approved (lesser of requested vs allowance)",
+        "scope": "#/properties/approvedAmount"
+      },
+      {
+        "type": "HelpContent",
+        "options": {
+          "help": ["Bid Comparison"]
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/bidA"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/bidB"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/bidC"
+      },
+      {
+        "type": "Control",
+        "label": "Lowest Bid",
+        "scope": "#/properties/lowestBid"
+      },
+      {
+        "type": "Control",
+        "label": "Highest Bid",
+        "scope": "#/properties/highestBid"
+      }
+    ]
+  },
+  "notes": [
+    "`min(a, b, ...)` returns the smallest value among the arguments",
+    "`max(a, b, ...)` returns the largest value among the arguments",
+    "Both accept 2 or more arguments — can compare multiple field references or literals",
+    "These are scalar comparisons, NOT array aggregates — each argument is a single value",
+    "Combine with other expressions: `min(#/properties/x * 2, 1000)` caps a doubled value at 1000"
+  ]
+}

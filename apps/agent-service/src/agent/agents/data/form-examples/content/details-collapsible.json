@@ -1,0 +1,39 @@
+{
+  "id": "details-collapsible",
+  "name": "Collapsible Details Section",
+  "category": "content",
+  "summary": "HelpContent with `variant: details` to create a click-to-expand section for long instructions",
+  "whenToUse": [
+    "Long instructional text that would clutter the form if always visible",
+    "Optional reference information users may already be familiar with",
+    "Calculation instructions like 'How to calculate household income'"
+  ],
+  "uiSchema": {
+    "type": "HelpContent",
+    "label": "How to calculate your household income",
+    "options": {
+      "variant": "details",
+      "help": "Household income is based on line 15000 (gross income) minus applicable amounts."
+    },
+    "elements": [
+      {
+        "type": "HelpContent",
+        "options": {
+          "help": [
+            "Line 21000 (deduction for split-pension amount)",
+            "Line 32000 (tuition expenses)",
+            "Line 33099 (medical expenses for self, spouse or common-law partner)",
+            "Line 33199 (medical expenses for other dependants)"
+          ]
+        }
+      }
+    ]
+  },
+  "notes": [
+    "Set `options.variant` to `\"details\"` to make the section collapsible",
+    "The `label` becomes the clickable title that expands/collapses the details",
+    "Nested `elements` contain the detail content revealed when expanded",
+    "Array in `help` renders as a bulleted list; string renders as a paragraph",
+    "This keeps forms clean while preserving access to reference information"
+  ]
+}

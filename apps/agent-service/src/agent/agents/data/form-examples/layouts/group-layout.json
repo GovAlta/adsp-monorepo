@@ -1,0 +1,42 @@
+{
+  "id": "group-layout",
+  "name": "Group Layout with Label",
+  "category": "layout",
+  "summary": "Group element that wraps controls in a labeled section (like a VerticalLayout with a heading)",
+  "whenToUse": [
+    "Visually grouping related fields under a section heading",
+    "When you want a bordered/labeled container without full page separation"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "firstName": { "type": "string" },
+      "lastName": { "type": "string" },
+      "initial": { "type": "string", "maxLength": 1 }
+    }
+  },
+  "uiSchema": {
+    "type": "Group",
+    "label": "Personal Information",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/firstName"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/lastName"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/initial"
+      }
+    ]
+  },
+  "notes": [
+    "A Group is like a VerticalLayout but with a visible label/heading",
+    "The `label` property sets the section heading text",
+    "Groups render with visual separation (border/card) depending on the renderer",
+    "Use Groups within pages/categories to sub-divide long sections"
+  ]
+}

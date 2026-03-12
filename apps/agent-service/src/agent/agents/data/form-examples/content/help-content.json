@@ -1,0 +1,27 @@
+{
+  "id": "help-content",
+  "name": "Help Content Block",
+  "category": "content",
+  "summary": "Descriptive help or notice block using HelpContent element with markdown support",
+  "whenToUse": [
+    "Displaying important notices like privacy collection statements",
+    "Adding instructional paragraphs or warnings between form sections",
+    "Providing rich-text guidance that is not tied to a specific field"
+  ],
+  "uiSchema": {
+    "type": "HelpContent",
+    "options": {
+      "markdown": true,
+      "help": [
+        "#### Notice of Collection:",
+        "The personal information on this form is collected under the authority of Section 33(c) of the Freedom of Information and Protection of Privacy Act (FOIP) and will be used for the purpose of administering the Alberta Approved Farmers' Market Program. If you have any questions about the collection and use of your information, please contact the Farmers' Market Specialist, Alberta Agriculture, Forestry and Rural Development at [ab.approvedfarmersmarket@gov.ab.ca](ab.approvedfarmersmarket@gov.ab.ca) or telephone: 780-581-4107."
+      ]
+    }
+  },
+  "notes": [
+    "Set `options.markdown` to `true` to enable markdown rendering",
+    "Use an array for `options.help` to separate content into multiple lines/paragraphs",
+    "HelpContent does not have a scope — it's a display-only element, not bound to data",
+    "Useful for FOIP/privacy notices required on Alberta government forms"
+  ]
+}

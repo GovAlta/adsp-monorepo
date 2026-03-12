@@ -1,0 +1,58 @@
+{
+  "id": "list-with-detail",
+  "name": "List with Detail (Repeating Items)",
+  "category": "repeating",
+  "summary": "ListWithDetail for collecting a variable number of complex items with full layout control",
+  "whenToUse": [
+    "Collecting multiple entries like family members, vendors, or work history",
+    "When each item has multiple fields and you need control over their layout",
+    "Preferred over Object Array for items with 3+ fields or nested data"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "familyMembers": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "firstName": { "type": "string" },
+            "lastName": { "type": "string" },
+            "relationship": {
+              "type": "string",
+              "enum": ["Spouse", "Child", "Parent", "Sibling"]
+            },
+            "dateOfBirth": { "type": "string", "format": "date" }
+          }
+        }
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "ListWithDetail",
+    "scope": "#/properties/familyMembers",
+    "options": {
+      "detail": {
+        "type": "VerticalLayout",
+        "elements": [
+          {
+            "type": "HorizontalLayout",
+            "elements": [
+              { "type": "Control", "scope": "#/properties/firstName", "label": "First Name" },
+              { "type": "Control", "scope": "#/properties/lastName", "label": "Last Name" }
+            ]
+          },
+          { "type": "Control", "scope": "#/properties/relationship" },
+          { "type": "Control", "scope": "#/properties/dateOfBirth" }
+        ]
+      }
+    }
+  },
+  "notes": [
+    "ListWithDetail shows a list panel on the left and detail form on the right",
+    "The `detail` object in options defines the layout for each item — you have full layout control",
+    "Scopes inside `detail` are relative to the array item, NOT the root: use `#/properties/firstName` not `#/properties/familyMembers/items/properties/firstName`",
+    "Use `items.type: \"object\"` in the data schema to define the shape of each list entry",
+    "Users can add/remove items dynamically; the list displays item count"
+  ]
+}

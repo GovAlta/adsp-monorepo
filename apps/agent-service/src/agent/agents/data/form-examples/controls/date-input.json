@@ -1,0 +1,28 @@
+{
+  "id": "date-input",
+  "name": "Date Input",
+  "category": "control",
+  "summary": "Date picker control using the `date` format on a string property",
+  "whenToUse": [
+    "Collecting dates like birth dates, appointment dates, or deadlines",
+    "When you need calendar-based date selection with built-in format validation"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "dateOfBirth": {
+        "type": "string",
+        "format": "date"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/dateOfBirth"
+  },
+  "notes": [
+    "Use `format: \"date\"` in the data schema — the renderer automatically provides a date picker",
+    "The value is stored in ISO 8601 format (YYYY-MM-DD)",
+    "No special UI schema options are needed; just a Control pointing to the property"
+  ]
+}

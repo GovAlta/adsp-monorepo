@@ -1,0 +1,85 @@
+{
+  "id": "rule-on-group-wrapper",
+  "name": "Rule on Group Wrapper (Multi-Element Rule)",
+  "category": "rule",
+  "summary": "Attach a rule to a Group or VerticalLayout to show/hide multiple elements at once. Includes wrap and unwrap procedures.",
+  "whenToUse": [
+    "Showing or hiding a group of related fields based on a single condition",
+    "When the user asks to add another field to an existing rule — wrap both in a layout and move the rule up",
+    "When a rule currently applies to multiple fields and one needs to be removed"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "hasSpouse": { "type": "boolean" },
+      "spouseFirstName": { "type": "string" },
+      "spouseLastName": { "type": "string" },
+      "spouseEmail": { "type": "string", "format": "email" }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/hasSpouse",
+        "label": "Do you have a spouse?"
+      },
+      {
+        "type": "Group",
+        "label": "Spouse Information",
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/hasSpouse",
+            "schema": { "const": true }
+          }
+        },
+        "elements": [
+          {
+            "type": "Control",
+            "scope": "#/properties/spouseFirstName",
+            "label": "Spouse First Name"
+          },
+          {
+            "type": "Control",
+            "scope": "#/properties/spouseLastName",
+            "label": "Spouse Last Name"
+          },
+          {
+            "type": "Control",
+            "scope": "#/properties/spouseEmail",
+            "label": "Spouse Email"
+          }
+        ]
+      }
+    ]
+  },
+  "notes": [
+    "A `rule` can be attached to ANY UI schema element: Control, Group, VerticalLayout, HorizontalLayout, Category, etc.",
+    "When a rule is on a layout/Group, ALL child elements are shown/hidden/enabled/disabled together",
+    "",
+    "## WRAP PROCEDURE — Adding an element to an existing single-element rule:",
+    "1. Create a new Group or VerticalLayout element",
+    "2. Move the existing element (with its rule) inside as a child",
+    "3. Add the new element as another child",
+    "4. Move the `rule` from the original element UP to the new wrapper",
+    "5. Remove the `rule` from the original element (now the wrapper controls visibility)",
+    "",
+    "## UNWRAP PROCEDURE — Removing an element from a multi-element rule:",
+    "1. Remove the element from the wrapper's `elements` array",
+    "2. Place the removed element where it should go (e.g., outside the wrapper, or in another section)",
+    "3. If only ONE element remains in the wrapper, move the `rule` down to that element and delete the wrapper",
+    "4. If zero elements remain, delete the wrapper entirely",
+    "",
+    "## ADD CRITERIA PROCEDURE — Adding a condition to an existing rule:",
+    "1. If the rule currently uses `scope: \"#/properties/field\"`, change it to `scope: \"#\"` and restructure the condition as a full JSON Schema",
+    "2. Add the new property check to the `properties` and `required` in the condition schema",
+    "3. For OR logic, wrap existing and new conditions in `anyOf`",
+    "",
+    "## REMOVE CRITERIA PROCEDURE — Removing a condition from a rule:",
+    "1. Remove the property from the condition schema's `properties` and `required`",
+    "2. If only one property remains AND the condition used `scope: \"#\"`, simplify back to `scope: \"#/properties/field\"` with `schema: { const: value }`",
+    "3. If removing from `anyOf`, remove the sub-schema entry; if only one remains, unwrap it from the `anyOf` array"
+  ]
+}

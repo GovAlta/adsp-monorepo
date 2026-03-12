@@ -1,0 +1,23 @@
+{
+  "id": "inline-help",
+  "name": "Inline Help Content",
+  "category": "control",
+  "summary": "Add contextual help text to a form control using `options.help`",
+  "whenToUse": [
+    "Providing guidance on how to fill in a specific field",
+    "Clarifying expected input format or source of information",
+    "Reducing user errors on fields that may be ambiguous"
+  ],
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/firstName",
+    "options": {
+      "help": "Please enter your first name as it appears on your official documents."
+    }
+  },
+  "notes": [
+    "Keep help text concise and actionable",
+    "Use plain language — aim for grade 9 reading level",
+    "Help text appears below the input field"
+  ]
+}
