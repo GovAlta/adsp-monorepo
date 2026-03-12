@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { GoabButton, GoabIcon } from '@abgov/react-components';
+import { GoabButton, GoabFormItem } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import {
@@ -7,10 +7,10 @@ import {
   ReviewHeader,
   ReviewLabel,
   ReviewValue,
-  WarningIconDiv,
   RequiredTextLabel,
 } from '../Inputs/style-component';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 type DateOfBirthReviewControlProps = ControlProps;
 
@@ -53,10 +53,10 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
             )}
           </ReviewHeader>
           {errors && (
-            <WarningIconDiv>
-              <GoabIcon type="warning" size="small" />
-              {errors?.includes('is a required property') ? `${label} is required` : errors}
-            </WarningIconDiv>
+            <GoabFormItem
+              error={errors?.includes(REQUIRED_PROPERTY_ERROR) ? `${label} is required` : errors}
+              label=""
+            ></GoabFormItem>
           )}
         </PageReviewContainer>
       </tr>

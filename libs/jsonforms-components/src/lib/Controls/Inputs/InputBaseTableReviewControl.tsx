@@ -7,13 +7,12 @@ import {
   ReviewHeader,
   ReviewLabel,
   ReviewValue,
-  WarningIconDiv,
   RequiredTextLabel,
 } from './style-component';
 import { convertToSentenceCase, getLastSegmentFromPointer } from '../../util';
 import { getLabelText } from '../../util/stringUtils';
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
-import { GoabButton, GoabIcon } from '@abgov/react-components';
+import { GoabButton, GoabFormItem } from '@abgov/react-components';
 
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
@@ -174,10 +173,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
             />
           )}
           {activeError && (
-            <WarningIconDiv>
-              <GoabIcon type="warning" size="small" />
-              {activeError}
-            </WarningIconDiv>
+            <GoabFormItem error={activeError} label=""></GoabFormItem>
           )}
         </ReviewValue>
       </PageReviewContainer>
