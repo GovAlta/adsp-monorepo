@@ -38,14 +38,18 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
   const [newDescription, onDescriptionChange] = React.useState('');
 
   const parseDataBySeparator = (value: string, selectedSeparator: RegisterDataSeparator): string[] | null => {
-    const trimmedValue = value.trim();
+    let trimmedValue = value.trim();
     if (!trimmedValue) {
       return null;
     }
 
+    if (selectedSeparator !== 'newline') {
+      trimmedValue = trimmedValue.replace(/\n/g, '');
+    }
+
     try {
       const splitPattern = SEPARATOR_MAPPER[selectedSeparator];
-      return trimmedValue.split(splitPattern);
+      return trimmedValue.split(splitPattern).filter((item) => item.trim() !== '');
     } catch (error) {
       setDataError(`Error parsing data: ${error}`);
       return null;
@@ -97,12 +101,13 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
         <GoabTextArea
           name="register-description"
           value={newDescription}
+          rows={2}
           width="100%"
           testId="data-register-add-description-input"
           onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => onDescriptionChange(detail.value)}
         />
       </GoabFormItem>
-      <GoabFormItem label="Register data">
+      <GoabFormItem label="Register data" mt="m" mb="m">
         <GoabDropdown
           name="register-data-separator"
           value={separator}
@@ -131,12 +136,10 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
           onBlur={() => {
             if (separator !== 'json') {
               const parsedConfig = parseDataBySeparator(configValue, separator);
-              console.log('Parsed config:', parsedConfig);
               setParsedData(parsedConfig);
             } else {
               const errorMessage = validateRegisterJson(configValue);
               if (errorMessage) {
-                console.log('JSON validation error:', errorMessage);
                 setDataError(errorMessage);
                 setParsedData(null);
               } else {

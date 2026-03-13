@@ -211,7 +211,6 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
   };
 
   const handleAddSave = (data: RegisterDataType | null, name: string, description: string) => {
-    console.log('Adding new register data:', { name, description, data });
     const newEntry: RegisterConfigData = { urn: name, name, description, data: data || [] };
     dispatch(
       updateConfigurationDefinition(
