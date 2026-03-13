@@ -13,7 +13,6 @@ import {
   DataRegisterEntryDetail,
   DataRegisterIconDiv,
   DataRegisterMonacoDiv,
-  DataRegisterNameDiv,
   DataRegisterTableWrapper,
 } from '../style-components';
 import {
@@ -211,52 +210,15 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
     setIsAddModalOpen(true);
   };
 
-  const parseNewData = (value: string): RegisterDataType => {
-    const trimmedValue = value.trim();
-    if (!trimmedValue) {
-      return [];
-    }
-
-    const normalizeParsedArray = (parsedArray: unknown[]): RegisterDataType => {
-      if (parsedArray.every((item) => typeof item === 'string')) {
-        return parsedArray as string[];
-      }
-
-      if (parsedArray.every((item) => typeof item === 'object' && item !== null)) {
-        return parsedArray as Record<string, unknown>[];
-      }
-
-      return parsedArray.map((item) => String(item));
-    };
-
-    try {
-      const parsed = JSON.parse(trimmedValue) as unknown;
-      if (Array.isArray(parsed)) {
-        return normalizeParsedArray(parsed);
-      }
-
-      if (typeof parsed === 'object' && parsed !== null) {
-        return [parsed as Record<string, unknown>];
-      }
-
-      return [String(parsed)];
-    } catch {
-      return trimmedValue
-        .split(/\r?\n/)
-        .map((item) => item.trim())
-        .filter((item) => item.length > 0);
-    }
-  };
-
-  const handleAddSave = () => {
-    const parsedData = parseNewData(newData);
-    const newEntry: RegisterConfigData = { urn: newName, name: newName, description: newDescription, data: parsedData };
+  const handleAddSave = (data: RegisterDataType | null, name: string, description: string) => {
+    console.log('Adding new register data:', { name, description, data });
+    const newEntry: RegisterConfigData = { urn: name, name, description, data: data || [] };
     dispatch(
       updateConfigurationDefinition(
         {
-          name: newName,
+          name,
           namespace: DATA_REGISTER_NAMESPACE,
-          description: newDescription,
+          description: description,
           configurationSchema: REGISTER_DATA_SCHEMA as never,
         },
         false,
@@ -266,16 +228,15 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
       replaceConfigurationDataAction(
         {
           namespace: DATA_REGISTER_NAMESPACE,
-          name: newName,
-          configuration: parsedData as never,
+          name,
+          configuration: data as never,
         },
         false,
       ),
     );
-
+    setCurrentRegister((prev: RegisterData | null) => [...(prev ?? []), newEntry]);
     onAdd?.(newName);
     setIsAddModalOpen(false);
-    setCurrentRegister((prev: RegisterData | null) => [...(prev ?? []), newEntry]);
   };
 
   const handleAddCancel = () => {
@@ -329,17 +290,7 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
           </GoabTable>
         </DataRegisterTableWrapper>
       )}
-      <AddRegisterDataModal
-        open={isAddModalOpen}
-        newName={newName}
-        newDescription={newDescription}
-        newData={newData}
-        onNameChange={setNewName}
-        onDescriptionChange={setNewDescription}
-        onDataChange={setNewRegisterData}
-        onCancel={handleAddCancel}
-        onSave={handleAddSave}
-      />
+      <AddRegisterDataModal open={isAddModalOpen} onCancel={handleAddCancel} onSave={handleAddSave} />
     </DataRegisterContainer>
   );
 };

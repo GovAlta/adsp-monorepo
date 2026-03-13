@@ -1,30 +1,64 @@
 import * as React from 'react';
-import { GoabButton, GoabButtonGroup, GoabFormItem, GoabInput, GoabModal, GoabTextArea } from '@abgov/react-components';
-import { GoabInputOnChangeDetail, GoabTextAreaOnKeyPressDetail } from '@abgov/ui-components-common';
+import {
+  GoabButton,
+  GoabButtonGroup,
+  GoabDropdown,
+  GoabDropdownItem,
+  GoabFormItem,
+  GoabInput,
+  GoabModal,
+  GoabTextArea,
+} from '@abgov/react-components';
+import {
+  GoabDropdownOnChangeDetail,
+  GoabInputOnChangeDetail,
+  GoabTextAreaOnKeyPressDetail,
+} from '@abgov/ui-components-common';
+import { validateRegisterJson } from './utils';
+import { RegisterDataType } from '@abgov/jsonforms-components';
 
+export type RegisterDataSeparator = 'comma' | 'newline' | 'semicolon' | 'json';
+const SEPARATOR_MAPPER = {
+  comma: ',',
+  newline: '\n',
+  semicolon: ';',
+};
 interface AddRegisterDataModalProps {
   open: boolean;
-  newName: string;
-  newDescription: string;
-  newData: string;
-  onNameChange: (value: string) => void;
-  onDescriptionChange: (value: string) => void;
-  onDataChange: (value: string) => void;
   onCancel: () => void;
-  onSave: () => void;
+  onSave: (data: RegisterDataType | null, name: string, description: string) => void;
 }
 
-export const AddRegisterDataModal = ({
-  open,
-  newName,
-  newDescription,
-  newData,
-  onNameChange,
-  onDescriptionChange,
-  onDataChange,
-  onCancel,
-  onSave,
-}: AddRegisterDataModalProps): JSX.Element => {
+export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterDataModalProps): JSX.Element => {
+  const [dataError, setDataError] = React.useState('');
+  const [parsedData, setParsedData] = React.useState<RegisterDataType | null>(null);
+  const [separator, setSeparator] = React.useState<RegisterDataSeparator>('comma');
+  const [configValue, setConfigValue] = React.useState<string>('');
+  const [newName, onNameChange] = React.useState('');
+  const [newDescription, onDescriptionChange] = React.useState('');
+
+  const parseDataBySeparator = (value: string, selectedSeparator: RegisterDataSeparator): string[] | null => {
+    const trimmedValue = value.trim();
+    if (!trimmedValue) {
+      return null;
+    }
+
+    try {
+      const splitPattern = SEPARATOR_MAPPER[selectedSeparator];
+      return trimmedValue.split(splitPattern);
+    } catch (error) {
+      setDataError(`Error parsing data: ${error}`);
+      return null;
+    }
+  };
+
+  const handleDataChange = (value: string) => {
+    setConfigValue(value);
+    if (dataError) {
+      setDataError(null);
+    }
+  };
+
   return (
     <GoabModal
       heading="Add register data"
@@ -36,7 +70,14 @@ export const AddRegisterDataModal = ({
           <GoabButton type="secondary" onClick={onCancel} testId="data-register-add-cancel">
             Cancel
           </GoabButton>
-          <GoabButton type="primary" onClick={onSave} disabled={!newName.trim()} testId="data-register-add-save">
+          <GoabButton
+            type="primary"
+            onClick={() => {
+              onSave(parsedData, newName, newDescription);
+            }}
+            disabled={!newName.trim() || !!dataError}
+            testId="data-register-add-save"
+          >
             Save
           </GoabButton>
         </GoabButtonGroup>
@@ -62,12 +103,47 @@ export const AddRegisterDataModal = ({
         />
       </GoabFormItem>
       <GoabFormItem label="Register data">
+        <GoabDropdown
+          name="register-data-separator"
+          value={separator}
+          testId="data-register-add-data-separator"
+          onChange={(detail: GoabDropdownOnChangeDetail) => {
+            setSeparator(detail.value as RegisterDataSeparator);
+            if (dataError) {
+              setDataError('');
+            }
+          }}
+          width="100%"
+        >
+          <GoabDropdownItem value="comma" label="Use comma as separator" />
+          <GoabDropdownItem value="newline" label="Use new line as separator" />
+          <GoabDropdownItem value="semicolon" label="Use semicolon as separator" />
+          <GoabDropdownItem value="json" label="Use JSON format" />
+        </GoabDropdown>
+      </GoabFormItem>
+      <GoabFormItem label="" error={dataError}>
         <GoabTextArea
           name="register-data"
-          value={newData}
+          value={configValue}
           width="100%"
           testId="data-register-add-data-input"
-          onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => onDataChange(detail.value)}
+          onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => handleDataChange(detail.value)}
+          onBlur={() => {
+            if (separator !== 'json') {
+              const parsedConfig = parseDataBySeparator(configValue, separator);
+              console.log('Parsed config:', parsedConfig);
+              setParsedData(parsedConfig);
+            } else {
+              const errorMessage = validateRegisterJson(configValue);
+              if (errorMessage) {
+                console.log('JSON validation error:', errorMessage);
+                setDataError(errorMessage);
+                setParsedData(null);
+              } else {
+                setParsedData(JSON.parse(configValue) as RegisterDataType);
+              }
+            }
+          }}
         />
       </GoabFormItem>
     </GoabModal>
