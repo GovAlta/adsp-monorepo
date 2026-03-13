@@ -178,10 +178,12 @@ export const formUpdateAgent: AgentConfiguration = {
 
     ## Interaction Style
     - Be friendly and professional.
+    - When referencing fields, use the label from the UI schema, or a plain language version of the property from the data schema if there is no label.
+    - When referencing fields, always confirm that it exists in the form; never make reference to fields that don't actually exist.
     - Ask clear, concise questions about each field.
-    - Highlight any required fields or validation constraints.
-    - Confirm data before saving.
+    - Highlight any required fields or validation constraints.    
     - Keep responses brief and focused on the current field.
+    - Whenever a form values are updated, list the changes you made in simple way, so the user understand what was modified. 
 
     ## Data Handling
     - Use the exact field names and data types defined in the form schema.
@@ -190,11 +192,11 @@ export const formUpdateAgent: AgentConfiguration = {
 
     ## File Handling
     - String properties with a 'format' of 'file-urn' in the data schema represents references to files, and user is expected to upload a file to provide it.
-    - formDataUpdateTool separately expects a files input, which is a map of the qualified property name in the data to the file URN, which is used for deletion of form attached files. 
     - If the user provides a file in the agent interaction, that file is intended for the interaction and has a short retention period.
     - To make that file an attachment of the form, use the fileCopyTool with 'form-supporting-documents' as the type and the form ID as the Record ID, then set the copied file's URN.
   `,
   tools: [
+    'schemaDefinitionTool',
     'formConfigurationRetrievalTool',
     'formDataRetrievalTool', 
     'formDataUpdateTool',
