@@ -1,4 +1,4 @@
-import { AdspId, assertAdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import * as hasha from 'hasha';
 import { v4 as uuidv4 } from 'uuid';
@@ -182,8 +182,8 @@ export class FormEntity implements Form {
 
   async update(
     user: User,
-    data?: Record<string, unknown>,
-    files?: Record<string, AdspId>,
+    fileService: FileService,
+    data: Record<string, unknown>,
     dryRun?: boolean
   ): Promise<FormEntity> {
     if (this.status !== FormStatus.Draft) {
@@ -197,18 +197,24 @@ export class FormEntity implements Form {
       throw new UnauthorizedUserError('update form', user);
     }
 
-    if (data) {
-      this.data = data;
-    }
+    const previousFiles = this.files || {};
+    this.data = data;
+    this.files = this.definition?.resolveFileReferences(data) || {};
 
-    if (files) {
-      Object.entries(files).forEach(([_key, fileId]) => {
-        assertAdspId(fileId, null, 'resource');
-        if (fileId.service !== 'file-service') {
-          throw new InvalidOperationError(`Provided ID is not for a file service resource: ${fileId}`);
-        }
-      });
-      this.files = files;
+    const currentFileUrns = new Set(
+      Object.values(this.files)
+        .filter((file) => !!file)
+        .map((file) => file.toString())
+    );
+    const removedFileUrns = new Set(
+      Object.values(previousFiles)
+        .filter((file) => !!file)
+        .map((file) => file.toString())
+        .filter((fileUrn) => !currentFileUrns.has(fileUrn))
+    );
+
+    for (const fileUrn of removedFileUrns) {
+      await fileService.delete(this.tenantId, AdspId.parse(fileUrn));
     }
 
     return this.repository.save(this);
@@ -281,6 +287,7 @@ export class FormEntity implements Form {
     }
 
     this.definition.validateData('form submission', this.data);
+    this.files = this.definition?.resolveFileReferences(this.data) || {};
 
     this.status = FormStatus.Submitted;
     this.submitted = new Date();

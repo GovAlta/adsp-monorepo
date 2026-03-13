@@ -12,6 +12,7 @@ export const FormSupportingDocFileType: FileType = {
   updateRoles: [
     `urn:ads:platform:form-service:${FormServiceRoles.FileUploader}`,
     `urn:ads:platform:form-service:${FormServiceRoles.IntakeApp}`,
+    `urn:ads:platform:form-service:${FormServiceRoles.FormService}`,
   ],
 };
 

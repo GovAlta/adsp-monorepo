@@ -18,7 +18,6 @@ export async function createFormTools({ directory, logger }: FormToolsProps) {
     description: 'Sets the field data for a form. The Form ID comes from request context (no input required).',
     inputSchema: z.object({
       data: z.object({}).passthrough().describe('Object representing the form data. Must be valid based on the form definition data schema.'),
-      files: z.record(z.string(), z.string()).optional().describe('Map of form data property paths to file URNs.')
     }),
     outputSchema: z.object({
       id: z.string(),
@@ -30,12 +29,12 @@ export async function createFormTools({ directory, logger }: FormToolsProps) {
       const user = requestContext.get('user');
       const formId = requestContext.get('formId');
 
-      const { data, files } = inputData;
+      const { data } = inputData;
 
       try {
         const formDataUrl = new URL(`v1/forms/${formId}/data`, formServiceUrl);
 
-        const { data: result } = await axios.put(formDataUrl.href, { data, files }, {
+        const { data: result } = await axios.put(formDataUrl.href, { data }, {
           params: {
             tenantId: tenantId?.toString(),
           },
