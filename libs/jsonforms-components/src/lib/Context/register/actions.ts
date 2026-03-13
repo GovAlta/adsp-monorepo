@@ -1,8 +1,10 @@
 import { Dispatch } from 'react';
+import { User } from './registerContext';
 
 export const ADD_REGISTER_DATA_ACTION = 'jsonforms/register/data/add';
 export const ADD_NO_ANONYMOUS_ACTION = 'jsonforms/register/no_anonymous';
 export const ADD_DATALIST_ACTION = 'jsonforms/register/add_datalist_action';
+export const ADD_USER_ACTION = 'jsonforms/register/add_user_action';
 export const ADD_REGISTER_DATA_ERROR = 'jsonforms/register/add_register_data_error';
 export interface RegisterConfig {
   urn?: string;
@@ -31,6 +33,7 @@ export interface RegisterConfigData extends RegisterConfig {
   errors?: Record<string, Errors>;
   nonAnonymous?: string[];
   nonExistent?: string[];
+  user?: User;
 }
 
 export type RegisterData = RegisterConfigData[];
@@ -39,6 +42,7 @@ export type RegisterDataResponse = {
   nonExistent: string[];
   nonAnonymous: string[];
   errors: Record<string, Errors>;
+  user?: User;
 };
 type AddDataAction = { type: string; payload: RegisterConfigData };
 

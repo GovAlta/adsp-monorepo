@@ -71,8 +71,8 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
         <Container vs={1} hs={1}>
           {form && !fileBusy.loading && (
             <>
-              {form.status === 'Submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
-              {form.status === 'Draft' && (
+              {form?.status === 'Submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
+              {form?.status === 'Draft' && (
                 <DraftFormWrapper
                   definition={definition}
                   form={form}

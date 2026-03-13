@@ -90,6 +90,7 @@ import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
 import { startThread } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
 import { GoabCheckboxOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { autoPopulatePropertiesMonaco } from '../../../../jsonforms-components/src/lib/util/autoPopulate';
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
 export const ContextProvider = ContextProviderFactory();
@@ -282,10 +283,40 @@ export function AddEditFormDefinitionEditor({
         new FormDataSchemaElementCompletionItemProvider(),
       );
 
+      const propertyKeyWatcher = monaco.languages.registerCompletionItemProvider('json', {
+        triggerCharacters: ['"'],
+
+        provideCompletionItems: function (model, position) {
+          const fullText = model.getValue();
+
+          const beforeCursor = fullText.slice(0, model.getOffsetAt(position));
+
+          if (!beforeCursor.includes('"properties"')) {
+            return { suggestions: [] };
+          }
+
+          return {
+            suggestions: autoPopulatePropertiesMonaco.map((prop) => ({
+              label: prop.label,
+              kind: monaco.languages.CompletionItemKind.Property,
+              insertText: prop.insertText,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              range: {
+                startLineNumber: position.lineNumber,
+                startColumn: position.column,
+                endLineNumber: position.lineNumber,
+                endColumn: position.column,
+              },
+            })),
+          };
+        },
+      });
+
       return function () {
         valueProvider.dispose();
         uiElementProvider.dispose();
         dataElementProvider.dispose();
+        propertyKeyWatcher.dispose();
       };
     }
   }, [monaco, dataSchema]);
@@ -465,6 +496,7 @@ export function AddEditFormDefinitionEditor({
                       }}
                       language="json"
                       options={{
+                        autoClosingQuotes: 'never',
                         automaticLayout: true,
                         scrollBeyondLastLine: false,
                         lineNumbersMinChars: 2,
