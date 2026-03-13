@@ -6,14 +6,32 @@ import { distance } from 'fastest-levenshtein';
 import { getEventDefinitions } from '@store/event/actions';
 import { useSearchableDropdown } from '@core-services/app-common';
 import { SearchBox, DateTimeInput } from './styled-components';
+import { validateEventKey } from './util';
 import { GoabButton, GoabIconButton, GoabButtonGroup, GoabGrid, GoabFormItem } from '@abgov/react-components';
+
 const initCriteria: EventSearchCriteria = {
   namespace: '',
   name: '',
   timestampMax: '',
   timestampMin: '',
 };
+function toDateTimeLocalValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
+function defaultWeekCriteria(): EventSearchCriteria {
+  const now = new Date();
+  const weekAgo = new Date(now);
+  weekAgo.setDate(now.getDate() - 7);
+
+  return {
+    namespace: '',
+    name: '',
+    timestampMin: toDateTimeLocalValue(weekAgo),
+    timestampMax: toDateTimeLocalValue(now),
+  };
+}
 interface EventSearchFormProps {
   initialValue?: EventSearchCriteria;
   onCancel?: () => void;
@@ -21,11 +39,13 @@ interface EventSearchFormProps {
 }
 
 export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCancel, onSearch }) => {
-  const [searchCriteria, setSearchCriteria] = useState(initCriteria);
+  const [searchCriteria, setSearchCriteria] = useState(() => defaultWeekCriteria());
   const [error, setError] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const today = new Date().toLocaleDateString().split('/').reverse().join('-');
-  const message = 'Use a colon (:) between namespace and name';
+  const defaultMessage = 'Use a colon (:) between namespace and name';
+  const [message, setMessage] = useState<string | undefined>(defaultMessage);
+
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getEventDefinitions());
@@ -33,6 +53,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
 
   const events = useSelector((state: RootState) => state.event.definitions);
 
+  const eventKey = Object.keys(events);
   const autoCompleteList = Object.keys(events).sort((a, b) => (a < b ? -1 : 1));
   const resolveCriteriaFromInput = (input: string): EventSearchCriteria | null => {
     const raw = (input ?? '').trim();
@@ -226,7 +247,6 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                   onChange={(e) => onInputChange(e.target.value)}
                   onKeyDown={(e) => {
                     dd.onKeyDown(e.key);
-                    // optional: stop cursor moving / form submit
                     if (['ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(e.key)) {
                       e.preventDefault();
                     }
@@ -247,15 +267,20 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                   variant="dark"
                   onClick={() => {
                     if (dd.open) {
+                      dd.setQuery('');
                       dd.setOpen(false);
+
+                      setError(false);
+                      setSearchCriteria((prev) => ({ ...prev, namespace: '', name: '' }));
                       return;
                     }
                     dd.inputRef.current?.focus();
+
                     if (!dd.query.trim()) {
                       dd.openAll();
-                      return;
+                    } else {
+                      dd.setOpen(true);
                     }
-                    dd.setOpen(true);
                   }}
                 />
               </div>
@@ -319,6 +344,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           Reset
         </GoabButton>
         <GoabButton
+          disabled={dd.query.indexOf(':') === -1}
           onClick={() => {
             dd.setOpen(false);
             setError(false);
@@ -328,9 +354,16 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
               setError(true);
               return;
             }
-            setSearchCriteria(resolved);
-            dd.setQuery(`${resolved.namespace}:${resolved.name}`);
-            onSearch?.(resolved);
+            const validEvent = validateEventKey(dd.query, eventKey);
+            if (!validEvent.ok) {
+              setError(true);
+              setMessage(validEvent.ok ? '' : validEvent.reason);
+            } else {
+              setSearchCriteria(resolved);
+              setMessage(defaultMessage);
+              dd.setQuery(`${resolved.namespace}:${resolved.name}`);
+              onSearch?.(resolved);
+            }
           }}
         >
           Search

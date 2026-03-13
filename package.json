@@ -98,7 +98,7 @@
     "mastra": "^1.1.0",
     "mkdirp": "^1.0.4",
     "moize": "^6.1.0",
-    "monaco-editor": "^0.32.1",
+    "monaco-editor": "0.52.0",
     "mongoose": "^6.13.8",
     "multer": "^2.1.1",
     "node-cache": "^5.1.2",
