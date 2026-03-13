@@ -374,14 +374,40 @@ export const updateForm = createAsyncThunk(
     { getState, dispatch }
   ) => {
     const { form, user } = getState() as AppState;
+    const nextData = data ?? form.data;
+    const nextFiles = files ?? form.files;
 
     // Dispatch saving the draft if there is a logged in user with a draft form.
     if (user.user && form.form?.id) {
-      dispatch(formActions.setSaving(true));
-      dispatch(saveForm(form.form.id));
+      const digest = await hashData({ id: form.form.id, data: nextData, files: nextFiles });
+      if (digest !== form.saved) {
+        dispatch(formActions.setSaving(true));
+        dispatch(saveForm(form.form.id));
+      }
     }
 
-    return { data, files, errors };
+    return { data: nextData, files: nextFiles, errors };
+  }
+);
+
+export const applyServerFormUpdate = createAsyncThunk(
+  'form/apply-server-form-update',
+  async (
+    {
+      id,
+      data,
+      files,
+    }: { id?: string; data?: Record<string, unknown>; files?: Record<string, string> },
+    { getState }
+  ) => {
+    const { form } = getState() as AppState;
+    const formId = id || form.form?.id;
+    const nextData = data || form.data;
+    const nextFiles = files || form.files;
+
+    const digest = formId ? await hashData({ id: formId, data: nextData, files: nextFiles }) : null;
+
+    return { data: nextData, files: nextFiles, digest };
   }
 );
 
@@ -630,9 +656,15 @@ export const formSlice = createSlice({
         state.busy.loading = false;
       })
       .addCase(updateForm.pending, (state, { meta }) => {
-        state.data = meta.arg.data;
-        state.files = meta.arg.files;
+        state.data = meta.arg.data ?? state.data;
+        state.files = meta.arg.files ?? state.files;
         state.errors = meta.arg.errors || [];
+      })
+      .addCase(applyServerFormUpdate.fulfilled, (state, { payload }) => {
+        state.data = payload.data || {};
+        state.files = payload.files || {};
+        state.errors = [];
+        state.saved = payload.digest;
       })
       .addCase(saveForm.fulfilled, (state, { payload }) => {
         state.saved = payload;

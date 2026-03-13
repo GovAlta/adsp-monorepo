@@ -1,6 +1,5 @@
-import { GoabIconButton } from '@abgov/react-components';
 import { Container } from '@core-services/app-common';
-import { FunctionComponent, useEffect, useState } from 'react';
+import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -16,8 +15,6 @@ import {
   filesSelector,
   formSelector,
   loadForm,
-  selectTopic,
-  selectedTopicSelector,
   showSubmitSelector,
   submitForm,
   updateForm,
@@ -25,7 +22,7 @@ import {
 import { DraftFormWrapper } from '../components/DraftFormWrapper';
 import { LogoutModal } from '../components/LogoutModal';
 import { SubmittedForm } from '../components/SubmittedForm';
-import CommentsViewer from './CommentsViewer';
+import { FormSupportPane } from './FormSupportPane';
 
 interface FormProps {
   className?: string;
@@ -41,7 +38,6 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const files = useSelector(filesSelector);
   const busy = useSelector(busySelector);
   const fileBusy = useSelector(fileBusySelector);
-  const topic = useSelector(selectedTopicSelector);
   const canSubmit = useSelector(canSubmitSelector);
   const showSubmit = useSelector(showSubmitSelector);
 
@@ -62,12 +58,10 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
     };
   }, [dispatch, formId]);
 
-  const [showComments, setShowComments] = useState(false);
-
   return (
     <div key={formId}>
       {definition && !definition.anonymousApply && <LogoutModal />}
-      <div className={className} data-show={showComments}>
+      <div className={className}>
         <Container vs={1} hs={1}>
           {form && !fileBusy.loading && (
             <>
@@ -100,25 +94,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
             </>
           )}
         </Container>
-        <div className="commentsPane">
-          <CommentsViewer />
-        </div>
-        {topic ? (
-          <GoabIconButton
-            disabled={!form}
-            icon={showComments ? 'help-circle' : 'help-circle'}
-            size="large"
-            title="Comments help"
-            onClick={() => {
-              setShowComments(!showComments);
-              if (topic?.resourceId !== form?.urn) {
-                dispatch(selectTopic({ resourceId: form.urn }));
-              }
-            }}
-          />
-        ) : (
-          <span></span>
-        )}
+        <FormSupportPane form={form} data={data} files={files} />
       </div>
     </div>
   );
@@ -144,43 +120,5 @@ export const Form = styled(FormComponent)`
     flex-basis: 70%;
     overflow: auto;
     padding-bottom: var(--goa-space-2xl);
-  }
-
-  .commentsPane {
-    display: none;
-    flex-grow: 1;
-    flex-shrink: 1;
-    flex-basis: 30%;
-    border-right: 1px solid var(--goa-color-greyscale-200);
-    background: white;
-    > * {
-      min-width: 300px;
-      height: 100%;
-    }
-
-    @media (max-width: 639px) {
-      z-index: 2;
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-    }
-  }
-
-  &[data-show='true'] .commentsPane {
-    display: block;
-  }
-
-  & > :last-child {
-    z-index: 3;
-    position: absolute;
-    bottom: var(--goa-space-l);
-    left: var(--goa-space-l);
-    background: white;
-  }
-
-  &[data-show='true'] > :last-child {
-    background: var(--goa-color-greyscale-100);
   }
 `;

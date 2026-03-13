@@ -27,6 +27,18 @@ type AddressLookUpProps = ControlProps;
 
 const ADDRESS_PATH = 'api/gateway/v1/address/v1/find';
 
+const normalizeAddressData = (value: Address | undefined, isAlbertaAddress: boolean): Address => {
+  const defaults = isAlbertaAddress
+    ? ({ country: 'CA', subdivisionCode: 'AB' } as Address)
+    : ({ country: 'CA' } as Address);
+
+  const source = (value || {}) as Address & { provinceState?: string };
+  const { provinceState, ...rest } = source;
+  const subdivisionCode = rest.subdivisionCode || provinceState;
+
+  return { ...defaults, ...rest, ...(subdivisionCode ? { subdivisionCode } : {}) } as Address;
+};
+
 export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => {
   const { data, path, schema, enabled, handleChange, uischema, visible } = props;
 
@@ -40,20 +52,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const addressContainerRef = useRef<HTMLDivElement>(null);
 
   const label = typeof uischema?.label === 'string' && uischema.label ? uischema.label : '';
-  let defaultAddress = {};
-
-  if (isAlbertaAddress) {
-    defaultAddress = {
-      country: 'CA',
-      subdivisionCode: 'AB',
-    };
-  } else {
-    defaultAddress = {
-      country: 'CA',
-    };
-  }
-
-  const [address, setAddress] = useState<Address>(data || defaultAddress);
+  const [address, setAddress] = useState<Address>(normalizeAddressData(data, isAlbertaAddress));
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -75,6 +74,24 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const cacheRef = useRef<Map<string, Suggestion[]>>(new Map());
 
   const spinnerTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const nextAddress = normalizeAddressData(data, isAlbertaAddress);
+    setAddress((currentAddress) => {
+      const keys: Array<keyof Address> = [
+        'addressLine1',
+        'addressLine2',
+        'municipality',
+        'postalCode',
+        'country',
+        'subdivisionCode',
+      ];
+
+      const unchanged = keys.every((key) => currentAddress[key] === nextAddress[key]);
+      return unchanged ? currentAddress : nextAddress;
+    });
+  }, [data, isAlbertaAddress]);
+
   const handleInputChange = (field: string, value: string) => {
     if (field === 'addressLine1') {
       setDropdownSelected(false);
