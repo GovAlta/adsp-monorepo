@@ -13,6 +13,7 @@ class FileServiceClient {
     metadata: {
       filename: string;
       mimeType: string;
+      urn: string;
     };
   }> {
     const resourceUrl = await this.directory.getResourceUrl(fileId);

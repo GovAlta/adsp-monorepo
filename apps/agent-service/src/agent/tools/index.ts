@@ -15,13 +15,13 @@ interface ToolsProps {
 export async function createTools({ logger, directory, tokenProvider }: ToolsProps) {
 
   const { fileDownloadTool } = await createFileTools({ logger, directory, tokenProvider });
-  
+
   const { formConfigurationRetrievalTool, formConfigurationUpdateTool } = await createFormConfigurationTools({
     logger,
     directory,
     tokenProvider,
   });
-  const { formUpdateTool } = await createFormTools({ logger, directory });
+  const { formDataRetrievalTool, formDataUpdateTool } = await createFormTools({ logger, directory });
 
   const { schemaDefinitionTool } = await createSchemaTools();
   const { rendererCatalogTool } = await createRendererCatalogTools({ logger });
@@ -30,7 +30,8 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     fileDownloadTool,
     formConfigurationRetrievalTool,
     formConfigurationUpdateTool,
-    formUpdateTool,
+    formDataRetrievalTool, 
+    formDataUpdateTool,
     schemaDefinitionTool,
     rendererCatalogTool,
   };
