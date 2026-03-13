@@ -68,7 +68,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
       newOptions.push({ label: '', value: '' });
     }
 
-    return newOptions.filter((option) => option.value !== '');
+    return newOptions;
     //eslint-disable-next-line
   }, [registerData, options]);
 
@@ -98,7 +98,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
                 path,
                 registerData.find((o) => {
                   return _.get(o, valuePath) === detail.value;
-                })
+                }),
               );
             } else {
               handleChange(path, detail.value);
@@ -107,14 +107,17 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
           width={width}
           testId={`jsonforms-${path}-dropdown`}
         >
-          {mergedOptions.map((item) => (
-            <GoabDropdownItem
-              testId={`jsonforms-${path}-dropdown-${item.label}`}
-              key={item.label}
-              label={item.label}
-              value={item.value}
-            />
-          ))}
+          {mergedOptions.map((item) => {
+            const displayLabel = item.label.trim() === '' ? '\u00A0' : item.label;
+            return (
+              <GoabDropdownItem
+                testId={`jsonforms-${path}-dropdown-${item.label}`}
+                key={item.value}
+                label={displayLabel}
+                value={item.value}
+              />
+            );
+          })}
         </GoabDropdown>
       )}
     </div>

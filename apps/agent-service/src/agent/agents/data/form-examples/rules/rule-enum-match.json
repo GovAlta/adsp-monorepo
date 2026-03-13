@@ -1,0 +1,75 @@
+{
+  "id": "rule-with-enum-match",
+  "name": "Rule with Enum / Multi-Value Matching",
+  "category": "rule",
+  "summary": "Show or hide elements based on matching one of several values using `enum` in the rule condition",
+  "whenToUse": [
+    "Showing different follow-up sections based on a dropdown or radio selection",
+    "When the trigger field can have multiple activating values"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "memberType": {
+        "type": "string",
+        "enum": ["employee", "contractor", "volunteer", "other"]
+      },
+      "employeeId": { "type": "string" },
+      "contractorCompany": { "type": "string" },
+      "volunteerOrganization": { "type": "string" }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/memberType",
+        "label": "What is your role?"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/employeeId",
+        "label": "Employee ID",
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/memberType",
+            "schema": { "const": "employee" }
+          }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/contractorCompany",
+        "label": "Contractor Company",
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/memberType",
+            "schema": { "enum": ["contractor", "other"] }
+          }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/volunteerOrganization",
+        "label": "Volunteer Organization",
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/memberType",
+            "schema": { "const": "volunteer" }
+          }
+        }
+      }
+    ]
+  },
+  "notes": [
+    "Use `const` in condition schema to match a single value exactly",
+    "Use `enum` in condition schema to match any of several values",
+    "Use `not: { const: value }` to negate — show when value is NOT a specific value",
+    "Numeric ranges: use `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`",
+    "You can scope the condition to `#` (root) and use a full JSON schema for complex multi-property conditions"
+  ]
+}

@@ -32,14 +32,6 @@ const localStorageMock = {
 
 Object.defineProperty(global, 'localStorage', { value: localStorageMock });
 describe('Test the stepper utilities', () => {
-  global.window = Object.create(window);
-  const url = 'http://localhost';
-  Object.defineProperty(window, 'location', {
-    value: {
-      href: url,
-    },
-    writable: true,
-  });
   beforeEach(() => {
     localStorage.clear(); // Clear local storage before each test
   });
@@ -54,9 +46,11 @@ describe('Test the stepper utilities', () => {
   });
 
   it('can get stored value', async () => {
-    localStorage.setItem(`http://localhost_${new Date().toISOString().slice(0, 10)}`, '[true]');
+    const dateKey = new Date().toISOString().slice(0, 10);
+    const key = `${window.location.href}_${dateKey}`;
+    localStorage.setItem(key, '[true]');
     expect((getIsVisitFromLocalStorage() as boolean[])[0]).toBe(true);
-    localStorage.setItem(`http://localhost_${new Date().toISOString().slice(0, 10)}`, '[tru]');
+    localStorage.setItem(key, '[tru]');
     expect(getIsVisitFromLocalStorage()).toBe(undefined);
   });
 
@@ -148,7 +142,7 @@ describe('getIncompletePaths', () => {
       errorMessageErr(
         '/whichOfThemApplies',
         '#/properties/whichOfThemApplies/errorMessage',
-        'Choose all that apply is required'
+        'Choose all that apply is required',
       ),
     ];
 
@@ -185,7 +179,7 @@ describe('getStepStatus (with mocked conditional deps)', () => {
     // controller: fillingApplicationOnbehalf
     // affected: applicantContactDetails
     (buildConditionalDeps as jest.Mock).mockReturnValue(
-      new Map<string, string[]>([['fillingApplicationOnbehalf', ['applicantContactDetails']]])
+      new Map<string, string[]>([['fillingApplicationOnbehalf', ['applicantContactDetails']]]),
     );
 
     const scopes = ['#/properties/fillingApplicationOnbehalf'];
@@ -205,7 +199,7 @@ describe('getStepStatus (with mocked conditional deps)', () => {
 
   it('returns Completed when controller step has no affected-path errors', () => {
     (buildConditionalDeps as jest.Mock).mockReturnValue(
-      new Map<string, string[]>([['fillingApplicationOnbehalf', ['applicantContactDetails']]])
+      new Map<string, string[]>([['fillingApplicationOnbehalf', ['applicantContactDetails']]]),
     );
 
     const scopes = ['#/properties/fillingApplicationOnbehalf'];

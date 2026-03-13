@@ -10,16 +10,14 @@ Feature: Form app
     When a user goes to form app overview site
     Then no critical or serious accessibility issues on "form app overview" page
 
-  # CS-4586: Ignore the test until the test is updated to work with the new summary page
-  # New date picker doesn't allow type in date input, so date picker related tests are commented out for now
-  @TEST_CS-3110 @TEST_CS-3459 @REQ_CS-2909 @regression @prod @ignore
+  @TEST_CS-3110 @TEST_CS-3459 @REQ_CS-2909 @regression @prod
   Scenario: As an authenticated user, I can log in to submit an application
     Given the user deletes any existing form from "Auto Test" for "autotest-testformapp"
     When an authenticated user is logged in to see "autotest-testformapp" application
     Then the user views a form draft of "autotest-testformapp"
     When the user enters "Joe" in a text field labelled "First Name"
     And the user enters "Smith" in a text field labelled "Last Name"
-    # And the user enters "1970-10-30" in a date picker labelled "Birthday"
+    And the user enters "1970-10-30" in a date picker labelled "Birthday"
     And the user enters "CA" in a dropdown labelled "Nationality"
     And the user clicks Next button in the form
     And the user selects "Not Married" radio button for the question of "Are you married?"
@@ -28,23 +26,22 @@ Feature: Form app
     And the user clicks list with detail button labelled as "Add child" in the form
     And the user enters "John" in list with detail element text field labelled "First Name"
     And the user enters "Smith" in list with detail element text field labelled "Last Name"
-    # And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
+    And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
+    And the user clicks Continue button for the list with detail in the form
     And the user clicks Next button in the form
-    Then the user views the summary of "Personal Information" with "Joe" as "required" "First Name"
-    And the user views the summary of "Personal Information" with "Smith" as "required" "Last Name"
-    # And the user views the summary of "Personal Information" with "1970-10-30" as "not required" "Birthday"
+    Then the user views the summary of "Personal Information" with "Joe" as "required" "First name"
+    And the user views the summary of "Personal Information" with "Smith" as "required" "Last name"
+    And the user views the summary of "Personal Information" with "1970-10-30" as "not required" "Birthday"
     And the user views the summary of "Additional Information" with "No" as "required" "Are you married?"
     # And the user views the summary of "Additional Information" with "Yes" as "not required" "Citizen"
-    # Validation of list with detail on review page is commented out until CS-3120 is fixed
-    # And the user views the summary of "Additional Information" with "John" as "required" "First Name:Dependant"
-    # And the user views the summary of "Additional Information" with "Smith" as "required" "Last Name:Dependant"
-    # And the user views the summary of "Additional Information" with "2010-01-15" as "not required" "Dob:Dependant"
-    When the user clicks submit button in the form
-    Then the user views a callout with a message of "We're processing your application"
-    When the user clicks Download PDF copy link on form submission confirmation page
-    Then the user views the PDF copy of "autotest-testformapp.pdf" being downloaded
-    When the user sends a delete form request
-    Then the new form is deleted
+    And the user views the summary of "Additional Information" with "John:Smith:2010-01-15" as a "Dependant"
+  # Submit with list of detail has a bug CS-4746
+  # When the user clicks submit button in the form
+  # Then the user views a callout with a message of "We're processing your application"
+  # When the user clicks Download PDF copy link on form submission confirmation page
+  # Then the user views the PDF copy of "autotest-testformapp.pdf" being downloaded
+  # When the user sends a delete form request
+  # Then the new form is deleted
 
   # Anonymous submission is pretected by reCAPTCHA and Cypress test will fail to pass CAPTCHA validation
   # TEST DATA: autotest-anonymous-submission is created as a form definition with anonymous enabled
@@ -66,9 +63,8 @@ Feature: Form app
     And the user clicks submit button in the form
     Then the user views a callout with a message of "We're processing your application"
 
-  # CS-4586: Ignore the test until the test is updated to work with the new summary page
   # TEST DATA: autotest-anonymous-submission is created as a form definition with anonymous enabled
-  @TEST_CS-3571 @REQ_CS-3484 @REQ_CS-3485 @regression @prod @ignore
+  @TEST_CS-3571 @REQ_CS-3484 @REQ_CS-3485 @regression @prod
   Scenario: As an anonymous applicant, I can see validation errors on missing required fields and cannot submit the form without all required fields being set
     Given an anonymous applicant goes to "autotest-anonymous-submission" application
     Then the user views an anonymous form draft of "autotest-anonymous-submission"
@@ -81,8 +77,8 @@ Feature: Form app
     And the user enters "Smith" in list with detail element text field labelled "Last Name"
     # And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
     And the user clicks Next button in the form
-    Then the user views "Last Name is required" validation message under "Last Name" field on summary page
-    And the user views "Are you married? is required" validation message under "Are you married?" field on summary page
+    Then the user views "Last Name is required" validation message under "Last name" field of "Personal Information" on summary page
+    And the user views "Are you married? is required" validation message under "Are you married?" field of "Additional Information" on summary page
     And the user views the submit button is disabled on summary page
 
   # TEST DATA: autotest-open-intake is created as a form definition with an open intake period
@@ -104,3 +100,10 @@ Feature: Form app
   Scenario: As a form applicant, I cannot apply outside an open intake period
     When an authenticated user is logged in to see "autotest-closed-submitted" application
     Then the user views a success callout message of "We're processing your application"
+
+  # TEST DATA: autotest-form-tester-role is created as a form definition with an open intake period in the future
+  # TEST DATA: autotest user 3 <email3>/<password3> is assigned with "form-tester" role which has access to see the form definition outside intake period
+  @TEST_CS-4314 @REQ_CS-2955 @regression
+  Scenario: As a form tester, I can access and use forms not yet opened for submissions
+    When autotest user 3 is logged in to see "autotest-form-tester-role" application
+    Then the user views a form page with primary application button enabled for "autotest-form-tester-role"

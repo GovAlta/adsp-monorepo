@@ -1,9 +1,9 @@
 [tool.coverage.run]
 branch = true
-source = [ "adsp_service_django_sdk" ]
+source = ["adsp_service_django_sdk"]
 
 [tool.coverage.report]
-exclude_lines = [ "if TYPE_CHECKING:" ]
+exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
 [tool.pytest.ini_options]
@@ -15,29 +15,29 @@ log_cli_level = "DEBUG"
 name = "adsp-service-django-sdk"
 version = "1.0.0"
 description = "ADSP Service SDK for Django"
-authors = [ ]
+authors = []
 license = "Apache-2.0"
 readme = "README.md"
 
-  [[tool.poetry.packages]]
-  include = "adsp_service_django_sdk"
+[[tool.poetry.packages]]
+include = "adsp_service_django_sdk"
 
-  [tool.poetry.dependencies]
-  python = ">=3.9,<3.12"
-  django = "^4.2.28"
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+django = "^4.2.29"
 
-    [tool.poetry.dependencies.adsp-py-common]
-    path = "../adsp-py-common"
-    develop = true
+[tool.poetry.dependencies.adsp-py-common]
+path = "../adsp-py-common"
+develop = true
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^7.3.0"
 pytest = "^8.4.2"
 pytest-coverage = "^0.0"
-pytest-html = "^4.1.1"
+pytest-html = "^4.2.0"
 black = "^25.11.0"
 tox = "^4.27.0"
 
 [build-system]
-requires = [ "poetry-core==1.1.0" ]
+requires = ["poetry-core==1.1.0"]
 build-backend = "poetry.core.masonry.api"

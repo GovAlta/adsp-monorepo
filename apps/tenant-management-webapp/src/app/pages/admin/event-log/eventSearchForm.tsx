@@ -1,10 +1,11 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { FunctionComponent, useState, useEffect, useRef } from 'react';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import type { EventSearchCriteria } from '@store/event/models';
 import { distance } from 'fastest-levenshtein';
 import { getEventDefinitions } from '@store/event/actions';
-import styled from 'styled-components';
+import { useSearchableDropdown } from '@core-services/app-common';
+import { SearchBox, DateTimeInput } from './styled-components';
 import { GoabButton, GoabIconButton, GoabButtonGroup, GoabGrid, GoabFormItem } from '@abgov/react-components';
 const initCriteria: EventSearchCriteria = {
   namespace: '',
@@ -21,64 +22,18 @@ interface EventSearchFormProps {
 
 export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCancel, onSearch }) => {
   const [searchCriteria, setSearchCriteria] = useState(initCriteria);
-  const [open, setOpen] = useState(false);
   const [error, setError] = useState(false);
-  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
-  const [searchBox, setSearchBox] = useState('');
-  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
+  const searchRef = useRef<HTMLDivElement>(null);
   const today = new Date().toLocaleDateString().split('/').reverse().join('-');
   const message = 'Use a colon (:) between namespace and name';
   const dispatch = useDispatch();
-  const [freeTextQuery, setFreeTextQuery] = useState('');
   useEffect(() => {
     dispatch(getEventDefinitions());
   }, [dispatch]);
+
   const events = useSelector((state: RootState) => state.event.definitions);
 
   const autoCompleteList = Object.keys(events).sort((a, b) => (a < b ? -1 : 1));
-
-  const suggestionOnChange = (e) => {
-    const userInput = e.target.value;
-
-    setSearchBox(userInput);
-    setFreeTextQuery(userInput);
-    setOpen(true);
-    setError(false);
-
-    const next = getSuggestions(autoCompleteList, userInput, 80);
-    setFilteredSuggestions(next);
-    setActiveSuggestionIndex(0);
-
-    if (userInput.includes(':')) {
-      const [ns, nm] = userInput.split(':');
-      setSearchCriteria({ ...searchCriteria, namespace: (ns ?? '').trim(), name: (nm ?? '').trim() });
-    } else {
-      setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
-    }
-  };
-
-  const selectSuggestion = (selectedValue: string) => {
-    if (!selectedValue) return;
-
-    setSearchBox(selectedValue);
-
-    const idx = selectedValue.indexOf(':');
-    const ns = idx >= 0 ? selectedValue.slice(0, idx) : '';
-    const nm = idx >= 0 ? selectedValue.slice(idx + 1) : selectedValue;
-
-    setSearchCriteria({
-      ...searchCriteria,
-      namespace: ns.trim(),
-      name: nm.trim(),
-    });
-  };
-
-  function handleItemOnClick(e, suggestion: string) {
-    e.preventDefault();
-    selectSuggestion(suggestion);
-    setFilteredSuggestions([suggestion]);
-    setOpen(false);
-  }
   const resolveCriteriaFromInput = (input: string): EventSearchCriteria | null => {
     const raw = (input ?? '').trim();
     if (!raw) return { ...searchCriteria, namespace: '', name: '' };
@@ -102,40 +57,6 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     if (!ns || !nm) return null;
 
     return { ...searchCriteria, namespace: ns, name: nm };
-  };
-
-  const onKeyDown = (e) => {
-    setError(false);
-    setOpen(true);
-    if (e.keyCode === 9) {
-      setOpen(false);
-    } else if (e.keyCode === 13) {
-      e.preventDefault();
-      setOpen(false);
-      setError(false);
-
-      const inputValue = (e.currentTarget as HTMLInputElement).value;
-
-      const resolved = resolveCriteriaFromInput(inputValue);
-
-      if (!resolved) {
-        setError(true);
-        return;
-      }
-      setSearchCriteria(resolved);
-      setSearchBox(`${resolved.namespace}:${resolved.name}`);
-      onSearch?.(resolved);
-    } else if (e.keyCode === 38) {
-      if (activeSuggestionIndex === 0) {
-        return;
-      }
-      setActiveSuggestionIndex(activeSuggestionIndex - 1);
-    } else if (e.keyCode === 40) {
-      if (activeSuggestionIndex === filteredSuggestions.length - 1) {
-        return;
-      }
-      setActiveSuggestionIndex(activeSuggestionIndex + 1);
-    }
   };
 
   function normalize(s: string): string {
@@ -211,23 +132,69 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
       .map((x) => x.s);
   }
 
-  const renderHighlight = (suggestion) => {
-    if (!searchBox) return <span>{suggestion}</span>;
-
+  const renderHighlight = (suggestion: string) => {
+    if (!dd.query) return <span>{suggestion}</span>;
     const hay = suggestion.toLowerCase();
-    const needle = searchBox.toLowerCase();
+    const needle = dd.query.toLowerCase();
     const i = hay.indexOf(needle);
-
     if (i >= 0) {
       return (
         <span>
-          {suggestion.substr(0, i)}
-          <strong>{suggestion.substr(i, searchBox.length)}</strong>
-          {suggestion.substr(i + searchBox.length)}
+          {suggestion.substring(0, i)}
+          <strong>{suggestion.substring(i, i + dd.query.length)}</strong>
+          {suggestion.substring(i + dd.query.length)}
         </span>
       );
     }
     return <span>{suggestion}</span>;
+  };
+  const dd = useSearchableDropdown<string>({
+    debounceMs: 0, // local results are instant
+    minChars: 1, // start suggesting when user types
+    getLocalItems: (q) => getSuggestions(autoCompleteList, q, 80),
+
+    // ✅ show full list when focusing empty input
+    showAllOnFocus: true,
+    allItemsOnEmptyQuery: () => autoCompleteList.slice(0, 80),
+
+    closeOnSelect: true,
+    onSelect: (value) => {
+      // When user hits Enter or clicks a suggestion
+      const resolved = resolveCriteriaFromInput(value);
+      if (!resolved) {
+        setError(true);
+        return;
+      }
+      setError(false);
+      setSearchCriteria(resolved);
+      dd.setOpen(false);
+      dd.setQuery(`${resolved.namespace}:${resolved.name}`);
+    },
+  });
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dd.open && searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        dd.setOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [dd, dd.open, dd.setOpen]);
+  // -----------------------------------
+  // Input onChange: keep criteria in sync if user types ns:name
+  // -----------------------------------
+  const onInputChange = (value: string) => {
+    dd.setQuery(value);
+    setError(false);
+    // ✅ do not close here
+
+    if (value.includes(':')) {
+      const [ns, nm] = value.split(':');
+      setSearchCriteria({ ...searchCriteria, namespace: (ns ?? '').trim(), name: (nm ?? '').trim() });
+    } else {
+      setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
+    }
   };
 
   return (
@@ -239,65 +206,81 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             error={error ? message : ''}
             label="Search event namespace and name"
           >
-            <div
-              className={open ? 'search search-open' : 'search'}
-              onKeyDown={(e) => {
-                if (e.keyCode === 9) {
-                  setOpen(false);
-                }
-              }}
-            >
-              <input
-                type="text"
-                name="searchBox"
-                value={searchBox}
-                onChange={suggestionOnChange}
-                onKeyDown={onKeyDown}
-                aria-label="Search"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setError(false);
-                  setOpen(!open);
-                  if (!open && searchBox.length === 0) {
-                    setFilteredSuggestions(autoCompleteList);
+            <div ref={searchRef}>
+              <div
+                className={dd.open ? 'search search-open' : 'search'}
+                onKeyDown={(e) => {
+                  if (e.keyCode === 9) {
+                    dd.setOpen(false);
                   }
                 }}
-              />
+              >
+                <input
+                  ref={dd.inputRef}
+                  type="text"
+                  name="searchBox"
+                  value={dd.query}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  onChange={(e) => onInputChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    dd.onKeyDown(e.key);
+                    // optional: stop cursor moving / form submit
+                    if (['ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  aria-label="Search"
+                  onFocus={dd.onFocus}
+                  onClick={() => {
+                    setError(false);
+                    dd.onFocus();
+                  }}
+                />
 
-              <GoabIconButton
-                icon={open ? 'close-circle' : 'chevron-down'}
-                title="dropdown"
-                size="medium"
-                testId="menu-open-close"
-                variant="dark"
-                onClick={() => {
-                  if (!open && searchBox.length === 0) {
-                    setFilteredSuggestions(autoCompleteList);
-                  }
-                  if (open && searchBox.length > 0) {
-                    setSearchBox('');
-                    setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
-                  }
-                  setOpen(!open);
-                }}
-              />
+                <GoabIconButton
+                  icon={dd.open ? 'close-circle' : 'chevron-down'}
+                  title="dropdown"
+                  size="medium"
+                  testId="menu-open-close"
+                  variant="dark"
+                  onClick={() => {
+                    if (dd.open) {
+                      dd.setOpen(false);
+                      return;
+                    }
+                    dd.inputRef.current?.focus();
+                    if (!dd.query.trim()) {
+                      dd.openAll();
+                      return;
+                    }
+                    dd.setOpen(true);
+                  }}
+                />
+              </div>
+              {dd.open && dd.items.length > 0 && (
+                <ul ref={dd.listRef} className="suggestions">
+                  {dd.items.map((suggestion, index) => {
+                    const className = index === dd.activeIndex ? 'suggestion-active' : undefined;
+                    return (
+                      <li
+                        key={`${suggestion}-${index}`}
+                        data-index={index}
+                        className={className}
+                        onMouseEnter={() => dd.setActiveIndex(index)}
+                        onMouseDown={(e) => {
+                          e.preventDefault(); // keep focus
+                          dd.selectItem(suggestion); // triggers onSelect
+                        }}
+                      >
+                        {renderHighlight(suggestion)}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
-
-            {open && autoCompleteList && (
-              <ul className="suggestions">
-                {filteredSuggestions.map((suggestion, index) => {
-                  let className;
-                  if (index === activeSuggestionIndex) {
-                    className = 'suggestion-active';
-                  }
-                  return (
-                    <li className={className} key={index} onClick={(e) => handleItemOnClick(e, suggestion)}>
-                      {renderHighlight(suggestion)}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
           </GoabFormItem>
         </SearchBox>
         <GoabFormItem label="Minimum timestamp">
@@ -308,7 +291,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             aria-label="timestampMin"
             value={searchCriteria.timestampMin}
             onChange={(e) => setValue('timestampMin', e.target.value)}
-            onClick={() => setOpen(false)}
+            onClick={() => dd.setOpen(false)}
           />
         </GoabFormItem>
         <GoabFormItem label="Maximum timestamp">
@@ -319,7 +302,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             aria-label="timestampMax"
             value={searchCriteria.timestampMax}
             onChange={(e) => setValue('timestampMax', e.target.value)}
-            onClick={() => setOpen(false)}
+            onClick={() => dd.setOpen(false)}
           />
         </GoabFormItem>
       </GoabGrid>
@@ -327,29 +310,26 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
         <GoabButton
           type="secondary"
           onClick={() => {
-            setOpen(false);
+            dd.reset();
             setError(false);
             setSearchCriteria(initCriteria);
-            setSearchBox('');
-            onCancel();
+            onCancel?.();
           }}
         >
           Reset
         </GoabButton>
         <GoabButton
           onClick={() => {
-            setOpen(false);
+            dd.setOpen(false);
             setError(false);
-            const resolved = resolveCriteriaFromInput(searchBox);
+
+            const resolved = resolveCriteriaFromInput(dd.query);
             if (!resolved) {
               setError(true);
               return;
             }
             setSearchCriteria(resolved);
-
-            if (searchBox) {
-              setSearchBox(`${resolved.namespace}:${resolved.name}`);
-            }
+            dd.setQuery(`${resolved.namespace}:${resolved.name}`);
             onSearch?.(resolved);
           }}
         >
@@ -359,77 +339,3 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     </div>
   );
 };
-
-const SearchBox = styled.div`
-  position: relative;
-  .search {
-    display: flex;
-    border: 1px solid var(--color-gray-700);
-    border-radius: 3px;
-    padding: 0.16rem;
-  }
-  .search-open {
-    border: 1px solid var(--color-orange);
-  }
-  .goa-state--error .search {
-    border: 1px solid var(--color-red);
-  }
-  input {
-    border-width: 0;
-    width: 100%;
-  }
-  input:focus {
-    outline: none;
-  }
-  .suggestions {
-    border: 1px solid var(--color-gray-700);
-    border-top-width: 0;
-    list-style: none;
-    margin-top: 0;
-    max-height: 15.5rem;
-    width: 100%;
-    position: absolute;
-
-    background: var(--color-white);
-    box-shadow:
-      0 8px 8px rgb(0 0 0 / 20%),
-      0 4px 4px rgb(0 0 0 / 10%);
-    z-index: 99;
-    padding-left: 0px;
-
-    overflow: hidden auto;
-  }
-  .suggestions li {
-    padding: 0.5rem;
-    color: var(--color-gray-900);
-  }
-
-  .suggestions li:hover {
-    background-color: var(--color-primary);
-    color: var(--color-white);
-    cursor: pointer;
-    font-weight: var(--fw-bold);
-  }
-`;
-
-const DateTimeInput = styled.input`
-  display: flex;
-  align-content: center;
-  width: 100%;
-  line-height: var(--input-height);
-  height: var(--input-height);
-  border: 1px solid var(--color-gray-700);
-  border-radius: 3px;
-  > input {
-    border: none;
-  }
-  :hover {
-    border-color: var(--color-blue-600);
-  }
-  :active,
-  :focus {
-    border-color: #004f84;
-    box-shadow: 0 0 0 3px #feba35;
-    outline: none;
-  }
-`;

@@ -1,0 +1,73 @@
+{
+  "id": "conditional-computed",
+  "name": "Conditional Ternary Computed Field",
+  "category": "computed",
+  "summary": "Use the ternary operator (`? :`) and `if()` function to compute values based on conditions",
+  "whenToUse": [
+    "Applying different rates or formulas based on a threshold (e.g., tax bracket)",
+    "Showing different computed results based on user input values"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "income": {
+        "type": "number",
+        "title": "Annual Income ($)"
+      },
+      "dependents": {
+        "type": "number",
+        "title": "Number of Dependents"
+      },
+      "taxRate": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/income > 50000 ? 25 : 15"
+      },
+      "taxAmount": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/income > 50000 ? #/properties/income * 0.25 : #/properties/income * 0.15"
+      },
+      "dependentCredit": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/dependents > 0 ? #/properties/dependents * 500 : 0"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/income"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/dependents"
+      },
+      {
+        "type": "Control",
+        "label": "Tax Rate (%)",
+        "scope": "#/properties/taxRate"
+      },
+      {
+        "type": "Control",
+        "label": "Tax Amount ($)",
+        "scope": "#/properties/taxAmount"
+      },
+      {
+        "type": "Control",
+        "label": "Dependent Credit ($)",
+        "scope": "#/properties/dependentCredit"
+      }
+    ]
+  },
+  "notes": [
+    "Ternary syntax: `condition ? trueValue : falseValue`",
+    "Equivalent function form: `if(condition, trueValue, falseValue)`",
+    "Comparison operators: `>`, `<`, `>=`, `<=`, `==`, `!=`",
+    "Logical operators: `and`, `or`, `not` can combine conditions",
+    "Both literal numbers and field references can appear on either side of the ternary"
+  ]
+}

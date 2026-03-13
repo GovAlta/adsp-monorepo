@@ -68,7 +68,7 @@ const Dashboard = (): JSX.Element => {
                   <h1 data-testid="dashboard-title">Dashboard</h1>
                   <GoabGrid gap="s" minChildWidth="25ch">
                     {services.map((ref, index) => (
-                      <GoabContainer accent="thin" type="interactive" key={index}>
+                      <GoabContainer accent="thin" type="interactive" key={index} minHeight={'100%'}>
                         <div>
                           <HeadingDiv>
                             <h2>

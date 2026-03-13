@@ -35,7 +35,14 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string>(selected);
   const [items, setItems] = useState(props.items);
-  const [inputText, setInputText] = useState<string>(selected);
+  const getDisplayText = (value: string) => {
+    const item = props.items.find((i) => i.value === value);
+    if (item && item.label.trim() === '') {
+      return '\u00A0';
+    }
+    return item?.label || value || '';
+  };
+  const [inputText, setInputText] = useState<string>(getDisplayText(selected));
   const prevCountRef = useRef(props.items);
 
   const trailingIcon = isOpen ? 'chevron-up' : 'chevron-down';
@@ -50,6 +57,12 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEqual(props.items, prevCountRef.current)]);
+
+  useEffect(() => {
+    setInputText(getDisplayText(selected));
+    setSelectedOption(selected);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
 
   useEffect(() => {
     if (textInput) {
@@ -85,7 +98,9 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const updateDropDownData = (item: Item) => {
     onChange(item.value);
     setSelectedOption(item.value);
-    setInputText(item.label);
+    const isBlankLabel = item.label.trim() === '';
+    const displayLabel = isBlankLabel ? '\u00A0' : item.label;
+    setInputText(displayLabel);
 
     if (isAutoCompletion) {
       const selectedItems = props.items.filter((filterItem) => {
@@ -111,7 +126,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
   const setElementFocus = (
     e: KeyboardEvent | React.KeyboardEvent<HTMLElement>,
     element: HTMLElement | null,
-    preventDefault: boolean
+    preventDefault: boolean,
   ) => {
     if (element) {
       element.focus();
@@ -146,10 +161,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       setIsOpen(true);
       const firstItem = props.items.at(0);
 
-      let index = 0;
-      if (firstItem?.label.trim() === '') {
-        index = 1;
-      }
+      const index = 0;
       let el = document.getElementById(`${PREFIX}-${label}-${props.items.at(index)?.value}`);
 
       if (el === null && !isAutoCompletion) {
@@ -181,7 +193,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
       setInputTextFocus();
     }
 
-    let index = items.findIndex((val) => {
+    const index = items.findIndex((val) => {
       return val.label === e.currentTarget.innerText;
     });
 
@@ -190,10 +202,6 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
     if (e.key === ARROW_DOWN_KEY) {
       if (item.label === items.at(-1)?.label) {
         e.preventDefault();
-      }
-
-      if (index === -1 && item.label.trim() === '') {
-        index = 0;
       }
 
       const el = document.getElementById(`${PREFIX}-${label}-${items.at(index + 1)?.value}`);
@@ -264,6 +272,9 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
           optionListMaxHeight={optionListMaxHeight}
         >
           {items.map((item) => {
+            const isBlankLabel = item.label.trim() === '';
+            const displayLabel = isBlankLabel ? '\u200B\u00A0' : item.label;
+
             return (
               <GoADropdownListOption
                 key={`${PREFIX}-option-${label}-${item.value}`}
@@ -283,7 +294,7 @@ export const Dropdown = (props: DropdownProps): JSX.Element => {
                     updateDropDownData(item);
                   }}
                 >
-                  <LabelItem>{item.label}</LabelItem>
+                  <LabelItem>{displayLabel}</LabelItem>
                 </div>
               </GoADropdownListOption>
             );

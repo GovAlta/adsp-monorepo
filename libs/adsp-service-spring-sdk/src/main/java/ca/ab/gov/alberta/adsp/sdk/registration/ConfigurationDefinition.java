@@ -3,7 +3,7 @@ package ca.ab.gov.alberta.adsp.sdk.registration;
 import org.springframework.core.GenericTypeResolver;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.ObjectNode;
 
 public abstract class ConfigurationDefinition<T> {
 

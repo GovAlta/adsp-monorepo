@@ -11,7 +11,7 @@ import ca.ab.gov.alberta.adsp.sdk.AdspId;
 
 public class AdspIdDeserializer extends StdDeserializer<AdspId> {
 
-  protected AdspIdDeserializer() {
+  public AdspIdDeserializer() {
     super(AdspId.class);
   }
 

@@ -74,54 +74,63 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
   onDelete,
 }) => {
   const definitions = useSelector((state: RootState) => state.event.results.map((r) => state.event.definitions[r]));
+  const tenantDefinitions = definitions.filter((d) => !d.isCore);
+  const coreDefinitions = definitions.filter((d) => d.isCore);
 
-  const groupedDefinitions = definitions.reduce((acc, def) => {
-    acc[def.namespace] = acc[def.namespace] || [];
-    acc[def.namespace].push(def);
-    return acc;
-  }, {});
-  const orderedGroupNames = Object.keys(groupedDefinitions).sort((prev, next): number => {
-    // Each group must have at least one element
-    if (groupedDefinitions[prev][0].isCore > groupedDefinitions[next][0].isCore) {
-      return 1;
-    }
-    if (prev > next) {
-      return 1;
-    }
-    return -1;
-  });
+  const renderDefinitionsByCore = (defs: EventDefinition[], showCoreHeading: boolean) => {
+    const groupedDefinitions = defs.reduce((acc, def) => {
+      acc[def.namespace] = acc[def.namespace] || [];
+      acc[def.namespace].push(def);
+      return acc;
+    }, {});
+
+    const orderedGroupNames = Object.keys(groupedDefinitions).sort((prev, next): number => {
+      if (prev > next) {
+        return 1;
+      }
+      return -1;
+    });
+
+    return orderedGroupNames.map((group) => (
+      <div key={group}>
+        <div className="group-name">{group}</div>
+        <DataTable data-testid="events-definitions-table">
+          <thead data-testid="events-definitions-table-header">
+            <tr>
+              <th id="name" data-testid="events-definitions-table-header-name">
+                Name
+              </th>
+              <th id="description">Description</th>
+              <th id="actions">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {groupedDefinitions[group]
+              .sort((a, b) => (a.name < b.name ? -1 : 1))
+              .map((definition) => (
+                <EventDefinitionComponent
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  key={`${definition.namespace}:${definition.name}}`}
+                  definition={definition}
+                />
+              ))}
+          </tbody>
+        </DataTable>
+      </div>
+    ));
+  };
 
   return (
     <div className={className}>
-      {!orderedGroupNames && renderNoItem('event definition')}
-      {orderedGroupNames.map((group) => (
-        <div key={group}>
-          <div className="group-name">{group}</div>
-          <DataTable data-testid="events-definitions-table">
-            <thead data-testid="events-definitions-table-header">
-              <tr>
-                <th id="name" data-testid="events-definitions-table-header-name">
-                  Name
-                </th>
-                <th id="description">Description</th>
-                <th id="actions">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {groupedDefinitions[group]
-                .sort((a, b) => (a.name < b.name ? -1 : 1))
-                .map((definition) => (
-                  <EventDefinitionComponent
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    key={`${definition.namespace}:${definition.name}}`}
-                    definition={definition}
-                  />
-                ))}
-            </tbody>
-          </DataTable>
+      {tenantDefinitions.length === 0 && coreDefinitions.length === 0 && renderNoItem('event definition')}
+      {tenantDefinitions.length > 0 && renderDefinitionsByCore(tenantDefinitions, false)}
+      {coreDefinitions.length > 0 && (
+        <div>
+          <h2 className="core-definitions-heading">Core definitions</h2>
+          {renderDefinitionsByCore(coreDefinitions, true)}
         </div>
-      ))}
+      )}
     </div>
   );
 };
@@ -129,8 +138,14 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
 export const EventDefinitionsList = styled(EventDefinitionsListComponent)`
   display: flex-inline-table;
   & .group-name {
-    font-size: var(--fs-lg);
     font-weight: var(--fw-bold);
+  }
+
+  & .core-definitions-heading {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    border-top: 1px solid #ddd;
+    padding-top: 1rem;
   }
 
   & td:first-child {

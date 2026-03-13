@@ -1,9 +1,21 @@
 import { GoabDetails, GoabFormItem, GoabSkeleton, GoabTextArea, GoabIconButton } from '@abgov/react-components';
 import { GoabTextAreaOnChangeDetail } from '@abgov/ui-components-common';
-import { FunctionComponent, memo, useEffect, useMemo, useRef, useState } from 'react';
+import { FunctionComponent, memo, useMemo, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import styled from 'styled-components';
-import { AgentMessage, Reasoning, Message, ToolCall, UserMessage, UserContent, Attachment, ResolvedImagePart, ResolvedFilePart } from '../types/agent';
+import { useAutoScroll } from '../hooks';
+import {
+  AgentMessage,
+  AgentError as AgentErrorType,
+  Reasoning,
+  Message,
+  ToolCall,
+  UserMessage,
+  UserContent,
+  Attachment,
+  ResolvedImagePart,
+  ResolvedFilePart,
+} from '../types/agent';
 
 // ========================================
 // Type Definitions
@@ -38,6 +50,11 @@ interface AgentReasoningProps {
   reasoning: Reasoning;
 }
 
+interface AgentErrorProps {
+  className?: string;
+  error: AgentErrorType;
+}
+
 // ========================================
 // Helpers
 // ========================================
@@ -60,35 +77,36 @@ const ContainerDiv = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
-  
+
   & > :first-child {
     overflow: auto;
     flex: 1;
-    
+
     > :last-child {
       padding-top: var(--goa-space-l);
     }
   }
-  
+
   & > :last-child {
     flex: 0;
   }
-  
+
   & .content {
     margin: var(--goa-space-m) var(--goa-space-xs) var(--goa-space-l) var(--goa-space-xs);
     max-width: 100%;
     overflow-wrap: break-word;
     word-break: break-word;
   }
-  
+
   & .content[data-from='agent'] {
     margin-right: var(--goa-space-l);
   }
-  
+
   & .content pre,
   & .content code {
     max-width: 100%;
     overflow-x: auto;
+    font-size: var(--goa-font-size-2);
   }
 `;
 
@@ -176,20 +194,90 @@ const UserMessageItem = memo(styled(({ className, message }: UserMessageItemProp
 const AgentReasoning = styled(({ className, reasoning }: AgentReasoningProps) => {
   return <div className={className}>{reasoning.content}</div>;
 })`
-  margin: var(--goa-space-xl);
+  margin: var(--goa-space-m) var(--goa-space-xl) 0 var(--goa-space-xl);
   font-size: var(--goa-font-size-1);
   line-height: var(--goa-space-m);
   padding: var(--goa-space-m);
   text-align: left;
 `;
 
-const AgentToolCallBase: FunctionComponent<AgentToolCallProps> = ({ className, toolCall }) => {
+const AgentErrorBase: FunctionComponent<AgentErrorProps> = ({ className, error }) => {
+  const label = error.type === 'tripwire' ? 'Validation Failed' : 'Error';
   return (
     <div className={className}>
-      <GoabDetails heading={`Called ${toolCall.toolName} tool`}>
+      <strong>{label}:</strong> {error.message}
+      {error.details && <pre>{JSON.stringify(error.details, null, 2)}</pre>}
+    </div>
+  );
+};
+
+const AgentError = memo(styled(AgentErrorBase)`
+  margin: var(--goa-space-m) var(--goa-space-xl) var(--goa-space-l) var(--goa-space-xl);
+  padding: var(--goa-space-m);
+  background-color: var(--goa-color-emergency-light);
+  border-left: 3px solid var(--goa-color-emergency-default);
+  border-radius: var(--goa-border-radius-s);
+  color: var(--goa-color-text-default);
+  font-size: var(--goa-font-size-1);
+  line-height: var(--goa-space-m);
+  text-align: left;
+
+  & strong {
+    color: var(--goa-color-emergency-default);
+  }
+
+  & pre {
+    background: var(--goa-color-greyscale-100);
+    border: 1px solid var(--goa-color-greyscale-200);
+    white-space: pre-wrap;
+    font-family: monospace;
+    font-size: var(--goa-font-size-0);
+    line-height: var(--goa-space-m);
+    padding: var(--goa-space-m);
+    margin: var(--goa-space-s) 0 0 0;
+    overflow: auto;
+    max-height: 200px;
+  }
+`);
+
+/**
+ * AgentToolCall component - Displays tool execution status and results
+ *
+ * States:
+ * - Pending: Tool has been called but no result/error yet (shows loading indicator)
+ * - Complete: Tool returned a result (green border, shows result)
+ * - Error: Tool execution failed (red border, shows error)
+ */
+const AgentToolCallBase: FunctionComponent<AgentToolCallProps> = ({ className, toolCall }) => {
+  const isPending = !toolCall.result && !toolCall.error;
+  const hasArgs = toolCall.args && Object.keys(toolCall.args).length > 0;
+
+  const getHeading = () => {
+    if (isPending) {
+      return `Calling ${toolCall.toolName} tool...`;
+    } else if (toolCall.error) {
+      return `${toolCall.toolName} tool failed`;
+    } else {
+      return `Called ${toolCall.toolName} tool`;
+    }
+  };
+
+  return (
+    <div className={className} data-status={isPending ? 'pending' : toolCall.error ? 'error' : 'complete'}>
+      <GoabDetails heading={getHeading()}>
         <div>
-          <span>Input</span>
-          <pre>{JSON.stringify(toolCall.args, null, 2)}</pre>
+          {isPending && (
+            <div className="pending-indicator">
+              <GoabSkeleton type="text" />
+              <span>Executing tool...</span>
+            </div>
+          )}
+          {hasArgs && (
+            <>
+              <span>Input</span>
+              <pre>{JSON.stringify(toolCall.args, null, 2)}</pre>
+            </>
+          )}
           {toolCall.result && (
             <>
               <span>Result</span>
@@ -199,7 +287,7 @@ const AgentToolCallBase: FunctionComponent<AgentToolCallProps> = ({ className, t
           {toolCall.error && (
             <>
               <span>Error</span>
-              <pre>{JSON.stringify(toolCall.error, null, 2)}</pre>
+              <pre className="error-output">{JSON.stringify(toolCall.error, null, 2)}</pre>
             </>
           )}
         </div>
@@ -209,8 +297,33 @@ const AgentToolCallBase: FunctionComponent<AgentToolCallProps> = ({ className, t
 };
 
 const AgentToolCall = memo(styled(AgentToolCallBase)`
-  margin: var(--goa-space-xl);
-  
+  margin: 0 var(--goa-space-xl) var(--goa-space-l) var(--goa-space-xl);
+
+  &[data-status='pending'] {
+    opacity: 0.8;
+  }
+
+  &[data-status='error'] {
+    border-left: 3px solid var(--goa-color-emergency-default);
+  }
+
+  &[data-status='complete'] {
+    border-left: 3px solid var(--goa-color-success-default);
+  }
+
+  & .pending-indicator {
+    display: flex;
+    flex-direction: column;
+    gap: var(--goa-space-xs);
+    padding: var(--goa-space-s) 0;
+
+    & span {
+      color: var(--goa-color-text-secondary);
+      font-style: italic;
+      font-size: var(--goa-font-size-1);
+    }
+  }
+
   & pre {
     background: var(--goa-color-greyscale-100);
     white-space: pre-wrap;
@@ -223,22 +336,68 @@ const AgentToolCall = memo(styled(AgentToolCallBase)`
     max-height: 250px;
     overflow: auto;
   }
+
+  & pre.error-output {
+    background: var(--goa-color-emergency-light);
+    border-left: 2px solid var(--goa-color-emergency-default);
+  }
 `);
 
 const AgentMessageItem = memo(styled(({ className, message }: AgentMessageItemProps) => {
+  const hasText = message.content?.trim().length > 0;
+  const hasReasoning = Boolean(message.reasoning?.content?.trim());
+  const hasToolCalls = message.toolCalls.length > 0;
+  const hasErrors = Boolean(message.errors?.length);
+  const hasPendingToolCall = message.toolCalls.some((toolCall) => !toolCall.result && !toolCall.error);
+
+  // Show explicit feedback if the stream has started but no visible output has arrived yet.
+  const isThinking = message.streaming && !hasText && !hasReasoning && !hasToolCalls && !hasErrors;
+
+  // Show a subtle continuation hint for quiet streaming gaps between visible updates.
+  const showStreamingContinuation = message.streaming && !isThinking && !hasPendingToolCall;
+
   return (
     <div className={className} data-from={message.from}>
+      {isThinking && (
+        <div className="activity-indicator" data-kind="thinking">
+          <GoabSkeleton type="text" />
+          <span>Agent is thinking...</span>
+        </div>
+      )}
+      {message.reasoning && <AgentReasoning reasoning={message.reasoning} />}
       <Markdown className="content" data-from={message.from}>
         {message.content}
       </Markdown>
-      {message.reasoning && <AgentReasoning reasoning={message.reasoning} />}
       {message.toolCalls.map((toolCall) => (
         <AgentToolCall key={toolCall.toolCallId} toolCall={toolCall} />
       ))}
+      {showStreamingContinuation && (
+        <div className="activity-indicator" data-kind="continuing">
+          <span>Generating response...</span>
+        </div>
+      )}
+      {message.errors && message.errors.map((error, index) => <AgentError key={index} error={error} />)}
     </div>
   );
 })`
   text-align: left;
+
+  & .activity-indicator {
+    margin: var(--goa-space-m) var(--goa-space-xl) var(--goa-space-l) var(--goa-space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--goa-space-xs);
+
+    & span {
+      color: var(--goa-color-text-secondary);
+      font-style: italic;
+      font-size: var(--goa-font-size-1);
+    }
+  }
+
+  & .activity-indicator[data-kind='continuing'] {
+    margin-top: 0;
+  }
 `);
 
 // ========================================
@@ -257,22 +416,16 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   const [draft, setDraft] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [uploading, setUploading] = useState(false);
-  
+
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const latestRef = useRef<HTMLDivElement | null>(null);
-  
+
+  // Hooks
+  const { scrollContainerRef, targetElementRef, onScroll, resetScroll } = useAutoScroll([messages]);
+
   // Computed values
   const welcomeMessage = useMemo(() => createWelcomeMessage(threadId), [threadId]);
   const isWaitingForResponse = useMemo(() => messages[messages.length - 1]?.from === 'user', [messages]);
-
-  // Auto-scroll to latest message
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      latestRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 50);
-    return () => clearTimeout(timer);
-  }, [messages]);
 
   // Event handlers
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -288,7 +441,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
         setUploading(false);
       }
     }
-    
+
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -313,6 +466,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
       onSend(threadId, context, content);
       setDraft('');
       setAttachments([]);
+      resetScroll(); // Re-enable auto-scroll for incoming messages
     }
   };
 
@@ -331,7 +485,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
   return (
     <ContainerDiv>
       {/* Message list */}
-      <div>
+      <div ref={scrollContainerRef} onScroll={onScroll}>
         <AgentMessageItem message={welcomeMessage} />
         {messages.map((message) =>
           message.from === 'user' ? (
@@ -341,7 +495,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
           ),
         )}
         {isWaitingForResponse && <GoabSkeleton type="text" mb="l" mr="4xl" />}
-        <div ref={latestRef} />
+        <div ref={targetElementRef} />
       </div>
 
       {/* Input form */}
@@ -358,9 +512,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
             />
             {attachments.map((attachment) => (
               <AttachmentItemDiv key={attachment.urn}>
-                {attachment.thumbnailUrl && (
-                  <img src={attachment.thumbnailUrl} alt={attachment.filename} />
-                )}
+                {attachment.thumbnailUrl && <img src={attachment.thumbnailUrl} alt={attachment.filename} />}
                 <span>{attachment.filename}</span>
                 <GoabIconButton
                   icon="trash"
@@ -379,7 +531,7 @@ export const AgentChat: FunctionComponent<AgentChatProps> = ({
             />
           </AttachmentListDiv>
         )}
-        
+
         <form onKeyDown={handleKeyDown}>
           <GoabFormItem ml="xs" mr="xs">
             <GoabTextArea

@@ -1,0 +1,38 @@
+{
+  "id": "object-array",
+  "name": "Object Array (Simple Repeating Items)",
+  "category": "repeating",
+  "summary": "Simple repeating items using a Control bound to an array property — auto-generated layout",
+  "whenToUse": [
+    "Collecting a short list of simple items (1-2 fields per item)",
+    "Quick lists like contacts, names, or simple records",
+    "When you don't need control over the detail layout"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "people": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "firstName": { "type": "string" },
+            "lastName": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "label": "People",
+    "scope": "#/properties/people"
+  },
+  "notes": [
+    "The simplest way to add repeating items — just point a Control at an array property",
+    "Each item renders as a card with auto-generated layout for its properties",
+    "You lose control over how item fields are arranged (no custom layout)",
+    "Best for small lists with simple items; use ListWithDetail for complex items",
+    "Each property on an item renders as a separate row on the card"
+  ]
+}

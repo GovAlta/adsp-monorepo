@@ -23,6 +23,13 @@ export const extractNestedFields = (properties: DataObject, propertyKeys: string
   return nestedItems;
 };
 
+function prettify(prop: string): string {
+  return prop
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/[_-]/g, ' ')
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
 /**
  * Extract Json data schema name attribute and the ui schema label name.
  * @param obj
@@ -37,32 +44,60 @@ export const extractNames = (obj: unknown, names: Record<string, string> = {}): 
 
     if (typeof typedObj.scope === 'string') {
       const parts = typedObj.scope.split('/');
-      if (typeof typedObj.label === 'string') {
-        names[parts[parts.length - 1]] = typedObj.label;
-      } else if (typeof typedObj.scope === 'string') {
-        const parts = typedObj.scope.split('/');
-        names[parts[parts.length - 1]] = parts[parts.length - 1];
+      const key = parts[parts.length - 1];
+
+      if (typeof typedObj.label === 'string' && typedObj.label.trim()) {
+        names[key] = typedObj.label;
+      } else if (
+        typeof typedObj.label === 'object' &&
+        typedObj.label !== null &&
+        'text' in (typedObj.label as Record<string, unknown>) &&
+        typeof (typedObj.label as Record<string, unknown>).text === 'string' &&
+        ((typedObj.label as Record<string, unknown>).text as string).trim()
+      ) {
+        names[key] = (typedObj.label as Record<string, unknown>).text as string;
+      } else {
+        names[key] = prettify(key);
       }
     }
+
     Object.values(typedObj).forEach((value) => extractNames(value, names));
   }
 
   return names;
 };
 
+function getHeaderLabel(
+  headName: string,
+  itemsSchema: Record<string, unknown>,
+  columnLabels?: Record<string, string>
+): string {
+  if (columnLabels?.[headName]) {
+    return columnLabels[headName];
+  }
+
+  const fieldSchema = itemsSchema?.[headName] as Record<string, unknown> | undefined;
+  if (fieldSchema && typeof fieldSchema.title === 'string' && fieldSchema.title.trim()) {
+    return fieldSchema.title;
+  }
+
+  return prettify(headName);
+}
+
 export interface TableProps {
   itemsSchema: Record<string, unknown>;
   data: Record<string, unknown>[];
+  columnLabels?: Record<string, string>;
 }
 
-const DataTable = ({ itemsSchema, data }: TableProps): JSX.Element => {
+const DataTable = ({ itemsSchema, data, columnLabels }: TableProps): JSX.Element => {
   return (
     <GoabTable width="100%">
       <thead>
         <tr>
           {itemsSchema &&
             Object.keys(itemsSchema)?.map((headNames, ix) => {
-              return <th key={ix}>{headNames}</th>;
+              return <th key={ix}>{getHeaderLabel(headNames, itemsSchema, columnLabels)}</th>;
             })}
         </tr>
       </thead>
@@ -140,7 +175,10 @@ export const renderCellColumn = ({
         return <pre>{renderWarningCell(JSON.stringify(values.at(0), null, 2))}</pre>;
       }
     } else {
-      return <DataTable itemsSchema={data[0]} data={data} />;
+      const firstRow = Array.isArray(data) ? data[0] : undefined;
+      const columnLabels = extractNames(firstRow);
+
+      return <DataTable itemsSchema={data[0]} data={data} columnLabels={columnLabels} />;
     }
   }
 

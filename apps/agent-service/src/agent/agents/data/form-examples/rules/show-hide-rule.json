@@ -1,0 +1,124 @@
+{
+  "id": "show-hide-rule",
+  "name": "Show/Hide Rule (Conditional Visibility)",
+  "category": "rule",
+  "summary": "SHOW or HIDE form elements based on boolean, string, or other field values using JSON Forms rules",
+  "whenToUse": [
+    "Showing follow-up questions only when a prerequisite is answered",
+    "Hiding irrelevant sections based on prior answers",
+    "'Do you have dependents?' → show dependent name fields",
+    "Hiding a warning message when conditions are met (HIDE effect)",
+    "String value matching — e.g., show fields when answer is 'yes'"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "hasChildren": { "type": "boolean" },
+      "numberOfChildren": { "type": "integer" },
+      "childsFirstName": { "type": "string" },
+      "childsLastName": { "type": "string" },
+      "needsAccommodation": {
+        "type": "string",
+        "enum": ["yes", "no"]
+      },
+      "accommodationDetails": { "type": "string" },
+      "termsAccepted": { "type": "boolean" }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/hasChildren",
+        "label": "Do you have children?"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/numberOfChildren",
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/hasChildren",
+            "schema": { "const": true }
+          }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/childsFirstName",
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/hasChildren",
+            "schema": { "const": true }
+          }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/childsLastName",
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/hasChildren",
+            "schema": { "const": true }
+          }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/needsAccommodation",
+        "label": "Do you need an accommodation?",
+        "options": {
+          "componentProps": { "name": "needsAccommodation" }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/accommodationDetails",
+        "label": "Please describe the accommodation needed",
+        "options": { "multi": true },
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/needsAccommodation",
+            "schema": { "const": "yes" }
+          }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/termsAccepted",
+        "label": "I accept the terms and conditions"
+      },
+      {
+        "type": "HelpContent",
+        "label": "",
+        "options": {
+          "help": "⚠ You must accept the terms and conditions before submitting.",
+          "variant": "important"
+        },
+        "rule": {
+          "effect": "HIDE",
+          "condition": {
+            "scope": "#/properties/termsAccepted",
+            "schema": { "const": true }
+          }
+        }
+      }
+    ]
+  },
+  "notes": [
+    "Attach a `rule` object to any UI schema element (Control, Layout, Group, etc.)",
+    "The `effect` can be `SHOW`, `HIDE`, `ENABLE`, or `DISABLE`",
+    "SHOW: element is hidden by default, shown when condition is TRUE",
+    "HIDE: element is visible by default, hidden when condition is TRUE — the INVERSE of SHOW",
+    "The `condition.scope` points to the field being evaluated; `condition.schema` is a JSON schema to match",
+    "Use `const` for exact value matching (boolean, string, number): `{ const: true }`, `{ const: \"yes\" }`, `{ const: 42 }`",
+    "String matching: `{ const: \"yes\" }` matches exactly 'yes'; `{ enum: [\"yes\", \"maybe\"] }` matches either value",
+    "IMPORTANT: Hidden fields can still be `required` — use conditional validation (if/then) to avoid validation errors on hidden fields",
+    "A rule can be attached to a layout element to show/hide an entire group of fields at once",
+    "Choose SHOW vs HIDE based on default state: use SHOW when hidden-by-default, HIDE when visible-by-default"
+  ]
+}

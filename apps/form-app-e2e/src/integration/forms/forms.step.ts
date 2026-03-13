@@ -51,6 +51,20 @@ When('an authenticated user is logged in to see {string} application', function 
   cy.wait(8000); // Wait all the redirects to settle down
 });
 
+When('autotest user 3 is logged in to see {string} application', function (formDefinition) {
+  cy.visit('/' + Cypress.env('tenantName') + '/' + formDefinition + '/login?kc_idp_hint=');
+  // Enter user name and password and click log in button
+  formsObj.usernameEmailField().type(Cypress.env('email3'));
+  formsObj.passwordField().type(Cypress.env('password3'));
+  formsObj.loginButton().click();
+  cy.wait(8000); // Wait all the redirects to settle down
+});
+
+Then('the user views a form page with primary application button enabled for {string}', function (formName) {
+  formsObj.formLandingPagePrimaryButton().shadow().find('button').should('be.enabled');
+  formsObj.formLandingPageSubtitle().should('contain.text', formName);
+});
+
 Given('an anonymous applicant goes to {string} application', function (formDefinition) {
   cy.visit('/' + Cypress.env('tenantName') + '/' + formDefinition);
   cy.wait(8000); // Wait all the redirects to settle down
@@ -94,12 +108,12 @@ When('the user enters {string} in a text field labelled {string}', function (tex
 });
 
 When('the user enters {string} in a date picker labelled {string}', function (date: string, label) {
-  formsObj.formDateInput(label).shadow().find('goa-input').shadow().find('input').clear().type(date, { force: true });
+  formsObj.formDateInput(label).shadow().find('input').clear().type(date, { force: true });
 });
 
 When('the user enters {string} in a dropdown labelled {string}', function (value: string, label) {
-  formsObj.formDropdown(label).find('goa-input').click({ force: true });
-  formsObj.formDropdown(label).find('div').contains(value).click({ force: true });
+  formsObj.formDropdown(label).shadow().find('input').click({ force: true });
+  formsObj.formDropdown(label).shadow().find('goa-popover').find('li').contains(value).click({ force: true });
 });
 
 When('the user clicks Next button in the form', function () {
@@ -171,84 +185,49 @@ When(
   }
 );
 
+When('the user clicks Continue button for the list with detail in the form', function () {
+  formsObj.formListWithDetailContinueButton().shadow().find('button').click({ force: true });
+  cy.wait(1000);
+});
+
 Then('the user views a callout with a message of {string}', function (message) {
   formsObj.formSuccessCallout().shadow().find('h3').should('have.text', message);
 });
 
-// List with detail label need to be passed in the format of <child element field label:parent array label>, i.e. First name:Dependant
 Then(
   'the user views the summary of {string} with {string} as {string} {string}',
   function (sectionName, value, requiredOrNot, label: string) {
-    let isFound = false;
-    if (label.includes(':')) {
-      const listWithDetailLabels = label.split(':');
-      const arrayLabel = listWithDetailLabels[1].toLowerCase(); // Array labels need to be changed to lower case to use in xpath
-      const fieldLabel = listWithDetailLabels[0];
-      formsObj
-        .formSummaryPageListWithDetailItems(sectionName, arrayLabel)
-        .then((items) => {
-          for (let i = 0; i < items.length; i++) {
-            cy.log(items[i].outerText);
-            switch (requiredOrNot) {
-              case 'required':
-                if (items[i].outerText == fieldLabel + ' *: ' + value) {
-                  isFound = true;
-                  cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
-                }
-                break;
-              case 'not required':
-                if (items[i].outerText == fieldLabel + ': ' + value) {
-                  isFound = true;
-                  cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
-                }
-                break;
-              default:
-                expect(requiredOrNot).to.be.oneOf(['required', 'not required']);
-            }
-          }
-        })
-        .then(() => {
-          expect(isFound).to.be.true;
-        });
-    } else {
-      formsObj
-        .formSummaryPageControlValues(sectionName)
-        .then((items) => {
-          cy.log('Items found: ' + items.length);
-          for (let i = 0; i < items.length; i++) {
-            cy.log(items[i].outerText);
-            switch (requiredOrNot) {
-              case 'required':
-                if (items[i].outerText == value) {
-                  if (
-                    items[i].parentElement?.getAttribute('requirement') == 'required' &&
-                    items[i].parentElement?.getAttribute('label')?.trim() == label
-                  ) {
-                    isFound = true;
-                    cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
-                  }
-                }
-                break;
-              case 'not required':
-                if (items[i].outerText == value) {
-                  if (
-                    !items[i].parentElement?.hasAttribute('requirement') &&
-                    items[i].parentElement?.getAttribute('label')?.trim() == label
-                  ) {
-                    isFound = true;
-                    cy.log(label + ': ' + value + ' is found? : ' + String(isFound));
-                  }
-                }
-                break;
-              default:
-                expect(requiredOrNot).to.be.oneOf(['required', 'not required']);
-            }
-          }
-        })
-        .then(() => {
-          expect(isFound).to.be.true;
-        });
+    switch (requiredOrNot) {
+      case 'required':
+        formsObj.formSummaryPageSectionRowLabel(sectionName, label).find('label').should('contains.text', 'required');
+        formsObj.formSummaryPageSectionRowValue(sectionName, label).should('have.text', value);
+        break;
+      case 'not required':
+        formsObj.formSummaryPageSectionRowValue(sectionName, label).should('have.text', value);
+        break;
+      default:
+        expect(requiredOrNot).to.be.oneOf(['required', 'not required']);
     }
+  }
+);
+
+Then(
+  'the user views the summary of {string} with {string} as a {string}',
+  function (sectionName, arrayElement: string, arrayLabel) {
+    const expectedValues = arrayElement.split(':').join(' ');
+    cy.log('Expected values string: ' + expectedValues);
+
+    formsObj.formSummaryPageListWithDetailItems(sectionName, arrayLabel).then((rows) => {
+      const rowTexts = Array.from(rows).map((row) =>
+        (row as HTMLElement).outerText
+          .replace(/\u00a0/g, ' ') // replace non-breaking spaces
+          .replace(/\s+/g, ' ') // collapse all whitespace
+          .trim()
+      );
+      cy.log('Row texts: ' + rowTexts.join('; '));
+      const isFound = rowTexts.some((text) => text.includes(expectedValues.trim()));
+      cy.wrap(isFound).should('be.true');
+    });
   }
 );
 
@@ -299,14 +278,9 @@ Given('the user deletes any existing form from {string} for {string}', function 
 });
 
 Then(
-  'the user views {string} validation message under {string} field on summary page',
-  function (errorMsg, textFieldLabel) {
-    formsObj
-      .formFieldFormItem(textFieldLabel)
-      .shadow()
-      .find('[class^="error-msg"]')
-      .invoke('text')
-      .should('contains', errorMsg);
+  'the user views {string} validation message under {string} field of {string} on summary page',
+  function (errorMsg, textFieldLabel, sectionName) {
+    formsObj.formSummaryPageValidationError(sectionName, textFieldLabel).should('have.text', errorMsg);
   }
 );
 

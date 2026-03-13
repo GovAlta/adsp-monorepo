@@ -1,0 +1,34 @@
+{
+  "id": "integer-input",
+  "name": "Integer Input with Min/Max",
+  "category": "control",
+  "summary": "Numeric integer input with min, max, and step using `componentProps`",
+  "whenToUse": [
+    "Collecting whole numbers like counts, quantities, or ages",
+    "When you need to constrain the numeric range with min/max bounds"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "numberOfChildren": {
+        "type": "integer"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/numberOfChildren",
+    "options": {
+      "componentProps": {
+        "min": 0,
+        "max": 20,
+        "step": 1
+      }
+    }
+  },
+  "notes": [
+    "Use `type: \"integer\"` in data schema for whole numbers, `type: \"number\"` for decimals",
+    "Use `options.componentProps` to pass min, max, and step to the underlying Design System component",
+    "componentProps are passed directly to the GoA Design System input component"
+  ]
+}

@@ -8,6 +8,8 @@ import {
   WithClassname,
   ControlProps,
   JsonSchema,
+  schemaTypeIs,
+  formatIs,
 } from '@jsonforms/core';
 import { GoabInput, GoabFormItem } from '@abgov/react-components';
 import { WithInputProps } from './type';
@@ -18,6 +20,8 @@ import { Visible } from '../../util';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
 import { useRegisterUser } from '../../Context/register';
 import { JsonFormRegisterProvider } from '../../Context/register';
+import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
+
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 import { autoPopulateValue } from '../../util/autoPopulate';
 
@@ -57,7 +61,7 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
 
   const primaryLabel = defaultSchema?.label || defaultLabel;
 
-  const splintIndex = splitErrors.findIndex((e) => e === 'is a required property');
+  const splintIndex = splitErrors.findIndex((e) => e === REQUIRED_PROPERTY_ERROR);
   splitErrors[splintIndex] = `${primaryLabel} is required`;
 
   const finalErrors = splitErrors.join('\n');
@@ -122,9 +126,7 @@ export const GoAEmailControl = (props: ControlProps & WithClassname) => <GoAEmai
 
 export const GoAEmailControlTester: RankedTester = rankWith(
   4,
-  and(
-    isControl,
-    schemaMatches((schema) => schema.format === 'email'),
-  ),
+  and(isControl, schemaTypeIs('string'), formatIs('email')),
 );
+
 export const GoAInputEmailControl = withJsonFormsControlProps(GoAEmailControl);

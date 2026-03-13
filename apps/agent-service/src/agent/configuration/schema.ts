@@ -45,7 +45,7 @@ export const configurationSchema = {
                   },
                   api: { type: 'string' },
                   path: { type: 'string' },
-                  userContext: { type: 'boolean' },
+                  useServiceAccount: { type: 'boolean' },
                 },
                 required: ['id', 'description', 'type', 'inputSchema', 'outputSchema', 'method', 'api', 'path'],
               },

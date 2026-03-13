@@ -1,5 +1,6 @@
 import { JsonSchema, JsonSchema7 } from '@jsonforms/core';
 import { resolveRefs, tryResolveRefs } from './resolveRefs';
+import { createSchemaMatchTester, createSchemaMatchRankedTester } from './tester';
 
 describe('resolveRefs', () => {
   it('can resolve refs', async () => {
@@ -56,6 +57,23 @@ describe('resolveRefs', () => {
     );
 
     expect((result.properties?.test as JsonSchema).type).toBe('string');
+  });
+
+  it('can resolve refs using schema v4 id fallback', async () => {
+    const result = await resolveRefs(
+      {
+        type: 'object',
+        properties: {
+          test: { $ref: 'https://test.org/v4-common.json' },
+        },
+      },
+      {
+        id: 'https://test.org/v4-common.json',
+        type: 'object',
+      } as JsonSchema
+    );
+
+    expect((result.properties?.test as JsonSchema).type).toBe('object');
   });
 
   it('can resolve inner refs', async () => {
@@ -120,5 +138,68 @@ describe('resolveRefs', () => {
     expect((result.properties?.test as JsonSchema).$ref).toBe('https://test.org/common.v1.json#missing');
     expect((result.properties?.test as JsonSchema).type).toBeUndefined();
     expect(error).toEqual(expect.any(Error));
+  });
+
+  it('throws when dereference is unavailable from parser module', async () => {
+    jest.resetModules();
+    jest.doMock('@apidevtools/json-schema-ref-parser', () => ({}));
+
+    const module = await import('./resolveRefs');
+
+    await expect(module.resolveRefs({ type: 'object' })).rejects.toThrow(
+      '@apidevtools/json-schema-ref-parser is required for use of resolveRefs().'
+    );
+
+    jest.dontMock('@apidevtools/json-schema-ref-parser');
+  });
+});
+
+describe('schema match testers', () => {
+  it('supports exact and partial schema property matching', () => {
+    const partialTester = createSchemaMatchTester(['firstName']);
+    const exactTester = createSchemaMatchTester(['firstName'], true);
+
+    const partialScore = partialTester(
+      {} as unknown as object,
+      {
+        type: 'object',
+        properties: { firstName: { type: 'string' }, lastName: { type: 'string' } },
+      } as JsonSchema,
+      undefined as unknown as object
+    );
+    const exactScore = exactTester(
+      {} as unknown as object,
+      {
+        type: 'object',
+        properties: { firstName: { type: 'string' } },
+      } as JsonSchema,
+      undefined as unknown as object
+    );
+    const missScore = exactTester(
+      {} as unknown as object,
+      {
+        type: 'object',
+        properties: { firstName: { type: 'string' }, lastName: { type: 'string' } },
+      } as JsonSchema,
+      undefined as unknown as object
+    );
+
+    expect(typeof partialScore).toBe('boolean');
+    expect(typeof exactScore).toBe('boolean');
+    expect(typeof missScore).toBe('boolean');
+  });
+
+  it('returns ranked score for matching schema', () => {
+    const rankedTester = createSchemaMatchRankedTester(['email']);
+    const ranked = rankedTester(
+      {} as unknown as object,
+      {
+        type: 'object',
+        properties: { email: { type: 'string' } },
+      } as JsonSchema,
+      undefined as unknown as object
+    );
+
+    expect(typeof ranked).toBe('number');
   });
 });

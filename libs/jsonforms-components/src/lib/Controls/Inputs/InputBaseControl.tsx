@@ -60,7 +60,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   useEffect(() => {
     if (stepperState?.targetScope && stepperState.targetScope === uischema.scope && controlRef.current) {
       const inputElement = controlRef.current.querySelector(
-        'input, textarea, select, goa-input, goa-textarea, goa-dropdown, goa-checkbox, goa-radio-group',
+        'input, textarea, select, goa-input, goa-textarea, goa-dropdown, goa-checkbox, goa-radio-group'
       );
 
       if (inputElement) {

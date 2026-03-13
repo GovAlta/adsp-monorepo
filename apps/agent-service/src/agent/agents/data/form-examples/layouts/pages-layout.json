@@ -1,0 +1,60 @@
+{
+  "id": "pages-layout",
+  "name": "Multi-Page Form Layout",
+  "category": "layout",
+  "summary": "Categorization with `variant: pages` to create a step-by-step multi-page form",
+  "whenToUse": [
+    "Complex forms with 6+ fields or multiple logical sections",
+    "When the form benefits from breaking content into digestible steps",
+    "Government service applications that collect personal info, contact info, and supporting details"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "firstName": { "type": "string" },
+      "lastName": { "type": "string" },
+      "email": { "type": "string", "format": "email" },
+      "phoneNumber": { "type": "string" }
+    }
+  },
+  "uiSchema": {
+    "type": "Categorization",
+    "options": { "variant": "pages" },
+    "elements": [
+      {
+        "type": "Category",
+        "label": "Personal Information",
+        "elements": [
+          {
+            "type": "Control",
+            "scope": "#/properties/firstName"
+          },
+          {
+            "type": "Control",
+            "scope": "#/properties/lastName"
+          }
+        ]
+      },
+      {
+        "type": "Category",
+        "label": "Contact Information",
+        "elements": [
+          {
+            "type": "Control",
+            "scope": "#/properties/email"
+          },
+          {
+            "type": "Control",
+            "scope": "#/properties/phoneNumber"
+          }
+        ]
+      }
+    ]
+  },
+  "notes": [
+    "Use Categorization with `variant: \"pages\"` as the root UI schema element",
+    "Each Category becomes a separate page/step in the form",
+    "Give each Category a descriptive `label` — this is shown as the page title",
+    "Group related fields into the same Category"
+  ]
+}

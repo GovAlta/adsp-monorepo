@@ -9,6 +9,20 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
     },
+    "generate-renderer-catalog": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "inputs": [
+        "{projectRoot}/src/index.ts",
+        "{projectRoot}/src/lib/**/*",
+        "{workspaceRoot}/tools/form-renderer-catalog/generate-renderer-catalog.mjs",
+        "{workspaceRoot}/tools/form-renderer-catalog/manual-overrides.json"
+      ],
+      "outputs": ["{workspaceRoot}/dist/libs/jsonforms-components/renderer-catalog.json"],
+      "options": {
+        "command": "node tools/form-renderer-catalog/generate-renderer-catalog.mjs"
+      }
+    },
     "build": {
       "executor": "@nx/rollup:rollup",
       "outputs": ["{options.outputPath}"],

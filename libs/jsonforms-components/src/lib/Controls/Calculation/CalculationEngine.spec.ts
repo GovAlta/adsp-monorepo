@@ -207,6 +207,46 @@ describe('CalculationEngine', () => {
       expect(result.error).toBeDefined();
       expect(result.error).toBe('Please provide values for: #/properties/arr/c3');
     });
+
+    it('evaluates min() with two scope arguments separated by comma', () => {
+      const data = { a: 10, b: 20 };
+      const expr = 'min(#/properties/a, #/properties/b)';
+      const result = evaluateExpression(expr, data);
+      expect(result.error).toBeUndefined();
+      expect(result.value).toBe(10);
+    });
+
+    it('evaluates max() with two scope arguments separated by comma', () => {
+      const data = { a: 10, b: 20 };
+      const expr = 'max(#/properties/a, #/properties/b)';
+      const result = evaluateExpression(expr, data);
+      expect(result.error).toBeUndefined();
+      expect(result.value).toBe(20);
+    });
+
+    it('evaluates min() with three scope arguments', () => {
+      const data = { a: 30, b: 10, c: 20 };
+      const expr = 'min(#/properties/a, #/properties/b, #/properties/c)';
+      const result = evaluateExpression(expr, data);
+      expect(result.error).toBeUndefined();
+      expect(result.value).toBe(10);
+    });
+
+    it('evaluates max() with three scope arguments', () => {
+      const data = { a: 30, b: 10, c: 20 };
+      const expr = 'max(#/properties/a, #/properties/b, #/properties/c)';
+      const result = evaluateExpression(expr, data);
+      expect(result.error).toBeUndefined();
+      expect(result.value).toBe(30);
+    });
+
+    it('evaluates min() mixing scopes and literals', () => {
+      const data = { x: 500 };
+      const expr = 'min(#/properties/x, 1000)';
+      const result = evaluateExpression(expr, data);
+      expect(result.error).toBeUndefined();
+      expect(result.value).toBe(500);
+    });
   });
   describe('collectScopes', () => {
     it('returns empty array for undefined schema', () => {

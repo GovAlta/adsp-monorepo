@@ -1,17 +1,15 @@
 import { SagaIterator } from '@redux-saga/core';
 import { fetchServiceMetrics } from '@store/common';
 import { ErrorNotification } from '@store/notifications/actions';
-import { UpdateIndicator, UpdateLoadingState } from '@store/session/actions';
+import { UpdateIndicator } from '@store/session/actions';
 import { getAccessToken } from '@store/tenant/sagas';
 import axios from 'axios';
 import moment from 'moment';
-import FormData from 'form-data';
 import { put, select, call, all, takeEvery } from 'redux-saga/effects';
 import { RootState } from '../index';
 import {
   FetchFilesSuccessService,
   FetchFileSuccessService,
-  UploadFileSuccessService,
   FetchFileTypeSucceededService,
   UpdateFileTypeSucceededService,
   DeleteFileSuccessService,
@@ -68,7 +66,7 @@ export function* fetchFiles(action: FetchFilesAction): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading...',
-    })
+    }),
   );
 
   const state = yield select();
@@ -82,14 +80,14 @@ export function* fetchFiles(action: FetchFilesAction): SagaIterator {
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
   }
 }
@@ -99,7 +97,7 @@ export function* fetchFile(action: FetchFileAction): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading File...',
-    })
+    }),
   );
 
   const state = yield select();
@@ -115,7 +113,7 @@ export function* fetchFile(action: FetchFileAction): SagaIterator {
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
   }
 }
@@ -138,12 +136,12 @@ export function* downloadFile(file) {
   try {
     const fileId = file.payload.data.id;
     const filename = file.payload.data.filename;
-    
+
     // Check if file is already cached
     const cachedDataUrl = state.fileService.downloadedFiles?.[fileId];
-    
+
     let blob: Blob;
-    
+
     if (cachedDataUrl) {
       // Use cached data URL - convert back to blob for download
       const response = yield fetch(cachedDataUrl);
@@ -154,7 +152,7 @@ export function* downloadFile(file) {
       const api = yield new FileApi(state.config, token);
       const files = yield api.downloadFiles(fileId, token);
       blob = new Blob([files]);
-      
+
       // Only cache files smaller than 1MB to avoid memory issues
       const MAX_CACHE_SIZE = 1048576; // 1MB in bytes
       if (blob.size < MAX_CACHE_SIZE) {
@@ -165,12 +163,12 @@ export function* downloadFile(file) {
           reader.onerror = reject;
           reader.readAsDataURL(blob);
         });
-        
+
         // Store in state for reuse (e.g., thumbnails)
         yield put(CacheFileService(fileId, dataUrl));
       }
     }
-    
+
     // Trigger browser download
     const element = document.createElement('a');
     element.href = URL.createObjectURL(blob);
@@ -184,7 +182,7 @@ export function* downloadFile(file) {
 
 export function* fetchFileTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
 
@@ -192,7 +190,7 @@ export function* fetchFileTypes(): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading...',
-    })
+    }),
   );
 
   if (configBaseUrl && token) {
@@ -220,14 +218,14 @@ export function* fetchFileTypes(): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -237,7 +235,7 @@ export function* deleteFileTypes(action: DeleteFileTypeAction): SagaIterator {
   const fileType = action.payload;
 
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
 
@@ -249,7 +247,7 @@ export function* deleteFileTypes(action: DeleteFileTypeAction): SagaIterator {
         { operation: 'DELETE', property: fileType.id },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       yield put(FetchFileTypeService());
@@ -261,7 +259,7 @@ export function* deleteFileTypes(action: DeleteFileTypeAction): SagaIterator {
 
 export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator {
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -280,7 +278,7 @@ export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       yield put(FetchFileTypeService());
     } catch (err) {
@@ -291,7 +289,7 @@ export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator
 
 export function* updateFileType({ payload }: UpdateFileTypeAction): SagaIterator {
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
 
@@ -311,7 +309,7 @@ export function* updateFileType({ payload }: UpdateFileTypeAction): SagaIterator
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       yield put(UpdateFileTypeSucceededService(payload));
     } catch (err) {
@@ -343,7 +341,7 @@ export function* fetchFileMetrics(): SagaIterator {
         fileLifetime: metrics[lifetimeMetric]?.values[0]
           ? moment.duration(parseInt(metrics[lifetimeMetric]?.values[0].avg, 10), 'seconds').asDays()
           : null,
-      })
+      }),
     );
   });
 }

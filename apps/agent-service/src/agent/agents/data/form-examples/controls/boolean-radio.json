@@ -1,0 +1,34 @@
+{
+  "id": "boolean-radio",
+  "name": "Boolean Yes/No Radio",
+  "category": "control",
+  "summary": "Boolean field rendered as Yes/No radio buttons using `format: radio` option",
+  "whenToUse": [
+    "Yes/No questions like 'Are you over 18?' or 'Do you have dependents?'",
+    "When you need a clear binary choice presented as radio buttons instead of a checkbox"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "isOver18": {
+        "type": "boolean"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/isOver18",
+    "label": "Are you over 18 years of age?",
+    "options": {
+      "format": "radio",
+      "textForTrue": "Yes",
+      "textForFalse": "No"
+    }
+  },
+  "notes": [
+    "Set `options.format` to `\"radio\"` to render as radio buttons",
+    "Use `textForTrue` and `textForFalse` to customize the labels (defaults to 'Yes'/'No')",
+    "The `label` property overrides the auto-generated label from the property name",
+    "Boolean radios are ideal for triggering rules that SHOW/HIDE dependent fields"
+  ]
+}

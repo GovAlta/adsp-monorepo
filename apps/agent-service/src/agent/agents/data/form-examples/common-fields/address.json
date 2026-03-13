@@ -1,0 +1,29 @@
+{
+  "id": "address",
+  "name": "Address (Common Field)",
+  "category": "common-field",
+  "summary": "Reusable address field using the ADSP common schema $ref definition for postal address",
+  "whenToUse": [
+    "Any form that collects a mailing or residential address",
+    "When you want structured address subfields (addressLine1, municipality, subdivisionCode, postalCode, country)"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "yourAddressProperty": {
+        "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressAlberta"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/yourAddressProperty"
+  },
+  "notes": [
+    "Use the schemaDefinitionTool to load the common schema definitions first",
+    "The definition is `postalAddressAlberta` (for AB-only) or `postalAddressCanada` (all provinces)",
+    "Reference definitions with `$ref` — this renders structured address subfields automatically",
+    "Replace `yourAddressProperty` with a meaningful property name like `mailingAddress`",
+    "Subfields: addressLine1, addressLine2, municipality, subdivisionCode, postalCode, country"
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "id": "conditional-required",
+  "name": "Conditional Required (if/then)",
+  "category": "validation",
+  "summary": "Conditionally required fields using JSON Schema if/then/else — essential when using SHOW/HIDE rules",
+  "whenToUse": [
+    "Making fields required only when a controlling field has a certain value",
+    "Preventing validation errors on hidden fields that use SHOW/HIDE rules",
+    "Dynamic required logic like 'if hasChildren is true, then childsName is required'"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "hasChildren": { "type": "boolean" },
+      "childsFirstName": { "type": "string", "minLength": 1 },
+      "childsLastName": { "type": "string", "minLength": 1 }
+    },
+    "required": ["hasChildren"],
+    "if": {
+      "properties": {
+        "hasChildren": { "const": true }
+      }
+    },
+    "then": {
+      "required": ["childsFirstName", "childsLastName"]
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/hasChildren",
+        "label": "Do you have children?"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/childsFirstName",
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/hasChildren",
+            "schema": { "const": true }
+          }
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/childsLastName",
+        "rule": {
+          "effect": "SHOW",
+          "condition": {
+            "scope": "#/properties/hasChildren",
+            "schema": { "const": true }
+          }
+        }
+      }
+    ]
+  },
+  "notes": [
+    "CRITICAL: Always pair SHOW/HIDE rules with conditional validation in the data schema",
+    "Without if/then, hidden required fields cause form validation to fail silently",
+    "The `if/then` construct is at the top level of the data schema (same level as `properties` and `required`)",
+    "Add `minLength: 1` to conditionally required string fields for the empty-string workaround",
+    "There can only be one `if/then` at each schema level — use `allOf` for multiple conditions"
+  ]
+}

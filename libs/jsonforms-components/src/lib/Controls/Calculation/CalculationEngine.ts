@@ -129,7 +129,7 @@ export function evaluateExpression(
     return evaluateSum(sumScope, data, opts);
   }
 
-  const scopeRegex = /#\/(?:properties\/)?[^\s"'()]+/g;
+  const scopeRegex = /#\/(?:properties\/)?[^\s"'(),]+/g;
   const matches = trimmed.match(scopeRegex) || [];
   const uniqueScopes = Array.from(new Set(matches));
 

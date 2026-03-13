@@ -6,7 +6,7 @@ import { ControlElement, ControlProps } from '@jsonforms/core';
 import { JsonFormsContext } from '@jsonforms/react';
 import { JsonFormRegisterProvider, useRegisterUser } from '../../Context/register';
 import { autoPopulateValue } from '../../util/autoPopulate';
-import { JsonFormsStepperContext } from '../FormStepper/context';
+import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
 
 jest.mock('../../Context/register', () => {
   const actual = jest.requireActual('../../Context/register');
@@ -133,7 +133,6 @@ describe('GoAEmailInput control', () => {
   });
 });
 
-// Mock autoPopulateValue
 jest.mock('../../util/autoPopulate', () => ({
   autoPopulateValue: jest.fn(() => 'auto@example.com'),
 }));
@@ -161,16 +160,36 @@ describe('GoAEmailInput additional coverage', () => {
   };
 
   it('sets visited if showReviewLink is true', () => {
-    const mockStepperCtx = {
+    const mockStepperCtx: JsonFormsStepperContextProps = {
+      stepperDispatch: () => {}, // dummy dispatch
       selectStepperState: () => ({
-        categories: [{ showReviewPageLink: true }],
+        categories: [{ showReviewPageLink: true, id: 42, label: 'Category 1', scopes: [] }],
         activeId: 0,
+        hasNextButton: true,
+        hasPrevButton: false,
+        path: '',
+        isOnReview: false,
+        isVisited: false,
+        visited: [],
+        isValid: true,
+        maxReachedStep: 0,
       }),
+      selectIsDisabled: () => false,
+      selectIsActive: (id: number) => false,
+      selectPath: () => '',
+      selectCategory: (id: number) => ({ showReviewPageLink: false, id, label: '', scopes: [] }),
+      goToPage: (id: number, targetScope?: string) => {},
+      goToTableOfContext: () => {},
+      toggleShowReviewLink: (id: number) => {},
+      validatePage: (id: number) => {},
+      selectNumberOfCompletedCategories: () => 0,
+      // optional
+      isProvided: true,
     };
-
+    //eslint-disable-next-line
     const { baseElement } = render(
       <JsonFormRegisterProvider defaultRegisters={undefined}>
-        <JsonFormsStepperContext.Provider value={mockStepperCtx as any}>
+        <JsonFormsStepperContext.Provider value={mockStepperCtx}>
           <GoAEmailInput {...staticProps} />
         </JsonFormsStepperContext.Provider>
       </JsonFormRegisterProvider>,

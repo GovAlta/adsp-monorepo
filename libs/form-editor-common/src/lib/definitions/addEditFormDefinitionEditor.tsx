@@ -83,6 +83,9 @@ import { CalendarEventDefault } from '@store/calendar/models';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
 import { DefinitionAgentChat } from './DefinitionAgentChat';
+import { DataRegisters } from './dataRegisters';
+import { updateConfigurationDefinition } from '@store/configuration/action';
+import { DATA_REGISTER_NAMESPACE } from '@store/configuration/model';
 import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
 import { startThread } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
@@ -159,7 +162,14 @@ const ClientRole = ({ roleNames, clientId, anonymousRead, configuration, onUpdat
 
 const NO_TASK_CREATED_OPTION = `No task created`;
 
-export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fileTypes }): JSX.Element {
+export function AddEditFormDefinitionEditor({
+  definition,
+  roles,
+  queueTasks,
+  fileTypes,
+  registerData = undefined,
+  showDataRegister = false,
+}): JSX.Element {
   const fileList = useSelector((state: RootState) => {
     return state?.fileService.newFileList;
   });
@@ -947,6 +957,12 @@ export function AddEditFormDefinitionEditor({ definition, roles, queueTasks, fil
                   </div>
                 </BorderBottom>
               </Tab>
+
+              {showDataRegister && (
+                <Tab label="Data Registers" data-testid="form-data-registers-tab" isTightContent={true}>
+                  <DataRegisters registerData={registerData} />
+                </Tab>
+              )}
             </Tabs>
 
             <FinalButtonPadding>

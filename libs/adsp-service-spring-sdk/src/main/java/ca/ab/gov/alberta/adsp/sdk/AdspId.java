@@ -18,6 +18,7 @@ import ca.ab.gov.alberta.adsp.sdk.utils.AdspIdDeserializer;
  * Represents URNs for ADSP resources including services and APIs.
  */
 @JsonDeserialize(using = AdspIdDeserializer.class)
+@tools.jackson.databind.annotation.JsonDeserialize(using = ca.ab.gov.alberta.adsp.sdk.utils.AdspIdDeserializer3.class)
 public final class AdspId {
   private static final Pattern UrnPattern = Pattern.compile(
       "^(?i:urn):ads(?<namespace>:[a-zA-Z0-9-]{1,50})(?<service>:[a-zA-Z0-9-]{1,50})?(?<api>:[a-zA-Z0-9-]{1,50})?(?<resource>:[a-zA-Z0-9-_/ ]{1,1000})?$");

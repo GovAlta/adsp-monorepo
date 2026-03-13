@@ -37,8 +37,6 @@ export const JSONFormPreviewer = ({ data, onChange }: JSONFormPreviewerProps): J
 
   const newUser = { ...user, roles: [], id: null } as User; // Create a new user object with the same properties as the original user, but with an empty roles array and null id
 
-  // registerData.user = newUser;
-
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
       {/* // This is a blank spacer div since web components can be problematic to apply styles to. */}
