@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Logger } from 'winston';
 
 class FileServiceClient {
-  constructor(private logger: Logger, private directory: ServiceDirectory, private tokenProvider: TokenProvider) {}
+  constructor(private logger: Logger, private directory: ServiceDirectory, private tokenProvider: TokenProvider) { }
 
   public async getFileAndMetadata(
     tenantId: AdspId,
@@ -51,6 +51,39 @@ class FileServiceClient {
     return {
       data: new Uint8Array(data),
       metadata,
+    };
+  }
+
+  public async copyFile(
+    tenantId: AdspId,
+    fileId: AdspId,
+    token: string,
+    filename?: string,
+    type?: string,
+    recordId?: string): Promise<{
+      urn: string;
+      filename: string;
+      mimeType: string;
+    }> {
+    const fileUrl = await this.directory.getResourceUrl(fileId);
+    const { data } = await axios.post(fileUrl.href, {
+      operation: 'copy',
+      type,
+      filename,
+      recordId
+    }, {
+      params: {
+        tenantId: tenantId?.toString(),
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return {
+      urn: data.urn,
+      filename: data.filename,
+      mimeType: data.mimeType,
     };
   }
 }

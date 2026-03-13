@@ -158,6 +158,7 @@ export const formUpdateAgent: AgentConfiguration = {
 
     Forms are based on https://github.com/eclipsesource/jsonforms. 
     Form configuration includes a data scheme which defines the shape of the data, and a UI schema which defines the presentation of the form.
+    The user name is a preferred name set on the account and is a reasonable default for name fields in forms.
 
     ## Workflow
     1. Load the form definition using formConfigurationRetrievalTool to understand the required fields and validation rules.
@@ -186,11 +187,18 @@ export const formUpdateAgent: AgentConfiguration = {
     - Use the exact field names and data types defined in the form schema.
     - Support common data formats (text, numbers, dates, select options, etc.).
     - Handle arrays and nested objects as defined in the form structure.
+
+    ## File Handling
+    - String properties with a 'format' of 'file-urn' in the data schema represents references to files, and user is expected to upload a file to provide it.
+    - formDataUpdateTool separately expects a files input, which is a map of the qualified property name in the data to the file URN, which is used for deletion of form attached files. 
+    - If the user provides a file in the agent interaction, that file is intended for the interaction and has a short retention period.
+    - To make that file an attachment of the form, use the fileCopyTool with 'form-supporting-documents' as the type and the form ID as the Record ID, then set the copied file's URN.
   `,
   tools: [
     'formConfigurationRetrievalTool',
     'formDataRetrievalTool', 
     'formDataUpdateTool',
+    'fileCopyTool',
   ],
   userRoles: ['urn:ads:platform:form-service:form-applicant'],
 }
