@@ -1,65 +1,34 @@
-import React, { useMemo, useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@store/index';
-import { RegisterData, RegisterConfigData } from '@abgov/jsonforms-components';
+import { RegisterData, RegisterConfigData, RegisterDataType } from '@abgov/jsonforms-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { DeleteModal } from '@components/DeleteModal';
 import MonacoEditor from '@monaco-editor/react';
-import {
-  GoabButton,
-  GoabButtonGroup,
-  GoabFormItem,
-  GoabInput,
-  GoabModal,
-  GoabTable,
-  GoabTextArea,
-} from '@abgov/react-components';
-import { GoabInputOnChangeDetail, GoabTextAreaOnKeyPressDetail } from '@abgov/ui-components-common';
-import { ajv } from '@lib/validation/checkInput';
+import { GoabButton, GoabButtonGroup, GoabFormItem, GoabTable } from '@abgov/react-components';
 import {
   DataRegisterContainer,
   DataRegisterEditorWrapper,
   DataRegisterEntryDetail,
   DataRegisterIconDiv,
   DataRegisterMonacoDiv,
-  DataRegisterNameDiv,
   DataRegisterTableWrapper,
-} from './style-components';
+} from '../style-components';
 import {
   updateConfigurationDefinition,
   replaceConfigurationDataAction,
   deleteConfigurationDefinition,
 } from '@store/configuration/action';
 import { DATA_REGISTER_NAMESPACE } from '@store/configuration/model';
-
-const REGISTER_DATA_SCHEMA: Record<string, unknown> = {
-  type: 'array',
-  items: {
-    anyOf: [{ type: 'string' }, { type: 'object' }],
-  },
-};
-
-const validateRegisterData = ajv.compile(REGISTER_DATA_SCHEMA);
+import { REGISTER_DATA_SCHEMA, parseUrn, urnCompare, validateRegisterJson } from './utils';
+import { AddRegisterDataModal } from './addRegisterDataModal';
 
 interface DataRegistersProps {
   registerData?: RegisterData;
   onAdd?: (name: string) => void;
   onDelete?: (entry: RegisterConfigData) => void;
 }
-
-const parseUrn = (urn: string): { namespace: string; name: string } => {
-  const parts = urn.split('/');
-  return {
-    namespace: parts[parts.length - 2] ?? '',
-    name: parts[parts.length - 1] ?? '',
-  };
-};
-
-const urnCompare = (a: RegisterConfigData, b: RegisterConfigData): number => {
-  const aName = parseUrn(a.urn ?? '').name;
-  const bName = parseUrn(b.urn ?? '').name;
-  return aName.localeCompare(bName);
-};
 
 interface RegisterItemProps {
   entry: RegisterConfigData;
@@ -77,17 +46,7 @@ const RegisterItem = ({ entry, onUpdate, onDelete }: RegisterItemProps): JSX.Ele
   const { name, namespace } = parseUrn(entry.urn ?? '');
 
   const validate = (value: string): string => {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(value);
-    } catch {
-      return 'Please provide valid JSON';
-    }
-    const isValid = validateRegisterData(parsed);
-    if (!isValid) {
-      return validateRegisterData.errors?.[0]?.message ?? 'Data must be an array of strings or objects';
-    }
-    return '';
+    return validateRegisterJson(value);
   };
 
   const handleEditOpen = () => {
@@ -119,7 +78,7 @@ const RegisterItem = ({ entry, onUpdate, onDelete }: RegisterItemProps): JSX.Ele
         {
           namespace: namespace || DATA_REGISTER_NAMESPACE,
           name,
-          configuration: parsed as never,
+          configuration: parsed || [],
         },
         false,
       ),
@@ -241,22 +200,24 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  const [newData, setNewRegisterData] = useState('');
   const [currentRegister, setCurrentRegister] = useState<RegisterData | null>(registerData);
 
   const handleAddOpen = () => {
     setNewName('');
     setNewDescription('');
+    setNewRegisterData('');
     setIsAddModalOpen(true);
   };
 
-  const handleAddSave = () => {
-    const newEntry: RegisterConfigData = { urn: newName, name: newName, description: newDescription, data: [] };
+  const handleAddSave = (data: RegisterDataType | null, name: string, description: string) => {
+    const newEntry: RegisterConfigData = { urn: name, name, description, data: data || [] };
     dispatch(
       updateConfigurationDefinition(
         {
-          name: newName,
+          name,
           namespace: DATA_REGISTER_NAMESPACE,
-          description: newDescription,
+          description: description,
           configurationSchema: REGISTER_DATA_SCHEMA as never,
         },
         false,
@@ -266,16 +227,15 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
       replaceConfigurationDataAction(
         {
           namespace: DATA_REGISTER_NAMESPACE,
-          name: newName,
-          configuration: [] as never,
+          name,
+          configuration: data as never,
         },
         false,
       ),
     );
-
+    setCurrentRegister((prev: RegisterData | null) => [...(prev ?? []), newEntry]);
     onAdd?.(newName);
     setIsAddModalOpen(false);
-    setCurrentRegister((prev: RegisterData | null) => [...(prev ?? []), newEntry]);
   };
 
   const handleAddCancel = () => {
@@ -329,47 +289,7 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
           </GoabTable>
         </DataRegisterTableWrapper>
       )}
-      <GoabModal
-        heading="Add register data"
-        open={isAddModalOpen}
-        testId="data-register-add-modal"
-        maxWidth="500px"
-        actions={
-          <GoabButtonGroup alignment="end">
-            <GoabButton type="secondary" onClick={handleAddCancel} testId="data-register-add-cancel">
-              Cancel
-            </GoabButton>
-            <GoabButton
-              type="primary"
-              onClick={handleAddSave}
-              disabled={!newName.trim()}
-              testId="data-register-add-save"
-            >
-              Save
-            </GoabButton>
-          </GoabButtonGroup>
-        }
-      >
-        <GoabFormItem label="Name">
-          <GoabInput
-            width="100%"
-            name="register-name"
-            value={newName}
-            onChange={(detail: GoabInputOnChangeDetail) => setNewName(detail.value)}
-            testId="data-register-add-name-input"
-            mb="l"
-          />
-        </GoabFormItem>
-        <GoabFormItem label="Description">
-          <GoabTextArea
-            name="register-description"
-            value={newDescription}
-            width="100%"
-            testId="data-register-add-description-input"
-            onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => setNewDescription(detail.value)}
-          />
-        </GoabFormItem>
-      </GoabModal>
+      <AddRegisterDataModal open={isAddModalOpen} onCancel={handleAddCancel} onSave={handleAddSave} />
     </DataRegisterContainer>
   );
 };

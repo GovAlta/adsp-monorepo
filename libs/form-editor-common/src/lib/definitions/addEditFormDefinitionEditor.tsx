@@ -83,7 +83,7 @@ import { CalendarEventDefault } from '@store/calendar/models';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
 import { DefinitionAgentChat } from './DefinitionAgentChat';
-import { DataRegisters } from './dataRegisters';
+import { DataRegisters } from './data-registers/dataRegisters';
 import { updateConfigurationDefinition } from '@store/configuration/action';
 import { DATA_REGISTER_NAMESPACE } from '@store/configuration/model';
 import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
