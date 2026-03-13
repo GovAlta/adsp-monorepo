@@ -32,7 +32,11 @@ const normalizeAddressData = (value: Address | undefined, isAlbertaAddress: bool
     ? ({ country: 'CA', subdivisionCode: 'AB' } as Address)
     : ({ country: 'CA' } as Address);
 
-  return { ...defaults, ...(value || {}) } as Address;
+  const source = (value || {}) as Address & { provinceState?: string };
+  const { provinceState, ...rest } = source;
+  const subdivisionCode = rest.subdivisionCode || provinceState;
+
+  return { ...defaults, ...rest, ...(subdivisionCode ? { subdivisionCode } : {}) } as Address;
 };
 
 export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => {
@@ -74,17 +78,16 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   useEffect(() => {
     const nextAddress = normalizeAddressData(data, isAlbertaAddress);
     setAddress((currentAddress) => {
-      const keys = [
+      const keys: Array<keyof Address> = [
         'addressLine1',
         'addressLine2',
         'municipality',
-        'provinceState',
         'postalCode',
         'country',
         'subdivisionCode',
       ];
 
-      const unchanged = keys.every((key) => (currentAddress as unknown as Record<string, unknown>)?.[key] === nextAddress?.[key]);
+      const unchanged = keys.every((key) => currentAddress[key] === nextAddress[key]);
       return unchanged ? currentAddress : nextAddress;
     });
   }, [data, isAlbertaAddress]);
