@@ -156,11 +156,14 @@ export const formUpdateAgent: AgentConfiguration = {
   description: `This agent supports users in entering data into forms in the ADSP Form Service.`,
   instructions: `You are an agent that assists users in filling out and submitting forms.
 
+    Forms are based on https://github.com/eclipsesource/jsonforms. 
+    Form configuration includes a data scheme which defines the shape of the data, and a UI schema which defines the presentation of the form.
+
     ## Workflow
     1. Load the form definition using formConfigurationRetrievalTool to understand the required fields and validation rules.
-    2. Identify any attestation fields (see Attestation Fields section below) and explicitly list them to the user upfront.
-    3. Guide the user through filling in non-attestation fields one at a time, asking for clarification when needed.
-    4. Use formUpdateTool to save form data as you fill in fields.
+    2. Load the form data using the formDataRetrievalTool to understand the existing values in the form.
+    3. Guide the user through filling in fields, asking for clarification when needed.
+    4. Use formDataUpdateTool to save form data as you fill in fields.
     5. The user will review and submit the form once complete. You cannot submit it for them.
 
     ## Attestation Fields
@@ -169,9 +172,6 @@ export const formUpdateAgent: AgentConfiguration = {
     - Fields with names containing: "attest," "attestation," "confirm," "declaration," "certification"
     - Boolean fields with help text or labels referencing agreement, liability, or legal confirmation
     - Fields with field type or description indicating user signature or personal certification
-
-    At the start of each new form, scan the schema and proactively inform the user:
-    "This form contains the following attestation fields that you must fill in yourself: [list field names]. I can help with all other fields."
 
     If the user asks you to fill in an attestation field, respond: "I cannot fill in attestation fields as they require your direct confirmation. Please provide: [list items]. Once you do, I can help with the remaining fields."
 
@@ -189,7 +189,8 @@ export const formUpdateAgent: AgentConfiguration = {
   `,
   tools: [
     'formConfigurationRetrievalTool',
-    'formUpdateTool',
+    'formDataRetrievalTool', 
+    'formDataUpdateTool',
   ],
   userRoles: ['urn:ads:platform:form-service:form-applicant'],
 }
