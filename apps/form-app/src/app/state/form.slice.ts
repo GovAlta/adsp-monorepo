@@ -47,7 +47,24 @@ interface SerializableForm {
     urn: string;
   };
   jobId?: string;
+  error?: string;
 }
+
+const blankSerializableForm: SerializableForm = {
+  definition: {
+    id: '',
+    name: '',
+    description: '',
+  },
+  id: null,
+  urn: '',
+  status: 'draft',
+  created: '',
+  submitted: undefined,
+  submission: undefined,
+  jobId: undefined,
+  error: undefined,
+};
 
 interface FormDataResponse {
   id: string;
@@ -100,7 +117,7 @@ export const selectedDefinition = createAsyncThunk(
     if (definitionId && !form.definitions[definitionId]) {
       dispatch(loadDefinition(definitionId));
     }
-  }
+  },
 );
 
 function pickRegisters(obj, property) {
@@ -151,7 +168,7 @@ export const loadDefinition = createAsyncThunk(
         {
           headers,
           params: { tenantId: tenantId.toString() },
-        }
+        },
       );
 
       if (data.dataSchema) {
@@ -174,7 +191,7 @@ export const loadDefinition = createAsyncThunk(
             const service = urn.split('/').slice(-2);
             const baseCacheServiceUrl = new URL(
               `/cache/v1/cache/${CONFIGURATION_SERVICE_ID}/configuration/${service[0]}/${service[1]}`,
-              cacheServiceUrl
+              cacheServiceUrl,
             ).href;
 
             try {
@@ -191,7 +208,7 @@ export const loadDefinition = createAsyncThunk(
             } catch (error) {
               console.warn(`Error fetching ${urn} active: ${error.message}`);
             }
-          })
+          }),
         );
       }
 
@@ -215,7 +232,7 @@ export const loadDefinition = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const findUserForms = createAsyncThunk(
@@ -254,7 +271,7 @@ export const findUserForms = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 const SUPPORT_TOPIC_TYPE_ID = 'form-questions';
@@ -272,7 +289,7 @@ export const loadForm = createAsyncThunk(
         new URL(`/form/v1/forms/${formId}`, formServiceUrl).href,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       token = await getAccessToken();
@@ -280,7 +297,7 @@ export const loadForm = createAsyncThunk(
         new URL(`/form/v1/forms/${formId}/data`, formServiceUrl).href,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (data.files && Object.values(data.files).length > 0) {
@@ -304,7 +321,7 @@ export const loadForm = createAsyncThunk(
             stream: SUPPORT_TOPIC_STREAM_ID,
             typeId: SUPPORT_TOPIC_TYPE_ID,
             topicId: result.id,
-          })
+          }),
         );
       }
 
@@ -325,7 +342,7 @@ export const loadForm = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const createForm = createAsyncThunk(
@@ -334,7 +351,6 @@ export const createForm = createAsyncThunk(
     try {
       const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
-
       const token = await getAccessToken();
       const { data } = await axios.post<SerializableForm>(
         new URL(`/form/v1/forms`, formServiceUrl).href,
@@ -346,21 +362,25 @@ export const createForm = createAsyncThunk(
             channels: [{ channel: 'email', address: user.user.email }],
           },
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       return data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
+        if (err.response?.data?.errorMessage === 'Cannot create form as there is no active intake.') {
+          return blankSerializableForm;
+        }
         return rejectWithValue({
           status: err.response?.status,
           message: err.response?.data?.errorMessage || err.message,
         });
       } else {
+        console.error(` we are throwing: ${err.message}`);
         throw err;
       }
     }
-  }
+  },
 );
 
 export const updateForm = createAsyncThunk(
@@ -371,7 +391,7 @@ export const updateForm = createAsyncThunk(
       files,
       errors,
     }: { data?: Record<string, unknown>; files?: Record<string, string>; errors?: ValidationError[] },
-    { getState, dispatch }
+    { getState, dispatch },
   ) => {
     const { form, user } = getState() as AppState;
 
@@ -382,7 +402,7 @@ export const updateForm = createAsyncThunk(
     }
 
     return { data, files, errors };
-  }
+  },
 );
 
 export const saveForm = createAsyncThunk(
@@ -406,7 +426,7 @@ export const saveForm = createAsyncThunk(
             update,
             {
               headers: { Authorization: `Bearer ${token}` },
-            }
+            },
           );
 
           dispatch(formActions.setSaving(false));
@@ -428,8 +448,8 @@ export const saveForm = createAsyncThunk(
       }
     },
     800,
-    { leading: false, trailing: true }
-  )
+    { leading: false, trailing: true },
+  ),
 );
 
 export const submitForm = createAsyncThunk(
@@ -445,7 +465,7 @@ export const submitForm = createAsyncThunk(
       const { data } = await axios.post<SerializableForm>(
         new URL(`/form/v1/forms/${formId}`, formServiceUrl).href,
         { operation: 'submit', dryRun },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       return data;
@@ -459,7 +479,7 @@ export const submitForm = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const submitAnonymousForm = createAsyncThunk(
@@ -497,7 +517,7 @@ export const submitAnonymousForm = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const deleteForm = createAsyncThunk(
@@ -512,7 +532,7 @@ export const deleteForm = createAsyncThunk(
         new URL(`/form/v1/forms/${formId}`, formServiceUrl).href,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       return !!data?.deleted;
@@ -526,7 +546,7 @@ export const deleteForm = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 const initialFormState: FormState = {
@@ -693,7 +713,7 @@ export const definitionSelector = createSelector(
       },
       initialized: definition !== undefined,
     };
-  }
+  },
 );
 
 export const formsSelector = createSelector(
@@ -716,7 +736,7 @@ export const formsSelector = createSelector(
       .filter((result) => !!result)
       .sort((a, b) => b.created.diff(a.created).as('seconds')),
     next,
-  })
+  }),
 );
 
 export const definitionFormsSelector = createSelector(
@@ -725,7 +745,7 @@ export const definitionFormsSelector = createSelector(
   ({ forms, next }, definitionId) => ({
     forms: forms.filter((form) => !definitionId || form.definition?.id === definitionId),
     next,
-  })
+  }),
 );
 
 export const formSelector = createSelector(
@@ -744,7 +764,7 @@ export const formSelector = createSelector(
               ? form.submitted && DateTime.fromISO(form.submitted)
               : undefined,
         }
-      : null
+      : null,
 );
 
 export const defaultUserFormSelector = createSelector(
@@ -768,7 +788,7 @@ export const defaultUserFormSelector = createSelector(
       // If there are multiple forms but none is the default, then it's ambiguous.
       ambiguous: forms.length > 0 && !form,
     };
-  }
+  },
 );
 
 export const dataSelector = (state: AppState) => state.form.data;
@@ -778,13 +798,13 @@ export const configSelector = (state: AppState) => state.form.config;
 export const isApplicantSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.user.user,
-  ({ definition }, user) => !!(user && definition?.applicantRoles.find((r) => user.roles.includes(r)))
+  ({ definition }, user) => !!(user && definition?.applicantRoles.find((r) => user.roles.includes(r))),
 );
 
 export const isClerkSelector = createSelector(
   definitionSelector,
   (state: AppState) => state.user.user,
-  ({ definition }, user) => !!(user && definition?.clerkRoles.find((r) => user.roles.includes(r)))
+  ({ definition }, user) => !!(user && definition?.clerkRoles.find((r) => user.roles.includes(r))),
 );
 
 export const busySelector = (state: AppState) => state.form.busy;
@@ -793,7 +813,7 @@ export const canCreateDraftSelector = createSelector(
   isApplicantSelector,
   definitionSelector,
   defaultUserFormSelector,
-  (isApplicant, { definition }, { form }) => isApplicant && (definition?.oneFormPerApplicant === false || !form)
+  (isApplicant, { definition }, { form }) => isApplicant && (definition?.oneFormPerApplicant === false || !form),
 );
 
 export const showSubmitSelector = createSelector(definitionSelector, ({ definition }) => {
@@ -811,7 +831,7 @@ export const canSubmitSelector = createSelector(
   (state: AppState) => state.form.errors,
   (state: AppState) => state.form.busy.saving,
   (state: AppState) => state.form.busy.submitting,
-  (errors, saving, submitting) => !errors?.length && !saving && !submitting
+  (errors, saving, submitting) => !errors?.length && !saving && !submitting,
 );
 
 export type FormDefinition = ReturnType<typeof definitionSelector>['definition'];

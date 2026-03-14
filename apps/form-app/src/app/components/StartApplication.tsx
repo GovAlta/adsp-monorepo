@@ -20,7 +20,7 @@ export const StartApplication: FunctionComponent<StartApplicationProps> = ({
     if (autoCreate && canCreate) {
       onCreate();
     }
-  });
+  }, []);
 
   return (
     <div>

@@ -26,10 +26,9 @@ export const ScheduledIntake: FunctionComponent<ScheduledIntakeProps> = ({ defin
   const isTester = user?.roles?.includes('urn:ads:platform:form-service:form-tester');
   const hasNoSchedule = !definition.scheduledIntakes;
   const intakeIsOpen = definition.intake && !definition.intake.isUpcoming;
-  const formIsLoading = !form?.status;
   const formIsSubmitted = form?.status?.toUpperCase() === 'SUBMITTED';
 
-  const allowForm = hasNoSchedule || intakeIsOpen || isTester || formIsLoading || formIsSubmitted;
+  const allowForm = hasNoSchedule || intakeIsOpen || isTester || formIsSubmitted;
 
   if (allowForm) {
     return children;
