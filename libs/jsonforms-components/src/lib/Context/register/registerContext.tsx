@@ -10,8 +10,17 @@ import {
   ADD_REGISTER_DATA_ERROR,
   ADD_DATALIST_ACTION,
   RegisterDataType,
+  ADD_USER_ACTION,
 } from './actions';
 import { fetchRegister } from './util';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  roles: string[];
+  preferredUsername: string;
+}
 
 interface JsonFormsRegisterContextProps {
   registerDispatch: JsonFormRegisterDispatch;
@@ -19,13 +28,14 @@ interface JsonFormsRegisterContextProps {
   selectRegisterData: (registerConfig: RegisterConfig) => RegisterDataType;
   fetchErrors: (registerConfig: RegisterConfig) => string;
   isProvided: boolean;
+  user?: User;
 }
 
 export const JsonFormsRegisterContext = createContext<JsonFormsRegisterContextProps | undefined>(undefined);
 
 interface JsonFormsRegisterProviderProps {
   children: ReactNode;
-  defaultRegisters: { registerData: RegisterData; dataList: string[]; nonAnonymous: string[] } | undefined;
+  defaultRegisters: { registerData: RegisterData; dataList: string[]; nonAnonymous: string[]; user?: User } | undefined;
 }
 
 export const JsonFormRegisterProvider = ({
@@ -37,6 +47,7 @@ export const JsonFormRegisterProvider = ({
     registerData: [],
     nonAnonymous: [],
     nonExistent: [],
+    user: defaultRegisters?.user,
     errors: {},
   });
 
@@ -44,6 +55,7 @@ export const JsonFormRegisterProvider = ({
     return {
       isProvided: true,
       registerDispatch: dispatch,
+      user: registers.user,
       selectRegisterData: (criteria: RegisterConfig): RegisterDataType => {
         if (criteria?.url) {
           return registers.registerData?.find((r) => r.url === criteria.url)?.data || [];
@@ -124,6 +136,10 @@ export const JsonFormRegisterProvider = ({
       if (defaultRegisters?.dataList?.length > 0) {
         dispatch({ type: ADD_DATALIST_ACTION, payload: { nonExistent: defaultRegisters?.dataList } });
       }
+
+      if (defaultRegisters?.user) {
+        dispatch({ type: ADD_USER_ACTION, payload: { user: defaultRegisters?.user } });
+      }
     }
   }, [dispatch, defaultRegisters]);
   /* The client might use the context outside of the Jsonform to provide custom register data */
@@ -132,4 +148,14 @@ export const JsonFormRegisterProvider = ({
     return <>{children}</>;
   }
   return <JsonFormsRegisterContext.Provider value={context}>{children}</JsonFormsRegisterContext.Provider>;
+};
+
+export const useRegisterUser = () => {
+  const ctx = useContext(JsonFormsRegisterContext);
+
+  if (!ctx) {
+    throw new Error('useRegisterUser must be used inside JsonFormRegisterProvider');
+  }
+
+  return ctx.user;
 };

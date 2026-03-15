@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { GoabFormItem, GoabInput, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Visible } from '../../util';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
@@ -20,10 +20,22 @@ export const PhoneGrid = styled.div`
 
 export const PHONE_REGEX = /^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/;
 
+const normalizePhoneData = (value?: Record<string, unknown>) => ({
+  type: (value?.type as string) || '',
+  number: (value?.number as string) || '',
+});
+
 export const PhoneNumberWithTypeControl = (props: ControlProps): JSX.Element => {
   const { data, path, handleChange, enabled, visible, required } = props;
-  const [formData, setFormData] = useState(data || {});
+  const [formData, setFormData] = useState(normalizePhoneData(data));
   const [error, setError] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const nextData = normalizePhoneData(data);
+    setFormData((currentData) =>
+      currentData.type === nextData.type && currentData.number === nextData.number ? currentData : nextData
+    );
+  }, [data]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateFormData = (updated: any) => {

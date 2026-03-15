@@ -28,7 +28,27 @@ describe('FormEntity', () => {
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
     clerkRoles: ['test-clerk'],
-    dataSchema: null,
+    dataSchema: {
+      type: 'object',
+      properties: {
+        attachment: { type: 'string', format: 'file-urn' },
+        nested: {
+          type: 'object',
+          properties: {
+            evidence: { type: 'string', format: 'file-urn' },
+          },
+        },
+        items: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              file: { type: 'string', format: 'file-urn' },
+            },
+          },
+        },
+      },
+    },
     securityClassification: 'protected b',
     queueTaskToProcess: { queueNameSpace: 'test-queue-namespace', queueName: 'test-queue' } as QueueTaskToProcess,
   });
@@ -74,6 +94,7 @@ describe('FormEntity', () => {
     notificationMock.sendCode.mockReset();
     notificationMock.verifyCode.mockReset();
     notificationMock.unsubscribe.mockReset();
+    fileMock.delete.mockReset();
     validationService.validate.mockReset();
     pdfServiceMock.generateFormPdf.mockReset();
     calendarService.getScheduledIntake.mockReset();
@@ -430,12 +451,18 @@ describe('FormEntity', () => {
     };
     const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
 
+    beforeEach(() => {
+      entity.data = {};
+      entity.files = {};
+    });
+
     it('can update form content', async () => {
-      const data = {};
-      const files = {};
-      const updated = await entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, data, files);
+      const data = {
+        attachment: 'urn:ads:platform:file-service:v1:/files/test',
+      };
+      const updated = await entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, fileMock, data);
       expect(updated.data).toBe(data);
-      expect(updated.files).toBe(files);
+      expect(updated.files.attachment?.toString()).toBe('urn:ads:platform:file-service:v1:/files/test');
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 
@@ -444,55 +471,111 @@ describe('FormEntity', () => {
       locked.status = FormStatus.Locked;
 
       const data = {};
-      const files = {};
       await expect(
-        locked.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, data, files)
-      ).rejects.toThrow(InvalidOperationError);
+        locked.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, fileMock, data)
+      ).rejects.toThrow(
+        InvalidOperationError
+      );
     });
 
-    it('can throw for file not a resource', async () => {
+    it('ignores provided files and resolves from schema-declared data fields', async () => {
       const data = {};
       const files = {
         support: adspId`urn:ads:platform:file-service`,
       };
 
-      await expect(
-        entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, data, files)
-      ).rejects.toThrow(Error);
-    });
-
-    it('can throw for file not a file service resource', async () => {
-      const data = {};
-      const files = {
-        support: adspId`urn:ads:platform:test-service:v1:/abc/123`,
-      };
-
-      await expect(
-        entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, data, files)
-      ).rejects.toThrow(InvalidOperationError);
+      const updated = await entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, fileMock, data);
+      expect(updated.files).toEqual({});
+      expect(files.support?.toString()).toBe('urn:ads:platform:file-service');
     });
 
     it('can throw for different user', async () => {
       const data = {};
-      const files = {};
       await expect(
-        entity.update({ tenantId, id: 'tester-2', roles: ['test-applicant'] } as User, data, files)
+        entity.update({ tenantId, id: 'tester-2', roles: ['test-applicant'] } as User, fileMock, data)
       ).rejects.toThrow(UnauthorizedUserError);
     });
 
     it('can update form content by clerk', async () => {
-      const data = {};
-      const files = {};
-      const updated = await entity.update({ tenantId, id: 'tester-2', roles: ['test-clerk'] } as User, data, files);
+      const data = {
+        nested: { evidence: 'urn:ads:platform:file-service:v1:/files/test-2' },
+      };
+      const updated = await entity.update({ tenantId, id: 'tester-2', roles: ['test-clerk'] } as User, fileMock, data);
       expect(updated.data).toBe(data);
-      expect(updated.files).toBe(files);
+      expect(updated.files['nested.evidence']?.toString()).toBe('urn:ads:platform:file-service:v1:/files/test-2');
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+    });
+
+    it('keeps duplicate URN references by path', async () => {
+      const data = {
+        attachment: 'urn:ads:platform:file-service:v1:/files/test',
+        nested: { evidence: 'urn:ads:platform:file-service:v1:/files/test' },
+      };
+
+      const updated = await entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, fileMock, data);
+      expect(updated.files.attachment?.toString()).toBe('urn:ads:platform:file-service:v1:/files/test');
+      expect(updated.files['nested.evidence']?.toString()).toBe('urn:ads:platform:file-service:v1:/files/test');
+    });
+
+    it('rebuilds files from current data so removed references are dropped', async () => {
+      await entity.update(
+        { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+        fileMock,
+        { attachment: 'urn:ads:platform:file-service:v1:/files/test' }
+      );
+
+      const updated = await entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, fileMock, {});
+      expect(updated.files).toEqual({});
+    });
+
+    it('deletes orphaned files when references are replaced or removed', async () => {
+      await entity.update(
+        { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+        fileMock,
+        {
+          attachment: 'urn:ads:platform:file-service:v1:/files/old',
+          nested: { evidence: 'urn:ads:platform:file-service:v1:/files/still-referenced' },
+        }
+      );
+
+      await entity.update(
+        { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+        fileMock,
+        {
+          attachment: 'urn:ads:platform:file-service:v1:/files/new',
+          nested: { evidence: 'urn:ads:platform:file-service:v1:/files/still-referenced' },
+        }
+      );
+
+      expect(fileMock.delete).toHaveBeenCalledTimes(1);
+      expect(fileMock.delete.mock.calls[0][0]).toBe(tenantId);
+      expect(fileMock.delete.mock.calls[0][1].toString()).toBe('urn:ads:platform:file-service:v1:/files/old');
+    });
+
+    it('does not delete files that remain referenced at another path', async () => {
+      await entity.update(
+        { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+        fileMock,
+        {
+          attachment: 'urn:ads:platform:file-service:v1:/files/shared',
+          nested: { evidence: 'urn:ads:platform:file-service:v1:/files/shared' },
+        }
+      );
+
+      await entity.update(
+        { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
+        fileMock,
+        {
+          nested: { evidence: 'urn:ads:platform:file-service:v1:/files/shared' },
+        }
+      );
+
+      expect(fileMock.delete).not.toHaveBeenCalled();
     });
 
     it('can throw for user without applicant role', async () => {
       const data = {};
-      const files = {};
-      await expect(entity.update({ tenantId, id: 'tester', roles: [] } as User, data, files)).rejects.toThrow(
+      await expect(entity.update({ tenantId, id: 'tester', roles: [] } as User, fileMock, data)).rejects.toThrow(
         UnauthorizedUserError
       );
     });
@@ -500,10 +583,9 @@ describe('FormEntity', () => {
     it('can throw unauthorized user for missing definition', async () => {
       // Missing definition means that no user will pass authorization check for updating form.
       const data = {};
-      const files = {};
       const entity = new FormEntity(repositoryMock, tenantId, null, subscriber, formInfo);
       await expect(
-        entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, data, files)
+        entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, fileMock, data)
       ).rejects.toThrow(UnauthorizedUserError);
       expect(repositoryMock.save).not.toHaveBeenCalled();
     });
@@ -600,7 +682,13 @@ describe('FormEntity', () => {
     };
 
     it('can submit form', async () => {
-      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo);
+      const entity = new FormEntity(repositoryMock, tenantId, definition, subscriber, {
+        ...formInfo,
+        data: {
+          attachment: 'urn:ads:platform:file-service:v1:/files/test',
+          items: [{ file: 'urn:ads:platform:file-service:v1:/files/test-2' }],
+        },
+      });
       const [submitted] = await entity.submit(
         { tenantId, id: 'tester', roles: ['test-applicant'] } as User,
         queueTaskServiceMock,
@@ -610,6 +698,8 @@ describe('FormEntity', () => {
       expect(submitted.status).toBe(FormStatus.Submitted);
       expect(submitted.submitted).toBeTruthy();
       expect(submitted.hash).toBeTruthy();
+      expect(submitted.files.attachment?.toString()).toBe('urn:ads:platform:file-service:v1:/files/test');
+      expect(submitted.files['items[0].file']?.toString()).toBe('urn:ads:platform:file-service:v1:/files/test-2');
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 

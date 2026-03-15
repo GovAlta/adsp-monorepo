@@ -287,6 +287,68 @@ describe('FormDefinitionEntity', () => {
     });
   });
 
+  describe('resolveFileReferences', () => {
+    const entity = new FormDefinitionEntity(validationService, calendarService, tenantId, {
+      id: 'test',
+      name: 'test-form-definition',
+      description: null,
+      formDraftUrlTemplate: 'https://my-form/{{ id }}',
+      anonymousApply: false,
+      applicantRoles: ['test-applicant'],
+      assessorRoles: ['test-assessor'],
+      clerkRoles: [],
+      dataSchema: {
+        type: 'object',
+        properties: {
+          attachment: { type: 'string', format: 'file-urn' },
+          title: { type: 'string' },
+          nested: {
+            type: 'object',
+            properties: {
+              evidence: { type: 'string', format: 'file-urn' },
+            },
+          },
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                file: { type: 'string', format: 'file-urn' },
+              },
+            },
+          },
+        },
+      },
+      submissionRecords: false,
+      submissionPdfTemplate: '',
+      supportTopic: false,
+      queueTaskToProcess: {} as QueueTaskToProcess,
+    });
+
+    it('can resolve file refs for configured file-urn schema fields', () => {
+      const files = entity.resolveFileReferences({
+        attachment: 'urn:ads:platform:file-service:v1:/files/test',
+        title: 'urn:ads:platform:file-service:v1:/files/ignored',
+        nested: { evidence: 'urn:ads:platform:file-service:v1:/files/test-2' },
+        items: [{ file: 'urn:ads:platform:file-service:v1:/files/test-3' }],
+      });
+
+      expect(files.attachment?.toString()).toBe('urn:ads:platform:file-service:v1:/files/test');
+      expect(files['nested.evidence']?.toString()).toBe('urn:ads:platform:file-service:v1:/files/test-2');
+      expect(files['items[0].file']?.toString()).toBe('urn:ads:platform:file-service:v1:/files/test-3');
+      expect(files.title).toBeUndefined();
+    });
+
+    it('skips invalid or non-file-service values while allowing draft data', () => {
+      const files = entity.resolveFileReferences({
+        attachment: 'not-a-urn',
+        nested: { evidence: 'urn:ads:platform:task-service:v1:/tasks/123' },
+      });
+
+      expect(files).toEqual({});
+    });
+  });
+
   describe('createForm', () => {
     const user = {
       tenantId,

@@ -228,6 +228,8 @@ export const uploadFile = createAsyncThunk(
       const token = await getAccessToken();
       const formData = new FormData();
       formData.append('type', typeId);
+      // Explicit filename field avoids UTF-8 filename encoding issues in some environments.
+      formData.append('filename', file.name);
       formData.append('recordId', recordId);
       formData.append('file', file);
 
