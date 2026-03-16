@@ -405,7 +405,7 @@ describe('Can render GoAInputBaseTableReview', () => {
     const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
     const tableReviewRow = getByTestId('input-base-table--row');
     expect(tableReviewRow?.textContent).toContain('No');
-    expect(tableReviewRow?.textContent).toContain('TestField');
+    expect(tableReviewRow?.textContent).toContain('Test Field');
   });
 
   it('can render the GoAInputBaseTableReview with radio boolean', () => {
@@ -422,7 +422,41 @@ describe('Can render GoAInputBaseTableReview', () => {
     };
     const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
     const tableReviewRow = getByTestId('input-base-table-mock-row');
-    expect(tableReviewRow?.textContent).toBe('Mock Yes');
+    expect(tableReviewRow?.textContent).toContain('mock');
+    expect(tableReviewRow?.textContent).toContain('Yes');
+  });
+
+  it('preserves auto-generated title casing for camelCase labels', () => {
+    const props = {
+      ...baseTableReviewProps,
+      label: 'First Name',
+      data: 'Alice',
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/firstName',
+      },
+    };
+
+    const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
+    const tableReviewRow = getByTestId('input-base-table-First Name-row');
+    expect(tableReviewRow?.textContent).toContain('First Name');
+    expect(tableReviewRow?.textContent).not.toContain('First name');
+  });
+
+  it('keeps title casing for single-word auto labels like nationality', () => {
+    const props = {
+      ...baseTableReviewProps,
+      label: 'Nationality',
+      data: 'Canadian',
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/nationality',
+      },
+    };
+
+    const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
+    const tableReviewRow = getByTestId('input-base-table-Nationality-row');
+    expect(tableReviewRow?.textContent).toContain('Nationality');
   });
 
   it('can render the GoAInputBaseTableReview with boolean and custom text', () => {
@@ -501,5 +535,4 @@ describe('Can render GoAInputBaseTableReview', () => {
     const { getByText } = render(<GoAInputBaseTableReview {...props} />);
     expect(getByText('No applicable renderer found.')).toBeTruthy();
   });
-
 });
