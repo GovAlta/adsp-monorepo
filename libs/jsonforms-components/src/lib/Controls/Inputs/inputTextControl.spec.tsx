@@ -8,6 +8,8 @@ import { validateSinWithLuhn, checkFieldValidity, isValidDate } from '../../util
 import { JsonFormsContext } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { fetchRegisterConfigFromOptions } from './InputTextControl';
+import { useRegisterUser } from '../../Context/register';
+import { autoPopulateValue } from '../../util/autoPopulate';
 
 const mockContextValue = {
   errors: [],
@@ -18,6 +20,19 @@ const mockContextValue = {
 const TestComponent: React.FC<{ props: any }> = ({ props }) => {
   return <>{checkFieldValidity(props)}</>;
 };
+
+jest.mock('../../Context/register', () => ({
+  ...jest.requireActual('../../Context/register'),
+  useRegisterUser: jest.fn(),
+}));
+
+jest.mock('../../util/autoPopulate', () => ({
+  autoPopulateValue: jest.fn(),
+}));
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('Input Text Control tests', () => {
   const textBoxUiSchema: ControlElement = {
@@ -255,7 +270,7 @@ describe('Input Text Control tests', () => {
       expect(handleChangeMock).toHaveBeenCalledWith('', '123 456 789');
     });
 
-    it('can trigger handleChange event', async () => {
+    it('does not trigger handleChange event if nothing changes', async () => {
       const props = { ...staticProps, handleChange: handleChangeMock };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
@@ -270,9 +285,8 @@ describe('Input Text Control tests', () => {
         await new Promise((resolve) => setTimeout(resolve, 350));
       });
 
-      expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);
-      expect(handleChangeMock.mock.calls.length).toBe(2);
+      expect(handleChangeMock.mock.calls.length).toBe(0);
     });
   });
 
@@ -375,6 +389,29 @@ describe('Input Text Control tests', () => {
       const options = { url: 'https://example.com', someProp: 'value' };
       const result = fetchRegisterConfigFromOptions(options);
       expect(result).toEqual(options);
+    });
+  });
+
+  it('autopopulates value when user exists and data is empty', async () => {
+    const handleChangeMock = jest.fn();
+
+    (useRegisterUser as jest.Mock).mockReturnValue({ name: 'Test User' });
+    (autoPopulateValue as jest.Mock).mockReturnValue('AUTO_VALUE');
+
+    const props = {
+      ...staticProps,
+      data: undefined,
+      handleChange: handleChangeMock,
+    };
+
+    render(
+      <JsonFormsContext.Provider value={mockContextValue}>
+        <GoAInputText {...props} />
+      </JsonFormsContext.Provider>,
+    );
+
+    await act(async () => {
+      await Promise.resolve();
     });
   });
 });
