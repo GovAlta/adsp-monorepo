@@ -18,8 +18,12 @@ import { onChangeForInputControl, onBlurForTextControl } from '../../util/inputC
 import { FormFieldWrapper } from './style-component';
 import { Visible } from '../../util';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
+import { useRegisterUser } from '../../Context/register';
+import { JsonFormRegisterProvider } from '../../Context/register';
+import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
+import { autoPopulateValue } from '../../util/autoPopulate';
 
 type GoAEmailControlProps = ControlProps & WithInputProps;
 type ExtendedJsonSchema = JsonSchema & {
@@ -30,11 +34,12 @@ type ExtendedJsonSchema = JsonSchema & {
 const defaultLabel = 'Email address';
 
 export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
-  const { data, config, id, enabled, visible, uischema, errors, schema, required, label } = props;
+  const { data, config, id, enabled, visible, uischema, errors, schema, required, label, handleChange } = props;
   const defaultSchema = schema as ExtendedJsonSchema;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const width = uischema?.options?.componentProps?.width ?? '100%';
+  const user = useRegisterUser();
 
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const stepperState = (formStepperCtx as JsonFormsStepperContextProps)?.selectStepperState?.();
@@ -56,52 +61,63 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
 
   const primaryLabel = defaultSchema?.label || defaultLabel;
 
-  const splintIndex = splitErrors.findIndex((e) => e === 'is a required property');
+  const splintIndex = splitErrors.findIndex((e) => e === REQUIRED_PROPERTY_ERROR);
   splitErrors[splintIndex] = `${primaryLabel} is required`;
 
   const finalErrors = splitErrors.join('\n');
 
+  useEffect(() => {
+    const autoPopulatedValue = schema.default || (user && autoPopulateValue(user, props));
+    if (autoPopulatedValue && autoPopulatedValue !== data) {
+      handleChange(props.path, autoPopulatedValue);
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schema, data, user]);
+
   return (
     <Visible visible={visible}>
-      <FormFieldWrapper>
-        <GoabFormItem
-          error={isVisited && finalErrors}
-          testId="form-email-input-wrapper"
-          requirement={required ? 'required' : undefined}
-          label={primaryLabel}
-        >
-          <GoabInput
-            error={isVisited && finalErrors.length > 0}
-            type={'email'}
-            width={width}
-            name="Email address"
-            value={data}
-            testId={appliedUiSchemaOptions?.testId || `${id}-input`}
-            disabled={!enabled}
-            readonly={readOnly}
-            onChange={(detail: GoabInputOnChangeDetail) => {
-              if (!isVisited) {
-                setIsVisited(true);
-              }
-              onChangeForInputControl({
-                name: detail.name,
-                value: detail.value,
-                controlProps: props as ControlProps,
-              });
-            }}
-            onBlur={(detail: GoabInputOnBlurDetail) => {
-              if (!isVisited) {
-                setIsVisited(true);
-              }
-              onBlurForTextControl({
-                name: detail.name,
-                value: detail.value,
-                controlProps: props as ControlProps,
-              });
-            }}
-          />
-        </GoabFormItem>
-      </FormFieldWrapper>
+      <JsonFormRegisterProvider defaultRegisters={undefined}>
+        <FormFieldWrapper>
+          <GoabFormItem
+            error={isVisited && finalErrors}
+            testId="form-email-input-wrapper"
+            requirement={required ? 'required' : undefined}
+            label={primaryLabel}
+          >
+            <GoabInput
+              error={isVisited && finalErrors.length > 0}
+              type={'email'}
+              width={width}
+              name="Email address"
+              value={data}
+              testId={appliedUiSchemaOptions?.testId || `${id}-input`}
+              disabled={!enabled}
+              readonly={readOnly}
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                if (!isVisited) {
+                  setIsVisited(true);
+                }
+                onChangeForInputControl({
+                  name: detail.name,
+                  value: detail.value,
+                  controlProps: props as ControlProps,
+                });
+              }}
+              onBlur={(detail: GoabInputOnBlurDetail) => {
+                if (!isVisited) {
+                  setIsVisited(true);
+                }
+                onBlurForTextControl({
+                  name: detail.name,
+                  value: detail.value,
+                  controlProps: props as ControlProps,
+                });
+              }}
+            />
+          </GoabFormItem>
+        </FormFieldWrapper>
+      </JsonFormRegisterProvider>
     </Visible>
   );
 };

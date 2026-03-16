@@ -9,10 +9,19 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useSelector } from 'react-redux';
 import FallbackRender from './FallbackRenderer';
 import { FormPreviewSpacer } from './style-components';
+import { RegisterConfigData } from '../../../../jsonforms-components/src';
 
 interface JSONFormPreviewerProps {
   data: unknown;
   onChange: ({ data }: { data: unknown }) => void;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  roles: string[];
+  preferredUsername: string;
 }
 
 export const JSONFormPreviewer = ({ data, onChange }: JSONFormPreviewerProps): JSX.Element => {
@@ -21,9 +30,12 @@ export const JSONFormPreviewer = ({ data, onChange }: JSONFormPreviewerProps): J
   const uiSchema = useSelector((state: RootState) => state.form.editor.uiSchema);
   const error = useSelector(schemaErrorSelector);
 
-  const registerData = useSelector(selectRegisterData);
+  const registerData = useSelector(selectRegisterData) as RegisterConfigData[];
   const nonAnonymous = useSelector((state: RootState) => state.configuration?.nonAnonymous);
   const dataList = useSelector((state: RootState) => state.configuration?.dataList);
+  const user = useSelector((state: RootState) => state.session.userInfo);
+
+  const newUser = { ...user, roles: [], id: null } as User; // Create a new user object with the same properties as the original user, but with an empty roles array and null id
 
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
@@ -35,7 +47,7 @@ export const JSONFormPreviewer = ({ data, onChange }: JSONFormPreviewerProps): J
         </GoabCallout>
       )}
       <JsonFormRegisterProvider
-        defaultRegisters={{ registerData: registerData, dataList: dataList, nonAnonymous: nonAnonymous }}
+        defaultRegisters={{ registerData: registerData, dataList: dataList, nonAnonymous: nonAnonymous, user: newUser }}
       >
         <JsonForms
           ajv={ajv}

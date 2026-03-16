@@ -76,6 +76,42 @@ describe('form router', () => {
     dispositionStates: [{ id: 'rejectedStatus', name: 'rejected', description: 'err' }],
     queueTaskToProcess: { queueName: 'test', queueNameSpace: 'queue-namespace' } as QueueTaskToProcess,
   });
+  const definitionWithFileUrnSchema = new FormDefinitionEntity(validationService, calendarService, tenantId, {
+    id: 'test',
+    name: 'test-form-definition',
+    description: null,
+    formDraftUrlTemplate: 'https://my-form/{{ id }}',
+    anonymousApply: false,
+    applicantRoles: ['test-applicant'],
+    assessorRoles: ['test-assessor'],
+    submissionRecords: false,
+    submissionPdfTemplate: '',
+    supportTopic: true,
+    clerkRoles: [],
+    dataSchema: {
+      type: 'object',
+      properties: {
+        attachment: { type: 'string', format: 'file-urn' },
+        nested: {
+          type: 'object',
+          properties: {
+            evidence: { type: 'string', format: 'file-urn' },
+          },
+        },
+        items: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              file: { type: 'string', format: 'file-urn' },
+            },
+          },
+        },
+      },
+    },
+    dispositionStates: [{ id: 'rejectedStatus', name: 'rejected', description: 'err' }],
+    queueTaskToProcess: { queueName: 'test', queueNameSpace: 'queue-namespace' } as QueueTaskToProcess,
+  });
 
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
   const subscriber = {
@@ -243,6 +279,7 @@ describe('form router', () => {
     notificationServiceMock.sendCode.mockReset();
     notificationServiceMock.verifyCode.mockReset();
     notificationServiceMock.unsubscribe.mockReset();
+    fileServiceMock.delete.mockReset();
     eventServiceMock.send.mockReset();
     commentServiceMock.createSupportTopic.mockClear();
     pdfServiceMock.generateFormPdf.mockClear();
@@ -349,7 +386,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+      req.getServiceConfiguration.mockResolvedValueOnce([definitionWithFileUrnSchema]);
       const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -373,7 +410,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+      req.getServiceConfiguration.mockResolvedValueOnce([definitionWithFileUrnSchema]);
       const handler = getFormDefinition(tenantServiceMock, calendarServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -676,6 +713,7 @@ describe('form router', () => {
         eventServiceMock,
         commentServiceMock,
         notificationServiceMock,
+        fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock
       );
@@ -701,7 +739,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+      req.getServiceConfiguration.mockResolvedValueOnce([definitionWithFileUrnSchema]);
       notificationServiceMock.subscribe.mockResolvedValueOnce(subscriber);
 
       const handler = createForm(
@@ -712,6 +750,7 @@ describe('form router', () => {
         eventServiceMock,
         commentServiceMock,
         notificationServiceMock,
+        fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock
       );
@@ -751,6 +790,7 @@ describe('form router', () => {
         eventServiceMock,
         commentServiceMock,
         notificationServiceMock,
+        fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock
       );
@@ -789,6 +829,7 @@ describe('form router', () => {
         eventServiceMock,
         commentServiceMock,
         notificationServiceMock,
+        fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock
       );
@@ -817,7 +858,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      req.getServiceConfiguration.mockResolvedValueOnce([definition]);
+      req.getServiceConfiguration.mockResolvedValueOnce([definitionWithFileUrnSchema]);
       notificationServiceMock.subscribe.mockResolvedValueOnce(subscriber);
 
       const handler = createForm(
@@ -828,6 +869,7 @@ describe('form router', () => {
         eventServiceMock,
         commentServiceMock,
         notificationServiceMock,
+        fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock
       );
@@ -872,6 +914,7 @@ describe('form router', () => {
         eventServiceMock,
         commentServiceMock,
         notificationServiceMock,
+        fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock
       );
@@ -880,6 +923,55 @@ describe('form router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Draft }));
       expect(repositoryMock.save).toHaveBeenCalledTimes(2);
       expect(commentServiceMock.createSupportTopic).toHaveBeenCalledTimes(1);
+    });
+
+    it('can create form and derive files from data', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: ['test-applicant'],
+      };
+      const req = {
+        user,
+        query: {},
+        body: {
+          definitionId: 'test',
+          applicant: { addressAs: 'applicant', channels: [{ channel: Channel.email, address: 'applicant@apply.co' }] },
+          data: {
+            attachment: 'urn:ads:platform:file-service:v1:/files/test',
+            nested: { evidence: 'urn:ads:platform:file-service:v1:/files/test-2' },
+          },
+        },
+        getConfiguration: jest.fn(),
+        getServiceConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      req.getServiceConfiguration.mockResolvedValueOnce([definitionWithFileUrnSchema]);
+      notificationServiceMock.subscribe.mockResolvedValueOnce(subscriber);
+
+      const handler = createForm(
+        apiId,
+        logger,
+        repositoryMock,
+        formSubmissionMock,
+        eventServiceMock,
+        commentServiceMock,
+        notificationServiceMock,
+        fileServiceMock,
+        queueTaskServiceMock,
+        pdfServiceMock
+      );
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(repositoryMock.save).toHaveBeenCalledTimes(2);
+      expect(repositoryMock.save.mock.calls[1][0].files.attachment?.toString()).toBe(
+        'urn:ads:platform:file-service:v1:/files/test'
+      );
+      expect(repositoryMock.save.mock.calls[1][0].files['nested.evidence']?.toString()).toBe(
+        'urn:ads:platform:file-service:v1:/files/test-2'
+      );
     });
 
     it('can create form and submit', async () => {
@@ -913,6 +1005,7 @@ describe('form router', () => {
         eventServiceMock,
         commentServiceMock,
         notificationServiceMock,
+        fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock
       );
@@ -960,6 +1053,7 @@ describe('form router', () => {
         eventServiceMock,
         commentServiceMock,
         notificationServiceMock,
+        fileServiceMock,
         queueTaskServiceMock,
         pdfServiceMock
       );
@@ -1183,9 +1277,77 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = updateFormData(logger);
+      const handler = updateFormData(logger, fileServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+      expect(res.send).toHaveBeenCalled();
+    });
+
+    it('can derive file references from form data', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: ['test-applicant'],
+      };
+      const req = {
+        user,
+        body: {
+          data: {
+            attachment: 'urn:ads:platform:file-service:v1:/files/test',
+            items: [{ file: 'urn:ads:platform:file-service:v1:/files/test-2' }],
+          },
+        },
+        params: { formId: 'test-form' },
+        form: new FormEntity(repositoryMock, tenantId, definitionWithFileUrnSchema, subscriber, formInfo),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = updateFormData(logger, fileServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(req.form.files.attachment?.toString()).toBe('urn:ads:platform:file-service:v1:/files/test');
+      expect(req.form.files['items[0].file']?.toString()).toBe('urn:ads:platform:file-service:v1:/files/test-2');
+      expect(res.send).toHaveBeenCalled();
+    });
+
+    it('can delete orphaned files when references are replaced or removed', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: ['test-applicant'],
+      };
+      const updateEntity = new FormEntity(repositoryMock, tenantId, definitionWithFileUrnSchema, subscriber, {
+        ...formInfo,
+        data: {
+          attachment: 'urn:ads:platform:file-service:v1:/files/old',
+          nested: { evidence: 'urn:ads:platform:file-service:v1:/files/still-referenced' },
+        },
+        files: {
+          attachment: adspId`urn:ads:platform:file-service:v1:/files/old`,
+          'nested.evidence': adspId`urn:ads:platform:file-service:v1:/files/still-referenced`,
+        },
+      });
+      const req = {
+        user,
+        body: {
+          data: {
+            attachment: 'urn:ads:platform:file-service:v1:/files/new',
+            nested: { evidence: 'urn:ads:platform:file-service:v1:/files/still-referenced' },
+          },
+        },
+        params: { formId: 'test-form' },
+        form: updateEntity,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = updateFormData(logger, fileServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(fileServiceMock.delete).toHaveBeenCalledTimes(1);
+      expect(fileServiceMock.delete.mock.calls[0][0]).toBe(tenantId);
+      expect(fileServiceMock.delete.mock.calls[0][1].toString()).toBe('urn:ads:platform:file-service:v1:/files/old');
       expect(res.send).toHaveBeenCalled();
     });
 
@@ -1204,7 +1366,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = updateFormData(logger);
+      const handler = updateFormData(logger, fileServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));

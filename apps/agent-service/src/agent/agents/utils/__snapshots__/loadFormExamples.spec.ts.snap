@@ -1,0 +1,4038 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`loadFormExamples snapshot matches the expected full output snapshot 1`] = `
+"# Best Practices
+
+## Layout Selection
+Choose the right root layout based on form complexity
+- **Simple forms (1-5 fields, single purpose)**: Use VerticalLayout as root
+- **Complex forms (6+ fields, multiple sections)**: Use Categorization with variant="pages"
+
+## Validation Checklist
+Pre-save validation checklist
+- All UI schema scopes reference properties that exist in the data schema
+- Required fields in data schema are clearly marked in the \`required\` array
+- Property names use camelCase convention
+- Each Control has a valid scope starting with \`#/properties/\`
+- No orphaned required fields (every required field has a matching property)
+- Data schema \`type\` is \`"object"\` at the root level
+
+## Accessibility
+- Include descriptive labels — property names are auto-converted to labels but may need refinement
+- Add inline help for complex fields using \`options.help\`
+- Use HelpContent elements for important notices, privacy statements, or instructions
+- Provide clear error messages in validation rules
+- Keep help text at grade 9 reading level for citizen-facing forms
+
+## Common Fields
+Use ADSP common schema definitions instead of building fields from scratch
+- **Full Name**: \`https://adsp.alberta.ca/common.v1.schema.json#/definitions/personFullName\` — First name, middle name, and last name input fields
+- **Address**: \`https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressAlberta\` — Structured postal address (addressLine1, municipality, subdivisionCode, postalCode)
+Usage: Use schemaDefinitionTool to load definitions, then reference them with $ref in data schema properties
+
+## Iterative Workflow
+1. Load existing form configuration with formConfigurationRetrievalTool
+2. Ask for the purpose of the form if unclear
+3. Start with 1-3 fields and apply via formConfigurationUpdateTool
+4. Ask for user feedback after each update
+5. Add more fields, refine layouts, and add help text incrementally
+6. Don't dump JSON — describe changes and use the update tool
+
+# UI Control Examples
+
+## Text Area
+Multi-line text input using the \`multi\` option on a string Control
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/message",
+  "options": {
+    "multi": true
+  }
+}
+\`\`\`
+
+### Notes
+- Set \`options.multi\` to \`true\` on any Control bound to a string property
+- The textarea will grow based on content by default
+
+## Inline Help Content
+Add contextual help text to a form control using \`options.help\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/firstName",
+  "options": {
+    "help": "Please enter your first name as it appears on your official documents."
+  }
+}
+\`\`\`
+
+### Notes
+- Keep help text concise and actionable
+- Use plain language — aim for grade 9 reading level
+- Help text appears below the input field
+
+## File Upload
+File upload control using \`file-urn\` format on a string property
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "photo": {
+      "type": "string",
+      "format": "file-urn"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/photo"
+}
+\`\`\`
+
+### Notes
+- The \`format: "file-urn"\` on the data schema property enables the file upload control
+- No special UI schema options are needed — just a Control bound to the property
+- Uploaded files are stored via the ADSP File Service and referenced by URN
+
+## Date Input
+Date picker control using the \`date\` format on a string property
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "dateOfBirth": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/dateOfBirth"
+}
+\`\`\`
+
+### Notes
+- Use \`format: "date"\` in the data schema — the renderer automatically provides a date picker
+- The value is stored in ISO 8601 format (YYYY-MM-DD)
+- No special UI schema options are needed; just a Control pointing to the property
+
+## Integer Input with Min/Max
+Numeric integer input with min, max, and step using \`componentProps\`
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "numberOfChildren": {
+      "type": "integer"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/numberOfChildren",
+  "options": {
+    "componentProps": {
+      "min": 0,
+      "max": 20,
+      "step": 1
+    }
+  }
+}
+\`\`\`
+
+### Notes
+- Use \`type: "integer"\` in data schema for whole numbers, \`type: "number"\` for decimals
+- Use \`options.componentProps\` to pass min, max, and step to the underlying Design System component
+- componentProps are passed directly to the GoA Design System input component
+
+## Boolean Yes/No Radio
+Boolean field rendered as Yes/No radio buttons using \`format: radio\` option
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "isOver18": {
+      "type": "boolean"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/isOver18",
+  "label": "Are you over 18 years of age?",
+  "options": {
+    "format": "radio",
+    "textForTrue": "Yes",
+    "textForFalse": "No"
+  }
+}
+\`\`\`
+
+### Notes
+- Set \`options.format\` to \`"radio"\` to render as radio buttons
+- Use \`textForTrue\` and \`textForFalse\` to customize the labels (defaults to 'Yes'/'No')
+- The \`label\` property overrides the auto-generated label from the property name
+- Boolean radios are ideal for triggering rules that SHOW/HIDE dependent fields
+
+## Dropdown Select
+Dropdown menu for selecting from a predefined list using \`enum\` in the data schema
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "province": {
+      "type": "string",
+      "enum": [
+        "Alberta",
+        "British Columbia",
+        "Saskatchewan",
+        "Manitoba",
+        "Ontario",
+        "Quebec"
+      ]
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/province",
+  "label": "Select your province"
+}
+\`\`\`
+
+### Notes
+- Define the options in \`enum\` array on the data schema property — renders as a dropdown by default
+- For 3 or fewer options, consider using radio buttons instead for better UX
+- The label on the UI schema overrides the auto-generated label from the property name
+- For dynamic lists loaded from an API or configuration, use data registers instead of enum
+
+## Radio Buttons
+Radio button group using \`enum\` in data schema and \`format: radio\` in UI schema
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "preferredContact": {
+      "type": "string",
+      "enum": [
+        "email",
+        "phone",
+        "mail"
+      ]
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/preferredContact",
+  "label": "Preferred contact method",
+  "options": {
+    "format": "radio",
+    "componentProps": {
+      "orientation": "horizontal"
+    }
+  }
+}
+\`\`\`
+
+### Notes
+- Set \`options.format\` to \`"radio"\` to render enum values as radio buttons instead of dropdown
+- Use \`componentProps.orientation\` to control layout: \`"horizontal"\` or \`"vertical"\`
+- Radio buttons are best for 2-4 options; use dropdowns for longer lists
+
+## Required Declaration Checkbox
+Required checkbox that must be checked to submit, using \`allOf\` with \`enum: [true]\` validation
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "iDeclare": {
+      "type": "boolean",
+      "allOf": [
+        {
+          "enum": [
+            true
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "iDeclare"
+  ]
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/iDeclare",
+  "options": {
+    "text": "I declare the information provided is correct to the best of my knowledge"
+  }
+}
+\`\`\`
+
+### Notes
+- The \`allOf: [{ enum: [true] }]\` pattern forces the checkbox to be checked (not just present)
+- Without \`allOf\`, a \`required\` boolean would accept both true and false as valid
+- Use \`options.text\` to set the checkbox label text
+- This pattern is essential for FOIP consent and declaration checkboxes on government forms
+
+## Required String Field (minLength Workaround)
+Required text field with \`minLength: 1\` workaround for the known JSON Forms empty-string bug
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "firstName"
+  ]
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/firstName"
+}
+\`\`\`
+
+### Notes
+- CRITICAL: There is a known JSON Forms bug where an empty string satisfies the \`required\` rule
+- Always add \`minLength: 1\` to required string fields as a workaround
+- Without \`minLength: 1\`, users can submit the form with blank required fields
+- This applies to ALL required string fields — text inputs, text areas, emails, etc.
+
+## File Upload (Drag & Drop)
+Drag and drop file upload variant using \`file-urn\` format and \`variant: dragdrop\`
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "certificateOfOwnership": {
+      "type": "string",
+      "format": "file-urn"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/certificateOfOwnership",
+  "options": {
+    "variant": "dragdrop"
+  }
+}
+\`\`\`
+
+### Notes
+- Set \`variant: "dragdrop"\` in UI schema options for the drag-and-drop upload area
+- The default variant is \`"button"\` which renders a 'Choose file' button
+- Also set the \`variant\` property on the data schema for the upload style: \`"button"\` (default) or \`"dragdrop"\`
+- Uploaded files are stored in Azure Blob storage via the ADSP File Service
+- The field value becomes a file URN like \`urn:ads:platform:file-service:v1:/files/<uuid>\`
+
+# Layout Examples
+
+## Multi-Page Form Layout
+Categorization with \`variant: pages\` to create a step-by-step multi-page form
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phoneNumber": {
+      "type": "string"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Categorization",
+  "options": {
+    "variant": "pages"
+  },
+  "elements": [
+    {
+      "type": "Category",
+      "label": "Personal Information",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/firstName"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/lastName"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Contact Information",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/email"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/phoneNumber"
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Use Categorization with \`variant: "pages"\` as the root UI schema element
+- Each Category becomes a separate page/step in the form
+- Give each Category a descriptive \`label\` — this is shown as the page title
+- Group related fields into the same Category
+
+## Simple Vertical Layout
+VerticalLayout for simple single-page forms with a few fields
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "message": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "email"
+  ]
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/name"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/email"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/message",
+      "options": {
+        "multi": true
+      }
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Use VerticalLayout as the root when the form is simple and single-purpose
+- Fields render top-to-bottom in the order listed in elements
+- Combine with \`required\` in the data schema to mark mandatory fields
+
+## Horizontal Layout (Side by Side)
+HorizontalLayout to render fields side by side in a row
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "HorizontalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/firstName"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/lastName"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- HorizontalLayout places elements side by side in a single row
+- Each element gets equal width by default
+- On narrow screens, elements may stack vertically depending on the renderer
+- Best for 2-3 related short fields; avoid more than 3 to prevent crowding
+
+## Mixed Nested Layout
+VerticalLayout containing a HorizontalLayout to mix row and column arrangements
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "reasonForLeaving": {
+      "type": "string"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "HorizontalLayout",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/firstName"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/lastName"
+        }
+      ]
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/reasonForLeaving",
+      "options": {
+        "multi": true
+      }
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Nest a HorizontalLayout inside a VerticalLayout to create mixed arrangements
+- This is the most common layout pattern for forms with name fields + longer inputs
+- Layouts can be nested up to several levels deep, but keep it simple for readability
+
+## Group Layout with Label
+Group element that wraps controls in a labeled section (like a VerticalLayout with a heading)
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "initial": {
+      "type": "string",
+      "maxLength": 1
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Group",
+  "label": "Personal Information",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/firstName"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/lastName"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/initial"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- A Group is like a VerticalLayout but with a visible label/heading
+- The \`label\` property sets the section heading text
+- Groups render with visual separation (border/card) depending on the renderer
+- Use Groups within pages/categories to sub-divide long sections
+
+## Page Stepper with Section Titles
+Multi-page form using Categorization with \`variant: pages\`, section titles, and nested object scopes
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "minLength": 2
+        },
+        "lastName": {
+          "type": "string",
+          "minLength": 2
+        },
+        "initial": {
+          "type": "string",
+          "maxLength": 1
+        }
+      }
+    },
+    "address": {
+      "type": "object",
+      "properties": {
+        "street": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Categorization",
+  "options": {
+    "variant": "pages",
+    "title": "Application Form",
+    "subtitle": "Tell us about yourself"
+  },
+  "elements": [
+    {
+      "type": "Category",
+      "label": "Name",
+      "options": {
+        "sectionTitle": "Identification"
+      },
+      "elements": [
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/name/properties/firstName"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/name/properties/lastName"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/name/properties/initial"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Address",
+      "options": {
+        "sectionTitle": "Residence"
+      },
+      "elements": [
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/address/properties/street"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/address/properties/city"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Use \`options.variant: "pages"\` for the Design System's preferred page stepper pattern
+- Use \`options.variant: "stepper"\` for the simple stepper (navigation bar at top)
+- Each Category becomes a page; \`sectionTitle\` groups categories into sections on the task list
+- For nested objects, scopes must use the full path: \`#/properties/name/properties/firstName\`
+- A Summary page is automatically appended by the GoA renderer for applicant review
+- Use \`options.title\` and \`options.subtitle\` on Categorization for the task list header
+
+# Common Field Examples
+
+## Full Name (Common Field)
+Reusable full name field using the ADSP common schema $ref definition for person name
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "yourFullNameProperty": {
+      "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/personFullName"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/yourFullNameProperty"
+}
+\`\`\`
+
+### Notes
+- Use the schemaDefinitionTool to load the common schema definitions first
+- The definition is \`personFullName\` — not \`fullName\`
+- Reference definitions with \`$ref\` — this renders firstName, middleName, lastName subfields
+- Replace \`yourFullNameProperty\` with a meaningful property name like \`applicantName\`
+- For name + date of birth together, use \`personFullNameAndDob\` instead
+
+## Address (Common Field)
+Reusable address field using the ADSP common schema $ref definition for postal address
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "yourAddressProperty": {
+      "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressAlberta"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/yourAddressProperty"
+}
+\`\`\`
+
+### Notes
+- Use the schemaDefinitionTool to load the common schema definitions first
+- The definition is \`postalAddressAlberta\` (for AB-only) or \`postalAddressCanada\` (all provinces)
+- Reference definitions with \`$ref\` — this renders structured address subfields automatically
+- Replace \`yourAddressProperty\` with a meaningful property name like \`mailingAddress\`
+- Subfields: addressLine1, addressLine2, municipality, subdivisionCode, postalCode, country
+
+# Content Element Examples
+
+## Help Content Block
+Descriptive help or notice block using HelpContent element with markdown support
+
+### UI schema
+\`\`\`json
+{
+  "type": "HelpContent",
+  "options": {
+    "markdown": true,
+    "help": [
+      "#### Notice of Collection:",
+      "The personal information on this form is collected under the authority of Section 33(c) of the Freedom of Information and Protection of Privacy Act (FOIP) and will be used for the purpose of administering the Alberta Approved Farmers' Market Program. If you have any questions about the collection and use of your information, please contact the Farmers' Market Specialist, Alberta Agriculture, Forestry and Rural Development at [ab.approvedfarmersmarket@gov.ab.ca](ab.approvedfarmersmarket@gov.ab.ca) or telephone: 780-581-4107."
+    ]
+  }
+}
+\`\`\`
+
+### Notes
+- Set \`options.markdown\` to \`true\` to enable markdown rendering
+- Use an array for \`options.help\` to separate content into multiple lines/paragraphs
+- HelpContent does not have a scope — it's a display-only element, not bound to data
+- Useful for FOIP/privacy notices required on Alberta government forms
+
+## Markdown Help Content
+Rich HelpContent using markdown for formatted text, links, images, and bullet points. This is the recommended way to add links and images in forms.
+
+### UI schema
+\`\`\`json
+{
+  "type": "HelpContent",
+  "label": "Program Overview",
+  "options": {
+    "markdown": true,
+    "help": [
+      "## Section Heading",
+      "This is a paragraph with some **bold** text and _italic_ text.",
+      "Visit [Alberta.ca](https://alberta.ca) for more information.",
+      "![Application process diagram](https://example.com/diagram.png)",
+      "- First bullet point",
+      "- Second bullet point",
+      "- Third bullet point",
+      "See the [Alberta Privacy Policy](https://www.alberta.ca/privacy-policy) for details."
+    ]
+  }
+}
+\`\`\`
+
+### Notes
+- Set \`options.markdown\` to \`true\` to enable markdown rendering
+- The \`help\` array contains one paragraph per entry — each entry can use markdown syntax
+- Supports headings (##), bold (**), italic (_), links ([text](url)), images (![alt](url)), and bullet lists (-)
+- For hyperlinks use \`[link text](url)\` — this replaces the deprecated \`variant: hyperlink\`
+- For images use \`![alt text](url)\` — this replaces the deprecated \`variant: img\`
+- Extended markdown syntax (tables, footnotes) is NOT currently supported
+
+## Collapsible Details Section
+HelpContent with \`variant: details\` to create a click-to-expand section for long instructions
+
+### UI schema
+\`\`\`json
+{
+  "type": "HelpContent",
+  "label": "How to calculate your household income",
+  "options": {
+    "variant": "details",
+    "help": "Household income is based on line 15000 (gross income) minus applicable amounts."
+  },
+  "elements": [
+    {
+      "type": "HelpContent",
+      "options": {
+        "help": [
+          "Line 21000 (deduction for split-pension amount)",
+          "Line 32000 (tuition expenses)",
+          "Line 33099 (medical expenses for self, spouse or common-law partner)",
+          "Line 33199 (medical expenses for other dependants)"
+        ]
+      }
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Set \`options.variant\` to \`"details"\` to make the section collapsible
+- The \`label\` becomes the clickable title that expands/collapses the details
+- Nested \`elements\` contain the detail content revealed when expanded
+- Array in \`help\` renders as a bulleted list; string renders as a paragraph
+- This keeps forms clean while preserving access to reference information
+
+## Markdown Link in Form
+Add clickable hyperlinks inside a form using markdown HelpContent with \`[text](url)\` syntax
+
+### UI schema
+\`\`\`json
+{
+  "type": "HelpContent",
+  "options": {
+    "markdown": true,
+    "help": [
+      "Please review the [Alberta Privacy Policy](https://www.alberta.ca/privacy-policy) before submitting.",
+      "For more details, visit [Alberta.ca](https://www.alberta.ca)."
+    ]
+  }
+}
+\`\`\`
+
+### Notes
+- Use standard markdown link syntax: \`[link text](url)\`
+- Set \`options.markdown\` to \`true\` to enable markdown rendering
+- Multiple links can appear in the same help entry or across entries
+- Links open in a new tab by default
+- The old \`variant: hyperlink\` approach is deprecated — always use markdown links
+
+## Markdown Image in Form
+Display an image inside a form using markdown HelpContent with \`![alt](url)\` syntax
+
+### UI schema
+\`\`\`json
+{
+  "type": "HelpContent",
+  "options": {
+    "markdown": true,
+    "help": [
+      "![Application process diagram](https://example.com/diagram.png)",
+      "The diagram above shows the steps in the application process."
+    ]
+  }
+}
+\`\`\`
+
+### Notes
+- Use standard markdown image syntax: \`![alt text](image-url)\`
+- Set \`options.markdown\` to \`true\` to enable markdown rendering
+- Always provide descriptive alt text for screen reader accessibility
+- The image URL must be a fully qualified public URL
+- The old \`variant: img\` approach is deprecated — always use markdown images
+
+# Repeating Items Examples
+
+## List with Detail (Repeating Items)
+ListWithDetail for collecting a variable number of complex items with full layout control
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "familyMembers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string",
+            "enum": [
+              "Spouse",
+              "Child",
+              "Parent",
+              "Sibling"
+            ]
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "ListWithDetail",
+  "scope": "#/properties/familyMembers",
+  "options": {
+    "detail": {
+      "type": "VerticalLayout",
+      "elements": [
+        {
+          "type": "HorizontalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/firstName",
+              "label": "First Name"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/lastName",
+              "label": "Last Name"
+            }
+          ]
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/relationship"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/dateOfBirth"
+        }
+      ]
+    }
+  }
+}
+\`\`\`
+
+### Notes
+- ListWithDetail shows a list panel on the left and detail form on the right
+- The \`detail\` object in options defines the layout for each item — you have full layout control
+- Scopes inside \`detail\` are relative to the array item, NOT the root: use \`#/properties/firstName\` not \`#/properties/familyMembers/items/properties/firstName\`
+- Use \`items.type: "object"\` in the data schema to define the shape of each list entry
+- Users can add/remove items dynamically; the list displays item count
+
+## Object Array (Simple Repeating Items)
+Simple repeating items using a Control bound to an array property — auto-generated layout
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "people": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "label": "People",
+  "scope": "#/properties/people"
+}
+\`\`\`
+
+### Notes
+- The simplest way to add repeating items — just point a Control at an array property
+- Each item renders as a card with auto-generated layout for its properties
+- You lose control over how item fields are arranged (no custom layout)
+- Best for small lists with simple items; use ListWithDetail for complex items
+- Each property on an item renders as a separate row on the card
+
+# Rule Examples
+
+## Show/Hide Rule (Conditional Visibility)
+SHOW or HIDE form elements based on boolean, string, or other field values using JSON Forms rules
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "hasChildren": {
+      "type": "boolean"
+    },
+    "numberOfChildren": {
+      "type": "integer"
+    },
+    "childsFirstName": {
+      "type": "string"
+    },
+    "childsLastName": {
+      "type": "string"
+    },
+    "needsAccommodation": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no"
+      ]
+    },
+    "accommodationDetails": {
+      "type": "string"
+    },
+    "termsAccepted": {
+      "type": "boolean"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/hasChildren",
+      "label": "Do you have children?"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/numberOfChildren",
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/hasChildren",
+          "schema": {
+            "const": true
+          }
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/childsFirstName",
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/hasChildren",
+          "schema": {
+            "const": true
+          }
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/childsLastName",
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/hasChildren",
+          "schema": {
+            "const": true
+          }
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/needsAccommodation",
+      "label": "Do you need an accommodation?",
+      "options": {
+        "componentProps": {
+          "name": "needsAccommodation"
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/accommodationDetails",
+      "label": "Please describe the accommodation needed",
+      "options": {
+        "multi": true
+      },
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/needsAccommodation",
+          "schema": {
+            "const": "yes"
+          }
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/termsAccepted",
+      "label": "I accept the terms and conditions"
+    },
+    {
+      "type": "HelpContent",
+      "label": "",
+      "options": {
+        "help": "⚠ You must accept the terms and conditions before submitting.",
+        "variant": "important"
+      },
+      "rule": {
+        "effect": "HIDE",
+        "condition": {
+          "scope": "#/properties/termsAccepted",
+          "schema": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Attach a \`rule\` object to any UI schema element (Control, Layout, Group, etc.)
+- The \`effect\` can be \`SHOW\`, \`HIDE\`, \`ENABLE\`, or \`DISABLE\`
+- SHOW: element is hidden by default, shown when condition is TRUE
+- HIDE: element is visible by default, hidden when condition is TRUE — the INVERSE of SHOW
+- The \`condition.scope\` points to the field being evaluated; \`condition.schema\` is a JSON schema to match
+- Use \`const\` for exact value matching (boolean, string, number): \`{ const: true }\`, \`{ const: "yes" }\`, \`{ const: 42 }\`
+- String matching: \`{ const: "yes" }\` matches exactly 'yes'; \`{ enum: ["yes", "maybe"] }\` matches either value
+- IMPORTANT: Hidden fields can still be \`required\` — use conditional validation (if/then) to avoid validation errors on hidden fields
+- A rule can be attached to a layout element to show/hide an entire group of fields at once
+- Choose SHOW vs HIDE based on default state: use SHOW when hidden-by-default, HIDE when visible-by-default
+
+## Enable/Disable Rule
+ENABLE or DISABLE a field based on another field's value — field remains visible but read-only when disabled
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "isDead": {
+      "type": "boolean"
+    },
+    "kindOfDead": {
+      "type": "string"
+    },
+    "hasLicense": {
+      "type": "boolean"
+    },
+    "licenseNumber": {
+      "type": "string"
+    },
+    "licenseExpiry": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/isDead",
+      "label": "Is Dead?"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/kindOfDead",
+      "label": "Kind of dead",
+      "rule": {
+        "effect": "ENABLE",
+        "condition": {
+          "scope": "#/properties/isDead",
+          "schema": {
+            "const": true
+          }
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/hasLicense",
+      "label": "Do you have a licence?"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/licenseNumber",
+      "label": "Licence Number",
+      "rule": {
+        "effect": "ENABLE",
+        "condition": {
+          "scope": "#/properties/hasLicense",
+          "schema": {
+            "const": true
+          }
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/licenseExpiry",
+      "label": "Licence Expiry Date",
+      "rule": {
+        "effect": "ENABLE",
+        "condition": {
+          "scope": "#/properties/hasLicense",
+          "schema": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- ENABLE: field starts disabled, becomes enabled when condition is TRUE
+- DISABLE: field starts enabled, becomes disabled when condition is TRUE — the INVERSE of ENABLE
+- Use ENABLE/DISABLE when you want the field to remain visible but toggled between editable and read-only
+- Disabled fields display their current value but don't accept input
+- Unlike SHOW/HIDE, the field is always visible — use this for fields that provide context
+- Choose ENABLE vs DISABLE based on the default state: use ENABLE when disabled-by-default, DISABLE when enabled-by-default
+- You can combine ENABLE/DISABLE with conditional required validation (if/then) to make a field required only when it is enabled
+
+## Rule with Enum / Multi-Value Matching
+Show or hide elements based on matching one of several values using \`enum\` in the rule condition
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "memberType": {
+      "type": "string",
+      "enum": [
+        "employee",
+        "contractor",
+        "volunteer",
+        "other"
+      ]
+    },
+    "employeeId": {
+      "type": "string"
+    },
+    "contractorCompany": {
+      "type": "string"
+    },
+    "volunteerOrganization": {
+      "type": "string"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/memberType",
+      "label": "What is your role?"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/employeeId",
+      "label": "Employee ID",
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/memberType",
+          "schema": {
+            "const": "employee"
+          }
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/contractorCompany",
+      "label": "Contractor Company",
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/memberType",
+          "schema": {
+            "enum": [
+              "contractor",
+              "other"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/volunteerOrganization",
+      "label": "Volunteer Organization",
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/memberType",
+          "schema": {
+            "const": "volunteer"
+          }
+        }
+      }
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Use \`const\` in condition schema to match a single value exactly
+- Use \`enum\` in condition schema to match any of several values
+- Use \`not: { const: value }\` to negate — show when value is NOT a specific value
+- Numeric ranges: use \`minimum\`, \`maximum\`, \`exclusiveMinimum\`, \`exclusiveMaximum\`
+- You can scope the condition to \`#\` (root) and use a full JSON schema for complex multi-property conditions
+
+## Multi-Criteria Rule (AND / OR Logic)
+Show, hide, enable, or disable an element based on multiple field values using \`scope: "#"\` with a full JSON Schema condition
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "employmentStatus": {
+      "type": "string",
+      "enum": [
+        "employed",
+        "self-employed",
+        "unemployed",
+        "retired"
+      ]
+    },
+    "province": {
+      "type": "string",
+      "enum": [
+        "Alberta",
+        "British Columbia",
+        "Ontario",
+        "Other"
+      ]
+    },
+    "annualIncome": {
+      "type": "number"
+    },
+    "albertaEmployeeBenefitInfo": {
+      "type": "string"
+    },
+    "retirementPlanDetails": {
+      "type": "string"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/employmentStatus",
+      "label": "Employment Status"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/province",
+      "label": "Province"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/annualIncome",
+      "label": "Annual Income ($)"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/albertaEmployeeBenefitInfo",
+      "label": "Alberta Employee Benefit Details",
+      "options": {
+        "help": "This field only appears when you are employed AND in Alberta."
+      },
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#",
+          "schema": {
+            "properties": {
+              "employmentStatus": {
+                "const": "employed"
+              },
+              "province": {
+                "const": "Alberta"
+              }
+            },
+            "required": [
+              "employmentStatus",
+              "province"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/retirementPlanDetails",
+      "label": "Retirement Plan Details",
+      "options": {
+        "help": "This field appears when you are retired OR self-employed."
+      },
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#",
+          "schema": {
+            "anyOf": [
+              {
+                "properties": {
+                  "employmentStatus": {
+                    "const": "retired"
+                  }
+                },
+                "required": [
+                  "employmentStatus"
+                ]
+              },
+              {
+                "properties": {
+                  "employmentStatus": {
+                    "const": "self-employed"
+                  }
+                },
+                "required": [
+                  "employmentStatus"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- For AND logic: set \`condition.scope\` to \`"#"\` (root) and provide a JSON Schema with multiple \`properties\` and \`required\`
+- All listed properties must match for the condition to be true — this is AND logic
+- For OR logic: use \`anyOf\` inside the condition schema — the condition is true if ANY sub-schema matches
+- IMPORTANT: Include \`required\` in the condition schema to ensure fields must be present for the condition to match
+- You can combine AND and OR: \`{ properties: { a: ... }, required: [...], anyOf: [...] }\`
+- This works with all effects: SHOW, HIDE, ENABLE, DISABLE
+- For negation (NOT): wrap in \`not: { properties: { ... }, required: [...] }\` inside the condition schema
+- The single-field \`condition.scope: "#/properties/fieldName"\` pattern only checks ONE field — use \`scope: "#"\` for multi-field conditions
+
+## Rule on Group Wrapper (Multi-Element Rule)
+Attach a rule to a Group or VerticalLayout to show/hide multiple elements at once. Includes wrap and unwrap procedures.
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "hasSpouse": {
+      "type": "boolean"
+    },
+    "spouseFirstName": {
+      "type": "string"
+    },
+    "spouseLastName": {
+      "type": "string"
+    },
+    "spouseEmail": {
+      "type": "string",
+      "format": "email"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/hasSpouse",
+      "label": "Do you have a spouse?"
+    },
+    {
+      "type": "Group",
+      "label": "Spouse Information",
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/hasSpouse",
+          "schema": {
+            "const": true
+          }
+        }
+      },
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/spouseFirstName",
+          "label": "Spouse First Name"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/spouseLastName",
+          "label": "Spouse Last Name"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/spouseEmail",
+          "label": "Spouse Email"
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- A \`rule\` can be attached to ANY UI schema element: Control, Group, VerticalLayout, HorizontalLayout, Category, etc.
+- When a rule is on a layout/Group, ALL child elements are shown/hidden/enabled/disabled together
+- 
+- ## WRAP PROCEDURE — Adding an element to an existing single-element rule:
+- 1. Create a new Group or VerticalLayout element
+- 2. Move the existing element (with its rule) inside as a child
+- 3. Add the new element as another child
+- 4. Move the \`rule\` from the original element UP to the new wrapper
+- 5. Remove the \`rule\` from the original element (now the wrapper controls visibility)
+- 
+- ## UNWRAP PROCEDURE — Removing an element from a multi-element rule:
+- 1. Remove the element from the wrapper's \`elements\` array
+- 2. Place the removed element where it should go (e.g., outside the wrapper, or in another section)
+- 3. If only ONE element remains in the wrapper, move the \`rule\` down to that element and delete the wrapper
+- 4. If zero elements remain, delete the wrapper entirely
+- 
+- ## ADD CRITERIA PROCEDURE — Adding a condition to an existing rule:
+- 1. If the rule currently uses \`scope: "#/properties/field"\`, change it to \`scope: "#"\` and restructure the condition as a full JSON Schema
+- 2. Add the new property check to the \`properties\` and \`required\` in the condition schema
+- 3. For OR logic, wrap existing and new conditions in \`anyOf\`
+- 
+- ## REMOVE CRITERIA PROCEDURE — Removing a condition from a rule:
+- 1. Remove the property from the condition schema's \`properties\` and \`required\`
+- 2. If only one property remains AND the condition used \`scope: "#"\`, simplify back to \`scope: "#/properties/field"\` with \`schema: { const: value }\`
+- 3. If removing from \`anyOf\`, remove the sub-schema entry; if only one remains, unwrap it from the \`anyOf\` array
+
+# Validation Examples
+
+## Conditional Required (if/then)
+Conditionally required fields using JSON Schema if/then/else — essential when using SHOW/HIDE rules
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "hasChildren": {
+      "type": "boolean"
+    },
+    "childsFirstName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "childsLastName": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "hasChildren"
+  ],
+  "if": {
+    "properties": {
+      "hasChildren": {
+        "const": true
+      }
+    }
+  },
+  "then": {
+    "required": [
+      "childsFirstName",
+      "childsLastName"
+    ]
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/hasChildren",
+      "label": "Do you have children?"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/childsFirstName",
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/hasChildren",
+          "schema": {
+            "const": true
+          }
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/childsLastName",
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/hasChildren",
+          "schema": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- CRITICAL: Always pair SHOW/HIDE rules with conditional validation in the data schema
+- Without if/then, hidden required fields cause form validation to fail silently
+- The \`if/then\` construct is at the top level of the data schema (same level as \`properties\` and \`required\`)
+- Add \`minLength: 1\` to conditionally required string fields for the empty-string workaround
+- There can only be one \`if/then\` at each schema level — use \`allOf\` for multiple conditions
+
+## Multiple Conditional Validations (allOf)
+Multiple if/then blocks wrapped in \`allOf\` for forms with several conditional required fields
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "hasChildren": {
+      "type": "boolean"
+    },
+    "childsFirstName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "childsLastName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "General Inquiry",
+        "Highway Issues",
+        "Environmental Concern"
+      ]
+    },
+    "highwayIssueDetails": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "category"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "hasChildren": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "childsFirstName",
+          "childsLastName"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "category": {
+            "const": "Highway Issues"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "highwayIssueDetails"
+        ]
+      }
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Wrap multiple if/then blocks in \`allOf\` at the root level of the data schema
+- You can add as many conditional validation blocks as needed inside \`allOf\`
+- Each \`if/then\` is independent — they don't interfere with each other
+- You can conditionally specify ANY JSON Schema validation: required, pattern, minLength, format, etc.
+- Be sure to pair each conditional validation with a matching SHOW/HIDE rule in the UI schema
+
+## Custom Error Messages
+Override default AJV validation error messages with user-friendly text using \`errorMessage\` in schema
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 15,
+      "pattern": "^[a-zA-Z]*$",
+      "errorMessage": {
+        "pattern": "First name must only contain letters.",
+        "minLength": "Minimum length for first name is 2 characters.",
+        "maxLength": "Maximum length for first name is 15 characters."
+      }
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "errorMessage": {
+        "_": "Please enter a valid email address."
+      }
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/firstName"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/email"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Add \`errorMessage\` object to any property in the data schema
+- Map each constraint keyword (pattern, minLength, maxLength, format) to a custom error string
+- Use \`"_"\` as the key for a default message that applies to ALL constraints on that field
+- If a constraint is omitted from errorMessage, the default AJV error is used
+- The \`required\` field validation message is NOT customizable — it always shows '{fieldName} is required'
+- Keep error messages at grade 9 reading level for citizen-facing government forms
+
+# Data Register Examples
+
+## Data Register — Configuration Service
+Populate a dropdown with dynamic data from the ADSP Configuration Service using a URN register
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "provinces": {
+      "type": "string",
+      "enum": [
+        ""
+      ]
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/provinces",
+  "label": "Province",
+  "options": {
+    "register": {
+      "urn": "urn:ads:platform:configuration:v2:/configuration/public-register/public-register-1"
+    }
+  }
+}
+\`\`\`
+
+### Notes
+- Set \`enum: [""]\` as a placeholder in the data schema — the actual values are loaded from the register
+- The \`options.register.urn\` points to a Configuration Service configuration definition
+- Admin-managed lists can be updated without changing the form definition
+- The register data can be an array of strings or array of \`{label, value}\` objects
+- Requires the JsonFormRegisterProvider context wrapper in the React integration
+
+## Data Register — External API Endpoint
+Populate a dropdown with data from an external REST API using a URL register
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "carBrand": {
+      "type": "string",
+      "enum": [
+        ""
+      ]
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/carBrand",
+  "label": "Select car brand",
+  "options": {
+    "register": {
+      "url": "https://parallelum.com.br/fipe/api/v1/carros/marcas",
+      "objectPathInArray": "nome"
+    }
+  }
+}
+\`\`\`
+
+### Notes
+- Use \`options.register.url\` for external REST API endpoints that return JSON arrays
+- The \`objectPathInArray\` property specifies which JSON property to use as the dropdown label and value
+- For example, if the API returns \`[{"codigo": "1", "nome": "Acura"}]\`, use \`objectPathInArray: "nome"\`
+- Set \`enum: [""]\` as a placeholder in the data schema — the actual values are loaded from the API
+- Requires the JsonFormRegisterProvider context wrapper in the React integration
+
+# Complex Scenario Examples
+
+## Full Government Application Form
+Complete multi-page government application with conditional fields, file uploads, common fields, FOIP notice, and declaration checkbox
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "applicantName": {
+      "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/personFullName"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "minLength": 1
+    },
+    "phone": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mailingAddress": {
+      "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressAlberta"
+    },
+    "applicationType": {
+      "type": "string",
+      "enum": [
+        "New Application",
+        "Renewal",
+        "Amendment"
+      ]
+    },
+    "hasSupplementaryDocs": {
+      "type": "boolean"
+    },
+    "supplementaryDocument": {
+      "type": "string",
+      "format": "file-urn"
+    },
+    "additionalNotes": {
+      "type": "string"
+    },
+    "iDeclare": {
+      "type": "boolean",
+      "allOf": [
+        {
+          "enum": [
+            true
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "email",
+    "phone",
+    "applicationType",
+    "iDeclare"
+  ],
+  "if": {
+    "properties": {
+      "hasSupplementaryDocs": {
+        "const": true
+      }
+    }
+  },
+  "then": {
+    "required": [
+      "supplementaryDocument"
+    ]
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Categorization",
+  "options": {
+    "variant": "pages",
+    "title": "Government Service Application",
+    "subtitle": "Apply for the program"
+  },
+  "elements": [
+    {
+      "type": "Category",
+      "label": "Personal Information",
+      "options": {
+        "sectionTitle": "About You"
+      },
+      "elements": [
+        {
+          "type": "HelpContent",
+          "options": {
+            "markdown": true,
+            "help": [
+              "Please provide your contact information. All fields marked with * are required."
+            ]
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/applicantName"
+        },
+        {
+          "type": "HorizontalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/email",
+              "options": {
+                "help": "We'll use this to send you updates on your application."
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/phone",
+              "options": {
+                "help": "Include area code (e.g., 780-555-0123)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Mailing Address",
+      "options": {
+        "sectionTitle": "About You"
+      },
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/mailingAddress"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Application Details",
+      "options": {
+        "sectionTitle": "Your Application"
+      },
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/applicationType",
+          "options": {
+            "format": "radio"
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hasSupplementaryDocs",
+          "label": "Do you have supplementary documents to upload?"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/supplementaryDocument",
+          "options": {
+            "variant": "dragdrop"
+          },
+          "rule": {
+            "effect": "SHOW",
+            "condition": {
+              "scope": "#/properties/hasSupplementaryDocs",
+              "schema": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/additionalNotes",
+          "options": {
+            "multi": true,
+            "help": "Provide any additional information relevant to your application."
+          }
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Review & Submit",
+      "options": {
+        "sectionTitle": "Submission"
+      },
+      "elements": [
+        {
+          "type": "HelpContent",
+          "options": {
+            "markdown": true,
+            "help": [
+              "#### Notice of Collection",
+              "The personal information on this form is collected under the authority of Section 33(c) of the *Freedom of Information and Protection of Privacy Act* (FOIP). If you have any questions contact us at [support@gov.ab.ca](mailto:support@gov.ab.ca)."
+            ]
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/iDeclare",
+          "options": {
+            "text": "I declare that the information I have provided is true and correct to the best of my knowledge."
+          }
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- This combines: multi-page stepper, common fields ($ref), conditional file upload, FOIP notice, and declaration
+- Section titles group related categories (pages) on the task list
+- The if/then conditional makes supplementaryDocument required only when hasSupplementaryDocs is true
+- Always pair SHOW/HIDE rules with matching if/then conditional validation in the data schema
+- Use schemaDefinitionTool to load common schema definitions before using $ref for fullName and address
+- The FOIP notice and declaration checkbox are required on most Alberta government forms
+
+## Contact/Feedback Form with Conditional Routing
+Simple feedback form with category-based conditional fields and custom validation messages
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "fullName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "minLength": 1
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "General Inquiry",
+        "Technical Issue",
+        "Complaint",
+        "Suggestion"
+      ]
+    },
+    "urgency": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Critical"
+      ]
+    },
+    "issueDescription": {
+      "type": "string",
+      "minLength": 10,
+      "errorMessage": {
+        "minLength": "Please provide at least 10 characters describing your issue."
+      }
+    },
+    "stepsToReproduce": {
+      "type": "string"
+    },
+    "preferredResolution": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "fullName",
+    "email",
+    "category",
+    "issueDescription"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "category": {
+            "const": "Technical Issue"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "stepsToReproduce"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "category": {
+            "const": "Complaint"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "urgency",
+          "preferredResolution"
+        ]
+      }
+    }
+  ]
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "HelpContent",
+      "options": {
+        "markdown": true,
+        "help": [
+          "### Contact Us",
+          "Please fill out the form below and we'll get back to you within 2 business days."
+        ]
+      }
+    },
+    {
+      "type": "HorizontalLayout",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/fullName"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/email"
+        }
+      ]
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/category",
+      "options": {
+        "format": "radio"
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/urgency",
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/category",
+          "schema": {
+            "const": "Complaint"
+          }
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/issueDescription",
+      "options": {
+        "multi": true,
+        "help": "Describe your inquiry in detail. Be specific about what happened."
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/stepsToReproduce",
+      "label": "Steps to reproduce the issue",
+      "options": {
+        "multi": true,
+        "help": "List the steps someone would follow to encounter this issue."
+      },
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/category",
+          "schema": {
+            "const": "Technical Issue"
+          }
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/preferredResolution",
+      "options": {
+        "multi": true,
+        "help": "Tell us how you'd like this resolved."
+      },
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/category",
+          "schema": {
+            "const": "Complaint"
+          }
+        }
+      }
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- This demonstrates a single-page form with allOf conditional validation and category-based SHOW rules
+- Each category shows different follow-up fields: Technical Issue → steps to reproduce, Complaint → urgency + resolution
+- Custom errorMessage on issueDescription provides better guidance than default AJV messages
+- Always pair SHOW rules with if/then conditional required in the data schema
+- Uses HorizontalLayout for name/email on one row, radio buttons for category selection
+
+## Vendor Registration with Repeating Items
+Multi-page vendor registration form with repeating product list, data registers, and file upload
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "businessName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "businessType": {
+      "type": "string",
+      "enum": [
+        "Sole Proprietor",
+        "Partnership",
+        "Corporation",
+        "Non-Profit"
+      ]
+    },
+    "contactEmail": {
+      "type": "string",
+      "format": "email",
+      "minLength": 1
+    },
+    "contactPhone": {
+      "type": "string",
+      "minLength": 1
+    },
+    "province": {
+      "type": "string",
+      "enum": [
+        ""
+      ]
+    },
+    "products": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "productName": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Produce",
+              "Baked Goods",
+              "Crafts",
+              "Prepared Foods",
+              "Other"
+            ]
+          },
+          "estimatedRevenue": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "businessLicense": {
+      "type": "string",
+      "format": "file-urn"
+    },
+    "iDeclare": {
+      "type": "boolean",
+      "allOf": [
+        {
+          "enum": [
+            true
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "businessName",
+    "businessType",
+    "contactEmail",
+    "contactPhone",
+    "iDeclare"
+  ]
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Categorization",
+  "options": {
+    "variant": "pages",
+    "title": "Vendor Registration",
+    "subtitle": "Register for the Approved Farmers' Market Program"
+  },
+  "elements": [
+    {
+      "type": "Category",
+      "label": "Business Information",
+      "options": {
+        "sectionTitle": "About Your Business"
+      },
+      "elements": [
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/businessName"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/businessType",
+              "options": {
+                "format": "radio"
+              }
+            },
+            {
+              "type": "HorizontalLayout",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/contactEmail"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/contactPhone"
+                }
+              ]
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/province",
+              "label": "Province",
+              "options": {
+                "register": {
+                  "urn": "urn:ads:platform:configuration:v2:/configuration/public-register/provinces"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Products & Services",
+      "options": {
+        "sectionTitle": "What You Sell"
+      },
+      "elements": [
+        {
+          "type": "HelpContent",
+          "options": {
+            "markdown": true,
+            "help": [
+              "List the products you plan to sell at the market. Click **Add** to add each product."
+            ]
+          }
+        },
+        {
+          "type": "ListWithDetail",
+          "scope": "#/properties/products",
+          "options": {
+            "detail": {
+              "type": "VerticalLayout",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/productName",
+                  "label": "Product Name"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/category"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/estimatedRevenue",
+                  "label": "Estimated Yearly Revenue ($)"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Documents & Declaration",
+      "options": {
+        "sectionTitle": "Submission"
+      },
+      "elements": [
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "HelpContent",
+              "options": {
+                "help": "Please upload a copy of your business license."
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/businessLicense",
+              "options": {
+                "variant": "dragdrop"
+              }
+            },
+            {
+              "type": "HelpContent",
+              "options": {
+                "markdown": true,
+                "help": [
+                  "#### Notice of Collection",
+                  "The personal information on this form is collected under the authority of Section 33(c) of the *Freedom of Information and Protection of Privacy Act* (FOIP)."
+                ]
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/iDeclare",
+              "options": {
+                "text": "I declare that the information I have provided is accurate and complete."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- This demonstrates: multi-page stepper, ListWithDetail for products, data register for province, file upload, declaration
+- The province dropdown uses a Configuration Service register (admin-managed list)
+- Products use ListWithDetail for full control over item layout
+- Farmers market vendor registration is a common Alberta government use case
+- Section titles group categories: 'About Your Business' and 'What You Sell' and 'Submission'
+
+# Computed Field Examples
+
+## Basic Arithmetic Computed Fields
+Simple math operations: addition, subtraction, multiplication, division using \`format: computed\`
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "price": {
+      "type": "number",
+      "title": "Unit Price ($)"
+    },
+    "quantity": {
+      "type": "number",
+      "title": "Quantity"
+    },
+    "discount": {
+      "type": "number",
+      "title": "Discount ($)"
+    },
+    "subtotal": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/price * #/properties/quantity"
+    },
+    "total": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/price * #/properties/quantity - #/properties/discount"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/price"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/quantity"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/discount"
+    },
+    {
+      "type": "Control",
+      "label": "Subtotal (Price × Quantity)",
+      "scope": "#/properties/subtotal"
+    },
+    {
+      "type": "Control",
+      "label": "Total (Subtotal − Discount)",
+      "scope": "#/properties/total"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Computed fields use \`"type": "string", "format": "computed"\` in the dataSchema
+- The \`description\` field IS the math expression — it references other fields via JSON pointer scopes
+- Supported arithmetic operators: \`+\`, \`-\`, \`*\`, \`/\`, \`%\` (modulo), \`^\` (exponent)
+- Computed fields are read-only in the UI — users cannot edit them
+- Result must be a finite number — NaN or Infinity shows an error
+
+## Conditional Ternary Computed Field
+Use the ternary operator (\`? :\`) and \`if()\` function to compute values based on conditions
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "income": {
+      "type": "number",
+      "title": "Annual Income ($)"
+    },
+    "dependents": {
+      "type": "number",
+      "title": "Number of Dependents"
+    },
+    "taxRate": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/income > 50000 ? 25 : 15"
+    },
+    "taxAmount": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/income > 50000 ? #/properties/income * 0.25 : #/properties/income * 0.15"
+    },
+    "dependentCredit": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/dependents > 0 ? #/properties/dependents * 500 : 0"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/income"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/dependents"
+    },
+    {
+      "type": "Control",
+      "label": "Tax Rate (%)",
+      "scope": "#/properties/taxRate"
+    },
+    {
+      "type": "Control",
+      "label": "Tax Amount ($)",
+      "scope": "#/properties/taxAmount"
+    },
+    {
+      "type": "Control",
+      "label": "Dependent Credit ($)",
+      "scope": "#/properties/dependentCredit"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Ternary syntax: \`condition ? trueValue : falseValue\`
+- Equivalent function form: \`if(condition, trueValue, falseValue)\`
+- Comparison operators: \`>\`, \`<\`, \`>=\`, \`<=\`, \`==\`, \`!=\`
+- Logical operators: \`and\`, \`or\`, \`not\` can combine conditions
+- Both literal numbers and field references can appear on either side of the ternary
+
+## SUM Array Aggregate
+Use \`SUM()\` to total a numeric column across an array of objects (repeating rows)
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "lineItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount ($)"
+          },
+          "hours": {
+            "type": "number",
+            "title": "Hours"
+          }
+        }
+      }
+    },
+    "totalAmount": {
+      "type": "string",
+      "format": "computed",
+      "description": "SUM(#/properties/lineItems/amount)"
+    },
+    "totalHours": {
+      "type": "string",
+      "format": "computed",
+      "description": "SUM(#/properties/lineItems/hours)"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/lineItems",
+      "label": "Line Items"
+    },
+    {
+      "type": "Control",
+      "label": "Total Amount ($)",
+      "scope": "#/properties/totalAmount"
+    },
+    {
+      "type": "Control",
+      "label": "Total Hours",
+      "scope": "#/properties/totalHours"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- SUM syntax: \`SUM(#/properties/arrayField/columnName)\`
+- SUM iterates all rows in the array and sums the specified column
+- Non-numeric values in the column cause a validation error
+- SUM must be the ENTIRE expression — cannot combine with arithmetic (e.g., \`SUM(...) * 1.05\` won't work)
+- Only \`SUM\` is available as an aggregate — no AVG, COUNT, MIN, MAX aggregates
+- The array must contain objects with the referenced property name
+
+## Rounding and Math Functions
+Use built-in functions like \`round()\`, \`ceil()\`, \`floor()\`, \`abs()\`, \`roundTo()\` for precise calculations
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "rawAmount": {
+      "type": "number",
+      "title": "Raw Amount"
+    },
+    "taxPercent": {
+      "type": "number",
+      "title": "Tax Rate (%)"
+    },
+    "rounded": {
+      "type": "string",
+      "format": "computed",
+      "description": "round(#/properties/rawAmount * #/properties/taxPercent / 100)"
+    },
+    "roundedTo2": {
+      "type": "string",
+      "format": "computed",
+      "description": "roundTo(#/properties/rawAmount * #/properties/taxPercent / 100, 2)"
+    },
+    "ceiled": {
+      "type": "string",
+      "format": "computed",
+      "description": "ceil(#/properties/rawAmount * #/properties/taxPercent / 100)"
+    },
+    "floored": {
+      "type": "string",
+      "format": "computed",
+      "description": "floor(#/properties/rawAmount * #/properties/taxPercent / 100)"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/rawAmount"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/taxPercent"
+    },
+    {
+      "type": "Control",
+      "label": "Tax (rounded to nearest integer)",
+      "scope": "#/properties/rounded"
+    },
+    {
+      "type": "Control",
+      "label": "Tax (rounded to 2 decimals)",
+      "scope": "#/properties/roundedTo2"
+    },
+    {
+      "type": "Control",
+      "label": "Tax (ceiling — always round up)",
+      "scope": "#/properties/ceiled"
+    },
+    {
+      "type": "Control",
+      "label": "Tax (floor — always round down)",
+      "scope": "#/properties/floored"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- \`round(x)\` — round to nearest integer
+- \`roundTo(x, n)\` — round x to n decimal places (e.g., \`roundTo(x, 2)\` for currency)
+- \`ceil(x)\` — smallest integer >= x (always rounds up)
+- \`floor(x)\` — largest integer <= x (always rounds down)
+- \`abs(x)\` — absolute value
+- \`trunc(x)\` — integer part (removes decimals without rounding)
+- \`sqrt(x)\` — square root, \`pow(x, y)\` — x to the power of y
+- Functions can be nested: \`round(abs(#/properties/a - #/properties/b))\`
+
+## Min/Max Scalar Comparison
+Use \`min()\` and \`max()\` functions to compute bounded values, caps, and floors
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "requestedAmount": {
+      "type": "number",
+      "title": "Requested Amount ($)"
+    },
+    "maxAllowance": {
+      "type": "number",
+      "title": "Maximum Allowance ($)"
+    },
+    "approvedAmount": {
+      "type": "string",
+      "format": "computed",
+      "description": "min(#/properties/requestedAmount, #/properties/maxAllowance)"
+    },
+    "bidA": {
+      "type": "number",
+      "title": "Bid A ($)"
+    },
+    "bidB": {
+      "type": "number",
+      "title": "Bid B ($)"
+    },
+    "bidC": {
+      "type": "number",
+      "title": "Bid C ($)"
+    },
+    "lowestBid": {
+      "type": "string",
+      "format": "computed",
+      "description": "min(#/properties/bidA, #/properties/bidB, #/properties/bidC)"
+    },
+    "highestBid": {
+      "type": "string",
+      "format": "computed",
+      "description": "max(#/properties/bidA, #/properties/bidB, #/properties/bidC)"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "HelpContent",
+      "options": {
+        "help": [
+          "Reimbursement Calculator"
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/requestedAmount"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/maxAllowance"
+    },
+    {
+      "type": "Control",
+      "label": "Approved (lesser of requested vs allowance)",
+      "scope": "#/properties/approvedAmount"
+    },
+    {
+      "type": "HelpContent",
+      "options": {
+        "help": [
+          "Bid Comparison"
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/bidA"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/bidB"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/bidC"
+    },
+    {
+      "type": "Control",
+      "label": "Lowest Bid",
+      "scope": "#/properties/lowestBid"
+    },
+    {
+      "type": "Control",
+      "label": "Highest Bid",
+      "scope": "#/properties/highestBid"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- \`min(a, b, ...)\` returns the smallest value among the arguments
+- \`max(a, b, ...)\` returns the largest value among the arguments
+- Both accept 2 or more arguments — can compare multiple field references or literals
+- These are scalar comparisons, NOT array aggregates — each argument is a single value
+- Combine with other expressions: \`min(#/properties/x * 2, 1000)\` caps a doubled value at 1000
+
+## Percentage and Ratio Calculations
+Compute percentages, ratios, and proportions with proper parenthesized expressions
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "partA": {
+      "type": "number",
+      "title": "Category A Amount ($)"
+    },
+    "partB": {
+      "type": "number",
+      "title": "Category B Amount ($)"
+    },
+    "partC": {
+      "type": "number",
+      "title": "Category C Amount ($)"
+    },
+    "grandTotal": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/partA + #/properties/partB + #/properties/partC"
+    },
+    "percentA": {
+      "type": "string",
+      "format": "computed",
+      "description": "roundTo(#/properties/partA / (#/properties/partA + #/properties/partB + #/properties/partC) * 100, 1)"
+    },
+    "percentB": {
+      "type": "string",
+      "format": "computed",
+      "description": "roundTo(#/properties/partB / (#/properties/partA + #/properties/partB + #/properties/partC) * 100, 1)"
+    },
+    "percentC": {
+      "type": "string",
+      "format": "computed",
+      "description": "roundTo(#/properties/partC / (#/properties/partA + #/properties/partB + #/properties/partC) * 100, 1)"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/partA"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/partB"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/partC"
+    },
+    {
+      "type": "Control",
+      "label": "Grand Total ($)",
+      "scope": "#/properties/grandTotal"
+    },
+    {
+      "type": "Control",
+      "label": "Category A (%)",
+      "scope": "#/properties/percentA"
+    },
+    {
+      "type": "Control",
+      "label": "Category B (%)",
+      "scope": "#/properties/percentB"
+    },
+    {
+      "type": "Control",
+      "label": "Category C (%)",
+      "scope": "#/properties/percentC"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Use parentheses \`()\` to control order of operations — \`a / (b + c)\` divides by the sum
+- Without parentheses, \`a / b + c * 100\` follows standard precedence: \`(a/b) + (c*100)\`
+- \`roundTo(expr, n)\` rounds the result to n decimal places for clean percentage display
+- Division by zero produces Infinity which triggers an error — handle with ternary if needed
+- Operator precedence (highest to lowest): \`^\`, \`* / %\`, \`+ -\`, comparisons, \`and\`, \`or\`, \`? :\`
+
+## Nested Ternary and Logical Operators
+Chain ternary operators and use \`and\`/\`or\` for multi-condition computed fields
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "score": {
+      "type": "number",
+      "title": "Assessment Score (0-100)"
+    },
+    "yearsExperience": {
+      "type": "number",
+      "title": "Years of Experience"
+    },
+    "grade": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/score >= 90 ? 4 : (#/properties/score >= 80 ? 3 : (#/properties/score >= 70 ? 2 : (#/properties/score >= 60 ? 1 : 0)))"
+    },
+    "experienceBonus": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/yearsExperience >= 10 ? 20 : (#/properties/yearsExperience >= 5 ? 10 : (#/properties/yearsExperience >= 2 ? 5 : 0))"
+    },
+    "finalScore": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/score + (#/properties/yearsExperience >= 10 ? 20 : (#/properties/yearsExperience >= 5 ? 10 : (#/properties/yearsExperience >= 2 ? 5 : 0)))"
+    },
+    "meetsThreshold": {
+      "type": "string",
+      "format": "computed",
+      "description": "(#/properties/score >= 70 and #/properties/yearsExperience >= 3) ? 1 : 0"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/score"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/yearsExperience"
+    },
+    {
+      "type": "Control",
+      "label": "Grade (0-4 scale)",
+      "scope": "#/properties/grade"
+    },
+    {
+      "type": "Control",
+      "label": "Experience Bonus Points",
+      "scope": "#/properties/experienceBonus"
+    },
+    {
+      "type": "Control",
+      "label": "Final Score (with bonus)",
+      "scope": "#/properties/finalScore"
+    },
+    {
+      "type": "Control",
+      "label": "Meets Threshold (1=Yes, 0=No)",
+      "scope": "#/properties/meetsThreshold"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Nest ternaries with parentheses: \`a >= 90 ? 4 : (a >= 80 ? 3 : (a >= 70 ? 2 : 0))\`
+- Use \`and\` / \`or\` for multi-condition logic: \`(x > 10 and y < 5) ? 1 : 0\`
+- Use \`not\` for negation: \`not(x > 10) ? 1 : 0\`
+- Results must be numbers — use 1/0 instead of true/false for boolean-like outputs
+- Parentheses are critical in nested ternaries to avoid precedence issues
+- The \`? :\` operator has the lowest precedence after \`or\`, so \`a > 5 ? b : c\` works without extra parens around the condition
+
+## Grant Eligibility Calculator
+Complex real-world example: multi-step grant calculation with tiered rates, caps, and array sums
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "organizationSize": {
+      "type": "number",
+      "title": "Number of Employees"
+    },
+    "annualRevenue": {
+      "type": "number",
+      "title": "Annual Revenue ($)"
+    },
+    "projectCost": {
+      "type": "number",
+      "title": "Total Project Cost ($)"
+    },
+    "expenses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Expense Category"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount ($)"
+          }
+        }
+      }
+    },
+    "totalExpenses": {
+      "type": "string",
+      "format": "computed",
+      "description": "SUM(#/properties/expenses/amount)"
+    },
+    "fundingRate": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/organizationSize <= 10 ? 75 : (#/properties/organizationSize <= 50 ? 60 : (#/properties/organizationSize <= 200 ? 50 : 40))"
+    },
+    "rawFunding": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/projectCost * (#/properties/organizationSize <= 10 ? 0.75 : (#/properties/organizationSize <= 50 ? 0.60 : (#/properties/organizationSize <= 200 ? 0.50 : 0.40)))"
+    },
+    "cappedFunding": {
+      "type": "string",
+      "format": "computed",
+      "description": "min(#/properties/projectCost * (#/properties/organizationSize <= 10 ? 0.75 : (#/properties/organizationSize <= 50 ? 0.60 : (#/properties/organizationSize <= 200 ? 0.50 : 0.40))), 100000)"
+    },
+    "applicantShare": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/projectCost - min(#/properties/projectCost * (#/properties/organizationSize <= 10 ? 0.75 : (#/properties/organizationSize <= 50 ? 0.60 : (#/properties/organizationSize <= 200 ? 0.50 : 0.40))), 100000)"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "HelpContent",
+      "options": {
+        "markdown": true,
+        "help": [
+          "## Grant Funding Calculator",
+          "Funding rate is based on organization size:",
+          "- **1-10 employees**: 75%",
+          "- **11-50 employees**: 60%",
+          "- **51-200 employees**: 50%",
+          "- **200+ employees**: 40%",
+          "Maximum grant: **$100,000**"
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/organizationSize"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/annualRevenue"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/projectCost"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/expenses",
+      "label": "Itemized Expenses"
+    },
+    {
+      "type": "Control",
+      "label": "Total Expenses ($)",
+      "scope": "#/properties/totalExpenses"
+    },
+    {
+      "type": "Control",
+      "label": "Funding Rate (%)",
+      "scope": "#/properties/fundingRate"
+    },
+    {
+      "type": "Control",
+      "label": "Calculated Funding ($) — before cap",
+      "scope": "#/properties/rawFunding"
+    },
+    {
+      "type": "Control",
+      "label": "Approved Funding ($) — capped at $100,000",
+      "scope": "#/properties/cappedFunding"
+    },
+    {
+      "type": "Control",
+      "label": "Applicant Share ($)",
+      "scope": "#/properties/applicantShare"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- This is a complex real-world pattern combining multiple computed techniques
+- Tiered rates use nested ternaries: \`size <= 10 ? 0.75 : (size <= 50 ? 0.60 : ...)\`
+- Funding cap uses \`min(calculated, 100000)\` to enforce the maximum
+- Applicant share = projectCost - cappedFunding (total minus what the grant covers)
+- SUM() is used for the expense array total — but it's standalone (cannot be composed in arithmetic)
+- Note: computed fields referencing OTHER computed fields work but depend on React render order
+- For critical chaining, repeat the expression inline rather than referencing another computed field
+
+## Exponents, Square Root, and Advanced Math
+Use \`^\` exponentiation, \`sqrt()\`, \`pow()\`, \`abs()\`, and constants like \`PI\` for scientific calculations
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "radius": {
+      "type": "number",
+      "title": "Radius (m)"
+    },
+    "circleArea": {
+      "type": "string",
+      "format": "computed",
+      "description": "roundTo(PI * #/properties/radius ^ 2, 2)"
+    },
+    "circumference": {
+      "type": "string",
+      "format": "computed",
+      "description": "roundTo(2 * PI * #/properties/radius, 2)"
+    },
+    "sideA": {
+      "type": "number",
+      "title": "Side A (m)"
+    },
+    "sideB": {
+      "type": "number",
+      "title": "Side B (m)"
+    },
+    "hypotenuse": {
+      "type": "string",
+      "format": "computed",
+      "description": "roundTo(sqrt(#/properties/sideA ^ 2 + #/properties/sideB ^ 2), 2)"
+    },
+    "valueA": {
+      "type": "number",
+      "title": "Value A"
+    },
+    "valueB": {
+      "type": "number",
+      "title": "Value B"
+    },
+    "absoluteDiff": {
+      "type": "string",
+      "format": "computed",
+      "description": "abs(#/properties/valueA - #/properties/valueB)"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "HelpContent",
+      "options": {
+        "help": [
+          "Circle Calculations"
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/radius"
+    },
+    {
+      "type": "Control",
+      "label": "Area (PI × r²)",
+      "scope": "#/properties/circleArea"
+    },
+    {
+      "type": "Control",
+      "label": "Circumference (2 × PI × r)",
+      "scope": "#/properties/circumference"
+    },
+    {
+      "type": "HelpContent",
+      "options": {
+        "help": [
+          "Pythagorean Theorem"
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/sideA"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/sideB"
+    },
+    {
+      "type": "Control",
+      "label": "Hypotenuse (√(a² + b²))",
+      "scope": "#/properties/hypotenuse"
+    },
+    {
+      "type": "HelpContent",
+      "options": {
+        "help": [
+          "Absolute Difference"
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/valueA"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/valueB"
+    },
+    {
+      "type": "Control",
+      "label": "Absolute Difference |A - B|",
+      "scope": "#/properties/absoluteDiff"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- \`^\` is the exponentiation operator (NOT bitwise XOR like in JavaScript): \`x ^ 2\` = x squared
+- \`pow(x, y)\` is equivalent to \`x ^ y\` — use whichever is more readable
+- \`sqrt(x)\` — square root; returns NaN for negative numbers (triggers error)
+- \`cbrt(x)\` — cube root (available but less common)
+- \`abs(x)\` — absolute value, useful for difference calculations
+- \`hypot(a, b)\` or \`pyt(a, b)\` — built-in hypotenuse shortcut (equivalent to sqrt(a^2 + b^2))
+- Constants: \`PI\` (3.14159...) and \`E\` (2.71828...) are available
+- \`exp(x)\` — e^x (Euler's number raised to x)
+
+## Mixed Computed Fields Overview
+Comprehensive example combining arithmetic, ternary conditions, and SUM aggregation in one form
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "x": {
+      "type": "number",
+      "title": "X"
+    },
+    "y": {
+      "type": "number",
+      "title": "Y"
+    },
+    "z": {
+      "type": "number",
+      "title": "Z"
+    },
+    "arr": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "c3": {
+            "type": "number",
+            "title": "C3"
+          }
+        }
+      }
+    },
+    "total": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/x * #/properties/y + #/properties/z"
+    },
+    "condition": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/x > 10 ? #/properties/y : #/properties/z"
+    },
+    "sumC3": {
+      "type": "string",
+      "format": "computed",
+      "description": "SUM(#/properties/arr/c3)"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/x"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/y"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/z"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/arr",
+      "label": "Array of objects"
+    },
+    {
+      "type": "Control",
+      "label": "Total (x × y + z)",
+      "scope": "#/properties/total"
+    },
+    {
+      "type": "Control",
+      "label": "Condition (if x > 10 then y else z)",
+      "scope": "#/properties/condition"
+    },
+    {
+      "type": "Control",
+      "label": "Sum of C3",
+      "scope": "#/properties/sumC3"
+    }
+  ]
+}
+\`\`\`
+
+### Notes
+- Demonstrates three computed patterns in one form: arithmetic, ternary condition, and SUM aggregate
+- Arithmetic: \`#/properties/x * #/properties/y + #/properties/z\` — standard operator precedence (* before +)
+- Ternary: \`#/properties/x > 10 ? #/properties/y : #/properties/z\` — returns y if x>10, else z
+- SUM: \`SUM(#/properties/arr/c3)\` — sums the c3 column across all array rows
+- Computed fields render as read-only inputs that update automatically as users enter data
+- The \`description\` field holds the expression — it doubles as tooltip text in some renderers
+
+# Anti-Patterns — What NOT To Do
+Common mistakes and pitfalls to avoid when generating JSON Forms configuration
+
+## Schema Anti-Patterns
+### ❌ UI Schema Scope Mismatch (critical)
+UI schema Control references a property that doesn't exist in the data schema
+
+**Bad:**
+\`\`\`json
+{
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "firstName": {
+        "type": "string"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/first_name"
+  }
+}
+\`\`\`
+**Good:**
+\`\`\`json
+{
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "firstName": {
+        "type": "string"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/firstName"
+  }
+}
+\`\`\`
+**Why:** The scope \`#/properties/first_name\` uses snake_case but the data schema property is \`firstName\` (camelCase). Scopes must exactly match property names.
+
+### ❌ Missing Scope Prefix (critical)
+Control scope doesn't start with \`#/properties/\`
+
+**Bad:**
+\`\`\`json
+{
+  "uiSchema": {
+    "type": "Control",
+    "scope": "firstName"
+  }
+}
+\`\`\`
+**Good:**
+\`\`\`json
+{
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/firstName"
+  }
+}
+\`\`\`
+**Why:** Every Control scope must be a JSON pointer starting with \`#/properties/\`. Omitting the prefix causes the control to not render.
+
+### ❌ Non-camelCase Property Names (high)
+Using snake_case, PascalCase, or spaces in data schema property names
+
+**Bad:**
+\`\`\`json
+{
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "first_name": {
+        "type": "string"
+      },
+      "LastName": {
+        "type": "string"
+      },
+      "phone number": {
+        "type": "string"
+      }
+    }
+  }
+}
+\`\`\`
+**Good:**
+\`\`\`json
+{
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "firstName": {
+        "type": "string"
+      },
+      "lastName": {
+        "type": "string"
+      },
+      "phoneNumber": {
+        "type": "string"
+      }
+    }
+  }
+}
+\`\`\`
+**Why:** Always use camelCase for property names. This is the convention for JSON Forms and ensures consistency in scope references.
+
+### ❌ Missing Pages Variant on Categorization (medium)
+Using Categorization without specifying the pages variant
+
+**Bad:**
+\`\`\`json
+{
+  "uiSchema": {
+    "type": "Categorization",
+    "elements": [
+      {
+        "type": "Category",
+        "label": "Step 1",
+        "elements": []
+      }
+    ]
+  }
+}
+\`\`\`
+**Good:**
+\`\`\`json
+{
+  "uiSchema": {
+    "type": "Categorization",
+    "options": {
+      "variant": "pages"
+    },
+    "elements": [
+      {
+        "type": "Category",
+        "label": "Step 1",
+        "elements": []
+      }
+    ]
+  }
+}
+\`\`\`
+**Why:** For multi-page forms, always set \`options.variant\` to \`"pages"\` on the Categorization element. Without it, pages won't render as steps.
+
+### ❌ Required Field Not in Properties (high)
+Listing a field in \`required\` that doesn't exist as a property
+
+**Bad:**
+\`\`\`json
+{
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "email": {
+        "type": "string",
+        "format": "email"
+      }
+    },
+    "required": [
+      "email",
+      "name"
+    ]
+  }
+}
+\`\`\`
+**Good:**
+\`\`\`json
+{
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "email": {
+        "type": "string",
+        "format": "email"
+      },
+      "name": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "email",
+      "name"
+    ]
+  }
+}
+\`\`\`
+**Why:** Every field listed in \`required\` must also exist in \`properties\`. An orphaned required field causes validation errors.
+
+### ❌ Including formDefinitionId in Tool Input (critical)
+Passing formDefinitionId as input to formConfigurationUpdateTool
+
+**Bad:**
+\`\`\`json
+{
+  "toolInput": {
+    "formDefinitionId": "my-form-id",
+    "name": "My Form",
+    "dataSchema": {}
+  }
+}
+\`\`\`
+**Good:**
+\`\`\`json
+{
+  "toolInput": {
+    "name": "My Form",
+    "dataSchema": {}
+  }
+}
+\`\`\`
+**Why:** formDefinitionId comes from request context automatically. Including it in tool input causes an error. Only pass name, dataSchema, uiSchema, anonymousApply, applicantRoles, and assessorRoles.
+
+## Design Anti-Patterns
+### ❌ Too Many Fields on a Single Page (medium)
+Putting 6+ fields in a VerticalLayout without pagination
+**Fix:** Use Categorization with \`variant: "pages"\` when you have 6 or more fields. Group related fields into separate Category pages.
+
+### ❌ No Help Text on Complex Fields (medium)
+Omitting contextual help for fields that need explanation
+**Fix:** Add \`options.help\` to Controls for fields where users might be uncertain what to enter. Use HelpContent elements for section-level guidance.
+
+### ❌ Including Full JSON in Chat Response (low)
+Showing the entire data/UI schema JSON to the user instead of applying it
+**Fix:** Apply changes using formConfigurationUpdateTool and describe what changed in plain language. Only show JSON if the user explicitly asks for it.
+
+### ❌ Missing FOIP Notice on Government Forms (high)
+Government forms that collect personal information without a privacy/FOIP collection notice
+**Fix:** Add a HelpContent with markdown containing the Notice of Collection under FOIP Act Section 33(c). Place it on the final page before the declaration checkbox.
+
+### ❌ Using Default Checkbox for Yes/No Questions (low)
+Rendering a yes/no question as a plain checkbox instead of Yes/No radio buttons
+**Fix:** Use \`options.format: "radio"\` with \`textForTrue: "Yes"\` and \`textForFalse: "No"\` for clear binary questions. Plain checkboxes are ambiguous — unchecked could mean 'no' or 'not yet answered'.
+
+### ❌ Using Dropdown for 2-3 Options (low)
+Using a dropdown menu when there are only 2-3 options — radio buttons are clearer
+**Fix:** Use \`options.format: "radio"\` for 2-3 options so all choices are visible without clicking. Reserve dropdowns for 4+ options.
+
+### ❌ Using Deprecated HelpContent Variants (hyperlink/img) (high)
+Using \`variant: hyperlink\` or \`variant: img\` on HelpContent — these are deprecated
+**Fix:** Use markdown HelpContent instead. For links: \`{ "markdown": true, "help": ["[Link text](url)"] }\`. For images: \`{ "markdown": true, "help": ["![Alt text](image-url)"] }\`.
+
+## Additional Schema Anti-Patterns
+### ❌ Required String Without minLength Workaround (critical)
+Marking a string field as required but not adding \`minLength: 1\` — empty strings pass validation
+
+**Bad:**
+\`\`\`json
+{
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "firstName": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "firstName"
+    ]
+  }
+}
+\`\`\`
+**Good:**
+\`\`\`json
+{
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "firstName": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "firstName"
+    ]
+  }
+}
+\`\`\`
+**Why:** JSON Forms has a known bug where an empty string satisfies the \`required\` rule. Always add \`minLength: 1\` to required string fields as a workaround.
+
+### ❌ SHOW/HIDE Rule Without Conditional Validation (critical)
+Using a SHOW/HIDE rule on a required field without adding if/then conditional validation in the data schema
+
+**Bad:**
+\`\`\`json
+{
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "hasChildren": {
+        "type": "boolean"
+      },
+      "childsName": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "hasChildren",
+      "childsName"
+    ]
+  },
+  "uiSchema_note": "childsName has SHOW rule based on hasChildren, but childsName is always required in data schema"
+}
+\`\`\`
+**Good:**
+\`\`\`json
+{
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "hasChildren": {
+        "type": "boolean"
+      },
+      "childsName": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "hasChildren"
+    ],
+    "if": {
+      "properties": {
+        "hasChildren": {
+          "const": true
+        }
+      }
+    },
+    "then": {
+      "required": [
+        "childsName"
+      ]
+    }
+  }
+}
+\`\`\`
+**Why:** Hidden required fields cause form validation to fail silently because the user cannot fill them in. Always pair SHOW/HIDE rules with if/then conditional required in the data schema.
+
+### ❌ Nested Object Scope Missing Full Path (critical)
+Using a flat scope for a nested object property instead of the full JSON pointer path
+
+**Bad:**
+\`\`\`json
+{
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/firstName"
+  },
+  "note": "When firstName is nested under a 'name' object"
+}
+\`\`\`
+**Good:**
+\`\`\`json
+{
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/name/properties/firstName"
+  }
+}
+\`\`\`
+**Why:** When data schema uses nested objects (e.g., \`name.firstName\`), UI schema scopes must include the full path. Using \`#/properties/firstName\` when the property is at \`properties.name.properties.firstName\` will not render.
+
+### ❌ Rule Condition Scope Points to Wrong Field (high)
+The rule's condition scope references a non-existent or wrong property
+
+**Bad:**
+\`\`\`json
+{
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/childsName",
+    "rule": {
+      "effect": "SHOW",
+      "condition": {
+        "scope": "#/properties/children",
+        "schema": {
+          "const": true
+        }
+      }
+    }
+  }
+}
+\`\`\`
+**Good:**
+\`\`\`json
+{
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/childsName",
+    "rule": {
+      "effect": "SHOW",
+      "condition": {
+        "scope": "#/properties/hasChildren",
+        "schema": {
+          "const": true
+        }
+      }
+    }
+  }
+}
+\`\`\`
+**Why:** If the condition scope resolves to undefined, JSON Schema validation succeeds and the condition evaluates to true — the rule always fires. Make sure the condition scope matches an actual property name in the data schema.
+"
+`;

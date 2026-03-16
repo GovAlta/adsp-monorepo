@@ -65,7 +65,7 @@ import {
 } from './styled-components';
 import { PageReviewContainer, ReviewHeader, ReviewLabel } from '../Inputs/style-component';
 import { DataProperty } from './ObjectListControlTypes';
-import { DEFAULT_MAX_ITEMS } from '../../common/Constants';
+import { DEFAULT_MAX_ITEMS, REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 
 const GenerateRows = (
@@ -308,7 +308,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                             if (
                               typeof humanMessage === 'string' &&
                               (humanMessage.includes('must have required property') ||
-                                humanMessage.includes('is a required property'))
+                                humanMessage.includes(REQUIRED_PROPERTY_ERROR))
                             ) {
                               const propertyMatch = humanMessage.match(/'([^']+)'/);
                               if (propertyMatch && propertyMatch[1]) {

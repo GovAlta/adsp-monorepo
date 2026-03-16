@@ -1,0 +1,37 @@
+{
+  "id": "api-endpoint-dropdown",
+  "name": "Data Register — External API Endpoint",
+  "category": "data-register",
+  "summary": "Populate a dropdown with data from an external REST API using a URL register",
+  "whenToUse": [
+    "Dropdown lists whose values come from a third-party API or external system",
+    "When the data source is not in the ADSP Configuration Service"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "carBrand": {
+        "type": "string",
+        "enum": [""]
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/carBrand",
+    "label": "Select car brand",
+    "options": {
+      "register": {
+        "url": "https://parallelum.com.br/fipe/api/v1/carros/marcas",
+        "objectPathInArray": "nome"
+      }
+    }
+  },
+  "notes": [
+    "Use `options.register.url` for external REST API endpoints that return JSON arrays",
+    "The `objectPathInArray` property specifies which JSON property to use as the dropdown label and value",
+    "For example, if the API returns `[{\"codigo\": \"1\", \"nome\": \"Acura\"}]`, use `objectPathInArray: \"nome\"`",
+    "Set `enum: [\"\"]` as a placeholder in the data schema — the actual values are loaded from the API",
+    "Requires the JsonFormRegisterProvider context wrapper in the React integration"
+  ]
+}

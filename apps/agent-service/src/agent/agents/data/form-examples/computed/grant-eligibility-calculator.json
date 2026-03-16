@@ -1,0 +1,139 @@
+{
+  "id": "grant-eligibility-calculator",
+  "name": "Grant Eligibility Calculator",
+  "category": "computed",
+  "summary": "Complex real-world example: multi-step grant calculation with tiered rates, caps, and array sums",
+  "whenToUse": [
+    "Government grant or subsidy applications with formula-based funding",
+    "Complex multi-step financial calculations combining inputs, tiers, and caps"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "organizationSize": {
+        "type": "number",
+        "title": "Number of Employees"
+      },
+      "annualRevenue": {
+        "type": "number",
+        "title": "Annual Revenue ($)"
+      },
+      "projectCost": {
+        "type": "number",
+        "title": "Total Project Cost ($)"
+      },
+      "expenses": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "title": "Expense Category"
+            },
+            "amount": {
+              "type": "number",
+              "title": "Amount ($)"
+            }
+          }
+        }
+      },
+      "totalExpenses": {
+        "type": "string",
+        "format": "computed",
+        "description": "SUM(#/properties/expenses/amount)"
+      },
+      "fundingRate": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/organizationSize <= 10 ? 75 : (#/properties/organizationSize <= 50 ? 60 : (#/properties/organizationSize <= 200 ? 50 : 40))"
+      },
+      "rawFunding": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/projectCost * (#/properties/organizationSize <= 10 ? 0.75 : (#/properties/organizationSize <= 50 ? 0.60 : (#/properties/organizationSize <= 200 ? 0.50 : 0.40)))"
+      },
+      "cappedFunding": {
+        "type": "string",
+        "format": "computed",
+        "description": "min(#/properties/projectCost * (#/properties/organizationSize <= 10 ? 0.75 : (#/properties/organizationSize <= 50 ? 0.60 : (#/properties/organizationSize <= 200 ? 0.50 : 0.40))), 100000)"
+      },
+      "applicantShare": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/projectCost - min(#/properties/projectCost * (#/properties/organizationSize <= 10 ? 0.75 : (#/properties/organizationSize <= 50 ? 0.60 : (#/properties/organizationSize <= 200 ? 0.50 : 0.40))), 100000)"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "HelpContent",
+        "options": {
+          "markdown": true,
+          "help": [
+            "## Grant Funding Calculator",
+            "Funding rate is based on organization size:",
+            "- **1-10 employees**: 75%",
+            "- **11-50 employees**: 60%",
+            "- **51-200 employees**: 50%",
+            "- **200+ employees**: 40%",
+            "Maximum grant: **$100,000**"
+          ]
+        }
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/organizationSize"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/annualRevenue"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/projectCost"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/expenses",
+        "label": "Itemized Expenses"
+      },
+      {
+        "type": "Control",
+        "label": "Total Expenses ($)",
+        "scope": "#/properties/totalExpenses"
+      },
+      {
+        "type": "Control",
+        "label": "Funding Rate (%)",
+        "scope": "#/properties/fundingRate"
+      },
+      {
+        "type": "Control",
+        "label": "Calculated Funding ($) — before cap",
+        "scope": "#/properties/rawFunding"
+      },
+      {
+        "type": "Control",
+        "label": "Approved Funding ($) — capped at $100,000",
+        "scope": "#/properties/cappedFunding"
+      },
+      {
+        "type": "Control",
+        "label": "Applicant Share ($)",
+        "scope": "#/properties/applicantShare"
+      }
+    ]
+  },
+  "notes": [
+    "This is a complex real-world pattern combining multiple computed techniques",
+    "Tiered rates use nested ternaries: `size <= 10 ? 0.75 : (size <= 50 ? 0.60 : ...)`",
+    "Funding cap uses `min(calculated, 100000)` to enforce the maximum",
+    "Applicant share = projectCost - cappedFunding (total minus what the grant covers)",
+    "SUM() is used for the expense array total — but it's standalone (cannot be composed in arithmetic)",
+    "Note: computed fields referencing OTHER computed fields work but depend on React render order",
+    "For critical chaining, repeat the expression inline rather than referencing another computed field"
+  ]
+}

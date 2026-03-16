@@ -51,7 +51,7 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
     return <Navigate to="forms" />;
   }
 
-  if (initialized && form?.id && form.status === FormStatus.submitted) {
+  if (initialized && form?.id && form?.status === FormStatus.submitted) {
     return <Navigate to={`${form.id}`} />;
   }
 

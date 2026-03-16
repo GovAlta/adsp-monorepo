@@ -1,0 +1,71 @@
+{
+  "id": "basic-arithmetic",
+  "name": "Basic Arithmetic Computed Fields",
+  "category": "computed",
+  "summary": "Simple math operations: addition, subtraction, multiplication, division using `format: computed`",
+  "whenToUse": [
+    "Auto-calculating totals, differences, or products from user-entered numbers",
+    "Displaying computed results without manual entry (e.g., subtotal = price × quantity)"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "price": {
+        "type": "number",
+        "title": "Unit Price ($)"
+      },
+      "quantity": {
+        "type": "number",
+        "title": "Quantity"
+      },
+      "discount": {
+        "type": "number",
+        "title": "Discount ($)"
+      },
+      "subtotal": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/price * #/properties/quantity"
+      },
+      "total": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/price * #/properties/quantity - #/properties/discount"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/price"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/quantity"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/discount"
+      },
+      {
+        "type": "Control",
+        "label": "Subtotal (Price × Quantity)",
+        "scope": "#/properties/subtotal"
+      },
+      {
+        "type": "Control",
+        "label": "Total (Subtotal − Discount)",
+        "scope": "#/properties/total"
+      }
+    ]
+  },
+  "notes": [
+    "Computed fields use `\"type\": \"string\", \"format\": \"computed\"` in the dataSchema",
+    "The `description` field IS the math expression — it references other fields via JSON pointer scopes",
+    "Supported arithmetic operators: `+`, `-`, `*`, `/`, `%` (modulo), `^` (exponent)",
+    "Computed fields are read-only in the UI — users cannot edit them",
+    "Result must be a finite number — NaN or Infinity shows an error"
+  ]
+}

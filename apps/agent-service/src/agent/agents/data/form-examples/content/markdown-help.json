@@ -1,0 +1,37 @@
+{
+  "id": "markdown-help",
+  "name": "Markdown Help Content",
+  "category": "content",
+  "summary": "Rich HelpContent using markdown for formatted text, links, images, and bullet points. This is the recommended way to add links and images in forms.",
+  "whenToUse": [
+    "Adding formatted instructional text with headings, bold, italic, links, or bullets",
+    "Adding clickable hyperlinks — use `[text](url)` markdown syntax",
+    "Displaying images — use `![alt](url)` markdown syntax",
+    "When you need more control over formatting than plain HelpContent provides"
+  ],
+  "uiSchema": {
+    "type": "HelpContent",
+    "label": "Program Overview",
+    "options": {
+      "markdown": true,
+      "help": [
+        "## Section Heading",
+        "This is a paragraph with some **bold** text and _italic_ text.",
+        "Visit [Alberta.ca](https://alberta.ca) for more information.",
+        "![Application process diagram](https://example.com/diagram.png)",
+        "- First bullet point",
+        "- Second bullet point",
+        "- Third bullet point",
+        "See the [Alberta Privacy Policy](https://www.alberta.ca/privacy-policy) for details."
+      ]
+    }
+  },
+  "notes": [
+    "Set `options.markdown` to `true` to enable markdown rendering",
+    "The `help` array contains one paragraph per entry — each entry can use markdown syntax",
+    "Supports headings (##), bold (**), italic (_), links ([text](url)), images (![alt](url)), and bullet lists (-)",
+    "For hyperlinks use `[link text](url)` — this replaces the deprecated `variant: hyperlink`",
+    "For images use `![alt text](url)` — this replaces the deprecated `variant: img`",
+    "Extended markdown syntax (tables, footnotes) is NOT currently supported"
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "name": "Form Configuration Best Practices",
+  "summary": "Guidelines and best practices for generating high-quality JSON Forms configuration",
+
+  "layoutSelection": {
+    "description": "Choose the right root layout based on form complexity",
+    "rules": [
+      {
+        "condition": "Simple forms (1-5 fields, single purpose)",
+        "recommendation": "Use VerticalLayout as root",
+        "example": "vertical-layout"
+      },
+      {
+        "condition": "Complex forms (6+ fields, multiple sections)",
+        "recommendation": "Use Categorization with variant=\"pages\"",
+        "example": "pages-layout"
+      }
+    ]
+  },
+
+  "validation": {
+    "description": "Pre-save validation checklist",
+    "checks": [
+      "All UI schema scopes reference properties that exist in the data schema",
+      "Required fields in data schema are clearly marked in the `required` array",
+      "Property names use camelCase convention",
+      "Each Control has a valid scope starting with `#/properties/`",
+      "No orphaned required fields (every required field has a matching property)",
+      "Data schema `type` is `\"object\"` at the root level"
+    ]
+  },
+
+  "accessibility": {
+    "description": "Accessibility guidelines for government forms",
+    "rules": [
+      "Include descriptive labels — property names are auto-converted to labels but may need refinement",
+      "Add inline help for complex fields using `options.help`",
+      "Use HelpContent elements for important notices, privacy statements, or instructions",
+      "Provide clear error messages in validation rules",
+      "Keep help text at grade 9 reading level for citizen-facing forms"
+    ]
+  },
+
+  "commonFields": {
+    "description": "Use ADSP common schema definitions instead of building fields from scratch",
+    "fields": [
+      {
+        "name": "Full Name",
+        "ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/personFullName",
+        "renders": "First name, middle name, and last name input fields",
+        "example": "full-name"
+      },
+      {
+        "name": "Address",
+        "ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressAlberta",
+        "renders": "Structured postal address (addressLine1, municipality, subdivisionCode, postalCode)",
+        "example": "address"
+      }
+    ],
+    "usage": "Use schemaDefinitionTool to load definitions, then reference them with $ref in data schema properties"
+  },
+
+  "iterativeWorkflow": {
+    "description": "How to build forms iteratively with the user",
+    "steps": [
+      "Load existing form configuration with formConfigurationRetrievalTool",
+      "Ask for the purpose of the form if unclear",
+      "Start with 1-3 fields and apply via formConfigurationUpdateTool",
+      "Ask for user feedback after each update",
+      "Add more fields, refine layouts, and add help text incrementally",
+      "Don't dump JSON — describe changes and use the update tool"
+    ]
+  }
+}

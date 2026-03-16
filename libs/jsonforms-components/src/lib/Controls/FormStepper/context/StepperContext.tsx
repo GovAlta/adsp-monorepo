@@ -32,7 +32,7 @@ export interface JsonFormsStepperContextProps {
 }
 
 const createStepperContextInitData = (
-  props: CategorizationStepperLayoutRendererProps & { activeId?: number } & { withBackReviewBtn?: boolean }
+  props: CategorizationStepperLayoutRendererProps & { activeId?: number } & { withBackReviewBtn?: boolean },
 ): StepperContextDataType => {
   const { uischema, data, schema, ajv, t, path } = props;
   const categorization = uischema as Categorization;
@@ -107,7 +107,7 @@ export const JsonFormsStepperContextProvider = ({
         payload: { errors: ctx?.core?.errors, id, ajv, schema, data },
       });
     },
-    [stepperDispatch, ctx?.core?.errors, ajv, schema, data]
+    [stepperDispatch, ctx?.core?.errors, ajv, schema, data],
   );
 
   const context = useMemo(() => {
@@ -143,7 +143,7 @@ export const JsonFormsStepperContextProvider = ({
             isVisible(cat.uischema, data, '', ajv, undefined)
               ? 1
               : 0),
-          0
+          0,
         );
       },
       selectIsActive: (id: number) => {
@@ -207,7 +207,12 @@ export const JsonFormsStepperContextProvider = ({
       }
     }
     //eslint-disable-next-line
-  }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema)]);
+  }, [
+    JSON.stringify(StepperProps.uischema),
+    JSON.stringify(StepperProps.schema),
+    JSON.stringify(data),
+    JSON.stringify(ctx?.core?.errors),
+  ]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
 };

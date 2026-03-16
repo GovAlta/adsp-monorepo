@@ -14,7 +14,7 @@ interface ApiToolProps {
 }
 export function createApiRequestTool(
   { logger, directory, tokenProvider }: ApiToolProps,
-  { id, description, api, path, method, inputSchema, outputSchema, userContext }: ApiRequestToolConfiguration
+  { id, description, api, path, method, inputSchema, outputSchema, useServiceAccount }: ApiRequestToolConfiguration
 ) {
   let apiId: AdspId;
   if (!AdspId.isAdspId(api) || (apiId = AdspId.parse(api)).type !== 'api') {
@@ -32,8 +32,8 @@ export function createApiRequestTool(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     outputSchema: outputSchema as any,
     execute: async (inputData: Record<string, unknown>, { requestContext }: { requestContext: AdspRequestContext }) => {
-      const tenantId = requestContext.get('tenantId') as AdspId;
-      const user = requestContext.get('user') as User;
+      const tenantId = requestContext.get('tenantId');
+      const user = requestContext.get('user');
 
       logger.debug(`Tool '${id}' ${method} request to ${apiId}:${path}...`, {
         context: 'ApiRequestTool',
@@ -55,7 +55,7 @@ export function createApiRequestTool(
           ...(method !== 'GET' ? inputData : {}),
         };
 
-        const token = userContext ? user.token.bearer : await tokenProvider.getAccessToken();
+        const token = useServiceAccount ? await tokenProvider.getAccessToken(): user.token.bearer;
         const { data } = await axios.request({
           method,
           url: resourceUrl.href,

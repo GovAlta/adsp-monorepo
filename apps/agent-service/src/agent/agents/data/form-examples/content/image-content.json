@@ -1,0 +1,28 @@
+{
+  "id": "markdown-image",
+  "name": "Markdown Image in Form",
+  "category": "content",
+  "summary": "Display an image inside a form using markdown HelpContent with `![alt](url)` syntax",
+  "whenToUse": [
+    "Showing a diagram, workflow illustration, or reference image",
+    "Visual instructions that complement text guidance",
+    "Displaying logos, charts, or sample documents"
+  ],
+  "uiSchema": {
+    "type": "HelpContent",
+    "options": {
+      "markdown": true,
+      "help": [
+        "![Application process diagram](https://example.com/diagram.png)",
+        "The diagram above shows the steps in the application process."
+      ]
+    }
+  },
+  "notes": [
+    "Use standard markdown image syntax: `![alt text](image-url)`",
+    "Set `options.markdown` to `true` to enable markdown rendering",
+    "Always provide descriptive alt text for screen reader accessibility",
+    "The image URL must be a fully qualified public URL",
+    "The old `variant: img` approach is deprecated — always use markdown images"
+  ]
+}

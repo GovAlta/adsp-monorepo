@@ -1,0 +1,167 @@
+{
+  "id": "vendor-registration",
+  "name": "Vendor Registration with Repeating Items",
+  "category": "complex",
+  "summary": "Multi-page vendor registration form with repeating product list, data registers, and file upload",
+  "whenToUse": [
+    "Registration forms that collect a list of items (products, services, team members)",
+    "Forms combining repeating items with multi-page navigation and dynamic dropdowns"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "businessName": { "type": "string", "minLength": 1 },
+      "businessType": {
+        "type": "string",
+        "enum": ["Sole Proprietor", "Partnership", "Corporation", "Non-Profit"]
+      },
+      "contactEmail": { "type": "string", "format": "email", "minLength": 1 },
+      "contactPhone": { "type": "string", "minLength": 1 },
+      "province": { "type": "string", "enum": [""] },
+      "products": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "productName": { "type": "string" },
+            "category": {
+              "type": "string",
+              "enum": ["Produce", "Baked Goods", "Crafts", "Prepared Foods", "Other"]
+            },
+            "estimatedRevenue": { "type": "number" }
+          }
+        }
+      },
+      "businessLicense": { "type": "string", "format": "file-urn" },
+      "iDeclare": {
+        "type": "boolean",
+        "allOf": [{ "enum": [true] }]
+      }
+    },
+    "required": ["businessName", "businessType", "contactEmail", "contactPhone", "iDeclare"]
+  },
+  "uiSchema": {
+    "type": "Categorization",
+    "options": {
+      "variant": "pages",
+      "title": "Vendor Registration",
+      "subtitle": "Register for the Approved Farmers' Market Program"
+    },
+    "elements": [
+      {
+        "type": "Category",
+        "label": "Business Information",
+        "options": { "sectionTitle": "About Your Business" },
+        "elements": [
+          {
+            "type": "VerticalLayout",
+            "elements": [
+              { "type": "Control", "scope": "#/properties/businessName" },
+              {
+                "type": "Control",
+                "scope": "#/properties/businessType",
+                "options": { "format": "radio" }
+              },
+              {
+                "type": "HorizontalLayout",
+                "elements": [
+                  { "type": "Control", "scope": "#/properties/contactEmail" },
+                  { "type": "Control", "scope": "#/properties/contactPhone" }
+                ]
+              },
+              {
+                "type": "Control",
+                "scope": "#/properties/province",
+                "label": "Province",
+                "options": {
+                  "register": {
+                    "urn": "urn:ads:platform:configuration:v2:/configuration/public-register/provinces"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Category",
+        "label": "Products & Services",
+        "options": { "sectionTitle": "What You Sell" },
+        "elements": [
+          {
+            "type": "HelpContent",
+            "options": {
+              "markdown": true,
+              "help": ["List the products you plan to sell at the market. Click **Add** to add each product."]
+            }
+          },
+          {
+            "type": "ListWithDetail",
+            "scope": "#/properties/products",
+            "options": {
+              "detail": {
+                "type": "VerticalLayout",
+                "elements": [
+                  { "type": "Control", "scope": "#/properties/productName", "label": "Product Name" },
+                  { "type": "Control", "scope": "#/properties/category" },
+                  {
+                    "type": "Control",
+                    "scope": "#/properties/estimatedRevenue",
+                    "label": "Estimated Yearly Revenue ($)"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "Category",
+        "label": "Documents & Declaration",
+        "options": { "sectionTitle": "Submission" },
+        "elements": [
+          {
+            "type": "VerticalLayout",
+            "elements": [
+              {
+                "type": "HelpContent",
+                "options": {
+                  "help": "Please upload a copy of your business license."
+                }
+              },
+              {
+                "type": "Control",
+                "scope": "#/properties/businessLicense",
+                "options": { "variant": "dragdrop" }
+              },
+              {
+                "type": "HelpContent",
+                "options": {
+                  "markdown": true,
+                  "help": [
+                    "#### Notice of Collection",
+                    "The personal information on this form is collected under the authority of Section 33(c) of the *Freedom of Information and Protection of Privacy Act* (FOIP)."
+                  ]
+                }
+              },
+              {
+                "type": "Control",
+                "scope": "#/properties/iDeclare",
+                "options": {
+                  "text": "I declare that the information I have provided is accurate and complete."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "notes": [
+    "This demonstrates: multi-page stepper, ListWithDetail for products, data register for province, file upload, declaration",
+    "The province dropdown uses a Configuration Service register (admin-managed list)",
+    "Products use ListWithDetail for full control over item layout",
+    "Farmers market vendor registration is a common Alberta government use case",
+    "Section titles group categories: 'About Your Business' and 'What You Sell' and 'Submission'"
+  ]
+}

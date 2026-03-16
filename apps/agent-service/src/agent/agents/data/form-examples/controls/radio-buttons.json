@@ -1,0 +1,35 @@
+{
+  "id": "radio-buttons",
+  "name": "Radio Buttons",
+  "category": "control",
+  "summary": "Radio button group using `enum` in data schema and `format: radio` in UI schema",
+  "whenToUse": [
+    "Selecting one option from 2-4 predefined choices",
+    "When all options should be visible at once without opening a dropdown"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "preferredContact": {
+        "type": "string",
+        "enum": ["email", "phone", "mail"]
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/preferredContact",
+    "label": "Preferred contact method",
+    "options": {
+      "format": "radio",
+      "componentProps": {
+        "orientation": "horizontal"
+      }
+    }
+  },
+  "notes": [
+    "Set `options.format` to `\"radio\"` to render enum values as radio buttons instead of dropdown",
+    "Use `componentProps.orientation` to control layout: `\"horizontal\"` or `\"vertical\"`",
+    "Radio buttons are best for 2-4 options; use dropdowns for longer lists"
+  ]
+}

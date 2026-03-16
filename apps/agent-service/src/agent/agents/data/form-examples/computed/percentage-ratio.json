@@ -1,0 +1,92 @@
+{
+  "id": "percentage-ratio",
+  "name": "Percentage and Ratio Calculations",
+  "category": "computed",
+  "summary": "Compute percentages, ratios, and proportions with proper parenthesized expressions",
+  "whenToUse": [
+    "Calculating tax, tip, or discount percentages",
+    "Computing completion ratios or proportional shares",
+    "Showing percentage breakdowns of a total"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "partA": {
+        "type": "number",
+        "title": "Category A Amount ($)"
+      },
+      "partB": {
+        "type": "number",
+        "title": "Category B Amount ($)"
+      },
+      "partC": {
+        "type": "number",
+        "title": "Category C Amount ($)"
+      },
+      "grandTotal": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/partA + #/properties/partB + #/properties/partC"
+      },
+      "percentA": {
+        "type": "string",
+        "format": "computed",
+        "description": "roundTo(#/properties/partA / (#/properties/partA + #/properties/partB + #/properties/partC) * 100, 1)"
+      },
+      "percentB": {
+        "type": "string",
+        "format": "computed",
+        "description": "roundTo(#/properties/partB / (#/properties/partA + #/properties/partB + #/properties/partC) * 100, 1)"
+      },
+      "percentC": {
+        "type": "string",
+        "format": "computed",
+        "description": "roundTo(#/properties/partC / (#/properties/partA + #/properties/partB + #/properties/partC) * 100, 1)"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/partA"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/partB"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/partC"
+      },
+      {
+        "type": "Control",
+        "label": "Grand Total ($)",
+        "scope": "#/properties/grandTotal"
+      },
+      {
+        "type": "Control",
+        "label": "Category A (%)",
+        "scope": "#/properties/percentA"
+      },
+      {
+        "type": "Control",
+        "label": "Category B (%)",
+        "scope": "#/properties/percentB"
+      },
+      {
+        "type": "Control",
+        "label": "Category C (%)",
+        "scope": "#/properties/percentC"
+      }
+    ]
+  },
+  "notes": [
+    "Use parentheses `()` to control order of operations — `a / (b + c)` divides by the sum",
+    "Without parentheses, `a / b + c * 100` follows standard precedence: `(a/b) + (c*100)`",
+    "`roundTo(expr, n)` rounds the result to n decimal places for clean percentage display",
+    "Division by zero produces Infinity which triggers an error — handle with ternary if needed",
+    "Operator precedence (highest to lowest): `^`, `* / %`, `+ -`, comparisons, `and`, `or`, `? :`"
+  ]
+}

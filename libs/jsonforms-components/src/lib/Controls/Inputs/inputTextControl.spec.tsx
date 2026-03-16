@@ -1,4 +1,3 @@
-import React from 'react';
 import { fireEvent, render, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
@@ -8,7 +7,7 @@ import { ControlElement, ControlProps, JsonSchema7 } from '@jsonforms/core';
 import { validateSinWithLuhn, checkFieldValidity, isValidDate } from '../../util/stringUtils';
 import { JsonFormsContext } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { describe } from 'node:test';
+import { fetchRegisterConfigFromOptions } from './InputTextControl';
 
 const mockContextValue = {
   errors: [],
@@ -56,7 +55,11 @@ describe('Input Text Control tests', () => {
 
   const sinProps: GoAInputTextProps & ControlProps = {
     uischema: textBoxUiSchema,
-    schema: { title: 'Social insurance number', errorMessage: 'Must be three groups of three digits.' },
+    schema: {
+      title: 'Social insurance number',
+      errorMessage: 'Must be three groups of three digits.',
+      default: '123456789',
+    },
     rootSchema: {},
     handleChange: (path, value) => {},
     enabled: true,
@@ -110,7 +113,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...staticProps} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
 
@@ -122,7 +125,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
       expect(firstNameInput!.getAttribute('error')).toBe('true');
@@ -133,7 +136,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='-input']");
       expect(firstNameInput!.getAttribute('name')).toBe('mytestInput-input');
@@ -162,7 +165,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const input = baseElement.querySelector("goa-input[testId='firstName-input']");
       const blurred = fireEvent.blur(input!);
@@ -185,7 +188,7 @@ describe('Input Text Control tests', () => {
       const { baseElement, ...component } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const input = baseElement.querySelector("goa-input[testId='firstName-input']");
 
@@ -193,7 +196,7 @@ describe('Input Text Control tests', () => {
         input!,
         new CustomEvent('_change', {
           detail: { name: 'firstName', value: 'test' },
-        })
+        }),
       );
       input!.setAttribute('value', 'test');
       expect(input?.getAttribute('value')).toBe('test');
@@ -205,7 +208,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
 
@@ -220,7 +223,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
 
@@ -233,7 +236,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
 
@@ -241,7 +244,7 @@ describe('Input Text Control tests', () => {
         firstNameInput!,
         new CustomEvent('_change', {
           detail: { value: '123456789' },
-        })
+        }),
       );
 
       // Wait for debounce (300ms)
@@ -257,7 +260,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoAInputText {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
 
@@ -269,7 +272,7 @@ describe('Input Text Control tests', () => {
 
       expect(props.handleChange).toBeCalled();
       expect(pressed).toBe(true);
-      expect(handleChangeMock.mock.calls.length).toBe(1);
+      expect(handleChangeMock.mock.calls.length).toBe(2);
     });
   });
 
@@ -278,7 +281,7 @@ describe('Input Text Control tests', () => {
       const { getByText } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <TestComponent props={emptyBooleanProps} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
 
       expect(getByText('First Name is required')).toBeTruthy();
@@ -297,7 +300,7 @@ describe('Input Text Control tests', () => {
       const { getByText } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <TestComponent props={sinProps} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
 
       expect(getByText('Must be three groups of three digits.')).toBeTruthy();
@@ -307,7 +310,7 @@ describe('Input Text Control tests', () => {
       const { getByText } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <TestComponent props={invalidSinProps} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
 
       expect(getByText('Social insurance number is invalid')).toBeTruthy();
@@ -359,6 +362,19 @@ describe('Input Text Control tests', () => {
       const input = '';
       const expected = '';
       expect(formatSin(input)).toBe(expected);
+    });
+  });
+
+  describe('InputTextControl additional coverage', () => {
+    it('fetchRegisterConfigFromOptions returns undefined when no url or urn', () => {
+      const result = fetchRegisterConfigFromOptions({});
+      expect(result).toBeUndefined();
+    });
+
+    it('fetchRegisterConfigFromOptions returns config when options exist', () => {
+      const options = { url: 'https://example.com', someProp: 'value' };
+      const result = fetchRegisterConfigFromOptions(options);
+      expect(result).toEqual(options);
     });
   });
 });

@@ -1,0 +1,49 @@
+{
+  "id": "custom-error-messages",
+  "name": "Custom Error Messages",
+  "category": "validation",
+  "summary": "Override default AJV validation error messages with user-friendly text using `errorMessage` in schema",
+  "whenToUse": [
+    "Making validation errors more helpful and human-readable",
+    "Providing guidance on the expected format (e.g., 'First name must only contain letters')",
+    "When default AJV messages like 'must match pattern' are not user-friendly"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "firstName": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 15,
+        "pattern": "^[a-zA-Z]*$",
+        "errorMessage": {
+          "pattern": "First name must only contain letters.",
+          "minLength": "Minimum length for first name is 2 characters.",
+          "maxLength": "Maximum length for first name is 15 characters."
+        }
+      },
+      "email": {
+        "type": "string",
+        "format": "email",
+        "errorMessage": {
+          "_": "Please enter a valid email address."
+        }
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      { "type": "Control", "scope": "#/properties/firstName" },
+      { "type": "Control", "scope": "#/properties/email" }
+    ]
+  },
+  "notes": [
+    "Add `errorMessage` object to any property in the data schema",
+    "Map each constraint keyword (pattern, minLength, maxLength, format) to a custom error string",
+    "Use `\"_\"` as the key for a default message that applies to ALL constraints on that field",
+    "If a constraint is omitted from errorMessage, the default AJV error is used",
+    "The `required` field validation message is NOT customizable — it always shows '{fieldName} is required'",
+    "Keep error messages at grade 9 reading level for citizen-facing government forms"
+  ]
+}

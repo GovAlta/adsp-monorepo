@@ -9,6 +9,13 @@ import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormSt
 
 type DateOfBirthControlProps = ControlProps;
 
+const normalizeNameDobData = (value?: Record<string, unknown>) => ({
+  firstName: (value?.firstName as string) || '',
+  middleName: (value?.middleName as string) || '',
+  lastName: (value?.lastName as string) || '',
+  dateOfBirth: (value?.dateOfBirth as string) || '',
+});
+
 export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element => {
   const { data, path, schema, handleChange, enabled, visible, uischema } = props;
   const requiredFields = (schema as { required: string[] }).required;
@@ -18,7 +25,6 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const stepperState = (formStepperCtx as JsonFormsStepperContextProps)?.selectStepperState?.();
 
-  const defaultNameAndDob = {};
   const validDates = () => {
     const currentDate = new Date();
     const minDate = new Date(currentDate.getFullYear() - 150, currentDate.getMonth(), currentDate.getDate())
@@ -30,13 +36,25 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
     };
   };
 
-  const [formData, setFormData] = useState(data || defaultNameAndDob);
+  const [formData, setFormData] = useState(normalizeNameDobData(data));
 
   const updateFormData = (updatedData: object) => {
     updatedData = Object.fromEntries(Object.entries(updatedData).filter(([_, value]) => value !== ''));
-    setFormData(updatedData);
+    setFormData(updatedData as any);
     handleChange(path, updatedData);
   };
+
+  useEffect(() => {
+    const nextData = normalizeNameDobData(data);
+    setFormData((currentData) =>
+      currentData.firstName === nextData.firstName &&
+      currentData.middleName === nextData.middleName &&
+      currentData.lastName === nextData.lastName &&
+      currentData.dateOfBirth === nextData.dateOfBirth
+        ? currentData
+        : nextData
+    );
+  }, [data]);
 
   const handleInputChange = (field: string, value: string) => {
     const updatedData = { ...formData, [field]: value };

@@ -15,6 +15,14 @@ class FormsPage {
     return cy.get('[name=password]');
   }
 
+  formLandingPageSubtitle() {
+    return cy.xpath('//h1/following-sibling::div');
+  }
+
+  formLandingPagePrimaryButton() {
+    return cy.xpath('//goa-button[@type="primary"]');
+  }
+
   formTextField(label) {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="text"]`);
   }

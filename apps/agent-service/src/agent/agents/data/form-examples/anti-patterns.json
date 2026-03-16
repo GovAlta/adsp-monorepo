@@ -1,0 +1,325 @@
+{
+  "name": "Form Configuration Anti-Patterns",
+  "summary": "Common mistakes and pitfalls to avoid when generating JSON Forms configuration",
+
+  "schemaAntiPatterns": [
+    {
+      "id": "scope-mismatch",
+      "name": "UI Schema Scope Mismatch",
+      "description": "UI schema Control references a property that doesn't exist in the data schema",
+      "severity": "critical",
+      "bad": {
+        "dataSchema": {
+          "type": "object",
+          "properties": {
+            "firstName": { "type": "string" }
+          }
+        },
+        "uiSchema": {
+          "type": "Control",
+          "scope": "#/properties/first_name"
+        }
+      },
+      "good": {
+        "dataSchema": {
+          "type": "object",
+          "properties": {
+            "firstName": { "type": "string" }
+          }
+        },
+        "uiSchema": {
+          "type": "Control",
+          "scope": "#/properties/firstName"
+        }
+      },
+      "explanation": "The scope `#/properties/first_name` uses snake_case but the data schema property is `firstName` (camelCase). Scopes must exactly match property names."
+    },
+    {
+      "id": "missing-scope-prefix",
+      "name": "Missing Scope Prefix",
+      "description": "Control scope doesn't start with `#/properties/`",
+      "severity": "critical",
+      "bad": {
+        "uiSchema": {
+          "type": "Control",
+          "scope": "firstName"
+        }
+      },
+      "good": {
+        "uiSchema": {
+          "type": "Control",
+          "scope": "#/properties/firstName"
+        }
+      },
+      "explanation": "Every Control scope must be a JSON pointer starting with `#/properties/`. Omitting the prefix causes the control to not render."
+    },
+    {
+      "id": "non-camelcase-properties",
+      "name": "Non-camelCase Property Names",
+      "description": "Using snake_case, PascalCase, or spaces in data schema property names",
+      "severity": "high",
+      "bad": {
+        "dataSchema": {
+          "type": "object",
+          "properties": {
+            "first_name": { "type": "string" },
+            "LastName": { "type": "string" },
+            "phone number": { "type": "string" }
+          }
+        }
+      },
+      "good": {
+        "dataSchema": {
+          "type": "object",
+          "properties": {
+            "firstName": { "type": "string" },
+            "lastName": { "type": "string" },
+            "phoneNumber": { "type": "string" }
+          }
+        }
+      },
+      "explanation": "Always use camelCase for property names. This is the convention for JSON Forms and ensures consistency in scope references."
+    },
+    {
+      "id": "wrong-categorization-variant",
+      "name": "Missing Pages Variant on Categorization",
+      "description": "Using Categorization without specifying the pages variant",
+      "severity": "medium",
+      "bad": {
+        "uiSchema": {
+          "type": "Categorization",
+          "elements": [
+            {
+              "type": "Category",
+              "label": "Step 1",
+              "elements": []
+            }
+          ]
+        }
+      },
+      "good": {
+        "uiSchema": {
+          "type": "Categorization",
+          "options": { "variant": "pages" },
+          "elements": [
+            {
+              "type": "Category",
+              "label": "Step 1",
+              "elements": []
+            }
+          ]
+        }
+      },
+      "explanation": "For multi-page forms, always set `options.variant` to `\"pages\"` on the Categorization element. Without it, pages won't render as steps."
+    },
+    {
+      "id": "orphaned-required-fields",
+      "name": "Required Field Not in Properties",
+      "description": "Listing a field in `required` that doesn't exist as a property",
+      "severity": "high",
+      "bad": {
+        "dataSchema": {
+          "type": "object",
+          "properties": {
+            "email": { "type": "string", "format": "email" }
+          },
+          "required": ["email", "name"]
+        }
+      },
+      "good": {
+        "dataSchema": {
+          "type": "object",
+          "properties": {
+            "email": { "type": "string", "format": "email" },
+            "name": { "type": "string" }
+          },
+          "required": ["email", "name"]
+        }
+      },
+      "explanation": "Every field listed in `required` must also exist in `properties`. An orphaned required field causes validation errors."
+    },
+    {
+      "id": "including-form-definition-id",
+      "name": "Including formDefinitionId in Tool Input",
+      "description": "Passing formDefinitionId as input to formConfigurationUpdateTool",
+      "severity": "critical",
+      "bad": {
+        "toolInput": {
+          "formDefinitionId": "my-form-id",
+          "name": "My Form",
+          "dataSchema": {}
+        }
+      },
+      "good": {
+        "toolInput": {
+          "name": "My Form",
+          "dataSchema": {}
+        }
+      },
+      "explanation": "formDefinitionId comes from request context automatically. Including it in tool input causes an error. Only pass name, dataSchema, uiSchema, anonymousApply, applicantRoles, and assessorRoles."
+    }
+  ],
+
+  "schemaAntiPatterns2": [
+    {
+      "id": "required-string-no-minlength",
+      "name": "Required String Without minLength Workaround",
+      "description": "Marking a string field as required but not adding `minLength: 1` — empty strings pass validation",
+      "severity": "critical",
+      "bad": {
+        "dataSchema": {
+          "type": "object",
+          "properties": {
+            "firstName": { "type": "string" }
+          },
+          "required": ["firstName"]
+        }
+      },
+      "good": {
+        "dataSchema": {
+          "type": "object",
+          "properties": {
+            "firstName": { "type": "string", "minLength": 1 }
+          },
+          "required": ["firstName"]
+        }
+      },
+      "explanation": "JSON Forms has a known bug where an empty string satisfies the `required` rule. Always add `minLength: 1` to required string fields as a workaround."
+    },
+    {
+      "id": "show-hide-without-conditional-validation",
+      "name": "SHOW/HIDE Rule Without Conditional Validation",
+      "description": "Using a SHOW/HIDE rule on a required field without adding if/then conditional validation in the data schema",
+      "severity": "critical",
+      "bad": {
+        "dataSchema": {
+          "type": "object",
+          "properties": {
+            "hasChildren": { "type": "boolean" },
+            "childsName": { "type": "string" }
+          },
+          "required": ["hasChildren", "childsName"]
+        },
+        "uiSchema_note": "childsName has SHOW rule based on hasChildren, but childsName is always required in data schema"
+      },
+      "good": {
+        "dataSchema": {
+          "type": "object",
+          "properties": {
+            "hasChildren": { "type": "boolean" },
+            "childsName": { "type": "string", "minLength": 1 }
+          },
+          "required": ["hasChildren"],
+          "if": { "properties": { "hasChildren": { "const": true } } },
+          "then": { "required": ["childsName"] }
+        }
+      },
+      "explanation": "Hidden required fields cause form validation to fail silently because the user cannot fill them in. Always pair SHOW/HIDE rules with if/then conditional required in the data schema."
+    },
+    {
+      "id": "nested-scope-missing-path",
+      "name": "Nested Object Scope Missing Full Path",
+      "description": "Using a flat scope for a nested object property instead of the full JSON pointer path",
+      "severity": "critical",
+      "bad": {
+        "uiSchema": {
+          "type": "Control",
+          "scope": "#/properties/firstName"
+        },
+        "note": "When firstName is nested under a 'name' object"
+      },
+      "good": {
+        "uiSchema": {
+          "type": "Control",
+          "scope": "#/properties/name/properties/firstName"
+        }
+      },
+      "explanation": "When data schema uses nested objects (e.g., `name.firstName`), UI schema scopes must include the full path. Using `#/properties/firstName` when the property is at `properties.name.properties.firstName` will not render."
+    },
+    {
+      "id": "rule-condition-wrong-scope",
+      "name": "Rule Condition Scope Points to Wrong Field",
+      "description": "The rule's condition scope references a non-existent or wrong property",
+      "severity": "high",
+      "bad": {
+        "uiSchema": {
+          "type": "Control",
+          "scope": "#/properties/childsName",
+          "rule": {
+            "effect": "SHOW",
+            "condition": {
+              "scope": "#/properties/children",
+              "schema": { "const": true }
+            }
+          }
+        }
+      },
+      "good": {
+        "uiSchema": {
+          "type": "Control",
+          "scope": "#/properties/childsName",
+          "rule": {
+            "effect": "SHOW",
+            "condition": {
+              "scope": "#/properties/hasChildren",
+              "schema": { "const": true }
+            }
+          }
+        }
+      },
+      "explanation": "If the condition scope resolves to undefined, JSON Schema validation succeeds and the condition evaluates to true — the rule always fires. Make sure the condition scope matches an actual property name in the data schema."
+    }
+  ],
+
+  "designAntiPatterns": [
+    {
+      "id": "too-many-fields-single-page",
+      "name": "Too Many Fields on a Single Page",
+      "description": "Putting 6+ fields in a VerticalLayout without pagination",
+      "severity": "medium",
+      "solution": "Use Categorization with `variant: \"pages\"` when you have 6 or more fields. Group related fields into separate Category pages."
+    },
+    {
+      "id": "no-help-text",
+      "name": "No Help Text on Complex Fields",
+      "description": "Omitting contextual help for fields that need explanation",
+      "severity": "medium",
+      "solution": "Add `options.help` to Controls for fields where users might be uncertain what to enter. Use HelpContent elements for section-level guidance."
+    },
+    {
+      "id": "dumping-json-in-response",
+      "name": "Including Full JSON in Chat Response",
+      "description": "Showing the entire data/UI schema JSON to the user instead of applying it",
+      "severity": "low",
+      "solution": "Apply changes using formConfigurationUpdateTool and describe what changed in plain language. Only show JSON if the user explicitly asks for it."
+    },
+    {
+      "id": "no-foip-notice",
+      "name": "Missing FOIP Notice on Government Forms",
+      "description": "Government forms that collect personal information without a privacy/FOIP collection notice",
+      "severity": "high",
+      "solution": "Add a HelpContent with markdown containing the Notice of Collection under FOIP Act Section 33(c). Place it on the final page before the declaration checkbox."
+    },
+    {
+      "id": "boolean-as-checkbox-for-yesno",
+      "name": "Using Default Checkbox for Yes/No Questions",
+      "description": "Rendering a yes/no question as a plain checkbox instead of Yes/No radio buttons",
+      "severity": "low",
+      "solution": "Use `options.format: \"radio\"` with `textForTrue: \"Yes\"` and `textForFalse: \"No\"` for clear binary questions. Plain checkboxes are ambiguous — unchecked could mean 'no' or 'not yet answered'."
+    },
+    {
+      "id": "enum-dropdown-for-few-options",
+      "name": "Using Dropdown for 2-3 Options",
+      "description": "Using a dropdown menu when there are only 2-3 options — radio buttons are clearer",
+      "severity": "low",
+      "solution": "Use `options.format: \"radio\"` for 2-3 options so all choices are visible without clicking. Reserve dropdowns for 4+ options."
+    },
+    {
+      "id": "deprecated-hyperlink-variant",
+      "name": "Using Deprecated HelpContent Variants (hyperlink/img)",
+      "description": "Using `variant: hyperlink` or `variant: img` on HelpContent — these are deprecated",
+      "severity": "high",
+      "solution": "Use markdown HelpContent instead. For links: `{ \"markdown\": true, \"help\": [\"[Link text](url)\"] }`. For images: `{ \"markdown\": true, \"help\": [\"![Alt text](image-url)\"] }`."
+    }
+  ]
+}

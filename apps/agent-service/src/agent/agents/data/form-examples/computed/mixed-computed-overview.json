@@ -1,0 +1,99 @@
+{
+  "id": "mixed-computed-overview",
+  "name": "Mixed Computed Fields Overview",
+  "category": "computed",
+  "summary": "Comprehensive example combining arithmetic, ternary conditions, and SUM aggregation in one form",
+  "whenToUse": [
+    "Reference form demonstrating all computed field patterns in a single example",
+    "Testing or validating that the calculation engine handles diverse expressions"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "x": {
+        "type": "number",
+        "title": "X"
+      },
+      "y": {
+        "type": "number",
+        "title": "Y"
+      },
+      "z": {
+        "type": "number",
+        "title": "Z"
+      },
+      "arr": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "c3": {
+              "type": "number",
+              "title": "C3"
+            }
+          }
+        }
+      },
+      "total": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/x * #/properties/y + #/properties/z"
+      },
+      "condition": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/x > 10 ? #/properties/y : #/properties/z"
+      },
+      "sumC3": {
+        "type": "string",
+        "format": "computed",
+        "description": "SUM(#/properties/arr/c3)"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/x"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/y"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/z"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/arr",
+        "label": "Array of objects"
+      },
+      {
+        "type": "Control",
+        "label": "Total (x × y + z)",
+        "scope": "#/properties/total"
+      },
+      {
+        "type": "Control",
+        "label": "Condition (if x > 10 then y else z)",
+        "scope": "#/properties/condition"
+      },
+      {
+        "type": "Control",
+        "label": "Sum of C3",
+        "scope": "#/properties/sumC3"
+      }
+    ]
+  },
+  "notes": [
+    "Demonstrates three computed patterns in one form: arithmetic, ternary condition, and SUM aggregate",
+    "Arithmetic: `#/properties/x * #/properties/y + #/properties/z` — standard operator precedence (* before +)",
+    "Ternary: `#/properties/x > 10 ? #/properties/y : #/properties/z` — returns y if x>10, else z",
+    "SUM: `SUM(#/properties/arr/c3)` — sums the c3 column across all array rows",
+    "Computed fields render as read-only inputs that update automatically as users enter data",
+    "The `description` field holds the expression — it doubles as tooltip text in some renderers"
+  ]
+}

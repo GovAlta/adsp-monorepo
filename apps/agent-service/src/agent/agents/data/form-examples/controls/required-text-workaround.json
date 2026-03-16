@@ -1,0 +1,30 @@
+{
+  "id": "required-text-workaround",
+  "name": "Required String Field (minLength Workaround)",
+  "category": "control",
+  "summary": "Required text field with `minLength: 1` workaround for the known JSON Forms empty-string bug",
+  "whenToUse": [
+    "Any required string field — always add minLength: 1 alongside required",
+    "This is a mandatory workaround for a known JSON Forms issue"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "firstName": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": ["firstName"]
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/firstName"
+  },
+  "notes": [
+    "CRITICAL: There is a known JSON Forms bug where an empty string satisfies the `required` rule",
+    "Always add `minLength: 1` to required string fields as a workaround",
+    "Without `minLength: 1`, users can submit the form with blank required fields",
+    "This applies to ALL required string fields — text inputs, text areas, emails, etc."
+  ]
+}

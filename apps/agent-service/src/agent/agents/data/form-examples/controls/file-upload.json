@@ -1,0 +1,28 @@
+{
+  "id": "file-upload",
+  "name": "File Upload",
+  "category": "control",
+  "summary": "File upload control using `file-urn` format on a string property",
+  "whenToUse": [
+    "Collecting document uploads like photos, certificates, or supporting documents",
+    "When the form requires file attachments alongside other data"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "photo": {
+        "type": "string",
+        "format": "file-urn"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/photo"
+  },
+  "notes": [
+    "The `format: \"file-urn\"` on the data schema property enables the file upload control",
+    "No special UI schema options are needed — just a Control bound to the property",
+    "Uploaded files are stored via the ADSP File Service and referenced by URN"
+  ]
+}

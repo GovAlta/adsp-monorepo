@@ -1,0 +1,85 @@
+{
+  "id": "nested-ternary-logic",
+  "name": "Nested Ternary and Logical Operators",
+  "category": "computed",
+  "summary": "Chain ternary operators and use `and`/`or` for multi-condition computed fields",
+  "whenToUse": [
+    "Tiered pricing or graduated rates (e.g., income tax brackets)",
+    "Complex eligibility scoring with multiple criteria",
+    "Multi-condition bonus or penalty calculations"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "score": {
+        "type": "number",
+        "title": "Assessment Score (0-100)"
+      },
+      "yearsExperience": {
+        "type": "number",
+        "title": "Years of Experience"
+      },
+      "grade": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/score >= 90 ? 4 : (#/properties/score >= 80 ? 3 : (#/properties/score >= 70 ? 2 : (#/properties/score >= 60 ? 1 : 0)))"
+      },
+      "experienceBonus": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/yearsExperience >= 10 ? 20 : (#/properties/yearsExperience >= 5 ? 10 : (#/properties/yearsExperience >= 2 ? 5 : 0))"
+      },
+      "finalScore": {
+        "type": "string",
+        "format": "computed",
+        "description": "#/properties/score + (#/properties/yearsExperience >= 10 ? 20 : (#/properties/yearsExperience >= 5 ? 10 : (#/properties/yearsExperience >= 2 ? 5 : 0)))"
+      },
+      "meetsThreshold": {
+        "type": "string",
+        "format": "computed",
+        "description": "(#/properties/score >= 70 and #/properties/yearsExperience >= 3) ? 1 : 0"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/score"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/yearsExperience"
+      },
+      {
+        "type": "Control",
+        "label": "Grade (0-4 scale)",
+        "scope": "#/properties/grade"
+      },
+      {
+        "type": "Control",
+        "label": "Experience Bonus Points",
+        "scope": "#/properties/experienceBonus"
+      },
+      {
+        "type": "Control",
+        "label": "Final Score (with bonus)",
+        "scope": "#/properties/finalScore"
+      },
+      {
+        "type": "Control",
+        "label": "Meets Threshold (1=Yes, 0=No)",
+        "scope": "#/properties/meetsThreshold"
+      }
+    ]
+  },
+  "notes": [
+    "Nest ternaries with parentheses: `a >= 90 ? 4 : (a >= 80 ? 3 : (a >= 70 ? 2 : 0))`",
+    "Use `and` / `or` for multi-condition logic: `(x > 10 and y < 5) ? 1 : 0`",
+    "Use `not` for negation: `not(x > 10) ? 1 : 0`",
+    "Results must be numbers — use 1/0 instead of true/false for boolean-like outputs",
+    "Parentheses are critical in nested ternaries to avoid precedence issues",
+    "The `? :` operator has the lowest precedence after `or`, so `a > 5 ? b : c` works without extra parens around the condition"
+  ]
+}

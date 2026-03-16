@@ -1,0 +1,45 @@
+{
+  "id": "vertical-layout",
+  "name": "Simple Vertical Layout",
+  "category": "layout",
+  "summary": "VerticalLayout for simple single-page forms with a few fields",
+  "whenToUse": [
+    "Simple forms with 1-5 fields and a single purpose",
+    "Quick feedback or contact forms",
+    "When a multi-page layout would add unnecessary complexity"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "name": { "type": "string" },
+      "email": { "type": "string", "format": "email" },
+      "message": { "type": "string" }
+    },
+    "required": ["name", "email"]
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/name"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/email"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/message",
+        "options": {
+          "multi": true
+        }
+      }
+    ]
+  },
+  "notes": [
+    "Use VerticalLayout as the root when the form is simple and single-purpose",
+    "Fields render top-to-bottom in the order listed in elements",
+    "Combine with `required` in the data schema to mark mandatory fields"
+  ]
+}

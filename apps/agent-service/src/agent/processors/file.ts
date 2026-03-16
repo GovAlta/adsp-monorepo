@@ -1,5 +1,5 @@
 import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
-import { convertUint8ArrayToBase64, FilePart, ImagePart } from '@ai-sdk/provider-utils-v5';
+import { convertUint8ArrayToBase64, FilePart, ImagePart, TextPart } from '@ai-sdk/provider-utils-v5';
 import type { CoreUserMessage } from '@mastra/core/llm';
 import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
@@ -30,7 +30,7 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
             case 'image': {
               const updated = await this.processContentData(tenantId, content);
               if (updated) {
-                processed.push(updated);
+                processed.push(...updated);
               }
               break;
             }
@@ -46,21 +46,22 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
     return input;
   }
 
-  private async processContentData(tenantId: AdspId, content: Partial<FilePart> | ImagePart): Promise<FilePart | ImagePart> {
+  private async processContentData(tenantId: AdspId, content: Partial<FilePart> | ImagePart): Promise<Array<TextPart | FilePart | ImagePart>> {
     const data = content.type === 'file' ? content.data : content.image;
     if (typeof data === 'string' && AdspId.isAdspId(data)) {
       const resourceId = AdspId.parse(data);
       if (resourceId.type === 'resource' && resourceId.service === 'file-service') {
-        const { mediaType, url } = await this.getFile(tenantId, resourceId);
-        return content.type === 'file'
-          ? { type: 'file', data: url, mediaType }
-          : { type: 'image', image: url, mediaType };
+        const { mediaType, url, urn, filename } = await this.getFile(tenantId, resourceId);
+        return [content.type === 'file'
+          ? { type: 'file', data: url, mediaType, filename }
+          : { type: 'image', image: url, mediaType },
+        { type: 'text', text: `Provided file or image has filename '${filename}' and file service URN of: ${urn}` }];
       }
     }
     return;
   }
 
-  private async getFile(tenantId: AdspId, resourceId: AdspId): Promise<{ url: string; mediaType: string }> {
+  private async getFile(tenantId: AdspId, resourceId: AdspId) {
     const { data, metadata } = await this.fileServiceClient.getFileAndMetadata(tenantId, resourceId);
 
     this.logger.info(`File downloaded by agent: ${resourceId}`, {
@@ -72,6 +73,8 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
     return {
       url: `data:${metadata.mimeType};base64,${imageStr}`,
       mediaType: metadata.mimeType,
+      filename: metadata.filename,
+      urn: metadata.urn,
     };
   }
 }

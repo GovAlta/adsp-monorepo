@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import { FullNameDobReviewControl } from './FullNameDobReviewControl';
 import { ControlProps } from '@jsonforms/core';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 describe('FullNameDobReviewControl', () => {
   const mockGoToPage = jest.fn();
@@ -123,10 +124,10 @@ describe('FullNameDobReviewControl', () => {
   it('displays error message when errors prop is provided', () => {
     const propsWithError = {
       ...defaultProps,
-      errors: 'Full Name and Date of Birth is a required property',
+      errors: `Full Name and Date of Birth ${REQUIRED_PROPERTY_ERROR}`,
     };
 
-    render(
+    const { baseElement } = render(
       <table>
         <tbody>
           <JsonFormsStepperContext.Provider value={stepperContextValue}>
@@ -136,7 +137,10 @@ describe('FullNameDobReviewControl', () => {
       </table>
     );
 
-    expect(screen.getByText('Full Name and Date of Birth is required')).toBeInTheDocument();
+    const errorFormItem = baseElement.querySelector(
+      'goa-form-item[error="Full Name and Date of Birth is required"]'
+    );
+    expect(errorFormItem).toBeInTheDocument();
   });
 
   it('does not render Change button when stepId is undefined', () => {

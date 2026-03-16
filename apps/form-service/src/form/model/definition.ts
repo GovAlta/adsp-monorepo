@@ -7,6 +7,11 @@ import { CalendarService } from '../calendar';
 import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { FormDefinition, Disposition, QueueTaskToProcess, SecurityClassificationType } from '../types';
+import {
+  collectFileUrnPathTemplates,
+  FileUrnPathTemplate,
+  resolveFileReferences as resolveSchemaFileReferences,
+} from './fileReferenceResolver';
 import { FormEntity } from './form';
 import { InvalidOperationError } from '@core-services/core-common';
 
@@ -33,6 +38,7 @@ export class FormDefinitionEntity implements FormDefinition {
   registeredId?: string;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
+  private fileUrnPathTemplates: FileUrnPathTemplate[];
 
   constructor(
     private validationService: ValidationService,
@@ -61,6 +67,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.dataSchema = definition.dataSchema || {};
     this.uiSchema = definition.uiSchema || {};
     this.validationService.setSchema(`${this.tenantId.resource}:${this.id}`, this.dataSchema);
+    this.fileUrnPathTemplates = collectFileUrnPathTemplates(this.dataSchema);
     this.securityClassification = definition?.securityClassification;
     this.scheduledIntakes = definition?.scheduledIntakes || false;
     this.registeredId = definition?.registeredId || null;
@@ -117,6 +124,10 @@ export class FormDefinitionEntity implements FormDefinition {
 
   public validateData(context: string, data: Record<string, unknown>) {
     return this.validationService.validate(context, `${this.tenantId.resource}:${this.id}`, data);
+  }
+
+  public resolveFileReferences(data: Record<string, unknown>): Record<string, AdspId> {
+    return resolveSchemaFileReferences(data, this.fileUrnPathTemplates);
   }
 
   public async createForm(

@@ -1,4 +1,4 @@
-import { isAllowedUser, Tenant, TenantService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { isAllowedUser, Tenant, TenantService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, InvalidValueError, NotFoundError } from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
 import { Namespace as IoNamespace, Socket } from 'socket.io';
@@ -8,6 +8,37 @@ import { ServiceRoles } from './roles';
 import { AgentServiceConfiguration } from './configuration';
 import { AgentBroker } from './model';
 import { CoreUserMessage } from '@mastra/core/llm';
+
+const TOKEN_EXPIRY_THRESHOLD_MS = 30 * 1000;
+
+function getUserTokenExpiry(user: User): number | null {
+  const exp = user?.token?.exp;
+
+  return typeof exp === 'number' && Number.isFinite(exp) ? exp * 1000 : null;
+}
+
+function isUserTokenExpired(user: User): boolean {
+  const expiry = getUserTokenExpiry(user);
+
+  return expiry !== null && expiry - TOKEN_EXPIRY_THRESHOLD_MS <= Date.now();
+}
+
+function disconnectExpiredSocket(socket: Socket, logger: Logger, user: User, tenant: Tenant): void {
+  if (!socket.connected) {
+    return;
+  }
+
+  logger.info(`Disconnecting socket for user ${user.name} (ID: ${user.id}) due to token expiry.`, {
+    context: 'AgentRouter',
+    tenant: tenant?.id?.toString(),
+    user: `${user.name} (ID: ${user.id})`,
+  });
+  socket.emit('session-expired', {
+    code: 'USER_TOKEN_EXPIRED',
+    message: 'Reconnect with a fresh token.',
+  });
+  socket.disconnect(true);
+}
 
 export function onIoConnection(logger: Logger) {
   return async (socket: Socket): Promise<void> => {
@@ -20,6 +51,20 @@ export function onIoConnection(logger: Logger) {
         throw new UnauthorizedUserError('use agent', user);
       }
 
+      if (isUserTokenExpired(user)) {
+        disconnectExpiredSocket(socket, logger, user, tenant);
+        return;
+      }
+
+      const expiry = getUserTokenExpiry(user);
+      const expiryTimeout =
+        expiry !== null
+          ? setTimeout(
+              () => disconnectExpiredSocket(socket, logger, user, tenant),
+              Math.max(expiry - TOKEN_EXPIRY_THRESHOLD_MS - Date.now(), 0)
+            )
+          : null;
+
       logger.info(`User ${user.name} (ID: ${user.id}) connected.`, {
         context: 'AgentRouter',
         tenant: tenant?.id?.toString(),
@@ -31,6 +76,11 @@ export function onIoConnection(logger: Logger) {
       socket.send(`Connected as user ${user.name} (ID: ${user.id}) for tenant ${tenant.name}...`);
       socket.on('message', async (payload) => {
         try {
+          if (isUserTokenExpired(user)) {
+            disconnectExpiredSocket(socket, logger, user, tenant);
+            return;
+          }
+
           if (typeof payload !== 'object') {
             throw new InvalidOperationError('payload for message must be a JSON object.');
           } else {
@@ -104,6 +154,10 @@ export function onIoConnection(logger: Logger) {
         }
       });
       socket.on('disconnect', () => {
+        if (expiryTimeout) {
+          clearTimeout(expiryTimeout);
+        }
+
         logger.info(`User ${user.name} (ID: ${user.id}) disconnected.`, {
           context: 'AgentRouter',
           tenant: tenant?.id?.toString(),

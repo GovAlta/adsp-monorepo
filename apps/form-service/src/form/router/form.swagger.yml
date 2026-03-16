@@ -490,11 +490,8 @@ components:
             properties:
               data:
                 type: object
-              files:
-                type: object
-                additionalProperties:
-                  type: string
-                  format: uri
+                description: Form data. File references can be embedded directly as file-service URNs anywhere in this object.
+            required: [data]
     responses:
       200:
         description: Successfully updated the form.

@@ -54,15 +54,17 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
           </GoabDropdown>
         </GoabFormItem>
       </GoabGrid>
-      <GoabButtonGroup alignment="end">
-        <GoabButton type="secondary" onClick={onReset}>
-          Reset
-        </GoabButton>
+      <div style={{ paddingTop: 'var(--goa-space-l)' }}>
+        <GoabButtonGroup alignment="end">
+          <GoabButton type="secondary" onClick={onReset}>
+            Reset
+          </GoabButton>
 
-        <GoabButton disabled={!chartInterval || !service} onClick={onSearch}>
-          Search
-        </GoabButton>
-      </GoabButtonGroup>
+          <GoabButton disabled={!chartInterval || !service} onClick={onSearch}>
+            Search
+          </GoabButton>
+        </GoabButtonGroup>
+      </div>
     </div>
   );
 };

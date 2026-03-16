@@ -1,0 +1,36 @@
+{
+  "id": "config-service-dropdown",
+  "name": "Data Register — Configuration Service",
+  "category": "data-register",
+  "summary": "Populate a dropdown with dynamic data from the ADSP Configuration Service using a URN register",
+  "whenToUse": [
+    "Dropdown lists whose values are managed by admins and change over time",
+    "Province/territory lists, program options, or category lists maintained in ADSP configuration"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "provinces": {
+        "type": "string",
+        "enum": [""]
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/provinces",
+    "label": "Province",
+    "options": {
+      "register": {
+        "urn": "urn:ads:platform:configuration:v2:/configuration/public-register/public-register-1"
+      }
+    }
+  },
+  "notes": [
+    "Set `enum: [\"\"]` as a placeholder in the data schema — the actual values are loaded from the register",
+    "The `options.register.urn` points to a Configuration Service configuration definition",
+    "Admin-managed lists can be updated without changing the form definition",
+    "The register data can be an array of strings or array of `{label, value}` objects",
+    "Requires the JsonFormRegisterProvider context wrapper in the React integration"
+  ]
+}

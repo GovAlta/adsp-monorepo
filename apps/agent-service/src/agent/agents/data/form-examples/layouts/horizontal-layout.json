@@ -1,0 +1,36 @@
+{
+  "id": "horizontal-layout",
+  "name": "Horizontal Layout (Side by Side)",
+  "category": "layout",
+  "summary": "HorizontalLayout to render fields side by side in a row",
+  "whenToUse": [
+    "Placing related short fields on the same row (e.g., first name + last name)",
+    "When horizontal space is available and fields are logically grouped"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "firstName": { "type": "string" },
+      "lastName": { "type": "string" }
+    }
+  },
+  "uiSchema": {
+    "type": "HorizontalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/firstName"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/lastName"
+      }
+    ]
+  },
+  "notes": [
+    "HorizontalLayout places elements side by side in a single row",
+    "Each element gets equal width by default",
+    "On narrow screens, elements may stack vertically depending on the renderer",
+    "Best for 2-3 related short fields; avoid more than 3 to prevent crowding"
+  ]
+}

@@ -9,11 +9,11 @@ import {
   ReviewHeader,
   ReviewLabel,
   ReviewValue,
-  WarningIconDiv,
   RequiredTextLabel,
 } from '../Inputs/style-component';
-import { GoabButton, GoabIcon } from '@abgov/react-components';
+import { GoabButton, GoabFormItem } from '@abgov/react-components';
 import { useJsonForms } from '@jsonforms/react';
+import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 type AddressViewProps = ControlProps;
 
@@ -107,7 +107,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
     } catch (err) {
       // fallback to parsing the raw message
       const raw = matched.message;
-      if (raw?.includes('must have required property') || raw?.includes('is a required property')) {
+      if (raw?.includes('must have required property') || raw?.includes(REQUIRED_PROPERTY_ERROR)) {
         const propertyMatch = raw.match(/'([^']+)'/);
         if (propertyMatch && propertyMatch[1]) {
           return prettify(propertyMatch[1]) + ' is required';
@@ -132,6 +132,11 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
       error = `${label} is required`;
     }
 
+    const errorMessage =
+      error && (error.includes(REQUIRED_PROPERTY_ERROR) || error.includes('required property'))
+        ? `${label} is required`
+        : error;
+
     return (
       <tr key={propName}>
         <PageReviewContainer colSpan={3}>
@@ -153,14 +158,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
           </ReviewHeader>
           <ReviewValue>
             {value}
-            {error && (
-              <WarningIconDiv>
-                <GoabIcon type="warning" size="small" />
-                {error?.includes('is a required property') || error?.includes('required property')
-                  ? `${label} is required`
-                  : error}
-              </WarningIconDiv>
-            )}
+            {errorMessage && <GoabFormItem error={errorMessage} label=""></GoabFormItem>}
           </ReviewValue>
         </PageReviewContainer>
       </tr>

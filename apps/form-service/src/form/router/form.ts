@@ -320,6 +320,7 @@ export function createForm(
   eventService: EventService,
   commentService: CommentService,
   notificationService: NotificationService,
+  fileService: FileService,
   queueTaskService: QueueTaskService,
   pdfService: PdfService
 ): RequestHandler {
@@ -329,7 +330,7 @@ export function createForm(
 
       const user = req.user;
       const tenantId = req.tenant?.id;
-      const { definitionId, applicant: applicantInfo, data, files: fileIds, submit, dryRun } = req.body;
+      const { definitionId, applicant: applicantInfo, data, submit, dryRun } = req.body;
 
       logger.debug(`Creating form of definition '${definitionId}'...`, {
         context: 'FormRouter',
@@ -346,13 +347,10 @@ export function createForm(
       let formSubmission: FormSubmissionEntity = null;
       let event = formCreated(apiId, user, form, dryRun);
 
-      // If data or files is set, then update the form.
-      if (data || fileIds) {
-        const files: Record<string, AdspId> = fileIds
-          ? Object.entries(fileIds).reduce((ids, [k, v]) => ({ ...ids, [k]: AdspId.parse(v as string) }), {})
-          : null;
-
-        form = await form.update(user, data, files, dryRun);
+      // If data is set, then update the form.
+      // File references are resolved from data in the model layer.
+      if (data) {
+        form = await form.update(user, fileService, data, dryRun);
       }
 
       let jobId = null;
@@ -567,14 +565,14 @@ export function accessForm(logger: Logger, notificationService: NotificationServ
   };
 }
 
-export function updateFormData(logger: Logger): RequestHandler {
+export function updateFormData(logger: Logger, fileService: FileService): RequestHandler {
   return async (req, res, next) => {
     try {
       const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
       const form: FormEntity = req[FORM];
-      const { data, files: fileIds } = req.body;
+      const { data } = req.body;
 
       logger.debug(`Updating form with ID: ${form.id} (definition ID: ${form.definition?.id}) data...`, {
         context: 'FormRouter',
@@ -582,11 +580,7 @@ export function updateFormData(logger: Logger): RequestHandler {
         user: user ? `${user.name} (ID: ${user.id})` : null,
       });
 
-      const files: Record<string, AdspId> = fileIds
-        ? Object.entries(fileIds).reduce((ids, [k, v]) => ({ ...ids, [k]: AdspId.parse(v as string) }), {})
-        : null;
-
-      const result = await form.update(user, data, files);
+      const result = await form.update(user, fileService, data);
 
       end();
       res.send(mapFormData(result));
@@ -844,6 +838,7 @@ export function createFormRouter({
       eventService,
       commentService,
       notificationService,
+      fileService,
       queueTaskService,
       pdfService
     )
@@ -893,13 +888,9 @@ export function createFormRouter({
   router.put(
     '/forms/:formId/data',
     assertAuthenticatedHandler,
-    createValidationHandler(
-      param('formId').isUUID(),
-      body('data').optional({ nullable: true }).isObject(),
-      body('files').optional({ nullable: true }).isObject()
-    ),
+    createValidationHandler(param('formId').isUUID(), body('data').exists().isObject()),
     getForm(repository),
-    updateFormData(logger)
+    updateFormData(logger, fileService)
   );
 
   router.get(

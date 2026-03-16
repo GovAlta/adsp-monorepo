@@ -1,0 +1,37 @@
+{
+  "id": "checkbox-required",
+  "name": "Required Declaration Checkbox",
+  "category": "control",
+  "summary": "Required checkbox that must be checked to submit, using `allOf` with `enum: [true]` validation",
+  "whenToUse": [
+    "Declaration or consent checkboxes that must be accepted before submission",
+    "'I agree to terms and conditions' or 'I certify this information is accurate' statements"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "iDeclare": {
+        "type": "boolean",
+        "allOf": [
+          {
+            "enum": [true]
+          }
+        ]
+      }
+    },
+    "required": ["iDeclare"]
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/iDeclare",
+    "options": {
+      "text": "I declare the information provided is correct to the best of my knowledge"
+    }
+  },
+  "notes": [
+    "The `allOf: [{ enum: [true] }]` pattern forces the checkbox to be checked (not just present)",
+    "Without `allOf`, a `required` boolean would accept both true and false as valid",
+    "Use `options.text` to set the checkbox label text",
+    "This pattern is essential for FOIP consent and declaration checkboxes on government forms"
+  ]
+}

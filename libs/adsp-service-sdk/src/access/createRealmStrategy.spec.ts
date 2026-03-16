@@ -3,6 +3,10 @@ import { TenantService } from '../tenant';
 import { adspId } from '../utils';
 import { createRealmStrategy } from './createRealmStrategy';
 
+interface TestStrategy {
+  _verify: (req: unknown, payload: Record<string, unknown>, done: (err: unknown, user?: Express.User) => void) => void;
+}
+
 describe('createRealmStrategy', () => {
   const tenantServiceMock = {
     getTenantByRealm: jest.fn(),
@@ -41,5 +45,30 @@ describe('createRealmStrategy', () => {
     });
     expect(strategy).toBeTruthy();
     expect(tenantServiceMock.getTenantByRealm).toHaveBeenCalled();
+  });
+
+  it('uses token from additional extractor for bearer', async () => {
+    const strategy = (await createRealmStrategy({
+      realm: 'core',
+      serviceId: adspId`urn:ads:platform:test`,
+      tenantService: tenantServiceMock as unknown as TenantService,
+      accessServiceUrl: new URL('https://access-service'),
+      logger: loggerMock,
+      ignoreServiceAud: false,
+      additionalExtractors: [() => 'custom-token'],
+    })) as unknown as TestStrategy;
+
+    const req = { headers: {} };
+    const payload = { sub: 'abc', preferred_username: 'test-user', email: 'test@example.com' };
+    const done = jest.fn();
+
+    strategy._verify(req, payload, done);
+
+    expect(done).toHaveBeenCalledWith(
+      null,
+      expect.objectContaining({
+        token: expect.objectContaining({ bearer: 'custom-token' }),
+      })
+    );
   });
 });

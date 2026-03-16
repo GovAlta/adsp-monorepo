@@ -1,0 +1,73 @@
+{
+  "id": "sum-array-aggregate",
+  "name": "SUM Array Aggregate",
+  "category": "computed",
+  "summary": "Use `SUM()` to total a numeric column across an array of objects (repeating rows)",
+  "whenToUse": [
+    "Summing line item costs, hours, quantities across repeating rows",
+    "Grand total of an expense report, invoice, or time sheet"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "lineItems": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "title": "Description"
+            },
+            "amount": {
+              "type": "number",
+              "title": "Amount ($)"
+            },
+            "hours": {
+              "type": "number",
+              "title": "Hours"
+            }
+          }
+        }
+      },
+      "totalAmount": {
+        "type": "string",
+        "format": "computed",
+        "description": "SUM(#/properties/lineItems/amount)"
+      },
+      "totalHours": {
+        "type": "string",
+        "format": "computed",
+        "description": "SUM(#/properties/lineItems/hours)"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/lineItems",
+        "label": "Line Items"
+      },
+      {
+        "type": "Control",
+        "label": "Total Amount ($)",
+        "scope": "#/properties/totalAmount"
+      },
+      {
+        "type": "Control",
+        "label": "Total Hours",
+        "scope": "#/properties/totalHours"
+      }
+    ]
+  },
+  "notes": [
+    "SUM syntax: `SUM(#/properties/arrayField/columnName)`",
+    "SUM iterates all rows in the array and sums the specified column",
+    "Non-numeric values in the column cause a validation error",
+    "SUM must be the ENTIRE expression — cannot combine with arithmetic (e.g., `SUM(...) * 1.05` won't work)",
+    "Only `SUM` is available as an aggregate — no AVG, COUNT, MIN, MAX aggregates",
+    "The array must contain objects with the referenced property name"
+  ]
+}

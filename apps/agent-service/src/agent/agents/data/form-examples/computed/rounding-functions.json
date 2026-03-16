@@ -1,0 +1,87 @@
+{
+  "id": "rounding-functions",
+  "name": "Rounding and Math Functions",
+  "category": "computed",
+  "summary": "Use built-in functions like `round()`, `ceil()`, `floor()`, `abs()`, `roundTo()` for precise calculations",
+  "whenToUse": [
+    "Rounding currency values to 2 decimal places",
+    "Ceiling/floor calculations for inventory or capacity planning",
+    "Absolute value for difference calculations"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "rawAmount": {
+        "type": "number",
+        "title": "Raw Amount"
+      },
+      "taxPercent": {
+        "type": "number",
+        "title": "Tax Rate (%)"
+      },
+      "rounded": {
+        "type": "string",
+        "format": "computed",
+        "description": "round(#/properties/rawAmount * #/properties/taxPercent / 100)"
+      },
+      "roundedTo2": {
+        "type": "string",
+        "format": "computed",
+        "description": "roundTo(#/properties/rawAmount * #/properties/taxPercent / 100, 2)"
+      },
+      "ceiled": {
+        "type": "string",
+        "format": "computed",
+        "description": "ceil(#/properties/rawAmount * #/properties/taxPercent / 100)"
+      },
+      "floored": {
+        "type": "string",
+        "format": "computed",
+        "description": "floor(#/properties/rawAmount * #/properties/taxPercent / 100)"
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "VerticalLayout",
+    "elements": [
+      {
+        "type": "Control",
+        "scope": "#/properties/rawAmount"
+      },
+      {
+        "type": "Control",
+        "scope": "#/properties/taxPercent"
+      },
+      {
+        "type": "Control",
+        "label": "Tax (rounded to nearest integer)",
+        "scope": "#/properties/rounded"
+      },
+      {
+        "type": "Control",
+        "label": "Tax (rounded to 2 decimals)",
+        "scope": "#/properties/roundedTo2"
+      },
+      {
+        "type": "Control",
+        "label": "Tax (ceiling — always round up)",
+        "scope": "#/properties/ceiled"
+      },
+      {
+        "type": "Control",
+        "label": "Tax (floor — always round down)",
+        "scope": "#/properties/floored"
+      }
+    ]
+  },
+  "notes": [
+    "`round(x)` — round to nearest integer",
+    "`roundTo(x, n)` — round x to n decimal places (e.g., `roundTo(x, 2)` for currency)",
+    "`ceil(x)` — smallest integer >= x (always rounds up)",
+    "`floor(x)` — largest integer <= x (always rounds down)",
+    "`abs(x)` — absolute value",
+    "`trunc(x)` — integer part (removes decimals without rounding)",
+    "`sqrt(x)` — square root, `pow(x, y)` — x to the power of y",
+    "Functions can be nested: `round(abs(#/properties/a - #/properties/b))`"
+  ]
+}

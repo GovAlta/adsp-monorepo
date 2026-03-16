@@ -61,6 +61,9 @@ export const populateDropdown = (schema, enumerators) => {
 
 const JsonFormsWrapper = ({ definition, data, onChange, readonly }) => {
   const enumerators = useContext(JsonFormContext) as enumerators;
+  const user = useSelector((state: AppState) => state.user);
+
+  definition.user = user?.user;
   return (
     <JsonFormRegisterProvider defaultRegisters={definition || []}>
       <JsonForms
@@ -129,12 +132,12 @@ export const DraftForm: FunctionComponent<DraftFormProps> = ({
                 recordId: form?.urn,
                 file,
                 propertyId: propertyIdRoot,
-              })
+              }),
             ).unwrap()
           ).metadata
         : (
             await dispatch(
-              uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file, propertyId: propertyIdRoot })
+              uploadFile({ typeId: FORM_SUPPORTING_DOCS, recordId: form.urn, file, propertyId: propertyIdRoot }),
             ).unwrap()
           ).metadata;
 

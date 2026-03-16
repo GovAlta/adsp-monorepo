@@ -20,7 +20,11 @@ export type GoabInputMultiLineTextProps = CellProps & WithClassname & WithInputP
 export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, path, schema, label, isVisited, errors, setIsVisited } = props;
   const { required } = props as ControlProps;
-  const [textAreaValue, _] = React.useState<string>(data);
+  const [textAreaValue, setTextAreaValue] = React.useState<string>(data || '');
+
+  useEffect(() => {
+    setTextAreaValue(data || '');
+  }, [data]);
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';

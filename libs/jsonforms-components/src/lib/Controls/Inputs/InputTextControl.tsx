@@ -4,20 +4,24 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoabInput, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { RegisterDataType } from '../../Context/register';
+import { JsonFormRegisterProvider, RegisterDataType } from '../../Context/register';
 import { JsonFormsRegisterContext, RegisterConfig } from '../../Context/register';
 import { onBlurForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 import { sinTitle } from '../../common/Constants';
+import { useRegisterUser } from '../../Context/register';
 import {
   GoabInputOnChangeDetail,
   GoabInputOnBlurDetail,
   GoabDropdownOnChangeDetail,
 } from '@abgov/ui-components-common';
 import { useDebounce } from '../../util/useDebounce';
+import { autoPopulateValue } from '../../util/autoPopulate';
 
 export type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
-function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undefined): RegisterConfig | undefined {
+export function fetchRegisterConfigFromOptions(
+  options: Record<string, unknown> | undefined,
+): RegisterConfig | undefined {
   if (!options?.url && !options?.urn) return undefined;
   const config: RegisterConfig = {
     ...options,
@@ -42,18 +46,36 @@ export const formatSin = (value: string) => {
   const formatVal = spacedNumber.length > 11 ? spacedNumber.slice(0, 11) : spacedNumber;
   return formatVal;
 };
-
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
+  return (
+    <JsonFormRegisterProvider defaultRegisters={undefined}>
+      <InnerGoAInputText {...props} />{' '}
+    </JsonFormRegisterProvider>
+  );
+};
+export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, schema, label, path, handleChange, errors, isVisited, setIsVisited } =
     props;
 
-  const [localValue, setLocalValue] = useState<string>(data ?? '');
+  const user = useRegisterUser();
+
+  const initialValue = (user && autoPopulateValue(user, props)) ?? data ?? '';
+  const [localValue, setLocalValue] = useState<string>(initialValue);
 
   const debouncedValue = useDebounce(localValue, 300);
 
   useEffect(() => {
-    setLocalValue(data ?? '');
+    setLocalValue(initialValue);
   }, [data]);
+
+  useEffect(() => {
+    const autoPopulatedValue = schema.default || (user && autoPopulateValue(user, props));
+    if (autoPopulatedValue && autoPopulatedValue !== data) {
+      handleChange(props.path, autoPopulatedValue);
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schema, data, user]);
 
   /* istanbul ignore next */
   useEffect(() => {

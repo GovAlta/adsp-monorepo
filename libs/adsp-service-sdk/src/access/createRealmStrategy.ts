@@ -31,9 +31,14 @@ export const createRealmStrategy = async ({
   const realmIss = realmIssUrl.href;
   const realmJwksUrl = new URL(`/auth/realms/${realm}/protocol/openid-connect/certs`, accessServiceUrl);
   const realmJwks = realmJwksUrl.href;
+  const extractToken = ExtractJwt.fromExtractors([
+    ExtractJwt.fromAuthHeaderAsBearerToken(),
+    ...(additionalExtractors || []),
+  ]);
 
   const tenant: Tenant = realm !== 'core' ? await tenantService.getTenantByRealm(realm) : null;
   const verifyCallback: VerifyCallbackWithRequest = (req, payload, done) => {
+    const bearer = extractToken(req);
     const user: Express.User = {
       id: payload.sub,
       name: payload.name || payload.preferred_username,
@@ -43,7 +48,7 @@ export const createRealmStrategy = async ({
       isCore: realm === 'core',
       token: {
         ...payload,
-        bearer: req.headers.authorization?.substring(7),
+        bearer,
       },
     };
 
@@ -55,10 +60,7 @@ export const createRealmStrategy = async ({
   });
   const strategy = new JwtStrategy(
     {
-      jwtFromRequest: ExtractJwt.fromExtractors([
-        ExtractJwt.fromAuthHeaderAsBearerToken(),
-        ...(additionalExtractors || []),
-      ]),
+      jwtFromRequest: extractToken,
       secretOrKeyProvider: (req, token, done) => {
         try {
           // Decode the header and check against expected issuer.

@@ -24,9 +24,15 @@ export const createTenantStrategy = ({
   const serviceAud = serviceId.toString();
   const issuerCache = new IssuerCache(logger, accessServiceUrl, tenantService);
   const keyProvider = new TenantKeyProvider(logger, accessServiceUrl, issuerCache);
+  const extractors = [ExtractJwt.fromAuthHeaderAsBearerToken(), ...(additionalExtractors || [])];
+  if (accessTokenInQuery) {
+    extractors.push(ExtractJwt.fromUrlQueryParameter('token'));
+  }
+  const extractToken = ExtractJwt.fromExtractors(extractors);
 
   const verifyCallback: VerifyCallbackWithRequest = async (req, payload, done) => {
     const tenant = await issuerCache.getTenantByIssuer(payload.iss);
+    const bearer = extractToken(req);
     const user: Express.User = {
       id: payload.sub,
       name: payload.name || payload.preferred_username,
@@ -36,21 +42,16 @@ export const createTenantStrategy = ({
       isCore: false,
       token: {
         ...payload,
-        bearer: req.headers.authorization?.substring(7),
+        bearer,
       },
     };
 
     done(null, user, null);
   };
 
-  const extractors = [ExtractJwt.fromAuthHeaderAsBearerToken(), ...(additionalExtractors || [])];
-  if (accessTokenInQuery) {
-    extractors.push(ExtractJwt.fromUrlQueryParameter('token'));
-  }
-
   const strategy = new JwtStrategy(
     {
-      jwtFromRequest: ExtractJwt.fromExtractors(extractors),
+      jwtFromRequest: extractToken,
       secretOrKeyProvider: keyProvider.keyRequestHandler,
       passReqToCallback: true,
       audience: !ignoreServiceAud ? serviceAud : null,
