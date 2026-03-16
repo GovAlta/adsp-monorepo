@@ -13,7 +13,7 @@ import {
 } from '../Inputs/style-component';
 import { GoabButton, GoabFormItem } from '@abgov/react-components';
 import { useJsonForms } from '@jsonforms/react';
-import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
+import { REQUIRED_PROPERTY_ERROR, getAddressLookupFieldLabel } from '../../common/Constants';
 
 type AddressViewProps = ControlProps;
 
@@ -52,13 +52,6 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
   const provinceLabel = isAlbertaAddress
     ? 'Alberta'
     : provinces.find((p) => p.value === data?.subdivisionCode)?.label || data?.subdivisionCode;
-
-  function prettify(prop: string) {
-    return prop
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/[_-]/g, ' ')
-      .replace(/^./, (c) => c.toUpperCase());
-  }
 
   const getError = (propName: string) => {
     const normalizePath = (p: string) =>
@@ -102,7 +95,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
       return humanizeAjvError(
         matched,
         jsonForms.core?.schema as JsonSchema,
-        jsonForms.core?.uischema as UISchemaElement
+        jsonForms.core?.uischema as UISchemaElement,
       );
     } catch (err) {
       // fallback to parsing the raw message
@@ -110,7 +103,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
       if (raw?.includes('must have required property') || raw?.includes(REQUIRED_PROPERTY_ERROR)) {
         const propertyMatch = raw.match(/'([^']+)'/);
         if (propertyMatch && propertyMatch[1]) {
-          return prettify(propertyMatch[1]) + ' is required';
+          return `${getAddressLookupFieldLabel(propertyMatch[1])} is required`;
         }
       }
       return raw;
@@ -184,12 +177,13 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
           </ReviewHeader>
         </PageReviewContainer>
       </tr>
-      {renderRow('Address line 1', data?.addressLine1, 'addressLine1', false)}
-      {data?.addressLine2 && renderRow('Address line 2', data.addressLine2, 'addressLine2', false)}
-      {renderRow('City', data?.municipality, 'municipality', false)}
-      {renderRow('Postal Code', data?.postalCode, 'postalCode', false)}
-      {renderRow('Province', provinceLabel, 'subdivisionCode', false)}
-      {renderRow('Country', 'Canada', 'country', false)}
+      {renderRow(getAddressLookupFieldLabel('addressLine1'), data?.addressLine1, 'addressLine1', false)}
+      {data?.addressLine2 &&
+        renderRow(getAddressLookupFieldLabel('addressLine2'), data.addressLine2, 'addressLine2', false)}
+      {renderRow(getAddressLookupFieldLabel('municipality'), data?.municipality, 'municipality', false)}
+      {renderRow(getAddressLookupFieldLabel('postalCode'), data?.postalCode, 'postalCode', false)}
+      {renderRow(getAddressLookupFieldLabel('subdivisionCode'), provinceLabel, 'subdivisionCode', false)}
+      {renderRow(getAddressLookupFieldLabel('country'), 'Canada', 'country', false)}
     </>
   );
 };

@@ -2,15 +2,8 @@ import React, { useContext } from 'react';
 import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import {
-  PageReviewContainer,
-  ReviewHeader,
-  ReviewLabel,
-  ReviewValue,
-  RequiredTextLabel,
-} from './style-component';
-import { convertToSentenceCase, getLastSegmentFromPointer } from '../../util';
-import { getLabelText } from '../../util/stringUtils';
+import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue, RequiredTextLabel } from './style-component';
+import { convertToReadableFormat, getLastSegmentFromPointer } from '../../util';
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { GoabButton, GoabFormItem } from '@abgov/react-components';
 
@@ -21,12 +14,17 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
   const { data, uischema, label, schema, path, errors, enabled, cells, required } = props;
   const context = useContext(JsonFormsStepperContext);
   const jsonForms = useJsonForms();
-  let labelToUpdate: string = uischema.options?.reviewLabel
-    ? (uischema.options.reviewLabel as string)
-    : convertToSentenceCase(getLabelText(uischema.scope, label || ''));
-  if (labelToUpdate === '') {
+  const reviewLabel = typeof uischema.options?.reviewLabel === 'string' ? (uischema.options.reviewLabel as string) : '';
+  const propLabel = typeof label === 'string' ? label : '';
+
+  let labelToUpdate: string = '';
+  if (reviewLabel.trim() !== '') {
+    labelToUpdate = reviewLabel;
+  } else if (propLabel.trim() !== '') {
+    labelToUpdate = propLabel;
+  } else if (uischema.scope?.startsWith('#/')) {
     const scopeName = uischema.scope ? getLastSegmentFromPointer(uischema.scope) : '';
-    labelToUpdate = convertToSentenceCase(scopeName);
+    labelToUpdate = convertToReadableFormat(scopeName);
   }
   let reviewText = data;
   const isBoolean = typeof data === 'boolean';
@@ -57,7 +55,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
       checkboxLabel = uischema.options.text.trim();
     } else if (uischema.scope && uischema.scope.startsWith('#/')) {
       const fallbackLabel = getLastSegmentFromPointer(uischema.scope);
-      checkboxLabel = fallbackLabel.charAt(0).toUpperCase() + fallbackLabel.slice(1);
+      checkboxLabel = convertToReadableFormat(fallbackLabel);
     }
 
     if (uischema.options?.radio === true) {
@@ -124,12 +122,12 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
       // Fallback: try to extract missing property name and create a friendly message
       if (matchedError.keyword === 'required' && matchedError.params?.missingProperty) {
         const missing = matchedError.params.missingProperty as string;
-        const missingPropertyLabel = convertToSentenceCase(missing);
+        const missingPropertyLabel = convertToReadableFormat(missing);
         activeError = `${missingPropertyLabel} is required`;
       } else {
         const propertyMatch = matchedError.message?.match(/'([^']+)'/);
         if (propertyMatch && propertyMatch[1]) {
-          const missingPropertyLabel = convertToSentenceCase(propertyMatch[1]);
+          const missingPropertyLabel = convertToReadableFormat(propertyMatch[1]);
           activeError = `${missingPropertyLabel} is required`;
         } else {
           activeError = matchedError.message;
@@ -172,9 +170,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
               cells={cells}
             />
           )}
-          {activeError && (
-            <GoabFormItem error={activeError} label=""></GoabFormItem>
-          )}
+          {activeError && <GoabFormItem error={activeError} label=""></GoabFormItem>}
         </ReviewValue>
       </PageReviewContainer>
     </tr>

@@ -113,7 +113,7 @@ describe('AddressLookUpControl', () => {
     return render(
       <JsonFormContext.Provider value={mockFormContext}>
         <AddressLookUpControl {...props} />
-      </JsonFormContext.Provider>
+      </JsonFormContext.Provider>,
     );
   };
 
@@ -156,7 +156,7 @@ describe('AddressLookUpControl', () => {
           bubbles: true,
           composed: true,
           detail: { name: 'addressLine1' },
-        })
+        }),
       );
     });
 
@@ -171,7 +171,7 @@ describe('AddressLookUpControl', () => {
   it('should render the input fields with empty values', () => {
     const { baseElement } = renderComponent();
     const input = baseElement.querySelector(
-      "goa-input[placeholder='Start typing the first line of your address, required.']"
+      "goa-input[placeholder='Start typing the first line of your address, required.']",
     );
 
     expect(input?.getAttribute('value')).toBe('');
@@ -187,7 +187,7 @@ describe('AddressLookUpControl', () => {
       inputField,
       new CustomEvent('_change', {
         detail: { name: 'addressLine1', value: '123' },
-      })
+      }),
     );
 
     expect(inputField?.getAttribute('value')).toBe('123');
@@ -216,7 +216,7 @@ describe('AddressLookUpControl', () => {
       inputField,
       new CustomEvent('_change', {
         detail: { name: 'addressLine1', value: '123' },
-      })
+      }),
     );
 
     fireEvent(
@@ -227,7 +227,7 @@ describe('AddressLookUpControl', () => {
           code: 40,
           charCode: 0,
         },
-      })
+      }),
     );
     fireEvent(
       inputField,
@@ -237,7 +237,7 @@ describe('AddressLookUpControl', () => {
           code: 38,
           charCode: 0,
         },
-      })
+      }),
     );
 
     fireEvent(
@@ -248,7 +248,7 @@ describe('AddressLookUpControl', () => {
           code: 13,
           charCode: 0,
         },
-      })
+      }),
     );
     expect(inputField?.getAttribute('value')).toBe('123');
   });
@@ -270,8 +270,8 @@ describe('AddressLookUpControl', () => {
           scope: '#/properties/personFullName',
         } as UISchemaElement,
         {},
-        dummyTestContext
-      )
+        dummyTestContext,
+      ),
     ).toBe(false);
 
     // wrong schema type
@@ -315,8 +315,8 @@ describe('AddressLookUpControl', () => {
             } as JsonSchema7,
           },
         },
-        dummyTestContext
-      )
+        dummyTestContext,
+      ),
     ).toBe(false);
 
     // miss addressLine1
@@ -372,8 +372,8 @@ describe('AddressLookUpControl', () => {
             } as JsonSchema7,
           },
         },
-        dummyTestContext
-      )
+        dummyTestContext,
+      ),
     ).toBe(false);
 
     expect(
@@ -441,8 +441,8 @@ describe('AddressLookUpControl', () => {
             } as JsonSchema7,
           },
         },
-        dummyTestContext
-      )
+        dummyTestContext,
+      ),
     ).toBe(true);
   });
 });
@@ -505,7 +505,7 @@ describe('AddressLookUpControl with error', () => {
     return render(
       <JsonFormContext.Provider value={mockFormContext}>
         <AddressLookUpControl {...props} />
-      </JsonFormContext.Provider>
+      </JsonFormContext.Provider>,
     );
   };
 
@@ -616,7 +616,7 @@ describe('AddressLookUpControl - More tests', () => {
     return render(
       <JsonFormContext.Provider value={mockFormContext}>
         <AddressLookUpControl {...props} />
-      </JsonFormContext.Provider>
+      </JsonFormContext.Provider>,
     );
   };
 
@@ -675,7 +675,7 @@ describe('AddressLookUpControl - More tests', () => {
           input!,
           new CustomEvent('_change', {
             detail: { name: 'addressLine1', value: '123 Main' },
-          })
+          }),
         );
       });
 
@@ -683,7 +683,7 @@ describe('AddressLookUpControl - More tests', () => {
         () => {
           expect(fetchAddressSuggestions).toHaveBeenCalled();
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
     });
   });
@@ -762,14 +762,14 @@ describe('AddressLookUpControl - More tests', () => {
           addressLine2Input!,
           new CustomEvent('_change', {
             detail: { name: 'addressLine2', value: '' },
-          })
+          }),
         );
       });
 
       // Should call handleChange without addressLine2
       expect(mockHandleChange).toHaveBeenCalledWith(
         'address',
-        expect.not.objectContaining({ addressLine2: expect.anything() })
+        expect.not.objectContaining({ addressLine2: expect.anything() }),
       );
     });
 
@@ -788,7 +788,7 @@ describe('AddressLookUpControl - More tests', () => {
           addressLine2Input!,
           new CustomEvent('_change', {
             detail: { name: 'addressLine2', value: 'Unit 10' },
-          })
+          }),
         );
       });
 
@@ -813,7 +813,7 @@ describe('AddressLookUpControl - More tests', () => {
           municipalityInput!,
           new CustomEvent('_blur', {
             detail: { name: 'municipality' },
-          })
+          }),
         );
       });
 
@@ -823,7 +823,7 @@ describe('AddressLookUpControl - More tests', () => {
           municipalityInput!,
           new CustomEvent('_change', {
             detail: { name: 'municipality', value: 'Calgary' },
-          })
+          }),
         );
       });
 
@@ -846,7 +846,7 @@ describe('AddressLookUpControl - More tests', () => {
           input!,
           new CustomEvent('_change', {
             detail: { name: 'addressLine1', value: '123 Main Street' },
-          })
+          }),
         );
       });
 
@@ -854,7 +854,7 @@ describe('AddressLookUpControl - More tests', () => {
         () => {
           expect(fetchAddressSuggestions).toHaveBeenCalled();
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
     });
 
@@ -870,7 +870,7 @@ describe('AddressLookUpControl - More tests', () => {
           input!,
           new CustomEvent('_change', {
             detail: { name: 'addressLine1', value: '12' },
-          })
+          }),
         );
       });
 
@@ -893,7 +893,7 @@ describe('AddressLookUpControl - More tests', () => {
           input!,
           new CustomEvent('_change', {
             detail: { name: 'addressLine1', value: '123 Main' },
-          })
+          }),
         );
       });
 
@@ -901,7 +901,7 @@ describe('AddressLookUpControl - More tests', () => {
         () => {
           expect(filterAlbertaAddresses).toHaveBeenCalled();
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
     });
 
@@ -926,7 +926,7 @@ describe('AddressLookUpControl - More tests', () => {
           input!,
           new CustomEvent('_change', {
             detail: { name: 'addressLine1', value: '123 Main' },
-          })
+          }),
         );
       });
 
@@ -935,7 +935,7 @@ describe('AddressLookUpControl - More tests', () => {
           expect(fetchAddressSuggestions).toHaveBeenCalled();
           expect(filterAlbertaAddresses).not.toHaveBeenCalled();
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
     });
 
@@ -952,7 +952,7 @@ describe('AddressLookUpControl - More tests', () => {
           input!,
           new CustomEvent('_change', {
             detail: { name: 'addressLine1', value: '123 Main' },
-          })
+          }),
         );
       });
 
@@ -960,7 +960,7 @@ describe('AddressLookUpControl - More tests', () => {
         () => {
           expect(consoleErrorSpy).toHaveBeenCalledWith('Address fetch failed:', expect.any(Error));
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
 
       consoleErrorSpy.mockRestore();
@@ -981,7 +981,7 @@ describe('AddressLookUpControl - More tests', () => {
           input!,
           new CustomEvent('_change', {
             detail: { name: 'addressLine1', value: '123 Main' },
-          })
+          }),
         );
       });
 
@@ -1002,7 +1002,7 @@ describe('AddressLookUpControl - More tests', () => {
           input!,
           new CustomEvent('_change', {
             detail: { name: 'addressLine1', value: 'ab' },
-          })
+          }),
         );
       });
 
@@ -1036,7 +1036,7 @@ describe('AddressLookUpControl - More tests', () => {
           input!,
           new CustomEvent('_change', {
             detail: { name: 'addressLine1', value: '123 Main' },
-          })
+          }),
         );
       });
 
@@ -1046,7 +1046,7 @@ describe('AddressLookUpControl - More tests', () => {
           const listItems = baseElement.querySelectorAll('[data-testId^="listItem-"]');
           return listItems.length > 0;
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
 
       // Now click on the first suggestion
@@ -1063,7 +1063,7 @@ describe('AddressLookUpControl - More tests', () => {
   });
 
   describe('Required Field Blur Handler', () => {
-    it('should show error for municipality as "city is required"', () => {
+    it('should show user-friendly required error for municipality', () => {
       const { baseElement } = renderComponent({ data: {} });
 
       const municipalityInput = baseElement.querySelector("goa-input[testId='address-form-city']");
@@ -1073,7 +1073,7 @@ describe('AddressLookUpControl - More tests', () => {
           municipalityInput!,
           new CustomEvent('_blur', {
             detail: { name: 'municipality' },
-          })
+          }),
         );
       });
 
@@ -1081,9 +1081,10 @@ describe('AddressLookUpControl - More tests', () => {
       // The GoA component will have the error attribute set
       const formItem = baseElement.querySelector('goa-form-item[label="City"]');
       expect(formItem).toBeTruthy();
+      expect(formItem?.getAttribute('error')).toBe('City is required');
     });
 
-    it('should show error for other required fields with field name', () => {
+    it('should show user-friendly required error for postal code', () => {
       const { baseElement } = renderComponent({ data: {} });
 
       const postalCodeInput = baseElement.querySelector("goa-input[testId='address-form-postal-code']");
@@ -1093,13 +1094,14 @@ describe('AddressLookUpControl - More tests', () => {
           postalCodeInput!,
           new CustomEvent('_blur', {
             detail: { name: 'postalCode' },
-          })
+          }),
         );
       });
 
       // Check that the form item exists
       const formItem = baseElement.querySelector('goa-form-item[label="Postal code"]');
       expect(formItem).toBeTruthy();
+      expect(formItem?.getAttribute('error')).toBe('Postal code is required');
     });
 
     it('should clear error when field has value on blur', () => {
@@ -1116,7 +1118,7 @@ describe('AddressLookUpControl - More tests', () => {
           addressLine1Input!,
           new CustomEvent('_blur', {
             detail: { name: 'addressLine1' },
-          })
+          }),
         );
       });
 
@@ -1138,7 +1140,7 @@ describe('AddressLookUpControl - More tests', () => {
           input!,
           new CustomEvent('_change', {
             detail: { name: 'addressLine1', value: '123 Main' },
-          })
+          }),
         );
       });
 
@@ -1150,7 +1152,7 @@ describe('AddressLookUpControl - More tests', () => {
           input!,
           new CustomEvent('_blur', {
             detail: { name: 'addressLine1' },
-          })
+          }),
         );
       });
 
