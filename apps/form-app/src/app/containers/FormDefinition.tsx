@@ -42,10 +42,10 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
   const busy = useSelector(busySelector);
 
   useEffect(() => {
-    if (definition && user) {
+    if (definition?.id && user) {
       dispatch(findUserForms({ definitionId: definition.id }));
     }
-  }, [dispatch, definition, user]);
+  }, [dispatch, definition?.id, user?.id]);
 
   if (initialized && definition && definition.oneFormPerApplicant === false) {
     return <Navigate to="forms" />;
@@ -66,13 +66,13 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
       ) : (
         <StartApplication
           definition={definition}
-          autoCreate={urlParams.has(AUTO_CREATE_PARAM, 'true')}
+          autoCreate={urlParams.get(AUTO_CREATE_PARAM) === 'true'}
           canCreate={!busy.creating}
           onCreate={async () => {
             const { payload } = await dispatch(createForm(definition.id));
             const form = payload as FormObject;
             if (form?.id) {
-              navigate(`${form.id}`);
+              navigate(`${form?.id}`);
             }
           }}
         />
