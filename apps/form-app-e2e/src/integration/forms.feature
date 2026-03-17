@@ -15,8 +15,8 @@ Feature: Form app
     Given the user deletes any existing form from "Auto Test" for "autotest-testformapp"
     When an authenticated user is logged in to see "autotest-testformapp" application
     Then the user views a form draft of "autotest-testformapp"
-    When the user enters "Joe" in a text field labelled "First Name"
-    And the user enters "Smith" in a text field labelled "Last Name"
+    When the user enters "Auto" in a text field labelled "First Name"
+    And the user enters "Test" in a text field labelled "Last Name"
     And the user enters "1970-10-30" in a date picker labelled "Birthday"
     And the user enters "CA" in a dropdown labelled "Nationality"
     And the user clicks Next button in the form
@@ -29,19 +29,18 @@ Feature: Form app
     And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
     And the user clicks Continue button for the list with detail in the form
     And the user clicks Next button in the form
-    Then the user views the summary of "Personal Information" with "Joe" as "required" "First name"
-    And the user views the summary of "Personal Information" with "Smith" as "required" "Last name"
+    Then the user views the summary of "Personal Information" with "Auto" as "required" "First Name"
+    And the user views the summary of "Personal Information" with "Test" as "required" "Last Name"
     And the user views the summary of "Personal Information" with "1970-10-30" as "not required" "Birthday"
     And the user views the summary of "Additional Information" with "No" as "required" "Are you married?"
     # And the user views the summary of "Additional Information" with "Yes" as "not required" "Citizen"
     And the user views the summary of "Additional Information" with "John:Smith:2010-01-15" as a "Dependant"
-  # Submit with list of detail has a bug CS-4746
-  # When the user clicks submit button in the form
-  # Then the user views a callout with a message of "We're processing your application"
-  # When the user clicks Download PDF copy link on form submission confirmation page
-  # Then the user views the PDF copy of "autotest-testformapp.pdf" being downloaded
-  # When the user sends a delete form request
-  # Then the new form is deleted
+    When the user clicks submit button in the form
+    Then the user views a callout with a message of "We're processing your application"
+    When the user clicks Download PDF copy link on form submission confirmation page
+    Then the user views the PDF copy of "autotest-testformapp.pdf" being downloaded
+    When the user sends a delete form request
+    Then the new form is deleted
 
   # Anonymous submission is pretected by reCAPTCHA and Cypress test will fail to pass CAPTCHA validation
   # TEST DATA: autotest-anonymous-submission is created as a form definition with anonymous enabled
@@ -89,11 +88,11 @@ Feature: Form app
     Then the user views a drafted form for "autotest-open-intake"
 
 
-  # TEST DATA: autotest-closed-intake is created as a form definition with an open intake period in the past
-  #@TEST_CS-4567 @REQ_CS-2954 @regression
-  #Scenario: As a form applicant, I cannot apply outside open intake period(s)
-  #  When an authenticated user is logged in to see "autotest-closed-intake" application
-  #  Then the user views a callout message of "This form is not available at this time"
+  TEST DATA: autotest-closed-intake is created as a form definition with an open intake period in the past
+  @TEST_CS-4567 @REQ_CS-2954 @regression
+  Scenario: As a form applicant, I cannot apply outside open intake period(s)
+    When an authenticated user is logged in to see "autotest-closed-intake" application
+    Then the user views a callout message of "This form is not available at this time"
 
   # TEST DATA: autotest-closed-submitted is created as a form definition with an open intake period in the past and an application already submitted by the test user
   @TEST_CS-4568 @REQ_CS-2954 @regression
