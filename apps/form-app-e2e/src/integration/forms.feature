@@ -88,7 +88,7 @@ Feature: Form app
     Then the user views a drafted form for "autotest-open-intake"
 
 
-  TEST DATA: autotest-closed-intake is created as a form definition with an open intake period in the past
+  # TEST DATA: autotest-closed-intake is created as a form definition with an open intake period in the past
   @TEST_CS-4567 @REQ_CS-2954 @regression
   Scenario: As a form applicant, I cannot apply outside open intake period(s)
     When an authenticated user is logged in to see "autotest-closed-intake" application
