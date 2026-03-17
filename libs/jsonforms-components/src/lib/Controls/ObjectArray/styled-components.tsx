@@ -43,6 +43,7 @@ export const SideMenuItem = styled.div`
 
 export const RowFlex = styled.div`
   display: flex;
+  margin: 1.5rem 0 1.5rem 0;
 
   align-items: flex-start;
 `;
@@ -72,7 +73,6 @@ export const RowFlexMenuLeft = styled.div`
   border: 1px solid var(--goa-color-greyscale-300);
   border-radius: var(--goa-border-radius-m);
   margin-top: var(--goa-space-xs);
-  background-color: var(--goa-color-greyscale-white);
   padding: 0;
   gap: 0;
   position: relative;
