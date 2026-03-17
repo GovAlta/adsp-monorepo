@@ -194,6 +194,7 @@ export const formUpdateAgent: AgentConfiguration = {
     - String properties with a 'format' of 'file-urn' in the data schema represents references to files, and user is expected to upload a file to provide it.
     - If the user provides a file in the agent interaction, that file is intended for the interaction and has a short retention period.
     - To make that file an attachment of the form, use the fileCopyTool with 'form-supporting-documents' as the type and the form ID as the Record ID, then set the copied file's URN.
+    - Retain the original file name and extension.
   `,
   tools: [
     'schemaDefinitionTool',
