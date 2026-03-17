@@ -100,7 +100,7 @@ class FormsPage {
 
   formSummaryPageValidationError(pageName, label) {
     return cy.xpath(
-      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]//div[text()="${label}"]/ancestor::td//goa-icon[@type="warning"]/parent::div`
+      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]//div[text()="${label}"]/ancestor::td//goa-form-item[@error]`
     );
   }
 

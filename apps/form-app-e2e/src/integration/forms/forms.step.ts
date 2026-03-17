@@ -280,7 +280,7 @@ Given('the user deletes any existing form from {string} for {string}', function 
 Then(
   'the user views {string} validation message under {string} field of {string} on summary page',
   function (errorMsg, textFieldLabel, sectionName) {
-    formsObj.formSummaryPageValidationError(sectionName, textFieldLabel).should('have.text', errorMsg);
+    formsObj.formSummaryPageValidationError(sectionName, textFieldLabel).invoke('attr', 'error').should('eq', errorMsg);
   }
 );
 
