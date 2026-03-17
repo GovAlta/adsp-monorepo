@@ -418,12 +418,22 @@ export const applyServerFormUpdate = createAsyncThunk(
       data,
       files,
     }: { id?: string; data?: Record<string, unknown>; files?: Record<string, string> },
-    { getState }
+    { getState, dispatch }
   ) => {
-    const { form } = getState() as AppState;
+    const { form, file } = getState() as AppState;
     const formId = id || form.form?.id;
     const nextData = data || form.data;
     const nextFiles = files || form.files;
+
+    if (nextFiles) {
+      for (const [propertyId, fileUrn] of Object.entries(nextFiles)) {
+        const propertyIdRoot = propertyId.split('.')?.[0];
+        const existingMetadata = file.metadata[propertyIdRoot];
+        if (!existingMetadata?.find((m) => m.urn === fileUrn)) {
+          dispatch(loadFileMetadata({ propertyId: propertyIdRoot, urn: fileUrn }));
+        }
+      }
+    }
 
     const digest = formId ? await hashData({ id: formId, data: nextData, files: nextFiles }) : null;
 
