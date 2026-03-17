@@ -22,6 +22,7 @@ import { useDebounce } from '../../util/useDebounce';
 import { Visible } from '../../util';
 import { GoabInputOnBlurDetail, GoabInputOnChangeDetail, GoabInputOnKeyPressDetail } from '@abgov/ui-components-common';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { getAddressLookupFieldLabel } from '../../common/Constants';
 
 type AddressLookUpProps = ControlProps;
 
@@ -103,7 +104,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     if (field === 'postalCode') {
       const validatePc = validatePostalCode(value);
       setErrors(
-        handlePostalCodeValidation(validatePc, postalCodeErrorMessage ? postalCodeErrorMessage : '', value, errors)
+        handlePostalCodeValidation(validatePc, postalCodeErrorMessage ? postalCodeErrorMessage : '', value, errors),
       );
       value = formatPostalCode(value);
       newAddress = { ...address, [field]: value.toUpperCase() };
@@ -140,7 +141,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
                 setSuggestions(suggestions);
               }
               setLoading(false);
-            }
+            },
           );
           // eslint-disable-next-line
         } catch (error: any) {
@@ -182,7 +183,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const handleRequiredFieldBlur = (name: string) => {
     const err = { ...errors };
     if (!data?.[name] || data[name] === '' || data?.[name] === undefined) {
-      err[name] = name === 'municipality' ? 'city is required' : `${name} is required`;
+      err[name] = `${getAddressLookupFieldLabel(name)} is required`;
       setErrors(err);
     } else {
       delete errors[name];
@@ -248,7 +249,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
           formUrl,
           q,
           isAlbertaAddress,
-          { signal: controller.signal } //update util to accept signal
+          { signal: controller.signal }, //update util to accept signal
         );
 
         const filtered = filterSuggestionsWithoutAddressCount(response);
@@ -343,7 +344,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
                       activeIndex,
                       suggestions,
                       (val) => handleInputChange('addressLine1', val),
-                      (suggestion) => handleSuggestionClick(suggestion)
+                      (suggestion) => handleSuggestionClick(suggestion),
                     );
                     setActiveIndex(newIndex);
                   }

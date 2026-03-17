@@ -59,26 +59,36 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   const user = useRegisterUser();
 
-  const initialValue = (user && autoPopulateValue(user, props)) ?? data ?? '';
+  const initialValue = schema.default ?? (user && autoPopulateValue(user, props)) ?? data ?? '';
   const [localValue, setLocalValue] = useState<string>(initialValue);
 
   const debouncedValue = useDebounce(localValue, 300);
 
   useEffect(() => {
-    setLocalValue(initialValue);
+    setLocalValue(data);
   }, [data]);
 
   useEffect(() => {
+    if (!user || data) return;
     const autoPopulatedValue = schema.default || (user && autoPopulateValue(user, props));
+
     if (autoPopulatedValue && autoPopulatedValue !== data) {
       handleChange(props.path, autoPopulatedValue);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schema, data, user]);
+  }, [schema, user]);
+
+  useEffect(() => {
+    if (typeof handleChange === 'function' && schema?.default !== undefined) {
+      handleChange(props.path, schema.default);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schema.default]);
 
   /* istanbul ignore next */
   useEffect(() => {
+    if (debouncedValue === data) return;
     // Only sync if debouncedValue differs from data and is not initial empty state
     if (debouncedValue !== data && (debouncedValue !== '' || data !== undefined)) {
       onChangeForInputControl({
