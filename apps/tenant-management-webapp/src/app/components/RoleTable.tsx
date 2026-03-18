@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { GoabCheckbox, GoabTable } from '@abgov/react-components';
+import { GoabTable } from '@abgov/react-components';
 import { MarginAdjustment, PaddingRem } from './styled-components';
+import { Checkbox } from './Checkbox';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { REALM_ROLE_KEY } from '@store/sharedSelectors/roles';
@@ -91,15 +92,11 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                 {checkedRoles.map((checkedRole, index) => {
                   return (
                     <td className="role" key={`${service}-${role}-checkbox-${index}`}>
-                      <GoabCheckbox
-                        name={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
-                        key={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
+                      <Checkbox
                         checked={checkedRole.selectedRoles?.includes(compositeRole)}
-                        testId={`${service}-${checkedRole?.title}-role-checkbox-${compositeRole}`}
                         disabled={
                           (props.anonymousRead && checkedRole.title === 'read') || checkedRole?.disabled === true
                         }
-                        ariaLabel={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                         onChange={() => {
                           if (checkedRole.selectedRoles?.includes(compositeRole)) {
                             const newRoles = checkedRole.selectedRoles.filter((readRole) => {

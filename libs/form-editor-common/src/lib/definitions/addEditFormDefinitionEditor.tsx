@@ -556,20 +556,23 @@ export function AddEditFormDefinitionEditor({
                   </EditorPadding>
                 </GoabFormItem>
               </Tab>
-              {agentConnected && (
-                <Tab
-                  label={
-                    <span>
-                      AI
-                      <GoabBadge type="important" ml="xs" mt="2xs" content="Alpha" icon={false} />
-                    </span>
-                  }
-                  data-testid="form-editor-agent-tab"
-                  isTightContent={true}
-                >
-                  <DefinitionAgentChat definitionId={definition.id} threadId={threadId} height={EditorHeight} />
-                </Tab>
-              )}
+              <Tab
+                label={
+                  <span>
+                    AI
+                    <GoabBadge type="important" ml="xs" mt="2xs" content="Alpha" icon={false} />
+                  </span>
+                }
+                data-testid="form-editor-agent-tab"
+                isTightContent={true}
+              >
+                <DefinitionAgentChat
+                  definitionId={definition.id}
+                  threadId={threadId}
+                  height={EditorHeight}
+                  disabled={!agentConnected}
+                />
+              </Tab>
               <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
                 <BorderBottom>
                   <AddToggleButtonPadding>
