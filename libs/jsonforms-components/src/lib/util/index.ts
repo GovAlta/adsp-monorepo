@@ -3,3 +3,4 @@ export * from './style-component';
 export * from './type';
 export * from './stringUtils';
 export * from './dateUtils';
+export * from './registerOptions';
