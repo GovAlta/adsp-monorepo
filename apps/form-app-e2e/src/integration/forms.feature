@@ -48,15 +48,15 @@ Feature: Form app
   Scenario: As an anonymous applicant, I can view and submit an anonymous application
     Given an anonymous applicant goes to "autotest-anonymous-submission" application
     Then the user views an anonymous form draft of "autotest-anonymous-submission"
-    When the user enters "Joe" in a text field labelled "First name"
-    And the user enters "Smith" in a text field labelled "Last name"
+    When the user enters "Joe" in a text field labelled "First Name"
+    And the user enters "Smith" in a text field labelled "Last Name"
     And the user enters "1970-10-30" in a date picker labelled "Birthday"
     And the user enters "CA" in a dropdown labelled "Nationality"
     And the user clicks Next button in the form
     And the user selects "Not Married" radio button for the question of "Are you married?"
     And the user clicks list with detail button labelled as "Add child" in the form
-    And the user enters "John" in list with detail element text field labelled "First name"
-    And the user enters "Smith" in list with detail element text field labelled "Last name"
+    And the user enters "John" in list with detail element text field labelled "First Name"
+    And the user enters "Smith" in list with detail element text field labelled "Last Name"
     And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
     And the user clicks Next button in the form
     And the user clicks submit button in the form
@@ -76,7 +76,7 @@ Feature: Form app
     And the user enters "Smith" in list with detail element text field labelled "Last Name"
     # And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
     And the user clicks Next button in the form
-    Then the user views "Last Name is required" validation message under "Last name" field of "Personal Information" on summary page
+    Then the user views "Last Name is required" validation message under "Last Name" field of "Personal Information" on summary page
     And the user views "Are you married? is required" validation message under "Are you married?" field of "Additional Information" on summary page
     And the user views the submit button is disabled on summary page
 
