@@ -25,7 +25,7 @@
             "output": "./"
           }
         ],
-        "styles": ["apps/status-app/src/styles.scss"],
+        "styles": [],
         "scripts": [],
         "webpackConfig": "apps/status-app/webpack.config.js",
         "babelUpwardRootMode": true
