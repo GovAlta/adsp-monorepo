@@ -57,12 +57,10 @@ export function onIoConnection(logger: Logger) {
       }
 
       const expiry = getUserTokenExpiry(user);
+      const timeToExpiry = expiry !== null ? Math.max(expiry - TOKEN_EXPIRY_THRESHOLD_MS - Date.now(), 0) : null;
       const expiryTimeout =
-        expiry !== null
-          ? setTimeout(
-              () => disconnectExpiredSocket(socket, logger, user, tenant),
-              Math.max(expiry - TOKEN_EXPIRY_THRESHOLD_MS - Date.now(), 0)
-            )
+        timeToExpiry !== null
+          ? setTimeout(() => disconnectExpiredSocket(socket, logger, user, tenant), timeToExpiry)
           : null;
 
       logger.info(`User ${user.name} (ID: ${user.id}) connected.`, {
@@ -103,7 +101,7 @@ export function onIoConnection(logger: Logger) {
             if (Array.isArray(content)) {
               userContent = content;
             } else if (typeof content === 'string') {
-              userContent = [{type: 'text',  text: content}];
+              userContent = [{ type: 'text', text: content }];
             } else {
               throw new InvalidValueError('content', 'content must string or array of text, image, or file parts.');
             }
@@ -115,7 +113,7 @@ export function onIoConnection(logger: Logger) {
                 role: 'user',
                 content: userContent,
               },
-              context
+              context,
             );
             const replyId = uuid();
 
@@ -129,7 +127,7 @@ export function onIoConnection(logger: Logger) {
                   chunk,
                 });
               }
-            } else {              
+            } else {
               for await (const content of result.textStream) {
                 socket.emit('stream', {
                   agent,
@@ -140,7 +138,7 @@ export function onIoConnection(logger: Logger) {
                 });
               }
             }
-            
+
             socket.emit('stream', {
               agent,
               threadId,
@@ -242,7 +240,7 @@ export function messageAgent(logger: Logger): RequestHandler {
       const result = await agent.generate(
         user,
         threadId,
-        input.map(({ content }) => ({ content, role: 'user' }))
+        input.map(({ content }) => ({ content, role: 'user' })),
       );
 
       logger.info(`Agent ${agent} responded to user ${user.name} (ID: ${user.id}) message.`, {

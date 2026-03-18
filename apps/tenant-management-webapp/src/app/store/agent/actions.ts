@@ -66,7 +66,7 @@ interface TextDeltaChunk {
   type: typeof TEXT_DELTA;
   payload: {
     text: string;
-  }
+  };
 }
 
 export const TOOL_CALL = 'tool-call';
@@ -75,7 +75,7 @@ interface ToolCallChunk {
   payload: {
     toolCallId: string;
     toolName: string;
-  }
+  };
 }
 
 export const TOOL_CALL_RESULT = 'tool-result';
@@ -86,9 +86,8 @@ interface ToolCallResultChunk {
     toolName: string;
     args: Record<string, unknown>;
     result: unknown;
-  }
+  };
 }
-
 
 export const TOOL_CALL_ERROR = 'tool-error';
 interface ToolCallErrorChunk {
@@ -98,60 +97,66 @@ interface ToolCallErrorChunk {
     toolName: string;
     args: Record<string, unknown>;
     error: unknown;
-  }
+  };
 }
 
 export const REASONING_START = 'reasoning-start';
 interface ReasoningStartChunk {
-  type: typeof REASONING_START,
+  type: typeof REASONING_START;
   payload: {
     id: string;
-  }
+  };
 }
 
 export const REASONING_DELTA = 'reasoning-delta';
 interface ReasoningDeltaChunk {
-  type: typeof REASONING_DELTA,
+  type: typeof REASONING_DELTA;
   payload: {
     id: string;
     text: string;
-  }
+  };
 }
 
 export const REASONING_END = 'reasoning-end';
 interface ReasoningEndChunk {
-  type: typeof REASONING_END,
+  type: typeof REASONING_END;
   payload: {
     id: string;
-  }
+  };
 }
 
 export const ERROR = 'error';
 interface ErrorChunk {
-  type: typeof ERROR,
+  type: typeof ERROR;
   payload: {
     message: string;
     details?: unknown;
-  }
+  };
 }
 
 export const TRIPWIRE = 'tripwire';
 interface TripwireChunk {
-  type: typeof TRIPWIRE,
+  type: typeof TRIPWIRE;
   payload: {
     message: string;
     details?: unknown;
-  }
+  };
 }
 
 export interface AgentResponseAction {
   type: typeof AGENT_RESPONSE_ACTION;
   threadId: string;
   messageId: string;
-  chunk?: TextDeltaChunk |
-    ToolCallChunk | ToolCallResultChunk | ToolCallErrorChunk |
-    ReasoningStartChunk | ReasoningDeltaChunk | ReasoningEndChunk |
-    ErrorChunk | TripwireChunk;
+  chunk?:
+    | TextDeltaChunk
+    | ToolCallChunk
+    | ToolCallResultChunk
+    | ToolCallErrorChunk
+    | ReasoningStartChunk
+    | ReasoningDeltaChunk
+    | ReasoningEndChunk
+    | ErrorChunk
+    | TripwireChunk;
   done: boolean;
 }
 
@@ -245,8 +250,14 @@ export function connectAgent() {
     socket.on('connect', () => {
       dispatch({ type: CONNECT_AGENT_SUCCESS_ACTION });
     });
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason) => {
       dispatch({ type: DISCONNECT_AGENT_SUCCESS_ACTION });
+      if (reason === 'io server disconnect') {
+        // Server forcefully disconnected (e.g. token expiry). socket.io will not
+        // auto-reconnect for this reason, so reconnect manually. The auth callback
+        // will fetch a fresh token.
+        socket.connect();
+      }
     });
     socket.on('stream', (message) => {
       const { threadId, messageId, chunk, done } = message;
@@ -294,7 +305,7 @@ export function getAgents() {
 
       const agentsConfigurationUrl = new URL(
         '/configuration/v2/configuration/platform/agent-service/latest',
-        config.serviceUrls?.configurationServiceApiUrl
+        config.serviceUrls?.configurationServiceApiUrl,
       );
 
       let token = await dispatch(getAccessToken());
@@ -302,7 +313,7 @@ export function getAgents() {
         agentsConfigurationUrl.href,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       token = await dispatch(getAccessToken());
       const { data: core } = await axios.get<Record<string, Omit<AgentConfiguration, 'id'>>>(
@@ -310,7 +321,7 @@ export function getAgents() {
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { core: true },
-        }
+        },
       );
 
       return dispatch({
@@ -335,7 +346,7 @@ export function updateAgent(agent: AgentConfiguration) {
 
       const agentsConfigurationUrl = new URL(
         '/configuration/v2/configuration/platform/agent-service',
-        config.serviceUrls?.configurationServiceApiUrl
+        config.serviceUrls?.configurationServiceApiUrl,
       );
 
       const token = await dispatch(getAccessToken());
@@ -344,7 +355,7 @@ export function updateAgent(agent: AgentConfiguration) {
         { operation: 'UPDATE', update: { [agent.id]: agent } },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       return dispatch({
@@ -366,7 +377,7 @@ export function deleteAgent(id: string) {
 
       const agentsConfigurationUrl = new URL(
         '/configuration/v2/configuration/platform/agent-service',
-        config.serviceUrls?.configurationServiceApiUrl
+        config.serviceUrls?.configurationServiceApiUrl,
       );
 
       const token = await dispatch(getAccessToken());
@@ -375,7 +386,7 @@ export function deleteAgent(id: string) {
         { operation: 'DELETE', property: id },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       return dispatch({
@@ -392,7 +403,7 @@ export function newPreviewThread(): NewPreviewThreadAction {
   return {
     type: NEW_PREVIEW_THREAD_ACTION,
     threadId: uuid(),
-  }
+  };
 }
 
 export function startEditAgent(id: string) {

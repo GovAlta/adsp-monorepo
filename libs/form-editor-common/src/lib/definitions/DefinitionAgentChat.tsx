@@ -11,25 +11,27 @@ interface DefinitionAgentChatProps {
   definitionId: string;
   threadId: string;
   height: number;
+  disabled?: boolean;
 }
 
 export const DefinitionAgentChat: FunctionComponent<DefinitionAgentChatProps> = ({
   threadId,
   definitionId,
   height,
+  disabled,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
 
   const handleAttachmentUpload = async (file: File): Promise<Attachment> => {
     const type = file.type.startsWith('image/') ? 'image' : 'file';
-    
+
     const { uploadedFile, dataUrl } = await dispatch(
       UploadFileService({
         type: 'agent-attachments',
         file,
         recordId: definitionId,
-      }) as unknown as AnyAction
+      }) as unknown as AnyAction,
     );
 
     return {
@@ -43,6 +45,7 @@ export const DefinitionAgentChat: FunctionComponent<DefinitionAgentChatProps> = 
   return (
     <div style={{ height }}>
       <AgentChat
+        disabled={disabled}
         threadId={threadId}
         context={{ formDefinitionId: definitionId }}
         messages={messages}
