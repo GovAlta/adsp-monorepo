@@ -54,7 +54,7 @@ export const FormTenant = () => {
   return (
     <React.Fragment>
       <GoabMicrositeHeader type="alpha" feedbackUrlTarget="self" headerUrlTarget="self" feedbackUrl="#" />
-      <GoabAppHeader url="/" heading={definition?.uiSchema?.options?.mainTitle}>
+      <GoabAppHeader url="/" heading={definition?.uiSchema?.options?.mainTitle || definition?.name}>
         <>
           <span style={{ display: 'none' }}></span>
           {userInitialized && (

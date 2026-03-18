@@ -238,7 +238,7 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
       return {
         ...state,
         connected: false,
-        busy: { ...state.busy, disconnecting: true },
+        busy: { ...state.busy, disconnecting: false },
       };
     case START_THREAD_ACTION:
       return {

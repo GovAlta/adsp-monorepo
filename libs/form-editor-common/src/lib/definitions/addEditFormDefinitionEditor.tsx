@@ -30,6 +30,8 @@ import {
   FormDataSchemaElementCompletionItemProvider,
   FormPropertyValueCompletionItemProvider,
   FormUISchemaElementCompletionItemProvider,
+  createOptionsCompletionProvider,
+  createPropertiesCompletionProvider,
 } from '@lib/autoComplete';
 import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
@@ -84,13 +86,10 @@ import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
 import { DefinitionAgentChat } from './DefinitionAgentChat';
 import { DataRegisters } from './data-registers/dataRegisters';
-import { updateConfigurationDefinition } from '@store/configuration/action';
-import { DATA_REGISTER_NAMESPACE } from '@store/configuration/model';
 import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
 import { startThread } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
 import { GoabCheckboxOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
-import { autoPopulatePropertiesMonaco } from '../../../../jsonforms-components/src/lib/util/autoPopulate';
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
 export const ContextProvider = ContextProviderFactory();
@@ -283,40 +282,22 @@ export function AddEditFormDefinitionEditor({
         new FormDataSchemaElementCompletionItemProvider(),
       );
 
-      const propertyKeyWatcher = monaco.languages.registerCompletionItemProvider('json', {
-        triggerCharacters: ['"'],
+      const propertyKeyWatcher = monaco.languages.registerCompletionItemProvider(
+        'json',
+        createPropertiesCompletionProvider(monaco),
+      );
 
-        provideCompletionItems: function (model, position) {
-          const fullText = model.getValue();
-
-          const beforeCursor = fullText.slice(0, model.getOffsetAt(position));
-
-          if (!beforeCursor.includes('"properties"')) {
-            return { suggestions: [] };
-          }
-
-          return {
-            suggestions: autoPopulatePropertiesMonaco.map((prop) => ({
-              label: prop.label,
-              kind: monaco.languages.CompletionItemKind.Property,
-              insertText: prop.insertText,
-              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-              range: {
-                startLineNumber: position.lineNumber,
-                startColumn: position.column,
-                endLineNumber: position.lineNumber,
-                endColumn: position.column,
-              },
-            })),
-          };
-        },
-      });
+      const uiPropertyKeyWatcher = monaco.languages.registerCompletionItemProvider(
+        'json',
+        createOptionsCompletionProvider(monaco),
+      );
 
       return function () {
         valueProvider.dispose();
         uiElementProvider.dispose();
         dataElementProvider.dispose();
         propertyKeyWatcher.dispose();
+        uiPropertyKeyWatcher.dispose();
       };
     }
   }, [monaco, dataSchema]);
@@ -540,6 +521,7 @@ export function AddEditFormDefinitionEditor({
                       }}
                       language="json"
                       options={{
+                        autoClosingQuotes: 'never',
                         automaticLayout: true,
                         scrollBeyondLastLine: false,
                         wordWrap: 'on',
@@ -556,20 +538,23 @@ export function AddEditFormDefinitionEditor({
                   </EditorPadding>
                 </GoabFormItem>
               </Tab>
-              {agentConnected && (
-                <Tab
-                  label={
-                    <span>
-                      AI
-                      <GoabBadge type="important" ml="xs" mt="2xs" content="Alpha" icon={false} />
-                    </span>
-                  }
-                  data-testid="form-editor-agent-tab"
-                  isTightContent={true}
-                >
-                  <DefinitionAgentChat definitionId={definition.id} threadId={threadId} height={EditorHeight} />
-                </Tab>
-              )}
+              <Tab
+                label={
+                  <span>
+                    AI
+                    <GoabBadge type="important" ml="xs" mt="2xs" content="Alpha" icon={false} />
+                  </span>
+                }
+                data-testid="form-editor-agent-tab"
+                isTightContent={true}
+              >
+                <DefinitionAgentChat
+                  definitionId={definition.id}
+                  threadId={threadId}
+                  height={EditorHeight}
+                  disabled={!agentConnected}
+                />
+              </Tab>
               <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
                 <BorderBottom>
                   <AddToggleButtonPadding>

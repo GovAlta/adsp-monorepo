@@ -134,7 +134,7 @@ const GenerateRows = (
   rowPath: string,
   enabled: boolean,
   cells?: JsonFormsCellRendererRegistryEntry[],
-  uischema?: ControlElement
+  uischema?: ControlElement,
 ) => {
   if (schema?.type === 'object') {
     const props = {
@@ -275,41 +275,37 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(p
 
   return (
     <>
-      {
-        // eslint-disable-next-line
-        (uischema as Layout)?.elements?.map((element: UISchemaElement, index) => {
-          return (
-            <JsonFormsDispatch
-              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-              key={`${rowPath}-${index}`}
-              schema={schema}
-              uischema={element}
-              path={`${rowPath}`}
-              enabled={enabled}
-              renderers={renderers}
-              cells={cells}
-            />
-          );
-        })
-      }
+      {// eslint-disable-next-line
+      (uischema as Layout)?.elements?.map((element: UISchemaElement, index) => {
+        return (
+          <JsonFormsDispatch
+            data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+            key={`${rowPath}-${index}`}
+            schema={schema}
+            uischema={element}
+            path={`${rowPath}`}
+            enabled={enabled}
+            renderers={renderers}
+            cells={cells}
+          />
+        );
+      })}
 
-      {
-        // eslint-disable-next-line
-        (uischema as Layout)?.options?.detail?.elements?.map((element: UISchemaElement, index: number) => {
-          return (
-            <JsonFormsDispatch
-              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-              key={`${rowPath}-${index}`}
-              schema={schema}
-              uischema={element}
-              path={rowPath}
-              enabled={enabled}
-              renderers={renderers}
-              cells={cells}
-            />
-          );
-        })
-      }
+      {// eslint-disable-next-line
+      (uischema as Layout)?.options?.detail?.elements?.map((element: UISchemaElement, index: number) => {
+        return (
+          <JsonFormsDispatch
+            data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+            key={`${rowPath}-${index}`}
+            schema={schema}
+            uischema={element}
+            path={rowPath}
+            enabled={enabled}
+            renderers={renderers}
+            cells={cells}
+          />
+        );
+      })}
 
       {hasNoElements() && uiSchemaElementsForNotDefined?.elements?.length > 0 && (
         <JsonFormsDispatch
@@ -493,7 +489,7 @@ function findLabelForPath(path: string, uiSchema?: UISchemaElement, schema?: Jso
 function generateSummaryPairs(
   rowData: Record<string, unknown>,
   detailUiSchema?: UISchemaElement,
-  schema?: JsonSchema
+  schema?: JsonSchema,
 ): Array<{ label: string; value: unknown }> {
   const paths = extractPaths(detailUiSchema);
 
@@ -885,7 +881,7 @@ const MainTab = ({
         }
         return acc;
       },
-      { fields: {} }
+      { fields: {} },
     );
 
   const errorText =
@@ -1121,7 +1117,7 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
   addItem = (path: string, value: any) => {
     const { data, addItem, setCurrentTab, uischema } = this.props;
     const isNonEmpty = data !== undefined && data !== null;
-    const newIndex = isNonEmpty ? data ?? 0 : 0;
+    const newIndex = isNonEmpty ? (data ?? 0) : 0;
     const maxItems = uischema?.options?.detail?.maxItems ?? DEFAULT_MAX_ITEMS;
     if (data < maxItems) {
       if (addItem) {
@@ -1164,13 +1160,12 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
 
     const withLeftTab = uischema?.options?.componentProps?.withLeftTab;
     const noLeftTabBlankButton = this.state.currentListPage === 0 && data === 0;
-    const showMainItems = withLeftTab || this.state.currentListPage === 0;
-    const showSecondaryButton = withLeftTab || noLeftTabBlankButton;
+    const editMode = this.state.currentListPage !== 0 && !withLeftTab;
 
     return (
       <Visible visible={visible} data-testid="jsonforms-object-list-wrapper">
         <ToolBarHeader>
-          {listTitle && showMainItems && (
+          {listTitle && (
             <MarginTop>
               <ObjectArrayTitle>
                 {listTitle} <span>{additionalProps.required && '(required)'}</span>
@@ -1180,29 +1175,27 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
               </ObjectArrayTitle>
             </MarginTop>
           )}
-          {showSecondaryButton && (
-            <ObjectArrayToolBar
-              data={data}
-              errors={errors}
-              label={label}
-              addItem={(path, value) => () => {
-                this.addItem(path, value);
-              }}
-              numColumns={0}
-              path={path}
-              uischema={controlElement}
-              schema={schema}
-              rootSchema={rootSchema}
-              enabled={enabled}
-              setCurrentListPage={(listPage: number) => {
-                this.setState({
-                  currentListPage: listPage,
-                });
-              }}
-              currentListPage={this.state.currentListPage}
-              buttonType="secondary"
-            />
-          )}
+          <ObjectArrayToolBar
+            data={data}
+            errors={errors}
+            label={label}
+            addItem={(path, value) => () => {
+              this.addItem(path, value);
+            }}
+            numColumns={0}
+            path={path}
+            uischema={controlElement}
+            schema={schema}
+            rootSchema={rootSchema}
+            enabled={enabled && !editMode}
+            setCurrentListPage={(listPage: number) => {
+              this.setState({
+                currentListPage: listPage,
+              });
+            }}
+            currentListPage={this.state.currentListPage}
+            buttonType="secondary"
+          />
         </ToolBarHeader>
         <div>
           <ObjectArrayList
@@ -1228,29 +1221,6 @@ export class ListWithDetailControl extends React.Component<ListWithDetailControl
             {...additionalProps}
           />
         </div>
-        {!showSecondaryButton && (
-          <ObjectArrayToolBar
-            data={data}
-            errors={errors}
-            label={label}
-            addItem={(path, value) => () => {
-              this.addItem(path, value);
-            }}
-            numColumns={0}
-            path={path}
-            uischema={controlElement}
-            schema={schema}
-            rootSchema={rootSchema}
-            enabled={enabled}
-            setCurrentListPage={(listPage: number) => {
-              this.setState({
-                currentListPage: listPage,
-              });
-            }}
-            currentListPage={this.state.currentListPage}
-            buttonType="tertiary"
-          />
-        )}
       </Visible>
     );
   }

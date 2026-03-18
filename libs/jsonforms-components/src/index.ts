@@ -87,6 +87,8 @@ export * from './lib/Context';
 export * from './lib/common';
 export * from './lib/Context/register';
 export * from './lib/Controls';
+export * from './lib/util/registerOptions';
+export * from './lib/util/autoPopulate';
 
 export const GoABaseRenderers: JsonFormsRendererRegistryEntry[] = [
   // controls
