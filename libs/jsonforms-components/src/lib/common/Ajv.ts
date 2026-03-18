@@ -1,6 +1,7 @@
 import Ajv, { AnySchema } from 'ajv';
 import addErrors from 'ajv-errors';
 import addFormats from 'ajv-formats';
+import { PHONE_REGEX } from '../Controls';
 
 export const createDefaultAjv = (...schemas: AnySchema[]) => {
   const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log', strictRequired: false, useDefaults: true });
@@ -10,6 +11,7 @@ export const createDefaultAjv = (...schemas: AnySchema[]) => {
   addFormats(ajv);
 
   ajv.addFormat('time', /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/);
+  ajv.addFormat('phone', PHONE_REGEX);
   ajv.addFormat('computed', /^[a-zA-Z0-9._-]+$/);
   ajv.addFormat('file-urn', {
     type: 'string',

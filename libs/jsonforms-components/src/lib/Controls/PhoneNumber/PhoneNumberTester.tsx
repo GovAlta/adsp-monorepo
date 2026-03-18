@@ -1,6 +1,3 @@
-import { RankedTester, rankWith } from '@jsonforms/core';
-import { createSchemaMatchTester } from '../../common/tester';
+import { RankedTester, rankWith, and, isControl, schemaTypeIs, formatIs } from '@jsonforms/core';
 
-export const isPhoneNumber = createSchemaMatchTester(['phoneNumber'], false);
-
-export const PhoneNumberTester: RankedTester = rankWith(3, isPhoneNumber);
+export const PhoneNumberTester: RankedTester = rankWith(4, and(isControl, schemaTypeIs('string'), formatIs('phone')));
