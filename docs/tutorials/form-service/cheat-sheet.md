@@ -836,6 +836,52 @@ Steppers allow you to partition your form into one or more steps, so users can f
   </tr>
 </table>
 
+The page stepper Task List also supports these options through `Categorization.options`:
+
+<table>
+  <tr>
+    <th>Attribute</th>
+    <th>Description</th>
+    <th>Example</th>
+  </tr>
+  <tr>
+    <td><code>hideSummary</code></td>
+    <td>Hide the Summary row on the Task List and skip the summary review page.</td>
+    <td><pre><code>
+{
+  "type": "Categorization",
+  "options": {
+    "hideSummary": true
+  }
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td><code>hideSubmit</code></td>
+    <td>Hide the Submit button on the summary review page.</td>
+    <td><pre><code>
+{
+  "type": "Categorization",
+  "options": {
+    "hideSubmit": true
+  }
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td><code>toAppOverviewLabel</code></td>
+    <td>Change the back-link text that returns the user to the Task List.</td>
+    <td><pre><code>
+{
+  "type": "Categorization",
+  "options": {
+    "toAppOverviewLabel": "Back to task list"
+  }
+}
+    </code></pre></td>
+  </tr>
+</table>
+
 ### Validation {#target-validation}
 
 Validation is most easily accomplished through the semantics of JSON Schemas. Note the "minLength" attribute of the name property. This is needed to address a fix needed when required string fields.

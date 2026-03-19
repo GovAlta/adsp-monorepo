@@ -24,6 +24,46 @@ Page steppers - now the [Design System's preferred method](https://design.albert
 
 The _Task List_ page allows users to see the status of their application, and the status of each page, at a glance. They can enter the application at any stage and continue the application from where they left off.
 
+The page stepper also supports several Task List and review-flow options through `Categorization.options`:
+
+<table>
+  <tr>
+    <th>Attribute</th>
+    <th>Behavior</th>
+    <th>Default</th>
+  </tr>
+  <tr>
+    <td><code>hideSummary</code></td>
+    <td>Hides the Summary row on the Task List and prevents navigation to the summary review page from the last visible step.</td>
+    <td><code>false</code></td>
+  </tr>
+  <tr>
+    <td><code>hideSubmit</code></td>
+    <td>Hides the Submit button on the summary review page.</td>
+    <td><code>false</code></td>
+  </tr>
+  <tr>
+    <td><code>toAppOverviewLabel</code></td>
+    <td>Changes the text of the back link that returns the user from a step page to the Task List.</td>
+    <td><code>Back to application overview</code></td>
+  </tr>
+</table>
+
+Example:
+
+```json
+{
+  "type": "Categorization",
+  "options": {
+    "variant": "pages",
+    "hideSummary": true,
+    "hideSubmit": true,
+    "toAppOverviewLabel": "Back to task list"
+  },
+  "elements": []
+}
+```
+
 ## Simple Steppers
 
 Simple Steppers have the dubious advantage of allowing the user to navigate anywhere from any page. This ease of use comes with a price; the step navigation takes up a lot of real estate, and will sometimes confuse end users. However, it is a common pattern for complex forms and is implemented by the form service. Here's an example:
@@ -164,5 +204,8 @@ Notice that
 - A _Category_ element can have an optional "sectionTitle", which is used to group one ore more categories into a section. Sections only appear on the task list, and are used solely for organization purposes. There is no equivalent concept for the _simple steppers_.
 - Everything else is declared as it would be without the stepper.
 - There is an extra page added to the stepper, called _Summary_. This is a GOA added feature that lets the applicant quickly review the data they have entered before final submission.
+- If `hideSummary` is set to `true`, the Summary row is removed from the Task List and the review page is skipped.
+- If `hideSubmit` is set to `true`, the review page still renders, but its Submit button is hidden.
+- If `toAppOverviewLabel` is set, the page stepper back link uses the provided text instead of `Back to application overview`.
 
 ![](/adsp-monorepo/assets/form-service/summary-page.png){: width="400" }
