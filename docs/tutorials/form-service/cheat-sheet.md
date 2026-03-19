@@ -836,17 +836,19 @@ Steppers allow you to partition your form into one or more steps, so users can f
   </tr>
 </table>
 
-The page stepper Task List also supports these options through `Categorization.options`:
+Page steppers support these Task List and review-flow options:
 
 <table>
   <tr>
     <th>Attribute</th>
     <th>Description</th>
+    <th>Scope</th>
     <th>Example</th>
   </tr>
   <tr>
     <td><code>hideSummary</code></td>
     <td>Hide the Summary row on the Task List and skip the summary review page.</td>
+    <td><code>Categorization.options</code></td>
     <td><pre><code>
 {
   "type": "Categorization",
@@ -859,6 +861,7 @@ The page stepper Task List also supports these options through `Categorization.o
   <tr>
     <td><code>hideSubmit</code></td>
     <td>Hide the Submit button on the summary review page.</td>
+    <td><code>Categorization.options</code></td>
     <td><pre><code>
 {
   "type": "Categorization",
@@ -871,11 +874,40 @@ The page stepper Task List also supports these options through `Categorization.o
   <tr>
     <td><code>toAppOverviewLabel</code></td>
     <td>Change the back-link text that returns the user to the Task List.</td>
+    <td><code>Categorization.options</code></td>
     <td><pre><code>
 {
   "type": "Categorization",
   "options": {
     "toAppOverviewLabel": "Back to task list"
+  }
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td><code>sectionTitle</code></td>
+    <td>Group categories under a section heading on the Task List.</td>
+    <td><code>Category.options</code></td>
+    <td><pre><code>
+{
+  "type": "Category",
+  "options": {
+    "sectionTitle": "The parties"
+  }
+}
+    </code></pre></td>
+  </tr>
+  <tr>
+    <td><code>showInTaskList</code></td>
+    <td>When set to <code>false</code>, hide the category from the Task List. Hidden categories do not render their own row, and a section header is not shown if all categories in that section are hidden.</td>
+    <td><code>Category.options</code></td>
+    <td><pre><code>
+{
+  "type": "Category",
+  "label": "What are their contact details?",
+  "options": {
+    "sectionTitle": "The parties",
+    "showInTaskList": false
   }
 }
     </code></pre></td>

@@ -24,32 +24,48 @@ Page steppers - now the [Design System's preferred method](https://design.albert
 
 The _Task List_ page allows users to see the status of their application, and the status of each page, at a glance. They can enter the application at any stage and continue the application from where they left off.
 
-The page stepper also supports several Task List and review-flow options through `Categorization.options`:
+The page stepper also supports these Task List and review-flow options:
 
 <table>
   <tr>
     <th>Attribute</th>
     <th>Behavior</th>
     <th>Default</th>
+    <th>Scope</th>
   </tr>
   <tr>
     <td><code>hideSummary</code></td>
     <td>Hides the Summary row on the Task List and prevents navigation to the summary review page from the last visible step.</td>
     <td><code>false</code></td>
+    <td><code>Categorization.options</code></td>
   </tr>
   <tr>
     <td><code>hideSubmit</code></td>
     <td>Hides the Submit button on the summary review page.</td>
     <td><code>false</code></td>
+    <td><code>Categorization.options</code></td>
   </tr>
   <tr>
     <td><code>toAppOverviewLabel</code></td>
     <td>Changes the text of the back link that returns the user from a step page to the Task List.</td>
     <td><code>Back to application overview</code></td>
+    <td><code>Categorization.options</code></td>
+  </tr>
+  <tr>
+    <td><code>sectionTitle</code></td>
+    <td>Groups categories under a section heading on the Task List.</td>
+    <td>Not set</td>
+    <td><code>Category.options</code></td>
+  </tr>
+  <tr>
+    <td><code>showInTaskList</code></td>
+    <td>When set to <code>false</code>, hides that category from the Task List. Hidden categories do not render their own row, do not render a section header by themselves, and are excluded from the completed-page count. If a hidden category follows a visible task in the same group, its completion is rolled into the visible task.</td>
+    <td><code>true</code></td>
+    <td><code>Category.options</code></td>
   </tr>
 </table>
 
-Example:
+Examples:
 
 ```json
 {
@@ -60,7 +76,17 @@ Example:
     "hideSubmit": true,
     "toAppOverviewLabel": "Back to task list"
   },
-  "elements": []
+  "elements": [
+    {
+      "type": "Category",
+      "label": "What are their contact details?",
+      "options": {
+        "sectionTitle": "The parties",
+        "showInTaskList": false
+      },
+      "elements": []
+    }
+  ]
 }
 ```
 
