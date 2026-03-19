@@ -41,7 +41,7 @@ export const configurationSchema = {
                   outputSchema: { type: 'object' },
                   method: {
                     type: 'string',
-                    enum: ['GET', 'POST', 'PUT'],
+                    enum: ['GET', 'POST', 'PUT', 'PATCH'],
                   },
                   api: { type: 'string' },
                   path: { type: 'string' },

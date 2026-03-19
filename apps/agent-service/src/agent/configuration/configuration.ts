@@ -50,7 +50,7 @@ interface TypedToolConfiguration {
 
 export interface ApiRequestToolConfiguration extends TypedToolConfiguration {
   type: 'api';
-  method: 'GET' | 'POST' | 'PUT';
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH';
   api: string;
   path: string;
   useServiceAccount?: boolean;

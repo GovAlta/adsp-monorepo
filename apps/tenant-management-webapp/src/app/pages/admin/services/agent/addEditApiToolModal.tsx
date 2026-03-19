@@ -153,6 +153,7 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
             onChange={(detail: GoabDropdownOnChangeDetail) => setTool({ ...tool, method: detail.value as string })}
           >
             <GoabDropdownItem value="GET" />
+            <GoabDropdownItem value="POST" />
             <GoabDropdownItem value="PUT" />
             <GoabDropdownItem value="PATCH" />
           </GoabDropdown>

@@ -14,7 +14,7 @@ export interface ApiToolConfiguration extends ToolDescription {
   type: 'api';
   inputSchema: Record<string, unknown>;
   outputSchema: Record<string, unknown>;
-  method: string;
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH';
   api: string;
   path: string;
   userContext?: boolean;
