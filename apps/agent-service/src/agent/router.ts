@@ -11,6 +11,22 @@ import { CoreUserMessage } from '@mastra/core/llm';
 
 const TOKEN_EXPIRY_THRESHOLD_MS = 30 * 1000;
 
+// Chunk types that the client understands and can render.
+// Other stream parts (step-start, step-finish, finish, raw, etc.) contain
+// complex non-serializable data (getters, circular refs via messageList)
+// that breaks socket.io JSON serialization.
+const FORWARDABLE_CHUNK_TYPES = new Set([
+  'text-delta',
+  'tool-call',
+  'tool-result',
+  'tool-error',
+  'reasoning-start',
+  'reasoning-delta',
+  'reasoning-end',
+  'error',
+  'tripwire',
+]);
+
 function getUserTokenExpiry(user: User): number | null {
   const exp = user?.token?.exp;
 
@@ -119,12 +135,20 @@ export function onIoConnection(logger: Logger) {
 
             if (rawChunks === true) {
               for await (const chunk of result.fullStream) {
+                if (!FORWARDABLE_CHUNK_TYPES.has(chunk.type)) {
+                  continue;
+                }
+
+                // Forward only type and payload; other properties on fullStream chunks
+                // (e.g. step-finish, finish) can contain non-serializable data
+                // (getters, circular refs via messageList) that breaks socket.io serialization.
+                const { type, payload } = chunk as { type: string; payload?: unknown };
                 socket.emit('stream', {
                   agent,
                   threadId,
                   messageId: replyId,
                   replyTo: messageId,
-                  chunk,
+                  chunk: { type, payload },
                 });
               }
             } else {
