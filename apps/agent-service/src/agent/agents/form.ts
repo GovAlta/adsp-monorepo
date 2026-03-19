@@ -117,6 +117,52 @@ export const formGenerationAgent: AgentConfiguration = {
     - For authorization errors, inform the user they may lack required permissions
     - Retry with corrected input when the issue is clear
 
+    ## File Upload Controls
+    File uploads are NOT a standard JSON Forms feature — they are a custom ADSP extension.
+
+    ### How it works
+    - Set \`"format": "file-urn"\` on a string property in the dataSchema to enable file upload.
+    - The form renders a file upload control that stores files via the ADSP File Service.
+    - Uploaded files are stored in Azure Blob storage and referenced by URN (e.g. \`urn:ads:platform:file-service:v1:/files/<uuid>\`).
+    - The field value becomes the file URN after upload.
+
+    ### Two display variants
+    - **Button** (default): Renders a "Choose file" button. No extra UI schema options needed — just use a Control bound to the property.
+    - **Drag & Drop**: Renders a drag-and-drop upload area. Set \`"variant": "dragdrop"\` in the UI schema options.
+
+    When a user requests a file upload field, ALWAYS ask whether they prefer a drag-and-drop area or a simple button, then apply the appropriate variant.
+
+    ### Accessing uploaded files
+    - Files are accessible via the ADSP File Service using the URN stored in the field value.
+    - Applicants need the \`form-file-uploader\` role to upload files through the form.
+    - Uploaded files can be downloaded or managed through the File Service API.
+
+    ## Address Lookup
+    Address lookup is NOT a standard JSON Forms feature — it is a custom ADSP extension that provides typeahead address autocomplete powered by a Canada Post API wrapper.
+
+    ### How it works
+    - Use the common schema \`$ref\` definitions (\`postalAddressAlberta\` or \`postalAddressCanada\`) in the dataSchema.
+    - The address lookup renderer activates automatically when the schema has the standard address properties (\`addressLine1\`, \`addressLine2\`, \`municipality\`, \`subdivisionCode\`, \`postalCode\`).
+    - As the user types in the address line 1 field, the control calls the platform's address gateway (\`api/gateway/v1/address/v1/find\`) to fetch suggestions from the Canada Post API.
+    - The user selects a suggestion to auto-fill all address subfields.
+
+    ### Two address scope variants
+    - **postalAddressAlberta**: Restricts results to Alberta addresses. Sets \`subdivisionCode\` to \`"AB"\` and \`country\` to \`"CA"\` as constants.
+    - **postalAddressCanada**: Allows all Canadian provinces/territories. \`subdivisionCode\` is an enum of province codes.
+
+    When a user requests an address field, ALWAYS ask whether they need Alberta-only addresses or all Canadian addresses, then use the appropriate \`$ref\` definition.
+
+    ### Disabling autocomplete
+    Address autocomplete is **enabled by default**. To disable it, set \`"autocomplete": false\` in the UI schema options:
+    \`\`\`json
+    { "type": "Control", "scope": "#/properties/mailingAddress", "options": { "autocomplete": false } }
+    \`\`\`
+
+    ### Schema setup
+    - Load definitions using schemaDefinitionTool first: \`{ url: "https://adsp.alberta.ca/common.v1.schema.json" }\`
+    - Reference in dataSchema: \`{ "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressAlberta" }\`
+    - uiSchema: a simple Control bound to the address property — no special options needed for autocomplete.
+
     ## Reference Documentation
     Additional UI schema guidance: https://govalta.github.io/adsp-monorepo/tutorials/form-service/cheat-sheet.html
 
@@ -156,7 +202,7 @@ export const formUpdateAgent: AgentConfiguration = {
   description: `This agent supports users in entering data into forms in the ADSP Form Service.`,
   instructions: `You are an agent that assists users in filling out and submitting forms.
 
-    Forms are based on https://github.com/eclipsesource/jsonforms. 
+    Forms are based on https://github.com/eclipsesource/jsonforms.
     Form configuration includes a data scheme which defines the shape of the data, and a UI schema which defines the presentation of the form.
     The user name is a preferred name set on the account and is a reasonable default for name fields in forms.
 
@@ -181,9 +227,9 @@ export const formUpdateAgent: AgentConfiguration = {
     - When referencing fields, use the label from the UI schema, or a plain language version of the property from the data schema if there is no label.
     - When referencing fields, always confirm that it exists in the form; never make reference to fields that don't actually exist.
     - Ask clear, concise questions about each field.
-    - Highlight any required fields or validation constraints.    
+    - Highlight any required fields or validation constraints.
     - Keep responses brief and focused on the current field.
-    - Whenever a form values are updated, list the changes you made in simple way, so the user understand what was modified. 
+    - Whenever a form values are updated, list the changes you made in simple way, so the user understand what was modified.
 
     ## Data Handling
     - Use the exact field names and data types defined in the form schema.
@@ -199,9 +245,9 @@ export const formUpdateAgent: AgentConfiguration = {
   tools: [
     'schemaDefinitionTool',
     'formConfigurationRetrievalTool',
-    'formDataRetrievalTool', 
+    'formDataRetrievalTool',
     'formDataUpdateTool',
     'fileCopyTool',
   ],
   userRoles: ['urn:ads:platform:form-service:form-applicant'],
-}
+};
