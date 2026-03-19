@@ -4,7 +4,6 @@ import '@testing-library/jest-dom';
 import { FullNameControlReview } from './FullNameControlReview';
 import { ControlProps } from '@jsonforms/core';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
-import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 describe('FullNameControlReview', () => {
   const mockGoToPage = jest.fn();
@@ -43,7 +42,7 @@ describe('FullNameControlReview', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the header row with label and required indicator', () => {
+  it('does not render grouped header label', () => {
     render(
       <table>
         <tbody>
@@ -51,11 +50,11 @@ describe('FullNameControlReview', () => {
             <FullNameControlReview {...defaultProps} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
-    expect(screen.getByText('Full Name')).toBeInTheDocument();
-    expect(screen.getByText('(required)')).toBeInTheDocument();
+    expect(screen.queryByText('Full Name')).not.toBeInTheDocument();
+    expect(screen.queryByText('(required)')).not.toBeInTheDocument();
   });
 
   it('renders individual field rows with values', () => {
@@ -66,7 +65,7 @@ describe('FullNameControlReview', () => {
             <FullNameControlReview {...defaultProps} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
     expect(screen.getByText('First name')).toBeInTheDocument();
@@ -77,7 +76,7 @@ describe('FullNameControlReview', () => {
     expect(screen.getByText('Doe')).toBeInTheDocument();
   });
 
-  it('renders Change button only on the header row', () => {
+  it('renders Change button for each rendered field row', () => {
     render(
       <table>
         <tbody>
@@ -85,11 +84,11 @@ describe('FullNameControlReview', () => {
             <FullNameControlReview {...defaultProps} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
     const changeButtons = screen.getAllByText('Change');
-    expect(changeButtons).toHaveLength(1);
+    expect(changeButtons).toHaveLength(3);
   });
 
   it('does not render middle name row when middleName is not present', () => {
@@ -108,7 +107,7 @@ describe('FullNameControlReview', () => {
             <FullNameControlReview {...propsWithoutMiddleName} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
     expect(screen.queryByText('Middle name')).not.toBeInTheDocument();
@@ -116,10 +115,15 @@ describe('FullNameControlReview', () => {
     expect(screen.getByText('Last name')).toBeInTheDocument();
   });
 
-  it('displays error message when errors prop is provided', () => {
+  it('displays required errors for missing required individual fields', () => {
     const propsWithError = {
       ...defaultProps,
-      errors: `Full Name ${REQUIRED_PROPERTY_ERROR}`,
+      data: {
+        firstName: '',
+        middleName: 'A.',
+        lastName: null,
+      },
+      schema: { required: ['firstName', 'lastName'] },
     };
 
     const { baseElement } = render(
@@ -129,11 +133,13 @@ describe('FullNameControlReview', () => {
             <FullNameControlReview {...propsWithError} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
-    const errorFormItem = baseElement.querySelector('goa-form-item[error="Full Name is required"]');
-    expect(errorFormItem).toBeInTheDocument();
+    const firstNameError = baseElement.querySelector('goa-form-item[error="First name is required"]');
+    const lastNameError = baseElement.querySelector('goa-form-item[error="Last name is required"]');
+    expect(firstNameError).toBeInTheDocument();
+    expect(lastNameError).toBeInTheDocument();
   });
 
   it('does not render Change button when stepId is undefined', () => {
@@ -152,28 +158,33 @@ describe('FullNameControlReview', () => {
             <FullNameControlReview {...propsWithoutStepId} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
     expect(screen.queryByText('Change')).not.toBeInTheDocument();
   });
 
-  it('does not show required indicator when not required', () => {
+  it('does not show required errors for non-required fields', () => {
     const propsNotRequired = {
       ...defaultProps,
-      required: false,
+      data: {
+        firstName: '',
+        lastName: '',
+      },
+      schema: { required: [] },
     };
 
-    render(
+    const { baseElement } = render(
       <table>
         <tbody>
           <JsonFormsStepperContext.Provider value={stepperContextValue}>
             <FullNameControlReview {...propsNotRequired} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
-    expect(screen.queryByText('(required)')).not.toBeInTheDocument();
+    expect(baseElement.querySelector('goa-form-item[error="First name is required"]')).not.toBeInTheDocument();
+    expect(baseElement.querySelector('goa-form-item[error="Last name is required"]')).not.toBeInTheDocument();
   });
 });

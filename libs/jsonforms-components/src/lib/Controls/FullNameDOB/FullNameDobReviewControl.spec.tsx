@@ -4,7 +4,6 @@ import '@testing-library/jest-dom';
 import { FullNameDobReviewControl } from './FullNameDobReviewControl';
 import { ControlProps } from '@jsonforms/core';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
-import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
 
 describe('FullNameDobReviewControl', () => {
   const mockGoToPage = jest.fn();
@@ -44,7 +43,7 @@ describe('FullNameDobReviewControl', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the header row with label and required indicator', () => {
+  it('does not render grouped header label', () => {
     render(
       <table>
         <tbody>
@@ -52,11 +51,11 @@ describe('FullNameDobReviewControl', () => {
             <FullNameDobReviewControl {...defaultProps} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
-    expect(screen.getByText('Full Name and Date of Birth')).toBeInTheDocument();
-    expect(screen.getByText('(required)')).toBeInTheDocument();
+    expect(screen.queryByText('Full Name and Date of Birth')).not.toBeInTheDocument();
+    expect(screen.queryByText('(required)')).not.toBeInTheDocument();
   });
 
   it('renders individual field rows with values including date of birth', () => {
@@ -67,7 +66,7 @@ describe('FullNameDobReviewControl', () => {
             <FullNameDobReviewControl {...defaultProps} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
     expect(screen.getByText('First name')).toBeInTheDocument();
@@ -80,7 +79,7 @@ describe('FullNameDobReviewControl', () => {
     expect(screen.getByText('1990-01-01')).toBeInTheDocument();
   });
 
-  it('renders Change button only on the header row', () => {
+  it('renders Change button for each rendered field row', () => {
     render(
       <table>
         <tbody>
@@ -88,11 +87,11 @@ describe('FullNameDobReviewControl', () => {
             <FullNameDobReviewControl {...defaultProps} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
     const changeButtons = screen.getAllByText('Change');
-    expect(changeButtons).toHaveLength(1);
+    expect(changeButtons).toHaveLength(4);
   });
 
   it('does not render middle name row when middleName is not present', () => {
@@ -112,7 +111,7 @@ describe('FullNameDobReviewControl', () => {
             <FullNameDobReviewControl {...propsWithoutMiddleName} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
     expect(screen.queryByText('Middle name')).not.toBeInTheDocument();
@@ -121,10 +120,16 @@ describe('FullNameDobReviewControl', () => {
     expect(screen.getByText('Date of birth')).toBeInTheDocument();
   });
 
-  it('displays error message when errors prop is provided', () => {
+  it('displays required errors for missing required individual fields', () => {
     const propsWithError = {
       ...defaultProps,
-      errors: `Full Name and Date of Birth ${REQUIRED_PROPERTY_ERROR}`,
+      data: {
+        firstName: '',
+        middleName: 'A.',
+        lastName: '',
+        dateOfBirth: null,
+      },
+      schema: { required: ['firstName', 'lastName', 'dateOfBirth'] },
     };
 
     const { baseElement } = render(
@@ -134,13 +139,15 @@ describe('FullNameDobReviewControl', () => {
             <FullNameDobReviewControl {...propsWithError} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
-    const errorFormItem = baseElement.querySelector(
-      'goa-form-item[error="Full Name and Date of Birth is required"]'
-    );
-    expect(errorFormItem).toBeInTheDocument();
+    const firstNameError = baseElement.querySelector('goa-form-item[error="First name is required"]');
+    const lastNameError = baseElement.querySelector('goa-form-item[error="Last name is required"]');
+    const dobError = baseElement.querySelector('goa-form-item[error="Date of birth is required"]');
+    expect(firstNameError).toBeInTheDocument();
+    expect(lastNameError).toBeInTheDocument();
+    expect(dobError).toBeInTheDocument();
   });
 
   it('does not render Change button when stepId is undefined', () => {
@@ -159,28 +166,35 @@ describe('FullNameDobReviewControl', () => {
             <FullNameDobReviewControl {...propsWithoutStepId} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
     expect(screen.queryByText('Change')).not.toBeInTheDocument();
   });
 
-  it('does not show required indicator when not required', () => {
+  it('does not show required errors for non-required fields', () => {
     const propsNotRequired = {
       ...defaultProps,
-      required: false,
+      data: {
+        firstName: '',
+        lastName: '',
+        dateOfBirth: '',
+      },
+      schema: { required: [] },
     };
 
-    render(
+    const { baseElement } = render(
       <table>
         <tbody>
           <JsonFormsStepperContext.Provider value={stepperContextValue}>
             <FullNameDobReviewControl {...propsNotRequired} />
           </JsonFormsStepperContext.Provider>
         </tbody>
-      </table>
+      </table>,
     );
 
-    expect(screen.queryByText('(required)')).not.toBeInTheDocument();
+    expect(baseElement.querySelector('goa-form-item[error="First name is required"]')).not.toBeInTheDocument();
+    expect(baseElement.querySelector('goa-form-item[error="Last name is required"]')).not.toBeInTheDocument();
+    expect(baseElement.querySelector('goa-form-item[error="Date of birth is required"]')).not.toBeInTheDocument();
   });
 });
