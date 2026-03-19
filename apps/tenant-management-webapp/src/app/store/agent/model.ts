@@ -10,11 +10,12 @@ export interface ToolDescription {
   description: string;
 }
 
+export type ApiToolMethods = 'GET' | 'POST' | 'PUT' | 'PATCH';
 export interface ApiToolConfiguration extends ToolDescription {
   type: 'api';
   inputSchema: Record<string, unknown>;
   outputSchema: Record<string, unknown>;
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH';
+  method: ApiToolMethods;
   api: string;
   path: string;
   userContext?: boolean;
