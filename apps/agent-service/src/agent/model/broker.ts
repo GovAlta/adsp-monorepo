@@ -1,5 +1,5 @@
 import { isAllowedUser, UnauthorizedUserError, type AdspId, type User } from '@abgov/adsp-service-sdk';
-import type { Agent, ToolsInput } from '@mastra/core/agent';
+import type { Agent, AgentExecutionOptions, ToolsInput } from '@mastra/core/agent';
 import type { CoreUserMessage } from '@mastra/core/llm';
 import { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
@@ -26,7 +26,7 @@ export class AgentBroker<
   }
 
   private getExecutionOptions(requestContext: RequestContext<Record<string, unknown>>, user: User, threadId: string) {
-    const options: any = {
+    const options: AgentExecutionOptions = {
       requestContext,
       memory: { thread: threadId, resource: user.id },
       onStepFinish: ({ finishReason, usage }) => {
@@ -35,6 +35,7 @@ export class AgentBroker<
           { context: 'AgentBroker', tenant: this.tenantId?.toString() }
         );
       },
+      structuredOutput,
     };
 
     return options;
