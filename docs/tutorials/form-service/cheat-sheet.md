@@ -137,6 +137,26 @@ Here are some out-of-the-box formats that not only render with the correct input
 }
     </code></pre></td>
   </tr>
+    <tr>
+      <td>Calculation (computed)</td>
+      <td>A read-only calculated field that evaluates a numeric expression from other form values and writes the result back into form data.</td>
+      <td><pre><code>
+  {
+    "total": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/x * #/properties/y + #/properties/z"
+    }
+  }
+      </code></pre></td>
+      <td><pre><code>
+  {
+    "type": "Control",
+    "scope": "#/properties/total",
+    "label": "Total"
+  }
+      </code></pre></td>
+    </tr>
   <tr>
     <td>Limited Text</td>
     <td>A single-line text input field with character limit.</td>
@@ -312,6 +332,229 @@ The date control supports these options to restrict date selection:
     <td>Not set</td>
   </tr>
 </table>
+
+#### Calculation Control
+
+The calculation control is rendered when the JSON schema field uses <code>"format": "computed"</code>. The expression is defined in <code>schema.description</code>, evaluated against current form data, and the result is written back to the control path automatically. The rendered field is read-only.
+
+##### Calculation Requirements
+
+<table>
+  <tr>
+    <th>Property</th>
+    <th>Location</th>
+    <th>Behavior</th>
+  </tr>
+  <tr>
+    <td><code>format</code></td>
+    <td><code>JSON schema</code></td>
+    <td>Must be set to <code>computed</code> for the calculation renderer to be selected.</td>
+  </tr>
+  <tr>
+    <td><code>description</code></td>
+    <td><code>JSON schema</code></td>
+    <td>Contains the calculation expression. This is where the library reads the formula from.</td>
+  </tr>
+  <tr>
+    <td><code>scope</code></td>
+    <td><code>UI schema</code></td>
+    <td>Points to the destination field where the computed result is stored.</td>
+  </tr>
+  <tr>
+    <td><code>label</code></td>
+    <td><code>UI schema</code></td>
+    <td>Optional display label for the read-only calculated field.</td>
+  </tr>
+</table>
+
+##### Supported Calculation Patterns
+
+<table>
+  <tr>
+    <th>Pattern</th>
+    <th>Description</th>
+    <th>Example Expression</th>
+  </tr>
+  <tr>
+    <td>Arithmetic with scopes</td>
+    <td>Uses referenced form values in numeric expressions.</td>
+    <td><code>#/properties/x * #/properties/y + #/properties/z</code></td>
+  </tr>
+  <tr>
+    <td><code>SUM(...)</code></td>
+    <td>Sums a numeric property across all rows of an object array.</td>
+    <td><code>SUM(#/properties/items/amount)</code></td>
+  </tr>
+  <tr>
+    <td><code>min(...)</code></td>
+    <td>Returns the smallest numeric value from referenced scopes and/or literals.</td>
+    <td><code>min(#/properties/a, #/properties/b, 100)</code></td>
+  </tr>
+  <tr>
+    <td><code>max(...)</code></td>
+    <td>Returns the largest numeric value from referenced scopes and/or literals.</td>
+    <td><code>max(#/properties/a, #/properties/b, 0)</code></td>
+  </tr>
+</table>
+
+##### Calculation Examples
+
+**Basic arithmetic**
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "x": {
+      "type": "number"
+    },
+    "y": {
+      "type": "number"
+    },
+    "z": {
+      "type": "number"
+    },
+    "total": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/x * #/properties/y + #/properties/z"
+    }
+  }
+}
+```
+
+```json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/x"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/y"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/z"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/total",
+      "label": "Total"
+    }
+  ]
+}
+```
+
+**Sum a numeric column from a repeating-item array**
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "totalAmount": {
+      "type": "string",
+      "format": "computed",
+      "description": "SUM(#/properties/items/amount)"
+    }
+  }
+}
+```
+
+```json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "ListWithDetail",
+      "scope": "#/properties/items",
+      "options": {
+        "detail": {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/amount",
+              "label": "Amount"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/totalAmount",
+      "label": "Total amount"
+    }
+  ]
+}
+```
+
+**Clamp to a minimum or maximum value**
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "requested": {
+      "type": "number"
+    },
+    "approved": {
+      "type": "string",
+      "format": "computed",
+      "description": "min(#/properties/requested, 1000)"
+    }
+  }
+}
+```
+
+##### Calculation Behavior and Errors
+
+<table>
+  <tr>
+    <th>Case</th>
+    <th>Behavior</th>
+  </tr>
+  <tr>
+    <td>All referenced values missing</td>
+    <td>The field stays blank and no error is shown.</td>
+  </tr>
+  <tr>
+    <td>Some referenced values missing</td>
+    <td>The field stays blank and shows <code>Please provide values for: ...</code> after the user has interacted with the form.</td>
+  </tr>
+  <tr>
+    <td>Invalid scope in the expression</td>
+    <td>A configuration error is shown for the bad scope reference.</td>
+  </tr>
+  <tr>
+    <td>Invalid expression syntax</td>
+    <td>A configuration error is shown with <code>Invalid expression syntax</code>.</td>
+  </tr>
+  <tr>
+    <td>Non-numeric values in <code>SUM(...)</code></td>
+    <td>The calculation does not produce a value and asks for valid values for the referenced array column.</td>
+  </tr>
+</table>
+
+##### Notes
+
+- The library selects this control for schema fields with <code>type: "string"</code> and <code>format: "computed"</code>.
+- Even though the schema type is <code>string</code>, the rendered control is a disabled numeric input and the computed value written back to form data is numeric.
+- Scope references should use JSON pointer-style paths such as <code>#/properties/fieldName</code>.
 
 ### Selectors {#target-selectors}
 
@@ -942,6 +1185,50 @@ _Repeating Items_ are useful when you need to capture multiple instances of simi
     </code></pre></td>
   </tr>
 </table>
+
+#### Repeating Items Control Options
+
+The repeating item controls support this array-list option:
+
+<table>
+  <tr>
+    <th>Option</th>
+    <th>Location</th>
+    <th>Behavior</th>
+    <th>Default</th>
+  </tr>
+  <tr>
+    <td><code>showArrayTableSortButtons</code></td>
+    <td><code>options.showArrayTableSortButtons</code></td>
+    <td>Enables the array sort-button setting for repeating item controls.
+    <td><code>false</code></td>
+  </tr>
+</table>
+
+##### Repeating Items Control Option Example
+
+```json
+{
+  "type": "ListWithDetail",
+  "scope": "#/properties/people",
+  "options": {
+    "showArrayTableSortButtons": true,
+    "detail": {
+      "type": "VerticalLayout",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/firstName"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/lastName"
+        }
+      ]
+    }
+  }
+}
+```
 
 ### Steppers {#target-steppers}
 
