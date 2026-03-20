@@ -249,15 +249,6 @@ The calculation engine also supports expressions such as <code>min(...)</code> a
 
 This example caps the approved value at <code>1000</code> even if the requested amount is higher.
 
-#### Error Handling and Validation Notes
-
-- If all referenced values are blank, the computed field stays blank.
-- If some referenced values are present and others are missing, the control shows an error asking for the missing values.
-- If the expression contains an invalid scope or invalid syntax, the control shows a configuration error.
-- For <code>SUM(...)</code>, non-numeric values in the referenced column prevent the result from being calculated.
-
-One implementation detail is worth noting: the control is selected using <code>type: "string"</code> together with <code>format: "computed"</code>, but the displayed result is numeric and the rendered input is disabled.
-
 For additional examples and option reference material, see the [cheat sheet](/adsp-monorepo/tutorials/form-service/cheat-sheet.html).
 
 ### ADSP Enhancements
