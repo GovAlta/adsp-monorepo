@@ -15,6 +15,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { onKeyPressForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
 import { GoabTextAreaOnKeyPressDetail } from '@abgov/ui-components-common';
+import { useDebounce } from '../../util/useDebounce';
 export type GoabInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 
 export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element => {
@@ -22,9 +23,22 @@ export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element =
   const { required } = props as ControlProps;
   const [textAreaValue, setTextAreaValue] = React.useState<string>(data || '');
 
+  const debouncedValue = useDebounce(textAreaValue, 500);
+
   useEffect(() => {
     setTextAreaValue(data || '');
   }, [data]);
+
+  /* istanbul ignore next */
+  useEffect(() => {
+    if (debouncedValue !== data && (debouncedValue !== '' || data !== undefined)) {
+      onChangeForInputControl({
+        name: '',
+        value: debouncedValue,
+        controlProps: props as ControlProps,
+      });
+    }
+  }, [debouncedValue]);
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
@@ -50,6 +64,8 @@ export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element =
       onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
         const newValue = autoCapitalize ? detail.value.toUpperCase() : detail.value;
 
+        setTextAreaValue(newValue);
+
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
@@ -61,12 +77,6 @@ export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element =
             controlProps: props as ControlProps,
           });
         }
-
-        onChangeForInputControl({
-          name: detail.name,
-          value: newValue,
-          controlProps: props as ControlProps,
-        });
       }}
       onChange={() => {
         if (isVisited === false && setIsVisited) {
