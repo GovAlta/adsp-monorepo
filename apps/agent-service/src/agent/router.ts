@@ -163,11 +163,24 @@ export function onIoConnection(logger: Logger) {
               }
             }
 
+            let output: unknown;
+            try {
+              output = await result.object;
+            } catch (err) {
+              logger.warn(`Invalid structured output produced for agent ${agent}; falling back to text output only.`, {
+                context: 'AgentRouter',
+                tenant: tenant?.id?.toString(),
+                user: `${user.name} (ID: ${user.id})`,
+                error: err instanceof Error ? err.message : String(err),
+              });
+            }
+
             socket.emit('stream', {
               agent,
               threadId,
               messageId: replyId,
               replyTo: messageId,
+              output,
               done: true,
             });
           }
@@ -276,6 +289,7 @@ export function messageAgent(logger: Logger): RequestHandler {
       res.send({
         agent: agent.Agent.id,
         content: result.text,
+        output: result.object,
       });
     } catch (err) {
       next(err);

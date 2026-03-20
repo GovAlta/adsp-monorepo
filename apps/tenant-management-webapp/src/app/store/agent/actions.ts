@@ -158,6 +158,7 @@ export interface AgentResponseAction {
     | ErrorChunk
     | TripwireChunk;
   done: boolean;
+  output?: unknown | null;
 }
 
 export interface GetAgentsAction {
@@ -260,8 +261,8 @@ export function connectAgent() {
       }
     });
     socket.on('stream', (message) => {
-      const { threadId, messageId, chunk, done } = message;
-      dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, chunk, done });
+      const { threadId, messageId, chunk, done, output } = message;
+      dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, chunk, done, output });
     });
     socket.on('error', (err) => {
       dispatch(ErrorNotification({ message: err }));

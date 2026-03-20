@@ -1,5 +1,5 @@
 import { isAllowedUser, UnauthorizedUserError, type AdspId, type User } from '@abgov/adsp-service-sdk';
-import type { Agent, ToolsInput } from '@mastra/core/agent';
+import type { Agent, AgentExecutionOptions, ToolsInput } from '@mastra/core/agent';
 import type { CoreUserMessage } from '@mastra/core/llm';
 import { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
@@ -23,6 +23,22 @@ export class AgentBroker<
     { userRoles }: Partial<AgentConfiguration>
   ) {
     this.userRoles = userRoles || [];
+  }
+
+  private getExecutionOptions(requestContext: RequestContext<Record<string, unknown>>, user: User, threadId: string) {
+    const options: AgentExecutionOptions = {
+      requestContext,
+      memory: { thread: threadId, resource: user.id },
+      onStepFinish: ({ finishReason, usage }) => {
+        this.logger.debug(
+          `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage?.totalTokens ?? 0} tokens.`,
+          { context: 'AgentBroker', tenant: this.tenantId?.toString() }
+        );
+      },
+      structuredOutput: undefined,
+    };
+
+    return options;
   }
 
   private async prepareAgentRequest(
@@ -59,16 +75,7 @@ export class AgentBroker<
   ) {
     const requestContext = await this.prepareAgentRequest(user, input, context);
 
-    return this.agent.stream(input, {
-      requestContext,
-      memory: { thread: threadId, resource: user.id },
-      onStepFinish: ({ finishReason, usage }) => {
-        this.logger.debug(
-          `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage.totalTokens} tokens.`,
-          { context: 'AgentBroker', tenant: this.tenantId?.toString() }
-        );
-      },
-    });
+    return this.agent.stream(input, this.getExecutionOptions(requestContext, user, threadId));
   }
 
   public async generate(
@@ -79,15 +86,6 @@ export class AgentBroker<
   ) {
     const requestContext = await this.prepareAgentRequest(user, input, context);
 
-    return this.agent.generate(input, {
-      requestContext,
-      memory: { thread: threadId, resource: user.id },
-      onStepFinish: ({ finishReason, usage }) => {
-        this.logger.debug(
-          `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage.totalTokens} tokens.`,
-          { context: 'AgentBroker', tenant: this.tenantId?.toString() }
-        );
-      },
-    });
+    return this.agent.generate(input, this.getExecutionOptions(requestContext, user, threadId));
   }
 }

@@ -348,6 +348,7 @@ const AgentMessageItem = memo(styled(({ className, message }: AgentMessageItemPr
   const hasReasoning = Boolean(message.reasoning?.content?.trim());
   const hasToolCalls = message.toolCalls.length > 0;
   const hasErrors = Boolean(message.errors?.length);
+  const hasStructuredOutput = message.output !== undefined;
   const hasPendingToolCall = message.toolCalls.some((toolCall) => !toolCall.result && !toolCall.error);
 
   // Show explicit feedback if the stream has started but no visible output has arrived yet.
@@ -371,6 +372,13 @@ const AgentMessageItem = memo(styled(({ className, message }: AgentMessageItemPr
       {message.toolCalls.map((toolCall) => (
         <AgentToolCall key={toolCall.toolCallId} toolCall={toolCall} />
       ))}
+      {hasStructuredOutput && (
+        <div className="structured-output">
+          <GoabDetails heading="Structured output">
+            <pre>{JSON.stringify(message.output, null, 2)}</pre>
+          </GoabDetails>
+        </div>
+      )}
       {showStreamingContinuation && (
         <div className="activity-indicator" data-kind="continuing">
           <span>Generating response...</span>
@@ -397,6 +405,23 @@ const AgentMessageItem = memo(styled(({ className, message }: AgentMessageItemPr
 
   & .activity-indicator[data-kind='continuing'] {
     margin-top: 0;
+  }
+
+  & .structured-output {
+    margin: 0 var(--goa-space-xl) var(--goa-space-l) var(--goa-space-xl);
+
+    & pre {
+      background: var(--goa-color-greyscale-100);
+      border: 1px solid var(--goa-color-greyscale-200);
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: var(--goa-font-size-1);
+      line-height: var(--goa-space-m);
+      padding: var(--goa-space-m);
+      margin: 0;
+      overflow: auto;
+      max-height: 250px;
+    }
   }
 `);
 

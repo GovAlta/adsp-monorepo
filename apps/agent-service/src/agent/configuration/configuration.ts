@@ -61,6 +61,7 @@ export interface AgentConfiguration {
   name: string;
   description?: string;
   instructions: string;
+  outputSchema?: Record<string, unknown> | null;
   userRoles?: string[];
   agents?: string[];
   tools?: ToolConfiguration[];
@@ -121,6 +122,14 @@ export class AgentServiceConfiguration {
                         apiKey: environment.MODEL_API_KEY,
                       }
                       : environment.MODEL,
+                    defaultOptions: configuration.outputSchema
+                      ? {
+                        structuredOutput: {
+                          schema: configuration.outputSchema,
+                          errorStrategy: 'warn',
+                        },
+                      }
+                      : undefined,
                     agents: () => {
                       const toolAgents = {};
                       for (const agent of configuration.agents || []) {
@@ -181,10 +190,13 @@ export class AgentServiceConfiguration {
         tokenProvider: this.tokenProvider,
       });
       this.brokers = Object.entries(this.mastra.listAgents()).reduce(
-        (brokers, [key, agent]) => ({
-          ...brokers,
-          [key]: new AgentBroker(this.logger, tenantId, inputProcessors, agent, configuration[key] || {}),
-        }),
+        (brokers, [key, agent]) => {
+          const agentConfiguration: Partial<AgentConfiguration> = configuration[key] || {};
+          return {
+            ...brokers,
+            [key]: new AgentBroker(this.logger, tenantId, inputProcessors, agent, agentConfiguration),
+          };
+        },
         {},
       );
     } catch (err) {

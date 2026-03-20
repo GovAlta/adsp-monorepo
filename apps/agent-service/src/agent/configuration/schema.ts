@@ -13,6 +13,17 @@ export const configurationSchema = {
         instructions: {
           type: 'string',
         },
+        outputSchema: {
+          anyOf: [
+            { type: 'null' },
+            {
+              allOf: [
+                { $ref: 'http://json-schema.org/draft-07/schema#' },
+                { type: 'object' },
+              ],
+            },
+          ],
+        },
         userRoles: {
           type: 'array',
           items: { type: 'string' },
