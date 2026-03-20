@@ -35,7 +35,7 @@ export class AgentBroker<
           { context: 'AgentBroker', tenant: this.tenantId?.toString() }
         );
       },
-      structuredOutput,
+      structuredOutput: undefined,
     };
 
     return options;
