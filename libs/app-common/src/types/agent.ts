@@ -71,4 +71,5 @@ export interface AgentMessage {
   toolCalls: ToolCall[];
   reasoning?: Reasoning;
   errors?: AgentError[];
+  output?: unknown | null;
 }

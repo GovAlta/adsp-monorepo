@@ -288,6 +288,14 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
         const message = messages[action.messageId];
         messages[action.messageId] = processResponseChunk(message as AgentMessage, action);
       }
+
+      if (action.done && action.output !== undefined) {
+        messages[action.messageId] = {
+          ...(messages[action.messageId] as AgentMessage),
+          output: action.output,
+        };
+      }
+
       return { ...state, threadMessages, messages };
     }
     case GET_AGENTS_ACTION:

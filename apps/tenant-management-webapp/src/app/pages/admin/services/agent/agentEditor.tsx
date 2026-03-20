@@ -285,6 +285,48 @@ export const AgentEditor: FunctionComponent = () => {
                 })}
               </div>
             </Tab>
+            <Tab testId="agent-edit-output-schema" label="Structured Output" className="editorMain">
+              <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                <p>
+                  Define a JSON Schema that describes the structure of the agent's output. When configured, the agent
+                  will return structured data matching this schema alongside text responses.
+                </p>
+              </div>
+              <MonacoEditor
+                data-testid="agent-output-schema-editor"
+                language="json"
+                height="400px"
+                value={
+                  agent?.outputSchema
+                    ? JSON.stringify(agent.outputSchema, null, 2)
+                    : '{\n  "type": "object",\n  "properties": {}\n}'
+                }
+                onChange={(value) => {
+                  if (value) {
+                    try {
+                      const parsed = JSON.parse(value);
+                      dispatch(editAgent({ ...agent, outputSchema: parsed }));
+                    } catch {
+                      // Keep the raw value while user is typing, will validate on save
+                    }
+                  }
+                }}
+                options={{
+                  formatOnPaste: true,
+                  formatOnType: true,
+                  minimap: { enabled: false },
+                }}
+              />
+              <div style={{ marginTop: '1rem' }}>
+                <GoabButton
+                  type="secondary"
+                  size="compact"
+                  onClick={() => dispatch(editAgent({ ...agent, outputSchema: null }))}
+                >
+                  Clear schema
+                </GoabButton>
+              </div>
+            </Tab>
           </Tabs>
           <hr />
           <GoabButtonGroup alignment="start" mt="m" mb="xl">

@@ -26,6 +26,7 @@ Each agent configuration includes:
 - **name**: Display name for the agent
 - **description**: Optional description of the agent's purpose
 - **instructions**: System prompt that defines the agent's behavior
+- **outputSchema**: Optional JSON Schema object that defines the structure of the agent's response. When configured, the agent will return structured output matching this schema alongside text responses.
 - **userRoles**: Optional array of roles required to use the agent
 - **agents**: Optional array of other agent IDs this agent can delegate to
 - **tools**: Optional array of tools available to the agent
@@ -43,6 +44,15 @@ Custom API tools can be configured to call external APIs on behalf of the agent.
 
 ### Threads
 Conversations with agents are organized into threads. Each thread maintains context across multiple messages, allowing for coherent multi-turn conversations. Thread IDs can be provided by the client or generated automatically.
+
+### Structured Output
+Agents can be configured with a JSON Schema that defines the structure of their output. When an agent has an `outputSchema` defined, it will return both text responses and structured JSON objects matching that schema. This is useful for extracting machine-readable data from agent responses, such as:
+- Parsing form data
+- Extracting entities or classifications
+- Standardized API responses
+- Validating response format
+
+The agent will attempt to return data matching the schema; if schema validation fails, the agent will fall back to text-only responses with a warning in the conversation logs.
 
 ## Code examples
 ### Configure an agent
@@ -95,7 +105,7 @@ Agents are configured using the [configuration service](configuration-service.md
 ```
 
 ### Message an agent (REST API)
-Send a message to an agent and receive a complete response.
+Send a message to an agent and receive a complete response. If the agent has a `outputSchema` configured, the response will also include a `output` field with structured data.
 
 ```typescript
   const agentServiceUrl = 'https://agent-service.adsp.alberta.ca';
@@ -115,11 +125,17 @@ Send a message to an agent and receive a complete response.
     }
   );
 
-  const { agent, content } = await response.json();
+  const { agent, content, output } = await response.json();
+  
+  // content contains the text response
+  // output contains structured data if outputSchema was configured (null otherwise)
+  if (output) {
+    console.log('Structured response:', output);
+  }
 ```
 
 ### Stream agent responses (WebSocket)
-Connect via WebSocket for real-time streaming responses. The WebSocket endpoint uses Socket.IO and requires the tenant name as the namespace.
+Connect via WebSocket for real-time streaming responses. The WebSocket endpoint uses Socket.IO and requires the tenant name as the namespace. When the response is complete, the done event will include any structured `output` if the agent has an `outputSchema` configured.
 
 ```typescript
   import { io } from 'socket.io-client';
@@ -147,10 +163,15 @@ Connect via WebSocket for real-time streaming responses. The WebSocket endpoint 
 
   // Receive streaming response
   socket.on('stream', (data) => {
-    const { agent, threadId, messageId, replyTo, content, done } = data;
+    const { agent, threadId, messageId, replyTo, content, output, done } = data;
     if (done) {
       console.log('Response complete');
+      // If the agent has a outputSchema, structured data is included here
+      if (output) {
+        console.log('Structured response:', output);
+      }
     } else {
+      // Streaming text content arrives as deltas
       process.stdout.write(content);
     }
   });
@@ -200,4 +221,58 @@ Agents can be configured with custom tools that call external APIs.
       }
     }
   }
+```
+
+### Configure structured output
+Agents can be configured with a JSON Schema to return structured data. This is useful for extracting machine-readable information from agent responses.
+
+```typescript
+  const configurationServiceUrl = 'https://configuration-service.adsp.alberta.ca';
+
+  const request = {
+    operation: 'UPDATE',
+    update: {
+      'data-extractor': {
+        name: 'Data Extractor',
+        description: 'Extracts structured data from unstructured text',
+        instructions: 'You are an expert at extracting structured information. Extract all relevant data and return it as valid JSON matching the provided schema.',
+        outputSchema: {
+          type: 'object',
+          properties: {
+            entities: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  type: { type: 'string', enum: ['person', 'organization', 'location'] },
+                  confidence: { type: 'number', minimum: 0, maximum: 1 }
+                },
+                required: ['name', 'type']
+              }
+            },
+            sentiment: {
+              type: 'string',
+              enum: ['positive', 'neutral', 'negative']
+            },
+            summary: { type: 'string' }
+          },
+          required: ['entities', 'sentiment']
+        },
+        tools: ['schemaDefinitionTool']
+      }
+    }
+  }
+
+  await fetch(
+    `${configurationServiceUrl}/configuration/v2/configuration/platform/agent-service`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request),
+    }
+  );
 ```

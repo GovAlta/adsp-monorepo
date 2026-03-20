@@ -25,6 +25,21 @@ export class AgentBroker<
     this.userRoles = userRoles || [];
   }
 
+  private getExecutionOptions(requestContext: RequestContext<Record<string, unknown>>, user: User, threadId: string) {
+    const options: any = {
+      requestContext,
+      memory: { thread: threadId, resource: user.id },
+      onStepFinish: ({ finishReason, usage }) => {
+        this.logger.debug(
+          `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage?.totalTokens ?? 0} tokens.`,
+          { context: 'AgentBroker', tenant: this.tenantId?.toString() }
+        );
+      },
+    };
+
+    return options;
+  }
+
   private async prepareAgentRequest(
     user: User,
     input: CoreUserMessage | CoreUserMessage[],
@@ -59,16 +74,7 @@ export class AgentBroker<
   ) {
     const requestContext = await this.prepareAgentRequest(user, input, context);
 
-    return this.agent.stream(input, {
-      requestContext,
-      memory: { thread: threadId, resource: user.id },
-      onStepFinish: ({ finishReason, usage }) => {
-        this.logger.debug(
-          `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage.totalTokens} tokens.`,
-          { context: 'AgentBroker', tenant: this.tenantId?.toString() }
-        );
-      },
-    });
+    return this.agent.stream(input, this.getExecutionOptions(requestContext, user, threadId));
   }
 
   public async generate(
@@ -79,15 +85,6 @@ export class AgentBroker<
   ) {
     const requestContext = await this.prepareAgentRequest(user, input, context);
 
-    return this.agent.generate(input, {
-      requestContext,
-      memory: { thread: threadId, resource: user.id },
-      onStepFinish: ({ finishReason, usage }) => {
-        this.logger.debug(
-          `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage.totalTokens} tokens.`,
-          { context: 'AgentBroker', tenant: this.tenantId?.toString() }
-        );
-      },
-    });
+    return this.agent.generate(input, this.getExecutionOptions(requestContext, user, threadId));
   }
 }

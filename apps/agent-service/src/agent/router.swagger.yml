@@ -122,3 +122,7 @@ components:
                   type: string
                 content:
                   type: string
+                output:
+                  type: object
+                  additionalProperties: true
+                  nullable: true

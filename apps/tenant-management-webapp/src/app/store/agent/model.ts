@@ -28,6 +28,7 @@ export interface AgentConfiguration {
   name: string;
   description?: string;
   instructions: string;
+  outputSchema?: Record<string, unknown> | null;
   userRoles?: string[];
   agents?: string[];
   tools?: ToolConfiguration[];
