@@ -23,7 +23,7 @@ export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element =
 
   const [textAreaValue, setTextAreaValue] = React.useState<string>(data || '');
 
-  const debouncedValue = useDebounce(textAreaValue, 400);
+  const debouncedValue = useDebounce(textAreaValue, 1000);
 
   useEffect(() => {
     setTextAreaValue(data || '');
