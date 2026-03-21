@@ -13,17 +13,17 @@ import { GoabTextArea } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { onKeyPressForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
-import { GoabTextAreaOnKeyPressDetail } from '@abgov/ui-components-common';
+import { onChangeForInputControl } from '../../util/inputControlUtils';
+import { GoabTextAreaOnChangeDetail, GoabTextAreaOnKeyPressDetail } from '@abgov/ui-components-common';
 import { useDebounce } from '../../util/useDebounce';
 export type GoabInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 
 export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, path, schema, label, isVisited, errors, setIsVisited } = props;
-  const { required } = props as ControlProps;
+
   const [textAreaValue, setTextAreaValue] = React.useState<string>(data || '');
 
-  const debouncedValue = useDebounce(textAreaValue, 500);
+  const debouncedValue = useDebounce(textAreaValue, 400);
 
   useEffect(() => {
     setTextAreaValue(data || '');
@@ -52,7 +52,7 @@ export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element =
   const txtAreaComponent = (
     <GoabTextArea
       error={isVisited && errors.length > 0}
-      value={textAreaValue}
+      value={debouncedValue}
       disabled={!enabled}
       readOnly={readOnly}
       placeholder={placeholder}
@@ -69,20 +69,8 @@ export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element =
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
-        if (detail.value.length === 0 || (required && errors.length === 0 && detail.value.length > 0)) {
-          onKeyPressForTextControl({
-            name: detail.name,
-            value: newValue,
-            key: detail.key,
-            controlProps: props as ControlProps,
-          });
-        }
       }}
-      onChange={() => {
-        if (isVisited === false && setIsVisited) {
-          setIsVisited();
-        }
-      }}
+      onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
       {...uischema?.options?.componentProps}
     />
   );
