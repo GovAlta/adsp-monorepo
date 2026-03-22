@@ -18,12 +18,13 @@ import { GoabTextAreaOnChangeDetail, GoabTextAreaOnKeyPressDetail } from '@abgov
 import { useDebounce } from '../../util/useDebounce';
 export type GoabInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 
+const DEBOUNCE_DELAY = 550;
 export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, path, schema, label, isVisited, errors, setIsVisited } = props;
 
   const [textAreaValue, setTextAreaValue] = React.useState<string>(data || '');
 
-  const debouncedValue = useDebounce(textAreaValue, 1000);
+  const debouncedValue = useDebounce(textAreaValue, DEBOUNCE_DELAY);
 
   useEffect(() => {
     setTextAreaValue(data || '');
