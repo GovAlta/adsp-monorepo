@@ -1,10 +1,11 @@
 import { resolve } from 'node:path';
 import type { Logger } from 'winston';
 import { Workspace, LocalFilesystem } from '@mastra/core/workspace';
-import type { RequestContext } from '@mastra/core/request-context';
+import { MASTRA_THREAD_ID_KEY } from '@mastra/core/request-context';
 import type { AdspId } from '@abgov/adsp-service-sdk';
 import hasha = require('hasha');
 import { environment } from '../../environments/environment';
+import { AdspRequestContext } from '../types';
 
 export interface AgentWorkspaceConfiguration {
   enabled: boolean;
@@ -42,11 +43,11 @@ function encodePathSegment(value: string): string {
 }
 
 function getWorkspaceContext(
-  requestContext: RequestContext<any>,
+  requestContext: AdspRequestContext,
 ): WorkspaceContext | undefined {
-  const tenantValue = requestContext.get('tenantId') as AdspId | string | undefined;
-  const userId = requestContext.get('userId') as string | undefined;
-  const threadId = requestContext.get('threadId') as string | undefined;
+  const tenantValue = requestContext.get('tenantId');
+  const userId = requestContext.get('user')?.id;
+  const threadId = requestContext.get(MASTRA_THREAD_ID_KEY);
 
   const tenantId = tenantValue?.toString();
 
@@ -90,7 +91,7 @@ export function createWorkspaceResolver(logger: Logger, agentId: string) {
     requestContext,
     mastra: _mastra,
   }: {
-    requestContext: RequestContext<any>;
+    requestContext: AdspRequestContext;
     mastra?: unknown;
   }): Promise<Workspace | undefined> => {
     const workspaceContext = getWorkspaceContext(requestContext);

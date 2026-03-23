@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { RequestContext } from '@mastra/core/request-context';
+import { MASTRA_THREAD_ID_KEY, RequestContext } from '@mastra/core/request-context';
 import { environment } from '../../environments/environment';
 import { assertWorkspaceEnvironment, createWorkspaceResolver } from './index';
 
@@ -55,8 +55,8 @@ describe('agent workspace', () => {
     const requestContext = new RequestContext<Record<string, unknown>>();
 
     requestContext.set('tenantId', 'urn:ads:platform:tenant-service:v2:/tenants/test');
-    requestContext.set('userId', 'user-123');
-    requestContext.set('threadId', 'thread-456');
+    requestContext.set('user', { id: 'user-123' });
+    requestContext.set(MASTRA_THREAD_ID_KEY, 'thread-456');
 
     const workspace = await resolver({ requestContext });
     const basePath = (workspace?.filesystem as { basePath?: string } | undefined)?.basePath;

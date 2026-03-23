@@ -11,6 +11,7 @@ import { AgentBroker } from '../model';
 import { createApiRequestTool, createTools } from '../tools';
 import { createBrokerInputProcessors, createInputProcessors } from '../processors';
 import { createWorkspaceResolver, type AgentWorkspaceConfiguration } from '../workspace';
+import { createFileServiceClient } from '../clients';
 
 /**
  * Wraps agent instructions to automatically inject contextual information on each request.
@@ -194,12 +195,17 @@ export class AgentServiceConfiguration {
         directory: this.directory,
         tokenProvider: this.tokenProvider,
       });
+      const fileServiceClient = createFileServiceClient({
+        logger: this.logger,
+        directory: this.directory,
+        tokenProvider: this.tokenProvider,
+      });
       this.brokers = Object.entries(this.mastra.listAgents()).reduce(
         (brokers, [key, agent]) => {
           const agentConfiguration: Partial<AgentConfiguration> = configuration[key] || {};
           return {
             ...brokers,
-            [key]: new AgentBroker(this.logger, tenantId, inputProcessors, agent, agentConfiguration),
+            [key]: new AgentBroker(this.logger, tenantId, inputProcessors, agent, agentConfiguration, fileServiceClient),
           };
         },
         {},

@@ -1,6 +1,6 @@
 import type { AdspId, User } from '@abgov/adsp-service-sdk';
 import type { CoreUserMessage } from '@mastra/core/llm';
-import type { RequestContext } from '@mastra/core/request-context';
+import { MASTRA_THREAD_ID_KEY, type RequestContext } from '@mastra/core/request-context';
 
 export interface BrokerInputProcessor {
   processInput(
@@ -9,4 +9,8 @@ export interface BrokerInputProcessor {
   ): Promise<CoreUserMessage | CoreUserMessage[]>;
 }
 
-export type AdspRequestContext<TAdditional = never> = RequestContext<{ tenantId?: AdspId, user?: User } | TAdditional>
+export type AdspRequestContext<TAdditional = never> = RequestContext<{
+  tenantId?: AdspId;
+  user?: User;
+  [MASTRA_THREAD_ID_KEY]?: string;
+} | TAdditional>
