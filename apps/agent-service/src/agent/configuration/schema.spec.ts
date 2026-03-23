@@ -20,7 +20,7 @@ describe('configuration', () => {
     const service = new AjvValidationService(logger as unknown as Logger);
 
     beforeAll(() => {
-      service.setSchema('configuration', { $ref: 'http://json-schema.org/draft-07/schema#' });
+      service.setSchema('configuration', configurationSchema);
     });
 
     it('accepts null outputSchema', () => {
