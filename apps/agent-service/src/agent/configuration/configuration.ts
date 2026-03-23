@@ -12,6 +12,7 @@ import { createApiRequestTool, createTools } from '../tools';
 import { createBrokerInputProcessors, createInputProcessors } from '../processors';
 import { createWorkspaceResolver, type AgentWorkspaceConfiguration } from '../workspace';
 import { createFileServiceClient } from '../clients';
+import { scheduleAgentJobs } from '../jobs';
 
 /**
  * Wraps agent instructions to automatically inject contextual information on each request.
@@ -94,6 +95,8 @@ export class AgentServiceConfiguration {
         tokenProvider: this.tokenProvider,
       });
 
+      const sharedMemory = new Memory();
+
       this.mastra = new Mastra({
         storage: environment.DB_HOST ? new PostgresStore({
           host: environment.DB_HOST,
@@ -173,7 +176,7 @@ export class AgentServiceConfiguration {
                         }
                         return tools;
                       }, {}) || {},
-                    memory: new Memory(),
+                    memory: sharedMemory,
                     workspace: configuration.workspace?.enabled
                       ? createWorkspaceResolver(this.logger, key)
                       : undefined,
@@ -210,6 +213,15 @@ export class AgentServiceConfiguration {
         },
         {},
       );
+
+      // Schedule here (not middleware) because memory is tenant-scoped, so cleanup must run in tenant context too.
+      scheduleAgentJobs({
+        logger: this.logger,
+        tenantId,
+        memory: sharedMemory,
+        clearWorkspace: (tenantId: string, agentId: string, userId: string, threadId: string) =>
+          this.clearThreadWorkspace(tenantId, agentId, userId, threadId),
+      });
     } catch (err) {
       this.logger.error('Error encountered initializing agent brokers.', {
         context: 'AgentServiceConfiguration',
@@ -227,5 +239,14 @@ export class AgentServiceConfiguration {
       id: key,
       name: broker.Agent.name,
     }));
+  }
+
+  private async clearThreadWorkspace(tenantId: string, agentId: string, userId: string, threadId: string): Promise<void> {
+    const broker = this.brokers[agentId];
+    if (!broker) {
+      throw new Error(`Unable to clear workspace for expired thread ${threadId}; agent '${agentId}' is not registered.`);
+    }
+
+    await broker.clearThreadWorkspace(tenantId, userId, threadId);
   }
 }
