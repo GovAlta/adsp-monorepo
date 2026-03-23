@@ -6,15 +6,10 @@ interface ThreadCleanupJobProps {
   logger: Logger;
   tenantId: AdspId;
   memory: Memory;
-  clearWorkspace: (tenantId: string, agentId: string, userId: string, threadId: string) => Promise<void>;
+  clearWorkspace: (tenantId: string, userId: string, threadId: string) => Promise<void>;
 }
 
-export function createThreadCleanupJob({
-  logger,
-  tenantId,
-  memory,
-  clearWorkspace,
-}: ThreadCleanupJobProps) {
+export function createThreadCleanupJob({ logger, tenantId, memory, clearWorkspace }: ThreadCleanupJobProps) {
   return async (): Promise<void> => {
     try {
       logger.debug('Starting thread cleanup job...', {
@@ -68,14 +63,9 @@ export function createThreadCleanupJob({
           typeof thread.metadata?.tenantId === 'string' && thread.metadata.tenantId
             ? thread.metadata.tenantId
             : tenantId?.toString();
-        const threadAgentId =
-          typeof thread.metadata?.agentId === 'string' && thread.metadata.agentId
-            ? thread.metadata.agentId
-            : undefined;
-
-        if (!threadTenantId || !thread.resourceId || !threadAgentId) {
+        if (!threadTenantId || !thread.resourceId) {
           result.failed++;
-          logger.warn(`Cannot cleanup expired thread ${thread.id}; missing tenantId, agentId, or resourceId.`, {
+          logger.warn(`Cannot cleanup expired thread ${thread.id}; missing tenantId or resourceId.`, {
             context: 'ThreadCleanupJob',
             tenant: tenantId.toString(),
           });
@@ -83,7 +73,7 @@ export function createThreadCleanupJob({
         }
 
         try {
-          await clearWorkspace(threadTenantId, threadAgentId, thread.resourceId, thread.id);
+          await clearWorkspace(threadTenantId, thread.resourceId, thread.id);
           await memory.deleteThread(thread.id);
           result.cleaned++;
         } catch (err) {

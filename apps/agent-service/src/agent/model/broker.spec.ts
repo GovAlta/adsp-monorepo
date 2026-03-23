@@ -45,14 +45,10 @@ describe('AgentBroker', () => {
     };
     const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
 
-    await broker.generate(
-      user as never,
-      'thread-456',
-      {
-        role: 'user',
-        content: [{ type: 'text', text: 'Hello' }],
-      },
-    );
+    await broker.generate(user as never, 'thread-456', {
+      role: 'user',
+      content: [{ type: 'text', text: 'Hello' }],
+    });
 
     const options = generate.mock.calls[0][1] as { requestContext: RequestContext<Record<string, unknown>> };
 
@@ -76,14 +72,10 @@ describe('AgentBroker', () => {
     };
     const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
 
-    await broker.generate(
-      user as never,
-      'thread-456',
-      {
-        role: 'user',
-        content: [{ type: 'text', text: 'Hello' }],
-      },
-    );
+    await broker.generate(user as never, 'thread-456', {
+      role: 'user',
+      content: [{ type: 'text', text: 'Hello' }],
+    });
 
     expect(createThread).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -92,7 +84,6 @@ describe('AgentBroker', () => {
         metadata: expect.objectContaining({
           expiresAt: expect.any(Number),
           tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
-          agentId: 'test-agent-id',
         }),
       }),
     );
@@ -101,7 +92,9 @@ describe('AgentBroker', () => {
 
   it('updates expiresAt metadata when updating expiry for an existing thread', async () => {
     const generate = jest.fn().mockResolvedValue({ text: 'ok', object: null });
-    const getThreadById = jest.fn().mockResolvedValue({ title: 'Existing thread', metadata: { foo: 'bar' } });
+    const getThreadById = jest
+      .fn()
+      .mockResolvedValue({ title: 'Existing thread', metadata: { foo: 'bar' } });
     const createThread = jest.fn();
     const saveThread = jest.fn().mockResolvedValue({});
     const getMemory = jest.fn().mockResolvedValue({ getThreadById, createThread, saveThread });
@@ -114,24 +107,25 @@ describe('AgentBroker', () => {
     };
     const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
 
-    await broker.generate(
-      user as never,
-      'thread-456',
-      {
-        role: 'user',
-        content: [{ type: 'text', text: 'Hello' }],
-      },
-    );
+    await broker.generate(user as never, 'thread-456', {
+      role: 'user',
+      content: [{ type: 'text', text: 'Hello' }],
+    });
 
     expect(saveThread).toHaveBeenCalledWith(
       expect.objectContaining({
         thread: expect.objectContaining({
           title: 'Existing thread',
+        }),
+      }),
+    );
+    expect(saveThread).toHaveBeenCalledWith(
+      expect.objectContaining({
+        thread: expect.objectContaining({
           metadata: expect.objectContaining({
             foo: 'bar',
             expiresAt: expect.any(Number),
             tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
-            agentId: 'test-agent-id',
           }),
         }),
       }),
@@ -144,19 +138,31 @@ describe('AgentBroker', () => {
       const agent = { name: 'Test agent', generate: jest.fn(), stream: jest.fn() };
       const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
 
-      await expect(broker.initializeWorkspace(user as never, 'thread-1', 'urn:ads:platform:file-service:v1:/files/abc')).rejects.toThrow(
-        'File service client is required'
-      );
+      await expect(
+        broker.initializeWorkspace(user as never, 'thread-1', 'urn:ads:platform:file-service:v1:/files/abc'),
+      ).rejects.toThrow('File service client is required');
     });
 
     it('throws if workspace is not enabled', async () => {
-      const agent = { name: 'Test agent', generate: jest.fn(), stream: jest.fn(), getWorkspace: jest.fn().mockResolvedValue(null) };
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getWorkspace: jest.fn().mockResolvedValue(null),
+      };
       const fileServiceClient = { getFileAndMetadata: jest.fn() };
-      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {}, fileServiceClient as never);
-
-      await expect(broker.initializeWorkspace(user as never, 'thread-1', 'urn:ads:platform:file-service:v1:/files/abc')).rejects.toThrow(
-        'Workspace is not enabled'
+      const broker = new AgentBroker(
+        logger as never,
+        tenantId as never,
+        [],
+        agent as never,
+        {},
+        fileServiceClient as never,
       );
+
+      await expect(
+        broker.initializeWorkspace(user as never, 'thread-1', 'urn:ads:platform:file-service:v1:/files/abc'),
+      ).rejects.toThrow('Workspace is not enabled');
     });
 
     it('clears existing files and extracts tar into workspace', async () => {
@@ -172,11 +178,23 @@ describe('AgentBroker', () => {
       const filesystem = { writeFile, deleteFile, mkdir, readdir };
       const workspace = { filesystem };
 
-      const agent = { name: 'Test agent', generate: jest.fn(), stream: jest.fn(), getWorkspace: jest.fn().mockResolvedValue(workspace) };
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getWorkspace: jest.fn().mockResolvedValue(workspace),
+      };
       const fileServiceClient = {
         getFileAndMetadata: jest.fn().mockResolvedValue({ data: new Uint8Array(tarball), metadata: {} }),
       };
-      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {}, fileServiceClient as never);
+      const broker = new AgentBroker(
+        logger as never,
+        tenantId as never,
+        [],
+        agent as never,
+        {},
+        fileServiceClient as never,
+      );
 
       await broker.initializeWorkspace(user as never, 'thread-1', 'urn:ads:platform:file-service:v1:/files/abc');
 
@@ -188,19 +206,29 @@ describe('AgentBroker', () => {
 
   describe('updateWorkspace', () => {
     it('throws if workspace is not enabled', async () => {
-      const agent = { name: 'Test agent', generate: jest.fn(), stream: jest.fn(), getWorkspace: jest.fn().mockResolvedValue(null) };
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getWorkspace: jest.fn().mockResolvedValue(null),
+      };
       const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
 
-      await expect(broker.updateWorkspace(user as never, 'thread-1', [{ path: 'a.txt', content: 'x' }])).rejects.toThrow(
-        'Workspace is not enabled'
-      );
+      await expect(
+        broker.updateWorkspace(user as never, 'thread-1', [{ path: 'a.txt', content: 'x' }]),
+      ).rejects.toThrow('Workspace is not enabled');
     });
 
     it('writes each file to workspace filesystem', async () => {
       const writeFile = jest.fn().mockResolvedValue(undefined);
       const filesystem = { writeFile };
       const workspace = { filesystem };
-      const agent = { name: 'Test agent', generate: jest.fn(), stream: jest.fn(), getWorkspace: jest.fn().mockResolvedValue(workspace) };
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getWorkspace: jest.fn().mockResolvedValue(workspace),
+      };
       const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
 
       await broker.updateWorkspace(user as never, 'thread-1', [

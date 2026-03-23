@@ -10,7 +10,7 @@ import { environment } from '../../environments/environment';
 import { AgentBroker } from '../model';
 import { createApiRequestTool, createTools } from '../tools';
 import { createBrokerInputProcessors, createInputProcessors } from '../processors';
-import { createWorkspaceResolver, type AgentWorkspaceConfiguration } from '../workspace';
+import { clearThreadWorkspace, createWorkspaceResolver, type AgentWorkspaceConfiguration } from '../workspace';
 import { createFileServiceClient } from '../clients';
 import { scheduleAgentJobs } from '../jobs';
 
@@ -98,16 +98,18 @@ export class AgentServiceConfiguration {
       const sharedMemory = new Memory();
 
       this.mastra = new Mastra({
-        storage: environment.DB_HOST ? new PostgresStore({
-          host: environment.DB_HOST,
-          port: environment.DB_PORT,
-          user: environment.DB_USER,
-          password: environment.DB_PASSWORD,
-          ssl: environment.DB_TLS,
-        }) : new LibSQLStore({
-          id: 'memoryStore',
-          url: ':memory:',
-        }),
+        storage: environment.DB_HOST
+          ? new PostgresStore({
+              host: environment.DB_HOST,
+              port: environment.DB_PORT,
+              user: environment.DB_USER,
+              password: environment.DB_PASSWORD,
+              ssl: environment.DB_TLS,
+            })
+          : new LibSQLStore({
+              id: 'memoryStore',
+              url: ':memory:',
+            }),
         agents: {
           ...Object.entries(configuration)
             .sort(([_xk, x], [_yk, y]) => (x?.agents?.length || 0) - (y?.agents?.length || 0)) // Sort the agents with agents to later.
@@ -122,19 +124,19 @@ export class AgentServiceConfiguration {
                     instructions: withContextualInstructions(configuration.instructions),
                     model: environment.MODEL_URL
                       ? {
-                        id: `custom/${environment.MODEL}`,
-                        modelId: environment.MODEL,
-                        url: environment.MODEL_URL,
-                        apiKey: environment.MODEL_API_KEY,
-                      }
+                          id: `custom/${environment.MODEL}`,
+                          modelId: environment.MODEL,
+                          url: environment.MODEL_URL,
+                          apiKey: environment.MODEL_API_KEY,
+                        }
                       : environment.MODEL,
                     defaultOptions: configuration.outputSchema
                       ? {
-                        structuredOutput: {
-                          schema: configuration.outputSchema,
-                          errorStrategy: 'warn',
-                        },
-                      }
+                          structuredOutput: {
+                            schema: configuration.outputSchema,
+                            errorStrategy: 'warn',
+                          },
+                        }
                       : undefined,
                     agents: () => {
                       const toolAgents = {};
@@ -177,9 +179,7 @@ export class AgentServiceConfiguration {
                         return tools;
                       }, {}) || {},
                     memory: sharedMemory,
-                    workspace: configuration.workspace?.enabled
-                      ? createWorkspaceResolver(this.logger, key)
-                      : undefined,
+                    workspace: configuration.workspace?.enabled ? createWorkspaceResolver(this.logger, key) : undefined,
                     inputProcessors: ({ requestContext }) =>
                       createInputProcessors({
                         logger: this.logger,
@@ -203,24 +203,21 @@ export class AgentServiceConfiguration {
         directory: this.directory,
         tokenProvider: this.tokenProvider,
       });
-      this.brokers = Object.entries(this.mastra.listAgents()).reduce(
-        (brokers, [key, agent]) => {
-          const agentConfiguration: Partial<AgentConfiguration> = configuration[key] || {};
-          return {
-            ...brokers,
-            [key]: new AgentBroker(this.logger, tenantId, inputProcessors, agent, agentConfiguration, fileServiceClient),
-          };
-        },
-        {},
-      );
+      this.brokers = Object.entries(this.mastra.listAgents()).reduce((brokers, [key, agent]) => {
+        const agentConfiguration: Partial<AgentConfiguration> = configuration[key] || {};
+        return {
+          ...brokers,
+          [key]: new AgentBroker(this.logger, tenantId, inputProcessors, agent, agentConfiguration, fileServiceClient),
+        };
+      }, {});
 
       // Schedule here (not middleware) because memory is tenant-scoped, so cleanup must run in tenant context too.
       scheduleAgentJobs({
         logger: this.logger,
         tenantId,
         memory: sharedMemory,
-        clearWorkspace: (tenantId: string, agentId: string, userId: string, threadId: string) =>
-          this.clearThreadWorkspace(tenantId, agentId, userId, threadId),
+        clearWorkspace: (tenantId: string, userId: string, threadId: string) =>
+          clearThreadWorkspace(this.logger, { tenantId, userId, threadId }),
       });
     } catch (err) {
       this.logger.error('Error encountered initializing agent brokers.', {
@@ -239,14 +236,5 @@ export class AgentServiceConfiguration {
       id: key,
       name: broker.Agent.name,
     }));
-  }
-
-  private async clearThreadWorkspace(tenantId: string, agentId: string, userId: string, threadId: string): Promise<void> {
-    const broker = this.brokers[agentId];
-    if (!broker) {
-      throw new Error(`Unable to clear workspace for expired thread ${threadId}; agent '${agentId}' is not registered.`);
-    }
-
-    await broker.clearThreadWorkspace(tenantId, userId, threadId);
   }
 }

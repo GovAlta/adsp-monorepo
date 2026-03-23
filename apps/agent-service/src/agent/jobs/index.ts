@@ -10,7 +10,7 @@ interface AgentJobProps {
   logger: Logger;
   tenantId: AdspId;
   memory: Memory;
-  clearWorkspace: (tenantId: string, agentId: string, userId: string, threadId: string) => Promise<void>;
+  clearWorkspace: (tenantId: string, userId: string, threadId: string) => Promise<void>;
 }
 
 function getJobName(tenantId: AdspId): string {
