@@ -61,6 +61,84 @@ describe('AgentBroker', () => {
     expect(options.requestContext.get(MASTRA_THREAD_ID_KEY)).toBe('thread-456');
   });
 
+  it('creates thread metadata with expiresAt when updating expiry for a new thread', async () => {
+    const generate = jest.fn().mockResolvedValue({ text: 'ok', object: null });
+    const getThreadById = jest.fn().mockResolvedValue(null);
+    const createThread = jest.fn().mockResolvedValue({});
+    const saveThread = jest.fn();
+    const getMemory = jest.fn().mockResolvedValue({ getThreadById, createThread, saveThread });
+    const agent = {
+      id: 'test-agent-id',
+      name: 'Test agent',
+      generate,
+      stream: jest.fn(),
+      getMemory,
+    };
+    const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+
+    await broker.generate(
+      user as never,
+      'thread-456',
+      {
+        role: 'user',
+        content: [{ type: 'text', text: 'Hello' }],
+      },
+    );
+
+    expect(createThread).toHaveBeenCalledWith(
+      expect.objectContaining({
+        threadId: 'thread-456',
+        resourceId: 'user-123',
+        metadata: expect.objectContaining({
+          expiresAt: expect.any(Number),
+          tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
+          agentId: 'test-agent-id',
+        }),
+      }),
+    );
+    expect(saveThread).not.toHaveBeenCalled();
+  });
+
+  it('updates expiresAt metadata when updating expiry for an existing thread', async () => {
+    const generate = jest.fn().mockResolvedValue({ text: 'ok', object: null });
+    const getThreadById = jest.fn().mockResolvedValue({ title: 'Existing thread', metadata: { foo: 'bar' } });
+    const createThread = jest.fn();
+    const saveThread = jest.fn().mockResolvedValue({});
+    const getMemory = jest.fn().mockResolvedValue({ getThreadById, createThread, saveThread });
+    const agent = {
+      id: 'test-agent-id',
+      name: 'Test agent',
+      generate,
+      stream: jest.fn(),
+      getMemory,
+    };
+    const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+
+    await broker.generate(
+      user as never,
+      'thread-456',
+      {
+        role: 'user',
+        content: [{ type: 'text', text: 'Hello' }],
+      },
+    );
+
+    expect(saveThread).toHaveBeenCalledWith(
+      expect.objectContaining({
+        thread: expect.objectContaining({
+          title: 'Existing thread',
+          metadata: expect.objectContaining({
+            foo: 'bar',
+            expiresAt: expect.any(Number),
+            tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
+            agentId: 'test-agent-id',
+          }),
+        }),
+      }),
+    );
+    expect(createThread).not.toHaveBeenCalled();
+  });
+
   describe('initializeWorkspace', () => {
     it('throws if fileServiceClient is not configured', async () => {
       const agent = { name: 'Test agent', generate: jest.fn(), stream: jest.fn() };

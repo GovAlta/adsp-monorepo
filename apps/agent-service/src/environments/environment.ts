@@ -22,6 +22,7 @@ export const environment = envalid.cleanEnv(
     DB_TLS: envalid.bool({ default: false }),
     AGENT_WORKSPACE_PROVIDER: envalid.str({ default: 'agentfs' }),
     AGENT_WORKSPACE_ROOT: envalid.str({ default: '.agent-workspaces' }),
+    AGENT_THREAD_TTL_MINUTES: envalid.num({ default: 30 }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3380 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
