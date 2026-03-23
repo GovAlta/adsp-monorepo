@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { MASTRA_THREAD_ID_KEY, RequestContext } from '@mastra/core/request-context';
 import { environment } from '../../environments/environment';
-import { assertWorkspaceEnvironment, createWorkspaceResolver } from './index';
+import { assertWorkspaceEnvironment, clearThreadWorkspace, createWorkspaceResolver } from './index';
 
 describe('agent workspace', () => {
   const logger = {
@@ -78,5 +78,32 @@ describe('agent workspace', () => {
     if (workspace2) {
       await workspace2.destroy();
     }
+  });
+
+  it('clears all files for a thread workspace', async () => {
+    process.env.AGENT_WORKSPACE_PROVIDER = 'local';
+    const resolver = createWorkspaceResolver(logger as never, 'test-agent');
+    const requestContext = new RequestContext<Record<string, unknown>>();
+
+    requestContext.set('tenantId', 'urn:ads:platform:tenant-service:v2:/tenants/test');
+    requestContext.set('user', { id: 'user-123' });
+    requestContext.set(MASTRA_THREAD_ID_KEY, 'thread-clear-test');
+
+    const workspace = await resolver({ requestContext });
+    await workspace?.filesystem.writeFile('folder/a.txt', 'A', { recursive: true });
+    await workspace?.filesystem.writeFile('b.txt', 'B', { recursive: true });
+    await workspace?.destroy();
+
+    await clearThreadWorkspace(logger as never, {
+      tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
+      userId: 'user-123',
+      threadId: 'thread-clear-test',
+    });
+
+    const cleared = await resolver({ requestContext });
+    const entries = await cleared?.filesystem.readdir('.');
+    expect(entries).toEqual([]);
+
+    await cleared?.destroy();
   });
 });

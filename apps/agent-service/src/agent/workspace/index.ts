@@ -2,8 +2,7 @@ import { resolve } from 'node:path';
 import type { Logger } from 'winston';
 import { Workspace, LocalFilesystem } from '@mastra/core/workspace';
 import { MASTRA_THREAD_ID_KEY } from '@mastra/core/request-context';
-import type { AdspId } from '@abgov/adsp-service-sdk';
-import hasha = require('hasha');
+import * as hasha from 'hasha';
 import { environment } from '../../environments/environment';
 import { AdspRequestContext } from '../types';
 
@@ -42,9 +41,7 @@ function encodePathSegment(value: string): string {
   return encodeURIComponent(value);
 }
 
-function getWorkspaceContext(
-  requestContext: AdspRequestContext,
-): WorkspaceContext | undefined {
+function getWorkspaceContext(requestContext: AdspRequestContext): WorkspaceContext | undefined {
   const tenantValue = requestContext.get('tenantId');
   const userId = requestContext.get('user')?.id;
   const threadId = requestContext.get(MASTRA_THREAD_ID_KEY);
@@ -64,13 +61,43 @@ function hashWorkspaceKey(workspaceKey: string): string {
   return hasha(workspaceKey, { algorithm: 'sha256' }).slice(0, 24);
 }
 
+function getWorkspaceId(workspaceContext: WorkspaceContext): string {
+  const workspaceHash = hashWorkspaceKey(workspaceContext.workspaceKey);
+  return `workspace-${workspaceHash}`;
+}
+
 async function createAgentFsFilesystem(workspaceId: string, workspaceRoot: string) {
+  // Lazily require optional dependency only when agentfs provider is used.
   const { AgentFSFilesystem } = await import('@mastra/agentfs');
 
   return new AgentFSFilesystem({
     agentId: workspaceId,
     path: resolve(workspaceRoot, 'workspaces.db'),
   });
+}
+
+async function createFilesystem(workspaceId: string, provider: WorkspaceProvider, workspaceRoot: string) {
+  return provider === 'local'
+    ? new LocalFilesystem({
+        basePath: resolve(workspaceRoot, 'local', encodePathSegment(workspaceId)),
+      })
+    : createAgentFsFilesystem(workspaceId, workspaceRoot);
+}
+
+async function createWorkspace(
+  workspaceId: string,
+  provider: WorkspaceProvider,
+  workspaceRoot: string,
+): Promise<Workspace> {
+  const filesystem = await createFilesystem(workspaceId, provider, workspaceRoot);
+  const workspace = new Workspace({
+    id: workspaceId,
+    name: workspaceId,
+    filesystem,
+  });
+
+  await workspace.init();
+  return workspace;
 }
 
 export function assertWorkspaceEnvironment(): void {
@@ -102,29 +129,10 @@ export function createWorkspaceResolver(logger: Logger, agentId: string) {
       return undefined;
     }
 
-    const workspaceHash = hashWorkspaceKey(workspaceContext.workspaceKey);
-    const workspaceId = `workspace-${workspaceHash}`;
+    const workspaceId = getWorkspaceId(workspaceContext);
     const provider = getWorkspaceProvider();
     const workspaceRoot = getWorkspaceRoot();
-
-    const filesystem =
-      provider === 'local'
-        ? new LocalFilesystem({
-            basePath: resolve(
-              workspaceRoot,
-              'local',
-              encodePathSegment(workspaceId),
-            ),
-          })
-        : await createAgentFsFilesystem(workspaceId, workspaceRoot);
-
-    const workspace = new Workspace({
-      id: workspaceId,
-      name: workspaceId,
-      filesystem,
-    });
-
-    await workspace.init();
+    const workspace = await createWorkspace(workspaceId, provider, workspaceRoot);
 
     logger.debug(`Resolved ${provider} workspace ${workspaceId} for agent ${agentId}.`, {
       context: 'AgentWorkspace',
@@ -138,4 +146,51 @@ export function createWorkspaceResolver(logger: Logger, agentId: string) {
 
     return workspace;
   };
+}
+
+export async function clearThreadWorkspace(
+  logger: Logger,
+  {
+    tenantId,
+    userId,
+    threadId,
+  }: {
+    tenantId: string;
+    userId: string;
+    threadId: string;
+  },
+): Promise<void> {
+  const workspaceContext: WorkspaceContext = {
+    tenantId,
+    userId,
+    threadId,
+    workspaceKey: `${tenantId}:${userId}:${threadId}`,
+  };
+
+  const provider = getWorkspaceProvider();
+  const workspaceRoot = getWorkspaceRoot();
+  const workspaceId = getWorkspaceId(workspaceContext);
+  const workspace = await createWorkspace(workspaceId, provider, workspaceRoot);
+
+  try {
+    const existing = await workspace.filesystem.readdir('.');
+    for (const entry of existing) {
+      if (entry.type === 'directory') {
+        await workspace.filesystem.rmdir(entry.name, { recursive: true, force: true });
+      } else {
+        await workspace.filesystem.deleteFile(entry.name, { recursive: true, force: true });
+      }
+    }
+  } finally {
+    await workspace.destroy();
+  }
+
+  logger.debug(`Cleared ${provider} workspace ${workspaceId}.`, {
+    context: 'AgentWorkspace',
+    provider,
+    workspaceId,
+    tenantId,
+    userId,
+    threadId,
+  });
 }

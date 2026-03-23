@@ -42,17 +42,14 @@ type ThreadMemoryAccessor = {
   saveThread?: (args: { thread: ThreadMetadataRecord }) => Promise<unknown>;
 };
 
-type AgentWithOptionalMemory<
-  TAgentId extends string = string,
-  TTools extends ToolsInput = ToolsInput
-> = Agent<TAgentId, TTools> & {
+type AgentWithOptionalMemory<TAgentId extends string = string, TTools extends ToolsInput = ToolsInput> = Agent<
+  TAgentId,
+  TTools
+> & {
   getMemory?: () => Promise<ThreadMemoryAccessor | undefined>;
 };
 
-export class AgentBroker<
-  TAgentId extends string = string,
-  TTools extends ToolsInput = ToolsInput
-> {
+export class AgentBroker<TAgentId extends string = string, TTools extends ToolsInput = ToolsInput> {
   private userRoles: string[];
   private readonly threadTtlMs = Math.max(environment.AGENT_THREAD_TTL_MINUTES, 1) * 60 * 1000;
   public get Agent() {
@@ -65,7 +62,7 @@ export class AgentBroker<
     private inputProcessors: BrokerInputProcessor[],
     private agent: AgentWithOptionalMemory<TAgentId, TTools>,
     { userRoles }: Partial<AgentConfiguration>,
-    private fileServiceClient?: IFileServiceClient
+    private fileServiceClient?: IFileServiceClient,
   ) {
     this.userRoles = userRoles || [];
   }
@@ -77,7 +74,7 @@ export class AgentBroker<
       onStepFinish: ({ finishReason, usage }) => {
         this.logger.debug(
           `Agent ${this.agent.name} finished step for reason '${finishReason}' and used ${usage?.totalTokens ?? 0} tokens.`,
-          { context: 'AgentBroker', tenant: this.tenantId?.toString() }
+          { context: 'AgentBroker', tenant: this.tenantId?.toString() },
         );
       },
       structuredOutput: undefined,
@@ -89,7 +86,7 @@ export class AgentBroker<
   private buildRequestContext(
     user: User,
     threadId: string,
-    context: Record<string, unknown> = {}
+    context: Record<string, unknown> = {},
   ): RequestContext<Record<string, unknown>> {
     const requestContext = new RequestContext<Record<string, unknown>>();
 
@@ -109,7 +106,7 @@ export class AgentBroker<
     user: User,
     threadId: string,
     input: CoreUserMessage | CoreUserMessage[],
-    context: Record<string, unknown> = {}
+    context: Record<string, unknown> = {},
   ): Promise<RequestContext<Record<string, unknown>>> {
     if (this.userRoles.length > 0 && !isAllowedUser(user, this.tenantId, this.userRoles)) {
       throw new UnauthorizedUserError('use agent', user);
@@ -140,14 +137,13 @@ export class AgentBroker<
 
       const expiresAt = Date.now() + this.threadTtlMs;
       const tenantId = this.tenantId?.toString();
-      const agentId = this.agent.id;
       const existingThread = await memory.getThreadById?.({ threadId });
 
       if (!existingThread) {
         await memory.createThread?.({
           threadId,
           resourceId: user.id,
-          metadata: { expiresAt, tenantId, agentId },
+          metadata: { expiresAt, tenantId },
         });
         return;
       }
@@ -160,7 +156,6 @@ export class AgentBroker<
             ...(existingThread.metadata || {}),
             expiresAt,
             tenantId,
-            agentId,
           },
         },
       });
@@ -172,27 +167,6 @@ export class AgentBroker<
       });
     }
   }
-
-  public async clearThreadWorkspace(tenantId: string, userId: string, threadId: string): Promise<void> {
-    const requestContext = new RequestContext<Record<string, unknown>>();
-    requestContext.set('tenantId', tenantId);
-    requestContext.set('user', { id: userId });
-    requestContext.set(MASTRA_THREAD_ID_KEY, threadId);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const workspace = await this.agent.getWorkspace({ requestContext: requestContext as any });
-    if (!workspace?.filesystem) {
-      return;
-    }
-
-    const existing = await workspace.filesystem.readdir('/');
-    for (const entry of existing) {
-      await workspace.filesystem.deleteFile(entry.name, { recursive: true, force: true });
-    }
-
-    await workspace.destroy();
-  }
-
 
   public async initializeWorkspace(user: User, threadId: string, tarballUrn: string): Promise<void> {
     if (!this.fileServiceClient) {
@@ -211,33 +185,40 @@ export class AgentBroker<
     const { data } = await this.fileServiceClient.getFileAndMetadata(this.tenantId, tarballId);
 
     // Clear all existing files before extracting.
-    const existing = await workspace.filesystem.readdir('/');
+    const existing = await workspace.filesystem.readdir('.');
     for (const entry of existing) {
-      await workspace.filesystem.deleteFile(entry.name, { recursive: true, force: true });
+      if (entry.type === 'directory') {
+        await workspace.filesystem.rmdir(entry.name, { recursive: true, force: true });
+      } else {
+        await workspace.filesystem.deleteFile(entry.name, { recursive: true, force: true });
+      }
     }
 
     // Extract tar archive into workspace filesystem.
     await new Promise<void>((resolve, reject) => {
       const extract = tarStream.extract();
 
-      extract.on('entry', async (header: { name: string; type: string }, stream: NodeJS.ReadableStream, next: (err?: Error) => void) => {
-        try {
-          const chunks: Buffer[] = [];
-          for await (const chunk of stream as AsyncIterable<Buffer>) {
-            chunks.push(chunk);
-          }
+      extract.on(
+        'entry',
+        async (header: { name: string; type: string }, stream: NodeJS.ReadableStream, next: (err?: Error) => void) => {
+          try {
+            const chunks: Buffer[] = [];
+            for await (const chunk of stream as AsyncIterable<Buffer>) {
+              chunks.push(chunk);
+            }
 
-          if (header.type === 'directory') {
-            await workspace.filesystem.mkdir(header.name, { recursive: true });
-          } else if (header.type === 'file') {
-            await workspace.filesystem.writeFile(header.name, Buffer.concat(chunks), { recursive: true });
-          }
+            if (header.type === 'directory') {
+              await workspace.filesystem.mkdir(header.name, { recursive: true });
+            } else if (header.type === 'file') {
+              await workspace.filesystem.writeFile(header.name, Buffer.concat(chunks), { recursive: true });
+            }
 
-          next();
-        } catch (err) {
-          next(err instanceof Error ? err : new Error(String(err)));
-        }
-      });
+            next();
+          } catch (err) {
+            next(err instanceof Error ? err : new Error(String(err)));
+          }
+        },
+      );
 
       extract.on('finish', resolve);
       extract.on('error', reject);
@@ -274,7 +255,7 @@ export class AgentBroker<
     user: User,
     threadId: string,
     input: CoreUserMessage | CoreUserMessage[],
-    context: Record<string, unknown> = {}
+    context: Record<string, unknown> = {},
   ) {
     const requestContext = await this.prepareAgentRequest(user, threadId, input, context);
 
@@ -285,7 +266,7 @@ export class AgentBroker<
     user: User,
     threadId: string,
     input: CoreUserMessage | CoreUserMessage[],
-    context: Record<string, unknown> = {}
+    context: Record<string, unknown> = {},
   ) {
     const requestContext = await this.prepareAgentRequest(user, threadId, input, context);
 
