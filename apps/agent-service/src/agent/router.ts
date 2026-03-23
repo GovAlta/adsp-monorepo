@@ -188,6 +188,72 @@ export function onIoConnection(logger: Logger) {
           socket.emit('error', err.message);
         }
       });
+      socket.on('workspace-init', async (payload) => {
+        try {
+          if (isUserTokenExpired(user)) {
+            disconnectExpiredSocket(socket, logger, user, tenant);
+            return;
+          }
+
+          if (typeof payload !== 'object') {
+            throw new InvalidOperationError('payload for workspace-init must be a JSON object.');
+          }
+
+          const { agent, threadId: threadIdValue, workspaceTarball } = payload;
+          const threadId = threadIdValue || uuid();
+
+          if (!workspaceTarball || typeof workspaceTarball !== 'string') {
+            throw new InvalidValueError('workspaceTarball', 'workspaceTarball must be a URN string.');
+          }
+
+          const aiAgent = configuration.getAgent(agent);
+          if (!aiAgent) {
+            throw new NotFoundError('agent', agent);
+          }
+
+          logger.info(`User ${user.name} (ID: ${user.id}) initializing workspace for agent ${agent}.`, {
+            context: 'AgentRouter',
+            tenant: tenant?.id?.toString(),
+            user: `${user.name} (ID: ${user.id})`,
+          });
+
+          await aiAgent.initializeWorkspace(user, threadId, workspaceTarball);
+
+          socket.emit('workspace-ready', { agent, threadId });
+        } catch (err) {
+          socket.emit('error', err.message);
+        }
+      });
+      socket.on('workspace-update', async (payload) => {
+        try {
+          if (isUserTokenExpired(user)) {
+            disconnectExpiredSocket(socket, logger, user, tenant);
+            return;
+          }
+
+          if (typeof payload !== 'object') {
+            throw new InvalidOperationError('payload for workspace-update must be a JSON object.');
+          }
+
+          const { agent, threadId: threadIdValue, files } = payload;
+          const threadId = threadIdValue || uuid();
+
+          if (!Array.isArray(files)) {
+            throw new InvalidValueError('files', 'files must be an array of { path, content } objects.');
+          }
+
+          const aiAgent = configuration.getAgent(agent);
+          if (!aiAgent) {
+            throw new NotFoundError('agent', agent);
+          }
+
+          await aiAgent.updateWorkspace(user, threadId, files);
+
+          socket.emit('workspace-updated', { agent, threadId, count: files.length });
+        } catch (err) {
+          socket.emit('error', err.message);
+        }
+      });
       socket.on('disconnect', () => {
         if (expiryTimeout) {
           clearTimeout(expiryTimeout);

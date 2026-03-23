@@ -20,6 +20,8 @@ export const environment = envalid.cleanEnv(
     DB_USER: envalid.str({ default: 'postgres' }),
     DB_PASSWORD: envalid.str({ default: 'guest' }),
     DB_TLS: envalid.bool({ default: false }),
+    AGENT_WORKSPACE_PROVIDER: envalid.str({ default: 'agentfs' }),
+    AGENT_WORKSPACE_ROOT: envalid.str({ default: '.agent-workspaces' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3380 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),

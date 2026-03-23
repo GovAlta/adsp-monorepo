@@ -20,7 +20,7 @@ describe('configuration', () => {
     const service = new AjvValidationService(logger as unknown as Logger);
 
     beforeAll(() => {
-      service.setSchema('configuration', { $ref: 'http://json-schema.org/draft-07/schema#' });
+      service.setSchema('configuration', configurationSchema);
     });
 
     it('accepts null outputSchema', () => {
@@ -82,6 +82,49 @@ describe('configuration', () => {
         },
       };
       expect(() => service.validate('test', 'configuration', config)).not.toThrow();
+    });
+
+    it('accepts workspace configuration when enabled', () => {
+      const config = {
+        'test-agent': {
+          name: 'Test Agent',
+          instructions: 'Test instructions',
+          workspace: {
+            enabled: true,
+          },
+        },
+      };
+
+      expect(() => service.validate('test', 'configuration', config)).not.toThrow();
+    });
+
+    it('accepts workspace configuration when disabled', () => {
+      const config = {
+        'test-agent': {
+          name: 'Test Agent',
+          instructions: 'Test instructions',
+          workspace: {
+            enabled: false,
+          },
+        },
+      };
+
+      expect(() => service.validate('test', 'configuration', config)).not.toThrow();
+    });
+
+    it('rejects workspace configuration with unexpected properties', () => {
+      const config = {
+        'test-agent': {
+          name: 'Test Agent',
+          instructions: 'Test instructions',
+          workspace: {
+            enabled: true,
+            scope: 'session-private',
+          },
+        },
+      };
+
+      expect(() => service.validate('test', 'configuration', config)).toThrow();
     });
 
     it('accepts JSON Schema with additionalProperties and patternProperties', () => {
