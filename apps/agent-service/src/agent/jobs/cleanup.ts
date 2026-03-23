@@ -50,9 +50,11 @@ export function createThreadCleanupJob({
     let page = 0;
     const perPage = 100;
     const now = Date.now();
+    let hasMore: boolean;
 
-    while (true) {
+    do {
       const threads = await memory.listThreads({ page, perPage });
+      hasMore = threads.hasMore;
 
       for (const thread of threads.threads || []) {
         const expiresAtRaw = thread.metadata?.expiresAt;
@@ -94,12 +96,10 @@ export function createThreadCleanupJob({
         }
       }
 
-      if (!threads.hasMore) {
-        break;
+      if (hasMore) {
+        page++;
       }
-
-      page++;
-    }
+    } while (hasMore);
 
     return result;
   }
