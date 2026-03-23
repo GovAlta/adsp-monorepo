@@ -285,6 +285,22 @@ export const AgentEditor: FunctionComponent = () => {
                 })}
               </div>
             </Tab>
+            <Tab testId="agent-edit-workspace" label="Workspace" className="editorMain">
+              <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                <p>
+                  Enable a file workspace for this agent. When enabled, the agent can read, write, and manage files
+                  during a conversation. Clients can pre-populate the workspace with files via the socket connection.
+                </p>
+              </div>
+              <GoabCheckbox
+                name="workspace-enabled"
+                text="Enable workspace"
+                checked={!!agent?.workspace?.enabled}
+                onChange={() =>
+                  dispatch(editAgent({ ...agent, workspace: { enabled: !agent?.workspace?.enabled } }))
+                }
+              />
+            </Tab>
             <Tab testId="agent-edit-output-schema" label="Structured Output" className="editorMain">
               <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
                 <p>
@@ -292,40 +308,52 @@ export const AgentEditor: FunctionComponent = () => {
                   will return structured data matching this schema alongside text responses.
                 </p>
               </div>
-              <MonacoEditor
-                data-testid="agent-output-schema-editor"
-                language="json"
-                height="400px"
-                value={
-                  agent?.outputSchema
-                    ? JSON.stringify(agent.outputSchema, null, 2)
-                    : '{\n  "type": "object",\n  "properties": {}\n}'
-                }
-                onChange={(value) => {
-                  if (value) {
-                    try {
-                      const parsed = JSON.parse(value);
-                      dispatch(editAgent({ ...agent, outputSchema: parsed }));
-                    } catch {
-                      // Keep the raw value while user is typing, will validate on save
+              {agent?.outputSchema ? (
+                <>
+                  <MonacoEditor
+                    data-testid="agent-output-schema-editor"
+                    language="json"
+                    height="400px"
+                    value={JSON.stringify(agent.outputSchema, null, 2)}
+                    onChange={(value) => {
+                      if (value) {
+                        try {
+                          const parsed = JSON.parse(value);
+                          dispatch(editAgent({ ...agent, outputSchema: parsed }));
+                        } catch {
+                          // Keep the raw value while user is typing, will validate on save
+                        }
+                      }
+                    }}
+                    options={{
+                      formatOnPaste: true,
+                      minimap: { enabled: false },
+                    }}
+                  />
+                  <div style={{ marginTop: '1rem' }}>
+                    <GoabButton
+                      type="secondary"
+                      size="compact"
+                      onClick={() => dispatch(editAgent({ ...agent, outputSchema: null }))}
+                    >
+                      Clear schema
+                    </GoabButton>
+                  </div>
+                </>
+              ) : (
+                <div style={{ marginTop: '1rem' }}>
+                  <p>No structured output schema configured. The agent will return plain text responses.</p>
+                  <GoabButton
+                    type="secondary"
+                    size="compact"
+                    onClick={() =>
+                      dispatch(editAgent({ ...agent, outputSchema: { type: 'object', properties: {} } }))
                     }
-                  }
-                }}
-                options={{
-                  formatOnPaste: true,
-                  formatOnType: true,
-                  minimap: { enabled: false },
-                }}
-              />
-              <div style={{ marginTop: '1rem' }}>
-                <GoabButton
-                  type="secondary"
-                  size="compact"
-                  onClick={() => dispatch(editAgent({ ...agent, outputSchema: null }))}
-                >
-                  Clear schema
-                </GoabButton>
-              </div>
+                  >
+                    Enable structured output
+                  </GoabButton>
+                </div>
+              )}
             </Tab>
           </Tabs>
           <hr />

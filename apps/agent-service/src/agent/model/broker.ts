@@ -43,6 +43,7 @@ export class AgentBroker<
 
   private async prepareAgentRequest(
     user: User,
+    threadId: string,
     input: CoreUserMessage | CoreUserMessage[],
     context: Record<string, unknown> = {}
   ): Promise<RequestContext<Record<string, unknown>>> {
@@ -51,12 +52,16 @@ export class AgentBroker<
     }
 
     const requestContext = new RequestContext<Record<string, unknown>>();
-    requestContext.set('tenantId', this.tenantId);
-    requestContext.set('user', user);
 
     for (const [key, value] of Object.entries(context || {})) {
       requestContext.set(key, value);
     }
+
+    // Reserve identity fields so client-supplied context cannot override workspace selection.
+    requestContext.set('tenantId', this.tenantId);
+    requestContext.set('user', user);
+    requestContext.set('userId', user.id);
+    requestContext.set('threadId', threadId);
 
     // This is necessarily because normal Mastra input processors run after message normalization.
     // For example, assets already downloaded, so we cannot use an input processor to download files with a credential.
@@ -73,7 +78,7 @@ export class AgentBroker<
     input: CoreUserMessage | CoreUserMessage[],
     context: Record<string, unknown> = {}
   ) {
-    const requestContext = await this.prepareAgentRequest(user, input, context);
+    const requestContext = await this.prepareAgentRequest(user, threadId, input, context);
 
     return this.agent.stream(input, this.getExecutionOptions(requestContext, user, threadId));
   }
@@ -84,7 +89,7 @@ export class AgentBroker<
     input: CoreUserMessage | CoreUserMessage[],
     context: Record<string, unknown> = {}
   ) {
-    const requestContext = await this.prepareAgentRequest(user, input, context);
+    const requestContext = await this.prepareAgentRequest(user, threadId, input, context);
 
     return this.agent.generate(input, this.getExecutionOptions(requestContext, user, threadId));
   }

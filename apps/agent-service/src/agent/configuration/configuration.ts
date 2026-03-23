@@ -10,6 +10,7 @@ import { environment } from '../../environments/environment';
 import { AgentBroker } from '../model';
 import { createApiRequestTool, createTools } from '../tools';
 import { createBrokerInputProcessors, createInputProcessors } from '../processors';
+import { createWorkspaceResolver, type AgentWorkspaceConfiguration } from '../workspace';
 
 /**
  * Wraps agent instructions to automatically inject contextual information on each request.
@@ -62,6 +63,7 @@ export interface AgentConfiguration {
   description?: string;
   instructions: string;
   outputSchema?: Record<string, unknown> | null;
+  workspace?: AgentWorkspaceConfiguration;
   userRoles?: string[];
   agents?: string[];
   tools?: ToolConfiguration[];
@@ -171,6 +173,9 @@ export class AgentServiceConfiguration {
                         return tools;
                       }, {}) || {},
                     memory: new Memory(),
+                    workspace: configuration.workspace?.enabled
+                      ? createWorkspaceResolver(this.logger, key)
+                      : undefined,
                     inputProcessors: ({ requestContext }) =>
                       createInputProcessors({
                         logger: this.logger,

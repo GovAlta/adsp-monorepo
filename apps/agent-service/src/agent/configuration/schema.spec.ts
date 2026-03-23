@@ -84,6 +84,49 @@ describe('configuration', () => {
       expect(() => service.validate('test', 'configuration', config)).not.toThrow();
     });
 
+    it('accepts workspace configuration when enabled', () => {
+      const config = {
+        'test-agent': {
+          name: 'Test Agent',
+          instructions: 'Test instructions',
+          workspace: {
+            enabled: true,
+          },
+        },
+      };
+
+      expect(() => service.validate('test', 'configuration', config)).not.toThrow();
+    });
+
+    it('accepts workspace configuration when disabled', () => {
+      const config = {
+        'test-agent': {
+          name: 'Test Agent',
+          instructions: 'Test instructions',
+          workspace: {
+            enabled: false,
+          },
+        },
+      };
+
+      expect(() => service.validate('test', 'configuration', config)).not.toThrow();
+    });
+
+    it('rejects workspace configuration with unexpected properties', () => {
+      const config = {
+        'test-agent': {
+          name: 'Test Agent',
+          instructions: 'Test instructions',
+          workspace: {
+            enabled: true,
+            scope: 'session-private',
+          },
+        },
+      };
+
+      expect(() => service.validate('test', 'configuration', config)).toThrow();
+    });
+
     it('accepts JSON Schema with additionalProperties and patternProperties', () => {
       const config = {
         'test-agent': {

@@ -21,9 +21,11 @@ import {
   CoreAgents,
   ServiceRoles,
 } from './agent';
+import { assertWorkspaceEnvironment } from './agent/workspace';
 import { fromSocketHandshake, REQ_SOCKET_PROP } from './socket';
 
 const logger = createLogger('agent-service', environment.LOG_LEVEL);
+assertWorkspaceEnvironment();
 
 const initializeApp = async (): Promise<Server> => {
   const app = express();
