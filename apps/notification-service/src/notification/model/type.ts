@@ -43,7 +43,7 @@ export class NotificationTypeEntity implements NotificationType {
     protected templateService: TemplateService,
     protected fileService: FileAttachmentService,
     type: NotificationType,
-    tenantId?: AdspId
+    tenantId?: AdspId,
   ) {
     Object.assign(this, type);
     this.tenantId = tenantId;
@@ -57,7 +57,7 @@ export class NotificationTypeEntity implements NotificationType {
         user,
         this.tenantId,
         [ServiceUserRoles.SubscriptionAdmin, ServiceUserRoles.SubscriptionApp],
-        true
+        true,
       ) ||
       (!!user &&
         user?.id === subscriber.userId &&
@@ -70,7 +70,7 @@ export class NotificationTypeEntity implements NotificationType {
     repository: SubscriptionRepository,
     user: User,
     subscriber: SubscriberEntity,
-    criteria?: SubscriptionCriteria
+    criteria?: SubscriptionCriteria,
   ): Promise<SubscriptionEntity> {
     if (!this.canSubscribe(user, subscriber)) {
       throw new UnauthorizedError('User not authorized to subscribe.');
@@ -142,7 +142,7 @@ export class NotificationTypeEntity implements NotificationType {
         {
           context: 'NotificationType',
           tenant: event.tenantId?.toString(),
-        }
+        },
       );
     }
     return attachments;
@@ -154,7 +154,7 @@ export class NotificationTypeEntity implements NotificationType {
     subscriptionRepository: SubscriptionRepository,
     configuration: NotificationConfiguration,
     event: DomainEvent,
-    messageContext: Record<string, unknown>
+    messageContext: Record<string, unknown>,
   ): Promise<Notification[]> {
     const notifications: Notification[] = [];
     const eventNotification = this.events.find((e) => e.namespace === event.namespace && e.name === event.name);
@@ -167,7 +167,7 @@ export class NotificationTypeEntity implements NotificationType {
           typeof eventNotification.attachments === 'string'
             ? [eventNotification.attachments]
             : eventNotification.attachments || [],
-          event
+          event,
         );
       }
 
@@ -181,7 +181,7 @@ export class NotificationTypeEntity implements NotificationType {
           {
             context: 'NotificationType',
             tenant: event.tenantId?.toString(),
-          }
+          },
         );
 
         const { results: subscriptions, page } = await subscriptionRepository.getSubscriptions(
@@ -199,7 +199,7 @@ export class NotificationTypeEntity implements NotificationType {
               correlationId: event.correlationId,
               context: event.context,
             },
-          }
+          },
         );
 
         for (const subscription of subscriptions) {
@@ -211,7 +211,7 @@ export class NotificationTypeEntity implements NotificationType {
               eventNotification,
               event,
               subscription,
-              messageContext
+              messageContext,
             );
             if (notification) {
               notifications.push({ ...notification, attachments });
@@ -241,7 +241,7 @@ export class NotificationTypeEntity implements NotificationType {
     // This needs to make a deep copy to avoid the modified template applying to the base type entity.
     const events: NotificationTypeEvent[] = this.events.map((event) => {
       const overrideEvent = customType.events.find(
-        (customEvent) => customEvent.namespace === event.namespace && customEvent.name === event.name
+        (customEvent) => customEvent.namespace === event.namespace && customEvent.name === event.name,
       );
       const templates = overrideEvent ? { ...event.templates, ...overrideEvent.templates } : event.templates;
       return { ...event, templates };
@@ -252,7 +252,7 @@ export class NotificationTypeEntity implements NotificationType {
       this.templateService,
       this.fileService,
       { ...this, events },
-      customType.tenantId
+      customType.tenantId,
     );
   }
 
@@ -263,7 +263,7 @@ export class NotificationTypeEntity implements NotificationType {
     eventNotification: NotificationTypeEvent,
     event: DomainEvent,
     subscription: SubscriptionEntity,
-    messageContext: Record<string, unknown>
+    messageContext: Record<string, unknown>,
   ): Notification {
     const { address, channel } = subscription.getSubscriberChannel(this, eventNotification) || {};
 
@@ -273,7 +273,7 @@ export class NotificationTypeEntity implements NotificationType {
         {
           context: 'NotificationType',
           tenant: event.tenantId?.toString(),
-        }
+        },
       );
 
       return null;
@@ -293,6 +293,11 @@ export class NotificationTypeEntity implements NotificationType {
         subtitle: eventNotification.templates[channel].subtitle ?? '',
       };
 
+      if (!configurationService?.email?.fromEmail) {
+        logger.warn('Configuration not ready, retrying...');
+        throw new Error('Configuration not ready');
+      }
+
       return {
         tenantId: event.tenantId.toString(),
         type: {
@@ -307,11 +312,11 @@ export class NotificationTypeEntity implements NotificationType {
         correlationId: event.correlationId,
         context: event.context,
         to: address,
-        from: configurationService.email?.fromEmail,
+        from: configurationService?.email?.fromEmail,
         channel,
         message: this.templateService.generateMessage(
           this.getTemplate(channel, eventNotification.templates[channel], context),
-          context
+          context,
         ),
         subscriber,
       };
@@ -352,10 +357,10 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
     templateService: TemplateService,
     fileService: FileAttachmentService,
     type: NotificationType,
-    tenantId?: AdspId
+    tenantId?: AdspId,
   ) {
     super(logger, templateService, fileService, type, tenantId);
-    
+
     Object.assign(this, type);
     if (!this.addressPath && !this.address) {
       throw new InvalidOperationError('Direct notification type must include an addressPath or address.');
@@ -366,7 +371,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
     _repository: SubscriptionRepository,
     _user: User,
     _subscriber: SubscriberEntity,
-    _criteria?: SubscriptionCriteria
+    _criteria?: SubscriptionCriteria,
   ): Promise<SubscriptionEntity> {
     throw new InvalidOperationError('Direct notification types cannot be subscribed to.');
   }
@@ -374,7 +379,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
   override async unsubscribe(
     _repository: SubscriptionRepository,
     _user: User,
-    _subscriber: SubscriberEntity
+    _subscriber: SubscriberEntity,
   ): Promise<boolean> {
     throw new InvalidOperationError('Direct notification types cannot be subscribed to.');
   }
@@ -397,7 +402,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
     _subscriptionRepository: SubscriptionRepository,
     configuration: NotificationConfiguration,
     event: DomainEvent,
-    messageContext: Record<string, unknown>
+    messageContext: Record<string, unknown>,
   ): Promise<Notification[]> {
     logger.debug(`Processing direct notification type ${this.id} for event ${event.namespace}:${event.name}...`, {
       context: 'NotificationType',
@@ -432,6 +437,11 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
         event,
       };
 
+      if (!configuration?.email?.fromEmail) {
+        logger.warn('Configuration not ready, retrying...');
+        throw new Error('Configuration not ready');
+      }
+
       const template = eventNotification.templates[channel];
 
       const message = this.templateService.generateMessage(
@@ -440,7 +450,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
           title: titleInEvent || template?.title,
           subtitle: subTitleInEvent || template?.subtitle,
         }),
-        context
+        context,
       );
 
       notifications.push({
@@ -459,7 +469,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
         to: address,
         cc,
         bcc,
-        from: configuration.email?.fromEmail,
+        from: configuration?.email?.fromEmail,
         channel,
         message: subjectInEvent ? { ...message, subject: subjectInEvent } : message,
         attachments,
@@ -477,7 +487,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
         {
           context: 'NotificationType',
           tenant: event.tenantId?.toString(),
-        }
+        },
       );
     }
 
