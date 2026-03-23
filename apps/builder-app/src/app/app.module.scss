@@ -1,0 +1,34 @@
+html,
+body {
+  overflow: hidden;
+  margin: 0;
+  height: 100vh;
+
+  :global(#root) {
+    margin: 0;
+    height: 100vh;
+  }
+}
+
+main {
+  flex-grow: 1;
+  position: relative;
+
+  a[target='_blank']:after {
+    background: none !important;
+  }
+}
+
+.app {
+  margin: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin-bottom: var(--goa-space-m);
+}
