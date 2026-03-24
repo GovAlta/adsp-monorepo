@@ -206,9 +206,7 @@ When(
             .find('.role-name')
             .contains(roleName)
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
         } else {
@@ -217,9 +215,7 @@ When(
             .find('.role-name')
             .contains(roles[i].trim())
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
         }
@@ -415,9 +411,7 @@ Then(
       // Unselect all roles
       eventsObj
         .streamModalRolesTables()
-        .find('goa-checkbox')
-        .shadow()
-        .find('[class^="container"]')
+        .find('input[type="checkbox"]')
         .then((elements) => {
           for (let i = 0; i < elements.length; i++) {
             if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
@@ -444,9 +438,7 @@ Then(
             .find('.role-name')
             .contains(roleName)
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
         } else {
@@ -455,9 +447,7 @@ Then(
             .find('.role-name')
             .contains(roles[i].trim())
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
         }
