@@ -1,10 +1,9 @@
 import React from 'react';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { Categorization, Layout, SchemaBasedCondition, isVisible, Scoped, UISchemaElement } from '@jsonforms/core';
+import { Categorization, Layout, isVisible, Scoped, UISchemaElement } from '@jsonforms/core';
 import { withJsonFormsLayoutProps, withTranslateProps } from '@jsonforms/react';
 import { CategorizationStepperLayoutReviewRendererProps } from './types';
 import { Anchor, ReviewItem, ReviewItemHeader, ReviewItemSection, ReviewItemTitle } from './styled-components';
-import { getProperty } from './util/helpers';
 import { withAjvProps } from '../../util/layout';
 import { GoabTable } from '@abgov/react-components';
 import { FormStepperComponentProps } from './types';
@@ -190,23 +189,7 @@ export const FormStepperReviewer = (props: CategorizationStepperLayoutReviewRend
 
         // Build visible elements list
         const elementsToRender = category.elements
-          .filter((field) => {
-            if (!hasVisibleContent(field)) {
-              return false;
-            }
-
-            const conditionProps = field.rule?.condition as SchemaBasedCondition;
-
-            if (conditionProps && data) {
-              const parts = conditionProps.scope?.split('/');
-              const property = parts?.[parts.length - 1];
-              const isHidden = getProperty(data, property);
-
-              return !isHidden;
-            }
-
-            return true;
-          })
+          .filter((field) => hasVisibleContent(field))
           .map((e) => {
             const layout = e as Layout;
 
