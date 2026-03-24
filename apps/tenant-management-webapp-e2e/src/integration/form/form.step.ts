@@ -1047,16 +1047,14 @@ Then(
   function (applicantRole, service, checkedOrNot) {
     formObj
       .definitionsEditorApplicantRole(service, applicantRole)
-      .shadow()
-      .find('[class^="container"]')
-      .invoke('attr', 'class')
-      .then((classAttr) => {
+      .find('input')
+      .then((element) => {
         switch (checkedOrNot) {
           case 'checked':
-            expect(classAttr).to.contain('selected');
+            cy.wrap(element).should('be.checked');
             break;
           case 'not checked':
-            expect(classAttr).to.not.contain('selected');
+            cy.wrap(element).should('not.be.checked');
             break;
           default:
             expect(checkedOrNot).to.be.oneOf(['checked', 'not checked']);
