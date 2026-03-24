@@ -157,8 +157,8 @@ export class AgentServiceConfiguration {
 
                       return toolAgents;
                     },
-                    tools:
-                      configuration.tools?.reduce((tools, toolConfig) => {
+                    tools: {
+                      ...(configuration.tools?.reduce((tools, toolConfig) => {
                         if (typeof toolConfig === 'string' && availableTools[toolConfig]) {
                           tools[toolConfig] = availableTools[toolConfig];
                         } else if (typeof toolConfig === 'object') {
@@ -177,7 +177,8 @@ export class AgentServiceConfiguration {
                           }
                         }
                         return tools;
-                      }, {}) || {},
+                      }, {}) || {}),
+                    },
                     memory: sharedMemory,
                     workspace: configuration.workspace?.enabled ? createWorkspaceResolver(this.logger, key) : undefined,
                     inputProcessors: ({ requestContext }) =>

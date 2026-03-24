@@ -5,6 +5,7 @@ import { MASTRA_THREAD_ID_KEY } from '@mastra/core/request-context';
 import * as hasha from 'hasha';
 import { environment } from '../../environments/environment';
 import { AdspRequestContext } from '../types';
+import { ManagedWorkspace } from './managedWorkspace';
 
 export interface AgentWorkspaceConfiguration {
   enabled: boolean;
@@ -173,14 +174,7 @@ export async function clearThreadWorkspace(
   const workspace = await createWorkspace(workspaceId, provider, workspaceRoot);
 
   try {
-    const existing = await workspace.filesystem.readdir('.');
-    for (const entry of existing) {
-      if (entry.type === 'directory') {
-        await workspace.filesystem.rmdir(entry.name, { recursive: true, force: true });
-      } else {
-        await workspace.filesystem.deleteFile(entry.name, { recursive: true, force: true });
-      }
-    }
+    await ManagedWorkspace.from(workspace).clear();
   } finally {
     await workspace.destroy();
   }
@@ -194,3 +188,5 @@ export async function clearThreadWorkspace(
     threadId,
   });
 }
+
+export * from './managedWorkspace';
