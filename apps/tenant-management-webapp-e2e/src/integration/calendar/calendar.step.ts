@@ -81,9 +81,7 @@ When(
           .find('.role-name')
           .contains(roleName)
           .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('[class^="container"]')
+          .find('input[type="checkbox"]')
           .scrollIntoView()
           .click({ force: true });
       } else {
@@ -92,9 +90,7 @@ When(
           .find('.role-name')
           .contains(readRoles[i].trim())
           .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('[class^="container"]')
+          .find('input[type="checkbox"]')
           .scrollIntoView()
           .click({ force: true });
       }
@@ -120,9 +116,7 @@ When(
           .contains(roleName)
           .next()
           .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('[class^="container"]')
+          .find('input[type="checkbox"]')
           .scrollIntoView()
           .click({ force: true });
       } else {
@@ -132,9 +126,7 @@ When(
           .contains(modifyRoles[i].trim())
           .next()
           .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('[class^="container"]')
+          .find('input[type="checkbox"]')
           .scrollIntoView()
           .click({ force: true });
       }
@@ -238,9 +230,7 @@ When(
       cy.wait(500);
       calendarObj
         .editCalendarModalTable()
-        .find('goa-checkbox')
-        .shadow()
-        .find('[class^="container"]')
+        .find('input[type="checkbox"]')
         .then((elements) => {
           for (let i = 0; i < elements.length; i++) {
             if (elements[i].getAttribute('class')?.includes('selected')) {
@@ -269,9 +259,7 @@ When(
           .find('.role-name')
           .contains(roleName)
           .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('[class^="container"]')
+          .find('input[type="checkbox"]')
           .scrollIntoView()
           .click({ force: true });
       } else {
@@ -280,9 +268,7 @@ When(
           .find('.role-name')
           .contains(readRoles[i].trim())
           .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('[class^="container"]')
+          .find('input[type="checkbox"]')
           .scrollIntoView()
           .click({ force: true });
       }
@@ -304,14 +290,11 @@ When(
         const roleName = clientModifyRoleStringArray[clientModifyRoleStringArray.length - 1];
         calendarObj
           .addCalendarModalClientRolesTable(clientName)
-
           .find('.role-name')
           .contains(roleName)
           .next()
           .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('[class^="container"]')
+          .find('input[type="checkbox"]')
           .scrollIntoView()
           .click({ force: true });
       } else {
@@ -321,9 +304,7 @@ When(
           .contains(modifyRoles[i].trim())
           .next()
           .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('[class^="container"]')
+          .find('input[type="checkbox"]')
           .scrollIntoView()
           .click({ force: true });
       }

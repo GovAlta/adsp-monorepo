@@ -120,9 +120,7 @@ When(
       cy.wait(500);
       commentObj
         .editorCheckboxesTables()
-        .find('goa-checkbox')
-        .shadow()
-        .find('[class^="container"]')
+        .find('input[type="checkbox"]')
         .then((elements) => {
           for (let i = 0; i < elements.length; i++) {
             if (elements[i].getAttribute('class')?.includes('selected')) {
@@ -152,9 +150,7 @@ When(
             .find('.role-name')
             .contains(adminRoleName)
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -164,9 +160,7 @@ When(
             .find('.role-name')
             .contains(adminRoles[i].trim())
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -195,9 +189,7 @@ When(
             .contains(commenterRoleName)
             .next()
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -208,9 +200,7 @@ When(
             .contains(commenterRoles[i].trim())
             .next()
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -240,9 +230,7 @@ When(
             .next()
             .next()
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
@@ -254,9 +242,7 @@ When(
             .next()
             .next()
             .next()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .scrollIntoView()
             .click({ force: true });
           cy.wait(1000); // Wait the checkbox status to change before proceeding
