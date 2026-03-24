@@ -244,8 +244,6 @@ export function* fetchRegisterData(): SagaIterator {
 
     const tenantConfigs = Object.entries(tenantConfigDefinition);
 
-    console.log('Tenant configurations fetched for register data:', tenantConfigs);
-
     const registerConfigs =
       tenantConfigs
         // eslint-disable-next-line
