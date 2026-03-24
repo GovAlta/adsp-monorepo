@@ -1,5 +1,6 @@
 import { ControlProps, JsonSchema, JsonSchema7, extractSchema } from '@jsonforms/core';
 import { invalidSin, sinTitle } from '../common/Constants';
+import { isRequiredBySchema } from './requiredUtil';
 
 /**
  * Sets the first word to be capitalized so that it is sentence cased.
@@ -132,7 +133,7 @@ export const getRequiredIfThen = (props: ControlProps) => {
  * @param props
  * @returns error message
  */
-export const checkFieldValidity = (props: ControlProps): string => {
+export const checkFieldValidity = (props: ControlProps, rootData?: unknown): string => {
   const { data, errors: ajvErrors, required, label, schema } = props;
   const labelToUpdate = label;
   const extraSchema = schema as JsonSchema & extractSchema;
@@ -146,8 +147,11 @@ export const checkFieldValidity = (props: ControlProps): string => {
   }
 
   const rootRequired = getRequiredIfThen(props);
+  const requiredByCondition = isRequiredBySchema(props.rootSchema as JsonSchema7, rootData, props.path, {
+    strategy: 'bestMatch',
+  });
 
-  if (required || rootRequired.length > 0) {
+  if (required || rootRequired.length > 0 || requiredByCondition) {
     if (schema) {
       if (isEmptyBoolean(schema, data)) {
         return `${labelToUpdate} is required`;

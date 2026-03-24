@@ -11,7 +11,7 @@ import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null => {
-  const { data, uischema, label, schema, path, errors, enabled, cells, required, visible } = props;
+  const { data, uischema, label, schema, rootSchema, path, errors, enabled, cells, required, visible } = props;
   const context = useContext(JsonFormsStepperContext);
   const jsonForms = useJsonForms();
   const reviewLabel = typeof uischema.options?.reviewLabel === 'string' ? (uischema.options.reviewLabel as string) : '';
@@ -128,7 +128,11 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
         activeError =
           minItemsError || humanizeAjvError(matchedError, schema as JsonSchema, uischema as UISchemaElement);
       } else {
-        activeError = humanizeAjvError(matchedError, schema as JsonSchema, uischema as UISchemaElement);
+        activeError = humanizeAjvError(
+          matchedError,
+          ((rootSchema as JsonSchema) ?? (schema as JsonSchema)) as JsonSchema,
+          uischema as UISchemaElement
+        );
       }
     } catch (err) {
       // Fallback: try to extract missing property name and create a friendly message

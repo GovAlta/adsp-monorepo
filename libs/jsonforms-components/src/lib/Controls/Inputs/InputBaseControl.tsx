@@ -40,8 +40,6 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const labelToUpdate: string = label || '';
   const controlRef = useRef<HTMLDivElement>(null);
 
-  let modifiedErrors = checkFieldValidity(props as ControlProps);
-
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const stepperState = (formStepperCtx as JsonFormsStepperContextProps)?.selectStepperState?.();
   const currentCategory = stepperState?.categories?.[stepperState?.activeId];
@@ -50,6 +48,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const [isVisited, setIsVisited] = useState(skipInitialValidation === true);
   const { core } = useJsonForms();
   const rootData = core?.data as any;
+  let modifiedErrors = checkFieldValidity(props as ControlProps, rootData);
   useEffect(() => {
     if (showReviewLink === true && !isStepperReview) {
       setIsVisited(true);
