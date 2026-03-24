@@ -134,6 +134,7 @@ export function onIoConnection(logger: Logger) {
             const replyId = uuid();
 
             if (rawChunks === true) {
+              const projector = await aiAgent.createProjector(user, threadId);
               for await (const chunk of result.fullStream) {
                 if (!FORWARDABLE_CHUNK_TYPES.has(chunk.type)) {
                   continue;
@@ -150,6 +151,23 @@ export function onIoConnection(logger: Logger) {
                   replyTo: messageId,
                   chunk: { type, payload },
                 });
+
+                if (type === 'tool-call') {
+                  projector.onToolCall(payload);
+                } else if (type === 'tool-error') {
+                  projector.onToolError(payload);
+                } else if (type === 'tool-result') {
+                  const workspaceChange = await projector.onToolResult(payload);
+                  if (workspaceChange) {
+                    socket.emit('workspace-change', {
+                      agent,
+                      threadId,
+                      messageId: replyId,
+                      replyTo: messageId,
+                      ...workspaceChange,
+                    });
+                  }
+                }
               }
             } else {
               for await (const content of result.textStream) {
@@ -217,9 +235,14 @@ export function onIoConnection(logger: Logger) {
             user: `${user.name} (ID: ${user.id})`,
           });
 
-          await aiAgent.initializeWorkspace(user, threadId, workspaceTarball);
+          const revision = await aiAgent.initializeWorkspace(user, threadId, workspaceTarball);
 
-          socket.emit('workspace-ready', { agent, threadId });
+          socket.emit('workspace-ready', {
+            agent,
+            threadId,
+            revision: revision.revision,
+            updatedAt: revision.updatedAt,
+          });
         } catch (err) {
           socket.emit('error', err.message);
         }
@@ -235,11 +258,19 @@ export function onIoConnection(logger: Logger) {
             throw new InvalidOperationError('payload for workspace-update must be a JSON object.');
           }
 
-          const { agent, threadId: threadIdValue, files } = payload;
+          const { agent, threadId: threadIdValue, files, writes, deletes } = payload;
           const threadId = threadIdValue || uuid();
 
-          if (!Array.isArray(files)) {
+          if (files !== undefined && !Array.isArray(files)) {
             throw new InvalidValueError('files', 'files must be an array of { path, content } objects.');
+          }
+
+          if (writes !== undefined && !Array.isArray(writes)) {
+            throw new InvalidValueError('writes', 'writes must be an array of { path, content } objects.');
+          }
+
+          if (deletes !== undefined && !Array.isArray(deletes)) {
+            throw new InvalidValueError('deletes', 'deletes must be an array of file paths.');
           }
 
           const aiAgent = configuration.getAgent(agent);
@@ -247,9 +278,51 @@ export function onIoConnection(logger: Logger) {
             throw new NotFoundError('agent', agent);
           }
 
-          await aiAgent.updateWorkspace(user, threadId, files);
+          const result = await aiAgent.updateWorkspace(user, threadId, {
+            writes: Array.isArray(writes) ? writes : Array.isArray(files) ? files : [],
+            deletes: Array.isArray(deletes) ? deletes : [],
+          });
 
-          socket.emit('workspace-updated', { agent, threadId, count: files.length });
+          socket.emit('workspace-updated', {
+            agent,
+            threadId,
+            revision: result.revision.revision,
+            updatedAt: result.revision.updatedAt,
+            writeCount: result.writeCount,
+            deleteCount: result.deleteCount,
+          });
+        } catch (err) {
+          socket.emit('error', err.message);
+        }
+      });
+      socket.on('workspace-read', async (payload) => {
+        try {
+          if (isUserTokenExpired(user)) {
+            disconnectExpiredSocket(socket, logger, user, tenant);
+            return;
+          }
+
+          if (typeof payload !== 'object') {
+            throw new InvalidOperationError('payload for workspace-read must be a JSON object.');
+          }
+
+          const { agent, threadId: threadIdValue } = payload;
+          const threadId = threadIdValue || uuid();
+
+          const aiAgent = configuration.getAgent(agent);
+          if (!aiAgent) {
+            throw new NotFoundError('agent', agent);
+          }
+
+          const result = await aiAgent.readWorkspace(user, threadId);
+
+          socket.emit('workspace-state', {
+            agent,
+            threadId,
+            revision: result.revision.revision,
+            updatedAt: result.revision.updatedAt,
+            files: result.files,
+          });
         } catch (err) {
           socket.emit('error', err.message);
         }

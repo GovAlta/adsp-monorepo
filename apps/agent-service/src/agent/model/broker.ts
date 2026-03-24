@@ -3,20 +3,20 @@ import { InvalidOperationError } from '@core-services/core-common';
 import type { Agent, AgentExecutionOptions, ToolsInput } from '@mastra/core/agent';
 import type { CoreUserMessage } from '@mastra/core/llm';
 import { MASTRA_THREAD_ID_KEY, RequestContext } from '@mastra/core/request-context';
-import { Readable } from 'node:stream';
 import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
 import type { IFileServiceClient } from '../clients';
 import { AgentConfiguration } from '../configuration';
 import { BrokerInputProcessor } from '../types';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const tarStream = require('tar-stream');
-
-export interface WorkspaceFileUpdate {
-  path: string;
-  content: string;
-}
+import {
+  ManagedWorkspace,
+  WorkspaceChangeProjector,
+  WorkspaceFileUpdate,
+  WorkspaceReadResult,
+  WorkspaceRevisionMetadata,
+  WorkspaceUpdateRequest,
+  WorkspaceUpdateResult,
+} from '../workspace';
 
 type ThreadMetadataRecord = {
   id: string;
@@ -168,87 +168,74 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     }
   }
 
-  public async initializeWorkspace(user: User, threadId: string, tarballUrn: string): Promise<void> {
-    if (!this.fileServiceClient) {
-      throw new InvalidOperationError('File service client is required to initialize workspace.');
-    }
-
+  private async getManagedWorkspace(user: User, threadId: string): Promise<ManagedWorkspace> {
     const requestContext = this.buildRequestContext(user, threadId);
     await this.updateThreadExpiry(user, threadId);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const workspace = await this.agent.getWorkspace({ requestContext: requestContext as any });
-    if (!workspace?.filesystem) {
-      throw new InvalidOperationError('Workspace is not enabled for this agent.');
+
+    return ManagedWorkspace.from(workspace as never);
+  }
+
+  public async initializeWorkspace(
+    user: User,
+    threadId: string,
+    tarballUrn: string,
+  ): Promise<WorkspaceRevisionMetadata> {
+    if (!this.fileServiceClient) {
+      throw new InvalidOperationError('File service client is required to initialize workspace.');
     }
+
+    const workspace = await this.getManagedWorkspace(user, threadId);
 
     const tarballId = AdspId.parse(tarballUrn);
     const { data } = await this.fileServiceClient.getFileAndMetadata(this.tenantId, tarballId);
-
-    // Clear all existing files before extracting.
-    const existing = await workspace.filesystem.readdir('.');
-    for (const entry of existing) {
-      if (entry.type === 'directory') {
-        await workspace.filesystem.rmdir(entry.name, { recursive: true, force: true });
-      } else {
-        await workspace.filesystem.deleteFile(entry.name, { recursive: true, force: true });
-      }
-    }
-
-    // Extract tar archive into workspace filesystem.
-    await new Promise<void>((resolve, reject) => {
-      const extract = tarStream.extract();
-
-      extract.on(
-        'entry',
-        async (header: { name: string; type: string }, stream: NodeJS.ReadableStream, next: (err?: Error) => void) => {
-          try {
-            const chunks: Buffer[] = [];
-            for await (const chunk of stream as AsyncIterable<Buffer>) {
-              chunks.push(chunk);
-            }
-
-            if (header.type === 'directory') {
-              await workspace.filesystem.mkdir(header.name, { recursive: true });
-            } else if (header.type === 'file') {
-              await workspace.filesystem.writeFile(header.name, Buffer.concat(chunks), { recursive: true });
-            }
-
-            next();
-          } catch (err) {
-            next(err instanceof Error ? err : new Error(String(err)));
-          }
-        },
-      );
-
-      extract.on('finish', resolve);
-      extract.on('error', reject);
-
-      Readable.from(Buffer.from(data)).pipe(extract);
-    });
+    const revision = await workspace.initializeFromTarball(data);
 
     this.logger.info(`Workspace initialized for thread ${threadId} from tarball ${tarballUrn}.`, {
       context: 'AgentBroker',
       tenant: this.tenantId?.toString(),
     });
+
+    return revision;
   }
 
-  public async updateWorkspace(user: User, threadId: string, files: WorkspaceFileUpdate[]): Promise<void> {
-    const requestContext = this.buildRequestContext(user, threadId);
-    await this.updateThreadExpiry(user, threadId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const workspace = await this.agent.getWorkspace({ requestContext: requestContext as any });
-    if (!workspace?.filesystem) {
-      throw new InvalidOperationError('Workspace is not enabled for this agent.');
-    }
+  public async updateWorkspace(
+    user: User,
+    threadId: string,
+    update: WorkspaceFileUpdate[] | WorkspaceUpdateRequest,
+  ): Promise<WorkspaceUpdateResult> {
+    const workspace = await this.getManagedWorkspace(user, threadId);
 
-    for (const { path, content } of files) {
-      await workspace.filesystem.writeFile(path, content, { recursive: true });
-    }
+    const writes = Array.isArray(update) ? update : update.writes || [];
+    const deletes = Array.isArray(update) ? [] : update.deletes || [];
+    const result = await workspace.applyUpdate({ writes, deletes });
 
-    this.logger.debug(`Workspace updated for thread ${threadId}: ${files.length} file(s) written.`, {
-      context: 'AgentBroker',
-      tenant: this.tenantId?.toString(),
-    });
+    this.logger.debug(
+      `Workspace updated for thread ${threadId}: ${writes.length} file(s) written, ${deletes.length} file(s) deleted.`,
+      {
+        context: 'AgentBroker',
+        tenant: this.tenantId?.toString(),
+      },
+    );
+
+    return result;
+  }
+
+  public async readWorkspace(user: User, threadId: string): Promise<WorkspaceReadResult> {
+    const workspace = await this.getManagedWorkspace(user, threadId);
+    return workspace.readSnapshot();
+  }
+
+  public async createProjector(user: User, threadId: string): Promise<WorkspaceChangeProjector> {
+    try {
+      const workspace = await this.getManagedWorkspace(user, threadId);
+      return workspace.createProjector();
+    } catch {
+      // Workspace not enabled for this agent — return an unbound projector.
+      // It will never match mutating tool calls, so it safely returns undefined for everything.
+      return new WorkspaceChangeProjector();
+    }
   }
 
   public async stream(
