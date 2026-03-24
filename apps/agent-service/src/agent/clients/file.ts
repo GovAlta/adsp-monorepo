@@ -2,7 +2,21 @@ import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk
 import axios from 'axios';
 import { Logger } from 'winston';
 
-class FileServiceClient {
+export interface IFileServiceClient {
+  getFileAndMetadata(
+    tenantId: AdspId,
+    fileId: AdspId
+  ): Promise<{
+    data: Uint8Array;
+    metadata: {
+      filename: string;
+      mimeType: string;
+      urn: string;
+    };
+  }>;
+}
+
+class FileServiceClient implements IFileServiceClient {
   constructor(private logger: Logger, private directory: ServiceDirectory, private tokenProvider: TokenProvider) { }
 
   public async getFileAndMetadata(

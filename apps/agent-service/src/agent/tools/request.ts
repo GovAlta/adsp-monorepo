@@ -1,4 +1,4 @@
-import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { createTool } from '@mastra/core/tools';
 import axios, { isAxiosError } from 'axios';

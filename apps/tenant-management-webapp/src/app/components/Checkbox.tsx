@@ -4,6 +4,7 @@ import styled from 'styled-components';
 interface CheckboxProps {
   checked: boolean;
   disabled?: boolean;
+  ariaLabel?: string;
   onChange: () => void;
 }
 
@@ -55,9 +56,9 @@ const Box = styled.span<{ checked: boolean; disabled: boolean }>`
   }
 `;
 
-export const Checkbox: React.FC<CheckboxProps> = ({ checked, disabled = false, onChange }) => (
+export const Checkbox: React.FC<CheckboxProps> = ({ checked, disabled = false, ariaLabel, onChange }) => (
   <Label>
-    <HiddenInput type="checkbox" checked={checked} disabled={disabled} onChange={onChange} />
+    <HiddenInput type="checkbox" checked={checked} disabled={disabled} aria-label={ariaLabel} onChange={onChange} />
     <Box checked={checked} disabled={disabled} />
   </Label>
 );

@@ -112,6 +112,9 @@ objects:
                   value: "3333"
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
+              volumeMounts:
+                - mountPath: /var/lib/agent-workspace
+                  name: workspace-root
               ports:
                 - containerPort: 3333
                   name: http
@@ -125,6 +128,9 @@ objects:
                   memory: 50Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
+          volumes:
+            - emptyDir: {}
+              name: workspace-root
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler

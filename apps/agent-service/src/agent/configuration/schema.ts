@@ -13,6 +13,27 @@ export const configurationSchema = {
         instructions: {
           type: 'string',
         },
+        workspace: {
+          type: 'object',
+          properties: {
+            enabled: {
+              type: 'boolean',
+            },
+          },
+          required: ['enabled'],
+          additionalProperties: false,
+        },
+        outputSchema: {
+          anyOf: [
+            { type: 'null' },
+            {
+              allOf: [
+                { $ref: 'http://json-schema.org/draft-07/schema#' },
+                { type: 'object' },
+              ],
+            },
+          ],
+        },
         userRoles: {
           type: 'array',
           items: { type: 'string' },
@@ -41,7 +62,7 @@ export const configurationSchema = {
                   outputSchema: { type: 'object' },
                   method: {
                     type: 'string',
-                    enum: ['GET', 'POST', 'PUT'],
+                    enum: ['GET', 'POST', 'PUT', 'PATCH'],
                   },
                   api: { type: 'string' },
                   path: { type: 'string' },

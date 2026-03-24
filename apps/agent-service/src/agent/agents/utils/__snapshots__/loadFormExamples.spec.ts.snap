@@ -849,6 +849,9 @@ Reusable address field using the ADSP common schema $ref definition for postal a
 - Reference definitions with \`$ref\` — this renders structured address subfields automatically
 - Replace \`yourAddressProperty\` with a meaningful property name like \`mailingAddress\`
 - Subfields: addressLine1, addressLine2, municipality, subdivisionCode, postalCode, country
+- Address autocomplete (typeahead lookup via Canada Post API) is enabled by default when using these definitions
+- To disable autocomplete, set \`autocomplete: false\` in the UI schema options
+- Always ask the user whether they need Alberta-only or all-Canadian addresses to choose the right definition
 
 # Content Element Examples
 

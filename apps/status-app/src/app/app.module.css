@@ -40,10 +40,17 @@ section {
   background-color: #f1f1f1;
   padding-top: 56px;
   padding-bottom: 56px;
-  padding-left: 150px;
-  padding-right: 150px;
+  padding-left: 1rem;
+  padding-right: 1rem;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   border-bottom: 16px solid #0081a2;
+}
+
+@media (min-width: 768px) {
+  .footer {
+    padding-left: 150px;
+    padding-right: 150px;
+  }
 }

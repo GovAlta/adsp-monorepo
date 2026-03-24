@@ -37,6 +37,15 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
   const [newName, onNameChange] = React.useState('');
   const [newDescription, onDescriptionChange] = React.useState('');
 
+  const resetState = () => {
+    setDataError('');
+    setParsedData(null);
+    setSeparator('comma');
+    setConfigValue('');
+    onNameChange('');
+    onDescriptionChange('');
+  };
+
   const parseDataBySeparator = (value: string, selectedSeparator: RegisterDataSeparator): string[] | null => {
     let trimmedValue = value.trim();
     if (!trimmedValue) {
@@ -71,13 +80,21 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
       maxWidth="500px"
       actions={
         <GoabButtonGroup alignment="end">
-          <GoabButton type="secondary" onClick={onCancel} testId="data-register-add-cancel">
+          <GoabButton
+            type="secondary"
+            onClick={() => {
+              onCancel();
+              resetState();
+            }}
+            testId="data-register-add-cancel"
+          >
             Cancel
           </GoabButton>
           <GoabButton
             type="primary"
             onClick={() => {
               onSave(parsedData, newName, newDescription);
+              resetState();
             }}
             disabled={!newName.trim() || !!dataError}
             testId="data-register-add-save"

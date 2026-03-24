@@ -112,6 +112,145 @@ You can conditionally specify pretty much any validation that is part of the JSO
 
 You will sometimes need to capture [lists of information](/adsp-monorepo/tutorials/form-service/repeated-items.html) in a form. Lists contain a variable number of items, each containing the necessary details. For example, an application for a Farmers Market License may require list of vendors, each with contact information, a classification, and their expected yearly revenue. Users are able to add one item at a time and fill in the details as needed.
 
+### Calculated Fields
+
+The form service includes a calculation control for fields whose values should be derived from other answers instead of entered directly by the user. This is useful for totals, capped amounts, and other values that depend on one or more numeric inputs.
+
+To use the calculation control:
+
+1. Add a destination field to the JSON schema.
+2. Set the field to <code>"format": "computed"</code>.
+3. Put the calculation expression in the field's <code>description</code>.
+4. Add a normal <code>Control</code> in the UI schema that points to the computed field.
+
+The rendered control is read-only. The library evaluates the expression against the current form data and writes the computed numeric result back to the field automatically.
+
+#### Basic Arithmetic
+
+For simple arithmetic, reference other fields using JSON pointer-style paths like <code>#/properties/x</code>.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "x": {
+      "type": "number"
+    },
+    "y": {
+      "type": "number"
+    },
+    "z": {
+      "type": "number"
+    },
+    "total": {
+      "type": "string",
+      "format": "computed",
+      "description": "#/properties/x * #/properties/y + #/properties/z"
+    }
+  }
+}
+```
+
+```json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/x"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/y"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/z"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/total",
+      "label": "Total"
+    }
+  ]
+}
+```
+
+#### Summing Repeating Items
+
+You can also sum a numeric property across a repeating item list by using <code>SUM(...)</code>. The argument must point to the array property followed by the numeric child property to sum.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "totalAmount": {
+      "type": "string",
+      "format": "computed",
+      "description": "SUM(#/properties/items/amount)"
+    }
+  }
+}
+```
+
+```json
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "ListWithDetail",
+      "scope": "#/properties/items",
+      "options": {
+        "detail": {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/amount",
+              "label": "Amount"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/totalAmount",
+      "label": "Total amount"
+    }
+  ]
+}
+```
+
+#### Minimum and Maximum Expressions
+
+The calculation engine also supports expressions such as <code>min(...)</code> and <code>max(...)</code>. These can combine scope references and numeric literals.
+
+```json
+{
+  "approved": {
+    "type": "string",
+    "format": "computed",
+    "description": "min(#/properties/requested, 1000)"
+  }
+}
+```
+
+This example caps the approved value at <code>1000</code> even if the requested amount is higher.
+
+For additional examples and option reference material, see the [cheat sheet](/adsp-monorepo/tutorials/form-service/cheat-sheet.html).
+
 ### ADSP Enhancements
 
 ADSP has added several enhancements to the form builder in order to help designers and developers create professional looking forms. These include:

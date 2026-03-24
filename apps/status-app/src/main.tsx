@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import App from './app/app';
+import './styles.scss';
 import { Provider } from 'react-redux';
 import { store } from './app/store/index';
 import '@abgov/web-components';

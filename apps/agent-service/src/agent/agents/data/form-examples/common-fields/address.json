@@ -24,6 +24,9 @@
     "The definition is `postalAddressAlberta` (for AB-only) or `postalAddressCanada` (all provinces)",
     "Reference definitions with `$ref` — this renders structured address subfields automatically",
     "Replace `yourAddressProperty` with a meaningful property name like `mailingAddress`",
-    "Subfields: addressLine1, addressLine2, municipality, subdivisionCode, postalCode, country"
+    "Subfields: addressLine1, addressLine2, municipality, subdivisionCode, postalCode, country",
+    "Address autocomplete (typeahead lookup via Canada Post API) is enabled by default when using these definitions",
+    "To disable autocomplete, set `autocomplete: false` in the UI schema options",
+    "Always ask the user whether they need Alberta-only or all-Canadian addresses to choose the right definition"
   ]
 }

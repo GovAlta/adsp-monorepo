@@ -163,11 +163,6 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
   const handleDropdownChange = (value: string) => {
     setDropdownSelected(false);
     setSearchTerm(value);
-
-    // keep form data updated immediately (so user sees their input reflected)
-    const newAddress = { ...address, addressLine1: value };
-    setAddress(newAddress);
-    updateFormData(newAddress);
   };
 
   /* istanbul ignore next */
@@ -180,7 +175,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     setDropdownSelected(true);
   };
 
-  const handleRequiredFieldBlur = (name: string) => {
+  const handleRequiredFieldBlur = (name: string, value?: string) => {
     const err = { ...errors };
     if (!data?.[name] || data[name] === '' || data?.[name] === undefined) {
       err[name] = `${getAddressLookupFieldLabel(name)} is required`;
@@ -190,6 +185,12 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
     }
     setSuggestions([]);
     setOpen(false);
+
+    if (value) {
+      const newAddress = { ...address, addressLine1: value };
+      setAddress(newAddress);
+      updateFormData(newAddress);
+    }
   };
 
   useEffect(() => {
@@ -334,7 +335,7 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
                 placeholder="Start typing the first line of your address, required."
                 value={address?.addressLine1 || ''}
                 onChange={(detail: GoabInputOnChangeDetail) => handleDropdownChange(detail.value)}
-                onBlur={(detail: GoabInputOnBlurDetail) => handleRequiredFieldBlur(detail.name)}
+                onBlur={(detail: GoabInputOnBlurDetail) => handleRequiredFieldBlur(detail.name, detail.value)}
                 width="100%"
                 onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
                   if (open) {

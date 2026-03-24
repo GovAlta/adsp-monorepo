@@ -16,10 +16,9 @@ import {
   isValidJSONCheck,
   wordMaxLengthCheck,
   badCharsCheckNoSpace,
-  duplicateNameCheck,
 } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
-import { ApiToolConfiguration } from '@store/agent/model';
+import { ApiToolConfiguration, ApiToolMethods } from '@store/agent/model';
 import { selectSortedDirectory } from '@store/directory/selectors';
 import { useSelector } from 'react-redux';
 import {
@@ -27,6 +26,7 @@ import {
   GoabInputOnChangeDetail,
   GoabDropdownOnChangeDetail,
 } from '@abgov/ui-components-common';
+
 interface AddEditApiToolModalProps {
   tool: ApiToolConfiguration;
   onCancel: () => void;
@@ -150,9 +150,10 @@ export const AddEditApiToolModal: FunctionComponent<AddEditApiToolModalProps> = 
             testId="api-tool-modal-method-input"
             ariaLabel="method"
             value={tool.method}
-            onChange={(detail: GoabDropdownOnChangeDetail) => setTool({ ...tool, method: detail.value as string })}
+            onChange={(detail: GoabDropdownOnChangeDetail) => setTool({ ...tool, method: detail.value as ApiToolMethods })}
           >
             <GoabDropdownItem value="GET" />
+            <GoabDropdownItem value="POST" />
             <GoabDropdownItem value="PUT" />
             <GoabDropdownItem value="PATCH" />
           </GoabDropdown>

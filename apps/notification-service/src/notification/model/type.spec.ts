@@ -33,7 +33,11 @@ describe('NotificationTypeEntity', () => {
     getAttachment: jest.fn(),
   };
 
-  const configurationMock = {};
+  const configurationMock = {
+    email: {
+      fromEmail: 'no-reply@test.com',
+    },
+  };
 
   beforeEach(() => {
     repositoryMock.saveSubscription.mockClear();
@@ -57,7 +61,7 @@ describe('NotificationTypeEntity', () => {
         channels: [],
         events: [],
       },
-      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
     );
 
     expect(entity).toBeTruthy();
@@ -79,7 +83,7 @@ describe('NotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       expect(entity.canSubscribe(null, null)).toBe(false);
@@ -100,7 +104,7 @@ describe('NotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       expect(
@@ -110,8 +114,8 @@ describe('NotificationTypeEntity', () => {
             tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/different`,
             roles: [],
           } as User,
-          {} as Subscriber
-        )
+          {} as Subscriber,
+        ),
       ).toBe(false);
     });
 
@@ -130,11 +134,11 @@ describe('NotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       expect(entity.canSubscribe({ id: 'test', tenantId, roles: [] } as User, { userId: 'test' } as Subscriber)).toBe(
-        false
+        false,
       );
     });
 
@@ -154,11 +158,11 @@ describe('NotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       expect(
-        entity.canSubscribe({ id: 'test', tenantId, roles: ['staff'] } as User, { userId: 'test' } as Subscriber)
+        entity.canSubscribe({ id: 'test', tenantId, roles: ['staff'] } as User, { userId: 'test' } as Subscriber),
       ).toBe(true);
     });
 
@@ -177,11 +181,11 @@ describe('NotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       expect(entity.canSubscribe({ id: 'test', tenantId, roles: [] } as User, { userId: 'test' } as Subscriber)).toBe(
-        false
+        false,
       );
     });
 
@@ -201,11 +205,11 @@ describe('NotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       expect(entity.canSubscribe({ id: 'test', tenantId, roles: [] } as User, { userId: 'test' } as Subscriber)).toBe(
-        true
+        true,
       );
     });
 
@@ -224,11 +228,11 @@ describe('NotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       expect(
-        entity.canSubscribe({ id: 'test', tenantId, roles: ['staff'] } as User, { userId: 'another' } as Subscriber)
+        entity.canSubscribe({ id: 'test', tenantId, roles: ['staff'] } as User, { userId: 'another' } as Subscriber),
       ).toBe(false);
     });
 
@@ -247,14 +251,14 @@ describe('NotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       expect(
         entity.canSubscribe(
           { id: 'test', tenantId, roles: [ServiceUserRoles.SubscriptionAdmin] } as User,
-          { userId: 'another' } as Subscriber
-        )
+          { userId: 'another' } as Subscriber,
+        ),
       ).toBe(true);
     });
   });
@@ -276,7 +280,7 @@ describe('NotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
@@ -288,7 +292,7 @@ describe('NotificationTypeEntity', () => {
       const subscription = await entity.subscribe(
         repositoryMock as unknown as SubscriptionRepository,
         { id: 'test', tenantId, roles: [] } as User,
-        subscriber
+        subscriber,
       );
 
       expect(subscription).toBeTruthy();
@@ -311,7 +315,7 @@ describe('NotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
@@ -323,8 +327,8 @@ describe('NotificationTypeEntity', () => {
         entity.subscribe(
           repositoryMock as unknown as SubscriptionRepository,
           { id: 'test', tenantId, roles: [] } as User,
-          subscriber
-        )
+          subscriber,
+        ),
       ).rejects.toThrowError(/User not authorized to subscribe./);
     });
   });
@@ -346,7 +350,7 @@ describe('NotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
@@ -380,7 +384,7 @@ describe('NotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
@@ -395,7 +399,7 @@ describe('NotificationTypeEntity', () => {
 
       user.id = 'test2';
       await expect(
-        entity.unsubscribe(repositoryMock as unknown as SubscriptionRepository, user, subscriber)
+        entity.unsubscribe(repositoryMock as unknown as SubscriptionRepository, user, subscriber),
       ).rejects.toThrowError(/User not authorized to unsubscribe./);
     });
   });
@@ -429,7 +433,7 @@ describe('NotificationTypeEntity', () => {
             },
           ],
         },
-        tenantId
+        tenantId,
       );
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
@@ -448,7 +452,7 @@ describe('NotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: {} },
         entity,
-        subscriber
+        subscriber,
       );
       repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [subscription], page: {} });
 
@@ -474,13 +478,19 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
       );
       expect(templateServiceMock.generateMessage).toHaveBeenCalledTimes(1);
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
       expect(notification.message).toBe(message);
     });
+
+    const configuration: NotificationConfiguration = {
+      email: {
+        fromEmail: 'no-reply@test.com',
+      },
+    } as NotificationConfiguration;
 
     it('can handle missing event configuration', async () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -498,7 +508,7 @@ describe('NotificationTypeEntity', () => {
           channels: [Channel.email],
           events: [],
         },
-        tenantId
+        tenantId,
       );
 
       const event: DomainEvent = {
@@ -517,7 +527,7 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
       );
       expect(results).toEqual(expect.arrayContaining([]));
     });
@@ -551,7 +561,7 @@ describe('NotificationTypeEntity', () => {
             },
           ],
         },
-        tenantId
+        tenantId,
       );
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
@@ -570,7 +580,7 @@ describe('NotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: {} },
         entity,
-        subscriber
+        subscriber,
       );
       repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [subscription], page: {} });
 
@@ -596,14 +606,14 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
       );
       expect(templateServiceMock.generateMessage).toHaveBeenCalledWith(
         expect.any(Object),
         expect.objectContaining({
           title: 'My notification',
           subtitle: 'Update about the notification',
-        })
+        }),
       );
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
@@ -639,7 +649,7 @@ describe('NotificationTypeEntity', () => {
             },
           ],
         },
-        tenantId
+        tenantId,
       );
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
@@ -658,7 +668,7 @@ describe('NotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: {} },
         entity,
-        subscriber
+        subscriber,
       );
       repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [subscription], page: {} });
 
@@ -684,14 +694,14 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
       );
       expect(templateServiceMock.generateMessage).toHaveBeenCalledWith(
         expect.any(Object),
         expect.objectContaining({
           title: 'My notification',
           subtitle: 'Update about the notification',
-        })
+        }),
       );
       expect(notification.to).toBe('123456789');
       expect(notification.channel).toBe(Channel.sms);
@@ -726,7 +736,7 @@ describe('NotificationTypeEntity', () => {
             },
           ],
         },
-        tenantId
+        tenantId,
       );
 
       const attachment1 = {},
@@ -749,7 +759,7 @@ describe('NotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: {} },
         entity,
-        subscriber
+        subscriber,
       );
       repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [subscription, subscription], page: {} });
 
@@ -777,7 +787,7 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
       );
       expect(templateServiceMock.generateMessage).toHaveBeenCalledTimes(2);
       // This is called once per attachment, doesn't increase for additional subscriptions.
@@ -813,7 +823,7 @@ describe('NotificationTypeEntity', () => {
             },
           ],
         },
-        tenantId
+        tenantId,
       );
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
@@ -832,7 +842,7 @@ describe('NotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: {} },
         entity,
-        subscriber
+        subscriber,
       );
       repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [subscription], page: {} });
 
@@ -853,7 +863,7 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
       );
       expect(notifications.length).toBe(0);
     });
@@ -886,7 +896,7 @@ describe('NotificationTypeEntity', () => {
             },
           ],
         },
-        tenantId
+        tenantId,
       );
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
@@ -905,7 +915,7 @@ describe('NotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: { correlationId: '123' } },
         entity,
-        subscriber
+        subscriber,
       );
       repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [subscription], page: {} });
 
@@ -933,7 +943,7 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
       );
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
@@ -967,7 +977,7 @@ describe('NotificationTypeEntity', () => {
             },
           ],
         },
-        tenantId
+        tenantId,
       );
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
@@ -986,7 +996,7 @@ describe('NotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: { correlationId: '123' } },
         entity,
-        subscriber
+        subscriber,
       );
       repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [subscription], page: {} });
 
@@ -1014,7 +1024,7 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant: null,
-        }
+        },
       );
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
@@ -1048,7 +1058,7 @@ describe('NotificationTypeEntity', () => {
             },
           ],
         },
-        tenantId
+        tenantId,
       );
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
@@ -1067,7 +1077,7 @@ describe('NotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: { correlationId: '123' } },
         entity,
-        subscriber
+        subscriber,
       );
       repositoryMock.getSubscriptions.mockResolvedValueOnce({ results: [subscription], page: {} });
 
@@ -1089,7 +1099,7 @@ describe('NotificationTypeEntity', () => {
         event,
         {
           tenant,
-        }
+        },
       );
       expect(notifications.length).toBe(0);
     });
@@ -1156,7 +1166,7 @@ describe('NotificationTypeEntity', () => {
             },
           ],
         },
-        tenantId
+        tenantId,
       );
 
       const effectiveEvent = baseTypeEntity.overrideWith(customTypeEntity);
@@ -1200,7 +1210,7 @@ describe('NotificationTypeEntity', () => {
               }),
             }),
           ]),
-        })
+        }),
       );
 
       expect(baseTypeEntity).toMatchObject(
@@ -1242,7 +1252,7 @@ describe('NotificationTypeEntity', () => {
               }),
             }),
           ]),
-        })
+        }),
       );
     });
   });
@@ -1272,7 +1282,11 @@ describe('DirectNotificationTypeEntity', () => {
     getAttachment: jest.fn(),
   };
 
-  const configurationMock = {};
+  const configurationMock = {
+    email: {
+      fromEmail: 'no-reply@test.com',
+    },
+  };
 
   beforeEach(() => {
     repositoryMock.saveSubscription.mockClear();
@@ -1297,7 +1311,7 @@ describe('DirectNotificationTypeEntity', () => {
         channels: [],
         events: [],
       },
-      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
     );
 
     expect(entity).toBeTruthy();
@@ -1318,7 +1332,7 @@ describe('DirectNotificationTypeEntity', () => {
         channels: [],
         events: [],
       },
-      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
     );
 
     expect(entity).toBeTruthy();
@@ -1339,7 +1353,7 @@ describe('DirectNotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
     }).toThrowError(InvalidOperationError);
   });
@@ -1361,7 +1375,7 @@ describe('DirectNotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
@@ -1379,8 +1393,8 @@ describe('DirectNotificationTypeEntity', () => {
         entity.subscribe(
           repositoryMock as unknown as SubscriptionRepository,
           { id: 'test', tenantId, roles: [] } as User,
-          subscriber
-        )
+          subscriber,
+        ),
       ).rejects.toThrowError(InvalidOperationError);
     });
   });
@@ -1402,7 +1416,7 @@ describe('DirectNotificationTypeEntity', () => {
           channels: [],
           events: [],
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
@@ -1420,8 +1434,8 @@ describe('DirectNotificationTypeEntity', () => {
         entity.unsubscribe(
           repositoryMock as unknown as SubscriptionRepository,
           { id: 'test', tenantId, roles: [] } as User,
-          subscriber
-        )
+          subscriber,
+        ),
       ).rejects.toThrowError(InvalidOperationError);
     });
   });
@@ -1454,7 +1468,7 @@ describe('DirectNotificationTypeEntity', () => {
           },
         ],
       },
-      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
     );
 
     it('can generate direct notification', async () => {
@@ -1479,7 +1493,7 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
       );
 
       expect(result).toMatchObject({
@@ -1532,7 +1546,7 @@ describe('DirectNotificationTypeEntity', () => {
           ],
           attachmentPath: 'file',
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
       const [result] = await entity.generateNotifications(
         logger as Logger,
@@ -1540,7 +1554,7 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
       );
 
       expect(result).toMatchObject({
@@ -1594,7 +1608,7 @@ describe('DirectNotificationTypeEntity', () => {
           ],
           attachmentPath: 'file',
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
       const [result] = await entity.generateNotifications(
         logger as Logger,
@@ -1602,7 +1616,7 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
       );
 
       expect(result).toMatchObject({
@@ -1656,7 +1670,7 @@ describe('DirectNotificationTypeEntity', () => {
           ],
           attachmentPath: 'file',
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
       const [result] = await entity.generateNotifications(
         logger as Logger,
@@ -1664,7 +1678,7 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
       );
 
       expect(result).toMatchObject({
@@ -1718,7 +1732,7 @@ describe('DirectNotificationTypeEntity', () => {
           ],
           attachmentPath: fileUrn,
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
       const [result] = await entity.generateNotifications(
         logger as Logger,
@@ -1726,7 +1740,7 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
       );
 
       expect(result).toMatchObject({
@@ -1780,7 +1794,7 @@ describe('DirectNotificationTypeEntity', () => {
             },
           ],
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
       const [result] = await entity.generateNotifications(
         logger as Logger,
@@ -1788,7 +1802,7 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
       );
 
       expect(result).toMatchObject({
@@ -1841,7 +1855,7 @@ describe('DirectNotificationTypeEntity', () => {
           ],
           attachmentPath: 'file',
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
       await expect(
         entity.generateNotifications(
@@ -1850,8 +1864,8 @@ describe('DirectNotificationTypeEntity', () => {
           repositoryMock as unknown as SubscriptionRepository,
           configurationMock as NotificationConfiguration,
           event,
-          { tenant }
-        )
+          { tenant },
+        ),
       ).rejects.toThrow('Test error');
     });
 
@@ -1877,7 +1891,7 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
       );
 
       expect(results).toMatchObject(expect.arrayContaining([]));
@@ -1906,7 +1920,7 @@ describe('DirectNotificationTypeEntity', () => {
             },
           ],
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
 
       const event = {
@@ -1930,7 +1944,7 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
       );
 
       expect(results).toMatchObject(expect.arrayContaining([]));
@@ -1959,7 +1973,7 @@ describe('DirectNotificationTypeEntity', () => {
             },
           ],
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
 
       const event = {
@@ -1983,7 +1997,7 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
       );
 
       expect(result).toMatchObject({ tenantId: tenantId.toString(), message, to: entity.address });
@@ -2010,7 +2024,7 @@ describe('DirectNotificationTypeEntity', () => {
             },
           ],
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
 
       const event = {
@@ -2034,7 +2048,7 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
       );
 
       expect(results).toMatchObject(expect.arrayContaining([]));
@@ -2079,7 +2093,7 @@ describe('DirectNotificationTypeEntity', () => {
             },
           ],
         },
-        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       );
       const [result] = await entity.generateNotifications(
         logger as Logger,
@@ -2087,7 +2101,7 @@ describe('DirectNotificationTypeEntity', () => {
         repositoryMock as unknown as SubscriptionRepository,
         configurationMock as NotificationConfiguration,
         event,
-        { tenant }
+        { tenant },
       );
 
       expect(result).toMatchObject({

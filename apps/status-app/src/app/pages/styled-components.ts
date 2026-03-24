@@ -11,7 +11,15 @@ export const Title = styled.h2`
 `;
 
 export const Main = styled.main`
+  padding-top: 6.25rem;
   padding-bottom: 10rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+
+  @media (min-width: 768px) {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
 `;
 
 export const ServiceStatusesCss = styled.div`
@@ -37,6 +45,14 @@ export const ServiceStatusesCss = styled.div`
   .small-container {
     max-width: 50rem;
     margin: 0 auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+
+    @media (min-width: 768px) {
+      padding-left: 0;
+      padding-right: 0;
+    }
+
     div.goa-form div {
       padding: 0;
       outline: none;
@@ -87,7 +103,13 @@ export const AllApplications = styled.div`
   }
 `;
 export const HeaderContainer = styled.div`
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 100;
+  background: #ffffff;
   border-bottom: 1px solid #dcdcdc;
   margin-bottom: 10px;
 `;
