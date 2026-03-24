@@ -231,6 +231,7 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
           configuration: data as never,
         },
         false,
+        true,
       ),
     );
     setCurrentRegister((prev: RegisterData | null) => [...(prev ?? []), newEntry]);

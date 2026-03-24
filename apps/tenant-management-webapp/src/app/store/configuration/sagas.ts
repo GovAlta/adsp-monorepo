@@ -244,6 +244,8 @@ export function* fetchRegisterData(): SagaIterator {
 
     const tenantConfigs = Object.entries(tenantConfigDefinition);
 
+    console.log('Tenant configurations fetched for register data:', tenantConfigs);
+
     const registerConfigs =
       tenantConfigs
         // eslint-disable-next-line
@@ -443,6 +445,7 @@ let replaceErrorConfiguration = [];
 
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const isSkipJSONValidation = action.skipJSONValidation === true;
   const coreConfig: Record<string, unknown> = yield select(
     (state: RootState) => state.configuration.coreConfigDefinitions.configuration,
   );
@@ -464,26 +467,34 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
         if (action.configuration.namespace === 'platform') {
           definition = coreConfig[service];
         } else {
+          // March 24 Paul: we might need to sync with remote if the definition in the store is empty.
           const tenantConfig: string = yield select(
             (state: RootState) => state.configuration.tenantConfigDefinitions.configuration || {},
           );
           definition = tenantConfig[service];
+
           if (!definition) {
             definition = coreConfig[service];
           }
         }
+
         // Check if configuration item following definition
-        const jsonSchemaValidation = jsonSchemaCheck(
-          definition.configurationSchema,
-          action.configuration.configuration,
-        );
-        if (!jsonSchemaValidation) {
-          replaceErrorConfiguration.push({
-            name: service,
-            error: 'JSON schema could not be validated',
-          });
-          return;
+        if (!isSkipJSONValidation) {
+          const jsonSchemaValidation = jsonSchemaCheck(
+            definition.configurationSchema,
+            action.configuration.configuration,
+          );
+          if (!jsonSchemaValidation) {
+            replaceErrorConfiguration.push({
+              name: service,
+              error: 'JSON schema could not be validated',
+            });
+
+            console.log('returning early due to json schema validation failure for service: ', service);
+            return;
+          }
         }
+
         let revision = null;
         if (action.isImportConfiguration) {
           // Import creates a new revision so there is a snapshot of pre-import revision.
@@ -502,6 +513,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
         }
         // Send request to replace configuration
         //Import configuration replaces (REPLACE operation in PATCH) the configuration stored in latest revision
+        console.log(body);
         yield call(
           axios.patch,
           `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
