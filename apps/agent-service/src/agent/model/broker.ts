@@ -10,6 +10,7 @@ import { AgentConfiguration } from '../configuration';
 import { BrokerInputProcessor } from '../types';
 import {
   ManagedWorkspace,
+  WorkspaceChangeProjector,
   WorkspaceFileUpdate,
   WorkspaceReadResult,
   WorkspaceRevisionMetadata,
@@ -224,6 +225,17 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
   public async readWorkspace(user: User, threadId: string): Promise<WorkspaceReadResult> {
     const workspace = await this.getManagedWorkspace(user, threadId);
     return workspace.readSnapshot();
+  }
+
+  public async createProjector(user: User, threadId: string): Promise<WorkspaceChangeProjector> {
+    try {
+      const workspace = await this.getManagedWorkspace(user, threadId);
+      return workspace.createProjector();
+    } catch {
+      // Workspace not enabled for this agent — return an unbound projector.
+      // It will never match mutating tool calls, so it safely returns undefined for everything.
+      return new WorkspaceChangeProjector();
+    }
   }
 
   public async stream(

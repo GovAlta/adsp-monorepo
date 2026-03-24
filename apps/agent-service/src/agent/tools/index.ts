@@ -13,7 +13,6 @@ interface ToolsProps {
 }
 
 export async function createTools({ logger, directory, tokenProvider }: ToolsProps) {
-
   const { fileDownloadTool, fileCopyTool } = await createFileTools({ logger, directory, tokenProvider });
 
   const { formConfigurationRetrievalTool, formConfigurationUpdateTool } = await createFormConfigurationTools({
@@ -31,7 +30,7 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     fileCopyTool,
     formConfigurationRetrievalTool,
     formConfigurationUpdateTool,
-    formDataRetrievalTool, 
+    formDataRetrievalTool,
     formDataUpdateTool,
     schemaDefinitionTool,
     rendererCatalogTool,

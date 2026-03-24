@@ -1,5 +1,5 @@
 import * as tarStream from 'tar-stream';
-import { ManagedWorkspace, projectWorkspaceChangeFromToolResult } from './managedWorkspace';
+import { ManagedWorkspace, WorkspaceChangeProjector } from './managedWorkspace';
 
 function createTestTar(files: { name: string; content: string }[]): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -23,37 +23,172 @@ describe('ManagedWorkspace', () => {
     );
   });
 
-  it('projects workspace tool results into managed workspace change events', () => {
-    const result = projectWorkspaceChangeFromToolResult({
-      toolName: 'workspaceFileUpdateTool',
-      result: {
-        workspaceChange: {
-          writes: [{ path: 'src/app.ts', content: 'export default App;' }],
-          deletes: ['src/old.ts'],
-          revision: 5,
-          updatedAt: '2026-03-24T00:05:00.000Z',
-        },
-      },
+  describe('WorkspaceChangeProjector', () => {
+    it('projects write_file tool-call/result pair into a workspace-change event with content', async () => {
+      const projector = new WorkspaceChangeProjector();
+
+      projector.onToolCall({
+        toolName: 'mastra_workspace_write_file',
+        toolCallId: 'call-1',
+        args: { path: 'src/App.tsx', content: 'export default () => null;' },
+      });
+
+      const event = await projector.onToolResult({
+        toolName: 'mastra_workspace_write_file',
+        toolCallId: 'call-1',
+        result: 'Wrote 26 bytes to src/App.tsx',
+      });
+
+      expect(event).toEqual({
+        toolName: 'mastra_workspace_write_file',
+        writes: [{ path: 'src/App.tsx', content: 'export default () => null;' }],
+        deletes: [],
+        writeCount: 1,
+        deleteCount: 0,
+      });
     });
 
-    expect(result).toEqual({
-      toolName: 'workspaceFileUpdateTool',
-      writes: [{ path: 'src/app.ts', content: 'export default App;' }],
-      deletes: ['src/old.ts'],
-      revision: 5,
-      updatedAt: '2026-03-24T00:05:00.000Z',
-      writeCount: 1,
-      deleteCount: 1,
-    });
-  });
+    it('projects edit_file and backfills content from the workspace', async () => {
+      const readFile = jest.fn().mockResolvedValue('export const x = 2;');
+      const workspace = new ManagedWorkspace({ readFile } as never);
+      const projector = workspace.createProjector();
 
-  it('ignores tool results without workspace change metadata', () => {
-    expect(
-      projectWorkspaceChangeFromToolResult({
+      projector.onToolCall({
+        toolName: 'mastra_workspace_edit_file',
+        toolCallId: 'call-2',
+        args: { path: 'src/App.tsx', old_string: 'x = 1', new_string: 'x = 2' },
+      });
+
+      const event = await projector.onToolResult({
+        toolName: 'mastra_workspace_edit_file',
+        toolCallId: 'call-2',
+        result: 'Replaced 1 occurrence in src/App.tsx',
+      });
+
+      expect(readFile).toHaveBeenCalledWith('src/App.tsx');
+      expect(event).toEqual({
+        toolName: 'mastra_workspace_edit_file',
+        writes: [{ path: 'src/App.tsx', content: 'export const x = 2;' }],
+        deletes: [],
+        writeCount: 1,
+        deleteCount: 0,
+      });
+    });
+
+    it('projects edit_file without content when workspace is not bound', async () => {
+      const projector = new WorkspaceChangeProjector();
+
+      projector.onToolCall({
+        toolName: 'mastra_workspace_edit_file',
+        toolCallId: 'call-2b',
+        args: { path: 'src/App.tsx', old_string: 'foo', new_string: 'bar' },
+      });
+
+      const event = await projector.onToolResult({
+        toolName: 'mastra_workspace_edit_file',
+        toolCallId: 'call-2b',
+        result: 'Replaced 1 occurrence in src/App.tsx',
+      });
+
+      expect(event).toEqual({
+        toolName: 'mastra_workspace_edit_file',
+        writes: [{ path: 'src/App.tsx' }],
+        deletes: [],
+        writeCount: 1,
+        deleteCount: 0,
+      });
+    });
+
+    it('projects delete tool-call/result pair into a workspace-change event', async () => {
+      const projector = new WorkspaceChangeProjector();
+
+      projector.onToolCall({
+        toolName: 'mastra_workspace_delete',
+        toolCallId: 'call-3',
+        args: { path: 'src/old.ts' },
+      });
+
+      const event = await projector.onToolResult({
+        toolName: 'mastra_workspace_delete',
+        toolCallId: 'call-3',
+        result: 'Deleted src/old.ts',
+      });
+
+      expect(event).toEqual({
+        toolName: 'mastra_workspace_delete',
+        writes: [],
+        deletes: ['src/old.ts'],
+        writeCount: 0,
+        deleteCount: 1,
+      });
+    });
+
+    it('returns undefined for unrelated tool results', async () => {
+      const projector = new WorkspaceChangeProjector();
+
+      // No matching tool-call was recorded
+      const event = await projector.onToolResult({
         toolName: 'formDataUpdateTool',
+        toolCallId: 'call-4',
         result: { id: 'form-1' },
-      }),
-    ).toBeUndefined();
+      });
+
+      expect(event).toBeUndefined();
+    });
+
+    it('returns undefined for tool-result with no preceding tool-call', async () => {
+      const projector = new WorkspaceChangeProjector();
+
+      const event = await projector.onToolResult({
+        toolName: 'mastra_workspace_write_file',
+        toolCallId: 'call-orphan',
+        result: 'Wrote 0 bytes',
+      });
+
+      expect(event).toBeUndefined();
+    });
+
+    it('clears pending tool calls when a tool-error is received', async () => {
+      const projector = new WorkspaceChangeProjector();
+
+      projector.onToolCall({
+        toolName: 'mastra_workspace_write_file',
+        toolCallId: 'call-error',
+        args: { path: 'src/App.tsx', content: 'export default () => null;' },
+      });
+
+      projector.onToolError({
+        toolName: 'mastra_workspace_write_file',
+        toolCallId: 'call-error',
+        error: 'write failed',
+      });
+
+      const event = await projector.onToolResult({
+        toolName: 'mastra_workspace_write_file',
+        toolCallId: 'call-error',
+        result: 'Wrote 26 bytes to src/App.tsx',
+      });
+
+      expect(event).toBeUndefined();
+    });
+
+    it('rejects reserved metadata path in tool args', async () => {
+      const projector = new WorkspaceChangeProjector();
+
+      projector.onToolCall({
+        toolName: 'mastra_workspace_write_file',
+        toolCallId: 'call-bad',
+        args: { path: '.agent/revision.json', content: '{}' },
+      });
+
+      const event = await projector.onToolResult({
+        toolName: 'mastra_workspace_write_file',
+        toolCallId: 'call-bad',
+        result: 'Wrote 2 bytes',
+      });
+
+      expect(event).toBeUndefined();
+    });
   });
 
   it('clears all files and directories from the workspace root', async () => {
@@ -110,6 +245,16 @@ describe('ManagedWorkspace', () => {
     expect(result.revision.revision).toBe(3);
     expect(result.writeCount).toBe(1);
     expect(result.deleteCount).toBe(1);
+  });
+
+  it('reads a single file by path', async () => {
+    const readFile = jest.fn().mockResolvedValue('export const x = 1;');
+    const workspace = new ManagedWorkspace({ readFile } as never);
+
+    const file = await workspace.readFile('src/app.ts');
+
+    expect(readFile).toHaveBeenCalledWith('src/app.ts');
+    expect(file).toEqual({ path: 'src/app.ts', content: 'export const x = 1;' });
   });
 
   it('returns snapshot files and excludes reserved metadata content', async () => {

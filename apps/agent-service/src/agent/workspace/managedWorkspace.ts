@@ -35,14 +35,17 @@ export interface WorkspaceReadResult {
   files: WorkspaceSnapshotFile[];
 }
 
+export interface WorkspaceFileDiff {
+  path: string;
+  content?: string;
+}
+
 export interface WorkspaceChangeEvent {
   toolName?: string;
-  writes: WorkspaceFileUpdate[];
+  writes: WorkspaceFileDiff[];
   deletes: string[];
   writeCount: number;
   deleteCount: number;
-  revision?: number;
-  updatedAt?: string;
 }
 
 type WorkspaceFilesystem = Workspace['filesystem'];
@@ -97,86 +100,100 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function normalizeWorkspaceWrites(value: unknown): WorkspaceFileUpdate[] | undefined {
-  if (!Array.isArray(value)) {
-    return undefined;
+// Mastra workspace tool IDs that mutate files (write or delete)
+const MASTRA_WRITE_TOOLS = new Set(['mastra_workspace_write_file', 'mastra_workspace_edit_file']);
+const MASTRA_DELETE_TOOLS = new Set(['mastra_workspace_delete']);
+
+interface PendingCall {
+  toolName: string;
+  args: Record<string, unknown>;
+}
+
+/**
+ * Stateful projector scoped to a single agent message stream.
+ * Pairs tool-call (input) with tool-result (confirmation) to synthesise
+ * WorkspaceChangeEvent instances for mutating Mastra workspace tool calls.
+ *
+ * Obtain via ManagedWorkspace.createProjector() so that edit_file results are
+ * backfilled with the post-edit file content from the workspace, producing a
+ * consistent event shape for every mutating tool.
+ */
+export class WorkspaceChangeProjector {
+  private pendingCalls = new Map<string, PendingCall>();
+
+  constructor(private readonly workspace?: ManagedWorkspace) {}
+
+  onToolCall(payload: unknown): void {
+    if (!isRecord(payload)) return;
+    const toolCallId = typeof payload.toolCallId === 'string' ? payload.toolCallId : undefined;
+    const toolName = typeof payload.toolName === 'string' ? payload.toolName : undefined;
+    const args = isRecord(payload.args) ? payload.args : undefined;
+
+    if (!toolCallId || !toolName || !args) return;
+    if (!MASTRA_WRITE_TOOLS.has(toolName) && !MASTRA_DELETE_TOOLS.has(toolName)) return;
+
+    this.pendingCalls.set(toolCallId, { toolName, args });
   }
 
-  const writes: WorkspaceFileUpdate[] = [];
-  for (const entry of value) {
-    if (!isRecord(entry) || typeof entry.path !== 'string' || typeof entry.content !== 'string') {
+  onToolError(payload: unknown): void {
+    if (!isRecord(payload)) return;
+
+    const toolCallId = typeof payload.toolCallId === 'string' ? payload.toolCallId : undefined;
+    if (!toolCallId) return;
+
+    this.pendingCalls.delete(toolCallId);
+  }
+
+  async onToolResult(payload: unknown): Promise<WorkspaceChangeEvent | undefined> {
+    if (!isRecord(payload)) return undefined;
+
+    const toolCallId = typeof payload.toolCallId === 'string' ? payload.toolCallId : undefined;
+    const toolName = typeof payload.toolName === 'string' ? payload.toolName : undefined;
+
+    if (!toolCallId || !toolName) return undefined;
+
+    const pending = this.pendingCalls.get(toolCallId);
+    if (!pending) return undefined;
+
+    this.pendingCalls.delete(toolCallId);
+
+    const path = typeof pending.args.path === 'string' ? pending.args.path : undefined;
+    if (!path) return undefined;
+
+    let normalizedPath: string;
+    try {
+      normalizedPath = validateWorkspacePath(path);
+    } catch {
       return undefined;
     }
 
-    writes.push({
-      path: validateWorkspacePath(entry.path),
-      content: entry.content,
-    });
-  }
+    if (MASTRA_WRITE_TOOLS.has(toolName)) {
+      // write_file provides full content in args.
+      // edit_file only has old/new patch strings — read the post-edit file from the workspace.
+      let content = typeof pending.args.content === 'string' ? pending.args.content : undefined;
 
-  return writes;
-}
+      if (content === undefined && this.workspace) {
+        try {
+          const file = await this.workspace.readFile(normalizedPath);
+          content = file.content;
+        } catch {
+          // If the read fails, emit the event without content. The client can
+          // reconcile via workspace-read on stream completion.
+        }
+      }
 
-function normalizeWorkspaceDeletes(value: unknown): string[] | undefined {
-  if (!Array.isArray(value)) {
-    return undefined;
-  }
+      const write: WorkspaceFileDiff =
+        content !== undefined ? { path: normalizedPath, content } : { path: normalizedPath };
 
-  const deletes: string[] = [];
-  for (const entry of value) {
-    if (typeof entry !== 'string') {
-      return undefined;
+      return { toolName, writes: [write], deletes: [], writeCount: 1, deleteCount: 0 };
     }
 
-    deletes.push(validateWorkspacePath(entry));
-  }
+    if (MASTRA_DELETE_TOOLS.has(toolName)) {
+      return { toolName, writes: [], deletes: [normalizedPath], writeCount: 0, deleteCount: 1 };
+    }
 
-  return deletes;
-}
-
-export function projectWorkspaceChangeFromToolResult(payload: unknown): WorkspaceChangeEvent | undefined {
-  if (!isRecord(payload)) {
     return undefined;
   }
-
-  const toolName = typeof payload.toolName === 'string' ? payload.toolName : undefined;
-  const result = isRecord(payload.result) ? payload.result : undefined;
-  const changeSource = result && isRecord(result.workspaceChange) ? result.workspaceChange : undefined;
-
-  if (!changeSource) {
-    return undefined;
-  }
-
-  const writes = normalizeWorkspaceWrites(changeSource.writes);
-  const deletes = normalizeWorkspaceDeletes(changeSource.deletes);
-
-  if (!writes || !deletes) {
-    return undefined;
-  }
-
-  const revision =
-    typeof changeSource.revision === 'number' && Number.isInteger(changeSource.revision)
-      ? changeSource.revision
-      : undefined;
-  const updatedAt = typeof changeSource.updatedAt === 'string' ? changeSource.updatedAt : undefined;
-  const writeCount =
-    typeof changeSource.writeCount === 'number' && changeSource.writeCount >= 0
-      ? changeSource.writeCount
-      : writes.length;
-  const deleteCount =
-    typeof changeSource.deleteCount === 'number' && changeSource.deleteCount >= 0
-      ? changeSource.deleteCount
-      : deletes.length;
-
-  return {
-    toolName,
-    writes,
-    deletes,
-    revision,
-    updatedAt,
-    writeCount,
-    deleteCount,
-  };
 }
 
 export class ManagedWorkspace {
@@ -309,6 +326,17 @@ export class ManagedWorkspace {
       writeCount: writes.length,
       deleteCount: deletes.length,
     };
+  }
+
+  public readFile(path: string): Promise<WorkspaceSnapshotFile> {
+    const normalizedPath = validateWorkspacePath(path);
+    return this.filesystem
+      .readFile(normalizedPath)
+      .then((content) => ({ path: normalizedPath, content: decodeWorkspaceContent(content) }));
+  }
+
+  public createProjector(): WorkspaceChangeProjector {
+    return new WorkspaceChangeProjector(this);
   }
 
   public async readSnapshot(): Promise<WorkspaceReadResult> {

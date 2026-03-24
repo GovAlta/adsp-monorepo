@@ -8,7 +8,6 @@ import { ServiceRoles } from './roles';
 import { AgentServiceConfiguration } from './configuration';
 import { AgentBroker } from './model';
 import { CoreUserMessage } from '@mastra/core/llm';
-import { projectWorkspaceChangeFromToolResult } from './workspace';
 
 const TOKEN_EXPIRY_THRESHOLD_MS = 30 * 1000;
 
@@ -135,6 +134,7 @@ export function onIoConnection(logger: Logger) {
             const replyId = uuid();
 
             if (rawChunks === true) {
+              const projector = await aiAgent.createProjector(user, threadId);
               for await (const chunk of result.fullStream) {
                 if (!FORWARDABLE_CHUNK_TYPES.has(chunk.type)) {
                   continue;
@@ -152,8 +152,12 @@ export function onIoConnection(logger: Logger) {
                   chunk: { type, payload },
                 });
 
-                if (type === 'tool-result') {
-                  const workspaceChange = projectWorkspaceChangeFromToolResult(payload);
+                if (type === 'tool-call') {
+                  projector.onToolCall(payload);
+                } else if (type === 'tool-error') {
+                  projector.onToolError(payload);
+                } else if (type === 'tool-result') {
+                  const workspaceChange = await projector.onToolResult(payload);
                   if (workspaceChange) {
                     socket.emit('workspace-change', {
                       agent,

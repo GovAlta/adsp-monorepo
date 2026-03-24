@@ -324,4 +324,54 @@ describe('AgentBroker', () => {
       ]);
     });
   });
+
+  describe('createProjector', () => {
+    it('returns a workspace-bound projector when workspace is enabled', async () => {
+      const readFile = jest.fn().mockResolvedValue('export const x = 2;');
+      const filesystem = { readFile };
+      const workspace = { filesystem };
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getWorkspace: jest.fn().mockResolvedValue(workspace),
+      };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+
+      const projector = await broker.createProjector(user as never, 'thread-1');
+      projector.onToolCall({
+        toolName: 'mastra_workspace_edit_file',
+        toolCallId: 'call-1',
+        args: { path: 'src/app.ts', old_string: 'x = 1', new_string: 'x = 2' },
+      });
+      const event = await projector.onToolResult({
+        toolName: 'mastra_workspace_edit_file',
+        toolCallId: 'call-1',
+        result: 'Replaced 1 occurrence in src/app.ts',
+      });
+
+      expect(readFile).toHaveBeenCalledWith('src/app.ts');
+      expect(event?.writes[0].content).toBe('export const x = 2;');
+    });
+
+    it('returns an unbound projector when workspace is disabled', async () => {
+      const agent = {
+        name: 'Test agent',
+        generate: jest.fn(),
+        stream: jest.fn(),
+        getWorkspace: jest.fn().mockResolvedValue(null),
+      };
+      const broker = new AgentBroker(logger as never, tenantId as never, [], agent as never, {});
+
+      const projector = await broker.createProjector(user as never, 'thread-1');
+      // Unrelated tool — should always return undefined
+      const event = await projector.onToolResult({
+        toolName: 'mastra_workspace_write_file',
+        toolCallId: 'call-orphan',
+        result: 'Wrote 0 bytes',
+      });
+
+      expect(event).toBeUndefined();
+    });
+  });
 });

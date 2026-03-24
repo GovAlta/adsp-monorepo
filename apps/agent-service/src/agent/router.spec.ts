@@ -1,5 +1,6 @@
 import { AgentConfigurations } from './configuration';
 import { onIoConnection } from './router';
+import { WorkspaceChangeProjector } from './workspace';
 
 jest.mock('@abgov/adsp-service-sdk', () => ({
   ...jest.requireActual('@abgov/adsp-service-sdk'),
@@ -25,6 +26,7 @@ describe('onIoConnection workspace socket events', () => {
     initializeWorkspace?: jest.Mock;
     updateWorkspace?: jest.Mock;
     readWorkspace?: jest.Mock;
+    createProjector?: jest.Mock;
     stream?: jest.Mock;
   }
 
@@ -45,6 +47,12 @@ describe('onIoConnection workspace socket events', () => {
         jest.fn().mockResolvedValue({
           revision: { revision: 2, updatedAt: '2026-03-23T00:01:00.000Z' },
           files: [{ path: 'src/app.ts', content: 'export default {};' }],
+        }),
+      createProjector:
+        brokerOverrides.createProjector ??
+        jest.fn().mockResolvedValue({
+          onToolCall: jest.fn(),
+          onToolResult: jest.fn().mockResolvedValue(undefined),
         }),
       stream:
         brokerOverrides.stream ??
@@ -99,29 +107,49 @@ describe('onIoConnection workspace socket events', () => {
   // -------------------------------------------------------------------------
 
   describe('message workspace-change projection', () => {
-    it('emits workspace-change for tool-result chunks with workspace change metadata', async () => {
-      const { socket, eventHandlers } = await connect({
-        stream: jest.fn().mockResolvedValue({
-          fullStream: (async function* () {
+    function connectWithProjector(projectCalls: boolean) {
+      const projector = new WorkspaceChangeProjector();
+      const createProjector = jest.fn().mockResolvedValue(projector);
+
+      const stream = jest.fn().mockResolvedValue({
+        fullStream: (async function* () {
+          if (projectCalls) {
+            yield {
+              type: 'tool-call',
+              payload: {
+                toolName: 'mastra_workspace_write_file',
+                toolCallId: 'call-1',
+                args: { path: 'src/App.tsx', content: 'export default () => null;' },
+              },
+            };
             yield {
               type: 'tool-result',
               payload: {
-                toolName: 'workspaceFileUpdateTool',
-                result: {
-                  workspaceChange: {
-                    writes: [{ path: 'src/app.ts', content: 'export const app = true;' }],
-                    deletes: ['src/old.ts'],
-                    revision: 7,
-                    updatedAt: '2026-03-24T00:07:00.000Z',
-                  },
-                },
+                toolName: 'mastra_workspace_write_file',
+                toolCallId: 'call-1',
+                result: 'Wrote 26 bytes to src/App.tsx',
               },
             };
-          })(),
-          textStream: (async function* () {})(),
-          object: Promise.resolve(null),
-        }),
+          } else {
+            yield {
+              type: 'tool-result',
+              payload: {
+                toolName: 'formDataUpdateTool',
+                toolCallId: 'call-x',
+                result: { id: 'form-1' },
+              },
+            };
+          }
+        })(),
+        textStream: (async function* () {})(),
+        object: Promise.resolve(null),
       });
+
+      return connect({ createProjector, stream });
+    }
+
+    it('emits workspace-change for mastra write_file tool-call/result pair', async () => {
+      const { socket, eventHandlers } = await connectWithProjector(true);
 
       await eventHandlers['message']({
         agent: 'builder',
@@ -137,39 +165,70 @@ describe('onIoConnection workspace socket events', () => {
           agent: 'builder',
           threadId: 'thread-1',
           replyTo: 'user-message-1',
-          toolName: 'workspaceFileUpdateTool',
-          writes: [{ path: 'src/app.ts', content: 'export const app = true;' }],
-          deletes: ['src/old.ts'],
-          revision: 7,
-          updatedAt: '2026-03-24T00:07:00.000Z',
+          toolName: 'mastra_workspace_write_file',
+          writes: [{ path: 'src/App.tsx', content: 'export default () => null;' }],
+          deletes: [],
           writeCount: 1,
-          deleteCount: 1,
+          deleteCount: 0,
         }),
       );
     });
 
     it('does not emit workspace-change for unrelated tool-result chunks', async () => {
-      const { socket, eventHandlers } = await connect({
-        stream: jest.fn().mockResolvedValue({
-          fullStream: (async function* () {
-            yield {
-              type: 'tool-result',
-              payload: {
-                toolName: 'formDataUpdateTool',
-                result: { id: 'form-1' },
-              },
-            };
-          })(),
-          textStream: (async function* () {})(),
-          object: Promise.resolve(null),
-        }),
-      });
+      const { socket, eventHandlers } = await connectWithProjector(false);
 
       await eventHandlers['message']({
         agent: 'builder',
         threadId: 'thread-1',
         messageId: 'user-message-1',
         content: 'Do something else',
+        rawChunks: true,
+      });
+
+      expect(socket.emit).not.toHaveBeenCalledWith('workspace-change', expect.anything());
+    });
+
+    it('does not emit workspace-change after tool-error clears the pending call', async () => {
+      const projector = new WorkspaceChangeProjector();
+      const createProjector = jest.fn().mockResolvedValue(projector);
+      const stream = jest.fn().mockResolvedValue({
+        fullStream: (async function* () {
+          yield {
+            type: 'tool-call',
+            payload: {
+              toolName: 'mastra_workspace_write_file',
+              toolCallId: 'call-error',
+              args: { path: 'src/App.tsx', content: 'export default () => null;' },
+            },
+          };
+          yield {
+            type: 'tool-error',
+            payload: {
+              toolName: 'mastra_workspace_write_file',
+              toolCallId: 'call-error',
+              error: 'write failed',
+            },
+          };
+          yield {
+            type: 'tool-result',
+            payload: {
+              toolName: 'mastra_workspace_write_file',
+              toolCallId: 'call-error',
+              result: 'Wrote 26 bytes to src/App.tsx',
+            },
+          };
+        })(),
+        textStream: (async function* () {})(),
+        object: Promise.resolve(null),
+      });
+
+      const { socket, eventHandlers } = await connect({ createProjector, stream });
+
+      await eventHandlers['message']({
+        agent: 'builder',
+        threadId: 'thread-1',
+        messageId: 'user-message-1',
+        content: 'Update the app',
         rawChunks: true,
       });
 
