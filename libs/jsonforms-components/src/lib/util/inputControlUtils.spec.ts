@@ -26,10 +26,8 @@ describe('isNilOrEmptyString', () => {
     expect(isNilOrEmptyString('')).toBe(true);
   });
 
-  it('returns false for non-empty values', () => {
+  it('returns false for non-empty string', () => {
     expect(isNilOrEmptyString('value')).toBe(false);
-    expect(isNilOrEmptyString(0)).toBe(false);
-    expect(isNilOrEmptyString(false)).toBe(false);
   });
 });
 
@@ -40,6 +38,11 @@ describe('isNilOrEmptyValue', () => {
 
   it('returns true for empty array when includeEmptyArray=true', () => {
     expect(isNilOrEmptyValue([], true)).toBe(true);
+  });
+
+  it('returns false for non-string primitives', () => {
+    expect(isNilOrEmptyValue(0)).toBe(false);
+    expect(isNilOrEmptyValue(false)).toBe(false);
   });
 });
 
