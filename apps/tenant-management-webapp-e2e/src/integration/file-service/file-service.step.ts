@@ -510,10 +510,16 @@ When(
         for (let i = 0; i < readRoles.length; i++) {
           fileServiceObj
             .fileTypePageCheckboxesTables()
-            .find('goa-checkbox[testid="FileType-read-role-checkbox-' + readRoles[i].trim() + '"]')
-            .shadow()
-            .find('[class^="container"]')
+            .find('.role-name')
+            .contains(readRoles[i].trim())
+            .next()
+            .find('input[type="checkbox"]')
+            .scrollIntoView()
             .click({ force: true, multiple: true });
+          //   .find('goa-checkbox[testid="FileType-read-role-checkbox-' + readRoles[i].trim() + '"]')
+          //   .shadow()
+          //   .find('[class^="container"]')
+          //   .click({ force: true, multiple: true });
         }
       }
 
