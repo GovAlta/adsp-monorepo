@@ -511,7 +511,6 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
         }
         // Send request to replace configuration
         //Import configuration replaces (REPLACE operation in PATCH) the configuration stored in latest revision
-        console.log(body);
         yield call(
           axios.patch,
           `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
