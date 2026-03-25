@@ -14,8 +14,34 @@ import {
   onChangeForDateTimeControl,
   isRequiredAndHasNoData,
   isNotKeyPressTabOrShift,
+  isNilOrEmptyString,
+  isNilOrEmptyValue,
 } from './inputControlUtils';
 import { ControlProps } from '@jsonforms/core';
+
+describe('isNilOrEmptyString', () => {
+  it('returns true for undefined, null, and empty string', () => {
+    expect(isNilOrEmptyString(undefined)).toBe(true);
+    expect(isNilOrEmptyString(null)).toBe(true);
+    expect(isNilOrEmptyString('')).toBe(true);
+  });
+
+  it('returns false for non-empty values', () => {
+    expect(isNilOrEmptyString('value')).toBe(false);
+    expect(isNilOrEmptyString(0)).toBe(false);
+    expect(isNilOrEmptyString(false)).toBe(false);
+  });
+});
+
+describe('isNilOrEmptyValue', () => {
+  it('returns false for empty array by default', () => {
+    expect(isNilOrEmptyValue([])).toBe(false);
+  });
+
+  it('returns true for empty array when includeEmptyArray=true', () => {
+    expect(isNilOrEmptyValue([], true)).toBe(true);
+  });
+});
 
 describe('onChangeForCheckboxData', () => {
   it('should add a checkbox value when data is an array with other values', () => {
@@ -235,6 +261,16 @@ describe('isRequiredAndHasNoData', () => {
       data: 'value',
     } as unknown as ControlProps;
     expect(isRequiredAndHasNoData(props)).toBe(false);
+  });
+
+  it('should return true when field is required and data is null', () => {
+    const props = {
+      handleChange: mockHandleChange,
+      path: 'testPath',
+      required: true,
+      data: null,
+    } as unknown as ControlProps;
+    expect(isRequiredAndHasNoData(props)).toBe(true);
   });
 });
 

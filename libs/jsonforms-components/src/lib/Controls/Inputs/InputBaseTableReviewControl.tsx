@@ -3,7 +3,7 @@ import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue, RequiredTextLabel } from './style-component';
-import { convertToReadableFormat, getLastSegmentFromPointer } from '../../util';
+import { convertToReadableFormat, getLastSegmentFromPointer, isNilOrEmptyValue } from '../../util';
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { GoabButton, GoabFormItem } from '@abgov/react-components';
 
@@ -154,11 +154,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
     }
   }
 
-  if (
-    required &&
-    (data === undefined || data === null || data === '' || (Array.isArray(data) && data.length === 0)) &&
-    !activeError
-  ) {
+  if (required && isNilOrEmptyValue(data, true) && !activeError) {
     activeError = `${labelToUpdate} is required`;
   }
 

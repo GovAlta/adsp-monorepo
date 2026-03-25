@@ -4,13 +4,24 @@ import { isValidDate } from './stringUtils';
 import { standardizeDate } from './dateUtils';
 
 /**
+ * Returns true when a value is undefined, null, or an empty string.
+ */
+export const isNilOrEmptyString = (value: unknown): boolean => value === undefined || value === null || value === '';
+
+/**
+ * Returns true when a value is undefined, null, empty string, or (optionally) an empty array.
+ */
+export const isNilOrEmptyValue = (value: unknown, includeEmptyArray = false): boolean =>
+  isNilOrEmptyString(value) || (includeEmptyArray && Array.isArray(value) && value.length === 0);
+
+/**
  * Checks input controls data value to determine is required and has any data.
  * @param props - The JsonForm control props
  * @returns true if there is no data and is a required field
  */
 export const isRequiredAndHasNoData = (props: ControlProps) => {
   const { data, required } = props;
-  return required && (data === undefined || data?.length === 0);
+  return required && (isNilOrEmptyString(data) || (Array.isArray(data) && data.length === 0));
 };
 
 /**
