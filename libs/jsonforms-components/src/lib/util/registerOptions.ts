@@ -8,6 +8,9 @@ const defineFields = <T extends Record<string, UserFieldDefinition>>(fields: T) 
 
 export const OPTION_DEFINITIONS = defineFields({
   mainTitle: { schema: 'Main form title' },
+  enableEmail: { schema: true },
+  enablePhone: { schema: true },
+  emailFirst: { schema: true },
   noDataMessage: { schema: 'no data' },
   detail: { name: 'maxItems', schema: { maxItems: 42 } },
   componentProps: { name: 'readOnly', schema: { readOnly: true } },
