@@ -4,6 +4,7 @@ import { GoabButton, GoabFormItem } from '@abgov/react-components';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue } from '../Inputs/style-component';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { isNilOrEmptyString } from '../../util';
 
 type FullNameControlReviewProps = ControlProps;
 
@@ -12,8 +13,7 @@ export const FullNameControlReview = (props: FullNameControlReviewProps): JSX.El
   const stepId = props.uischema?.options?.stepId;
   const { uischema, data, id } = props;
   const requiredFields = props.schema?.required ?? [];
-  const isMissing = (value: string | null | undefined): boolean =>
-    value === undefined || value === null || value === '';
+  const isMissing = (value: string | null | undefined): boolean => isNilOrEmptyString(value);
 
   const renderRow = (fieldLabel: string, value: string, fieldName: string, testId: string) => (
     <tr key={testId}>

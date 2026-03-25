@@ -4,6 +4,7 @@ import { ControlProps } from '@jsonforms/core';
 import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue } from '../Inputs/style-component';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
+import { isNilOrEmptyString } from '../../util';
 
 type DateOfBirthReviewControlProps = ControlProps;
 
@@ -12,8 +13,7 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
   const context = useContext(JsonFormsStepperContext);
   const stepId = uischema?.options?.stepId;
   const requiredFields = props.schema?.required ?? [];
-  const isMissing = (value: string | null | undefined): boolean =>
-    value === undefined || value === null || value === '';
+  const isMissing = (value: string | null | undefined): boolean => isNilOrEmptyString(value);
 
   const renderRow = (fieldLabel: string, value: string, fieldName: string, testId: string) => (
     <tr key={testId}>
