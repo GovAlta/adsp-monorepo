@@ -947,11 +947,16 @@ export function AddEditFormDefinitionEditor({
               </Tab>
 
               {showDataRegister && (
-                <Tab label="Data Registers" data-testid="form-data-registers-tab" isTightContent={true}>
+                <Tab label="Data registers" data-testid="form-data-registers-tab" isTightContent={true}>
                   <DataRegisters
                     registerData={_registerData}
                     onAdd={(newRegisterData) => {
                       setRegisterData(newRegisterData);
+                    }}
+                    onDelete={(deleted) => {
+                      setRegisterData((prev: RegisterConfigData[] | null) =>
+                        (prev ?? []).filter((r: RegisterConfigData) => r.urn !== deleted.urn),
+                      );
                     }}
                   />
                 </Tab>
