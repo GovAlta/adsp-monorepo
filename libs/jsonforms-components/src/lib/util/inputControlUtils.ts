@@ -1,19 +1,7 @@
 import { ControlProps } from '@jsonforms/core';
 import { EventBlurControlProps, EventChangeControlProps, EventKeyPressControlProps } from '../Controls/Inputs/type';
-import { isValidDate } from './stringUtils';
+import { isValidDate, isNilOrEmptyValue } from './stringUtils';
 import { standardizeDate } from './dateUtils';
-
-/**
- * Returns true when a value is undefined, null, or an empty string.
- */
-export const isNilOrEmptyString = (value: string | null | undefined): boolean =>
-  value === undefined || value === null || value === '';
-
-/**
- * Returns true when a value is undefined, null, empty string, or (optionally) an empty array.
- */
-export const isNilOrEmptyValue = (value: unknown, includeEmptyArray = false): boolean =>
-  value === undefined || value === null || value === '' || (includeEmptyArray && Array.isArray(value) && value.length === 0);
 
 /**
  * Checks input controls data value to determine is required and has any data.

@@ -14,37 +14,8 @@ import {
   onChangeForDateTimeControl,
   isRequiredAndHasNoData,
   isNotKeyPressTabOrShift,
-  isNilOrEmptyString,
-  isNilOrEmptyValue,
 } from './inputControlUtils';
 import { ControlProps } from '@jsonforms/core';
-
-describe('isNilOrEmptyString', () => {
-  it('returns true for undefined, null, and empty string', () => {
-    expect(isNilOrEmptyString(undefined)).toBe(true);
-    expect(isNilOrEmptyString(null)).toBe(true);
-    expect(isNilOrEmptyString('')).toBe(true);
-  });
-
-  it('returns false for non-empty string', () => {
-    expect(isNilOrEmptyString('value')).toBe(false);
-  });
-});
-
-describe('isNilOrEmptyValue', () => {
-  it('returns false for empty array by default', () => {
-    expect(isNilOrEmptyValue([])).toBe(false);
-  });
-
-  it('returns true for empty array when includeEmptyArray=true', () => {
-    expect(isNilOrEmptyValue([], true)).toBe(true);
-  });
-
-  it('returns false for non-string primitives', () => {
-    expect(isNilOrEmptyValue(0)).toBe(false);
-    expect(isNilOrEmptyValue(false)).toBe(false);
-  });
-});
 
 describe('onChangeForCheckboxData', () => {
   it('should add a checkbox value when data is an array with other values', () => {

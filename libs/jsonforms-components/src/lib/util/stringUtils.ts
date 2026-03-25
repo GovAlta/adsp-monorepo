@@ -59,6 +59,18 @@ export const isEmptyNumber = (schema: JsonSchema, data: unknown): boolean => {
   );
 };
 
+/**
+ * Returns true when a value is undefined, null, or an empty string.
+ */
+export const isNilOrEmptyString = (value: string | null | undefined): boolean =>
+  value === undefined || value === null || value === '';
+
+/**
+ * Returns true when a value is undefined, null, empty string, or (optionally) an empty array.
+ */
+export const isNilOrEmptyValue = (value: unknown, includeEmptyArray = false): boolean =>
+  value === undefined || value === null || value === '' || (includeEmptyArray && Array.isArray(value) && value.length === 0);
+
 export const validateSinWithLuhn = (input: number): boolean => {
   const cardNumber = input.toString();
   const digits = cardNumber.replace(/\D/g, '').split('').map(Number);
