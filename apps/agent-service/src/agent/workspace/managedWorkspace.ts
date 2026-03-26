@@ -1,5 +1,5 @@
 import { dirname, posix } from 'node:path';
-import { Readable } from 'node:stream';
+import { PassThrough, Readable } from 'node:stream';
 import { createGunzip } from 'node:zlib';
 import { InvalidOperationError, InvalidValueError } from '@core-services/core-common';
 import { Workspace } from '@mastra/core/workspace';
@@ -106,7 +106,7 @@ function decodeTarball(data: Uint8Array | Buffer | Readable): Readable {
     let isGzip = false;
     let firstChunk: Buffer | null = null;
 
-    const peekStream = new (require('node:stream').PassThrough)();
+    const peekStream = new PassThrough();
 
     data.on('data', (chunk: Buffer) => {
       if (firstChunk === null) {
