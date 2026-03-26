@@ -193,8 +193,8 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     const workspace = await this.getManagedWorkspace(user, threadId);
 
     const tarballId = AdspId.parse(tarballUrn);
-    const { data } = await this.fileServiceClient.getFileAndMetadata(this.tenantId, tarballId);
-    const revision = await workspace.initializeFromTarball(data);
+    const { stream } = await this.fileServiceClient.getFileStream(this.tenantId, tarballId);
+    const revision = await workspace.initializeFromTarball(stream);
 
     this.logger.info(`Workspace initialized for thread ${threadId} from tarball ${tarballUrn}.`, {
       context: 'AgentBroker',
