@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
+import { ControlProps, UISchemaElement, JsonSchema, JsonSchema7 } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue, RequiredTextLabel } from './style-component';
@@ -9,6 +9,7 @@ import { GoabButton, GoabFormItem } from '@abgov/react-components';
 
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
+import { isRequiredBySchema } from '../../util/requiredUtil';
 
 export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null => {
   const { data, uischema, label, schema, rootSchema, path, errors, enabled, cells, required, visible } = props;
@@ -118,6 +119,14 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
   };
 
   const matchedError = findMatchingError(jsonForms.core?.errors);
+  const scopeDerivedPath = uischema.scope?.startsWith('#/') ? getLastSegmentFromPointer(uischema.scope) : undefined;
+  const requiredByCondition =
+    isRequiredBySchema(rootSchema as JsonSchema7, jsonForms.core?.data, path, {
+      strategy: 'bestMatch',
+    }) ||
+    isRequiredBySchema(rootSchema as JsonSchema7, jsonForms.core?.data, scopeDerivedPath, {
+      strategy: 'bestMatch',
+    });
   let activeError: string | undefined;
   if (matchedError) {
     try {
@@ -131,7 +140,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
         activeError = humanizeAjvError(
           matchedError,
           ((rootSchema as JsonSchema) ?? (schema as JsonSchema)) as JsonSchema,
-          uischema as UISchemaElement
+          uischema as UISchemaElement,
         );
       }
     } catch (err) {
@@ -154,7 +163,11 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
     }
   }
 
-  if (required && isNilOrEmptyValue(data, true) && !activeError) {
+  if (!activeError && typeof errors === 'string' && errors.trim() !== '') {
+    activeError = errors;
+  }
+
+  if ((required || requiredByCondition) && isNilOrEmptyValue(data, true) && !activeError) {
     activeError = `${labelToUpdate} is required`;
   }
 
@@ -167,7 +180,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
         <ReviewHeader>
           <ReviewLabel>
             {labelToUpdate}
-            {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
+            {(required || requiredByCondition) && <RequiredTextLabel> (required)</RequiredTextLabel>}
           </ReviewLabel>
           {stepId !== undefined && (
             <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId, uischema.scope)}>

@@ -525,6 +525,22 @@ describe('Can render GoAInputBaseTableReview', () => {
     expect(errorFormItem?.getAttribute('error')).toMatch(/required/i);
   });
 
+  it('renders conditional required error from AJV errors even when required=false', () => {
+    const props = {
+      ...baseTableReviewProps,
+      label: 'Describe your dispute in a few words',
+      path: 'whichOfThemAppliesOther',
+      data: '',
+      required: false,
+      errors: 'Describe your dispute in a few words is required',
+    };
+
+    const { baseElement } = render(<GoAInputBaseTableReview {...props} />);
+    const errorFormItem = baseElement.querySelector('goa-form-item[error]');
+    expect(errorFormItem).toBeTruthy();
+    expect(errorFormItem?.getAttribute('error')).toBe('Describe your dispute in a few words is required');
+  });
+
   it('renders JsonFormsDispatch for non-primitive review values', () => {
     const props = {
       ...baseTableReviewProps,
