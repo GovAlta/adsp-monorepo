@@ -2003,6 +2003,86 @@ Populate a dropdown with data from an external REST API using a URL register
 - Set \`enum: [""]\` as a placeholder in the data schema — the actual values are loaded from the API
 - Requires the JsonFormRegisterProvider context wrapper in the React integration
 
+## Data Register — Weekdays (String Array)
+Populate a dropdown with a reusable list of weekdays stored as a string-array data register in the Configuration Service
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "preferredDay": {
+      "type": "string",
+      "enum": [
+        ""
+      ]
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/preferredDay",
+  "label": "Preferred Day",
+  "options": {
+    "register": {
+      "urn": "urn:ads:platform:configuration:v2:/configuration/data-register/weekdays"
+    }
+  }
+}
+\`\`\`
+
+### Notes
+- The register data is a simple string array: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+- For string arrays, each value is used as both the label and value in the dropdown
+- Set \`enum: [""]\` as a placeholder in the data schema — the actual values are loaded from the register at runtime
+- The \`options.register.urn\` points to a Configuration Service data-register definition
+- Use \`dataRegisterListTool\` to find existing registers and \`dataRegisterCreateTool\` to create new ones
+
+## Data Register — Object Array with Label/Value Mapping
+Populate a dropdown from an object-array data register using options.label and options.value to map display text and stored value
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "ministry": {
+      "type": "string",
+      "enum": [
+        ""
+      ]
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Control",
+  "scope": "#/properties/ministry",
+  "label": "Ministry",
+  "options": {
+    "register": {
+      "urn": "urn:ads:platform:configuration:v2:/configuration/data-register/goa-ministries"
+    },
+    "label": "ministryName",
+    "value": "ministryCode"
+  }
+}
+\`\`\`
+
+### Notes
+- The register data is an array of objects, e.g.: [{"ministryCode": "EDUC", "ministryName": "Education"}, {"ministryCode": "HLTH", "ministryName": "Health"}]
+- Use \`options.label\` to specify which object property to display in the dropdown (defaults to \`"label"\` if omitted)
+- Use \`options.value\` to specify which object property to store as the form value (defaults to \`"value"\` if omitted)
+- The mapping uses lodash \`_.get()\` so nested paths like \`"details.name"\` are supported
+- Set \`enum: [""]\` as a placeholder in the data schema — the actual values are loaded from the register at runtime
+
 # Complex Scenario Examples
 
 ## Full Government Application Form
