@@ -234,6 +234,128 @@ describe('onIoConnection workspace socket events', () => {
 
       expect(socket.emit).not.toHaveBeenCalledWith('workspace-change', expect.anything());
     });
+
+    it('emits workspace-change for one-level nested sub-agent workspace tool chunks', async () => {
+      const projector = new WorkspaceChangeProjector();
+      const createProjector = jest.fn().mockResolvedValue(projector);
+      const stream = jest.fn().mockResolvedValue({
+        fullStream: (async function* () {
+          yield {
+            type: 'tool-call',
+            payload: {
+              toolName: 'builderPrototypeCoderAgent',
+              toolCallId: 'subagent-call-1',
+              args: {},
+            },
+          };
+          yield {
+            type: 'tool-result',
+            payload: {
+              toolName: 'builderPrototypeCoderAgent',
+              toolCallId: 'subagent-call-1',
+              result: {
+                chunks: [
+                  {
+                    type: 'tool-call',
+                    payload: {
+                      toolName: 'mastra_workspace_write_file',
+                      toolCallId: 'nested-write-1',
+                      args: { path: 'src/App.tsx', content: 'export default function App() { return null; }' },
+                    },
+                  },
+                  {
+                    type: 'tool-result',
+                    payload: {
+                      toolName: 'mastra_workspace_write_file',
+                      toolCallId: 'nested-write-1',
+                      result: 'Wrote file',
+                    },
+                  },
+                ],
+              },
+            },
+          };
+        })(),
+        textStream: (async function* () {})(),
+        object: Promise.resolve(null),
+      });
+
+      const { socket, eventHandlers } = await connect({ createProjector, stream });
+
+      await eventHandlers['message']({
+        agent: 'builder',
+        threadId: 'thread-1',
+        messageId: 'user-message-1',
+        content: 'Update app using sub-agent',
+        rawChunks: true,
+      });
+
+      expect(socket.emit).toHaveBeenCalledWith(
+        'workspace-change',
+        expect.objectContaining({
+          agent: 'builder',
+          threadId: 'thread-1',
+          replyTo: 'user-message-1',
+          toolName: 'mastra_workspace_write_file',
+          writes: [{ path: 'src/App.tsx', content: 'export default function App() { return null; }' }],
+          deletes: [],
+          writeCount: 1,
+          deleteCount: 0,
+        }),
+      );
+    });
+
+    it('emits workspace-change for subAgentToolResults payload shape', async () => {
+      const projector = new WorkspaceChangeProjector();
+      const createProjector = jest.fn().mockResolvedValue(projector);
+      const stream = jest.fn().mockResolvedValue({
+        fullStream: (async function* () {
+          yield {
+            type: 'tool-result',
+            payload: {
+              toolName: 'builderPrototypeCoderAgent',
+              toolCallId: 'subagent-call-2',
+              result: {
+                subAgentToolResults: [
+                  {
+                    toolName: 'mastra_workspace_write_file',
+                    toolCallId: 'nested-write-2',
+                    args: { path: 'src/main.tsx', content: 'console.log("updated");' },
+                    result: 'Wrote file',
+                  },
+                ],
+              },
+            },
+          };
+        })(),
+        textStream: (async function* () {})(),
+        object: Promise.resolve(null),
+      });
+
+      const { socket, eventHandlers } = await connect({ createProjector, stream });
+
+      await eventHandlers['message']({
+        agent: 'builder',
+        threadId: 'thread-1',
+        messageId: 'user-message-1',
+        content: 'Update app using sub-agent',
+        rawChunks: true,
+      });
+
+      expect(socket.emit).toHaveBeenCalledWith(
+        'workspace-change',
+        expect.objectContaining({
+          agent: 'builder',
+          threadId: 'thread-1',
+          replyTo: 'user-message-1',
+          toolName: 'mastra_workspace_write_file',
+          writes: [{ path: 'src/main.tsx', content: 'console.log("updated");' }],
+          deletes: [],
+          writeCount: 1,
+          deleteCount: 0,
+        }),
+      );
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -317,6 +439,31 @@ describe('onIoConnection workspace socket events', () => {
       await eventHandlers['workspace-init']('not-an-object');
 
       expect(socket.emit).toHaveBeenCalledWith('error', expect.any(String));
+    });
+
+    it('logs a warning when workspace initialization fails', async () => {
+      const { socket, eventHandlers } = await connect({
+        initializeWorkspace: jest.fn().mockRejectedValue(new Error('Invalid tar header')),
+      });
+
+      await eventHandlers['workspace-init']({
+        agent: 'builder',
+        threadId: 'thread-1',
+        workspaceTarball: 'urn:ads:platform:file-service:v1:/files/abc',
+      });
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Workspace initialization failed for agent builder.',
+        expect.objectContaining({
+          context: 'AgentRouter',
+          tenant: 'urn:ads:platform:tenant-service:v2:/tenants/test',
+          user: 'Alice (ID: user-1)',
+          threadId: 'thread-1',
+          workspaceTarball: 'urn:ads:platform:file-service:v1:/files/abc',
+          error: 'Invalid tar header',
+        }),
+      );
+      expect(socket.emit).toHaveBeenCalledWith('error', 'Invalid tar header');
     });
   });
 
