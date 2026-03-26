@@ -1,4 +1,5 @@
 import { DevToolsEnhancerOptions, configureStore } from '@reduxjs/toolkit';
+import { AGENT_FEATURE_KEY, agentReducer } from './agent.slice';
 import { CONFIG_FEATURE_KEY, configReducer } from './config.slice';
 import { USER_FEATURE_KEY, userReducer } from './user.slice';
 
@@ -19,6 +20,7 @@ const reduxDevToolsLogOnly: DevToolsEnhancerOptions = {
 
 export const store = configureStore({
   reducer: {
+    [AGENT_FEATURE_KEY]: agentReducer,
     [CONFIG_FEATURE_KEY]: configReducer,
     [USER_FEATURE_KEY]: userReducer,
   },

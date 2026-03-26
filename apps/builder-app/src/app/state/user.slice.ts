@@ -27,6 +27,11 @@ export interface UserState {
 
 let client: Keycloak | undefined;
 
+function resolveRedirectUri(from: string): string {
+  const target = (from || '/').trim();
+  return new URL(target, window.location.origin).href;
+}
+
 async function initializeKeycloakClient(dispatch: Dispatch, realm: string, config: ConfigState) {
   if (client?.realm !== realm) {
     client = new Keycloak({
@@ -35,21 +40,43 @@ async function initializeKeycloakClient(dispatch: Dispatch, realm: string, confi
       realm,
     });
 
+    client.onAuthLogout = () => {
+      dispatch(userActions.clearUser());
+    };
+  }
+
+  // Always call init to process any auth code in the URL and check SSO status
+  if (client && !client.authenticated) {
     try {
       await client.init({
         onLoad: 'check-sso',
         pkceMethod: 'S256',
+        checkLoginIframe: true,
         silentCheckSsoRedirectUri: new URL('/silent-check-sso.html', window.location.href).href,
       });
-      client.onAuthLogout = () => {
-        dispatch(userActions.clearUser());
-      };
     } catch {
       // Keycloak can throw undefined in some browser states.
     }
   }
 
   return client;
+}
+
+export async function getAccessToken(dispatch: Dispatch, realm: string, config: ConfigState): Promise<string | null> {
+  const keycloak = await initializeKeycloakClient(dispatch, realm, config);
+
+  if (!keycloak?.authenticated) {
+    return null;
+  }
+
+  try {
+    await keycloak.updateToken(30);
+  } catch {
+    dispatch(userActions.clearUser());
+    return null;
+  }
+
+  return keycloak.token ?? null;
 }
 
 const getIdpHint = (): string => {
@@ -131,7 +158,7 @@ export const loginUser = createAsyncThunk(
 
     await keycloak.login({
       idpHint: getIdpHint(),
-      redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
+      redirectUri: resolveRedirectUri(from),
     });
 
     return null;
@@ -150,7 +177,7 @@ export const loginUserWithIDP = createAsyncThunk(
 
     await keycloak.login({
       idpHint: idpFromUrl,
-      redirectUri: from === '/' ? new URL('/auth/callback?from=/', window.location.href).href : from,
+      redirectUri: resolveRedirectUri(from),
     });
 
     return null;
@@ -168,7 +195,7 @@ export const logoutUser = createAsyncThunk(
     }
 
     await keycloak.logout({
-      redirectUri: new URL(`/auth/callback?from=${from}`, window.location.href).href,
+      redirectUri: resolveRedirectUri(from),
     });
   },
 );
