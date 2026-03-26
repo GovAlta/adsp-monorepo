@@ -1,4 +1,5 @@
 import { MASTRA_THREAD_ID_KEY, RequestContext } from '@mastra/core/request-context';
+import { Readable } from 'node:stream';
 import { AgentBroker } from './broker';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -183,7 +184,10 @@ describe('AgentBroker', () => {
         getWorkspace: jest.fn().mockResolvedValue(workspace),
       };
       const fileServiceClient = {
-        getFileAndMetadata: jest.fn().mockResolvedValue({ data: new Uint8Array(tarball), metadata: {} }),
+        getFileStream: jest.fn().mockResolvedValue({
+          stream: Readable.from(Buffer.from(tarball)),
+          metadata: {},
+        }),
       };
       const broker = new AgentBroker(
         logger as never,

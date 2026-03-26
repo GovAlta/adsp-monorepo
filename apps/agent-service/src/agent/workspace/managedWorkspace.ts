@@ -1,6 +1,6 @@
 import { dirname, posix } from 'node:path';
-import { Readable } from 'node:stream';
-import { gunzipSync } from 'node:zlib';
+import { PassThrough, Readable } from 'node:stream';
+import { createGunzip } from 'node:zlib';
 import { InvalidOperationError, InvalidValueError } from '@core-services/core-common';
 import { Workspace } from '@mastra/core/workspace';
 import * as tarStream from 'tar-stream';
@@ -97,18 +97,66 @@ function validateWorkspacePath(path: string): string {
   return normalized;
 }
 
-function decodeTarball(data: Uint8Array | Buffer): Buffer {
-  const buffer = Buffer.from(data);
-  const isGzip = buffer.length >= 2 && buffer[0] === 0x1f && buffer[1] === 0x8b;
-  if (!isGzip) {
-    return buffer;
+function decodeTarball(data: Uint8Array | Buffer | Readable): Readable {
+  // If already a readable stream, assume it's the file download stream
+  if (data instanceof Readable) {
+    const gunzip = createGunzip();
+
+    // Detect if stream is gzipped by peeking at first bytes
+    let isGzip = false;
+    let firstChunk: Buffer | null = null;
+
+    const peekStream = new PassThrough();
+
+    data.on('data', (chunk: Buffer) => {
+      if (firstChunk === null) {
+        firstChunk = chunk;
+        // Check magic bytes
+        if (chunk.length >= 2 && chunk[0] === 0x1f && chunk[1] === 0x8b) {
+          isGzip = true;
+        }
+      }
+
+      if (isGzip) {
+        gunzip.write(chunk);
+      } else {
+        peekStream.write(chunk);
+      }
+    });
+
+    data.on('end', () => {
+      if (isGzip) {
+        gunzip.end();
+      } else {
+        peekStream.end();
+      }
+    });
+
+    data.on('error', (err) => {
+      gunzip.destroy(err);
+      peekStream.destroy(err);
+    });
+
+    return isGzip ? gunzip : peekStream;
   }
 
-  try {
-    return gunzipSync(buffer);
-  } catch {
-    throw new InvalidOperationError('Workspace tarball could not be decompressed as gzip data.');
+  // Handle buffer input (original behavior)
+  const buffer = Buffer.from(data);
+  const isGzip = buffer.length >= 2 && buffer[0] === 0x1f && buffer[1] === 0x8b;
+
+  const readable = Readable.from(buffer);
+  if (!isGzip) {
+    return readable;
   }
+
+  const gunzip = createGunzip();
+  readable.pipe(gunzip);
+
+  gunzip.on('error', () => {
+    throw new InvalidOperationError('Workspace tarball could not be decompressed as gzip data.');
+  });
+
+  return gunzip;
 }
 
 function resolveTarEntryPath(path: string): string | undefined {
@@ -304,7 +352,7 @@ export class ManagedWorkspace {
     return this.setRevision(current.revision + 1);
   }
 
-  public async initializeFromTarball(data: Uint8Array | Buffer): Promise<WorkspaceRevisionMetadata> {
+  public async initializeFromTarball(data: Uint8Array | Buffer | Readable): Promise<WorkspaceRevisionMetadata> {
     await this.clear();
     const tarData = decodeTarball(data);
 
@@ -342,7 +390,7 @@ export class ManagedWorkspace {
       extract.on('finish', resolve);
       extract.on('error', reject);
 
-      Readable.from(tarData).pipe(extract);
+      tarData.pipe(extract);
     });
 
     return this.setRevision(1);
