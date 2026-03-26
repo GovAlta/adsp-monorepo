@@ -37,12 +37,11 @@ import {
   FETCH_REGISTER_DATA_ACTION,
   getRegisterDataAction,
   getRegisterDataSuccessAction,
-  FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
 } from './action';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '..';
-import { select, call, put, takeEvery, all, take } from 'redux-saga/effects';
+import { select, call, put, takeEvery, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { jsonSchemaCheck } from '@lib/validation/checkInput';
 import { getAccessToken } from '@store/tenant/sagas';
@@ -228,8 +227,6 @@ export function* fetchConfigurationRevisions(action: FetchConfigurationRevisions
 
 export function* fetchRegisterData(): SagaIterator {
   try {
-    take(FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION);
-
     const configBaseUrl: string = yield select(
       (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
     );
@@ -296,12 +293,13 @@ export function* fetchRegisterData(): SagaIterator {
             data: data?.configuration,
           });
         }
-
-        yield put(getRegisterDataSuccessAction(registerData, dataList, anonymousRead));
       } catch (error) {
-        console.warn(`Error in fetching the register data from service: ${registerConfig}`);
+        console.warn(`Error in fetching the register data from service: ${registerConfig.name}`);
       }
     }
+
+    // Dispatch once with a new array so Redux detects the state change.
+    yield put(getRegisterDataSuccessAction([...registerData], dataList, anonymousRead));
   } catch (error) {
     console.warn(`Error in fetching the register data from service: ${error}`);
   }
@@ -555,6 +553,7 @@ export function* resetReplaceList(_action: ResetReplaceConfigurationListAction):
   yield put(resetReplaceConfigurationListSuccessAction());
   replaceErrorConfiguration = [];
 }
+
 export function* watchConfigurationSagas(): Generator {
   yield takeEvery(FETCH_CONFIGURATION_DEFINITIONS_ACTION, fetchConfigurationDefinitions);
   yield takeEvery(UPDATE_CONFIGURATION_DEFINITION_ACTION, updateConfigurationDefinition);

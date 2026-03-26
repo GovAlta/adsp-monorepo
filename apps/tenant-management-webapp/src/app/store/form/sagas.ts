@@ -66,7 +66,6 @@ import {
   deleteResourceSuccessTags,
   clearAllTags,
   INITIALIZE_FORM_EDITOR,
-
 } from './action';
 import {
   fetchFormDefinitionsApi,
@@ -94,10 +93,11 @@ import { getTaskQueues } from '@store/task/action';
 import { FetchFileTypeService } from '@store/file/actions';
 import { fetchCalendars } from '@store/calendar/actions';
 import { AGENT_RESPONSE_ACTION, AgentResponseAction } from '../agent/actions';
+import { getConfigurationDefinitions } from '../configuration/action';
 
 export function* fetchFormDefinitions(payload): SagaIterator {
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
   const next = payload.next ?? '';
@@ -108,7 +108,7 @@ export function* fetchFormDefinitions(payload): SagaIterator {
       yield put(
         UpdateIndicator({
           show: true,
-        })
+        }),
       );
       const definitions = results.reduce((acc, def) => {
         if (def.latest?.configuration?.id) {
@@ -122,7 +122,7 @@ export function* fetchFormDefinitions(payload): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
       yield put(getFormDefinitionsSuccess(definitions, page.next, page.after));
     } catch (err) {
@@ -130,7 +130,7 @@ export function* fetchFormDefinitions(payload): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -163,7 +163,7 @@ export function* exportFormInfo(payload): SagaIterator {
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
   }
 }
@@ -219,7 +219,7 @@ export function* deleteFormDefinition({ definition }: DeleteFormDefinitionAction
     UpdateIndicator({
       show: true,
       message: 'Deleting Definition...',
-    })
+    }),
   );
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
@@ -230,14 +230,14 @@ export function* deleteFormDefinition({ definition }: DeleteFormDefinitionAction
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -337,7 +337,7 @@ export function* fetchFormMetrics(): SagaIterator {
       fetchFormMetricsSuccess({
         formsCreated: parseInt(metrics[formsCreatedMetric]?.values[0]?.sum || '0', 10),
         formsSubmitted: parseInt(metrics[formsSubmittedMetric]?.values[0]?.sum || '0', 10),
-      })
+      }),
     );
   });
 }
@@ -347,7 +347,7 @@ export function* tagFormResource({ tag, isTagAdded }: TagResourceAction): SagaIt
     UpdateIndicator({
       show: true,
       message: 'Add a tag...',
-    })
+    }),
   );
 
   const state: RootState = yield select();
@@ -372,14 +372,14 @@ export function* tagFormResource({ tag, isTagAdded }: TagResourceAction): SagaIt
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ message: 'Failed to add tag', error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -390,7 +390,7 @@ export function* unTagFormResource({ payload }: UnTagResourceAction): SagaIterat
     UpdateIndicator({
       show: true,
       message: 'untag resource...',
-    })
+    }),
   );
 
   const state: RootState = yield select();
@@ -403,14 +403,14 @@ export function* unTagFormResource({ payload }: UnTagResourceAction): SagaIterat
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ message: 'Failed to un tag a resource', error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -420,7 +420,7 @@ export function* fetchFormResourceTags({ payload }: FetchResourceTagsAction): Sa
     UpdateIndicator({
       show: true,
       message: 'Fetch resource tags...',
-    })
+    }),
   );
 
   const state: RootState = yield select();
@@ -438,14 +438,14 @@ export function* fetchFormResourceTags({ payload }: FetchResourceTagsAction): Sa
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ message: 'Failed to fetch resource tags', error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -456,7 +456,7 @@ export function* fetchFormTagByTagName({ payload }: FetchTagByTagNameAction): Sa
     UpdateIndicator({
       show: true,
       message: 'Get tag by tag name...',
-    })
+    }),
   );
 
   const state: RootState = yield select();
@@ -469,7 +469,7 @@ export function* fetchFormTagByTagName({ payload }: FetchTagByTagNameAction): Sa
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
   } catch (err) {
     //Tag not found response
@@ -481,7 +481,7 @@ export function* fetchFormTagByTagName({ payload }: FetchTagByTagNameAction): Sa
     yield put(
       UpdateIndicator({
         show: false,
-      })
+      }),
     );
   }
 }
@@ -606,6 +606,8 @@ export function* refreshDefinitionOnAgentResponse({ threadId, done }: AgentRespo
     const thread = threads[threadId];
     if (thread?.agent === 'formGenerationAgent') {
       yield call(refreshDefinition);
+      // Refresh data register definitions; its saga chains getRegisterDataAction() on success.
+      yield put(getConfigurationDefinitions());
     }
   }
 }
@@ -615,12 +617,14 @@ function* initializeFormEditorSaga() {
   const keycloakRoles = yield select((state) => state.serviceRoles.keycloak);
   const queueTasks = yield select((state: RootState) => state.task?.queues);
   const fileTypes = yield select((state: RootState) => state.fileService.fileTypes);
+  const registers = yield select((state: RootState) => state.configuration?.registers);
   try {
     yield all([
       ...(realmRoles == null ? [put(FetchRealmRoles())] : []),
       ...(keycloakRoles == null ? [put(fetchKeycloakServiceRoles())] : []),
       ...(queueTasks == null ? [put(getTaskQueues())] : []),
       ...(fileTypes == null ? [put(FetchFileTypeService())] : []),
+      ...(!registers || registers.length === 0 ? [put(getConfigurationDefinitions())] : []),
       put(fetchCalendars()),
     ]);
   } catch (e) {
@@ -650,5 +654,5 @@ export function* watchFormSagas(): Generator {
   yield takeEvery(FETCH_FORM_TAG_BY_TAG_NAME_ACTION, fetchFormTagByTagName);
   yield takeEvery(FETCH_ALL_TAGS_ACTION, fetchAllTags);
   yield takeLatest(FETCH_RESOURCES_BY_TAG_ACTION, fetchResourcesByTag);
-  yield takeLatest(AGENT_RESPONSE_ACTION, refreshDefinitionOnAgentResponse);
+  yield takeEvery(AGENT_RESPONSE_ACTION, refreshDefinitionOnAgentResponse);
 }

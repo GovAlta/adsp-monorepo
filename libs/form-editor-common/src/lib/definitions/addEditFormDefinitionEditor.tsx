@@ -180,6 +180,10 @@ export function AddEditFormDefinitionEditor({
   const editorRefUi = useRef(null);
   const [_registerData, setRegisterData] = useState<RegisterConfigData[] | null>(registerData);
 
+  useEffect(() => {
+    setRegisterData(registerData);
+  }, [registerData]);
+
   const uploadFile = (file: File, propertyId: string) => {
     const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId };
     dispatch(UploadFileService(fileInfo));
@@ -948,17 +952,7 @@ export function AddEditFormDefinitionEditor({
 
               {showDataRegister && (
                 <Tab label="Data registers" data-testid="form-data-registers-tab" isTightContent={true}>
-                  <DataRegisters
-                    registerData={_registerData}
-                    onAdd={(newRegisterData) => {
-                      setRegisterData(newRegisterData);
-                    }}
-                    onDelete={(deleted) => {
-                      setRegisterData((prev: RegisterConfigData[] | null) =>
-                        (prev ?? []).filter((r: RegisterConfigData) => r.urn !== deleted.urn),
-                      );
-                    }}
-                  />
+                  <DataRegisters registerData={_registerData} />
                 </Tab>
               )}
             </Tabs>

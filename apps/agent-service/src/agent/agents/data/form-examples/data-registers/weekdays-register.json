@@ -1,0 +1,37 @@
+{
+  "id": "weekdays-register",
+  "name": "Data Register — Weekdays (String Array)",
+  "category": "data-register",
+  "summary": "Populate a dropdown with a reusable list of weekdays stored as a string-array data register in the Configuration Service",
+  "whenToUse": [
+    "Dropdown where the user selects a day of the week",
+    "Simple string-array data register where label and value are the same",
+    "Demonstrating the simplest data register pattern"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "preferredDay": {
+        "type": "string",
+        "enum": [""]
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/preferredDay",
+    "label": "Preferred Day",
+    "options": {
+      "register": {
+        "urn": "urn:ads:platform:configuration:v2:/configuration/data-register/weekdays"
+      }
+    }
+  },
+  "notes": [
+    "The register data is a simple string array: [\"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\", \"Saturday\", \"Sunday\"]",
+    "For string arrays, each value is used as both the label and value in the dropdown",
+    "Set `enum: [\"\"]` as a placeholder in the data schema — the actual values are loaded from the register at runtime",
+    "The `options.register.urn` points to a Configuration Service data-register definition",
+    "Use `dataRegisterListTool` to find existing registers and `dataRegisterCreateTool` to create new ones"
+  ]
+}
