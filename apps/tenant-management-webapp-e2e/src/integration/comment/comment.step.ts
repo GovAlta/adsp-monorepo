@@ -396,37 +396,52 @@ Then(
       const adminRoles = adminRole.split(',');
       commentObj
         .topicTypeEditorRolesTables()
-        .find('goa-checkbox[testid*="Admin roles"]')
+        .find('tr')
+        .find('td:nth-child(2)')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
-            if (appRoles[i].getAttribute('checked') == 'true') {
-              for (let j = 0; j < adminRoles.length; j++) {
-                if (appRoles[i].getAttribute('name')?.includes(adminRoles[j])) {
-                  const appRoleName = appRoles[i].getAttribute('name');
-                  if (appRoleName != null) {
-                    cy.log(appRoleName);
-                  } else {
-                    cy.log('Application role name attribute is null');
+            cy.wrap(appRoles[i])
+              .find('input')
+              .then((element) => {
+                if (element.is(':checked')) {
+                  cy.log('checked');
+                  for (let j = 0; j < adminRoles.length; j++) {
+                    cy.wrap(appRoles[i])
+                      .prev()
+                      .invoke('text')
+                      .then((appRoleName) => {
+                        if (appRoleName.includes(adminRoles[j].trim())) {
+                          adminRoleMatchCount = adminRoleMatchCount + 1;
+                        }
+                      });
                   }
-                  adminRoleMatchCount = adminRoleMatchCount + 1;
                 }
-              }
-            }
+              });
           }
+        })
+        .then(() => {
           expect(adminRoles.length).to.eq(adminRoleMatchCount);
         });
     } else {
+      let readerRoleCount = 0;
       commentObj
         .topicTypeEditorRolesTables()
-        .find('goa-checkbox[testid*="Admin roles"]')
+        .find('tr')
+        .find('td:nth-child(2)')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
-            if (appRoles[i].getAttribute('checked') == 'true') {
-              expect(appRoles[i].getAttribute('checked')).to.be('false');
-            }
+            cy.wrap(appRoles[i])
+              .find('input')
+              .then((element) => {
+                if (element.is(':checked')) {
+                  readerRoleCount = readerRoleCount + 1;
+                }
+              });
           }
+        })
+        .then(() => {
+          expect(readerRoleCount).to.eq(0);
         });
-      cy.log('No admin role is selected');
     }
 
     //check commenter roles
@@ -435,37 +450,53 @@ Then(
       const commenterRoles = commenterRole.split(',');
       commentObj
         .topicTypeEditorRolesTables()
-        .find('goa-checkbox[testid*="Commenter roles"]')
+        .find('tr')
+        .find('td:nth-child(3)')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
-            if (appRoles[i].getAttribute('checked') == 'true') {
-              for (let j = 0; j < commenterRoles.length; j++) {
-                if (appRoles[i].getAttribute('name')?.includes(commenterRoles[j])) {
-                  const appRoleName = appRoles[i].getAttribute('name');
-                  if (appRoleName != null) {
-                    cy.log(appRoleName);
-                  } else {
-                    cy.log('Application role name attribute is null');
+            cy.wrap(appRoles[i])
+              .find('input')
+              .then((element) => {
+                if (element.is(':checked')) {
+                  cy.log('checked');
+                  for (let j = 0; j < commenterRoles.length; j++) {
+                    cy.wrap(appRoles[i])
+                      .prev()
+                      .prev()
+                      .invoke('text')
+                      .then((appRoleName) => {
+                        if (appRoleName.includes(commenterRoles[j].trim())) {
+                          commenterRoleMatchCount = commenterRoleMatchCount + 1;
+                        }
+                      });
                   }
-                  commenterRoleMatchCount = commenterRoleMatchCount + 1;
                 }
-              }
-            }
+              });
           }
+        })
+        .then(() => {
           expect(commenterRoles.length).to.eq(commenterRoleMatchCount);
         });
     } else {
+      let commenterRoleCount = 0;
       commentObj
         .topicTypeEditorRolesTables()
-        .find('goa-checkbox[testid*="Commenter roles"]')
+        .find('tr')
+        .find('td:nth-child(3)')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
-            if (appRoles[i].getAttribute('checked') == 'true') {
-              expect(appRoles[i].getAttribute('checked')).to.be('false');
-            }
+            cy.wrap(appRoles[i])
+              .find('input')
+              .then((element) => {
+                if (element.is(':checked')) {
+                  commenterRoleCount = commenterRoleCount + 1;
+                }
+              });
           }
+        })
+        .then(() => {
+          expect(commenterRoleCount).to.eq(0);
         });
-      cy.log('No commenter role is selected');
     }
 
     //check reader roles
@@ -474,37 +505,53 @@ Then(
       const readerRoles = readerRole.split(',');
       commentObj
         .topicTypeEditorRolesTables()
-        .find('goa-checkbox[testid*="Reader roles"]')
+        .find('tr')
+        .find('td:nth-child(4)')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
-            if (appRoles[i].getAttribute('checked') == 'true') {
-              for (let j = 0; j < readerRoles.length; j++) {
-                if (appRoles[i].getAttribute('name')?.includes(readerRoles[j])) {
-                  const appRoleName = appRoles[i].getAttribute('name');
-                  if (appRoleName != null) {
-                    cy.log(appRoleName);
-                  } else {
-                    cy.log('Application role name attribute is null');
+            cy.wrap(appRoles[i])
+              .find('input')
+              .then((element) => {
+                if (element.is(':checked')) {
+                  for (let j = 0; j < readerRoles.length; j++) {
+                    cy.wrap(appRoles[i])
+                      .prev()
+                      .prev()
+                      .prev()
+                      .invoke('text')
+                      .then((appRoleName) => {
+                        if (appRoleName.includes(readerRoles[j].trim())) {
+                          readerRoleMatchCount = readerRoleMatchCount + 1;
+                        }
+                      });
                   }
-                  readerRoleMatchCount = readerRoleMatchCount + 1;
                 }
-              }
-            }
+              });
           }
+        })
+        .then(() => {
           expect(readerRoles.length).to.eq(readerRoleMatchCount);
         });
     } else {
+      let readerRoleCount = 0;
       commentObj
         .topicTypeEditorRolesTables()
-        .find('goa-checkbox[testid*="Reader roles"]')
+        .find('tr')
+        .find('td:nth-child(4)')
         .then((appRoles) => {
           for (let i = 0; i < appRoles.length; i++) {
-            if (appRoles[i].getAttribute('checked') == 'true') {
-              expect(appRoles[i].getAttribute('checked')).to.be('false');
-            }
+            cy.wrap(appRoles[i])
+              .find('input')
+              .then((element) => {
+                if (element.is(':checked')) {
+                  readerRoleCount = readerRoleCount + 1;
+                }
+              });
           }
+        })
+        .then(() => {
+          expect(readerRoleCount).to.eq(0);
         });
-      cy.log('No reader role is selected');
     }
   }
 );
