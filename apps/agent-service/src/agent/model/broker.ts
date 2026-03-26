@@ -193,8 +193,9 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     const workspace = await this.getManagedWorkspace(user, threadId);
 
     const tarballId = AdspId.parse(tarballUrn);
-    const { stream } = await this.fileServiceClient.getFileStream(this.tenantId, tarballId);
-    const revision = await workspace.initializeFromTarball(stream);
+    const { stream, metadata } = await this.fileServiceClient.getFileStream(this.tenantId, tarballId);
+    const compressed = isCompressedTarball(metadata?.filename, metadata?.mimeType);
+    const revision = await workspace.initializeFromTarball(stream, compressed);
 
     this.logger.info(`Workspace initialized for thread ${threadId} from tarball ${tarballUrn}.`, {
       context: 'AgentBroker',
@@ -263,4 +264,17 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
 
     return this.agent.generate(input, this.getExecutionOptions(requestContext, user, threadId));
   }
+}
+
+function isCompressedTarball(filename?: string, mimeType?: string): boolean {
+  const normalizedName = filename?.toLowerCase() ?? '';
+  const normalizedType = mimeType?.toLowerCase() ?? '';
+
+  return (
+    normalizedName.endsWith('.tar.gz') ||
+    normalizedName.endsWith('.tgz') ||
+    normalizedName.endsWith('.gz') ||
+    normalizedType.includes('gzip') ||
+    normalizedType === 'application/x-tar+gzip'
+  );
 }
