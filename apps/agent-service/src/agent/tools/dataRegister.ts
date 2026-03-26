@@ -90,15 +90,6 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
             : String(err),
         });
 
-        if (isAxiosError(err)) {
-          const status = err.response?.status;
-          if (status === 403) {
-            throw new Error('Permission denied. You need the configuration-admin role to list data registers.');
-          } else if (status === 401) {
-            throw new Error('Authentication failed. Your session may have expired.');
-          }
-        }
-
         throw new Error(`Failed to list data registers: ${err.message}`);
       }
     },
@@ -199,20 +190,6 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
             : String(err),
         });
 
-        if (isAxiosError(err)) {
-          const status = err.response?.status;
-          const errorData = err.response?.data;
-
-          if (status === 403) {
-            throw new Error('Permission denied. You need the configuration-admin role to create data registers.');
-          } else if (status === 401) {
-            throw new Error('Authentication failed. Your session may have expired.');
-          } else if (status === 400) {
-            const message = errorData?.message || 'Invalid register data';
-            throw new Error(`Validation failed: ${message}`);
-          }
-        }
-
         throw new Error(`Failed to create data register: ${err.message}`);
       }
     },
@@ -277,22 +254,6 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
               }
             : String(err),
         });
-
-        if (isAxiosError(err)) {
-          const status = err.response?.status;
-          const errorData = err.response?.data;
-
-          if (status === 404) {
-            throw new Error(`Data register '${name}' not found. Use dataRegisterListTool to see available registers.`);
-          } else if (status === 403) {
-            throw new Error('Permission denied. You need the configuration-admin role to update data registers.');
-          } else if (status === 401) {
-            throw new Error('Authentication failed. Your session may have expired.');
-          } else if (status === 400) {
-            const message = errorData?.message || 'Invalid register data';
-            throw new Error(`Validation failed: ${message}`);
-          }
-        }
 
         throw new Error(`Failed to update data register: ${err.message}`);
       }

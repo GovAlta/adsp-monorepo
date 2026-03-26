@@ -103,7 +103,7 @@ describe('createDataRegisterTools', () => {
 
       await expect(
         tools.dataRegisterListTool.execute({}, { requestContext: mockRequestContext } as never),
-      ).rejects.toThrow('Permission denied');
+      ).rejects.toThrow('Failed to list data registers');
     });
   });
 
@@ -205,7 +205,7 @@ describe('createDataRegisterTools', () => {
         tools.dataRegisterCreateTool.execute({ name: 'test', data: ['a'] }, {
           requestContext: mockRequestContext,
         } as never),
-      ).rejects.toThrow('Permission denied');
+      ).rejects.toThrow('Failed to create data register');
     });
   });
 
@@ -245,7 +245,7 @@ describe('createDataRegisterTools', () => {
         tools.dataRegisterUpdateTool.execute({ name: 'nonexistent', data: ['a'] }, {
           requestContext: mockRequestContext,
         } as never),
-      ).rejects.toThrow('not found');
+      ).rejects.toThrow('Failed to update data register');
     });
 
     it('throws on 400 validation error', async () => {
@@ -261,7 +261,7 @@ describe('createDataRegisterTools', () => {
         tools.dataRegisterUpdateTool.execute({ name: 'weekdays', data: ['a'] }, {
           requestContext: mockRequestContext,
         } as never),
-      ).rejects.toThrow('Validation failed');
+      ).rejects.toThrow('Failed to update data register');
     });
   });
 });
