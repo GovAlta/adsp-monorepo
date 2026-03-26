@@ -77,20 +77,20 @@ Feature: Comment
   # Then the user views topic type editor for "autotest-topicTypesAccessibility"
   # And no critical or serious accessibility issues on "comment topic type editor page"
 
-  # TEST DATA: a topic type called "autotest-autoTopicType" is created with more than 10 but less than 20 pre-created topics to test Load more button
-  # TEST DATA: a topic called "autotest-submission001" with resource id of "auto-001" under topic type of "autotest-autoTopicType" has more than 10 comments to test Load more button
+  # TEST DATA: a topic type called "autotest-topic-type" is created with more than 10 but less than 20 pre-created topics to test Load more button
+  # TEST DATA: a topic called "autotest-submission001" with resource id of "auto-001" under topic type of "autotest-topic-type" has more than 10 comments to test Load more button
   @TEST_CS-2655 @TEST_CS-2677 @TEST_CS-2696 @TEST_CS-2692 @TEST_CS-2691 @REQ_CS-2549 @REQ_CS-2535 @REQ_CS-2550 @REQ_CS-2551 @REQ_CS-2536 @regression
   Scenario: As a tenant admin, I can add, view and delete topics and comments
     Given a tenant admin user is on comment service overview page
     When the user selects "Comments" tab for "Comment"
     # Add topic
-    And the user selects "autotest-autoTopicType" in Select a topic type dropdown
+    And the user selects "autotest-topic-type" in Select a topic type dropdown
     Then the user views a topic list
     When the user clicks Add topic type button on comments page
     Then the user views Add topic modal
-    When the user enters "autotest-addDeleteTopic", "autotest topic desc", "autotest123" in Add topic modal
+    When the user enters "autotest-topic-type", "autotest topic desc", "autotest123" in Add topic modal
     And the user clicks "Cancel" button in Add topic modal
-    Then the user "should not view" a topic of "autotest-addDeleteTopic", "autotest123"
+    Then the user "should not view" a topic of "autotest-topic-type", "autotest123"
     When the user clicks Add topic type button on comments page
     Then the user views Add topic modal
     When the user enters "autotest-addDelTopic<$ph>", "autotest topic desc", "autotest123" in Add topic modal
