@@ -1,5 +1,4 @@
 import '@abgov/web-components/index.css';
-import { AuthCallback } from '@core-services/app-common';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { BuilderTenant } from './containers/BuilderTenant';
 import { Landing } from './components/Landing';
@@ -11,7 +10,6 @@ export function App() {
     <div className={styles.app}>
       <Router>
         <Routes>
-          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/:tenant/*" element={<BuilderTenant />} />
           <Route path="/:realm/login" element={<Login />} />
           <Route path="*" element={<Landing />} />

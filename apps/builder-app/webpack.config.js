@@ -12,7 +12,11 @@ module.exports = composePlugins(
   (config) => {
     // Update the webpack config as needed here.
     // e.g. `config.plugins.push(new MyPlugin())`
+    config.module.rules.push({
+      test: /builderPreview\..*[.]html$/i,
+      type: 'asset/source',
+    });
     config.output.clean = true;
     return config;
-  }
+  },
 );
