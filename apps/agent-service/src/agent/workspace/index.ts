@@ -77,13 +77,17 @@ function getWorkspaceId(workspaceContext: WorkspaceContext): string {
   return `workspace-${workspaceHash}`;
 }
 
+export function getAgentFsDatabasePath(workspaceId: string, workspaceRoot: string): string {
+  return resolve(workspaceRoot, 'agentfs', `${encodePathSegment(workspaceId)}.db`);
+}
+
 async function createAgentFsFilesystem(workspaceId: string, workspaceRoot: string) {
   // Lazily require optional dependency only when agentfs provider is used.
   const { AgentFSFilesystem } = await import('@mastra/agentfs');
 
   return new AgentFSFilesystem({
     agentId: workspaceId,
-    path: resolve(workspaceRoot, 'workspaces.db'),
+    path: getAgentFsDatabasePath(workspaceId, workspaceRoot),
   });
 }
 

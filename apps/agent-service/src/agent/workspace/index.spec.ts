@@ -1,7 +1,12 @@
 import { join } from 'node:path';
 import { MASTRA_THREAD_ID_KEY, RequestContext } from '@mastra/core/request-context';
 import { environment } from '../../environments/environment';
-import { assertWorkspaceEnvironment, clearThreadWorkspace, createWorkspaceResolver } from './index';
+import {
+  assertWorkspaceEnvironment,
+  clearThreadWorkspace,
+  createWorkspaceResolver,
+  getAgentFsDatabasePath,
+} from './index';
 
 describe('agent workspace', () => {
   const logger = {
@@ -78,6 +83,13 @@ describe('agent workspace', () => {
     if (workspace2) {
       await workspace2.destroy();
     }
+  });
+
+  it('creates a dedicated agentfs database path per workspace', () => {
+    const dbPath = getAgentFsDatabasePath('workspace-1234567890abcdef12345678', environment.AGENT_WORKSPACE_ROOT);
+
+    expect(dbPath).toContain(join(environment.AGENT_WORKSPACE_ROOT, 'agentfs'));
+    expect(dbPath).toMatch(/workspace-[0-9a-f]{24}\.db$/);
   });
 
   it('clears all files for a thread workspace', async () => {
