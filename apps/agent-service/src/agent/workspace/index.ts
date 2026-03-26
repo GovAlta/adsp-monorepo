@@ -1,7 +1,9 @@
 import { resolve } from 'node:path';
+import { mkdir } from 'node:fs/promises';
 import type { Logger } from 'winston';
 import { Workspace, LocalFilesystem } from '@mastra/core/workspace';
 import { MASTRA_THREAD_ID_KEY } from '@mastra/core/request-context';
+import { ExponentialBackoff, handleAll, retry as retryBuilder } from 'cockatiel';
 import * as hasha from 'hasha';
 import { environment } from '../../environments/environment';
 import { AdspRequestContext } from '../types';
@@ -12,6 +14,14 @@ export interface AgentWorkspaceConfiguration {
 }
 
 type WorkspaceProvider = 'agentfs' | 'local';
+
+const WORKSPACE_INIT_RETRY_ATTEMPTS = 5;
+const WORKSPACE_INIT_RETRY_DELAY_MS = 50;
+
+const workspaceInitRetry = retryBuilder(handleAll, {
+  maxAttempts: WORKSPACE_INIT_RETRY_ATTEMPTS,
+  backoff: new ExponentialBackoff({ initialDelay: WORKSPACE_INIT_RETRY_DELAY_MS }),
+});
 
 interface WorkspaceContext {
   tenantId: string;
@@ -90,15 +100,34 @@ async function createWorkspace(
   provider: WorkspaceProvider,
   workspaceRoot: string,
 ): Promise<Workspace> {
-  const filesystem = await createFilesystem(workspaceId, provider, workspaceRoot);
-  const workspace = new Workspace({
-    id: workspaceId,
-    name: workspaceId,
-    filesystem,
-  });
+  await mkdir(workspaceRoot, { recursive: true });
 
-  await workspace.init();
-  return workspace;
+  const initializeWorkspace = async (): Promise<Workspace> => {
+    let workspace: Workspace | undefined;
+
+    try {
+      const filesystem = await createFilesystem(workspaceId, provider, workspaceRoot);
+      workspace = new Workspace({
+        id: workspaceId,
+        name: workspaceId,
+        filesystem,
+      });
+
+      await workspace.init();
+      return workspace;
+    } catch (error) {
+      // Release any partially initialized resources before retrying.
+      try {
+        await workspace?.destroy();
+      } catch {
+        // Ignore destroy failures while recovering from initialization errors.
+      }
+
+      throw error instanceof Error ? error : new Error(String(error));
+    }
+  };
+
+  return workspaceInitRetry.execute(initializeWorkspace);
 }
 
 export function assertWorkspaceEnvironment(): void {

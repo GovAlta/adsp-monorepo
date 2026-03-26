@@ -43,7 +43,7 @@ export const Login = () => {
 
   const tenantLogin = useCallback(
     async (realmName: string) => {
-      const loginRedirectUrl = `${window.location.origin}/${realmName}`;
+      const loginRedirectUrl = `${window.location.origin}/${realmName}${window.location.search}`;
       const tenantApi = directory['urn:ads:platform:tenant-service'];
       const resolvedRealm = isUUID(realmName) ? realmName : await getRealm(realmName, tenantApi);
 

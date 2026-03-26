@@ -477,18 +477,26 @@ export const BuilderTenant = () => {
     if (configInitialized && tenantName) {
       dispatch(initializeTenant(tenantName));
       const searchParams = new URLSearchParams(location.search);
-      const projectId = searchParams.get('projectId');
+      const projectId = searchParams.get('projectId')?.trim();
 
       if (projectId) {
         // Use projectId directly as thread ID
         setThreadId(projectId);
       } else {
-        // Generate a new thread ID for this session (no persistence)
-        const newThreadId =
+        // Generate a project context and persist it in the URL so reload restores the same thread.
+        const newProjectId =
           typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
             ? crypto.randomUUID()
             : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-        setThreadId(newThreadId);
+
+        searchParams.set('projectId', newProjectId);
+        const nextSearch = searchParams.toString();
+        window.history.replaceState(
+          window.history.state,
+          '',
+          `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}${window.location.hash}`,
+        );
+        setThreadId(newProjectId);
       }
     }
   }, [configInitialized, dispatch, tenantName, location.search]);
@@ -836,7 +844,10 @@ export const BuilderTenant = () => {
                   </GoabCallout>
                   <p className={styles.panelSubtle}>Tenant: {tenant.name}</p>
                   <GoabButtonGroup alignment="end">
-                    <GoabButton type="primary" onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}>
+                    <GoabButton
+                      type="primary"
+                      onClick={() => dispatch(loginUser({ tenant, from: `${location.pathname}${location.search}` }))}
+                    >
                       Sign in
                     </GoabButton>
                   </GoabButtonGroup>
