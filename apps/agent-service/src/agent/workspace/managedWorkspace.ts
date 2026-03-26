@@ -1,5 +1,6 @@
 import { dirname, posix } from 'node:path';
 import { Readable } from 'node:stream';
+import { gunzipSync } from 'node:zlib';
 import { InvalidOperationError, InvalidValueError } from '@core-services/core-common';
 import { Workspace } from '@mastra/core/workspace';
 import * as tarStream from 'tar-stream';
@@ -94,6 +95,41 @@ function validateWorkspacePath(path: string): string {
   }
 
   return normalized;
+}
+
+function decodeTarball(data: Uint8Array | Buffer): Buffer {
+  const buffer = Buffer.from(data);
+  const isGzip = buffer.length >= 2 && buffer[0] === 0x1f && buffer[1] === 0x8b;
+  if (!isGzip) {
+    return buffer;
+  }
+
+  try {
+    return gunzipSync(buffer);
+  } catch {
+    throw new InvalidOperationError('Workspace tarball could not be decompressed as gzip data.');
+  }
+}
+
+function resolveTarEntryPath(path: string): string | undefined {
+  const normalized = posix.normalize(path);
+  const relative = normalized.replace(/^\.\//, '');
+
+  // Many tar tools include a root directory marker entry (e.g. "./").
+  // It is safe to ignore because it does not map to a workspace file.
+  if (!relative || relative === '.' || relative === './') {
+    return undefined;
+  }
+
+  const segments = relative.split('/').filter(Boolean);
+  const basename = segments[segments.length - 1];
+
+  // Ignore macOS metadata emitted by Finder/BSD tar when archiving folders.
+  if (segments[0] === '__MACOSX' || basename === '.DS_Store' || basename.startsWith('._')) {
+    return undefined;
+  }
+
+  return validateWorkspacePath(relative);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -270,6 +306,7 @@ export class ManagedWorkspace {
 
   public async initializeFromTarball(data: Uint8Array | Buffer): Promise<WorkspaceRevisionMetadata> {
     await this.clear();
+    const tarData = decodeTarball(data);
 
     await new Promise<void>((resolve, reject) => {
       const extract = tarStream.extract();
@@ -278,10 +315,15 @@ export class ManagedWorkspace {
         'entry',
         async (header: { name: string; type: string }, stream: NodeJS.ReadableStream, next: (err?: Error) => void) => {
           try {
-            const entryPath = validateWorkspacePath(header.name);
+            const entryPath = resolveTarEntryPath(header.name);
             const chunks: Buffer[] = [];
             for await (const chunk of stream as AsyncIterable<Buffer>) {
               chunks.push(chunk);
+            }
+
+            if (!entryPath) {
+              next();
+              return;
             }
 
             if (header.type === 'directory') {
@@ -300,7 +342,7 @@ export class ManagedWorkspace {
       extract.on('finish', resolve);
       extract.on('error', reject);
 
-      Readable.from(Buffer.from(data)).pipe(extract);
+      Readable.from(tarData).pipe(extract);
     });
 
     return this.setRevision(1);

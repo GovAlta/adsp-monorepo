@@ -1,4 +1,5 @@
 import * as tarStream from 'tar-stream';
+import { gzipSync } from 'node:zlib';
 import { ManagedWorkspace, WorkspaceChangeProjector } from './managedWorkspace';
 
 function createTestTar(files: { name: string; content: string }[]): Promise<Buffer> {
@@ -9,6 +10,41 @@ function createTestTar(files: { name: string; content: string }[]): Promise<Buff
     pack.on('end', () => resolve(Buffer.concat(chunks)));
     pack.on('error', reject);
 
+    for (const file of files) {
+      pack.entry({ name: file.name }, file.content);
+    }
+    pack.finalize();
+  });
+}
+
+function createTestTarWithRootDirectory(files: { name: string; content: string }[]): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const pack = tarStream.pack();
+    const chunks: Buffer[] = [];
+    pack.on('data', (chunk: Buffer) => chunks.push(chunk));
+    pack.on('end', () => resolve(Buffer.concat(chunks)));
+    pack.on('error', reject);
+
+    pack.entry({ name: './', type: 'directory' });
+    for (const file of files) {
+      pack.entry({ name: `./${file.name}` }, file.content);
+    }
+    pack.finalize();
+  });
+}
+
+function createTestTarWithMacMetadata(files: { name: string; content: string }[]): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const pack = tarStream.pack();
+    const chunks: Buffer[] = [];
+    pack.on('data', (chunk: Buffer) => chunks.push(chunk));
+    pack.on('end', () => resolve(Buffer.concat(chunks)));
+    pack.on('error', reject);
+
+    pack.entry({ name: '__MACOSX/', type: 'directory' });
+    pack.entry({ name: '__MACOSX/._App.tsx' }, 'metadata');
+    pack.entry({ name: 'src/._App.tsx' }, 'metadata');
+    pack.entry({ name: '.DS_Store' }, 'metadata');
     for (const file of files) {
       pack.entry({ name: file.name }, file.content);
     }
@@ -221,6 +257,75 @@ describe('ManagedWorkspace', () => {
 
     expect(writeFile).toHaveBeenCalledWith('package.json', expect.any(Buffer), { recursive: true });
     expect(writeFile).toHaveBeenCalledWith('src/app.ts', expect.any(Buffer), { recursive: true });
+    expect(writeFile).toHaveBeenCalledWith('.agent/revision.json', expect.any(String), { recursive: true });
+    expect(revision.revision).toBe(1);
+  });
+
+  it('initializes from a gzipped tarball', async () => {
+    const tarball = await createTestTar([
+      { name: 'package.json', content: '{"name":"demo"}' },
+      { name: 'src/app.ts', content: 'export const app = true;' },
+    ]);
+    const gzippedTarball = gzipSync(tarball);
+
+    const readdir = jest.fn().mockResolvedValue([]);
+    const mkdir = jest.fn().mockResolvedValue(undefined);
+    const writeFile = jest.fn().mockResolvedValue(undefined);
+    const workspace = new ManagedWorkspace({ readdir, mkdir, writeFile } as never);
+
+    const revision = await workspace.initializeFromTarball(gzippedTarball);
+
+    expect(writeFile).toHaveBeenCalledWith('package.json', expect.any(Buffer), { recursive: true });
+    expect(writeFile).toHaveBeenCalledWith('src/app.ts', expect.any(Buffer), { recursive: true });
+    expect(writeFile).toHaveBeenCalledWith('.agent/revision.json', expect.any(String), { recursive: true });
+    expect(revision.revision).toBe(1);
+  });
+
+  it('initializes when tar contains a root marker entry', async () => {
+    const tarball = await createTestTarWithRootDirectory([
+      { name: 'package.json', content: '{"name":"demo"}' },
+      { name: 'src/app.ts', content: 'export const app = true;' },
+    ]);
+
+    const readdir = jest.fn().mockResolvedValue([]);
+    const mkdir = jest.fn().mockResolvedValue(undefined);
+    const writeFile = jest.fn().mockResolvedValue(undefined);
+    const workspace = new ManagedWorkspace({ readdir, mkdir, writeFile } as never);
+
+    const revision = await workspace.initializeFromTarball(tarball);
+
+    expect(writeFile).toHaveBeenCalledWith('package.json', expect.any(Buffer), { recursive: true });
+    expect(writeFile).toHaveBeenCalledWith('src/app.ts', expect.any(Buffer), { recursive: true });
+    expect(writeFile).toHaveBeenCalledWith('.agent/revision.json', expect.any(String), { recursive: true });
+    expect(revision.revision).toBe(1);
+  });
+
+  it('ignores macOS metadata entries in tar archives', async () => {
+    const tarball = await createTestTarWithMacMetadata([
+      { name: 'package.json', content: '{"name":"demo"}' },
+      { name: 'src/app.ts', content: 'export const app = true;' },
+    ]);
+
+    const readdir = jest.fn().mockResolvedValue([]);
+    const mkdir = jest.fn().mockResolvedValue(undefined);
+    const writeFile = jest.fn().mockResolvedValue(undefined);
+    const workspace = new ManagedWorkspace({ readdir, mkdir, writeFile } as never);
+
+    const revision = await workspace.initializeFromTarball(tarball);
+
+    expect(writeFile).toHaveBeenCalledWith('package.json', expect.any(Buffer), { recursive: true });
+    expect(writeFile).toHaveBeenCalledWith('src/app.ts', expect.any(Buffer), { recursive: true });
+    expect(writeFile).not.toHaveBeenCalledWith(
+      expect.stringMatching(/^__MACOSX\//),
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(writeFile).not.toHaveBeenCalledWith(
+      expect.stringMatching(/\/\._|^\._/),
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(writeFile).not.toHaveBeenCalledWith('.DS_Store', expect.anything(), expect.anything());
     expect(writeFile).toHaveBeenCalledWith('.agent/revision.json', expect.any(String), { recursive: true });
     expect(revision.revision).toBe(1);
   });

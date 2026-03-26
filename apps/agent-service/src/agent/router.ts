@@ -27,6 +27,108 @@ const FORWARDABLE_CHUNK_TYPES = new Set([
   'tripwire',
 ]);
 
+const PROJECTABLE_TOOL_CHUNK_TYPES = new Set(['tool-call', 'tool-result', 'tool-error']);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+interface ToolChunk {
+  type: 'tool-call' | 'tool-result' | 'tool-error';
+  payload: unknown;
+}
+
+function toProjectableToolChunks(candidate: unknown): ToolChunk[] {
+  if (!isRecord(candidate)) {
+    return [];
+  }
+
+  const type = typeof candidate.type === 'string' ? candidate.type : undefined;
+  if (type && PROJECTABLE_TOOL_CHUNK_TYPES.has(type)) {
+    return [{ type: type as ToolChunk['type'], payload: candidate.payload }];
+  }
+
+  const toolName = typeof candidate.toolName === 'string' ? candidate.toolName : undefined;
+  const toolCallId = typeof candidate.toolCallId === 'string' ? candidate.toolCallId : undefined;
+  if (!toolName || !toolCallId) {
+    return [];
+  }
+
+  const chunks: ToolChunk[] = [];
+
+  if ('args' in candidate) {
+    chunks.push({
+      type: 'tool-call',
+      payload: {
+        toolName,
+        toolCallId,
+        args: candidate.args,
+      },
+    });
+  }
+  if (candidate.isError === true || 'error' in candidate) {
+    chunks.push({
+      type: 'tool-error',
+      payload: {
+        toolName,
+        toolCallId,
+        error: 'error' in candidate ? candidate.error : candidate.result,
+      },
+    });
+  } else if ('result' in candidate) {
+    chunks.push({
+      type: 'tool-result',
+      payload: {
+        toolName,
+        toolCallId,
+        result: candidate.result,
+      },
+    });
+  }
+
+  return chunks;
+}
+
+/**
+ * Extract projectable nested tool chunks from sub-agent tool payloads.
+ * Supports one nested level only. Multi-level supervisor nesting is intentionally
+ * unsupported to keep projection deterministic.
+ */
+function getNestedToolChunks(payload: unknown): ToolChunk[] {
+  if (!isRecord(payload)) {
+    return [];
+  }
+
+  const containers: unknown[] = [];
+  const nestedKeys = ['chunks', 'events', 'steps', 'toolCalls', 'toolResults', 'toolErrors', 'subAgentToolResults'];
+  for (const key of nestedKeys) {
+    if (key in payload) {
+      containers.push(payload[key]);
+    }
+  }
+
+  if ('result' in payload && isRecord(payload.result)) {
+    for (const key of nestedKeys) {
+      if (key in payload.result) {
+        containers.push(payload.result[key]);
+      }
+    }
+  }
+
+  const nested: ToolChunk[] = [];
+  for (const container of containers) {
+    if (!Array.isArray(container)) {
+      continue;
+    }
+
+    for (const item of container) {
+      nested.push(...toProjectableToolChunks(item));
+    }
+  }
+
+  return nested;
+}
+
 function getUserTokenExpiry(user: User): number | null {
   const exp = user?.token?.exp;
 
@@ -135,6 +237,25 @@ export function onIoConnection(logger: Logger) {
 
             if (rawChunks === true) {
               const projector = await aiAgent.createProjector(user, threadId);
+              const projectWorkspaceChange = async (type: string, payload: unknown) => {
+                if (type === 'tool-call') {
+                  projector.onToolCall(payload);
+                } else if (type === 'tool-error') {
+                  projector.onToolError(payload);
+                } else if (type === 'tool-result') {
+                  const workspaceChange = await projector.onToolResult(payload);
+                  if (workspaceChange) {
+                    socket.emit('workspace-change', {
+                      agent,
+                      threadId,
+                      messageId: replyId,
+                      replyTo: messageId,
+                      ...workspaceChange,
+                    });
+                  }
+                }
+              };
+
               for await (const chunk of result.fullStream) {
                 if (!FORWARDABLE_CHUNK_TYPES.has(chunk.type)) {
                   continue;
@@ -152,21 +273,11 @@ export function onIoConnection(logger: Logger) {
                   chunk: { type, payload },
                 });
 
-                if (type === 'tool-call') {
-                  projector.onToolCall(payload);
-                } else if (type === 'tool-error') {
-                  projector.onToolError(payload);
-                } else if (type === 'tool-result') {
-                  const workspaceChange = await projector.onToolResult(payload);
-                  if (workspaceChange) {
-                    socket.emit('workspace-change', {
-                      agent,
-                      threadId,
-                      messageId: replyId,
-                      replyTo: messageId,
-                      ...workspaceChange,
-                    });
-                  }
+                await projectWorkspaceChange(type, payload);
+
+                // One-level nested projection support for sub-agent tool chunks.
+                for (const nested of getNestedToolChunks(payload)) {
+                  await projectWorkspaceChange(nested.type, nested.payload);
                 }
               }
             } else {
@@ -244,7 +355,27 @@ export function onIoConnection(logger: Logger) {
             updatedAt: revision.updatedAt,
           });
         } catch (err) {
-          socket.emit('error', err.message);
+          const payloadRecord =
+            typeof payload === 'object' && payload !== null ? (payload as Record<string, unknown>) : null;
+          const agent = payloadRecord && typeof payloadRecord.agent === 'string' ? payloadRecord.agent : undefined;
+          const threadId =
+            payloadRecord && typeof payloadRecord.threadId === 'string' ? payloadRecord.threadId : undefined;
+          const workspaceTarball =
+            payloadRecord && typeof payloadRecord.workspaceTarball === 'string'
+              ? payloadRecord.workspaceTarball
+              : undefined;
+          const errorMessage = err instanceof Error ? err.message : String(err);
+
+          logger.warn(`Workspace initialization failed for agent ${agent ?? 'unknown'}.`, {
+            context: 'AgentRouter',
+            tenant: tenant?.id?.toString(),
+            user: `${user.name} (ID: ${user.id})`,
+            threadId,
+            workspaceTarball,
+            error: errorMessage,
+          });
+
+          socket.emit('error', errorMessage);
         }
       });
       socket.on('workspace-update', async (payload) => {
