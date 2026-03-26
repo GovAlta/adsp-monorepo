@@ -1,6 +1,6 @@
 import { ControlProps } from '@jsonforms/core';
 import { EventBlurControlProps, EventChangeControlProps, EventKeyPressControlProps } from '../Controls/Inputs/type';
-import { isValidDate } from './stringUtils';
+import { isValidDate, isNilOrEmptyValue } from './stringUtils';
 import { standardizeDate } from './dateUtils';
 
 /**
@@ -10,7 +10,7 @@ import { standardizeDate } from './dateUtils';
  */
 export const isRequiredAndHasNoData = (props: ControlProps) => {
   const { data, required } = props;
-  return required && (data === undefined || data?.length === 0);
+  return required && isNilOrEmptyValue(data, true);
 };
 
 /**

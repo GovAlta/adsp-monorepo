@@ -236,6 +236,16 @@ describe('isRequiredAndHasNoData', () => {
     } as unknown as ControlProps;
     expect(isRequiredAndHasNoData(props)).toBe(false);
   });
+
+  it('should return true when field is required and data is null', () => {
+    const props = {
+      handleChange: mockHandleChange,
+      path: 'testPath',
+      required: true,
+      data: null,
+    } as unknown as ControlProps;
+    expect(isRequiredAndHasNoData(props)).toBe(true);
+  });
 });
 
 describe('onKeyPressForTextControl', () => {

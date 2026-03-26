@@ -5,6 +5,8 @@ import { Category, UISchemaElement } from '@jsonforms/core';
 import { ContextProviderFactory, GoARenderers } from '../../../index';
 import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
+import { GoAInputBaseTableReview } from './InputBaseTableReviewControl';
+import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context/StepperContext';
 
 import { CategorizationStepperLayoutRendererProps } from '../FormStepper/types';
 import { JsonFormsStepperContextProvider } from '../FormStepper/context';
@@ -401,5 +403,82 @@ const stepperBasePropsReview: TestProps = {
 describe('InputBaseTableReviewControl', () => {
   it('renders without crashing', () => {
     expect(stepperBasePropsReview).toBeDefined();
+  });
+
+  it('does not render a review row when the control is hidden (visible=false)', () => {
+    const { container } = render(
+      <table>
+        <tbody>
+          <GoAInputBaseTableReview
+            data="Hidden text"
+            visible={false}
+            label="Describe your dispute in a few words"
+            path="whichOfThemAppliesOther"
+            schema={{ type: 'string' }}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/whichOfThemAppliesOther',
+              label: 'Describe your dispute in a few words',
+              options: { stepId: 0 },
+            }}
+            enabled={true}
+            errors={undefined}
+            cells={[]}
+            required={false}
+            id="whichOfThemAppliesOther"
+            rootSchema={{ type: 'object', properties: {} }}
+            config={{}}
+            renderers={[]}
+            handleChange={jest.fn()}
+          />
+        </tbody>
+      </table>,
+    );
+
+    expect(container.querySelector('tr')).toBeNull();
+  });
+
+  it('shows validation error for empty array when required', () => {
+    const mockGoToPage = jest.fn();
+    const contextValue: JsonFormsStepperContextProps = { goToPage: mockGoToPage } as JsonFormsStepperContextProps;
+    const { baseElement } = render(
+      <JsonFormsStepperContext.Provider value={contextValue}>
+        <table>
+          <tbody>
+            <GoAInputBaseTableReview
+              data={[]}
+              visible={true}
+              label="Choose all options that best apply"
+              path="whichOfThemApplies"
+              schema={{
+                type: 'array',
+                items: { type: 'string' },
+                minItems: 1,
+                errorMessage: { minItems: 'Choose all that apply is required' },
+              }}
+              uischema={{
+                type: 'Control',
+                scope: '#/properties/whichOfThemApplies',
+                label: 'Choose all options that best apply',
+              }}
+              enabled={true}
+              errors={undefined}
+              cells={[]}
+              required={true}
+              id="whichOfThemApplies"
+              rootSchema={{ type: 'object', properties: {} }}
+              config={{}}
+              renderers={[]}
+              handleChange={jest.fn()}
+            />
+          </tbody>
+        </table>
+      </JsonFormsStepperContext.Provider>,
+    );
+
+    const errorFormItem = baseElement.querySelector(
+      'goa-form-item[error="Choose all options that best apply is required"]'
+    );
+    expect(errorFormItem).toBeInTheDocument();
   });
 });

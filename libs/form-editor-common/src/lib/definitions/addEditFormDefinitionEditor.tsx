@@ -90,6 +90,8 @@ import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
 import { startThread } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';
 import { GoabCheckboxOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import { RegisterConfigData } from '@abgov/jsonforms-components';
+
 type IEditor = monacoNS.editor.IStandaloneCodeEditor;
 
 export const ContextProvider = ContextProviderFactory();
@@ -176,6 +178,7 @@ export function AddEditFormDefinitionEditor({
   const dispatch = useDispatch<AppDispatch>();
   const editorRefData = useRef(null);
   const editorRefUi = useRef(null);
+  const [_registerData, setRegisterData] = useState<RegisterConfigData[] | null>(registerData);
 
   const uploadFile = (file: File, propertyId: string) => {
     const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId };
@@ -944,8 +947,18 @@ export function AddEditFormDefinitionEditor({
               </Tab>
 
               {showDataRegister && (
-                <Tab label="Data Registers" data-testid="form-data-registers-tab" isTightContent={true}>
-                  <DataRegisters registerData={registerData} />
+                <Tab label="Data registers" data-testid="form-data-registers-tab" isTightContent={true}>
+                  <DataRegisters
+                    registerData={_registerData}
+                    onAdd={(newRegisterData) => {
+                      setRegisterData(newRegisterData);
+                    }}
+                    onDelete={(deleted) => {
+                      setRegisterData((prev: RegisterConfigData[] | null) =>
+                        (prev ?? []).filter((r: RegisterConfigData) => r.urn !== deleted.urn),
+                      );
+                    }}
+                  />
                 </Tab>
               )}
             </Tabs>

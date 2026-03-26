@@ -76,3 +76,6 @@ coveragereport/*
 
 # Github Pages doesn't use the lock file; keep local when working with docs in jekyll
 **/Gemfile.lock
+
+# Local builder workspace files
+.agent-workspaces

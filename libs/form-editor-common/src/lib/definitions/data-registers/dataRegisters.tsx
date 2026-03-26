@@ -26,7 +26,7 @@ import { AddRegisterDataModal } from './addRegisterDataModal';
 
 interface DataRegistersProps {
   registerData?: RegisterData;
-  onAdd?: (name: string) => void;
+  onAdd?: (newRegister) => void;
   onDelete?: (entry: RegisterConfigData) => void;
 }
 
@@ -231,10 +231,11 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
           configuration: data as never,
         },
         false,
+        true,
       ),
     );
     setCurrentRegister((prev: RegisterData | null) => [...(prev ?? []), newEntry]);
-    onAdd?.(newName);
+    onAdd?.((prev: RegisterData | null) => [...(prev ?? []), newEntry]);
     setIsAddModalOpen(false);
   };
 

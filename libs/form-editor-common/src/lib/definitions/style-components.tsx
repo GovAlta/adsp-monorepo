@@ -111,10 +111,10 @@ export const DataRegisterMonacoDiv = styled.div`
 `;
 
 export const DataRegisterTableWrapper = styled.div`
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
 `;
 
 export const DataRegisterContainer = styled.div`
-  min-height: 450px;
+  min-height: 550px;
 `;

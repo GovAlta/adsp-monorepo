@@ -2,7 +2,7 @@ import { isAllowedUser, UnauthorizedUserError, AdspId, type User } from '@abgov/
 import { InvalidOperationError } from '@core-services/core-common';
 import type { Agent, AgentExecutionOptions, ToolsInput } from '@mastra/core/agent';
 import type { CoreUserMessage } from '@mastra/core/llm';
-import { MASTRA_THREAD_ID_KEY, RequestContext } from '@mastra/core/request-context';
+import { MASTRA_RESOURCE_ID_KEY, MASTRA_THREAD_ID_KEY, RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
 import type { IFileServiceClient } from '../clients';
@@ -95,9 +95,13 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     }
 
     // Reserve identity fields so client-supplied context cannot override workspace selection.
+    // Setting MASTRA_THREAD_ID_KEY and MASTRA_RESOURCE_ID_KEY in requestContext ensures Mastra
+    // propagates the authenticated values to sub-agents (requestContext takes priority over
+    // the LLM-authored memory.thread/resource values that Mastra otherwise derives).
     requestContext.set('tenantId', this.tenantId);
     requestContext.set('user', user);
     requestContext.set(MASTRA_THREAD_ID_KEY, threadId);
+    requestContext.set(MASTRA_RESOURCE_ID_KEY, user.id);
 
     return requestContext;
   }
