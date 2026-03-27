@@ -424,6 +424,17 @@ describe('loadFormExamples', () => {
     it('renders API endpoint dropdown example', () => {
       expect(output).toContain('## Data Register — External API Endpoint');
     });
+
+    it('renders weekdays register example', () => {
+      expect(output).toContain('## Data Register — Weekdays (String Array)');
+      expect(output).toContain('data-register/weekdays');
+    });
+
+    it('renders object register mapping example', () => {
+      expect(output).toContain('## Data Register — Object Array with Label/Value Mapping');
+      expect(output).toContain('options.label');
+      expect(output).toContain('options.value');
+    });
   });
 
   describe('complex scenario examples', () => {

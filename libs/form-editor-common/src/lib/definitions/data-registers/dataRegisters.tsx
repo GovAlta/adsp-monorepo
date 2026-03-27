@@ -19,6 +19,7 @@ import {
   updateConfigurationDefinition,
   replaceConfigurationDataAction,
   deleteConfigurationDefinition,
+  getConfigurationDefinitions,
 } from '@store/configuration/action';
 import { DATA_REGISTER_NAMESPACE } from '@store/configuration/model';
 import { REGISTER_DATA_SCHEMA, parseUrn, urnCompare, validateRegisterJson } from './utils';
@@ -26,17 +27,13 @@ import { AddRegisterDataModal } from './addRegisterDataModal';
 
 interface DataRegistersProps {
   registerData?: RegisterData;
-  onAdd?: (newRegister) => void;
-  onDelete?: (entry: RegisterConfigData) => void;
 }
 
 interface RegisterItemProps {
   entry: RegisterConfigData;
-  onUpdate?: (entry: RegisterConfigData) => void;
-  onDelete?: (entry: RegisterConfigData) => void;
 }
 
-const RegisterItem = ({ entry, onUpdate, onDelete }: RegisterItemProps): JSX.Element => {
+const RegisterItem = ({ entry }: RegisterItemProps): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
   const [showDetails, setShowDetails] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -83,7 +80,8 @@ const RegisterItem = ({ entry, onUpdate, onDelete }: RegisterItemProps): JSX.Ele
         false,
       ),
     );
-    onUpdate?.({ ...entry, data: parsed });
+    // Refetch register data from the backend so Redux stays in sync.
+    dispatch(getConfigurationDefinitions());
     setIsEditing(false);
   };
 
@@ -186,7 +184,8 @@ const RegisterItem = ({ entry, onUpdate, onDelete }: RegisterItemProps): JSX.Ele
           onCancel={() => setShowDeleteConfirm(false)}
           onDelete={() => {
             dispatch(deleteConfigurationDefinition(`${namespace || DATA_REGISTER_NAMESPACE}:${name}`));
-            onDelete?.(entry);
+            // Refetch register data from the backend so Redux stays in sync.
+            dispatch(getConfigurationDefinitions());
             setShowDeleteConfirm(false);
           }}
         />
@@ -195,13 +194,12 @@ const RegisterItem = ({ entry, onUpdate, onDelete }: RegisterItemProps): JSX.Ele
   );
 };
 
-export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersProps): JSX.Element => {
+export const DataRegisters = ({ registerData }: DataRegistersProps): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newData, setNewRegisterData] = useState('');
-  const [currentRegister, setCurrentRegister] = useState<RegisterData | null>(registerData);
 
   const handleAddOpen = () => {
     setNewName('');
@@ -211,7 +209,6 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
   };
 
   const handleAddSave = (data: RegisterDataType | null, name: string, description: string) => {
-    const newEntry: RegisterConfigData = { urn: name, name, description, data: data || [] };
     dispatch(
       updateConfigurationDefinition(
         {
@@ -234,8 +231,8 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
         true,
       ),
     );
-    setCurrentRegister((prev: RegisterData | null) => [...(prev ?? []), newEntry]);
-    onAdd?.((prev: RegisterData | null) => [...(prev ?? []), newEntry]);
+    // Refetch register data from the backend so Redux stays in sync.
+    dispatch(getConfigurationDefinitions());
     setIsAddModalOpen(false);
   };
 
@@ -250,7 +247,7 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
           Add register data
         </GoabButton>
       </GoabButtonGroup>
-      {!currentRegister || currentRegister.length === 0 ? (
+      {!registerData || registerData.length === 0 ? (
         <p>No data registers</p>
       ) : (
         <DataRegisterTableWrapper>
@@ -269,22 +266,8 @@ export const DataRegisters = ({ registerData, onAdd, onDelete }: DataRegistersPr
               </tr>
             </thead>
             <tbody>
-              {[...currentRegister].sort(urnCompare).map((entry) => (
-                <RegisterItem
-                  key={entry.urn}
-                  entry={entry}
-                  onUpdate={(updated) =>
-                    setCurrentRegister((prev: RegisterData | null) =>
-                      (prev ?? []).map((r: RegisterConfigData) => (r.urn === updated.urn ? updated : r)),
-                    )
-                  }
-                  onDelete={(deleted) => {
-                    setCurrentRegister((prev: RegisterData | null) =>
-                      (prev ?? []).filter((r: RegisterConfigData) => r.urn !== deleted.urn),
-                    );
-                    onDelete?.(deleted);
-                  }}
-                />
+              {[...registerData].sort(urnCompare).map((entry) => (
+                <RegisterItem key={entry.urn} entry={entry} />
               ))}
             </tbody>
           </GoabTable>

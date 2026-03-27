@@ -43,6 +43,8 @@ import * as customErrorMessages from '../data/form-examples/validation/custom-er
 // Data registers
 import * as configServiceDropdown from '../data/form-examples/data-registers/config-service-dropdown.json';
 import * as apiEndpointDropdown from '../data/form-examples/data-registers/api-endpoint-dropdown.json';
+import * as weekdaysRegister from '../data/form-examples/data-registers/weekdays-register.json';
+import * as objectRegisterMapping from '../data/form-examples/data-registers/object-register-mapping.json';
 // Complex scenarios
 import * as governmentApplication from '../data/form-examples/complex/government-application.json';
 import * as contactFormWithRules from '../data/form-examples/complex/contact-form-with-rules.json';
@@ -166,7 +168,12 @@ const validationExamples: FormExample[] = [
   multipleConditions,
   customErrorMessages,
 ] as FormExample[];
-const dataRegisterExamples: FormExample[] = [configServiceDropdown, apiEndpointDropdown] as FormExample[];
+const dataRegisterExamples: FormExample[] = [
+  configServiceDropdown,
+  apiEndpointDropdown,
+  weekdaysRegister,
+  objectRegisterMapping,
+] as FormExample[];
 const complexExamples: FormExample[] = [
   governmentApplication,
   contactFormWithRules,

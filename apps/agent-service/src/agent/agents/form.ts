@@ -82,6 +82,111 @@ export const formGenerationAgent: AgentConfiguration = {
     If a field has a SHOW/HIDE rule and is also \`required\` in the dataSchema, you MUST use conditional validation (if/then) in the dataSchema.
     Otherwise, hidden fields will block form submission because they remain required even when hidden.
 
+    ## HelpContent Behavioral Rules
+    HelpContent is a non-standard JSON Forms component specific to ADSP. It is used for display-only content (notices, instructions, guidance) that is not bound to data.
+
+    ### Default to Markdown
+    ALWAYS set \`"markdown": true\` in \`options\` when creating HelpContent elements, unless the user specifically requests otherwise.
+    This enables rich formatting (headings, bold, links, images, lists) and is the recommended approach for all help content.
+
+    ### Offer Help Text When Adding Fields
+    When adding a new field to the form, briefly ask the user if they'd like to include help text for that field.
+    - For simple/obvious fields (e.g. first name, email), a short offer is sufficient: "Would you like help text for this field?"
+    - For complex or domain-specific fields, proactively suggest adding guidance and propose draft help text.
+    - If the user declines or ignores the offer, proceed without adding help text. Do not repeatedly ask if the user has already indicated they don't want help text.
+
+    ### Consolidate Adjacent HelpContent
+    When updating the uiSchema, check for adjacent HelpContent elements (two or more HelpContent elements next to each other in the same \`elements\` array with no Control or other element between them).
+    - If adjacent HelpContent elements are detected, ask the user: "I notice there are adjacent help content blocks next to each other. Would you like me to consolidate them into a single HelpContent element?"
+    - If the user agrees, merge the \`help\` arrays (or strings) into a single HelpContent element, preserving the content of both.
+    - Preserve any distinct \`variant\` settings (e.g. don't merge a \`details\` collapsible with a regular help block).
+
+    ### Clean Up HelpContent When Deleting Controls
+    When removing a Control from the uiSchema, check if there are HelpContent elements directly adjacent to (immediately before or after) the deleted Control.
+    - If adjacent HelpContent is found, ask the user: "The field I'm removing has adjacent help content. Would you like me to remove that help content too?"
+    - Only delete the HelpContent if the user confirms.
+    - If the deletion causes two previously-separated HelpContent elements to become adjacent, apply the adjacency consolidation rule above.
+
+    ## Data Registers
+    Data registers are a non-standard ADSP extension that allows reusable lists of values (e.g. weekdays, ministries, provinces) to be stored in the Configuration Service and shared across multiple forms.
+
+    ### How Data Registers Work
+    - Registers are stored as configuration definitions in the \`data-register\` namespace of the Configuration Service.
+    - A register contains an array of values — either simple strings (e.g. \`["Monday", "Tuesday"]\`) or objects (e.g. \`[{"label": "Alberta", "value": "AB"}]\`).
+    - In the form's uiSchema, a Control references a register via \`options.register.urn\` (for Configuration Service registers) or \`options.register.url\` (for external API endpoints).
+    - In the dataSchema, the property uses \`"enum": [""]\` as a placeholder — the actual values are loaded from the register at runtime.
+
+    ### Label/Value Mapping for Object Registers
+    When register data is an array of objects, the dropdown needs to know which property to display and which to store:
+    - \`options.label\`: The object property to use as the dropdown display text (defaults to \`"label"\` if omitted).
+    - \`options.value\`: The object property to use as the stored form value (defaults to \`"value"\` if omitted).
+    - These use lodash \`_.get()\` so nested paths like \`"details.name"\` are supported.
+    Example: If register data is \`[{"code": "EDUC", "name": "Education"}]\`, set \`options.label\` to \`"name"\` and \`options.value\` to \`"code"\`.
+
+    ### Behavioral Rules for Data Registers
+    - When a user describes a list of values for a dropdown (e.g. "the options should be Monday through Friday"), ask: "Would you like to create a data register for these values so they can be reused in other forms, or just use a static enum?"
+    - Use \`dataRegisterUpdateTool\` when the user wants to add, remove, or change values in an existing register.
+    - Register names should be kebab-case (e.g. \`weekdays\`, \`goa-ministries\`, \`province-codes\`).
+
+    ### Collecting Data Register Values from the User (MANDATORY before creating)
+    When the user wants to create a new data register, you MUST follow this exact conversational flow BEFORE calling \`dataRegisterCreateTool\`.
+
+    **Step 1 — Check for existing registers FIRST:**
+    IMMEDIATELY call \`dataRegisterListTool\` to retrieve all existing registers for the tenant.
+    Compare the user's stated purpose/name/data against existing registers:
+    - Look for registers with similar names (e.g. user wants "weekdays" and "days-of-week" already exists).
+    - Look for registers whose description or data overlap with what the user described.
+    - If a matching or similar register is found, present it to the user:
+      "I found an existing register **{name}** that looks similar: {description}. It contains {item count} items (e.g. {first 3 items}).
+      Would you like to reuse this register, or create a new one?"
+    - If the user chooses to reuse it, skip to the "Wiring a Register into a Form" section.
+    - If no match is found, tell the user: "I checked the existing registers and didn't find a match. Let's create a new one."
+    Then proceed to Step 2.
+
+    **Step 2 — Ask which format they need:**
+    "Data registers support two formats:
+    1. **Simple list** — each item is both the label and stored value (e.g. weekdays, colors).
+    2. **Label/value pairs** — the dropdown displays one thing but stores another (e.g. show ministry names but store ministry codes).
+    Which format works for your use case?"
+
+    **Step 3 — Ask for the actual values with an example matching their chosen format:**
+
+    For a **simple list**, prompt:
+    "Please provide the list of values. For example:
+    \`Monday, Tuesday, Wednesday, Thursday, Friday\`
+    You can separate them with commas, newlines, or provide them however is easiest."
+
+    For **label/value pairs**, prompt:
+    "Please provide the items as label → value pairs. For example:
+    - Education → EDUC
+    - Health → HLTH
+    - Justice → JUS
+
+    I'll also need the property names. For the example above that would be:
+    - **Label property**: \`ministryName\` (displayed in the dropdown)
+    - **Value property**: \`ministryCode\` (stored when selected)
+
+    What are your items and property names?"
+
+    **Step 4 — Confirm before creating:**
+    Summarize the register details back to the user in a table or list:
+    - Register name (suggest a kebab-case name, let user override)
+    - Format (string array or object array)
+    - Number of items
+    - First 3–5 items as a preview
+    Then ask: "Does this look right? I'll create the register and wire it into your form."
+
+    NEVER guess or infer register values from vague descriptions. If the user says "add a dropdown for programs", ask what the program names are — do not make up placeholder data.
+
+    **Step 5 — Create and wire:**
+    - Call \`dataRegisterCreateTool\` with the confirmed name and data, then wire the returned URN into the form.
+
+    ### Wiring a Register into a Form
+    After creating or finding a register, update both schemas:
+    - dataSchema: \`{ "type": "string", "enum": [""] }\` (placeholder enum)
+    - uiSchema: \`{ "type": "Control", "scope": "#/properties/<field>", "options": { "register": { "urn": "<register-urn>" } } }\`
+    For object registers, also add \`options.label\` and \`options.value\`.
+
     ## Tool Usage
 
     Communication: Don't include JSON in chat responses unless asked; summarize planned/applied schema changes in plain language. Keep responses concise but show what fields and structure have been added/changed.
@@ -99,6 +204,9 @@ export const formGenerationAgent: AgentConfiguration = {
     - schemaDefinitionTool: must include url.
     - fileDownloadTool: must include fileId.
     - formConfigurationUpdateTool: include at least one field to update; usually include both dataSchema and uiSchema together.
+    - dataRegisterListTool: call with {} only.
+    - dataRegisterCreateTool: must include name and data; description is optional.
+    - dataRegisterUpdateTool: must include name and data.
 
     ### schemaDefinitionTool
     Retrieves common field definitions like personFullName, postalAddressAlberta, email, phoneNumber.
@@ -178,6 +286,9 @@ ${formExamplesText}
     'formConfigurationUpdateTool',
     'fileDownloadTool',
     'rendererCatalogTool',
+    'dataRegisterListTool',
+    'dataRegisterCreateTool',
+    'dataRegisterUpdateTool',
   ],
   userRoles: ['urn:ads:platform:configuration-service:configuration-admin'],
 };

@@ -1,6 +1,7 @@
 import { dirname, posix } from 'node:path';
 import { Readable } from 'node:stream';
-import { gunzipSync } from 'node:zlib';
+import { pipeline } from 'node:stream/promises';
+import { createGunzip } from 'node:zlib';
 import { InvalidOperationError, InvalidValueError } from '@core-services/core-common';
 import { Workspace } from '@mastra/core/workspace';
 import * as tarStream from 'tar-stream';
@@ -97,18 +98,27 @@ function validateWorkspacePath(path: string): string {
   return normalized;
 }
 
-function decodeTarball(data: Uint8Array | Buffer): Buffer {
-  const buffer = Buffer.from(data);
-  const isGzip = buffer.length >= 2 && buffer[0] === 0x1f && buffer[1] === 0x8b;
-  if (!isGzip) {
-    return buffer;
+function decodeTarball(data: Uint8Array | Buffer | Readable, compressed?: boolean): Readable {
+  // For stream input, compression cannot be safely inferred without consuming bytes.
+  // Use explicit metadata-derived compression flag from the caller.
+  if (data instanceof Readable) {
+    if (!compressed) {
+      return data;
+    }
+
+    return data.pipe(createGunzip());
   }
 
-  try {
-    return gunzipSync(buffer);
-  } catch {
-    throw new InvalidOperationError('Workspace tarball could not be decompressed as gzip data.');
+  // Handle buffer input (original behavior)
+  const buffer = Buffer.from(data);
+  const isGzip = compressed ?? (buffer.length >= 2 && buffer[0] === 0x1f && buffer[1] === 0x8b);
+
+  const readable = Readable.from(buffer);
+  if (!isGzip) {
+    return readable;
   }
+
+  return readable.pipe(createGunzip());
 }
 
 function resolveTarEntryPath(path: string): string | undefined {
@@ -304,46 +314,46 @@ export class ManagedWorkspace {
     return this.setRevision(current.revision + 1);
   }
 
-  public async initializeFromTarball(data: Uint8Array | Buffer): Promise<WorkspaceRevisionMetadata> {
+  public async initializeFromTarball(
+    data: Uint8Array | Buffer | Readable,
+    compressed?: boolean,
+  ): Promise<WorkspaceRevisionMetadata> {
     await this.clear();
-    const tarData = decodeTarball(data);
+    const extract = tarStream.extract();
 
-    await new Promise<void>((resolve, reject) => {
-      const extract = tarStream.extract();
-
-      extract.on(
-        'entry',
-        async (header: { name: string; type: string }, stream: NodeJS.ReadableStream, next: (err?: Error) => void) => {
-          try {
-            const entryPath = resolveTarEntryPath(header.name);
-            const chunks: Buffer[] = [];
-            for await (const chunk of stream as AsyncIterable<Buffer>) {
-              chunks.push(chunk);
-            }
-
-            if (!entryPath) {
-              next();
-              return;
-            }
-
-            if (header.type === 'directory') {
-              await this.filesystem.mkdir(entryPath, { recursive: true });
-            } else if (header.type === 'file') {
-              await this.filesystem.writeFile(entryPath, Buffer.concat(chunks), { recursive: true });
-            }
-
-            next();
-          } catch (err) {
-            next(err instanceof Error ? err : new Error(String(err)));
+    extract.on(
+      'entry',
+      async (header: { name: string; type: string }, stream: NodeJS.ReadableStream, next: (err?: Error) => void) => {
+        try {
+          const entryPath = resolveTarEntryPath(header.name);
+          const chunks: Buffer[] = [];
+          for await (const chunk of stream as AsyncIterable<Buffer>) {
+            chunks.push(chunk);
           }
-        },
-      );
 
-      extract.on('finish', resolve);
-      extract.on('error', reject);
+          if (!entryPath) {
+            next();
+            return;
+          }
 
-      Readable.from(tarData).pipe(extract);
-    });
+          if (header.type === 'directory') {
+            await this.filesystem.mkdir(entryPath, { recursive: true });
+          } else if (header.type === 'file') {
+            await this.filesystem.writeFile(entryPath, Buffer.concat(chunks), { recursive: true });
+          }
+
+          next();
+        } catch (err) {
+          next(err instanceof Error ? err : new Error(String(err)));
+        }
+      },
+    );
+
+    try {
+      await pipeline(decodeTarball(data, compressed), extract);
+    } catch {
+      throw new InvalidOperationError('Workspace tarball could not be decompressed as gzip data.');
+    }
 
     return this.setRevision(1);
   }

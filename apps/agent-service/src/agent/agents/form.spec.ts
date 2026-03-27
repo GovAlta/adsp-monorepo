@@ -218,6 +218,97 @@ describe('formGenerationAgent', () => {
     expect(formGenerationAgent.instructions).toContain('Scope Mismatch');
   });
 
+  it('includes HelpContent behavioral rules section', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('## HelpContent Behavioral Rules');
+  });
+
+  it('instructs to default to markdown true for HelpContent', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('ALWAYS set');
+    expect(instructions).toContain('"markdown": true');
+    expect(instructions).toContain('unless the user specifically requests otherwise');
+  });
+
+  it('instructs to offer help text when adding new fields', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('Offer Help Text When Adding Fields');
+    expect(instructions).toContain("ask the user if they'd like to include help text");
+  });
+
+  it('instructs to consolidate adjacent HelpContent elements', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('Consolidate Adjacent HelpContent');
+    expect(instructions).toContain('adjacent help content blocks');
+    expect(instructions).toContain('consolidate them into a single HelpContent element');
+  });
+
+  it('instructs to clean up HelpContent when deleting controls', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('Clean Up HelpContent When Deleting Controls');
+    expect(instructions).toContain('adjacent help content');
+    expect(instructions).toContain('Would you like me to remove that help content too');
+  });
+
+  it('includes Data Registers behavioral section', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('## Data Registers');
+    expect(instructions).toContain('data-register');
+  });
+
+  it('instructs to suggest data registers for reusable dropdown values', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('Would you like to create a data register');
+    expect(instructions).toContain('reused in other forms');
+  });
+
+  it('instructs to check existing registers after user confirms values', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('dataRegisterListTool');
+    expect(instructions).toContain('Check for existing registers FIRST');
+  });
+
+  it('documents label/value mapping for object registers', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('options.label');
+    expect(instructions).toContain('options.value');
+  });
+
+  it('instructs to collect register values from user before calling any tools', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('Collecting Data Register Values from the User');
+    expect(instructions).toContain('MANDATORY before creating');
+    expect(instructions).toContain('NEVER guess or infer register values');
+    expect(instructions).toContain('Simple list');
+    expect(instructions).toContain('Label/value pairs');
+  });
+
+  it('provides example prompts for both register data formats', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('Monday, Tuesday, Wednesday, Thursday, Friday');
+    expect(instructions).toContain('Education');
+    expect(instructions).toContain('Label property');
+    expect(instructions).toContain('Value property');
+  });
+
+  it('instructs to confirm register details before creating', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('Confirm before creating');
+    expect(instructions).toContain('Does this look right');
+  });
+
+  it('instructs never to guess register values', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('NEVER guess or infer register values');
+    expect(instructions).toContain('do not make up placeholder data');
+  });
+
+  it('includes data register tool input requirements', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('dataRegisterCreateTool: must include name and data');
+    expect(instructions).toContain('dataRegisterUpdateTool: must include name and data');
+  });
+
   it('retains core instruction sections alongside examples', () => {
     const instructions = formGenerationAgent.instructions;
     // Workflow
@@ -242,6 +333,9 @@ describe('formGenerationAgent', () => {
       'formConfigurationUpdateTool',
       'fileDownloadTool',
       'rendererCatalogTool',
+      'dataRegisterListTool',
+      'dataRegisterCreateTool',
+      'dataRegisterUpdateTool',
     ]);
   });
 

@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
+  agentServiceUrl: 'http://localhost:3380',
   directory: {
     url: 'https://directory-service.adsp-dev.gov.ab.ca',
   },
