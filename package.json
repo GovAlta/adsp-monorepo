@@ -305,7 +305,7 @@
     "underscore": "^1.13.6",
     "url-loader": "^4.1.1",
     "webpack": "^5.105.0",
-    "yaml": "^1.10.0"
+    "yaml": "^1.10.3"
   },
   "overrides": {
     "@nx/devkit": "22.3.3",
