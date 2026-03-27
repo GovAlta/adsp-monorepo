@@ -248,17 +248,27 @@
         },
         "type": {
           "type": "string",
-          "enum": [
-            "Mobile",
-            "Landline"
-          ],
+          "enum": ["Mobile", "Landline"],
           "title": "Phone type"
         }
       },
-      "required": [
-        "number",
-        "type"
-      ]
+      "required": ["number", "type"]
+    },
+    "contactInformation": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "$ref": "#/definitions/email"
+        },
+        "phone": {
+          "$ref": "#/definitions/phoneNumber"
+        },
+        "preferredContactMethod": {
+          "type": "string",
+          "enum": ["Email", "Phone"]
+        }
+      },
+      "anyOf": [{ "required": ["email"] }, { "required": ["phone"] }]
     }
   }
 }

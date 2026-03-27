@@ -62,6 +62,8 @@ import {
   GoACalculationControlTester,
   GoACalculationControl,
   GoAPrimitiveArrayTester,
+  ContactInformationTester,
+  ContractInfoControl,
 } from './lib/Controls';
 
 import { InputCells } from './lib/Cells';
@@ -259,6 +261,7 @@ export const GoARenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: PhoneNumberTester, renderer: withJsonFormsControlProps(PhoneNumberControl) },
   { tester: PhoneNumberWithTypeTester, renderer: withJsonFormsControlProps(PhoneNumberWithTypeControl) },
   { tester: GoACalculationControlTester, renderer: GoACalculationControl },
+  { tester: ContactInformationTester, renderer: withJsonFormsControlProps(ContractInfoControl) },
 ];
 
 export const GoACells: JsonFormsCellRendererRegistryEntry[] = [...InputCells];

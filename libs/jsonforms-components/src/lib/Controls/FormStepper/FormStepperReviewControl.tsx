@@ -15,6 +15,7 @@ import { FullNameTester } from '../FullName/FullNameTester';
 import { GoAInputBaseFullNameControlReview } from '../FullName/FullNameControlReview';
 import { FullNameDobTester } from '../FullNameDOB/FullNameDobTester';
 import { GoAInputBaseFullNameDobControlReview } from '../FullNameDOB/FullNameDobReviewControl';
+import { ContactInformationTester, ContractInfoControlReview } from '../ContactInfo';
 
 import {
   GoAEnumControlTester,
@@ -101,6 +102,7 @@ export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: GoAGroupReviewLayoutTester, renderer: TableGroupLayoutRenderer },
   { tester: HelpContentTester, renderer: EmptyHelpContentRenderer },
   { tester: GoACalloutControlTester, renderer: CalloutReviewControl },
+  { tester: ContactInformationTester, renderer: withJsonFormsControlProps(ContractInfoControlReview) },
 ];
 
 export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
