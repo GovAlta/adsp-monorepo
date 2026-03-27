@@ -18,6 +18,7 @@ import * as horizontalLayout from '../data/form-examples/layouts/horizontal-layo
 import * as mixedLayout from '../data/form-examples/layouts/mixed-layout.json';
 import * as groupLayout from '../data/form-examples/layouts/group-layout.json';
 import * as stepperWithSections from '../data/form-examples/layouts/stepper-with-sections.json';
+import * as simpleStepper from '../data/form-examples/layouts/simple-stepper.json';
 // Common fields
 import * as fullName from '../data/form-examples/common-fields/full-name.json';
 import * as address from '../data/form-examples/common-fields/address.json';
@@ -64,6 +65,19 @@ import * as mixedComputedOverview from '../data/form-examples/computed/mixed-com
 import * as bestPractices from '../data/form-examples/best-practices.json';
 import * as antiPatterns from '../data/form-examples/anti-patterns.json';
 
+interface OptionReference {
+  name: string;
+  type: string;
+  values?: string[];
+  default?: unknown;
+  description: string;
+}
+
+interface OptionsSection {
+  description: string;
+  options: OptionReference[];
+}
+
 interface FormExample {
   id: string;
   name: string;
@@ -72,6 +86,8 @@ interface FormExample {
   whenToUse?: string[];
   dataSchema?: Record<string, unknown>;
   uiSchema?: Record<string, unknown>;
+  categorizationOptions?: OptionsSection;
+  categoryOptions?: OptionsSection;
   notes?: string[];
 }
 
@@ -146,6 +162,7 @@ const layoutExamples: FormExample[] = [
   mixedLayout,
   groupLayout,
   stepperWithSections,
+  simpleStepper,
 ] as FormExample[];
 const commonFieldExamples: FormExample[] = [fullName, address] as FormExample[];
 const contentExamples: FormExample[] = [
@@ -211,6 +228,27 @@ function formatExample(example: FormExample): string {
     lines.push('```json');
     lines.push(JSON.stringify(example.uiSchema, null, 2));
     lines.push('```');
+    lines.push('');
+  }
+
+  if (example.categorizationOptions) {
+    lines.push(`### Categorization Options`);
+    lines.push(example.categorizationOptions.description);
+    for (const opt of example.categorizationOptions.options) {
+      const defaultStr = opt.default !== undefined ? ` (default: ${JSON.stringify(opt.default)})` : '';
+      const valuesStr = opt.values ? ` — values: ${opt.values.join(', ')}` : '';
+      lines.push(`- **${opt.name}** (${opt.type}${defaultStr}${valuesStr}): ${opt.description}`);
+    }
+    lines.push('');
+  }
+
+  if (example.categoryOptions) {
+    lines.push(`### Category Options`);
+    lines.push(example.categoryOptions.description);
+    for (const opt of example.categoryOptions.options) {
+      const defaultStr = opt.default !== undefined ? ` (default: ${JSON.stringify(opt.default)})` : '';
+      lines.push(`- **${opt.name}** (${opt.type}${defaultStr}): ${opt.description}`);
+    }
     lines.push('');
   }
 

@@ -307,8 +307,16 @@ describe('loadFormExamples', () => {
     });
 
     it('renders stepper with sections example', () => {
-      expect(output).toContain('## Page Stepper with Section Titles');
+      expect(output).toContain('## Page Stepper with Sections, Hidden Tasks, and Task List Options');
       expect(output).toContain('"sectionTitle"');
+      expect(output).toContain('"showInTaskList": false');
+    });
+
+    it('renders simple stepper example', () => {
+      expect(output).toContain('## Simple Stepper with Navigation Buttons');
+      expect(output).toContain('"showNavButtons": true');
+      expect(output).toContain('"nextButtonLabel"');
+      expect(output).toContain('"previousButtonLabel"');
     });
   });
 
@@ -550,7 +558,7 @@ describe('loadFormExamples', () => {
       it('renders missing pages variant anti-pattern', () => {
         expect(output).toContain('### ❌ Missing Pages Variant on Categorization (medium)');
         expect(output).toContain(
-          '**Why:** For multi-page forms, always set `options.variant` to `"pages"` on the Categorization element.',
+          '**Why:** For multi-page forms, always set `options.variant` to `"pages"` (Design System page stepper with Task List)',
         );
       });
 
@@ -571,8 +579,8 @@ describe('loadFormExamples', () => {
 
       it('renders all schema and design anti-patterns', () => {
         const schemaApCount = (output.match(/### ❌ .+\((?:critical|high|medium|low)\)/g) || []).length;
-        // 6 schema + 4 schemaAntiPatterns2 + 7 design = 17 total ❌ headings
-        expect(schemaApCount).toBe(17);
+        // 6 schema + 4 schemaAntiPatterns2 + 9 design = 19 total ❌ headings
+        expect(schemaApCount).toBe(19);
       });
 
       it('renders every original schema anti-pattern with **Bad:** and **Good:** labels', () => {
@@ -632,7 +640,12 @@ describe('loadFormExamples', () => {
       it('renders design anti-patterns with **Fix:** instead of **Bad:**/**Good:**', () => {
         const section = output.substring(output.indexOf('## Design Anti-Patterns'));
         const fixCount = (section.match(/\*\*Fix:\*\*/g) || []).length;
-        expect(fixCount).toBe(7);
+        expect(fixCount).toBe(9);
+      });
+
+      it('renders new layout design anti-patterns', () => {
+        expect(output).toContain('### ❌ Page Stepper Without Section Groupings (medium)');
+        expect(output).toContain('### ❌ Page Stepper Without Title (medium)');
       });
     });
   });

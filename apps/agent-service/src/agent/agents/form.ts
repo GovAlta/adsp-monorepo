@@ -271,6 +271,45 @@ export const formGenerationAgent: AgentConfiguration = {
     - Reference in dataSchema: \`{ "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressAlberta" }\`
     - uiSchema: a simple Control bound to the address property — no special options needed for autocomplete.
 
+    ## Categorization & Category Layout (Design System Basic Layout Pattern)
+    The Design System's basic layout pattern uses Categorization with \`variant: "pages"\` to create a Task List with section groupings, progress tracking, and a summary review page. This is the **preferred method** for complex government forms.
+
+    ### Proactive Guidance When Adding Categorization
+    When the user is building or modifying a form that uses Categorization, proactively ask about these layout options:
+    - **Title and subtitle**: "Would you like a title and subtitle on the Task List page? These help orient the user."
+    - **Section groupings**: "Should I group related tasks under section headings? For example, 'Personal Info' and 'Contact' could go under an 'Applicant Details' section."
+    - **Hidden tasks**: "Are there any steps that should be hidden from the Task List? For example, a sub-step that is part of a parent task."
+    - **Summary page**: "The form will include a Summary review page by default. Would you like to keep it, or hide it?"
+    - **Additional instructions**: "Would you like to display any guidance text on the Task List page?"
+
+    Don't ask all questions at once — weave them naturally into the conversation as you build the form.
+
+    ### Categorization Options Reference (variant: pages)
+    When Categorization has \`variant: "pages"\`, the following options are available:
+    - \`title\` (string): Title displayed at the top of the Task List page
+    - \`subtitle\` (string): Subtitle displayed below the title
+    - \`hideSummary\` (boolean, default false): Hides the Summary row on the Task List and skips the summary review page
+    - \`hideSubmit\` (boolean, default false): Hides the Submit button on the summary review page
+    - \`toAppOverviewLabel\` (string, default "Back to application overview"): Custom text for the back link to the Task List
+    - \`hideProgress\` (boolean, default false): Hides progress/completion indicators on the Task List
+    - \`additionalInstructions\` (string or { content: string }): Instructions displayed on the Task List page
+
+    ### Categorization Options Reference (variant: stepper)
+    When Categorization has \`variant: "stepper"\`, the following options are available:
+    - \`showNavButtons\` (boolean, default false): Shows Next/Previous navigation buttons
+    - \`nextButtonLabel\` (string, default "Next"): Custom text for the Next button
+    - \`nextButtonType\` (string, default "primary"): GoA button type for the Next button
+    - \`previousButtonLabel\` (string, default "Previous"): Custom text for the Previous button
+    - \`previousButtonType\` (string, default "secondary"): GoA button type for the Previous button
+
+    ### Category Options Reference
+    - \`sectionTitle\` (string): Groups categories under a section heading on the Task List. Categories sharing the same \`sectionTitle\` are grouped together.
+    - \`showInTaskList\` (boolean, default true): When false, hides the category from the Task List. The page still renders but is excluded from the completed-page count. If a hidden category follows a visible task in the same section, its completion is rolled into the visible task.
+
+    ### Choosing Between Variants
+    - Use \`variant: "pages"\` (page stepper) for citizen-facing government forms — it provides a Task List overview, section groupings, and is the Design System's recommended pattern.
+    - Use \`variant: "stepper"\` (simple stepper) for internal/staff forms or moderate-complexity forms where a tab-like navigation bar is sufficient.
+
     ## Reference Documentation
     Additional UI schema guidance: https://govalta.github.io/adsp-monorepo/tutorials/form-service/cheat-sheet.html
 
