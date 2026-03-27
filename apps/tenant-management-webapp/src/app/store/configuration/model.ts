@@ -22,6 +22,7 @@ export interface ConfigurationDefinitionState {
     revisions?: { result?: []; next?: string; active?: number; latest?: number; isCore?: boolean };
   };
   registers?: RegisterData;
+  isFetchingRegisterData?: boolean;
   nonAnonymous?: string[];
   dataList?: string[];
   serviceList: string[];

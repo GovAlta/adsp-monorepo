@@ -16,6 +16,7 @@ import {
   FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION,
   REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION,
   UPDATE_LATEST_REVISION_SUCCESS_ACTION,
+  FETCH_REGISTER_DATA_ACTION,
   FETCH_REGISTER_DATA_SUCCESS_ACTION,
   CLOSE_TEMPLATE_ACTION,
   CONNECT_CONFIGURATION_UPDATES_ACTION,
@@ -211,10 +212,16 @@ export default function (
       };
     }
 
+    case FETCH_REGISTER_DATA_ACTION:
+      return {
+        ...state,
+        isFetchingRegisterData: true,
+      };
     case FETCH_REGISTER_DATA_SUCCESS_ACTION: {
       return {
         ...state,
         registers: action.payload,
+        isFetchingRegisterData: false,
         nonAnonymous: action.anonymousRead,
         dataList: action.dataList,
       };
