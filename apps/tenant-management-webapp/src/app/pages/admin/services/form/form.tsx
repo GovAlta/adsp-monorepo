@@ -53,7 +53,16 @@ export const Form: FunctionComponent = () => {
             <h1 data-testid="form-title">Form service</h1>
             <img src={BetaBadge} alt="Form Service" />
           </HeadingDiv>
-          <Tabs activeIndex={activeIndex} data-testid="form-tabs">
+          <Tabs
+            activeIndex={activeIndex}
+            data-testid="form-tabs"
+            changeTabCallback={(index: number) => {
+              setActiveIndex(index);
+              if (index === 3) {
+                dispatch(getConfigurationDefinitions());
+              }
+            }}
+          >
             <Tab label="Overview" data-testid="form-overview-tab">
               <FormOverview
                 openAddDefinition={openAddDefinition}
