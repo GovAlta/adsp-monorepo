@@ -1,12 +1,14 @@
 {
   "id": "pages-layout",
-  "name": "Multi-Page Form Layout",
+  "name": "Multi-Page Form Layout (Design System Basic Layout Pattern)",
   "category": "layout",
-  "summary": "Categorization with `variant: pages` to create a step-by-step multi-page form",
+  "summary": "Categorization with `variant: pages` implements the Design System's basic layout pattern — the preferred method for complex government forms. Creates a Task List (table of contents) with progress tracking, section groupings, and a summary review page.",
   "whenToUse": [
     "Complex forms with 6+ fields or multiple logical sections",
     "When the form benefits from breaking content into digestible steps",
-    "Government service applications that collect personal info, contact info, and supporting details"
+    "Government service applications that collect personal info, contact info, and supporting details",
+    "When you want the Design System's recommended Task List pattern with progress tracking",
+    "When users need to see application status at a glance and enter at any step"
   ],
   "dataSchema": {
     "type": "object",
@@ -19,11 +21,18 @@
   },
   "uiSchema": {
     "type": "Categorization",
-    "options": { "variant": "pages" },
+    "options": {
+      "variant": "pages",
+      "title": "Service Application",
+      "subtitle": "Complete all sections below"
+    },
     "elements": [
       {
         "type": "Category",
         "label": "Personal Information",
+        "options": {
+          "sectionTitle": "Applicant Details"
+        },
         "elements": [
           {
             "type": "Control",
@@ -38,6 +47,9 @@
       {
         "type": "Category",
         "label": "Contact Information",
+        "options": {
+          "sectionTitle": "Applicant Details"
+        },
         "elements": [
           {
             "type": "Control",
@@ -51,10 +63,85 @@
       }
     ]
   },
+  "categorizationOptions": {
+    "description": "All available options on the Categorization element when variant is 'pages'",
+    "options": [
+      {
+        "name": "variant",
+        "type": "string",
+        "values": ["pages", "stepper"],
+        "description": "Set to 'pages' for the Design System's page stepper with Task List, or 'stepper' for a simple stepper with navigation tabs"
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "description": "Title displayed at the top of the Task List page"
+      },
+      {
+        "name": "subtitle",
+        "type": "string",
+        "description": "Subtitle displayed below the title on the Task List page"
+      },
+      {
+        "name": "hideSummary",
+        "type": "boolean",
+        "default": false,
+        "description": "When true, hides the Summary row on the Task List and skips the summary review page entirely"
+      },
+      {
+        "name": "hideSubmit",
+        "type": "boolean",
+        "default": false,
+        "description": "When true, hides the Submit button on the summary review page (the review page still renders)"
+      },
+      {
+        "name": "toAppOverviewLabel",
+        "type": "string",
+        "default": "Back to application overview",
+        "description": "Custom text for the back link that returns the user from a step page to the Task List"
+      },
+      {
+        "name": "hideProgress",
+        "type": "boolean",
+        "default": false,
+        "description": "When true, hides the progress/completion indicators on the Task List"
+      },
+      {
+        "name": "additionalInstructions",
+        "type": "string or object",
+        "description": "Instructions displayed on the Task List page. Can be a plain string or an object with { content: string } for markdown content"
+      }
+    ]
+  },
+  "categoryOptions": {
+    "description": "All available options on Category elements within a pages-variant Categorization",
+    "options": [
+      {
+        "name": "sectionTitle",
+        "type": "string",
+        "description": "Groups one or more categories under a section heading on the Task List. Categories sharing the same sectionTitle are grouped together. Sections only appear on the Task List for organizational purposes."
+      },
+      {
+        "name": "showInTaskList",
+        "type": "boolean",
+        "default": true,
+        "description": "When false, hides the category from the Task List. The category page still renders but does not get its own row, does not show a section header by itself, and is excluded from the completed-page count. If a hidden category follows a visible task in the same section, its completion is rolled into the visible task."
+      }
+    ]
+  },
   "notes": [
-    "Use Categorization with `variant: \"pages\"` as the root UI schema element",
+    "Use Categorization with `variant: \"pages\"` as the root UI schema element — this is the Design System's preferred method for complex forms",
     "Each Category becomes a separate page/step in the form",
-    "Give each Category a descriptive `label` — this is shown as the page title",
-    "Group related fields into the same Category"
+    "Give each Category a descriptive `label` — this is shown as the page title and Task List row",
+    "Group related fields into the same Category",
+    "Use `sectionTitle` on Category options to group multiple tasks under a section heading on the Task List",
+    "Categories sharing the same `sectionTitle` value are grouped under one section heading",
+    "A Summary review page is automatically appended for applicant review before submission",
+    "Set `hideSummary: true` if the form doesn't need a review step (e.g. simple data collection)",
+    "Set `hideSubmit: true` if submission is handled elsewhere (e.g. by a parent application)",
+    "Use `toAppOverviewLabel` to customize the back link text (e.g. 'Back to task list')",
+    "Set `hideProgress: true` to hide completion indicators on the Task List",
+    "Use `additionalInstructions` to display guidance text on the Task List page",
+    "Set `showInTaskList: false` on a Category to hide it from the Task List — useful for sub-steps that should be part of a parent task's flow"
   ]
 }

@@ -4,9 +4,10 @@ exports[`loadFormExamples snapshot matches the expected full output snapshot 1`]
 "# Best Practices
 
 ## Layout Selection
-Choose the right root layout based on form complexity
+Choose the right root layout based on form complexity. The Design System's basic layout pattern uses the page stepper (Categorization with variant='pages') as the preferred method for complex government forms.
 - **Simple forms (1-5 fields, single purpose)**: Use VerticalLayout as root
-- **Complex forms (6+ fields, multiple sections)**: Use Categorization with variant="pages"
+- **Complex forms (6+ fields, multiple sections)**: Use Categorization with variant="pages" — the Design System's preferred basic layout pattern. This creates a Task List with section groupings, progress tracking, and a summary review page.
+- **Moderate forms for experienced/internal users**: Use Categorization with variant="stepper" for a simple step navigation bar. Less structure than pages but still organizes content into steps.
 
 ## Validation Checklist
 Pre-save validation checklist
@@ -406,8 +407,8 @@ Drag and drop file upload variant using \`file-urn\` format and \`variant: dragd
 
 # Layout Examples
 
-## Multi-Page Form Layout
-Categorization with \`variant: pages\` to create a step-by-step multi-page form
+## Multi-Page Form Layout (Design System Basic Layout Pattern)
+Categorization with \`variant: pages\` implements the Design System's basic layout pattern — the preferred method for complex government forms. Creates a Task List (table of contents) with progress tracking, section groupings, and a summary review page.
 
 ### Data schema
 \`\`\`json
@@ -436,12 +437,17 @@ Categorization with \`variant: pages\` to create a step-by-step multi-page form
 {
   "type": "Categorization",
   "options": {
-    "variant": "pages"
+    "variant": "pages",
+    "title": "Service Application",
+    "subtitle": "Complete all sections below"
   },
   "elements": [
     {
       "type": "Category",
       "label": "Personal Information",
+      "options": {
+        "sectionTitle": "Applicant Details"
+      },
       "elements": [
         {
           "type": "Control",
@@ -456,6 +462,9 @@ Categorization with \`variant: pages\` to create a step-by-step multi-page form
     {
       "type": "Category",
       "label": "Contact Information",
+      "options": {
+        "sectionTitle": "Applicant Details"
+      },
       "elements": [
         {
           "type": "Control",
@@ -471,11 +480,36 @@ Categorization with \`variant: pages\` to create a step-by-step multi-page form
 }
 \`\`\`
 
+### Categorization Options
+All available options on the Categorization element when variant is 'pages'
+- **variant** (string — values: pages, stepper): Set to 'pages' for the Design System's page stepper with Task List, or 'stepper' for a simple stepper with navigation tabs
+- **title** (string): Title displayed at the top of the Task List page
+- **subtitle** (string): Subtitle displayed below the title on the Task List page
+- **hideSummary** (boolean (default: false)): When true, hides the Summary row on the Task List and skips the summary review page entirely
+- **hideSubmit** (boolean (default: false)): When true, hides the Submit button on the summary review page (the review page still renders)
+- **toAppOverviewLabel** (string (default: "Back to application overview")): Custom text for the back link that returns the user from a step page to the Task List
+- **hideProgress** (boolean (default: false)): When true, hides the progress/completion indicators on the Task List
+- **additionalInstructions** (string or object): Instructions displayed on the Task List page. Can be a plain string or an object with { content: string } for markdown content
+
+### Category Options
+All available options on Category elements within a pages-variant Categorization
+- **sectionTitle** (string): Groups one or more categories under a section heading on the Task List. Categories sharing the same sectionTitle are grouped together. Sections only appear on the Task List for organizational purposes.
+- **showInTaskList** (boolean (default: true)): When false, hides the category from the Task List. The category page still renders but does not get its own row, does not show a section header by itself, and is excluded from the completed-page count. If a hidden category follows a visible task in the same section, its completion is rolled into the visible task.
+
 ### Notes
-- Use Categorization with \`variant: "pages"\` as the root UI schema element
+- Use Categorization with \`variant: "pages"\` as the root UI schema element — this is the Design System's preferred method for complex forms
 - Each Category becomes a separate page/step in the form
-- Give each Category a descriptive \`label\` — this is shown as the page title
+- Give each Category a descriptive \`label\` — this is shown as the page title and Task List row
 - Group related fields into the same Category
+- Use \`sectionTitle\` on Category options to group multiple tasks under a section heading on the Task List
+- Categories sharing the same \`sectionTitle\` value are grouped under one section heading
+- A Summary review page is automatically appended for applicant review before submission
+- Set \`hideSummary: true\` if the form doesn't need a review step (e.g. simple data collection)
+- Set \`hideSubmit: true\` if submission is handled elsewhere (e.g. by a parent application)
+- Use \`toAppOverviewLabel\` to customize the back link text (e.g. 'Back to task list')
+- Set \`hideProgress: true\` to hide completion indicators on the Task List
+- Use \`additionalInstructions\` to display guidance text on the Task List page
+- Set \`showInTaskList: false\` on a Category to hide it from the Task List — useful for sub-steps that should be part of a parent task's flow
 
 ## Simple Vertical Layout
 VerticalLayout for simple single-page forms with a few fields
@@ -678,8 +712,8 @@ Group element that wraps controls in a labeled section (like a VerticalLayout wi
 - Groups render with visual separation (border/card) depending on the renderer
 - Use Groups within pages/categories to sub-divide long sections
 
-## Page Stepper with Section Titles
-Multi-page form using Categorization with \`variant: pages\`, section titles, and nested object scopes
+## Pages with Sections, Hidden Tasks, and Task List Options
+Advanced pages layout demonstrating section groupings, hidden task list items, additional instructions, and customized review flow — the full Design System basic layout pattern
 
 ### Data schema
 \`\`\`json
@@ -713,6 +747,9 @@ Multi-page form using Categorization with \`variant: pages\`, section titles, an
           "type": "string"
         }
       }
+    },
+    "phone": {
+      "type": "string"
     }
   }
 }
@@ -725,7 +762,9 @@ Multi-page form using Categorization with \`variant: pages\`, section titles, an
   "options": {
     "variant": "pages",
     "title": "Application Form",
-    "subtitle": "Tell us about yourself"
+    "subtitle": "Tell us about yourself",
+    "toAppOverviewLabel": "Back to task list",
+    "additionalInstructions": "Complete all required sections before submitting your application."
   },
   "elements": [
     {
@@ -749,6 +788,25 @@ Multi-page form using Categorization with \`variant: pages\`, section titles, an
             {
               "type": "Control",
               "scope": "#/properties/name/properties/initial"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Contact Details",
+      "options": {
+        "sectionTitle": "Identification",
+        "showInTaskList": false
+      },
+      "elements": [
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/phone"
             }
           ]
         }
@@ -781,12 +839,97 @@ Multi-page form using Categorization with \`variant: pages\`, section titles, an
 \`\`\`
 
 ### Notes
-- Use \`options.variant: "pages"\` for the Design System's preferred page stepper pattern
-- Use \`options.variant: "stepper"\` for the simple stepper (navigation bar at top)
+- Use \`options.variant: "pages"\` for the Design System's preferred pages pattern
 - Each Category becomes a page; \`sectionTitle\` groups categories into sections on the task list
+- Categories sharing the same \`sectionTitle\` are grouped under one section heading
+- Set \`showInTaskList: false\` on a Category to hide it from the Task List — the page still renders but the row is hidden and completion is rolled into the previous visible task in the same section
 - For nested objects, scopes must use the full path: \`#/properties/name/properties/firstName\`
 - A Summary page is automatically appended by the GoA renderer for applicant review
 - Use \`options.title\` and \`options.subtitle\` on Categorization for the task list header
+- Use \`toAppOverviewLabel\` to customize the back link text (default: 'Back to application overview')
+- Use \`additionalInstructions\` to display guidance text on the Task List page
+- Set \`hideSummary: true\` to remove the Summary row and skip the review page entirely
+- Set \`hideSubmit: true\` to keep the review page but hide the Submit button
+- Set \`hideProgress: true\` to hide the completion indicators on the Task List
+
+## Simple Stepper with Navigation Buttons
+Categorization with \`variant: stepper\` for a simple form stepper with customizable navigation buttons and step tabs
+
+### Data schema
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    }
+  }
+}
+\`\`\`
+
+### UI schema
+\`\`\`json
+{
+  "type": "Categorization",
+  "options": {
+    "variant": "stepper",
+    "showNavButtons": true,
+    "nextButtonLabel": "Continue",
+    "previousButtonLabel": "Go Back"
+  },
+  "elements": [
+    {
+      "type": "Category",
+      "label": "Personal Info",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/firstName"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/lastName"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Contact",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/email"
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+### Categorization Options
+All available options on the Categorization element when variant is 'stepper'
+- **variant** (string — values: stepper): Set to 'stepper' for a simple stepper with a navigation tab bar at the top
+- **showNavButtons** (boolean (default: false)): When true, shows Next and Previous navigation buttons below the form content
+- **nextButtonLabel** (string (default: "Next")): Custom text for the Next button
+- **nextButtonType** (string (default: "primary")): GoA Design System button type for the Next button (e.g. 'primary', 'secondary', 'tertiary')
+- **previousButtonLabel** (string (default: "Previous")): Custom text for the Previous button
+- **previousButtonType** (string (default: "secondary")): GoA Design System button type for the Previous button
+
+### Notes
+- The simple stepper shows all step labels in a navigation bar at the top — users can click any step
+- Set \`showNavButtons: true\` to add Next/Previous buttons for linear navigation
+- Customize button labels with \`nextButtonLabel\` and \`previousButtonLabel\`
+- Customize button styling with \`nextButtonType\` and \`previousButtonType\` (GoA Design System button types)
+- The simple stepper does NOT have a Task List or section groupings — use \`variant: "pages"\` for that
+- A Summary page is automatically appended for applicant review
+- For most government citizen-facing forms, the page stepper (variant: pages) is preferred
 
 # Common Field Examples
 
@@ -3857,7 +4000,7 @@ Using Categorization without specifying the pages variant
   }
 }
 \`\`\`
-**Why:** For multi-page forms, always set \`options.variant\` to \`"pages"\` on the Categorization element. Without it, pages won't render as steps.
+**Why:** For multi-page forms, always set \`options.variant\` to \`"pages"\` (Design System page stepper with Task List) or \`"stepper"\` (simple stepper with tab navigation). Without a variant, the Categorization won't render as steps. For citizen-facing government forms, prefer \`"pages"\`.
 
 ### ❌ Required Field Not in Properties (high)
 Listing a field in \`required\` that doesn't exist as a property
@@ -3931,6 +4074,14 @@ Passing formDefinitionId as input to formConfigurationUpdateTool
 ### ❌ Too Many Fields on a Single Page (medium)
 Putting 6+ fields in a VerticalLayout without pagination
 **Fix:** Use Categorization with \`variant: "pages"\` when you have 6 or more fields. Group related fields into separate Category pages.
+
+### ❌ Page Stepper Without Section Groupings (medium)
+Using Categorization with variant=pages and 4+ categories but no sectionTitle groupings — the Task List becomes a flat unorganized list
+**Fix:** Add \`sectionTitle\` to Category options to group related tasks under section headings. For example, group 'Name' and 'Contact' under 'Applicant Details'.
+
+### ❌ Page Stepper Without Title (medium)
+Using Categorization with variant=pages without setting a title — the Task List has no heading and looks incomplete
+**Fix:** Add \`title\` and optionally \`subtitle\` to the Categorization options to give the Task List a clear heading.
 
 ### ❌ No Help Text on Complex Fields (medium)
 Omitting contextual help for fields that need explanation
