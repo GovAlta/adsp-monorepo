@@ -8,7 +8,7 @@ export const DataRegisterIconDiv = styled.div`
 `;
 
 export const DataRegisterEntryDetail = styled.div`
-  background: #f3f3f3;
+  background: var(--goa-color-greyscale-100);
   white-space: pre-wrap;
   font-family: monospace;
   font-size: var(--goa-font-size-1);
