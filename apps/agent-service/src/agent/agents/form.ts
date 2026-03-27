@@ -45,42 +45,11 @@ export const formGenerationAgent: AgentConfiguration = {
 
     ## JSON Forms Rules Reference
     Rules control the visibility and editability of UI elements based on field values.
+    The full syntax, effects (SHOW/HIDE/ENABLE/DISABLE), condition patterns, multi-criteria rules, and group wrapper procedures are demonstrated in the rules examples below.
 
-    ### Rule Syntax
-    Attach a \`rule\` object to any uiSchema element (Control, Group, VerticalLayout, HorizontalLayout, etc.):
-    \`\`\`json
-    { "rule": { "effect": "SHOW", "condition": { "scope": "#/properties/fieldName", "schema": { "const": value } } } }
-    \`\`\`
-
-    ### Effects (4 total)
-    - SHOW: element is hidden by default, shown when condition is TRUE
-    - HIDE: element is visible by default, hidden when condition is TRUE (inverse of SHOW)
-    - ENABLE: element is disabled by default, enabled when condition is TRUE
-    - DISABLE: element is enabled by default, disabled when condition is TRUE (inverse of ENABLE)
-    Choose based on the DEFAULT state: use SHOW when hidden-by-default, HIDE when visible-by-default.
-
-    ### Condition Schema Patterns
-    - Exact value: \`{ "const": true }\`, \`{ "const": "yes" }\`, \`{ "const": 42 }\`
-    - Multiple values (OR): \`{ "enum": ["employed", "self-employed"] }\`
-    - Negation: \`{ "not": { "const": "declined" } }\`
-    - Numeric range: \`{ "minimum": 18 }\`, \`{ "maximum": 65 }\`
-
-    ### Multi-Criteria Rules (AND / OR)
-    For conditions on MULTIPLE fields, set \`scope: "#"\` and provide a full JSON Schema:
-    - AND logic: \`{ "scope": "#", "schema": { "properties": { "field1": { "const": "A" }, "field2": { "const": true } }, "required": ["field1", "field2"] } }\`
-    - OR logic: \`{ "scope": "#", "schema": { "anyOf": [ { "properties": { "field1": { "const": "A" } }, "required": ["field1"] }, { "properties": { "field2": { "const": "B" } }, "required": ["field2"] } ] } }\`
-    IMPORTANT: Always include \`required\` array in the condition schema for reliable matching.
-
-    ### Rules on Groups (Multi-Element Rules)
-    Attach a rule to a Group or layout wrapper to show/hide/enable/disable all child elements together.
-    - To add an element to a rule: wrap both elements in a Group, move the rule from the element to the Group, add the new element
-    - To remove an element from a rule: remove from the wrapper's elements; if only one remains, move the rule down and delete the wrapper
-    - To add criteria: convert single-field scope to "#" with full JSON Schema; add new property to conditions
-    - To remove criteria: remove property from condition; simplify back to single-field scope if only one remains
-
-    ### CRITICAL: Hidden Required Field Anti-Pattern
-    If a field has a SHOW/HIDE rule and is also \`required\` in the dataSchema, you MUST use conditional validation (if/then) in the dataSchema.
-    Otherwise, hidden fields will block form submission because they remain required even when hidden.
+    Key guidance not in examples:
+    - Choose effect based on the DEFAULT state: use SHOW when hidden-by-default, HIDE when visible-by-default. Same logic for ENABLE vs DISABLE.
+    - CRITICAL: If a field has a SHOW/HIDE rule and is also \`required\` in the dataSchema, you MUST use conditional validation (if/then) in the dataSchema. Otherwise, hidden fields will block form submission because they remain required even when hidden.
 
     ## HelpContent Behavioral Rules
     HelpContent is a non-standard JSON Forms component specific to ADSP. It is used for display-only content (notices, instructions, guidance) that is not bound to data.
@@ -108,20 +77,7 @@ export const formGenerationAgent: AgentConfiguration = {
     - If the deletion causes two previously-separated HelpContent elements to become adjacent, apply the adjacency consolidation rule above.
 
     ## Data Registers
-    Data registers are a non-standard ADSP extension that allows reusable lists of values (e.g. weekdays, ministries, provinces) to be stored in the Configuration Service and shared across multiple forms.
-
-    ### How Data Registers Work
-    - Registers are stored as configuration definitions in the \`data-register\` namespace of the Configuration Service.
-    - A register contains an array of values — either simple strings (e.g. \`["Monday", "Tuesday"]\`) or objects (e.g. \`[{"label": "Alberta", "value": "AB"}]\`).
-    - In the form's uiSchema, a Control references a register via \`options.register.urn\` (for Configuration Service registers) or \`options.register.url\` (for external API endpoints).
-    - In the dataSchema, the property uses \`"enum": [""]\` as a placeholder — the actual values are loaded from the register at runtime.
-
-    ### Label/Value Mapping for Object Registers
-    When register data is an array of objects, the dropdown needs to know which property to display and which to store:
-    - \`options.label\`: The object property to use as the dropdown display text (defaults to \`"label"\` if omitted).
-    - \`options.value\`: The object property to use as the stored form value (defaults to \`"value"\` if omitted).
-    - These use lodash \`_.get()\` so nested paths like \`"details.name"\` are supported.
-    Example: If register data is \`[{"code": "EDUC", "name": "Education"}]\`, set \`options.label\` to \`"name"\` and \`options.value\` to \`"code"\`.
+    Data registers are a non-standard ADSP extension that allows reusable lists of values (e.g. weekdays, ministries, provinces) to be stored in the Configuration Service and shared across multiple forms. The data register examples below demonstrate the mechanics (URN/URL references, label/value mapping, placeholder enums, wiring patterns).
 
     ### Behavioral Rules for Data Registers
     - When a user describes a list of values for a dropdown (e.g. "the options should be Monday through Friday"), ask: "Would you like to create a data register for these values so they can be reused in other forms, or just use a static enum?"
@@ -226,17 +182,7 @@ export const formGenerationAgent: AgentConfiguration = {
     - Retry with corrected input when the issue is clear
 
     ## File Upload Controls
-    File uploads are NOT a standard JSON Forms feature — they are a custom ADSP extension.
-
-    ### How it works
-    - Set \`"format": "file-urn"\` on a string property in the dataSchema to enable file upload.
-    - The form renders a file upload control that stores files via the ADSP File Service.
-    - Uploaded files are stored in Azure Blob storage and referenced by URN (e.g. \`urn:ads:platform:file-service:v1:/files/<uuid>\`).
-    - The field value becomes the file URN after upload.
-
-    ### Two display variants
-    - **Button** (default): Renders a "Choose file" button. No extra UI schema options needed — just use a Control bound to the property.
-    - **Drag & Drop**: Renders a drag-and-drop upload area. Set \`"variant": "dragdrop"\` in the UI schema options.
+    File uploads are NOT a standard JSON Forms feature — they are a custom ADSP extension. The file upload examples below demonstrate both variants (button and drag-and-drop) and the \`format: "file-urn"\` dataSchema setup.
 
     When a user requests a file upload field, ALWAYS ask whether they prefer a drag-and-drop area or a simple button, then apply the appropriate variant.
 
@@ -246,17 +192,12 @@ export const formGenerationAgent: AgentConfiguration = {
     - Uploaded files can be downloaded or managed through the File Service API.
 
     ## Address Lookup
-    Address lookup is NOT a standard JSON Forms feature — it is a custom ADSP extension that provides typeahead address autocomplete powered by a Canada Post API wrapper.
+    Address lookup is NOT a standard JSON Forms feature — it is a custom ADSP extension that provides typeahead address autocomplete powered by a Canada Post API wrapper. The address example below demonstrates the basic setup with \`$ref\` definitions and autocomplete options.
 
-    ### How it works
-    - Use the common schema \`$ref\` definitions (\`postalAddressAlberta\` or \`postalAddressCanada\`) in the dataSchema.
-    - The address lookup renderer activates automatically when the schema has the standard address properties (\`addressLine1\`, \`addressLine2\`, \`municipality\`, \`subdivisionCode\`, \`postalCode\`).
-    - As the user types in the address line 1 field, the control calls the platform's address gateway (\`api/gateway/v1/address/v1/find\`) to fetch suggestions from the Canada Post API.
-    - The user selects a suggestion to auto-fill all address subfields.
-
-    ### Two address scope variants
+    Additional details not in examples:
     - **postalAddressAlberta**: Restricts results to Alberta addresses. Sets \`subdivisionCode\` to \`"AB"\` and \`country\` to \`"CA"\` as constants.
     - **postalAddressCanada**: Allows all Canadian provinces/territories. \`subdivisionCode\` is an enum of province codes.
+    - As the user types in the address line 1 field, the control calls \`api/gateway/v1/address/v1/find\` to fetch suggestions from the Canada Post API.
 
     When a user requests an address field, ALWAYS ask whether they need Alberta-only addresses or all Canadian addresses, then use the appropriate \`$ref\` definition.
 
@@ -265,11 +206,6 @@ export const formGenerationAgent: AgentConfiguration = {
     \`\`\`json
     { "type": "Control", "scope": "#/properties/mailingAddress", "options": { "autocomplete": false } }
     \`\`\`
-
-    ### Schema setup
-    - Load definitions using schemaDefinitionTool first: \`{ url: "https://adsp.alberta.ca/common.v1.schema.json" }\`
-    - Reference in dataSchema: \`{ "$ref": "https://adsp.alberta.ca/common.v1.schema.json#/definitions/postalAddressAlberta" }\`
-    - uiSchema: a simple Control bound to the address property — no special options needed for autocomplete.
 
     ## Categorization & Category Layout (Design System Basic Layout Pattern)
     The Design System's basic layout pattern uses Categorization with \`variant: "pages"\` to create a Task List with section groupings, progress tracking, and a summary review page. This is the **preferred method** for complex government forms.
@@ -284,31 +220,7 @@ export const formGenerationAgent: AgentConfiguration = {
 
     Don't ask all questions at once — weave them naturally into the conversation as you build the form.
 
-    ### Categorization Options Reference (variant: pages)
-    When Categorization has \`variant: "pages"\`, the following options are available:
-    - \`title\` (string): Title displayed at the top of the Task List page
-    - \`subtitle\` (string): Subtitle displayed below the title
-    - \`hideSummary\` (boolean, default false): Hides the Summary row on the Task List and skips the summary review page
-    - \`hideSubmit\` (boolean, default false): Hides the Submit button on the summary review page
-    - \`toAppOverviewLabel\` (string, default "Back to application overview"): Custom text for the back link to the Task List
-    - \`hideProgress\` (boolean, default false): Hides progress/completion indicators on the Task List
-    - \`additionalInstructions\` (string or { content: string }): Instructions displayed on the Task List page
-
-    ### Categorization Options Reference (variant: stepper)
-    When Categorization has \`variant: "stepper"\`, the following options are available:
-    - \`showNavButtons\` (boolean, default false): Shows Next/Previous navigation buttons
-    - \`nextButtonLabel\` (string, default "Next"): Custom text for the Next button
-    - \`nextButtonType\` (string, default "primary"): GoA button type for the Next button
-    - \`previousButtonLabel\` (string, default "Previous"): Custom text for the Previous button
-    - \`previousButtonType\` (string, default "secondary"): GoA button type for the Previous button
-
-    ### Category Options Reference
-    - \`sectionTitle\` (string): Groups categories under a section heading on the Task List. Categories sharing the same \`sectionTitle\` are grouped together.
-    - \`showInTaskList\` (boolean, default true): When false, hides the category from the Task List. The page still renders but is excluded from the completed-page count. If a hidden category follows a visible task in the same section, its completion is rolled into the visible task.
-
-    ### Choosing Between Variants
-    - Use \`variant: "pages"\` (page stepper) for citizen-facing government forms — it provides a Task List overview, section groupings, and is the Design System's recommended pattern.
-    - Use \`variant: "stepper"\` (simple stepper) for internal/staff forms or moderate-complexity forms where a tab-like navigation bar is sufficient.
+    The full options references for Categorization (variant: pages), Categorization (variant: stepper), and Category options are provided in the layout examples below. Refer to those for the complete list of available options and their defaults.
 
     ## Reference Documentation
     Additional UI schema guidance: https://govalta.github.io/adsp-monorepo/tutorials/form-service/cheat-sheet.html

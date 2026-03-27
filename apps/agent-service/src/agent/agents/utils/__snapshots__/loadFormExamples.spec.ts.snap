@@ -712,8 +712,8 @@ Group element that wraps controls in a labeled section (like a VerticalLayout wi
 - Groups render with visual separation (border/card) depending on the renderer
 - Use Groups within pages/categories to sub-divide long sections
 
-## Page Stepper with Sections, Hidden Tasks, and Task List Options
-Advanced page stepper demonstrating section groupings, hidden task list items, additional instructions, and customized review flow — the full Design System basic layout pattern
+## Pages with Sections, Hidden Tasks, and Task List Options
+Advanced pages layout demonstrating section groupings, hidden task list items, additional instructions, and customized review flow — the full Design System basic layout pattern
 
 ### Data schema
 \`\`\`json
@@ -839,8 +839,7 @@ Advanced page stepper demonstrating section groupings, hidden task list items, a
 \`\`\`
 
 ### Notes
-- Use \`options.variant: "pages"\` for the Design System's preferred page stepper pattern
-- Use \`options.variant: "stepper"\` for the simple stepper (navigation bar at top)
+- Use \`options.variant: "pages"\` for the Design System's preferred pages pattern
 - Each Category becomes a page; \`sectionTitle\` groups categories into sections on the task list
 - Categories sharing the same \`sectionTitle\` are grouped under one section heading
 - Set \`showInTaskList: false\` on a Category to hide it from the Task List — the page still renders but the row is hidden and completion is rolled into the previous visible task in the same section

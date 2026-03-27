@@ -17,7 +17,7 @@ import * as verticalLayout from '../data/form-examples/layouts/vertical-layout.j
 import * as horizontalLayout from '../data/form-examples/layouts/horizontal-layout.json';
 import * as mixedLayout from '../data/form-examples/layouts/mixed-layout.json';
 import * as groupLayout from '../data/form-examples/layouts/group-layout.json';
-import * as stepperWithSections from '../data/form-examples/layouts/stepper-with-sections.json';
+import * as pagesWithSections from '../data/form-examples/layouts/pages-with-sections.json';
 import * as simpleStepper from '../data/form-examples/layouts/simple-stepper.json';
 // Common fields
 import * as fullName from '../data/form-examples/common-fields/full-name.json';
@@ -161,7 +161,7 @@ const layoutExamples: FormExample[] = [
   horizontalLayout,
   mixedLayout,
   groupLayout,
-  stepperWithSections,
+  pagesWithSections,
   simpleStepper,
 ] as FormExample[];
 const commonFieldExamples: FormExample[] = [fullName, address] as FormExample[];

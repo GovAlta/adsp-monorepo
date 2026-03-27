@@ -1,8 +1,8 @@
 {
-  "id": "stepper-with-sections",
-  "name": "Page Stepper with Sections, Hidden Tasks, and Task List Options",
+  "id": "pages-with-sections",
+  "name": "Pages with Sections, Hidden Tasks, and Task List Options",
   "category": "layout",
-  "summary": "Advanced page stepper demonstrating section groupings, hidden task list items, additional instructions, and customized review flow — the full Design System basic layout pattern",
+  "summary": "Advanced pages layout demonstrating section groupings, hidden task list items, additional instructions, and customized review flow — the full Design System basic layout pattern",
   "whenToUse": [
     "Large government application forms with distinct logical sections",
     "When you want a task-list view with section groupings and progress tracking",
@@ -67,9 +67,7 @@
         "elements": [
           {
             "type": "VerticalLayout",
-            "elements": [
-              { "type": "Control", "scope": "#/properties/phone" }
-            ]
+            "elements": [{ "type": "Control", "scope": "#/properties/phone" }]
           }
         ]
       },
@@ -92,8 +90,7 @@
     ]
   },
   "notes": [
-    "Use `options.variant: \"pages\"` for the Design System's preferred page stepper pattern",
-    "Use `options.variant: \"stepper\"` for the simple stepper (navigation bar at top)",
+    "Use `options.variant: \"pages\"` for the Design System's preferred pages pattern",
     "Each Category becomes a page; `sectionTitle` groups categories into sections on the task list",
     "Categories sharing the same `sectionTitle` are grouped under one section heading",
     "Set `showInTaskList: false` on a Category to hide it from the Task List — the page still renders but the row is hidden and completion is rolled into the previous visible task in the same section",

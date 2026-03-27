@@ -306,8 +306,8 @@ describe('loadFormExamples', () => {
       expect(output).toContain('"type": "Group"');
     });
 
-    it('renders stepper with sections example', () => {
-      expect(output).toContain('## Page Stepper with Sections, Hidden Tasks, and Task List Options');
+    it('renders pages with sections example', () => {
+      expect(output).toContain('## Pages with Sections, Hidden Tasks, and Task List Options');
       expect(output).toContain('"sectionTitle"');
       expect(output).toContain('"showInTaskList": false');
     });
