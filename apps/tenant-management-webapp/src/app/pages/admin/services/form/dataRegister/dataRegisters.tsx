@@ -1,20 +1,22 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@store/index';
-import { RegisterData, RegisterConfigData, RegisterDataType } from '@abgov/jsonforms-components';
+import { RegisterConfigData, RegisterDataType } from '@abgov/jsonforms-components';
+import { selectRegisterData } from '@store/configuration/selectors';
+import { RootState } from '@store/index';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { DeleteModal } from '@components/DeleteModal';
 import MonacoEditor from '@monaco-editor/react';
-import { GoabButton, GoabButtonGroup, GoabFormItem, GoabTable } from '@abgov/react-components';
+import { GoabButton, GoabButtonGroup, GoabCircularProgress, GoabFormItem, GoabTable } from '@abgov/react-components';
 import {
-  DataRegisterContainer,
   DataRegisterEditorWrapper,
   DataRegisterEntryDetail,
   DataRegisterIconDiv,
+  DataRegisterLoadingDiv,
   DataRegisterMonacoDiv,
   DataRegisterTableWrapper,
-} from '../style-components';
+} from './styled-components';
 import {
   updateConfigurationDefinition,
   replaceConfigurationDataAction,
@@ -25,9 +27,6 @@ import { DATA_REGISTER_NAMESPACE } from '@store/configuration/model';
 import { REGISTER_DATA_SCHEMA, parseUrn, urnCompare, validateRegisterJson } from './utils';
 import { AddRegisterDataModal } from './addRegisterDataModal';
 
-interface DataRegistersProps {
-  registerData?: RegisterData;
-}
 
 interface RegisterItemProps {
   entry: RegisterConfigData;
@@ -194,8 +193,10 @@ const RegisterItem = ({ entry }: RegisterItemProps): JSX.Element => {
   );
 };
 
-export const DataRegisters = ({ registerData }: DataRegistersProps): JSX.Element => {
+export const DataRegisters = (): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
+  const registerData = useSelector(selectRegisterData) as RegisterConfigData[];
+  const isFetching = useSelector((state: RootState) => state.configuration.isFetchingRegisterData);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDescription, setNewDescription] = useState('');
@@ -241,13 +242,17 @@ export const DataRegisters = ({ registerData }: DataRegistersProps): JSX.Element
   };
 
   return (
-    <DataRegisterContainer>
+    <>
       <GoabButtonGroup alignment="end" mt="m">
         <GoabButton type="secondary" onClick={handleAddOpen} testId="data-register-add-btn">
           Add register data
         </GoabButton>
       </GoabButtonGroup>
-      {!registerData || registerData.length === 0 ? (
+      {isFetching ? (
+        <DataRegisterLoadingDiv>
+          <GoabCircularProgress visible={true} size="large" />
+        </DataRegisterLoadingDiv>
+      ) : !registerData || registerData.length === 0 ? (
         <p>No data registers</p>
       ) : (
         <DataRegisterTableWrapper>
@@ -274,6 +279,6 @@ export const DataRegisters = ({ registerData }: DataRegistersProps): JSX.Element
         </DataRegisterTableWrapper>
       )}
       <AddRegisterDataModal open={isAddModalOpen} onCancel={handleAddCancel} onSave={handleAddSave} />
-    </DataRegisterContainer>
+    </>
   );
 };
