@@ -3,7 +3,7 @@ import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { PdfOverview } from './overview';
 import { PdfTemplates } from './templates/templates';
-
+import { Voice } from './voice';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
@@ -28,6 +28,9 @@ export const Pdf: FunctionComponent = () => {
           </Tab>
           <Tab label="Templates" data-testid="pdf-service-templates-tab">
             <PdfTemplates openAddTemplate={openAddTemplate} />
+          </Tab>
+          <Tab label="Voice">
+            <Voice />
           </Tab>
         </Tabs>
       </Main>
