@@ -116,3 +116,89 @@ export function toFileTree(files: WorkspaceFileMap): WorkspaceFileTree {
 
   return root as WorkspaceFileTree;
 }
+
+// --- Tar archive helpers ---
+
+function writeTarString(target: Uint8Array, offset: number, size: number, value: string): void {
+  const bytes = new TextEncoder().encode(value);
+  const length = Math.min(bytes.length, size);
+  target.set(bytes.slice(0, length), offset);
+}
+
+function writeTarOctal(target: Uint8Array, offset: number, size: number, value: number): void {
+  const octal = Math.max(0, Math.floor(value)).toString(8);
+  const bodyLength = Math.max(0, size - 1);
+  const body = octal.padStart(bodyLength, '0').slice(-bodyLength);
+  writeTarString(target, offset, bodyLength, body);
+  target[offset + size - 1] = 0;
+}
+
+function normalizeTarPath(path: string): { name: string; prefix: string } {
+  const normalized = path.replace(/^\/+/, '').replace(/\\/g, '/');
+
+  if (normalized.length <= 100) {
+    return { name: normalized, prefix: '' };
+  }
+
+  const splitIndex = normalized.lastIndexOf('/');
+  if (splitIndex > 0) {
+    const prefix = normalized.slice(0, splitIndex);
+    const name = normalized.slice(splitIndex + 1);
+    if (name.length <= 100 && prefix.length <= 155) {
+      return { name, prefix };
+    }
+  }
+
+  return { name: normalized.slice(-100), prefix: '' };
+}
+
+export function createTarArchive(files: WorkspaceSnapshotFile[]): Blob {
+  const encoder = new TextEncoder();
+  const now = Math.floor(Date.now() / 1000);
+  const chunks: Uint8Array[] = [];
+
+  for (const file of files) {
+    const { name, prefix } = normalizeTarPath(file.path);
+    const content = encoder.encode(file.content ?? '');
+    const header = new Uint8Array(512);
+
+    writeTarString(header, 0, 100, name);
+    writeTarOctal(header, 100, 8, 0o644);
+    writeTarOctal(header, 108, 8, 0);
+    writeTarOctal(header, 116, 8, 0);
+    writeTarOctal(header, 124, 12, content.length);
+    writeTarOctal(header, 136, 12, now);
+
+    for (let index = 148; index < 156; index++) {
+      header[index] = 0x20;
+    }
+
+    header[156] = '0'.charCodeAt(0);
+    writeTarString(header, 257, 6, 'ustar');
+    writeTarString(header, 263, 2, '00');
+    writeTarString(header, 345, 155, prefix);
+
+    const checksum = header.reduce((sum, value) => sum + value, 0);
+    const checksumOctal = checksum.toString(8).padStart(6, '0').slice(-6);
+    writeTarString(header, 148, 6, checksumOctal);
+    header[154] = 0;
+    header[155] = 0x20;
+
+    chunks.push(header);
+    chunks.push(content);
+
+    const remainder = content.length % 512;
+    if (remainder !== 0) {
+      chunks.push(new Uint8Array(512 - remainder));
+    }
+  }
+
+  chunks.push(new Uint8Array(1024));
+  return new Blob(chunks as unknown as BlobPart[], { type: 'application/x-tar' });
+}
+
+export async function gzipBlob(blob: Blob): Promise<Blob> {
+  const stream = blob.stream().pipeThrough(new CompressionStream('gzip'));
+  const compressed = await new Response(stream).arrayBuffer();
+  return new Blob([compressed], { type: 'application/gzip' });
+}
