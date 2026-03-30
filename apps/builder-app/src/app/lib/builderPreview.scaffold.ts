@@ -178,7 +178,7 @@ export function createPreviewScript(
         }
 
         const mime = inferAssetMimeType(path);
-        const base64Candidate = trimmed.replace(/\s+/g, '');
+          const base64Candidate = trimmed.replace(/\\s+/g, '');
         const looksBase64 =
           base64Candidate.length > 0 &&
           /^[A-Za-z0-9+/=]+$/.test(base64Candidate) &&
