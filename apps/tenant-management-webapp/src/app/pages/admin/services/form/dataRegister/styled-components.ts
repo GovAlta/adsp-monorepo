@@ -17,6 +17,15 @@ export const DataRegisterEntryDetail = styled.div`
   text-align: left;
 `;
 
+export const DataRegisterUrn = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--goa-space-xs);
+  padding: var(--goa-space-s) var(--goa-space-m);
+  background: var(--goa-color-greyscale-100);
+  border-bottom: 1px solid var(--goa-color-greyscale-200);
+`;
+
 export const DataRegisterEditorWrapper = styled.div`
   padding: var(--goa-space-m) 0;
 `;
