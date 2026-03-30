@@ -1,6 +1,7 @@
-import { dirname, posix } from 'node:path';
+import { dirname, extname, posix } from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
+import { TextDecoder } from 'node:util';
 import { createGunzip } from 'node:zlib';
 import { InvalidOperationError, InvalidValueError } from '@core-services/core-common';
 import { Workspace } from '@mastra/core/workspace';
@@ -55,25 +56,241 @@ type WorkspaceFilesystem = Workspace['filesystem'];
 const WORKSPACE_METADATA_DIR = '.agent';
 const WORKSPACE_REVISION_PATH = `${WORKSPACE_METADATA_DIR}/revision.json`;
 const DEFAULT_WORKSPACE_REVISION = 0;
+const UTF8_DECODER = new TextDecoder('utf-8', { fatal: true });
+
+// File size limits for workspace initialization
+const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50MB per file
+const MAX_TARBALL_SIZE_BYTES = 500 * 1024 * 1024; // 500MB total
+
+const BINARY_EXTENSIONS = new Set([
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.bmp',
+  '.ico',
+  '.avif',
+  '.svg',
+  '.ttf',
+  '.otf',
+  '.woff',
+  '.woff2',
+  '.eot',
+  '.pdf',
+  '.zip',
+  '.gz',
+  '.tar',
+  '.wasm',
+  '.mp4',
+  '.webm',
+  '.mp3',
+  '.wav',
+  '.ogg',
+]);
+
+const TEXT_EXTENSIONS = new Set([
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+  '.json',
+  '.md',
+  '.txt',
+  '.css',
+  '.scss',
+  '.sass',
+  '.less',
+  '.html',
+  '.xml',
+  '.yml',
+  '.yaml',
+  '.env',
+  '.gitignore',
+  '.gitattributes',
+  '.npmrc',
+  '.editorconfig',
+  '.prettierrc',
+  '.eslintrc',
+  '.spec',
+]);
 
 function isNotFoundError(err: unknown): boolean {
   return err instanceof Error && /not found|enoent/i.test(err.message);
 }
 
-function decodeWorkspaceContent(content: unknown): string {
+function getExtension(path?: string): string {
+  if (!path) {
+    return '';
+  }
+
+  const ext = extname(path).toLowerCase();
+  if (ext) {
+    return ext;
+  }
+
+  const basename = posix.basename(path).toLowerCase();
+  if (basename.startsWith('.')) {
+    return basename;
+  }
+
+  return '';
+}
+
+function isKnownBinaryPath(path?: string): boolean {
+  const ext = getExtension(path);
+  return !!ext && BINARY_EXTENSIONS.has(ext);
+}
+
+function isKnownTextPath(path?: string): boolean {
+  const ext = getExtension(path);
+  if (!ext) {
+    return false;
+  }
+
+  if (TEXT_EXTENSIONS.has(ext)) {
+    return true;
+  }
+
+  return ext.startsWith('.config.');
+}
+
+function inferMimeType(path?: string): string {
+  switch (getExtension(path)) {
+    case '.png':
+      return 'image/png';
+    case '.jpg':
+    case '.jpeg':
+      return 'image/jpeg';
+    case '.gif':
+      return 'image/gif';
+    case '.webp':
+      return 'image/webp';
+    case '.bmp':
+      return 'image/bmp';
+    case '.ico':
+      return 'image/x-icon';
+    case '.avif':
+      return 'image/avif';
+    case '.svg':
+      return 'image/svg+xml';
+    case '.ttf':
+      return 'font/ttf';
+    case '.otf':
+      return 'font/otf';
+    case '.woff':
+      return 'font/woff';
+    case '.woff2':
+      return 'font/woff2';
+    case '.eot':
+      return 'application/vnd.ms-fontobject';
+    case '.pdf':
+      return 'application/pdf';
+    case '.wasm':
+      return 'application/wasm';
+    case '.mp4':
+      return 'video/mp4';
+    case '.webm':
+      return 'video/webm';
+    case '.mp3':
+      return 'audio/mpeg';
+    case '.wav':
+      return 'audio/wav';
+    case '.ogg':
+      return 'audio/ogg';
+    default:
+      return 'application/octet-stream';
+  }
+}
+
+function isLikelyTextBuffer(buffer: Buffer, path?: string): boolean {
+  if (isKnownBinaryPath(path)) {
+    // A binary-extension file that was previously stored as a data URL (e.g. written
+    // back from a tar that contained the data URL text) should be returned as-is text
+    // rather than re-encoded. Detect by checking for the data: prefix bytes.
+    if (buffer.length >= 5 && buffer.slice(0, 5).toString('ascii') === 'data:') {
+      return true;
+    }
+    return false;
+  }
+
+  if (isKnownTextPath(path)) {
+    return true;
+  }
+
+  if (buffer.includes(0)) {
+    return false;
+  }
+
+  let decoded = '';
+  try {
+    decoded = UTF8_DECODER.decode(buffer);
+  } catch {
+    return false;
+  }
+
+  // Count non-printable control characters (excluding tab \x09, LF \x0A, CR \x0D)
+  // eslint-disable-next-line no-control-regex
+  const control = decoded.match(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g)?.length || 0;
+  return control / Math.max(decoded.length, 1) < 0.2;
+}
+
+function parseBase64DataUrl(value: string): { mimeType: string; base64: string } | undefined {
+  const match = /^data:([^;,]+);base64,([A-Za-z0-9+/=\s]+)$/.exec(value.trim());
+  if (!match) {
+    return undefined;
+  }
+
+  return {
+    mimeType: match[1].toLowerCase(),
+    base64: match[2].replace(/\s+/g, ''),
+  };
+}
+
+function decodeUpdateContent(path: string, content: string): string | Buffer {
+  const parsed = parseBase64DataUrl(content);
+  if (!parsed) {
+    return content;
+  }
+
+  const shouldDecode =
+    isKnownBinaryPath(path) ||
+    (!parsed.mimeType.startsWith('text/') &&
+      parsed.mimeType !== 'application/json' &&
+      parsed.mimeType !== 'application/xml');
+
+  if (!shouldDecode) {
+    return content;
+  }
+
+  try {
+    return Buffer.from(parsed.base64, 'base64');
+  } catch {
+    return content;
+  }
+}
+
+function decodeWorkspaceContent(content: unknown, path?: string): string {
   if (typeof content === 'string') {
     return content;
   }
 
+  let buffer: Buffer;
   if (content instanceof Uint8Array) {
-    return Buffer.from(content).toString('utf-8');
+    buffer = Buffer.from(content);
+  } else if (Buffer.isBuffer(content)) {
+    buffer = content;
+  } else {
+    throw new InvalidOperationError('Workspace file content could not be decoded as UTF-8 text.');
   }
 
-  if (Buffer.isBuffer(content)) {
-    return content.toString('utf-8');
+  if (isLikelyTextBuffer(buffer, path)) {
+    return buffer.toString('utf-8');
   }
 
-  throw new InvalidOperationError('Workspace file content could not be decoded as UTF-8 text.');
+  return `data:${inferMimeType(path)};base64,${buffer.toString('base64')}`;
 }
 
 function validateWorkspacePath(path: string): string {
@@ -271,7 +488,9 @@ export class ManagedWorkspace {
   public async getRevision(): Promise<WorkspaceRevisionMetadata> {
     try {
       const content = await this.filesystem.readFile(WORKSPACE_REVISION_PATH);
-      const parsed = JSON.parse(decodeWorkspaceContent(content)) as Partial<WorkspaceRevisionMetadata>;
+      const parsed = JSON.parse(
+        decodeWorkspaceContent(content, WORKSPACE_REVISION_PATH),
+      ) as Partial<WorkspaceRevisionMetadata>;
       const revision = Number(parsed.revision);
 
       return {
@@ -320,10 +539,15 @@ export class ManagedWorkspace {
   ): Promise<WorkspaceRevisionMetadata> {
     await this.clear();
     const extract = tarStream.extract();
+    let totalSize = 0;
 
     extract.on(
       'entry',
-      async (header: { name: string; type: string }, stream: NodeJS.ReadableStream, next: (err?: Error) => void) => {
+      async (
+        header: { name: string; type: string; size?: number },
+        stream: NodeJS.ReadableStream,
+        next: (err?: Error) => void,
+      ) => {
         try {
           const entryPath = resolveTarEntryPath(header.name);
           const chunks: Buffer[] = [];
@@ -339,7 +563,26 @@ export class ManagedWorkspace {
           if (header.type === 'directory') {
             await this.filesystem.mkdir(entryPath, { recursive: true });
           } else if (header.type === 'file') {
-            await this.filesystem.writeFile(entryPath, Buffer.concat(chunks), { recursive: true });
+            const fileContent = Buffer.concat(chunks);
+            const fileSize = fileContent.length;
+
+            // Validate individual file size
+            if (fileSize > MAX_FILE_SIZE_BYTES) {
+              throw new InvalidOperationError(
+                `File "${entryPath}" exceeds maximum size of ${MAX_FILE_SIZE_BYTES / (1024 * 1024)}MB (` +
+                  `actual: ${fileSize / (1024 * 1024)}MB).`,
+              );
+            }
+
+            // Validate cumulative tarball size
+            totalSize += fileSize;
+            if (totalSize > MAX_TARBALL_SIZE_BYTES) {
+              throw new InvalidOperationError(
+                `Workspace tarball exceeds maximum size of ${MAX_TARBALL_SIZE_BYTES / (1024 * 1024)}MB.`,
+              );
+            }
+
+            await this.filesystem.writeFile(entryPath, fileContent, { recursive: true });
           }
 
           next();
@@ -363,7 +606,10 @@ export class ManagedWorkspace {
     const deletes = update.deletes || [];
 
     for (const { path, content } of writes) {
-      await this.filesystem.writeFile(validateWorkspacePath(path), content, { recursive: true });
+      const normalizedPath = validateWorkspacePath(path);
+      await this.filesystem.writeFile(normalizedPath, decodeUpdateContent(normalizedPath, content), {
+        recursive: true,
+      });
     }
 
     for (const path of deletes) {
@@ -384,7 +630,7 @@ export class ManagedWorkspace {
     const normalizedPath = validateWorkspacePath(path);
     return this.filesystem
       .readFile(normalizedPath)
-      .then((content) => ({ path: normalizedPath, content: decodeWorkspaceContent(content) }));
+      .then((content) => ({ path: normalizedPath, content: decodeWorkspaceContent(content, normalizedPath) }));
   }
 
   public createProjector(): WorkspaceChangeProjector {
@@ -413,7 +659,7 @@ export class ManagedWorkspace {
         const content = await this.filesystem.readFile(entryPath);
         files.push({
           path: entryPath,
-          content: decodeWorkspaceContent(content),
+          content: decodeWorkspaceContent(content, entryPath),
         });
       }
     }

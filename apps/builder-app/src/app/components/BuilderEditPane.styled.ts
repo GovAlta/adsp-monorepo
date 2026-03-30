@@ -288,7 +288,7 @@ export const FileButton = styled.button<{ $isActive: boolean; $isUpdated: boolea
   padding: 0.55rem 0.65rem;
   border-radius: 0.75rem;
   text-align: left;
-  background: var(--goa-color-greyscale-white, #ffffff);
+  background: transparent;
   color: inherit;
   cursor: pointer;
   transition:
@@ -368,6 +368,33 @@ export const FileContent = styled.pre`
   line-height: 1.5;
   font-family:
     ui-monospace, SFMono-Regular, SFMono, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+`;
+
+export const AssetThumbnailPane = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--goa-color-greyscale-white, #ffffff);
+`;
+
+export const AssetThumbnailImg = styled.img`
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+`;
+
+export const AssetThumbnailMeta = styled.span`
+  font-size: 0.74rem;
+  color: var(--builder-muted, #596b7e);
+  font-style: italic;
 `;
 
 export const Composer = styled.div`

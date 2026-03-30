@@ -19,6 +19,7 @@ const KNOWN_PREVIEW_SPECIFIERS = new Set([
   '@abgov/web-components/index.css',
   '@abgov/react-components',
   'ionicons/dist/loader',
+  'ionicons/loader',
 ]);
 
 const NODE_BUILTIN_PREFIXES = new Set([

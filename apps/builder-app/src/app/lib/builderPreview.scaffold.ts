@@ -122,6 +122,79 @@ export function createPreviewScript(
         return specifier;
       }
 
+      function inferAssetMimeType(path) {
+        const ext = String(path).split('.').pop()?.toLowerCase() || '';
+        switch (ext) {
+          case 'png':
+            return 'image/png';
+          case 'jpg':
+          case 'jpeg':
+            return 'image/jpeg';
+          case 'gif':
+            return 'image/gif';
+          case 'webp':
+            return 'image/webp';
+          case 'bmp':
+            return 'image/bmp';
+          case 'ico':
+            return 'image/x-icon';
+          case 'avif':
+            return 'image/avif';
+          case 'svg':
+            return 'image/svg+xml';
+          case 'woff':
+            return 'font/woff';
+          case 'woff2':
+            return 'font/woff2';
+          case 'ttf':
+            return 'font/ttf';
+          case 'otf':
+            return 'font/otf';
+          case 'eot':
+            return 'application/vnd.ms-fontobject';
+          case 'mp4':
+            return 'video/mp4';
+          case 'webm':
+            return 'video/webm';
+          case 'mp3':
+            return 'audio/mpeg';
+          case 'wav':
+            return 'audio/wav';
+          case 'ogg':
+            return 'audio/ogg';
+          default:
+            return 'application/octet-stream';
+        }
+      }
+
+      function toAssetModuleValue(path, source) {
+        if (typeof source !== 'string') {
+          return 'about:blank';
+        }
+
+        const trimmed = source.trim();
+        if (trimmed.startsWith('data:')) {
+          return trimmed;
+        }
+
+        const mime = inferAssetMimeType(path);
+        const base64Candidate = trimmed.replace(/\s+/g, '');
+        const looksBase64 =
+          base64Candidate.length > 0 &&
+          /^[A-Za-z0-9+/=]+$/.test(base64Candidate) &&
+          base64Candidate.length % 4 === 0;
+
+        if (looksBase64) {
+          return 'data:' + mime + ';base64,' + base64Candidate;
+        }
+
+        if (mime === 'image/svg+xml') {
+          return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(source);
+        }
+
+        return 'about:blank';
+      }
+
       function ensureExternalStylesheet(href) {
         if (!href || document.querySelector('link[data-builder-fallback="' + href + '"]')) {
           return;
@@ -390,6 +463,18 @@ export function createPreviewScript(
                     // Ignore non-writable properties in fallback mode.
                   }
 
+                  // Svelte web components register property setters in all-lowercase
+                  // (e.g. backgroundUrl → backgroundurl). Try the lowercase form as well
+                  // so props like backgroundUrl reach the correct setter.
+                  const lowerKey = key.toLowerCase();
+                  if (lowerKey !== key) {
+                    try {
+                      element[lowerKey] = value;
+                    } catch {
+                      // Ignore non-writable properties in fallback mode.
+                    }
+                  }
+
                   const attributeName = toKebabCase(key);
                   if (typeof value === 'boolean') {
                     if (value) {
@@ -436,6 +521,12 @@ export function createPreviewScript(
         }
 
         if (specifier === 'ionicons/dist/loader') {
+          return {
+            defineCustomElements: () => undefined,
+          };
+        }
+
+        if (specifier === 'ionicons/loader') {
           return {
             defineCustomElements: () => undefined,
           };
@@ -532,6 +623,13 @@ export function createPreviewScript(
 
         if (resolvedPath.endsWith('.json')) {
           return JSON.parse(files[resolvedPath]);
+        }
+
+        // Treat common static assets as URL/string modules in fallback mode.
+        // Accept data: URLs or base64 payloads when available, otherwise fall
+        // back to a blank URL rather than trying to transpile assets as JS.
+        if (/[.](png|jpe?g|gif|webp|bmp|ico|avif|svg|ttf|otf|woff2?|eot|mp4|webm|mp3|wav|ogg)$/i.test(resolvedPath)) {
+          return toAssetModuleValue(resolvedPath, files[resolvedPath]);
         }
 
         const source = files[resolvedPath];

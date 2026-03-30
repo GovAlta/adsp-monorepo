@@ -10,6 +10,7 @@ import {
   agentActions,
   agentConnectionStatusSelector,
   agentMessagesByThreadSelector,
+  agentSelectedAssetThumbnailSelector,
   agentSocketConnectedSelector,
   agentWorkspaceRefreshingSelector,
   agentWorkspaceStatusSelector,
@@ -32,6 +33,7 @@ import {
   createTarArchive,
   DEFAULT_SELECTED_FILE,
   getDefaultSelectedPath,
+  isImagePath,
   sortWorkspaceFiles,
   type WorkspaceChangeEvent,
   type WorkspaceFileMap,
@@ -367,6 +369,7 @@ export const BuilderTenant = () => {
   const connectionStatus = useSelector(agentConnectionStatusSelector);
   const workspaceStatus = useSelector(agentWorkspaceStatusSelector);
   const isWorkspaceRefreshing = useSelector(agentWorkspaceRefreshingSelector);
+  const selectedAssetThumbnail = useSelector(agentSelectedAssetThumbnailSelector);
   const [files, setFiles] = useState<WorkspaceFileMap>({});
   const [selectedPath, setSelectedPath] = useState(DEFAULT_SELECTED_FILE);
   const isSocketConnected = useSelector(agentSocketConnectedSelector);
@@ -382,6 +385,8 @@ export const BuilderTenant = () => {
   const workspaceInitInProgressRef = useRef(false);
   const updateIndicatorTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const reconnectTimerRef = useRef<number | null>(null);
+  const workspaceReadRetryTimerRef = useRef<number | null>(null);
+  const workspaceReadRetryAttemptsRef = useRef(0);
   const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
   const previewRouteStateRef = useRef<PreviewRouteState | undefined>(undefined);
 
@@ -428,10 +433,22 @@ export const BuilderTenant = () => {
   }, [selectedPath]);
 
   useEffect(() => {
+    if (isImagePath(selectedPath) && files[selectedPath]) {
+      dispatch(agentActions.setSelectedAssetThumbnail({ path: selectedPath, dataUrl: files[selectedPath] }));
+    } else {
+      dispatch(agentActions.setSelectedAssetThumbnail(null));
+    }
+  }, [dispatch, selectedPath, files]);
+
+  useEffect(() => {
     return () => {
       if (reconnectTimerRef.current !== null) {
         window.clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
+      }
+      if (workspaceReadRetryTimerRef.current !== null) {
+        window.clearTimeout(workspaceReadRetryTimerRef.current);
+        workspaceReadRetryTimerRef.current = null;
       }
       socketRef.current?.disconnect();
       for (const timeout of Object.values(updateIndicatorTimeoutsRef.current)) {
@@ -497,6 +514,51 @@ export const BuilderTenant = () => {
     let socket: Socket | null = null;
 
     const connect = async () => {
+      const clearWorkspaceReadRetry = () => {
+        if (workspaceReadRetryTimerRef.current !== null) {
+          window.clearTimeout(workspaceReadRetryTimerRef.current);
+          workspaceReadRetryTimerRef.current = null;
+        }
+      };
+
+      const requestWorkspaceRead = (status?: string) => {
+        if (!socket?.connected) {
+          return;
+        }
+
+        if (status) {
+          dispatch(agentActions.setWorkspaceStatus(status));
+        }
+
+        socket.emit('workspace-read', { agent: BUILDER_AGENT_ID, threadId });
+      };
+
+      const scheduleWorkspaceReadRetry = () => {
+        if (!workspaceInitInProgressRef.current || workspaceReadRetryTimerRef.current !== null) {
+          return;
+        }
+
+        workspaceReadRetryTimerRef.current = window.setTimeout(() => {
+          workspaceReadRetryTimerRef.current = null;
+
+          if (!workspaceInitInProgressRef.current || !socket?.connected) {
+            return;
+          }
+
+          workspaceReadRetryAttemptsRef.current += 1;
+          if (workspaceReadRetryAttemptsRef.current > 8) {
+            workspaceInitInProgressRef.current = false;
+            dispatch(agentActions.setWorkspaceRefreshing(false));
+            dispatch(agentActions.setWorkspaceStatus('Workspace sync timed out; retrying snapshot read'));
+            requestWorkspaceRead();
+            return;
+          }
+
+          requestWorkspaceRead('Workspace initialization in progress');
+          scheduleWorkspaceReadRetry();
+        }, 1500);
+      };
+
       const scheduleReconnect = (delayMs = 1500) => {
         if (reconnectTimerRef.current !== null) {
           window.clearTimeout(reconnectTimerRef.current);
@@ -530,6 +592,8 @@ export const BuilderTenant = () => {
       socketRef.current = socket;
       seededWorkspaceRef.current = false;
       autoLoadAttemptedRef.current = false;
+      clearWorkspaceReadRetry();
+      workspaceReadRetryAttemptsRef.current = 0;
 
       socket.on('connect', () => {
         dispatch(agentActions.setSocketConnected(true));
@@ -538,8 +602,7 @@ export const BuilderTenant = () => {
           reconnectTimerRef.current = null;
         }
         dispatch(agentActions.setConnectionStatus('Connected to builder agent'));
-        dispatch(agentActions.setWorkspaceStatus('Reading workspace from agent'));
-        socket?.emit('workspace-read', { agent: BUILDER_AGENT_ID, threadId });
+        requestWorkspaceRead('Reading workspace from agent');
       });
 
       socket.on('disconnect', (reason) => {
@@ -564,6 +627,8 @@ export const BuilderTenant = () => {
       });
 
       socket.on('error', (message: string) => {
+        clearWorkspaceReadRetry();
+        workspaceReadRetryAttemptsRef.current = 0;
         workspaceInitInProgressRef.current = false;
         dispatch(agentActions.setWorkspaceRefreshing(false));
         dispatch(agentActions.setWorkspaceStatus(`Agent error: ${message}`));
@@ -573,6 +638,7 @@ export const BuilderTenant = () => {
         dispatch(agentActions.setWorkspaceRefreshing(false));
         if (!nextFiles.length && workspaceInitInProgressRef.current) {
           dispatch(agentActions.setWorkspaceStatus('Workspace initialization in progress'));
+          scheduleWorkspaceReadRetry();
           return;
         }
 
@@ -588,28 +654,35 @@ export const BuilderTenant = () => {
                 if (fileId) {
                   const urn = `urn:ads:platform:file-service:v1:/files/${fileId}`;
                   workspaceInitInProgressRef.current = true;
+                  workspaceReadRetryAttemptsRef.current = 0;
                   socketRef.current?.emit('workspace-init', {
                     agent: BUILDER_AGENT_ID,
                     threadId,
                     workspaceTarball: urn,
                   });
                   dispatch(agentActions.setWorkspaceStatus('Restoring workspace from last saved snapshot'));
+                  scheduleWorkspaceReadRetry();
                 } else {
+                  clearWorkspaceReadRetry();
                   setIsWorkspaceEmpty(true);
                   dispatch(agentActions.setWorkspaceStatus('Workspace is empty'));
                 }
               })
               .catch(() => {
+                clearWorkspaceReadRetry();
                 setIsWorkspaceEmpty(true);
                 dispatch(agentActions.setWorkspaceStatus('Workspace is empty'));
               });
           } else {
+            clearWorkspaceReadRetry();
             setIsWorkspaceEmpty(true);
             dispatch(agentActions.setWorkspaceStatus('Workspace is empty'));
           }
           return;
         }
 
+        clearWorkspaceReadRetry();
+        workspaceReadRetryAttemptsRef.current = 0;
         workspaceInitInProgressRef.current = false;
         setIsWorkspaceEmpty(false);
         previewRouteStateRef.current = readPreviewRouteState(previewFrameRef.current);
@@ -623,26 +696,30 @@ export const BuilderTenant = () => {
       });
 
       socket.on('workspace-updated', ({ revision, writeCount, deleteCount }) => {
+        clearWorkspaceReadRetry();
+        workspaceReadRetryAttemptsRef.current = 0;
         workspaceInitInProgressRef.current = false;
         dispatch(agentActions.setWorkspaceRefreshing(false));
         setIsWorkspaceEmpty(false);
         setWorkspaceRevision(revision);
         dispatch(agentActions.setWorkspaceStatus(`Workspace updated: ${writeCount} writes, ${deleteCount} deletes`));
-        socket?.emit('workspace-read', { agent: BUILDER_AGENT_ID, threadId });
+        requestWorkspaceRead();
       });
 
       socket.on('workspace-ready', ({ revision }) => {
+        clearWorkspaceReadRetry();
+        workspaceReadRetryAttemptsRef.current = 0;
         dispatch(agentActions.setWorkspaceRefreshing(false));
         setIsWorkspaceEmpty(false);
         setWorkspaceRevision(revision);
         dispatch(agentActions.setWorkspaceStatus('Workspace initialized; reading snapshot'));
-        socket?.emit('workspace-read', { agent: BUILDER_AGENT_ID, threadId });
+        requestWorkspaceRead();
       });
 
       socket.on('workspace-change', (change: WorkspaceChangeEvent) => {
         dispatch(agentActions.setWorkspaceRefreshing(false));
         if (change.writes.some(({ content }) => content === undefined)) {
-          socket?.emit('workspace-read', { agent: BUILDER_AGENT_ID, threadId });
+          requestWorkspaceRead();
           return;
         }
 
@@ -672,6 +749,10 @@ export const BuilderTenant = () => {
 
     return () => {
       active = false;
+      if (workspaceReadRetryTimerRef.current !== null) {
+        window.clearTimeout(workspaceReadRetryTimerRef.current);
+        workspaceReadRetryTimerRef.current = null;
+      }
       if (reconnectTimerRef.current !== null) {
         window.clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
@@ -880,6 +961,7 @@ export const BuilderTenant = () => {
         sortedFiles={sortedFiles}
         selectedPath={selectedPath}
         selectedFileContent={selectedFileContent}
+        selectedAssetThumbnail={selectedAssetThumbnail}
         recentlyUpdatedPaths={recentlyUpdatedPaths}
         workspaceRevision={workspaceRevision}
         isWorkspaceRefreshing={isWorkspaceRefreshing}

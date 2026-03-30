@@ -12,9 +12,13 @@ import {
   GoabTabs,
 } from '@abgov/react-components';
 import { GoabTabsOnChangeDetail } from '@abgov/ui-components-common';
-import { WorkspaceSnapshotFile } from '../lib/builderWorkspace';
+import { WorkspaceSnapshotFile, isBinaryPath, isImagePath } from '../lib/builderWorkspace';
+import { type AssetThumbnail } from '../state/agent.slice';
 import {
   Actions,
+  AssetThumbnailImg,
+  AssetThumbnailMeta,
+  AssetThumbnailPane,
   BreadcrumbCurrent,
   BreadcrumbDivider,
   BreadcrumbLink,
@@ -74,6 +78,7 @@ interface BuilderEditPaneProps {
   sortedFiles: WorkspaceSnapshotFile[];
   selectedPath: string;
   selectedFileContent: string;
+  selectedAssetThumbnail: AssetThumbnail | null;
   recentlyUpdatedPaths: Record<string, number>;
   workspaceRevision?: number;
   isWorkspaceRefreshing: boolean;
@@ -100,6 +105,7 @@ export const BuilderEditPane = ({
   sortedFiles,
   selectedPath,
   selectedFileContent,
+  selectedAssetThumbnail,
   recentlyUpdatedPaths,
   workspaceRevision,
   isWorkspaceRefreshing,
@@ -307,7 +313,20 @@ export const BuilderEditPane = ({
 
                       <WorkspaceView $active={workspaceView === 'file'}>
                         <FileContent>
-                          <code>{selectedFileContent}</code>
+                          {isBinaryPath(selectedPath) ? (
+                            isImagePath(selectedPath) && selectedAssetThumbnail?.path === selectedPath ? (
+                              <AssetThumbnailPane>
+                                <AssetThumbnailImg src={selectedAssetThumbnail.dataUrl} alt={selectedPath} />
+                                <AssetThumbnailMeta>{selectedPath}</AssetThumbnailMeta>
+                              </AssetThumbnailPane>
+                            ) : (
+                              <code style={{ color: '#888', fontStyle: 'italic' }}>
+                                Binary asset — preview rendered in the preview pane.
+                              </code>
+                            )
+                          ) : (
+                            <code>{selectedFileContent}</code>
+                          )}
                         </FileContent>
                       </WorkspaceView>
                     </WorkspaceStage>
