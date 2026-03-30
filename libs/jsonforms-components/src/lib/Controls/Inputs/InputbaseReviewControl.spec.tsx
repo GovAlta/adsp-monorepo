@@ -256,6 +256,7 @@ describe('GoABaseInputReviewComponent', () => {
   it('renders array data with fallback labels from scope', () => {
     const props = {
       ...baseProps,
+      label: '',
       data: ['', ''],
       uischema: {
         type: 'Control' as const,
@@ -265,10 +266,10 @@ describe('GoABaseInputReviewComponent', () => {
     };
     const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
     const reviewControl = getByTestId('review-control-input-id');
-    expect(reviewControl.textContent).toContain('CheckboxGroup');
+    expect(reviewControl.textContent).toContain('Checkbox group');
   });
 
-  it('renders checkbox with empty label when scope is invalid', () => {
+  it('preserves explicit label when scope is invalid', () => {
     const props = {
       ...baseProps,
       data: true,
@@ -282,7 +283,7 @@ describe('GoABaseInputReviewComponent', () => {
     };
     const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
     const reviewControl = getByTestId('review-control-input-id');
-    expect(reviewControl.textContent).toBe('Yes ()');
+    expect(reviewControl.textContent).toBe('Yes (test label)');
   });
 
   it('uses schema title in required warning text when options text is missing', () => {
@@ -405,7 +406,7 @@ describe('Can render GoAInputBaseTableReview', () => {
     const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
     const tableReviewRow = getByTestId('input-base-table--row');
     expect(tableReviewRow?.textContent).toContain('No');
-    expect(tableReviewRow?.textContent).toContain('Test Field');
+    expect(tableReviewRow?.textContent).toContain('Test field');
   });
 
   it('can render the GoAInputBaseTableReview with radio boolean', () => {
@@ -426,7 +427,7 @@ describe('Can render GoAInputBaseTableReview', () => {
     expect(tableReviewRow?.textContent).toContain('Yes');
   });
 
-  it('preserves auto-generated title casing for camelCase labels', () => {
+  it('applies sentence case to auto-generated labels in table review', () => {
     const props = {
       ...baseTableReviewProps,
       label: 'First Name',
@@ -439,8 +440,7 @@ describe('Can render GoAInputBaseTableReview', () => {
 
     const { getByTestId } = render(<GoAInputBaseTableReview {...props} />);
     const tableReviewRow = getByTestId('input-base-table-First Name-row');
-    expect(tableReviewRow?.textContent).toContain('First Name');
-    expect(tableReviewRow?.textContent).not.toContain('First name');
+    expect(tableReviewRow?.textContent).toContain('First name');
   });
 
   it('keeps title casing for single-word auto labels like nationality', () => {

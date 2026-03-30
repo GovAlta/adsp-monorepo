@@ -3,7 +3,14 @@ import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue, RequiredTextLabel } from './style-component';
-import { convertToReadableFormat, getLastSegmentFromPointer, isNilOrEmptyValue } from '../../util';
+import {
+  convertToReadableFormat,
+  getGeneratedLabelFromScope,
+  controlScopeMatchesLabel,
+  getLabelText,
+  getLastSegmentFromPointer,
+  isNilOrEmptyValue,
+} from '../../util';
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { GoabButton, GoabFormItem } from '@abgov/react-components';
 
@@ -24,11 +31,18 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
   let labelToUpdate: string = '';
   if (reviewLabel.trim() !== '') {
     labelToUpdate = reviewLabel;
+  } else if (typeof schema?.title === 'string' && schema.title.trim()) {
+    labelToUpdate = schema.title;
   } else if (propLabel.trim() !== '') {
-    labelToUpdate = propLabel;
+    if (uischema.scope?.startsWith('#/') && controlScopeMatchesLabel(uischema.scope, propLabel)) {
+      labelToUpdate = getLabelText(uischema.scope, propLabel);
+    } else {
+      labelToUpdate = propLabel;
+    }
   } else if (uischema.scope?.startsWith('#/')) {
-    const scopeName = uischema.scope ? getLastSegmentFromPointer(uischema.scope) : '';
-    labelToUpdate = convertToReadableFormat(scopeName);
+    labelToUpdate = getGeneratedLabelFromScope(uischema.scope);
+  } else {
+    labelToUpdate = propLabel;
   }
   let reviewText = data;
   const isBoolean = typeof data === 'boolean';
@@ -58,8 +72,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
     if (uischema.options?.text?.trim()) {
       checkboxLabel = uischema.options.text.trim();
     } else if (uischema.scope && uischema.scope.startsWith('#/')) {
-      const fallbackLabel = getLastSegmentFromPointer(uischema.scope);
-      checkboxLabel = convertToReadableFormat(fallbackLabel);
+      checkboxLabel = getGeneratedLabelFromScope(uischema.scope);
     }
 
     if (uischema.options?.radio === true) {
@@ -131,7 +144,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
         activeError = humanizeAjvError(
           matchedError,
           ((rootSchema as JsonSchema) ?? (schema as JsonSchema)) as JsonSchema,
-          uischema as UISchemaElement
+          uischema as UISchemaElement,
         );
       }
     } catch (err) {
