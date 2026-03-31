@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import MonacoEditor from '@monaco-editor/react';
 import { AgentChat } from '@core-services/app-common';
 import {
   GoabBadge,
@@ -27,11 +28,13 @@ import {
   EmptyWorkspaceState,
   FileButton,
   FileContent,
+  FileContentMessage,
   FileList,
   FileMeta,
   FilePath,
   FilePathRow,
   FileUpdateBadge,
+  FileViewer,
   InfoPaneBody,
   Panel,
   PanelCollapseButton,
@@ -44,6 +47,7 @@ import {
   PanelValue,
   Stack,
   TabContainer,
+  ProjectIdRow,
   TabContentArea,
   TarballForm,
   UrnCode,
@@ -62,6 +66,88 @@ import {
 
 type PanelTab = 'chat' | 'workspace' | 'info';
 type WorkspaceView = 'list' | 'file';
+
+const getWorkspaceFileLanguage = (path: string): string => {
+  const normalizedPath = path.toLowerCase();
+
+  if (normalizedPath.endsWith('.d.ts')) {
+    return 'typescript';
+  }
+
+  if (normalizedPath.endsWith('.tsx') || normalizedPath.endsWith('.ts') || normalizedPath === 'tsconfig.json') {
+    return 'typescript';
+  }
+
+  if (normalizedPath.endsWith('.jsx') || normalizedPath.endsWith('.js') || normalizedPath.endsWith('.mjs')) {
+    return 'javascript';
+  }
+
+  if (normalizedPath.endsWith('.json')) {
+    return 'json';
+  }
+
+  if (normalizedPath.endsWith('.css')) {
+    return 'css';
+  }
+
+  if (normalizedPath.endsWith('.scss')) {
+    return 'scss';
+  }
+
+  if (normalizedPath.endsWith('.html') || normalizedPath.endsWith('.htm')) {
+    return 'html';
+  }
+
+  if (normalizedPath.endsWith('.md')) {
+    return 'markdown';
+  }
+
+  if (normalizedPath.endsWith('.yml') || normalizedPath.endsWith('.yaml') || normalizedPath === '.github/workflows') {
+    return 'yaml';
+  }
+
+  if (normalizedPath.endsWith('.sh')) {
+    return 'shell';
+  }
+
+  if (normalizedPath.endsWith('.py')) {
+    return 'python';
+  }
+
+  if (normalizedPath.endsWith('.java')) {
+    return 'java';
+  }
+
+  if (normalizedPath.endsWith('.cs')) {
+    return 'csharp';
+  }
+
+  if (normalizedPath.endsWith('.go')) {
+    return 'go';
+  }
+
+  if (normalizedPath.endsWith('.rs')) {
+    return 'rust';
+  }
+
+  if (normalizedPath.endsWith('.sql')) {
+    return 'sql';
+  }
+
+  if (normalizedPath.endsWith('.xml') || normalizedPath.endsWith('.svg')) {
+    return 'xml';
+  }
+
+  if (
+    normalizedPath.endsWith('.dockerfile') ||
+    normalizedPath.endsWith('/dockerfile') ||
+    normalizedPath === 'dockerfile'
+  ) {
+    return 'dockerfile';
+  }
+
+  return 'plaintext';
+};
 
 interface BuilderEditPaneProps {
   threadId: string;
@@ -121,6 +207,9 @@ export const BuilderEditPane = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showTarballForm, setShowTarballForm] = useState(false);
   const [tarballUrnInput, setTarballUrnInput] = useState('');
+  const [copyLinkLabel, setCopyLinkLabel] = useState('Copy link');
+  const copyLinkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const workspaceFileLanguage = getWorkspaceFileLanguage(selectedPath);
 
   const stripTabHash = () => {
     const tabHashes = new Set(['#chat', '#workspace', '#session-info']);
@@ -141,6 +230,18 @@ export const BuilderEditPane = ({
       window.removeEventListener('hashchange', onHashChange);
     };
   }, []);
+
+  const handleCopyLink = () => {
+    if (!threadId) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set('projectId', threadId);
+    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopyLinkLabel('Copied!');
+      if (copyLinkTimerRef.current) clearTimeout(copyLinkTimerRef.current);
+      copyLinkTimerRef.current = setTimeout(() => setCopyLinkLabel('Copy link'), 2000);
+    });
+  };
 
   const handleInitFromTarball = () => {
     const uuid = tarballUrnInput.trim();
@@ -220,8 +321,13 @@ export const BuilderEditPane = ({
                 <PanelValue>{userEmail ?? 'Not signed in'}</PanelValue>
               </div>
               <div>
-                <PanelLabel>Thread</PanelLabel>
-                <PanelValue>{threadId || 'Pending'}</PanelValue>
+                <PanelLabel>Project ID</PanelLabel>
+                <ProjectIdRow>
+                  <PanelValue>{threadId || 'Pending'}</PanelValue>
+                  <GoabButton type="tertiary" size="compact" disabled={!threadId} onClick={handleCopyLink}>
+                    {copyLinkLabel}
+                  </GoabButton>
+                </ProjectIdRow>
               </div>
               <Actions>
                 {canSignOut ? (
@@ -320,12 +426,30 @@ export const BuilderEditPane = ({
                                 <AssetThumbnailMeta>{selectedPath}</AssetThumbnailMeta>
                               </AssetThumbnailPane>
                             ) : (
-                              <code style={{ color: '#888', fontStyle: 'italic' }}>
-                                Binary asset — preview rendered in the preview pane.
-                              </code>
+                              <FileContentMessage>
+                                Binary asset - preview rendered in the preview pane.
+                              </FileContentMessage>
                             )
                           ) : (
-                            <code>{selectedFileContent}</code>
+                            <FileViewer>
+                              <MonacoEditor
+                                height="100%"
+                                path={selectedPath}
+                                language={workspaceFileLanguage}
+                                value={selectedFileContent}
+                                theme="vs"
+                                options={{
+                                  automaticLayout: true,
+                                  domReadOnly: true,
+                                  lineNumbers: 'on',
+                                  minimap: { enabled: false },
+                                  readOnly: true,
+                                  renderLineHighlight: 'none',
+                                  scrollBeyondLastLine: false,
+                                  wordWrap: 'off',
+                                }}
+                              />
+                            </FileViewer>
                           )}
                         </FileContent>
                       </WorkspaceView>

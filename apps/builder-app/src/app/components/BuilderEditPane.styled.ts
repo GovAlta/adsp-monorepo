@@ -154,10 +154,24 @@ export const PanelValue = styled.p`
   word-break: break-word;
 `;
 
+export const ProjectIdRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  justify-content: flex-start;
+
+  ${PanelValue} {
+    margin-top: 0;
+  }
+`;
+
 export const Actions = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
 `;
 
 export const WorkspaceTabPane = styled.div`
@@ -356,18 +370,35 @@ export const FileMeta = styled.span`
   color: var(--builder-muted, #596b7e);
 `;
 
-export const FileContent = styled.pre`
+export const FileContent = styled.div`
   margin: 0;
   flex: 1;
   min-height: 0;
-  overflow: auto;
-  padding: 0.9rem;
+  overflow: hidden;
   background: var(--goa-color-greyscale-white, #ffffff);
   color: var(--builder-ink, #162231);
   font-size: 0.8rem;
   line-height: 1.5;
   font-family:
     ui-monospace, SFMono-Regular, SFMono, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+`;
+
+export const FileViewer = styled.div`
+  height: 100%;
+  min-height: 0;
+
+  .monaco-editor,
+  .monaco-editor-background,
+  .monaco-editor .margin {
+    background: var(--goa-color-greyscale-white, #ffffff) !important;
+  }
+`;
+
+export const FileContentMessage = styled.code`
+  display: block;
+  padding: 0.9rem;
+  color: #888;
+  font-style: italic;
 `;
 
 export const AssetThumbnailPane = styled.div`
