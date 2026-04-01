@@ -3,10 +3,10 @@ import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { PdfOverview } from './overview';
 import { PdfTemplates } from './templates/templates';
-import { Voice } from './voice';
+
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-
+import { VoiceEngineSelectorDemo } from './voice/VoiceEngineSelectorDemo';
 import AsideLinks from '@components/AsideLinks';
 
 export const Pdf: FunctionComponent = () => {
@@ -30,7 +30,7 @@ export const Pdf: FunctionComponent = () => {
             <PdfTemplates openAddTemplate={openAddTemplate} />
           </Tab>
           <Tab label="Voice">
-            <Voice />
+            <VoiceEngineSelectorDemo />
           </Tab>
         </Tabs>
       </Main>
