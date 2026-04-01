@@ -36,9 +36,7 @@
       {
         "type": "Category",
         "label": "Contact",
-        "elements": [
-          { "type": "Control", "scope": "#/properties/email" }
-        ]
+        "elements": [{ "type": "Control", "scope": "#/properties/email" }]
       }
     ]
   },
@@ -90,6 +88,7 @@
     "Customize button styling with `nextButtonType` and `previousButtonType` (GoA Design System button types)",
     "The simple stepper does NOT have a Task List or section groupings — use `variant: \"pages\"` for that",
     "A Summary page is automatically appended for applicant review",
-    "For most government citizen-facing forms, the page stepper (variant: pages) is preferred"
+    "For most government citizen-facing forms, the page stepper (variant: pages) is preferred",
+    "CRITICAL: Category elements can ONLY be direct first-level children of the Categorization `elements` array. Do NOT wrap Categories in VerticalLayout, Group, or any other layout element"
   ]
 }

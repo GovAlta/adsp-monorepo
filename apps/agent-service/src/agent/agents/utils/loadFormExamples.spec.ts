@@ -579,8 +579,8 @@ describe('loadFormExamples', () => {
 
       it('renders all schema and design anti-patterns', () => {
         const schemaApCount = (output.match(/### ❌ .+\((?:critical|high|medium|low)\)/g) || []).length;
-        // 6 schema + 4 schemaAntiPatterns2 + 9 design = 19 total ❌ headings
-        expect(schemaApCount).toBe(19);
+        // 6 schema + 5 schemaAntiPatterns2 + 9 design = 20 total ❌ headings
+        expect(schemaApCount).toBe(20);
       });
 
       it('renders every original schema anti-pattern with **Bad:** and **Good:** labels', () => {
@@ -611,6 +611,7 @@ describe('loadFormExamples', () => {
         expect(output).toContain('### ❌ SHOW/HIDE Rule Without Conditional Validation (critical)');
         expect(output).toContain('### ❌ Nested Object Scope Missing Full Path (critical)');
         expect(output).toContain('### ❌ Rule Condition Scope Points to Wrong Field (high)');
+        expect(output).toContain('### ❌ Category Not a Direct Child of Categorization (critical)');
       });
     });
 
