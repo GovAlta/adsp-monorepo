@@ -11,6 +11,7 @@ import { selectFormAppHost } from '@store/form/selectors';
 import { FormExport } from './export/formExport';
 import FormOverview from './formOverview';
 import { FormDefinitions } from '@form-editor-common';
+import { DataRegisters } from './dataRegister/dataRegisters';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { HeadingDiv } from '../styled-components';
 
@@ -34,7 +35,6 @@ export const Form: FunctionComponent = () => {
   const location = useLocation();
   const isNavigatedFromEdit = location.state?.isNavigatedFromEdit;
   const [isNavigatedFromEditor, setIsNavigatedFromEditor] = useState(isNavigatedFromEdit);
-
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
@@ -71,6 +71,9 @@ export const Form: FunctionComponent = () => {
             </Tab>
             <Tab label="Export" data-testid="form-export">
               <FormExport />
+            </Tab>
+            <Tab label="Register data" data-testid="form-register-data">
+              <DataRegisters />
             </Tab>
           </Tabs>
         </>

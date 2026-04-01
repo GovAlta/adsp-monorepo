@@ -1,0 +1,39 @@
+{
+  "id": "object-register-mapping",
+  "name": "Data Register — Object Array with Label/Value Mapping",
+  "category": "data-register",
+  "summary": "Populate a dropdown from an object-array data register using options.label and options.value to map display text and stored value",
+  "whenToUse": [
+    "Dropdown where the display label differs from the stored value (e.g. ministry name vs code)",
+    "Register data is an array of objects with named properties",
+    "When you need to store a code or ID but show a human-readable label"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "ministry": {
+        "type": "string",
+        "enum": [""]
+      }
+    }
+  },
+  "uiSchema": {
+    "type": "Control",
+    "scope": "#/properties/ministry",
+    "label": "Ministry",
+    "options": {
+      "register": {
+        "urn": "urn:ads:platform:configuration:v2:/configuration/data-register/goa-ministries"
+      },
+      "label": "ministryName",
+      "value": "ministryCode"
+    }
+  },
+  "notes": [
+    "The register data is an array of objects, e.g.: [{\"ministryCode\": \"EDUC\", \"ministryName\": \"Education\"}, {\"ministryCode\": \"HLTH\", \"ministryName\": \"Health\"}]",
+    "Use `options.label` to specify which object property to display in the dropdown (defaults to `\"label\"` if omitted)",
+    "Use `options.value` to specify which object property to store as the form value (defaults to `\"value\"` if omitted)",
+    "The mapping uses lodash `_.get()` so nested paths like `\"details.name\"` are supported",
+    "Set `enum: [\"\"]` as a placeholder in the data schema — the actual values are loaded from the register at runtime"
+  ]
+}

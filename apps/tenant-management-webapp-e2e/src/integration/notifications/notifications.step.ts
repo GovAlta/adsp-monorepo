@@ -71,9 +71,7 @@ When(
           // Deselect all previously selected roles and then select new roles
           notificationsObj
             .notificationTypeModalRolesTable()
-            .find('goa-checkbox')
-            .shadow()
-            .find('[class^="container"]')
+            .find('input[type="checkbox"]')
             .then((elements) => {
               for (let i = 0; i < elements.length; i++) {
                 if (elements[i].className?.includes('selected')) {
@@ -93,9 +91,10 @@ When(
                 } else {
                   notificationsObj
                     .notificationTypeModalRolesTable()
-                    .find('goa-checkbox[name="Notifications-type-subscribe-role-checkbox-' + roles[i].trim() + '"]')
-                    .shadow()
-                    .find('[class^="container"]')
+                    .find('td')
+                    .contains(roles[i].trim())
+                    .next()
+                    .find('input[type="checkbox"]')
                     .click({ force: true });
                 }
               }

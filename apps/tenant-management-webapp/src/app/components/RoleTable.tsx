@@ -97,6 +97,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                         disabled={
                           (props.anonymousRead && checkedRole.title === 'read') || checkedRole?.disabled === true
                         }
+                        ariaLabel={`${role} ${checkedRole.title}`}
                         onChange={() => {
                           if (checkedRole.selectedRoles?.includes(compositeRole)) {
                             const newRoles = checkedRole.selectedRoles.filter((readRole) => {

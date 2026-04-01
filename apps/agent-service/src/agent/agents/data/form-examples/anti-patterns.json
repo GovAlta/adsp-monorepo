@@ -110,7 +110,7 @@
           ]
         }
       },
-      "explanation": "For multi-page forms, always set `options.variant` to `\"pages\"` on the Categorization element. Without it, pages won't render as steps."
+      "explanation": "For multi-page forms, always set `options.variant` to `\"pages\"` (Design System page stepper with Task List) or `\"stepper\"` (simple stepper with tab navigation). Without a variant, the Categorization won't render as steps. For citizen-facing government forms, prefer `\"pages\"`."
     },
     {
       "id": "orphaned-required-fields",
@@ -278,6 +278,20 @@
       "description": "Putting 6+ fields in a VerticalLayout without pagination",
       "severity": "medium",
       "solution": "Use Categorization with `variant: \"pages\"` when you have 6 or more fields. Group related fields into separate Category pages."
+    },
+    {
+      "id": "pages-without-sections",
+      "name": "Page Stepper Without Section Groupings",
+      "description": "Using Categorization with variant=pages and 4+ categories but no sectionTitle groupings — the Task List becomes a flat unorganized list",
+      "severity": "medium",
+      "solution": "Add `sectionTitle` to Category options to group related tasks under section headings. For example, group 'Name' and 'Contact' under 'Applicant Details'."
+    },
+    {
+      "id": "pages-without-title",
+      "name": "Page Stepper Without Title",
+      "description": "Using Categorization with variant=pages without setting a title — the Task List has no heading and looks incomplete",
+      "severity": "medium",
+      "solution": "Add `title` and optionally `subtitle` to the Categorization options to give the Task List a clear heading."
     },
     {
       "id": "no-help-text",

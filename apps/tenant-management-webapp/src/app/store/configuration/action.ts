@@ -150,6 +150,7 @@ export interface ReplaceConfigurationDataAction {
   type: typeof REPLACE_CONFIGURATION_DATA_ACTION;
   configuration: ReplaceConfiguration;
   isImportConfiguration: boolean;
+  skipJSONValidation?: boolean;
 }
 
 export interface ReplaceConfigurationDataSuccessAction {
@@ -369,10 +370,12 @@ export const setConfigurationRevisionActiveSuccessAction = (
 export const replaceConfigurationDataAction = (
   configuration: ReplaceConfiguration,
   isImportConfiguration,
+  skipJSONValidation = false,
 ): ReplaceConfigurationDataAction => ({
   type: REPLACE_CONFIGURATION_DATA_ACTION,
   configuration,
   isImportConfiguration,
+  skipJSONValidation,
 });
 export const resetReplaceConfigurationListAction = (): ResetReplaceConfigurationListAction => ({
   type: RESET_REPLACE_CONFIGURATION_LIST_ACTION,

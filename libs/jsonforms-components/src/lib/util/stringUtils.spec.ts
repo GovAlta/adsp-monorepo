@@ -9,12 +9,41 @@ import {
   getRequiredIfThen,
   isEmptyBoolean,
   isEmptyNumber,
+  isNilOrEmptyString,
+  isNilOrEmptyValue,
   controlScopeMatchesLabel,
   getLabelText,
   validateSinWithLuhn,
 } from './stringUtils';
 import { describe } from 'node:test';
 import { GoAInputTextProps } from '../Controls';
+
+describe('isNilOrEmptyString', () => {
+  it('returns true for undefined, null, and empty string', () => {
+    expect(isNilOrEmptyString(undefined)).toBe(true);
+    expect(isNilOrEmptyString(null)).toBe(true);
+    expect(isNilOrEmptyString('')).toBe(true);
+  });
+
+  it('returns false for non-empty string', () => {
+    expect(isNilOrEmptyString('value')).toBe(false);
+  });
+});
+
+describe('isNilOrEmptyValue', () => {
+  it('returns false for empty array by default', () => {
+    expect(isNilOrEmptyValue([])).toBe(false);
+  });
+
+  it('returns true for empty array when includeEmptyArray=true', () => {
+    expect(isNilOrEmptyValue([], true)).toBe(true);
+  });
+
+  it('returns false for non-string primitives', () => {
+    expect(isNilOrEmptyValue(0)).toBe(false);
+    expect(isNilOrEmptyValue(false)).toBe(false);
+  });
+});
 
 describe('stringUtils string tests', () => {
   const textBoxUiSchema: ControlElement = {
@@ -216,6 +245,16 @@ describe('stringUtils string tests', () => {
       expect(returnValue).toBe('');
     });
 
+    it('convertToReadableFormat converts camelCase to readable text', () => {
+      const returnValue = convertToReadableFormat('employmentStatus');
+      expect(returnValue).toBe('Employment Status');
+    });
+
+    it('convertToReadableFormat preserves acronyms', () => {
+      const returnValue = convertToReadableFormat('SIN');
+      expect(returnValue).toBe('SIN');
+    });
+
     it('capitalizeFirstLetter handles single character', () => {
       const result = capitalizeFirstLetter('a');
       expect(result).toBe('A');
@@ -333,19 +372,29 @@ describe('stringUtils string tests', () => {
       expect(result).toBe(true);
     });
 
-    it('getLabelText matching scope not uppercase', () => {
+    it('getLabelText auto-generated camelCase label - applies sentence casing', () => {
       const result = getLabelText('#/properties/firstName', 'firstName');
-      expect(result).toBeDefined();
+      expect(result).toBe('Firstname');
     });
 
-    it('getLabelText all uppercase label', () => {
-      const result = getLabelText('#/properties/ABC', 'ABC');
-      expect(result).toBe('ABC');
+    it('getLabelText auto-generated label with scope match - strips to sentence case', () => {
+      const result = getLabelText('#/properties/myField', 'myField');
+      expect(result).toBe('Myfield');
     });
 
-    it('getLabelText non-matching scope', () => {
-      const result = getLabelText('#/properties/firstName', 'lastName');
-      expect(result).toBe('lastName');
+    it('getLabelText all uppercase label - skips casing (acronym/abbreviation)', () => {
+      const result = getLabelText('#/properties/SIN', 'SIN');
+      expect(result).toBe('SIN');
+    });
+
+    it('getLabelText generated readable label is normalized to sentence case', () => {
+      const result = getLabelText('#/properties/firstName', 'First Name');
+      expect(result).toBe('First name');
+    });
+
+    it('getLabelText user-provided with custom casing - preserves exactly', () => {
+      const result = getLabelText('#/properties/firstName', 'FIRST_NAME');
+      expect(result).toBe('FIRST_NAME');
     });
 
     it('getLabelText empty label', () => {
@@ -545,7 +594,7 @@ describe('stringUtils string tests', () => {
 
     it('convertToReadableFormat with valid input', () => {
       const result = convertToReadableFormat('camelCaseExample');
-      expect(typeof result).toBe('string');
+      expect(result).toBe('Camel Case Example');
     });
 
     it('capitalizeFirstLetter with lowercase start', () => {

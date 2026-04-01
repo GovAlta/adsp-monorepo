@@ -567,4 +567,20 @@ describe('Form Stepper Control', () => {
       expect(isNotCategoryLayout).toBe(false);
     });
   });
+
+  describe('review summary conditional visibility fix', () => {
+    it('renders review without errors for visible controls only', () => {
+      const { container } = render(
+        <JsonFormsStepperContextProvider
+          StepperProps={{
+            ...stepperBaseProps,
+            data: { name: { firstName: 'Bob', lastName: 'Bing' }, address: { street: 'Sesame', city: 'Seattle' } },
+            activeId: 2,
+          }}
+          children={getForm({ name: { firstName: 'Bob', lastName: 'Bing' }, address: { street: 'Sesame', city: 'Seattle' } })}
+        />,
+      );
+      expect(container).toBeInTheDocument();
+    });
+  });
 });

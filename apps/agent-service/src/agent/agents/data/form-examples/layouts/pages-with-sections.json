@@ -1,0 +1,106 @@
+{
+  "id": "pages-with-sections",
+  "name": "Pages with Sections, Hidden Tasks, and Task List Options",
+  "category": "layout",
+  "summary": "Advanced pages layout demonstrating section groupings, hidden task list items, additional instructions, and customized review flow — the full Design System basic layout pattern",
+  "whenToUse": [
+    "Large government application forms with distinct logical sections",
+    "When you want a task-list view with section groupings and progress tracking",
+    "When some steps should be hidden from the Task List (e.g. sub-steps rolled into a parent)",
+    "When you need to customize the review flow (hide summary, hide submit, change labels)"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "object",
+        "properties": {
+          "firstName": { "type": "string", "minLength": 2 },
+          "lastName": { "type": "string", "minLength": 2 },
+          "initial": { "type": "string", "maxLength": 1 }
+        }
+      },
+      "address": {
+        "type": "object",
+        "properties": {
+          "street": { "type": "string" },
+          "city": { "type": "string" }
+        }
+      },
+      "phone": { "type": "string" }
+    }
+  },
+  "uiSchema": {
+    "type": "Categorization",
+    "options": {
+      "variant": "pages",
+      "title": "Application Form",
+      "subtitle": "Tell us about yourself",
+      "toAppOverviewLabel": "Back to task list",
+      "additionalInstructions": "Complete all required sections before submitting your application."
+    },
+    "elements": [
+      {
+        "type": "Category",
+        "label": "Name",
+        "options": {
+          "sectionTitle": "Identification"
+        },
+        "elements": [
+          {
+            "type": "VerticalLayout",
+            "elements": [
+              { "type": "Control", "scope": "#/properties/name/properties/firstName" },
+              { "type": "Control", "scope": "#/properties/name/properties/lastName" },
+              { "type": "Control", "scope": "#/properties/name/properties/initial" }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Category",
+        "label": "Contact Details",
+        "options": {
+          "sectionTitle": "Identification",
+          "showInTaskList": false
+        },
+        "elements": [
+          {
+            "type": "VerticalLayout",
+            "elements": [{ "type": "Control", "scope": "#/properties/phone" }]
+          }
+        ]
+      },
+      {
+        "type": "Category",
+        "label": "Address",
+        "options": {
+          "sectionTitle": "Residence"
+        },
+        "elements": [
+          {
+            "type": "VerticalLayout",
+            "elements": [
+              { "type": "Control", "scope": "#/properties/address/properties/street" },
+              { "type": "Control", "scope": "#/properties/address/properties/city" }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "notes": [
+    "Use `options.variant: \"pages\"` for the Design System's preferred pages pattern",
+    "Each Category becomes a page; `sectionTitle` groups categories into sections on the task list",
+    "Categories sharing the same `sectionTitle` are grouped under one section heading",
+    "Set `showInTaskList: false` on a Category to hide it from the Task List — the page still renders but the row is hidden and completion is rolled into the previous visible task in the same section",
+    "For nested objects, scopes must use the full path: `#/properties/name/properties/firstName`",
+    "A Summary page is automatically appended by the GoA renderer for applicant review",
+    "Use `options.title` and `options.subtitle` on Categorization for the task list header",
+    "Use `toAppOverviewLabel` to customize the back link text (default: 'Back to application overview')",
+    "Use `additionalInstructions` to display guidance text on the Task List page",
+    "Set `hideSummary: true` to remove the Summary row and skip the review page entirely",
+    "Set `hideSubmit: true` to keep the review page but hide the Submit button",
+    "Set `hideProgress: true` to hide the completion indicators on the Task List"
+  ]
+}

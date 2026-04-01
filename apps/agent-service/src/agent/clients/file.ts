@@ -1,13 +1,44 @@
 import { AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
+import { Readable } from 'node:stream';
 import { Logger } from 'winston';
 
-class FileServiceClient {
-  constructor(private logger: Logger, private directory: ServiceDirectory, private tokenProvider: TokenProvider) { }
+export interface IFileServiceClient {
+  getFileAndMetadata(
+    tenantId: AdspId,
+    fileId: AdspId,
+  ): Promise<{
+    data: Uint8Array;
+    metadata: {
+      filename: string;
+      mimeType: string;
+      urn: string;
+    };
+  }>;
+
+  getFileStream(
+    tenantId: AdspId,
+    fileId: AdspId,
+  ): Promise<{
+    stream: Readable;
+    metadata: {
+      filename: string;
+      mimeType: string;
+      urn: string;
+    };
+  }>;
+}
+
+class FileServiceClient implements IFileServiceClient {
+  constructor(
+    private logger: Logger,
+    private directory: ServiceDirectory,
+    private tokenProvider: TokenProvider,
+  ) {}
 
   public async getFileAndMetadata(
     tenantId: AdspId,
-    fileId: AdspId
+    fileId: AdspId,
   ): Promise<{
     data: Uint8Array;
     metadata: {
@@ -54,31 +85,85 @@ class FileServiceClient {
     };
   }
 
+  public async getFileStream(
+    tenantId: AdspId,
+    fileId: AdspId,
+  ): Promise<{
+    stream: Readable;
+    metadata: {
+      filename: string;
+      mimeType: string;
+      urn: string;
+    };
+  }> {
+    const resourceUrl = await this.directory.getResourceUrl(fileId);
+
+    const fileUrl = resourceUrl.pathname.endsWith('/download')
+      ? new URL(resourceUrl.pathname.replace('/download', ''), resourceUrl)
+      : resourceUrl;
+    const { data: metadata } = await axios.get(fileUrl.href, {
+      params: {
+        tenantId: tenantId?.toString(),
+      },
+      headers: {
+        Authorization: `Bearer ${await this.tokenProvider.getAccessToken()}`,
+      },
+    });
+
+    const fileDownloadUrl = resourceUrl.pathname.endsWith('/download')
+      ? resourceUrl
+      : new URL(`${resourceUrl.pathname}/download`, resourceUrl);
+    const response = await axios.get(fileDownloadUrl.href, {
+      params: {
+        tenantId: tenantId?.toString(),
+      },
+      headers: {
+        Authorization: `Bearer ${await this.tokenProvider.getAccessToken()}`,
+      },
+      responseType: 'stream',
+    });
+
+    this.logger.debug(`File stream opened: ${fileId}`, {
+      context: 'FileServiceClient',
+      tenant: tenantId?.toString(),
+    });
+
+    return {
+      stream: response.data as Readable,
+      metadata,
+    };
+  }
+
   public async copyFile(
     tenantId: AdspId,
     fileId: AdspId,
     token: string,
     filename?: string,
     type?: string,
-    recordId?: string): Promise<{
-      urn: string;
-      filename: string;
-      mimeType: string;
-    }> {
+    recordId?: string,
+  ): Promise<{
+    urn: string;
+    filename: string;
+    mimeType: string;
+  }> {
     const fileUrl = await this.directory.getResourceUrl(fileId);
-    const { data } = await axios.post(fileUrl.href, {
-      operation: 'copy',
-      type,
-      filename,
-      recordId
-    }, {
-      params: {
-        tenantId: tenantId?.toString(),
+    const { data } = await axios.post(
+      fileUrl.href,
+      {
+        operation: 'copy',
+        type,
+        filename,
+        recordId,
       },
-      headers: {
-        Authorization: `Bearer ${token}`,
+      {
+        params: {
+          tenantId: tenantId?.toString(),
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
 
     return {
       urn: data.urn,

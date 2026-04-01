@@ -16,6 +16,7 @@ import {
   FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION,
   REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION,
   UPDATE_LATEST_REVISION_SUCCESS_ACTION,
+  FETCH_REGISTER_DATA_ACTION,
   FETCH_REGISTER_DATA_SUCCESS_ACTION,
   CLOSE_TEMPLATE_ACTION,
   CONNECT_CONFIGURATION_UPDATES_ACTION,
@@ -44,7 +45,7 @@ const defaultState: ConfigurationDefinitionState = {
 
 export default function (
   state: ConfigurationDefinitionState = defaultState,
-  action: ConfigurationDefinitionActionTypes
+  action: ConfigurationDefinitionActionTypes,
 ): ConfigurationDefinitionState {
   switch (action.type) {
     case FETCH_CONFIGURATION_DEFINITIONS_ACTION:
@@ -176,7 +177,7 @@ export default function (
         const latest = state.configurationRevisions[action.service]['revisions']['result'][0].revision;
         state.configurationRevisions[action.service]['revisions']['latest'] = latest;
         state.configurationRevisions[action.service]['revisions']['isCore'] = Object.keys(
-          state.coreConfigDefinitions?.configuration
+          state.coreConfigDefinitions?.configuration,
         ).some((key) => key === action.service);
       }
       return {
@@ -211,13 +212,18 @@ export default function (
       };
     }
 
-    case FETCH_REGISTER_DATA_SUCCESS_ACTION: {
-      state.registers = action.payload;
-      state.nonAnonymous = action.anonymousRead;
-      state.dataList = action.dataList;
-
+    case FETCH_REGISTER_DATA_ACTION:
       return {
         ...state,
+        isFetchingRegisterData: true,
+      };
+    case FETCH_REGISTER_DATA_SUCCESS_ACTION: {
+      return {
+        ...state,
+        registers: action.payload,
+        isFetchingRegisterData: false,
+        nonAnonymous: action.anonymousRead,
+        dataList: action.dataList,
       };
     }
     case CONNECT_CONFIGURATION_UPDATES_ACTION:
@@ -237,7 +243,7 @@ export default function (
 
 export const ConfigurationExport = (
   state: ConfigurationExportState = {},
-  action: ConfigurationExportActionTypes
+  action: ConfigurationExportActionTypes,
 ): ConfigurationExportState => {
   switch (action.type) {
     case FETCH_CONFIGURATIONS_ACTION:

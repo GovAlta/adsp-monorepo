@@ -239,7 +239,7 @@ class FormPage {
 
   definitionsEditorApplicantRole(serviceName, roleName) {
     return cy.xpath(
-      `//h4/div[contains(text(),"${serviceName}")]/parent::h4/following-sibling::goa-table[1]//tbody/tr/td[1][text()="${roleName}"]/following-sibling::td[1]/goa-checkbox`
+      `//h4/div[contains(text(),"${serviceName}")]/parent::h4/following-sibling::goa-table[1]//tbody/tr/td[1][text()="${roleName}"]/following-sibling::td[1]`
     );
   }
 

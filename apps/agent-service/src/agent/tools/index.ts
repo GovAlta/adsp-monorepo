@@ -5,6 +5,7 @@ import { createSchemaTools } from './schema';
 import { createFileTools } from './file';
 import { createRendererCatalogTools } from './rendererCatalog';
 import { createFormTools } from './form';
+import { createDataRegisterTools } from './dataRegister';
 
 interface ToolsProps {
   logger: Logger;
@@ -13,7 +14,6 @@ interface ToolsProps {
 }
 
 export async function createTools({ logger, directory, tokenProvider }: ToolsProps) {
-
   const { fileDownloadTool, fileCopyTool } = await createFileTools({ logger, directory, tokenProvider });
 
   const { formConfigurationRetrievalTool, formConfigurationUpdateTool } = await createFormConfigurationTools({
@@ -26,15 +26,24 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
   const { schemaDefinitionTool } = await createSchemaTools();
   const { rendererCatalogTool } = await createRendererCatalogTools({ logger });
 
+  const { dataRegisterListTool, dataRegisterCreateTool, dataRegisterUpdateTool } = await createDataRegisterTools({
+    logger,
+    directory,
+    tokenProvider,
+  });
+
   return {
     fileDownloadTool,
     fileCopyTool,
     formConfigurationRetrievalTool,
     formConfigurationUpdateTool,
-    formDataRetrievalTool, 
+    formDataRetrievalTool,
     formDataUpdateTool,
     schemaDefinitionTool,
     rendererCatalogTool,
+    dataRegisterListTool,
+    dataRegisterCreateTool,
+    dataRegisterUpdateTool,
   };
 }
 

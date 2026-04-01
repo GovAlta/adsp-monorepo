@@ -3,28 +3,46 @@ import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue, RequiredTextLabel } from './style-component';
-import { convertToReadableFormat, getLastSegmentFromPointer } from '../../util';
+import {
+  convertToReadableFormat,
+  getGeneratedLabelFromScope,
+  controlScopeMatchesLabel,
+  getLabelText,
+  getLastSegmentFromPointer,
+  isNilOrEmptyValue,
+} from '../../util';
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { GoabButton, GoabFormItem } from '@abgov/react-components';
 
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
 
-export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
-  const { data, uischema, label, schema, path, errors, enabled, cells, required } = props;
+export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null => {
+  const { data, uischema, label, schema, rootSchema, path, errors, enabled, cells, required, visible } = props;
   const context = useContext(JsonFormsStepperContext);
   const jsonForms = useJsonForms();
   const reviewLabel = typeof uischema.options?.reviewLabel === 'string' ? (uischema.options.reviewLabel as string) : '';
   const propLabel = typeof label === 'string' ? label : '';
 
+  if (visible === false) {
+    return null;
+  }
+
   let labelToUpdate: string = '';
   if (reviewLabel.trim() !== '') {
     labelToUpdate = reviewLabel;
+  } else if (typeof schema?.title === 'string' && schema.title.trim()) {
+    labelToUpdate = schema.title;
   } else if (propLabel.trim() !== '') {
-    labelToUpdate = propLabel;
+    if (uischema.scope?.startsWith('#/') && controlScopeMatchesLabel(uischema.scope, propLabel)) {
+      labelToUpdate = getLabelText(uischema.scope, propLabel);
+    } else {
+      labelToUpdate = propLabel;
+    }
   } else if (uischema.scope?.startsWith('#/')) {
-    const scopeName = uischema.scope ? getLastSegmentFromPointer(uischema.scope) : '';
-    labelToUpdate = convertToReadableFormat(scopeName);
+    labelToUpdate = getGeneratedLabelFromScope(uischema.scope);
+  } else {
+    labelToUpdate = propLabel;
   }
   let reviewText = data;
   const isBoolean = typeof data === 'boolean';
@@ -54,8 +72,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
     if (uischema.options?.text?.trim()) {
       checkboxLabel = uischema.options.text.trim();
     } else if (uischema.scope && uischema.scope.startsWith('#/')) {
-      const fallbackLabel = getLastSegmentFromPointer(uischema.scope);
-      checkboxLabel = convertToReadableFormat(fallbackLabel);
+      checkboxLabel = getGeneratedLabelFromScope(uischema.scope);
     }
 
     if (uischema.options?.radio === true) {
@@ -84,8 +101,8 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
   const normalizePath = (p: string) =>
     p
       .replace(/\[(\d+)\]/g, '.$1')
-      .replace(/^\./, '')
-      .replace(/\//g, '.');
+      .replace(/\//g, '.')
+      .replace(/^\./, '');
 
   const findMatchingError = (currentErrors: ErrorObject[] | undefined): ErrorObject | undefined => {
     if (!currentErrors) return undefined;
@@ -117,13 +134,27 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
   let activeError: string | undefined;
   if (matchedError) {
     try {
-      activeError = humanizeAjvError(matchedError, schema as JsonSchema, uischema as UISchemaElement);
+      if (matchedError.keyword === 'errorMessage' && matchedError.message) {
+        activeError = matchedError.message;
+      } else if (matchedError.keyword === 'minItems') {
+        const minItemsError = (schema as JsonSchema & { errorMessage?: { minItems?: string } }).errorMessage?.minItems;
+        activeError =
+          minItemsError || humanizeAjvError(matchedError, schema as JsonSchema, uischema as UISchemaElement);
+      } else {
+        activeError = humanizeAjvError(
+          matchedError,
+          ((rootSchema as JsonSchema) ?? (schema as JsonSchema)) as JsonSchema,
+          uischema as UISchemaElement,
+        );
+      }
     } catch (err) {
       // Fallback: try to extract missing property name and create a friendly message
       if (matchedError.keyword === 'required' && matchedError.params?.missingProperty) {
         const missing = matchedError.params.missingProperty as string;
         const missingPropertyLabel = convertToReadableFormat(missing);
         activeError = `${missingPropertyLabel} is required`;
+      } else if (matchedError.keyword === 'minItems') {
+        activeError = (schema as JsonSchema & { errorMessage?: { minItems?: string } }).errorMessage?.minItems;
       } else {
         const propertyMatch = matchedError.message?.match(/'([^']+)'/);
         if (propertyMatch && propertyMatch[1]) {
@@ -136,7 +167,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element => {
     }
   }
 
-  if (required && (data === undefined || data === null || data === '') && !activeError) {
+  if (required && isNilOrEmptyValue(data, true) && !activeError) {
     activeError = `${labelToUpdate} is required`;
   }
 

@@ -2,7 +2,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { GoabFormItem } from '@abgov/react-components';
 import { ControlProps } from '@jsonforms/core';
-import { checkFieldValidity } from '../../util/stringUtils';
+import { checkFieldValidity, getControlLabelText } from '../../util/stringUtils';
 import { Visible } from '../../util';
 import { JsonFormRegisterProvider } from '../../Context/register';
 import { FormFieldWrapper } from './style-component';
@@ -37,10 +37,8 @@ export interface WithInput {
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
   const { uischema, visible, label, input, required, errors, path, isStepperReview, skipInitialValidation } = props;
   const InnerComponent = input;
-  const labelToUpdate: string = label || '';
+  const labelToUpdate = getControlLabelText(props);
   const controlRef = useRef<HTMLDivElement>(null);
-
-  let modifiedErrors = checkFieldValidity(props as ControlProps);
 
   const formStepperCtx = useContext(JsonFormsStepperContext);
   const stepperState = (formStepperCtx as JsonFormsStepperContextProps)?.selectStepperState?.();
@@ -50,6 +48,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const [isVisited, setIsVisited] = useState(skipInitialValidation === true);
   const { core } = useJsonForms();
   const rootData = core?.data as any;
+  let modifiedErrors = checkFieldValidity(props as ControlProps, rootData);
   useEffect(() => {
     if (showReviewLink === true && !isStepperReview) {
       setIsVisited(true);
@@ -60,7 +59,7 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   useEffect(() => {
     if (stepperState?.targetScope && stepperState.targetScope === uischema.scope && controlRef.current) {
       const inputElement = controlRef.current.querySelector(
-        'input, textarea, select, goa-input, goa-textarea, goa-dropdown, goa-checkbox, goa-radio-group'
+        'input, textarea, select, goa-input, goa-textarea, goa-dropdown, goa-checkbox, goa-radio-group',
       );
 
       if (inputElement) {

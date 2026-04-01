@@ -17,8 +17,7 @@ Feature: Events
     When the user clicks "hide" details button for the definition of "tenant-created" under "tenant-service"
     Then the user "should not view" the definition details of "tenant-created" under "tenant-service"
 
-  # CS-4750 - Event service API doc is missing in UAT
-  @regression @ignore
+  @regression
   Scenario: As a tenant admin, I can see event service API docs
     Given a tenant admin user is on tenant admin page
     When the user selects the "Event" menu item

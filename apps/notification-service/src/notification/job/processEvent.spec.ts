@@ -120,8 +120,11 @@ describe('createProcessEventJob', () => {
           test: type,
         },
         {},
-        tenantId
+        tenantId,
       );
+      configuration.email = {
+        fromEmail: 'no-reply@test.com',
+      };
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
       configurationServiceMock.getConfiguration.mockResolvedValueOnce(configuration);
 
@@ -142,7 +145,7 @@ describe('createProcessEventJob', () => {
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test', subscriberId: 'test', criteria: {} },
         null,
-        subscriber
+        subscriber,
       );
       repositoryMock.getSubscriptions.mockResolvedValueOnce({
         results: [subscription],
@@ -161,11 +164,13 @@ describe('createProcessEventJob', () => {
         true,
         (err) => {
           expect(err).toBeFalsy();
-        }
+        },
       );
 
+      expect(queueServiceMock.enqueue).toHaveBeenCalled();
+
       expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
-        expect.objectContaining({ subscriber: expect.objectContaining({ id: 'test' }), to: 'test@testco.org' })
+        expect.objectContaining({ subscriber: expect.objectContaining({ id: 'test' }), to: 'test@testco.org' }),
       );
     });
 
@@ -211,8 +216,13 @@ describe('createProcessEventJob', () => {
           test: type,
         },
         {},
-        tenantId
+        tenantId,
       );
+
+      configuration.email = {
+        fromEmail: 'no-reply@test.com',
+      };
+
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
       configurationServiceMock.getConfiguration.mockResolvedValueOnce(configuration);
 
@@ -233,7 +243,7 @@ describe('createProcessEventJob', () => {
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test', subscriberId: 'testA', criteria: {} },
         configuration.getNotificationType('test'),
-        subscriberA
+        subscriberA,
       );
 
       const subscriberB = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
@@ -253,7 +263,7 @@ describe('createProcessEventJob', () => {
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test', subscriberId: 'testB', criteria: {} },
         configuration.getNotificationType('test'),
-        subscriberB
+        subscriberB,
       );
       repositoryMock.getSubscriptions.mockResolvedValueOnce({
         results: [subscriptionA, subscriptionB],
@@ -272,15 +282,15 @@ describe('createProcessEventJob', () => {
         true,
         (err) => {
           expect(err).toBeFalsy();
-        }
+        },
       );
 
       expect(queueServiceMock.enqueue).toHaveBeenCalledTimes(2);
       expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
-        expect.objectContaining({ subscriber: expect.objectContaining({ id: 'testA' }), to: 'testA@testco.org' })
+        expect.objectContaining({ subscriber: expect.objectContaining({ id: 'testA' }), to: 'testA@testco.org' }),
       );
       expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
-        expect.objectContaining({ subscriber: expect.objectContaining({ id: 'testB' }), to: 'testB@testco.org' })
+        expect.objectContaining({ subscriber: expect.objectContaining({ id: 'testB' }), to: 'testB@testco.org' }),
       );
     });
 
@@ -326,7 +336,7 @@ describe('createProcessEventJob', () => {
           test: type,
         },
         {},
-        tenantId
+        tenantId,
       );
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
       configurationServiceMock.getConfiguration.mockResolvedValueOnce(configuration);
@@ -349,7 +359,7 @@ describe('createProcessEventJob', () => {
         (err) => {
           expect(err).toBeFalsy();
           done();
-        }
+        },
       );
     });
 
@@ -382,7 +392,7 @@ describe('createProcessEventJob', () => {
         (err) => {
           expect(err).toBeTruthy();
           done();
-        }
+        },
       );
     });
 
@@ -414,7 +424,7 @@ describe('createProcessEventJob', () => {
           expect(err).toBeFalsy();
           expect(queueServiceMock.enqueue).not.toHaveBeenCalled();
           done();
-        }
+        },
       );
     });
   });

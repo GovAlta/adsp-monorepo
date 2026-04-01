@@ -423,9 +423,7 @@ When(
       //Unselect all checkboxes
       fileServiceObj
         .fileTypePageCheckboxesTables()
-        .find('goa-checkbox')
-        .shadow()
-        .find('[class^="container"]')
+        .find('input[type="checkbox"]')
         .then((elements) => {
           for (let i = 0; i < elements.length; i++) {
             if (elements[i].getAttribute('class')?.includes('selected')) {
@@ -455,9 +453,7 @@ When(
               .contains(roleName)
               .next()
               .next()
-              .find('goa-checkbox')
-              .shadow()
-              .find('[class^="container"]')
+              .find('input[type="checkbox"]')
               .scrollIntoView()
               .click({ force: true });
           } else {
@@ -467,9 +463,7 @@ When(
               .contains(updateRoles[i].trim())
               .next()
               .next()
-              .find('goa-checkbox')
-              .shadow()
-              .find('[class^="container"]')
+              .find('input[type="checkbox"]')
               .scrollIntoView()
               .click({ force: true }); // The checkbox clicking doesn't work properly (selects and unselects the checkbox).Need further investigation
           }
@@ -500,9 +494,7 @@ When(
       //Unselect all checkboxes
       fileServiceObj
         .fileTypePageCheckboxesTables()
-        .find('goa-checkbox')
-        .shadow()
-        .find('[class^="container"]')
+        .find('input[type="checkbox"]')
         .then((elements) => {
           for (let i = 0; i < elements.length; i++) {
             if (elements[i].getAttribute('class')?.includes('selected')) {
@@ -518,9 +510,11 @@ When(
         for (let i = 0; i < readRoles.length; i++) {
           fileServiceObj
             .fileTypePageCheckboxesTables()
-            .find('goa-checkbox[testid="FileType-read-role-checkbox-' + readRoles[i].trim() + '"]')
-            .shadow()
-            .find('[class^="container"]')
+            .find('.role-name')
+            .contains(readRoles[i].trim())
+            .next()
+            .find('input[type="checkbox"]')
+            .scrollIntoView()
             .click({ force: true, multiple: true });
         }
       }
@@ -546,9 +540,7 @@ When(
               .contains(roleName)
               .next()
               .next()
-              .find('goa-checkbox')
-              .shadow()
-              .find('[class^="container"]')
+              .find('input[type="checkbox"]')
               .scrollIntoView()
               .click({ force: true });
           } else {
@@ -558,9 +550,7 @@ When(
               .contains(updateRoles[i].trim())
               .next()
               .next()
-              .find('goa-checkbox')
-              .shadow()
-              .find('[class^="container"]')
+              .find('input[type="checkbox"]')
               .scrollIntoView()
               .click({ force: true });
           }

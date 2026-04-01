@@ -13,18 +13,33 @@ import { GoabTextArea } from '@abgov/react-components';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
-import { onKeyPressForTextControl, onChangeForInputControl } from '../../util/inputControlUtils';
-import { GoabTextAreaOnKeyPressDetail } from '@abgov/ui-components-common';
+import { onChangeForInputControl } from '../../util/inputControlUtils';
+import { GoabTextAreaOnChangeDetail, GoabTextAreaOnKeyPressDetail } from '@abgov/ui-components-common';
+import { useDebounce } from '../../util/useDebounce';
 export type GoabInputMultiLineTextProps = CellProps & WithClassname & WithInputProps;
 
+const DEBOUNCE_DELAY = 550;
 export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element => {
   const { data, config, id, enabled, uischema, path, schema, label, isVisited, errors, setIsVisited } = props;
-  const { required } = props as ControlProps;
+
   const [textAreaValue, setTextAreaValue] = React.useState<string>(data || '');
+
+  const debouncedValue = useDebounce(textAreaValue, DEBOUNCE_DELAY);
 
   useEffect(() => {
     setTextAreaValue(data || '');
   }, [data]);
+
+  /* istanbul ignore next */
+  useEffect(() => {
+    if (debouncedValue !== data && (debouncedValue !== '' || data !== undefined)) {
+      onChangeForInputControl({
+        name: '',
+        value: debouncedValue,
+        controlProps: props as ControlProps,
+      });
+    }
+  }, [debouncedValue]);
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
@@ -38,7 +53,7 @@ export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element =
   const txtAreaComponent = (
     <GoabTextArea
       error={isVisited && errors.length > 0}
-      value={textAreaValue}
+      value={debouncedValue}
       disabled={!enabled}
       readOnly={readOnly}
       placeholder={placeholder}
@@ -50,29 +65,13 @@ export const MultiLineText = (props: GoabInputMultiLineTextProps): JSX.Element =
       onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => {
         const newValue = autoCapitalize ? detail.value.toUpperCase() : detail.value;
 
-        if (isVisited === false && setIsVisited) {
-          setIsVisited();
-        }
-        if (detail.value.length === 0 || (required && errors.length === 0 && detail.value.length > 0)) {
-          onKeyPressForTextControl({
-            name: detail.name,
-            value: newValue,
-            key: detail.key,
-            controlProps: props as ControlProps,
-          });
-        }
+        setTextAreaValue(newValue);
 
-        onChangeForInputControl({
-          name: detail.name,
-          value: newValue,
-          controlProps: props as ControlProps,
-        });
-      }}
-      onChange={() => {
         if (isVisited === false && setIsVisited) {
           setIsVisited();
         }
       }}
+      onChange={(detail: GoabTextAreaOnChangeDetail) => {}}
       {...uischema?.options?.componentProps}
     />
   );

@@ -3,7 +3,7 @@
   "summary": "Guidelines and best practices for generating high-quality JSON Forms configuration",
 
   "layoutSelection": {
-    "description": "Choose the right root layout based on form complexity",
+    "description": "Choose the right root layout based on form complexity. The Design System's basic layout pattern uses the page stepper (Categorization with variant='pages') as the preferred method for complex government forms.",
     "rules": [
       {
         "condition": "Simple forms (1-5 fields, single purpose)",
@@ -12,8 +12,13 @@
       },
       {
         "condition": "Complex forms (6+ fields, multiple sections)",
-        "recommendation": "Use Categorization with variant=\"pages\"",
+        "recommendation": "Use Categorization with variant=\"pages\" — the Design System's preferred basic layout pattern. This creates a Task List with section groupings, progress tracking, and a summary review page.",
         "example": "pages-layout"
+      },
+      {
+        "condition": "Moderate forms for experienced/internal users",
+        "recommendation": "Use Categorization with variant=\"stepper\" for a simple step navigation bar. Less structure than pages but still organizes content into steps.",
+        "example": "simple-stepper"
       }
     ]
   },

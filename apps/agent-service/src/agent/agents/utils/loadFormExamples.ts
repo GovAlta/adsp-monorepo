@@ -17,7 +17,8 @@ import * as verticalLayout from '../data/form-examples/layouts/vertical-layout.j
 import * as horizontalLayout from '../data/form-examples/layouts/horizontal-layout.json';
 import * as mixedLayout from '../data/form-examples/layouts/mixed-layout.json';
 import * as groupLayout from '../data/form-examples/layouts/group-layout.json';
-import * as stepperWithSections from '../data/form-examples/layouts/stepper-with-sections.json';
+import * as pagesWithSections from '../data/form-examples/layouts/pages-with-sections.json';
+import * as simpleStepper from '../data/form-examples/layouts/simple-stepper.json';
 // Common fields
 import * as fullName from '../data/form-examples/common-fields/full-name.json';
 import * as address from '../data/form-examples/common-fields/address.json';
@@ -43,6 +44,8 @@ import * as customErrorMessages from '../data/form-examples/validation/custom-er
 // Data registers
 import * as configServiceDropdown from '../data/form-examples/data-registers/config-service-dropdown.json';
 import * as apiEndpointDropdown from '../data/form-examples/data-registers/api-endpoint-dropdown.json';
+import * as weekdaysRegister from '../data/form-examples/data-registers/weekdays-register.json';
+import * as objectRegisterMapping from '../data/form-examples/data-registers/object-register-mapping.json';
 // Complex scenarios
 import * as governmentApplication from '../data/form-examples/complex/government-application.json';
 import * as contactFormWithRules from '../data/form-examples/complex/contact-form-with-rules.json';
@@ -62,6 +65,19 @@ import * as mixedComputedOverview from '../data/form-examples/computed/mixed-com
 import * as bestPractices from '../data/form-examples/best-practices.json';
 import * as antiPatterns from '../data/form-examples/anti-patterns.json';
 
+interface OptionReference {
+  name: string;
+  type: string;
+  values?: string[];
+  default?: unknown;
+  description: string;
+}
+
+interface OptionsSection {
+  description: string;
+  options: OptionReference[];
+}
+
 interface FormExample {
   id: string;
   name: string;
@@ -70,6 +86,8 @@ interface FormExample {
   whenToUse?: string[];
   dataSchema?: Record<string, unknown>;
   uiSchema?: Record<string, unknown>;
+  categorizationOptions?: OptionsSection;
+  categoryOptions?: OptionsSection;
   notes?: string[];
 }
 
@@ -143,7 +161,8 @@ const layoutExamples: FormExample[] = [
   horizontalLayout,
   mixedLayout,
   groupLayout,
-  stepperWithSections,
+  pagesWithSections,
+  simpleStepper,
 ] as FormExample[];
 const commonFieldExamples: FormExample[] = [fullName, address] as FormExample[];
 const contentExamples: FormExample[] = [
@@ -166,7 +185,12 @@ const validationExamples: FormExample[] = [
   multipleConditions,
   customErrorMessages,
 ] as FormExample[];
-const dataRegisterExamples: FormExample[] = [configServiceDropdown, apiEndpointDropdown] as FormExample[];
+const dataRegisterExamples: FormExample[] = [
+  configServiceDropdown,
+  apiEndpointDropdown,
+  weekdaysRegister,
+  objectRegisterMapping,
+] as FormExample[];
 const complexExamples: FormExample[] = [
   governmentApplication,
   contactFormWithRules,
@@ -204,6 +228,27 @@ function formatExample(example: FormExample): string {
     lines.push('```json');
     lines.push(JSON.stringify(example.uiSchema, null, 2));
     lines.push('```');
+    lines.push('');
+  }
+
+  if (example.categorizationOptions) {
+    lines.push(`### Categorization Options`);
+    lines.push(example.categorizationOptions.description);
+    for (const opt of example.categorizationOptions.options) {
+      const defaultStr = opt.default !== undefined ? ` (default: ${JSON.stringify(opt.default)})` : '';
+      const valuesStr = opt.values ? ` — values: ${opt.values.join(', ')}` : '';
+      lines.push(`- **${opt.name}** (${opt.type}${defaultStr}${valuesStr}): ${opt.description}`);
+    }
+    lines.push('');
+  }
+
+  if (example.categoryOptions) {
+    lines.push(`### Category Options`);
+    lines.push(example.categoryOptions.description);
+    for (const opt of example.categoryOptions.options) {
+      const defaultStr = opt.default !== undefined ? ` (default: ${JSON.stringify(opt.default)})` : '';
+      lines.push(`- **${opt.name}** (${opt.type}${defaultStr}): ${opt.description}`);
+    }
     lines.push('');
   }
 

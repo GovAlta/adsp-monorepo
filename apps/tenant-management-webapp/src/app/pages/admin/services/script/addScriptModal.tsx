@@ -55,7 +55,7 @@ export const AddScriptModal = ({
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .add('duplicated', 'name', duplicateNameCheck(scriptNames, 'Script'))
@@ -144,11 +144,7 @@ export const AddScriptModal = ({
         </GoabButtonGroup>
       }
     >
-      <div
-        ref={scrollPaneRef}
-        className="roles-scroll-pane"
-        style={{ overflowY: 'auto', maxHeight: '70vh', padding: '0 3px 0 3px' }}
-      >
+      <div ref={scrollPaneRef} className="roles-scroll-pane" style={{ padding: '0 3px 0 3px' }}>
         <GoabFormItem error={errors?.['name']} label="Name">
           <GoabInput
             type="text"

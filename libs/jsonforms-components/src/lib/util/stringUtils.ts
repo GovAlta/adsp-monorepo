@@ -1,5 +1,6 @@
 import { ControlProps, JsonSchema, JsonSchema7, extractSchema } from '@jsonforms/core';
 import { invalidSin, sinTitle } from '../common/Constants';
+import { isRequiredBySchema } from './requiredUtil';
 
 /**
  * Sets the first word to be capitalized so that it is sentence cased.
@@ -20,8 +21,8 @@ export const capitalizeFirstLetter = (words: string) => {
  */
 export const controlScopeMatchesLabel = (scope: string, label: string) => {
   // Get the property name in the string from the scope
-  const splitIdName = scope?.replace(' ', '').split('/')?.at(-1)?.toLowerCase() ?? '';
-  const labelWithNoSpaces = label?.replace(' ', '').toLowerCase();
+  const splitIdName = scope?.replace(/\s+/g, '').split('/')?.at(-1)?.toLowerCase() ?? '';
+  const labelWithNoSpaces = label?.replace(/\s+/g, '').toLowerCase();
   return splitIdName === labelWithNoSpaces;
 };
 
@@ -46,6 +47,55 @@ export const getLabelText = (scope: string, label: string): string => {
 const areAllUppercase = (label: string): boolean => {
   return /^[^a-z]*$/.test(label);
 };
+
+const getExplicitControlLabel = (props: ControlProps): string | undefined => {
+  const optionText = props.uischema?.options?.text;
+  if (typeof optionText === 'string' && optionText.trim()) {
+    return optionText.trim();
+  }
+
+  if (typeof props.schema?.title === 'string' && props.schema.title.trim()) {
+    return props.schema.title.trim();
+  }
+
+  const uiLabel = props.uischema?.label;
+  if (typeof uiLabel === 'string' && uiLabel.trim()) {
+    return uiLabel.trim();
+  }
+
+  if (typeof uiLabel === 'object' && uiLabel !== null && 'text' in uiLabel) {
+    const text = uiLabel.text;
+    if (typeof text === 'string' && text.trim()) {
+      return text.trim();
+    }
+  }
+
+  return undefined;
+};
+
+export const getGeneratedLabelFromScope = (scope: string): string => {
+  if (!scope?.startsWith('#/')) {
+    return '';
+  }
+
+  const propertyName = getLastSegmentFromPointer(scope);
+  const readableLabel = convertToReadableFormat(propertyName);
+  return getLabelText(scope, readableLabel);
+};
+
+export const getControlLabelText = (props: ControlProps): string => {
+  const explicitLabel = getExplicitControlLabel(props);
+  if (explicitLabel) {
+    return explicitLabel;
+  }
+
+  if (props.uischema?.scope?.startsWith('#/')) {
+    return getGeneratedLabelFromScope(props.uischema.scope);
+  }
+
+  return props.label || '';
+};
+
 export const isEmptyBoolean = (schema: JsonSchema, data: unknown): boolean => {
   return schema.type !== undefined && schema.type === 'boolean' && (data === null || data === undefined);
 };
@@ -57,6 +107,21 @@ export const isEmptyNumber = (schema: JsonSchema, data: unknown): boolean => {
     ((schema.type === 'number' || schema.type === 'integer') && isNaN(+data))
   );
 };
+
+/**
+ * Returns true when a value is undefined, null, or an empty string.
+ */
+export const isNilOrEmptyString = (value: string | null | undefined): boolean =>
+  value === undefined || value === null || value === '';
+
+/**
+ * Returns true when a value is undefined, null, empty string, or (optionally) an empty array.
+ */
+export const isNilOrEmptyValue = (value: unknown, includeEmptyArray = false): boolean =>
+  value === undefined ||
+  value === null ||
+  value === '' ||
+  (includeEmptyArray && Array.isArray(value) && value.length === 0);
 
 export const validateSinWithLuhn = (input: number): boolean => {
   const cardNumber = input.toString();
@@ -132,9 +197,9 @@ export const getRequiredIfThen = (props: ControlProps) => {
  * @param props
  * @returns error message
  */
-export const checkFieldValidity = (props: ControlProps): string => {
-  const { data, errors: ajvErrors, required, label, schema } = props;
-  const labelToUpdate = label;
+export const checkFieldValidity = (props: ControlProps, rootData?: unknown): string => {
+  const { data, errors: ajvErrors, required, schema } = props;
+  const labelToUpdate = getControlLabelText(props);
   const extraSchema = schema as JsonSchema & extractSchema;
 
   if (extraSchema && data && extraSchema?.title === sinTitle) {
@@ -146,8 +211,11 @@ export const checkFieldValidity = (props: ControlProps): string => {
   }
 
   const rootRequired = getRequiredIfThen(props);
+  const requiredByCondition = isRequiredBySchema(props.rootSchema as JsonSchema7, rootData, props.path, {
+    strategy: 'bestMatch',
+  });
 
-  if (required || rootRequired.length > 0) {
+  if (required || rootRequired.length > 0 || requiredByCondition) {
     if (schema) {
       if (isEmptyBoolean(schema, data)) {
         return `${labelToUpdate} is required`;
@@ -206,8 +274,10 @@ export const convertToReadableFormat = (input: string): string => {
 
   return input
     .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]/g, ' ')
     .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .filter(Boolean)
+    .map((word) => (areAllUppercase(word) ? word : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
     .join(' ');
 };
 
