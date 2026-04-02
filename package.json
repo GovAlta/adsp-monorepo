@@ -117,6 +117,7 @@
     "qs": "^6.14.2",
     "react-components": "npm:@abgov/react-components@^6.11.0",
     "react-error-boundary": "4.0.12",
+    "react-speech-recognition": "^4.0.1",
     "redis": "^3.1.2",
     "rehype-raw": "^6.1.1",
     "remark-gfm": "^3.0.1",
