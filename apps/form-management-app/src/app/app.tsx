@@ -11,6 +11,7 @@ import TenantManagement from './pages/admin/index';
 import FormDefinitions from './pages/admin/FormDefinitions';
 import FormEditor from './pages/admin/FormEditor';
 import FormFilters from './pages/admin/FormFilters';
+import FormVersions from './pages/admin/FormVersions';
 import CreateFormDefinition from './pages/admin/CreateFormDefinition';
 import { AppDispatch, configInitializedSelector, initializeTenant, userSelector } from './state';
 
@@ -69,6 +70,7 @@ export function App() {
               <Route path="forms/new" element={<CreateFormDefinition />} />
               <Route path="forms/edit/:id" element={<CreateFormDefinition />} />
               <Route path="filters" element={<FormFilters />} />
+              <Route path="versions" element={<FormVersions />} />
             </Route>
 
             {/* Editor uses a different layout */}

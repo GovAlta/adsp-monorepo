@@ -17,3 +17,9 @@ export const selectFormPage = (state: AppState) => state.form.page;
 export const selectFormNext = (state: AppState) => state.form.next;
 export const selectFormCursors = (state: AppState) => state.form.cursors;
 export const selectFormCriteria = (state: AppState) => state.form.criteria;
+export const selectFormVersions = (definitionId: string) => (state: AppState) =>
+  state.form.versions[definitionId]?.revisions || [];
+export const selectFormVersionsLoading = (definitionId: string) => (state: AppState) =>
+  state.form.versions[definitionId]?.loading || false;
+export const selectFormVersionsNext = (definitionId: string) => (state: AppState) =>
+  state.form.versions[definitionId]?.next || null;

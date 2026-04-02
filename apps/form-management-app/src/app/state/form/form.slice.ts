@@ -9,6 +9,13 @@ export const FORM_FEATURE_KEY = 'form';
 
 export type ValidationError = JsonFormsCore['errors'][number];
 
+export interface FormDefinitionRevision {
+  revision: number;
+  created: string;
+  lastUpdated: string;
+  configuration: FormDefinition;
+}
+
 export interface FormDefinitionsCriteria {
   top?: number;
   after?: string;
@@ -50,6 +57,13 @@ export interface FormState {
     ministry: string;
   };
   lastCriteria: FormDefinitionsCriteria | null;
+  versions: {
+    [definitionId: string]: {
+      revisions: FormDefinitionRevision[];
+      loading: boolean;
+      next: string | null;
+    };
+  };
 }
 
 export const createDefinition = createAsyncThunk(
@@ -62,7 +76,7 @@ export const createDefinition = createAsyncThunk(
       const { data } = await axios.patch<{ latest: { configuration: FormDefinition } }>(
         new URL(`configuration/v2/configuration/form-service/${definition.id}`, configurationService).href,
         { operation: 'REPLACE', configuration: definition },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       return data;
     } catch (err) {
@@ -75,7 +89,7 @@ export const createDefinition = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const updateDefinition = createAsyncThunk(
@@ -88,7 +102,7 @@ export const updateDefinition = createAsyncThunk(
       const { data } = await axios.patch<{ latest: { configuration: FormDefinition } }>(
         new URL(`configuration/v2/configuration/form-service/${definition.id}`, configurationService).href,
         { operation: 'REPLACE', configuration: definition },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       return await data;
     } catch (err) {
@@ -103,7 +117,7 @@ export const updateDefinition = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const deleteDefinition = createAsyncThunk(
@@ -115,7 +129,7 @@ export const deleteDefinition = createAsyncThunk(
       const token = await getAccessToken();
       await axios.delete(
         new URL(`configuration/v2/configuration/form-service/${definitionId}`, configurationService).href,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       return definitionId;
     } catch (err) {
@@ -128,7 +142,7 @@ export const deleteDefinition = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const getFormConfiguration = createAsyncThunk<
@@ -154,7 +168,7 @@ export const getFormConfiguration = createAsyncThunk<
         const { data } = await axios.get<{ latest: { configuration: FormDefinition } }>(
           new URL(`configuration/v2/configuration/form-service/${id}`, configurationService).href,
 
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
 
         definition = data.latest.configuration;
@@ -211,7 +225,7 @@ export const getPrograms = createAsyncThunk(
       if (state.form.programs && state.form.programs.length > 0) return false;
       return true;
     },
-  }
+  },
 );
 
 export const getMinistries = createAsyncThunk(
@@ -244,7 +258,7 @@ export const getMinistries = createAsyncThunk(
       if (state.form.ministries && state.form.ministries.length > 0) return false;
       return true;
     },
-  }
+  },
 );
 
 export const getActsOfLegislation = createAsyncThunk(
@@ -277,7 +291,41 @@ export const getActsOfLegislation = createAsyncThunk(
       if (state.form.actsOfLegislation && state.form.actsOfLegislation.length > 0) return false;
       return true;
     },
-  }
+  },
+);
+
+export const getFormDefinitionVersions = createAsyncThunk(
+  'form/get-definition-versions',
+  async ({ definitionId, after }: { definitionId: string; after?: string }, { getState, rejectWithValue }) => {
+    try {
+      const { config } = getState() as AppState;
+      const configurationService = config.directory[CONFIGURATION_SERVICE_ID];
+      const token = await getAccessToken();
+
+      const url = after
+        ? `${configurationService}/configuration/v2/configuration/form-service/${definitionId}/revisions?top=10&after=${after}`
+        : `${configurationService}/configuration/v2/configuration/form-service/${definitionId}/revisions?top=10`;
+
+      const { data } = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return {
+        definitionId,
+        revisions: data.results || [],
+        next: data.page?.next || null,
+      };
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
+      } else {
+        throw err;
+      }
+    }
+  },
 );
 
 export const updatePrograms = createAsyncThunk(
@@ -291,7 +339,7 @@ export const updatePrograms = createAsyncThunk(
       const { data } = await axios.patch(
         `${configurationService}/configuration/v2/configuration/dcm/programs`,
         { operation: 'REPLACE', configuration: programs },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       return data.latest.configuration;
@@ -305,7 +353,7 @@ export const updatePrograms = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const updateMinistries = createAsyncThunk(
@@ -319,7 +367,7 @@ export const updateMinistries = createAsyncThunk(
       const { data } = await axios.patch(
         `${configurationService}/configuration/v2/configuration/dcm/ministry`,
         { operation: 'REPLACE', configuration: ministries },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       return data.latest.configuration;
@@ -333,7 +381,7 @@ export const updateMinistries = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const updateActsOfLegislation = createAsyncThunk(
@@ -347,7 +395,7 @@ export const updateActsOfLegislation = createAsyncThunk(
       const { data } = await axios.patch(
         `${configurationService}/configuration/v2/configuration/dcm/acts`,
         { operation: 'REPLACE', configuration: acts },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       return data.latest.configuration;
@@ -361,7 +409,7 @@ export const updateActsOfLegislation = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const getFormDefinitions = createAsyncThunk(
@@ -423,7 +471,7 @@ export const getFormDefinitions = createAsyncThunk(
       if (_.isEqual(criteria, state.form.lastCriteria)) return false;
       return true;
     },
-  }
+  },
 );
 
 export const initialFormState: FormState = {
@@ -457,6 +505,7 @@ export const initialFormState: FormState = {
     ministry: '',
   },
   lastCriteria: null,
+  versions: {},
 };
 
 const formSlice = createSlice({
@@ -479,7 +528,7 @@ const formSlice = createSlice({
           program?: string;
           ministry?: string;
         };
-      }
+      },
     ) => {
       state.criteria = { ...state.criteria, ...action.payload };
     },
@@ -607,6 +656,34 @@ const formSlice = createSlice({
       })
       .addCase(updateActsOfLegislation.rejected, (state) => {
         state.busy.saving = false;
+      })
+      .addCase(getFormDefinitionVersions.pending, (state, { meta }) => {
+        const definitionId = meta.arg.definitionId;
+        if (!state.versions[definitionId]) {
+          state.versions[definitionId] = {
+            revisions: [],
+            loading: true,
+            next: null,
+          };
+        } else {
+          state.versions[definitionId].loading = true;
+        }
+      })
+      .addCase(getFormDefinitionVersions.fulfilled, (state, { payload }) => {
+        const { definitionId, revisions, next } = payload;
+        if (state.versions[definitionId]) {
+          const existingRevisions = state.versions[definitionId].revisions;
+          const isLoadingMore = existingRevisions.length > 0;
+          state.versions[definitionId].revisions = isLoadingMore ? [...existingRevisions, ...revisions] : revisions;
+          state.versions[definitionId].next = next;
+          state.versions[definitionId].loading = false;
+        }
+      })
+      .addCase(getFormDefinitionVersions.rejected, (state, { meta }) => {
+        const definitionId = meta.arg.definitionId;
+        if (state.versions[definitionId]) {
+          state.versions[definitionId].loading = false;
+        }
       });
   },
 });
