@@ -1,29 +1,15 @@
 // @param {string} serializedFiles - JSON stringified files object with < escaped
-// @param {string} serializedEsmDeps - JSON stringified array of ESM dependencies
 // @param {string} serializedRouteState - JSON stringified route state with < escaped
+// @param {string} vendorBundleUrl - absolute URL of pre-built template vendor bundle
 export function createPreviewScript(
   serializedFiles: string,
-  serializedEsmDeps: string,
   serializedRouteState: string,
+  vendorBundleUrl: string,
 ): string {
   return `
       const files = ${serializedFiles};
       const moduleCache = {};
       const initialRouteState = ${serializedRouteState};
-
-      // Some generated snippets include Vite React Fast Refresh markers.
-      // Provide no-op shims so fallback preview can execute them safely.
-      if (typeof globalThis.$RefreshReg$ !== 'function') {
-        globalThis.$RefreshReg$ = function() {};
-      }
-      if (typeof globalThis.$RefreshSig$ !== 'function') {
-        globalThis.$RefreshSig$ = function() {
-          return function(type) {
-            return type;
-          };
-        };
-      }
-      globalThis.__vite_plugin_react_preamble_installed__ = true;
 
       const css = Object.entries(files)
         .filter(([path]) => path.endsWith('.css'))
@@ -195,384 +181,38 @@ export function createPreviewScript(
         return 'about:blank';
       }
 
-      function ensureExternalStylesheet(href) {
-        if (!href || document.querySelector('link[data-builder-fallback="' + href + '"]')) {
-          return;
-        }
-
-        const link = document.createElement('link');
-        link.setAttribute('rel', 'stylesheet');
-        link.setAttribute('href', href);
-        link.setAttribute('data-builder-fallback', href);
-        document.head.appendChild(link);
-      }
-
-      function ensureExternalModule(specifier, src) {
-        if (!src || window.__builderFallbackModules?.[specifier]) {
-          return;
-        }
-
-        window.__builderFallbackModules = window.__builderFallbackModules || {};
-        window.__builderFallbackModules[specifier] = true;
-
-        // Load ESM side effects (custom element registration) without blocking module evaluation.
-        import(src).catch((error) => {
-          console.warn('Failed to load fallback external module:', specifier, error);
-        });
-      }
-
-      function toKebabCase(value) {
-        return String(value)
-          .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-          .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
-          .toLowerCase();
-      }
-
       function externalRequire(specifier) {
-        function createRouterFallbackModule() {
-          const React = window.React;
-          const RouterContext = React.createContext({
-            path: '/',
-            navigate: function() {},
-          });
+        // 1. Template vendor bundle — version-locked, pre-built, primary path.
+        const templateDeps = window.__BUILDER_TEMPLATE_DEPS__;
+        if (templateDeps && Object.prototype.hasOwnProperty.call(templateDeps, specifier)) {
+          const dep = templateDeps[specifier];
 
-          function normalizePath(value) {
-            const raw = String(value || '/').trim();
-            if (!raw) {
-              return '/';
-            }
-            return raw.startsWith('/') ? raw : '/' + raw;
-          }
-
-          function readPathFromHash() {
-            const hash = typeof window.location.hash === 'string' ? window.location.hash : '';
-            const value = hash.replace(/^#/, '');
-            return normalizePath(value || '/');
-          }
-
-          function BrowserRouter(props) {
-            const [path, setPath] = React.useState(readPathFromHash);
-
-            React.useEffect(function() {
-              const onHashChange = function() {
-                setPath(readPathFromHash());
-              };
-
-              window.addEventListener('hashchange', onHashChange);
-              return function() {
-                window.removeEventListener('hashchange', onHashChange);
-              };
-            }, []);
-
-            const navigate = React.useCallback(function(to) {
-              const target = normalizePath(to);
-              if (window.location.hash !== '#' + target) {
-                window.location.hash = target;
-              }
-              setPath(target);
-            }, []);
-
-            return React.createElement(
-              RouterContext.Provider,
-              { value: { path: path, navigate: navigate } },
-              props.children
-            );
-          }
-
-          function MemoryRouter(props) {
-            const initial = Array.isArray(props.initialEntries) && props.initialEntries.length > 0
-              ? normalizePath(props.initialEntries[0])
-              : '/';
-            const [path, setPath] = React.useState(initial);
-            const navigate = React.useCallback(function(to) {
-              setPath(normalizePath(to));
-            }, []);
-
-            return React.createElement(
-              RouterContext.Provider,
-              { value: { path: path, navigate: navigate } },
-              props.children
-            );
-          }
-
-          function Route() {
-            return null;
-          }
-
-          function Routes(props) {
-            const context = React.useContext(RouterContext);
-            const children = React.Children.toArray(props.children);
-            const current = normalizePath(context.path);
-
-            const matched = children.find(function(child) {
-              if (!React.isValidElement(child)) {
-                return false;
-              }
-              const routePath = normalizePath(child.props.path || '/');
-              return routePath === current || routePath === '*';
-            });
-
-            return matched && React.isValidElement(matched) ? matched.props.element || null : null;
-          }
-
-          function Link(props) {
-            const context = React.useContext(RouterContext);
-            const to = normalizePath(props.to || '/');
-
-            const onClick = function(event) {
-              if (typeof props.onClick === 'function') {
-                props.onClick(event);
-              }
-              if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
-                return;
-              }
-              event.preventDefault();
-              context.navigate(to);
+          // In srcdoc previews, react-router URL construction can throw because
+          // window.location is about:srcdoc. Use MemoryRouter in preview only.
+          if (specifier === 'react-router-dom' && dep && dep.MemoryRouter) {
+            return {
+              ...dep,
+              BrowserRouter: dep.MemoryRouter,
+              HashRouter: dep.MemoryRouter,
             };
-
-            return React.createElement(
-              'a',
-              Object.assign({}, props, {
-                href: '#' + to,
-                onClick: onClick,
-              }),
-              props.children
-            );
           }
 
-          function useNavigate() {
-            return React.useContext(RouterContext).navigate;
-          }
-
-          function useLocation() {
-            const path = React.useContext(RouterContext).path;
-            return { pathname: normalizePath(path), search: '', hash: '' };
-          }
-
-          return {
-            BrowserRouter: BrowserRouter,
-            MemoryRouter: MemoryRouter,
-            Routes: Routes,
-            Route: Route,
-            Link: Link,
-            NavLink: Link,
-            Outlet: function Outlet() { return null; },
-            useNavigate: useNavigate,
-            useLocation: useLocation,
-            createBrowserRouter: function() {
-              return {
-                navigate: function() {},
-                state: { location: { pathname: '/' } },
-              };
-            },
-            createMemoryRouter: function() {
-              return {
-                navigate: function() {},
-                state: { location: { pathname: '/' } },
-              };
-            },
-            RouterProvider: function RouterProvider(props) {
-              return props.children || null;
-            },
-          };
+          return dep;
         }
 
-        if (specifier === 'react') {
-          return window.React;
-        }
-
-        if (specifier === 'react-dom') {
-          return window.ReactDOM;
-        }
-
-        if (specifier === 'react-dom/client') {
-          return { createRoot: window.ReactDOM.createRoot };
-        }
-
-        if (specifier === '@abgov/web-components/index.css') {
-          ensureExternalStylesheet('https://cdn.jsdelivr.net/npm/@abgov/web-components@1.41.0/index.css');
-          ensureExternalStylesheet('https://unpkg.com/@abgov/web-components@1.41.0/index.css');
+        // 2. CSS side-effect imports on external packages → passthrough.
+        if (typeof specifier === 'string' && specifier.endsWith('.css')) {
           return {};
         }
 
-        if (specifier === '@abgov/web-components') {
-          ensureExternalModule(specifier, 'https://cdn.jsdelivr.net/npm/@abgov/web-components@1.41.0/index.js');
-          return {};
-        }
-
-        if (specifier === '@abgov/react-components') {
-          ensureExternalStylesheet('https://cdn.jsdelivr.net/npm/@abgov/web-components@1.41.0/index.css');
-          ensureExternalStylesheet('https://unpkg.com/@abgov/web-components@1.41.0/index.css');
-          ensureExternalModule('@abgov/web-components', 'https://cdn.jsdelivr.net/npm/@abgov/web-components@1.41.0/index.js');
-
-          const createComponentBridge = (name) => {
-            const rawName = String(name || 'div');
-            const normalizedName = rawName.replace(/^Goab/, '');
-            const tag = 'goa-' + toKebabCase(normalizedName);
-
-            return function GoabFallbackBridge(props) {
-              const input = props || {};
-              const elementRef = window.React.useRef(null);
-              const outputProps = {};
-              const propertyEntries = [];
-              const eventEntries = [];
-
-              for (const [key, value] of Object.entries(input)) {
-                if (key === 'children') {
-                  continue;
-                }
-
-                if (key === 'className') {
-                  outputProps.className = value;
-                  continue;
-                }
-
-                if (key === 'testId') {
-                  outputProps['data-testid'] = value;
-                  continue;
-                }
-
-                if (/^on[A-Z]/.test(key) && typeof value === 'function') {
-                  const eventName = key.slice(2).toLowerCase();
-                  eventEntries.push([eventName, value]);
-                  continue;
-                }
-
-                propertyEntries.push([key, value]);
-
-                const attributeName = toKebabCase(key);
-                if (typeof value === 'string' || typeof value === 'number') {
-                  outputProps[attributeName] = String(value);
-                } else if (typeof value === 'boolean') {
-                  if (value) {
-                    outputProps[attributeName] = '';
-                  }
-                }
-              }
-
-              window.React.useEffect(() => {
-                const element = elementRef.current;
-                if (!element) {
-                  return;
-                }
-
-                for (const [key, value] of propertyEntries) {
-                  try {
-                    element[key] = value;
-                  } catch {
-                    // Ignore non-writable properties in fallback mode.
-                  }
-
-                  // Svelte web components register property setters in all-lowercase
-                  // (e.g. backgroundUrl → backgroundurl). Try the lowercase form as well
-                  // so props like backgroundUrl reach the correct setter.
-                  const lowerKey = key.toLowerCase();
-                  if (lowerKey !== key) {
-                    try {
-                      element[lowerKey] = value;
-                    } catch {
-                      // Ignore non-writable properties in fallback mode.
-                    }
-                  }
-
-                  const attributeName = toKebabCase(key);
-                  if (typeof value === 'boolean') {
-                    if (value) {
-                      element.setAttribute(attributeName, '');
-                    } else {
-                      element.removeAttribute(attributeName);
-                    }
-                  }
-                }
-
-                const listeners = [];
-                for (const [eventName, handler] of eventEntries) {
-                  try {
-                    element.addEventListener(eventName, handler);
-                    listeners.push([eventName, handler]);
-                  } catch {
-                    // Ignore invalid event listeners in fallback mode.
-                  }
-                }
-
-                return () => {
-                  for (const [eventName, handler] of listeners) {
-                    try {
-                      element.removeEventListener(eventName, handler);
-                    } catch {
-                      // Ignore invalid listener cleanup in fallback mode.
-                    }
-                  }
-                };
-              }, [propertyEntries]);
-
-              outputProps.ref = elementRef;
-
-              return window.React.createElement(tag, outputProps, input.children);
-            };
-          };
-
-          return new Proxy(
-            {},
-            {
-              get: (_, key) => createComponentBridge(String(key)),
-            }
-          );
-        }
-
-        if (specifier === 'ionicons/dist/loader') {
-          return {
-            defineCustomElements: () => undefined,
-          };
-        }
-
-        if (specifier === 'ionicons/loader') {
-          return {
-            defineCustomElements: () => undefined,
-          };
-        }
-
-        // Handle esm.sh React peer dependency URLs injected by bundled packages
-        if (specifier.startsWith('https://esm.sh/react@') || specifier.startsWith('https://esm.sh/react/') || specifier === 'https://esm.sh/react') {
-          return window.React;
-        }
-        if (specifier.startsWith('https://esm.sh/react-dom@') || specifier.startsWith('https://esm.sh/react-dom/') || specifier === 'https://esm.sh/react-dom') {
-          return window.ReactDOM;
-        }
-
-        // react sub-path externals (jsx-runtime, jsx-dev-runtime) that bundled packages may import
-        if (specifier === 'react/jsx-runtime' || specifier === 'react/jsx-dev-runtime') {
-          return window.React;
-        }
-        if (specifier === 'react-dom/client') {
-          return { createRoot: window.ReactDOM.createRoot, hydrateRoot: window.ReactDOM.hydrateRoot };
-        }
-        if (specifier === 'react-dom/server') {
-          return {};
-        }
-
-        // Shim react-router: BrowserRouter / createBrowserRouter use history.pushState,
-        // which throws a SecurityError in srcDoc iframes (document URL is about:srcdoc).
-        // Silently map them to MemoryRouter / createMemoryRouter so routing works without
-        // requiring workspace code to know about the preview constraint.
-        if (specifier === 'react-router-dom' || specifier === 'react-router') {
-          window.__builderRouterFallback = window.__builderRouterFallback || createRouterFallbackModule();
-          return window.__builderRouterFallback;
-        }
-
-        // Return pre-fetched esm.sh module if available
+        // 3. esm.sh fallback cache for packages not in the vendor bundle.
         if (window._esmCache?.[specifier]) {
           return window._esmCache[specifier].exports;
         }
 
-        // Gracefully stub any remaining CDN URL imports (e.g. transitive esm.sh sub-deps
-        // that ?bundle didn't fully inline). Return {} rather than crashing the preview.
-        if (specifier.startsWith('https://') || specifier.startsWith('http://')) {
-          console.warn('[builder preview] unresolved CDN import stubbed:', specifier);
-          return {};
-        }
-
-        throw new Error('Unsupported external dependency: ' + specifier);
+        // 4. Warn and stub anything else so a missing dep doesn't crash the full preview.
+        console.warn('[builder preview] unresolved dependency stubbed:', specifier);
+        return {};
       }
 
       async function fetchEsmDep(specifier) {
@@ -702,15 +342,22 @@ export function createPreviewScript(
         return module.exports;
       }
 
-      const esmDepsToFetch = ${serializedEsmDeps};
+      const vendorBundleUrl = ${JSON.stringify(vendorBundleUrl)};
 
       (async function() {
         try {
           restoreRouteState();
 
-          if (esmDepsToFetch.length > 0) {
-            await Promise.all(esmDepsToFetch.map(fetchEsmDep));
-          }
+          // Load pre-built template vendor bundle.
+          // Populates window.__BUILDER_TEMPLATE_DEPS__ with all template dependencies
+          // so externalRequire can resolve them synchronously during module evaluation.
+          await new Promise(function(resolve, reject) {
+            const script = document.createElement('script');
+            script.src = vendorBundleUrl;
+            script.onload = resolve;
+            script.onerror = function() { reject(new Error('Failed to load vendor bundle: ' + vendorBundleUrl)); };
+            document.head.appendChild(script);
+          });
 
           const entryPath = resolveCandidate('src/main') || resolveCandidate('src/index') || resolveCandidate('index');
           if (!entryPath) {
@@ -721,7 +368,7 @@ export function createPreviewScript(
           loadModule(entryPath);
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          const errorHtml = '<pre style="padding:16px;color:#5c1b14;background:#fff3f0;border:1px solid #f0b8ae;border-radius:12px;font:14px/1.5 monospace;white-space:pre-wrap;">Fallback preview failed: ' + message + '</pre>';
+          const errorHtml = '<pre style="padding:16px;color:#5c1b14;background:#fff3f0;border:1px solid #f0b8ae;border-radius:12px;font:14px/1.5 monospace;white-space:pre-wrap;">Preview failed: ' + message + '</pre>';
           document.body.innerHTML = errorHtml;
         }
       })();
