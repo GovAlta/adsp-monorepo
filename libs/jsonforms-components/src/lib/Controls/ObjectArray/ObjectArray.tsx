@@ -14,10 +14,12 @@ import { ObjectArrayControl } from './ObjectListControl';
 import { Visible } from '../../util';
 import { composePaths } from '@jsonforms/core';
 
-import { GoabButton, GoabIconButton } from '@abgov/react-components';
+import { GoabButton, GoabIconButton, GoabCheckbox } from '@abgov/react-components';
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { getLabelText } from '../../util';
 import pluralize from 'pluralize';
+
+import { GoabCheckboxOnChangeDetail } from '@abgov/ui-components-common';
 
 export type CombinedProps = ControlProps & ArrayLayoutProps;
 
@@ -65,10 +67,38 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
     handleChange(path, [...items, '']);
   };
 
+  interface EnumOption {
+    const: string;
+    title?: string;
+    description?: string;
+  }
+
+  const getOptionValue = (option: string | EnumOption): string => (typeof option === 'string' ? option : option.const);
+
+  const getOptionLabel = (option: string | EnumOption): string =>
+    typeof option === 'string' ? option : option.title || option.const;
+
+  const getOptionDescription = (option: string | EnumOption): string | undefined =>
+    typeof option === 'string' ? undefined : option.description;
+
   const removeItem = (index: number) => {
     const copy = [...items];
     copy.splice(index, 1);
     handleChange(path, copy);
+  };
+
+  const getPrimitiveArrayOptions = (schema?: JsonSchema): Array<string | EnumOption> => {
+    const itemSchema = schema?.items as JsonSchema | undefined;
+
+    if (Array.isArray(itemSchema?.oneOf)) {
+      return itemSchema.oneOf as Array<string | EnumOption>;
+    }
+
+    if (Array.isArray(itemSchema?.enum)) {
+      return itemSchema.enum as string[];
+    }
+
+    return [];
   };
 
   const itemUiSchema = {
@@ -76,10 +106,56 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
     scope: '#',
   };
 
+  const options = uischema.options || {};
+
   const label = (uischema?.label as string) || schema?.title || 'Item';
 
   const arrayLabel = getLabelText(uischema.scope, label);
   const prettyLabel = pluralize.singular(arrayLabel.charAt(0).toLocaleUpperCase() + arrayLabel.slice(1));
+
+  if (options.format === 'checkboxes') {
+    const checkboxOptions = getPrimitiveArrayOptions(schema);
+
+    return (
+      <Visible visible={visible}>
+        <h4>{prettyLabel}</h4>
+        <div>
+          {checkboxOptions.map((option) => {
+            const value = getOptionValue(option);
+            const text = getOptionLabel(option);
+            const description = getOptionDescription(option);
+            const checked = items.includes(value);
+
+            return (
+              <GoabCheckbox
+                key={value}
+                name={value}
+                value={value}
+                text={text}
+                description={description}
+                checked={checked}
+                disabled={!enabled}
+                testId={`${value}-checkbox`}
+                onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                  let newValue = [...items];
+
+                  if (detail.value) {
+                    if (!newValue.includes(value)) {
+                      newValue.push(value);
+                    }
+                  } else {
+                    newValue = newValue.filter((item) => item !== value);
+                  }
+
+                  handleChange(path, newValue.length ? newValue : undefined);
+                }}
+              />
+            );
+          })}
+        </div>
+      </Visible>
+    );
+  }
 
   return (
     <Visible visible={visible}>
@@ -88,6 +164,8 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
           Add {prettyLabel}
         </GoabButton>
       </div>
+      <pre>{JSON.stringify(schema.items, null, 2)}</pre>
+      <pre>{JSON.stringify(itemUiSchema, null, 2)}</pre>
       {items.length === 0 && <p style={{ opacity: 0.7 }}>No {arrayLabel.toLowerCase()} added</p>}
       {items.map((item, index) => (
         <div key={index} style={{ display: 'flex', gap: 8 }}>
