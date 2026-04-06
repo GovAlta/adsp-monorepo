@@ -2,25 +2,15 @@ import React, { startTransition, useCallback, useEffect, useMemo, useRef, useSta
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
-import { AgentChat, Band, Container, Grid, GridItem, type UserContent } from '@core-services/app-common';
-import {
-  GoabBadge,
-  GoabButton,
-  GoabButtonGroup,
-  GoabCallout,
-  GoabFormItem,
-  GoabIconButton,
-  GoabInput,
-  GoabTab,
-  GoabTabs,
-} from '@abgov/react-components';
-import { GoabTabsOnChangeDetail } from '@abgov/ui-components-common';
+import { Band, Container, Grid, GridItem, type UserContent } from '@core-services/app-common';
+import { GoabButton, GoabButtonGroup, GoabCallout } from '@abgov/react-components';
 import {
   AppDispatch,
   AppState,
   agentActions,
   agentConnectionStatusSelector,
   agentMessagesByThreadSelector,
+  agentSelectedAssetThumbnailSelector,
   agentSocketConnectedSelector,
   agentWorkspaceRefreshingSelector,
   agentWorkspaceStatusSelector,
@@ -30,6 +20,9 @@ import {
   initializeTenant,
   loginUser,
   logoutUser,
+  lookupProjectSnapshot,
+  projectIsSavingSelector,
+  saveWorkspaceToFileService,
   tenantSelector,
   userSelector,
 } from '../state';
@@ -37,15 +30,26 @@ import {
   applyWorkspaceChange,
   applyWorkspaceSnapshot,
   BUILDER_AGENT_ID,
+  createTarArchive,
   DEFAULT_SELECTED_FILE,
   getDefaultSelectedPath,
+  isImagePath,
   sortWorkspaceFiles,
   type WorkspaceChangeEvent,
   type WorkspaceFileMap,
   type WorkspaceSnapshotFile,
 } from '../lib/builderWorkspace';
 import { createFallbackPreviewDocument, type PreviewRouteState } from '../lib/builderPreview';
-import styles from './BuilderTenant.module.scss';
+import { BuilderEditPane } from '../components/BuilderEditPane';
+import {
+  EmptyState,
+  Page,
+  PanelSubtle,
+  PreviewViewportFrame,
+  PrimaryPreviewViewport,
+  Shell,
+  SignInPanel,
+} from './BuilderTenant.styled';
 
 const RECENT_FILE_UPDATE_MS = 10000;
 
@@ -337,90 +341,6 @@ function readPreviewRouteState(frame: HTMLIFrameElement | null): PreviewRouteSta
   }
 }
 
-function writeTarString(target: Uint8Array, offset: number, size: number, value: string): void {
-  const bytes = new TextEncoder().encode(value);
-  const length = Math.min(bytes.length, size);
-  target.set(bytes.slice(0, length), offset);
-}
-
-function writeTarOctal(target: Uint8Array, offset: number, size: number, value: number): void {
-  const octal = Math.max(0, Math.floor(value)).toString(8);
-  const bodyLength = Math.max(0, size - 1);
-  const body = octal.padStart(bodyLength, '0').slice(-bodyLength);
-  writeTarString(target, offset, bodyLength, body);
-  target[offset + size - 1] = 0;
-}
-
-function normalizeTarPath(path: string): { name: string; prefix: string } {
-  const normalized = normalizeWorkspacePath(path).replace(/^\/+/, '');
-
-  if (normalized.length <= 100) {
-    return { name: normalized, prefix: '' };
-  }
-
-  const splitIndex = normalized.lastIndexOf('/');
-  if (splitIndex > 0) {
-    const prefix = normalized.slice(0, splitIndex);
-    const name = normalized.slice(splitIndex + 1);
-    if (name.length <= 100 && prefix.length <= 155) {
-      return { name, prefix };
-    }
-  }
-
-  // Fallback: keep tail segment if path cannot fit ustar split constraints.
-  return {
-    name: normalized.slice(-100),
-    prefix: '',
-  };
-}
-
-function createTarArchive(files: WorkspaceSnapshotFile[]): Blob {
-  const encoder = new TextEncoder();
-  const now = Math.floor(Date.now() / 1000);
-  const chunks: Uint8Array[] = [];
-
-  for (const file of files) {
-    const { name, prefix } = normalizeTarPath(file.path);
-    const content = encoder.encode(file.content ?? '');
-    const header = new Uint8Array(512);
-
-    writeTarString(header, 0, 100, name);
-    writeTarOctal(header, 100, 8, 0o644);
-    writeTarOctal(header, 108, 8, 0);
-    writeTarOctal(header, 116, 8, 0);
-    writeTarOctal(header, 124, 12, content.length);
-    writeTarOctal(header, 136, 12, now);
-
-    // Checksum field must be initialized to spaces before checksum is computed.
-    for (let index = 148; index < 156; index++) {
-      header[index] = 0x20;
-    }
-
-    header[156] = '0'.charCodeAt(0);
-    writeTarString(header, 257, 6, 'ustar');
-    writeTarString(header, 263, 2, '00');
-    writeTarString(header, 345, 155, prefix);
-
-    const checksum = header.reduce((sum, value) => sum + value, 0);
-    const checksumOctal = checksum.toString(8).padStart(6, '0').slice(-6);
-    writeTarString(header, 148, 6, checksumOctal);
-    header[154] = 0;
-    header[155] = 0x20;
-
-    chunks.push(header);
-    chunks.push(content);
-
-    const remainder = content.length % 512;
-    if (remainder !== 0) {
-      chunks.push(new Uint8Array(512 - remainder));
-    }
-  }
-
-  // End-of-archive marker: two empty 512-byte blocks.
-  chunks.push(new Uint8Array(1024));
-  return new Blob(chunks as unknown as BlobPart[], { type: 'application/x-tar' });
-}
-
 function downloadBlob(blob: Blob, fileName: string): void {
   const objectUrl = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -449,24 +369,24 @@ export const BuilderTenant = () => {
   const connectionStatus = useSelector(agentConnectionStatusSelector);
   const workspaceStatus = useSelector(agentWorkspaceStatusSelector);
   const isWorkspaceRefreshing = useSelector(agentWorkspaceRefreshingSelector);
+  const selectedAssetThumbnail = useSelector(agentSelectedAssetThumbnailSelector);
   const [files, setFiles] = useState<WorkspaceFileMap>({});
   const [selectedPath, setSelectedPath] = useState(DEFAULT_SELECTED_FILE);
-  const [workspaceView, setWorkspaceView] = useState<'list' | 'file'>('list');
-  const [activePanelTab, setActivePanelTab] = useState<'chat' | 'workspace' | 'info'>('chat');
-  const [isEditPaneCollapsed, setIsEditPaneCollapsed] = useState(false);
   const isSocketConnected = useSelector(agentSocketConnectedSelector);
   const [workspaceRevision, setWorkspaceRevision] = useState<number | undefined>();
   const [recentlyUpdatedPaths, setRecentlyUpdatedPaths] = useState<Record<string, number>>({});
   const [isWorkspaceEmpty, setIsWorkspaceEmpty] = useState(false);
-  const [tarballUrnInput, setTarballUrnInput] = useState('');
-  const [showTarballForm, setShowTarballForm] = useState(false);
+  const isWorkspaceSaving = useSelector(projectIsSavingSelector);
 
   const socketRef = useRef<Socket | null>(null);
   const seededWorkspaceRef = useRef(false);
+  const autoLoadAttemptedRef = useRef(false);
   const selectedPathRef = useRef(DEFAULT_SELECTED_FILE);
   const workspaceInitInProgressRef = useRef(false);
   const updateIndicatorTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const reconnectTimerRef = useRef<number | null>(null);
+  const workspaceReadRetryTimerRef = useRef<number | null>(null);
+  const workspaceReadRetryAttemptsRef = useRef(0);
   const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
   const previewRouteStateRef = useRef<PreviewRouteState | undefined>(undefined);
 
@@ -513,10 +433,22 @@ export const BuilderTenant = () => {
   }, [selectedPath]);
 
   useEffect(() => {
+    if (isImagePath(selectedPath) && files[selectedPath]) {
+      dispatch(agentActions.setSelectedAssetThumbnail({ path: selectedPath, dataUrl: files[selectedPath] }));
+    } else {
+      dispatch(agentActions.setSelectedAssetThumbnail(null));
+    }
+  }, [dispatch, selectedPath, files]);
+
+  useEffect(() => {
     return () => {
       if (reconnectTimerRef.current !== null) {
         window.clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
+      }
+      if (workspaceReadRetryTimerRef.current !== null) {
+        window.clearTimeout(workspaceReadRetryTimerRef.current);
+        workspaceReadRetryTimerRef.current = null;
       }
       socketRef.current?.disconnect();
       for (const timeout of Object.values(updateIndicatorTimeoutsRef.current)) {
@@ -582,6 +514,51 @@ export const BuilderTenant = () => {
     let socket: Socket | null = null;
 
     const connect = async () => {
+      const clearWorkspaceReadRetry = () => {
+        if (workspaceReadRetryTimerRef.current !== null) {
+          window.clearTimeout(workspaceReadRetryTimerRef.current);
+          workspaceReadRetryTimerRef.current = null;
+        }
+      };
+
+      const requestWorkspaceRead = (status?: string) => {
+        if (!socket?.connected) {
+          return;
+        }
+
+        if (status) {
+          dispatch(agentActions.setWorkspaceStatus(status));
+        }
+
+        socket.emit('workspace-read', { agent: BUILDER_AGENT_ID, threadId });
+      };
+
+      const scheduleWorkspaceReadRetry = () => {
+        if (!workspaceInitInProgressRef.current || workspaceReadRetryTimerRef.current !== null) {
+          return;
+        }
+
+        workspaceReadRetryTimerRef.current = window.setTimeout(() => {
+          workspaceReadRetryTimerRef.current = null;
+
+          if (!workspaceInitInProgressRef.current || !socket?.connected) {
+            return;
+          }
+
+          workspaceReadRetryAttemptsRef.current += 1;
+          if (workspaceReadRetryAttemptsRef.current > 8) {
+            workspaceInitInProgressRef.current = false;
+            dispatch(agentActions.setWorkspaceRefreshing(false));
+            dispatch(agentActions.setWorkspaceStatus('Workspace sync timed out; retrying snapshot read'));
+            requestWorkspaceRead();
+            return;
+          }
+
+          requestWorkspaceRead('Workspace initialization in progress');
+          scheduleWorkspaceReadRetry();
+        }, 1500);
+      };
+
       const scheduleReconnect = (delayMs = 1500) => {
         if (reconnectTimerRef.current !== null) {
           window.clearTimeout(reconnectTimerRef.current);
@@ -614,6 +591,9 @@ export const BuilderTenant = () => {
       });
       socketRef.current = socket;
       seededWorkspaceRef.current = false;
+      autoLoadAttemptedRef.current = false;
+      clearWorkspaceReadRetry();
+      workspaceReadRetryAttemptsRef.current = 0;
 
       socket.on('connect', () => {
         dispatch(agentActions.setSocketConnected(true));
@@ -622,8 +602,7 @@ export const BuilderTenant = () => {
           reconnectTimerRef.current = null;
         }
         dispatch(agentActions.setConnectionStatus('Connected to builder agent'));
-        dispatch(agentActions.setWorkspaceStatus('Reading workspace from agent'));
-        socket?.emit('workspace-read', { agent: BUILDER_AGENT_ID, threadId });
+        requestWorkspaceRead('Reading workspace from agent');
       });
 
       socket.on('disconnect', (reason) => {
@@ -648,6 +627,8 @@ export const BuilderTenant = () => {
       });
 
       socket.on('error', (message: string) => {
+        clearWorkspaceReadRetry();
+        workspaceReadRetryAttemptsRef.current = 0;
         workspaceInitInProgressRef.current = false;
         dispatch(agentActions.setWorkspaceRefreshing(false));
         dispatch(agentActions.setWorkspaceStatus(`Agent error: ${message}`));
@@ -657,16 +638,51 @@ export const BuilderTenant = () => {
         dispatch(agentActions.setWorkspaceRefreshing(false));
         if (!nextFiles.length && workspaceInitInProgressRef.current) {
           dispatch(agentActions.setWorkspaceStatus('Workspace initialization in progress'));
+          scheduleWorkspaceReadRetry();
           return;
         }
 
         if (!nextFiles.length && !seededWorkspaceRef.current) {
           seededWorkspaceRef.current = true;
-          setIsWorkspaceEmpty(true);
-          dispatch(agentActions.setWorkspaceStatus('Workspace is empty'));
+
+          // Attempt to auto-restore from the last saved project snapshot
+          if (!autoLoadAttemptedRef.current && threadId) {
+            autoLoadAttemptedRef.current = true;
+            dispatch(lookupProjectSnapshot({ threadId }))
+              .then((result) => {
+                const fileId = typeof result.payload === 'string' ? result.payload : null;
+                if (fileId) {
+                  const urn = `urn:ads:platform:file-service:v1:/files/${fileId}`;
+                  workspaceInitInProgressRef.current = true;
+                  workspaceReadRetryAttemptsRef.current = 0;
+                  socketRef.current?.emit('workspace-init', {
+                    agent: BUILDER_AGENT_ID,
+                    threadId,
+                    workspaceTarball: urn,
+                  });
+                  dispatch(agentActions.setWorkspaceStatus('Restoring workspace from last saved snapshot'));
+                  scheduleWorkspaceReadRetry();
+                } else {
+                  clearWorkspaceReadRetry();
+                  setIsWorkspaceEmpty(true);
+                  dispatch(agentActions.setWorkspaceStatus('Workspace is empty'));
+                }
+              })
+              .catch(() => {
+                clearWorkspaceReadRetry();
+                setIsWorkspaceEmpty(true);
+                dispatch(agentActions.setWorkspaceStatus('Workspace is empty'));
+              });
+          } else {
+            clearWorkspaceReadRetry();
+            setIsWorkspaceEmpty(true);
+            dispatch(agentActions.setWorkspaceStatus('Workspace is empty'));
+          }
           return;
         }
 
+        clearWorkspaceReadRetry();
+        workspaceReadRetryAttemptsRef.current = 0;
         workspaceInitInProgressRef.current = false;
         setIsWorkspaceEmpty(false);
         previewRouteStateRef.current = readPreviewRouteState(previewFrameRef.current);
@@ -680,26 +696,30 @@ export const BuilderTenant = () => {
       });
 
       socket.on('workspace-updated', ({ revision, writeCount, deleteCount }) => {
+        clearWorkspaceReadRetry();
+        workspaceReadRetryAttemptsRef.current = 0;
         workspaceInitInProgressRef.current = false;
         dispatch(agentActions.setWorkspaceRefreshing(false));
         setIsWorkspaceEmpty(false);
         setWorkspaceRevision(revision);
         dispatch(agentActions.setWorkspaceStatus(`Workspace updated: ${writeCount} writes, ${deleteCount} deletes`));
-        socket?.emit('workspace-read', { agent: BUILDER_AGENT_ID, threadId });
+        requestWorkspaceRead();
       });
 
       socket.on('workspace-ready', ({ revision }) => {
+        clearWorkspaceReadRetry();
+        workspaceReadRetryAttemptsRef.current = 0;
         dispatch(agentActions.setWorkspaceRefreshing(false));
         setIsWorkspaceEmpty(false);
         setWorkspaceRevision(revision);
         dispatch(agentActions.setWorkspaceStatus('Workspace initialized; reading snapshot'));
-        socket?.emit('workspace-read', { agent: BUILDER_AGENT_ID, threadId });
+        requestWorkspaceRead();
       });
 
       socket.on('workspace-change', (change: WorkspaceChangeEvent) => {
         dispatch(agentActions.setWorkspaceRefreshing(false));
         if (change.writes.some(({ content }) => content === undefined)) {
-          socket?.emit('workspace-read', { agent: BUILDER_AGENT_ID, threadId });
+          requestWorkspaceRead();
           return;
         }
 
@@ -729,6 +749,10 @@ export const BuilderTenant = () => {
 
     return () => {
       active = false;
+      if (workspaceReadRetryTimerRef.current !== null) {
+        window.clearTimeout(workspaceReadRetryTimerRef.current);
+        workspaceReadRetryTimerRef.current = null;
+      }
       if (reconnectTimerRef.current !== null) {
         window.clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
@@ -741,23 +765,33 @@ export const BuilderTenant = () => {
     };
   }, [agentServiceUrl, config, configInitialized, dispatch, tenant, tenantName, threadId, user]);
 
-  const handleInitFromTarball = useCallback(() => {
-    const uuid = tarballUrnInput.trim();
-    if (!socketRef.current || !uuid) {
+  const handleInitFromTarball = useCallback(
+    (uuid: string) => {
+      const normalizedUuid = uuid.trim();
+      if (!socketRef.current || !normalizedUuid) {
+        return;
+      }
+
+      const urn = `urn:ads:platform:file-service:v1:/files/${normalizedUuid}`;
+      workspaceInitInProgressRef.current = true;
+      setIsWorkspaceEmpty(false);
+      socketRef.current.emit('workspace-init', {
+        agent: BUILDER_AGENT_ID,
+        threadId,
+        workspaceTarball: urn,
+      });
+      dispatch(agentActions.setWorkspaceStatus('Initializing workspace from tarball'));
+    },
+    [dispatch, threadId],
+  );
+
+  const handleSignOut = useCallback(() => {
+    if (!tenant) {
       return;
     }
 
-    const urn = `urn:ads:platform:file-service:v1:/files/${uuid}`;
-    workspaceInitInProgressRef.current = true;
-    setIsWorkspaceEmpty(false);
-    setShowTarballForm(false);
-    socketRef.current.emit('workspace-init', {
-      agent: BUILDER_AGENT_ID,
-      threadId,
-      workspaceTarball: urn,
-    });
-    dispatch(agentActions.setWorkspaceStatus('Initializing workspace from tarball'));
-  }, [dispatch, tarballUrnInput, threadId]);
+    dispatch(logoutUser({ tenant, from: location.pathname }));
+  }, [dispatch, location.pathname, tenant]);
 
   const handleSendPrompt = (_threadId: string, context: Record<string, unknown>, content: UserContent) => {
     if (!content.length || !socketRef.current) {
@@ -824,25 +858,67 @@ export const BuilderTenant = () => {
     dispatch(agentActions.setWorkspaceStatus(`Downloaded workspace (${snapshot.length} files)`));
   }, [dispatch, files, threadId]);
 
+  const handleSaveWorkspace = useCallback(async () => {
+    if (isWorkspaceSaving || !socketRef.current || !threadId) {
+      return;
+    }
+
+    const socket = socketRef.current;
+    let refreshedFiles: WorkspaceSnapshotFile[];
+    try {
+      refreshedFiles = await new Promise<WorkspaceSnapshotFile[]>((resolve, reject) => {
+        const timeout = window.setTimeout(() => {
+          socket.off('workspace-state', onWorkspaceState);
+          reject(new Error('Timed out waiting for workspace snapshot'));
+        }, 5000);
+
+        const onWorkspaceState = ({ files: nextFiles }: WorkspaceStateEvent) => {
+          window.clearTimeout(timeout);
+          socket.off('workspace-state', onWorkspaceState);
+          resolve(nextFiles ?? []);
+        };
+
+        socket.on('workspace-state', onWorkspaceState);
+        socket.emit('workspace-read', { agent: BUILDER_AGENT_ID, threadId });
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      dispatch(agentActions.setWorkspaceStatus(`Workspace save failed: ${message}`));
+      return;
+    }
+
+    const snapshot = sortWorkspaceFiles(applyWorkspaceSnapshot(refreshedFiles));
+    if (!snapshot.length) {
+      dispatch(agentActions.setWorkspaceStatus('Workspace is empty; nothing to save'));
+      return;
+    }
+
+    dispatch(saveWorkspaceToFileService({ files: snapshot, threadId })).then((result) => {
+      if (saveWorkspaceToFileService.rejected.match(result)) {
+        dispatch(agentActions.setWorkspaceStatus(`Workspace save failed: ${result.error.message ?? 'Unknown error'}`));
+      }
+    });
+  }, [dispatch, isWorkspaceSaving, threadId]);
+
   if (!userInitialized && tenant) {
     return null;
   }
 
   if (!user && tenant) {
     return (
-      <main className={styles.page}>
+      <Page>
         <Band title="Sign in to continue">Sign in to launch the live workspace.</Band>
         <Container vs={3} hs={1}>
           <Grid>
             <GridItem md={1} />
             <GridItem md={10}>
-              <section className={`${styles.panel} ${styles.signInPanel}`}>
-                <div className={styles.emptyState}>
+              <SignInPanel>
+                <EmptyState>
                   <GoabCallout type="information" heading="Builder prototype access">
                     This prototype uses your tenant-scoped token to connect directly to the agent-service Socket.IO
                     endpoint.
                   </GoabCallout>
-                  <p className={styles.panelSubtle}>Tenant: {tenant.name}</p>
+                  <PanelSubtle>Tenant: {tenant.name}</PanelSubtle>
                   <GoabButtonGroup alignment="end">
                     <GoabButton
                       type="primary"
@@ -851,306 +927,51 @@ export const BuilderTenant = () => {
                       Sign in
                     </GoabButton>
                   </GoabButtonGroup>
-                </div>
-              </section>
+                </EmptyState>
+              </SignInPanel>
             </GridItem>
             <GridItem md={1} />
           </Grid>
         </Container>
-      </main>
+      </Page>
     );
   }
 
   const sortedFiles = sortWorkspaceFiles(files);
   const selectedFileContent = files[selectedPath] ?? '';
   return (
-    <main className={styles.page}>
-      <section className={styles.shell}>
-        <section className={styles.primaryPreviewViewport}>
-          <iframe
-            ref={previewFrameRef}
-            className={styles.previewViewportFrame}
-            srcDoc={previewDocument}
-            title="Builder preview"
-          />
-        </section>
-      </section>
-
-      {isEditPaneCollapsed ? (
-        <div className={styles.panelLauncher}>
-          <GoabIconButton
-            icon="chevron-up"
-            variant="dark"
-            size="medium"
-            ariaLabel="Open edit pane"
-            onClick={() => setIsEditPaneCollapsed(false)}
-          />
-        </div>
-      ) : (
-        <section id="builder-edit-pane" className={`${styles.panel} ${styles.floatingPanel}`}>
-          <header className={styles.panelHeader}>
-            <div>
-              <h2 className={styles.panelTitle}>Agent interaction</h2>
-              <p className={styles.panelSubtle}>{activePanelTab === 'chat' ? connectionStatus : workspaceStatus}</p>
-            </div>
-            <div className={styles.panelHeaderActions}>
-              <div className={styles.panelCollapseButton}>
-                <GoabIconButton
-                  icon="chevron-down"
-                  variant="nocolor"
-                  size="medium"
-                  ariaLabel="Hide panel"
-                  onClick={() => setIsEditPaneCollapsed(true)}
-                />
-              </div>
-            </div>
-          </header>
-
-          <div className={styles.tabContainer}>
-            <GoabTabs
-              initialTab={1}
-              onChange={(event: GoabTabsOnChangeDetail) => {
-                if (event.tab === 2) setActivePanelTab('workspace');
-                else if (event.tab === 3) setActivePanelTab('info');
-                else setActivePanelTab('chat');
-              }}
-              data-testid="builder-edit-pane-tabs"
-            >
-              <GoabTab heading="Chat" data-testid="builder-chat-tab" />
-              <GoabTab heading="Workspace" data-testid="builder-workspace-tab" />
-              <GoabTab heading="Session info" data-testid="builder-info-tab" />
-            </GoabTabs>
-
-            <div className={styles.tabContentArea}>
-              {activePanelTab === 'chat' ? (
-                <div className={styles.chatPane}>
-                  <AgentChat
-                    disabled={!threadId || !isSocketConnected}
-                    threadId={threadId}
-                    context={{ tenant: tenant?.name ?? tenantName }}
-                    messages={messages}
-                    onSend={handleSendPrompt}
-                  />
-                </div>
-              ) : activePanelTab === 'info' ? (
-                <div className={styles.infoPaneBody}>
-                  <div>
-                    <p className={styles.panelLabel}>Tenant</p>
-                    <p className={styles.panelValue}>{tenant?.name ?? tenantName ?? 'Unknown'}</p>
-                  </div>
-                  <div>
-                    <p className={styles.panelLabel}>Signed in</p>
-                    <p className={styles.panelValue}>{user?.email ?? 'Not signed in'}</p>
-                  </div>
-                  <div>
-                    <p className={styles.panelLabel}>Thread</p>
-                    <p className={styles.panelValue}>{threadId || 'Pending'}</p>
-                  </div>
-                  <div className={styles.actions}>
-                    {user && tenant ? (
-                      <GoabButton
-                        type="secondary"
-                        size="compact"
-                        onClick={() => dispatch(logoutUser({ tenant, from: location.pathname }))}
-                      >
-                        Sign out
-                      </GoabButton>
-                    ) : null}
-                  </div>
-                </div>
-              ) : (
-                <div className={styles.workspaceTabPane}>
-                  {isWorkspaceEmpty ? (
-                    <div className={styles.emptyWorkspaceState}>
-                      <GoabCallout type="information" heading="Workspace is empty">
-                        Provide a file service URN to initialize the workspace from a starter tarball.
-                      </GoabCallout>
-                      <GoabFormItem label="File ID (UUID)">
-                        <div>
-                          <GoabInput
-                            name="tarball-uuid"
-                            value={tarballUrnInput}
-                            placeholder="e.g., 550e8400-e29b-41d4-a716-446655440000"
-                            onChange={({ value }) => setTarballUrnInput(value)}
-                            width="100%"
-                          />
-                          <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-                            Full URN:{' '}
-                            <code style={{ background: '#f5f5f5', padding: '2px 4px', borderRadius: '2px' }}>
-                              urn:ads:platform:file-service:v1:/files/{tarballUrnInput || '...'}
-                            </code>
-                          </div>
-                        </div>
-                      </GoabFormItem>
-                      <GoabButtonGroup alignment="end">
-                        <GoabButton
-                          type="primary"
-                          size="compact"
-                          disabled={!tarballUrnInput.trim() || !isSocketConnected}
-                          onClick={handleInitFromTarball}
-                        >
-                          Initialize workspace
-                        </GoabButton>
-                      </GoabButtonGroup>
-                    </div>
-                  ) : (
-                    <>
-                      <div className={styles.workspacePaneBody}>
-                        <div className={styles.workspaceTopBar}>
-                          {workspaceView === 'file' ? (
-                            <nav className={styles.workspaceBreadcrumb} aria-label="Workspace file navigation">
-                              <button className={styles.breadcrumbLink} onClick={() => setWorkspaceView('list')}>
-                                Workspace files
-                              </button>
-                              <span className={styles.breadcrumbDivider}>/</span>
-                              <span className={styles.breadcrumbCurrent}>{selectedPath}</span>
-                            </nav>
-                          ) : (
-                            <div className={styles.workspacePaneMeta}>
-                              <p className={styles.panelSubtle}>{sortedFiles.length} synchronized file(s)</p>
-                              <GoabBadge
-                                type="information"
-                                icon={false}
-                                content={
-                                  workspaceRevision !== undefined ? `Revision r${workspaceRevision}` : 'No revision'
-                                }
-                              />
-                            </div>
-                          )}
-                        </div>
-
-                        <div className={styles.workspaceStage}>
-                          <div
-                            className={`${styles.workspaceView} ${
-                              workspaceView === 'list' ? styles.workspaceViewActive : styles.workspaceViewHidden
-                            }`}
-                          >
-                            <ul className={styles.fileList}>
-                              {sortedFiles.map((file) => (
-                                <li key={file.path}>
-                                  <button
-                                    className={`${styles.fileButton} ${selectedPath === file.path ? styles.fileButtonActive : ''} ${
-                                      recentlyUpdatedPaths[file.path] ? styles.fileButtonUpdated : ''
-                                    }`}
-                                    onClick={() => {
-                                      setSelectedPath(file.path);
-                                      setWorkspaceView('file');
-                                    }}
-                                  >
-                                    <span className={styles.filePathRow}>
-                                      <span className={styles.filePath}>{file.path}</span>
-                                      {recentlyUpdatedPaths[file.path] ? (
-                                        <span className={styles.fileUpdateBadge} aria-label="Updated by agent">
-                                          Updated
-                                        </span>
-                                      ) : null}
-                                    </span>
-                                    <span className={styles.fileMeta}>
-                                      {file.content.length.toLocaleString()} chars
-                                    </span>
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          <div
-                            className={`${styles.workspaceView} ${
-                              workspaceView === 'file' ? styles.workspaceViewActive : styles.workspaceViewHidden
-                            }`}
-                          >
-                            <pre className={styles.fileContent}>
-                              <code>{selectedFileContent}</code>
-                            </pre>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className={styles.composer}>
-                        <div className={styles.stack}>
-                          {showTarballForm ? (
-                            <div className={styles.tarballForm}>
-                              <GoabFormItem label="File ID (UUID)">
-                                <div>
-                                  <GoabInput
-                                    name="tarball-uuid"
-                                    value={tarballUrnInput}
-                                    placeholder="e.g., 550e8400-e29b-41d4-a716-446655440000"
-                                    onChange={({ value }) => setTarballUrnInput(value)}
-                                    width="100%"
-                                  />
-                                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-                                    Full URN:{' '}
-                                    <code style={{ background: '#f5f5f5', padding: '2px 4px', borderRadius: '2px' }}>
-                                      urn:ads:platform:file-service:v1:/files/{tarballUrnInput || '...'}
-                                    </code>
-                                  </div>
-                                </div>
-                              </GoabFormItem>
-                              <GoabButtonGroup alignment="end">
-                                <GoabButton type="tertiary" size="compact" onClick={() => setShowTarballForm(false)}>
-                                  Cancel
-                                </GoabButton>
-                                <GoabButton
-                                  type="primary"
-                                  size="compact"
-                                  disabled={!tarballUrnInput.trim() || !isSocketConnected}
-                                  onClick={handleInitFromTarball}
-                                >
-                                  Load workspace
-                                </GoabButton>
-                              </GoabButtonGroup>
-                            </div>
-                          ) : (
-                            <div className={styles.workspaceActionBar}>
-                              <GoabButtonGroup alignment="start">
-                                <GoabIconButton
-                                  icon="download"
-                                  variant="nocolor"
-                                  title="Download workspace"
-                                  ariaLabel="Download workspace"
-                                  size="small"
-                                  onClick={handleDownloadWorkspace}
-                                />
-                                <GoabIconButton
-                                  icon="cloud-upload"
-                                  variant="nocolor"
-                                  title="Set workspace from tarball"
-                                  ariaLabel="Set workspace from tarball"
-                                  size="small"
-                                  onClick={() => setShowTarballForm(true)}
-                                />
-                              </GoabButtonGroup>
-                              <div
-                                className={`${styles.workspaceActionRefresh} ${
-                                  isWorkspaceRefreshing ? styles.workspaceActionRefreshBusy : ''
-                                }`}
-                              >
-                                <span className={styles.workspaceActionRefreshLabel} aria-live="polite">
-                                  {isWorkspaceRefreshing ? 'Refreshing...' : 'Refresh'}
-                                </span>
-                                <GoabIconButton
-                                  icon="reload"
-                                  variant="nocolor"
-                                  title="Refresh workspace"
-                                  ariaLabel="Refresh workspace"
-                                  size="small"
-                                  disabled={isWorkspaceRefreshing || !isSocketConnected}
-                                  onClick={handleRefreshWorkspace}
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-    </main>
+    <Page>
+      <Shell>
+        <PrimaryPreviewViewport>
+          <PreviewViewportFrame ref={previewFrameRef} srcDoc={previewDocument} title="Builder preview" />
+        </PrimaryPreviewViewport>
+      </Shell>
+      <BuilderEditPane
+        threadId={threadId}
+        isSocketConnected={isSocketConnected}
+        connectionStatus={connectionStatus}
+        workspaceStatus={workspaceStatus}
+        tenantLabel={tenant?.name ?? tenantName ?? 'Unknown'}
+        userEmail={user?.email}
+        canSignOut={Boolean(user && tenant)}
+        messages={messages}
+        onSendPrompt={handleSendPrompt}
+        onSignOut={handleSignOut}
+        isWorkspaceEmpty={isWorkspaceEmpty}
+        sortedFiles={sortedFiles}
+        selectedPath={selectedPath}
+        selectedFileContent={selectedFileContent}
+        selectedAssetThumbnail={selectedAssetThumbnail}
+        recentlyUpdatedPaths={recentlyUpdatedPaths}
+        workspaceRevision={workspaceRevision}
+        isWorkspaceRefreshing={isWorkspaceRefreshing}
+        isWorkspaceSaving={isWorkspaceSaving}
+        onSelectPath={setSelectedPath}
+        onInitFromTarball={handleInitFromTarball}
+        onDownloadWorkspace={handleDownloadWorkspace}
+        onSaveWorkspace={handleSaveWorkspace}
+        onRefreshWorkspace={handleRefreshWorkspace}
+      />
+    </Page>
   );
 };

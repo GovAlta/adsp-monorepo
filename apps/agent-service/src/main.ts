@@ -33,7 +33,8 @@ const initializeApp = async (): Promise<Server> => {
 
   app.use(compression());
   app.use(helmet());
-  app.use(express.json({ limit: '1mb' }));
+  // Increased limit to 50mb to support large binary assets in workspace snapshots
+  app.use(express.json({ limit: '50mb' }));
   app.use(cors());
 
   if (environment.TRUSTED_PROXY) {
@@ -89,7 +90,7 @@ const initializeApp = async (): Promise<Server> => {
       additionalExtractors: [fromSocketHandshake],
       serviceConfigurations: [{ serviceId, configuration: CoreAgents }],
     },
-    { logger }
+    { logger },
   );
 
   passport.use('core', coreStrategy);
@@ -112,6 +113,8 @@ const initializeApp = async (): Promise<Server> => {
       credentials: true,
       origin: true,
     },
+    // Support large binary assets in workspace snapshots (> 1MB images encoded as base64)
+    maxHttpBufferSize: 50 * 1024 * 1024, // 50MB
   });
 
   const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) => {
@@ -124,7 +127,7 @@ const initializeApp = async (): Promise<Server> => {
         // Passport JS calls end w/ 401 when all authenticators fail.
         end: () => next(new UnauthorizedError('User not authorized to connect.')),
       } as unknown as express.Response,
-      next
+      next,
     );
   };
 
@@ -145,7 +148,7 @@ const initializeApp = async (): Promise<Server> => {
     metricsHandler,
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   applyAgentMiddleware(app, [defaultIo, io], { logger, directory, tokenProvider, tenantService });

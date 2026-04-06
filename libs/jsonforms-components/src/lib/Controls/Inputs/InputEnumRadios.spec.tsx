@@ -155,4 +155,103 @@ describe('Input Boolean Radio Control', () => {
     fireEvent(radioGroup as Element, new CustomEvent('_change', { detail: { value: 'two' } }));
     expect(handleChange).toHaveBeenCalledWith('options', 'two');
   });
+
+    it('will render oneOf radio buttons', () => {
+      const oneOfSchema = {
+        type: 'object',
+        properties: {
+          options: {
+            type: 'string',
+            oneOf: [
+              { const: 'mild', title: 'Mild' },
+              { const: 'moderate', title: 'Moderate' },
+              { const: 'severe', title: 'Severe' },
+            ],
+          },
+        },
+      };
+
+      const { baseElement } = render(getForm(oneOfSchema, uiSchema));
+      const radio = baseElement.querySelector("goa-radio-group[testId='options-radio-group']");
+
+      expect(radio).toBeInTheDocument();
+      expect(baseElement.querySelector("goa-radio-item[label='Mild']")).toBeInTheDocument();
+      expect(baseElement.querySelector("goa-radio-item[label='Moderate']")).toBeInTheDocument();
+      expect(baseElement.querySelector("goa-radio-item[label='Severe']")).toBeInTheDocument();
+    });
+
+    it('will accept a oneOf radio click', () => {
+      const oneOfSchema = {
+        type: 'object',
+        properties: {
+          options: {
+            type: 'string',
+            oneOf: [
+              { const: 'mild', title: 'Mild' },
+              { const: 'moderate', title: 'Moderate' },
+              { const: 'severe', title: 'Severe' },
+            ],
+          },
+        },
+      };
+
+      const data = { options: 'mild' };
+      const { baseElement } = render(getForm(oneOfSchema, uiSchema, data));
+      const radioGroup = baseElement.querySelector("goa-radio-group[testId='options-radio-group']");
+
+      expect(radioGroup).toBeInTheDocument();
+      expect(radioGroup?.getAttribute('value')).toBe('mild');
+
+      fireEvent(radioGroup as Element, new CustomEvent('_change', { detail: { name: 'bob', value: 'severe' } }));
+      expect(radioGroup?.getAttribute('value')).toBe('severe');
+    });
+
+    it('calls handleChange with oneOf value on direct radio group change', () => {
+      const handleChange = jest.fn();
+      const { baseElement } = render(
+        <RadioGroup
+          data={undefined}
+          id="radio"
+          enabled={true}
+          schema={{
+            oneOf: [
+              { const: 'mild', title: 'Mild' },
+              { const: 'moderate', title: 'Moderate' },
+            ],
+          }}
+          uischema={{ type: 'Control' }}
+          path="options"
+          handleChange={handleChange}
+          options={{}}
+          config={{}}
+          label="Options"
+          isVisited={false}
+          errors={''}
+        />,
+      );
+
+      const radioGroup = baseElement.querySelector("goa-radio-group[testId='options-radio-group']");
+      expect(radioGroup).toBeInTheDocument();
+
+      fireEvent(radioGroup as Element, new CustomEvent('_change', { detail: { value: 'moderate' } }));
+      expect(handleChange).toHaveBeenCalledWith('options', 'moderate');
+    });
+
+    it('returns rank for radio format oneOf controls', () => {
+      const ranked = GoARadioGroupControlTester(
+        { type: 'Control', scope: '#/properties/options', options: { format: 'radio' } } as unknown as UISchemaElement,
+        {
+          type: 'object',
+          properties: {
+            options: {
+              type: 'string',
+              oneOf: [{ const: 'mild', title: 'Mild' }],
+            },
+          },
+        } as unknown as object,
+        undefined as unknown as object,
+      );
+
+      expect(ranked).toBe(20);
+    });
 });

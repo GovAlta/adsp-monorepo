@@ -68,7 +68,6 @@ export const FormDefinitionEditor = (): JSX.Element => {
                   queueTasks={queueTasks}
                   fileTypes={fileTypes}
                   registerData={registerData}
-                  showDataRegister={true}
                 />
               ) : (
                 <FormEditor>

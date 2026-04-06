@@ -1,0 +1,95 @@
+{
+  "id": "simple-stepper",
+  "name": "Simple Stepper with Navigation Buttons",
+  "category": "layout",
+  "summary": "Categorization with `variant: stepper` for a simple form stepper with customizable navigation buttons and step tabs",
+  "whenToUse": [
+    "Moderate-complexity forms where a simple step navigation bar is sufficient",
+    "Internal staff forms where the full Task List pattern is not needed",
+    "When users are experienced and benefit from seeing all steps at once in a tab bar"
+  ],
+  "dataSchema": {
+    "type": "object",
+    "properties": {
+      "firstName": { "type": "string" },
+      "lastName": { "type": "string" },
+      "email": { "type": "string", "format": "email" }
+    }
+  },
+  "uiSchema": {
+    "type": "Categorization",
+    "options": {
+      "variant": "stepper",
+      "showNavButtons": true,
+      "nextButtonLabel": "Continue",
+      "previousButtonLabel": "Go Back"
+    },
+    "elements": [
+      {
+        "type": "Category",
+        "label": "Personal Info",
+        "elements": [
+          { "type": "Control", "scope": "#/properties/firstName" },
+          { "type": "Control", "scope": "#/properties/lastName" }
+        ]
+      },
+      {
+        "type": "Category",
+        "label": "Contact",
+        "elements": [
+          { "type": "Control", "scope": "#/properties/email" }
+        ]
+      }
+    ]
+  },
+  "categorizationOptions": {
+    "description": "All available options on the Categorization element when variant is 'stepper'",
+    "options": [
+      {
+        "name": "variant",
+        "type": "string",
+        "values": ["stepper"],
+        "description": "Set to 'stepper' for a simple stepper with a navigation tab bar at the top"
+      },
+      {
+        "name": "showNavButtons",
+        "type": "boolean",
+        "default": false,
+        "description": "When true, shows Next and Previous navigation buttons below the form content"
+      },
+      {
+        "name": "nextButtonLabel",
+        "type": "string",
+        "default": "Next",
+        "description": "Custom text for the Next button"
+      },
+      {
+        "name": "nextButtonType",
+        "type": "string",
+        "default": "primary",
+        "description": "GoA Design System button type for the Next button (e.g. 'primary', 'secondary', 'tertiary')"
+      },
+      {
+        "name": "previousButtonLabel",
+        "type": "string",
+        "default": "Previous",
+        "description": "Custom text for the Previous button"
+      },
+      {
+        "name": "previousButtonType",
+        "type": "string",
+        "default": "secondary",
+        "description": "GoA Design System button type for the Previous button"
+      }
+    ]
+  },
+  "notes": [
+    "The simple stepper shows all step labels in a navigation bar at the top — users can click any step",
+    "Set `showNavButtons: true` to add Next/Previous buttons for linear navigation",
+    "Customize button labels with `nextButtonLabel` and `previousButtonLabel`",
+    "Customize button styling with `nextButtonType` and `previousButtonType` (GoA Design System button types)",
+    "The simple stepper does NOT have a Task List or section groupings — use `variant: \"pages\"` for that",
+    "A Summary page is automatically appended for applicant review",
+    "For most government citizen-facing forms, the page stepper (variant: pages) is preferred"
+  ]
+}

@@ -362,6 +362,36 @@ describe('ManagedWorkspace', () => {
     expect(file).toEqual({ path: 'src/app.ts', content: 'export const x = 1;' });
   });
 
+  it('reads binary files as base64 data URLs', async () => {
+    const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff]);
+    const readFile = jest.fn().mockResolvedValue(pngBytes);
+    const workspace = new ManagedWorkspace({ readFile } as never);
+
+    const file = await workspace.readFile('src/logo.png');
+
+    expect(readFile).toHaveBeenCalledWith('src/logo.png');
+    expect(file).toEqual({
+      path: 'src/logo.png',
+      content: `data:image/png;base64,${pngBytes.toString('base64')}`,
+    });
+  });
+
+  it('decodes base64 data URLs for binary update writes', async () => {
+    const readFile = jest
+      .fn()
+      .mockResolvedValueOnce(JSON.stringify({ revision: 1, updatedAt: '2026-03-24T00:00:00.000Z' }));
+    const writeFile = jest.fn().mockResolvedValue(undefined);
+    const mkdir = jest.fn().mockResolvedValue(undefined);
+    const workspace = new ManagedWorkspace({ readFile, writeFile, mkdir } as never);
+
+    const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff]);
+    const dataUrl = `data:image/png;base64,${pngBytes.toString('base64')}`;
+
+    await workspace.applyUpdate({ writes: [{ path: 'src/logo.png', content: dataUrl }], deletes: [] });
+
+    expect(writeFile).toHaveBeenCalledWith('src/logo.png', pngBytes, { recursive: true });
+  });
+
   it('returns snapshot files and excludes reserved metadata content', async () => {
     const readdir = jest
       .fn()
@@ -394,6 +424,36 @@ describe('ManagedWorkspace', () => {
     expect(snapshot.files).toEqual([
       { path: 'README.md', content: '# Demo' },
       { path: 'src/app.ts', content: 'export default {}' },
+    ]);
+  });
+
+  it('returns binary files as base64 data URLs in snapshots', async () => {
+    const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff]);
+    const readdir = jest
+      .fn()
+      .mockResolvedValueOnce([
+        { name: '.agent', type: 'directory' },
+        { name: 'src', type: 'directory' },
+      ])
+      .mockResolvedValueOnce([{ name: 'logo.png', type: 'file' }]);
+    const readFile = jest.fn(async (path: string) => {
+      if (path === '.agent/revision.json') {
+        return JSON.stringify({ revision: 2, updatedAt: '2026-03-24T00:00:00.000Z' });
+      }
+
+      if (path === 'src/logo.png') {
+        return pngBytes;
+      }
+
+      throw new Error(`Unexpected read: ${path}`);
+    });
+
+    const workspace = new ManagedWorkspace({ readdir, readFile } as never);
+    const snapshot = await workspace.readSnapshot();
+
+    expect(snapshot.revision.revision).toBe(2);
+    expect(snapshot.files).toEqual([
+      { path: 'src/logo.png', content: `data:image/png;base64,${pngBytes.toString('base64')}` },
     ]);
   });
 });
