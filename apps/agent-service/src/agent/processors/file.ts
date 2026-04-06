@@ -11,17 +11,13 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
   readonly name = 'file-service-download-processor';
   private fileServiceClient: ReturnType<typeof createFileServiceClient>;
 
-  constructor(
-    private logger: Logger,
-    directory: ServiceDirectory,
-    tokenProvider: TokenProvider,
-  ) {
+  constructor(private logger: Logger, directory: ServiceDirectory, tokenProvider: TokenProvider) {
     this.fileServiceClient = createFileServiceClient({ logger, directory, tokenProvider });
   }
 
   async processInput(
     requestContext: RequestContext<Record<string, unknown>>,
-    input: CoreUserMessage | CoreUserMessage[],
+    input: CoreUserMessage | CoreUserMessage[]
   ): Promise<CoreUserMessage | CoreUserMessage[]> {
     const tenantId = requestContext.get<'tenantId', AdspId>('tenantId');
 
@@ -51,10 +47,7 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
     return input;
   }
 
-  private async processContentData(
-    tenantId: AdspId,
-    content: Partial<FilePart> | ImagePart,
-  ): Promise<Array<TextPart | FilePart | ImagePart>> {
+  private async processContentData(tenantId: AdspId, content: Partial<FilePart> | ImagePart): Promise<Array<TextPart | FilePart | ImagePart>> {
     const data = content.type === 'file' ? content.data : content.image;
     if (typeof data === 'string' && AdspId.isAdspId(data)) {
       const resourceId = AdspId.parse(data);
