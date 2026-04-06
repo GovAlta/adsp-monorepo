@@ -1,5 +1,5 @@
 import React from 'react';
-import { isBooleanControl, RankedTester, rankWith, ControlProps, optionIs, and } from '@jsonforms/core';
+import { isBooleanControl, RankedTester, rankWith, ControlProps, optionIs, and, or } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoabRadioGroup, GoabRadioItem } from '@abgov/react-components';
 import { GoAInputBaseControl } from './InputBaseControl';
@@ -59,5 +59,8 @@ export const BooleanRadioControl = (props: ControlProps) => (
   <GoAInputBaseControl {...{ ...props }} input={BooleanRadioComponent} />
 );
 
-export const GoABooleanRadioControlTester: RankedTester = rankWith(3, and(isBooleanControl, optionIs('radio', true)));
+export const GoABooleanRadioControlTester: RankedTester = rankWith(
+  3,
+  and(isBooleanControl, or(optionIs('format', 'radio'), optionIs('radio', true))),
+);
 export const GoABooleanRadioControl = withJsonFormsControlProps(BooleanRadioControl);
