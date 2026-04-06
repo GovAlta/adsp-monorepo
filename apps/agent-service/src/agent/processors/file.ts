@@ -5,23 +5,18 @@ import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
 import { BrokerInputProcessor } from '../types';
 import { createFileServiceClient } from '../clients';
-import { isWordDocument, transferWordDocumentToTextFile } from './transfers/wordDocument';
 
 export class FileServiceDownloadProcessor implements BrokerInputProcessor {
   readonly name = 'file-service-download-processor';
   private fileServiceClient: ReturnType<typeof createFileServiceClient>;
 
-  constructor(
-    private logger: Logger,
-    directory: ServiceDirectory,
-    tokenProvider: TokenProvider,
-  ) {
+  constructor(private logger: Logger, directory: ServiceDirectory, tokenProvider: TokenProvider) {
     this.fileServiceClient = createFileServiceClient({ logger, directory, tokenProvider });
   }
 
   async processInput(
     requestContext: RequestContext<Record<string, unknown>>,
-    input: CoreUserMessage | CoreUserMessage[],
+    input: CoreUserMessage | CoreUserMessage[]
   ): Promise<CoreUserMessage | CoreUserMessage[]> {
     const tenantId = requestContext.get<'tenantId', AdspId>('tenantId');
 
@@ -51,29 +46,16 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
     return input;
   }
 
-  private async processContentData(
-    tenantId: AdspId,
-    content: Partial<FilePart> | ImagePart,
-  ): Promise<Array<TextPart | FilePart | ImagePart>> {
+  private async processContentData(tenantId: AdspId, content: Partial<FilePart> | ImagePart): Promise<Array<TextPart | FilePart | ImagePart>> {
     const data = content.type === 'file' ? content.data : content.image;
     if (typeof data === 'string' && AdspId.isAdspId(data)) {
       const resourceId = AdspId.parse(data);
       if (resourceId.type === 'resource' && resourceId.service === 'file-service') {
         const { mediaType, url, urn, filename } = await this.getFile(tenantId, resourceId);
-
-        if (content.type === 'file' && isWordDocument(mediaType, filename)) {
-          const textFile = await transferWordDocumentToTextFile(this.logger, url, filename);
-          if (textFile) {
-            return [textFile];
-          }
-        }
-
-        return [
-          content.type === 'file'
-            ? { type: 'file', data: url, mediaType, filename }
-            : { type: 'image', image: url, mediaType },
-          { type: 'text', text: `Provided file or image has filename '${filename}' and file service URN of: ${urn}` },
-        ];
+        return [content.type === 'file'
+          ? { type: 'file', data: url, mediaType, filename }
+          : { type: 'image', image: url, mediaType },
+        { type: 'text', text: `Provided file or image has filename '${filename}' and file service URN of: ${urn}` }];
       }
     }
     return;
