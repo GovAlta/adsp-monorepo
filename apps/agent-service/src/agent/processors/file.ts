@@ -3,13 +3,9 @@ import { convertUint8ArrayToBase64, FilePart, ImagePart, TextPart } from '@ai-sd
 import type { CoreUserMessage } from '@mastra/core/llm';
 import type { RequestContext } from '@mastra/core/request-context';
 import { Logger } from 'winston';
-import * as fs from 'fs';
-import * as path from 'path';
 import { BrokerInputProcessor } from '../types';
 import { createFileServiceClient } from '../clients';
 import { extractDocumentText, isExtractableDocument } from '../utils/documentParser';
-
-const EXTRACTED_DIR = path.resolve('apps/agent-service/src/agent/processors/extracted');
 
 export class FileServiceDownloadProcessor implements BrokerInputProcessor {
   readonly name = 'file-service-download-processor';
@@ -69,24 +65,12 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
         // Most LLMs don't support binary document file parts (e.g. application/pdf),
         // so we replace the file part with extracted text content.
         const isExtractable = isExtractableDocument(mediaType, filename);
-        this.writeDebug(
-          filename,
-          `[processor] File: ${filename}, MIME: ${mediaType}, isExtractable: ${isExtractable}, dataLen: ${rawData.length}`,
-        );
 
         if (isExtractable) {
           try {
-            this.writeDebug(filename, `[processor] Calling extractDocumentText...`);
             const extracted = await extractDocumentText(rawData, mediaType, filename, this.logger);
-            this.writeDebug(
-              filename,
-              `[processor] extractDocumentText returned: text.length=${extracted?.text?.length || 0}, xfaForm=${extracted?.xfaForm}, pageCount=${extracted?.pageCount}`,
-            );
 
             if (extracted?.text) {
-              // Write extracted text to file for debugging
-              this.writeExtractedText(filename, extracted.text);
-
               const prefix = extracted.xfaForm
                 ? `Provided document '${filename}' (file service URN: ${urn}) is an XFA-based PDF form (created with Adobe LiveCycle Designer). The form structure was extracted from the embedded XML:`
                 : `Provided document has filename '${filename}' and file service URN of: ${urn}`;
@@ -99,7 +83,6 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
 
             // XFA form detected but no content could be extracted
             if (extracted?.xfaForm) {
-              this.writeDebug(filename, `[processor] XFA detected but no text extracted, returning fallback message`);
               return [
                 {
                   type: 'text',
@@ -107,13 +90,7 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
                 },
               ];
             }
-
-            this.writeDebug(
-              filename,
-              `[processor] extraction returned null or non-XFA with empty text, falling through to binary`,
-            );
           } catch (err) {
-            this.writeDebug(filename, `[processor] EXCEPTION in extractDocumentText: ${err.message}\n${err.stack}`);
             this.logger.warn(`Failed to extract text from document '${filename}': ${err.message}`, {
               context: 'FileServiceDownloadProcessor',
               tenant: tenantId?.toString(),
@@ -150,34 +127,5 @@ export class FileServiceDownloadProcessor implements BrokerInputProcessor {
       filename: metadata.filename,
       urn: metadata.urn,
     };
-  }
-
-  private writeExtractedText(originalFilename: string, text: string): void {
-    try {
-      fs.mkdirSync(EXTRACTED_DIR, { recursive: true });
-      const baseName = path.parse(originalFilename).name;
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const outputPath = path.join(EXTRACTED_DIR, `${baseName}_${timestamp}.txt`);
-      fs.writeFileSync(outputPath, text, 'utf-8');
-      this.logger.info(`Extracted text written to: ${outputPath}`, {
-        context: 'FileServiceDownloadProcessor',
-      });
-    } catch (err) {
-      this.logger.warn(`Failed to write extracted text for '${originalFilename}': ${err.message}`, {
-        context: 'FileServiceDownloadProcessor',
-      });
-    }
-  }
-
-  private writeDebug(originalFilename: string, message: string): void {
-    try {
-      fs.mkdirSync(EXTRACTED_DIR, { recursive: true });
-      const baseName = path.parse(originalFilename || 'unknown').name;
-      const debugPath = path.join(EXTRACTED_DIR, `${baseName}_processor-debug.log`);
-      const line = `[${new Date().toISOString()}] ${message}\n`;
-      fs.appendFileSync(debugPath, line, 'utf-8');
-    } catch {
-      // ignore debug write errors
-    }
   }
 }
