@@ -164,8 +164,6 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
           Add {prettyLabel}
         </GoabButton>
       </div>
-      <pre>{JSON.stringify(schema.items, null, 2)}</pre>
-      <pre>{JSON.stringify(itemUiSchema, null, 2)}</pre>
       {items.length === 0 && <p style={{ opacity: 0.7 }}>No {arrayLabel.toLowerCase()} added</p>}
       {items.map((item, index) => (
         <div key={index} style={{ display: 'flex', gap: 8 }}>
