@@ -1,5 +1,15 @@
 import React from 'react';
-import { ControlProps, isEnumControl, OwnPropsOfEnum, RankedTester, rankWith, optionIs, and } from '@jsonforms/core';
+import {
+  ControlProps,
+  isEnumControl,
+  OwnPropsOfEnum,
+  RankedTester,
+  rankWith,
+  optionIs,
+  and,
+  isOneOfEnumControl,
+  or,
+} from '@jsonforms/core';
 import { TranslateProps, withJsonFormsEnumProps, withTranslateProps } from '@jsonforms/react';
 
 import { WithInputProps } from './type';
@@ -13,7 +23,18 @@ type RadioGroupProp = EnumCellProps & WithClassname & TranslateProps & WithInput
 
 export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
   const { data, id, enabled, schema, uischema, path, handleChange, options, config, label, isVisited, errors } = props;
-  const enumData = schema?.enum || [];
+  const oneOF = schema?.oneOf || [];
+  const items =
+    oneOF?.length > 0
+      ? oneOF.map((item) => ({
+          value: String(item.const),
+          label: item.title ?? String(item.const),
+        }))
+      : (schema?.enum || []).map((value) => ({
+          value: String(value),
+          label: String(value),
+        }));
+
   const appliedUiSchemaOptions = merge({}, config, props.uischema.options, options);
   return (
     <GoabRadioGroup
@@ -26,17 +47,14 @@ export const RadioGroup = (props: RadioGroupProp): JSX.Element => {
       onChange={(detail: GoabRadioGroupOnChangeDetail) => handleChange(path, detail.value)}
       {...uischema?.options?.componentProps}
     >
-      {enumData.map((enumValue, index) => {
-        return (
-          <GoabRadioItem
-            key={`list-item-${enumValue}-${index}`}
-            name={enumValue}
-            value={`${enumValue}`}
-            {...appliedUiSchemaOptions}
-            label={enumValue}
-          />
-        );
-      })}
+      {items.map((item, index) => (
+        <GoabRadioItem
+          key={`list-item-${item.value}-${index}`}
+          name={item.value}
+          value={item.value}
+          label={item.label}
+        />
+      ))}
     </GoabRadioGroup>
   );
 };
@@ -46,4 +64,8 @@ export const EnumRadioControl = (props: ControlProps & OwnPropsOfEnum & WithOpti
 };
 
 export const GoAEnumRadioGroupControl = withJsonFormsEnumProps(withTranslateProps(EnumRadioControl), true);
-export const GoARadioGroupControlTester: RankedTester = rankWith(20, and(isEnumControl, optionIs('format', 'radio')));
+
+export const GoARadioGroupControlTester: RankedTester = rankWith(
+  20,
+  and(or(isEnumControl, isOneOfEnumControl), optionIs('format', 'radio')),
+);
