@@ -18,6 +18,7 @@ import {
   UPDATE_LATEST_REVISION_SUCCESS_ACTION,
   FETCH_REGISTER_DATA_ACTION,
   FETCH_REGISTER_DATA_SUCCESS_ACTION,
+  UPDATE_REGISTERS_LOCAL_ACTION,
   CLOSE_TEMPLATE_ACTION,
   CONNECT_CONFIGURATION_UPDATES_ACTION,
   DISCONNECT_CONFIGURATION_UPDATES_ACTION,
@@ -226,6 +227,11 @@ export default function (
         dataList: action.dataList,
       };
     }
+    case UPDATE_REGISTERS_LOCAL_ACTION:
+      return {
+        ...state,
+        registers: action.payload,
+      };
     case CONNECT_CONFIGURATION_UPDATES_ACTION:
       return {
         ...state,
