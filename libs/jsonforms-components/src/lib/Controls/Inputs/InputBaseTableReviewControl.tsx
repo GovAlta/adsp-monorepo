@@ -167,6 +167,13 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
     }
   }
 
+  if (!activeError && typeof errors === 'string' && errors.trim() !== '') {
+    activeError = errors;
+  }
+  if (activeError && /\sis required$/i.test(activeError)) {
+    activeError = `${labelToUpdate} is required`;
+  }
+
   if (required && isNilOrEmptyValue(data, true) && !activeError) {
     activeError = `${labelToUpdate} is required`;
   }
