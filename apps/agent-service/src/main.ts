@@ -20,6 +20,10 @@ import {
   configurationSchema,
   CoreAgents,
   ServiceRoles,
+  ThreadCreatedDefinition,
+  ThreadDeletedDefinition,
+  WorkspaceCreatedDefinition,
+  WorkspaceCreationFailedDefinition,
 } from './agent';
 import { assertWorkspaceEnvironment } from './agent/workspace';
 import { fromSocketHandshake, REQ_SOCKET_PROP } from './socket';
@@ -56,6 +60,7 @@ const initializeApp = async (): Promise<Server> => {
     tenantHandler,
     healthCheck,
     traceHandler,
+    eventService,
   } = await initializePlatform(
     {
       serviceId,
@@ -76,7 +81,12 @@ const initializeApp = async (): Promise<Server> => {
             'Agent tool role assigned to agent service service account. Used to grant resource access to agent tools.',
         },
       ],
-      events: [],
+      events: [
+        WorkspaceCreatedDefinition,
+        WorkspaceCreationFailedDefinition,
+        ThreadCreatedDefinition,
+        ThreadDeletedDefinition,
+      ],
       fileTypes: [AgentAttachmentsFileType],
       values: [ServiceMetricsValueDefinition],
       configuration: {
@@ -86,7 +96,7 @@ const initializeApp = async (): Promise<Server> => {
       useLongConfigurationCacheTTL: true,
       enableConfigurationInvalidation: true,
       combineConfiguration: (tenant: AgentConfigurations, core: AgentConfigurations, tenantId) =>
-        new AgentServiceConfiguration(logger, directory, tokenProvider, tenantId, tenant, core),
+        new AgentServiceConfiguration(logger, directory, tokenProvider, eventService, tenantId, tenant, core),
       additionalExtractors: [fromSocketHandshake],
       serviceConfigurations: [{ serviceId, configuration: CoreAgents }],
     },

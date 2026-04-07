@@ -1,4 +1,4 @@
-import { isAllowedUser, UnauthorizedUserError, AdspId, type User } from '@abgov/adsp-service-sdk';
+import { isAllowedUser, UnauthorizedUserError, AdspId, type User, EventService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import type { Agent, AgentExecutionOptions, ToolsInput } from '@mastra/core/agent';
 import type { CoreUserMessage } from '@mastra/core/llm';
@@ -8,6 +8,7 @@ import { environment } from '../../environments/environment';
 import type { IFileServiceClient } from '../clients';
 import { AgentConfiguration } from '../configuration';
 import { BrokerInputProcessor } from '../types';
+import { threadCreated, workspaceCreated, workspaceCreationFailed } from '../events';
 import {
   ManagedWorkspace,
   WorkspaceChangeProjector,
@@ -63,6 +64,8 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
     private agent: AgentWithOptionalMemory<TAgentId, TTools>,
     { userRoles }: Partial<AgentConfiguration>,
     private fileServiceClient?: IFileServiceClient,
+    private eventService?: EventService,
+    private agentId?: string,
   ) {
     this.userRoles = userRoles || [];
   }
@@ -149,6 +152,21 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
           resourceId: user.id,
           metadata: { expiresAt, tenantId },
         });
+
+        // Signal thread-created event for new threads
+        try {
+          if (this.eventService) {
+            const event = threadCreated(this.tenantId, threadId, this.agentId || '', user);
+            this.eventService.send(event);
+          }
+        } catch (err) {
+          this.logger.warn(`Failed to signal thread-created event for thread ${threadId}.`, {
+            context: 'AgentBroker',
+            tenant: this.tenantId?.toString(),
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+
         return;
       }
 
@@ -190,19 +208,64 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
       throw new InvalidOperationError('File service client is required to initialize workspace.');
     }
 
-    const workspace = await this.getManagedWorkspace(user, threadId);
+    let sourceFilename = tarballUrn;
 
-    const tarballId = AdspId.parse(tarballUrn);
-    const { stream, metadata } = await this.fileServiceClient.getFileStream(this.tenantId, tarballId);
-    const compressed = isCompressedTarball(metadata?.filename, metadata?.mimeType);
-    const revision = await workspace.initializeFromTarball(stream, compressed);
+    try {
+      const workspace = await this.getManagedWorkspace(user, threadId);
 
-    this.logger.info(`Workspace initialized for thread ${threadId} from tarball ${tarballUrn}.`, {
-      context: 'AgentBroker',
-      tenant: this.tenantId?.toString(),
-    });
+      const tarballId = AdspId.parse(tarballUrn);
+      const { stream, metadata } = await this.fileServiceClient.getFileStream(this.tenantId, tarballId);
+      sourceFilename = metadata?.filename ?? tarballUrn;
+      const compressed = isCompressedTarball(metadata?.filename, metadata?.mimeType);
+      const revision = await workspace.initializeFromTarball(stream, compressed);
 
-    return revision;
+      this.logger.info(`Workspace initialized for thread ${threadId} from tarball ${tarballUrn}.`, {
+        context: 'AgentBroker',
+        tenant: this.tenantId?.toString(),
+      });
+
+      if (this.eventService) {
+        const sourceFile: { filename: string; uploadedAt: Date; size?: number } = {
+          filename: sourceFilename,
+          uploadedAt: new Date(),
+        };
+        if (isRecordWithNumericSize(metadata)) {
+          sourceFile.size = metadata.size;
+        }
+        this.eventService.send(
+          workspaceCreated(this.tenantId, threadId, this.agentId || '', tarballUrn, user, sourceFile),
+        );
+      }
+
+      return revision;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+
+      if (this.eventService) {
+        try {
+          this.eventService.send(
+            workspaceCreationFailed(
+              this.tenantId,
+              threadId,
+              this.agentId || '',
+              tarballUrn,
+              user,
+              sourceFilename,
+              error.name,
+              error.message,
+            ),
+          );
+        } catch (eventErr) {
+          this.logger.warn(`Failed to signal workspace-creation-failed event for thread ${threadId}.`, {
+            context: 'AgentBroker',
+            tenant: this.tenantId?.toString(),
+            error: eventErr instanceof Error ? eventErr.message : String(eventErr),
+          });
+        }
+      }
+
+      throw err;
+    }
   }
 
   public async updateWorkspace(
@@ -264,6 +327,10 @@ export class AgentBroker<TAgentId extends string = string, TTools extends ToolsI
 
     return this.agent.generate(input, this.getExecutionOptions(requestContext, user, threadId));
   }
+}
+
+function isRecordWithNumericSize(value: unknown): value is { size: number } {
+  return typeof value === 'object' && value !== null && 'size' in value && typeof value.size === 'number';
 }
 
 function isCompressedTarball(filename?: string, mimeType?: string): boolean {
