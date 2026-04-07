@@ -1,4 +1,4 @@
-import { AdspId } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService } from '@abgov/adsp-service-sdk';
 import * as schedule from 'node-schedule';
 import { Memory } from '@mastra/memory';
 import { Logger } from 'winston';
@@ -11,20 +11,21 @@ interface AgentJobProps {
   tenantId: AdspId;
   memory: Memory;
   clearWorkspace: (tenantId: string, userId: string, threadId: string) => Promise<void>;
+  eventService?: EventService;
 }
 
 function getJobName(tenantId: AdspId): string {
   return `agent-thread-cleanup-${encodeURIComponent(tenantId.toString())}`;
 }
 
-export function scheduleAgentJobs({ logger, tenantId, memory, clearWorkspace }: AgentJobProps): void {
+export function scheduleAgentJobs({ logger, tenantId, memory, clearWorkspace, eventService }: AgentJobProps): void {
   const jobName = getJobName(tenantId);
   const existing = schedule.scheduledJobs[jobName];
   if (existing) {
     existing.cancel();
   }
 
-  const cleanupJob = createThreadCleanupJob({ logger, tenantId, memory, clearWorkspace });
+  const cleanupJob = createThreadCleanupJob({ logger, tenantId, memory, clearWorkspace, eventService });
   schedule.scheduleJob(jobName, THREAD_CLEANUP_CRON, cleanupJob);
 
   logger.info(`Scheduled thread cleanup job (${THREAD_CLEANUP_CRON}).`, {
