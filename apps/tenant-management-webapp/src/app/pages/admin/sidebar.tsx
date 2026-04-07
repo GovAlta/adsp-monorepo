@@ -14,6 +14,10 @@ interface SidebarProps {
   type: 'mobile' | 'desktop';
 }
 
+export const alphaBadge = () => {
+  return <AlphaBadgeStyle>Alpha</AlphaBadgeStyle>;
+};
+
 const Sidebar = ({ type }: SidebarProps) => {
   const tenantAdminRole = 'tenant-admin';
   const dispatch = useDispatch();
@@ -89,6 +93,7 @@ const Sidebar = ({ type }: SidebarProps) => {
                   >
                     <span>{service.name}</span>
                     {service.beta && betaBadge()}
+                    {service.alpha && alphaBadge()}
                   </NavLink>
                 ))}
             </>
@@ -103,6 +108,15 @@ export default Sidebar;
 
 const BetaBadgeStyle = styled.span`
   height: 20px;
+`;
+const AlphaBadgeStyle = styled.span`
+  height: 20px;
+  background-color: var(--goa-microsite-header-alpha-badge-color);
+  color: black;
+  font-size: var(--goa-font-size-1);
+  line-height: 1.5;
+  margin-left: 0.5rem;
+  padding: 0 4px 0 4px !important;
 `;
 const Links = styled.div`
   a {

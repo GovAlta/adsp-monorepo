@@ -4,7 +4,7 @@ import { GoAInputBaseControl } from './InputBaseControl';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoabIcon } from '@abgov/react-components';
 import { RequiredTextLabel, WarningIconDiv } from './style-component';
-import { getLastSegmentFromPointer, to12HourFormat, UTCToFullLocalTime } from '../../util';
+import { getControlLabelText, to12HourFormat, UTCToFullLocalTime } from '../../util';
 
 export type WithBaseInputReviewProps = CellProps & WithClassname & WithInputProps & StatePropsOfControl;
 
@@ -49,6 +49,8 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
 
   const requiredText = getRequiredLabelText();
 
+  const getFallbackCheckboxLabel = () => getControlLabelText(props as ControlProps);
+
   const renderWarningMessage = () => {
     if (uischema.options?.radio) return null;
 
@@ -60,14 +62,7 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
   };
 
   if (isBoolean) {
-    let checkboxLabel = '';
-
-    if (uischema.options?.text?.trim()) {
-      checkboxLabel = uischema.options.text.trim();
-    } else if (uischema.scope && uischema.scope.startsWith('#/')) {
-      const fallbackLabel = getLastSegmentFromPointer(uischema.scope);
-      checkboxLabel = fallbackLabel.charAt(0).toUpperCase() + fallbackLabel.slice(1);
-    }
+    const checkboxLabel = getFallbackCheckboxLabel();
 
     if (uischema.options?.radio === true) {
       reviewText = data ? `Yes` : `No`;
@@ -88,16 +83,7 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
     reviewText = (
       <ul>
         {data.map((checkbox: string, index: number) => {
-          let checkboxLabel = '';
-
-          // Use explicit text if provided, otherwise fall back to property name from scope
-          if (uischema?.options?.text?.trim()) {
-            checkboxLabel = uischema.options.text.trim();
-          } else if (uischema.scope && uischema.scope.startsWith('#/')) {
-            const fallbackLabel = getLastSegmentFromPointer(uischema.scope);
-            // Capitalize first letter only when falling back to property name from scope
-            checkboxLabel = fallbackLabel.charAt(0).toUpperCase() + fallbackLabel.slice(1);
-          }
+          const checkboxLabel = getFallbackCheckboxLabel();
 
           return <li key={index}>{checkbox.trim() || checkboxLabel}</li>;
         })}

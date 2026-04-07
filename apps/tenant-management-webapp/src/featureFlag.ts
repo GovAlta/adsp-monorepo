@@ -103,6 +103,14 @@ const completeServiceVariables = [
     beta: false,
   },
   {
+    name: 'SharePoint',
+    link: 'services/sharepoint',
+    description:
+      'The SharePoint service allows developers to connect to a SharePoint List, so that they can read, create, and update its data.',
+    beta: false,
+    alpha: true,
+  },
+  {
     name: 'Task',
     link: 'services/task',
     description:
@@ -132,6 +140,7 @@ export const defaultFeaturesVisible = {
   PDF: true,
   Script: true,
   Status: true,
+  SharePoint: true,
   Task: false,
   Value: true,
   Cache: true,

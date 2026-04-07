@@ -18,17 +18,17 @@ jobs:
     environment:
       name: ${{ github.event.inputs.ENVIRONMENT }}-e2e
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - name: E2E Test
         env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
+          NODE_OPTIONS: '--max_old_space_size=4096'
         uses: ./.github/actions/nx-cypress-e2e
         with:
           app: ${{ github.event.inputs.APP }}

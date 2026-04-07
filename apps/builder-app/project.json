@@ -7,6 +7,7 @@
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
+      "dependsOn": ["build-react-template-vendors"],
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
@@ -18,6 +19,11 @@
         "assets": [
           "apps/builder-app/src/favicon.ico",
           "apps/builder-app/src/assets",
+          {
+            "glob": "**/*",
+            "input": "apps/builder-app/.generated/template-bundles",
+            "output": "assets/template-bundles"
+          },
           {
             "glob": "silent-check-sso.html",
             "input": "apps/builder-app/src/",
@@ -94,6 +100,17 @@
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "apps/builder-app/jest.config.ts"
+      }
+    },
+    "build-react-template-vendors": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/.generated/template-bundles/react"],
+      "options": {
+        "commands": [
+          "npm ci --prefix apps/builder-app/templates/react",
+          "node apps/builder-app/scripts/build-template-react-vendors.js"
+        ],
+        "parallel": false
       }
     }
   }

@@ -1,5 +1,5 @@
-name: "NX cypress e2e run"
-description: "Executes nx e2e for target project."
+name: 'NX cypress e2e run'
+description: 'Executes nx e2e for target project.'
 inputs:
   app:
     description: APP to run against.
@@ -29,13 +29,13 @@ inputs:
     description: Test user 3 password.
     required: true
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
-    - uses: actions/setup-dotnet@v4
+    - uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '9'
     - name: E2E Test
-      uses: cypress-io/github-action@v6
+      uses: cypress-io/github-action@v7
       env:
         CYPRESS_TAGS: ${{ inputs.tags }}
         cypress_coreApiClientSecret: ${{ inputs.core-api-client-secret }}
@@ -49,7 +49,7 @@ runs:
         command: npx nx e2e ${{ inputs.app }}-e2e --dev-server-target='' --browser chrome --headed --cypress-config="apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.config.js"
     - if: ${{ always() }}
       name: Upload Cypress Results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ inputs.app }}-${{ inputs.environment }}-cypress-reports
         path: dist/cypress/apps/${{ inputs.app }}-e2e/
