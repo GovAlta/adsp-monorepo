@@ -24,6 +24,7 @@ import { CommentRouter } from './services/comment';
 import { FormRouter } from './services/form';
 import { FileRouter } from './services/file';
 import { ValueRouter } from './services/value';
+import { SharePoint } from './services/sharePoint';
 import { CacheRouter } from './services/cache';
 import { AgentRouter } from './services/agent';
 import { serviceVariables } from '../../../featureFlag';
@@ -74,6 +75,8 @@ const TenantManagement = (): JSX.Element => {
         return <ScriptRouter />;
       case 'Status':
         return <Status />;
+      case 'SharePoint':
+        return <SharePoint />;
       case 'Task':
         return <TaskRouter />;
       case 'Feedback':

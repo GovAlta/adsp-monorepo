@@ -10,6 +10,7 @@ import { DashboardAside, DashboardDiv, HeadingDiv, ListWrapper, DashboardMinWidt
 import SupportLinks from '@components/SupportLinks';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import { serviceVariables } from '../../../../featureFlag';
+import { alphaBadge } from '../sidebar';
 
 import { FetchTenant } from '@store/tenant/actions';
 
@@ -77,6 +78,7 @@ const Dashboard = (): JSX.Element => {
                             {services[index].beta && (
                               <img src={BetaBadge} alt={`${services[index].name} Service`} width={39} height={23} />
                             )}
+                            {services[index].alpha && <div>{alphaBadge()}</div>}
                           </HeadingDiv>
                           <div>{services[index].description}</div>
                         </div>
