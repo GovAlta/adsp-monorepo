@@ -510,6 +510,7 @@ All available options on Category elements within a pages-variant Categorization
 - Set \`hideProgress: true\` to hide completion indicators on the Task List
 - Use \`additionalInstructions\` to display guidance text on the Task List page
 - Set \`showInTaskList: false\` on a Category to hide it from the Task List — useful for sub-steps that should be part of a parent task's flow
+- CRITICAL: Category elements can ONLY be direct first-level children of the Categorization \`elements\` array. Do NOT wrap Categories in VerticalLayout, Group, or any other layout — only Category is valid at the first level inside a Categorization
 
 ## Simple Vertical Layout
 VerticalLayout for simple single-page forms with a few fields
@@ -847,6 +848,7 @@ Advanced pages layout demonstrating section groupings, hidden task list items, a
 - A Summary page is automatically appended by the GoA renderer for applicant review
 - Use \`options.title\` and \`options.subtitle\` on Categorization for the task list header
 - Use \`toAppOverviewLabel\` to customize the back link text (default: 'Back to application overview')
+- CRITICAL: Category elements can ONLY be direct first-level children of the Categorization \`elements\` array — do not nest them inside other layouts
 - Use \`additionalInstructions\` to display guidance text on the Task List page
 - Set \`hideSummary: true\` to remove the Summary row and skip the review page entirely
 - Set \`hideSubmit: true\` to keep the review page but hide the Submit button
@@ -930,6 +932,7 @@ All available options on the Categorization element when variant is 'stepper'
 - The simple stepper does NOT have a Task List or section groupings — use \`variant: "pages"\` for that
 - A Summary page is automatically appended for applicant review
 - For most government citizen-facing forms, the page stepper (variant: pages) is preferred
+- CRITICAL: Category elements can ONLY be direct first-level children of the Categorization \`elements\` array. Do NOT wrap Categories in VerticalLayout, Group, or any other layout element
 
 # Common Field Examples
 
@@ -4268,5 +4271,51 @@ The rule's condition scope references a non-existent or wrong property
 }
 \`\`\`
 **Why:** If the condition scope resolves to undefined, JSON Schema validation succeeds and the condition evaluates to true — the rule always fires. Make sure the condition scope matches an actual property name in the data schema.
+
+### ❌ Category Not a Direct Child of Categorization (critical)
+Wrapping Category elements inside a layout (e.g. VerticalLayout, Group) within a Categorization instead of placing them as direct first-level children
+
+**Bad:**
+\`\`\`json
+{
+  "uiSchema": {
+    "type": "Categorization",
+    "options": {
+      "variant": "pages"
+    },
+    "elements": [
+      {
+        "type": "VerticalLayout",
+        "elements": [
+          {
+            "type": "Category",
+            "label": "Step 1",
+            "elements": []
+          }
+        ]
+      }
+    ]
+  }
+}
+\`\`\`
+**Good:**
+\`\`\`json
+{
+  "uiSchema": {
+    "type": "Categorization",
+    "options": {
+      "variant": "pages"
+    },
+    "elements": [
+      {
+        "type": "Category",
+        "label": "Step 1",
+        "elements": []
+      }
+    ]
+  }
+}
+\`\`\`
+**Why:** Categories can ONLY be placed as direct first-level children of a Categorization's \`elements\` array. Wrapping them in VerticalLayout, HorizontalLayout, Group, or any other layout element will cause them not to render as pages/steps. Only Category elements are valid at the first level inside a Categorization.
 "
 `;

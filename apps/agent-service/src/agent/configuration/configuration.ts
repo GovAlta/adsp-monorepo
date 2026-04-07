@@ -95,7 +95,11 @@ export class AgentServiceConfiguration {
         tokenProvider: this.tokenProvider,
       });
 
-      const sharedMemory = new Memory();
+      const sharedMemory = new Memory({
+        options: {
+          lastMessages: 40,
+        },
+      });
 
       this.mastra = new Mastra({
         storage: environment.DB_HOST

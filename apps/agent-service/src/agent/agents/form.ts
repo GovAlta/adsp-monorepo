@@ -317,6 +317,7 @@ ${formExamplesText}
     'formConfigurationRetrievalTool',
     'formConfigurationUpdateTool',
     'fileDownloadTool',
+    'documentExtractTool',
     'rendererCatalogTool',
     'dataRegisterListTool',
     'dataRegisterCreateTool',
