@@ -106,3 +106,4 @@ Feature: Form app
   Scenario: As a form tester, I can access and use forms not yet opened for submissions
     When autotest user 3 is logged in to see "autotest-form-tester-role" application
     Then the user views a form page with primary application button enabled for "autotest-form-tester-role"
+
