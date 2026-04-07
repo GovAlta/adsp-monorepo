@@ -36,7 +36,7 @@ jobs:
     if: ${{ inputs.SERVICE_NAME == 'all' || inputs.SERVICE_NAME == 'event-service' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Make reports directory
         run: mkdir reports
       - name: Execute load tests event service
@@ -44,7 +44,7 @@ jobs:
       - name: Generate HTML report event service
         run: /home/node/artillery/bin/run report --output reports/event-report.html reports/event-report.json
       - name: Archive tests reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: artillery-test-report-event
           path: reports/*
@@ -55,7 +55,7 @@ jobs:
     container: artilleryio/artillery:latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Make reports directory
         run: mkdir reports
@@ -67,7 +67,7 @@ jobs:
         run: /home/node/artillery/bin/run report --output reports/status-report.html reports/status-report.json
 
       - name: Archive tests reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: artillery-test-report-status
           path: reports/*
@@ -78,13 +78,13 @@ jobs:
     if: ${{ inputs.SERVICE_NAME == 'all' || inputs.SERVICE_NAME == 'form-app' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Make reports directory
         run: mkdir reports
       - name: Execute load tests for form app
         run: /home/node/artillery/bin/run run tests/form-app/load.yml --environment ${{ inputs.ENVIRONMENT }} --output reports/form-app-report.json
       - name: Archive tests reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: artillery-test-report-event
           path: reports/*
@@ -94,13 +94,13 @@ jobs:
     if: ${{ inputs.SERVICE_NAME == 'all' || inputs.SERVICE_NAME == 'pdf-service' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Make reports directory
         run: mkdir reports
       - name: Execute load tests pdf service
         run: /home/node/artillery/bin/run run tests/pdf-service/load.yml --environment ${{ inputs.ENVIRONMENT }} --output reports/form-app-report.json
       - name: Archive tests reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: artillery-test-report-event
           path: reports/*
@@ -110,13 +110,13 @@ jobs:
     if: ${{ inputs.SERVICE_NAME == 'all' || inputs.SERVICE_NAME == 'feedback-service' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Make reports directory
         run: mkdir reports
       - name: Execute load tests for feedback service
         run: /home/node/artillery/bin/run run tests/feedback-service/load.yml --environment ${{ inputs.ENVIRONMENT }} --output reports/form-app-report.json
       - name: Archive tests reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: artillery-test-report-event
           path: reports/*

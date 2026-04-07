@@ -20,24 +20,24 @@ jobs:
       affected_apps: ${{ steps.set_outputs.outputs.affected_apps }}
       affected_apps_array: ${{ steps.set_outputs.outputs.affected_apps_array }}
     env:
-      AFFECTED_APPS: ""
+      AFFECTED_APPS: ''
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "10"
-      - uses: actions/cache@v4
+          dotnet-version: '10'
+      - uses: actions/cache@v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
       - name: Get last successful commit
-        uses: nrwl/nx-set-shas@v3
+        uses: nrwl/nx-set-shas@v5
         id: last_successful_commit
         with:
           last-successful-event: workflow_dispatch
@@ -61,11 +61,11 @@ jobs:
       matrix:
         app: [tenant-management-webapp, status-app, subscriber-app]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -75,7 +75,7 @@ jobs:
         with:
           app: ${{ matrix.app }}
           environment: staging
-          tags: "@regression and not @ignore"
+          tags: '@regression and not @ignore'
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
@@ -94,7 +94,7 @@ jobs:
     environment:
       name: Production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Oc login
         uses: redhat-actions/oc-login@v1
         with:
@@ -118,11 +118,11 @@ jobs:
       matrix:
         app: [tenant-management-webapp, status-app, subscriber-app]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -131,7 +131,7 @@ jobs:
         with:
           app: ${{ matrix.app }}
           environment: prod
-          tags: "@smoke-test and not @ignore"
+          tags: '@smoke-test and not @ignore'
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
