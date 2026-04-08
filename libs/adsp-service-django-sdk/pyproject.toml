@@ -24,7 +24,7 @@ include = "adsp_service_django_sdk"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-django = "^4.2.29"
+django = "^4.2.30"
 
 [tool.poetry.dependencies.adsp-py-common]
 path = "../adsp-py-common"
