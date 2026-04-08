@@ -127,6 +127,23 @@ export const HelpContentComponent = ({
     !uischema.options?.variant ||
     (uischema.options?.variant !== 'details' && uischema.options?.variant !== 'hyperlink');
 
+  if (markdown && uischema.options?.variant === 'details') {
+    return (
+      <Visible visible={visible}>
+        <HelpContentDiv aria-label={uischema.options?.ariaLabel}>
+          <div className={`help-content-markdown ${marginClass}`}>
+            <GoabDetails heading={label ? label : ''} mt="3xs" mb="none">
+              <div className="help-content-markdown">
+                {MarkdownComponent({ markdown: getMarkDownData(uischema?.options?.help) })}
+              </div>
+              {uischema?.elements && uischema?.elements?.length > 0 && <HelpContents elements={uischema?.elements} />}
+            </GoabDetails>
+          </div>
+        </HelpContentDiv>
+      </Visible>
+    );
+  }
+
   if (markdown) {
     return (
       <Visible visible={visible}>

@@ -114,7 +114,8 @@ describe('Help Content Control', () => {
     const form = getForm(helpSchema);
     const renderer = render(form);
     const mainWrapper = renderer.container.querySelector('div > :scope goa-details');
-    expect(mainWrapper).toBeNull();
+    expect(mainWrapper).not.toBeNull();
+    expect(mainWrapper?.getAttribute('heading')).toBe(helpSchema.label);
   });
 
   it('will render image in help content', () => {
