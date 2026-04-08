@@ -4,7 +4,11 @@
     "../../.eslintrc.json"
   ],
   "ignorePatterns": [
-    "!**/*"
+    "!**/*",
+    ".generated/**",
+    "scripts/**",
+    "templates/**",
+    "webpack.template-react-vendors.config.js"
   ],
   "overrides": [
     {

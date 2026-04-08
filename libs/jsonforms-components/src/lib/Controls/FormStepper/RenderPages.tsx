@@ -19,8 +19,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   const enumerators = useContext(JsonFormContext);
 
   const formStepperCtx = useContext(JsonFormsStepperContext);
-  const { goToPage, toggleShowReviewLink, goToTableOfContext, validatePage } =
-    formStepperCtx as JsonFormsStepperContextProps;
+  const { goToPage, goToTableOfContext } = formStepperCtx as JsonFormsStepperContextProps;
   const { categories, isOnReview, isValid, activeId, validationTrigger } = (
     formStepperCtx as JsonFormsStepperContextProps
   ).selectStepperState();
@@ -56,6 +55,22 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
     setIsOpen(false);
   };
 
+  const category = categories[activeId];
+  const categoryProps: StepProps = {
+    category: category?.uischema as CategorizationElement,
+    categoryIndex: category?.id,
+    visible: category?.visible as boolean,
+    enabled: category?.isEnabled as boolean,
+    path,
+    schema,
+    renderers,
+    cells,
+    data,
+    validationTrigger,
+  };
+  const currentStep = activeId + 1 - categories.filter((c) => !c.visible && c.id < activeId).length;
+  const totalSteps = categories.filter((c) => c.visible).length;
+
   return (
     <div data-testid="form-stepper-test-wrapper" ref={topElementRef}>
       <Visible visible={visible}>
@@ -69,90 +84,67 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
               }}
               testId="back-to-tasks"
             />
-            {
-              //eslint-disable-next-line
-              categories?.map((category, index) => {
-                const categoryProps: StepProps = {
-                  category: category.uischema as CategorizationElement,
-                  categoryIndex: category.id,
-                  visible: category?.visible as boolean,
-                  enabled: category?.isEnabled as boolean,
-                  path,
-                  schema,
-                  renderers,
-                  cells,
-                  data,
-                  validationTrigger,
-                };
-
-                const currentStep = index + 1 - categories.filter((c) => !c.visible && c.id < index).length;
-                const totalSteps = categories.filter((c) => c.visible).length;
-                const isActive = index === activeId && !isOnReview;
-
-                return (
-                  <Visible visible={isActive} key={`page-${category.id}`}>
-                    <div data-testid={`step_${index}-content-pages`} style={{ marginTop: '1.5rem' }}>
-                      <PageRenderPadding>
-                        <h3>
-                          Step {currentStep} of {totalSteps}
-                        </h3>
-                        <RenderStepElements {...categoryProps} />
-                      </PageRenderPadding>
-                      <PageRenderPadding>
-                        <GoabGrid minChildWidth="100px" gap="2xs">
-                          <GoabButtonGroup alignment="start">
-                            {activeId > 0 && (
-                              <GoabButton
-                                type="secondary"
-                                onClick={() => {
-                                  handleSave();
-                                  let prevId = activeId - 1;
-                                  while (prevId >= 0 && categories[prevId].visible === false) {
-                                    prevId = prevId - 1;
-                                  }
-                                  if (prevId >= 0) {
-                                    if (topElementRef.current) {
-                                      topElementRef.current.scrollIntoView();
-                                    }
-                                    goToPage(prevId);
-                                  }
-                                }}
-                                testId="pages-prev-btn"
-                              >
-                                Previous
-                              </GoabButton>
-                            )}{' '}
-                          </GoabButtonGroup>
-
-                          <GoabButtonGroup alignment="end">
-                            <GoabButton
-                              type="submit"
-                              onClick={() => {
-                                handleSave();
-                                let nextId = activeId + 1;
-                                while (nextId < categories.length && categories[nextId].visible === false) {
-                                  nextId = nextId + 1;
+            {!isOnReview && (
+              <Visible visible={true} key={`page-${category?.id}`}>
+                <div data-testid={`step_${activeId}-content-pages`} style={{ marginTop: '1.5rem' }}>
+                  <PageRenderPadding>
+                    <h3>
+                      Step {currentStep} of {totalSteps}
+                    </h3>
+                    <RenderStepElements {...categoryProps} />
+                  </PageRenderPadding>
+                  <PageRenderPadding>
+                    <GoabGrid minChildWidth="100px" gap="2xs">
+                      <GoabButtonGroup alignment="start">
+                        {activeId > 0 && (
+                          <GoabButton
+                            type="secondary"
+                            onClick={() => {
+                              handleSave();
+                              let prevId = activeId - 1;
+                              while (prevId >= 0 && categories[prevId].visible === false) {
+                                prevId = prevId - 1;
+                              }
+                              if (prevId >= 0) {
+                                if (topElementRef.current) {
+                                  topElementRef.current.scrollIntoView();
                                 }
-                                if (!(currentStep === totalSteps && hideSummary)) {
-                                  if (topElementRef.current) {
-                                    topElementRef.current.scrollIntoView();
-                                  }
-                                  goToPage(nextId);
-                                }
-                              }}
-                              disabled={!enabled}
-                              testId="pages-save-continue-btn"
-                            >
-                              {currentStep === totalSteps ? submissionLabel : 'Next'}
-                            </GoabButton>
-                          </GoabButtonGroup>
-                        </GoabGrid>
-                      </PageRenderPadding>
-                    </div>
-                  </Visible>
-                );
-              })
-            }
+                                goToPage(prevId);
+                              }
+                            }}
+                            testId="pages-prev-btn"
+                          >
+                            Previous
+                          </GoabButton>
+                        )}{' '}
+                      </GoabButtonGroup>
+                      <GoabButtonGroup alignment="end">
+                        <GoabButton
+                          type="submit"
+                          onClick={() => {
+                            handleSave();
+                            let nextId = activeId + 1;
+                            while (nextId < categories.length && categories[nextId].visible === false) {
+                              nextId = nextId + 1;
+                            }
+                            if (!(currentStep === totalSteps && hideSummary)) {
+                              if (topElementRef.current) {
+                                topElementRef.current.scrollIntoView();
+                              }
+                              goToPage(nextId);
+                            }
+                          }}
+                          disabled={!enabled}
+                          testId="pages-save-continue-btn"
+                        >
+                          {currentStep === totalSteps ? submissionLabel : 'Next'}
+                        </GoabButton>
+                      </GoabButtonGroup>
+                    </GoabGrid>
+                  </PageRenderPadding>
+                </div>
+              </Visible>
+            )}
 
             {isOnReview && (
               <div data-testid="stepper-pages-review-page">

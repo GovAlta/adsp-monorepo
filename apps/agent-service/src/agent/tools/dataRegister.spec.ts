@@ -42,9 +42,10 @@ describe('createDataRegisterTools', () => {
     mockTokenProvider.getAccessToken.mockResolvedValue('test-token');
   });
 
-  it('creates all three data register tools', () => {
+  it('creates all data register tools', () => {
     expect(tools.dataRegisterListTool).toBeDefined();
     expect(tools.dataRegisterCreateTool).toBeDefined();
+    expect(tools.dataRegisterGetTool).toBeDefined();
     expect(tools.dataRegisterUpdateTool).toBeDefined();
   });
 
@@ -206,6 +207,72 @@ describe('createDataRegisterTools', () => {
           requestContext: mockRequestContext,
         } as never),
       ).rejects.toThrow('Failed to create data register');
+    });
+  });
+
+  describe('dataRegisterGetTool', () => {
+    it('retrieves current values of a string array register', async () => {
+      mockedAxios.get.mockResolvedValueOnce({
+        data: {
+          configuration: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        },
+      });
+
+      const result = await tools.dataRegisterGetTool.execute({ name: 'weekdays' }, {
+        requestContext: mockRequestContext,
+      } as never);
+
+      expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+      const call = mockedAxios.get.mock.calls[0];
+      expect(call[0]).toContain('data-register/weekdays/latest');
+
+      expect(result.name).toBe('weekdays');
+      expect(result.data).toEqual(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
+    });
+
+    it('retrieves current values of an object array register', async () => {
+      const objectData = [
+        { label: 'Alberta', value: 'AB' },
+        { label: 'British Columbia', value: 'BC' },
+      ];
+
+      mockedAxios.get.mockResolvedValueOnce({
+        data: { configuration: objectData },
+      });
+
+      const result = await tools.dataRegisterGetTool.execute({ name: 'provinces' }, {
+        requestContext: mockRequestContext,
+      } as never);
+
+      expect(result.name).toBe('provinces');
+      expect(result.data).toEqual(objectData);
+    });
+
+    it('returns empty array when register has no data', async () => {
+      mockedAxios.get.mockResolvedValueOnce({
+        data: {},
+      });
+
+      const result = await tools.dataRegisterGetTool.execute({ name: 'empty-register' }, {
+        requestContext: mockRequestContext,
+      } as never);
+
+      expect(result.name).toBe('empty-register');
+      expect(result.data).toEqual([]);
+    });
+
+    it('throws on 404 not found', async () => {
+      mockedAxios.get.mockRejectedValueOnce({
+        isAxiosError: true,
+        response: { status: 404, statusText: 'Not Found', data: {} },
+        message: 'Request failed with status code 404',
+      });
+
+      (axios.isAxiosError as unknown as jest.Mock) = jest.fn().mockReturnValue(true);
+
+      await expect(
+        tools.dataRegisterGetTool.execute({ name: 'nonexistent' }, { requestContext: mockRequestContext } as never),
+      ).rejects.toThrow('Failed to retrieve data register');
     });
   });
 

@@ -5,6 +5,9 @@
 /tmp
 /out-tsc
 
+docs/.bundle
+docs/vendor
+
 # dependencies
 /node_modules
 
@@ -73,6 +76,7 @@ coveragereport/*
 .nx/cache
 .nx/workspace-data
 .cache
+apps/builder-app/.generated
 
 # Github Pages doesn't use the lock file; keep local when working with docs in jekyll
 **/Gemfile.lock

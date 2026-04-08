@@ -15,8 +15,8 @@ Feature: Form app
     Given the user deletes any existing form from "Auto Test" for "autotest-testformapp"
     When an authenticated user is logged in to see "autotest-testformapp" application
     Then the user views a form draft of "autotest-testformapp"
-    When the user enters "Auto" in a text field labelled "First Name"
-    And the user enters "Test" in a text field labelled "Last Name"
+    When the user enters "Auto" in a text field labelled "First name"
+    And the user enters "Test" in a text field labelled "Last name"
     And the user enters "1970-10-30" in a date picker labelled "Birthday"
     And the user enters "CA" in a dropdown labelled "Nationality"
     And the user clicks Next button in the form
@@ -24,13 +24,13 @@ Feature: Form app
     # Using both radio button and checkbox causing the review page validation fail randomly. Remove checkbox user input for now.
     # And the user "selects" a checkbox labelled "Citizen"
     And the user clicks list with detail button labelled as "Add child" in the form
-    And the user enters "John" in list with detail element text field labelled "First Name"
-    And the user enters "Smith" in list with detail element text field labelled "Last Name"
+    And the user enters "John" in list with detail element text field labelled "First name"
+    And the user enters "Smith" in list with detail element text field labelled "Last name"
     And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
     And the user clicks Continue button for the list with detail in the form
     And the user clicks Next button in the form
-    Then the user views the summary of "Personal Information" with "Auto" as "required" "First Name"
-    And the user views the summary of "Personal Information" with "Test" as "required" "Last Name"
+    Then the user views the summary of "Personal Information" with "Auto" as "required" "First name"
+    And the user views the summary of "Personal Information" with "Test" as "required" "Last name"
     And the user views the summary of "Personal Information" with "1970-10-30" as "not required" "Birthday"
     And the user views the summary of "Additional Information" with "No" as "required" "Are you married?"
     # And the user views the summary of "Additional Information" with "Yes" as "not required" "Citizen"
@@ -67,16 +67,16 @@ Feature: Form app
   Scenario: As an anonymous applicant, I can see validation errors on missing required fields and cannot submit the form without all required fields being set
     Given an anonymous applicant goes to "autotest-anonymous-submission" application
     Then the user views an anonymous form draft of "autotest-anonymous-submission"
-    When the user enters "Joe" in a text field labelled "First Name"
+    When the user enters "Joe" in a text field labelled "First name"
     # And the user enters "1970-10-30" in a date picker labelled "Birthday"
     And the user enters "CA" in a dropdown labelled "Nationality"
     And the user clicks Next button in the form
     And the user clicks list with detail button labelled as "Add child" in the form
-    And the user enters "John" in list with detail element text field labelled "First Name"
-    And the user enters "Smith" in list with detail element text field labelled "Last Name"
+    And the user enters "John" in list with detail element text field labelled "First name"
+    And the user enters "Smith" in list with detail element text field labelled "Last name"
     # And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
     And the user clicks Next button in the form
-    Then the user views "Last Name is required" validation message under "Last Name" field of "Personal Information" on summary page
+    Then the user views "Last name is required" validation message under "Last name" field of "Personal Information" on summary page
     And the user views "Are you married? is required" validation message under "Are you married?" field of "Additional Information" on summary page
     And the user views the submit button is disabled on summary page
 

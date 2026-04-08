@@ -8,7 +8,8 @@ import { RootState } from '@store/index';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { DeleteModal } from '@components/DeleteModal';
 import MonacoEditor from '@monaco-editor/react';
-import { GoabButton, GoabButtonGroup, GoabCircularProgress, GoabFormItem, GoabTable } from '@abgov/react-components';
+import { GoabBadge, GoabButton, GoabButtonGroup, GoabCircularProgress, GoabFormItem, GoabIconButton, GoabTable } from '@abgov/react-components';
+import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import {
   DataRegisterEditorWrapper,
   DataRegisterEntryDetail,
@@ -16,12 +17,13 @@ import {
   DataRegisterLoadingDiv,
   DataRegisterMonacoDiv,
   DataRegisterTableWrapper,
+  DataRegisterUrn,
 } from './styled-components';
 import {
   updateConfigurationDefinition,
   replaceConfigurationDataAction,
   deleteConfigurationDefinition,
-  getConfigurationDefinitions,
+  updateRegistersLocalAction,
 } from '@store/configuration/action';
 import { DATA_REGISTER_NAMESPACE } from '@store/configuration/model';
 import { REGISTER_DATA_SCHEMA, parseUrn, urnCompare, validateRegisterJson } from './utils';
@@ -30,11 +32,14 @@ import { AddRegisterDataModal } from './addRegisterDataModal';
 
 interface RegisterItemProps {
   entry: RegisterConfigData;
+  isSelected: boolean;
+  onToggle: (entry: RegisterConfigData | null) => void;
+  onDelete: (urn: string) => void;
+  onUpdate: (urn: string, data: RegisterConfigData['data']) => void;
 }
 
-const RegisterItem = ({ entry }: RegisterItemProps): JSX.Element => {
+const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate }: RegisterItemProps): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
-  const [showDetails, setShowDetails] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editValue, setEditValue] = useState('');
@@ -54,12 +59,11 @@ const RegisterItem = ({ entry }: RegisterItemProps): JSX.Element => {
     setEditValue(value);
     setJsonError(validate(value));
     setIsEditing(true);
-    setShowDetails(false);
   };
 
-  const handleEditorChange = (value: string) => {
-    setEditValue(value);
-    setJsonError(validate(value));
+  const handleEditorChange = (value: string | undefined) => {
+    setEditValue(value ?? '');
+    setJsonError(validate(value ?? ''));
   };
 
   const handleSave = () => {
@@ -79,8 +83,7 @@ const RegisterItem = ({ entry }: RegisterItemProps): JSX.Element => {
         false,
       ),
     );
-    // Refetch register data from the backend so Redux stays in sync.
-    dispatch(getConfigurationDefinitions());
+    onUpdate(entry.urn, parsed);
     setIsEditing(false);
   };
 
@@ -93,12 +96,9 @@ const RegisterItem = ({ entry }: RegisterItemProps): JSX.Element => {
           <DataRegisterIconDiv>
             <GoAContextMenu>
               <GoAContextMenuIcon
-                type={showDetails ? 'eye-off' : 'eye'}
+                type={isSelected ? 'eye-off' : 'eye'}
                 title="Toggle details"
-                onClick={() => {
-                  setShowDetails(!showDetails);
-                  setIsEditing(false);
-                }}
+                onClick={() => onToggle(isSelected ? null : entry)}
                 testId={`data-register-details-${name}`}
               />
               <GoAContextMenuIcon
@@ -117,15 +117,6 @@ const RegisterItem = ({ entry }: RegisterItemProps): JSX.Element => {
           </DataRegisterIconDiv>
         </td>
       </tr>
-      {showDetails && (
-        <tr>
-          <td colSpan={3} style={{ padding: '0px' }}>
-            <DataRegisterEntryDetail data-testid={`data-register-detail-${name}`}>
-              {JSON.stringify(entry.data, null, 2)}
-            </DataRegisterEntryDetail>
-          </td>
-        </tr>
-      )}
       {isEditing && (
         <tr>
           <td colSpan={3}>
@@ -183,8 +174,7 @@ const RegisterItem = ({ entry }: RegisterItemProps): JSX.Element => {
           onCancel={() => setShowDeleteConfirm(false)}
           onDelete={() => {
             dispatch(deleteConfigurationDefinition(`${namespace || DATA_REGISTER_NAMESPACE}:${name}`));
-            // Refetch register data from the backend so Redux stays in sync.
-            dispatch(getConfigurationDefinitions());
+            onDelete(entry.urn);
             setShowDeleteConfirm(false);
           }}
         />
@@ -198,15 +188,12 @@ export const DataRegisters = (): JSX.Element => {
   const registerData = useSelector(selectRegisterData) as RegisterConfigData[];
   const isFetching = useSelector((state: RootState) => state.configuration.isFetchingRegisterData);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newDescription, setNewDescription] = useState('');
-  const [newData, setNewRegisterData] = useState('');
+  const [selectedEntry, setSelectedEntry] = useState<RegisterConfigData | null>(null);
+  const [urnCopied, setUrnCopied] = useState(false);
 
-  const handleAddOpen = () => {
-    setNewName('');
-    setNewDescription('');
-    setNewRegisterData('');
-    setIsAddModalOpen(true);
+  const handleToggle = (entry: RegisterConfigData | null) => {
+    setSelectedEntry(entry);
+    setUrnCopied(false);
   };
 
   const handleAddSave = (data: RegisterDataType | null, name: string, description: string) => {
@@ -215,7 +202,7 @@ export const DataRegisters = (): JSX.Element => {
         {
           name,
           namespace: DATA_REGISTER_NAMESPACE,
-          description: description,
+          description,
           configurationSchema: REGISTER_DATA_SCHEMA as never,
         },
         false,
@@ -232,19 +219,36 @@ export const DataRegisters = (): JSX.Element => {
         true,
       ),
     );
-    // Refetch register data from the backend so Redux stays in sync.
-    dispatch(getConfigurationDefinitions());
+    const newEntry: RegisterConfigData = {
+      urn: `urn:ads:platform:configuration:v2:/configuration/${DATA_REGISTER_NAMESPACE}/${name}`,
+      description,
+      data,
+    };
+    dispatch(updateRegistersLocalAction([...(registerData ?? []), newEntry]));
     setIsAddModalOpen(false);
   };
 
-  const handleAddCancel = () => {
-    setIsAddModalOpen(false);
+  const handleDelete = (urn: string) => {
+    if (selectedEntry?.urn === urn) {
+      setSelectedEntry(null);
+    }
+    dispatch(updateRegistersLocalAction((registerData ?? []).filter((e) => e.urn !== urn)));
   };
+
+  const handleUpdate = (urn: string, data: RegisterConfigData['data']) => {
+    const updated = (registerData ?? []).map((e) => (e.urn === urn ? { ...e, data } : e));
+    dispatch(updateRegistersLocalAction(updated));
+    if (selectedEntry?.urn === urn) {
+      setSelectedEntry((prev) => (prev ? { ...prev, data } : null));
+    }
+  };
+
+  const selectedName = selectedEntry ? parseUrn(selectedEntry.urn ?? '').name : null;
 
   return (
     <>
       <GoabButtonGroup alignment="end" mt="m">
-        <GoabButton type="secondary" onClick={handleAddOpen} testId="data-register-add-btn">
+        <GoabButton type="secondary" onClick={() => setIsAddModalOpen(true)} testId="data-register-add-btn">
           Add register data
         </GoabButton>
       </GoabButtonGroup>
@@ -272,13 +276,50 @@ export const DataRegisters = (): JSX.Element => {
             </thead>
             <tbody>
               {[...registerData].sort(urnCompare).map((entry) => (
-                <RegisterItem key={entry.urn} entry={entry} />
+                <RegisterItem
+                  key={entry.urn}
+                  entry={entry}
+                  isSelected={selectedEntry?.urn === entry.urn}
+                  onToggle={handleToggle}
+                  onDelete={handleDelete}
+                  onUpdate={handleUpdate}
+                />
               ))}
             </tbody>
           </GoabTable>
         </DataRegisterTableWrapper>
       )}
-      <AddRegisterDataModal open={isAddModalOpen} onCancel={handleAddCancel} onSave={handleAddSave} />
+      {selectedEntry && selectedName && (
+        <>
+          <DataRegisterUrn>
+            <GoabBadge
+              type="information"
+              content={`urn:ads:platform:configuration:v2:/configuration/data-register/${selectedName}`}
+              icon={false}
+            />
+            {!urnCopied ? (
+              <GoabIconButton
+                icon="copy"
+                size="small"
+                variant="color"
+                title="Copy URN"
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    `urn:ads:platform:configuration:v2:/configuration/data-register/${selectedName}`
+                  );
+                  setUrnCopied(true);
+                }}
+              />
+            ) : (
+              <CheckmarkCircle size="medium" />
+            )}
+          </DataRegisterUrn>
+          <DataRegisterEntryDetail data-testid={`data-register-detail-${selectedName}`}>
+            {JSON.stringify(selectedEntry.data, null, 2)}
+          </DataRegisterEntryDetail>
+        </>
+      )}
+      <AddRegisterDataModal open={isAddModalOpen} onCancel={() => setIsAddModalOpen(false)} onSave={handleAddSave} />
     </>
   );
 };

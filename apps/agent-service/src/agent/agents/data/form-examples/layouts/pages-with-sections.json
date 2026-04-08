@@ -98,6 +98,7 @@
     "A Summary page is automatically appended by the GoA renderer for applicant review",
     "Use `options.title` and `options.subtitle` on Categorization for the task list header",
     "Use `toAppOverviewLabel` to customize the back link text (default: 'Back to application overview')",
+    "CRITICAL: Category elements can ONLY be direct first-level children of the Categorization `elements` array — do not nest them inside other layouts",
     "Use `additionalInstructions` to display guidance text on the Task List page",
     "Set `hideSummary: true` to remove the Summary row and skip the review page entirely",
     "Set `hideSubmit: true` to keep the review page but hide the Submit button",

@@ -1,0 +1,141 @@
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--goa-font-family, 'Helvetica Neue', Arial, sans-serif);
+  color: var(--goa-color-text-default, #162231);
+  background: var(--goa-color-greyscale-white, #ffffff);
+}
+
+/* App header layout */
+.app-header-shell {
+  background: var(--goa-color-greyscale-white, #ffffff);
+  border-bottom: 1px solid var(--goa-color-greyscale-200, #dfe2e5);
+}
+
+/* Offset hero banner below the fixed app header */
+.hero-banner-wrapper {
+}
+
+/* Hero banner subtitle text */
+.hero-subtitle {
+  color: var(--goa-color-greyscale-white, #ffffff);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  margin: 0 0 var(--goa-space-m, 1rem) 0;
+}
+
+/* Hero banner button styling */
+goa-hero-banner goa-button {
+  --goa-button-background: var(--goa-color-interactive-default, #005072);
+}
+
+/* Page layout */
+.page-title {
+  margin-top: var(--goa-space-2xl, 3rem);
+  margin-bottom: var(--goa-space-l, 1.5rem);
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.page-content {
+  padding-bottom: var(--goa-space-2xl, 3rem);
+}
+
+/* Lead text for introductions */
+.lead-text {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  margin-bottom: var(--goa-space-l, 1.5rem);
+  color: var(--goa-color-text-secondary, #505050);
+}
+
+/* Section spacing utilities */
+.section-spacing {
+  margin-bottom: var(--goa-space-3xl, 2.5rem);
+  padding-bottom: var(--goa-space-l, 1.5rem);
+}
+
+/* Feature cards removed - now using GoabContainer components */
+
+/* Button groups */
+.button-group {
+  display: flex;
+  gap: var(--goa-space-m, 1rem);
+  flex-wrap: wrap;
+}
+
+.apply-page .section-title {
+  margin-top: 0;
+}
+
+.form-shell {
+  border: 1px solid var(--goa-color-greyscale-200, #dfe2e5);
+  border-radius: var(--goa-border-radius-m, 0.5rem);
+  padding: var(--goa-space-l, 1.5rem);
+  background: var(--goa-color-greyscale-white, #ffffff);
+}
+
+.submission-reference {
+  font-family: var(--goa-font-family-mono, 'Courier New', monospace);
+  font-size: 0.95rem;
+}
+
+/* Link styling */
+a {
+  color: var(--goa-color-interactive-default, #005072);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Heading hierarchy */
+h1 {
+  margin-top: 0;
+  margin-bottom: var(--goa-space-m, 1rem);
+  line-height: 1.2;
+}
+
+h2 {
+  margin-top: var(--goa-space-xl, 2rem);
+  margin-bottom: var(--goa-space-m, 1rem);
+  line-height: 1.3;
+  font-size: 1.5rem;
+}
+
+h3 {
+  margin-top: var(--goa-space-l, 1.5rem);
+  margin-bottom: var(--goa-space-s, 0.75rem);
+}
+
+/* Text elements */
+p {
+  line-height: 1.6;
+  margin-bottom: var(--goa-space-m, 1rem);
+}
+
+ol,
+ul {
+  margin-bottom: var(--goa-space-m, 1rem);
+  padding-left: var(--goa-space-l, 1.5rem);
+  line-height: 1.8;
+}
+
+ol li,
+ul li {
+  margin-bottom: 0.5rem;
+}
+
+/* Accessibility improvements */
+a:focus {
+  outline: 2px solid var(--goa-color-interactive-default, #005072);
+  outline-offset: 2px;
+}

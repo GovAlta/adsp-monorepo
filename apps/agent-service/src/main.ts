@@ -20,6 +20,10 @@ import {
   configurationSchema,
   CoreAgents,
   ServiceRoles,
+  ThreadCreatedDefinition,
+  ThreadDeletedDefinition,
+  WorkspaceCreatedDefinition,
+  WorkspaceCreationFailedDefinition,
 } from './agent';
 import { assertWorkspaceEnvironment } from './agent/workspace';
 import { fromSocketHandshake, REQ_SOCKET_PROP } from './socket';
@@ -33,7 +37,8 @@ const initializeApp = async (): Promise<Server> => {
 
   app.use(compression());
   app.use(helmet());
-  app.use(express.json({ limit: '1mb' }));
+  // Increased limit to 50mb to support large binary assets in workspace snapshots
+  app.use(express.json({ limit: '50mb' }));
   app.use(cors());
 
   if (environment.TRUSTED_PROXY) {
@@ -55,6 +60,7 @@ const initializeApp = async (): Promise<Server> => {
     tenantHandler,
     healthCheck,
     traceHandler,
+    eventService,
   } = await initializePlatform(
     {
       serviceId,
@@ -75,7 +81,12 @@ const initializeApp = async (): Promise<Server> => {
             'Agent tool role assigned to agent service service account. Used to grant resource access to agent tools.',
         },
       ],
-      events: [],
+      events: [
+        WorkspaceCreatedDefinition,
+        WorkspaceCreationFailedDefinition,
+        ThreadCreatedDefinition,
+        ThreadDeletedDefinition,
+      ],
       fileTypes: [AgentAttachmentsFileType],
       values: [ServiceMetricsValueDefinition],
       configuration: {
@@ -85,11 +96,11 @@ const initializeApp = async (): Promise<Server> => {
       useLongConfigurationCacheTTL: true,
       enableConfigurationInvalidation: true,
       combineConfiguration: (tenant: AgentConfigurations, core: AgentConfigurations, tenantId) =>
-        new AgentServiceConfiguration(logger, directory, tokenProvider, tenantId, tenant, core),
+        new AgentServiceConfiguration(logger, directory, tokenProvider, eventService, tenantId, tenant, core),
       additionalExtractors: [fromSocketHandshake],
       serviceConfigurations: [{ serviceId, configuration: CoreAgents }],
     },
-    { logger }
+    { logger },
   );
 
   passport.use('core', coreStrategy);
@@ -112,6 +123,8 @@ const initializeApp = async (): Promise<Server> => {
       credentials: true,
       origin: true,
     },
+    // Support large binary assets in workspace snapshots (> 1MB images encoded as base64)
+    maxHttpBufferSize: 50 * 1024 * 1024, // 50MB
   });
 
   const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) => {
@@ -124,7 +137,7 @@ const initializeApp = async (): Promise<Server> => {
         // Passport JS calls end w/ 401 when all authenticators fail.
         end: () => next(new UnauthorizedError('User not authorized to connect.')),
       } as unknown as express.Response,
-      next
+      next,
     );
   };
 
@@ -145,7 +158,7 @@ const initializeApp = async (): Promise<Server> => {
     metricsHandler,
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   applyAgentMiddleware(app, [defaultIo, io], { logger, directory, tokenProvider, tenantService });

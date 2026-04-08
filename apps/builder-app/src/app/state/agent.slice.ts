@@ -21,12 +21,18 @@ export interface BuilderAgentStreamEvent {
   chunk?: StreamChunk;
 }
 
+export interface AssetThumbnail {
+  path: string;
+  dataUrl: string;
+}
+
 export interface AgentState {
   messages: Message[];
   connectionStatus: string;
   workspaceStatus: string;
   isSocketConnected: boolean;
   isWorkspaceRefreshing: boolean;
+  selectedAssetThumbnail: AssetThumbnail | null;
 }
 
 interface StreamDelta {
@@ -44,6 +50,7 @@ const initialState: AgentState = {
   workspaceStatus: DEFAULT_WORKSPACE_STATUS,
   isSocketConnected: false,
   isWorkspaceRefreshing: false,
+  selectedAssetThumbnail: null,
 };
 
 function formatPayload(value: unknown): string {
@@ -248,6 +255,9 @@ const agentSlice = createSlice({
     setWorkspaceRefreshing: (state, action: { payload: boolean }) => {
       state.isWorkspaceRefreshing = action.payload;
     },
+    setSelectedAssetThumbnail: (state, action: { payload: AssetThumbnail | null }) => {
+      state.selectedAssetThumbnail = action.payload;
+    },
     resetSessionState: (state) => {
       state.connectionStatus = DEFAULT_CONNECTION_STATUS;
       state.workspaceStatus = DEFAULT_WORKSPACE_STATUS;
@@ -265,6 +275,8 @@ export const agentConnectionStatusSelector = (state: AppState): string => state.
 export const agentWorkspaceStatusSelector = (state: AppState): string => state.agent.workspaceStatus;
 export const agentSocketConnectedSelector = (state: AppState): boolean => state.agent.isSocketConnected;
 export const agentWorkspaceRefreshingSelector = (state: AppState): boolean => state.agent.isWorkspaceRefreshing;
+export const agentSelectedAssetThumbnailSelector = (state: AppState): AssetThumbnail | null =>
+  state.agent.selectedAssetThumbnail;
 
 export const agentMessagesByThreadSelector = createSelector(
   [agentMessagesSelector, (_: AppState, threadId: string) => threadId],
