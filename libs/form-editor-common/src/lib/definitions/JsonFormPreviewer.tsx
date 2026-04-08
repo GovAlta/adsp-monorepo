@@ -1,4 +1,4 @@
-import { GoARenderers, GoAReviewRenderers, GoABaseReviewRenderers, GoACells, JsonFormRegisterProvider } from '@abgov/jsonforms-components';
+import { GoARenderers, GoAReviewRenderers, GoACells, JsonFormRegisterProvider } from '@abgov/jsonforms-components';
 import { GoabCallout } from '@abgov/react-components';
 import { ajv } from '@lib/validation/checkInput';
 import { JsonForms } from '@jsonforms/react';
@@ -15,7 +15,6 @@ interface JSONFormPreviewerProps {
   data: unknown;
   onChange: ({ data }: { data: unknown }) => void;
   useReviewRenderers?: boolean;
-  useReadOnlyMode?: boolean;
 }
 
 interface User {
@@ -26,7 +25,7 @@ interface User {
   preferredUsername: string;
 }
 
-export const JSONFormPreviewer = ({ data, onChange, useReviewRenderers = false, useReadOnlyMode = false }: JSONFormPreviewerProps): JSX.Element => {
+export const JSONFormPreviewer = ({ data, onChange, useReviewRenderers = false }: JSONFormPreviewerProps): JSX.Element => {
   // Resolved data schema (with refs inlined) is used with JsonForms since it doesn't handle remote refs.
   const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema);
   const uiSchema = useSelector((state: RootState) => state.form.editor.uiSchema);
@@ -38,9 +37,6 @@ export const JSONFormPreviewer = ({ data, onChange, useReviewRenderers = false, 
   const user = useSelector((state: RootState) => state.session.userInfo);
 
   const newUser = { ...user, roles: [], id: null } as User; // Create a new user object with the same properties as the original user, but with an empty roles array and null id
-
-  // No-op function for read-only mode
-  const handleChange = useReadOnlyMode ? () => {} : onChange;
 
   return (
     <ErrorBoundary fallbackRender={FallbackRender}>
@@ -56,12 +52,11 @@ export const JSONFormPreviewer = ({ data, onChange, useReviewRenderers = false, 
       >
         <JsonForms
           ajv={ajv}
-          renderers={useReadOnlyMode ? GoAReviewRenderers : useReviewRenderers ? GoAReviewRenderers : GoARenderers}
+          renderers={useReviewRenderers ? GoAReviewRenderers : GoARenderers}
           cells={GoACells}
-          onChange={handleChange}
+          onChange={onChange}
           data={data}
           validationMode={'ValidateAndShow'}
-          readonly={useReadOnlyMode}
           //need to re-create the schemas here in order to trigger a refresh when passing data back through the context
           schema={{ ...dataSchema }}
           uischema={{ ...uiSchema }}
