@@ -1,4 +1,4 @@
-import React, { Children, ReactNode, useState, useEffect } from 'react';
+import React, { Children, ReactNode, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 
 /**
@@ -20,9 +20,11 @@ interface TabsProps {
 
 function Tabs(props: TabsProps): JSX.Element {
   const [activeTabIndex, setActiveTabIndex] = useState(props.activeIndex ?? 0);
+  const visitedTabs = useRef<Set<number>>(new Set([props.activeIndex ?? 0]));
 
   function selectTab(index: number) {
     setActiveTabIndex(index);
+    visitedTabs.current.add(index);
     if (typeof props.changeTabCallback === 'function') {
       props.changeTabCallback(index);
     }
@@ -56,8 +58,13 @@ function Tabs(props: TabsProps): JSX.Element {
       </SCTabs>
       {
         // eslint-disable-next-line
-        filteredChildren.filter((_child: any, index: number) => {
-          return index === activeTabIndex;
+        filteredChildren.map((_child: any, index: number) => {
+          if (!visitedTabs.current.has(index)) return null;
+          return (
+            <div key={index} style={{ display: index === activeTabIndex ? 'block' : 'none' }}>
+              {_child}
+            </div>
+          );
         })
       }
     </>
@@ -131,7 +138,9 @@ const SCTab = styled.div`
   text-align: center;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
-  transition: background-color 500ms, border-bottom-width 100ms;
+  transition:
+    background-color 500ms,
+    border-bottom-width 100ms;
   padding-bottom: calc(0.5rem + 4px);
   white-space: nowrap;
   overflow-x: hidden;
@@ -153,7 +162,13 @@ interface TabContentProps {
 }
 
 const TabContent = styled.div<TabContentProps>`
-  padding: ${(props) => (props?.isDenseContent === true ? `0rem` : `1rem 0`)} > h1, > h2, > h3, > h4, > ul, > ol {
+  padding:
+    ${(props) => (props?.isDenseContent === true ? `0rem` : `1rem 0`)} > h1,
+    > h2,
+    > h3,
+    > h4,
+    > ul,
+    > ol {
     margin-top: 0;
   }
 `;

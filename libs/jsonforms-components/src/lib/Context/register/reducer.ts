@@ -27,9 +27,17 @@ export function registerReducer(
     }
     case ADD_REGISTER_DATA_ACTION: {
       const { registerData } = state;
-      registerData.push(action.payload);
+      const payload = action.payload;
+      const existingIndex = registerData.findIndex(
+        (r) => (payload.urn && r.urn === payload.urn) || (payload.url && r.url === payload.url),
+      );
 
-      return { ...state, registerData: registerData };
+      const updatedData =
+        existingIndex >= 0
+          ? registerData.map((r, i) => (i === existingIndex ? payload : r))
+          : [...registerData, payload];
+
+      return { ...state, registerData: updatedData };
     }
     case ADD_NO_ANONYMOUS_ACTION: {
       return { ...state, nonAnonymous: action.payload.nonAnonymous || [] };

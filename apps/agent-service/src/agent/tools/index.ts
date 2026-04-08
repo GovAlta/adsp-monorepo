@@ -28,11 +28,12 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
   const { schemaDefinitionTool } = await createSchemaTools();
   const { rendererCatalogTool } = await createRendererCatalogTools({ logger });
 
-  const { dataRegisterListTool, dataRegisterCreateTool, dataRegisterUpdateTool } = await createDataRegisterTools({
-    logger,
-    directory,
-    tokenProvider,
-  });
+  const { dataRegisterListTool, dataRegisterCreateTool, dataRegisterGetTool, dataRegisterUpdateTool } =
+    await createDataRegisterTools({
+      logger,
+      directory,
+      tokenProvider,
+    });
 
   return {
     fileDownloadTool,
@@ -46,6 +47,7 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     rendererCatalogTool,
     dataRegisterListTool,
     dataRegisterCreateTool,
+    dataRegisterGetTool,
     dataRegisterUpdateTool,
   };
 }

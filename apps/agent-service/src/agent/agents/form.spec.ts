@@ -306,7 +306,18 @@ describe('formGenerationAgent', () => {
   it('includes data register tool input requirements', () => {
     const instructions = formGenerationAgent.instructions;
     expect(instructions).toContain('dataRegisterCreateTool: must include name and data');
+    expect(instructions).toContain('dataRegisterGetTool: must include name');
     expect(instructions).toContain('dataRegisterUpdateTool: must include name and data');
+  });
+
+  it('instructs to retrieve current values and confirm before updating registers', () => {
+    const instructions = formGenerationAgent.instructions;
+    expect(instructions).toContain('Updating Data Register Values (MANDATORY before updating)');
+    expect(instructions).toContain('dataRegisterGetTool');
+    expect(instructions).toContain('Confirm before updating');
+    expect(instructions).toContain(
+      'NEVER call `dataRegisterUpdateTool` without first retrieving the current values and getting user confirmation',
+    );
   });
 
   it('retains core instruction sections alongside examples', () => {
@@ -336,6 +347,7 @@ describe('formGenerationAgent', () => {
       'rendererCatalogTool',
       'dataRegisterListTool',
       'dataRegisterCreateTool',
+      'dataRegisterGetTool',
       'dataRegisterUpdateTool',
     ]);
   });
