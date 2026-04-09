@@ -243,7 +243,6 @@ export function AddEditFormDefinitionEditor({
   const [showNew, setShowNew] = useState(false);
 
   const [showSelectedRoles, setShowSelectedRoles] = useState(false);
-  const [showInReviewSummary, setShowInReviewSummary] = useState(false);
 
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
@@ -948,7 +947,6 @@ export function AddEditFormDefinitionEditor({
                   </div>
                 </BorderBottom>
               </Tab>
-
             </Tabs>
 
             <FinalButtonPadding>
@@ -1035,7 +1033,6 @@ export function AddEditFormDefinitionEditor({
                           setData(data);
                         }}
                         data={data}
-                        useReviewRenderers={showInReviewSummary}
                       />
                     </GoabFormItem>
                   </ContextProvider>
@@ -1052,20 +1049,6 @@ export function AddEditFormDefinitionEditor({
                   <PDFPreviewTemplateCore formName={definition.name} />
                 </Tab>
               ) : null}
-              <Tab label="Review summary" data-testid="review-summary-tab">
-                <style>{`[data-testid="review-summary-tab"] goa-button { display: none !important; }`}</style>
-                <FormPreviewScrollPane>
-                  <GoabFormItem error={schemaError} label="">
-                    <JSONFormPreviewer
-                      onChange={({ data }) => {
-                        setData(data);
-                      }}
-                      data={data}
-                      useReadOnlyMode={true}
-                    />
-                  </GoabFormItem>
-                </FormPreviewScrollPane>
-              </Tab>
             </Tabs>
           </FormPreviewContainer>
         </FlexRow>
