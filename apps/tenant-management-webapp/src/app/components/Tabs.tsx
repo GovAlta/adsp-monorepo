@@ -1,4 +1,4 @@
-import React, { Children, ReactNode, useState, useEffect, useRef } from 'react';
+import React, { Children, ReactNode, useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 /**
@@ -20,11 +20,10 @@ interface TabsProps {
 
 function Tabs(props: TabsProps): JSX.Element {
   const [activeTabIndex, setActiveTabIndex] = useState(props.activeIndex ?? 0);
-  const visitedTabs = useRef<Set<number>>(new Set([props.activeIndex ?? 0]));
 
   function selectTab(index: number) {
     setActiveTabIndex(index);
-    visitedTabs.current.add(index);
+
     if (typeof props.changeTabCallback === 'function') {
       props.changeTabCallback(index);
     }
@@ -58,13 +57,8 @@ function Tabs(props: TabsProps): JSX.Element {
       </SCTabs>
       {
         // eslint-disable-next-line
-        filteredChildren.map((_child: any, index: number) => {
-          if (!visitedTabs.current.has(index)) return null;
-          return (
-            <div key={index} style={{ display: index === activeTabIndex ? 'block' : 'none' }}>
-              {_child}
-            </div>
-          );
+        filteredChildren.filter((_child: any, index: number) => {
+          return index === activeTabIndex;
         })
       }
     </>
