@@ -44,7 +44,7 @@ class FormsPage {
   }
 
   formSubmitButton() {
-    return cy.xpath('//goa-button[@testid="stepper-submit-btn"]');
+    return cy.xpath('//goa-button[@type="primary" and text()="Submit" and not(@disabled)]');
   }
 
   formListWithDetailButton(label) {
@@ -69,38 +69,38 @@ class FormsPage {
 
   formSummaryPageControlValues(pageName) {
     return cy.xpath(
-      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/parent::div/following-sibling::*//*[contains(@data-testid, "review-control")]`
+      `//div[text()="${pageName}"]/parent::div/following-sibling::*//*[contains(@data-testid, "review-control")]`
     );
   }
 
   //pageName is case sensitive and arrayName is lower case
   formSummaryPageListWithDetailItems(pageName, arrayName) {
     return cy.xpath(
-      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${arrayName}")]/ancestor::td//goa-table/table/tbody/tr`
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${arrayName}")]/ancestor::td//goa-table/table/tbody/tr`
     );
   }
 
   formSummaryPageSectionRows(pageName) {
     return cy.xpath(
-      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr`
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr`
     );
   }
 
   formSummaryPageSectionRowLabel(pageName, label) {
     return cy.xpath(
-      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]`
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]`
     );
   }
 
   formSummaryPageSectionRowValue(pageName, label) {
     return cy.xpath(
-      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]/ancestor::td//div[contains(@data-testid,"review-value")]`
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]/ancestor::td//div[contains(@data-testid,"review-value")]`
     );
   }
 
   formSummaryPageValidationError(pageName, label) {
     return cy.xpath(
-      `//*[@data-testid="summary_step-content"]//h3[text()="Summary"]/following-sibling::div//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]//div[text()="${label}"]/ancestor::td//goa-form-item[@error]`
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]//div[text()="${label}"]/ancestor::td//goa-form-item[@error]`
     );
   }
 
@@ -120,6 +120,38 @@ class FormsPage {
 
   ProcessingYourApplicationCallout() {
     return cy.xpath('//goa-callout[contains(@heading,"We\'re processing your application") and @type="success"]');
+  }
+
+  formTitle() {
+    return cy.get('goa-text[size="heading-xl"]');
+  }
+
+  formApplicationProgressText() {
+    return cy.xpath('//h3[text()="Application Progress"]/following-sibling::div[1]/div[1]');
+  }
+
+  formTaskLink(taskName) {
+    return cy.xpath(`//a[@href and text()="${taskName}"]`);
+  }
+
+  formTaskStatus(taskName) {
+    return cy.xpath(`//a[@href and text()="${taskName}"]/parent::td/following-sibling::td//goa-badge`);
+  }
+
+  formStepIndicator() {
+    return cy.xpath('//h3[contains(text(),"Step")]');
+  }
+
+  formBackToOverviewLink() {
+    return cy.xpath('//div[@class="back-link" and text()="Back to application overview"]');
+  }
+
+  formTaskListStepPageNextButton() {
+    return cy.xpath('//goa-button[@testid="pages-save-continue-btn"]');
+  }
+
+  formTaskListAllLinks() {
+    return cy.xpath('//tbody//a[@href]');
   }
 }
 
