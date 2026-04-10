@@ -1,4 +1,4 @@
-import { AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceDirectory, TokenProvider, User, EventService } from '@abgov/adsp-service-sdk';
 import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
 import type { RequestContext } from '@mastra/core/request-context';
@@ -79,6 +79,7 @@ export class AgentServiceConfiguration {
     private logger: Logger,
     private directory: ServiceDirectory,
     private tokenProvider: TokenProvider,
+    private eventService: EventService,
     tenantId: AdspId,
     tenant: AgentConfigurations,
     core: AgentConfigurations,
@@ -95,21 +96,23 @@ export class AgentServiceConfiguration {
         tokenProvider: this.tokenProvider,
       });
 
-      const sharedMemory = new Memory();
+      const storage = environment.DB_HOST
+        ? new PostgresStore({
+            host: environment.DB_HOST,
+            port: environment.DB_PORT,
+            user: environment.DB_USER,
+            password: environment.DB_PASSWORD,
+            ssl: environment.DB_TLS,
+          })
+        : new LibSQLStore({
+            id: 'memoryStore',
+            url: ':memory:',
+          });
+
+      const sharedMemory = new Memory({ storage, options: { lastMessages: 40 } });
 
       this.mastra = new Mastra({
-        storage: environment.DB_HOST
-          ? new PostgresStore({
-              host: environment.DB_HOST,
-              port: environment.DB_PORT,
-              user: environment.DB_USER,
-              password: environment.DB_PASSWORD,
-              ssl: environment.DB_TLS,
-            })
-          : new LibSQLStore({
-              id: 'memoryStore',
-              url: ':memory:',
-            }),
+        storage,
         agents: {
           ...Object.entries(configuration)
             .sort(([_xk, x], [_yk, y]) => (x?.agents?.length || 0) - (y?.agents?.length || 0)) // Sort the agents with agents to later.
@@ -206,9 +209,19 @@ export class AgentServiceConfiguration {
       });
       this.brokers = Object.entries(this.mastra.listAgents()).reduce((brokers, [key, agent]) => {
         const agentConfiguration: Partial<AgentConfiguration> = configuration[key] || {};
+        const broker = new AgentBroker(
+          this.logger,
+          tenantId,
+          inputProcessors,
+          agent,
+          agentConfiguration,
+          fileServiceClient,
+          this.eventService,
+          key,
+        );
         return {
           ...brokers,
-          [key]: new AgentBroker(this.logger, tenantId, inputProcessors, agent, agentConfiguration, fileServiceClient),
+          [key]: broker,
         };
       }, {});
 
@@ -219,6 +232,7 @@ export class AgentServiceConfiguration {
         memory: sharedMemory,
         clearWorkspace: (tenantId: string, userId: string, threadId: string) =>
           clearThreadWorkspace(this.logger, { tenantId, userId, threadId }),
+        eventService: this.eventService,
       });
     } catch (err) {
       this.logger.error('Error encountered initializing agent brokers.', {

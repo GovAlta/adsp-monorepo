@@ -101,8 +101,44 @@ export const formGenerationAgent: AgentConfiguration = {
 
     ### Behavioral Rules for Data Registers
     - When a user describes a list of values for a dropdown (e.g. "the options should be Monday through Friday"), ask: "Would you like to create a data register for these values so they can be reused in other forms, or just use a static enum?"
+    - Use \`dataRegisterGetTool\` to retrieve the current values of a register before making any changes. This is MANDATORY before calling \`dataRegisterUpdateTool\`.
     - Use \`dataRegisterUpdateTool\` when the user wants to add, remove, or change values in an existing register.
     - Register names should be kebab-case (e.g. \`weekdays\`, \`goa-ministries\`, \`province-codes\`).
+
+    ### Updating Data Register Values (MANDATORY before updating)
+    When the user wants to modify values in an existing register (add, remove, or change items), you MUST follow this exact flow:
+
+    **Step 1 — Retrieve current values:**
+    Call \`dataRegisterGetTool\` with the register name to fetch the current data.
+    Present the current values to the user: "The **{name}** register currently contains: {values}."
+
+    **Step 2 — Compute the new values:**
+    Based on the user's request (append, remove, replace), compute the full updated list.
+    - For append: merge the existing values with the new values.
+    - For removal: filter out the specified values from the existing list and keep all the rest.
+    - For replacement: use the new values provided by the user.
+
+    **Step 3 — Confirm before updating:**
+    Present the proposed changes to the user in a clear format:
+    - Show which values are being added (if any)
+    - Show which values are being removed (if any)
+    - Show the complete final list that will remain after the change
+    Then ask: "Does this look right? I'll update the register with these values."
+
+    **Step 4 — Apply the update:**
+    Only after the user confirms, call \`dataRegisterUpdateTool\` with the full updated list (all remaining values).
+
+    NEVER call \`dataRegisterUpdateTool\` without first retrieving the current values and getting user confirmation.
+
+    ### Removing Items from a Data Register
+    When a user asks to remove one or more items from a data register (e.g. "remove Rally from event types"), treat this as an update:
+    1. Call \`dataRegisterGetTool\` to get the current values.
+    2. Filter out the item(s) the user wants removed.
+    3. Present the updated list showing which items will be removed and what will remain.
+       Example: "I'll remove **Rally** from the **event-types** register. The updated list will be: Festival, Concert, Sports Tournament, Farmers Market, Community Gathering, Charity Run, Other. Does this look right?"
+    4. After confirmation, call \`dataRegisterUpdateTool\` with the filtered list.
+
+    Do NOT tell the user you cannot remove items. You can always update a register with the remaining values to effectively remove items.
 
     ### Collecting Data Register Values from the User (MANDATORY before creating)
     When the user wants to create a new data register, you MUST follow this exact conversational flow BEFORE calling \`dataRegisterCreateTool\`.
@@ -182,6 +218,7 @@ export const formGenerationAgent: AgentConfiguration = {
     - formConfigurationUpdateTool: include at least one field to update; usually include both dataSchema and uiSchema together.
     - dataRegisterListTool: call with {} only.
     - dataRegisterCreateTool: must include name and data; description is optional.
+    - dataRegisterGetTool: must include name.
     - dataRegisterUpdateTool: must include name and data.
 
     ### schemaDefinitionTool
@@ -317,9 +354,11 @@ ${formExamplesText}
     'formConfigurationRetrievalTool',
     'formConfigurationUpdateTool',
     'fileDownloadTool',
+    'documentExtractTool',
     'rendererCatalogTool',
     'dataRegisterListTool',
     'dataRegisterCreateTool',
+    'dataRegisterGetTool',
     'dataRegisterUpdateTool',
   ],
   userRoles: ['urn:ads:platform:configuration-service:configuration-admin'],

@@ -947,7 +947,6 @@ export function AddEditFormDefinitionEditor({
                   </div>
                 </BorderBottom>
               </Tab>
-
             </Tabs>
 
             <FinalButtonPadding>

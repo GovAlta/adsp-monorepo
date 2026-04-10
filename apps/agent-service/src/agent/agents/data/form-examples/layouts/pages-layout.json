@@ -142,6 +142,7 @@
     "Use `toAppOverviewLabel` to customize the back link text (e.g. 'Back to task list')",
     "Set `hideProgress: true` to hide completion indicators on the Task List",
     "Use `additionalInstructions` to display guidance text on the Task List page",
-    "Set `showInTaskList: false` on a Category to hide it from the Task List — useful for sub-steps that should be part of a parent task's flow"
+    "Set `showInTaskList: false` on a Category to hide it from the Task List — useful for sub-steps that should be part of a parent task's flow",
+    "CRITICAL: Category elements can ONLY be direct first-level children of the Categorization `elements` array. Do NOT wrap Categories in VerticalLayout, Group, or any other layout — only Category is valid at the first level inside a Categorization"
   ]
 }

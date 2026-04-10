@@ -268,6 +268,44 @@
         }
       },
       "explanation": "If the condition scope resolves to undefined, JSON Schema validation succeeds and the condition evaluates to true — the rule always fires. Make sure the condition scope matches an actual property name in the data schema."
+    },
+    {
+      "id": "category-not-first-level",
+      "name": "Category Not a Direct Child of Categorization",
+      "description": "Wrapping Category elements inside a layout (e.g. VerticalLayout, Group) within a Categorization instead of placing them as direct first-level children",
+      "severity": "critical",
+      "bad": {
+        "uiSchema": {
+          "type": "Categorization",
+          "options": { "variant": "pages" },
+          "elements": [
+            {
+              "type": "VerticalLayout",
+              "elements": [
+                {
+                  "type": "Category",
+                  "label": "Step 1",
+                  "elements": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "good": {
+        "uiSchema": {
+          "type": "Categorization",
+          "options": { "variant": "pages" },
+          "elements": [
+            {
+              "type": "Category",
+              "label": "Step 1",
+              "elements": []
+            }
+          ]
+        }
+      },
+      "explanation": "Categories can ONLY be placed as direct first-level children of a Categorization's `elements` array. Wrapping them in VerticalLayout, HorizontalLayout, Group, or any other layout element will cause them not to render as pages/steps. Only Category elements are valid at the first level inside a Categorization."
     }
   ],
 

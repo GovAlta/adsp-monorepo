@@ -23,6 +23,7 @@ function Tabs(props: TabsProps): JSX.Element {
 
   function selectTab(index: number) {
     setActiveTabIndex(index);
+
     if (typeof props.changeTabCallback === 'function') {
       props.changeTabCallback(index);
     }
@@ -131,7 +132,9 @@ const SCTab = styled.div`
   text-align: center;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
-  transition: background-color 500ms, border-bottom-width 100ms;
+  transition:
+    background-color 500ms,
+    border-bottom-width 100ms;
   padding-bottom: calc(0.5rem + 4px);
   white-space: nowrap;
   overflow-x: hidden;
@@ -153,7 +156,13 @@ interface TabContentProps {
 }
 
 const TabContent = styled.div<TabContentProps>`
-  padding: ${(props) => (props?.isDenseContent === true ? `0rem` : `1rem 0`)} > h1, > h2, > h3, > h4, > ul, > ol {
+  padding:
+    ${(props) => (props?.isDenseContent === true ? `0rem` : `1rem 0`)} > h1,
+    > h2,
+    > h3,
+    > h4,
+    > ul,
+    > ol {
     margin-top: 0;
   }
 `;

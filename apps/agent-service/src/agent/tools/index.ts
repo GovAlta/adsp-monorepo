@@ -3,6 +3,7 @@ import { Logger } from 'winston';
 import { createFormConfigurationTools } from './formConfiguration';
 import { createSchemaTools } from './schema';
 import { createFileTools } from './file';
+import { createDocumentTools } from './document';
 import { createRendererCatalogTools } from './rendererCatalog';
 import { createFormTools } from './form';
 import { createDataRegisterTools } from './dataRegister';
@@ -15,6 +16,7 @@ interface ToolsProps {
 
 export async function createTools({ logger, directory, tokenProvider }: ToolsProps) {
   const { fileDownloadTool, fileCopyTool } = await createFileTools({ logger, directory, tokenProvider });
+  const { documentExtractTool } = await createDocumentTools({ logger, directory, tokenProvider });
 
   const { formConfigurationRetrievalTool, formConfigurationUpdateTool } = await createFormConfigurationTools({
     logger,
@@ -26,15 +28,17 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
   const { schemaDefinitionTool } = await createSchemaTools();
   const { rendererCatalogTool } = await createRendererCatalogTools({ logger });
 
-  const { dataRegisterListTool, dataRegisterCreateTool, dataRegisterUpdateTool } = await createDataRegisterTools({
-    logger,
-    directory,
-    tokenProvider,
-  });
+  const { dataRegisterListTool, dataRegisterCreateTool, dataRegisterGetTool, dataRegisterUpdateTool } =
+    await createDataRegisterTools({
+      logger,
+      directory,
+      tokenProvider,
+    });
 
   return {
     fileDownloadTool,
     fileCopyTool,
+    documentExtractTool,
     formConfigurationRetrievalTool,
     formConfigurationUpdateTool,
     formDataRetrievalTool,
@@ -43,6 +47,7 @@ export async function createTools({ logger, directory, tokenProvider }: ToolsPro
     rendererCatalogTool,
     dataRegisterListTool,
     dataRegisterCreateTool,
+    dataRegisterGetTool,
     dataRegisterUpdateTool,
   };
 }

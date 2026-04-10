@@ -59,7 +59,8 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   const user = useRegisterUser();
 
-  const initialValue = schema.default ?? (user && autoPopulateValue(user, props)) ?? data ?? '';
+  const initialValue = data;
+  const [manualInput, setManualInput] = useState<boolean>(false);
   const [localValue, setLocalValue] = useState<string>(initialValue);
 
   const debouncedValue = useDebounce(localValue, 300);
@@ -72,15 +73,14 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
     if (!user || data) return;
     const autoPopulatedValue = schema.default || (user && autoPopulateValue(user, props));
 
-    if (autoPopulatedValue && autoPopulatedValue !== data) {
+    if (autoPopulatedValue && autoPopulatedValue !== data && !manualInput) {
       handleChange(props.path, autoPopulatedValue);
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schema, user]);
+  }, [user]);
 
   useEffect(() => {
-    if (typeof handleChange === 'function' && schema?.default !== undefined) {
+    if (typeof handleChange === 'function' && schema?.default !== undefined && !manualInput) {
       handleChange(props.path, schema.default);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -189,9 +189,8 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
             if (schema && schema.title === sinTitle && detail.value !== '') {
               formattedValue = formatSin(detail.value);
             }
-
             setLocalValue(formattedValue);
-
+            setManualInput(true);
             if (isVisited === false && setIsVisited) {
               setIsVisited();
             }
