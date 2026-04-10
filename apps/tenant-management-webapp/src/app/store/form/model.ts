@@ -26,10 +26,6 @@ export interface FormDefinition {
   securityClassification?: SecurityClassification;
   resourceTags?: FormResourceTagResult[];
   dryRun?: boolean;
-  ministry?: string;
-  registeredId?: string;
-  programName?: string | null;
-  actsOfLegislation?: string[];
 }
 
 export interface FormResourceTagResponse {
@@ -74,7 +70,6 @@ export const defaultFormDefinition: FormDefinition = {
   formDraftUrlTemplate: '',
   anonymousApply: false,
   oneFormPerApplicant: true,
-  registeredId: null,
   scheduledIntakes: false,
   dispositionStates: [],
   submissionRecords: false,
@@ -82,8 +77,6 @@ export const defaultFormDefinition: FormDefinition = {
   queueTaskToProcess: { queueName: '', queueNameSpace: '' } as QueueTaskToProcess,
   supportTopic: false,
   securityClassification: SecurityClassification.ProtectedB,
-  programName: null,
-  actsOfLegislation: [],
 };
 export interface Stream {
   namespace: string;
@@ -132,7 +125,6 @@ export interface FormState {
   socket: Socket;
 
   formResourceTag: FormResourceTag;
-  registerIdDefinition: Record<string, FormDefinition>;
 }
 
 export interface FormResourceTag {
