@@ -21,6 +21,7 @@ import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormSt
 import { useRegisterUser } from '../../Context/register';
 import { JsonFormRegisterProvider } from '../../Context/register';
 import { REQUIRED_PROPERTY_ERROR } from '../../common/Constants';
+import { useDebounce } from '../../util/useDebounce';
 
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 import { autoPopulateValue } from '../../util/autoPopulate';
@@ -46,6 +47,24 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
   const currentCategory = stepperState?.categories?.[stepperState?.activeId];
   const showReviewLink = currentCategory?.showReviewPageLink;
 
+  const [localValue, setLocalValue] = useState<string>(data);
+
+  const debouncedValue = useDebounce(localValue, 300);
+
+  /* istanbul ignore next */
+  useEffect(() => {
+    if (debouncedValue === data) return;
+    // Only sync if debouncedValue differs from data and is not initial empty state
+    if (debouncedValue !== data && (debouncedValue !== '' || data !== undefined)) {
+      onChangeForInputControl({
+        name: '',
+        value: debouncedValue,
+        controlProps: props as ControlProps,
+      });
+    }
+  }, [debouncedValue]);
+
+  const [manualInput, setManualInput] = useState<boolean>(false);
   const [isVisited, setIsVisited] = useState(false);
 
   useEffect(() => {
@@ -70,7 +89,7 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
     if (!user || data) return;
     const autoPopulatedValue = schema.default || (user && autoPopulateValue(user, props));
 
-    if (autoPopulatedValue && autoPopulatedValue !== data) {
+    if (autoPopulatedValue && autoPopulatedValue !== data && !manualInput) {
       handleChange(props.path, autoPopulatedValue);
     }
 
@@ -104,14 +123,11 @@ export const GoAEmailInput = (props: GoAEmailControlProps): JSX.Element => {
               disabled={!enabled}
               readonly={readOnly}
               onChange={(detail: GoabInputOnChangeDetail) => {
+                setManualInput(true);
                 if (!isVisited) {
                   setIsVisited(true);
                 }
-                onChangeForInputControl({
-                  name: detail.name,
-                  value: detail.value,
-                  controlProps: props as ControlProps,
-                });
+                setLocalValue(detail.value);
               }}
               onBlur={(detail: GoabInputOnBlurDetail) => {
                 if (!isVisited) {
