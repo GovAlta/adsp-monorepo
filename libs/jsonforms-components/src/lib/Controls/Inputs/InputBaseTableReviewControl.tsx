@@ -180,6 +180,13 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
 
   // eslint-disable-next-line
   const stepId = uischema.options?.stepId;
+  const showInlineValue =
+    reviewText === null ||
+    reviewText === undefined ||
+    typeof reviewText === 'string' ||
+    typeof reviewText === 'number' ||
+    React.isValidElement(reviewText) ||
+    (Array.isArray(reviewText) && reviewText.length === 0);
 
   return (
     <tr data-testid={`input-base-table-${label}-row`}>
@@ -196,8 +203,8 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
           )}
         </ReviewHeader>
         <ReviewValue>
-          {typeof reviewText === 'string' || typeof reviewText === 'number' || React.isValidElement(reviewText) ? (
-            <div data-testid={`review-value-${label}`}>{reviewText}</div>
+          {showInlineValue ? (
+            <div data-testid={`review-value-${label}`}>{reviewText ?? ''}</div>
           ) : (
             <JsonFormsDispatch
               data-testid={`jsonforms-object-list-defined-elements-dispatch`}

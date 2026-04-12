@@ -23,7 +23,7 @@ import {
   updateConfigurationDefinition,
   replaceConfigurationDataAction,
   deleteConfigurationDefinition,
-  getConfigurationDefinitions,
+  updateRegistersLocalAction,
 } from '@store/configuration/action';
 import { DATA_REGISTER_NAMESPACE } from '@store/configuration/model';
 import { REGISTER_DATA_SCHEMA, parseUrn, urnCompare, validateRegisterJson } from './utils';
@@ -34,9 +34,11 @@ interface RegisterItemProps {
   entry: RegisterConfigData;
   isSelected: boolean;
   onToggle: (entry: RegisterConfigData | null) => void;
+  onDelete: (urn: string) => void;
+  onUpdate: (urn: string, data: RegisterConfigData['data']) => void;
 }
 
-const RegisterItem = ({ entry, isSelected, onToggle }: RegisterItemProps): JSX.Element => {
+const RegisterItem = ({ entry, isSelected, onToggle, onDelete, onUpdate }: RegisterItemProps): JSX.Element => {
   const dispatch = useDispatch<AppDispatch>();
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -81,8 +83,7 @@ const RegisterItem = ({ entry, isSelected, onToggle }: RegisterItemProps): JSX.E
         false,
       ),
     );
-    // Refetch register data from the backend so Redux stays in sync.
-    dispatch(getConfigurationDefinitions());
+    onUpdate(entry.urn, parsed);
     setIsEditing(false);
   };
 
@@ -173,8 +174,7 @@ const RegisterItem = ({ entry, isSelected, onToggle }: RegisterItemProps): JSX.E
           onCancel={() => setShowDeleteConfirm(false)}
           onDelete={() => {
             dispatch(deleteConfigurationDefinition(`${namespace || DATA_REGISTER_NAMESPACE}:${name}`));
-            // Refetch register data from the backend so Redux stays in sync.
-            dispatch(getConfigurationDefinitions());
+            onDelete(entry.urn);
             setShowDeleteConfirm(false);
           }}
         />
@@ -188,9 +188,6 @@ export const DataRegisters = (): JSX.Element => {
   const registerData = useSelector(selectRegisterData) as RegisterConfigData[];
   const isFetching = useSelector((state: RootState) => state.configuration.isFetchingRegisterData);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newDescription, setNewDescription] = useState('');
-  const [newData, setNewRegisterData] = useState('');
   const [selectedEntry, setSelectedEntry] = useState<RegisterConfigData | null>(null);
   const [urnCopied, setUrnCopied] = useState(false);
 
@@ -199,20 +196,13 @@ export const DataRegisters = (): JSX.Element => {
     setUrnCopied(false);
   };
 
-  const handleAddOpen = () => {
-    setNewName('');
-    setNewDescription('');
-    setNewRegisterData('');
-    setIsAddModalOpen(true);
-  };
-
   const handleAddSave = (data: RegisterDataType | null, name: string, description: string) => {
     dispatch(
       updateConfigurationDefinition(
         {
           name,
           namespace: DATA_REGISTER_NAMESPACE,
-          description: description,
+          description,
           configurationSchema: REGISTER_DATA_SCHEMA as never,
         },
         false,
@@ -229,13 +219,28 @@ export const DataRegisters = (): JSX.Element => {
         true,
       ),
     );
-    // Refetch register data from the backend so Redux stays in sync.
-    dispatch(getConfigurationDefinitions());
+    const newEntry: RegisterConfigData = {
+      urn: `urn:ads:platform:configuration:v2:/configuration/${DATA_REGISTER_NAMESPACE}/${name}`,
+      description,
+      data,
+    };
+    dispatch(updateRegistersLocalAction([...(registerData ?? []), newEntry]));
     setIsAddModalOpen(false);
   };
 
-  const handleAddCancel = () => {
-    setIsAddModalOpen(false);
+  const handleDelete = (urn: string) => {
+    if (selectedEntry?.urn === urn) {
+      setSelectedEntry(null);
+    }
+    dispatch(updateRegistersLocalAction((registerData ?? []).filter((e) => e.urn !== urn)));
+  };
+
+  const handleUpdate = (urn: string, data: RegisterConfigData['data']) => {
+    const updated = (registerData ?? []).map((e) => (e.urn === urn ? { ...e, data } : e));
+    dispatch(updateRegistersLocalAction(updated));
+    if (selectedEntry?.urn === urn) {
+      setSelectedEntry((prev) => (prev ? { ...prev, data } : null));
+    }
   };
 
   const selectedName = selectedEntry ? parseUrn(selectedEntry.urn ?? '').name : null;
@@ -243,7 +248,7 @@ export const DataRegisters = (): JSX.Element => {
   return (
     <>
       <GoabButtonGroup alignment="end" mt="m">
-        <GoabButton type="secondary" onClick={handleAddOpen} testId="data-register-add-btn">
+        <GoabButton type="secondary" onClick={() => setIsAddModalOpen(true)} testId="data-register-add-btn">
           Add register data
         </GoabButton>
       </GoabButtonGroup>
@@ -276,6 +281,8 @@ export const DataRegisters = (): JSX.Element => {
                   entry={entry}
                   isSelected={selectedEntry?.urn === entry.urn}
                   onToggle={handleToggle}
+                  onDelete={handleDelete}
+                  onUpdate={handleUpdate}
                 />
               ))}
             </tbody>
@@ -312,7 +319,7 @@ export const DataRegisters = (): JSX.Element => {
           </DataRegisterEntryDetail>
         </>
       )}
-      <AddRegisterDataModal open={isAddModalOpen} onCancel={handleAddCancel} onSave={handleAddSave} />
+      <AddRegisterDataModal open={isAddModalOpen} onCancel={() => setIsAddModalOpen(false)} onSave={handleAddSave} />
     </>
   );
 };

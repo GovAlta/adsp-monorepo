@@ -375,7 +375,7 @@ Then('the login link is copied to the clipboard', function () {
 });
 
 Then(
-  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}',
+  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}',
   function (
     access,
     agent,
@@ -392,6 +392,7 @@ Then(
     pdf,
     script,
     status,
+    sharepoint,
     task,
     value
   ) {
@@ -411,6 +412,7 @@ Then(
       'The PDF service provides',
       'The script services provides',
       'The status service allows',
+      'The SharePoint service allows',
       'The task service provides',
       'The value service provides',
     ];
@@ -430,6 +432,7 @@ Then(
       pdf,
       script,
       status,
+      sharepoint,
       task,
       value,
     ];

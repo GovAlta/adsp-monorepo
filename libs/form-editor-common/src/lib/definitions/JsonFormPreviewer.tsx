@@ -1,4 +1,4 @@
-import { GoARenderers, GoACells, JsonFormRegisterProvider } from '@abgov/jsonforms-components';
+import { GoARenderers, GoAReviewRenderers, GoACells, JsonFormRegisterProvider } from '@abgov/jsonforms-components';
 import { GoabCallout } from '@abgov/react-components';
 import { ajv } from '@lib/validation/checkInput';
 import { JsonForms } from '@jsonforms/react';
@@ -14,6 +14,7 @@ import { RegisterConfigData } from '../../../../jsonforms-components/src';
 interface JSONFormPreviewerProps {
   data: unknown;
   onChange: ({ data }: { data: unknown }) => void;
+  useReviewRenderers?: boolean;
 }
 
 interface User {
@@ -24,7 +25,7 @@ interface User {
   preferredUsername: string;
 }
 
-export const JSONFormPreviewer = ({ data, onChange }: JSONFormPreviewerProps): JSX.Element => {
+export const JSONFormPreviewer = ({ data, onChange, useReviewRenderers = false }: JSONFormPreviewerProps): JSX.Element => {
   // Resolved data schema (with refs inlined) is used with JsonForms since it doesn't handle remote refs.
   const dataSchema = useSelector((state: RootState) => state.form.editor.resolvedDataSchema);
   const uiSchema = useSelector((state: RootState) => state.form.editor.uiSchema);
@@ -51,7 +52,7 @@ export const JSONFormPreviewer = ({ data, onChange }: JSONFormPreviewerProps): J
       >
         <JsonForms
           ajv={ajv}
-          renderers={GoARenderers}
+          renderers={useReviewRenderers ? GoAReviewRenderers : GoARenderers}
           cells={GoACells}
           onChange={onChange}
           data={data}

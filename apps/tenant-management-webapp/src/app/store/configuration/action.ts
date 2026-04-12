@@ -56,6 +56,7 @@ export const RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION =
 
 export const FETCH_REGISTER_DATA_ACTION = 'configuration/FETCH_REGISTER_DATA';
 export const FETCH_REGISTER_DATA_SUCCESS_ACTION = 'configuration/FETCH_REGISTER_DATA_SUCCESS_ACTION';
+export const UPDATE_REGISTERS_LOCAL_ACTION = 'configuration/UPDATE_REGISTERS_LOCAL';
 export const CLOSE_TEMPLATE_ACTION = 'configuration/CLOSE_TEMPLATE_ACTION';
 
 export const UPDATE_LATEST_REVISION_SUCCESS_ACTION = 'configuration/UPDATE_LATEST_REVISION_SUCCESS_ACTION';
@@ -192,6 +193,16 @@ export interface FetchRegisterDataSuccessAction {
   anonymousRead: string[];
 }
 
+export interface UpdateRegistersLocalAction {
+  type: typeof UPDATE_REGISTERS_LOCAL_ACTION;
+  payload: RegisterData;
+}
+
+export const updateRegistersLocalAction = (registers: RegisterData): UpdateRegistersLocalAction => ({
+  type: UPDATE_REGISTERS_LOCAL_ACTION,
+  payload: registers,
+});
+
 export interface ConnectConfigurationUpdatesAction {
   type: typeof CONNECT_CONFIGURATION_UPDATES_ACTION;
 }
@@ -239,6 +250,7 @@ export type ConfigurationDefinitionActionTypes =
   | FetchConfigurationActionRevisionAction
   | FetchRegisterDataAction
   | FetchRegisterDataSuccessAction
+  | UpdateRegistersLocalAction
   | FetchConfigurationActiveRevisionSuccessAction
   | CloseTemplateAction
   | ConnectConfigurationUpdatesAction

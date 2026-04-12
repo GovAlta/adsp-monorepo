@@ -5,6 +5,9 @@
 /tmp
 /out-tsc
 
+docs/.bundle
+docs/vendor
+
 # dependencies
 /node_modules
 

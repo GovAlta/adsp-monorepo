@@ -195,6 +195,64 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
     },
   });
 
+  const dataRegisterGetTool = createTool({
+    id: 'get-data-register',
+    description:
+      'Retrieve the current values of a specific data register by name. Use this to inspect register contents before making changes.',
+    inputSchema: z.object({
+      name: z.string().describe('The name of the register to retrieve (e.g. "weekdays", "event-types").'),
+    }),
+    outputSchema: z.object({
+      name: z.string(),
+      data: z.array(z.union([z.string(), z.record(z.unknown())])),
+    }),
+    execute: async (inputData, { requestContext }: { requestContext: AdspRequestContext }) => {
+      const { name } = inputData;
+      const tenantId = requestContext.get('tenantId');
+
+      try {
+        const dataUrl = new URL(`v2/configuration/${DATA_REGISTER_NAMESPACE}/${name}/latest`, configurationServiceUrl);
+
+        const { data } = await axios.get(dataUrl.href, {
+          params: {
+            tenantId: tenantId?.toString(),
+          },
+          headers: {
+            Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
+          },
+        });
+
+        const registerData = data?.configuration ?? data?.latest ?? data ?? [];
+
+        logger.info(`Retrieved data register '${name}'.`, {
+          context: 'dataRegisterGetTool',
+          tenant: tenantId?.toString(),
+          registerName: name,
+        });
+
+        return {
+          name,
+          data: Array.isArray(registerData) ? registerData : [],
+        };
+      } catch (err) {
+        logger.error(`Failed to retrieve data register '${name}'.`, {
+          context: 'dataRegisterGetTool',
+          tenant: tenantId?.toString(),
+          registerName: name,
+          error: isAxiosError(err)
+            ? {
+                status: err.response?.status,
+                statusText: err.response?.statusText,
+                data: err.response?.data,
+              }
+            : String(err),
+        });
+
+        throw new Error(`Failed to retrieve data register: ${err.message}`);
+      }
+    },
+  });
+
   const dataRegisterUpdateTool = createTool({
     id: 'update-data-register',
     description: 'Update the values of an existing data register. Replaces all current values with the new data.',
@@ -260,5 +318,5 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
     },
   });
 
-  return { dataRegisterListTool, dataRegisterCreateTool, dataRegisterUpdateTool };
+  return { dataRegisterListTool, dataRegisterCreateTool, dataRegisterGetTool, dataRegisterUpdateTool };
 }

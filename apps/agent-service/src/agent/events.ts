@@ -52,6 +52,7 @@ export const ThreadCreatedDefinition: DomainEventDefinition = {
   payloadSchema: {
     type: 'object',
     properties: {
+      threadId: { type: 'string', examples: ['thread-123'] },
       createdBy: userInfoSchema,
     },
   },
@@ -62,7 +63,9 @@ export const ThreadDeletedDefinition: DomainEventDefinition = {
   description: 'Signalled when a thread is deleted.',
   payloadSchema: {
     type: 'object',
-    properties: {},
+    properties: {
+      threadId: { type: 'string', examples: ['thread-123'] },
+    },
   },
 };
 
@@ -158,6 +161,7 @@ export function threadCreated(tenantId: AdspId, threadId: string, agentId: strin
       agentId,
     },
     payload: {
+      threadId,
       createdBy: {
         id: user.id,
         name: user.name,
@@ -178,6 +182,8 @@ export function threadDeleted(tenantId: AdspId, threadId: string): DomainEvent {
     context: {
       threadId,
     },
-    payload: {},
+    payload: {
+      threadId,
+    },
   };
 }

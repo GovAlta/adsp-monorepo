@@ -31,7 +31,7 @@ export const TenantIdp = (): JSX.Element => {
   const [deletedUserIdp, setDeletedUserIdp] = useState(false);
 
   const fetchUserIdState: LoadingState = useSelector((state: RootState) =>
-    findActionState(state, FETCH_USER_ID_BY_EMAIL)
+    findActionState(state, FETCH_USER_ID_BY_EMAIL),
   );
 
   const deleteUserIdpState: LoadingState = useSelector((state: RootState) => findActionState(state, DELETE_USER_IDP));
@@ -55,7 +55,7 @@ export const TenantIdp = (): JSX.Element => {
     dispatch(FetchUserIdByEmail(email));
   };
 
-  const InputUserEmailHandler = (name, value) => {
+  const InputUserEmailHandler = (name: string, value: string) => {
     if (errors['email']) {
       validators.clear();
     }
@@ -99,7 +99,7 @@ export const TenantIdp = (): JSX.Element => {
           name="user-email"
           type="email"
           testId={'user-search-email-input'}
-          onChange={(detail: GoabInputOnChangeDetail) => InputUserEmailHandler}
+          onChange={(detail: GoabInputOnChangeDetail) => InputUserEmailHandler(detail.name, detail.value)}
         ></GoabInput>
       </GoabFormItem>
       <GoabSpacer vSpacing="s"></GoabSpacer>
@@ -169,9 +169,10 @@ export const TenantIdp = (): JSX.Element => {
           {
             // eslint-disable-next-line
             (fetchUserIdState?.data as unknown as any)?.hasDefaultIdpInCore !== true && (
-              <p>The user is NOT linked to the GoA SSO.</p>
+              <p>The related ADSP default IdP link in the core realm is not found.</p>
             )
           }
+
           <GoabSpacer vSpacing="m"></GoabSpacer>
           <GoabButton testId="reset-core-idp-btn" type="secondary" onClick={resetFormHandler}>
             Reset

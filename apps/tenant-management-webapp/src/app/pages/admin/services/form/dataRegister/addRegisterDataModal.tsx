@@ -65,10 +65,31 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
     }
   };
 
+  const parseAndSet = (value: string, selectedSeparator: RegisterDataSeparator) => {
+    if (!value.trim()) {
+      setParsedData(null);
+      setDataError('');
+      return;
+    }
+    if (selectedSeparator === 'json') {
+      const errorMessage = validateRegisterJson(value);
+      if (errorMessage) {
+        setDataError(errorMessage);
+        setParsedData(null);
+      } else {
+        setDataError('');
+        setParsedData(JSON.parse(value) as RegisterDataType);
+      }
+    } else {
+      setDataError('');
+      setParsedData(parseDataBySeparator(value, selectedSeparator));
+    }
+  };
+
   const handleDataChange = (value: string) => {
     setConfigValue(value);
     if (dataError) {
-      setDataError(null);
+      setDataError('');
     }
   };
 
@@ -130,10 +151,9 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
           value={separator}
           testId="data-register-add-data-separator"
           onChange={(detail: GoabDropdownOnChangeDetail) => {
-            setSeparator(detail.value as RegisterDataSeparator);
-            if (dataError) {
-              setDataError('');
-            }
+            const newSeparator = detail.value as RegisterDataSeparator;
+            setSeparator(newSeparator);
+            parseAndSet(configValue, newSeparator);
           }}
           width="100%"
         >
@@ -150,20 +170,7 @@ export const AddRegisterDataModal = ({ open, onCancel, onSave }: AddRegisterData
           width="100%"
           testId="data-register-add-data-input"
           onKeyPress={(detail: GoabTextAreaOnKeyPressDetail) => handleDataChange(detail.value)}
-          onBlur={() => {
-            if (separator !== 'json') {
-              const parsedConfig = parseDataBySeparator(configValue, separator);
-              setParsedData(parsedConfig);
-            } else {
-              const errorMessage = validateRegisterJson(configValue);
-              if (errorMessage) {
-                setDataError(errorMessage);
-                setParsedData(null);
-              } else {
-                setParsedData(JSON.parse(configValue) as RegisterDataType);
-              }
-            }
-          }}
+          onBlur={() => parseAndSet(configValue, separator)}
         />
       </GoabFormItem>
     </GoabModal>
