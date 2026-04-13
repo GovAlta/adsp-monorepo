@@ -21,7 +21,6 @@ import {
   fetchResourcesByTag,
   setSelectedTag,
   deleteResourceTags,
-  resetRegisteredId,
 } from '@store/form/action';
 import { RootState } from '@store/index';
 import { ResourceTagFilterCriteria, ResourceTagResult, Service, Tag, ResourceTag } from '@store/directory/models';
@@ -71,7 +70,6 @@ export const FormDefinitions = ({
   const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries) || null;
   const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
   const selectedTag = useSelector((state: RootState) => state.form?.formResourceTag?.selectedTag as Tag | null);
-  const registerIdDefinition = useSelector((state: RootState) => state.form?.registerIdDefinition);
   const tagResources = formResourceTag.tagResources;
 
   const orderedFormDefinitions = (state: RootState) => {
@@ -190,7 +188,7 @@ export const FormDefinitions = ({
     return null;
   };
 
-  const displayDefinitions = registerIdDefinition ? registerIdDefinition : selectedTag ? tagResources : formDefinitions;
+  const displayDefinitions = selectedTag ? tagResources : formDefinitions;
 
   const filteredDefinitions = useMemo(() => {
     return displayDefinitions || {};
@@ -206,7 +204,6 @@ export const FormDefinitions = ({
           value={selectedTag?.value || ''}
           disabled={false}
           onChange={(detail: GoabDropdownOnChangeDetail) => {
-            dispatch(resetRegisteredId());
             const selectedTagObj = tags.find((tag) => tag?.value === detail.value);
             if (selectedTagObj) {
               dispatch(setSelectedTag(selectedTagObj));
@@ -232,7 +229,6 @@ export const FormDefinitions = ({
         <GoabButton
           testId="add-definition"
           onClick={() => {
-            dispatch(resetRegisteredId());
             setOpenAddFormDefinition(true);
           }}
           mb={'l'}
