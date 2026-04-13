@@ -348,3 +348,7 @@ When('the user clicks Next button on a tasklist step page', function () {
   formsObj.formTaskListStepPageNextButton().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
+
+Then('the user views section title of {string} on task list page', function (sectionTitle) {
+  formsObj.formSectionTitle(sectionTitle).should('exist');
+});

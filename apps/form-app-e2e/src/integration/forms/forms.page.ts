@@ -153,6 +153,10 @@ class FormsPage {
   formTaskListAllLinks() {
     return cy.xpath('//tbody//a[@href]');
   }
+
+  formSectionTitle(sectionTitle) {
+    return cy.xpath(`//tbody/tr/td/goa-text [text()="${sectionTitle}"]`);
+  }
 }
 
 export default FormsPage;
