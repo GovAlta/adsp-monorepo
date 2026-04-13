@@ -4,6 +4,7 @@ import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import { FetchConfigSuccessAction } from './actions';
 import { SagaIterator } from '@redux-saga/core';
+import { defaultFeaturesVisible } from '../../../featureFlag';
 
 export function* fetchConfig(): SagaIterator {
   const state: RootState = yield select();
@@ -72,16 +73,16 @@ export function* fetchConfig(): SagaIterator {
           formServiceApiUrl: data.serviceUrls.formServiceUrl,
           exportServiceUrl: entryMapping['export-service'],
           formAppApiUrl: entryMapping['form-service'],
-          agentServiceApiUrl: entryMapping['agent-service'],
+          agentServiceApiUrl: 'http://localhost:3380',
         },
-        featureFlags: data.featureFlags,
+        featureFlags: { ...defaultFeaturesVisible, ...data.featureFlags },
       };
 
       const feedbackServiceUrl = entryMapping['feedback-service'];
       if (feedbackServiceUrl) {
         const { integrity }: { integrity: string } = (yield call(
           axios.get,
-          new URL('/feedback/v1/script/integrity', feedbackServiceUrl).href
+          new URL('/feedback/v1/script/integrity', feedbackServiceUrl).href,
         )).data;
 
         // Set the feedback script information.
