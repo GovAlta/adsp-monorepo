@@ -52,6 +52,7 @@ export interface FeatureFlags {
   Comment: boolean;
   Configuration: boolean;
   Form: boolean;
+  FormAI: boolean;
   Directory: boolean;
   Event: boolean;
   File: boolean;

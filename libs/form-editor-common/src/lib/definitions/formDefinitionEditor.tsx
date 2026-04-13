@@ -40,17 +40,20 @@ export const FormDefinitionEditor = (): JSX.Element => {
   const definition = useSelector(modifiedDefinitionSelector);
   const roles = useSelector(rolesSelector);
   const registerData = useSelector(selectRegisterData);
+  const formAIEnabled = useSelector((state: RootState) => state.config.featureFlags?.FormAI === true);
 
   useEffect(() => {
     dispatch(initializeFormEditor());
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(connectAgent());
-    return () => {
-      dispatch(disconnectAgent());
-    };
-  }, [dispatch]);
+    if (formAIEnabled) {
+      dispatch(connectAgent());
+      return () => {
+        dispatch(disconnectAgent());
+      };
+    }
+  }, [dispatch, formAIEnabled]);
 
   return (
     <Modal data-testid="template-form">
@@ -68,6 +71,7 @@ export const FormDefinitionEditor = (): JSX.Element => {
                   queueTasks={queueTasks}
                   fileTypes={fileTypes}
                   registerData={registerData}
+                  formAIEnabled={formAIEnabled}
                 />
               ) : (
                 <FormEditor>

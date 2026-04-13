@@ -133,6 +133,7 @@ export const defaultFeaturesVisible = {
   Configuration: true,
   Feedback: false,
   Form: false,
+  FormAI: true,
   Directory: true,
   Event: true,
   File: true,
