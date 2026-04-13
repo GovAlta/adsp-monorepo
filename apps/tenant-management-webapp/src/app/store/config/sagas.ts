@@ -73,7 +73,7 @@ export function* fetchConfig(): SagaIterator {
           formServiceApiUrl: data.serviceUrls.formServiceUrl,
           exportServiceUrl: entryMapping['export-service'],
           formAppApiUrl: entryMapping['form-service'],
-          agentServiceApiUrl: 'http://localhost:3380',
+          agentServiceApiUrl: entryMapping['agent-service'],
         },
         featureFlags: { ...defaultFeaturesVisible, ...data.featureFlags },
       };
