@@ -21,6 +21,7 @@ export interface FormDefinition {
   dispositionStates: Array<Disposition>;
   submissionRecords: boolean;
   submissionPdfTemplate: string;
+  includeDataInSubmission?: boolean;
   queueTaskToProcess: QueueTaskToProcess;
   supportTopic: boolean;
   securityClassification?: SecurityClassification;
@@ -74,6 +75,7 @@ export const defaultFormDefinition: FormDefinition = {
   dispositionStates: [],
   submissionRecords: false,
   submissionPdfTemplate: 'submitted-form',
+  includeDataInSubmission: false,
   queueTaskToProcess: { queueName: '', queueNameSpace: '' } as QueueTaskToProcess,
   supportTopic: false,
   securityClassification: SecurityClassification.ProtectedB,

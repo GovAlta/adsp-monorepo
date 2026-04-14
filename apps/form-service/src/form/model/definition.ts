@@ -35,6 +35,7 @@ export class FormDefinitionEntity implements FormDefinition {
   securityClassification?: SecurityClassificationType;
   scheduledIntakes: boolean;
   dryRun: boolean;
+  includeDataInSubmission: boolean;
   registeredId?: string;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
@@ -70,6 +71,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.fileUrnPathTemplates = collectFileUrnPathTemplates(this.dataSchema);
     this.securityClassification = definition?.securityClassification;
     this.scheduledIntakes = definition?.scheduledIntakes || false;
+    this.includeDataInSubmission = definition?.includeDataInSubmission || false;
     this.registeredId = definition?.registeredId || null;
   }
 

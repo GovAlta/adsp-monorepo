@@ -820,6 +820,30 @@ export function AddEditFormDefinitionEditor({
                         <GoabIcon type="information-circle" ariaLabel="submission-icon"></GoabIcon>
                       </GoabTooltip>
                     </FlexRow>
+                    <FlexRow>
+                      <SubmissionRecordsBox>
+                        <GoabCheckbox
+                          name="include-data-in-submission"
+                          key="include-data-in-submission"
+                          checked={definition.includeDataInSubmission}
+                          testId="include-data-in-submission"
+                          onChange={() => {
+                            setDefinition({ includeDataInSubmission: !definition.includeDataInSubmission });
+                          }}
+                          text="Include data in submission event"
+                        />
+                      </SubmissionRecordsBox>
+                      <GoabTooltip
+                        content={
+                          definition.includeDataInSubmission
+                            ? 'Form data will be included in the submission event payload.'
+                            : 'Form data will not be included in the submission event payload.'
+                        }
+                        position="top"
+                      >
+                        <GoabIcon type="information-circle" ariaLabel="include-data-in-submission-icon"></GoabIcon>
+                      </GoabTooltip>
+                    </FlexRow>
                     <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                       <SubmissionConfigurationPadding>
                         <H3Inline>Task queue to process</H3Inline>
