@@ -37,8 +37,7 @@ const initializeApp = async (): Promise<Server> => {
 
   app.use(compression());
   app.use(helmet());
-  // Increased limit to 50mb to support large binary assets in workspace snapshots
-  app.use(express.json({ limit: '50mb' }));
+  app.use(express.json({ limit: environment.AGENT_JSON_BODY_LIMIT }));
   app.use(cors());
 
   if (environment.TRUSTED_PROXY) {
@@ -123,8 +122,7 @@ const initializeApp = async (): Promise<Server> => {
       credentials: true,
       origin: true,
     },
-    // Support large binary assets in workspace snapshots (> 1MB images encoded as base64)
-    maxHttpBufferSize: 50 * 1024 * 1024, // 50MB
+    maxHttpBufferSize: environment.AGENT_SOCKET_MAX_BUFFER_SIZE,
   });
 
   const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) => {

@@ -12,15 +12,11 @@
  * Both approaches handle decompression of PDF streams internally.
  */
 import { Logger } from 'winston';
-import * as fs from 'fs';
-import * as path from 'path';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.mjs');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PDFParser = require('pdf2json');
-
-const DEBUG_DIR = path.resolve('apps/agent-service/src/agent/processors/extracted');
 
 interface XfaFieldInfo {
   name: string;
@@ -47,97 +43,43 @@ export interface XfaFormResult {
  * Tries pdfjs-dist first, falls back to pdf2json.
  */
 export async function extractXfaFields(data: Uint8Array, logger?: Logger): Promise<XfaFormResult | null> {
-  const debugLog: string[] = [];
-  const ts = new Date().toISOString().replace(/[:.]/g, '-');
-
-  debugLog.push(`=== XFA Extraction Debug Log ===`);
-  debugLog.push(`Timestamp: ${new Date().toISOString()}`);
-  debugLog.push(`PDF data size: ${data.length} bytes`);
-  debugLog.push(
-    `First 20 bytes: ${Array.from(data.slice(0, 20))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join(' ')}`,
-  );
-  debugLog.push('');
-
   // Strategy 1: pdfjs-dist with enableXfa
-  debugLog.push('--- Strategy 1: pdfjs-dist (enableXfa: true) ---');
-  const pdfjsResult = await extractWithPdfjs(data, logger, debugLog);
-  debugLog.push(
-    `pdfjs result: fields=${pdfjsResult?.fields?.length || 0}, descLen=${pdfjsResult?.htmlDescription?.length || 0}`,
-  );
-  debugLog.push('');
+  const pdfjsResult = await extractWithPdfjs(data, logger);
 
   if (pdfjsResult && pdfjsResult.fields.length > 0) {
     logger?.info('XFA extraction succeeded via pdfjs-dist', { fieldCount: pdfjsResult.fields.length });
-    debugLog.push('>>> WINNER: pdfjs-dist');
-    writeDebugLog(debugLog, `xfa-debug_${ts}.txt`);
     return pdfjsResult;
   }
 
   logger?.info('pdfjs-dist returned no fields, trying pdf2json fallback...');
 
   // Strategy 2: pdf2json fallback
-  debugLog.push('--- Strategy 2: pdf2json ---');
-  const pdf2jsonResult = await extractWithPdf2json(data, logger, debugLog);
-  debugLog.push(
-    `pdf2json result: fields=${pdf2jsonResult?.fields?.length || 0}, descLen=${pdf2jsonResult?.htmlDescription?.length || 0}`,
-  );
-  debugLog.push('');
+  const pdf2jsonResult = await extractWithPdf2json(data, logger);
 
   if (pdf2jsonResult && pdf2jsonResult.fields.length > 0) {
     logger?.info('XFA extraction succeeded via pdf2json', { fieldCount: pdf2jsonResult.fields.length });
-    debugLog.push('>>> WINNER: pdf2json');
-    writeDebugLog(debugLog, `xfa-debug_${ts}.txt`);
     return pdf2jsonResult;
   }
 
   // If pdfjs found layout info (allXfaHtml) but no structured fields, still return it
   if (pdfjsResult && pdfjsResult.htmlDescription.length > 50) {
     logger?.info('Returning pdfjs-dist layout info without structured fields');
-    debugLog.push('>>> WINNER: pdfjs-dist (layout only, no structured fields)');
-    writeDebugLog(debugLog, `xfa-debug_${ts}.txt`);
     return pdfjsResult;
   }
 
   logger?.warn('All XFA extraction strategies failed');
-  debugLog.push('>>> ALL STRATEGIES FAILED');
-  writeDebugLog(debugLog, `xfa-debug_${ts}.txt`);
   return null;
-}
-
-function writeDebugLog(lines: string[], filename: string): void {
-  try {
-    fs.mkdirSync(DEBUG_DIR, { recursive: true });
-    const filePath = path.join(DEBUG_DIR, filename);
-    fs.writeFileSync(filePath, lines.join('\n'), 'utf-8');
-  } catch {
-    // Ignore write errors in debug logging
-  }
 }
 
 // ─── Strategy 1: pdfjs-dist ────────────────────────────────────────────────────
 
-async function extractWithPdfjs(data: Uint8Array, logger?: Logger, debugLog?: string[]): Promise<XfaFormResult | null> {
+async function extractWithPdfjs(data: Uint8Array, logger?: Logger): Promise<XfaFormResult | null> {
   let doc;
   try {
     const loadingTask = pdfjsLib.getDocument({ data, enableXfa: true, isEvalSupported: false });
     doc = await loadingTask.promise;
-    debugLog?.push(`pdfjs: Document loaded OK. numPages=${doc.numPages}`);
-
-    // Log metadata for debugging
-    try {
-      const metadata = await doc.getMetadata();
-      debugLog?.push(`pdfjs metadata.info: ${JSON.stringify(metadata?.info || {}).substring(0, 500)}`);
-      const isXFAPresent = metadata?.info?.IsXFAPresent;
-      const isAcroFormPresent = metadata?.info?.IsAcroFormPresent;
-      debugLog?.push(`pdfjs: IsXFAPresent=${isXFAPresent}, IsAcroFormPresent=${isAcroFormPresent}`);
-    } catch (metaErr) {
-      debugLog?.push(`pdfjs: getMetadata() ERROR: ${(metaErr as Error).message}`);
-    }
   } catch (err) {
     const msg = (err as Error).message;
-    debugLog?.push(`pdfjs: FAILED to load document: ${msg}`);
     logger?.warn('pdfjs-dist failed to load document', { error: msg });
     return null;
   }
@@ -150,19 +92,6 @@ async function extractWithPdfjs(data: Uint8Array, logger?: Logger, debugLog?: st
     try {
       const fieldObjects = await doc.getFieldObjects();
       const fieldCount = fieldObjects ? Object.keys(fieldObjects).length : 0;
-      debugLog?.push(`pdfjs.getFieldObjects(): ${fieldCount} field groups`);
-      if (fieldObjects && fieldCount > 0) {
-        const keys = Object.keys(fieldObjects).slice(0, 10);
-        debugLog?.push(`  Sample keys: ${keys.join(', ')}${fieldCount > 10 ? '...' : ''}`);
-        // Log first field's full structure for debugging
-        const firstKey = keys[0];
-        if (firstKey) {
-          debugLog?.push(`  First field raw: ${JSON.stringify(fieldObjects[firstKey]).substring(0, 500)}`);
-        }
-      } else {
-        debugLog?.push(`  fieldObjects value: ${JSON.stringify(fieldObjects)?.substring(0, 200)}`);
-      }
-      logger?.debug('pdfjs getFieldObjects returned', { fieldCount });
 
       if (fieldObjects && fieldCount > 0) {
         lines.push('## Form Fields\n');
@@ -195,20 +124,12 @@ async function extractWithPdfjs(data: Uint8Array, logger?: Logger, debugLog?: st
         lines.push('');
       }
     } catch (err) {
-      debugLog?.push(`pdfjs.getFieldObjects() ERROR: ${(err as Error).message}`);
-      logger?.debug('pdfjs getFieldObjects failed', { error: (err as Error).message });
+      logger?.warn('pdfjs getFieldObjects failed', { error: (err as Error).message });
     }
 
     // Method 2: allXfaHtml — gives the full XFA rendering tree
     try {
       const xfaHtml = doc.allXfaHtml as XfaHtmlNode | null;
-      debugLog?.push(`pdfjs.allXfaHtml: ${xfaHtml ? 'PRESENT' : 'null/undefined'}`);
-      if (xfaHtml) {
-        debugLog?.push(`  allXfaHtml type: ${typeof xfaHtml}`);
-        debugLog?.push(`  allXfaHtml keys: ${Object.keys(xfaHtml).join(', ')}`);
-        debugLog?.push(`  allXfaHtml raw (first 1000 chars): ${JSON.stringify(xfaHtml).substring(0, 1000)}`);
-      }
-      logger?.debug('pdfjs allXfaHtml present', { hasXfa: !!xfaHtml });
 
       if (xfaHtml) {
         lines.push('## XFA Form Layout\n');
@@ -216,50 +137,30 @@ async function extractWithPdfjs(data: Uint8Array, logger?: Logger, debugLog?: st
         lines.push(layoutText);
       }
     } catch (err) {
-      debugLog?.push(`pdfjs.allXfaHtml ERROR: ${(err as Error).message}`);
-      logger?.debug('pdfjs allXfaHtml failed', { error: (err as Error).message });
+      logger?.warn('pdfjs allXfaHtml failed', { error: (err as Error).message });
     }
 
     // Method 3: Per-page annotations (fallback for forms with no field objects)
     if (fields.length === 0) {
       try {
         const numPages = doc.numPages;
-        debugLog?.push(`pdfjs: Trying per-page extraction (${numPages} pages)`);
         for (let i = 1; i <= numPages; i++) {
           const page = await doc.getPage(i);
 
           // Try page-level XFA
           try {
             const xfaData = await page.getXfa();
-            debugLog?.push(`  Page ${i} getXfa(): ${xfaData ? 'PRESENT' : 'null'}`);
             if (xfaData) {
-              debugLog?.push(`    getXfa raw (first 500): ${JSON.stringify(xfaData).substring(0, 500)}`);
               lines.push(`### Page ${i} (XFA)`);
               const pageText = walkXfaHtml(xfaData as XfaHtmlNode, 0);
               lines.push(pageText);
             }
-          } catch (xfaErr) {
-            debugLog?.push(`  Page ${i} getXfa() ERROR: ${(xfaErr as Error).message}`);
+          } catch {
             // getXfa not available in all pdfjs versions
           }
 
           // Also try annotations which contain form widget info
           const annotations = await page.getAnnotations();
-          debugLog?.push(`  Page ${i} annotations: ${annotations.length} total`);
-          if (annotations.length > 0) {
-            const sample = annotations
-              .slice(0, 3)
-              .map((a: Record<string, unknown>) =>
-                JSON.stringify({
-                  subtype: a.subtype,
-                  fieldType: a.fieldType,
-                  fieldName: a.fieldName,
-                  fieldValue: a.fieldValue,
-                }),
-              );
-            debugLog?.push(`    Sample annotations: ${sample.join('; ')}`);
-          }
-          logger?.debug(`Page ${i} annotations`, { count: annotations.length });
           for (const annot of annotations) {
             if (annot.fieldType || annot.fieldName) {
               fields.push({
@@ -283,12 +184,9 @@ async function extractWithPdfjs(data: Uint8Array, logger?: Logger, debugLog?: st
           }
         }
       } catch (err) {
-        debugLog?.push(`pdfjs annotation loop ERROR: ${(err as Error).message}`);
-        logger?.debug('pdfjs annotation extraction failed', { error: (err as Error).message });
+        logger?.warn('pdfjs annotation extraction failed', { error: (err as Error).message });
       }
     }
-
-    debugLog?.push(`pdfjs final: ${fields.length} fields, ${lines.length} line entries`);
 
     if (fields.length === 0 && lines.length <= 2) {
       return null;
@@ -303,26 +201,19 @@ async function extractWithPdfjs(data: Uint8Array, logger?: Logger, debugLog?: st
 
 // ─── Strategy 2: pdf2json ──────────────────────────────────────────────────────
 
-async function extractWithPdf2json(
-  data: Uint8Array,
-  logger?: Logger,
-  debugLog?: string[],
-): Promise<XfaFormResult | null> {
+async function extractWithPdf2json(data: Uint8Array, logger?: Logger): Promise<XfaFormResult | null> {
   return new Promise((resolve) => {
     try {
       const pdfParser = new PDFParser(null, 1);
-      debugLog?.push('pdf2json: Parser created, parsing buffer...');
 
       // Set a timeout to avoid hanging indefinitely
       const timeout = setTimeout(() => {
-        debugLog?.push('pdf2json: TIMEOUT after 30s');
         logger?.warn('pdf2json timed out after 30s');
         resolve(null);
       }, 30000);
 
       pdfParser.on('pdfParser_dataError', (errData: { parserError: Error }) => {
         clearTimeout(timeout);
-        debugLog?.push(`pdf2json: PARSE ERROR: ${errData.parserError?.message}`);
         logger?.warn('pdf2json parse error', { error: errData.parserError?.message });
         resolve(null);
       });
@@ -330,28 +221,9 @@ async function extractWithPdf2json(
       pdfParser.on('pdfParser_dataReady', (pdfData: Pdf2jsonData) => {
         clearTimeout(timeout);
         try {
-          debugLog?.push(`pdf2json: Data ready. Pages=${pdfData.Pages?.length || 0}`);
-          debugLog?.push(`pdf2json: Meta=${JSON.stringify(pdfData.Meta || {}).substring(0, 500)}`);
-          if (pdfData.Pages && pdfData.Pages.length > 0) {
-            const page0 = pdfData.Pages[0];
-            debugLog?.push(
-              `pdf2json: Page 0: Fields=${page0.Fields?.length || 0}, Boxsets=${page0.Boxsets?.length || 0}, Texts=${page0.Texts?.length || 0}`,
-            );
-            if (page0.Fields && page0.Fields.length > 0) {
-              debugLog?.push(`pdf2json: First field raw: ${JSON.stringify(page0.Fields[0]).substring(0, 300)}`);
-            }
-            if (page0.Texts && page0.Texts.length > 0) {
-              const sampleTexts = page0.Texts.slice(0, 5)
-                .map((t: { R?: Array<{ T: string }> }) => t.R?.[0]?.T)
-                .filter(Boolean);
-              debugLog?.push(`pdf2json: Sample texts: ${sampleTexts.join(' | ')}`);
-            }
-          }
-
-          const result = parsePdf2jsonOutput(pdfData, pdfParser, logger, debugLog);
+          const result = parsePdf2jsonOutput(pdfData, pdfParser, logger);
           resolve(result);
         } catch (err) {
-          debugLog?.push(`pdf2json: Output parsing ERROR: ${(err as Error).message}\n${(err as Error).stack}`);
           logger?.warn('pdf2json output parsing failed', { error: (err as Error).message });
           resolve(null);
         }
@@ -360,7 +232,6 @@ async function extractWithPdf2json(
       // pdf2json accepts a Buffer
       pdfParser.parseBuffer(Buffer.from(data));
     } catch (err) {
-      debugLog?.push(`pdf2json: Init ERROR: ${(err as Error).message}`);
       logger?.warn('pdf2json initialization failed', { error: (err as Error).message });
       resolve(null);
     }
@@ -402,18 +273,12 @@ function parsePdf2jsonOutput(
   pdfData: Pdf2jsonData,
   pdfParser: { getAllFieldsTypes: () => Pdf2jsonField[]; getRawTextContent: () => string },
   logger?: Logger,
-  debugLog?: string[],
 ): XfaFormResult | null {
   const fields: XfaFieldInfo[] = [];
   const lines: string[] = [];
 
   // getAllFieldsTypes gives a flat list of form fields
   const allFields = pdfParser.getAllFieldsTypes();
-  debugLog?.push(`pdf2json getAllFieldsTypes(): ${allFields?.length || 0} fields`);
-  if (allFields && allFields.length > 0) {
-    debugLog?.push(`pdf2json first field: ${JSON.stringify(allFields[0]).substring(0, 300)}`);
-  }
-  logger?.debug('pdf2json getAllFieldsTypes', { count: allFields?.length || 0 });
 
   if (allFields && allFields.length > 0) {
     lines.push('## Form Fields (pdf2json)\n');
@@ -447,18 +312,12 @@ function parsePdf2jsonOutput(
 
   // Also extract text content for context
   const rawText = pdfParser.getRawTextContent();
-  debugLog?.push(`pdf2json getRawTextContent(): ${rawText?.length || 0} chars`);
-  if (rawText) {
-    debugLog?.push(`pdf2json rawText (first 500): ${rawText.substring(0, 500)}`);
-  }
   if (rawText && rawText.trim().length > 20) {
     // Only include first 3000 chars of text content to avoid overwhelming the LLM
     const truncated = rawText.length > 3000 ? rawText.substring(0, 3000) + '\n...(truncated)' : rawText;
     lines.push('## Document Text Content\n');
     lines.push(truncated);
   }
-
-  logger?.debug('pdf2json extraction result', { fieldCount: fields.length, textLength: rawText?.length || 0 });
 
   if (fields.length === 0 && lines.length <= 2) {
     return null;

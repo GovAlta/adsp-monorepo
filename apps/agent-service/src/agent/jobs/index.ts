@@ -3,8 +3,9 @@ import * as schedule from 'node-schedule';
 import { Memory } from '@mastra/memory';
 import { Logger } from 'winston';
 import { createThreadCleanupJob } from './cleanup';
+import { environment } from '../../environments/environment';
 
-const THREAD_CLEANUP_CRON = '0 * * * *';
+const THREAD_CLEANUP_CRON = environment.AGENT_THREAD_CLEANUP_CRON;
 
 interface AgentJobProps {
   logger: Logger;

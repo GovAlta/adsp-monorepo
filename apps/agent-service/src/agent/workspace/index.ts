@@ -15,12 +15,9 @@ export interface AgentWorkspaceConfiguration {
 
 type WorkspaceProvider = 'agentfs' | 'local';
 
-const WORKSPACE_INIT_RETRY_ATTEMPTS = 5;
-const WORKSPACE_INIT_RETRY_DELAY_MS = 50;
-
 const workspaceInitRetry = retryBuilder(handleAll, {
-  maxAttempts: WORKSPACE_INIT_RETRY_ATTEMPTS,
-  backoff: new ExponentialBackoff({ initialDelay: WORKSPACE_INIT_RETRY_DELAY_MS }),
+  maxAttempts: environment.AGENT_WORKSPACE_INIT_RETRY_ATTEMPTS,
+  backoff: new ExponentialBackoff({ initialDelay: environment.AGENT_WORKSPACE_INIT_RETRY_DELAY_MS }),
 });
 
 interface WorkspaceContext {
