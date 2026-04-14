@@ -59,6 +59,7 @@ export interface FeatureFlags {
   Notification: boolean;
   PDF: boolean;
   Script: boolean;
+  SharePoint: boolean;
   Status: boolean;
   Task: boolean;
   Feedback: boolean;

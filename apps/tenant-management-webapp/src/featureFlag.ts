@@ -140,7 +140,7 @@ export const defaultFeaturesVisible = {
   Notification: true,
   PDF: true,
   Script: true,
-  SharePoint: true,
+  SharePoint: false,
   Status: true,
   Task: false,
   Value: true,
