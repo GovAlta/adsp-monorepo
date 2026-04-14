@@ -108,7 +108,7 @@ Feature: Form app
     Then the user views a form page with primary application button enabled for "autotest-form-tester-role"
 
   # TEST DATA: autotest-tasklist is created as a form definition with two tasks and a summary page
-  @TEST_CS-4052 @REQ_CS-3812 @REQ_CS-4016 @REQ_CS-3881 @REQ_CS-4015 @REQ_CS-4205 @regression
+  @TEST_CS-4052 @REQ_CS-3812 @REQ_CS-4016 @REQ_CS-3881 @REQ_CS-4015 @REQ_CS-4168 @regression
   Scenario: As a form user, I can navigate between the task list and pages, view task status, submit it from summary page
     Given the user deletes any existing form from "Auto Test" for "autotest-tasklist"
     When an authenticated user is logged in to see "autotest-tasklist" application
