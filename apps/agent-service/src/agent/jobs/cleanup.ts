@@ -2,6 +2,7 @@ import { AdspId, EventService } from '@abgov/adsp-service-sdk';
 import { Memory } from '@mastra/memory';
 import { Logger } from 'winston';
 import { threadDeleted } from '../events';
+import { environment } from '../../environments/environment';
 
 interface ThreadCleanupJobProps {
   logger: Logger;
@@ -51,7 +52,7 @@ export function createThreadCleanupJob({
     }
 
     let page = 0;
-    const perPage = 100;
+    const perPage = environment.AGENT_THREAD_CLEANUP_BATCH_SIZE;
     const now = Date.now();
     let hasMore: boolean;
 
