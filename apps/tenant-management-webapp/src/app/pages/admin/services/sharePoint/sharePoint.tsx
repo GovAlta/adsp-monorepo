@@ -1,9 +1,12 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { SharePointOverview } from './overview';
+import { ConnectionsView } from './connections/connectionsView';
 
 export const SharePoint: FunctionComponent = () => {
+  const [activateEditState, setActivateEditState] = useState<boolean>(false);
+
   return (
     <Page>
       <Main>
@@ -12,6 +15,9 @@ export const SharePoint: FunctionComponent = () => {
           <Tabs activeIndex={0} data-testid="sharepoint-tabs">
             <Tab label="Overview" data-testid="sharepoint-overview-tab">
               <SharePointOverview />
+            </Tab>
+            <Tab label="Connections" data-testid="sharepoint-connections-tab">
+              <ConnectionsView activeEdit={activateEditState} />
             </Tab>
           </Tabs>
         </>
