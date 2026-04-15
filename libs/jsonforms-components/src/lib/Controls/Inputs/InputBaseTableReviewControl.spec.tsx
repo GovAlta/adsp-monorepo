@@ -422,7 +422,7 @@ describe('InputBaseTableReviewControl', () => {
               options: { stepId: 0 },
             }}
             enabled={true}
-            errors={undefined}
+            errors=""
             cells={[]}
             required={false}
             id="whichOfThemAppliesOther"
@@ -440,7 +440,7 @@ describe('InputBaseTableReviewControl', () => {
 
   it('shows validation error for empty array when required', () => {
     const mockGoToPage = jest.fn();
-    const contextValue: JsonFormsStepperContextProps = { goToPage: mockGoToPage } as JsonFormsStepperContextProps;
+    const contextValue: JsonFormsStepperContextProps = { goToPage: mockGoToPage } as unknown as JsonFormsStepperContextProps;
     const { baseElement } = render(
       <JsonFormsStepperContext.Provider value={contextValue}>
         <table>
@@ -462,7 +462,7 @@ describe('InputBaseTableReviewControl', () => {
                 label: 'Choose all options that best apply',
               }}
               enabled={true}
-              errors={undefined}
+              errors=""
               cells={[]}
               required={true}
               id="whichOfThemApplies"
@@ -479,6 +479,41 @@ describe('InputBaseTableReviewControl', () => {
     const errorFormItem = baseElement.querySelector(
       'goa-form-item[error="Choose all options that best apply is required"]'
     );
+    expect(errorFormItem).toBeInTheDocument();
+  });
+
+  it('shows only required error (no "No (...)" value) for unchecked required checkbox', () => {
+    const { baseElement, getByTestId } = render(
+      <table>
+        <tbody>
+          <GoAInputBaseTableReview
+            data={false}
+            visible={true}
+            label=""
+            path="isAttestationAccepted"
+            schema={{ type: 'boolean' }}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/isAttestationAccepted',
+              label: '',
+              options: { text: 'Is attestation accepted' },
+            }}
+            enabled={true}
+            errors={'Is Attestation Accepted must be equal to one of the allowed values'}
+            cells={[]}
+            required={true}
+            id="isAttestationAccepted"
+            rootSchema={{ type: 'object', properties: {} }}
+            config={{}}
+            renderers={[]}
+            handleChange={jest.fn()}
+          />
+        </tbody>
+      </table>,
+    );
+
+    expect(getByTestId('review-value-').textContent).toBe('');
+    const errorFormItem = baseElement.querySelector('goa-form-item[error="Is attestation accepted is required"]');
     expect(errorFormItem).toBeInTheDocument();
   });
 });

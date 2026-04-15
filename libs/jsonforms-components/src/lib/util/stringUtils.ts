@@ -49,17 +49,10 @@ const areAllUppercase = (label: string): boolean => {
 };
 
 const getExplicitControlLabel = (props: ControlProps): string | undefined => {
-  const optionText = props.uischema?.options?.text;
-  if (typeof optionText === 'string' && optionText.trim()) {
-    return optionText.trim();
-  }
-
-  if (typeof props.schema?.title === 'string' && props.schema.title.trim()) {
-    return props.schema.title.trim();
-  }
-
+  // uischema.label has highest priority. An explicit empty string suppresses the
+  // auto-generated label (and prevents options.text from leaking into the form-item label).
   const uiLabel = props.uischema?.label;
-  if (typeof uiLabel === 'string' && uiLabel.trim()) {
+  if (typeof uiLabel === 'string') {
     return uiLabel.trim();
   }
 
@@ -68,6 +61,15 @@ const getExplicitControlLabel = (props: ControlProps): string | undefined => {
     if (typeof text === 'string' && text.trim()) {
       return text.trim();
     }
+  }
+
+  const optionText = props.uischema?.options?.text;
+  if (typeof optionText === 'string' && optionText.trim()) {
+    return optionText.trim();
+  }
+
+  if (typeof props.schema?.title === 'string' && props.schema.title.trim()) {
+    return props.schema.title.trim();
   }
 
   return undefined;
@@ -85,7 +87,7 @@ export const getGeneratedLabelFromScope = (scope: string): string => {
 
 export const getControlLabelText = (props: ControlProps): string => {
   const explicitLabel = getExplicitControlLabel(props);
-  if (explicitLabel) {
+  if (explicitLabel !== undefined) {
     return explicitLabel;
   }
 
