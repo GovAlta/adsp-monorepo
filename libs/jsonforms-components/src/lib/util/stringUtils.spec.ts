@@ -14,6 +14,7 @@ import {
   controlScopeMatchesLabel,
   getLabelText,
   validateSinWithLuhn,
+  getControlLabelText,
 } from './stringUtils';
 import { describe } from 'node:test';
 import { GoAInputTextProps } from '../Controls';
@@ -199,19 +200,19 @@ describe('stringUtils string tests', () => {
 
   describe('string function test', () => {
     it('capitalizeFirstLetter is null', () => {
-      const testValue: string = null;
+      const testValue: string | null = null;
       const returnValue = capitalizeFirstLetter(testValue);
       expect(returnValue).toBe('');
     });
 
     it('convertToReadableFormat is null', () => {
-      const testValue: string = null;
+      const testValue: string | null = null;
       const returnValue = convertToReadableFormat(testValue);
       expect(returnValue).toBe(null);
     });
 
     it('convertToSentenceCase handles null input', () => {
-      const testValue: string = null;
+      const testValue: string | null = null;
       const returnValue = convertToSentenceCase(testValue);
       expect(returnValue).toBe(null);
     });
@@ -420,7 +421,7 @@ describe('stringUtils string tests', () => {
     });
 
     it('getRequiredIfThen with if/then structure', () => {
-      const schema: GoAInputTextProps & ControlProps = {
+      const schema: any = {
         uischema: { type: 'Control', scope: '#/properties/firstName' },
         schema: {},
         rootSchema: {
@@ -443,7 +444,7 @@ describe('stringUtils string tests', () => {
     });
 
     it('getRequiredIfThen with nested else structure', () => {
-      const schema: GoAInputTextProps & ControlProps = {
+      const schema: any = {
         uischema: { type: 'Control', scope: '#/properties/firstName' },
         schema: {},
         rootSchema: {
@@ -464,7 +465,7 @@ describe('stringUtils string tests', () => {
     });
 
     it('getRequiredIfThen with allOf if/else/then', () => {
-      const schema: GoAInputTextProps & ControlProps = {
+      const schema: any = {
         uischema: { type: 'Control', scope: '#/properties/field' },
         schema: {},
         rootSchema: {
@@ -486,7 +487,7 @@ describe('stringUtils string tests', () => {
     });
 
     it('getRequiredIfThen with root schema if without then', () => {
-      const schema: GoAInputTextProps & ControlProps = {
+      const schema: any = {
         uischema: { type: 'Control', scope: '#/properties/field' },
         schema: {},
         rootSchema: {
@@ -645,7 +646,7 @@ describe('stringUtils string tests', () => {
     });
 
     it('getRequiredIfThen with complex nested structure', () => {
-      const schema: GoAInputTextProps & ControlProps = {
+      const schema: any = {
         uischema: { type: 'Control', scope: '#/properties/test' },
         schema: {},
         rootSchema: {
@@ -692,7 +693,7 @@ describe('stringUtils string tests', () => {
     });
 
     it('getRequiredIfThen with rootSchema if but no then or else', () => {
-      const schema: GoAInputTextProps & ControlProps = {
+      const schema: any = {
         uischema: { type: 'Control', scope: '#/properties/field' },
         schema: {},
         rootSchema: {
@@ -831,7 +832,7 @@ describe('stringUtils string tests', () => {
     });
 
     it('stringUtils: getRequiredIfThen without rootSchema property', () => {
-      const schema: GoAInputTextProps & ControlProps = {
+      const schema: any = {
         uischema: { type: 'Control', scope: '#/properties/field' },
         schema: {},
         rootSchema: { properties: { field: { type: 'string' } } },
@@ -868,5 +869,48 @@ describe('stringUtils string tests', () => {
       expect(result2).toBeDefined();
       expect(result3).toBeDefined();
     });
+  });
+});
+
+describe('getControlLabelText blank label (CS-4826)', () => {
+  const makeProps = (label: unknown, scope = '#/properties/myField', optionsText?: string): ControlProps =>
+    ({
+      uischema: { type: 'Control', scope, label, options: optionsText ? { text: optionsText } : undefined } as ControlElement,
+      schema: {},
+      rootSchema: {},
+      handleChange: jest.fn(),
+      label: 'fallback',
+    } as unknown as ControlProps);
+
+  it('returns empty string when uischema.label is explicitly empty string', () => {
+    const result = getControlLabelText(makeProps(''));
+    expect(result).toBe('');
+  });
+
+  it('returns empty string when uischema.label is whitespace-only', () => {
+    const result = getControlLabelText(makeProps('   '));
+    expect(result).toBe('');
+  });
+
+  it('returns empty string when label is "" even if options.text is set (boolean checkbox case)', () => {
+    const result = getControlLabelText(makeProps('', '#/properties/myField', 'Is attestation accepted'));
+    expect(result).toBe('');
+  });
+
+  it('falls back to generated label when uischema.label is absent', () => {
+    const result = getControlLabelText(makeProps(undefined));
+    // generated from scope '#/properties/myField'
+    expect(result).toBeTruthy();
+    expect(result).not.toBe('');
+  });
+
+  it('uses options.text as form-item label when uischema.label is absent', () => {
+    const result = getControlLabelText(makeProps(undefined, '#/properties/myField', 'My checkbox text'));
+    expect(result).toBe('My checkbox text');
+  });
+
+  it('returns the provided label when uischema.label is a non-empty string', () => {
+    const result = getControlLabelText(makeProps('My custom label'));
+    expect(result).toBe('My custom label');
   });
 });
