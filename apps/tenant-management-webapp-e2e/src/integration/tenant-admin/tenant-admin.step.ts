@@ -391,8 +391,8 @@ Then(
     notification,
     pdf,
     script,
-    status,
     sharepoint,
+    status,
     task,
     value
   ) {
@@ -411,8 +411,8 @@ Then(
       'The notifications service provides',
       'The PDF service provides',
       'The script services provides',
-      'The status service allows',
       'The SharePoint service allows',
+      'The status service allows',
       'The task service provides',
       'The value service provides',
     ];
@@ -431,8 +431,8 @@ Then(
       notification,
       pdf,
       script,
-      status,
       sharepoint,
+      status,
       task,
       value,
     ];
