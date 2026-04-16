@@ -129,7 +129,7 @@ Feature: Form app
     And the user clicks Next button on a tasklist step page
     Then the user views Step "2" of "2" on the form page
     When the user clicks Back to application overview link on the form page
-    And the user views the task of "Personal Information" with "Completed" status
+    Then the user views the task of "Personal Information" with "Completed" status
     And the user views the task of "Additional Information" with "In progress" status
     When the user clicks "Additional Information" task on task list page
     And the user selects "Not Married" radio button for the question of "Are you married?"
