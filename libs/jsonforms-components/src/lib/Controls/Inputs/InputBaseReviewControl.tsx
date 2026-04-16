@@ -67,7 +67,7 @@ export const GoABaseInputReviewComponent = (props: WithBaseInputReviewProps): JS
     if (uischema.options?.radio === true) {
       reviewText = data ? `Yes` : `No`;
     } else {
-      reviewText = data ? `Yes (${checkboxLabel})` : `No (${checkboxLabel})`;
+      reviewText = data ? (checkboxLabel ? `Yes (${checkboxLabel})` : `Yes`) : (checkboxLabel ? `No (${checkboxLabel})` : `No`);
     }
   }
 

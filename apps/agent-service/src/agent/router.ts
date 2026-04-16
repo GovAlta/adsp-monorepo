@@ -8,8 +8,9 @@ import { ServiceRoles } from './roles';
 import { AgentServiceConfiguration } from './configuration';
 import { AgentBroker } from './model';
 import { CoreUserMessage } from '@mastra/core/llm';
+import { environment } from '../environments/environment';
 
-const TOKEN_EXPIRY_THRESHOLD_MS = 30 * 1000;
+const TOKEN_EXPIRY_THRESHOLD_MS = environment.AGENT_TOKEN_EXPIRY_THRESHOLD_MS;
 
 // Chunk types that the client understands and can render.
 // Other stream parts (step-start, step-finish, finish, raw, etc.) contain
@@ -176,10 +177,30 @@ export function onIoConnection(logger: Logger) {
 
       const expiry = getUserTokenExpiry(user);
       const timeToExpiry = expiry !== null ? Math.max(expiry - TOKEN_EXPIRY_THRESHOLD_MS - Date.now(), 0) : null;
-      const expiryTimeout =
-        timeToExpiry !== null
-          ? setTimeout(() => disconnectExpiredSocket(socket, logger, user, tenant), timeToExpiry)
-          : null;
+
+      // Track whether an agent response is currently being streamed so that
+      // token-expiry disconnects can be deferred until the stream finishes.
+      let streaming = false;
+      let disconnectDeferred = false;
+
+      const deferredDisconnect = () => {
+        if (streaming) {
+          // An agent response is in-flight — defer the disconnect until it completes.
+          disconnectDeferred = true;
+          logger.info(
+            `Deferring token-expiry disconnect for user ${user.name} (ID: ${user.id}) while stream is in progress.`,
+            {
+              context: 'AgentRouter',
+              tenant: tenant?.id?.toString(),
+              user: `${user.name} (ID: ${user.id})`,
+            },
+          );
+          return;
+        }
+        disconnectExpiredSocket(socket, logger, user, tenant);
+      };
+
+      const expiryTimeout = timeToExpiry !== null ? setTimeout(() => deferredDisconnect(), timeToExpiry) : null;
 
       logger.info(`User ${user.name} (ID: ${user.id}) connected.`, {
         context: 'AgentRouter',
@@ -235,83 +256,98 @@ export function onIoConnection(logger: Logger) {
             );
             const replyId = uuid();
 
-            if (rawChunks === true) {
-              const projector = await aiAgent.createProjector(user, threadId);
-              const projectWorkspaceChange = async (type: string, payload: unknown) => {
-                if (type === 'tool-call') {
-                  projector.onToolCall(payload);
-                } else if (type === 'tool-error') {
-                  projector.onToolError(payload);
-                } else if (type === 'tool-result') {
-                  const workspaceChange = await projector.onToolResult(payload);
-                  if (workspaceChange) {
-                    socket.emit('workspace-change', {
-                      agent,
-                      threadId,
-                      messageId: replyId,
-                      replyTo: messageId,
-                      ...workspaceChange,
-                    });
+            streaming = true;
+            try {
+              if (rawChunks === true) {
+                const projector = await aiAgent.createProjector(user, threadId);
+                const projectWorkspaceChange = async (type: string, payload: unknown) => {
+                  if (type === 'tool-call') {
+                    projector.onToolCall(payload);
+                  } else if (type === 'tool-error') {
+                    projector.onToolError(payload);
+                  } else if (type === 'tool-result') {
+                    const workspaceChange = await projector.onToolResult(payload);
+                    if (workspaceChange) {
+                      socket.emit('workspace-change', {
+                        agent,
+                        threadId,
+                        messageId: replyId,
+                        replyTo: messageId,
+                        ...workspaceChange,
+                      });
+                    }
+                  }
+                };
+
+                for await (const chunk of result.fullStream) {
+                  if (!FORWARDABLE_CHUNK_TYPES.has(chunk.type)) {
+                    continue;
+                  }
+
+                  // Forward only type and payload; other properties on fullStream chunks
+                  // (e.g. step-finish, finish) can contain non-serializable data
+                  // (getters, circular refs via messageList) that breaks socket.io serialization.
+                  const { type, payload } = chunk as { type: string; payload?: unknown };
+                  socket.emit('stream', {
+                    agent,
+                    threadId,
+                    messageId: replyId,
+                    replyTo: messageId,
+                    chunk: { type, payload },
+                  });
+
+                  await projectWorkspaceChange(type, payload);
+
+                  // One-level nested projection support for sub-agent tool chunks.
+                  for (const nested of getNestedToolChunks(payload)) {
+                    await projectWorkspaceChange(nested.type, nested.payload);
                   }
                 }
-              };
-
-              for await (const chunk of result.fullStream) {
-                if (!FORWARDABLE_CHUNK_TYPES.has(chunk.type)) {
-                  continue;
-                }
-
-                // Forward only type and payload; other properties on fullStream chunks
-                // (e.g. step-finish, finish) can contain non-serializable data
-                // (getters, circular refs via messageList) that breaks socket.io serialization.
-                const { type, payload } = chunk as { type: string; payload?: unknown };
-                socket.emit('stream', {
-                  agent,
-                  threadId,
-                  messageId: replyId,
-                  replyTo: messageId,
-                  chunk: { type, payload },
-                });
-
-                await projectWorkspaceChange(type, payload);
-
-                // One-level nested projection support for sub-agent tool chunks.
-                for (const nested of getNestedToolChunks(payload)) {
-                  await projectWorkspaceChange(nested.type, nested.payload);
+              } else {
+                for await (const content of result.textStream) {
+                  socket.emit('stream', {
+                    agent,
+                    threadId,
+                    messageId: replyId,
+                    replyTo: messageId,
+                    content,
+                  });
                 }
               }
-            } else {
-              for await (const content of result.textStream) {
-                socket.emit('stream', {
-                  agent,
-                  threadId,
-                  messageId: replyId,
-                  replyTo: messageId,
-                  content,
-                });
-              }
-            }
 
-            let output: unknown;
-            try {
-              output = await result.object;
-            } catch (err) {
-              logger.warn(`Invalid structured output produced for agent ${agent}; falling back to text output only.`, {
-                context: 'AgentRouter',
-                tenant: tenant?.id?.toString(),
-                user: `${user.name} (ID: ${user.id})`,
-                error: err instanceof Error ? err.message : String(err),
+              let output: unknown;
+              try {
+                output = await result.object;
+              } catch (err) {
+                logger.warn(
+                  `Invalid structured output produced for agent ${agent}; falling back to text output only.`,
+                  {
+                    context: 'AgentRouter',
+                    tenant: tenant?.id?.toString(),
+                    user: `${user.name} (ID: ${user.id})`,
+                    error: err instanceof Error ? err.message : String(err),
+                  },
+                );
+              }
+
+              socket.emit('stream', {
+                agent,
+                threadId,
+                messageId: replyId,
+                replyTo: messageId,
+                output,
+                done: true,
               });
-            }
+            } finally {
+              streaming = false;
 
-            socket.emit('stream', {
-              agent,
-              threadId,
-              messageId: replyId,
-              replyTo: messageId,
-              output,
-              done: true,
-            });
+              // If a token-expiry disconnect was deferred while the stream was
+              // in progress, execute it now that the response has been delivered.
+              if (disconnectDeferred) {
+                disconnectDeferred = false;
+                disconnectExpiredSocket(socket, logger, user, tenant);
+              }
+            }
           }
         } catch (err) {
           socket.emit('error', err.message);

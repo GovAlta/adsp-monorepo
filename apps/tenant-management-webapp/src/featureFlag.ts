@@ -96,19 +96,19 @@ const completeServiceVariables = [
     beta: true,
   },
   {
-    name: 'Status',
-    link: 'services/status',
-    description:
-      'The status service allows for easy monitoring of application downtime. Each application should represent a service that is useful to the end user by itself, such as child care subsidy and child care certification.',
-    beta: false,
-  },
-  {
     name: 'SharePoint',
     link: 'services/sharepoint',
     description:
       'The SharePoint service allows developers to connect to a SharePoint List, so that they can read, create, and update its data.',
     beta: false,
     alpha: true,
+  },
+  {
+    name: 'Status',
+    link: 'services/status',
+    description:
+      'The status service allows for easy monitoring of application downtime. Each application should represent a service that is useful to the end user by itself, such as child care subsidy and child care certification.',
+    beta: false,
   },
   {
     name: 'Task',
@@ -129,18 +129,19 @@ const completeServiceVariables = [
 export const defaultFeaturesVisible = {
   Access: true,
   Calendar: true,
-  Comment: false,
+  Comment: true,
   Configuration: true,
-  Feedback: false,
+  Feedback: true,
   Form: false,
+  FormAI: true,
   Directory: true,
   Event: true,
   File: true,
   Notification: true,
   PDF: true,
   Script: true,
+  SharePoint: false,
   Status: true,
-  SharePoint: true,
   Task: false,
   Value: true,
   Cache: true,

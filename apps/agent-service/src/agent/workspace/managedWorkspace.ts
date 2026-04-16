@@ -58,9 +58,10 @@ const WORKSPACE_REVISION_PATH = `${WORKSPACE_METADATA_DIR}/revision.json`;
 const DEFAULT_WORKSPACE_REVISION = 0;
 const UTF8_DECODER = new TextDecoder('utf-8', { fatal: true });
 
-// File size limits for workspace initialization
-const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50MB per file
-const MAX_TARBALL_SIZE_BYTES = 500 * 1024 * 1024; // 500MB total
+// File size limits for workspace initialization — configured via environment
+import { environment } from '../../environments/environment';
+const MAX_FILE_SIZE_BYTES = environment.AGENT_MAX_FILE_SIZE_BYTES;
+const MAX_TARBALL_SIZE_BYTES = environment.AGENT_MAX_TARBALL_SIZE_BYTES;
 
 const BINARY_EXTENSIONS = new Set([
   '.png',

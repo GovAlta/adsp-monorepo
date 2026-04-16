@@ -138,7 +138,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
               {label}
               {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
             </ReviewLabel>
-            {showButton && stepId !== undefined && (
+            {showButton && stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
               <GoabButton
                 type="tertiary"
                 size="compact"
@@ -164,7 +164,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
         <PageReviewContainer colSpan={3}>
           <ReviewHeader>
             <ReviewLabel>{`${isAlbertaAddress ? 'Alberta' : 'Canada'} postal address`}</ReviewLabel>
-            {stepId !== undefined && (
+            {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
               <GoabButton
                 type="tertiary"
                 size="compact"

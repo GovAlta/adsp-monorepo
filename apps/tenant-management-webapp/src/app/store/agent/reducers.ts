@@ -223,12 +223,24 @@ export default function (state: AgentState = defaultState, action: AgentActionTy
         ...state,
         busy: { ...state.busy, connecting: true },
       };
-    case CONNECT_AGENT_SUCCESS_ACTION:
+    case CONNECT_AGENT_SUCCESS_ACTION: {
+      // Complete any messages stuck in streaming state from a prior connection
+      // (e.g. the stream was interrupted by a token-expiry disconnect).
+      const patchedMessages = { ...state.messages };
+      let patched = false;
+      for (const [id, msg] of Object.entries(patchedMessages)) {
+        if (msg.from === 'agent' && msg.streaming) {
+          patchedMessages[id] = { ...msg, streaming: false };
+          patched = true;
+        }
+      }
       return {
         ...state,
         connected: true,
         busy: { ...state.busy, connecting: false },
+        ...(patched ? { messages: patchedMessages } : {}),
       };
+    }
     case DISCONNECT_AGENT_ACTION:
       return {
         ...state,
