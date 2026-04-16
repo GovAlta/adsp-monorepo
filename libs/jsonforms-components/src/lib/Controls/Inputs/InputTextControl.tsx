@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
+import _ from 'lodash';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoabInput, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
@@ -108,33 +109,39 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
   if (registerConfig) {
     registerData = registerCtx?.selectRegisterData(registerConfig) as RegisterDataType;
   }
+
+  const labelPath = (uischema?.options?.label as string) || 'label';
+  const valuePath = uischema?.options?.value || 'value';
+  const dropDownPlaceholder = uischema?.options?.placeholder ?? 'Select an option';
+
   const autoCompletion = props.uischema?.options?.autoComplete === true;
 
   const mergedOptions = useMemo(() => {
-    const newOptions = [
-      ...(registerData?.map((d) => {
+    const dynamicOptions =
+      registerData?.map((d) => {
         if (typeof d === 'string') {
           return {
             value: d,
             label: d,
           };
-        } else {
-          return { ...d };
         }
-      }) || []),
-    ];
 
-    const hasNonEmptyOptions = newOptions.some((option) => option.value !== '');
+        if (typeof d === 'object' && d !== null) {
+          return {
+            value: _.get(d, valuePath) || '',
+            label: _.get(d, labelPath) || '',
+          };
+        }
 
-    if (!hasNonEmptyOptions && newOptions.length === 1 && newOptions[0].value === '') {
-      return newOptions;
-    }
-    if (newOptions && newOptions.length === 0) {
-      newOptions.push({ label: '', value: '' });
-    }
+        return { label: '', value: '' };
+      }) || [];
 
-    return newOptions.filter((option) => option.value !== '');
-  }, [registerData]);
+    const filteredDynamicOptions = dynamicOptions.filter((item) => !(item.value === '' && item.label.trim() === ''));
+    const newOptions = [{ label: dropDownPlaceholder, value: '' }, ...filteredDynamicOptions];
+
+    return newOptions;
+    // eslint-disable-next-line
+  }, [registerData, valuePath, labelPath]);
 
   useEffect(() => {
     if (registerConfig) {
@@ -153,7 +160,7 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   return (
     <div>
-      {mergedOptions.length > 0 ? (
+      {mergedOptions.length > 1 ? (
         <GoabDropdown
           name={`jsonforms-${path}-dropdown`}
           value={data}
@@ -183,7 +190,6 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
           ariaLabel={appliedUiSchemaOptions?.name || `${id || label}-input`}
           testId={appliedUiSchemaOptions?.testId || `${id}-input`}
           {...uischema.options?.componentProps}
-          // maxLength={appliedUiSchemaOptions?.maxLength}
           onChange={(detail: GoabInputOnChangeDetail) => {
             let formattedValue = detail.value;
             if (schema && schema.title === sinTitle && detail.value !== '') {
