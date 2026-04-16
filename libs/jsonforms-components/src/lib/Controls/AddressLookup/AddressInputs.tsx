@@ -101,7 +101,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
         </GoabFormItem>
       </GoabGrid>
       <br />
-      <GoabGrid minChildWidth="0" gap="s">
+      <GoabGrid minChildWidth="18rem" gap="s">
         <GoabFormItem label="Province">
           {isAlbertaAddress && <LabelDiv data-testid="address-form-province">Alberta</LabelDiv>}
           {!isAlbertaAddress && (
@@ -114,7 +114,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
               onChange={(detail: GoabDropdownOnChangeDetail) =>
                 handleInputChange('subdivisionCode', detail.value as string)
               }
-              width="25ch"
+              width="100%"
             >
               {provinces.map((w) => (
                 <GoabDropdownItem key={w.value} value={w.value} label={w.label} />
