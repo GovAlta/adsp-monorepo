@@ -122,7 +122,7 @@ Feature: Form app
     And the user views Summary link as the last link in the table on task list page
     When the user clicks "Personal Information" task on task list page
     Then the user views Step "1" of "2" on the form page
-    And the user enters "Auto" in a text field labelled "First name"
+    When the user enters "Auto" in a text field labelled "First name"
     And the user enters "Test" in a text field labelled "Last name"
     And the user enters "1970-10-30" in a date picker labelled "Birthday"
     And the user enters "CA" in a dropdown labelled "Nationality"
