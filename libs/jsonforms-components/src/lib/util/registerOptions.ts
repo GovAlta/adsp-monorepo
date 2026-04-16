@@ -10,6 +10,7 @@ export const OPTION_DEFINITIONS = defineFields({
   mainTitle: { schema: 'Main form title' },
   enableEmail: { schema: true },
   enablePhone: { schema: true },
+  placeholder: { schema: 'Please select something' },
   emailFirst: { schema: true },
   noDataMessage: { schema: 'no data' },
   detail: { name: 'maxItems', schema: { maxItems: 42 } },
