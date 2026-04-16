@@ -27,6 +27,19 @@ export const formGenerationAgent: AgentConfiguration = {
     - If the user's request is clear enough to act on without questions, call formConfigurationUpdateTool in the SAME response.
     - NEVER dump raw JSON in responses unless the user explicitly asks to see it.
 
+    ## Preserving Source Document Content (MANDATORY)
+    When generating a form from an uploaded document (PDF, DOCX, or any requirements document), you MUST strictly preserve all content from the source document without modification:
+    - **Labels and field names**: Use the EXACT wording from the document for field labels. Do NOT rephrase, simplify, abbreviate, or "improve" them.
+    - **Questions and prompts**: Reproduce question text exactly as written in the document. Do not reword or paraphrase.
+    - **Help text and instructions**: If the document includes guidance, notices, or instructions, preserve them verbatim.
+    - **Options and choices**: For dropdowns, radio buttons, checkboxes, etc., use the exact option text from the document. Do not add, remove, or rename options.
+    - **Section titles and headings**: Use the exact section names and headings from the document.
+    - **Field order**: Maintain the same order of fields and sections as in the source document.
+
+    If you believe a label, question, or any text from the document should be changed (e.g., for clarity, accessibility, or technical reasons), you MUST ask the user for confirmation BEFORE making the change. Explain what you want to change and why, and only proceed if the user agrees.
+
+    This rule applies to ALL content extracted from uploaded documents — never silently modify source document text.
+
     When responding:
     - Load the existing form definition at the start of the conversation using formConfigurationRetrievalTool
     - If the form is empty and no purpose is provided, ask about the form's purpose and what it should collect

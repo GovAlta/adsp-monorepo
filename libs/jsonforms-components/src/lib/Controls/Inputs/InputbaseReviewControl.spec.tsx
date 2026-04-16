@@ -357,6 +357,46 @@ describe('GoABaseInputReviewComponent', () => {
     const reviewControl = getByTestId('review-control-input-id');
     expect(reviewControl.textContent).toContain('Agreement is required');
   });
+
+  it('renders "No" without parentheses when uischema.label is "" and no options.text (CS-4826)', () => {
+    const props = {
+      ...baseProps,
+      data: false,
+      required: false,
+      label: '',
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/isAttestationAccepted',
+        label: '',
+        options: {
+          radio: false,
+        },
+      },
+      schema: { type: 'boolean' },
+    };
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    expect(getByTestId('review-control-input-id').textContent).toBe('No');
+  });
+
+  it('renders "Yes" without parentheses when uischema.label is "" and no options.text (CS-4826)', () => {
+    const props = {
+      ...baseProps,
+      data: true,
+      required: false,
+      label: '',
+      uischema: {
+        type: 'Control' as const,
+        scope: '#/properties/isAttestationAccepted',
+        label: '',
+        options: {
+          radio: false,
+        },
+      },
+      schema: { type: 'boolean' },
+    };
+    const { getByTestId } = render(<GoABaseInputReviewComponent {...props} />);
+    expect(getByTestId('review-control-input-id').textContent).toBe('Yes');
+  });
 });
 
 describe('Can render GoAInputBaseTableReview', () => {

@@ -61,6 +61,7 @@ import { watchServiceMetricsSagas } from './metrics/sagas';
 import { watchScriptSagas } from './script/sagas';
 import { watchValueSagas } from './value/sagas';
 import { watchDirectorySagas } from './directory/sagas';
+import { watchSharepointSagas } from './sharePoint/sagas';
 
 // eslint-disable-next-line  @typescript-eslint/explicit-module-boundary-types
 export function* watchSagas() {
@@ -127,6 +128,8 @@ export function* watchSagas() {
     watchDirectorySagas(),
     //Cache
     watchCacheSagas(),
+    //sharepoint
+    watchSharepointSagas(),
   ]);
 
   // yield all([watchNotixSagas()]);

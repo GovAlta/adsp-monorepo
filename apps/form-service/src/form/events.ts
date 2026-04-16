@@ -121,6 +121,10 @@ export const FormStatusSubmittedDefinition: DomainEventDefinition = {
           id: { type: 'string' },
         },
       },
+      data: {
+        type: ['object', 'null'],
+        description: 'Form submission data, included when includeDataInSubmission is enabled on the definition.',
+      },
     },
   },
   interval: {
@@ -342,7 +346,8 @@ export function formSubmitted(
         id: user.id,
         name: user.name,
       },
-      dryRun: dryRun
+      data: form.definition.includeDataInSubmission === true ? form.data : null,
+      dryRun: dryRun,
     },
   };
 }

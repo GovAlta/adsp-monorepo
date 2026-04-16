@@ -23,7 +23,7 @@ export const ContractInfoControlReview = (props: ContractInfoControlReviewProps)
       <PageReviewContainer colSpan={3}>
         <ReviewHeader>
           <ReviewLabel>{fieldLabel}</ReviewLabel>
-          {stepId !== undefined && (
+          {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
             <GoabButton
               type="tertiary"
               size="compact"

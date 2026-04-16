@@ -393,6 +393,7 @@ Then(
     script,
     sharepoint,
     status,
+    sharepoint,
     task,
     value
   ) {
@@ -413,6 +414,7 @@ Then(
       'The script services provides',
       'The SharePoint service allows',
       'The status service allows',
+      'The SharePoint service allows',
       'The task service provides',
       'The value service provides',
     ];
@@ -433,6 +435,7 @@ Then(
       script,
       sharepoint,
       status,
+      sharepoint,
       task,
       value,
     ];

@@ -25,6 +25,7 @@ import Task from './task/reducers';
 import Feedback from './feedback/reducers';
 import Value from './value/reducers';
 import Agent from './agent/reducers';
+import sharepointReducer from './sharePoint/reducers';
 
 export const rootReducer = combineReducers({
   fileService: File,
@@ -54,4 +55,5 @@ export const rootReducer = combineReducers({
   scriptService: Script,
   valueService: Value,
   agent: Agent,
+  sharepoint: sharepointReducer,
 });

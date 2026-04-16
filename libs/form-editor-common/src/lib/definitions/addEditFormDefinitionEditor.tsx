@@ -168,6 +168,7 @@ export function AddEditFormDefinitionEditor({
   queueTasks,
   fileTypes,
   registerData = undefined,
+  formAIEnabled = false,
 }): JSX.Element {
   const fileList = useSelector((state: RootState) => {
     return state?.fileService.newFileList;
@@ -416,10 +417,10 @@ export function AddEditFormDefinitionEditor({
 
   const thread = useSelector((state: RootState) => threadSelector(state, threadId));
   useEffect(() => {
-    if (!thread) {
+    if (formAIEnabled && !thread) {
       dispatch(startThread('formGenerationAgent', threadId));
     }
-  }, [dispatch, thread]);
+  }, [dispatch, formAIEnabled, thread]);
 
   return (
     <FormEditor>
@@ -543,23 +544,25 @@ export function AddEditFormDefinitionEditor({
                   </EditorPadding>
                 </GoabFormItem>
               </Tab>
-              <Tab
-                label={
-                  <span>
-                    AI
-                    <GoabBadge type="important" ml="xs" mt="2xs" content="Alpha" icon={false} />
-                  </span>
-                }
-                data-testid="form-editor-agent-tab"
-                isTightContent={true}
-              >
-                <DefinitionAgentChat
-                  definitionId={definition.id}
-                  threadId={threadId}
-                  height={EditorHeight}
-                  disabled={!agentConnected}
-                />
-              </Tab>
+              {formAIEnabled && (
+                <Tab
+                  label={
+                    <span>
+                      AI
+                      <GoabBadge type="important" ml="xs" mt="2xs" content="Alpha" icon={false} />
+                    </span>
+                  }
+                  data-testid="form-editor-agent-tab"
+                  isTightContent={true}
+                >
+                  <DefinitionAgentChat
+                    definitionId={definition.id}
+                    threadId={threadId}
+                    height={EditorHeight}
+                    disabled={!agentConnected}
+                  />
+                </Tab>
+              )}
               <Tab label="Roles" data-testid="form-roles-tab" isTightContent={true}>
                 <BorderBottom>
                   <AddToggleButtonPadding>
@@ -818,6 +821,30 @@ export function AddEditFormDefinitionEditor({
                         position="top"
                       >
                         <GoabIcon type="information-circle" ariaLabel="submission-icon"></GoabIcon>
+                      </GoabTooltip>
+                    </FlexRow>
+                    <FlexRow>
+                      <SubmissionRecordsBox>
+                        <GoabCheckbox
+                          name="include-data-in-submission"
+                          key="include-data-in-submission"
+                          checked={definition.includeDataInSubmission}
+                          testId="include-data-in-submission"
+                          onChange={() => {
+                            setDefinition({ includeDataInSubmission: !definition.includeDataInSubmission });
+                          }}
+                          text="Include data in submission event"
+                        />
+                      </SubmissionRecordsBox>
+                      <GoabTooltip
+                        content={
+                          definition.includeDataInSubmission
+                            ? 'Form data will be included in the submission event payload.'
+                            : 'Form data will not be included in the submission event payload.'
+                        }
+                        position="top"
+                      >
+                        <GoabIcon type="information-circle" ariaLabel="include-data-in-submission-icon"></GoabIcon>
                       </GoabTooltip>
                     </FlexRow>
                     <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>

@@ -52,12 +52,14 @@ export interface FeatureFlags {
   Comment: boolean;
   Configuration: boolean;
   Form: boolean;
+  FormAI: boolean;
   Directory: boolean;
   Event: boolean;
   File: boolean;
   Notification: boolean;
   PDF: boolean;
   Script: boolean;
+  SharePoint: boolean;
   Status: boolean;
   Task: boolean;
   Feedback: boolean;

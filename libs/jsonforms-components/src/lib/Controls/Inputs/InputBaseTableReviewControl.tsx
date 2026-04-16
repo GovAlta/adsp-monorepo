@@ -174,8 +174,20 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
     activeError = `${labelToUpdate} is required`;
   }
 
+  // For required boolean fields (e.g. anyOf: [{enum: [true]}]), suppress the raw AJV
+  // "must be equal to one of the allowed values" error and show a friendly message instead.
+  if (schema?.type === 'boolean' && activeError && activeError.toLowerCase().includes('must be equal')) {
+    activeError = data === false ? `${labelToUpdate} is required` : undefined;
+  }
+
   if (required && isNilOrEmptyValue(data, true) && !activeError) {
     activeError = `${labelToUpdate} is required`;
+  }
+
+  // If a required checkbox is unchecked, show only the validation message in
+  // review mode (not a contradictory "No (...)" value line).
+  if (schema?.type === 'boolean' && data === false && activeError && /\sis required$/i.test(activeError)) {
+    reviewText = '';
   }
 
   // eslint-disable-next-line
@@ -196,7 +208,7 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
             {labelToUpdate}
             {required && <RequiredTextLabel> (required)</RequiredTextLabel>}
           </ReviewLabel>
-          {stepId !== undefined && (
+          {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
             <GoabButton type="tertiary" size="compact" onClick={() => context?.goToPage(stepId, uischema.scope)}>
               Change
             </GoabButton>

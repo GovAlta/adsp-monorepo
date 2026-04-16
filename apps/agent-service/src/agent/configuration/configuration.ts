@@ -109,7 +109,24 @@ export class AgentServiceConfiguration {
             url: ':memory:',
           });
 
-      const sharedMemory = new Memory({ storage, options: { lastMessages: 40 } });
+      const sharedMemory = new Memory({
+        storage,
+        options: {
+          lastMessages: environment.AGENT_LAST_MESSAGES,
+          observationalMemory: environment.AGENT_OBSERVATIONAL_MEMORY
+            ? {
+                model: environment.MODEL_URL
+                  ? {
+                      providerId: 'custom',
+                      modelId: environment.MODEL,
+                      url: environment.MODEL_URL,
+                      apiKey: environment.MODEL_API_KEY,
+                    }
+                  : environment.MODEL,
+              }
+            : false,
+        },
+      });
 
       this.mastra = new Mastra({
         storage,

@@ -223,11 +223,35 @@ export type AgentActionTypes =
   | EditAgentAction
   | NewPreviewThreadAction;
 
-// wrapping function for socket.on
+// Grace period (ms) before surfacing a disconnect to the UI.
+// Normal token-renewal reconnections complete in ~1-2 s, so 5 s is a generous
+// buffer while still surfacing genuine outages.
+const DISCONNECT_GRACE_MS = 5_000;
+
 let socket: Socket;
+let disconnectGraceTimer: ReturnType<typeof setTimeout> | null = null;
+
+interface QueuedMessage {
+  threadId: string;
+  messageId: string;
+  agent: string;
+  content: UserContent;
+  context: Record<string, unknown>;
+}
+let queuedMessages: QueuedMessage[] = [];
+
+function clearGraceTimer() {
+  if (disconnectGraceTimer !== null) {
+    clearTimeout(disconnectGraceTimer);
+    disconnectGraceTimer = null;
+  }
+}
+
 export function connectAgent() {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     dispatch({ type: CONNECT_AGENT_ACTION });
+
+    clearGraceTimer();
 
     if (socket?.connected) {
       socket.disconnect();
@@ -237,6 +261,9 @@ export function connectAgent() {
 
     socket = io(config.serviceUrls?.agentServiceApiUrl || 'localhost:3380', {
       withCredentials: true,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
       auth: async (cb) => {
         try {
           const token = await dispatch(getAccessToken());
@@ -249,10 +276,36 @@ export function connectAgent() {
     });
 
     socket.on('connect', () => {
+      clearGraceTimer();
       dispatch({ type: CONNECT_AGENT_SUCCESS_ACTION });
+
+      // Flush any messages queued while the socket was briefly disconnected.
+      while (queuedMessages.length > 0 && socket.connected) {
+        const queued = queuedMessages.shift();
+        if (queued) {
+          socket.send({
+            threadId: queued.threadId,
+            messageId: queued.messageId,
+            agent: queued.agent,
+            content: queued.content,
+            context: queued.context,
+            rawChunks: true,
+          });
+        }
+      }
     });
+
     socket.on('disconnect', (reason) => {
-      dispatch({ type: DISCONNECT_AGENT_SUCCESS_ACTION });
+      // Start a grace period instead of immediately marking as disconnected.
+      // If the socket reconnects within the window the UI never notices.
+      clearGraceTimer();
+      disconnectGraceTimer = setTimeout(() => {
+        disconnectGraceTimer = null;
+        // Grace period expired without reconnection — surface the disconnect.
+        dispatch({ type: DISCONNECT_AGENT_SUCCESS_ACTION });
+        queuedMessages = [];
+      }, DISCONNECT_GRACE_MS);
+
       if (reason === 'io server disconnect') {
         // Server forcefully disconnected (e.g. token expiry). socket.io will not
         // auto-reconnect for this reason, so reconnect manually. The auth callback
@@ -260,6 +313,13 @@ export function connectAgent() {
         socket.connect();
       }
     });
+
+    socket.on('session-expired', () => {
+      // Server is about to disconnect due to token expiry.
+      // Reconnect promptly — the auth callback will fetch a fresh token.
+      socket.connect();
+    });
+
     socket.on('stream', (message) => {
       const { threadId, messageId, chunk, done, output } = message;
       dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, chunk, done, output });
@@ -272,6 +332,8 @@ export function connectAgent() {
 
 export function disconnectAgent() {
   return async (dispatch: Dispatch) => {
+    clearGraceTimer();
+    queuedMessages = [];
     dispatch({ type: DISCONNECT_AGENT_ACTION });
 
     if (socket?.connected) {
@@ -292,7 +354,13 @@ export function messageAgent(threadId: string, context: Record<string, unknown>,
     const { agent } = getState();
     const thread = agent.threads[threadId];
     if (thread) {
-      socket.send({ threadId, messageId, agent: thread.agent, content, context, rawChunks: true });
+      if (socket?.connected) {
+        socket.send({ threadId, messageId, agent: thread.agent, content, context, rawChunks: true });
+      } else {
+        // Socket is briefly disconnected (e.g. token renewal). Queue the message
+        // so it is sent automatically once the connection is re-established.
+        queuedMessages.push({ threadId, messageId, agent: thread.agent, content, context });
+      }
     }
   };
 }
