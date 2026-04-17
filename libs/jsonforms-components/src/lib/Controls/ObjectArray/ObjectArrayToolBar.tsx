@@ -17,7 +17,7 @@ export interface ObjectArrayToolbarProps {
   rootSchema: JsonSchema;
   enabled: boolean;
   // eslint-disable-next-line
-  addItem(path: string, value: any): () => void;
+  addItem(path: string, value: any): (() => void) | undefined;
   setCurrentListPage?: (page: number) => void; // optional now
   currentListPage?: number;
   buttonType?: string;
@@ -51,7 +51,7 @@ const ObjectArrayToolBar = React.memo(function TableToolbar({
             leadingIcon="add"
             aria-label={`Add to button to ${label?.toLowerCase() || ''}`}
             onClick={() => {
-              addItem(path, createDefaultValue(schema, rootSchema))();
+              addItem(path, createDefaultValue(schema, rootSchema))?.();
               setCurrentListPage?.(data + 1);
             }}
             type={uischema.options?.addButtonType ?? buttonType ?? 'secondary'}
