@@ -267,7 +267,81 @@ describe('Input Text Control tests', () => {
         await new Promise((resolve) => setTimeout(resolve, 350));
       });
 
-      expect(handleChangeMock).toHaveBeenCalledWith('', '123 456 789');
+      expect(handleChangeMock).toHaveBeenCalledWith('', '123-456-789');
+    });
+
+    it('does not update SIN input when alphabet characters are entered', async () => {
+      const props = { ...sinProps, handleChange: handleChangeMock };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      handleChangeMock.mockClear();
+      (firstNameInput as HTMLElement & { value: string }).value = '123a';
+
+      await fireEvent(
+        firstNameInput!,
+        new CustomEvent('_change', {
+          detail: { value: '123a' },
+        }),
+      );
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      });
+
+      expect(handleChangeMock).not.toHaveBeenCalledWith('', expect.stringContaining('a'));
+      expect((firstNameInput as HTMLElement & { value: string }).value).toBe('1324567');
+    });
+
+    it('prevents alphabet key presses for SIN input', async () => {
+      const props = { ...sinProps, handleChange: handleChangeMock };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      const keyDownEvent = new KeyboardEvent('keydown', {
+        cancelable: true,
+        bubbles: true,
+        key: 'a',
+      });
+      const preventDefaultSpy = jest.spyOn(keyDownEvent, 'preventDefault');
+
+      fireEvent(firstNameInput!, keyDownEvent);
+
+      expect(preventDefaultSpy).toHaveBeenCalled();
+    });
+
+    it('allows number and hyphen key presses for SIN input', async () => {
+      const props = { ...sinProps, handleChange: handleChangeMock };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      const numberKeyDownEvent = new KeyboardEvent('keydown', {
+        cancelable: true,
+        bubbles: true,
+        key: '1',
+      });
+      const hyphenKeyDownEvent = new KeyboardEvent('keydown', {
+        cancelable: true,
+        bubbles: true,
+        key: '-',
+      });
+      const numberPreventDefaultSpy = jest.spyOn(numberKeyDownEvent, 'preventDefault');
+      const hyphenPreventDefaultSpy = jest.spyOn(hyphenKeyDownEvent, 'preventDefault');
+
+      fireEvent(firstNameInput!, numberKeyDownEvent);
+      fireEvent(firstNameInput!, hyphenKeyDownEvent);
+
+      expect(numberPreventDefaultSpy).not.toHaveBeenCalled();
+      expect(hyphenPreventDefaultSpy).not.toHaveBeenCalled();
     });
 
     it('does not trigger handleChange event if nothing changes', async () => {
@@ -379,38 +453,38 @@ describe('Input Text Control tests', () => {
       expect(validateSinWithLuhn(Number('123456879'))).toBe(false);
     });
     it('should return 9 digits for invalid SIN Number with more than 16 digits', () => {
-      expect(formatSin('123456879123456789999')).toBe('123 456 879');
+      expect(formatSin('123456879123456789999')).toBe('123-456-879');
     });
   });
 
   describe('formatSin', () => {
     it('formats a valid SIN number correctly', () => {
       const input = '123456789';
-      const expected = '123 456 789';
+      const expected = '123-456-789';
       expect(formatSin(input)).toBe(expected);
     });
 
-    it('handles input with existing spaces correctly', () => {
-      const input = '123 456 789';
-      const expected = '123 456 789';
+    it('handles input with existing hyphens correctly', () => {
+      const input = '123-456-789';
+      const expected = '123-456-789';
       expect(formatSin(input)).toBe(expected);
     });
 
-    it('removes non-numeric characters and formats correctly', () => {
+    it('rejects alphabet characters', () => {
       const input = 'abc123456def';
-      const expected = '123 456';
+      const expected = '';
       expect(formatSin(input)).toBe(expected);
     });
 
     it('truncates input longer than 9 digits', () => {
       const input = '123456789012345';
-      const expected = '123 456 789';
+      const expected = '123-456-789';
       expect(formatSin(input)).toBe(expected);
     });
 
     it('formats input with fewer than 9 digits', () => {
       const input = '12345';
-      const expected = '123 45';
+      const expected = '123-45';
       expect(formatSin(input)).toBe(expected);
     });
 
@@ -434,7 +508,7 @@ describe('Input Text Control tests', () => {
     });
   });
 
-  it('autopopulates value when user exists and data is empty', async () => {
+  it('autoPopulates value when user exists and data is empty', async () => {
     const handleChangeMock = jest.fn();
 
     (useRegisterUser as jest.Mock).mockReturnValue({ name: 'Test User' });

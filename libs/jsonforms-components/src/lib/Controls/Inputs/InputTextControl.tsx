@@ -13,6 +13,7 @@ import {
   GoabInputOnChangeDetail,
   GoabInputOnBlurDetail,
   GoabDropdownOnChangeDetail,
+  GoabInputOnKeyPressDetail,
 } from '@abgov/ui-components-common';
 import { useDebounce } from '../../util/useDebounce';
 import { autoPopulateValue } from '../../util/autoPopulate';
@@ -29,23 +30,46 @@ export function fetchRegisterConfigFromOptions(
   return config;
 }
 
+const formattedSinPattern = /^\d{3}-\d{3}-\d{3}$/;
+const allowedSinInputPattern = /^[\d-]*$/;
+const allowedSinKeyPattern = /^[\d-]$/;
+const allowedSinControlKeys = new Set([
+  'Backspace',
+  'Delete',
+  'Tab',
+  'Enter',
+  'Escape',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'Home',
+  'End',
+]);
+
 export const formatSin = (value: string) => {
-  const inputVal = value?.replace(/ /g, '');
-  let inputNumbersOnly = inputVal?.replace(/\D/g, '');
-
-  if (inputNumbersOnly.length > 16) {
-    inputNumbersOnly = inputNumbersOnly.substr(0, 9);
+  if (!allowedSinInputPattern.test(value)) {
+    return '';
   }
 
-  const splits = inputNumbersOnly.match(/.{1,3}/g);
-
-  let spacedNumber = '';
-  if (splits) {
-    spacedNumber = splits.join(' ');
+  if (formattedSinPattern.test(value)) {
+    return value;
   }
-  const formatVal = spacedNumber.length > 11 ? spacedNumber.slice(0, 11) : spacedNumber;
-  return formatVal;
+
+  const digits = value?.replace(/\D/g, '').slice(0, 9);
+  return digits?.match(/.{1,3}/g)?.join('-') ?? '';
 };
+
+const resetInputValue = (detail: GoabInputOnChangeDetail, value: string) => {
+  const target = (detail as GoabInputOnChangeDetail & { event?: Event }).event?.target as
+    | { value?: string }
+    | undefined;
+
+  if (target) {
+    target.value = value;
+  }
+};
+
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   return (
     <JsonFormRegisterProvider defaultRegisters={undefined}>
@@ -151,8 +175,44 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
 
+  const preventInvalidSinKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (
+      !isSinField ||
+      allowedSinControlKeys.has(event.key) ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      allowedSinKeyPattern.test(event.key)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+  };
+
+  const preventInvalidSinBeforeInput = (event: React.FormEvent<HTMLDivElement>) => {
+    if (!isSinField) {
+      return;
+    }
+
+    const data = (event.nativeEvent as InputEvent).data;
+    if (data && !allowedSinInputPattern.test(data)) {
+      event.preventDefault();
+    }
+  };
+
+  const preventInvalidSinPaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    if (isSinField && !allowedSinInputPattern.test(event.clipboardData.getData('text'))) {
+      event.preventDefault();
+    }
+  };
+
   return (
-    <div>
+    <div
+      onKeyDownCapture={preventInvalidSinKey}
+      onBeforeInputCapture={preventInvalidSinBeforeInput}
+      onPasteCapture={preventInvalidSinPaste}
+    >
       {mergedOptions.length > 0 ? (
         <GoabDropdown
           name={`jsonforms-${path}-dropdown`}
@@ -177,7 +237,7 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
           value={localValue}
           width={width}
           readonly={readOnly}
-          maxLength={isSinField ? 11 : ''}
+          maxLength={isSinField ? 11 : undefined}
           placeholder={placeholder}
           name={appliedUiSchemaOptions?.name || `${id || label}-input`}
           ariaLabel={appliedUiSchemaOptions?.name || `${id || label}-input`}
@@ -186,7 +246,11 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
           // maxLength={appliedUiSchemaOptions?.maxLength}
           onChange={(detail: GoabInputOnChangeDetail) => {
             let formattedValue = detail.value;
-            if (schema && schema.title === sinTitle && detail.value !== '') {
+            if (isSinField && !allowedSinInputPattern.test(detail.value)) {
+              resetInputValue(detail, localValue);
+              return;
+            }
+            if (isSinField && detail.value !== '') {
               formattedValue = formatSin(detail.value);
             }
             setLocalValue(formattedValue);
@@ -205,6 +269,11 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
               controlProps: props as ControlProps,
               value: autoCapitalize ? detail.value.toUpperCase() : detail.value,
             });
+          }}
+          onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
+            if (isSinField && detail.key && !allowedSinKeyPattern.test(detail.key)) {
+              (detail as GoabInputOnKeyPressDetail & { event?: Event }).event?.preventDefault();
+            }
           }}
           {...uischema?.options?.componentProps}
         />
