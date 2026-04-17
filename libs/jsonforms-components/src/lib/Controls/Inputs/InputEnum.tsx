@@ -22,14 +22,14 @@ function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undef
 }
 
 export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
-  const { data, enabled, path, handleChange, options, label, uischema, required, setIsVisited, isVisited, schema } =
-    props;
+  const { data, enabled, path, handleChange, options, uischema, schema, errors } = props;
 
   const registerCtx = useContext(JsonFormsRegisterContext);
   const registerConfig: RegisterConfig | undefined = fetchRegisterConfigFromOptions(props.uischema?.options?.register);
 
   const labelPath = (uischema?.options?.label as string) || 'label';
   const valuePath = uischema?.options?.value || 'value';
+  const placeholder = uischema?.options?.placeholder ?? 'Select an option';
   let registerData: RegisterDataType = [];
   let error = '';
 
@@ -40,15 +40,18 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
   const autoCompletion = props.uischema?.options?.autoComplete === true;
 
   const mergedOptions = useMemo(() => {
-    const newOptions = [
-      ...(options || []),
-      ...(registerData?.map((d) => {
+    const staticOptions = (options || []).filter((item) => !(item.value === '' && item.label.trim() === ''));
+
+    const dynamicOptions =
+      registerData?.map((d) => {
         if (typeof d === 'string') {
           return {
             value: d,
             label: d,
           };
-        } else if (typeof d === 'object' && d !== null) {
+        }
+
+        if (typeof d === 'object' && d !== null) {
           return {
             value: _.get(d, valuePath) || '',
             label: _.get(d, labelPath) || '',
@@ -56,21 +59,14 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
         }
 
         return { label: '', value: '' };
-      }) || []),
-    ];
+      }) || [];
 
-    const hasNonEmptyOptions = newOptions.some((option) => option.value !== '');
-
-    if (!hasNonEmptyOptions && newOptions.length === 1 && newOptions[0].value === '') {
-      return newOptions;
-    }
-    if (newOptions && newOptions.length === 0) {
-      newOptions.push({ label: '', value: '' });
-    }
+    const filteredDynamicOptions = dynamicOptions.filter((item) => !(item.value === '' && item.label.trim() === ''));
+    const newOptions = [{ label: placeholder, value: '' }, ...staticOptions, ...filteredDynamicOptions];
 
     return newOptions;
-    //eslint-disable-next-line
-  }, [registerData, options]);
+    // eslint-disable-next-line
+  }, [registerData, options, valuePath, labelPath]);
 
   const width = uischema?.options?.componentProps?.width || '100%';
 

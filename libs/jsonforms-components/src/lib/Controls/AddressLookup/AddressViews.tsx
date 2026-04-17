@@ -69,7 +69,7 @@ export const AddressViews: React.FC<AddressInputsProps> = ({
           </GoabFormItem>
         </GoabGrid>
         <br />
-        <GoabGrid minChildWidth="0" gap="s">
+        <GoabGrid minChildWidth="18rem" gap="s">
           <GoabFormItem
             label="Province"
             error={!isAlbertaAddress && data?.subdivisionCode === undefined ? 'Province is required' : ''}
