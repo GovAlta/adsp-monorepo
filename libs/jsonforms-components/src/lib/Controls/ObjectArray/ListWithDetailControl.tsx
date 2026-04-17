@@ -172,7 +172,7 @@ export interface EmptyListProps {
 }
 
 const EmptyList = ({ numColumns, noDataMessage }: EmptyListProps) => (
-  <GoabGrid minChildWidth="60ch">
+  <GoabGrid minChildWidth="60ch" mt="l" mb="l">
     <TextCenter>
       <b>{noDataMessage}</b>
     </TextCenter>
