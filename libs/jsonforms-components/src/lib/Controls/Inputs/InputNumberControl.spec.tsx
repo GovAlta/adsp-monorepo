@@ -266,38 +266,38 @@ describe('Input Text Control tests', () => {
       expect(validateSinWithLuhn(Number('123456879'))).toBe(false);
     });
     it('should return 9 digits for invalid SIN Number with more than 16 digits', () => {
-      expect(formatSin('123456879123456789999')).toBe('123 456 879');
+      expect(formatSin('123456879123456789999')).toBe('123-456-879');
     });
   });
 
   describe('formatSin', () => {
     it('formats a valid SIN number correctly', () => {
       const input = '123456789';
-      const expected = '123 456 789';
+      const expected = '123-456-789';
       expect(formatSin(input)).toBe(expected);
     });
 
-    it('handles input with existing spaces correctly', () => {
-      const input = '123 456 789';
-      const expected = '123 456 789';
+    it('handles input with existing hyphens correctly', () => {
+      const input = '123-456-789';
+      const expected = '123-456-789';
       expect(formatSin(input)).toBe(expected);
     });
 
-    it('removes non-numeric characters and formats correctly', () => {
+    it('rejects alphabet characters', () => {
       const input = 'abc123456def';
-      const expected = '123 456';
+      const expected = '';
       expect(formatSin(input)).toBe(expected);
     });
 
     it('truncates input longer than 9 digits', () => {
       const input = '123456789012345';
-      const expected = '123 456 789';
+      const expected = '123-456-789';
       expect(formatSin(input)).toBe(expected);
     });
 
     it('formats input with fewer than 9 digits', () => {
       const input = '12345';
-      const expected = '123 45';
+      const expected = '123-45';
       expect(formatSin(input)).toBe(expected);
     });
 
