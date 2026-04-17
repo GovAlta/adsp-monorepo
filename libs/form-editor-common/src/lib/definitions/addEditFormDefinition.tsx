@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { debounce as _debounce } from 'lodash';
 import { FormDefinition } from '@store/form/model';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
@@ -26,6 +27,7 @@ import {
   GoabCheckbox,
   GoabDropdown,
   GoabDropdownItem,
+  GoabFilterChip,
 } from '@abgov/react-components';
 import { HelpTextComponent } from '@components/HelpTextComponent';
 import {
@@ -33,13 +35,15 @@ import {
   GoabInputOnChangeDetail,
   GoabDropdownOnChangeDetail,
 } from '@abgov/ui-components-common';
+import { Tag } from '@store/directory/models';
+import { fetchFormTagByTagName } from '@store/form/action';
 
 interface AddEditFormDefinitionProps {
   open: boolean;
   isEdit: boolean;
   initialValue?: FormDefinition;
   onClose: () => void;
-  onSave: (definition: FormDefinition) => void;
+  onSave: (definition: FormDefinition, tags?: string[]) => void;
 }
 
 function isValidUrl(string) {
@@ -77,9 +81,13 @@ export const AddEditFormDefinition = ({
   open,
   onSave,
 }: AddEditFormDefinitionProps): JSX.Element => {
+  const dispatch = useDispatch();
   const [definition, setDefinition] = useState<FormDefinition>(initialValue);
   const [multiForm, setMultiForm] = useState<boolean>(false);
   const [spinner, setSpinner] = useState<boolean>(false);
+  const [tagInput, setTagInput] = useState<string>('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const MAX_TAG_LENGTH = 50;
 
   const definitions = useSelector((state: RootState) => {
     return state?.form?.definitions;
@@ -92,6 +100,32 @@ export const AddEditFormDefinition = ({
   const descErrMessage = 'Description can not be over 180 characters';
 
   const defaultFormUrl = useSelector((state: RootState) => selectDefaultFormUrl(state, definition?.id || null));
+
+  const searchedTagExists = useSelector((state: RootState) => {
+    return state?.form?.formResourceTag?.searchedTagExists;
+  });
+
+  const tagAlreadyAdded = () => {
+    return selectedTags.some((tag) => tag.toLowerCase() === tagInput.toLowerCase());
+  };
+
+  const debouncedTagChangeHandler = useMemo(
+    () =>
+      _debounce(
+        async (input) => {
+          dispatch(fetchFormTagByTagName(toKebabName(input.toLowerCase())));
+        },
+        800,
+        { leading: false, trailing: true },
+      ),
+    [dispatch],
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedTagChangeHandler.cancel();
+    };
+  }, [debouncedTagChangeHandler]);
 
   useEffect(() => {
     if (spinner && Object.keys(definitions).length > 0 && !isEdit) {
@@ -107,6 +141,8 @@ export const AddEditFormDefinition = ({
 
   useEffect(() => {
     setDefinition(initialValue);
+    setTagInput('');
+    setSelectedTags([]);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { errors, validators } = useValidators(
@@ -114,14 +150,13 @@ export const AddEditFormDefinition = ({
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
   )
     .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .add('formDraftUrlTemplate', 'formDraftUrlTemplate', checkFormDefaultUrl())
+    .add('tag', 'tag', wordMaxLengthCheck(MAX_TAG_LENGTH, 'Tag'), badCharsCheck)
     .build();
-
-
 
   return (
     <GoabModal
@@ -165,7 +200,7 @@ export const AddEditFormDefinition = ({
                 if (definition?.formDraftUrlTemplate === '') {
                   definition.formDraftUrlTemplate = defaultFormUrl;
                 }
-                onSave(definition);
+                onSave(definition, selectedTags);
               }
             }}
           >
@@ -210,7 +245,7 @@ export const AddEditFormDefinition = ({
                   setDefinition(
                     isEdit
                       ? { ...definition, name: detail.value }
-                      : { ...definition, name: detail.value, id: toKebabName(detail.value) }
+                      : { ...definition, name: detail.value, id: toKebabName(detail.value) },
                   );
                 }}
                 onBlur={() => {
@@ -280,6 +315,71 @@ export const AddEditFormDefinition = ({
                 }}
               />
             </FormFormItem>
+          </GoabFormItem>
+
+          <GoabFormItem
+            error={errors?.['tag']}
+            label="Tags"
+            helpText="Add tags to organize and filter form definitions"
+            mt={'s'}
+          >
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+              <FormFormItem style={{ flex: 1 }}>
+                <GoabInput
+                  type="text"
+                  name="form-definition-tag"
+                  value={tagInput}
+                  testId="form-definition-tag"
+                  aria-label="form-definition-tag"
+                  width="100%"
+                  maxLength={MAX_TAG_LENGTH}
+                  placeholder="Enter tag name"
+                  onChange={(detail: GoabInputOnChangeDetail) => {
+                    setTagInput(detail.value);
+                    validators.remove('tag');
+                    const validations = {
+                      tag: detail.value,
+                    };
+                    validators.checkAll(validations);
+                    if (!validators.haveErrors()) {
+                      debouncedTagChangeHandler(detail.value);
+                    }
+                  }}
+                />
+              </FormFormItem>
+              <GoabButton
+                type="secondary"
+                testId="add-tag-btn"
+                disabled={!tagInput.trim() || validators.haveErrors() || tagAlreadyAdded()}
+                onClick={() => {
+                  const validations = {
+                    tag: tagInput,
+                  };
+                  if (validators.checkAll(validations) && !tagAlreadyAdded()) {
+                    const trimmedTag = tagInput.trim();
+                    setSelectedTags([...selectedTags, trimmedTag]);
+                    setTagInput('');
+                    validators.remove('tag');
+                  }
+                }}
+              >
+                {searchedTagExists ? 'Add tag' : 'Create and add tag'}
+              </GoabButton>
+            </div>
+            {selectedTags.length > 0 && (
+              <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {selectedTags.map((tag, index) => (
+                  <GoabFilterChip
+                    key={`tag-${index}`}
+                    testId={`form-tag-${index}`}
+                    content={tag}
+                    onClick={() => {
+                      setSelectedTags(selectedTags.filter((_, i) => i !== index));
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </GoabFormItem>
 
           {!isEdit && (

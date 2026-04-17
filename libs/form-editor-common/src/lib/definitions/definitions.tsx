@@ -75,10 +75,13 @@ export const FormDefinitions = ({
   const orderedFormDefinitions = (state: RootState) => {
     const entries = Object.entries(state?.form?.definitions);
 
-    return entries.reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
-      tempObj[formDefinitionId] = formDefinitionData;
-      return tempObj;
-    }, {} as Record<string, any>);
+    return entries.reduce(
+      (tempObj, [formDefinitionId, formDefinitionData]) => {
+        tempObj[formDefinitionId] = formDefinitionData;
+        return tempObj;
+      },
+      {} as Record<string, any>,
+    );
   };
 
   const formDefinitions = useSelector(orderedFormDefinitions);
@@ -92,7 +95,7 @@ export const FormDefinitions = ({
 
   const selectConfigurationHost = (state: RootState) => {
     return (state?.directory?.directory?.filter(
-      (y) => y.service === CONFIGURATION_SERVICE && y.namespace?.toLowerCase() === 'platform' && y.urn.endsWith('v2')
+      (y) => y.service === CONFIGURATION_SERVICE && y.namespace?.toLowerCase() === 'platform' && y.urn.endsWith('v2'),
     )[0] ?? []) as Service;
   };
   const resourceConfiguration = useSelector(selectConfigurationHost);
@@ -245,7 +248,7 @@ export const FormDefinitions = ({
           setOpenAddDefinition(false);
         }}
         initialValue={defaultFormDefinition}
-        onSave={(definition) => {
+        onSave={(definition, tags) => {
           setOpenAddFormDefinition(false);
           navigate({
             pathname: `edit/${definition.id}`,
@@ -253,6 +256,13 @@ export const FormDefinitions = ({
           });
           dispatch(updateFormDefinition(definition));
           dispatch(openEditorForDefinition(definition.id, definition));
+
+          if (tags && tags.length > 0) {
+            const urn = `${BASE_FORM_CONFIG_URN}/${definition.id}`;
+            tags.forEach((tagLabel) => {
+              dispatch(tagFormResource({ urn, label: tagLabel }, false));
+            });
+          }
         }}
       />
 
