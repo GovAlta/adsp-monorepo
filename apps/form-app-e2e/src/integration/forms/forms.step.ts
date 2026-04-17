@@ -313,3 +313,42 @@ Then('the user views a drafted form for {string}', function (formDefinitionName)
   );
   cy.url().should('match', regex);
 });
+
+Then('the user views "Automated Test Application" as the form title', function () {
+  formsObj.formTitle().should('have.text', 'Automated Test Application');
+});
+
+Then('the user views Application Progress with {string} progress status', function (progressStatus) {
+  formsObj.formApplicationProgressText().should('have.text', progressStatus);
+});
+
+Then('the user views the task of {string} with {string} status', function (taskName, status) {
+  formsObj.formTaskLink(taskName).should('exist');
+  formsObj.formTaskStatus(taskName).invoke('attr', 'arialabel').should('eq', status);
+});
+
+Then('the user views Summary link as the last link in the table on task list page', function () {
+  formsObj.formTaskListAllLinks().last().should('have.text', 'Summary');
+});
+
+When('the user clicks {string} task on task list page', function (taskName) {
+  formsObj.formTaskLink(taskName).click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views Step {string} of {string} on the form page', function (currentStep, totalSteps) {
+  formsObj.formStepIndicator().should('have.text', `Step ${currentStep} of ${totalSteps}`);
+});
+
+When('the user clicks Back to application overview link on the form page', function () {
+  formsObj.formBackToOverviewLink().click({ force: true });
+});
+
+When('the user clicks Next button on a tasklist step page', function () {
+  formsObj.formTaskListStepPageNextButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
+});
+
+Then('the user views section title of {string} on task list page', function (sectionTitle) {
+  formsObj.formSectionTitle(sectionTitle).should('exist');
+});

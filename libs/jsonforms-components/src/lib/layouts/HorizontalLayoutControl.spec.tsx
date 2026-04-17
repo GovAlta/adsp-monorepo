@@ -46,7 +46,7 @@ describe('HorizontalLayoutControl', () => {
       // Execution covers 'row' branch
     });
 
-    it('sets direction to column when HelpContent is present', () => {
+    it('keeps rendering when HelpContent is present', () => {
       const uischema: HorizontalLayout = {
         type: 'HorizontalLayout',
         elements: [
@@ -55,7 +55,7 @@ describe('HorizontalLayoutControl', () => {
         ]
       };
       render(<GoAHorizontalLayoutComponent {...baseProps} uischema={uischema} />);
-      // Execution covers 'column' branch
+      // Execution covers HelpContent branch
     });
   });
 

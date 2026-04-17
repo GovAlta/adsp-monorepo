@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
+import _ from 'lodash';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoabInput, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
@@ -47,6 +48,9 @@ const allowedSinControlKeys = new Set([
   'End',
 ]);
 
+const formatSinForDisplay = (value: string) => value.replace(/ /g, '-');
+const formatSinForSchema = (value: string) => value.replace(/-/g, ' ');
+
 export const formatSin = (value: string) => {
   if (!allowedSinInputPattern.test(value)) {
     return '';
@@ -82,16 +86,17 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
     props;
 
   const user = useRegisterUser();
+  const isSinField = schema.title === sinTitle;
 
-  const initialValue = data;
+  const initialValue = isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data;
   const [manualInput, setManualInput] = useState<boolean>(false);
   const [localValue, setLocalValue] = useState<string>(initialValue);
 
   const debouncedValue = useDebounce(localValue, 300);
 
   useEffect(() => {
-    setLocalValue(data);
-  }, [data]);
+    setLocalValue(isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data);
+  }, [data, isSinField]);
 
   useEffect(() => {
     if (!user || data) return;
@@ -112,12 +117,14 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   /* istanbul ignore next */
   useEffect(() => {
-    if (debouncedValue === data) return;
+    const dataForInput = isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data;
+    if (debouncedValue === dataForInput) return;
+
     // Only sync if debouncedValue differs from data and is not initial empty state
-    if (debouncedValue !== data && (debouncedValue !== '' || data !== undefined)) {
+    if (debouncedValue !== dataForInput && (debouncedValue !== '' || data !== undefined)) {
       onChangeForInputControl({
         name: '',
-        value: debouncedValue,
+        value: isSinField ? formatSinForSchema(debouncedValue) : debouncedValue,
         controlProps: props as ControlProps,
       });
     }
@@ -132,33 +139,39 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
   if (registerConfig) {
     registerData = registerCtx?.selectRegisterData(registerConfig) as RegisterDataType;
   }
+
+  const labelPath = (uischema?.options?.label as string) || 'label';
+  const valuePath = uischema?.options?.value || 'value';
+  const dropDownPlaceholder = uischema?.options?.placeholder ?? 'Select an option';
+
   const autoCompletion = props.uischema?.options?.autoComplete === true;
 
   const mergedOptions = useMemo(() => {
-    const newOptions = [
-      ...(registerData?.map((d) => {
+    const dynamicOptions =
+      registerData?.map((d) => {
         if (typeof d === 'string') {
           return {
             value: d,
             label: d,
           };
-        } else {
-          return { ...d };
         }
-      }) || []),
-    ];
 
-    const hasNonEmptyOptions = newOptions.some((option) => option.value !== '');
+        if (typeof d === 'object' && d !== null) {
+          return {
+            value: _.get(d, valuePath) || '',
+            label: _.get(d, labelPath) || '',
+          };
+        }
 
-    if (!hasNonEmptyOptions && newOptions.length === 1 && newOptions[0].value === '') {
-      return newOptions;
-    }
-    if (newOptions && newOptions.length === 0) {
-      newOptions.push({ label: '', value: '' });
-    }
+        return { label: '', value: '' };
+      }) || [];
 
-    return newOptions.filter((option) => option.value !== '');
-  }, [registerData]);
+    const filteredDynamicOptions = dynamicOptions.filter((item) => !(item.value === '' && item.label.trim() === ''));
+    const newOptions = [{ label: dropDownPlaceholder, value: '' }, ...filteredDynamicOptions];
+
+    return newOptions;
+    // eslint-disable-next-line
+  }, [registerData, valuePath, labelPath]);
 
   useEffect(() => {
     if (registerConfig) {
@@ -168,8 +181,6 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
-
-  const isSinField = schema.title === sinTitle;
 
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
@@ -213,7 +224,7 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
       onBeforeInputCapture={preventInvalidSinBeforeInput}
       onPasteCapture={preventInvalidSinPaste}
     >
-      {mergedOptions.length > 0 ? (
+      {mergedOptions.length > 1 ? (
         <GoabDropdown
           name={`jsonforms-${path}-dropdown`}
           value={data}
@@ -243,7 +254,6 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
           ariaLabel={appliedUiSchemaOptions?.name || `${id || label}-input`}
           testId={appliedUiSchemaOptions?.testId || `${id}-input`}
           {...uischema.options?.componentProps}
-          // maxLength={appliedUiSchemaOptions?.maxLength}
           onChange={(detail: GoabInputOnChangeDetail) => {
             let formattedValue = detail.value;
             if (isSinField && !allowedSinInputPattern.test(detail.value)) {

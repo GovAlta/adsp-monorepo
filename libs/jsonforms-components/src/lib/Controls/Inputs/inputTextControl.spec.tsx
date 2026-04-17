@@ -8,7 +8,7 @@ import { validateSinWithLuhn, checkFieldValidity, isValidDate } from '../../util
 import { JsonFormsContext } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 import { fetchRegisterConfigFromOptions } from './InputTextControl';
-import { useRegisterUser } from '../../Context/register';
+import { JsonFormsRegisterContext, useRegisterUser } from '../../Context/register';
 import { autoPopulateValue } from '../../util/autoPopulate';
 
 const mockContextValue = {
@@ -267,7 +267,7 @@ describe('Input Text Control tests', () => {
         await new Promise((resolve) => setTimeout(resolve, 350));
       });
 
-      expect(handleChangeMock).toHaveBeenCalledWith('', '123-456-789');
+      expect(handleChangeMock).toHaveBeenCalledWith('', '123 456 789');
     });
 
     it('does not update SIN input when alphabet characters are entered', async () => {
@@ -342,6 +342,116 @@ describe('Input Text Control tests', () => {
 
       expect(numberPreventDefaultSpy).not.toHaveBeenCalled();
       expect(hyphenPreventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    it('allows control and shortcut key presses for SIN input', async () => {
+      const props = { ...sinProps, handleChange: handleChangeMock };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      const backspaceEvent = new KeyboardEvent('keydown', {
+        cancelable: true,
+        bubbles: true,
+        key: 'Backspace',
+      });
+      const copyShortcutEvent = new KeyboardEvent('keydown', {
+        cancelable: true,
+        bubbles: true,
+        key: 'c',
+        ctrlKey: true,
+      });
+      const backspacePreventDefaultSpy = jest.spyOn(backspaceEvent, 'preventDefault');
+      const shortcutPreventDefaultSpy = jest.spyOn(copyShortcutEvent, 'preventDefault');
+
+      fireEvent(firstNameInput!, backspaceEvent);
+      fireEvent(firstNameInput!, copyShortcutEvent);
+
+      expect(backspacePreventDefaultSpy).not.toHaveBeenCalled();
+      expect(shortcutPreventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not block alphabet key presses for non-SIN input', async () => {
+      const props = { ...staticProps };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      const keyDownEvent = new KeyboardEvent('keydown', {
+        cancelable: true,
+        bubbles: true,
+        key: 'a',
+      });
+      const preventDefaultSpy = jest.spyOn(keyDownEvent, 'preventDefault');
+
+      fireEvent(firstNameInput!, keyDownEvent);
+
+      expect(preventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    it('prevents invalid pasted text for SIN input', async () => {
+      const props = { ...sinProps, handleChange: handleChangeMock };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      const pasteEvent = new Event('paste', { cancelable: true, bubbles: true });
+      Object.defineProperty(pasteEvent, 'clipboardData', {
+        value: {
+          getData: () => '123a',
+        },
+      });
+      const preventDefaultSpy = jest.spyOn(pasteEvent, 'preventDefault');
+
+      fireEvent(firstNameInput!, pasteEvent);
+
+      expect(preventDefaultSpy).toHaveBeenCalled();
+    });
+
+    it('allows valid pasted text for SIN input', async () => {
+      const props = { ...sinProps, handleChange: handleChangeMock };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      const pasteEvent = new Event('paste', { cancelable: true, bubbles: true });
+      Object.defineProperty(pasteEvent, 'clipboardData', {
+        value: {
+          getData: () => '123-456',
+        },
+      });
+      const preventDefaultSpy = jest.spyOn(pasteEvent, 'preventDefault');
+
+      fireEvent(firstNameInput!, pasteEvent);
+
+      expect(preventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    it('prevents invalid GoA key press events for SIN input', async () => {
+      const props = { ...sinProps, handleChange: handleChangeMock };
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <GoAInputText {...props} />
+        </JsonFormsContext.Provider>,
+      );
+      const firstNameInput = baseElement.querySelector("goa-input[testId='firstName-input']");
+      const keyPressEvent = new CustomEvent('_keyPress', {
+        cancelable: true,
+        detail: { key: 'a', value: '1324567a' },
+      });
+      const preventDefaultSpy = jest.spyOn(keyPressEvent, 'preventDefault');
+
+      fireEvent(firstNameInput!, keyPressEvent);
+
+      expect(preventDefaultSpy).toHaveBeenCalled();
     });
 
     it('does not trigger handleChange event if nothing changes', async () => {
@@ -445,6 +555,23 @@ describe('Input Text Control tests', () => {
 
       expect(getByText('Social insurance number is invalid')).toBeTruthy();
     });
+
+    it('does not show an error for a valid schema-formatted SIN', () => {
+      const validSinProps = {
+        ...sinProps,
+        schema: { ...sinProps.schema, default: undefined },
+        data: '046 454 286',
+      };
+
+      const { container } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <TestComponent props={validSinProps} />
+        </JsonFormsContext.Provider>,
+      );
+
+      expect(container).toBeEmptyDOMElement();
+    });
+
     it('should return true for valid SIN Number', () => {
       expect(validateSinWithLuhn(Number('046454286'))).toBe(true);
     });
@@ -505,6 +632,94 @@ describe('Input Text Control tests', () => {
       const options = { url: 'https://example.com', someProp: 'value' };
       const result = fetchRegisterConfigFromOptions(options);
       expect(result).toEqual(options);
+    });
+
+    it('renders register string data as dropdown options', () => {
+      const handleChangeMock = jest.fn();
+      const fetchRegisterByUrlMock = jest.fn();
+      const props = {
+        ...staticProps,
+        handleChange: handleChangeMock,
+        uischema: {
+          ...staticProps.uischema,
+          options: {
+            ...staticProps.uischema.options,
+            register: { url: 'https://example.com/register' },
+          },
+        },
+      };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <JsonFormsRegisterContext.Provider
+            value={
+              {
+                isProvided: true,
+                registerDispatch: jest.fn(),
+                selectRegisterData: jest.fn(() => ['Option 1']),
+                fetchErrors: jest.fn(() => ''),
+                fetchRegisterByUrl: fetchRegisterByUrlMock,
+              } as never
+            }
+          >
+            <GoAInputText {...props} />
+          </JsonFormsRegisterContext.Provider>
+        </JsonFormsContext.Provider>,
+      );
+
+      const dropdown = baseElement.querySelector("goa-dropdown[testId='jsonforms-firstName-dropdown']");
+      const option = baseElement.querySelector('goa-dropdown-item[value="Option 1"]');
+
+      expect(dropdown).toBeInTheDocument();
+      expect(option).toBeInTheDocument();
+      expect(fetchRegisterByUrlMock).toHaveBeenCalledWith({ url: 'https://example.com/register' });
+
+      fireEvent(
+        dropdown!,
+        new CustomEvent('_change', {
+          detail: { value: 'Option 1' },
+        }),
+      );
+
+      expect(handleChangeMock).toHaveBeenCalledWith('firstName', 'Option 1');
+    });
+
+    it('renders register object data using configured label and value paths', () => {
+      const props = {
+        ...staticProps,
+        uischema: {
+          ...staticProps.uischema,
+          options: {
+            ...staticProps.uischema.options,
+            label: 'name',
+            value: 'code',
+            register: { urn: 'urn:ads:test:register' },
+          },
+        },
+      };
+
+      const { baseElement } = render(
+        <JsonFormsContext.Provider value={mockContextValue}>
+          <JsonFormsRegisterContext.Provider
+            value={
+              {
+                isProvided: true,
+                registerDispatch: jest.fn(),
+                selectRegisterData: jest.fn(() => [{ name: 'Display label', code: 'display-value' }]),
+                fetchErrors: jest.fn(() => ''),
+                fetchRegisterByUrl: jest.fn(),
+              } as never
+            }
+          >
+            <GoAInputText {...props} />
+          </JsonFormsRegisterContext.Provider>
+        </JsonFormsContext.Provider>,
+      );
+
+      const option = baseElement.querySelector('goa-dropdown-item[value="display-value"]');
+
+      expect(option).toBeInTheDocument();
+      expect(option?.getAttribute('label')).toBe('Display label');
     });
   });
 

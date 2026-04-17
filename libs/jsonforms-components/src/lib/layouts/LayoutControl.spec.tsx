@@ -57,6 +57,32 @@ const getUiSchema = (type: string) => {
   };
 };
 
+const getHorizontalUiSchemaWithHelpContent = () => {
+  return {
+    type: 'HorizontalLayout',
+    elements: [
+      {
+        type: 'HelpContent',
+        options: {
+          help: 'Help text for horizontal layout',
+        },
+      },
+      {
+        type: 'Control',
+        scope: '#/properties/firstName',
+      },
+      {
+        type: 'Control',
+        scope: '#/properties/middleInitial',
+      },
+      {
+        type: 'Control',
+        scope: '#/properties/lastName',
+      },
+    ],
+  };
+};
+
 const getForm = (schema: object, uiSchema: UISchemaElement, data: object = {}) => {
   return (
     <JsonForms
@@ -73,6 +99,13 @@ const getForm = (schema: object, uiSchema: UISchemaElement, data: object = {}) =
 describe('Horizontal Layout control', () => {
   it('renders a horizontal row with a grid', () => {
     const form = getForm(schema, getUiSchema('HorizontalLayout'));
+    const { container } = render(form);
+    const grid = container.querySelector('div > :scope goa-grid');
+    expect(grid).toBeInTheDocument();
+  });
+
+  it('renders a horizontal row with a grid when HelpContent is present', () => {
+    const form = getForm(schema, getHorizontalUiSchemaWithHelpContent());
     const { container } = render(form);
     const grid = container.querySelector('div > :scope goa-grid');
     expect(grid).toBeInTheDocument();
