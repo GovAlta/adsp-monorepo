@@ -44,7 +44,7 @@ class FormsPage {
   }
 
   formSubmitButton() {
-    return cy.xpath('//goa-button[@type="primary" and text()="Submit" and not(@disabled)]');
+    return cy.xpath('//goa-button[@type="primary" and text()="Submit"]');
   }
 
   formListWithDetailButton(label) {
