@@ -115,7 +115,7 @@ export const RedirectButton = ({ url, name, label }: RedirectButtonProps): JSX.E
     >
       <Content>
         {label}
-        <GoabIcon type="create" size="medium" theme="outline"></GoabIcon>
+        <GoabIcon type="create" size="medium" theme="outline" ariaLabel={`redirect-button-icon-${name}`}></GoabIcon>
       </Content>
     </GoabButton>
   );

@@ -52,7 +52,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
       currentData.lastName === nextData.lastName &&
       currentData.dateOfBirth === nextData.dateOfBirth
         ? currentData
-        : nextData
+        : nextData,
     );
   }, [data]);
 
@@ -76,10 +76,10 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
         name === 'firstName'
           ? 'First name'
           : name === 'lastName'
-          ? 'Last name'
-          : name === 'dateOfBirth'
-          ? 'Date of birth'
-          : name;
+            ? 'Last name'
+            : name === 'dateOfBirth'
+              ? 'Date of birth'
+              : name;
       err[name] = `${modifiedName} is required`;
     } else {
       delete err[name];
@@ -91,12 +91,10 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
     ['firstName', 'middleName', 'lastName', 'dateOfBirth'],
     formData,
     updateFormData,
-    handleRequiredFieldBlur
+    handleRequiredFieldBlur,
   );
-  const hostRef = useRef<HTMLElement | null>(null);
-
   useEffect(() => {
-    const host = hostRef.current ?? document.querySelector('goa-input[type="date"]');
+    const host = controlRef.current?.querySelector<HTMLElement>('goa-input[type="date"]') ?? null;
     host?.shadowRoot?.querySelector('input[type="date"]');
     ensureGoaDatePointerCursor(host);
   }, []);
