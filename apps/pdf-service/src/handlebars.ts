@@ -62,8 +62,8 @@ const getFormFieldValue = (scope: string, data: object) => {
     return Array.isArray(currentValue)
       ? currentValue[currentValue.length - 1]
       : typeof currentValue === 'object'
-      ? ''
-      : currentValue;
+        ? ''
+        : currentValue;
   } else {
     return '';
   }
@@ -337,7 +337,7 @@ class HandlebarsTemplateService implements TemplateService {
         }
 
         return ret;
-      }
+      },
     );
     handlebars.registerHelper(
       'withItemsObject',
@@ -377,7 +377,7 @@ class HandlebarsTemplateService implements TemplateService {
         ret = ret + options.fn(extendedContext);
 
         return ret;
-      }
+      },
     );
 
     handlebars.registerHelper('forEachItemObject', function (context, data, requiredFields, options) {
@@ -444,6 +444,10 @@ class HandlebarsTemplateService implements TemplateService {
         value = `${urnCount} file${urnCount > 1 ? 's' : ''} uploaded`;
       } else {
         value = valueMap(value);
+      }
+
+      if (value === undefined || value === null || value === '') {
+        value = '(none given)';
       }
 
       return value;
