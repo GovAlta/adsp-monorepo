@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ObjectArrayControl, NonEmptyCellComponent } from './ObjectListControl';
 import { ControlElement, ArrayTranslations } from '@jsonforms/core';
-import { JsonFormsDispatch } from '@jsonforms/react';
+import { JsonFormsDispatch, useJsonForms } from '@jsonforms/react';
 jest.mock('@jsonforms/react');
 
 const mockUISchema: ControlElement = {
@@ -103,6 +103,33 @@ describe('Object List component', () => {
     render(<ObjectArrayControl {...baseMockProps} />);
     const ObjectListWrapper = screen.getByTestId('jsonforms-object-list-wrapper');
     expect(ObjectListWrapper).toBeTruthy();
+  });
+
+  it('shows the object array list when the toolbar add button is clicked from an empty array', async () => {
+    (useJsonForms as jest.Mock).mockReturnValue({
+      core: { schema: rootSchema, errors: [] },
+      cells: [],
+      renderers: [],
+    });
+    const handleChange = jest.fn();
+    const props = {
+      ...baseMockProps,
+      data: [],
+      handleChange,
+    };
+
+    const { baseElement } = render(<ObjectArrayControl {...props} />);
+    const addButton = baseElement.querySelector('goa-button');
+
+    fireEvent(
+      addButton!,
+      new CustomEvent('_click', {
+        bubbles: true,
+      }),
+    );
+
+    expect(handleChange).toHaveBeenCalledWith('dependant', [{}]);
+    await waitFor(() => expect(baseElement.querySelector('goa-input')).toBeInTheDocument());
   });
 
   it('Can render components with defined layout in the not empty cell', async () => {
