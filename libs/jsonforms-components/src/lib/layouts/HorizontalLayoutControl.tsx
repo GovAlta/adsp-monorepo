@@ -15,13 +15,14 @@ export const GoAHorizontalLayoutComponent = ({
   visible,
 }: LayoutProps) => {
   const layout = uischema as HorizontalLayout;
-  const hasHelpContent = layout.elements?.some((element) => element.type === 'HelpContent');
-  const childProps: LayoutRendererProps = {
-    elements: layout.elements,
+  const elements = layout.elements || [];
+  const helpElements = elements.filter((element) => element.type === 'HelpContent');
+  const contentElements = elements.filter((element) => element.type !== 'HelpContent');
+
+  const childProps: Omit<LayoutRendererProps, 'elements' | 'direction'> = {
     schema,
     path,
     enabled,
-    direction: hasHelpContent ? 'column' : 'row',
     visible,
     width: uischema?.options?.width || '300px',
     option: {
@@ -29,7 +30,16 @@ export const GoAHorizontalLayoutComponent = ({
     },
   };
 
-  return <LayoutRenderer {...childProps} renderers={renderers} cells={cells} />;
+  return (
+    <>
+      {helpElements.length > 0 && (
+        <LayoutRenderer {...childProps} direction="column" elements={helpElements} renderers={renderers} cells={cells} />
+      )}
+      {contentElements.length > 0 && (
+        <LayoutRenderer {...childProps} direction="row" elements={contentElements} renderers={renderers} cells={cells} />
+      )}
+    </>
+  );
 };
 
 export const GoAHorizontalReviewLayoutComponent = ({

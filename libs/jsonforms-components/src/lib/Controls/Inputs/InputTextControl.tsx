@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
+import _ from 'lodash';
 import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoabInput, GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
@@ -13,6 +14,7 @@ import {
   GoabInputOnChangeDetail,
   GoabInputOnBlurDetail,
   GoabDropdownOnChangeDetail,
+  GoabInputOnKeyPressDetail,
 } from '@abgov/ui-components-common';
 import { useDebounce } from '../../util/useDebounce';
 import { autoPopulateValue } from '../../util/autoPopulate';
@@ -29,23 +31,49 @@ export function fetchRegisterConfigFromOptions(
   return config;
 }
 
+const formattedSinPattern = /^\d{3}-\d{3}-\d{3}$/;
+const allowedSinInputPattern = /^[\d-]*$/;
+const allowedSinKeyPattern = /^[\d-]$/;
+const allowedSinControlKeys = new Set([
+  'Backspace',
+  'Delete',
+  'Tab',
+  'Enter',
+  'Escape',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'Home',
+  'End',
+]);
+
+const formatSinForDisplay = (value: string) => value.replace(/ /g, '-');
+const formatSinForSchema = (value: string) => value.replace(/-/g, ' ');
+
 export const formatSin = (value: string) => {
-  const inputVal = value?.replace(/ /g, '');
-  let inputNumbersOnly = inputVal?.replace(/\D/g, '');
-
-  if (inputNumbersOnly.length > 16) {
-    inputNumbersOnly = inputNumbersOnly.substr(0, 9);
+  if (!allowedSinInputPattern.test(value)) {
+    return '';
   }
 
-  const splits = inputNumbersOnly.match(/.{1,3}/g);
-
-  let spacedNumber = '';
-  if (splits) {
-    spacedNumber = splits.join(' ');
+  if (formattedSinPattern.test(value)) {
+    return value;
   }
-  const formatVal = spacedNumber.length > 11 ? spacedNumber.slice(0, 11) : spacedNumber;
-  return formatVal;
+
+  const digits = value?.replace(/\D/g, '').slice(0, 9);
+  return digits?.match(/.{1,3}/g)?.join('-') ?? '';
 };
+
+const resetInputValue = (detail: GoabInputOnChangeDetail, value: string) => {
+  const target = (detail as GoabInputOnChangeDetail & { event?: Event }).event?.target as
+    | { value?: string }
+    | undefined;
+
+  if (target) {
+    target.value = value;
+  }
+};
+
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
   return (
     <JsonFormRegisterProvider defaultRegisters={undefined}>
@@ -58,16 +86,17 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
     props;
 
   const user = useRegisterUser();
+  const isSinField = schema.title === sinTitle;
 
-  const initialValue = data;
+  const initialValue = isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data;
   const [manualInput, setManualInput] = useState<boolean>(false);
   const [localValue, setLocalValue] = useState<string>(initialValue);
 
   const debouncedValue = useDebounce(localValue, 300);
 
   useEffect(() => {
-    setLocalValue(data);
-  }, [data]);
+    setLocalValue(isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data);
+  }, [data, isSinField]);
 
   useEffect(() => {
     if (!user || data) return;
@@ -88,12 +117,14 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
   /* istanbul ignore next */
   useEffect(() => {
-    if (debouncedValue === data) return;
+    const dataForInput = isSinField && typeof data === 'string' ? formatSinForDisplay(data) : data;
+    if (debouncedValue === dataForInput) return;
+
     // Only sync if debouncedValue differs from data and is not initial empty state
-    if (debouncedValue !== data && (debouncedValue !== '' || data !== undefined)) {
+    if (debouncedValue !== dataForInput && (debouncedValue !== '' || data !== undefined)) {
       onChangeForInputControl({
         name: '',
-        value: debouncedValue,
+        value: isSinField ? formatSinForSchema(debouncedValue) : debouncedValue,
         controlProps: props as ControlProps,
       });
     }
@@ -108,33 +139,39 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
   if (registerConfig) {
     registerData = registerCtx?.selectRegisterData(registerConfig) as RegisterDataType;
   }
+
+  const labelPath = (uischema?.options?.label as string) || 'label';
+  const valuePath = uischema?.options?.value || 'value';
+  const dropDownPlaceholder = uischema?.options?.placeholder ?? 'Select an option';
+
   const autoCompletion = props.uischema?.options?.autoComplete === true;
 
   const mergedOptions = useMemo(() => {
-    const newOptions = [
-      ...(registerData?.map((d) => {
+    const dynamicOptions =
+      registerData?.map((d) => {
         if (typeof d === 'string') {
           return {
             value: d,
             label: d,
           };
-        } else {
-          return { ...d };
         }
-      }) || []),
-    ];
 
-    const hasNonEmptyOptions = newOptions.some((option) => option.value !== '');
+        if (typeof d === 'object' && d !== null) {
+          return {
+            value: _.get(d, valuePath) || '',
+            label: _.get(d, labelPath) || '',
+          };
+        }
 
-    if (!hasNonEmptyOptions && newOptions.length === 1 && newOptions[0].value === '') {
-      return newOptions;
-    }
-    if (newOptions && newOptions.length === 0) {
-      newOptions.push({ label: '', value: '' });
-    }
+        return { label: '', value: '' };
+      }) || [];
 
-    return newOptions.filter((option) => option.value !== '');
-  }, [registerData]);
+    const filteredDynamicOptions = dynamicOptions.filter((item) => !(item.value === '' && item.label.trim() === ''));
+    const newOptions = [{ label: dropDownPlaceholder, value: '' }, ...filteredDynamicOptions];
+
+    return newOptions;
+    // eslint-disable-next-line
+  }, [registerData, valuePath, labelPath]);
 
   useEffect(() => {
     if (registerConfig) {
@@ -145,15 +182,49 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
 
-  const isSinField = schema.title === sinTitle;
-
   const autoCapitalize =
     uischema?.options?.componentProps?.autoCapitalize === true || uischema?.options?.autoCapitalize === true;
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
 
+  const preventInvalidSinKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (
+      !isSinField ||
+      allowedSinControlKeys.has(event.key) ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      allowedSinKeyPattern.test(event.key)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+  };
+
+  const preventInvalidSinBeforeInput = (event: React.FormEvent<HTMLDivElement>) => {
+    if (!isSinField) {
+      return;
+    }
+
+    const data = (event.nativeEvent as InputEvent).data;
+    if (data && !allowedSinInputPattern.test(data)) {
+      event.preventDefault();
+    }
+  };
+
+  const preventInvalidSinPaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    if (isSinField && !allowedSinInputPattern.test(event.clipboardData.getData('text'))) {
+      event.preventDefault();
+    }
+  };
+
   return (
-    <div>
-      {mergedOptions.length > 0 ? (
+    <div
+      onKeyDownCapture={preventInvalidSinKey}
+      onBeforeInputCapture={preventInvalidSinBeforeInput}
+      onPasteCapture={preventInvalidSinPaste}
+    >
+      {mergedOptions.length > 1 ? (
         <GoabDropdown
           name={`jsonforms-${path}-dropdown`}
           value={data}
@@ -177,16 +248,19 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
           value={localValue}
           width={width}
           readonly={readOnly}
-          maxLength={isSinField ? 11 : ''}
+          maxLength={isSinField ? 11 : undefined}
           placeholder={placeholder}
           name={appliedUiSchemaOptions?.name || `${id || label}-input`}
           ariaLabel={appliedUiSchemaOptions?.name || `${id || label}-input`}
           testId={appliedUiSchemaOptions?.testId || `${id}-input`}
           {...uischema.options?.componentProps}
-          // maxLength={appliedUiSchemaOptions?.maxLength}
           onChange={(detail: GoabInputOnChangeDetail) => {
             let formattedValue = detail.value;
-            if (schema && schema.title === sinTitle && detail.value !== '') {
+            if (isSinField && !allowedSinInputPattern.test(detail.value)) {
+              resetInputValue(detail, localValue);
+              return;
+            }
+            if (isSinField && detail.value !== '') {
               formattedValue = formatSin(detail.value);
             }
             setLocalValue(formattedValue);
@@ -205,6 +279,11 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
               controlProps: props as ControlProps,
               value: autoCapitalize ? detail.value.toUpperCase() : detail.value,
             });
+          }}
+          onKeyPress={(detail: GoabInputOnKeyPressDetail) => {
+            if (isSinField && detail.key && !allowedSinKeyPattern.test(detail.key)) {
+              (detail as GoabInputOnKeyPressDetail & { event?: Event }).event?.preventDefault();
+            }
           }}
           {...uischema?.options?.componentProps}
         />
