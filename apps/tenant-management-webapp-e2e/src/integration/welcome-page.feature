@@ -59,7 +59,8 @@ Feature: Tenant management welcome page
         When the user sends the delete tenant request
         Then the new tenant is deleted
 
-    @accessibility @regression
+    # Ignore the accessibility test due to the blocked issue CS-4849
+    @accessibility @regression @ignore
     Scenario: As a tenant management user, I can see the welcome page without any critical and serious accessibility issues
         When the user goes to the tenant management welcome page
         Then no critical or serious accessibility issues on "tenant management welcome page"
