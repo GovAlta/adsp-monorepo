@@ -8,7 +8,7 @@ export const SUBMITTED_FORM = 'submitted-form';
 
 const template = `
 
-<body>
+<body class="body">
   <div class="content">
     <div class="review-item">
       {{#each data.definition.uiSchema.elements }}
@@ -17,17 +17,15 @@ const template = `
             {{> elements element=this data=@root.data.content.data dataSchema=@root.data.definition.dataSchema requiredFields=(requiredField @root.data.definition.dataSchema) }}
           </div>
         {{else}}
-          <div class="review-item-section">
-            <div class="review-item-header">
-              <div class="review-item-title">{{this.label}}</div>
-            </div>
-            <div class="grid">
-                {{#each this.elements }}
-                    <div class="grid-padding">
-                        {{> elements element=this data=@root.data.content.data dataSchema=@root.data.definition.dataSchema requiredFields=(requiredField @root.data.definition.dataSchema) styles=@root.content.styles }}
-                     </div>
-                {{/each}}
-            </div>
+          <div class="review-item-header">
+            <div class="review-item-title">{{this.label}}</div>
+          </div>
+          <div class="grid">
+              {{#each this.elements }}
+                  <div class="grid-padding">
+                      {{> elements element=this data=@root.data.content.data dataSchema=@root.data.definition.dataSchema requiredFields=(requiredField @root.data.definition.dataSchema) styles=@root.content.styles }}
+                    </div>
+              {{/each}}
           </div>
         {{/if}}
       {{/each}}
@@ -79,26 +77,25 @@ html {
 }
 
 .content {
-  padding: 0 1em;
+  padding: 0 0;
   margin-top: 1.5em;
-  box-sizing: border-box;
+}
+.body {
+  padding: 0 0;
+  margin: 0 0 0 0;
+  white-space: nowrap;
+  border-top: 1px solid lightgrey;
 }
 
-.content .review-item-section {
-  background-color: #f1f1f1;
-  margin: 0.5rem 0;
-  padding: 1rem;
-  border: 1px solid #dcdcdc;
-  border-radius: 5px;
+.bold {
+  font-weight: bold;
 }
 
 .content .review-item {
   display: flex;
   flex-direction: column;
-  border: 1px solid grey;
-  border-radius: 0.25rem;
-  margin: 0.25rem 0.25rem 1.25rem 0.25rem;
-  padding: 0.5rem;
+  margin: 0;
+  padding: 0;
 }
 
 .content .review-item-header {
@@ -108,8 +105,7 @@ html {
   margin-bottom: 2rem;
 }
 .content .vertical-flex {
-  display: flex;
-  flex-direction: column;
+  width: 100%;
 }
 
 .content .grid {
@@ -121,13 +117,18 @@ html {
 }
 
 .content .grid-item {
-  flex: 1 1 calc(41% - 1rem);
+  display: flex;
+  width: 100%;
   margin: 0 3em 0 0;
+
+}
+.content .flex-1 {
+  margin-bottom: 1rem;
+  flex: 1;
 }
 .content .grid-padding {
   display: flex;
   flex: 1 1 calc(91% - 1rem);
-  margin-bottom: 1rem;
 }
 
 .content .header {
@@ -140,46 +141,51 @@ html {
   margin: 0;
 }
 .content .list-item-borderless-bottom-padding {
-  flex: 1 1 calc(45% - 1rem);
+  width: 100%;
 }
 .content .list-item-basic {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  border: 1px solid #dcdcdc;
-  border-radius: 0.25rem;
   padding: 0.75rem;
   width: 95%;
-  margin: 0 0 1em 0;
+  margin: 1rem 0 1rem 0;
 }
 .content .list-item-basic-list {
   display: flex;
-  flex-direction: row;
-  gap: 1rem;
-  border: 1px solid #dcdcdc;
+  flex-direction: column;
+  border: 1px solid lightgrey;
   border-radius: 0.25rem;
   padding: 0.75rem;
-  width: 95%;
-  margin: 0 0 1em 0;
+  width: 96%;
+  margin:  0 1em 1rem;
+}
+
+.content .list-item-basic-list > * {
+  width: 100%;
+}
+
+.content .no-margin {
+  margin: 0;
+  padding: 0;
+  width: 100%;
 }
 
 .content .list-item-borderless-box {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  padding: 0.375rem 0;
-  width: 95%;
+  width: 100%;
 }
 
 .content .review-item-title {
+  margin-top: 1rem;
   font-size: 1.5rem;
   line-height: 25px;
   font-weight: 300;
 }
 
 .content .review-item-basic {
-  background-color: #f1f1f1;
-  padding: 1rem;
+  padding: 0rem;
 }
 
 .content .goa-card {
@@ -214,7 +220,6 @@ const header = `
   .subtitle {
     padding-top: 3mm;
     margin-top: 2mm;
-    border-top: 1px solid lightgrey;
   }
   .subtitle span {
     display: inline-block;
