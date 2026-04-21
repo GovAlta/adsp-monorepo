@@ -1,35 +1,64 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
+  - package-ecosystem: 'npm'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
+    open-pull-requests-limit: 0
     directories:
-      - "/"
-      - "/apps/content-service"
+      - '/'
     groups:
-      prod-dependencies:
-        dependency-type: "production"
-      dev-dependencies:
-        dependency-type: "development"
-  - package-ecosystem: "pip"
+      security-updates:
+        applies-to: 'security-updates'
+        patterns:
+          - '*'
+  - package-ecosystem: 'pip'
     schedule:
-      interval: "weekly"
-    directories:
-      - "/libs/adsp-py-common"
-      - "/libs/adsp-service-django-sdk"
-      - "libs/adsp-service-flask-sdk"
+      interval: 'weekly'
+    open-pull-requests-limit: 0
+    directory: '/libs/adsp-py-common'
     groups:
-      prod-dependencies:
-        dependency-type: "production"
-      dev-dependencies:
-        dependency-type: "development"
-  - package-ecosystem: "maven"
+      security-updates:
+        applies-to: 'security-updates'
+        patterns:
+          - '*'
+  - package-ecosystem: 'pip'
     schedule:
-      interval: "weekly"
-    directories:
-      - "/libs/adsp-service-spring-sdk"
+      interval: 'weekly'
+    open-pull-requests-limit: 0
+    directory: '/libs/adsp-service-django-sdk'
     groups:
-      prod-dependencies:
-        dependency-type: "production"
-      dev-dependencies:
-        dependency-type: "development"
+      security-updates:
+        applies-to: 'security-updates'
+        patterns:
+          - '*'
+  - package-ecosystem: 'pip'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 0
+    directory: '/libs/adsp-service-flask-sdk'
+    groups:
+      security-updates:
+        applies-to: 'security-updates'
+        patterns:
+          - '*'
+  - package-ecosystem: 'pip'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 0
+    directory: '/apps/pii-service'
+    groups:
+      security-updates:
+        applies-to: 'security-updates'
+        patterns:
+          - '*'
+  - package-ecosystem: 'maven'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 0
+    directories:
+      - '/libs/adsp-service-spring-sdk'
+    groups:
+      security-updates:
+        applies-to: 'security-updates'
+        patterns:
+          - '*'
