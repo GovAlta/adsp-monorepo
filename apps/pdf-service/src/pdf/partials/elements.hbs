@@ -23,13 +23,17 @@
             {{/withItemsObject}}
         {{else}}
             <div class="grid-item">
-                <strong>
-                    {{ label element }}{{#if (isRequiredField requiredFields element )}}
-                    *
-                    {{/if}}
-                    :
-                </strong>
-                {{ value element data }}
+                <div class="flex-1">
+                    <div class="bold">
+                        {{ label element }}{{#if (isRequiredField requiredFields element )}}
+                        *
+                        {{/if}}
+                        :
+                    </div>
+                </div>
+                <div class="flex-1">
+                  {{ value element data }}
+                </div>
             </div>
         {{/if}}
     </div>
@@ -58,7 +62,7 @@
         {{/withEachData}}
     </div>
 {{else if (hasElements element) }}
-    <div>
+    <div class="no-margin">
         {{#if (isGroup element )}}
             <h4 class="groupPadding">
                 {{ label element }}

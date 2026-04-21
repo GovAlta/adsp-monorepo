@@ -193,9 +193,6 @@ class HandlebarsTemplateService implements TemplateService {
     handlebars.registerHelper('hasOptionElements', function (element) {
       return element?.options?.detail?.elements;
     });
-    handlebars.registerHelper('hasElements', function (element) {
-      return element?.elements;
-    });
     handlebars.registerHelper('isArray', function (element, data) {
       if (data !== undefined) {
         const pathArray = element.scope.replace('#/properties/', '').replace('properties/', '').split('/');
@@ -463,7 +460,7 @@ class HandlebarsTemplateService implements TemplateService {
     });
 
     handlebars.registerHelper('hasElements', function (element) {
-      return element?.elements && element.elements.length > 0;
+      return element?.elements && element.elements.length > 0 && element.type !== 'HelpContent';
     });
 
     handlebars.registerHelper('eq', function (a, b) {
