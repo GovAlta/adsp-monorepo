@@ -170,6 +170,10 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
     renderer: GoAInputBaseReviewControl,
   },
   {
+    tester: GoAPrimitiveArrayTester,
+    renderer: GoAInputBaseReviewControl,
+  },
+  {
     tester: GoAArrayControlTester,
     renderer: GoAArrayControlReviewRenderer,
   },
@@ -213,6 +217,10 @@ export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: GoABooleanRadioControlTester, renderer: GoAInputBaseTableReviewControl },
   {
     tester: MultiLineTextControlTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  {
+    tester: GoAPrimitiveArrayTester,
     renderer: GoAInputBaseTableReviewControl,
   },
   {
