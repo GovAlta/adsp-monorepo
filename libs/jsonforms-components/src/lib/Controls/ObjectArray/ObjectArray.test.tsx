@@ -369,6 +369,19 @@ const getPrimitiveForm = (formData: object, enabled = true) => {
   );
 };
 
+const getPrimitiveReviewForm = (formData: object) => {
+  return (
+    <JsonForms
+      uischema={primitiveUiSchema}
+      data={formData}
+      schema={primitiveSchema}
+      ajv={new Ajv({ allErrors: true, verbose: true })}
+      renderers={GoABaseReviewRenderers}
+      cells={GoACells}
+    />
+  );
+};
+
 it('shows empty state when no items', () => {
   const data = { files: [] };
   const { baseElement } = render(getPrimitiveForm(data));
@@ -444,4 +457,13 @@ it('primitive control handles non-array data and disabled add button', () => {
   const addButton = baseElement.querySelector('goa-button');
   expect(addButton).toBeInTheDocument();
   expect(addButton?.getAttribute('disabled')).toBe('true');
+});
+
+it('renders primitive array values in review without fallback error', () => {
+  const data = { files: ['test-one', 'test-two'] };
+  const { baseElement } = render(getPrimitiveReviewForm(data));
+
+  expect(baseElement.textContent).toContain('test-one');
+  expect(baseElement.textContent).toContain('test-two');
+  expect(baseElement.textContent).not.toContain('No applicable renderer found.');
 });
