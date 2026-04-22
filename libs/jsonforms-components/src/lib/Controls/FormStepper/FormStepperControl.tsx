@@ -50,7 +50,7 @@ export const FormStepper = (props: CategorizationStepperLayoutRendererProps) => 
 };
 
 export const FormStepperView = (props: CategorizationStepperLayoutRendererProps): JSX.Element => {
-  const { uischema, data, schema, path, cells, renderers, visible, t } = props;
+  const { uischema, data, schema, path, cells, renderers, visible, t, enabled } = props;
 
   const enumerators = useContext(JsonFormContext);
   const formStepperCtx = useContext(JsonFormsStepperContext);
@@ -59,7 +59,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
     formStepperCtx as JsonFormsStepperContextProps
   ).selectStepperState();
 
-  const { selectIsDisabled, goToPage } = formStepperCtx as JsonFormsStepperContextProps;
+  const { goToPage } = formStepperCtx as JsonFormsStepperContextProps;
   const submitFormFunction = enumerators?.submitFunction.get('submit-form');
   const submitForm = submitFormFunction && submitFormFunction();
 
@@ -139,7 +139,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
               {hasPrevButton ? (
                 <GoabButton
                   type={optionProps?.previousButtonType ? optionProps?.previousButtonType : 'secondary'}
-                  disabled={selectIsDisabled()}
+                  disabled={!enabled}
                   onClick={() => {
                     const element = document.getElementById(`${path || `goa`}-form-stepper`);
                     if (element) {
@@ -166,7 +166,7 @@ export const FormStepperView = (props: CategorizationStepperLayoutRendererProps)
               <RightAlignmentDiv>
                 <GoabButton
                   type={optionProps?.nextButtonType ? optionProps?.nextButtonType : 'primary'}
-                  disabled={selectIsDisabled()}
+                  disabled={!enabled}
                   onClick={() => {
                     headersRef.current[activeId + 1] &&
                       headersRef.current[activeId + 1]
