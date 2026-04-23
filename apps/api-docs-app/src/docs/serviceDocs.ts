@@ -44,8 +44,21 @@ export interface ServiceDocs {
   getDocs(id: AdspId): Promise<Record<string, ServiceDoc>>;
 }
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const withRetry = async <T>(fn: () => Promise<T>, retries = 3, delayMs = 1000): Promise<T> => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (attempt === retries) throw err;
+      await delay(delayMs * attempt);
+    }
+  }
+};
+
 class ServiceDocsImpl {
-  private readonly cache = new NodeCache();
+  private readonly cache = new NodeCache({ stdTTL: 7200 });
 
   constructor(
     private readonly logger: Logger,
@@ -55,7 +68,7 @@ class ServiceDocsImpl {
 
   #retrieveDocJson = async (docUrl): Promise<JsonObject | void> => {
     try {
-      const doc = (await axios.get(docUrl))?.data as JsonObject;
+      const doc = (await withRetry(() => axios.get(docUrl)))?.data as JsonObject;
       if (doc?.openapi) {
         return doc;
       }
@@ -83,7 +96,9 @@ class ServiceDocsImpl {
               `directory/v2/namespaces/${namespace}/services/${id.service}`,
               directoryServiceUrl.href
             );
-            const { metadata } = (await axios.get<DirectoryServiceResponse>(serviceDirectoryUrl.href)).data;
+            const { metadata } = (
+              await withRetry(() => axios.get<DirectoryServiceResponse>(serviceDirectoryUrl.href))
+            ).data;
             if (metadata?._links?.docs?.href) {
               docs[id.toString()] = {
                 service: {
