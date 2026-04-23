@@ -9,6 +9,7 @@ interface connectionTableProps {
   connectionSite: string;
   connectionList: string;
   connectionName: string;
+  connectionId: string;
   showDeleteConfig: (show: boolean) => void;
 }
 
@@ -16,6 +17,7 @@ export const DeleteConfirmationsView: FunctionComponent<connectionTableProps> = 
   connectionSite,
   connectionList,
   connectionName,
+  connectionId,
   showDeleteConfig,
 }) => {
   const dispatch = useDispatch();
@@ -32,16 +34,21 @@ export const DeleteConfirmationsView: FunctionComponent<connectionTableProps> = 
           <div>
             Are you sure you want to delete this connection?
             <MarginTop>
-              <b>Site ID</b>: {connectionSite}
-              <p>
+              <div>
+                <b>Connection Name:</b> {connectionName}
+              </div>
+              <div>
+                <b>Site ID</b>: {connectionSite}
+              </div>
+              <div>
                 <b>List ID:</b> {connectionList}
-              </p>
+              </div>
             </MarginTop>
           </div>
         }
         onDelete={() => {
           showDeleteConfig(false);
-          dispatch(deleteSharepointConnection(connectionName));
+          dispatch(deleteSharepointConnection(connectionId));
         }}
       />
       <br />
