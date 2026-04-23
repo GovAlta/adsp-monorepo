@@ -26,8 +26,9 @@ const ConnectionItemComponent: FunctionComponent<CalendarItemProps> = ({
   return (
     <>
       <tr key={connection.id}>
-        <td headers="connection-id">{connection.siteId}</td>
-        <td headers="connection-listid">{connection.listId}</td>
+        <td headers="connection-name">{connection.name}</td>
+        <td headers="connection-siteId">{connection.siteId}</td>
+        <td headers="connection-listId">{connection.listId}</td>
         <td headers="connection-actions">
           <div>
             <GoAContextMenuIcon
@@ -105,13 +106,16 @@ export const ConnectionTableComponent: FunctionComponent<calendarTableProps> = (
       <DataTable data-testid="connection-table">
         <thead data-testid="connection-table-header">
           <tr>
-            <th id="connection-id" data-testid="connection-table-header-id" style={{ width: '30%' }}>
-              Site Id
+            <th id="connection-name" data-testid="connection-table-name" style={{ width: '25%' }}>
+              Connection name
             </th>
-            <th id="connection-description" data-testid="connection-table-header-description" style={{ width: '30%' }}>
-              List Id
+            <th id="connection-site-id" data-testid="connection-table-header-id" style={{ width: '25%' }}>
+              Site ID
             </th>
-            <th id="connection-action" data-testid="connection-table-header-actions">
+            <th id="connection-list-id" data-testid="connection-table-header-description" style={{ width: '25%' }}>
+              List ID
+            </th>
+            <th id="connection-action" data-testid="connection-table-header-actions" style={{ width: '25%' }}>
               Actions
             </th>
           </tr>

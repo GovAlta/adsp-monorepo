@@ -84,7 +84,8 @@ export const ConnectionsView = ({ activeEdit }: AddEditConnectionProps): JSX.Ele
         <DeleteConfirmationsView
           connectionSite={connections[selectedConnectionId]?.siteId}
           connectionList={connections[selectedConnectionId]?.listId}
-          connectionName={selectedConnectionId}
+          connectionName={connections[selectedConnectionId]?.name}
+          connectionId={selectedConnectionId}
           showDeleteConfig={(conf) => setShowDeleteConfirmation(conf)}
         ></DeleteConfirmationsView>
       )}
