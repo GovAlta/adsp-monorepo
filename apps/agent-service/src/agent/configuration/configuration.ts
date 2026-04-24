@@ -1,9 +1,11 @@
 import { AdspId, ServiceDirectory, TokenProvider, User, EventService } from '@abgov/adsp-service-sdk';
+import hasha from 'hasha';
 import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
 import type { RequestContext } from '@mastra/core/request-context';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
+import { MCPClient, type MastraMCPServerDefinition } from '@mastra/mcp';
 import { PostgresStore } from '@mastra/pg';
 import { Logger } from 'winston';
 import { environment } from '../../environments/environment';
@@ -58,6 +60,45 @@ export interface ApiRequestToolConfiguration extends TypedToolConfiguration {
   path: string;
   useServiceAccount?: boolean;
 }
+
+export interface McpServerConfiguration {
+  url: string;
+  headers?: Record<string, string>;
+  capabilities?: string[];
+}
+
+
+function deriveMcpServerIdFromUrl(url: URL) {
+  const normalized = normalizeMcpServerUrl(url);
+  const host = url.hostname.replace(/\./g, '-').toLowerCase();
+  const path = (url.pathname || '/')
+    .replace(/^\/+/g, '')
+    .replace(/\/+$/g, '')
+    .replace(/[^a-zA-Z0-9-_]+/g, '-')
+    .toLowerCase();
+  const hash = createStableHash(normalized);
+
+  const candidate = `${host}${path ? `-${path}` : ''}`.replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const prefix = candidate ? candidate.slice(0, 41) : 'mcp-server';
+  return `${prefix}-${hash}`;
+}
+
+function createStableHash(value: string) {
+  return hasha(value, { algorithm: 'sha256' }).slice(0, 8);
+}
+
+function normalizeMcpServerUrl(url: URL) {
+  const protocol = url.protocol.toLowerCase();
+  const host = url.hostname.toLowerCase();
+  const port = url.port ? `:${url.port}` : '';
+  const path = url.pathname.replace(/\/+/g, '/').replace(/\/$/, '') || '/';
+  return `${protocol}//${host}${port}${path}`;
+}
+
+export interface McpConfiguration {
+  servers: McpServerConfiguration[];
+}
+
 type ToolConfiguration = string | ApiRequestToolConfiguration;
 
 export interface AgentConfiguration {
@@ -69,11 +110,12 @@ export interface AgentConfiguration {
   userRoles?: string[];
   agents?: string[];
   tools?: ToolConfiguration[];
+  mcp?: McpConfiguration;
 }
 export type AgentConfigurations = Record<string, AgentConfiguration>;
 
 export class AgentServiceConfiguration {
-  private mastra: Mastra;
+  private mastra!: Mastra;
   private brokers: Record<string, AgentBroker> = {};
   constructor(
     private logger: Logger,
@@ -128,59 +170,72 @@ export class AgentServiceConfiguration {
         },
       });
 
+      const mcpToolsByAgent = Object.fromEntries(
+        await Promise.all(
+          Object.entries(configuration).map(async ([agentId, agentConfiguration]) => {
+            const mcpTools = await this.createMcpTools(tenantId, agentId, agentConfiguration.mcp);
+            return [agentId, mcpTools] as const;
+          }),
+        ),
+      );
+
       this.mastra = new Mastra({
         storage,
-        agents: {
-          ...Object.entries(configuration)
-            .sort(([_xk, x], [_yk, y]) => (x?.agents?.length || 0) - (y?.agents?.length || 0)) // Sort the agents with agents to later.
-            .reduce(
-              (agents, [key, configuration]) => {
-                return {
-                  ...agents,
-                  [key]: new Agent({
-                    id: key,
-                    name: configuration.name,
-                    description: configuration.description,
-                    instructions: withContextualInstructions(configuration.instructions),
-                    model: environment.MODEL_URL
-                      ? {
-                          id: `custom/${environment.MODEL}`,
-                          modelId: environment.MODEL,
-                          url: environment.MODEL_URL,
-                          apiKey: environment.MODEL_API_KEY,
-                        }
-                      : environment.MODEL,
-                    defaultOptions: configuration.outputSchema
-                      ? {
-                          structuredOutput: {
-                            schema: configuration.outputSchema,
-                            errorStrategy: 'warn',
-                          },
-                        }
-                      : undefined,
-                    agents: () => {
-                      const toolAgents = {};
-                      for (const agent of configuration.agents || []) {
-                        const toolAgent = agents[agent];
-                        if (toolAgent) {
-                          toolAgents[agent] = toolAgent;
-                        } else {
-                          this.logger.warn(
-                            `Agent '${agent}' not found and cannot be provided to agent '${configuration.name}'.`,
-                            {
-                              context: 'AgentServiceConfiguration',
-                              tenant: tenantId?.toString(),
-                            },
-                          );
-                        }
-                      }
+        agents: Object.entries(configuration)
+          .sort(([_xk, x], [_yk, y]) => (x?.agents?.length || 0) - (y?.agents?.length || 0)) // Sort the agents with agents to later.
+          .reduce(
+            (agents, [key, configuration]) => {
+              const externalTools = mcpToolsByAgent[key] || {};
+              const availableToolMap = availableTools as Record<string, unknown>;
 
-                      return toolAgents;
-                    },
-                    tools: {
-                      ...(configuration.tools?.reduce((tools, toolConfig) => {
-                        if (typeof toolConfig === 'string' && availableTools[toolConfig]) {
-                          tools[toolConfig] = availableTools[toolConfig];
+              return {
+                ...agents,
+                [key]: new Agent({
+                  id: key,
+                  name: configuration.name,
+                  description: configuration.description,
+                  instructions: withContextualInstructions(configuration.instructions),
+                  model: environment.MODEL_URL
+                    ? {
+                        id: `custom/${environment.MODEL}`,
+                        modelId: environment.MODEL,
+                        url: environment.MODEL_URL,
+                        apiKey: environment.MODEL_API_KEY,
+                      }
+                    : environment.MODEL,
+                  defaultOptions: (configuration.outputSchema
+                    ? {
+                        structuredOutput: {
+                          schema: configuration.outputSchema,
+                          errorStrategy: 'warn',
+                        },
+                      }
+                    : undefined) as unknown as never,
+                  agents: () => {
+                    const toolAgents: Record<string, Agent> = {};
+                    for (const agent of configuration.agents || []) {
+                      const toolAgent = agents[agent];
+                      if (toolAgent) {
+                        toolAgents[agent] = toolAgent;
+                      } else {
+                        this.logger.warn(
+                          `Agent '${agent}' not found and cannot be provided to agent '${configuration.name}'.`,
+                          {
+                            context: 'AgentServiceConfiguration',
+                            tenant: tenantId?.toString(),
+                          },
+                        );
+                      }
+                    }
+
+                    return toolAgents;
+                  },
+                  tools: {
+                    ...externalTools,
+                    ...(configuration.tools?.reduce(
+                      (tools, toolConfig) => {
+                        if (typeof toolConfig === 'string' && availableToolMap[toolConfig]) {
+                          tools[toolConfig] = availableToolMap[toolConfig];
                         } else if (typeof toolConfig === 'object') {
                           switch (toolConfig.type) {
                             case 'api': {
@@ -197,21 +252,22 @@ export class AgentServiceConfiguration {
                           }
                         }
                         return tools;
-                      }, {}) || {}),
-                    },
-                    memory: sharedMemory,
-                    workspace: configuration.workspace?.enabled ? createWorkspaceResolver(this.logger, key) : undefined,
-                    inputProcessors: ({ requestContext }) =>
-                      createInputProcessors({
-                        logger: this.logger,
-                        requestContext: requestContext as RequestContext<Record<string, unknown>>,
-                      }),
-                  }),
-                };
-              },
-              {} as Record<string, Agent>,
-            ),
-        },
+                      },
+                      {} as Record<string, unknown>,
+                    ) || {}),
+                  } as unknown as never,
+                  memory: sharedMemory,
+                  workspace: configuration.workspace?.enabled ? createWorkspaceResolver(this.logger, key) : undefined,
+                  inputProcessors: ({ requestContext }) =>
+                    createInputProcessors({
+                      logger: this.logger,
+                      requestContext: requestContext as RequestContext<Record<string, unknown>>,
+                    }),
+                }) as Agent,
+              };
+            },
+            {} as Record<string, Agent>,
+          ),
       });
 
       const inputProcessors = createBrokerInputProcessors({
@@ -230,7 +286,7 @@ export class AgentServiceConfiguration {
           this.logger,
           tenantId,
           inputProcessors,
-          agent,
+          agent as never,
           agentConfiguration,
           fileServiceClient,
           this.eventService,
@@ -268,5 +324,108 @@ export class AgentServiceConfiguration {
       id: key,
       name: broker.Agent.name,
     }));
+  }
+
+  private async createMcpTools(tenantId: AdspId, agentId: string, mcp?: McpConfiguration) {
+    if (!mcp?.servers?.length) {
+      return {};
+    }
+
+    const allowedCapabilities = new Map<string, Set<string>>();
+    const usedServerUrls = new Set<string>();
+    const servers = mcp.servers.reduce(
+      (result, server) => {
+        try {
+          const serverUrl = new URL(server.url);
+          const normalizedUrl = normalizeMcpServerUrl(serverUrl);
+          if (usedServerUrls.has(normalizedUrl)) {
+            this.logger.warn(
+              `Ignoring duplicate MCP server URL '${server.url}' for agent '${agentId}'. Only one configuration per URL is supported.`,
+              {
+                context: 'AgentServiceConfiguration',
+                tenant: tenantId?.toString(),
+              },
+            );
+            return result;
+          }
+
+          usedServerUrls.add(normalizedUrl);
+          const baseId = deriveMcpServerIdFromUrl(serverUrl).trim();
+          const serverId = baseId;
+
+          result[serverId] = {
+            url: serverUrl,
+            requestInit: server.headers
+              ? {
+                  headers: server.headers,
+                }
+              : undefined,
+          };
+
+          if (server.capabilities?.length) {
+            allowedCapabilities.set(serverId, new Set(server.capabilities));
+          }
+
+          this.logger.debug(`Generated MCP server ID '${serverId}' from URL '${server.url}' for agent '${agentId}'.`, {
+            context: 'AgentServiceConfiguration',
+            tenant: tenantId?.toString(),
+          });
+        } catch {
+          this.logger.warn(`Ignoring invalid MCP server URL '${server.url}' for agent '${agentId}'.`, {
+            context: 'AgentServiceConfiguration',
+            tenant: tenantId?.toString(),
+          });
+        }
+
+        return result;
+      },
+      {} as Record<string, MastraMCPServerDefinition>,
+    );
+
+    const serverEntries = Object.entries(servers);
+    if (serverEntries.length < 1) {
+      return {};
+    }
+
+    const mcpClient = new MCPClient({
+      id: `${tenantId?.toString()}:${agentId}`,
+      servers,
+    });
+
+    try {
+      const toolsets = await mcpClient.listToolsets();
+
+      return serverEntries.reduce(
+        (tools, [serverId]) => {
+          const serverTools = toolsets[serverId] || {};
+          const allowed = allowedCapabilities.get(serverId);
+
+          for (const [toolId, tool] of Object.entries(serverTools)) {
+            if (!allowed || allowed.has(toolId)) {
+              tools[`${serverId}_${toolId}`] = tool;
+            }
+          }
+
+          return tools;
+        },
+        {} as Record<string, unknown>,
+      );
+    } catch (err) {
+      this.logger.warn(`Failed to load MCP tools for agent '${agentId}'.`, {
+        context: 'AgentServiceConfiguration',
+        tenant: tenantId?.toString(),
+        error: err instanceof Error ? err.message : String(err),
+      });
+
+      return {};
+    } finally {
+      mcpClient.disconnect().catch((err) => {
+        this.logger.debug(`Failed to disconnect MCP client for agent '${agentId}'.`, {
+          context: 'AgentServiceConfiguration',
+          tenant: tenantId?.toString(),
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+    }
   }
 }
