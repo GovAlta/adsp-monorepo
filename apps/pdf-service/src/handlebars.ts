@@ -449,6 +449,24 @@ class HandlebarsTemplateService implements TemplateService {
 
       return value;
     });
+
+    handlebars.registerHelper('isEmptyValue', function (element, data) {
+      let value = getFormFieldValue(element.scope, data ? data : {});
+
+      if (typeof value === 'string') {
+        const parts = value.split(';');
+        const urnCount = parts.filter((p) => p.startsWith('urn:')).length;
+
+        if (urnCount > 0) {
+          return false;
+        }
+
+        value = valueMap(value);
+      }
+
+      return value === undefined || value === null || value === '';
+    });
+
     handlebars.registerHelper('isControl', function (element) {
       return element.type === 'Control';
     });

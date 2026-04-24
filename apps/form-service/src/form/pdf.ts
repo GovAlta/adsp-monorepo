@@ -123,8 +123,11 @@ html {
 
 }
 .content .flex-1 {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   flex: 1;
+}
+.content .font-size-11 {
+  font-size: 11pt;
 }
 .content .grid-padding {
   display: flex;
@@ -134,6 +137,7 @@ html {
 .content .header {
   width: 100%;
   margin-bottom: 1rem;
+  font-size: 12pt;
 }
 
 .content .list-item-borderless {
