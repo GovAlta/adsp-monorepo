@@ -127,6 +127,85 @@ describe('configuration', () => {
       expect(() => service.validate('test', 'configuration', config)).toThrow();
     });
 
+    it('accepts MCP server configuration with capability filters', () => {
+      const config = {
+        'test-agent': {
+          name: 'Test Agent',
+          instructions: 'Test instructions',
+          mcp: {
+            servers: [
+              {
+                url: 'https://example.com/mcp',
+                headers: {
+                  Authorization: 'Bearer token',
+                },
+                capabilities: ['getComponent', 'searchTokens'],
+              },
+            ],
+          },
+        },
+      };
+
+      expect(() => service.validate('test', 'configuration', config)).not.toThrow();
+    });
+
+    it('rejects MCP server configuration with explicit id property', () => {
+      const config = {
+        'test-agent': {
+          name: 'Test Agent',
+          instructions: 'Test instructions',
+          mcp: {
+            servers: [
+              {
+                id: 'goa-design-system',
+                url: 'https://example.com/mcp',
+              },
+            ],
+          },
+        },
+      };
+
+      expect(() => service.validate('test', 'configuration', config)).toThrow();
+    });
+
+    it('accepts MCP server configuration without explicit id', () => {
+      const config = {
+        'test-agent': {
+          name: 'Test Agent',
+          instructions: 'Test instructions',
+          mcp: {
+            servers: [
+              {
+                url: 'https://example.com/mcp',
+                capabilities: ['getComponent'],
+              },
+            ],
+          },
+        },
+      };
+
+      expect(() => service.validate('test', 'configuration', config)).not.toThrow();
+    });
+
+    it('rejects MCP server configuration with unexpected properties', () => {
+      const config = {
+        'test-agent': {
+          name: 'Test Agent',
+          instructions: 'Test instructions',
+          mcp: {
+            servers: [
+              {
+                url: 'https://example.com/mcp',
+                token: 'not-allowed',
+              },
+            ],
+          },
+        },
+      };
+
+      expect(() => service.validate('test', 'configuration', config)).toThrow();
+    });
+
     it('accepts JSON Schema with additionalProperties and patternProperties', () => {
       const config = {
         'test-agent': {

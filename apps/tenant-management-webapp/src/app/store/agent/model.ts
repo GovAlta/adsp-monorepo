@@ -22,6 +22,17 @@ export interface ApiToolConfiguration extends ToolDescription {
 }
 
 type ToolConfiguration = string | ApiToolConfiguration;
+
+export interface McpServerConfiguration {
+  url: string;
+  headers?: Record<string, string>;
+  capabilities?: string[];
+}
+
+export interface McpConfiguration {
+  servers: McpServerConfiguration[];
+}
+
 export interface AgentConfiguration {
   core?: boolean;
   id: string;
@@ -33,6 +44,7 @@ export interface AgentConfiguration {
   userRoles?: string[];
   agents?: string[];
   tools?: ToolConfiguration[];
+  mcp?: McpConfiguration;
 }
 
 export interface AgentState {
