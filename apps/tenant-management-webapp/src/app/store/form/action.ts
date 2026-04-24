@@ -231,6 +231,7 @@ export interface InitializeFormEditorAction {
   type: typeof INITIALIZE_FORM_EDITOR;
 }
 
+
 export type FormActionTypes =
   | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
@@ -601,3 +602,4 @@ export const deleteResourceSuccessTags = (urn: string, formDefinitionId: string)
 export const initializeFormEditor = (): InitializeFormEditorAction => ({
   type: INITIALIZE_FORM_EDITOR,
 });
+

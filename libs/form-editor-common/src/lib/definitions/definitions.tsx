@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
+import { useFuzzySearch } from '@core-services/app-common';
 import {
   GoabButton,
   GoabCircularProgress,
   GoabDropdown,
   GoabDropdownItem,
   GoabFormItem,
+  GoabInput,
 } from '@abgov/react-components';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -30,7 +32,7 @@ import { Center, IndicatorWithDelay, PageIndicator } from '@components/Indicator
 import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
-import { LoadMoreWrapper } from './style-components';
+import { LoadMoreWrapper, SearchRow, SearchInputWrapper } from './style-components';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
@@ -66,6 +68,8 @@ export const FormDefinitions = ({
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
+  const [searchInput, setSearchInput] = useState('');
+  const [isLoadingAll, setIsLoadingAll] = useState(false);
   const next = useSelector((state: RootState) => state.form.nextEntries);
   const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries) || null;
   const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
@@ -154,6 +158,17 @@ export const FormDefinitions = ({
   };
 
   useEffect(() => {
+    if (!isLoadingAll) return;
+    if (indicator.show) return;
+    if (next) {
+      const timer = setTimeout(() => dispatch(getFormDefinitions(next)), 300);
+      return () => clearTimeout(timer);
+    } else {
+      setIsLoadingAll(false);
+    }
+  }, [isLoadingAll, indicator.show, next]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     document.body.style.overflow = 'unset';
   }, [formDefinitions]);
 
@@ -191,7 +206,10 @@ export const FormDefinitions = ({
     return null;
   };
 
-  const displayDefinitions = selectedTag ? tagResources : formDefinitions;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fuzzyFiltered = useFuzzySearch(formDefinitions, searchInput, (def: any, key: string) => (def.name || key) as string);
+
+  const displayDefinitions = fuzzyFiltered ?? (selectedTag ? tagResources : formDefinitions);
 
   const filteredDefinitions = useMemo(() => {
     return displayDefinitions || {};
@@ -200,6 +218,37 @@ export const FormDefinitions = ({
   return (
     <section>
       <GoabCircularProgress variant="fullscreen" size="small" message="Loading message..."></GoabCircularProgress>
+
+      <SearchRow>
+        <SearchInputWrapper>
+          <GoabFormItem label="Search by name" mb={'m'}>
+            <GoabInput
+              name="form-definition-search"
+              value={searchInput}
+              placeholder="Search form definitions..."
+              width="100%"
+              trailingIcon={searchInput ? 'close-circle' : undefined}
+              onTrailingIconClick={() => setSearchInput('')}
+              onChange={(detail) => setSearchInput(detail.value)}
+              testId="form-definition-search-input"
+            />
+          </GoabFormItem>
+        </SearchInputWrapper>
+        <GoabButton
+          type="secondary"
+          disabled={isLoadingAll}
+          mb={'m'}
+          testId="form-definition-load-all-btn"
+          onClick={() => {
+            if (next) {
+              setIsLoadingAll(true);
+              dispatch(getFormDefinitions(next));
+            }
+          }}
+        >
+          {isLoadingAll ? 'Loading...' : 'Load all'}
+        </GoabButton>
+      </SearchRow>
 
       <GoabFormItem label="Filter by tag" mb={'l'}>
         <GoabDropdown

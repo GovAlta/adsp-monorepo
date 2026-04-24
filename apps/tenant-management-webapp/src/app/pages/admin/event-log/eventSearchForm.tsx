@@ -2,9 +2,8 @@ import React, { FunctionComponent, useState, useEffect, useRef } from 'react';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import type { EventSearchCriteria } from '@store/event/models';
-import { distance } from 'fastest-levenshtein';
 import { getEventDefinitions } from '@store/event/actions';
-import { useSearchableDropdown } from '@core-services/app-common';
+import { useSearchableDropdown, scoreFuzzyMatch, getFuzzyMatches } from '@core-services/app-common';
 import { SearchBox, DateTimeInput } from './styled-components';
 import { validateEventKey } from './util';
 import { GoabButton, GoabIconButton, GoabButtonGroup, GoabGrid, GoabFormItem } from '@abgov/react-components';
@@ -69,7 +68,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     }
 
     // Free-text: pick best fuzzy suggestion
-    const best = getSuggestions(autoCompleteList, raw, 1)[0];
+    const best = getFuzzyMatches(autoCompleteList, raw, 1)[0];
     if (!best) return null;
 
     const idx = best.indexOf(':');
@@ -80,78 +79,9 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     return { ...searchCriteria, namespace: ns, name: nm };
   };
 
-  function normalize(s: string): string {
-    return (
-      s
-        .toLowerCase()
-        // eslint-disable-next-line
-        .replace(/[_:\-]+/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-    );
-  }
-
   const setValue = (name: string, value: string) => {
     setSearchCriteria({ ...searchCriteria, [name]: value });
   };
-
-  function scoreMatch(queryRaw: string, candidateRaw: string): number {
-    const q = normalize(queryRaw);
-    const c = normalize(candidateRaw);
-    const levenshteinAccuracyThread = 0.4;
-    if (!q) return 0;
-
-    const qTokens = q.split(' ').filter(Boolean);
-    const cTokens = c.split(' ').filter(Boolean);
-
-    // 1) Exact normalized substring (best)
-    if (c.includes(q)) return 100;
-
-    // 2) Prefix match on any token (makes "log" work for "login")
-    // Boost if matches earlier tokens
-    let prefixHits = 0;
-    for (const qt of qTokens) {
-      for (let i = 0; i < cTokens.length; i++) {
-        if (cTokens[i].startsWith(qt)) {
-          prefixHits++;
-          break;
-        }
-      }
-    }
-    if (prefixHits > 0) return 80 + prefixHits * 5;
-
-    // 3) Loose contains match per token (for "train" in "training")
-    let containsHits = 0;
-    for (const qt of qTokens) {
-      if (c.includes(qt)) {
-        containsHits++;
-      }
-    }
-    if (containsHits > 0) return 60 + containsHits * 8;
-
-    // 4) Evaluate the similarity between the words to handle simple typo of search criteria.
-    if (q.length > 3) {
-      const word_distance = distance(q, c.slice(0, q.length));
-      const accuracy = 1 - word_distance / q.length;
-      if (accuracy > levenshteinAccuracyThread) {
-        return accuracy * 100;
-      }
-    }
-
-    return 0;
-  }
-
-  function getSuggestions(list: string[], input: string, limit = 50): string[] {
-    const q = input.trim();
-    if (!q) return list.slice(0, limit);
-
-    return list
-      .map((s) => ({ s, score: scoreMatch(q, s) }))
-      .filter((x) => x.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
-      .map((x) => x.s);
-  }
 
   const renderHighlight = (suggestion: string) => {
     if (!dd.query) return <span>{suggestion}</span>;
@@ -172,7 +102,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   const dd = useSearchableDropdown<string>({
     debounceMs: 0, // local results are instant
     minChars: 1, // start suggesting when user types
-    getLocalItems: (q) => getSuggestions(autoCompleteList, q, 80),
+    getLocalItems: (q) => getFuzzyMatches(autoCompleteList, q, 80),
 
     // ✅ show full list when focusing empty input
     showAllOnFocus: true,
