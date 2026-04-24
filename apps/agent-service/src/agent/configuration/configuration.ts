@@ -1,5 +1,5 @@
 import { AdspId, ServiceDirectory, TokenProvider, User, EventService } from '@abgov/adsp-service-sdk';
-import hasha from 'hasha';
+import * as hasha from 'hasha';
 import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
 import type { RequestContext } from '@mastra/core/request-context';
