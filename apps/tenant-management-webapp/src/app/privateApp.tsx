@@ -87,7 +87,7 @@ interface ItemProps {
   notifications: any[];
 }
 const ScrollBarFixMain = styled.div<ItemProps>`
-  margin-left: calc(100vw - 100%);
+  margin-left: 1rem;
   margin-right: 0;
   padding-top: ${(props) => (props.notifications.length >= 1 ? '12rem' : '99px')};
 `;
