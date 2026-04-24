@@ -3,6 +3,7 @@ import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { SharePointOverview } from './overview';
 import { ConnectionsView } from './connections/connectionsView';
+import AsideLinks from '@components/AsideLinks';
 
 export const SharePoint: FunctionComponent = () => {
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
@@ -22,6 +23,9 @@ export const SharePoint: FunctionComponent = () => {
           </Tabs>
         </>
       </Main>
+      <Aside>
+        <AsideLinks serviceName="sharepoint" />
+      </Aside>
     </Page>
   );
 };
