@@ -68,7 +68,7 @@ const ConnectionItemComponent: FunctionComponent<CalendarItemProps> = ({
             }}
           >
             <MoreDetails>
-              <p>Id</p>
+              <p>ID</p>
               <span>{connection.id}</span>
 
               <p>Tenant ID</p>
