@@ -83,6 +83,7 @@ export interface ClearFormDefinitions {
 export interface FetchFormDefinitionsAction {
   type: typeof FETCH_FORM_DEFINITIONS_ACTION;
   next: string;
+  nameContains?: string;
 }
 
 export interface FetchFormDefinitionsSuccessAction {
@@ -376,9 +377,10 @@ export const deleteFormDefinitionSuccess = (definition: FormDefinition): DeleteF
   payload: definition,
 });
 
-export const getFormDefinitions = (next?: string): FetchFormDefinitionsAction => ({
+export const getFormDefinitions = (next?: string, nameContains?: string): FetchFormDefinitionsAction => ({
   type: FETCH_FORM_DEFINITIONS_ACTION,
   next,
+  nameContains,
 });
 
 export const getFormDefinitionsSuccess = (
