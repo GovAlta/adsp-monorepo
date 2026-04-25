@@ -1,5 +1,6 @@
 import dompurify from 'dompurify';
 import * as xss from 'xss';
+import type { Config } from 'dompurify';
 
 const options = {
   whiteList: {
@@ -68,7 +69,8 @@ const options = {
 }; // Custom rules
 const xssFilter = new xss.FilterXSS(options);
 
-export const sanitizeHtml = dompurify.sanitize;
+export const sanitizeHtml = (dirty: string | Node, cfg?: Config): string => dompurify.sanitize(dirty, cfg);
+
 dompurify.addHook('afterSanitizeAttributes', function (node) {
   // set all elements owning target to target=_blank
   if ('target' in node) {

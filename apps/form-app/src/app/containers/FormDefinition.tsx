@@ -22,8 +22,8 @@ import { AnonymousForm } from './AnonymousForm';
 import { Form } from './Form';
 import { ContinueApplication } from '../components/ContinueApplication';
 import { StartApplication } from '../components/StartApplication';
-import { UserNotAuthorized } from '../components/UserNotAuthorized';
 import { Forms } from './Forms';
+import { FormDoesNotExist } from '../components/FormDoesNotExist';
 
 interface FormDefinitionStart {
   definition: FormDefinitionObject;
@@ -113,7 +113,7 @@ export const FormDefinition: FunctionComponent = () => {
             </Routes>
           </ScheduledIntake>
         ) : user ? (
-          <UserNotAuthorized />
+          <FormDoesNotExist />
         ) : (
           <SignInStartApplication />
         ))}

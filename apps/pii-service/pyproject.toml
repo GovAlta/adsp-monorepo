@@ -22,21 +22,21 @@ include = ["pii_service/resources/swagger.yml"]
   include = "pii_service"
 
   [tool.poetry.dependencies]
-  python = ">=3.9,<3.12"
+  python = ">=3.10,<3.12"
   presidio-analyzer = "^2.2.353"
   adsp-service-flask-sdk = {path = "../../libs/adsp-service-flask-sdk"}
   flask = "^3.1.3"
-  python-dotenv = "^1.0.1"
+  python-dotenv = "^1.2.2"
   presidio-anonymizer = "^2.2.353"
   pyyaml = "^6.0.1"
   flask-cors = "^6.0.0"
 
   [tool.poetry.group.dev.dependencies]
   flake8 = "6.0.0"
-  pytest = "^7.3.1"
+  pytest = "^9.0.3"
   pytest-coverage = "^0.0"
   pytest-html = "^3.2.0"
-  black = "^24.3.0"
+  black = "^26.3.1"
   tox = "^4.4.7"
 
 [build-system]

@@ -79,7 +79,9 @@ const Sidebar = ({ type }: SidebarProps) => {
                   >
                     <span>Service metrics</span>
                   </NavLink>
-                  <GoabSideMenuHeading>Services</GoabSideMenuHeading>
+                  <div className="goab-side-menu-heading">
+                    <GoabSideMenuHeading>Services</GoabSideMenuHeading>
+                  </div>
                 </>
               )}
               {hasAdminRole &&
@@ -115,13 +117,18 @@ const AlphaBadgeStyle = styled.span`
   color: black;
   font-size: var(--goa-font-size-1);
   line-height: 1.5;
-  margin-left: 0.5rem;
   padding: 0 4px 0 4px !important;
 `;
 const Links = styled.div`
+  .goab-side-menu-heading {
+    margin-right: 1rem;
+  }
+
   a {
     display: flex;
     align-items: center;
+    margin-right: 1rem;
+    padding-right: 0;
 
     &:first-of-type {
       margin-top: 0;
@@ -151,7 +158,8 @@ const Links = styled.div`
       height: 18px;
     }
     span {
-      padding-left: 0.5rem;
+      padding-left: 0;
+      padding-right: 0.5rem;
       display: block;
     }
   }

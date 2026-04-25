@@ -62,8 +62,8 @@ const getFormFieldValue = (scope: string, data: object) => {
     return Array.isArray(currentValue)
       ? currentValue[currentValue.length - 1]
       : typeof currentValue === 'object'
-      ? ''
-      : currentValue;
+        ? ''
+        : currentValue;
   } else {
     return '';
   }
@@ -192,9 +192,6 @@ class HandlebarsTemplateService implements TemplateService {
     });
     handlebars.registerHelper('hasOptionElements', function (element) {
       return element?.options?.detail?.elements;
-    });
-    handlebars.registerHelper('hasElements', function (element) {
-      return element?.elements;
     });
     handlebars.registerHelper('isArray', function (element, data) {
       if (data !== undefined) {
@@ -337,7 +334,7 @@ class HandlebarsTemplateService implements TemplateService {
         }
 
         return ret;
-      }
+      },
     );
     handlebars.registerHelper(
       'withItemsObject',
@@ -377,7 +374,7 @@ class HandlebarsTemplateService implements TemplateService {
         ret = ret + options.fn(extendedContext);
 
         return ret;
-      }
+      },
     );
 
     handlebars.registerHelper('forEachItemObject', function (context, data, requiredFields, options) {
@@ -446,8 +443,30 @@ class HandlebarsTemplateService implements TemplateService {
         value = valueMap(value);
       }
 
+      if (value === undefined || value === null || value === '') {
+        value = '(none given)';
+      }
+
       return value;
     });
+
+    handlebars.registerHelper('isEmptyValue', function (element, data) {
+      let value = getFormFieldValue(element.scope, data ? data : {});
+
+      if (typeof value === 'string') {
+        const parts = value.split(';');
+        const urnCount = parts.filter((p) => p.startsWith('urn:')).length;
+
+        if (urnCount > 0) {
+          return false;
+        }
+
+        value = valueMap(value);
+      }
+
+      return value === undefined || value === null || value === '';
+    });
+
     handlebars.registerHelper('isControl', function (element) {
       return element.type === 'Control';
     });
@@ -459,7 +478,7 @@ class HandlebarsTemplateService implements TemplateService {
     });
 
     handlebars.registerHelper('hasElements', function (element) {
-      return element?.elements && element.elements.length > 0;
+      return element?.elements && element.elements.length > 0 && element.type !== 'HelpContent';
     });
 
     handlebars.registerHelper('eq', function (a, b) {

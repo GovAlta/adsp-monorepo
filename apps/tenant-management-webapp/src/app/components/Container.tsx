@@ -21,27 +21,6 @@ const Container = styled.div<Props>`
   width: 100%;
   margin: 0 auto;
   padding: ${(props) => `${props.vs ?? 0}rem ${props.hs ?? 0}rem`};
-
-  @media (min-width: 640px) {
-    margin: 0 auto;
-    padding: ${(props) => `${props.smVSpacing ?? props.vs ?? 0}rem ${props.smHSpacing ?? props.hs ?? 0}rem`};
-    width: 640px;
-  }
-  @media (min-width: 768px) {
-    margin: 0 auto;
-    padding: ${(props: Props) => `${props.mdVSpacing ?? props.vs ?? 0}rem ${props.mdHSpacing ?? props.hs ?? 0}rem`};
-    width: 691px;
-  }
-  @media (min-width: 1024px) {
-    padding: ${(props) => `${props.lgVSpacing ?? props.vs ?? 0}rem ${props.lgHSpacing ?? props.hs ?? 0}rem`};
-    margin: 0 auto;
-    width: 922px;
-  }
-  @media (min-width: 1280px) {
-    padding: ${(props) => `${props.xlVSpacing ?? props.vs ?? 0}rem ${props.xlHSpacing ?? props.hs ?? 0}rem`};
-    margin: 0 auto;
-    width: 1152px;
-  }
 `;
 
 export default Container;

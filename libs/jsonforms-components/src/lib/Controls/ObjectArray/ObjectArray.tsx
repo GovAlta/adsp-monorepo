@@ -166,18 +166,37 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
       </div>
       {items.length === 0 && <p style={{ opacity: 0.7 }}>No {arrayLabel.toLowerCase()} added</p>}
       {items.map((item, index) => (
-        <div key={index} style={{ display: 'flex', gap: 8 }}>
-          <JsonFormsDispatch
-            key={index}
-            schema={schema.items as JsonSchema}
-            uischema={itemUiSchema}
-            path={composePaths(path, `${index}`)}
-            enabled={enabled}
-            renderers={renderers}
-            cells={cells}
-          />
+        <div
+          key={index}
+          style={{
+            width: '100%',
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) auto',
+            columnGap: 8,
+            alignItems: 'start',
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
+            <JsonFormsDispatch
+              schema={schema.items as JsonSchema}
+              uischema={itemUiSchema}
+              path={composePaths(path, `${index}`)}
+              enabled={enabled}
+              renderers={renderers}
+              cells={cells}
+            />
+          </div>
 
-          <GoabIconButton icon="trash" aria-label={`remove-${index}`} onClick={() => removeItem(index)} />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+              paddingTop: 8,
+            }}
+          >
+            <GoabIconButton icon="trash" aria-label={`remove-${index}`} onClick={() => removeItem(index)} />
+          </div>
         </div>
       ))}
     </Visible>

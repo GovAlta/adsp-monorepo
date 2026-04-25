@@ -32,7 +32,6 @@ import {
   ADD_DATA_ACTION,
   Categories,
   DELETE_ACTION,
-  INCREMENT_ACTION,
   initialState,
   objectListReducer,
   SET_DATA_ACTION,
@@ -173,9 +172,12 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     properties?: Record<string, DataProperty>;
   }
 
-  const element = (schema?.items as SchemaElement) || (schema?.properties?.[rowPath]?.items as SchemaElement);
+  const element =
+    (schema?.items as SchemaElement) ||
+    (schema?.properties?.[rowPath]?.items as SchemaElement) ||
+    (schema as SchemaElement);
 
-  const required = element?.required;
+  const required = element?.required || [];
   const properties = element?.properties;
 
   let tableKeys = extractNames(uischema?.options?.detail);
@@ -603,10 +605,11 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   } = props;
 
   const parsedData = Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
-  const latestData: StateData = Array.isArray(data)
+  const hasDataRows = parsedData.length > 0;
+  const latestData: StateData = hasDataRows
     ? (Object.fromEntries(parsedData.map((item, index) => [String(index), item])) as StateData)
     : (registers.categories[path]?.data ?? {});
-  const latestCount = Array.isArray(data)
+  const latestCount = hasDataRows
     ? parsedData.length
     : (registers.categories[path]?.count ?? Object.keys(latestData).length);
 
@@ -630,13 +633,26 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   //  eslint-disable-next-line
   const addItem = (path: string, value: any) => {
     const maxItems = uischema.options?.detail?.maxItems ? uischema.options?.detail?.maxItems : DEFAULT_MAX_ITEMS;
-    const categories = registers.categories;
-    const currentCategory = categories[path];
 
-    const count = currentCategory?.count !== undefined ? currentCategory?.count : 0;
-    if (count < maxItems) {
-      dispatch({ type: INCREMENT_ACTION, payload: path });
-      return () => props.addItem(path, value);
+    if (latestCount < maxItems) {
+      return () => {
+        const currentRows = hasDataRows
+          ? parsedData
+          : Object.keys(latestData)
+              .sort((a, b) => Number(a) - Number(b))
+              .map((key) => latestData[key] as Record<string, unknown>);
+        const nextData = [...currentRows, value];
+        const categoryData = Object.fromEntries(nextData.map((item, index) => [String(index), item])) as StateData;
+
+        props.handleChange(path, nextData);
+        dispatch({
+          type: SET_DATA_ACTION,
+          payload: {
+            ...registers.categories,
+            [path]: { count: nextData.length, data: categoryData },
+          },
+        });
+      };
     } else {
       setMaxItemsError(`Maximum ${maxItems} items allowed.`);
       setTimeout(() => {
@@ -708,6 +724,11 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
     const updatedData = Object.fromEntries((parsedData || []).map((item, index) => [index, item]));
     const count = Object.keys(updatedData).length;
     const currentCategory = registers.categories[path];
+
+    if (Array.isArray(data) && data.length === 0 && (currentCategory?.count ?? 0) > 0) {
+      return;
+    }
+
     const hasSameCount = currentCategory?.count === count;
     const hasSameData = JSON.stringify(currentCategory?.data || {}) === JSON.stringify(updatedData);
 
@@ -795,7 +816,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
         <ObjectArrayToolBar
           errors={errors}
           label={label}
-          addItem={(a, b) => () => addItem(a, b)}
+          addItem={addItem}
           numColumns={0}
           path={path}
           uischema={controlElement}
