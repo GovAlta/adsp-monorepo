@@ -5,6 +5,7 @@ import { ControlElement, UISchemaElement } from '@jsonforms/core';
 import { GoACells, GoARenderers } from '../../../index';
 import { JsonForms } from '@jsonforms/react';
 import Ajv from 'ajv';
+import { FileUploader } from './FileUploaderControl';
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
@@ -250,5 +251,39 @@ describe('FileUploaderControl tests', () => {
 
     const modal = renderer.container.querySelector('goa-modal');
     expect(modal).not.toBeNull();
+  });
+
+  it('does not clear a newly added empty uploader row on mount', async () => {
+    jest.useFakeTimers();
+    const handleChange = jest.fn();
+    const EmptyFileListContext = ContextProviderFactory();
+
+    render(
+      <EmptyFileListContext
+        fileManagement={{
+          fileList: {},
+          uploadFile: mockUpload,
+          downloadFile: mockDownload,
+          deleteFile: mockDelete,
+        }}
+      >
+        <FileUploader
+          data=""
+          path="supportingDoc.0"
+          handleChange={handleChange}
+          uischema={fileUploaderUiSchema}
+          schema={{ type: 'string', format: 'file-urn' }}
+          required={false}
+          label="Uploader"
+          visible={true}
+        />
+      </EmptyFileListContext>
+    );
+
+    await act(async () => {
+      await jest.runAllTimers();
+    });
+
+    expect(handleChange).not.toHaveBeenCalledWith('supportingDoc.0', undefined);
   });
 });

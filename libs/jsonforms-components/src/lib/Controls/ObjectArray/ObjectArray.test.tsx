@@ -459,6 +459,41 @@ it('primitive control handles non-array data and disabled add button', () => {
   expect(addButton?.getAttribute('disabled')).toBe('true');
 });
 
+it('primitive control compacts undefined items and shows empty state', async () => {
+  const handleChange = jest.fn();
+
+  const { baseElement, rerender } = render(
+    <PrimitiveArrayControl
+      data={['file-urn']}
+      path="files"
+      handleChange={handleChange}
+      visible={true}
+      enabled={true}
+      uischema={{ type: 'Control', label: 'Files' }}
+      schema={{ type: 'array', items: { type: 'string' } }}
+      renderers={GoARenderers}
+      cells={GoACells}
+    />
+  );
+
+  rerender(
+    <PrimitiveArrayControl
+      data={[undefined] as unknown as string[]}
+      path="files"
+      handleChange={handleChange}
+      visible={true}
+      enabled={true}
+      uischema={{ type: 'Control', label: 'Files' }}
+      schema={{ type: 'array', items: { type: 'string' } }}
+      renderers={GoARenderers}
+      cells={GoACells}
+    />
+  );
+
+  await waitFor(() => expect(handleChange).toHaveBeenCalledWith('files', undefined));
+  expect(baseElement.textContent).toContain('No files added');
+});
+
 it('renders primitive array values in review without fallback error', () => {
   const data = { files: ['test-one', 'test-two'] };
   const { baseElement } = render(getPrimitiveReviewForm(data));

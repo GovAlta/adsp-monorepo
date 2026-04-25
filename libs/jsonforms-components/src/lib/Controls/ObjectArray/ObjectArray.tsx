@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   ArrayLayoutProps,
   RankedTester,
@@ -61,7 +61,14 @@ export const GoAArrayControlReviewRenderer = withJsonFormsControlProps(ArrayCont
 export const PrimitiveArrayControl = (props: ControlProps) => {
   const { data, path, handleChange, visible, enabled, uischema, schema, renderers, cells } = props;
   const newSchema = schema as JsonSchema;
-  const items: string[] = Array.isArray(data) ? data : [];
+  const rawItems: string[] = Array.isArray(data) ? data : [];
+  const items = rawItems.filter((item): item is string => item !== undefined && item !== null);
+
+  useEffect(() => {
+    if (rawItems.length !== items.length) {
+      handleChange(path, items.length > 0 ? items : undefined);
+    }
+  }, [rawItems, items, handleChange, path]);
 
   const addItem = () => {
     handleChange(path, [...items, '']);
@@ -161,7 +168,7 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
     <Visible visible={visible}>
       <div style={{ marginBottom: '8px' }}>
         <GoabButton disabled={!enabled} onClick={() => addItem()}>
-          Add {prettyLabel}
+          Add {prettyLabel.toLowerCase()}
         </GoabButton>
       </div>
       {items.length === 0 && <p style={{ opacity: 0.7 }}>No {arrayLabel.toLowerCase()} added</p>}
