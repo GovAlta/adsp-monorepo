@@ -35,7 +35,7 @@ const resolveLabelFromScope = (scope: string) => {
   const lastSegment = scope.split('/').pop();
 
   if (lastSegment) {
-    const lowercased = lastSegment.replace(/([A-Z])/g, ' $1').toLowerCase();
+    const lowercased = lastSegment?.replace(/([A-Z])/g, ' $1').toLowerCase();
 
     return lowercased.charAt(0).toUpperCase() + lowercased.slice(1);
   }
@@ -48,7 +48,7 @@ function isObject(value) {
 
 const getFormFieldValue = (scope: string, data: object) => {
   if (data !== undefined) {
-    const pathArray = scope.replace('#/properties/', '').replace('properties/', '').split('/');
+    const pathArray = scope?.replace('#/properties/', '')?.replace('properties/', '').split('/');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let currentValue: any = data;
 
@@ -70,9 +70,9 @@ const getFormFieldValue = (scope: string, data: object) => {
 };
 
 function sentenceCase(input) {
-  let formattedString = input.replace(/([A-Z0-9])/g, ' $1').toLowerCase();
-  formattedString = formattedString.trim();
-  formattedString = formattedString.charAt(0).toUpperCase() + formattedString.slice(1);
+  let formattedString = input?.replace(/([A-Z0-9])/g, ' $1').toLowerCase();
+  formattedString = formattedString?.trim();
+  formattedString = formattedString ? formattedString.charAt(0).toUpperCase() + formattedString.slice(1) : '';
   return formattedString;
 }
 
@@ -195,7 +195,7 @@ class HandlebarsTemplateService implements TemplateService {
     });
     handlebars.registerHelper('isArray', function (element, data) {
       if (data !== undefined) {
-        const pathArray = element.scope.replace('#/properties/', '').replace('properties/', '').split('/');
+        const pathArray = element?.scope?.replace('#/properties/', '')?.replace('properties/', '').split('/');
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let currentValue: any = data;
@@ -215,7 +215,7 @@ class HandlebarsTemplateService implements TemplateService {
 
     handlebars.registerHelper('isObject', function (element, data) {
       if (data !== undefined) {
-        const pathArray = element.scope.replace('#/properties/', '').replace('properties/', '').split('/');
+        const pathArray = element?.scope?.replace('#/properties/', '')?.replace('properties/', '')?.split('/');
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let currentValue: any = data;
@@ -240,7 +240,7 @@ class HandlebarsTemplateService implements TemplateService {
         requiredFields = null;
       }
 
-      const pathArray = element.scope.replace('#/properties/', '').replace('properties/', '').split('/');
+      const pathArray = element?.scope?.replace('#/properties/', '')?.replace('properties/', '').split('/');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let currentValue: any = context;
       for (const key of pathArray) {
@@ -255,7 +255,7 @@ class HandlebarsTemplateService implements TemplateService {
     });
 
     handlebars.registerHelper('scopeName', function (scope) {
-      const scopeName = scope.replace('#/properties/', '');
+      const scopeName = scope?.replace('#/properties/', '');
       const firstCap = scopeName.charAt(0).toUpperCase() + scopeName.substring(1);
       return firstCap;
     });
@@ -292,7 +292,7 @@ class HandlebarsTemplateService implements TemplateService {
 
     handlebars.registerHelper('withEachData', function (context, scope, requiredFields, element, options) {
       let ret = '';
-      const scopeName = scope.replace('#/properties/', '');
+      const scopeName = scope?.replace('#/properties/', '');
 
       if (!options) {
         options = { ...requiredFields };
@@ -315,7 +315,7 @@ class HandlebarsTemplateService implements TemplateService {
       'withEachDataWithItems',
       function (context, scope, requiredFields, element, dataSchema, dataSchemaAgain, options) {
         let ret = '';
-        const scopeName = scope.replace('#/properties/', '');
+        const scopeName = scope?.replace('#/properties/', '');
 
         if (!options) {
           options = { ...requiredFields };
@@ -342,7 +342,7 @@ class HandlebarsTemplateService implements TemplateService {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let currentValue: any = context;
 
-        const pathArray = element.scope.replace('#/properties/', '').replace('properties/', '').split('/');
+        const pathArray = element?.scope?.replace('#/properties/', '')?.replace('properties/', '').split('/');
 
         for (const key of pathArray) {
           if (currentValue[key] === undefined) {
@@ -352,7 +352,7 @@ class HandlebarsTemplateService implements TemplateService {
         }
 
         let ret = '';
-        const scopeName = scope.replace('#/properties/', '');
+        const scopeName = scope?.replace('#/properties/', '');
 
         if (!options) {
           options = { ...requiredFields };
