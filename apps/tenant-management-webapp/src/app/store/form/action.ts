@@ -76,6 +76,7 @@ export const DELETE_RESOURCE_TAGS = 'form/resource/delete-resource-tags';
 
 export const DELETE_RESOURCE_TAGS_SUCCESS = 'form/resource/delete-resource-tags/success';
 export const INITIALIZE_FORM_EDITOR = 'form/initialize-form-editor';
+export const SET_DEFINITION_SEARCH_INPUT_ACTION = 'form/SET_DEFINITION_SEARCH_INPUT_ACTION';
 
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
@@ -232,6 +233,11 @@ export interface InitializeFormEditorAction {
   type: typeof INITIALIZE_FORM_EDITOR;
 }
 
+export interface SetDefinitionSearchInputAction {
+  type: typeof SET_DEFINITION_SEARCH_INPUT_ACTION;
+  searchInput: string;
+}
+
 export type FormActionTypes =
   | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
@@ -275,7 +281,8 @@ export type FormActionTypes =
   | SetSelectedTagAction
   | DeleteResourceTagsAction
   | DeleteResourceSuccessTagsAction
-  | ClearAllTagsAction;
+  | ClearAllTagsAction
+  | SetDefinitionSearchInputAction;
 
 export interface FetchAllTagsAction {
   type: typeof FETCH_ALL_TAGS_ACTION;
@@ -381,6 +388,11 @@ export const getFormDefinitions = (next?: string, nameContains?: string): FetchF
   type: FETCH_FORM_DEFINITIONS_ACTION,
   next,
   nameContains,
+});
+
+export const setDefinitionSearchInput = (searchInput: string): SetDefinitionSearchInputAction => ({
+  type: SET_DEFINITION_SEARCH_INPUT_ACTION,
+  searchInput,
 });
 
 export const getFormDefinitionsSuccess = (
