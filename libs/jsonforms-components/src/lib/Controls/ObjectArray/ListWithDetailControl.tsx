@@ -552,7 +552,17 @@ const SummaryDisplay = ({ rowData, uischema, schema }: SummaryDisplayProps) => {
                 paddingBottom: 'var(--goa-space-xs)',
               }}
             >
-              {String(pair.value)}
+              {typeof pair.value === 'boolean'
+                ? pair.value ? 'Yes' : 'No'
+                : pair.value !== null && typeof pair.value === 'object'
+                  ? (() => {
+                      const v = pair.value as Record<string, unknown>;
+                      if (('day' in v || 'date' in v) && 'month' in v && 'year' in v) {
+                        return `${v.year}-${v.month}-${'day' in v ? v.day : v.date}`;
+                      }
+                      return Object.values(v).filter(x => x !== undefined && x !== null && x !== '').join(' ');
+                    })()
+                  : String(pair.value)}
             </td>
           </tr>
         ))}
