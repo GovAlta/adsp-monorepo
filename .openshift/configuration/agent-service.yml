@@ -12,6 +12,7 @@ items:
       KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
       DIRECTORY_URL: https://directory-service.adsp-dev.gov.ab.ca
       AGENT_WORKSPACE_ROOT: /var/lib/agent-workspace
+      AGENT_MCP_SERVER_CREDENTIALS_FILE: /var/run/secrets/adsp/mcp/mcp-servers.json
       LOG_LEVEL: debug
   - apiVersion: v1
     kind: Secret
@@ -23,3 +24,7 @@ items:
     stringData:
       CLIENT_ID: urn:ads:platform:agent-service
       CLIENT_SECRET:
+      mcp-servers.json: |
+        {
+          "servers": []
+        }
