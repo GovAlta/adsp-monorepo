@@ -116,10 +116,13 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
       if (!fileList) return;
 
       const filesForControl: UploadedFile[] = fileList?.[path] || [];
+      const hasFileListEntryForPath = Object.prototype.hasOwnProperty.call(fileList, path);
 
       const urns = filesForControl.map((f) => f.urn);
       if (urns.length === 0) {
-        handleChange(path, undefined);
+        if (hasFileListEntryForPath && data !== undefined && data !== null && data !== '') {
+          handleChange(path, undefined);
+        }
       } else if (isMultiFile) {
         handleChange(path, urns);
       } else {
@@ -130,7 +133,7 @@ export const FileUploader = ({ data, path, handleChange, uischema, ...props }: F
     const timeoutId = setTimeout(delayedFunction, 1);
     return () => clearTimeout(timeoutId);
     //eslint-disable-next-line
-  }, [fileList, propertyId]);
+  }, [data, fileList, path, propertyId, isMultiFile, handleChange, loadingFileName]);
 
   const readOnly =
     uischema?.options?.componentProps?.readOnly === true || props?.isStepperReview === true || user === null;
