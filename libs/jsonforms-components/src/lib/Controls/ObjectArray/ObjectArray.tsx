@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import {
   ArrayLayoutProps,
   RankedTester,
@@ -18,6 +18,7 @@ import { GoabButton, GoabIconButton, GoabCheckbox } from '@abgov/react-component
 import { JsonFormsDispatch } from '@jsonforms/react';
 import { getLabelText } from '../../util';
 import pluralize from 'pluralize';
+import { JsonFormContext } from '../../Context';
 
 import { GoabCheckboxOnChangeDetail } from '@abgov/ui-components-common';
 
@@ -60,9 +61,18 @@ export const GoAArrayControlReviewRenderer = withJsonFormsControlProps(ArrayCont
 
 export const PrimitiveArrayControl = (props: ControlProps) => {
   const { data, path, handleChange, visible, enabled, uischema, schema, renderers, cells } = props;
+  const enumerators = useContext(JsonFormContext);
   const newSchema = schema as JsonSchema;
   const rawItems: string[] = Array.isArray(data) ? data : [];
   const items = rawItems.filter((item): item is string => item !== undefined && item !== null);
+  const deleteTriggerFunction = enumerators?.functions?.get('delete-file');
+  const deleteTrigger = deleteTriggerFunction && deleteTriggerFunction();
+  const fileListValue = enumerators?.data.get('file-list');
+  type UploadedFile = {
+    urn: string;
+    filename?: string;
+  };
+  const fileList = fileListValue && (fileListValue() as Record<string, UploadedFile[]>);
 
   useEffect(() => {
     if (rawItems.length !== items.length) {
@@ -89,9 +99,24 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
     typeof option === 'string' ? undefined : option.description;
 
   const removeItem = (index: number) => {
+    const itemSchema = schema?.items as JsonSchema | undefined;
+    const removedItem = items[index];
+    const itemPath = composePaths(path, `${index}`);
+
+    if (itemSchema?.format === 'file-urn' && deleteTrigger && removedItem) {
+      const allUploadedFiles = (Object.values(fileList || {}).flat() as UploadedFile[]) || [];
+      const rowFile =
+        fileList?.[itemPath]?.find((file: UploadedFile) => file?.urn === removedItem) ||
+        allUploadedFiles.find((file: UploadedFile) => file?.urn === removedItem);
+
+      if (rowFile?.urn) {
+        deleteTrigger(rowFile as unknown as File, itemPath);
+      }
+    }
+
     const copy = [...items];
     copy.splice(index, 1);
-    handleChange(path, copy);
+    handleChange(path, copy.length > 0 ? copy : undefined);
   };
 
   const getPrimitiveArrayOptions = (schema?: JsonSchema): Array<string | EnumOption> => {
