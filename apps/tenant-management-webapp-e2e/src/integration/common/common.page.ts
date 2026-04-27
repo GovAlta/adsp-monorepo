@@ -21,8 +21,8 @@ class Common {
     );
   }
 
-  APIDocsPageTitle(text) {
-    return cy.xpath(`//*[@class="title" and contains(text(), "${text}")]`);
+  APIDocsPageTitle(text, timeout = 10000) {
+    return cy.xpath(`//*[@class="title" and contains(text(), "${text}")]`, { timeout });
   }
 
   serviceTab(service, text) {
