@@ -4,6 +4,7 @@ import { JsonForms } from '@jsonforms/react';
 import Ajv from 'ajv';
 import { GoACells, GoARenderers, GoABaseReviewRenderers } from '../../../index';
 import { ArrayControlReview, PrimitiveArrayControl } from './ObjectArray';
+import { ContextProviderFactory } from '../../Context';
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
@@ -369,6 +370,19 @@ const getPrimitiveForm = (formData: object, enabled = true) => {
   );
 };
 
+const getPrimitiveReviewForm = (formData: object) => {
+  return (
+    <JsonForms
+      uischema={primitiveUiSchema}
+      data={formData}
+      schema={primitiveSchema}
+      ajv={new Ajv({ allErrors: true, verbose: true })}
+      renderers={GoABaseReviewRenderers}
+      cells={GoACells}
+    />
+  );
+};
+
 it('shows empty state when no items', () => {
   const data = { files: [] };
   const { baseElement } = render(getPrimitiveForm(data));
@@ -420,7 +434,7 @@ it('primitive control calls handleChange for add and remove', () => {
   const removeButton = baseElement.querySelector("goa-icon-button[icon='trash']");
   expect(removeButton).toBeInTheDocument();
   fireEvent(removeButton!, new CustomEvent('_click'));
-  expect(handleChange).toHaveBeenCalledWith('files', []);
+  expect(handleChange).toHaveBeenCalledWith('files', undefined);
 });
 
 it('primitive control handles non-array data and disabled add button', () => {
@@ -444,4 +458,84 @@ it('primitive control handles non-array data and disabled add button', () => {
   const addButton = baseElement.querySelector('goa-button');
   expect(addButton).toBeInTheDocument();
   expect(addButton?.getAttribute('disabled')).toBe('true');
+});
+
+it('primitive control compacts undefined items and shows empty state', async () => {
+  const handleChange = jest.fn();
+
+  const { baseElement, rerender } = render(
+    <PrimitiveArrayControl
+      data={['file-urn']}
+      path="files"
+      handleChange={handleChange}
+      visible={true}
+      enabled={true}
+      uischema={{ type: 'Control', label: 'Files' }}
+      schema={{ type: 'array', items: { type: 'string' } }}
+      renderers={GoARenderers}
+      cells={GoACells}
+    />
+  );
+
+  rerender(
+    <PrimitiveArrayControl
+      data={[undefined] as unknown as string[]}
+      path="files"
+      handleChange={handleChange}
+      visible={true}
+      enabled={true}
+      uischema={{ type: 'Control', label: 'Files' }}
+      schema={{ type: 'array', items: { type: 'string' } }}
+      renderers={GoARenderers}
+      cells={GoACells}
+    />
+  );
+
+  await waitFor(() => expect(handleChange).toHaveBeenCalledWith('files', undefined));
+  expect(baseElement.textContent).toContain('No files added');
+});
+
+it('primitive file-upload array delete via array icon triggers file cleanup', () => {
+  const handleChange = jest.fn();
+  const deleteFile = jest.fn();
+  const ContextProvider = ContextProviderFactory();
+
+  const { baseElement } = render(
+    <ContextProvider
+      fileManagement={{
+        fileList: {
+          uploadFiles: [{ urn: 'urn:file-1', filename: 'test.pdf' }],
+        },
+        deleteFile,
+      }}
+    >
+      <PrimitiveArrayControl
+        data={['urn:file-1']}
+        path="uploadFiles"
+        handleChange={handleChange}
+        visible={true}
+        enabled={true}
+        uischema={{ type: 'Control', label: 'Upload files' }}
+        schema={{ type: 'array', items: { type: 'string', format: 'file-urn' } }}
+        renderers={GoARenderers}
+        cells={GoACells}
+      />
+    </ContextProvider>
+  );
+
+  const removeButton = baseElement.querySelector("goa-icon-button[icon='trash']");
+  expect(removeButton).toBeInTheDocument();
+  fireEvent(removeButton!, new CustomEvent('_click'));
+
+  expect(deleteFile).toHaveBeenCalledWith({ urn: 'urn:file-1', filename: 'test.pdf' }, 'uploadFiles.0');
+  expect(handleChange).toHaveBeenCalledWith('uploadFiles', undefined);
+});
+
+it('renders primitive array values in review without fallback error', () => {
+  const data = { files: ['test-one', 'test-two'] };
+  const { baseElement } = render(getPrimitiveReviewForm(data));
+
+  expect(baseElement.textContent).toContain('test-one');
+  expect(baseElement.textContent).toContain('test-two');
+  expect(baseElement.textContent).not.toContain('No applicable renderer found.');
 });

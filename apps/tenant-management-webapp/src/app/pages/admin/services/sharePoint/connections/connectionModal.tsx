@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GoabButton, GoabButtonGroup, GoabModal, GoabInput, GoabFormItem } from '@abgov/react-components';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
-import { isNotEmptyCheck } from '@lib/validation/checkInput';
+import { duplicateNameCheck, isNotEmptyCheck } from '@lib/validation/checkInput';
 import { RootState } from '@store/index';
-import { selectRoleList } from '@store/sharedSelectors/roles';
-import { v4 as uuid } from 'uuid';
 import { areObjectsEqual } from '@lib/objectUtil';
 import { SharepointConnection } from '@store/sharePoint/actions';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
 import { ConnectionPadding } from '../styled-components';
+import { toKebabName } from '@lib/kebabName';
 
 interface ConnectionModalProps {
   connectionId: string | undefined;
@@ -27,6 +26,7 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
     () =>
       initialValue || {
         id: '',
+        name: '',
         tenantId: realmId,
         siteId: '',
         listId: '',
@@ -44,7 +44,14 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
 
   const title = isNew ? 'Add connection' : 'Edit connection';
 
+  const connections = useSelector((state: RootState) => {
+    return state?.sharepoint?.connections;
+  });
+
+  const connectionIds = Object.values(connections).map((x) => x.id);
+
   const { errors, validators } = useValidators('clientId', 'clientId', isNotEmptyCheck('clientId'))
+    .add('duplicate', 'name', duplicateNameCheck(connectionIds, 'connection'))
     .add('siteId', 'siteId', isNotEmptyCheck('siteId'))
     .add('listId', 'listId', isNotEmptyCheck('listId'))
     .add('tenantId', 'tenantId', isNotEmptyCheck('tenantId'))
@@ -71,9 +78,6 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
       return;
     }
 
-    if (isNew) {
-      connection.id = uuid();
-    }
     onSave(connection);
     if (onCancel) {
       onCancel();
@@ -123,6 +127,61 @@ export const ConnectionModal = ({ connectionId, onCancel, onSave, open }: Connec
         style={{ overflowY: 'auto', maxHeight: '70vh', padding: '0 3px 0 3px' }}
       >
         <ConnectionPadding>
+          <GoabFormItem error={errors?.['name']} label="Sharepoint connection name">
+            <GoabInput
+              type="text"
+              name="form-definition-name"
+              value={connection.name}
+              testId="form-definition-name"
+              aria-label="form-definition-name"
+              width="100%"
+              onChange={(detail: GoabInputOnChangeDetail) => {
+                const validations = {
+                  name: detail.value,
+                };
+
+                if (isNew) {
+                  validators.remove('name');
+                  validations['duplicate'] = detail.value;
+
+                  if (!validators.checkAll(validations)) {
+                    return;
+                  }
+                }
+
+                if (connection.id.length > 0) {
+                  validators.remove('name');
+
+                  validators.checkAll(validations);
+                }
+
+                setConnection(
+                  !isNew
+                    ? { ...connection, name: detail.value }
+                    : { ...connection, name: detail.value, id: toKebabName(detail.value) },
+                );
+              }}
+              onBlur={() => {
+                const validations = {
+                  name: connection.name,
+                };
+                if (isNew) {
+                  validations['duplicate'] = connection.name;
+                }
+                validators.checkAll(validations);
+              }}
+            />
+          </GoabFormItem>
+          <GoabFormItem label="Definition ID">
+            <GoabInput
+              name="form-definition-id"
+              value={connection?.id}
+              testId="form-definition-id"
+              disabled={true}
+              width="100%"
+              onChange={() => {}}
+            />
+          </GoabFormItem>
           <GoabFormItem error={errors?.['tenantId']} label="Tenant ID">
             <GoabInput
               type="text"

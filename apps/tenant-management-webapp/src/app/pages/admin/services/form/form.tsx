@@ -18,13 +18,13 @@ import { HeadingDiv } from '../styled-components';
 const HelpLink = (): JSX.Element => {
   const defaultFormUrl = useSelector((state: RootState) => selectFormAppHost(state));
   return (
-    <Aside>
+    <>
       <AsideLinks serviceName="form" />
       <h3>Submit applications</h3>
       <span>Users can access forms and submit applications here:</span>
       <h3>Form app link</h3>
       <LinkCopyComponent text={'Copy link'} link={defaultFormUrl} />
-    </Aside>
+    </>
   );
 };
 

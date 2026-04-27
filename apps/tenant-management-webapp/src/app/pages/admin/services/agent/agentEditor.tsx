@@ -38,7 +38,7 @@ import {
   updateAgent,
 } from '@store/agent/actions';
 import { UploadFileService } from '@store/file/actions';
-import { ApiToolConfiguration } from '@store/agent/model';
+import { ApiToolConfiguration, McpServerConfiguration } from '@store/agent/model';
 import { connectConfigurationUpdates, disconnectConfigurationUpdates } from '@store/configuration/action';
 import { fetchDirectory } from '@store/directory/actions';
 import { filteredRoleListSelector } from '@store/sharedSelectors/roles';
@@ -47,6 +47,7 @@ import { AddEditApiToolModal } from './addEditApiToolModal';
 import { AddBuiltInToolModal } from './addBuiltInToolModal';
 import { AddEditAgentModal } from './addEditAgentModal';
 import { AddToolAgentModal } from './addToolAgentModal';
+import { AddEditMcpServerModal } from './addEditMcpServerModal';
 import { AnyAction } from 'redux';
 
 const ChatContainerDiv = styled.div`
@@ -74,6 +75,9 @@ export const AgentEditor: FunctionComponent = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [toolToDelete, setToolToDelete] = useState<{ id: string; index: number } | null>(null);
   const [toolToEdit, setToolToEdit] = useState<ApiToolConfiguration | null>(null);
+  const [mcpServerToDelete, setMcpServerToDelete] = useState<{ url: string; index: number } | null>(null);
+  const [mcpServerToEdit, setMcpServerToEdit] = useState<McpServerConfiguration | null>(null);
+  const [mcpServerEditIndex, setMcpServerEditIndex] = useState<number | null>(null);
   const [showBuiltInToolModal, setShowBuiltInToolModal] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState<{ id: string; index: number } | null>(null);
   const [showAgentModal, setShowAgentModal] = useState(false);
@@ -86,7 +90,7 @@ export const AgentEditor: FunctionComponent = () => {
   const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
 
   const filteredRoles = useSelector((state: RootState) =>
-    filteredRoleListSelector(state, 'agent.editor.agent.userRoles', showSelectedRoles)
+    filteredRoleListSelector(state, 'agent.editor.agent.userRoles', showSelectedRoles),
   );
 
   const dispatch = useDispatch<AppDispatch>();
@@ -107,7 +111,7 @@ export const AgentEditor: FunctionComponent = () => {
         if (namespace === 'platform' && name === 'agent-service') {
           dispatch(newPreviewThread());
         }
-      })
+      }),
     );
 
     return () => {
@@ -125,13 +129,13 @@ export const AgentEditor: FunctionComponent = () => {
 
   const handleAttachmentUpload = async (file: File): Promise<Attachment> => {
     const type = file.type.startsWith('image/') ? 'image' : 'file';
-    
+
     const { uploadedFile, dataUrl } = await dispatch(
       UploadFileService({
         type: 'agent-attachments',
         file,
         recordId: agent.id,
-      }) as unknown as AnyAction
+      }) as unknown as AnyAction,
     );
 
     return {
@@ -214,8 +218,63 @@ export const AgentEditor: FunctionComponent = () => {
                             </GoabButtonGroup>
                           </td>
                         </tr>
-                      )
+                      ),
                     )}
+                  </tbody>
+                </GoabTable>
+              </div>
+            </Tab>
+            <Tab testId="agent-edit-mcp" label="MCP" className="editorMain">
+              <GoabButtonGroup alignment="start" mt="s" gap="compact">
+                <GoabButton
+                  type="tertiary"
+                  size="compact"
+                  onClick={() => {
+                    setMcpServerEditIndex(null);
+                    setMcpServerToEdit({ url: '' });
+                  }}
+                >
+                  Add MCP server
+                </GoabButton>
+              </GoabButtonGroup>
+              <div style={{ overflow: 'auto' }}>
+                <GoabTable>
+                  <colgroup>
+                    <col />
+                    <col />
+                    <col style={{ width: '120px' }} />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>URL</th>
+                      <th>Capabilities</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(agent?.mcp?.servers || []).map((server, index) => (
+                      <tr key={`${server.url}-${index}`}>
+                        <td>{server.url}</td>
+                        <td>{(server.capabilities || []).join(', ')}</td>
+                        <td>
+                          <GoabButtonGroup alignment="end" gap="compact">
+                            <GoabIconButton
+                              icon="create"
+                              size="small"
+                              onClick={() => {
+                                setMcpServerEditIndex(index);
+                                setMcpServerToEdit(server);
+                              }}
+                            />
+                            <GoabIconButton
+                              icon="trash"
+                              size="small"
+                              onClick={() => setMcpServerToDelete({ url: server.url, index })}
+                            />
+                          </GoabButtonGroup>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </GoabTable>
               </div>
@@ -296,12 +355,10 @@ export const AgentEditor: FunctionComponent = () => {
                 name="workspace-enabled"
                 text="Enable workspace"
                 checked={!!agent?.workspace?.enabled}
-                onChange={() =>
-                  dispatch(editAgent({ ...agent, workspace: { enabled: !agent?.workspace?.enabled } }))
-                }
+                onChange={() => dispatch(editAgent({ ...agent, workspace: { enabled: !agent?.workspace?.enabled } }))}
               />
             </Tab>
-            <Tab testId="agent-edit-output-schema" label="Structured Output" className="editorMain">
+            <Tab testId="agent-edit-output-schema" label="Output" className="editorMain">
               <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
                 <p>
                   Define a JSON Schema that describes the structure of the agent's output. When configured, the agent
@@ -346,9 +403,7 @@ export const AgentEditor: FunctionComponent = () => {
                   <GoabButton
                     type="secondary"
                     size="compact"
-                    onClick={() =>
-                      dispatch(editAgent({ ...agent, outputSchema: { type: 'object', properties: {} } }))
-                    }
+                    onClick={() => dispatch(editAgent({ ...agent, outputSchema: { type: 'object', properties: {} } }))}
                   >
                     Enable structured output
                   </GoabButton>
@@ -406,6 +461,30 @@ export const AgentEditor: FunctionComponent = () => {
               }
             }}
           />
+          <DeleteModal
+            isOpen={mcpServerToDelete !== null}
+            title="Delete MCP server"
+            content={
+              <div>
+                Are you sure you wish to delete <b>{mcpServerToDelete?.url}</b>?
+              </div>
+            }
+            onCancel={() => setMcpServerToDelete(null)}
+            onDelete={() => {
+              if (mcpServerToDelete) {
+                const servers = [...(agent?.mcp?.servers || [])];
+                servers.splice(mcpServerToDelete.index, 1);
+
+                dispatch(
+                  editAgent({
+                    ...agent,
+                    mcp: servers.length > 0 ? { servers } : undefined,
+                  }),
+                );
+                setMcpServerToDelete(null);
+              }
+            }}
+          />
           <AddEditAgentModal
             agent={agent}
             open={showEditModal}
@@ -440,6 +519,33 @@ export const AgentEditor: FunctionComponent = () => {
               const update = [...selected, ...(agent?.tools?.filter((tool) => typeof tool === 'object') || [])];
               dispatch(editAgent({ ...agent, tools: update }));
               setShowBuiltInToolModal(false);
+            }}
+          />
+          <AddEditMcpServerModal
+            server={mcpServerToEdit}
+            existingServerUrls={(agent?.mcp?.servers || []).map((server) => server.url)}
+            editingServerUrl={mcpServerToEdit?.url}
+            open={!!mcpServerToEdit}
+            onCancel={() => {
+              setMcpServerToEdit(null);
+              setMcpServerEditIndex(null);
+            }}
+            onOK={(update) => {
+              const servers = [...(agent?.mcp?.servers || [])];
+              if (mcpServerEditIndex !== null && mcpServerEditIndex > -1) {
+                servers.splice(mcpServerEditIndex, 1, update);
+              } else {
+                servers.push(update);
+              }
+
+              dispatch(
+                editAgent({
+                  ...agent,
+                  mcp: { servers },
+                }),
+              );
+              setMcpServerToEdit(null);
+              setMcpServerEditIndex(null);
             }}
           />
           <AddToolAgentModal

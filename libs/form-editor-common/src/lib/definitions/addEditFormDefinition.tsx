@@ -317,14 +317,9 @@ export const AddEditFormDefinition = ({
             </FormFormItem>
           </GoabFormItem>
 
-          <GoabFormItem
-            error={errors?.['tag']}
-            label="Tags"
-            helpText="Add tags to organize and filter form definitions"
-            mt={'s'}
-          >
+          <GoabFormItem error={errors?.['tag']} label="Tags" mt={'s'}>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-              <FormFormItem style={{ flex: 1 }}>
+              <DescriptionItem style={{ flex: 1 }}>
                 <GoabInput
                   type="text"
                   name="form-definition-tag"
@@ -346,7 +341,7 @@ export const AddEditFormDefinition = ({
                     }
                   }}
                 />
-              </FormFormItem>
+              </DescriptionItem>
               <GoabButton
                 type="secondary"
                 testId="add-tag-btn"
@@ -366,6 +361,12 @@ export const AddEditFormDefinition = ({
                 {searchedTagExists ? 'Add tag' : 'Create and add tag'}
               </GoabButton>
             </div>
+            <HelpTextComponent
+              length={tagInput?.length || 0}
+              maxLength={MAX_TAG_LENGTH}
+              descErrMessage="Add tags to organize and filter form definitions"
+              errorMsg={errors?.['tag']}
+            />
             {selectedTags.length > 0 && (
               <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {selectedTags.map((tag, index) => (
@@ -381,20 +382,21 @@ export const AddEditFormDefinition = ({
               </div>
             )}
           </GoabFormItem>
-
           {!isEdit && (
-            <GoabCheckbox
-              name={'populate-form'}
-              key={'populate-form'}
-              ariaLabel={'populate-form-checkbox'}
-              checked={multiForm}
-              testId={'populate-template'}
-              onChange={() => {
-                setMultiForm(multiForm ? false : true);
-              }}
-            >
-              Populate form with a default multi-page form
-            </GoabCheckbox>
+            <GoabFormItem mt={'m'}>
+              <GoabCheckbox
+                name={'populate-form'}
+                key={'populate-form'}
+                ariaLabel={'populate-form-checkbox'}
+                checked={multiForm}
+                testId={'populate-template'}
+                onChange={() => {
+                  setMultiForm(multiForm ? false : true);
+                }}
+              >
+                Populate form with a default multi-page form
+              </GoabCheckbox>
+            </GoabFormItem>
           )}
         </>
       )}

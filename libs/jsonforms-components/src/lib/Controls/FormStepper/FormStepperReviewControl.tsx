@@ -31,7 +31,7 @@ import {
   GoABooleanRadioControlTester,
   MultiLineTextControlTester,
 } from '../Inputs';
-import { GoAArrayControlTester, GoAArrayControlReviewRenderer } from '../ObjectArray/ObjectArray';
+import { GoAArrayControlTester, GoAArrayControlReviewRenderer, GoAPrimitiveArrayTester } from '../ObjectArray/ObjectArray';
 import { GoAListWithDetailsTester } from '../ObjectArray/listWithDetails';
 
 import { GoAInputBaseTableReviewControl } from '../Inputs/InputBaseTableReviewControl';
@@ -78,6 +78,10 @@ export const GoABaseTableReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: GoABooleanRadioControlTester, renderer: GoAInputBaseTableReviewControl },
   {
     tester: MultiLineTextControlTester,
+    renderer: GoAInputBaseTableReviewControl,
+  },
+  {
+    tester: GoAPrimitiveArrayTester,
     renderer: GoAInputBaseTableReviewControl,
   },
   {
@@ -130,6 +134,10 @@ export const GoABaseReviewRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: GoABooleanRadioControlTester, renderer: GoAInputBaseReviewControl },
   {
     tester: MultiLineTextControlTester,
+    renderer: GoAInputBaseReviewControl,
+  },
+  {
+    tester: GoAPrimitiveArrayTester,
     renderer: GoAInputBaseReviewControl,
   },
   {

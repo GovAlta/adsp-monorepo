@@ -25,14 +25,12 @@ import merge from 'lodash/merge';
 import range from 'lodash/range';
 import React, { useCallback, useContext, useEffect, useReducer, useState } from 'react';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
-import { GoAReviewRenderers } from '../../../index';
 import { capitalizeFirstLetter, isEmptyBoolean, isEmptyNumber, Visible } from '../../util';
 import { humanizeAjvError } from './ListWithDetailControl';
 import {
   ADD_DATA_ACTION,
   Categories,
   DELETE_ACTION,
-  INCREMENT_ACTION,
   initialState,
   objectListReducer,
   SET_DATA_ACTION,
@@ -173,9 +171,12 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
     properties?: Record<string, DataProperty>;
   }
 
-  const element = (schema?.items as SchemaElement) || (schema?.properties?.[rowPath]?.items as SchemaElement);
+  const element =
+    (schema?.items as SchemaElement) ||
+    (schema?.properties?.[rowPath]?.items as SchemaElement) ||
+    (schema as SchemaElement);
 
-  const required = element?.required;
+  const required = element?.required || [];
   const properties = element?.properties;
 
   let tableKeys = extractNames(uischema?.options?.detail);
@@ -213,56 +214,118 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
 
   return (
     <NonEmptyCellStyle>
-      {(uischema as Layout)?.elements?.map((element: UISchemaElement) => {
-        return (
-          <JsonFormsDispatch
-            data-testid={`jsonforms-object-list-defined-elements-dispatch`}
-            key={rowPath}
-            schema={schema}
-            uischema={element}
-            path={rowPath}
-            enabled={enabled}
-            renderers={isInReview ? GoAReviewRenderers : renderers}
-            cells={cells}
-          />
-        );
-      })}
+      {!isInReview &&
+        (uischema as Layout)?.elements?.map((element: UISchemaElement) => {
+          return (
+            <JsonFormsDispatch
+              data-testid={`jsonforms-object-list-defined-elements-dispatch`}
+              key={rowPath}
+              schema={schema}
+              uischema={element}
+              path={rowPath}
+              enabled={enabled}
+              renderers={renderers}
+              cells={cells}
+            />
+          );
+        })}
       {properties && Object.keys(properties).length > 0 && (
         <>
+          {isInReview ? (
+            <div style={{ padding: '0.75rem 0' }}>
+              {range(count || 0).map((i) => {
+                const rowData = data && data[i];
+                if (!rowData) return null;
+                const hasAnyValue = Object.keys(tableKeys).some((key) => {
+                  const value = rowData[key];
+                  return value !== undefined && value !== null && (value as unknown) !== '';
+                });
+                const hasRowErrors = (errors || []).some((e) =>
+                  e.instancePath.includes(`/${props.rowPath.replace(/\./g, '/')}/${i}`),
+                );
+                if (!hasAnyValue && !hasRowErrors) return null;
+                return (
+                  <div key={i} style={{ marginBottom: '1.5rem' }}>
+                    {Object.entries(tableKeys).map(([key, label]) => {
+                      const value = rowData[key];
+                      const isRequiredField = required?.includes(key) ?? false;
+                      const fieldPath = `/${props.rowPath.replace(/\./g, '/')}/${i}/${key}`;
+                      const rowPathMatch = `/${props.rowPath.replace(/\./g, '/')}/${i}`;
+                      const fieldError = (errors || []).find((e) => {
+                        const msg = (e as ErrorObject).message || '';
+                        const requiredProperty = msg.match(/'([^']+)'/)?.[1];
+                        return (
+                          e.instancePath === fieldPath ||
+                          (e.instancePath === rowPathMatch && msg.includes(key)) ||
+                          (e.instancePath === rowPathMatch && requiredProperty === key)
+                        );
+                      });
+                      const isEmptyValue = value === undefined || value === null || (value as unknown) === '';
+                      if (isEmptyValue && !isRequiredField && !fieldError) return null;
+
+                      let reviewError = '';
+                      if (fieldError) {
+                        const raw = (fieldError as ErrorObject).message || '';
+                        reviewError = raw.includes('required')
+                          ? `${capitalizeFirstLetter(key.replace(/[_-]/g, ' '))} is required`
+                          : raw;
+                      } else if (isRequiredField && isEmptyValue) {
+                        reviewError = `${capitalizeFirstLetter(key.replace(/[_-]/g, ' '))} is required`;
+                      }
+
+                      return (
+                        <div key={key} style={{ display: 'flex', marginBottom: '0.5rem', alignItems: 'center' }}>
+                          <strong style={{ width: '50%', flexShrink: 0 }}>
+                            {properties?.[key]?.title ||
+                              (label !== key
+                                ? label
+                                : key
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .replace(/[_-]/g, ' ')
+                                    .replace(/^./, (c) => c.toUpperCase()))}
+                            {isRequiredField && <RequiredSpan> (required)</RequiredSpan>} :
+                          </strong>
+                          <span
+                            style={{ marginLeft: '1rem' }}
+                            data-testid={`#/properties/${key}-input-${i}-review`}
+                          >
+                            {renderCellColumn({
+                              data: isEmptyValue ? undefined : (value as unknown as string),
+                              error: reviewError,
+                              isRequired: isRequiredField,
+                              errors: errors !== undefined ? errors : [],
+                              count: -1,
+                              element: key,
+                              rowPath,
+                              index: i,
+                            })}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
           <FixTableHeaderAlignment>
             <GoabTable width="100%">
               <thead>
                 <tr key={0}>
                   {Object.entries(tableKeys).map(([value, index]) => {
                     const currentProperty = properties[value];
-                    if (!isInReview) {
-                      return (
-                        <th key={index}>
-                          <p>
-                            {currentProperty?.title || index}
-                            {required?.includes(value) && <RequiredSpan>(required)</RequiredSpan>}
-                          </p>
-                        </th>
-                      );
-                    }
                     return (
-                      <TableTHHeader key={index}>
+                      <th key={index}>
                         <p>
-                          {`${currentProperty?.title || index}`}
-                          {required?.includes(value) && (
-                            <RequiredSpan>
-                              <br /> (required)
-                            </RequiredSpan>
-                          )}
+                          {currentProperty?.title || index}
+                          {required?.includes(value) && <RequiredSpan>(required)</RequiredSpan>}
                         </p>
-                      </TableTHHeader>
+                      </th>
                     );
                   })}
-                  {isInReview !== true && (
-                    <th>
-                      <p>Actions</p>
-                    </th>
-                  )}
+                  <th>
+                    <p>Actions</p>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -330,31 +393,6 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
                           (isEmptyBoolean(schema, currentData) || isEmptyNumber(schema, currentData))
                         ) {
                           humanMessage = `${capitalizeFirstLetter(schemaName)} is required`;
-                        }
-
-                        if (isInReview === true) {
-                          return (
-                            <td key={ix}>
-                              <div
-                                data-testid={`#/properties/${schemaName}-input-${i}-review`}
-                                style={{ display: 'block' }}
-                              >
-                                {renderCellColumn({
-                                  data:
-                                    currentData !== '' && currentData !== null && currentData !== undefined
-                                      ? currentData
-                                      : undefined,
-                                  error: humanMessage,
-                                  isRequired: required?.includes(element) ?? false,
-                                  errors: errors !== undefined ? errors : [],
-                                  count: count !== undefined ? count : -1,
-                                  element,
-                                  rowPath,
-                                  index: i,
-                                })}
-                              </div>
-                            </td>
-                          );
                         }
 
                         return (
@@ -437,6 +475,7 @@ export const NonEmptyCellComponent = React.memo(function NonEmptyCellComponent(
               </tbody>
             </GoabTable>
           </FixTableHeaderAlignment>
+          )}
           {hasAnyErrors && isInReview && (
             <GoabFormItem error={`There are validation errors for '${capitalizeFirstLetter(rowPath)}'`}></GoabFormItem>
           )}
@@ -603,10 +642,11 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   } = props;
 
   const parsedData = Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
-  const latestData: StateData = Array.isArray(data)
+  const hasDataRows = parsedData.length > 0;
+  const latestData: StateData = hasDataRows
     ? (Object.fromEntries(parsedData.map((item, index) => [String(index), item])) as StateData)
     : (registers.categories[path]?.data ?? {});
-  const latestCount = Array.isArray(data)
+  const latestCount = hasDataRows
     ? parsedData.length
     : (registers.categories[path]?.count ?? Object.keys(latestData).length);
 
@@ -630,13 +670,26 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
   //  eslint-disable-next-line
   const addItem = (path: string, value: any) => {
     const maxItems = uischema.options?.detail?.maxItems ? uischema.options?.detail?.maxItems : DEFAULT_MAX_ITEMS;
-    const categories = registers.categories;
-    const currentCategory = categories[path];
 
-    const count = currentCategory?.count !== undefined ? currentCategory?.count : 0;
-    if (count < maxItems) {
-      dispatch({ type: INCREMENT_ACTION, payload: path });
-      return () => props.addItem(path, value);
+    if (latestCount < maxItems) {
+      return () => {
+        const currentRows = hasDataRows
+          ? parsedData
+          : Object.keys(latestData)
+              .sort((a, b) => Number(a) - Number(b))
+              .map((key) => latestData[key] as Record<string, unknown>);
+        const nextData = [...currentRows, value];
+        const categoryData = Object.fromEntries(nextData.map((item, index) => [String(index), item])) as StateData;
+
+        props.handleChange(path, nextData);
+        dispatch({
+          type: SET_DATA_ACTION,
+          payload: {
+            ...registers.categories,
+            [path]: { count: nextData.length, data: categoryData },
+          },
+        });
+      };
     } else {
       setMaxItemsError(`Maximum ${maxItems} items allowed.`);
       setTimeout(() => {
@@ -708,6 +761,11 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
     const updatedData = Object.fromEntries((parsedData || []).map((item, index) => [index, item]));
     const count = Object.keys(updatedData).length;
     const currentCategory = registers.categories[path];
+
+    if (Array.isArray(data) && data.length === 0 && (currentCategory?.count ?? 0) > 0) {
+      return;
+    }
+
     const hasSameCount = currentCategory?.count === count;
     const hasSameData = JSON.stringify(currentCategory?.data || {}) === JSON.stringify(updatedData);
 
@@ -795,7 +853,7 @@ export const ObjectArrayControl = (props: ObjectArrayControlProps): JSX.Element 
         <ObjectArrayToolBar
           errors={errors}
           label={label}
-          addItem={(a, b) => () => addItem(a, b)}
+          addItem={addItem}
           numColumns={0}
           path={path}
           uischema={controlElement}

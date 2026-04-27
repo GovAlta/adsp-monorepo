@@ -23,14 +23,42 @@ export const configurationSchema = {
           required: ['enabled'],
           additionalProperties: false,
         },
+        mcp: {
+          type: 'object',
+          properties: {
+            servers: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  url: {
+                    type: 'string',
+                    format: 'uri',
+                  },
+                  headers: {
+                    type: 'object',
+                    additionalProperties: {
+                      type: 'string',
+                    },
+                  },
+                  capabilities: {
+                    type: 'array',
+                    items: { type: 'string' },
+                  },
+                },
+                required: ['url'],
+                additionalProperties: false,
+              },
+            },
+          },
+          required: ['servers'],
+          additionalProperties: false,
+        },
         outputSchema: {
           anyOf: [
             { type: 'null' },
             {
-              allOf: [
-                { $ref: 'http://json-schema.org/draft-07/schema#' },
-                { type: 'object' },
-              ],
+              allOf: [{ $ref: 'http://json-schema.org/draft-07/schema#' }, { type: 'object' }],
             },
           ],
         },

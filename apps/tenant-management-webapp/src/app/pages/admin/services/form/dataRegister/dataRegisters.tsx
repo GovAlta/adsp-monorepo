@@ -247,7 +247,7 @@ export const DataRegisters = (): JSX.Element => {
 
   return (
     <>
-      <GoabButtonGroup alignment="end" mt="m">
+      <GoabButtonGroup alignment="start" mt="m">
         <GoabButton type="secondary" onClick={() => setIsAddModalOpen(true)} testId="data-register-add-btn">
           Add register data
         </GoabButton>

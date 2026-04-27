@@ -6,6 +6,17 @@ import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-componen
 import { isEmpty } from 'lodash';
 import { ErrorObject } from 'ajv';
 
+const jsonPreviewStyle: React.CSSProperties = {
+  display: 'block',
+  width: '100%',
+  boxSizing: 'border-box',
+  margin: 0,
+  padding: 0,
+  whiteSpace: 'pre-wrap',
+  textAlign: 'left',
+  overflowX: 'auto',
+};
+
 export const extractNestedFields = (properties: DataObject, propertyKeys: string[]): Record<string, NestedItem> => {
   const nestedItems: Record<string, NestedItem> = {};
 
@@ -150,7 +161,11 @@ export const renderCellColumn = ({
   const nestedErrors = errors?.filter((e: ErrorObject) => e.instancePath.includes(path));
 
   /* istanbul ignore next */
-  if (typeof data === 'string') {
+  if (typeof data === 'boolean') {
+    return data ? 'Yes' : 'No';
+  } else if (typeof data === 'number') {
+    return String(data);
+  } else if (typeof data === 'string') {
     return data;
   } else if (typeof data === 'object' || Array.isArray(data)) {
     const result = Object.keys(data);
@@ -159,20 +174,21 @@ export const renderCellColumn = ({
       if (
         'year' in (data as Record<string, unknown>) &&
         'month' in (data as Record<string, unknown>) &&
-        'day' in (data as Record<string, unknown>)
+        ('day' in (data as Record<string, unknown>) || 'date' in (data as Record<string, unknown>))
       ) {
-        const dateObj = data as { year: number; month: number; day: number };
-        return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
+        const dateObj = data as { year: unknown; month: unknown; day?: unknown; date?: unknown };
+        const dayValue = 'day' in dateObj ? dateObj.day : dateObj.date;
+        return `${dateObj.year}-${dateObj.month}-${dayValue}`;
       }
-      return <pre>{JSON.stringify(data, null, 2)}</pre>;
+      return <pre style={jsonPreviewStyle}>{JSON.stringify(data, null, 2)}</pre>;
     } else if (result.length === 0) {
       return renderWarningCell();
     } else if (result.length > 0 && (isObjectArrayEmpty(data) || nestedErrors.length > 0)) {
-      return <pre>{renderWarningCell(JSON.stringify(data, null, 2))}</pre>;
+      return <pre style={jsonPreviewStyle}>{renderWarningCell(JSON.stringify(data, null, 2))}</pre>;
     } else if (data !== undefined && result.length > 0 && error !== '' && error !== undefined) {
       const values = Object.values(data) as string[];
       if (values && values.length > 0) {
-        return <pre>{renderWarningCell(JSON.stringify(values.at(0), null, 2))}</pre>;
+        return <pre style={jsonPreviewStyle}>{renderWarningCell(JSON.stringify(values.at(0), null, 2))}</pre>;
       }
     } else {
       const firstRow = Array.isArray(data) ? data[0] : undefined;

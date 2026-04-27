@@ -11,7 +11,7 @@ import {
 } from '../../util/inputControlUtils';
 import { standardizeDate } from '../../util/dateUtils';
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail, GoabInputOnKeyPressDetail } from '@abgov/ui-components-common';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
 export type GoAInputDateProps = CellProps & WithClassname & WithInputProps;
 export const errMalformedDate = (scope: string, type: string): string => {
@@ -37,6 +37,7 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
   const readOnly = uischema?.options?.componentProps?.readOnly ?? false;
   const width = uischema?.options?.componentProps?.width ?? '100%';
+  const inputName = appliedUiSchemaOptions?.name || `${id || label}-input`;
   const allowPastDate = uischema?.options?.allowPastDate;
   const allowFutureDate = uischema?.options?.allowFutureDate;
 
@@ -56,25 +57,23 @@ export const GoADateInput = (props: GoAInputDateProps): JSX.Element => {
   } else if (!allowPastDate && allowFutureDate) {
     minDate = todayLocalYmd();
   }
-  const hostRef = useRef<HTMLElement | null>(null);
-
   useEffect(() => {
-    const host = hostRef.current ?? document.querySelector('goa-input[type="date"]');
+    const host = document.querySelector<HTMLElement>(`goa-input[name="${inputName}"]`);
     host?.shadowRoot?.querySelector('input[type="date"]');
     ensureGoaDatePointerCursor(host);
-  }, [appliedUiSchemaOptions?.name, id]);
+  }, [inputName]);
 
   return (
     <GoabInput
       type="date"
-      ref={hostRef}
       error={isVisited && errors.length > 0}
       width={width}
-      name={appliedUiSchemaOptions?.name || `${id || label}-input`}
+      name={inputName}
       value={standardizeDate(data) || ''}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       disabled={!enabled}
       readonly={readOnly}
+      ariaLabel={`appliedUiSchemaOptions?.name date`}
       min={minDate ? standardizeDate(minDate) || undefined : undefined}
       max={maxDate ? standardizeDate(maxDate) || undefined : undefined}
       onChange={(detail: GoabInputOnChangeDetail) => {

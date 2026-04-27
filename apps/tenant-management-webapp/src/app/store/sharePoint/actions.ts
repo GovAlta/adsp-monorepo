@@ -9,6 +9,7 @@ export const DELETE_SHAREPOINT_CONNECTION_SUCCESS_ACTION = 'sharepoint/DELETE_SH
 
 export interface SharepointConnection {
   id: string;
+  name: string;
   tenantId: string;
   siteId: string;
   listId: string;

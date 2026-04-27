@@ -32,6 +32,7 @@ export const environment = envalid.cleanEnv(
     AGENT_SOCKET_MAX_BUFFER_SIZE: envalid.num({ default: 50 * 1024 * 1024 }),
     AGENT_MAX_FILE_SIZE_BYTES: envalid.num({ default: 50 * 1024 * 1024 }),
     AGENT_MAX_TARBALL_SIZE_BYTES: envalid.num({ default: 500 * 1024 * 1024 }),
+    AGENT_MCP_SERVER_CREDENTIALS_FILE: envalid.str({ default: '/var/run/secrets/adsp/mcp/mcp-servers.json' }),
     AGENT_WORKSPACE_INIT_RETRY_ATTEMPTS: envalid.num({ default: 5 }),
     AGENT_WORKSPACE_INIT_RETRY_DELAY_MS: envalid.num({ default: 50 }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
@@ -44,5 +45,5 @@ export const environment = envalid.cleanEnv(
         console.error(`Invalid env vars: ${util.inspect(errors)}`);
       }
     },
-  }
+  },
 );

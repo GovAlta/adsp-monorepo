@@ -103,12 +103,12 @@ const Aside = styled.aside`
     line-height: normal;
   }
   @media (min-width: 1280px) {
-    flex: 0 0 380px;
+    flex: 0 0 280px;
     padding-left: 2rem;
   }
 
   @media (min-width: 1024px) and (max-width: 1279px) {
-    flex: 0 0 269px;
+    flex: 0 0 240px;
     padding-left: 2rem;
   }
 

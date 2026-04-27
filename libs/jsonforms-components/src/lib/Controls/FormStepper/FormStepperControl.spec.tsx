@@ -153,6 +153,30 @@ const categorizationPagesWithHide = {
   },
 };
 
+const categorizationWithDisabledAddressCategory = {
+  type: 'Categorization',
+  label: 'Test Categorization',
+  elements: [
+    nameCategory,
+    {
+      ...addressCategory,
+      rule: {
+        effect: 'DISABLE',
+        condition: {
+          scope: '#/properties/preQualification',
+          schema: { const: true },
+        },
+      },
+    },
+  ],
+  options: {
+    variant: 'stepper',
+    testId: 'stepper-test-disabled-category',
+    showNavButtons: true,
+    componentProps: { controlledNav: true },
+  },
+};
+
 const formData = {
   name: { firstName: undefined, lastName: undefined },
   address: { street: undefined, city: undefined },
@@ -352,6 +376,30 @@ describe('Form Stepper Control', () => {
 
       expect(mockDispatch.mock.calls[2][0].type === 'page/to/index');
       expect(mockDispatch.mock.calls[2][0].id === 0);
+    });
+
+    it('keeps Prev and Next enabled when current category is disabled by rule', () => {
+      const newStepperProps = {
+        ...stepperBaseProps,
+        uischema: categorizationWithDisabledAddressCategory,
+        data: { ...formData, preQualification: true },
+        activeId: 1,
+      };
+
+      const { baseElement } = render(
+        <JsonFormsStepperContextProvider
+          StepperProps={newStepperProps}
+          children={getForm(newStepperProps.data, categorizationWithDisabledAddressCategory)}
+        />
+      );
+
+      const prevButton = baseElement.querySelector("goa-button[testId='prev-button']");
+      const nextButton = baseElement.querySelector("goa-button[testId='next-button']");
+
+      expect(prevButton).toBeInTheDocument();
+      expect(nextButton).toBeInTheDocument();
+      expect(prevButton?.getAttribute('disabled')).not.toBe('true');
+      expect(nextButton?.getAttribute('disabled')).not.toBe('true');
     });
   });
 

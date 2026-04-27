@@ -38,8 +38,7 @@ export const DataRegisterMonacoDiv = styled.div`
 `;
 
 export const DataRegisterTableWrapper = styled.div`
-  max-height: 500px;
-  overflow-y: auto;
+  overflow-y: visible;
 `;
 
 export const DataRegisterLoadingDiv = styled.div`

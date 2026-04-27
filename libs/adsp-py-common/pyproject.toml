@@ -23,7 +23,7 @@ readme = 'README.md'
   include = "adsp_py_common"
 
   [tool.poetry.dependencies]
-  python = ">=3.9,<3.12"
+  python = ">=3.10,<3.12"
   cachetools = "^6.2.6"
   types-cachetools = "^6.2.0.20251022"
   httpx = "^0.28.1"
@@ -36,10 +36,10 @@ readme = 'README.md'
 
   [tool.poetry.group.dev.dependencies]
   flake8 = "^7.3.0"
-  pytest = "^8.4.2"
+  pytest = "^9.0.3"
   pytest-coverage = "^0.0"
   pytest-html = "^4.2.0"
-  black = "^25.11.0"
+  black = "^26.3.1"
   tox = "^4.30.3"
 
 [build-system]
