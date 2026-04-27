@@ -15,6 +15,7 @@ import { createBrokerInputProcessors, createInputProcessors } from '../processor
 import { clearThreadWorkspace, createWorkspaceResolver, type AgentWorkspaceConfiguration } from '../workspace';
 import { createFileServiceClient } from '../clients';
 import { scheduleAgentJobs } from '../jobs';
+import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpServerUrl } from './mcpCredentials';
 
 /**
  * Wraps agent instructions to automatically inject contextual information on each request.
@@ -67,7 +68,6 @@ export interface McpServerConfiguration {
   capabilities?: string[];
 }
 
-
 function deriveMcpServerIdFromUrl(url: URL) {
   const normalized = normalizeMcpServerUrl(url);
   const host = url.hostname.replace(/\./g, '-').toLowerCase();
@@ -85,14 +85,6 @@ function deriveMcpServerIdFromUrl(url: URL) {
 
 function createStableHash(value: string) {
   return hasha(value, { algorithm: 'sha256' }).slice(0, 8);
-}
-
-function normalizeMcpServerUrl(url: URL) {
-  const protocol = url.protocol.toLowerCase();
-  const host = url.hostname.toLowerCase();
-  const port = url.port ? `:${url.port}` : '';
-  const path = url.pathname.replace(/\/+/g, '/').replace(/\/$/, '') || '/';
-  return `${protocol}//${host}${port}${path}`;
 }
 
 export interface McpConfiguration {
@@ -117,6 +109,7 @@ export type AgentConfigurations = Record<string, AgentConfiguration>;
 export class AgentServiceConfiguration {
   private mastra!: Mastra;
   private brokers: Record<string, AgentBroker> = {};
+  private readonly knownMcpServers: ReturnType<typeof loadKnownMcpServerSecrets>;
   constructor(
     private logger: Logger,
     private directory: ServiceDirectory,
@@ -126,6 +119,7 @@ export class AgentServiceConfiguration {
     tenant: AgentConfigurations,
     core: AgentConfigurations,
   ) {
+    this.knownMcpServers = loadKnownMcpServerSecrets(environment.AGENT_MCP_SERVER_CREDENTIALS_FILE, this.logger);
     const configuration = { ...tenant, ...core };
     this.initializeBrokers(tenantId, configuration);
   }
@@ -352,13 +346,18 @@ export class AgentServiceConfiguration {
           usedServerUrls.add(normalizedUrl);
           const baseId = deriveMcpServerIdFromUrl(serverUrl).trim();
           const serverId = baseId;
+          const requestInit = server.headers
+            ? {
+                headers: server.headers,
+              }
+            : undefined;
+          const knownServer = this.knownMcpServers.get(normalizedUrl);
 
           result[serverId] = {
             url: serverUrl,
-            requestInit: server.headers
-              ? {
-                  headers: server.headers,
-                }
+            requestInit: knownServer?.authentication ? undefined : requestInit,
+            fetch: knownServer?.authentication
+              ? createAuthenticatedMcpFetch(knownServer.authentication, requestInit)
               : undefined,
           };
 

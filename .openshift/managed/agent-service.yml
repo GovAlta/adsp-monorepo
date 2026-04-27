@@ -34,7 +34,7 @@ parameters:
   - name: ROUTE_HOST
     description: Host for the route.
     displayName: Route Host
-    value: ""
+    value: ''
 objects:
   # Service Objects
 
@@ -46,7 +46,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-infra: "true"
+        apply-infra: 'true'
       name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
     spec:
@@ -65,10 +65,10 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-dev: "true"
-        apply-test: "true"
-        apply-uat: "true"
-        apply-prod: "true"
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-uat: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
       annotations:
@@ -109,12 +109,15 @@ objects:
                     name: ${APP_NAME}
               env:
                 - name: PORT
-                  value: "3333"
+                  value: '3333'
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               volumeMounts:
                 - mountPath: /var/lib/agent-workspace
                   name: workspace-root
+                - mountPath: /var/run/secrets/adsp/mcp
+                  name: mcp-server-credentials
+                  readOnly: true
               ports:
                 - containerPort: 3333
                   name: http
@@ -131,6 +134,12 @@ objects:
           volumes:
             - emptyDir: {}
               name: workspace-root
+            - secret:
+                items:
+                  - key: mcp-servers.json
+                    path: mcp-servers.json
+                secretName: ${APP_NAME}
+              name: mcp-server-credentials
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler
@@ -147,10 +156,10 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-dev: "true"
-        apply-test: "true"
-        apply-uat: "true"
-        apply-prod: "true"
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-uat: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
     spec:
@@ -170,10 +179,10 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-dev: "true"
-        apply-test: "true"
-        apply-uat: "true"
-        apply-prod: "true"
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-uat: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
     spec:
