@@ -107,6 +107,7 @@ export interface Stream {
 export interface FormState {
   definitions: Record<string, FormDefinition>;
   nextEntries: string | null;
+  definitionSearchInput: string;
   exportResult: FormExportResponse;
   editor: {
     selectedId: string;

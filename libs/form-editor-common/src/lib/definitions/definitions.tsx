@@ -22,6 +22,7 @@ import {
   fetchResourcesByTag,
   setSelectedTag,
   deleteResourceTags,
+  setDefinitionSearchInput,
 } from '@store/form/action';
 import { RootState } from '@store/index';
 import { ResourceTagFilterCriteria, ResourceTagResult, Service, Tag, ResourceTag } from '@store/directory/models';
@@ -67,7 +68,7 @@ export const FormDefinitions = ({
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
-  const [searchInput, setSearchInput] = useState('');
+  const searchInput = useSelector((state: RootState) => state.form.definitionSearchInput);
   const next = useSelector((state: RootState) => state.form.nextEntries);
   const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries) || null;
   const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
@@ -213,10 +214,10 @@ export const FormDefinitions = ({
               width="100%"
               trailingIcon={searchInput ? 'close-circle' : undefined}
               onTrailingIconClick={() => {
-                setSearchInput('');
+                dispatch(setDefinitionSearchInput(''));
                 dispatch(getFormDefinitions());
               }}
-              onChange={(detail) => setSearchInput(detail.value)}
+              onChange={(detail) => dispatch(setDefinitionSearchInput(detail.value))}
               onKeyPress={(detail) => {
                 if (detail.key === 'Enter') {
                   dispatch(getFormDefinitions(undefined, searchInput || undefined));
