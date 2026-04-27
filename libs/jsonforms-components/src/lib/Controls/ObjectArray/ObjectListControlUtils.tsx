@@ -6,6 +6,17 @@ import { HilightCellWarning, ObjectArrayWarningIconDiv } from './styled-componen
 import { isEmpty } from 'lodash';
 import { ErrorObject } from 'ajv';
 
+const jsonPreviewStyle: React.CSSProperties = {
+  display: 'block',
+  width: '100%',
+  boxSizing: 'border-box',
+  margin: 0,
+  padding: 0,
+  whiteSpace: 'pre-wrap',
+  textAlign: 'left',
+  overflowX: 'auto',
+};
+
 export const extractNestedFields = (properties: DataObject, propertyKeys: string[]): Record<string, NestedItem> => {
   const nestedItems: Record<string, NestedItem> = {};
 
@@ -169,15 +180,15 @@ export const renderCellColumn = ({
         const dayValue = 'day' in dateObj ? dateObj.day : dateObj.date;
         return `${dateObj.year}-${dateObj.month}-${dayValue}`;
       }
-      return <pre>{JSON.stringify(data, null, 2)}</pre>;
+      return <pre style={jsonPreviewStyle}>{JSON.stringify(data, null, 2)}</pre>;
     } else if (result.length === 0) {
       return renderWarningCell();
     } else if (result.length > 0 && (isObjectArrayEmpty(data) || nestedErrors.length > 0)) {
-      return <pre>{renderWarningCell(JSON.stringify(data, null, 2))}</pre>;
+      return <pre style={jsonPreviewStyle}>{renderWarningCell(JSON.stringify(data, null, 2))}</pre>;
     } else if (data !== undefined && result.length > 0 && error !== '' && error !== undefined) {
       const values = Object.values(data) as string[];
       if (values && values.length > 0) {
-        return <pre>{renderWarningCell(JSON.stringify(values.at(0), null, 2))}</pre>;
+        return <pre style={jsonPreviewStyle}>{renderWarningCell(JSON.stringify(values.at(0), null, 2))}</pre>;
       }
     } else {
       const firstRow = Array.isArray(data) ? data[0] : undefined;
