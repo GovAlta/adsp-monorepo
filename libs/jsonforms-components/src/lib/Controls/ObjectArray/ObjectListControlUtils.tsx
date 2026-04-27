@@ -150,7 +150,11 @@ export const renderCellColumn = ({
   const nestedErrors = errors?.filter((e: ErrorObject) => e.instancePath.includes(path));
 
   /* istanbul ignore next */
-  if (typeof data === 'string') {
+  if (typeof data === 'boolean') {
+    return data ? 'Yes' : 'No';
+  } else if (typeof data === 'number') {
+    return String(data);
+  } else if (typeof data === 'string') {
     return data;
   } else if (typeof data === 'object' || Array.isArray(data)) {
     const result = Object.keys(data);
@@ -159,10 +163,11 @@ export const renderCellColumn = ({
       if (
         'year' in (data as Record<string, unknown>) &&
         'month' in (data as Record<string, unknown>) &&
-        'day' in (data as Record<string, unknown>)
+        ('day' in (data as Record<string, unknown>) || 'date' in (data as Record<string, unknown>))
       ) {
-        const dateObj = data as { year: number; month: number; day: number };
-        return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
+        const dateObj = data as { year: unknown; month: unknown; day?: unknown; date?: unknown };
+        const dayValue = 'day' in dateObj ? dateObj.day : dateObj.date;
+        return `${dateObj.year}-${dateObj.month}-${dayValue}`;
       }
       return <pre>{JSON.stringify(data, null, 2)}</pre>;
     } else if (result.length === 0) {
