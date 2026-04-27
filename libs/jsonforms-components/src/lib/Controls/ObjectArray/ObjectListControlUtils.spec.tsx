@@ -258,7 +258,7 @@ describe('renderCellColumn', () => {
     expect(container.querySelector('goa-icon')).toBeTruthy();
   });
 
-  it('returns null for non-string primitive data', () => {
+  it('returns formatted string for number data', () => {
     const result = renderCellColumn({
       data: 123 as unknown as string,
       error: '',
@@ -269,6 +269,6 @@ describe('renderCellColumn', () => {
       isRequired: false,
     });
 
-    expect(result).toBeNull();
+    expect(result).toBe('123');
   });
 });
