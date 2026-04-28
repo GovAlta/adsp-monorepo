@@ -10,7 +10,7 @@ import Dashboard from './dashboard';
 
 import AccessPage from './services/access/access';
 import { Directory } from './services/directory';
-import Container from '@components/Container';
+import { MainColumnContainer } from '@components/Container';
 import Status from './services/status';
 import { TaskRouter } from './services/task';
 import { EventLog } from './event-log';
@@ -102,7 +102,7 @@ const TenantManagement = (): JSX.Element => {
         />
       </Routes>
 
-      <Container hs={1}>
+      <MainColumnContainer>
         <Routes>
           <Route index element={<Dashboard />} />
           <Route path="/event-log" element={<EventLog />} />
@@ -119,7 +119,7 @@ const TenantManagement = (): JSX.Element => {
           })}
         </Routes>
         <Outlet />
-      </Container>
+      </MainColumnContainer>
     </AdminLayout>
   );
 };
