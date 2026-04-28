@@ -27,6 +27,12 @@ export interface FormDefinition {
   securityClassification?: SecurityClassification;
   resourceTags?: FormResourceTagResult[];
   dryRun?: boolean;
+  customSubmissionEvent?: CustomSubmissionEvent;
+}
+
+export interface CustomSubmissionEvent {
+  namespace: string;
+  name: string;
 }
 
 export interface FormResourceTagResponse {
@@ -79,6 +85,7 @@ export const defaultFormDefinition: FormDefinition = {
   queueTaskToProcess: { queueName: '', queueNameSpace: '' } as QueueTaskToProcess,
   supportTopic: false,
   securityClassification: SecurityClassification.ProtectedB,
+  customSubmissionEvent: null,
 };
 export interface Stream {
   namespace: string;

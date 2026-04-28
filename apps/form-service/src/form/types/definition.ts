@@ -21,6 +21,12 @@ export interface FormDefinition {
   dryRun?: boolean;
   includeDataInSubmission?: boolean;
   registeredId?: string;
+  customSubmissionEvent?: CustomSubmissionEvent;
+}
+
+export interface CustomSubmissionEvent {
+  namespace: string;
+  name: string;
 }
 
 export interface QueueTaskToProcess {

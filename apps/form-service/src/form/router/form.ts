@@ -35,6 +35,7 @@ import {
   formUnlocked,
   submissionDeleted,
   submissionDispositioned,
+  customFormSubmitted,
 } from '../events';
 import { mapForm, mapFormDefinition, mapFormSubmission, mapFormWithFormSubmission } from '../mapper';
 import { FormDefinitionEntity, FormEntity, FormSubmissionEntity } from '../model';
@@ -131,7 +132,7 @@ export function getFormDefinitions(directory: ServiceDirectory, tokenProvider: T
         results: data.results.map(({ latest, active }) =>
           active
             ? mapFormDefinition(active.configuration, active.revision)
-            : mapFormDefinition(latest.configuration, latest.revision)
+            : mapFormDefinition(latest.configuration, latest.revision),
         ),
       });
     } catch (err) {
@@ -199,7 +200,7 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
         user,
         req.tenant.id,
         [FormServiceRoles.Admin, ExportServiceRoles.ExportJob],
-        true
+        true,
       );
       if (!hasAccessToAll) {
         // If user is not a form service admin, then limit search to only forms created by the user.
@@ -270,7 +271,7 @@ export function findSubmissions(apiId: AdspId, repository: FormSubmissionReposit
 export function findFormSubmissions(
   apiId: AdspId,
   repository: FormSubmissionRepository,
-  formRepository: FormRepository
+  formRepository: FormRepository,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -322,7 +323,7 @@ export function createForm(
   notificationService: NotificationService,
   fileService: FileService,
   queueTaskService: QueueTaskService,
-  pdfService: PdfService
+  pdfService: PdfService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -361,7 +362,7 @@ export function createForm(
           queueTaskService,
           submissionRepository,
           pdfService,
-          dryRun
+          dryRun,
         );
         jobId = pdfJobId;
         form = submittedForm;
@@ -381,6 +382,11 @@ export function createForm(
       res.send(result);
 
       eventService.send(event);
+
+      if (submit && form.definition.customSubmissionEvent) {
+        const customEvent = customFormSubmitted(apiId, user, form, formSubmission, dryRun);
+        eventService.send(customEvent);
+      }
 
       if (definition.supportTopic) {
         commentService.createSupportTopic(form, result.urn);
@@ -453,7 +459,7 @@ export function getFormSubmission(apiId: AdspId, submissionRepository: FormSubmi
 export function deleteFormSubmission(
   apiId: AdspId,
   eventService: EventService,
-  submissionRepository: FormSubmissionRepository
+  submissionRepository: FormSubmissionRepository,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -488,7 +494,7 @@ export function updateFormSubmissionDisposition(
   apiId: AdspId,
   logger: Logger,
   eventService: EventService,
-  submissionRepository: FormSubmissionRepository
+  submissionRepository: FormSubmissionRepository,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -504,7 +510,7 @@ export function updateFormSubmissionDisposition(
           context: 'FormRouter',
           tenantId: tenantId?.toString,
           user: user ? `${user.name} (ID: ${user.id})` : null,
-        }
+        },
       );
 
       const formSubmission = await submissionRepository.get(tenantId, submissionId, formId);
@@ -524,7 +530,7 @@ export function updateFormSubmissionDisposition(
           context: 'FormRouter',
           tenantId: tenantId?.toString,
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
     } catch (err) {
       next(err);
@@ -607,7 +613,7 @@ export function formOperation(
   notificationService: NotificationService,
   queueTaskService: QueueTaskService,
   submissionRepository: FormSubmissionRepository,
-  pdfService: PdfService
+  pdfService: PdfService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -626,7 +632,7 @@ export function formOperation(
           context: 'FormRouter',
           tenantId: form.tenantId.toString,
           user: user ? `${user.name} (ID: ${user.id})` : null,
-        }
+        },
       );
 
       let result: FormEntityWithJobId = null;
@@ -649,7 +655,7 @@ export function formOperation(
             queueTaskService,
             submissionRepository,
             pdfService,
-            dryRun || false
+            dryRun || false,
           );
           result = submittedForm;
           result.jobId = jobId;
@@ -683,6 +689,11 @@ export function formOperation(
       res.send(mappedResult);
       if (event) {
         eventService.send(event);
+
+        if (request.operation === SUBMIT_FORM_OPERATION && result.definition.customSubmissionEvent) {
+          const customEvent = customFormSubmitted(apiId, user, result, formSubmissionResult, dryRun);
+          eventService.send(customEvent);
+        }
       }
 
       logger.info(
@@ -691,7 +702,7 @@ export function formOperation(
           context: 'FormRouter',
           tenantId: form.tenantId.toString,
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
     } catch (err) {
       next(err);
@@ -704,7 +715,7 @@ export function deleteForm(
   logger: Logger,
   eventService: EventService,
   fileService: FileService,
-  notificationService: NotificationService
+  notificationService: NotificationService,
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -799,7 +810,7 @@ export function createFormRouter({
   router.get(
     '/definitions/:definitionId',
     createValidationHandler(param('definitionId').isString().isLength({ min: 1, max: 50 })),
-    getFormDefinition(tenantService, calendarService)
+    getFormDefinition(tenantService, calendarService),
   );
 
   router.get(
@@ -813,10 +824,10 @@ export function createFormRouter({
           criteria: { optional: true, isJSON: true },
           includeData: { optional: true, isBoolean: true },
         },
-        ['query']
-      )
+        ['query'],
+      ),
     ),
-    findForms(apiId, repository)
+    findForms(apiId, repository),
   );
   router.post(
     '/forms',
@@ -828,7 +839,7 @@ export function createFormRouter({
       body('applicant.channels').optional().isArray(),
       body('data').optional().isObject(),
       body('files').optional().isObject(),
-      body('submit').optional().isBoolean()
+      body('submit').optional().isBoolean(),
     ),
     createForm(
       apiId,
@@ -840,8 +851,8 @@ export function createFormRouter({
       notificationService,
       fileService,
       queueTaskService,
-      pdfService
-    )
+      pdfService,
+    ),
   );
 
   router.get(
@@ -849,7 +860,7 @@ export function createFormRouter({
     assertAuthenticatedHandler,
     createValidationHandler(param('formId').isUUID(), query('includeData').optional().isBoolean()),
     getForm(repository),
-    mapFormForSubmission(apiId, submissionRepository)
+    mapFormForSubmission(apiId, submissionRepository),
   );
   router.post(
     '/forms/:formId',
@@ -862,17 +873,17 @@ export function createFormRouter({
         SUBMIT_FORM_OPERATION,
         ARCHIVE_FORM_OPERATION,
         SET_TO_DRAFT_FORM_OPERATION,
-      ])
+      ]),
     ),
     getForm(repository),
-    formOperation(apiId, logger, eventService, notificationService, queueTaskService, submissionRepository, pdfService)
+    formOperation(apiId, logger, eventService, notificationService, queueTaskService, submissionRepository, pdfService),
   );
   router.delete(
     '/forms/:formId',
     assertAuthenticatedHandler,
     createValidationHandler(param('formId').isUUID()),
     getForm(repository),
-    deleteForm(apiId, logger, eventService, fileService, notificationService)
+    deleteForm(apiId, logger, eventService, fileService, notificationService),
   );
 
   router.get(
@@ -880,17 +891,17 @@ export function createFormRouter({
     assertAuthenticatedHandler,
     createValidationHandler(
       param('formId').isUUID(),
-      query('code').optional().isString().isLength({ min: 1, max: 10 })
+      query('code').optional().isString().isLength({ min: 1, max: 10 }),
     ),
     getForm(repository),
-    accessForm(logger, notificationService)
+    accessForm(logger, notificationService),
   );
   router.put(
     '/forms/:formId/data',
     assertAuthenticatedHandler,
     createValidationHandler(param('formId').isUUID(), body('data').exists().isObject()),
     getForm(repository),
-    updateFormData(logger, fileService)
+    updateFormData(logger, fileService),
   );
 
   router.get(
@@ -903,23 +914,23 @@ export function createFormRouter({
         .optional()
         .custom(async (value: string) => {
           validateCriteria(value);
-        })
+        }),
     ),
-    findSubmissions(apiId, submissionRepository)
+    findSubmissions(apiId, submissionRepository),
   );
 
   router.get(
     '/submissions/:submissionId',
     assertAuthenticatedHandler,
     createValidationHandler(param('submissionId').isUUID()),
-    getFormSubmission(apiId, submissionRepository)
+    getFormSubmission(apiId, submissionRepository),
   );
 
   router.delete(
     '/submissions/:submissionId',
     assertAuthenticatedHandler,
     createValidationHandler(param('submissionId').isUUID()),
-    deleteFormSubmission(apiId, eventService, submissionRepository)
+    deleteFormSubmission(apiId, eventService, submissionRepository),
   );
 
   router.get(
@@ -933,9 +944,9 @@ export function createFormRouter({
         .optional()
         .custom(async (value: string) => {
           validateCriteria(value);
-        })
+        }),
     ),
-    findFormSubmissions(apiId, submissionRepository, repository)
+    findFormSubmissions(apiId, submissionRepository, repository),
   );
 
   router.get(
@@ -944,17 +955,17 @@ export function createFormRouter({
     createValidationHandler(
       param('formId').isUUID(),
       param('submissionId').isUUID(),
-      getFormSubmission(apiId, submissionRepository)
-    )
+      getFormSubmission(apiId, submissionRepository),
+    ),
   );
   router.post(
     '/forms/:formId/submissions/:submissionId',
     assertAuthenticatedHandler,
     createValidationHandler(
       body('dispositionStatus').isString().isLength({ min: 1 }),
-      body('dispositionReason').isString().isLength({ min: 1 })
+      body('dispositionReason').isString().isLength({ min: 1 }),
     ),
-    updateFormSubmissionDisposition(apiId, logger, eventService, submissionRepository)
+    updateFormSubmissionDisposition(apiId, logger, eventService, submissionRepository),
   );
 
   return router;
