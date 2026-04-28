@@ -6,6 +6,7 @@ import {
   GoabDropdown,
   GoabDropdownItem,
   GoabFormItem,
+  GoabInput,
 } from '@abgov/react-components';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,6 +22,7 @@ import {
   fetchResourcesByTag,
   setSelectedTag,
   deleteResourceTags,
+  setDefinitionSearchInput,
 } from '@store/form/action';
 import { RootState } from '@store/index';
 import { ResourceTagFilterCriteria, ResourceTagResult, Service, Tag, ResourceTag } from '@store/directory/models';
@@ -30,7 +32,7 @@ import { Center, IndicatorWithDelay, PageIndicator } from '@components/Indicator
 import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
-import { LoadMoreWrapper } from './style-components';
+import { LoadMoreWrapper, SearchRow, SearchInputWrapper } from './style-components';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AddRemoveResourceTagModal } from './addRemoveResourceTagModal';
@@ -66,6 +68,7 @@ export const FormDefinitions = ({
   const [showAddRemoveResourceTagModal, setShowAddRemoveResourceTagModal] = useState(false);
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
+  const searchInput = useSelector((state: RootState) => state.form.definitionSearchInput);
   const next = useSelector((state: RootState) => state.form.nextEntries);
   const tagNext = useSelector((state: RootState) => state.form.formResourceTag.nextEntries) || null;
   const formResourceTag = useSelector((state: RootState) => state.form.formResourceTag);
@@ -200,6 +203,39 @@ export const FormDefinitions = ({
   return (
     <section>
       <GoabCircularProgress variant="fullscreen" size="small" message="Loading message..."></GoabCircularProgress>
+
+      <SearchRow>
+        <SearchInputWrapper>
+          <GoabFormItem label="Search by name" mb={'m'}>
+            <GoabInput
+              name="form-definition-search"
+              value={searchInput}
+              placeholder="Search form definitions..."
+              width="100%"
+              trailingIcon={searchInput ? 'close-circle' : undefined}
+              onTrailingIconClick={() => {
+                dispatch(setDefinitionSearchInput(''));
+                dispatch(getFormDefinitions());
+              }}
+              onChange={(detail) => dispatch(setDefinitionSearchInput(detail.value))}
+              onKeyPress={(detail) => {
+                if (detail.key === 'Enter') {
+                  dispatch(getFormDefinitions(undefined, searchInput || undefined));
+                }
+              }}
+              testId="form-definition-search-input"
+            />
+          </GoabFormItem>
+        </SearchInputWrapper>
+        <GoabButton
+          type="primary"
+          mb={'m'}
+          testId="form-definition-search-btn"
+          onClick={() => dispatch(getFormDefinitions(undefined, searchInput || undefined))}
+        >
+          Search
+        </GoabButton>
+      </SearchRow>
 
       <GoabFormItem label="Filter by tag" mb={'l'}>
         <GoabDropdown

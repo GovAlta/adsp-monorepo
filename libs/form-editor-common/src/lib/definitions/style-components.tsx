@@ -118,3 +118,13 @@ export const DataRegisterTableWrapper = styled.div`
 export const DataRegisterContainer = styled.div`
   min-height: 550px;
 `;
+
+export const SearchRow = styled.div`
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+`;
+
+export const SearchInputWrapper = styled.div`
+  width: 60ch;
+`;

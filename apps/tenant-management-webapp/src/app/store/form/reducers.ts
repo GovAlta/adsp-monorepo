@@ -34,6 +34,7 @@ import {
   SET_SELECTED_TAG,
   DELETE_RESOURCE_TAGS_SUCCESS,
   CLEAR_ALL_TAGS_ACTION,
+  SET_DEFINITION_SEARCH_INPUT_ACTION,
 } from './action';
 
 import { FormResourceTag, FormState } from './model';
@@ -41,6 +42,7 @@ import { FormResourceTag, FormState } from './model';
 export const defaultState: FormState = {
   definitions: {},
   nextEntries: null,
+  definitionSearchInput: '',
   exportResult: {},
   editor: {
     selectedId: null,
@@ -62,6 +64,12 @@ export const defaultState: FormState = {
 
 export default function (state: FormState = defaultState, action: FormActionTypes): FormState {
   switch (action.type) {
+    case SET_DEFINITION_SEARCH_INPUT_ACTION:
+      return {
+        ...state,
+        definitionSearchInput: action.searchInput,
+      };
+
     case CLEAR_FORM_DEFINITIONS_ACTION:
       return {
         ...state,
