@@ -6,6 +6,7 @@ import { HeadingDiv } from '../styled-components';
 import { CacheOverview } from './cacheOverview';
 import { Targets } from './targets';
 import AsideLinks from '@components/AsideLinks';
+import { AsidePadding } from '../../../../components/Html';
 
 export const Cache: FunctionComponent = () => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -29,7 +30,9 @@ export const Cache: FunctionComponent = () => {
       </Main>
 
       <Aside>
-        <AsideLinks serviceName="cache" />
+        <AsidePadding>
+          <AsideLinks serviceName="cache" />
+        </AsidePadding>
       </Aside>
     </Page>
   );

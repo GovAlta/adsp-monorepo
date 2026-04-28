@@ -6,6 +6,8 @@ interface Props {
   // base horizontal spacing
   hs?: number;
 
+  backgroundColor?: string;
+
   // spacing overrides for different screen sizes
   smVSpacing?: number;
   smHSpacing?: number;
@@ -20,6 +22,7 @@ interface Props {
 const Container = styled.div<Props>`
   width: 100%;
   margin: 0 auto;
+  background-color: ${(props) => props.backgroundColor ?? 'transparent'};
   padding: ${(props) => `${props.vs ?? 0}rem ${props.hs ?? 0}rem`};
 `;
 

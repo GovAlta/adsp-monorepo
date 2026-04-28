@@ -14,6 +14,7 @@ import { FormDefinitions } from '@form-editor-common';
 import { DataRegisters } from './dataRegister/dataRegisters';
 import { getConfigurationDefinitions } from '@store/configuration/action';
 import { HeadingDiv } from '../styled-components';
+import { AsidePadding } from '../../../../components/Html';
 
 const HelpLink = (): JSX.Element => {
   const defaultFormUrl = useSelector((state: RootState) => selectFormAppHost(state));
@@ -79,7 +80,10 @@ export const Form: FunctionComponent = () => {
         </>
       </Main>
       <Aside>
-        <HelpLink />
+        <AsidePadding>
+          <AsideLinks serviceName="form" />
+          <HelpLink />
+        </AsidePadding>
       </Aside>
     </Page>
   );

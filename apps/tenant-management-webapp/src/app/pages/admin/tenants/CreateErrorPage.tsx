@@ -2,6 +2,7 @@ import React from 'react';
 import GoALinkButton from '@components/LinkButton';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
+import { AsidePadding } from '../../../components/Html';
 
 const CreateErrorPage = (): JSX.Element => {
   return (
@@ -14,7 +15,9 @@ const CreateErrorPage = (): JSX.Element => {
         </GoALinkButton>
       </Main>
       <Aside>
-        <SupportLinks />
+        <AsidePadding>
+          <SupportLinks />
+        </AsidePadding>
       </Aside>
     </Page>
   );
