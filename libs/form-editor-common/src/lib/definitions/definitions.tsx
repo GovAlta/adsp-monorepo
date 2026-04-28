@@ -176,6 +176,10 @@ export const FormDefinitions = ({
       return <PageIndicator />;
     }
 
+    if (!indicator.show && !selectedTag && searchInput && Object.keys(formDefinitions).length === 0) {
+      return renderNoItem('form definitions');
+    }
+
     if (selectedTag && tagResources && !tagNext && Object.keys(tagResources)?.length >= 0 && tagsLoading) {
       return (
         <Center>
