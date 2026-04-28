@@ -125,9 +125,9 @@ export const isNilOrEmptyValue = (value: unknown, includeEmptyArray = false): bo
   value === '' ||
   (includeEmptyArray && Array.isArray(value) && value.length === 0);
 
-export const validateSinWithLuhn = (input: number): boolean => {
-  const cardNumber = input.toString();
-  const digits = cardNumber.replace(/\D/g, '').split('').map(Number);
+export const validateSinWithLuhn = (input: string): boolean => {
+  const digits = input.replace(/\D/g, '').split('').map(Number);
+
   let sum = 0;
   let isSecond = false;
   for (let i = digits.length - 1; i >= 0; i--) {
@@ -202,15 +202,6 @@ export const getRequiredIfThen = (props: ControlProps) => {
 export const checkFieldValidity = (props: ControlProps, rootData?: unknown): string => {
   const { data, errors: ajvErrors, required, schema } = props;
   const labelToUpdate = getControlLabelText(props);
-  const extraSchema = schema as JsonSchema & extractSchema;
-
-  if (extraSchema && data && extraSchema?.title === sinTitle) {
-    if (data.length === 11 && !validateSinWithLuhn(data)) {
-      return data === '' ? '' : invalidSin;
-    } else if (data.length > 0 && data.length < 11) {
-      return extraSchema.errorMessage;
-    }
-  }
 
   const rootRequired = getRequiredIfThen(props);
   const requiredByCondition = isRequiredBySchema(props.rootSchema as JsonSchema7, rootData, props.path, {

@@ -2,6 +2,7 @@ import Ajv, { AnySchema } from 'ajv';
 import addErrors from 'ajv-errors';
 import addFormats from 'ajv-formats';
 import { PHONE_REGEX } from '../Controls';
+import { validateSinWithLuhn } from '../util';
 
 export const createDefaultAjv = (...schemas: AnySchema[]) => {
   const ajv = new Ajv({ allErrors: true, verbose: true, strict: 'log', strictRequired: false, useDefaults: true });
@@ -26,5 +27,28 @@ export const createDefaultAjv = (...schemas: AnySchema[]) => {
       return true;
     },
   });
+
+  ajv.addKeyword({
+    keyword: 'validSin',
+    type: 'string',
+    schemaType: 'boolean',
+    validate: (shouldValidate: boolean, data: unknown) => {
+      if (!shouldValidate) return true;
+
+      if (typeof data !== 'string' || data.length === 0) {
+        return true;
+      }
+
+      if (!/^\d{3} \d{3} \d{3}$/.test(data)) {
+        return true;
+      }
+
+      return validateSinWithLuhn(data);
+    },
+    error: {
+      message: 'Social insurance number is invalid.',
+    },
+  });
+
   return ajv;
 };

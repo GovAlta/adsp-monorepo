@@ -735,7 +735,7 @@ export function humanizeAjvError(error: ErrorObject, schema: JsonSchema, uischem
       return `${label} must be a ${error.params.type}`;
 
     default:
-      return `${label} ${error.message ?? ''}`.trim();
+     return error.message ?? `${label} is invalid`;
   }
 }
 

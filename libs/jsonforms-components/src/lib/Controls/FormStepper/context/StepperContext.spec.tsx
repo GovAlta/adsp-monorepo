@@ -119,7 +119,7 @@ describe('Test jsonforms stepper context', () => {
 
   it('can render jsonforms stepper context provider', async () => {
     const stepper = render(
-      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={<ComponentForTest />} />
+      <JsonFormsStepperContextProvider StepperProps={stepperBaseProps} children={<ComponentForTest />} />,
     );
     expect(stepper).toBeTruthy();
   });
@@ -129,7 +129,7 @@ describe('Test jsonforms stepper context', () => {
       <JsonFormsStepperContextProvider
         StepperProps={{ ...stepperBaseProps, schema: schemaWithRequired }}
         children={<ComponentForTest />}
-      />
+      />,
     );
     expect(screen.getByTestId('number-of-category').textContent).toContain('Found');
     expect(screen.getByTestId('path-of-category').textContent).toContain('Found');
@@ -141,7 +141,7 @@ describe('Test jsonforms stepper context', () => {
       <JsonFormsStepperContextProvider
         StepperProps={{ ...stepperBaseProps, schema: schema }}
         children={<ComponentForTest />}
-      />
+      />,
     );
     expect(screen.getByTestId('number-of-category').textContent).toContain('Found');
   });
@@ -203,10 +203,10 @@ describe('Test jsonforms stepper context', () => {
     expect(stepperReducer({ ...stateTwoCategory, activeId: 1 }, { type: 'page/prev' }).activeId).toBe(0);
     expect(stepperReducer({ ...stateTwoCategory, activeId: 1 }, { type: 'page/prev' }).hasPrevButton).toBe(false);
     expect(
-      stepperReducer({ ...stateTwoCategory, activeId: 1 }, { type: 'page/to/index', payload: { id: 0 } }).activeId
+      stepperReducer({ ...stateTwoCategory, activeId: 1 }, { type: 'page/to/index', payload: { id: 0 } }).activeId,
     ).toBe(0);
     expect(
-      stepperReducer({ ...stateTwoCategory, activeId: 0 }, { type: 'page/to/index', payload: { id: 2 } }).isOnReview
+      stepperReducer({ ...stateTwoCategory, activeId: 0 }, { type: 'page/to/index', payload: { id: 2 } }).isOnReview,
     ).toBe(true);
 
     expect(
@@ -221,8 +221,8 @@ describe('Test jsonforms stepper context', () => {
             schema: { type: 'object', properties: {} },
             data: { firstName: 'test' },
           },
-        }
-      ).categories[0].isValid
+        },
+      ).categories[0].isValid,
     ).toBe(true);
     expect(hasMeaningfulValue(123)).toBe(true);
 
@@ -251,8 +251,8 @@ describe('Test jsonforms stepper context', () => {
             schema: { type: 'object', properties: {} },
             data: {},
           },
-        }
-      ).categories[0].isValid
+        },
+      ).categories[0].isValid,
     ).toBe(true);
 
     const yyy = stepperReducer(
@@ -273,7 +273,7 @@ describe('Test jsonforms stepper context', () => {
           schema: { type: 'object', properties: {} },
           data: { firstName: 'test' },
         },
-      }
+      },
     );
 
     const noData = stepperReducer(
@@ -294,11 +294,24 @@ describe('Test jsonforms stepper context', () => {
           schema: { type: 'object', properties: {} },
           data: {},
         },
-      }
+      },
     );
 
-    expect(noData.categories[1].isVisited).toBe(true);
-    expect(noData.categories[1].isValid).toBe(true);
+    expect(noData.categories[1].isVisited).toBe(false);
+
+    const visited = stepperReducer(
+      { ...stateTwoCategory, activeId: 0 },
+      {
+        type: 'set/visited',
+        payload: { id: 1 },
+      },
+    );
+
+    expect(visited.categories[1].isVisited).toBe(true);
+
+    expect(visited.categories.find((cat) => cat.id === 1)?.isVisited).toBe(true);
+
+    expect(visited.categories[1].isValid).toBe(true);
 
     const filledOut = stepperReducer(
       { ...stateTwoCategory, activeId: 0 },
@@ -318,10 +331,9 @@ describe('Test jsonforms stepper context', () => {
           schema: { type: 'object', properties: {} },
           data: { secondName: 'test' },
         },
-      }
+      },
     );
 
-    expect(filledOut.categories[1].isVisited).toBe(true);
     expect(filledOut.categories[1].isValid).toBe(true);
 
     expect(
@@ -339,8 +351,8 @@ describe('Test jsonforms stepper context', () => {
               },
             ],
           },
-        }
-      ).isValid
+        },
+      ).isValid,
     ).toBe(false);
   });
 
@@ -349,7 +361,7 @@ describe('Test jsonforms stepper context', () => {
       <JsonFormsStepperContextProvider
         StepperProps={{ ...stepperBaseProps, schema: schemaWithRequired }}
         children={<ComponentForTestWithGoToPage />}
-      />
+      />,
     );
     const to0CategoryBtn = getByTestId('go-to-0');
     const to0CategoryBtnWithUpdate = getByTestId('go-to-0-0');
@@ -425,7 +437,7 @@ describe('Test jsonforms stepper context', () => {
     };
 
     const { getByTestId } = render(
-      <JsonFormsStepperContextProvider StepperProps={props} children={<ComponentWithNavigation />} />
+      <JsonFormsStepperContextProvider StepperProps={props} children={<ComponentWithNavigation />} />,
     );
 
     // Should start at page 2 (pages variant starts at index = categories.length + 1)
@@ -442,7 +454,7 @@ describe('Test jsonforms stepper context', () => {
 
     // Verify page/to/index was dispatched for navigation
     const navigationCalls = mockDispatch.mock.calls.filter(
-      (call) => call[0].type === 'page/to/index' && call[0].payload.id === 0
+      (call) => call[0].type === 'page/to/index' && call[0].payload.id === 0,
     );
     expect(navigationCalls.length).toBeGreaterThan(0);
   });
@@ -473,8 +485,8 @@ describe('Test jsonforms stepper context', () => {
         {
           whichOfThemApplies: ['Access to condominium documents or records'],
         },
-        ['#/properties/whichOfThemApplies']
-      )
+        ['#/properties/whichOfThemApplies'],
+      ),
     ).toBe(true);
 
     expect(hasDataInScopes({}, ['#/properties/whichOfThemApplies'])).toBe(false);

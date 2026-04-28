@@ -48,12 +48,17 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
   const [isVisited, setIsVisited] = useState(skipInitialValidation === true);
   const { core } = useJsonForms();
   const rootData = core?.data as any;
-  let modifiedErrors = checkFieldValidity(props as ControlProps, rootData);
+  const modifiedErrors = checkFieldValidity(props as ControlProps, rootData);
   useEffect(() => {
     if (showReviewLink === true && !isStepperReview) {
       setIsVisited(true);
     }
   }, [showReviewLink, isStepperReview]);
+
+  const hasValue = (() => {
+    const value = props.data;
+    return value !== undefined && value !== null && value !== '';
+  })();
 
   /* istanbul ignore next */
   useEffect(() => {
@@ -86,9 +91,6 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
     }
   }, [stepperState?.targetScope, uischema.scope]);
 
-  if (modifiedErrors === 'must be equal to one of the allowed values') {
-    modifiedErrors = '';
-  }
   const requiredNow =
     required ||
     isRequiredBySchema(props.rootSchema as any, rootData, props.path, {
@@ -103,9 +105,11 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
           className="jsonforms-elements-wrapper"
           id={isStepperReview === true ? `review-base-${path}-element-wrapper` : `${path}-element-wrapper`}
         >
+          <pre>{JSON.stringify(currentCategory?.isVisited, null, 2)}</pre>
+          <pre>{JSON.stringify(hasValue, null, 2)}</pre>
           <GoabFormItem
             requirement={uischema?.options?.componentProps?.requirement ?? (requiredNow ? 'required' : undefined)}
-            error={isVisited === true ? modifiedErrors : undefined}
+            error={currentCategory?.isVisited === true || hasValue ? modifiedErrors : undefined}
             testId={isStepperReview === true ? `review-base-${path}` : path}
             label={props?.noLabel === true ? '' : labelToUpdate}
             helpText={typeof uischema?.options?.help === 'string' && !isStepperReview ? uischema?.options?.help : ''}
