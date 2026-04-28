@@ -4,6 +4,7 @@ import { Tab, Tabs } from '@components/Tabs';
 import { SharePointOverview } from './overview';
 import { ConnectionsView } from './connections/connectionsView';
 import AsideLinks from '@components/AsideLinks';
+import { AsidePadding } from '../../../../components/Html';
 
 export const SharePoint: FunctionComponent = () => {
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
@@ -24,7 +25,9 @@ export const SharePoint: FunctionComponent = () => {
         </>
       </Main>
       <Aside>
-        <AsideLinks serviceName="sharepoint" />
+        <AsidePadding>
+          <AsideLinks serviceName="sharepoint" />
+        </AsidePadding>
       </Aside>
     </Page>
   );

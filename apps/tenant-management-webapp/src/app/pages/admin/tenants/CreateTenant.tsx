@@ -11,6 +11,7 @@ import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
 import { TenantLogout } from '@store/tenant/actions';
 import { PageLoader } from '@core-services/app-common';
 import { GoabInputOnChangeDetail } from '@abgov/ui-components-common';
+import { AsidePadding } from '../../../components/Html';
 
 const CreateRealm = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -38,7 +39,7 @@ const CreateRealm = (): JSX.Element => {
       tenantRealm: state.tenant.realm,
       isInBeta: state.session.realmAccess?.roles?.includes('beta-tester'),
       notifications: state.notifications.notifications,
-    })
+    }),
   );
 
   useEffect(() => {
@@ -164,7 +165,9 @@ const CreateRealm = (): JSX.Element => {
             )}
           </Main>
           <Aside>
-            <SupportLinks />
+            <AsidePadding>
+              <SupportLinks />
+            </AsidePadding>
           </Aside>
         </>
       ) : (

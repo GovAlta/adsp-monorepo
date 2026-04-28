@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
 import AsideLinks from '@components/AsideLinks';
+import { AsidePadding } from '../../../../components/Html';
 
 export const Pdf: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -32,7 +33,9 @@ export const Pdf: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <AsideLinks serviceName="pdf" />
+        <AsidePadding>
+          <AsideLinks serviceName="pdf" />
+        </AsidePadding>
       </Aside>
     </Page>
   );

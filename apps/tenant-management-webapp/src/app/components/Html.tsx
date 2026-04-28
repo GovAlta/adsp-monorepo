@@ -10,6 +10,9 @@ const Page = styled.div<PagePros>`
   @media (min-width: 1024px) {
     flex-direction: row;
   }
+  background: #fbfcfe;
+  padding: 0 1rem;
+  margin-top: 9px;
 `;
 
 const Main = styled.main`
@@ -150,4 +153,16 @@ const Aside = styled.aside`
   }
 `;
 
-export { Page, Main, Aside };
+const AsidePadding = styled.div`
+  border: 1px solid var(--color-gray-300);
+  background-color: white;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+
+  h3 {
+    margin-top: 2rem;
+  }
+`;
+
+export { Page, Main, Aside, AsidePadding };

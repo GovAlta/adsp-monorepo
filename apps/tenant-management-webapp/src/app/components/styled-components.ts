@@ -28,7 +28,7 @@ export const EmailLinkColor = styled.div`
   }
 `;
 export const SpaceAdjust = styled.h3`
-  padding-top: 3rem;
+  padding-top: 1rem;
   padding-bottom: 1rem;
 `;
 export const LoadMoreWrapper = styled.div`
@@ -36,7 +36,7 @@ export const LoadMoreWrapper = styled.div`
 `;
 
 export const GapAdjustment = styled.h3`
-  padding-top: 2rem;
+  padding-top: 0.5rem;
   padding-button: 1rem;
 `;
 export const HyperLinkColor = styled.div`
