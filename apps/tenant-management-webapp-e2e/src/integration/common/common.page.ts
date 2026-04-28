@@ -22,7 +22,7 @@ class Common {
   }
 
   APIDocsPageTitle(text, timeout = 10000) {
-    return cy.xpath(`//*[@class="title" and contains(text(), "${text}")]`, { timeout });
+    return cy.contains('h1.title', text, { timeout });
   }
 
   serviceTab(service, text) {
