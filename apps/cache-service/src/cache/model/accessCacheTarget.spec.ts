@@ -41,7 +41,7 @@ describe('accessCacheTarget', () => {
       tenantId,
       {
         serviceId: adspId`urn:ads:platform:access-service:v1`,
-      }
+      },
     );
 
     expect(target).toBeTruthy();
@@ -58,8 +58,8 @@ describe('accessCacheTarget', () => {
           tenantId,
           {
             serviceId: adspId`urn:ads:platform:configuration-service`,
-          }
-        )
+          },
+        ),
     ).toThrowError();
   });
 
@@ -72,7 +72,7 @@ describe('accessCacheTarget', () => {
       tenantId,
       {
         serviceId: adspId`urn:ads:platform:access-service:v1`,
-      }
+      },
     );
 
     it('can send cached response for user', async () => {
@@ -173,7 +173,7 @@ describe('accessCacheTarget', () => {
       tenantId,
       {
         serviceId: adspId`urn:ads:platform:access-service:v1`,
-      }
+      },
     );
 
     it('can invalidate cache entry', async () => {
@@ -191,6 +191,84 @@ describe('accessCacheTarget', () => {
       });
 
       expect(providerMock.del).toHaveBeenCalled();
+    });
+
+    it('can invalidate expanded related paths on user change', async () => {
+      providerMock.del.mockResolvedValue(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'access-service',
+        name: 'UPDATE-USER',
+        payload: {
+          resourceType: 'USER',
+          operationType: 'UPDATE',
+          resourcePath: '/users/abc-123',
+        },
+        timestamp: new Date(),
+      });
+
+      // Expect invalidation of direct user path plus:
+      // users, users/count, users/{id}/role-mappings, users/{id}/groups, users/{id}/groups/count
+      expect(providerMock.del).toHaveBeenCalledTimes(6);
+    });
+
+    it('can invalidate expanded related paths on group change', async () => {
+      providerMock.del.mockResolvedValue(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'access-service',
+        name: 'UPDATE-GROUP',
+        payload: {
+          resourceType: 'GROUP',
+          operationType: 'UPDATE',
+          resourcePath: '/groups/grp-123',
+        },
+        timestamp: new Date(),
+      });
+
+      // Expect invalidation of direct group path plus:
+      // groups, groups/count, groups/{id}/members, groups/{id}/children
+      expect(providerMock.del).toHaveBeenCalledTimes(5);
+    });
+
+    it('can invalidate expanded related paths on realm role change', async () => {
+      providerMock.del.mockResolvedValue(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'access-service',
+        name: 'UPDATE-REALM_ROLE',
+        payload: {
+          resourceType: 'REALM_ROLE',
+          operationType: 'UPDATE',
+          resourcePath: '/roles/test-role',
+        },
+        timestamp: new Date(),
+      });
+
+      // Expect invalidation of direct role path plus:
+      // roles, roles/{role}/composites, roles/{role}/composites/realm, roles/{role}/users, roles/{role}/groups
+      expect(providerMock.del).toHaveBeenCalledTimes(6);
+    });
+
+    it('can invalidate expanded related paths on client role change', async () => {
+      providerMock.del.mockResolvedValue(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'access-service',
+        name: 'UPDATE-CLIENT_ROLE',
+        payload: {
+          resourceType: 'CLIENT_ROLE',
+          operationType: 'UPDATE',
+          resourcePath: '/clients/client-1/roles/test-role',
+        },
+        timestamp: new Date(),
+      });
+
+      // Expect invalidation of direct role path plus:
+      // clients, clients/{id}, clients/{id}/roles,
+      // clients/{id}/roles/{role}/composites, clients/{id}/roles/{role}/composites/realm,
+      // clients/{id}/roles/{role}/users, clients/{id}/roles/{role}/groups
+      expect(providerMock.del).toHaveBeenCalledTimes(8);
     });
 
     it('can skip unrecognized event namespace', async () => {
@@ -234,6 +312,134 @@ describe('accessCacheTarget', () => {
       });
 
       expect(providerMock.del).toHaveBeenCalled();
+    });
+
+    it('can invalidate related paths on realm role mapping change', async () => {
+      providerMock.del.mockResolvedValue(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'access-service',
+        name: 'UPDATE-REALM_ROLE_MAPPING',
+        payload: {
+          resourceType: 'REALM_ROLE_MAPPING',
+          operationType: 'CREATE',
+          resourcePath: '/users/abc-123/role-mappings/realm',
+        },
+        timestamp: new Date(),
+      });
+
+      // Expect invalidation of: direct path, users/{id}/role-mappings, users/{id}, users collection
+      expect(providerMock.del).toHaveBeenCalledTimes(4);
+    });
+
+    it('can invalidate related paths on client role mapping change', async () => {
+      providerMock.del.mockResolvedValue(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'access-service',
+        name: 'UPDATE-CLIENT_ROLE_MAPPING',
+        payload: {
+          resourceType: 'CLIENT_ROLE_MAPPING',
+          operationType: 'CREATE',
+          resourcePath: '/users/abc-123/role-mappings/clients/client-456',
+        },
+        timestamp: new Date(),
+      });
+
+      // Expect invalidation of: direct path, users/{id}/role-mappings, users/{id}, users collection
+      expect(providerMock.del).toHaveBeenCalledTimes(4);
+    });
+
+    it('can invalidate related paths on group role mapping change', async () => {
+      providerMock.del.mockResolvedValue(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'access-service',
+        name: 'UPDATE-REALM_ROLE_MAPPING',
+        payload: {
+          resourceType: 'REALM_ROLE_MAPPING',
+          operationType: 'CREATE',
+          resourcePath: '/groups/grp-123/role-mappings/realm',
+        },
+        timestamp: new Date(),
+      });
+
+      // Expect invalidation of: direct path, groups/{id}/role-mappings, groups/{id}, groups collection
+      expect(providerMock.del).toHaveBeenCalledTimes(4);
+    });
+
+    it('can invalidate related paths on realm scope mapping change', async () => {
+      providerMock.del.mockResolvedValue(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'access-service',
+        name: 'UPDATE-REALM_SCOPE_MAPPING',
+        payload: {
+          resourceType: 'REALM_SCOPE_MAPPING',
+          operationType: 'CREATE',
+          resourcePath: '/users/abc-123/scope-mappings/realm',
+        },
+        timestamp: new Date(),
+      });
+
+      // Expect invalidation of: direct path, users/{id}/scope-mappings, users/{id}, users collection
+      expect(providerMock.del).toHaveBeenCalledTimes(4);
+    });
+
+    it('can invalidate related paths on client scope mapping change', async () => {
+      providerMock.del.mockResolvedValue(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'access-service',
+        name: 'UPDATE-CLIENT_SCOPE_MAPPING',
+        payload: {
+          resourceType: 'CLIENT_SCOPE_MAPPING',
+          operationType: 'CREATE',
+          resourcePath: '/groups/grp-123/scope-mappings/clients/client-456',
+        },
+        timestamp: new Date(),
+      });
+
+      // Expect invalidation of: direct path, groups/{id}/scope-mappings, groups/{id}, groups collection
+      expect(providerMock.del).toHaveBeenCalledTimes(4);
+    });
+
+    it('can invalidate related paths on client scope client mapping change', async () => {
+      providerMock.del.mockResolvedValue(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'access-service',
+        name: 'UPDATE-CLIENT_SCOPE_CLIENT_MAPPING',
+        payload: {
+          resourceType: 'CLIENT_SCOPE_CLIENT_MAPPING',
+          operationType: 'CREATE',
+          resourcePath: '/clients/client-1/default-client-scopes/scope-1',
+        },
+        timestamp: new Date(),
+      });
+
+      // Expect invalidation of: direct path, clients collection, client,
+      // client default/optional scope lists, and client-scope related paths.
+      expect(providerMock.del).toHaveBeenCalledTimes(7);
+    });
+
+    it('can invalidate related paths on group membership change', async () => {
+      providerMock.del.mockResolvedValue(true);
+      await target.processEvent({
+        tenantId,
+        namespace: 'access-service',
+        name: 'UPDATE-GROUP_MEMBERSHIP',
+        payload: {
+          resourceType: 'GROUP_MEMBERSHIP',
+          operationType: 'CREATE',
+          resourcePath: '/users/abc-123/groups/grp-456',
+        },
+        timestamp: new Date(),
+      });
+
+      // Expect invalidation of: direct path, users/{id}, users/{id}/groups,
+      // groups/{id}, groups/{id}/members, groups collection, users collection
+      expect(providerMock.del).toHaveBeenCalledTimes(7);
     });
   });
 });
