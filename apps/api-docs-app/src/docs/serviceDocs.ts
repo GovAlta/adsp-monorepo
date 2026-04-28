@@ -58,7 +58,7 @@ const withRetry = async <T>(fn: () => Promise<T>, retries = 3, delayMs = 1000): 
 };
 
 class ServiceDocsImpl {
-  private readonly cache = new NodeCache({ stdTTL: 7200 });
+  private readonly cache = new NodeCache();
 
   constructor(
     private readonly logger: Logger,
