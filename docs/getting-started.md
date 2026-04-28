@@ -64,10 +64,15 @@ Once you have an event definition configured, you can use the event service API 
 
 **To create a service account**
 
-1. In Keycloak realm administration, from _Clients_, click _Create_ to create a client to use with a service account.
-2. Set _Access Type_ to confidential, _Service Accounts Enabled_ to true, _Valid Redirect URLs_ to https://api.adsp.alberta.ca and _Web Origins_ to +.
-3. Select _Service Account Roles_ tab, and under _Client Roles_, select `urn:ads:platform:event-service` and add the `event-sender` role.
-4. Select _Credentials_ tab, and take note of the _Secret_.
+1. In Keycloak realm administration, from _Clients_, click _Create client_ to create a client to use with a service account.
+2. Set the _Client Type_ to "Confidential", enter a _Client ID_ (e.g., `urn:ads:platform:event-service` for event service).
+3. Under _Client authentication_, toggle _Client authentication_ to **On**.
+4. Under _Authentication flow_, toggle _Service accounts_ to **On**.
+5. Set _Valid redirect URIs_ to https://api.adsp.alberta.ca and _Web origins_ to +.
+6. Save the client configuration.
+7. Navigate to the _Service account roles_ tab
+8. Click _Assign role_, filter by clients, select `urn:ads:platform:event-service`, and assign the `event-sender` role.
+9. Select the _Credentials_ tab and take note of the _Client secret_.
 
 **To send an event manually**
 
