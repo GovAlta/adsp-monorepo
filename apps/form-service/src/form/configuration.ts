@@ -44,6 +44,14 @@ export const configurationSchema = {
     submissionPdfTemplate: { type: 'string' },
     scheduledIntakes: { type: 'boolean' },
     registeredId: { type: 'string' },
+    customSubmissionEvent: {
+      type: 'object',
+      properties: {
+        namespace: { type: 'string' },
+        name: { type: 'string' },
+      },
+      required: ['namespace', 'name'],
+    },
   },
   required: ['id', 'name', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
 };

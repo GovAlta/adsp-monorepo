@@ -82,6 +82,7 @@ import { PreviewTop, PDFPreviewTemplateCore } from './PDFPreviewTemplateCore';
 import { RowFlex, QueueTaskDropdown, H3, BorderBottom, H3Inline, ToolTipAdjust } from './style-components';
 import { UpdateSearchCriteriaAndFetchEvents } from '@store/calendar/actions';
 import { CalendarEventDefault } from '@store/calendar/models';
+import { getEventDefinitions } from '@store/event/actions';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
 import { DefinitionAgentChat } from './DefinitionAgentChat';
@@ -183,6 +184,11 @@ export function AddEditFormDefinitionEditor({
     setRegisterData(registerData);
   }, [registerData]);
 
+  // Fetch event definitions on component mount
+  useEffect(() => {
+    dispatch(getEventDefinitions());
+  }, [dispatch]);
+
   const uploadFile = (file: File, propertyId: string) => {
     const fileInfo = { file: file, type: fileTypes[0]?.id, propertyId: propertyId };
     dispatch(UploadFileService(fileInfo));
@@ -215,6 +221,7 @@ export function AddEditFormDefinitionEditor({
   const setDefinition = (update: Partial<FormDefinition>) => dispatch(updateEditorFormDefinition(update));
   const formDefinitions = useSelector((state: RootState) => state.form.definitions);
   const schemaError = useSelector(schemaErrorSelector);
+  const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
 
   const selectedCoreEvent = useSelector(
     (state: RootState) => state.calendarService?.coreCalendars?.['form-intake']?.selectedCalendarEvents,
@@ -847,6 +854,55 @@ export function AddEditFormDefinitionEditor({
                         <GoabIcon type="information-circle" ariaLabel="include-data-in-submission-icon"></GoabIcon>
                       </GoabTooltip>
                     </FlexRow>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <FlexRow style={{ alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <label style={{ fontWeight: 'bold', marginRight: '0.5rem' }}>Custom submission event</label>
+                        <GoabTooltip
+                          content="Optional custom event to be issued when the form is submitted. The form-submitted event will always be issued. The custom event payload will include the form data."
+                          position="top"
+                        >
+                          <GoabIcon type="information-circle" ariaLabel="custom-event-icon"></GoabIcon>
+                        </GoabTooltip>
+                      </FlexRow>
+                      <div style={{ paddingLeft: '3px' }}>
+                        <GoabDropdown
+                          name="customSubmissionEvent"
+                          width="25rem"
+                          value={
+                            definition.customSubmissionEvent
+                              ? `${definition.customSubmissionEvent.namespace}:${definition.customSubmissionEvent.name}`
+                              : ''
+                          }
+                          onChange={(detail: GoabDropdownOnChangeDetail) => {
+                            if (detail.value) {
+                              const [namespace, name] = detail.value.split(':');
+                              setDefinition({ customSubmissionEvent: { namespace, name } });
+                            } else {
+                              setDefinition({ customSubmissionEvent: null });
+                            }
+                          }}
+                        >
+                          <GoabDropdownItem value="" label="No custom event" />
+                          {Object.values(eventDefinitions || {})
+                            .filter((def) => !def.isCore)
+                            .sort((a, b) => {
+                              const aKey = `${a.namespace}:${a.name}`;
+                              const bKey = `${b.namespace}:${b.name}`;
+                              return aKey.localeCompare(bKey);
+                            })
+                            .map((def) => {
+                              const eventKey = `${def.namespace}:${def.name}`;
+                              return (
+                                <GoabDropdownItem
+                                  key={eventKey}
+                                  value={eventKey}
+                                  label={`${def.namespace}:${def.name}`}
+                                />
+                              );
+                            })}
+                        </GoabDropdown>
+                      </div>
+                    </div>
                     <div style={{ background: definition.submissionRecords ? 'white' : '#f1f1f1' }}>
                       <SubmissionConfigurationPadding>
                         <H3Inline>Task queue to process</H3Inline>
