@@ -1,4 +1,8 @@
 import type { Logger } from 'winston';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { BatchSpanProcessor, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
+import { Resource } from '@opentelemetry/resources';
 import { createRealmStrategy, createTenantStrategy, createTokenProvider } from '../access';
 import { createConfigurationHandler, createConfigurationService } from '../configuration';
 import { createDirectory } from '../directory';
@@ -24,10 +28,11 @@ export async function initializePlatform(
     enableConfigurationInvalidation,
     useLongConfigurationCacheTTL,
     additionalExtractors,
+    tracing,
     ...registration
   }: PlatformOptions,
   logOptions: Logger | LogOptions,
-  service?: Partial<PlatformServices>
+  service?: Partial<PlatformServices>,
 ): Promise<PlatformCapabilities> {
   assertAdspId(serviceId, null, 'service');
 
@@ -123,8 +128,52 @@ export async function initializePlatform(
 
   const metricsHandler = await createMetricsHandler(serviceId, logger, tokenProvider, directory);
 
+  // Initialize tracer provider if tracing config is provided
+  let tracerProvider: NodeTracerProvider | undefined;
+  if (tracing) {
+    try {
+      const serviceName = serviceId.service;
+      const serviceVersion = '1.0.0';
+      const endpoint = tracing.endpoint;
+      const sampleRate = tracing.sampleRate ?? 1.0;
+
+      // Create tracer provider with semantic attributes
+      tracerProvider = new NodeTracerProvider({
+        sampler: new TraceIdRatioBasedSampler(sampleRate),
+        resource: new Resource({
+          'service.name': serviceName,
+          'service.version': serviceVersion,
+        }),
+      });
+
+      const exporter = new OTLPTraceExporter({
+        url: `${endpoint}/v1/traces`,
+        headers: tracing.headers,
+      });
+
+      // Add span processor
+      tracerProvider.addSpanProcessor(
+        new BatchSpanProcessor(exporter, {
+          maxQueueSize: 2048,
+          maxExportBatchSize: 512,
+          scheduledDelayMillis: 5000,
+          exportTimeoutMillis: 30000,
+        }),
+      );
+
+      tracerProvider.register();
+
+      logger.info(`OpenTelemetry tracing initialized: ${serviceName} → ${endpoint}`);
+    } catch (err) {
+      logger.warn(
+        `Failed to initialize OpenTelemetry tracing: ${err instanceof Error ? err.message : String(err)}. Tracing disabled.`,
+      );
+      tracerProvider = undefined;
+    }
+  }
+
   // Note: Sample rate is not currently used in the SDK.
-  const traceHandler = createTraceHandler({ logger, sampleRate: 0 });
+  const traceHandler = createTraceHandler({ logger, sampleRate: 0, tracerProvider });
 
   return {
     tokenProvider,
@@ -140,6 +189,7 @@ export async function initializePlatform(
     clearCached,
     metricsHandler,
     traceHandler,
+    tracerProvider,
     logger,
   };
 }

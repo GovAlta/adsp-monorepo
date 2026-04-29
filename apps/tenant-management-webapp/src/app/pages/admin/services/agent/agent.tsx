@@ -7,6 +7,7 @@ import { Agents } from './agents';
 import { AgentOverview } from './overview';
 import { HeadingDiv } from '../styled-components';
 import { useParams } from 'react-router-dom';
+import { AsidePadding } from '../../../../components/Html';
 
 export const Agent: FunctionComponent = () => {
   const { tab } = useParams();
@@ -31,7 +32,9 @@ export const Agent: FunctionComponent = () => {
       </Main>
 
       <Aside>
-        <AsideLinks serviceName="agent" />
+        <AsidePadding>
+          <AsideLinks serviceName="agent" />
+        </AsidePadding>
       </Aside>
     </Page>
   );

@@ -6,12 +6,12 @@ import React, { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { MetricsChart } from './metricsChart';
 import { MetricsSearchForm } from './metricsSearchForm';
-import { ServiceColumnLayout } from '../../admin';
+import { ServiceColumnLayoutWithMargin } from '../../admin';
 
 export const ServiceMetrics: FunctionComponent = () => {
   const readerRole = 'value-reader';
   const hasReaderRole = useSelector((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:value-service']?.roles?.includes(readerRole)
+    state.session?.resourceAccess?.['urn:ads:platform:value-service']?.roles?.includes(readerRole),
   );
   const { service, chartInterval } = useSelector((state: RootState) => state.serviceMetrics.criteria);
 
@@ -22,7 +22,7 @@ export const ServiceMetrics: FunctionComponent = () => {
 
   return (
     <Main>
-      <ServiceColumnLayout>
+      <ServiceColumnLayoutWithMargin>
         <h1 data-testid="serviceMetrics-title">Service metrics</h1>
         <p>
           Service metrics shows low level response time values benchmarked in service code. Instrument your services to
@@ -45,7 +45,7 @@ export const ServiceMetrics: FunctionComponent = () => {
             <p>You need the urn:ads:platform:value-service 'value-reader' role to see the event log.</p>
           </GoabCallout>
         )}
-      </ServiceColumnLayout>
+      </ServiceColumnLayoutWithMargin>
     </Main>
   );
 };

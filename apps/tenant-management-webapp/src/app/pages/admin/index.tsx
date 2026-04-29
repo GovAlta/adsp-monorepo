@@ -134,12 +134,21 @@ const SidebarWrapper = styled.nav`
   flex: 0 0 0;
   transition: flex-basis 200ms;
   overflow-x: hidden;
+  padding-top: 9px;
 
   @media (min-width: 768px) {
     flex-basis: 12rem;
   }
+  box-shadow: inset -1px 0 0 0 #dfe1e6;
 `;
 
 export const ServiceColumnLayout = styled.div`
-  margin-bottom: var(--goa-space-3xl);
+  margin: 1rem 1rem var(--goa-space-3xl) 1rem;
+`;
+export const ServiceColumnLayoutDashboard = styled.div`
+  margin: 0.45rem 1rem var(--goa-space-3xl) 1rem;
+`;
+
+export const ServiceColumnLayoutWithMargin = styled.div`
+  margin: 1rem 2rem var(--goa-space-3xl) 2rem;
 `;

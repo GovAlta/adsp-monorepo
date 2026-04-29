@@ -3,6 +3,7 @@ import CreatingRealmCarousel0 from '@assets/creatingRealmCarousel0.png';
 import CreatingRealmCarousel1 from '@assets/creatingRealmCarousel1.png';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
+import { AsidePadding } from '../../../components/Html';
 
 export default (): JSX.Element => {
   return (
@@ -28,7 +29,9 @@ export default (): JSX.Element => {
         </p>
       </Main>
       <Aside>
-        <SupportLinks />
+        <AsidePadding>
+          <SupportLinks />
+        </AsidePadding>
       </Aside>
     </Page>
   );

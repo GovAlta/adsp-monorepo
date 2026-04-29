@@ -8,6 +8,7 @@ import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 
 import AsideLinks from '@components/AsideLinks';
+import { AsidePadding } from '../../../../components/Html';
 
 const HelpLink = (): JSX.Element => {
   return <AsideLinks serviceName="file" />;
@@ -48,7 +49,10 @@ export const File: FunctionComponent = () => {
         </>
       </Main>
       <Aside>
-        <HelpLink />
+        <AsidePadding>
+          <AsideLinks serviceName="file" />
+          <HelpLink />
+        </AsidePadding>
       </Aside>
     </Page>
   );

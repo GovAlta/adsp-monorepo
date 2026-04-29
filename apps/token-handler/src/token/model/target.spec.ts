@@ -5,7 +5,6 @@ import { TargetProxy } from './target';
 import { AuthenticationClient } from './client';
 import { Logger } from 'winston';
 import { OutgoingHttpHeaders, RequestOptions } from 'http';
-import TraceParent = require('traceparent');
 
 jest.mock('@abgov/adsp-service-sdk', () => ({
   ...jest.requireActual('@abgov/adsp-service-sdk'),
@@ -28,7 +27,7 @@ describe('TargetProxy', () => {
   };
 
   const clientMock = {
-    tenantId
+    tenantId,
   };
 
   beforeEach(() => {
@@ -44,7 +43,7 @@ describe('TargetProxy', () => {
       {
         id: 'test',
         upstream: adspId`urn:ads:platform:test-service`,
-      }
+      },
     );
     expect(proxy).toBeTruthy();
   });
@@ -59,7 +58,7 @@ describe('TargetProxy', () => {
         loggerMock as unknown as Logger,
         clientMock as unknown as AuthenticationClient,
         directoryMock,
-        target
+        target,
       );
 
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://test-service'));
@@ -76,7 +75,7 @@ describe('TargetProxy', () => {
         {
           id: 'test',
           upstream: adspId`urn:ads:platform:test-service`,
-        }
+        },
       );
 
       directoryMock.getServiceUrl.mockResolvedValueOnce(null);
@@ -94,7 +93,7 @@ describe('TargetProxy', () => {
         loggerMock as unknown as Logger,
         clientMock as unknown as AuthenticationClient,
         directoryMock,
-        target
+        target,
       );
 
       const req = {
@@ -118,7 +117,7 @@ describe('TargetProxy', () => {
         loggerMock as unknown as Logger,
         client as unknown as AuthenticationClient,
         directoryMock,
-        target
+        target,
       );
 
       const req = {
@@ -144,7 +143,7 @@ describe('TargetProxy', () => {
         loggerMock as unknown as Logger,
         clientMock as unknown as AuthenticationClient,
         directoryMock,
-        target
+        target,
       );
 
       const req = {
@@ -164,18 +163,18 @@ describe('TargetProxy', () => {
         loggerMock as unknown as Logger,
         clientMock as unknown as AuthenticationClient,
         directoryMock,
-        target
+        target,
       );
 
       const req = {
         user: { accessToken: 'abc-123', exp: Date.now() / 1000 + 300, authenticatedBy: 'test' },
       };
 
-      const trace = TraceParent.startOrResume(null, { transactionSampleRate: 5 });
-      getContextTraceMock.mockReturnValueOnce(trace);
+      const traceString = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
+      getContextTraceMock.mockReturnValueOnce(traceString);
 
       const options = await proxy.decorateRequest({ headers: {} } as RequestOptions, req as unknown as Request);
-      expect((options.headers as string[])['traceparent']).toBe(trace.toString());
+      expect((options.headers as string[])['traceparent']).toBe(traceString);
     });
   });
 
@@ -189,15 +188,15 @@ describe('TargetProxy', () => {
         loggerMock as unknown as Logger,
         clientMock as unknown as AuthenticationClient,
         directoryMock,
-        target
+        target,
       );
 
       const req = {
         user: { accessToken: 'abc-123', exp: Date.now() / 1000 + 300, authenticatedBy: 'test' },
-        originalUrl: '/token-handler/v1/targets/test/abc/123?test=true'
+        originalUrl: '/token-handler/v1/targets/test/abc/123?test=true',
       };
 
-      const path = proxy.resolveRequestPath(new URL('http://test-service/test/v1'), req as unknown as Request)
+      const path = proxy.resolveRequestPath(new URL('http://test-service/test/v1'), req as unknown as Request);
       expect(path).toBe('/test/v1/abc/123?test=true');
     });
   });
