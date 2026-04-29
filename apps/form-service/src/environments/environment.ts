@@ -11,6 +11,7 @@ export const environment = envalid.cleanEnv(
     DIRECTORY_URL: envalid.str({ default: 'http://localhost:3331' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:form-service' }),
     CLIENT_SECRET: envalid.str(),
+    OTEL_EXPORTER_OTLP_ENDPOINT: envalid.str({ default: '' }),
     MONGO_URI: envalid.str({ default: 'mongodb://localhost:27017' }),
     MONGO_DB: envalid.str({ default: 'formDb' }),
     MONGO_USER: envalid.str({ default: '' }),

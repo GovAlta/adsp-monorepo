@@ -61,6 +61,11 @@ const initializeApp = async (): Promise<express.Application> => {
       serviceId,
       displayName: 'Event service',
       description: 'Service for sending of domain events.',
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT
+        ? {
+            endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+          }
+        : undefined,
       roles: [EventServiceRoles.sender],
       configuration: {
         description: 'Definitions of events including payload schema.',

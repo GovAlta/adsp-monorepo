@@ -68,6 +68,11 @@ async function initializeApp(): Promise<express.Application> {
       serviceId,
       displayName: 'File service',
       description: 'Service for upload and download of files.',
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT
+        ? {
+            endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+          }
+        : undefined,
       roles: [
         {
           role: ServiceUserRoles.Admin,
