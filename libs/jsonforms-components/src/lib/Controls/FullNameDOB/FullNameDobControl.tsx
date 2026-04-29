@@ -6,8 +6,13 @@ import { useSyncAutofillFields } from '../../util/useSyncAutofillFields';
 import { Visible, ensureGoaDatePointerCursor } from '../../util';
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context';
+import { NameInputs } from '../FullName/FullNameInputs';
 
 type DateOfBirthControlProps = ControlProps;
+type NameDobData = ReturnType<typeof normalizeNameDobData>;
+const AUTOFILL_FIELDS = ['firstName', 'middleName', 'lastName', 'dateOfBirth'];
+const getRequiredLabel = (name: string) =>
+  name === 'firstName' ? 'First name' : name === 'lastName' ? 'Last name' : name === 'dateOfBirth' ? 'Date of birth' : name;
 
 const normalizeNameDobData = (value?: Record<string, unknown>) => ({
   firstName: (value?.firstName as string) || '',
@@ -18,7 +23,7 @@ const normalizeNameDobData = (value?: Record<string, unknown>) => ({
 
 export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element => {
   const { data, path, schema, handleChange, enabled, visible, uischema } = props;
-  const requiredFields = (schema as { required: string[] }).required;
+  const requiredFields = ((schema as { required?: string[] }).required || []) as string[];
   const [errors, setErrors] = useState<Record<string, string>>({});
   const controlRef = useRef<HTMLDivElement>(null);
 
@@ -38,10 +43,10 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
 
   const [formData, setFormData] = useState(normalizeNameDobData(data));
 
-  const updateFormData = (updatedData: object) => {
-    updatedData = Object.fromEntries(Object.entries(updatedData).filter(([_, value]) => value !== ''));
-    setFormData(updatedData as any);
-    handleChange(path, updatedData);
+  const updateFormData = (updatedData: NameDobData) => {
+    const nextData = Object.fromEntries(Object.entries(updatedData).filter(([_, value]) => value !== '')) as NameDobData;
+    setFormData(nextData);
+    handleChange(path, nextData);
   };
 
   useEffect(() => {
@@ -72,15 +77,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
       '';
 
     if (requiredFields.includes(name) && liveInputValue.trim() === '') {
-      const modifiedName =
-        name === 'firstName'
-          ? 'First name'
-          : name === 'lastName'
-            ? 'Last name'
-            : name === 'dateOfBirth'
-              ? 'Date of birth'
-              : name;
-      err[name] = `${modifiedName} is required`;
+      err[name] = `${getRequiredLabel(name)} is required`;
     } else {
       delete err[name];
     }
@@ -88,7 +85,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
     setErrors(err);
   };
   useSyncAutofillFields(
-    ['firstName', 'middleName', 'lastName', 'dateOfBirth'],
+    AUTOFILL_FIELDS,
     formData,
     updateFormData,
     handleRequiredFieldBlur,
@@ -131,67 +128,17 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
   return (
     <Visible visible={visible}>
       <div ref={controlRef}>
-        <GoabGrid minChildWidth="0ch" gap="s" mb="m">
-          <GoabFormItem
-            label="First name"
-            requirement={schema?.required?.includes('firstName') ? 'required' : undefined}
-            error={errors?.['firstName'] ?? ''}
-            testId="form-item-first-name"
-          >
-            <GoabInput
-              disabled={!enabled}
-              type="text"
-              name="firstName"
-              testId="name-form-first-name"
-              ariaLabel={'name-form-first-name'}
-              value={formData.firstName}
-              onChange={(detail: GoabInputOnChangeDetail) => {
-                handleInputChange(detail.name, detail.value);
-              }}
-              onBlur={(detail: GoabInputOnBlurDetail) => {
-                handleRequiredFieldBlur(detail.name);
-              }}
-              width="100%"
-            />
-          </GoabFormItem>
-          <GoabFormItem
-            label="Middle name"
-            requirement={schema?.required?.includes('middleName') ? 'required' : undefined}
-          >
-            <GoabInput
-              type="text"
-              name="middleName"
-              disabled={!enabled}
-              testId="name-form-middle-name"
-              ariaLabel={'name-form-middle-name'}
-              value={formData.middleName || ''}
-              onChange={(detail: GoabInputOnChangeDetail) => handleInputChange(detail.name, detail.value)}
-              width="100%"
-            />
-          </GoabFormItem>
-          <GoabFormItem
-            label="Last name"
-            requirement={schema?.required?.includes('lastName') ? 'required' : undefined}
-            error={errors?.['lastName'] ?? ''}
-            testId="form-item-last-name"
-          >
-            <GoabInput
-              type="text"
-              name="lastName"
-              disabled={!enabled}
-              testId="name-form-last-name"
-              ariaLabel={'name-form-last-name'}
-              value={formData.lastName || ''}
-              onChange={(detail: GoabInputOnChangeDetail) => {
-                handleInputChange(detail.name, detail.value);
-              }}
-              onBlur={(detail: GoabInputOnBlurDetail) => {
-                handleRequiredFieldBlur(detail.name);
-              }}
-              width="100%"
-            />
-          </GoabFormItem>
-        </GoabGrid>
+        <NameInputs
+          firstName={formData.firstName}
+          middleName={formData.middleName}
+          lastName={formData.lastName}
+          handleInputChange={handleInputChange}
+          data={formData}
+          disabled={!enabled}
+          requiredFields={requiredFields}
+          errors={errors}
+          onFieldBlur={handleRequiredFieldBlur}
+        />
         <GoabGrid minChildWidth="0ch" gap="s" mb="m">
           <GoabFormItem
             label="Date of birth"
