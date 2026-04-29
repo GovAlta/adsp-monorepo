@@ -50,6 +50,11 @@ const initializeApp = async (): Promise<express.Application> => {
         serviceId,
         displayName: 'Configuration service',
         description: 'Service for managing configuration',
+        tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT
+          ? {
+              endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+            }
+          : undefined,
         roles: [
           {
             role: ConfigurationServiceRoles.Reader,
@@ -139,7 +144,7 @@ const initializeApp = async (): Promise<express.Application> => {
           },
         ],
       },
-      { logger }
+      { logger },
     );
 
   passport.use('core', coreStrategy);
@@ -161,7 +166,7 @@ const initializeApp = async (): Promise<express.Application> => {
     '/configuration',
     metricsHandler,
     passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
-    tenantHandler
+    tenantHandler,
   );
 
   const validationService = new AjvValidationService(logger);

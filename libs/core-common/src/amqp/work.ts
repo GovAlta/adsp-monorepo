@@ -1,6 +1,7 @@
 import { ConfirmChannel, ConsumeMessage, Options } from 'amqplib';
 import { Logger } from 'winston';
 import { Observable, Subscriber } from 'rxjs';
+import { context as otelContext, propagation, trace as otelTrace, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { WorkItem, WorkQueueService } from '../work';
 import { InvalidOperationError } from '../errors';
 import { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
@@ -8,12 +9,13 @@ import { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
   connected = false;
   channel: ChannelWrapper = null;
+  private tracer = otelTrace.getTracer('core-common.amqp');
 
   constructor(
     protected queue: string,
     protected logger: Logger,
     protected connection: AmqpConnectionManager,
-    protected consumerOptions: Options.Consume = {}
+    protected consumerOptions: Options.Consume = {},
   ) {}
 
   isConnected(): boolean {
@@ -62,8 +64,12 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
 
   async enqueue(item: T): Promise<void> {
     try {
+      const headers = {} as Record<string, unknown>;
+      propagation.inject(otelContext.active(), headers);
+
       const sent = await this.channel.sendToQueue(this.queue, Buffer.from(JSON.stringify(item)), {
         contentType: 'application/json',
+        headers,
       });
 
       if (!sent) {
@@ -88,31 +94,63 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
       (msg) => {
         // If the message is redelivered, then don't requeue on failure, and let it go to dead letter.
         const requeueOnFail = !msg.fields?.redelivered;
+        let span;
         try {
-          sub.next({
-            item: this.convertMessage(msg),
-            retryOnError: requeueOnFail,
-            done: (err) => {
-              if (err) {
-                channel.nack(msg, false, requeueOnFail);
-                if (!requeueOnFail) {
-                  this.logger.error(
-                    `Redelivered message ${msg.fields.routingKey} processing failed and will be dead lettered.`
-                  );
-                }
-              } else {
-                channel.ack(msg);
-              }
+          const extractedContext = propagation.extract(otelContext.active(), msg.properties?.headers || {});
+          span = this.tracer.startSpan(
+            `amqp consume ${msg.fields?.routingKey || this.queue}`,
+            {
+              kind: SpanKind.CONSUMER,
+              attributes: {
+                'messaging.system': 'rabbitmq',
+                'messaging.operation': 'process',
+                'messaging.destination.name': this.queue,
+                'messaging.rabbitmq.routing_key': msg.fields?.routingKey,
+              },
             },
+            extractedContext,
+          );
+          const contextWithSpan = otelTrace.setSpan(extractedContext, span);
+
+          otelContext.with(contextWithSpan, () => {
+            sub.next({
+              item: this.convertMessage(msg),
+              retryOnError: requeueOnFail,
+              done: (err) => {
+                if (err) {
+                  const exception = err instanceof Error ? err : new Error(String(err));
+                  span.recordException(exception);
+                  span.setStatus({
+                    code: SpanStatusCode.ERROR,
+                    message: err instanceof Error ? err.message : String(err),
+                  });
+                  channel.nack(msg, false, requeueOnFail);
+                  if (!requeueOnFail) {
+                    this.logger.error(
+                      `Redelivered message ${msg.fields.routingKey} processing failed and will be dead lettered.`,
+                    );
+                  }
+                } else {
+                  span.setStatus({ code: SpanStatusCode.OK });
+                  channel.ack(msg);
+                }
+
+                span.end();
+              },
+            });
           });
         } catch (err) {
+          const exception = err instanceof Error ? err : new Error(String(err));
+          span?.recordException(exception);
+          span?.setStatus({ code: SpanStatusCode.ERROR, message: exception.message });
+          span?.end();
           this.logger.error(
-            `Processing of item with routing key ${msg?.fields?.routingKey} failed and will NOT be retried. ${err}`
+            `Processing of item with routing key ${msg?.fields?.routingKey} failed and will NOT be retried. ${err}`,
           );
           channel.nack(msg, false, false);
         }
       },
-      { ...this.consumerOptions, prefetch: 1 }
+      { ...this.consumerOptions, prefetch: 1 },
     );
   };
 

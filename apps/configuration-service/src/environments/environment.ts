@@ -11,6 +11,7 @@ export const environment = envalid.cleanEnv(
     DIRECTORY_URL: envalid.str({ default: 'https://directory-service.adsp-dev.gov.ab.ca' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:configuration-service' }),
     CLIENT_SECRET: envalid.str(),
+    OTEL_EXPORTER_OTLP_ENDPOINT: envalid.str({ default: '' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     MONGO_URI: envalid.str({ default: 'mongodb://localhost:27017' }),
     MONGO_DB: envalid.str({ default: 'config' }),
@@ -26,7 +27,7 @@ export const environment = envalid.cleanEnv(
         console.error(`Invalidated env vars: ${util.inspect(errors)}`);
       }
     },
-  }
+  },
 );
 
 environment.isProd; // true if NODE_ENV === 'production'
