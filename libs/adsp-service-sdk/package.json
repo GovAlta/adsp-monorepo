@@ -5,6 +5,11 @@
   "description": "Government of Alberta - SDK for ADSP platform and tenant services.",
   "repository": "https://github.com/GovAlta/adsp-monorepo",
   "dependencies": {
+    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.50.0",
+    "@opentelemetry/resources": "1.23.0",
+    "@opentelemetry/sdk-trace-base": "1.23.0",
+    "@opentelemetry/sdk-trace-node": "1.23.0",
     "axios": "1.15.0",
     "cockatiel": "^3.2.1",
     "express": "^4.21.2",
@@ -19,7 +24,6 @@
     "passport-jwt": "^4.0.0",
     "response-time": "^2.3.4",
     "socket.io-client": "^4.7.5",
-    "traceparent": "^1.0.0",
     "tslib": "^2.3.0",
     "winston": "^3.3.3"
   }
