@@ -19,7 +19,7 @@ export class TargetProxy {
     private logger: Logger,
     private client: AuthenticationClient,
     private directory: ServiceDirectory,
-    target: Target
+    target: Target,
   ) {
     this.id = target.id;
     this.upstream = target.upstream;
@@ -43,7 +43,7 @@ export class TargetProxy {
 
     const trace = getContextTrace();
     if (trace) {
-      opts.headers['traceparent'] = trace.toString();
+      opts.headers['traceparent'] = trace;
     }
 
     return opts;
@@ -66,7 +66,7 @@ export class TargetProxy {
       const upstreamUrl = await this.directory.getServiceUrl(this.upstream);
       if (!upstreamUrl) {
         throw new InvalidOperationError(
-          `Target (ID: ${this.id}) upstream ${this.upstream} cannot be resolved by the service directory. Did you register the service or API?`
+          `Target (ID: ${this.id}) upstream ${this.upstream} cannot be resolved by the service directory. Did you register the service or API?`,
         );
       }
 
