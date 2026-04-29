@@ -120,6 +120,11 @@ async function initializeApp() {
       ],
       values: [ServiceMetricsValueDefinition],
       useLongConfigurationCacheTTL: true,
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT
+        ? {
+            endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+          }
+        : undefined,
     },
     { logger }
   );

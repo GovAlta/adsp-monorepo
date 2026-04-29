@@ -13,6 +13,7 @@ items:
       DIRECTORY_URL: https://directory-service.adsp-dev.gov.ab.ca
       LOG_LEVEL: info
       AMQP_HOST: event-service-rabbitmq-balancer
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       SMTP_HOST: smtp.gov.ab.ca
       SMTP_PORT: "25"
       FROM_ADDRESS: noreply@gov.ab.ca
