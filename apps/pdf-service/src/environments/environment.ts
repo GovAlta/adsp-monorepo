@@ -17,6 +17,7 @@ export const environment = envalid.cleanEnv(
     REDIS_HOST: envalid.str({ default: 'pdf-redis' }),
     REDIS_PORT: envalid.num({ default: 6379 }),
     REDIS_PASSWORD: envalid.str({ default: '' }),
+    OTEL_EXPORTER_OTLP_ENDPOINT: envalid.str({ default: '' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3345 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),

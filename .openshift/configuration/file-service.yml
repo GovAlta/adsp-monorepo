@@ -51,10 +51,11 @@ items:
     data:
       AV_PROVIDER: meta
       AV_HOST: http://vnn4457.gov.ab.ca
-      AV_PORT: "8008"
+      AV_PORT: '8008'
       KEYCLOAK_ROOT_URL: https://access-dev.os99.gov.ab.ca
       DIRECTORY_URL: https://tenant-management-api.core-services-dev.svc.cluster.local
       AMQP_HOST: event-service-rabbitmq-balancer
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318
       STORAGE_PROVIDER: file
       BLOB_ACCOUNT_URL:
       LOG_LEVEL: info
@@ -66,7 +67,7 @@ items:
         component: api
       name: file-service
     stringData:
-      CLIENT_ID: "urn:ads:platform:file-service"
+      CLIENT_ID: 'urn:ads:platform:file-service'
       CLIENT_SECRET:
       BLOB_ACCOUNT_NAME:
       BLOB_ACCOUNT_KEY:
