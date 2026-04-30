@@ -18,6 +18,7 @@ export const environment = envalid.cleanEnv(
     DB_USER: envalid.str({ default: 'postgres' }),
     DB_PASSWORD: envalid.str({ default: 'guest' }),
     DB_TLS: envalid.bool({ default: false }),
+    OTEL_EXPORTER_OTLP_ENDPOINT: envalid.str({ default: '' }),
     PORT: envalid.num({ default: 3336 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
   },

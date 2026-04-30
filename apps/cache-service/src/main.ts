@@ -90,7 +90,7 @@ const initializeApp = async (): Promise<express.Application> => {
               ...coreConfig?.targets,
             },
           },
-          tenantId
+          tenantId,
         );
       },
       enableConfigurationInvalidation: true,
@@ -118,7 +118,7 @@ const initializeApp = async (): Promise<express.Application> => {
         },
       ],
     },
-    { logger }
+    { logger },
   );
 
   passport.use('core', coreStrategy);
@@ -145,7 +145,7 @@ const initializeApp = async (): Promise<express.Application> => {
     passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     tenantHandler,
     anonymousTenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   applyCacheMiddleware(app, { logger, configurationService, queueService });

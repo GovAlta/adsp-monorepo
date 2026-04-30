@@ -101,7 +101,7 @@ const initializeApp = async (): Promise<express.Application> => {
       combineConfiguration: (tenant: Record<string, TopicType>, core: Record<string, TopicType>, tenantId) =>
         Object.entries({ ...core, ...tenant }).reduce(
           (entities, [id, type]) => ({ ...entities, [id]: new TopicTypeEntity(tenantId, type) }),
-          {} as Record<string, TopicTypeEntity>
+          {} as Record<string, TopicTypeEntity>,
         ),
       enableConfigurationInvalidation: true,
       useLongConfigurationCacheTTL: true,
@@ -128,7 +128,7 @@ const initializeApp = async (): Promise<express.Application> => {
         },
       ],
     },
-    { logger }
+    { logger },
   );
 
   passport.use('core', coreStrategy);
@@ -149,7 +149,7 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   applyCommentMiddleware(app, { serviceId, logger, eventService, repository: repositories.topicRepository });

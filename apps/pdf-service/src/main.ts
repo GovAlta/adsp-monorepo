@@ -83,7 +83,7 @@ const initializeApp = async (): Promise<express.Application> => {
               logger,
             }),
           }),
-          {}
+          {},
         ),
       roles: [
         {
@@ -112,7 +112,7 @@ const initializeApp = async (): Promise<express.Application> => {
       values: [ServiceMetricsValueDefinition],
       useLongConfigurationCacheTTL: true,
     },
-    { logger }
+    { logger },
   );
 
   const templateService = createTemplateService(directory);
@@ -162,7 +162,7 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   const { repository, ...repositories } = createJobRepository<FileResult>({ logger, ...environment });

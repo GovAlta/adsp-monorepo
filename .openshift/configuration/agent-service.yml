@@ -13,6 +13,7 @@ items:
       DIRECTORY_URL: https://directory-service.adsp-dev.gov.ab.ca
       AGENT_WORKSPACE_ROOT: /var/lib/agent-workspace
       AGENT_MCP_SERVER_CREDENTIALS_FILE: /var/run/secrets/adsp/mcp/mcp-servers.json
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       LOG_LEVEL: debug
   - apiVersion: v1
     kind: Secret
