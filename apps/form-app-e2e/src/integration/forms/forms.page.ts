@@ -39,6 +39,10 @@ class FormsPage {
     return cy.xpath(`//goa-form-item[@label="${label}"]`);
   }
 
+  formNumericField(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="number"]`);
+  }
+
   formDateInput(label) {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="date"]`);
   }

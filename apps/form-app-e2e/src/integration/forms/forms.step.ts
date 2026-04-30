@@ -111,6 +111,10 @@ When('the user enters {string} in a text area field labelled {string}', function
   formsObj.formTextAreaField(label).shadow().find('textarea').clear().type(text, { force: true, delay: 200 });
 });
 
+When('the user enters {string} in a numeric field labelled {string}', function (text: string, label) {
+  formsObj.formNumericField(label).shadow().find('input').clear().type(text, { force: true, delay: 200 });
+});
+
 When('the user enters {string} in a date picker labelled {string}', function (date: string, label) {
   formsObj.formDateInput(label).shadow().find('input').clear().type(date, { force: true });
 });
