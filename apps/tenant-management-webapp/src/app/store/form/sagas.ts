@@ -495,15 +495,22 @@ export function* fetchAllTags(): SagaIterator {
     const token: string = yield call(getAccessToken);
 
     if (baseUrl && token) {
-      const { results } = yield call(getAllTagsApi, token, baseUrl);
-      const tags: Tag[] = results.map((tag: FormResourceTagResult) => ({
-        urn: tag.urn,
-        label: tag.label,
-        value: tag.value.toLowerCase(),
-        _links: tag._links,
-      }));
+      let allTags: Tag[] = [];
+      let after: string | undefined;
 
-      yield put(fetchAllTagsSuccess(tags));
+      do {
+        const { results, page } = yield call(getAllTagsApi, token, baseUrl, after);
+        const tags: Tag[] = results.map((tag: FormResourceTagResult) => ({
+          urn: tag.urn,
+          label: tag.label,
+          value: tag.value.toLowerCase(),
+          _links: tag._links,
+        }));
+        allTags = [...allTags, ...tags];
+        after = page?.next || undefined;
+      } while (after);
+
+      yield put(fetchAllTagsSuccess(allTags));
     } else {
       throw new Error('Missing token or base URL');
     }
