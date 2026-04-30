@@ -50,7 +50,6 @@ export const File: FunctionComponent = () => {
       </Main>
       <Aside>
         <AsidePadding>
-          <AsideLinks serviceName="file" />
           <HelpLink />
         </AsidePadding>
       </Aside>
