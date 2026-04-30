@@ -45,12 +45,17 @@ export const configurationSchema = {
     scheduledIntakes: { type: 'boolean' },
     registeredId: { type: 'string' },
     customSubmissionEvent: {
-      type: 'object',
-      properties: {
-        namespace: { type: 'string' },
-        name: { type: 'string' },
-      },
-      required: ['namespace', 'name'],
+      anyOf: [
+        {
+          type: 'object',
+          properties: {
+            namespace: { type: 'string' },
+            name: { type: 'string' },
+          },
+          required: ['namespace', 'name'],
+        },
+        { type: 'null' },
+      ],
     },
   },
   required: ['id', 'name', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
