@@ -81,7 +81,6 @@ export const Form: FunctionComponent = () => {
       </Main>
       <Aside>
         <AsidePadding>
-          <AsideLinks serviceName="form" />
           <HelpLink />
         </AsidePadding>
       </Aside>
