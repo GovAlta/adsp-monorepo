@@ -66,6 +66,11 @@ const initializeApp = async (): Promise<express.Application> => {
             endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
           }
         : undefined,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT
+        ? {
+            endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+          }
+        : undefined,
       roles: [EventServiceRoles.sender],
       configuration: {
         description: 'Definitions of events including payload schema.',
@@ -78,7 +83,7 @@ const initializeApp = async (): Promise<express.Application> => {
                 ...namespaces,
                 [namespace]: new NamespaceEntity(new AjvValidationService(logger), config[namespace], tenantId),
               }),
-              {}
+              {},
             )
           : null;
       },
@@ -106,7 +111,7 @@ const initializeApp = async (): Promise<express.Application> => {
         },
       ],
     },
-    { logger }
+    { logger },
   );
 
   // This update connection is per instance (when horizontally scaled) rather than
@@ -147,7 +152,7 @@ const initializeApp = async (): Promise<express.Application> => {
     },
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   applyEventMiddleware(app, {

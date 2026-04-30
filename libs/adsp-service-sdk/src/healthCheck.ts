@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as NodeCache from 'node-cache';
+import type { MeterProvider } from '@opentelemetry/sdk-metrics';
 import { Logger } from 'winston';
 import { ServiceDirectory } from './directory';
 import { adspId } from './utils';
@@ -40,15 +41,30 @@ export const createHealthCheck = (
   accessServiceUrl: URL,
   directoryUrl: URL,
   directory: ServiceDirectory,
-  exclude: Record<string, boolean>
+  exclude: Record<string, boolean>,
+  meterProvider?: MeterProvider,
 ): PlatformHealthCheck => {
   // This cache is a dead-band on health check requests.
   const resultCache = new NodeCache({ stdTTL: 120 });
+  const meter = meterProvider?.getMeter('adsp-service-sdk');
+  const durationMetric = meter?.createHistogram('platform.healthcheck.duration', {
+    description: 'Duration of platform dependency health checks.',
+    unit: 'ms',
+  });
+  const dependencyStatusMetric = meter?.createHistogram('platform.healthcheck.dependency.status', {
+    description: 'Dependency health status where 1 is healthy and 0 is unhealthy.',
+  });
+  const dependencyFailureMetric = meter?.createCounter('platform.healthcheck.dependency.failures', {
+    description: 'Count of failed platform dependency health checks.',
+  });
 
   return async () => {
+    const started = Date.now();
     let results = resultCache.get<HealthCheckResult>('health');
+    let cacheHit = true;
 
     if (!results) {
+      cacheHit = false;
       const accessHealthUrl = new URL('/auth/realms/core/.well-known/openid-configuration', accessServiceUrl);
       const accessHealth = exclude.access || (await checkServiceHealth(logger, accessHealthUrl));
 
@@ -81,8 +97,22 @@ export const createHealthCheck = (
         }
       });
 
+      Object.entries(results).forEach(([dependency, healthy]) => {
+        dependencyStatusMetric?.record(healthy ? 1 : 0, {
+          dependency,
+          cache_hit: 'false',
+        });
+        if (!healthy) {
+          dependencyFailureMetric?.add(1, { dependency });
+        }
+      });
+
       resultCache.set('health', results);
     }
+
+    durationMetric?.record(Date.now() - started, {
+      cache_hit: cacheHit ? 'true' : 'false',
+    });
 
     return results;
   };

@@ -27,5 +27,5 @@ export const environment = envalid.cleanEnv(
         console.error(`Invalid env vars: ${util.inspect(errors)}`);
       }
     },
-  }
+  },
 );
