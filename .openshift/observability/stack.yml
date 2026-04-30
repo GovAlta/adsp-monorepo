@@ -5,7 +5,7 @@ metadata:
   annotations:
     template.openshift.io/provider-display-name: platform team
     description: >-
-      Platform-owned Tempo, OpenTelemetry Collector, and Grafana stack for
+      Platform-owned Tempo, OpenTelemetry Collector, Prometheus, and Grafana stack for
       request tracing evaluation.
 parameters:
   - name: ENVIRONMENT_NAME
@@ -48,7 +48,7 @@ parameters:
     description: Requested storage size for Tempo data.
     displayName: Tempo Storage Size
     required: true
-    value: 20Gi
+    value: 10Gi
   - name: TRACE_RETENTION
     description: Trace retention period.
     displayName: Trace Retention
@@ -70,6 +70,32 @@ parameters:
     displayName: Collector Replicas
     required: true
     value: '1'
+
+  - name: PROMETHEUS_NAME
+    description: Prometheus resource name.
+    displayName: Prometheus Name
+    required: true
+    value: prometheus
+  - name: PROMETHEUS_IMAGE
+    description: Source Docker image for Prometheus import.
+    displayName: Prometheus Image
+    required: true
+    value: prom/prometheus:v3.2.1
+  - name: PROMETHEUS_STORAGE_CLASS_NAME
+    description: Storage class for Prometheus data.
+    displayName: Prometheus Storage Class
+    required: false
+    value: azure-disk
+  - name: PROMETHEUS_STORAGE_SIZE
+    description: Requested storage size for Prometheus data.
+    displayName: Prometheus Storage Size
+    required: true
+    value: 10Gi
+  - name: PROMETHEUS_RETENTION
+    description: Prometheus TSDB retention period.
+    displayName: Prometheus Retention
+    required: true
+    value: 7d
 
   - name: GRAFANA_NAME
     description: Grafana resource name.
@@ -150,7 +176,7 @@ parameters:
     description: Requested storage size for Grafana data.
     displayName: Grafana Storage Size
     required: true
-    value: 2Gi
+    value: 1Gi
 objects:
   - apiVersion: v1
     kind: ImageStream
@@ -205,6 +231,25 @@ objects:
           from:
             kind: DockerImage
             name: ${GRAFANA_IMAGE}
+          importPolicy:
+            scheduled: ${{IMAGE_IMPORT_SCHEDULED}}
+          referencePolicy:
+            type: Local
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: ${PROMETHEUS_NAME}
+      namespace: ${INFRA_NAMESPACE}
+      labels:
+        app: ${PROMETHEUS_NAME}
+        component: observability
+        apply-infra: 'true'
+    spec:
+      tags:
+        - name: ${IMAGE_TAG}
+          from:
+            kind: DockerImage
+            name: ${PROMETHEUS_IMAGE}
           importPolicy:
             scheduled: ${{IMAGE_IMPORT_SCHEDULED}}
           referencePolicy:
@@ -438,6 +483,23 @@ objects:
               initial_interval: 1s
               max_interval: 30s
               max_elapsed_time: 300s
+          prometheus:
+            endpoint: 0.0.0.0:8889
+
+        connectors:
+          servicegraph:
+            dimensions:
+              - http.method
+              - http.status_code
+            store:
+              ttl: 2s
+          spanmetrics:
+            histogram:
+              explicit:
+                buckets: [2ms, 5ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s]
+            dimensions:
+              - name: http.method
+              - name: http.status_code
 
         extensions:
           health_check:
@@ -449,7 +511,11 @@ objects:
             traces:
               receivers: [otlp]
               processors: [memory_limiter, resource, batch]
-              exporters: [otlp]
+              exporters: [otlp, servicegraph, spanmetrics]
+            metrics:
+              receivers: [otlp, servicegraph, spanmetrics]
+              processors: [memory_limiter, resource, batch]
+              exporters: [prometheus]
   - apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -498,6 +564,9 @@ objects:
                   protocol: TCP
                 - containerPort: 4318
                   name: otlp-http
+                  protocol: TCP
+                - containerPort: 8889
+                  name: metrics
                   protocol: TCP
                 - containerPort: 13133
                   name: health
@@ -561,9 +630,160 @@ objects:
           port: 4318
           targetPort: otlp-http
           protocol: TCP
+        - name: metrics
+          port: 8889
+          targetPort: metrics
+          protocol: TCP
         - name: health
           port: 13133
           targetPort: health
+          protocol: TCP
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: ${PROMETHEUS_NAME}
+      labels:
+        app: ${PROMETHEUS_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    data:
+      prometheus.yml: |
+        global:
+          scrape_interval: 30s
+          evaluation_interval: 30s
+
+        scrape_configs:
+          - job_name: otel-collector
+            static_configs:
+              - targets: ['${COLLECTOR_NAME}:8889']
+
+          - job_name: prometheus
+            static_configs:
+              - targets: ['127.0.0.1:9090']
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: ${PROMETHEUS_NAME}-storage
+      labels:
+        app: ${PROMETHEUS_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: ${PROMETHEUS_STORAGE_CLASS_NAME}
+      resources:
+        requests:
+          storage: ${PROMETHEUS_STORAGE_SIZE}
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${PROMETHEUS_NAME}
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${PROMETHEUS_NAME}:${IMAGE_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": false
+            }
+          ]
+      labels:
+        app: ${PROMETHEUS_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      replicas: 1
+      strategy:
+        type: Recreate
+      selector:
+        matchLabels:
+          app: ${PROMETHEUS_NAME}
+      template:
+        metadata:
+          labels:
+            app: ${PROMETHEUS_NAME}
+            component: observability
+            environment: ${ENVIRONMENT_NAME}
+        spec:
+          terminationGracePeriodSeconds: 30
+          containers:
+            - name: prometheus
+              image: image-registry.openshift-image-registry.svc:5000/${INFRA_NAMESPACE}/${PROMETHEUS_NAME}:${IMAGE_TAG}
+              imagePullPolicy: IfNotPresent
+              args:
+                - --config.file=/etc/prometheus/prometheus.yml
+                - --storage.tsdb.path=/prometheus
+                - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION}
+                - --web.enable-lifecycle
+              ports:
+                - containerPort: 9090
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /-/ready
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 10
+              livenessProbe:
+                httpGet:
+                  path: /-/healthy
+                  port: http
+                initialDelaySeconds: 30
+                periodSeconds: 20
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 1Gi
+              volumeMounts:
+                - name: config
+                  mountPath: /etc/prometheus
+                - name: storage
+                  mountPath: /prometheus
+          volumes:
+            - name: config
+              configMap:
+                name: ${PROMETHEUS_NAME}
+            - name: storage
+              persistentVolumeClaim:
+                claimName: ${PROMETHEUS_NAME}-storage
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: ${PROMETHEUS_NAME}
+      labels:
+        app: ${PROMETHEUS_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      minAvailable: 1
+      selector:
+        matchLabels:
+          app: ${PROMETHEUS_NAME}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${PROMETHEUS_NAME}
+      labels:
+        app: ${PROMETHEUS_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      selector:
+        app: ${PROMETHEUS_NAME}
+      ports:
+        - name: http
+          port: 9090
+          targetPort: http
           protocol: TCP
 
   - apiVersion: v1
@@ -588,11 +808,21 @@ objects:
             jsonData:
               httpMethod: GET
               serviceMap:
-                datasourceUid: ''
+                datasourceUid: prometheus
               tracesToLogsV2:
                 datasourceUid: ''
               nodeGraph:
                 enabled: true
+      prometheus.yaml: |
+        apiVersion: 1
+        datasources:
+          - name: Prometheus
+            uid: prometheus
+            type: prometheus
+            access: proxy
+            url: http://${PROMETHEUS_NAME}:9090
+            isDefault: false
+            editable: false
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:

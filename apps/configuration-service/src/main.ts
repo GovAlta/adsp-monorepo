@@ -55,6 +55,11 @@ const initializeApp = async (): Promise<express.Application> => {
               endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
             }
           : undefined,
+        metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT
+          ? {
+              endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+            }
+          : undefined,
         roles: [
           {
             role: ConfigurationServiceRoles.Reader,

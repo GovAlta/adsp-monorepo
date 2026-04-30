@@ -38,6 +38,8 @@ export async function initializeService(options: Options, logOptions: Logger | L
     tenantStrategy,
     healthCheck,
     clearCached,
+    tracerProvider,
+    meterProvider,
     traceHandler,
     logger,
   } = await initializePlatform({ ...options }, logOptions);
@@ -48,10 +50,17 @@ export async function initializeService(options: Options, logOptions: Logger | L
     tokenProvider,
     configurationService,
     options.serviceId,
-    tenant?.id
+    tenant?.id,
   );
 
-  const metricsHandler = await createMetricsHandler(options.serviceId, logger, tokenProvider, directory, tenant?.id);
+  const metricsHandler = await createMetricsHandler(
+    options.serviceId,
+    logger,
+    tokenProvider,
+    directory,
+    tenant?.id,
+    meterProvider,
+  );
 
   return {
     directory,
@@ -64,6 +73,8 @@ export async function initializeService(options: Options, logOptions: Logger | L
     healthCheck,
     metricsHandler,
     traceHandler,
+    tracerProvider,
+    meterProvider,
     logger,
     clearCached: (serviceId) => clearCached(tenant?.id, serviceId),
   };

@@ -85,6 +85,71 @@ describe('handler', () => {
       const handler = await createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock, tenantId);
       handler(req as unknown as Request, res as Response, next);
     });
+
+    it('can record OpenTelemetry metrics when meter provider is provided', async () => {
+      const requestCountAdd = jest.fn();
+      const requestDurationRecord = jest.fn();
+      const activeRequestsAdd = jest.fn();
+      const errorCountAdd = jest.fn();
+      const meterProviderMock = {
+        getMeter: jest.fn(() => ({
+          createCounter: jest
+            .fn()
+            .mockReturnValueOnce({ add: requestCountAdd })
+            .mockReturnValueOnce({ add: errorCountAdd }),
+          createHistogram: jest.fn().mockReturnValue({ record: requestDurationRecord }),
+          createUpDownCounter: jest.fn().mockReturnValue({ add: activeRequestsAdd }),
+        })),
+      };
+
+      const req = {
+        method: 'GET',
+        baseUrl: '/resource',
+        route: { path: '/:id' },
+        user: { tenantId },
+      };
+      const res = { statusCode: 503 };
+      const next = jest.fn();
+
+      responseTimeMock.mockImplementationOnce((fn) => (req, res, _next) => fn(req, res, 123));
+      const handler = await createMetricsHandler(
+        serviceId,
+        loggerMock,
+        tokenProviderMock,
+        directoryMock,
+        tenantId,
+        meterProviderMock as never,
+      );
+
+      handler(req as unknown as Request, res as Response, next);
+
+      expect(requestCountAdd).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          'http.request.method': 'GET',
+          'http.route': '/resource/:id',
+          'http.response.status_code': 503,
+        }),
+      );
+      expect(requestDurationRecord).toHaveBeenCalledWith(
+        123,
+        expect.objectContaining({
+          'http.request.method': 'GET',
+          'http.route': '/resource/:id',
+          'http.response.status_code': 503,
+        }),
+      );
+      expect(activeRequestsAdd).toHaveBeenCalledWith(1, { 'http.request.method': 'GET' });
+      expect(activeRequestsAdd).toHaveBeenCalledWith(-1, { 'http.request.method': 'GET' });
+      expect(errorCountAdd).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          'http.request.method': 'GET',
+          'http.route': '/resource/:id',
+          'http.response.status_code': 503,
+        }),
+      );
+    });
   });
 
   describe('writeMetrics', () => {
@@ -122,7 +187,7 @@ describe('handler', () => {
                   [`total:${name}`]: value,
                   [`${method}:${path}:${name}`]: value,
                 }),
-                {}
+                {},
               ),
               [`total:count`]: 1,
               [`${method}:${path}:count`]: 1,
@@ -153,7 +218,7 @@ describe('handler', () => {
         ]),
         expect.objectContaining({
           params: expect.objectContaining({ tenantId: tenantId.toString() }),
-        })
+        }),
       );
     });
 
@@ -207,7 +272,7 @@ describe('handler', () => {
         ]),
         expect.objectContaining({
           params: expect.objectContaining({ tenantId: tenantId.toString() }),
-        })
+        }),
       );
 
       expect(axiosMock.post).toHaveBeenCalledWith(
@@ -221,7 +286,7 @@ describe('handler', () => {
         ]),
         expect.objectContaining({
           params: expect.objectContaining({ tenantId: tenant2Id.toString() }),
-        })
+        }),
       );
     });
 
@@ -255,7 +320,7 @@ describe('handler', () => {
                   [`total:${name}`]: value,
                   [`${method}:${path}:${name}`]: value,
                 }),
-                {}
+                {},
               ),
               [`total:count`]: 1,
               [`${method}:${path}:count`]: 1,

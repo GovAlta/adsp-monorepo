@@ -2,6 +2,7 @@ import { RequestHandler } from 'express';
 import { Strategy } from 'passport';
 import { JwtFromRequestFunction } from 'passport-jwt';
 import type { Logger } from 'winston';
+import type { MeterProvider } from '@opentelemetry/sdk-metrics';
 import type { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { TokenProvider } from '../access';
 import { CombineConfiguration, ConfigurationConverter, ConfigurationService } from '../configuration';
@@ -37,6 +38,37 @@ export interface TracingOptions {
    *
    * @type {Record<string, string>}
    * @memberof TracingOptions
+   */
+  headers?: Record<string, string>;
+}
+
+export interface MetricsOptions {
+  /**
+   * OTLP exporter endpoint: URL of OTLP collector (e.g., http://otel-collector:4318).
+   *
+   * @type {string}
+   * @memberof MetricsOptions
+   */
+  endpoint: string;
+  /**
+   * Export interval in milliseconds for periodic metric export.
+   *
+   * @type {number}
+   * @memberof MetricsOptions
+   */
+  exportIntervalMillis?: number;
+  /**
+   * Export timeout in milliseconds for periodic metric export.
+   *
+   * @type {number}
+   * @memberof MetricsOptions
+   */
+  exportTimeoutMillis?: number;
+  /**
+   * Headers: Optional headers for OTLP exporter (e.g., authorization).
+   *
+   * @type {Record<string, string>}
+   * @memberof MetricsOptions
    */
   headers?: Record<string, string>;
 }
@@ -138,6 +170,13 @@ export interface PlatformOptions extends ServiceRegistration {
    * @memberof PlatformOptions
    */
   tracing?: TracingOptions;
+  /**
+   * Metrics options: Configuration for OpenTelemetry metrics and OTLP metric export.
+   *
+   * @type {MetricsOptions}
+   * @memberof PlatformOptions
+   */
+  metrics?: MetricsOptions;
 }
 
 export interface PlatformServices {
@@ -255,6 +294,15 @@ export interface PlatformCapabilities extends PlatformServices {
    * @memberof PlatformCapabilities
    */
   tracerProvider?: NodeTracerProvider;
+  /**
+   * Meter provider: OpenTelemetry meter provider for creating metric instruments.
+   *
+   * Only available if metrics is enabled in platform options.
+   *
+   * @type {MeterProvider}
+   * @memberof PlatformCapabilities
+   */
+  meterProvider?: MeterProvider;
   /**
    * Logger used by SDK components.
    *
