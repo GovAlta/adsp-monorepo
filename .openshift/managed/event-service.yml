@@ -34,7 +34,7 @@ parameters:
   - name: ROUTE_HOST
     description: Host for the route.
     displayName: Route Host
-    value: ""
+    value: ''
   - name: RABBITMQ_USER
     description: Username for the RabbitMQ instance.
     generate: expression
@@ -42,11 +42,11 @@ parameters:
   - name: RABBITMQ_PASS
     description: Password securing the RabbitMQ instance.
     generate: expression
-    from: "[a-zA-Z0-9]{16}"
+    from: '[a-zA-Z0-9]{16}'
   - name: RABBITMQ_ERLANG_COOKIE
     description: Cookie used for authentication of cluster nodes.
     generate: expression
-    from: "[a-zA-Z0-9]{16}"
+    from: '[a-zA-Z0-9]{16}'
 objects:
   # RabbitMQ Objects
   - apiVersion: v1
@@ -57,7 +57,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: queue
-        apply-init: "true"
+        apply-init: 'true'
   - apiVersion: v1
     kind: RoleBinding
     metadata:
@@ -66,7 +66,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: queue
-        apply-init: "true"
+        apply-init: 'true'
     roleRef:
       kind: Role
       name: view
@@ -85,7 +85,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: queue
-        apply-init: "true"
+        apply-init: 'true'
     type: Opaque
   - apiVersion: v1
     kind: ConfigMap
@@ -95,7 +95,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: queue
-        apply-init: "true"
+        apply-init: 'true'
     data:
       rabbitmq.conf: |
         loopback_users.guest = false
@@ -130,7 +130,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: queue
-        apply-init: "true"
+        apply-init: 'true'
     spec:
       type: ClusterIP
       ports:
@@ -153,7 +153,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: queue
-        apply-init: "true"
+        apply-init: 'true'
     spec:
       selector:
         app: ${APP_NAME}
@@ -174,7 +174,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: queue
-        apply-init: "true"
+        apply-init: 'true'
       annotations:
         image.openshift.io/triggers: |-
           [
@@ -214,10 +214,10 @@ objects:
           terminationGracePeriodSeconds: 30
           initContainers:
             - name: rm-erlang-cookie
-              image: ""
+              image: ''
               command:
                 - sh
-                - "-c"
+                - '-c'
                 - rm -f /var/lib/rabbitmq/.erlang.cookie
               resources:
                 limits:
@@ -237,7 +237,7 @@ objects:
               args:
                 - -c
                 - cp -v /etc/rabbitmq/rabbitmq.conf ${RABBITMQ_CONFIG_FILE}.conf; exec docker-entrypoint.sh rabbitmq-server
-              image: ""
+              image: ''
               imagePullPolicy: IfNotPresent
               volumeMounts:
                 - name: config-volume
@@ -256,13 +256,13 @@ objects:
                   containerPort: 25672
               livenessProbe:
                 exec:
-                  command: ["rabbitmq-diagnostics", "ping"]
+                  command: ['rabbitmq-diagnostics', 'ping']
                 initialDelaySeconds: 120
                 periodSeconds: 60
                 timeoutSeconds: 30
               readinessProbe:
                 exec:
-                  command: ["rabbitmq-diagnostics", "ping"]
+                  command: ['rabbitmq-diagnostics', 'ping']
                 initialDelaySeconds: 30
                 periodSeconds: 60
                 timeoutSeconds: 30
@@ -297,9 +297,9 @@ objects:
                     fieldRef:
                       fieldPath: metadata.namespace
                 - name: RABBITMQ_USE_LONGNAME
-                  value: "true"
+                  value: 'true'
                 - name: RABBITMQ_NODENAME
-                  value: "rabbit@$(POD_NAME).${APP_NAME}-rabbitmq.$(POD_NAMESPACE).svc.cluster.local"
+                  value: 'rabbit@$(POD_NAME).${APP_NAME}-rabbitmq.$(POD_NAMESPACE).svc.cluster.local'
                 - name: RABBITMQ_CONFIG_FILE
                   value: /var/lib/rabbitmq/rabbitmq
               resources:
@@ -326,7 +326,7 @@ objects:
               component: queue
           spec:
             storageClassName: azure-disk
-            accessModes: ["ReadWriteOnce"]
+            accessModes: ['ReadWriteOnce']
             resources:
               requests:
                 storage: 10Gi
@@ -339,7 +339,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: queue
-        apply-init: "true"
+        apply-init: 'true'
     spec:
       port:
         targetPort: http
@@ -361,7 +361,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-infra: "true"
+        apply-infra: 'true'
       name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
     spec:
@@ -381,10 +381,10 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-dev: "true"
-        apply-test: "true"
-        apply-uat: "true"
-        apply-prod: "true"
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-uat: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
       annotations:
@@ -424,7 +424,7 @@ objects:
                     name: ${APP_NAME}
               env:
                 - name: PORT
-                  value: "3333"
+                  value: '3333'
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               ports:
@@ -441,7 +441,7 @@ objects:
               terminationMessagePath: /dev/termination-log
               readinessProbe:
                 httpGet:
-                  path: /
+                  path: /health
                   port: 3333
                   scheme: HTTP
                 initialDelaySeconds: 2
@@ -451,7 +451,7 @@ objects:
                 failureThreshold: 20
               livenessProbe:
                 httpGet:
-                  path: /
+                  path: /health
                   port: 3333
                   scheme: HTTP
                 initialDelaySeconds: 60
@@ -477,10 +477,10 @@ objects:
       labels:
         app: ${APP_NAME}
         component: job
-        apply-dev: "true"
-        apply-test: "true"
-        apply-uat: "true"
-        apply-prod: "true"
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-uat: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}-job
       namespace: ${NAMESPACE}
       annotations:
@@ -520,9 +520,9 @@ objects:
                     name: ${APP_NAME}
               env:
                 - name: PORT
-                  value: "3333"
+                  value: '3333'
                 - name: AMQP_CONSUMER_PRIORITY
-                  value: "1"
+                  value: '1'
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               ports:
@@ -540,7 +540,7 @@ objects:
               terminationMessagePolicy: File
               readinessProbe:
                 httpGet:
-                  path: /
+                  path: /health
                   port: 3333
                   scheme: HTTP
                 initialDelaySeconds: 2
@@ -550,7 +550,7 @@ objects:
                 failureThreshold: 20
               livenessProbe:
                 httpGet:
-                  path: /
+                  path: /health
                   port: 3333
                   scheme: HTTP
                 initialDelaySeconds: 60
@@ -576,10 +576,10 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-dev: "true"
-        apply-test: "true"
-        apply-uat: "true"
-        apply-prod: "true"
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-uat: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
     spec:
@@ -599,10 +599,10 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-dev: "true"
-        apply-test: "true"
-        apply-uat: "true"
-        apply-prod: "true"
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-uat: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}
       namespace: ${NAMESPACE}
     spec:

@@ -153,13 +153,6 @@ export async function initializePlatform(
         readers: [metricReader],
       } as unknown as never);
 
-      const metricsWithLegacyApi = meterProvider as unknown as {
-        addMetricReader?: (reader: PeriodicExportingMetricReader) => void;
-      };
-      if (typeof metricsWithLegacyApi.addMetricReader === 'function') {
-        metricsWithLegacyApi.addMetricReader(metricReader);
-      }
-
       logger.info(`OpenTelemetry metrics initialized: ${serviceName} -> ${metrics.endpoint}`);
     } catch (err) {
       logger.warn(
