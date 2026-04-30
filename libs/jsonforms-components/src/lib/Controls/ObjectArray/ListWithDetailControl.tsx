@@ -553,14 +553,18 @@ const SummaryDisplay = ({ rowData, uischema, schema }: SummaryDisplayProps) => {
               }}
             >
               {typeof pair.value === 'boolean'
-                ? pair.value ? 'Yes' : 'No'
+                ? pair.value
+                  ? 'Yes'
+                  : 'No'
                 : pair.value !== null && typeof pair.value === 'object'
                   ? (() => {
                       const v = pair.value as Record<string, unknown>;
                       if (('day' in v || 'date' in v) && 'month' in v && 'year' in v) {
                         return `${v.year}-${v.month}-${'day' in v ? v.day : v.date}`;
                       }
-                      return Object.values(v).filter(x => x !== undefined && x !== null && x !== '').join(' ');
+                      return Object.values(v)
+                        .filter((x) => x !== undefined && x !== null && x !== '')
+                        .join(' ');
                     })()
                   : String(pair.value)}
             </td>
@@ -712,6 +716,8 @@ export function humanizeAjvError(error: ErrorObject, schema: JsonSchema, uischem
   const path = getEffectiveInstancePath(error);
   const label = resolveLabel(path, schema, uischema);
 
+  console.log('Do we get here?', { error, path, label });
+
   switch (error.keyword) {
     case VALIDATION_KEYWORDS.REQUIRED:
       return `${label} is required`;
@@ -735,7 +741,7 @@ export function humanizeAjvError(error: ErrorObject, schema: JsonSchema, uischem
       return `${label} must be a ${error.params.type}`;
 
     default:
-     return error.message ?? `${label} is invalid`;
+      return error.message ?? `${label} is invalid`;
   }
 }
 

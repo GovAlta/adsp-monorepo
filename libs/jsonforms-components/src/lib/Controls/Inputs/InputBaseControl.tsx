@@ -105,8 +105,6 @@ export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Elemen
           className="jsonforms-elements-wrapper"
           id={isStepperReview === true ? `review-base-${path}-element-wrapper` : `${path}-element-wrapper`}
         >
-          <pre>{JSON.stringify(currentCategory?.isVisited, null, 2)}</pre>
-          <pre>{JSON.stringify(hasValue, null, 2)}</pre>
           <GoabFormItem
             requirement={uischema?.options?.componentProps?.requirement ?? (requiredNow ? 'required' : undefined)}
             error={currentCategory?.isVisited === true || hasValue ? modifiedErrors : undefined}
