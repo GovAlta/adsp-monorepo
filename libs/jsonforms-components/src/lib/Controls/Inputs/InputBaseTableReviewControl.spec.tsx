@@ -7,6 +7,7 @@ import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
 import { GoAInputBaseTableReview } from './InputBaseTableReviewControl';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context/StepperContext';
+import { invalidSin } from '../../common/Constants';
 
 import { CategorizationStepperLayoutRendererProps } from '../FormStepper/types';
 import { JsonFormsStepperContextProvider } from '../FormStepper/context';
@@ -440,7 +441,9 @@ describe('InputBaseTableReviewControl', () => {
 
   it('shows validation error for empty array when required', () => {
     const mockGoToPage = jest.fn();
-    const contextValue: JsonFormsStepperContextProps = { goToPage: mockGoToPage } as unknown as JsonFormsStepperContextProps;
+    const contextValue: JsonFormsStepperContextProps = {
+      goToPage: mockGoToPage,
+    } as unknown as JsonFormsStepperContextProps;
     const { baseElement } = render(
       <JsonFormsStepperContext.Provider value={contextValue}>
         <table>
@@ -477,7 +480,7 @@ describe('InputBaseTableReviewControl', () => {
     );
 
     const errorFormItem = baseElement.querySelector(
-      'goa-form-item[error="Choose all options that best apply is required"]'
+      'goa-form-item[error="Choose all options that best apply is required"]',
     );
     expect(errorFormItem).toBeInTheDocument();
   });
@@ -514,6 +517,44 @@ describe('InputBaseTableReviewControl', () => {
 
     expect(getByTestId('review-value-').textContent).toBe('');
     const errorFormItem = baseElement.querySelector('goa-form-item[error="Is attestation accepted is required"]');
+    expect(errorFormItem).toBeInTheDocument();
+  });
+
+  it('shows SIN validation error on summary row for invalid SIN', () => {
+    const { baseElement } = render(
+      <table>
+        <tbody>
+          <GoAInputBaseTableReview
+            data="123 111 111"
+            visible={true}
+            label="Social insurance number"
+            path="sinControls.valueA"
+            schema={{
+              type: 'string',
+              title: 'Social insurance number',
+              errorMessage: 'Must be three groups of three digits.',
+            }}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/sinControls/properties/valueA',
+              label: 'Social insurance number',
+              options: { stepId: 1 },
+            }}
+            enabled={true}
+            errors=""
+            cells={[]}
+            required={false}
+            id="sin-controls-valueA"
+            rootSchema={{ type: 'object', properties: {} }}
+            config={{}}
+            renderers={[]}
+            handleChange={jest.fn()}
+          />
+        </tbody>
+      </table>,
+    );
+
+    const errorFormItem = baseElement.querySelector(`goa-form-item[error="${invalidSin}"]`);
     expect(errorFormItem).toBeInTheDocument();
   });
 });
