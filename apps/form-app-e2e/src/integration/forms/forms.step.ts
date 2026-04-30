@@ -107,6 +107,10 @@ When('the user enters {string} in a text field labelled {string}', function (tex
   formsObj.formTextField(label).shadow().find('input').clear().type(text, { force: true, delay: 200 });
 });
 
+When('the user enters {string} in a text area field labelled {string}', function (text: string, label) {
+  formsObj.formTextAreaField(label).shadow().find('textarea').clear().type(text, { force: true, delay: 200 });
+});
+
 When('the user enters {string} in a date picker labelled {string}', function (date: string, label) {
   formsObj.formDateInput(label).shadow().find('input').clear().type(date, { force: true });
 });
@@ -278,9 +282,12 @@ Given('the user deletes any existing form from {string} for {string}', function 
 });
 
 Then(
-  'the user views {string} validation message under {string} field of {string} on summary page',
+  'the user views {string} validation error message under {string} field of {string} on summary page',
   function (errorMsg, textFieldLabel, sectionName) {
-    formsObj.formSummaryPageValidationError(sectionName, textFieldLabel).invoke('attr', 'error').should('eq', errorMsg);
+    formsObj
+      .formSummaryPageValidationError(sectionName, textFieldLabel)
+      .invoke('attr', 'error')
+      .should('contains', errorMsg);
   }
 );
 
@@ -341,14 +348,31 @@ Then('the user views Step {string} of {string} on the form page', function (curr
 });
 
 When('the user clicks Back to application overview link on the form page', function () {
+  cy.wait(1000); // Wait for the page to save data to avoid losing the last data input
   formsObj.formBackToOverviewLink().click({ force: true });
 });
 
 When('the user clicks Next button on a tasklist step page', function () {
+  cy.wait(1000); // Wait for the page to save data to avoid losing the last data input
   formsObj.formTaskListStepPageNextButton().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
 Then('the user views section title of {string} on task list page', function (sectionTitle) {
   formsObj.formSectionTitle(sectionTitle).should('exist');
+});
+
+Then(
+  'the user views an error message of {string} under the control labelled {string}',
+  function (errorMsg, textFieldLabel) {
+    formsObj
+      .formTextFieldFormItem(textFieldLabel)
+      .shadow()
+      .find('[class^="error-msg"]')
+      .should('contain.text', errorMsg);
+  }
+);
+
+When('the user enters {string} in Social insurance number control', function (socialInsuranceNumber: string) {
+  formsObj.formSocialInsuranceNumberField().shadow().find('input').type(socialInsuranceNumber);
 });

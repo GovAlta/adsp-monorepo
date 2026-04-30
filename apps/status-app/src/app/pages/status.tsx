@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoAHeader } from '@abgov/react-components-old';
+import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { IndicatorWithDelay } from '@components/Indicator';
 
 import { Grid, GridItem } from '@core-services/app-common';
@@ -56,7 +56,7 @@ const ServiceStatusPage = (): JSX.Element => {
       error: state.session?.notifications,
       contact: state.configuration.contact,
       indicator: state.session.indicator,
-    })
+    }),
   );
 
   const contactEmail = contact?.contactEmail || 'adsp@gov.ab.ca';
@@ -249,11 +249,8 @@ const ServiceStatusPage = (): JSX.Element => {
   return (
     <div>
       <HeaderContainer>
-        <GoAHeader
-          serviceLevel="live"
-          serviceName="Alberta Digital Service Platform - Status & Outages "
-          serviceHome="/"
-        />
+        <GoabMicrositeHeader type="live" headerUrlTarget="self" />
+        <GoabAppHeader url="/" heading={'Alberta Digital Service Platform - Status & Outages'} />
       </HeaderContainer>
       {/* TODO: re-visit this part when design and card or breadcrumb is ready.
       <div className="goa-banner">

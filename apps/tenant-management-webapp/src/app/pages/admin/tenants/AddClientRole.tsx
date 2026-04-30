@@ -3,6 +3,7 @@ import { GoabButton, GoabFormItem, GoabButtonGroup } from '@abgov/react-componen
 import GoALinkButton from '@components/LinkButton';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
+import { AsidePadding } from '../../../components/Html';
 
 const AddClientRole = (): JSX.Element => {
   const [name, setName] = useState('');
@@ -39,7 +40,11 @@ const AddClientRole = (): JSX.Element => {
         Need to <a href={'/get-started'}>create a tenant?</a>
       </Main>
       <Aside>
-        <SupportLinks />
+        <AsidePadding>
+          <h2>Need help?</h2>
+          <p>If you continue to experience issues, please reach out to our support team for assistance.</p>
+          <SupportLinks />
+        </AsidePadding>
       </Aside>
     </Page>
   );

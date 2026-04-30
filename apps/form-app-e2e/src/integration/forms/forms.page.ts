@@ -27,6 +27,18 @@ class FormsPage {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="text"]`);
   }
 
+  formTextFieldFormItem(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]`);
+  }
+
+  formTextAreaField(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-textarea`);
+  }
+
+  formTextAreaFieldFormItem(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]`);
+  }
+
   formDateInput(label) {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="date"]`);
   }
@@ -41,6 +53,10 @@ class FormsPage {
 
   formCheckbox(label) {
     return cy.xpath(`//goa-checkbox[@text="${label}"]`);
+  }
+
+  formSocialInsuranceNumberField() {
+    return cy.xpath('//goa-form-item[@label="Social insurance number"]//goa-input');
   }
 
   formSubmitButton() {

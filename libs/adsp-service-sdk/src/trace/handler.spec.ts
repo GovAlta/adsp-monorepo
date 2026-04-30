@@ -1,9 +1,8 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 import { Request, Response } from 'express';
 import * as context from 'express-http-context';
-import TraceParent = require('traceparent');
 import { Logger } from 'winston';
-import { getContextTrace as getContextTraceMocked } from './context';
+import { context as otelContext, propagation, trace as otelTrace } from '@opentelemetry/api';
 import { createTraceHandler, traceRequestInterceptor } from './handler';
 
 jest.mock('axios');
@@ -12,9 +11,6 @@ const axiosMock = axios as jest.Mocked<typeof axios>;
 jest.mock('express-http-context');
 const contextMock = context as jest.Mocked<typeof context>;
 
-jest.mock('./context');
-const getContextTraceMock = getContextTraceMocked as jest.MockedFunction<typeof getContextTraceMocked>;
-
 const loggerMock = {
   debug: jest.fn(),
   info: jest.fn(),
@@ -22,15 +18,7 @@ const loggerMock = {
 } as unknown as Logger;
 
 describe('handler', () => {
-  beforeEach(() => {
-    getContextTraceMock.mockClear();
-  });
-
   describe('createTraceHandler', () => {
-    beforeEach(() => {
-      contextMock.set.mockClear();
-    });
-
     it('can create handler', () => {
       const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
       expect(handler).toBeTruthy();
@@ -50,51 +38,11 @@ describe('handler', () => {
         const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
         handler(req as unknown as Request, res as Response, next);
         expect(next).toHaveBeenCalledWith(undefined);
-        expect(contextMock.set).toHaveBeenCalledWith('adsp_traceparent', expect.any(TraceParent));
-      });
-
-      it('can handle request by resuming trace context', () => {
-        const req = {
-          headers: { traceparent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01' },
-        };
-        const res = {};
-        const next = jest.fn();
-        contextMock.middleware.mockImplementationOnce((_req, _res, next) => next());
-
-        const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
-        handler(req as unknown as Request, res as Response, next);
-        expect(next).toHaveBeenCalledWith(undefined);
-        expect(contextMock.set).toHaveBeenCalledWith(
-          'adsp_traceparent',
-          expect.objectContaining({
-            version: '00',
-            traceId: '4bf92f3577b34da6a3ce929d0e0e4736',
-            parentId: '00f067aa0ba902b7',
-            flags: '01',
-            recorded: true,
-          })
-        );
-      });
-
-      it('can handle trace error', () => {
-        const req = {
-          headers: {},
-        };
-        const res = {};
-        const next = jest.fn();
-        contextMock.middleware.mockImplementationOnce((_req, _res, next) => next());
-        contextMock.set.mockImplementationOnce(() => {
-          throw new Error('oh noes!');
-        });
-
-        const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
-        handler(req as unknown as Request, res as Response, next);
-        expect(next).toHaveBeenCalledWith(expect.any(Error));
       });
 
       it('can passthrough error', () => {
         const req = {
-          headers: { traceparent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01' },
+          headers: {},
         };
         const res = {};
         const next = jest.fn();
@@ -104,30 +52,65 @@ describe('handler', () => {
         const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
         handler(req as unknown as Request, res as Response, next);
         expect(next).toHaveBeenCalledWith(err);
-        expect(contextMock.set).not.toHaveBeenCalled();
       });
     });
   });
 
   describe('traceRequestInterceptor', () => {
-    it('can add traceparent header to request', () => {
-      const trace = TraceParent.startOrResume(null, { transactionSampleRate: 5 });
-      getContextTraceMock.mockReturnValueOnce(trace);
-
+    it('can inject traceparent header to request', () => {
       const config = { headers: { has: jest.fn(), set: jest.fn() } };
       config.headers.has.mockReturnValueOnce(false);
+
+      const injectSpy = jest.spyOn(propagation, 'inject').mockImplementation((_ctx, _carrier, setter) => {
+        setter.set(config.headers as unknown as Record<string, unknown>, 'traceparent', 'trace-value');
+      });
+
       traceRequestInterceptor(config as unknown as InternalAxiosRequestConfig);
-      expect(config.headers.set).toHaveBeenCalledWith('traceparent', trace.toString());
+
+      expect(injectSpy).toHaveBeenCalled();
+      expect(config.headers.set).toHaveBeenCalledWith('traceparent', 'trace-value');
+      injectSpy.mockRestore();
     });
 
     it('can passthrough original traceparent header', () => {
-      const trace = TraceParent.startOrResume(null, { transactionSampleRate: 5 });
-      getContextTraceMock.mockReturnValueOnce(trace);
-
       const config = { headers: { has: jest.fn(), set: jest.fn() } };
       config.headers.has.mockReturnValueOnce(true);
+
+      const injectSpy = jest.spyOn(propagation, 'inject');
       traceRequestInterceptor(config as unknown as InternalAxiosRequestConfig);
+
+      expect(injectSpy).not.toHaveBeenCalled();
       expect(config.headers.set).not.toHaveBeenCalled();
+      injectSpy.mockRestore();
+    });
+
+    it('can add request event to active span', () => {
+      const config = { headers: { has: jest.fn(), set: jest.fn() }, method: 'get', url: '/path' };
+      config.headers.has.mockReturnValueOnce(false);
+
+      const span = {
+        spanContext: () => ({ traceId: '4bf92f3577b34da6a3ce929d0e0e4736', spanId: '00f067aa0ba902b7', traceFlags: 1 }),
+        addEvent: jest.fn(),
+      };
+      contextMock.get.mockReturnValue(span);
+
+      const withSpy = jest.spyOn(otelContext, 'with');
+      const setSpanSpy = jest.spyOn(otelTrace, 'setSpan');
+      const getActiveSpanSpy = jest.spyOn(otelTrace, 'getActiveSpan').mockReturnValue(span as unknown as never);
+
+      traceRequestInterceptor(config as unknown as InternalAxiosRequestConfig);
+
+      expect(setSpanSpy).toHaveBeenCalled();
+      expect(withSpy).toHaveBeenCalled();
+      expect(getActiveSpanSpy).toHaveBeenCalled();
+      expect(span.addEvent).toHaveBeenCalledWith('http.client.request', {
+        'http.method': 'get',
+        'http.url': '/path',
+      });
+
+      withSpy.mockRestore();
+      setSpanSpy.mockRestore();
+      getActiveSpanSpy.mockRestore();
     });
   });
 });

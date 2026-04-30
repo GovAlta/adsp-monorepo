@@ -76,8 +76,8 @@ Feature: Form app
     And the user enters "Smith" in list with detail element text field labelled "Last name"
     # And the user enters "2010-01-15" in list with detail element date input labelled "Dob"
     And the user clicks Next button in the form
-    Then the user views "Last name is required" validation message under "Last name" field of "Personal Information" on summary page
-    And the user views "Are you married? is required" validation message under "Are you married?" field of "Additional Information" on summary page
+    Then the user views "Last name is required" validation error message under "Last name" field of "Personal Information" on summary page
+    And the user views "Are you married? is required" validation error message under "Are you married?" field of "Additional Information" on summary page
     And the user views the submit button is disabled on summary page
 
   # TEST DATA: autotest-open-intake is created as a form definition with an open intake period
@@ -147,3 +147,26 @@ Feature: Form app
     Then the user views a callout with a message of "We're processing your application"
     When the user sends a delete form request
     Then the new form is deleted
+
+  # TEST DATA: regression-control-examples is created with all types of control examples with some validation rules
+  @TEST_CS-4007 @regression
+  Scenario: As a form user, I can see validation errors on different rules
+    Given an anonymous applicant goes to "regression-control-examples" application
+    Then the user views an anonymous form draft of "regression-control-examples"
+    When the user clicks "Controls" task on task list page
+    And the user enters "hi" in a text field labelled "Single line textbox"
+    Then the user views an error message of "must NOT have fewer than 3 characters" under the control labelled "Single line textbox"
+    When the user enters "hello" in a text area field labelled "Multiline text area"
+    Then the user views an error message of "must NOT have fewer than 10 characters" under the control labelled "Multiline text area"
+    When the user clicks Back to application overview link on the form page
+    And the user clicks "Standard controls" task on task list page
+    And the user enters "111111111" in Social insurance number control
+    Then the user views an error message of "Social insurance number is invalid" under the control labelled "Social insurance number"
+    When the user clicks Back to application overview link on the form page
+    And the user clicks "Summary" task on task list page
+    Then the user views "must be at least 3 characters" validation error message under "Single line textbox" field of "Controls" on summary page
+    And the user views "must be at least 10 characters" validation error message under "Multiline text area" field of "Controls" on summary page
+    And the user views "Checkbox is required" validation error message under "Checkbox" field of "Controls" on summary page
+    And the user views "Radio group is required" validation error message under "Radio group" field of "Controls" on summary page
+    And the user views "Data schema enumeration is required" validation error message under "Data schema enumeration" field of "Controls" on summary page
+    And the user views "Social insurance number is invalid" validation error message under "Social insurance number" field of "Standard controls" on summary page

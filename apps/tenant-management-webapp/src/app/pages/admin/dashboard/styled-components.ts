@@ -11,7 +11,9 @@ export const HeadingDiv = styled.div`
 `;
 
 export const DashboardAside = styled(Aside)`
-  padding-top: 1.6em;
+  padding-top: 4.8em;
+  margin-left: -1.5em;
+  margin-right: 1em;
 
   .copy-url {
     font - size: var(--fs-sm);
@@ -25,7 +27,7 @@ export const DashboardAside = styled(Aside)`
   }
 
   .small-font {
-            font - size: var(--fs-sm);
+    font - size: var(--fs-sm);
     line-height: normal;
   }
 
@@ -64,4 +66,13 @@ export const ListWrapper = styled.ul`
 // 216 (GoAGrid min width) * 2 + 16 * 2 = 464
 export const DashboardMinWidth = styled.div`
   min-width: 464px;
+`;
+
+export const DashboardContainer = styled.div`
+  box-sizing: border-box;
+  background: white;
+  border: 1px solid var(--color-gray-300);
+  padding: 2rem;
+  border-radius: 10px;
+  margin: 0.5rem;
 `;

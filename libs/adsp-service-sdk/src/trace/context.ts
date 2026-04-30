@@ -1,15 +1,17 @@
-import * as context from 'express-http-context';
-import TraceParent = require('traceparent');
-
-export const TRACE_PARENT_CTX = 'adsp_traceparent';
+import { context as otelContext, trace as otelTrace } from '@opentelemetry/api';
 export const TRACE_PARENT_HEADER = 'traceparent';
 
-export function getContextTrace(): TraceParent {
-  let trace: TraceParent = null;
-  const value = context.get(TRACE_PARENT_CTX);
-  if (value instanceof TraceParent) {
-    trace = value;
+export function getContextTrace(): { toString(): string } | null {
+  const span = otelTrace.getSpan(otelContext.active());
+  const spanContext = span?.spanContext();
+  if (!spanContext) {
+    return null;
   }
 
-  return trace;
+  const flags = spanContext.traceFlags.toString(16).padStart(2, '0');
+  const traceparent = `00-${spanContext.traceId}-${spanContext.spanId}-${flags}`;
+
+  return {
+    toString: () => traceparent,
+  };
 }

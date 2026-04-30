@@ -96,6 +96,11 @@ const initializeApp = async (): Promise<Server> => {
       enableConfigurationInvalidation: true,
       combineConfiguration: (tenant: AgentConfigurations, core: AgentConfigurations, tenantId) =>
         new AgentServiceConfiguration(logger, directory, tokenProvider, eventService, tenantId, tenant, core),
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT
+        ? {
+            endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+          }
+        : undefined,
       additionalExtractors: [fromSocketHandshake],
       serviceConfigurations: [{ serviceId, configuration: CoreAgents }],
     },

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: grafana
+        component: observability
+      name: grafana
+    stringData:
+      admin-user: admin
+      admin-password:
+      oauth-client-id:
+      oauth-client-secret:

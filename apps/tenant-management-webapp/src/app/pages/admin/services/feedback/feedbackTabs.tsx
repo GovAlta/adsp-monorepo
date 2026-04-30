@@ -1,4 +1,4 @@
-import { Aside, Main, Page } from '@components/Html';
+import { Aside, Main, Page, AsidePadding } from '@components/Html';
 
 import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
@@ -39,7 +39,9 @@ export const FeedbackTabs: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <AsideLinks serviceName="feedback" feedbackTutorialLink={true} />
+        <AsidePadding>
+          <AsideLinks serviceName="feedback" feedbackTutorialLink={true} />
+        </AsidePadding>
       </Aside>
     </Page>
   );

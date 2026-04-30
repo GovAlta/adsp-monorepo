@@ -6,13 +6,22 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { ExternalLink } from '@components/icons/ExternalLink';
 import BetaBadge from '@icons/beta-badge.svg';
-import { DashboardAside, DashboardDiv, HeadingDiv, ListWrapper, DashboardMinWidth } from './styled-components';
+import {
+  DashboardAside,
+  DashboardDiv,
+  HeadingDiv,
+  ListWrapper,
+  DashboardMinWidth,
+  DashboardContainer,
+} from './styled-components';
 import SupportLinks from '@components/SupportLinks';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import { serviceVariables } from '../../../../featureFlag';
 import { alphaBadge } from '../sidebar';
 
 import { FetchTenant } from '@store/tenant/actions';
+import { AsidePadding } from '../../../components/Html';
+import { ServiceColumnLayoutDashboard } from '..';
 
 const Dashboard = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -58,6 +67,11 @@ const Dashboard = (): JSX.Element => {
     }
   }, [realm, authenticated, dispatch]);
 
+  const truncate = (text, maxLength = 100) => {
+    if (!text) return '';
+    return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+  };
+
   const adminDashboard = () => {
     return (
       <DashboardDiv>
@@ -65,53 +79,53 @@ const Dashboard = (): JSX.Element => {
           <Main>
             <DashboardMinWidth>
               {tenantName && (
-                <>
+                <ServiceColumnLayoutDashboard>
                   <h1 data-testid="dashboard-title">Dashboard</h1>
-                  <GoabGrid gap="s" minChildWidth="25ch">
+                  <GoabGrid gap="s" minChildWidth="clamp(280px, 32%, 420px)">
                     {services.map((ref, index) => (
-                      <GoabContainer accent="thin" type="interactive" key={index} minHeight={'100%'}>
-                        <div>
-                          <HeadingDiv>
-                            <h2>
-                              <Link to={services[index].link}>{services[index].name}</Link>
-                            </h2>
-                            {services[index].beta && (
-                              <img src={BetaBadge} alt={`${services[index].name} Service`} width={39} height={23} />
-                            )}
-                            {services[index].alpha && <div>{alphaBadge()}</div>}
-                          </HeadingDiv>
-                          <div>{services[index].description}</div>
-                        </div>
-                      </GoabContainer>
+                      <DashboardContainer>
+                        <HeadingDiv>
+                          <h2>
+                            <Link to={services[index].link}>{services[index].name}</Link>
+                          </h2>
+                          {services[index].beta && (
+                            <img src={BetaBadge} alt={`${services[index].name} Service`} width={39} height={23} />
+                          )}
+                          {services[index].alpha && <div>{alphaBadge()}</div>}
+                        </HeadingDiv>
+                        <div>{truncate(services[index].description, 120)}</div>
+                      </DashboardContainer>
                     ))}
                   </GoabGrid>
-                </>
+                </ServiceColumnLayoutDashboard>
               )}
             </DashboardMinWidth>
           </Main>
           <DashboardAside>
-            <SupportLinks />
-            <h3>Sharing tenant access</h3>
-            <div>
-              <p>To give another user limited access to your realm:</p>
+            <AsidePadding>
+              <SupportLinks />
+              <h3>Sharing tenant access</h3>
               <div>
-                <ListWrapper>
-                  <li>
-                    Share the login URL below and have your user <ExternalLink link={loginUrl} text="login" /> once to
-                    create their account.
-                  </li>
-                  <li>
-                    Add the 'tenant-admin' role to the user's assigned roles from{' '}
-                    <ExternalLink link={getKeycloakAdminPortalUsers()} text="here" />
-                    <br />
-                    (Role Mapping › Client Roles › urn:ads:platform:tenant-service › Add selected)
-                  </li>
-                  <li>Once granted the role, the user can access tenant admin using the URL below.</li>
-                </ListWrapper>
+                <p>To give another user limited access to your realm:</p>
+                <div>
+                  <ListWrapper>
+                    <li>
+                      Share the login URL below and have your user <ExternalLink link={loginUrl} text="login" /> once to
+                      create their account.
+                    </li>
+                    <li>
+                      Add the 'tenant-admin' role to the user's assigned roles from{' '}
+                      <ExternalLink link={getKeycloakAdminPortalUsers()} text="here" />
+                      <br />
+                      (Role Mapping › Client Roles › urn:ads:platform:tenant-service › Add selected)
+                    </li>
+                    <li>Once granted the role, the user can access tenant admin using the URL below.</li>
+                  </ListWrapper>
+                </div>
               </div>
-            </div>
-            <h3>Login link</h3>
-            <LinkCopyComponent text={'Copy link'} link={loginUrl} />
+              <h3>Login link</h3>
+              <LinkCopyComponent text={'Copy link'} link={loginUrl} />
+            </AsidePadding>
           </DashboardAside>
         </Page>
       </DashboardDiv>

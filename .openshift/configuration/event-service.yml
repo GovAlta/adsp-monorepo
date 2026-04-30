@@ -12,6 +12,7 @@ items:
       KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
       DIRECTORY_URL: https://directory-service.adsp-dev.gov.ab.ca
       AMQP_HOST: event-service-rabbitmq-balancer
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       LOG_LEVEL: info
   - apiVersion: v1
     kind: Secret
