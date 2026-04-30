@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Aside, Main, Page } from '@components/Html';
+import { Aside, Main, Page, AsidePadding } from '@components/Html';
 import AsideLinks from '@components/AsideLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { Overview } from './overview';
@@ -30,7 +30,9 @@ export default function (): JSX.Element {
       </Main>
 
       <Aside>
-        <AsideLinks serviceName="Access" noDocsLink={true} />
+        <AsidePadding>
+          <AsideLinks serviceName="Access" noDocsLink={true} />
+        </AsidePadding>
       </Aside>
     </Page>
   );

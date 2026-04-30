@@ -148,6 +148,24 @@ interface extractSchema {
   errorMessage?: string;
 }
 
+export const getSinValidationError = (data: unknown, schema?: JsonSchema): string | undefined => {
+  const extraSchema = schema as JsonSchema & extractSchema;
+
+  if (!extraSchema || extraSchema.title !== sinTitle || typeof data !== 'string') {
+    return undefined;
+  }
+
+  if (data.length === 11 && !validateSinWithLuhn(Number(data.replace(/\D/g, '')))) {
+    return data === '' ? '' : invalidSin;
+  }
+
+  if (data.length > 0 && data.length < 11) {
+    return extraSchema.errorMessage;
+  }
+
+  return undefined;
+};
+
 /**
  * Gets the required fields in the If/Then/Else json schema condition.
  * @param props - ControlProps

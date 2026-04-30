@@ -8,6 +8,7 @@ import BetaBadge from '@icons/beta-badge.svg';
 import { HeadingDiv } from '../styled-components';
 import AsideLinks from '@components/AsideLinks';
 import { CalendarEvents } from './events';
+import { AsidePadding } from '../../../../components/Html';
 
 export const Calendar = (): JSX.Element => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -41,7 +42,9 @@ export const Calendar = (): JSX.Element => {
         </>
       </Main>
       <Aside>
-        <AsideLinks serviceName={'calendar'} />
+        <AsidePadding>
+          <AsideLinks serviceName={'calendar'} />
+        </AsidePadding>
       </Aside>
     </Page>
   );

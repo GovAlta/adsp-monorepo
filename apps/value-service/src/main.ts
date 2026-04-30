@@ -92,6 +92,11 @@ const initializeApp = async () => {
         ],
         useLongConfigurationCacheTTL: true,
         enableConfigurationInvalidation: true,
+        tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT
+          ? {
+              endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+            }
+          : undefined,
         serviceConfigurations: [
           {
             serviceId: adspId`urn:ads:platform:cache-service`,

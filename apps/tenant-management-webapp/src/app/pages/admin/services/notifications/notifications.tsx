@@ -12,6 +12,7 @@ import { subscriberAppUrlSelector } from './selectors';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 
 import AsideLinks from '@components/AsideLinks';
+import { AsidePadding } from '../../../../components/Html';
 
 export const Notifications: FunctionComponent = () => {
   const loginUrl = useSelector(subscriberAppUrlSelector);
@@ -50,12 +51,13 @@ export const Notifications: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <AsideLinks serviceName="notification" />
-
-        <h3>Manage subscriptions</h3>
-        <span>Subscribers can manage their subscriptions here:</span>
-        <h3>Subscriber app link</h3>
-        <LinkCopyComponent text={'Copy link'} link={loginUrl} />
+        <AsidePadding>
+          <AsideLinks serviceName="notification" />
+          <h3>Manage subscriptions</h3>
+          <span>Subscribers can manage their subscriptions here:</span>
+          <h3>Subscriber app link</h3>
+          <LinkCopyComponent text={'Copy link'} link={loginUrl} />
+        </AsidePadding>
       </Aside>
     </Page>
   );

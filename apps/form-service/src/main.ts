@@ -88,6 +88,11 @@ const initializeApp = async (): Promise<express.Application> => {
       serviceId,
       displayName: 'Form service',
       description: 'Service that provides a model for intake forms completed by applicants and processed by assessors.',
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT
+        ? {
+            endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+          }
+        : undefined,
       roles: [
         {
           role: FormServiceRoles.Admin,

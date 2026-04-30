@@ -9,12 +9,12 @@ import { GoabButton, GoabCallout } from '@abgov/react-components';
 
 import { EventSearchCriteria } from '@store/event/models';
 import { LoadMoreWrapper } from '@components/styled-components';
-import { ServiceColumnLayout } from '../../admin';
+import { ServiceColumnLayoutWithMargin } from '../../admin';
 
 export const EventLog: FunctionComponent = () => {
   const readerRole = 'value-reader';
   const hasReaderRole = useSelector((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:value-service']?.roles?.includes(readerRole)
+    state.session?.resourceAccess?.['urn:ads:platform:value-service']?.roles?.includes(readerRole),
   );
   const [searched, setSearched] = useState(false);
   const [searchCriteria, setSearchCriteria] = useState(null);
@@ -51,7 +51,7 @@ export const EventLog: FunctionComponent = () => {
   };
   return (
     <Main>
-      <ServiceColumnLayout>
+      <ServiceColumnLayoutWithMargin>
         <h1 data-testid="eventLog-title">Event log</h1>
         <p>
           The event log shows the sequence of events for your tenant. Enable the adsp-event-listener in your realm to
@@ -77,7 +77,7 @@ export const EventLog: FunctionComponent = () => {
             </GoabCallout>
           )}
         </section>
-      </ServiceColumnLayout>
+      </ServiceColumnLayoutWithMargin>
     </Main>
   );
 };

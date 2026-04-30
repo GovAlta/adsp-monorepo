@@ -68,6 +68,11 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT
+        ? {
+            endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+          }
+        : undefined,
       displayName: 'Comment service',
       description: 'Service that allows users to comment on topics.',
       roles: [
@@ -96,7 +101,7 @@ const initializeApp = async (): Promise<express.Application> => {
       combineConfiguration: (tenant: Record<string, TopicType>, core: Record<string, TopicType>, tenantId) =>
         Object.entries({ ...core, ...tenant }).reduce(
           (entities, [id, type]) => ({ ...entities, [id]: new TopicTypeEntity(tenantId, type) }),
-          {} as Record<string, TopicTypeEntity>
+          {} as Record<string, TopicTypeEntity>,
         ),
       enableConfigurationInvalidation: true,
       useLongConfigurationCacheTTL: true,
@@ -123,7 +128,7 @@ const initializeApp = async (): Promise<express.Application> => {
         },
       ],
     },
-    { logger }
+    { logger },
   );
 
   passport.use('core', coreStrategy);
@@ -144,7 +149,7 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   applyCommentMiddleware(app, { serviceId, logger, eventService, repository: repositories.topicRepository });

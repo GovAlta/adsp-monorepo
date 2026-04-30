@@ -3,6 +3,7 @@ import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import GoALinkButton from '@components/LinkButton';
 import { GoabButton, GoabButtonGroup, GoabModal } from '@abgov/react-components';
+import { AsidePadding } from '../../components/Html';
 
 export const SignInError = (): JSX.Element => {
   const [showModal, setShowModel] = useState(false);
@@ -41,7 +42,9 @@ export const SignInError = (): JSX.Element => {
         </GoALinkButton>
       </Main>
       <Aside>
-        <SupportLinks />
+        <AsidePadding>
+          <SupportLinks />
+        </AsidePadding>
       </Aside>
       <GoabModal
         testId="target-cache"
