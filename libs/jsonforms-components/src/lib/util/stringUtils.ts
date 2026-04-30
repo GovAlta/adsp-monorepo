@@ -148,6 +148,24 @@ interface extractSchema {
   errorMessage?: string;
 }
 
+export const getSinValidationError = (data: unknown, schema?: JsonSchema): string | undefined => {
+  const extraSchema = schema as JsonSchema & extractSchema;
+
+  if (!extraSchema || extraSchema.title !== sinTitle || typeof data !== 'string') {
+    return undefined;
+  }
+
+  if (data.length === 11 && !validateSinWithLuhn(Number(data.replace(/\D/g, '')))) {
+    return data === '' ? '' : invalidSin;
+  }
+
+  if (data.length > 0 && data.length < 11) {
+    return extraSchema.errorMessage;
+  }
+
+  return undefined;
+};
+
 /**
  * Gets the required fields in the If/Then/Else json schema condition.
  * @param props - ControlProps
@@ -202,14 +220,9 @@ export const getRequiredIfThen = (props: ControlProps) => {
 export const checkFieldValidity = (props: ControlProps, rootData?: unknown): string => {
   const { data, errors: ajvErrors, required, schema } = props;
   const labelToUpdate = getControlLabelText(props);
-  const extraSchema = schema as JsonSchema & extractSchema;
-
-  if (extraSchema && data && extraSchema?.title === sinTitle) {
-    if (data.length === 11 && !validateSinWithLuhn(data)) {
-      return data === '' ? '' : invalidSin;
-    } else if (data.length > 0 && data.length < 11) {
-      return extraSchema.errorMessage;
-    }
+  const sinValidationError = getSinValidationError(data, schema);
+  if (sinValidationError) {
+    return sinValidationError;
   }
 
   const rootRequired = getRequiredIfThen(props);
