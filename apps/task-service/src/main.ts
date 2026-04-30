@@ -198,7 +198,7 @@ const initializeApp = async (): Promise<express.Application> => {
         : undefined,
       values: [ServiceMetricsValueDefinition],
     },
-    { logger }
+    { logger },
   );
 
   passport.use('core', coreStrategy);
@@ -220,7 +220,7 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   const repositories = await createRepositories({ logger, ...environment });

@@ -25,6 +25,7 @@ export const environment = envalid.cleanEnv(
     AMQP_USER: envalid.str({ default: 'guest' }),
     AMQP_PASSWORD: envalid.str({ default: 'guest' }),
     AMQP_URL: envalid.str({ default: '' }),
+    OTEL_EXPORTER_OTLP_ENDPOINT: envalid.str({ default: '' }),
     DIRECTORY_URL: envalid.str({ default: 'http://localhost:3331' }),
     PLATFORM_TENANT_REALM: envalid.str({ default: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5' }),
     HA_MODEL: envalid.bool({ default: false }),

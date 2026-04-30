@@ -90,7 +90,7 @@ async function initializeApp() {
       combineConfiguration: (
         tenantConfig: Record<string, NotificationType>,
         coreConfig: Record<string, NotificationType>,
-        tenantId: AdspId
+        tenantId: AdspId,
       ) => new NotificationConfiguration(logger, templateService, fileService, tenantConfig, coreConfig, tenantId),
       events: [
         NotificationsGeneratedDefinition,
@@ -126,7 +126,7 @@ async function initializeApp() {
           }
         : undefined,
     },
-    { logger }
+    { logger },
   );
 
   passport.use('core', coreStrategy);
@@ -148,7 +148,7 @@ async function initializeApp() {
     metricsHandler,
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   const { botRepository, ...repositories } = await createRepositories({ ...environment, logger });

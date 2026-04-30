@@ -1,0 +1,784 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: observability-stack
+  annotations:
+    template.openshift.io/provider-display-name: platform team
+    description: >-
+      Platform-owned Tempo, OpenTelemetry Collector, and Grafana stack for
+      request tracing evaluation.
+parameters:
+  - name: ENVIRONMENT_NAME
+    description: Logical environment label for observability resources.
+    displayName: Environment Name
+    required: true
+    value: dev
+  - name: INFRA_NAMESPACE
+    description: Namespace where shared ImageStreams are created.
+    displayName: Infra Namespace
+    required: true
+    value: core-services-infra
+  - name: IMAGE_TAG
+    description: ImageStream tag used for import and deployment.
+    displayName: Image Tag
+    required: true
+    value: latest
+  - name: IMAGE_IMPORT_SCHEDULED
+    description: Whether ImageStreams periodically re-import from upstream registry.
+    displayName: Scheduled Image Import
+    required: true
+    value: 'false'
+
+  - name: TEMPO_NAME
+    description: Tempo resource name.
+    displayName: Tempo Name
+    required: true
+    value: tempo
+  - name: TEMPO_IMAGE
+    description: Source Docker image for Tempo import.
+    displayName: Tempo Image
+    required: true
+    value: grafana/tempo:2.7.2
+  - name: TEMPO_STORAGE_CLASS_NAME
+    description: Storage class for Tempo data.
+    displayName: Tempo Storage Class
+    required: false
+    value: azure-disk
+  - name: TEMPO_STORAGE_SIZE
+    description: Requested storage size for Tempo data.
+    displayName: Tempo Storage Size
+    required: true
+    value: 20Gi
+  - name: TRACE_RETENTION
+    description: Trace retention period.
+    displayName: Trace Retention
+    required: true
+    value: 72h
+
+  - name: COLLECTOR_NAME
+    description: Collector resource name.
+    displayName: Collector Name
+    required: true
+    value: otel-collector
+  - name: COLLECTOR_IMAGE
+    description: Source Docker image for Collector import.
+    displayName: Collector Image
+    required: true
+    value: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.125.0
+  - name: COLLECTOR_REPLICAS
+    description: Number of collector replicas.
+    displayName: Collector Replicas
+    required: true
+    value: '1'
+
+  - name: GRAFANA_NAME
+    description: Grafana resource name.
+    displayName: Grafana Name
+    required: true
+    value: grafana
+  - name: GRAFANA_IMAGE
+    description: Source Docker image for Grafana import.
+    displayName: Grafana Image
+    required: true
+    value: grafana/grafana:11.5.2
+  - name: GRAFANA_SECRET_NAME
+    description: Name of an existing secret containing Grafana credentials.
+    displayName: Grafana Secret Name
+    required: true
+    value: grafana
+  - name: GRAFANA_OAUTH_ENABLED
+    description: Enable Grafana Generic OAuth authentication.
+    displayName: Grafana OAuth Enabled
+    required: true
+    value: 'false'
+  - name: GRAFANA_OAUTH_NAME
+    description: Label for OAuth login option.
+    displayName: Grafana OAuth Provider Name
+    required: true
+    value: Keycloak
+  - name: GRAFANA_OAUTH_ALLOW_SIGN_UP
+    description: Whether OAuth users can sign up in Grafana.
+    displayName: Grafana OAuth Allow Signup
+    required: true
+    value: 'true'
+  - name: GRAFANA_OAUTH_SCOPES
+    description: OAuth scopes requested by Grafana.
+    displayName: Grafana OAuth Scopes
+    required: true
+    value: openid profile email
+  - name: GRAFANA_OAUTH_ADMIN_ROLE
+    description: Keycloak role mapped to Grafana Admin.
+    displayName: Grafana OAuth Admin Role
+    required: true
+    value: grafana-admin
+  - name: GRAFANA_OAUTH_VIEWER_ROLE
+    description: Keycloak role mapped to Grafana Viewer.
+    displayName: Grafana OAuth Viewer Role
+    required: true
+    value: grafana-viewer
+  - name: GRAFANA_OAUTH_AUTH_URL
+    description: OAuth authorization endpoint URL.
+    displayName: Grafana OAuth Auth URL
+    required: false
+    value: ''
+  - name: GRAFANA_OAUTH_TOKEN_URL
+    description: OAuth token endpoint URL.
+    displayName: Grafana OAuth Token URL
+    required: false
+    value: ''
+  - name: GRAFANA_OAUTH_API_URL
+    description: OAuth user info endpoint URL.
+    displayName: Grafana OAuth API URL
+    required: false
+    value: ''
+  - name: GRAFANA_DISABLE_LOGIN_FORM
+    description: Disable Grafana local login form.
+    displayName: Grafana Disable Login Form
+    required: true
+    value: 'false'
+  - name: GRAFANA_ROOT_URL
+    description: Public root URL for Grafana.
+    displayName: Grafana Root URL
+    required: false
+    value: ''
+  - name: GRAFANA_STORAGE_CLASS_NAME
+    description: Storage class for Grafana data.
+    displayName: Grafana Storage Class
+    required: false
+    value: azure-disk
+  - name: GRAFANA_STORAGE_SIZE
+    description: Requested storage size for Grafana data.
+    displayName: Grafana Storage Size
+    required: true
+    value: 2Gi
+objects:
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: ${TEMPO_NAME}
+      namespace: ${INFRA_NAMESPACE}
+      labels:
+        app: ${TEMPO_NAME}
+        component: observability
+        apply-infra: 'true'
+    spec:
+      tags:
+        - name: ${IMAGE_TAG}
+          from:
+            kind: DockerImage
+            name: ${TEMPO_IMAGE}
+          importPolicy:
+            scheduled: ${{IMAGE_IMPORT_SCHEDULED}}
+          referencePolicy:
+            type: Local
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: ${COLLECTOR_NAME}
+      namespace: ${INFRA_NAMESPACE}
+      labels:
+        app: ${COLLECTOR_NAME}
+        component: observability
+        apply-infra: 'true'
+    spec:
+      tags:
+        - name: ${IMAGE_TAG}
+          from:
+            kind: DockerImage
+            name: ${COLLECTOR_IMAGE}
+          importPolicy:
+            scheduled: ${{IMAGE_IMPORT_SCHEDULED}}
+          referencePolicy:
+            type: Local
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: ${GRAFANA_NAME}
+      namespace: ${INFRA_NAMESPACE}
+      labels:
+        app: ${GRAFANA_NAME}
+        component: observability
+        apply-infra: 'true'
+    spec:
+      tags:
+        - name: ${IMAGE_TAG}
+          from:
+            kind: DockerImage
+            name: ${GRAFANA_IMAGE}
+          importPolicy:
+            scheduled: ${{IMAGE_IMPORT_SCHEDULED}}
+          referencePolicy:
+            type: Local
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: ${TEMPO_NAME}
+      labels:
+        app: ${TEMPO_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    data:
+      tempo.yaml: |
+        stream_over_http_enabled: true
+
+        server:
+          http_listen_port: 3200
+
+        distributor:
+          receivers:
+            otlp:
+              protocols:
+                grpc:
+                  endpoint: 0.0.0.0:4317
+                http:
+                  endpoint: 0.0.0.0:4318
+
+        ingester:
+          max_block_duration: 5m
+
+        compactor:
+          compaction:
+            block_retention: ${TRACE_RETENTION}
+
+        storage:
+          trace:
+            backend: local
+            wal:
+              path: /var/tempo/wal
+            local:
+              path: /var/tempo/blocks
+
+        querier:
+          frontend_worker:
+            frontend_address: 127.0.0.1:9095
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: ${TEMPO_NAME}-storage
+      labels:
+        app: ${TEMPO_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: ${TEMPO_STORAGE_CLASS_NAME}
+      resources:
+        requests:
+          storage: ${TEMPO_STORAGE_SIZE}
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${TEMPO_NAME}
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${TEMPO_NAME}:${IMAGE_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": false
+            }
+          ]
+      labels:
+        app: ${TEMPO_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      replicas: 1
+      strategy:
+        type: Recreate
+      selector:
+        matchLabels:
+          app: ${TEMPO_NAME}
+      template:
+        metadata:
+          labels:
+            app: ${TEMPO_NAME}
+            component: observability
+            environment: ${ENVIRONMENT_NAME}
+        spec:
+          terminationGracePeriodSeconds: 30
+          containers:
+            - name: tempo
+              image: image-registry.openshift-image-registry.svc:5000/${INFRA_NAMESPACE}/${TEMPO_NAME}:${IMAGE_TAG}
+              imagePullPolicy: IfNotPresent
+              args:
+                - -config.file=/conf/tempo.yaml
+              ports:
+                - containerPort: 3200
+                  name: http
+                  protocol: TCP
+                - containerPort: 4317
+                  name: otlp-grpc
+                  protocol: TCP
+                - containerPort: 4318
+                  name: otlp-http
+                  protocol: TCP
+                - containerPort: 9095
+                  name: grpc
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /ready
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 10
+              livenessProbe:
+                httpGet:
+                  path: /ready
+                  port: http
+                initialDelaySeconds: 30
+                periodSeconds: 20
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+                limits:
+                  cpu: 500m
+                  memory: 1Gi
+              volumeMounts:
+                - name: config
+                  mountPath: /conf
+                - name: storage
+                  mountPath: /var/tempo
+          volumes:
+            - name: config
+              configMap:
+                name: ${TEMPO_NAME}
+            - name: storage
+              persistentVolumeClaim:
+                claimName: ${TEMPO_NAME}-storage
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: ${TEMPO_NAME}
+      labels:
+        app: ${TEMPO_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      minAvailable: 1
+      selector:
+        matchLabels:
+          app: ${TEMPO_NAME}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${TEMPO_NAME}
+      labels:
+        app: ${TEMPO_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      selector:
+        app: ${TEMPO_NAME}
+      ports:
+        - name: http
+          port: 3200
+          targetPort: http
+          protocol: TCP
+        - name: otlp-grpc
+          port: 4317
+          targetPort: otlp-grpc
+          protocol: TCP
+        - name: otlp-http
+          port: 4318
+          targetPort: otlp-http
+          protocol: TCP
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: ${COLLECTOR_NAME}
+      labels:
+        app: ${COLLECTOR_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    data:
+      collector.yaml: |
+        receivers:
+          otlp:
+            protocols:
+              grpc:
+                endpoint: 0.0.0.0:4317
+              http:
+                endpoint: 0.0.0.0:4318
+
+        processors:
+          memory_limiter:
+            check_interval: 1s
+            limit_mib: 1024
+            spike_limit_mib: 256
+          resource:
+            attributes:
+              - key: deployment.environment
+                action: upsert
+                value: ${ENVIRONMENT_NAME}
+          batch:
+            timeout: 5s
+            send_batch_size: 512
+            send_batch_max_size: 1024
+
+        exporters:
+          otlp:
+            endpoint: ${TEMPO_NAME}:4317
+            tls:
+              insecure: true
+            sending_queue:
+              enabled: true
+              num_consumers: 4
+              queue_size: 2048
+            retry_on_failure:
+              enabled: true
+              initial_interval: 1s
+              max_interval: 30s
+              max_elapsed_time: 300s
+
+        extensions:
+          health_check:
+            endpoint: 0.0.0.0:13133
+
+        service:
+          extensions: [health_check]
+          pipelines:
+            traces:
+              receivers: [otlp]
+              processors: [memory_limiter, resource, batch]
+              exporters: [otlp]
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${COLLECTOR_NAME}
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${COLLECTOR_NAME}:${IMAGE_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": false
+            }
+          ]
+      labels:
+        app: ${COLLECTOR_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      replicas: ${{COLLECTOR_REPLICAS}}
+      strategy:
+        type: RollingUpdate
+      selector:
+        matchLabels:
+          app: ${COLLECTOR_NAME}
+      template:
+        metadata:
+          labels:
+            app: ${COLLECTOR_NAME}
+            component: observability
+            environment: ${ENVIRONMENT_NAME}
+        spec:
+          terminationGracePeriodSeconds: 30
+          containers:
+            - name: otel-collector
+              image: image-registry.openshift-image-registry.svc:5000/${INFRA_NAMESPACE}/${COLLECTOR_NAME}:${IMAGE_TAG}
+              imagePullPolicy: IfNotPresent
+              args:
+                - --config=/conf/collector.yaml
+              ports:
+                - containerPort: 4317
+                  name: otlp-grpc
+                  protocol: TCP
+                - containerPort: 4318
+                  name: otlp-http
+                  protocol: TCP
+                - containerPort: 13133
+                  name: health
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: health
+                initialDelaySeconds: 10
+                periodSeconds: 10
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: health
+                initialDelaySeconds: 30
+                periodSeconds: 20
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              volumeMounts:
+                - name: config
+                  mountPath: /conf
+          volumes:
+            - name: config
+              configMap:
+                name: ${COLLECTOR_NAME}
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: ${COLLECTOR_NAME}
+      labels:
+        app: ${COLLECTOR_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      minAvailable: 1
+      selector:
+        matchLabels:
+          app: ${COLLECTOR_NAME}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${COLLECTOR_NAME}
+      labels:
+        app: ${COLLECTOR_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      selector:
+        app: ${COLLECTOR_NAME}
+      ports:
+        - name: otlp-grpc
+          port: 4317
+          targetPort: otlp-grpc
+          protocol: TCP
+        - name: otlp-http
+          port: 4318
+          targetPort: otlp-http
+          protocol: TCP
+        - name: health
+          port: 13133
+          targetPort: health
+          protocol: TCP
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: ${GRAFANA_NAME}-datasources
+      labels:
+        app: ${GRAFANA_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    data:
+      tempo.yaml: |
+        apiVersion: 1
+        datasources:
+          - name: Tempo
+            uid: tempo
+            type: tempo
+            access: proxy
+            url: http://${TEMPO_NAME}:3200
+            isDefault: true
+            editable: false
+            jsonData:
+              httpMethod: GET
+              serviceMap:
+                datasourceUid: ''
+              tracesToLogsV2:
+                datasourceUid: ''
+              nodeGraph:
+                enabled: true
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: ${GRAFANA_NAME}-storage
+      labels:
+        app: ${GRAFANA_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: ${GRAFANA_STORAGE_CLASS_NAME}
+      resources:
+        requests:
+          storage: ${GRAFANA_STORAGE_SIZE}
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${GRAFANA_NAME}
+      annotations:
+        image.openshift.io/triggers: |-
+          [
+            {
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${GRAFANA_NAME}:${IMAGE_TAG}",
+                "namespace": "${INFRA_NAMESPACE}"
+              },
+              "fieldPath": "spec.template.spec.containers[0].image",
+              "paused": false
+            }
+          ]
+      labels:
+        app: ${GRAFANA_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      replicas: 1
+      strategy:
+        type: Recreate
+      selector:
+        matchLabels:
+          app: ${GRAFANA_NAME}
+      template:
+        metadata:
+          labels:
+            app: ${GRAFANA_NAME}
+            component: observability
+            environment: ${ENVIRONMENT_NAME}
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: grafana
+              image: image-registry.openshift-image-registry.svc:5000/${INFRA_NAMESPACE}/${GRAFANA_NAME}:${IMAGE_TAG}
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              env:
+                - name: GF_SECURITY_ADMIN_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${GRAFANA_SECRET_NAME}
+                      key: admin-user
+                - name: GF_SECURITY_ADMIN_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${GRAFANA_SECRET_NAME}
+                      key: admin-password
+                - name: GF_PATHS_PROVISIONING
+                  value: /etc/grafana/provisioning
+                - name: GF_SERVER_ROOT_URL
+                  value: ${GRAFANA_ROOT_URL}
+                - name: GF_AUTH_DISABLE_LOGIN_FORM
+                  value: ${GRAFANA_DISABLE_LOGIN_FORM}
+                - name: GF_AUTH_GENERIC_OAUTH_ENABLED
+                  value: ${GRAFANA_OAUTH_ENABLED}
+                - name: GF_AUTH_GENERIC_OAUTH_NAME
+                  value: ${GRAFANA_OAUTH_NAME}
+                - name: GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP
+                  value: ${GRAFANA_OAUTH_ALLOW_SIGN_UP}
+                - name: GF_AUTH_GENERIC_OAUTH_SCOPES
+                  value: ${GRAFANA_OAUTH_SCOPES}
+                - name: GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH
+                  value: "(contains(realm_access.roles[*], '${GRAFANA_OAUTH_ADMIN_ROLE}') || contains(resource_access.grafana.roles[*], '${GRAFANA_OAUTH_ADMIN_ROLE}')) && 'Admin' || (contains(realm_access.roles[*], '${GRAFANA_OAUTH_VIEWER_ROLE}') || contains(resource_access.grafana.roles[*], '${GRAFANA_OAUTH_VIEWER_ROLE}')) && 'Viewer' || 'None'"
+                - name: GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_STRICT
+                  value: 'true'
+                - name: GF_AUTH_GENERIC_OAUTH_AUTH_URL
+                  value: ${GRAFANA_OAUTH_AUTH_URL}
+                - name: GF_AUTH_GENERIC_OAUTH_TOKEN_URL
+                  value: ${GRAFANA_OAUTH_TOKEN_URL}
+                - name: GF_AUTH_GENERIC_OAUTH_API_URL
+                  value: ${GRAFANA_OAUTH_API_URL}
+                - name: GF_AUTH_GENERIC_OAUTH_CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${GRAFANA_SECRET_NAME}
+                      key: oauth-client-id
+                - name: GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${GRAFANA_SECRET_NAME}
+                      key: oauth-client-secret
+              ports:
+                - containerPort: 3000
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                httpGet:
+                  path: /api/health
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 10
+              livenessProbe:
+                httpGet:
+                  path: /api/health
+                  port: http
+                initialDelaySeconds: 30
+                periodSeconds: 20
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 300m
+                  memory: 512Mi
+              volumeMounts:
+                - name: datasources
+                  mountPath: /etc/grafana/provisioning/datasources
+                - name: storage
+                  mountPath: /var/lib/grafana
+          volumes:
+            - name: datasources
+              configMap:
+                name: ${GRAFANA_NAME}-datasources
+            - name: storage
+              persistentVolumeClaim:
+                claimName: ${GRAFANA_NAME}-storage
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: ${GRAFANA_NAME}
+      labels:
+        app: ${GRAFANA_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      minAvailable: 1
+      selector:
+        matchLabels:
+          app: ${GRAFANA_NAME}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${GRAFANA_NAME}
+      labels:
+        app: ${GRAFANA_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      selector:
+        app: ${GRAFANA_NAME}
+      ports:
+        - name: http
+          port: 3000
+          targetPort: http
+          protocol: TCP
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      name: ${GRAFANA_NAME}
+      labels:
+        app: ${GRAFANA_NAME}
+        component: observability
+        environment: ${ENVIRONMENT_NAME}
+    spec:
+      to:
+        kind: Service
+        name: ${GRAFANA_NAME}
+      port:
+        targetPort: http
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
