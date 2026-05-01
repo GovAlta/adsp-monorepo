@@ -14,7 +14,7 @@ Given('a user is on the public service status page for {string}', function (tena
 });
 
 Then('the user views the status and outages page', function () {
-  statusNoticeObj.statusPageTitle().invoke('text').should('contain', 'Status');
+  statusNoticeObj.statusPageTitle().invoke('attr', 'heading').should('contain', 'Status');
 });
 
 Then('the user views the correct header and release version', function () {

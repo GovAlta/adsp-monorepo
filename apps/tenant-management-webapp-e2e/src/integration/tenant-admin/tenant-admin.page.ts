@@ -1,6 +1,6 @@
 class TenantAdminPage {
   dashboardTitle() {
-    return cy.get('.name');
+    return cy.xpath('//goa-microsite-header/following-sibling::goa-app-header');
   }
 
   dashboardServicesMenuCategory() {

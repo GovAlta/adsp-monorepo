@@ -1,14 +1,14 @@
 class ServiceStatusPage {
   goaMicrositeHeader() {
-    return cy.xpath('//div[@class="goa-header goa-microsite-header"]');
+    return cy.get('goa-microsite-header[type="live"]');
   }
 
   goaOfficialSiteHeader() {
-    return cy.xpath('//*[@class="goa-header goa-official-site-header"]');
+    return cy.get('goa-app-header');
   }
 
   statusPageTitle() {
-    return cy.get('.name');
+    return cy.get('goa-app-header');
   }
 
   applicationStatus(appTitle) {
