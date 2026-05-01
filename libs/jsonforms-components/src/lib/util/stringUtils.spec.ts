@@ -412,19 +412,19 @@ describe('stringUtils string tests', () => {
     });
 
     it('validateSinWithLuhn sample value', () => {
-      const result = validateSinWithLuhn(123456789);
+      const result = validateSinWithLuhn('123456789');
       expect(typeof result).toBe('boolean');
     });
 
     it('validateSinWithLuhn various values', () => {
-      const result1 = validateSinWithLuhn(100);
-      const result2 = validateSinWithLuhn(999999999);
+      const result1 = validateSinWithLuhn('100');
+      const result2 = validateSinWithLuhn('999999999');
       expect(typeof result1).toBe('boolean');
       expect(typeof result2).toBe('boolean');
     });
 
     it('validateSinWithLuhn single digit', () => {
-      const result = validateSinWithLuhn(0);
+      const result = validateSinWithLuhn('0');
       expect(typeof result).toBe('boolean');
     });
 
@@ -687,8 +687,8 @@ describe('stringUtils string tests', () => {
     });
 
     it('validateSinWithLuhn with 9-digit SIN', () => {
-      expect(typeof validateSinWithLuhn(123456782)).toBe('boolean');
-      expect(typeof validateSinWithLuhn(46454286)).toBe('boolean');
+      expect(typeof validateSinWithLuhn('123456782')).toBe('boolean');
+      expect(typeof validateSinWithLuhn('46454286')).toBe('boolean');
     });
 
     it('isEmptyNumber with undefined for integer type', () => {
@@ -848,12 +848,17 @@ describe('stringUtils string tests', () => {
 describe('getControlLabelText blank label (CS-4826)', () => {
   const makeProps = (label: unknown, scope = '#/properties/myField', optionsText?: string): ControlProps =>
     ({
-      uischema: { type: 'Control', scope, label, options: optionsText ? { text: optionsText } : undefined } as ControlElement,
+      uischema: {
+        type: 'Control',
+        scope,
+        label,
+        options: optionsText ? { text: optionsText } : undefined,
+      } as ControlElement,
       schema: {},
       rootSchema: {},
       handleChange: jest.fn(),
       label: 'fallback',
-    } as unknown as ControlProps);
+    }) as unknown as ControlProps;
 
   it('returns empty string when uischema.label is explicitly empty string', () => {
     const result = getControlLabelText(makeProps(''));

@@ -556,7 +556,18 @@ describe('humanizeAjvError', () => {
       params: {},
       message: 'something went wrong',
     };
-    expect(humanizeAjvError(error, schema, uischema)).toBe('Field something went wrong');
+    expect(humanizeAjvError(error, schema, uischema)).toBe('something went wrong');
+  });
+
+  it('should handle unknown keyword without message', () => {
+    const error: ErrorObject = {
+      keyword: 'custom',
+      instancePath: '/field',
+      schemaPath: '#/properties/field/custom',
+      params: {},
+    };
+
+    expect(humanizeAjvError(error, schema, uischema)).toBe('Field is invalid');
   });
 });
 

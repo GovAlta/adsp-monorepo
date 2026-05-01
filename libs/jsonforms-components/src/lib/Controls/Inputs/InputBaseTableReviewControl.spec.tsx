@@ -12,6 +12,10 @@ import { invalidSin } from '../../common/Constants';
 import { CategorizationStepperLayoutRendererProps } from '../FormStepper/types';
 import { JsonFormsStepperContextProvider } from '../FormStepper/context';
 
+import { createDefaultAjv } from '../../../index';
+
+const ajv = createDefaultAjv();
+
 const getFormBase = (uiSchema: UISchemaElement, schema: object, data: object): JSX.Element => {
   return (
     <JsonForms
@@ -520,7 +524,39 @@ describe('InputBaseTableReviewControl', () => {
     expect(errorFormItem).toBeInTheDocument();
   });
 
+  it('returns invalid SIN error from custom AJV', () => {
+    const ajv = createDefaultAjv();
+
+    const validate = ajv.compile({
+      type: 'string',
+      pattern: '^\\d{3} \\d{3} \\d{3}$',
+      validSin: true,
+    });
+
+    const valid = validate('123 111 111');
+
+    expect(valid).toBe(false);
+    expect(validate.errors?.[0]?.message).toBe(invalidSin);
+  });
+
   it('shows SIN validation error on summary row for invalid SIN', () => {
+    const ajv = createDefaultAjv();
+
+    const schema = {
+      type: 'string',
+      title: 'Social insurance number',
+      pattern: '^\\d{3} \\d{3} \\d{3}$',
+      validSin: true,
+      errorMessage: {
+        pattern: 'Must be three groups of three digits.',
+      },
+    };
+
+    const validate = ajv.compile(schema);
+    validate('123 111 111');
+
+    const sinError = validate.errors?.[0]?.message ?? '';
+
     const { baseElement } = render(
       <table>
         <tbody>
@@ -529,11 +565,7 @@ describe('InputBaseTableReviewControl', () => {
             visible={true}
             label="Social insurance number"
             path="sinControls.valueA"
-            schema={{
-              type: 'string',
-              title: 'Social insurance number',
-              errorMessage: 'Must be three groups of three digits.',
-            }}
+            schema={schema}
             uischema={{
               type: 'Control',
               scope: '#/properties/sinControls/properties/valueA',
@@ -541,7 +573,7 @@ describe('InputBaseTableReviewControl', () => {
               options: { stepId: 1 },
             }}
             enabled={true}
-            errors=""
+            errors={sinError}
             cells={[]}
             required={false}
             id="sin-controls-valueA"
@@ -555,6 +587,8 @@ describe('InputBaseTableReviewControl', () => {
     );
 
     const errorFormItem = baseElement.querySelector(`goa-form-item[error="${invalidSin}"]`);
+
+    expect(sinError).toBe(invalidSin);
     expect(errorFormItem).toBeInTheDocument();
   });
 });

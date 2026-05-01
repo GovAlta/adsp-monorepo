@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { act, useContext } from 'react';
 import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { withJsonFormsControlProps } from '@jsonforms/react';
@@ -10,7 +10,6 @@ import {
   getLabelText,
   getLastSegmentFromPointer,
   isNilOrEmptyValue,
-  getSinValidationError,
 } from '../../util';
 import { humanizeAjvError } from '../ObjectArray/ListWithDetailControl';
 import { GoabButton, GoabFormItem } from '@abgov/react-components';
@@ -170,11 +169,6 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
 
   if (!activeError && typeof errors === 'string' && errors.trim() !== '') {
     activeError = errors;
-  }
-
-  const sinValidationError = getSinValidationError(data, schema as JsonSchema);
-  if (sinValidationError) {
-    activeError = sinValidationError;
   }
 
   if (activeError && /\sis required$/i.test(activeError)) {
