@@ -19,7 +19,7 @@ Given('the user goes to tenant management login link', function () {
 
 Then('the tenant management admin page is displayed', function () {
   cy.url().should('include', '/admin');
-  tenantAdminObj.dashboardTitle().contains('Tenant management');
+  tenantAdminObj.dashboardTitle().invoke('attr', 'heading').should('contains', 'Tenant management');
   tenantAdminObj.dashboardServicesMenuCategory();
 });
 
