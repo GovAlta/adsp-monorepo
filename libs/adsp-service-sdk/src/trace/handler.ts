@@ -2,7 +2,8 @@ import axios, { InternalAxiosRequestConfig } from 'axios';
 import type { RequestHandler } from 'express';
 import * as context from 'express-http-context';
 import type { Logger } from 'winston';
-import { context as otelContext, trace as otelTrace, propagation, SpanStatusCode } from '@opentelemetry/api';
+import { context as otelContext, trace as otelTrace, propagation, SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import type { Span, Tracer } from '@opentelemetry/api';
 import type { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { TRACE_PARENT_HEADER } from './context';
 import { createHttpServerTraceHandler, getContextSpan } from './instrument';
@@ -13,16 +14,66 @@ interface TraceHandlerOptions {
   tracerProvider?: NodeTracerProvider;
 }
 
-export function traceRequestInterceptor(config: InternalAxiosRequestConfig) {
+interface AxiosConfigWithSpan extends InternalAxiosRequestConfig {
+  _otelClientSpan?: Span;
+}
+
+function endClientSpan(span: Span | undefined, status: number, error?: unknown) {
+  if (!span) {
+    return;
+  }
+
+  span.setAttributes({
+    'http.status_code': status,
+  });
+
+  if (error || status >= 400) {
+    if (error) {
+      span.recordException(error instanceof Error ? error : String(error));
+    }
+    span.setStatus({
+      code: SpanStatusCode.ERROR,
+      message: error instanceof Error ? error.message : `HTTP ${status}`,
+    });
+  } else {
+    span.setStatus({ code: SpanStatusCode.OK });
+  }
+
+  span.end();
+}
+
+export function traceRequestInterceptor(config: InternalAxiosRequestConfig, tracer?: Tracer) {
+  const configWithSpan = config as AxiosConfigWithSpan;
   const hasTraceparent =
     typeof config.headers?.has === 'function'
       ? config.headers.has(TRACE_PARENT_HEADER)
       : !!(config.headers as Record<string, unknown>)?.[TRACE_PARENT_HEADER];
 
+  const parentSpan = getContextSpan();
+  const parentContext = parentSpan ? otelTrace.setSpan(otelContext.active(), parentSpan) : otelContext.active();
+
+  if (tracer && !configWithSpan._otelClientSpan) {
+    const clientSpan = tracer.startSpan(
+      `${(config.method || 'GET').toUpperCase()} ${config.url || 'unknown'}`,
+      {
+        kind: SpanKind.CLIENT,
+        attributes: {
+          'http.method': config.method,
+          'http.url': config.url,
+        },
+      },
+      parentContext,
+    );
+
+    configWithSpan._otelClientSpan = clientSpan;
+  }
+
+  const contextWithSpan = configWithSpan._otelClientSpan
+    ? otelTrace.setSpan(parentContext, configWithSpan._otelClientSpan)
+    : parentContext;
+
   if (!hasTraceparent) {
     const carrier = config.headers || {};
-    const span = getContextSpan();
-    const contextWithSpan = span ? otelTrace.setSpan(otelContext.active(), span) : otelContext.active();
 
     propagation.inject(contextWithSpan, carrier, {
       set: (headerCarrier, key, value) => {
@@ -36,17 +87,15 @@ export function traceRequestInterceptor(config: InternalAxiosRequestConfig) {
     config.headers = carrier as InternalAxiosRequestConfig['headers'];
   }
 
-  // Record outbound HTTP request event on active span.
-  const span = getContextSpan();
-  if (span) {
-    otelContext.with(otelTrace.setSpan(otelContext.active(), span), () => {
-      const activeSpan = otelTrace.getActiveSpan();
-      if (activeSpan) {
-        activeSpan.addEvent('http.client.request', {
-          'http.method': config.method,
-          'http.url': config.url,
-        });
-      }
+  if (configWithSpan._otelClientSpan) {
+    configWithSpan._otelClientSpan.addEvent('http.client.request', {
+      'http.method': config.method,
+      'http.url': config.url,
+    });
+  } else if (parentSpan) {
+    parentSpan.addEvent('http.client.request', {
+      'http.method': config.method,
+      'http.url': config.url,
     });
   }
 
@@ -58,24 +107,26 @@ export function createTraceHandler({
   sampleRate: _sampleRate,
   tracerProvider,
 }: TraceHandlerOptions): RequestHandler {
+  const tracer = tracerProvider?.getTracer('adsp-service-sdk');
+
   // Use an axios interceptor to inject trace context into outbound request headers.
-  axios.interceptors.request.use(traceRequestInterceptor);
+  axios.interceptors.request.use((config) => traceRequestInterceptor(config, tracer));
   axios.interceptors.response.use(
     (response) => {
-      const span = getContextSpan();
-      if (span) {
-        span.setAttributes({
+      const config = response.config as AxiosConfigWithSpan;
+      const clientSpan = config?._otelClientSpan;
+      if (clientSpan) {
+        clientSpan.setAttributes({
           'http.client.status': response.status,
         });
       }
+      endClientSpan(clientSpan, response.status);
       return response;
     },
     (error) => {
-      const span = getContextSpan();
-      if (span) {
-        span.recordException(error);
-        span.setStatus({ code: SpanStatusCode.ERROR });
-      }
+      const config = error?.config as AxiosConfigWithSpan | undefined;
+      const clientSpan = config?._otelClientSpan;
+      endClientSpan(clientSpan, error?.response?.status || 0, error);
       return Promise.reject(error);
     },
   );

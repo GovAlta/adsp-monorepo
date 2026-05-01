@@ -99,11 +99,8 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
-      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT
-        ? {
-            endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
-          }
-        : undefined,
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       serviceConfigurations: [
         {
           serviceId,
