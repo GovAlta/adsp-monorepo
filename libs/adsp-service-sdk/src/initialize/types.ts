@@ -42,6 +42,8 @@ export interface TracingOptions {
   headers?: Record<string, string>;
 }
 
+export type TracingConfiguration = TracingOptions | string;
+
 export interface MetricsOptions {
   /**
    * OTLP exporter endpoint: URL of OTLP collector (e.g., http://otel-collector:4318).
@@ -72,6 +74,8 @@ export interface MetricsOptions {
    */
   headers?: Record<string, string>;
 }
+
+export type MetricsConfiguration = MetricsOptions | string;
 
 export interface PlatformOptions extends ServiceRegistration {
   /**
@@ -166,17 +170,21 @@ export interface PlatformOptions extends ServiceRegistration {
   /**
    * Tracing options: Configuration for OpenTelemetry tracing and OTLP span export.
    *
-   * @type {TracingOptions}
+   * Accepts either a full tracing configuration object or a raw OTLP endpoint URL.
+   *
+   * @type {TracingConfiguration}
    * @memberof PlatformOptions
    */
-  tracing?: TracingOptions;
+  tracing?: TracingConfiguration;
   /**
    * Metrics options: Configuration for OpenTelemetry metrics and OTLP metric export.
    *
-   * @type {MetricsOptions}
+   * Accepts either a full metrics configuration object or a raw OTLP endpoint URL.
+   *
+   * @type {MetricsConfiguration}
    * @memberof PlatformOptions
    */
-  metrics?: MetricsOptions;
+  metrics?: MetricsConfiguration;
 }
 
 export interface PlatformServices {

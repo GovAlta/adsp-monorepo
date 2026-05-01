@@ -115,23 +115,20 @@ const initializeApp = async (): Promise<express.Application> => {
       combineConfiguration: (
         tenant: DirectoryConfigurationValue,
         core: DirectoryConfigurationValue,
-        tenantId: AdspId
+        tenantId: AdspId,
       ) =>
         new DirectoryConfiguration(
           { logger, directory, repository: repositories.directoryRepository },
           tenant,
           core,
-          tenantId
+          tenantId,
         ),
       useLongConfigurationCacheTTL: true,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
-      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT
-        ? {
-            endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
-          }
-        : undefined,
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       eventStreams: [EntryUpdatesStream],
       values: [ServiceMetricsValueDefinition],
       serviceConfigurations: [
@@ -209,7 +206,7 @@ const initializeApp = async (): Promise<express.Application> => {
       // TODO: This needs to be implemented so that the directory doesn't make re-entrant request to
       // itself via the SDK. Re-entrancy on start up can be a problem.
       directory,
-    }
+    },
   );
 
   // This update connection is per instance (when horizontally scaled) rather than
@@ -247,7 +244,7 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   applyDirectoryMiddleware(app, {

@@ -17,6 +17,14 @@ import { createTraceHandler } from '../trace';
 import { LogOptions, PlatformCapabilities, PlatformOptions, PlatformServices } from './types';
 import { AdspId, assertAdspId, createLogger } from '../utils';
 
+function normalizeTelemetryOptions<T extends { endpoint: string }>(options?: T | string): T | undefined {
+  if (!options) {
+    return undefined;
+  }
+
+  return typeof options === 'string' ? ({ endpoint: options } as T) : options;
+}
+
 export async function initializePlatform(
   {
     realm,
@@ -135,17 +143,19 @@ export async function initializePlatform(
     'service.name': serviceName,
     'service.version': serviceVersion,
   });
+  const tracingOptions = normalizeTelemetryOptions(tracing);
+  const metricsOptions = normalizeTelemetryOptions(metrics);
 
   let meterProvider: MeterProvider | undefined;
-  if (metrics) {
+  if (metricsOptions) {
     try {
       const metricReader = new PeriodicExportingMetricReader({
         exporter: new OTLPMetricExporter({
-          url: `${metrics.endpoint}/v1/metrics`,
-          headers: metrics.headers,
+          url: `${metricsOptions.endpoint}/v1/metrics`,
+          headers: metricsOptions.headers,
         }),
-        exportIntervalMillis: metrics.exportIntervalMillis ?? 60000,
-        exportTimeoutMillis: metrics.exportTimeoutMillis ?? 30000,
+        exportIntervalMillis: metricsOptions.exportIntervalMillis ?? 60000,
+        exportTimeoutMillis: metricsOptions.exportTimeoutMillis ?? 30000,
       });
 
       meterProvider = new MeterProvider({
@@ -153,7 +163,7 @@ export async function initializePlatform(
         readers: [metricReader],
       } as unknown as never);
 
-      logger.info(`OpenTelemetry metrics initialized: ${serviceName} -> ${metrics.endpoint}`);
+      logger.info(`OpenTelemetry metrics initialized: ${serviceName} -> ${metricsOptions.endpoint}`);
     } catch (err) {
       logger.warn(
         `Failed to initialize OpenTelemetry metrics: ${err instanceof Error ? err.message : String(err)}. Metrics disabled.`,
@@ -181,10 +191,10 @@ export async function initializePlatform(
 
   // Initialize tracer provider if tracing config is provided
   let tracerProvider: NodeTracerProvider | undefined;
-  if (tracing) {
+  if (tracingOptions) {
     try {
-      const endpoint = tracing.endpoint;
-      const sampleRate = tracing.sampleRate ?? 1.0;
+      const endpoint = tracingOptions.endpoint;
+      const sampleRate = tracingOptions.sampleRate ?? 1.0;
 
       // Create tracer provider with semantic attributes
       tracerProvider = new NodeTracerProvider({
@@ -194,7 +204,7 @@ export async function initializePlatform(
 
       const exporter = new OTLPTraceExporter({
         url: `${endpoint}/v1/traces`,
-        headers: tracing.headers,
+        headers: tracingOptions.headers,
       });
 
       // Add span processor
