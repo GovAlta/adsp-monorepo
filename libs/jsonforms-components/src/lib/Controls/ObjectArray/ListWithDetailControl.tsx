@@ -716,16 +716,20 @@ export function humanizeAjvError(error: ErrorObject, schema: JsonSchema, uischem
   const path = getEffectiveInstancePath(error);
   const label = resolveLabel(path, schema, uischema);
 
-  console.log('Do we get here?', { error, path, label });
-
   switch (error.keyword) {
     case VALIDATION_KEYWORDS.REQUIRED:
       return `${label} is required`;
 
     case VALIDATION_KEYWORDS.MIN_LENGTH:
+      if (error?.message) {
+        return error.message;
+      }
       return `${label} must be at least ${error.params.limit} characters`;
 
     case VALIDATION_KEYWORDS.MAX_LENGTH:
+      if (error?.message) {
+        return error.message;
+      }
       return `${label} must be at most ${error.params.limit} characters`;
 
     case VALIDATION_KEYWORDS.FORMAT:

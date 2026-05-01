@@ -348,7 +348,7 @@ it('errors are visible', async () => {
   expect(messageFormItem).not.toBeNull();
 
   // Check the error text
-  expect(messageFormItem).toHaveAttribute('error', 'Message must be at most 5 characters');
+  expect(messageFormItem).toHaveAttribute('error', 'must NOT have more than 5 characters');
 });
 it('required errors work', async () => {
   const data = { messages: [] };
