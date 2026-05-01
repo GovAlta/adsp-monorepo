@@ -50,16 +50,8 @@ const initializeApp = async (): Promise<express.Application> => {
         serviceId,
         displayName: 'Configuration service',
         description: 'Service for managing configuration',
-        tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT
-          ? {
-              endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
-            }
-          : undefined,
-        metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT
-          ? {
-              endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
-            }
-          : undefined,
+        tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+        metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
         roles: [
           {
             role: ConfigurationServiceRoles.Reader,

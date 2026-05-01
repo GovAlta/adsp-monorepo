@@ -2,7 +2,7 @@ import axios, { InternalAxiosRequestConfig } from 'axios';
 import { Request, Response } from 'express';
 import * as context from 'express-http-context';
 import { Logger } from 'winston';
-import { context as otelContext, propagation, trace as otelTrace } from '@opentelemetry/api';
+import { context as otelContext, propagation, trace as otelTrace, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { createTraceHandler, traceRequestInterceptor } from './handler';
 
 jest.mock('axios');
@@ -23,6 +23,21 @@ describe('handler', () => {
       const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
       expect(handler).toBeTruthy();
       expect(axiosMock.interceptors.request.use).toHaveBeenCalled();
+    });
+
+    it('can configure tracing with tracer provider present', () => {
+      const tracerProvider = {
+        getTracer: jest.fn().mockReturnValue({ startSpan: jest.fn() }),
+      };
+
+      const handler = createTraceHandler({
+        logger: loggerMock,
+        sampleRate: 0,
+        tracerProvider: tracerProvider as never,
+      });
+
+      expect(handler).toBeTruthy();
+      expect(tracerProvider.getTracer).toHaveBeenCalledWith('adsp-service-sdk');
     });
 
     describe('handler', () => {
@@ -84,33 +99,81 @@ describe('handler', () => {
       injectSpy.mockRestore();
     });
 
-    it('can add request event to active span', () => {
+    it('can add request event to client span', () => {
       const config = { headers: { has: jest.fn(), set: jest.fn() }, method: 'get', url: '/path' };
       config.headers.has.mockReturnValueOnce(false);
 
-      const span = {
+      const parentSpan = {
         spanContext: () => ({ traceId: '4bf92f3577b34da6a3ce929d0e0e4736', spanId: '00f067aa0ba902b7', traceFlags: 1 }),
         addEvent: jest.fn(),
       };
-      contextMock.get.mockReturnValue(span);
+      const clientSpan = {
+        addEvent: jest.fn(),
+      };
+      const tracer = { startSpan: jest.fn().mockReturnValue(clientSpan) };
+      contextMock.get.mockReturnValue(parentSpan);
 
-      const withSpy = jest.spyOn(otelContext, 'with');
       const setSpanSpy = jest.spyOn(otelTrace, 'setSpan');
-      const getActiveSpanSpy = jest.spyOn(otelTrace, 'getActiveSpan').mockReturnValue(span as unknown as never);
 
-      traceRequestInterceptor(config as unknown as InternalAxiosRequestConfig);
+      traceRequestInterceptor(config as unknown as InternalAxiosRequestConfig, tracer as never);
 
       expect(setSpanSpy).toHaveBeenCalled();
-      expect(withSpy).toHaveBeenCalled();
-      expect(getActiveSpanSpy).toHaveBeenCalled();
-      expect(span.addEvent).toHaveBeenCalledWith('http.client.request', {
+      expect(tracer.startSpan).toHaveBeenCalledWith(
+        'GET /path',
+        expect.objectContaining({ kind: SpanKind.CLIENT }),
+        expect.anything(),
+      );
+      expect(clientSpan.addEvent).toHaveBeenCalledWith('http.client.request', {
         'http.method': 'get',
         'http.url': '/path',
       });
 
-      withSpy.mockRestore();
       setSpanSpy.mockRestore();
-      getActiveSpanSpy.mockRestore();
+    });
+
+    it('can create a client span when tracer is provided', () => {
+      const config = { headers: { has: jest.fn(), set: jest.fn() }, method: 'get', url: 'http://example.com' };
+      config.headers.has.mockReturnValueOnce(false);
+
+      const clientSpan = {
+        addEvent: jest.fn(),
+      };
+      const tracer = { startSpan: jest.fn().mockReturnValue(clientSpan) };
+
+      traceRequestInterceptor(config as unknown as InternalAxiosRequestConfig, tracer as never);
+
+      expect(tracer.startSpan).toHaveBeenCalledWith(
+        'GET http://example.com',
+        expect.objectContaining({ kind: SpanKind.CLIENT }),
+        expect.anything(),
+      );
+    });
+
+    it('can end client span on axios error', async () => {
+      const clientSpan = {
+        addEvent: jest.fn(),
+        setAttributes: jest.fn(),
+        setStatus: jest.fn(),
+        end: jest.fn(),
+        recordException: jest.fn(),
+      };
+      const tracerProvider = {
+        getTracer: jest.fn().mockReturnValue({ startSpan: jest.fn().mockReturnValue(clientSpan) }),
+      };
+
+      createTraceHandler({ logger: loggerMock, sampleRate: 0, tracerProvider: tracerProvider as never });
+
+      const responseUse = axiosMock.interceptors.response.use as unknown as jest.Mock;
+      const onError = responseUse.mock.lastCall?.[1] as (error: unknown) => Promise<unknown>;
+
+      const config = { _otelClientSpan: clientSpan };
+
+      await expect(onError({ config, response: { status: 503 }, message: 'boom' })).rejects.toMatchObject({
+        response: { status: 503 },
+      });
+
+      expect(clientSpan.setStatus).toHaveBeenCalledWith({ code: SpanStatusCode.ERROR, message: 'HTTP 503' });
+      expect(clientSpan.end).toHaveBeenCalled();
     });
   });
 });

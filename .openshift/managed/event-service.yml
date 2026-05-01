@@ -441,7 +441,7 @@ objects:
               terminationMessagePath: /dev/termination-log
               readinessProbe:
                 httpGet:
-                  path: /health
+                  path: /
                   port: 3333
                   scheme: HTTP
                 initialDelaySeconds: 2
@@ -451,7 +451,7 @@ objects:
                 failureThreshold: 20
               livenessProbe:
                 httpGet:
-                  path: /health
+                  path: /
                   port: 3333
                   scheme: HTTP
                 initialDelaySeconds: 60

@@ -125,9 +125,9 @@ export const isNilOrEmptyValue = (value: unknown, includeEmptyArray = false): bo
   value === '' ||
   (includeEmptyArray && Array.isArray(value) && value.length === 0);
 
-export const validateSinWithLuhn = (input: number): boolean => {
-  const cardNumber = input.toString();
-  const digits = cardNumber.replace(/\D/g, '').split('').map(Number);
+export const validateSinWithLuhn = (input: string): boolean => {
+  const digits = input.replace(/\D/g, '').split('').map(Number);
+
   let sum = 0;
   let isSecond = false;
   for (let i = digits.length - 1; i >= 0; i--) {
@@ -147,24 +147,6 @@ export const validateSinWithLuhn = (input: number): boolean => {
 interface extractSchema {
   errorMessage?: string;
 }
-
-export const getSinValidationError = (data: unknown, schema?: JsonSchema): string | undefined => {
-  const extraSchema = schema as JsonSchema & extractSchema;
-
-  if (!extraSchema || extraSchema.title !== sinTitle || typeof data !== 'string') {
-    return undefined;
-  }
-
-  if (data.length === 11 && !validateSinWithLuhn(Number(data.replace(/\D/g, '')))) {
-    return data === '' ? '' : invalidSin;
-  }
-
-  if (data.length > 0 && data.length < 11) {
-    return extraSchema.errorMessage;
-  }
-
-  return undefined;
-};
 
 /**
  * Gets the required fields in the If/Then/Else json schema condition.
@@ -220,10 +202,6 @@ export const getRequiredIfThen = (props: ControlProps) => {
 export const checkFieldValidity = (props: ControlProps, rootData?: unknown): string => {
   const { data, errors: ajvErrors, required, schema } = props;
   const labelToUpdate = getControlLabelText(props);
-  const sinValidationError = getSinValidationError(data, schema);
-  if (sinValidationError) {
-    return sinValidationError;
-  }
 
   const rootRequired = getRequiredIfThen(props);
   const requiredByCondition = isRequiredBySchema(props.rootSchema as JsonSchema7, rootData, props.path, {

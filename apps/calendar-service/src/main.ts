@@ -75,27 +75,24 @@ const initializeApp = async (): Promise<express.Application> => {
       combineConfiguration: (
         tenant: CalendarServiceConfiguration,
         core: CalendarServiceConfiguration,
-        tenantId?: AdspId
+        tenantId?: AdspId,
       ) =>
         Object.entries({ ...tenant, ...core }).reduce(
           (entities, [key, value]) => ({
             ...entities,
             [key]: new CalendarEntity(repositories.calendarRepository, tenantId, value),
           }),
-          {}
+          {},
         ),
       enableConfigurationInvalidation: true,
       useLongConfigurationCacheTTL: true,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
-      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT
-        ? {
-            endpoint: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
-          }
-        : undefined,
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       values: [ServiceMetricsValueDefinition],
     },
-    { logger }
+    { logger },
   );
 
   passport.use('core', coreStrategy);
@@ -118,7 +115,7 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   applyCalendarMiddleware(app, { serviceId, logger, eventService, directory, tenantService, ...repositories });

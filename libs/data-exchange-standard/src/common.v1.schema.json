@@ -216,7 +216,10 @@
       "description": "000 000 000",
       "type": "string",
       "pattern": "^\\d{3} \\d{3} \\d{3}$",
-      "errorMessage": "Must be three groups of three digits."
+      "validSin": true,
+      "errorMessage": {
+        "pattern": "Must be three groups of three digits."
+      }
     },
     "email": {
       "$comment": "Standard email address",

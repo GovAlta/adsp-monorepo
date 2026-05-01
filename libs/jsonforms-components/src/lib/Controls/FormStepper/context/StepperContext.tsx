@@ -25,6 +25,7 @@ export interface JsonFormsStepperContextProps {
   selectCategory: (id: number) => CategoryState;
   goToPage: (id: number, targetScope?: string) => void;
   goToTableOfContext: () => void;
+  setVisited: (id: number) => void;
   toggleShowReviewLink: (id: number) => void;
   validatePage: (id: number) => void;
   selectNumberOfCompletedCategories: () => number;
@@ -163,6 +164,9 @@ export const JsonFormsStepperContextProvider = ({
       goToPage: (id: number, targetScope?: string) => {
         stepperDispatch({ type: 'page/to/index', payload: { id, targetScope } });
       },
+      setVisited: (id: number) => {
+        stepperDispatch({ type: 'set/visited', payload: { id } });
+      },
       toggleShowReviewLink: (id: number) => {
         stepperDispatch({
           type: 'toggle/category/review-link',
@@ -207,12 +211,7 @@ export const JsonFormsStepperContextProvider = ({
       }
     }
     //eslint-disable-next-line
-  }, [
-    JSON.stringify(StepperProps.uischema),
-    JSON.stringify(StepperProps.schema),
-    JSON.stringify(data),
-    JSON.stringify(ctx?.core?.errors),
-  ]);
+  }, [JSON.stringify(StepperProps.uischema), JSON.stringify(StepperProps.schema)]);
 
   return <JsonFormsStepperContext.Provider value={context}>{children}</JsonFormsStepperContext.Provider>;
 };

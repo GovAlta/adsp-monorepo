@@ -19,7 +19,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
   const enumerators = useContext(JsonFormContext);
 
   const formStepperCtx = useContext(JsonFormsStepperContext);
-  const { goToPage, goToTableOfContext } = formStepperCtx as JsonFormsStepperContextProps;
+  const { goToPage, goToTableOfContext, setVisited } = formStepperCtx as JsonFormsStepperContextProps;
   const { categories, isOnReview, isValid, activeId, validationTrigger } = (
     formStepperCtx as JsonFormsStepperContextProps
   ).selectStepperState();
@@ -81,6 +81,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
               link={() => {
                 handleSave();
                 goToTableOfContext();
+                setVisited(activeId);
               }}
               testId="back-to-tasks"
             />
@@ -110,6 +111,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                                   topElementRef.current.scrollIntoView();
                                 }
                                 goToPage(prevId);
+                                setVisited(activeId);
                               }
                             }}
                             testId="pages-prev-btn"
@@ -132,6 +134,7 @@ export const RenderPages = (props: PageRenderingProps): JSX.Element => {
                                 topElementRef.current.scrollIntoView();
                               }
                               goToPage(nextId);
+                              setVisited(activeId);
                             }
                           }}
                           disabled={!enabled}
