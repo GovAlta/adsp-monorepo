@@ -43,7 +43,7 @@ For other team members, note the instructions and tenant specific login LRN show
 2. Use the _Keycloak admin portal_ link to access Keycloak realm administration for your tenant.
 3. Select _Manage_ -> _Users_ and click the _View all users_ button.
 4. Select the team member you wish to grant access to, and select _Role Mappings_.
-5. Under _Client Roles_, select `urn:ads:platform:tenant-service` and add the `tenant-admin` role.
+5. Click _Assign role_, filter by clients, select `urn:ads:platform:tenant-service`, and assign the `tenant-admin` role.
 6. Your team member can now access tenant administration via the tenant specific login url.
 
 ## Configuring a platform service
