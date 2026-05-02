@@ -92,7 +92,7 @@ class FormsPage {
   //pageName is case sensitive and arrayName is lower case
   formSummaryPageListWithDetailItems(pageName, arrayName) {
     return cy.xpath(
-      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${arrayName}")]/ancestor::td//goa-table/table/tbody/tr`
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${arrayName}")]/ancestor::goa-table/table/tbody/tr/td/div[2]//div[@style="margin-bottom: 1.5rem;"]`
     );
   }
 
