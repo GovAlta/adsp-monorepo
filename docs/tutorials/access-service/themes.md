@@ -6,10 +6,12 @@ parent: Access Service
 grand_parent: Tutorials
 ---
 
+<!-- tags: [keycloak] -->
 ## Keycloak Themes
 
 Keycloak allows you to customize the look and feel it's webpages via themes, and developers can choose a specific theme for the realm being used with their application. So, for example, if the application redirects users to the keycloak login page to sign in, they may want it to match the application's theme.
 
+<!-- tags: [keycloak] -->
 ### Choosing a Theme
 
 The _Access Service_ includes several themes that you can use for applications in your realm. You can choose one by logging in to Keycloak as an admin, and then
@@ -19,6 +21,7 @@ navigating to _Realm Settings_ / _Themes_. There you can select a theme for the 
 
 The existing set of themes may not suit you needs, however, and you may want to build your own. The _Access Service_ supports this idea, allowing developers to build and test their themes, and then check them into github for deployment.
 
+<!-- tags: [keycloak] -->
 ### New Themes
 
 Keycloak manages themes using Apache's [FreeMarker](https://freemarker.apache.org/docs/index.html), a language used for building templates similar to _Handlebars_ or _Mustache_. In essence, FreeMarker templates are a combination of

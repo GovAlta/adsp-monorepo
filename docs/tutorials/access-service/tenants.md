@@ -6,10 +6,12 @@ parent: Access Service
 grand_parent: Tutorials
 ---
 
+<!-- tags: [keycloak] -->
 ## On Tenants and Realms
 
 In the IdSP world realms and tenants are often used interchangeably to describe self-contained security and administrative domains. They are containers that holds a set of users, roles, clients, and other configurations within an identity and access management system, and each one can be considered an isolated environment. Keycloak uses the term _realm_ to refer to these domains.
 
+<!-- tags: [keycloak] -->
 ADSP, on the other hand, refers to them as _Tenants_. In this context a tenant is a keycloak realm with some pre-configured clients and roles that are specific to securing the ADSP API endpoints used by applications to gain access to it's services.
 
 Each ministry in the DDD is associated with one or more tenants and each tenant, in turn, is associated with an application or group of applications. ADSP services require that you and your applications have access to one of these _Tenants_ in order to:
@@ -17,6 +19,7 @@ Each ministry in the DDD is associated with one or more tenants and each tenant,
 - authenticate and authorize calls to ADSP endpoints, and
 - to log in to our Tenant Management Webapp in order to configure ADSP services for your applications.
 
+<!-- tags: [keycloak] -->
 Most application groups already have a Keycloak realm that they use for user management, and most realms have been configured as an ADSP tenant. If you, as a developer, are new to ADSP and want to start using one or more of its services it is very important that you take some time to identify an existing tenant that you might be able to use instead of requesting a new one from the ADSP team. It is important because:
 
 - your application users may use other applications in your group, and will want the seamless integration between them that is provided through a tenant's SSO login capability,
@@ -33,6 +36,7 @@ ask the _realm owner_ to add you as a user with the _tenant admin_ role so that 
 - log in to Keycloak and configure it as needed, and
 - log in to ADSP's _Tenant Admin Webapp_ to configure it as needed.
 
+<!-- tags: [keycloak] -->
 #### Adding Developers as Tenant-admins
 
 Realm owners are responsible for approving and adding developers as tenant-admins. The owner must:
