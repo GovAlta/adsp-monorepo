@@ -1,12 +1,11 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 import type { RequestHandler } from 'express';
-import * as context from 'express-http-context';
 import type { Logger } from 'winston';
 import { context as otelContext, trace as otelTrace, propagation, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import type { Span, Tracer } from '@opentelemetry/api';
 import type { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { TRACE_PARENT_HEADER } from './context';
-import { createHttpServerTraceHandler, getContextSpan } from './instrument';
+import { createHttpServerTraceHandler } from './instrument';
 
 interface TraceHandlerOptions {
   logger: Logger;
@@ -49,7 +48,7 @@ export function traceRequestInterceptor(config: InternalAxiosRequestConfig, trac
       ? config.headers.has(TRACE_PARENT_HEADER)
       : !!(config.headers as Record<string, unknown>)?.[TRACE_PARENT_HEADER];
 
-  const parentSpan = getContextSpan();
+  const parentSpan = otelTrace.getActiveSpan();
   const parentContext = parentSpan ? otelTrace.setSpan(otelContext.active(), parentSpan) : otelContext.active();
 
   if (tracer && !configWithSpan._otelClientSpan) {
@@ -133,7 +132,7 @@ export function createTraceHandler({
 
   const requestMiddleware = tracerProvider
     ? createHttpServerTraceHandler(tracerProvider)
-    : (req, res, next) => context.middleware(req, res, next as (err?: unknown) => void);
+    : (_req, _res, next) => next();
 
   return function (req, res, next) {
     requestMiddleware(req, res, (err: unknown) => {

@@ -1,14 +1,10 @@
 import axios from 'axios';
-import * as context from 'express-http-context';
 import { context as otelContext, propagation, trace as otelTrace, SpanStatusCode } from '@opentelemetry/api';
 import { Logger } from 'winston';
-import { createHttpServerTraceHandler, getContextSpan, instrumentAxios, setContextSpan } from './instrument';
+import { createHttpServerTraceHandler, instrumentAxios } from './instrument';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
-
-jest.mock('express-http-context');
-const contextMock = context as jest.Mocked<typeof context>;
 
 describe('instrument', () => {
   const logger = {
@@ -43,23 +39,8 @@ describe('instrument', () => {
     });
   });
 
-  describe('span context helpers', () => {
-    it('can set and get context span', () => {
-      const span = { name: 'test-span' };
-      contextMock.get.mockReturnValueOnce(span as never);
-
-      setContextSpan(span as never);
-      const result = getContextSpan();
-
-      expect(contextMock.set).toHaveBeenCalledWith('otel-span', span);
-      expect(result).toBe(span);
-    });
-  });
-
   describe('createHttpServerTraceHandler', () => {
     it('can create span and complete it on json response', () => {
-      contextMock.middleware.mockImplementationOnce((_req, _res, next) => next());
-
       const span = {
         setAttributes: jest.fn(),
         setStatus: jest.fn(),
@@ -108,7 +89,6 @@ describe('instrument', () => {
       handler(req as never, res as never, next);
       expect(extractSpy).toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith();
-      expect(contextMock.set).toHaveBeenCalledWith('otel-span', span);
 
       (res.json as (body: unknown) => unknown)({ ok: true });
 
@@ -121,24 +101,7 @@ describe('instrument', () => {
       setSpanSpy.mockRestore();
     });
 
-    it('can pass through context middleware error', () => {
-      const err = new Error('middleware failed');
-      contextMock.middleware.mockImplementationOnce((_req, _res, next) => next(err));
-
-      const tracerProvider = {
-        getTracer: jest.fn().mockReturnValue({ startSpan: jest.fn() }),
-      };
-      const handler = createHttpServerTraceHandler(tracerProvider as never);
-
-      const next = jest.fn();
-      handler({} as never, {} as never, next);
-
-      expect(next).toHaveBeenCalledWith(err);
-    });
-
     it('can record errors and finish completion', () => {
-      contextMock.middleware.mockImplementationOnce((_req, _res, next) => next());
-
       const span = {
         setAttributes: jest.fn(),
         setStatus: jest.fn(),

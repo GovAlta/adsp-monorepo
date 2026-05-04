@@ -3,9 +3,6 @@ import type { RequestHandler } from 'express';
 import type { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { Logger } from 'winston';
 import { context as otelContext, propagation, trace as otelTrace, SpanStatusCode, SpanKind } from '@opentelemetry/api';
-import type { Span } from '@opentelemetry/api';
-import * as context from 'express-http-context';
-
 export function instrumentAxios(logger: Logger) {
   const timings = new Map();
 
@@ -32,16 +29,6 @@ export function instrumentAxios(logger: Logger) {
   });
 }
 
-const OTEL_SPAN_CTX = 'otel-span';
-
-export function getContextSpan(): Span | undefined {
-  return context.get(OTEL_SPAN_CTX);
-}
-
-export function setContextSpan(span: Span): void {
-  context.set(OTEL_SPAN_CTX, span);
-}
-
 /**
  * Create Express middleware for OpenTelemetry HTTP server tracing.
  *
@@ -64,12 +51,7 @@ export function createHttpServerTraceHandler(tracerProvider: NodeTracerProvider)
   const tracer = tracerProvider.getTracer('adsp-service-sdk');
 
   return function (req, res, next) {
-    context.middleware(req, res, (err: unknown) => {
-      if (err) {
-        return next(err);
-      }
-
-      const parentContext = propagation.extract(otelContext.active(), req.headers);
+    const parentContext = propagation.extract(otelContext.active(), req.headers);
 
       const span = tracer.startSpan(
         `${req.method} ${req.route?.path || req.path}`,
@@ -88,9 +70,6 @@ export function createHttpServerTraceHandler(tracerProvider: NodeTracerProvider)
         },
         parentContext,
       );
-
-      // Set span in context for use in handlers and outbound requests
-      setContextSpan(span);
 
       // Record span completion on response
       const originalJson = res.json.bind(res);
@@ -141,6 +120,5 @@ export function createHttpServerTraceHandler(tracerProvider: NodeTracerProvider)
       otelContext.with(otelTrace.setSpan(parentContext, span), () => {
         next();
       });
-    });
   };
 }

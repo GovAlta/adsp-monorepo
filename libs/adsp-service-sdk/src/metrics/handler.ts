@@ -2,7 +2,6 @@ import axios from 'axios';
 import { Request, RequestHandler, Response } from 'express';
 import { throttle } from 'lodash';
 import type { MeterProvider } from '@opentelemetry/sdk-metrics';
-import { context, ROOT_CONTEXT } from '@opentelemetry/api';
 import * as responseTime from 'response-time';
 import { Logger } from 'winston';
 import { TokenProvider } from '../access';
@@ -38,34 +37,41 @@ export async function writeMetrics(
   tokenProvider: TokenProvider,
   buffer: Record<string, unknown[]>,
 ): Promise<void> {
-  await context.with(ROOT_CONTEXT, async () => {
-    const valueServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:value-service:v1`);
-    const valueUrl = new URL(`v1/${serviceId.service}/values/service-metrics`, valueServiceUrl);
+  const valueServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:value-service:v1`);
+  const valueUrl = new URL(`v1/${serviceId.service}/values/service-metrics`, valueServiceUrl);
 
-    // Value service write does not handle writing a batch of values of mixed tenancy, so group by tenant then write.
-    for (const tenantId of Object.getOwnPropertyNames(buffer)) {
-      try {
-        const values = buffer[tenantId]?.splice(0) || [];
-        if (values.length > 0) {
-          const token = await tokenProvider.getAccessToken();
-          await axios.post(valueUrl.href, values, {
-            headers: { Authorization: `Bearer ${token}` },
-            params: { tenantId },
-            timeout: 30000,
-          });
-          logger.debug(`Wrote service metrics to value service.`, {
-            context: 'MetricsHandler',
-            tenant: tenantId,
-          });
-        }
-      } catch (err) {
-        logger.warn(`Error encountered writing service metrics. ${err}`, {
+  // Value service write does not handle writing a batch of values of mixed tenancy, so group by tenant then write.
+  for (const tenantId of Object.getOwnPropertyNames(buffer)) {
+    try {
+      const values = buffer[tenantId]?.splice(0) || [];
+      if (values.length > 0) {
+        const token = await tokenProvider.getAccessToken();
+
+        // Suppress span context propagation: the traceparent header prevents the axios interceptor
+        // from injecting an active span as parent, since this write is deferred and unrelated to
+        // any HTTP request span.
+        const headers: Record<string, string> = {
+          Authorization: `Bearer ${token}`,
+          traceparent: '00-0000000000000000000000000000000-0000000000000000-00',
+        };
+
+        await axios.post(valueUrl.href, values, {
+          headers,
+          params: { tenantId },
+          timeout: 30000,
+        });
+        logger.debug(`Wrote service metrics to value service.`, {
           context: 'MetricsHandler',
           tenant: tenantId,
         });
       }
+    } catch (err) {
+      logger.warn(`Error encountered writing service metrics. ${err}`, {
+        context: 'MetricsHandler',
+        tenant: tenantId,
+      });
     }
-  });
+  }
 }
 
 // Throttle the metric writes so that there isn't a write request per measured request at higher request volumes.

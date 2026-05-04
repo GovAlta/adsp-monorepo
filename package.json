@@ -88,7 +88,6 @@
     "export-from-json": "^1.7.4",
     "express": "^4.22.1",
     "express-healthcheck": "^0.1.0",
-    "express-http-context": "^1.2.4",
     "express-http-proxy": "^2.0.0",
     "express-rate-limit": "^7.1.4",
     "express-session": "^1.18.2",
