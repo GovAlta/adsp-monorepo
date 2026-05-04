@@ -2,6 +2,7 @@ import axios from 'axios';
 import { Request, RequestHandler, Response } from 'express';
 import { throttle } from 'lodash';
 import type { MeterProvider } from '@opentelemetry/sdk-metrics';
+import { context, ROOT_CONTEXT } from '@opentelemetry/api';
 import * as responseTime from 'response-time';
 import { Logger } from 'winston';
 import { TokenProvider } from '../access';
@@ -26,6 +27,10 @@ function getMetricAttributes(req: Request, res: Response): Record<string, string
   };
 }
 
+/**
+ * @deprecated Value service metrics recording is deprecated. Use OpenTelemetry instrumentation via the
+ * `meterProvider` option of `createMetricsHandler` instead.
+ */
 export async function writeMetrics(
   serviceId: AdspId,
   directory: ServiceDirectory,
@@ -63,6 +68,14 @@ export async function writeMetrics(
 
 // Throttle the metric writes so that there isn't a write request per measured request at higher request volumes.
 const WRITE_THROTTLE_MS = 60000;
+
+/**
+ * Creates an Express middleware handler for service request metrics.
+ *
+ * @deprecated The value service metrics recording path (requires `serviceId`, `tokenProvider`, `directory`) is
+ * deprecated. Provide a `meterProvider` and omit the value service dependencies to use OpenTelemetry instrumentation
+ * only. Value service metric recording will be removed in a future release.
+ */
 export async function createMetricsHandler(
   serviceId: AdspId,
   logger: Logger,
@@ -148,7 +161,9 @@ export async function createMetricsHandler(
         valuesBuffer[value.tenantId] = [];
       }
       valuesBuffer[value.tenantId].push(value);
-      writeBuffer(serviceId, directory, logger, tokenProvider, valuesBuffer);
+      // Detach from the current request's trace context so the throttled write
+      // does not create spans parented to the originating HTTP request span.
+      context.with(ROOT_CONTEXT, () => writeBuffer(serviceId, directory, logger, tokenProvider, valuesBuffer));
     }
   });
 
