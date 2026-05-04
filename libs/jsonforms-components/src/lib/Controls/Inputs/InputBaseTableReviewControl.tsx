@@ -2,7 +2,14 @@ import React, { act, useContext } from 'react';
 import { ControlProps, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ErrorObject } from 'ajv';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue, RequiredTextLabel } from './style-component';
+import {
+  PageReviewContainer,
+  ReviewHeader,
+  ReviewLabel,
+  ReviewValue,
+  RequiredTextLabel,
+  NoneGivenText,
+} from './style-component';
 import {
   convertToReadableFormat,
   getGeneratedLabelFromScope,
@@ -187,8 +194,10 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
 
   // If a required checkbox is unchecked, show only the validation message in
   // review mode (not a contradictory "No (...)" value line).
+  let isBooleanRequiredError = false;
   if (schema?.type === 'boolean' && data === false && activeError && /\sis required$/i.test(activeError)) {
     reviewText = '';
+    isBooleanRequiredError = true;
   }
 
   // eslint-disable-next-line
@@ -200,6 +209,13 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
     typeof reviewText === 'number' ||
     React.isValidElement(reviewText) ||
     (Array.isArray(reviewText) && reviewText.length === 0);
+
+  const isValueEmpty =
+    !isBooleanRequiredError &&
+    (reviewText === null ||
+      reviewText === undefined ||
+      reviewText === '' ||
+      (Array.isArray(reviewText) && reviewText.length === 0));
 
   return (
     <tr data-testid={`input-base-table-${label}-row`}>
@@ -217,7 +233,9 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
         </ReviewHeader>
         <ReviewValue>
           {showInlineValue ? (
-            <div data-testid={`review-value-${label}`}>{reviewText ?? ''}</div>
+            <div data-testid={`review-value-${label}`}>
+              {isValueEmpty ? <NoneGivenText>(none given)</NoneGivenText> : (reviewText ?? '')}
+            </div>
           ) : (
             <JsonFormsDispatch
               data-testid={`jsonforms-object-list-defined-elements-dispatch`}
