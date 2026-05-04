@@ -1,0 +1,64 @@
+.page {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 0 20px;
+  font-family: Arial, sans-serif;
+}
+
+.tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+button,
+select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #f3f3f3;
+}
+
+.card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background: white;
+}
+
+.editor {
+  min-height: 250px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tiptap-editor {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  min-height: 250px;
+  padding: 12px;
+}
+
+.tiptap-editor .ProseMirror {
+  min-height: 220px;
+  outline: none;
+}
+
+textarea {
+  width: 100%;
+  font-family: monospace;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}

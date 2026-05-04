@@ -9,7 +9,7 @@ import { RootState } from '@store/index';
 
 import AsideLinks from '@components/AsideLinks';
 import { AsidePadding } from '../../../../components/Html';
-
+import { HtmlEditor } from './HtmlEditor';
 export const Pdf: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
 
@@ -29,6 +29,9 @@ export const Pdf: FunctionComponent = () => {
           </Tab>
           <Tab label="Templates" data-testid="pdf-service-templates-tab">
             <PdfTemplates openAddTemplate={openAddTemplate} />
+          </Tab>
+          <Tab label="Html editor">
+            <HtmlEditor />
           </Tab>
         </Tabs>
       </Main>
