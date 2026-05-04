@@ -67,6 +67,11 @@ export const ReviewValue = styled.div`
 export const CheckboxWrapper = styled.div`
   min-height: 28px;
 `;
+
+export const NoneGivenText = styled.span`
+  color: var(--goa-color-greyscale-700);
+  font-style: italic;
+`;
 export const H4Large = styled.h4`
   margin: 0 0 0.25rem 0;
   fontsize: larger;
