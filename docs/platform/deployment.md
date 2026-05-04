@@ -14,6 +14,7 @@ communicate over APIs and RabbitMQ, and so deployment into other hosting environ
 
 ## Prerequisites
 
+<!-- tags: [keycloak] -->
 A few prerequisites are needed to set up an ADSP deployment:
 
 1. [Keycloak](https://www.keycloak.org/) is used as an IAM solution. Realms provide tenants with user access management under their own administrative control.
@@ -21,6 +22,8 @@ A few prerequisites are needed to set up an ADSP deployment:
 3. Databases for platform micro-services. Containerized databases are not included in the deployment manifests, and managed options are recommended.
 
 ## Keycloak configuration
+
+<!-- tags: [keycloak] -->
 
 ### Master realm configuration
 
