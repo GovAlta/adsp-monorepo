@@ -15,6 +15,7 @@ interface TraceHandlerOptions {
 
 interface AxiosConfigWithSpan extends InternalAxiosRequestConfig {
   _otelClientSpan?: Span;
+  _otelSuppressTracing?: boolean;
 }
 
 function endClientSpan(span: Span | undefined, status: number, error?: unknown) {
@@ -43,6 +44,16 @@ function endClientSpan(span: Span | undefined, status: number, error?: unknown) 
 
 export function traceRequestInterceptor(config: InternalAxiosRequestConfig, tracer?: Tracer) {
   const configWithSpan = config as AxiosConfigWithSpan;
+  const suppressTracing = !!configWithSpan._otelSuppressTracing;
+
+  // Allow callers to opt out of tracing for deferred/background requests that should not
+  // inherit active request spans (e.g., throttled service-metrics writes). This is an
+  // in-process signal only and never sent on the wire.
+  if (suppressTracing) {
+    delete configWithSpan._otelSuppressTracing;
+    return config;
+  }
+
   const hasTraceparent =
     typeof config.headers?.has === 'function'
       ? config.headers.has(TRACE_PARENT_HEADER)

@@ -143,6 +143,29 @@ describe('handler', () => {
       );
     });
 
+    it('can bypass tracing when suppression header is set', () => {
+      const config = {
+        headers: {
+          has: jest.fn(),
+          set: jest.fn(),
+        },
+        _otelSuppressTracing: true,
+        method: 'post',
+        url: 'http://example.com/deferred',
+      };
+
+      const tracer = { startSpan: jest.fn() };
+      const injectSpy = jest.spyOn(propagation, 'inject');
+
+      traceRequestInterceptor(config as unknown as InternalAxiosRequestConfig, tracer as never);
+
+      expect(tracer.startSpan).not.toHaveBeenCalled();
+      expect(injectSpy).not.toHaveBeenCalled();
+      expect((config as { _otelSuppressTracing?: boolean })._otelSuppressTracing).toBeUndefined();
+
+      injectSpy.mockRestore();
+    });
+
     it('can end client span on axios error', async () => {
       const clientSpan = {
         addEvent: jest.fn(),

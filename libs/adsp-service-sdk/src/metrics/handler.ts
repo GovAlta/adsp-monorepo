@@ -47,19 +47,16 @@ export async function writeMetrics(
       if (values.length > 0) {
         const token = await tokenProvider.getAccessToken();
 
-        // Suppress span context propagation: the traceparent header prevents the axios interceptor
-        // from injecting an active span as parent, since this write is deferred and unrelated to
-        // any HTTP request span.
-        const headers: Record<string, string> = {
-          Authorization: `Bearer ${token}`,
-          traceparent: '00-0000000000000000000000000000000-0000000000000000-00',
-        };
-
+        // Suppress tracing for deferred writes so throttled metric flushes do not attach to
+        // request spans that scheduled the write.
         await axios.post(valueUrl.href, values, {
-          headers,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
           params: { tenantId },
           timeout: 30000,
-        });
+          _otelSuppressTracing: true,
+        } as unknown as import('axios').InternalAxiosRequestConfig);
         logger.debug(`Wrote service metrics to value service.`, {
           context: 'MetricsHandler',
           tenant: tenantId,
