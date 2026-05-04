@@ -65,11 +65,7 @@ export async function getAccessToken(): Promise<string> {
   let token = null;
   if (client) {
     try {
-      const now = Math.floor(Date.now() / 1000);
-      const exp = client?.tokenParsed?.exp || 0;
-      if (exp - now < 60) {
-        await client.updateToken(60);
-      }
+      await client.updateToken(60);
       token = client.token;
     } catch (err) {
       // If we're unable to update token, return no value and the request will fail on 401.
