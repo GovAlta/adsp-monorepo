@@ -38,32 +38,34 @@ export async function writeMetrics(
   tokenProvider: TokenProvider,
   buffer: Record<string, unknown[]>,
 ): Promise<void> {
-  const valueServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:value-service:v1`);
-  const valueUrl = new URL(`v1/${serviceId.service}/values/service-metrics`, valueServiceUrl);
+  await context.with(ROOT_CONTEXT, async () => {
+    const valueServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:value-service:v1`);
+    const valueUrl = new URL(`v1/${serviceId.service}/values/service-metrics`, valueServiceUrl);
 
-  // Value service write does not handle writing a batch of values of mixed tenancy, so group by tenant then write.
-  for (const tenantId of Object.getOwnPropertyNames(buffer)) {
-    try {
-      const values = buffer[tenantId]?.splice(0) || [];
-      if (values.length > 0) {
-        const token = await tokenProvider.getAccessToken();
-        await axios.post(valueUrl.href, values, {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { tenantId },
-          timeout: 30000,
-        });
-        logger.debug(`Wrote service metrics to value service.`, {
+    // Value service write does not handle writing a batch of values of mixed tenancy, so group by tenant then write.
+    for (const tenantId of Object.getOwnPropertyNames(buffer)) {
+      try {
+        const values = buffer[tenantId]?.splice(0) || [];
+        if (values.length > 0) {
+          const token = await tokenProvider.getAccessToken();
+          await axios.post(valueUrl.href, values, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { tenantId },
+            timeout: 30000,
+          });
+          logger.debug(`Wrote service metrics to value service.`, {
+            context: 'MetricsHandler',
+            tenant: tenantId,
+          });
+        }
+      } catch (err) {
+        logger.warn(`Error encountered writing service metrics. ${err}`, {
           context: 'MetricsHandler',
           tenant: tenantId,
         });
       }
-    } catch (err) {
-      logger.warn(`Error encountered writing service metrics. ${err}`, {
-        context: 'MetricsHandler',
-        tenant: tenantId,
-      });
     }
-  }
+  });
 }
 
 // Throttle the metric writes so that there isn't a write request per measured request at higher request volumes.
@@ -161,9 +163,7 @@ export async function createMetricsHandler(
         valuesBuffer[value.tenantId] = [];
       }
       valuesBuffer[value.tenantId].push(value);
-      // Detach from the current request's trace context so the throttled write
-      // does not create spans parented to the originating HTTP request span.
-      context.with(ROOT_CONTEXT, () => writeBuffer(serviceId, directory, logger, tokenProvider, valuesBuffer));
+      writeBuffer(serviceId, directory, logger, tokenProvider, valuesBuffer);
     }
   });
 
