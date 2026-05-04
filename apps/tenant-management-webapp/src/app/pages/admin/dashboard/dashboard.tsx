@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { GoabContainer, GoabCallout, GoabGrid } from '@abgov/react-components';
+import { GoabContainer, GoabCallout, GoabGrid, GoabTooltip } from '@abgov/react-components';
+
 import { Link } from 'react-router-dom';
 import { Main, Page } from '@components/Html';
 import { useDispatch, useSelector } from 'react-redux';
@@ -67,10 +68,12 @@ const Dashboard = (): JSX.Element => {
     }
   }, [realm, authenticated, dispatch]);
 
-  const truncate = (text, maxLength = 100) => {
+  const truncate = (text: string, maxLength = 100) => {
     if (!text) return '';
     return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
   };
+
+  const descriptionLengthThreshold = 120;
 
   const adminDashboard = () => {
     return (
@@ -93,7 +96,21 @@ const Dashboard = (): JSX.Element => {
                           )}
                           {services[index].alpha && <div>{alphaBadge()}</div>}
                         </HeadingDiv>
-                        <div>{truncate(services[index].description, 120)}</div>
+                        {services[index].description.length > descriptionLengthThreshold ? (
+                          <GoabTooltip
+                            content={
+                              <span style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
+                                {services[index].description}
+                              </span>
+                            }
+                            position="bottom"
+                            key={index}
+                          >
+                            <div>{truncate(services[index].description, descriptionLengthThreshold)}</div>
+                          </GoabTooltip>
+                        ) : (
+                          <div>{services[index].description}</div>
+                        )}
                       </DashboardContainer>
                     ))}
                   </GoabGrid>
