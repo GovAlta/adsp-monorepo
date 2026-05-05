@@ -7,9 +7,14 @@ import Ajv from 'ajv';
 import { JsonForms } from '@jsonforms/react';
 import { GoAInputBaseTableReview } from './InputBaseTableReviewControl';
 import { JsonFormsStepperContext, JsonFormsStepperContextProps } from '../FormStepper/context/StepperContext';
+import { invalidSin } from '../../common/Constants';
 
 import { CategorizationStepperLayoutRendererProps } from '../FormStepper/types';
 import { JsonFormsStepperContextProvider } from '../FormStepper/context';
+
+import { createDefaultAjv } from '../../../index';
+
+const ajv = createDefaultAjv();
 
 const getFormBase = (uiSchema: UISchemaElement, schema: object, data: object): JSX.Element => {
   return (
@@ -440,7 +445,9 @@ describe('InputBaseTableReviewControl', () => {
 
   it('shows validation error for empty array when required', () => {
     const mockGoToPage = jest.fn();
-    const contextValue: JsonFormsStepperContextProps = { goToPage: mockGoToPage } as unknown as JsonFormsStepperContextProps;
+    const contextValue: JsonFormsStepperContextProps = {
+      goToPage: mockGoToPage,
+    } as unknown as JsonFormsStepperContextProps;
     const { baseElement } = render(
       <JsonFormsStepperContext.Provider value={contextValue}>
         <table>
@@ -477,7 +484,7 @@ describe('InputBaseTableReviewControl', () => {
     );
 
     const errorFormItem = baseElement.querySelector(
-      'goa-form-item[error="Choose all options that best apply is required"]'
+      'goa-form-item[error="Choose all options that best apply is required"]',
     );
     expect(errorFormItem).toBeInTheDocument();
   });
@@ -515,5 +522,202 @@ describe('InputBaseTableReviewControl', () => {
     expect(getByTestId('review-value-').textContent).toBe('');
     const errorFormItem = baseElement.querySelector('goa-form-item[error="Is attestation accepted is required"]');
     expect(errorFormItem).toBeInTheDocument();
+  });
+
+  it('returns invalid SIN error from custom AJV', () => {
+    const ajv = createDefaultAjv();
+
+    const validate = ajv.compile({
+      type: 'string',
+      pattern: '^\\d{3} \\d{3} \\d{3}$',
+      validSin: true,
+    });
+
+    const valid = validate('123 111 111');
+
+    expect(valid).toBe(false);
+    expect(validate.errors?.[0]?.message).toBe(invalidSin);
+  });
+
+  it('shows SIN validation error on summary row for invalid SIN', () => {
+    const ajv = createDefaultAjv();
+
+    const schema = {
+      type: 'string',
+      title: 'Social insurance number',
+      pattern: '^\\d{3} \\d{3} \\d{3}$',
+      validSin: true,
+      errorMessage: {
+        pattern: 'Must be three groups of three digits.',
+      },
+    };
+
+    const validate = ajv.compile(schema);
+    validate('123 111 111');
+
+    const sinError = validate.errors?.[0]?.message ?? '';
+
+    const { baseElement } = render(
+      <table>
+        <tbody>
+          <GoAInputBaseTableReview
+            data="123 111 111"
+            visible={true}
+            label="Social insurance number"
+            path="sinControls.valueA"
+            schema={schema}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/sinControls/properties/valueA',
+              label: 'Social insurance number',
+              options: { stepId: 1 },
+            }}
+            enabled={true}
+            errors={sinError}
+            cells={[]}
+            required={false}
+            id="sin-controls-valueA"
+            rootSchema={{ type: 'object', properties: {} }}
+            config={{}}
+            renderers={[]}
+            handleChange={jest.fn()}
+          />
+        </tbody>
+      </table>,
+    );
+
+    const errorFormItem = baseElement.querySelector(`goa-form-item[error="${invalidSin}"]`);
+
+    expect(sinError).toBe(invalidSin);
+    expect(errorFormItem).toBeInTheDocument();
+  });
+
+  it('shows (none given) for undefined data', () => {
+    const { getByTestId } = render(
+      <table>
+        <tbody>
+          <GoAInputBaseTableReview
+            data={undefined}
+            visible={true}
+            label="First name"
+            path="firstName"
+            schema={{ type: 'string' }}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/firstName',
+              label: 'First name',
+            }}
+            enabled={true}
+            errors=""
+            cells={[]}
+            required={false}
+            id="firstName"
+            rootSchema={{ type: 'object', properties: {} }}
+            config={{}}
+            renderers={[]}
+            handleChange={jest.fn()}
+          />
+        </tbody>
+      </table>,
+    );
+
+    expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
+  });
+
+  it('shows (none given) for null data', () => {
+    const { getByTestId } = render(
+      <table>
+        <tbody>
+          <GoAInputBaseTableReview
+            data={null}
+            visible={true}
+            label="First name"
+            path="firstName"
+            schema={{ type: 'string' }}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/firstName',
+              label: 'First name',
+            }}
+            enabled={true}
+            errors=""
+            cells={[]}
+            required={false}
+            id="firstName"
+            rootSchema={{ type: 'object', properties: {} }}
+            config={{}}
+            renderers={[]}
+            handleChange={jest.fn()}
+          />
+        </tbody>
+      </table>,
+    );
+
+    expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
+  });
+
+  it('shows (none given) for empty string data', () => {
+    const { getByTestId } = render(
+      <table>
+        <tbody>
+          <GoAInputBaseTableReview
+            data=""
+            visible={true}
+            label="First name"
+            path="firstName"
+            schema={{ type: 'string' }}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/firstName',
+              label: 'First name',
+            }}
+            enabled={true}
+            errors=""
+            cells={[]}
+            required={false}
+            id="firstName"
+            rootSchema={{ type: 'object', properties: {} }}
+            config={{}}
+            renderers={[]}
+            handleChange={jest.fn()}
+          />
+        </tbody>
+      </table>,
+    );
+
+    expect(getByTestId('review-value-First name').textContent).toBe('(none given)');
+  });
+
+  it('does not show (none given) for unchecked required boolean (shows error instead)', () => {
+    const { getByTestId } = render(
+      <table>
+        <tbody>
+          <GoAInputBaseTableReview
+            data={false}
+            visible={true}
+            label=""
+            path="isAccepted"
+            schema={{ type: 'boolean' }}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/isAccepted',
+              label: '',
+              options: { text: 'I accept the terms' },
+            }}
+            enabled={true}
+            errors="Is Accepted must be equal to one of the allowed values"
+            cells={[]}
+            required={true}
+            id="isAccepted"
+            rootSchema={{ type: 'object', properties: {} }}
+            config={{}}
+            renderers={[]}
+            handleChange={jest.fn()}
+          />
+        </tbody>
+      </table>,
+    );
+
+    expect(getByTestId('review-value-').textContent).toBe('');
   });
 });

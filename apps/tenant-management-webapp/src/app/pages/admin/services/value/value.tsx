@@ -4,6 +4,7 @@ import { Tab, Tabs } from '@components/Tabs';
 import { ValueOverview } from './valueOverview';
 import { ValueDefinitions } from './definitions';
 import AsideLinks from '@components/AsideLinks';
+import { AsidePadding } from '../../../../components/Html';
 
 export const Value: FunctionComponent = () => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -35,7 +36,9 @@ export const Value: FunctionComponent = () => {
       </Main>
 
       <Aside>
-        <AsideLinks serviceName="value" />
+        <AsidePadding>
+          <AsideLinks serviceName="value" />
+        </AsidePadding>
       </Aside>
     </Page>
   );

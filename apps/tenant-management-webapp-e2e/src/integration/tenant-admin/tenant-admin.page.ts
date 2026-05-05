@@ -1,6 +1,6 @@
 class TenantAdminPage {
   dashboardTitle() {
-    return cy.get('.name');
+    return cy.xpath('//goa-microsite-header/following-sibling::goa-app-header');
   }
 
   dashboardServicesMenuCategory() {
@@ -56,15 +56,15 @@ class TenantAdminPage {
   }
 
   goaCardTitles() {
-    return cy.xpath('//goa-container//h2/a');
+    return cy.xpath('//goa-grid//h2/a');
   }
 
   goaCardTexts() {
-    return cy.xpath('//goa-container/div/div[contains(text(), ".")]');
+    return cy.xpath('//goa-grid/div/div[2]');
   }
 
   goaCardLink(text) {
-    return cy.xpath(`//goa-container//h2/a[contains(text(), "${text}")]`);
+    return cy.xpath(`//goa-grid//h2/a[contains(text(), "${text}")]`);
   }
 
   servicePageTitle(text) {

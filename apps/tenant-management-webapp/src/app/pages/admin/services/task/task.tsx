@@ -10,6 +10,7 @@ import { taskAppLoginUrlSelector } from './selectors';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import { RootState } from '@store/index';
 import { useLocation } from 'react-router-dom';
+import { AsidePadding } from '../../../../components/Html';
 
 export const Task: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -70,11 +71,13 @@ export const Task: FunctionComponent = () => {
       </Main>
 
       <Aside>
-        <AsideLinks serviceName="task" />
-        <h3>Work on tasks</h3>
-        <span>Users can view and work on tasks in queues here:</span>
-        <h3>Task app link</h3>
-        <LinkCopyComponent text={'Copy link'} link={loginUrl} />
+        <AsidePadding>
+          <AsideLinks serviceName="task" />
+          <h3>Work on tasks</h3>
+          <span>Users can view and work on tasks in queues here:</span>
+          <h3>Task app link</h3>
+          <LinkCopyComponent text={'Copy link'} link={loginUrl} />
+        </AsidePadding>
       </Aside>
     </Page>
   );

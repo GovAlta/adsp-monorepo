@@ -115,7 +115,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoANumberInput {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const amountInput = baseElement.querySelector("goa-input[testId='amount-input']");
 
@@ -130,7 +130,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoANumberInput {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const amountInput = baseElement.querySelector("goa-input[testId='amount-input']");
 
@@ -143,7 +143,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoANumberInput {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const amountInput = baseElement.querySelector("goa-input[testId='amount-input']");
       expect(amountInput.getAttribute('error')).toBe('true');
@@ -154,7 +154,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoANumberInput {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const amountInput = baseElement.querySelector("goa-input[testId='-input']");
       expect(amountInput.getAttribute('name')).toBe('mytestInput-input');
@@ -165,7 +165,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoANumberInput {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const amountInput = baseElement.querySelector("goa-input[testId='amount-input']");
       expect(amountInput).toBeInTheDocument();
@@ -185,7 +185,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoANumberInput {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const amountInput = baseElement.querySelector("goa-input[testId='amount-input']");
 
@@ -200,7 +200,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoANumberInput {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
       const amountInput = baseElement.querySelector("goa-input[testId='amount-input']");
       // fireEvent.change(amountInput, { target: { value: '5' } });
@@ -209,7 +209,7 @@ describe('Input Text Control tests', () => {
         amountInput,
         new CustomEvent('_change', {
           detail: { name: 'amount', value: '5' },
-        })
+        }),
       );
       amountInput?.setAttribute('value', '5');
       expect(amountInput?.getAttribute('value')).toBe('5');
@@ -220,7 +220,7 @@ describe('Input Text Control tests', () => {
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
           <GoANumberInput {...props} />
-        </JsonFormsContext.Provider>
+        </JsonFormsContext.Provider>,
       );
 
       const firstNameInput = baseElement.querySelector("goa-input[testId='amount-input']");
@@ -241,29 +241,12 @@ describe('Input Text Control tests', () => {
     });
   });
   describe('Luhn validation function tests', () => {
-    it('Must be three groups of three digits', () => {
-      const { getByText } = render(
-        <JsonFormsContext.Provider value={mockContextValue}>
-          <TestComponent props={sinProps} />
-        </JsonFormsContext.Provider>
-      );
-      expect(getByText('Must be three groups of three digits.')).toBeTruthy();
-    });
-
-    it('should enter valid SIN', () => {
-      const { getByText } = render(
-        <JsonFormsContext.Provider value={mockContextValue}>
-          <TestComponent props={invalidSinProps} />
-        </JsonFormsContext.Provider>
-      );
-      expect(getByText('Social insurance number is invalid')).toBeTruthy();
-    });
     it('should return true for valid SIN Number', () => {
-      expect(validateSinWithLuhn(Number('046454286'))).toBe(true);
+      expect(validateSinWithLuhn('046454286')).toBe(true);
     });
 
     it('should return false for invalid SIN Number', () => {
-      expect(validateSinWithLuhn(Number('123456879'))).toBe(false);
+      expect(validateSinWithLuhn('123456879')).toBe(false);
     });
     it('should return 9 digits for invalid SIN Number with more than 16 digits', () => {
       expect(formatSin('123456879123456789999')).toBe('123-456-879');

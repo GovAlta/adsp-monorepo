@@ -83,7 +83,7 @@ const initializeApp = async (): Promise<express.Application> => {
               logger,
             }),
           }),
-          {}
+          {},
         ),
       roles: [
         {
@@ -98,6 +98,8 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       combineConfiguration: (tenantConfig: Record<string, PdfTemplate>, coreConfig: Record<string, PdfTemplate>) => [
         {
           ...tenantConfig,
@@ -107,7 +109,7 @@ const initializeApp = async (): Promise<express.Application> => {
       values: [ServiceMetricsValueDefinition],
       useLongConfigurationCacheTTL: true,
     },
-    { logger }
+    { logger },
   );
 
   const templateService = createTemplateService(directory);
@@ -157,7 +159,7 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   const { repository, ...repositories } = createJobRepository<FileResult>({ logger, ...environment });

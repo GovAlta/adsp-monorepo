@@ -95,8 +95,10 @@ instrumentAxios(logger);
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
     },
-    { logger }
+    { logger },
   );
 
   passport.use('jwt', coreStrategy);
@@ -128,7 +130,7 @@ instrumentAxios(logger);
     repositories.endpointStatusEntryRepository,
     directory,
     tenantService,
-    logger
+    logger,
   );
 
   const healthCheckSchedulingProps = {
@@ -160,7 +162,7 @@ instrumentAxios(logger);
           healthCheckScheduler: scheduler,
           logger: logger,
         },
-        getScheduler(healthCheckSchedulingProps)
+        getScheduler(healthCheckSchedulingProps),
       );
 
       const amqpCredentials: AMQPCredentials = {

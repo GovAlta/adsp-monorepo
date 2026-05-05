@@ -318,7 +318,7 @@ export function formSubmitted(
   user: User,
   form: FormEntity,
   submission?: FormSubmissionEntity,
-  dryRun?: boolean
+  dryRun?: boolean,
 ): DomainEvent {
   const formResponse = mapForm(apiId, form);
   return {
@@ -347,6 +347,45 @@ export function formSubmitted(
         name: user.name,
       },
       data: form.definition.includeDataInSubmission === true ? form.data : null,
+      dryRun: dryRun,
+    },
+  };
+}
+
+export function customFormSubmitted(
+  apiId: AdspId,
+  user: User,
+  form: FormEntity,
+  submission?: FormSubmissionEntity,
+  dryRun?: boolean,
+): DomainEvent {
+  const formResponse = mapForm(apiId, form);
+  return {
+    name: form.definition.customSubmissionEvent.name,
+    timestamp: form.submitted,
+    tenantId: form.tenantId,
+    correlationId: getCorrelationId(formResponse),
+    context: {
+      definitionId: form.definition.id,
+      formId: form.id,
+    },
+    payload: {
+      form: formResponse,
+      submission: submission
+        ? {
+            urn: `${formResponse.urn}/submissions/${submission.id}`,
+            id: submission.id,
+            createdBy: {
+              id: submission.createdBy.id,
+              name: submission.createdBy.name,
+            },
+          }
+        : null,
+      submittedBy: {
+        id: user.id,
+        name: user.name,
+      },
+      data: form.data,
       dryRun: dryRun,
     },
   };

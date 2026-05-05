@@ -11,6 +11,7 @@ export const environment = envalid.cleanEnv(
     DIRECTORY_URL: envalid.str({ default: 'http://localhost:3331' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:event-service' }),
     CLIENT_SECRET: envalid.str(),
+    OTEL_EXPORTER_OTLP_ENDPOINT: envalid.str({ default: '' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     AMQP_HOST: envalid.str({ default: 'localhost' }),
     AMQP_USER: envalid.str({ default: 'guest' }),
@@ -26,5 +27,5 @@ export const environment = envalid.cleanEnv(
         console.error(`Invalid env vars: ${util.inspect(errors)}`);
       }
     },
-  }
+  },
 );

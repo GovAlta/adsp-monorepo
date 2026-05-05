@@ -90,7 +90,7 @@ const initializeApp = async (): Promise<express.Application> => {
               ...coreConfig?.targets,
             },
           },
-          tenantId
+          tenantId,
         );
       },
       enableConfigurationInvalidation: true,
@@ -99,6 +99,8 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       serviceConfigurations: [
         {
           serviceId,
@@ -113,7 +115,7 @@ const initializeApp = async (): Promise<express.Application> => {
         },
       ],
     },
-    { logger }
+    { logger },
   );
 
   passport.use('core', coreStrategy);
@@ -140,7 +142,7 @@ const initializeApp = async (): Promise<express.Application> => {
     passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     tenantHandler,
     anonymousTenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   applyCacheMiddleware(app, { logger, configurationService, queueService });

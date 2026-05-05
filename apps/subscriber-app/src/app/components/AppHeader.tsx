@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GoAHeader } from '@abgov/react-components-old';
+import { GoabAppHeader, GoabMicrositeHeader } from '@abgov/react-components';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
@@ -72,9 +72,10 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
 function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }: HeaderProps): JSX.Element {
   return (
     <HeaderContainer>
-      <GoAHeader serviceHome="/" serviceLevel="live" serviceName={serviceName}>
+      <GoabMicrositeHeader type="live" headerUrlTarget="self" />
+      <GoabAppHeader url="/" heading={serviceName}>
         <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
-      </GoAHeader>
+      </GoabAppHeader>
     </HeaderContainer>
   );
 }

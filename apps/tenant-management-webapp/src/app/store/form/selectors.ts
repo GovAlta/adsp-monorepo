@@ -74,3 +74,18 @@ export const schemaErrorSelector = createSelector(
   (state: RootState) => state.form.editor.uiSchemaError,
   (dataError, uiError) => dataError || uiError
 );
+
+export const selectFilteredDefinitions = createSelector(
+  (state: RootState) => state.form.definitions,
+  (state: RootState) => state.form.formResourceTag.tagResources,
+  (state: RootState) => state.form.formResourceTag.selectedTag,
+  (state: RootState) => state.form.definitionSearchInput,
+  (definitions, tagResources, selectedTag, searchInput) => {
+    if (selectedTag && searchInput) {
+      const nameKeys = new Set(Object.keys(definitions || {}));
+      return Object.fromEntries(Object.entries(tagResources || {}).filter(([id]) => nameKeys.has(id)));
+    }
+    if (selectedTag) return tagResources || {};
+    return definitions || {};
+  }
+);

@@ -2,6 +2,7 @@ import React from 'react';
 import { GoabButton } from '@abgov/react-components';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
+import { AsidePadding } from '../../../components/Html';
 
 const CreateErrorPage = (): JSX.Element => {
   return (
@@ -11,7 +12,11 @@ const CreateErrorPage = (): JSX.Element => {
         <GoabButton>Activate Tenant</GoabButton>
       </Main>
       <Aside>
-        <SupportLinks />
+        <AsidePadding>
+          <h2>Need help?</h2>
+          <p>If you continue to experience issues, please reach out to our support team for assistance.</p>
+          <SupportLinks />
+        </AsidePadding>
       </Aside>
     </Page>
   );

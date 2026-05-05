@@ -7,24 +7,29 @@ parent: Services
 
 # Access service
 
+<!-- tags: [keycloak] -->
 Access service is a deployment of [Keycloak](https://www.keycloak.org/). It provides _Realms_ (tenancy in Keycloak) to tenants and serves as the basis for tenant access management.
 
 Access tokens issued by tenant realms are recognized by platform services and serve to identify the associated tenant of each request. Tenant administrators control the user and service accounts that have access to platform capabilities by adding or removing platform service client roles from accounts.
 
 ## Client roles
 
+<!-- tags: [keycloak] -->
 Access service roles are defined by Keycloak. Realm management related roles can be found under the `realm-management` client. Refer to keycloak documentation for specifics.
 
 ## Concepts
 
+<!-- tags: [keycloak] -->
 This captures some key concepts and their specific relevance to ADSP. For the complete documentation, refer to Keycloak documentation.
 
 ### Clients
 
+<!-- tags: [keycloak] -->
 Clients represents applications that request authentication for users or applications that verify access via bearer tokens. In ADSP, tenant realms are created with a `urn:ads:platform:tenant-admin-app` client that is used by the tenant administration application to authenticate users, as well as platform service bearer-only clients that include _client roles_.
 
 ### Clients roles
 
+<!-- tags: [keycloak] -->
 Client roles are roles associated with a specific client. For example, Keycloak realm administration console roles are client roles of a `realm-management` client. If an access token is requested for an account with a client role, the _Audience Resolve_ protocol mapper included in the _roles_ scope will include the client in the `aud` field of the returned access token.
 
 To access to ADSP services, a few ADSP clients in the format of `urn:ads:<service-name>` are created as default. Mostly, client roles within those clients provide the fine-grained access control to a specific ADSP service. One exception is the `tenant-admin` role in the `urn:ads:platform:tenant-service` client. The `tenant-admin` is created as a composite role and contains other client roles. The `tenant-admin` shall be only assigned to the ADSP tenant admin.
@@ -33,6 +38,7 @@ The ADSP clients and related roles are maintained by the ADSP team. Please conta
 
 ### Add team member as a tenant admin
 
+<!-- tags: [keycloak] -->
 The steps of settping up a tenant admin are described as follows:
 
 - Request the team memeber to login to the keycloak tenant realm once.

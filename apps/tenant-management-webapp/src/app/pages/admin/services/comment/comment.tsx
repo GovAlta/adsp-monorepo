@@ -10,6 +10,7 @@ import { RootState } from '@store/index';
 import BetaBadge from '@icons/beta-badge.svg';
 
 import AsideLinks from '@components/AsideLinks';
+import { AsidePadding } from '../../../../components/Html';
 
 export const Comment: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -40,7 +41,9 @@ export const Comment: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <AsideLinks serviceName="comment" />
+        <AsidePadding>
+          <AsideLinks serviceName="comment" />
+        </AsidePadding>
       </Aside>
     </Page>
   );

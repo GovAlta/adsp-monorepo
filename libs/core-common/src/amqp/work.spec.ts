@@ -1,5 +1,6 @@
 import { AmqpConnectionManager } from 'amqp-connection-manager';
 import { Logger } from 'winston';
+import { context as otelContext, propagation, trace as otelTrace, SpanStatusCode } from '@opentelemetry/api';
 import { AmqpWorkQueueService } from './work';
 
 describe('AmqpWorkQueueService<string>', () => {
@@ -44,7 +45,7 @@ describe('AmqpWorkQueueService<string>', () => {
     const service = new AmqpWorkQueueService<{ value: string }>(
       'test',
       logger,
-      connection as unknown as AmqpConnectionManager
+      connection as unknown as AmqpConnectionManager,
     );
 
     service.connect().then((connected) => {
@@ -64,7 +65,7 @@ describe('AmqpWorkQueueService<string>', () => {
     const service = new AmqpWorkQueueService<{ value: string }>(
       'test',
       logger,
-      connection as unknown as AmqpConnectionManager
+      connection as unknown as AmqpConnectionManager,
     );
     const connected = await service.connect();
 
@@ -88,11 +89,15 @@ describe('AmqpWorkQueueService<string>', () => {
       }),
     };
 
+    const injectSpy = jest.spyOn(propagation, 'inject').mockImplementation((_ctx, carrier) => {
+      (carrier as Record<string, unknown>).traceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
+    });
+
     channel.sendToQueue.mockResolvedValueOnce(true);
     const service = new AmqpWorkQueueService<{ value: string }>(
       'test',
       logger,
-      connection as unknown as AmqpConnectionManager
+      connection as unknown as AmqpConnectionManager,
     );
     await service.connect();
     await service.enqueue({ value: 'test' });
@@ -101,8 +106,12 @@ describe('AmqpWorkQueueService<string>', () => {
       expect.any(Buffer),
       expect.objectContaining({
         contentType: 'application/json',
-      })
+        headers: {
+          traceparent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
+        },
+      }),
     );
+    injectSpy.mockRestore();
   });
 
   describe('Subscriber', () => {
@@ -110,6 +119,17 @@ describe('AmqpWorkQueueService<string>', () => {
       const workItem = {
         value: 'test',
       };
+      const span = {
+        setStatus: jest.fn(),
+        recordException: jest.fn(),
+        end: jest.fn(),
+      };
+      const withSpy = jest.spyOn(otelContext, 'with').mockImplementation((_ctx, callback) => callback());
+      const extractSpy = jest.spyOn(propagation, 'extract').mockReturnValue({} as never);
+      const setSpanSpy = jest.spyOn(otelTrace, 'setSpan').mockReturnValue({} as never);
+      const getTracerSpy = jest
+        .spyOn(otelTrace, 'getTracer')
+        .mockReturnValue({ startSpan: jest.fn().mockReturnValue(span) } as never);
 
       const subChannel = {
         assertExchange: jest.fn(() => Promise.resolve()),
@@ -117,7 +137,11 @@ describe('AmqpWorkQueueService<string>', () => {
         bindQueue: jest.fn(() => Promise.resolve()),
         publish: jest.fn(),
         consume: jest.fn((_queue, cb) => {
-          cb({ properties: { headers: {} }, content: JSON.stringify(workItem) });
+          cb({
+            properties: { headers: { traceparent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01' } },
+            fields: { routingKey: 'test.key' },
+            content: JSON.stringify(workItem),
+          });
         }),
         ack: jest.fn(),
       };
@@ -133,13 +157,30 @@ describe('AmqpWorkQueueService<string>', () => {
       const service = new AmqpWorkQueueService<{ value: string }>(
         'test',
         logger,
-        connection as unknown as AmqpConnectionManager
+        connection as unknown as AmqpConnectionManager,
       );
       service.connect().then(() => {
         service.getItems().subscribe(({ item, done: workDone }) => {
-          expect(item).toEqual(workItem);
+          expect(item).toEqual(
+            expect.objectContaining({
+              ...workItem,
+              traceparent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
+            }),
+          );
+          expect(extractSpy).toHaveBeenCalledWith(expect.anything(), {
+            traceparent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
+          });
+          expect(getTracerSpy).toHaveBeenCalledWith('core-common.amqp');
+          expect(setSpanSpy).toHaveBeenCalled();
+          expect(withSpy).toHaveBeenCalled();
           workDone();
           expect(subChannel.ack).toHaveBeenCalledTimes(1);
+          expect(span.setStatus).toHaveBeenCalledWith({ code: SpanStatusCode.OK });
+          expect(span.end).toHaveBeenCalledTimes(1);
+          getTracerSpy.mockRestore();
+          setSpanSpy.mockRestore();
+          extractSpy.mockRestore();
+          withSpy.mockRestore();
           done();
         });
       });
@@ -149,8 +190,20 @@ describe('AmqpWorkQueueService<string>', () => {
       const workItem = {
         value: 'test',
       };
+      const span = {
+        setStatus: jest.fn(),
+        recordException: jest.fn(),
+        end: jest.fn(),
+      };
+      const getTracerSpy = jest
+        .spyOn(otelTrace, 'getTracer')
+        .mockReturnValue({ startSpan: jest.fn().mockReturnValue(span) } as never);
 
-      const msg = { properties: { headers: {} }, content: JSON.stringify(workItem) };
+      const msg = {
+        properties: { headers: {} },
+        fields: { routingKey: 'test.key' },
+        content: JSON.stringify(workItem),
+      };
       const subChannel = {
         assertExchange: jest.fn(() => Promise.resolve()),
         assertQueue: jest.fn(() => Promise.resolve()),
@@ -173,21 +226,26 @@ describe('AmqpWorkQueueService<string>', () => {
       const service = new AmqpWorkQueueService<{ value: string }>(
         'test',
         logger,
-        connection as unknown as AmqpConnectionManager
+        connection as unknown as AmqpConnectionManager,
       );
       service.connect().then(() => {
         service.getItems().subscribe(({ item, done: workDone }) => {
           expect(item).toEqual(workItem);
-          workDone(new Error('Something went terribly wrong.'));
+          const err = new Error('Something went terribly wrong.');
+          workDone(err);
           expect(subChannel.nack).toHaveBeenCalledTimes(1);
           expect(subChannel.nack).toBeCalledWith(msg, false, true);
+          expect(span.recordException).toHaveBeenCalledWith(err);
+          expect(span.setStatus).toHaveBeenCalledWith({ code: SpanStatusCode.ERROR, message: err.message });
+          expect(span.end).toHaveBeenCalledTimes(1);
+          getTracerSpy.mockRestore();
           done();
         });
       });
     });
 
     it('can nack and requeue item for message error', (done) => {
-      const msg = { properties: { headers: {} }, content: "//" };
+      const msg = { properties: { headers: {} }, content: '//' };
       const subChannel = {
         assertExchange: jest.fn(() => Promise.resolve()),
         assertQueue: jest.fn(() => Promise.resolve()),
@@ -197,7 +255,7 @@ describe('AmqpWorkQueueService<string>', () => {
           cb(msg);
         }),
         nack: jest.fn(() => {
-          done()
+          done();
         }),
       };
 
@@ -212,7 +270,7 @@ describe('AmqpWorkQueueService<string>', () => {
       const service = new AmqpWorkQueueService<{ value: string }>(
         'test',
         logger,
-        connection as unknown as AmqpConnectionManager
+        connection as unknown as AmqpConnectionManager,
       );
       service.connect().then(() => {
         service.getItems().subscribe(({ done: workDone }) => workDone());
@@ -247,7 +305,7 @@ describe('AmqpWorkQueueService<string>', () => {
       const service = new AmqpWorkQueueService<{ value: string }>(
         'test',
         logger,
-        connection as unknown as AmqpConnectionManager
+        connection as unknown as AmqpConnectionManager,
       );
       service.connect().then(() => {
         service.getItems().subscribe(({ item, done: workDone }) => {
@@ -279,7 +337,7 @@ describe('AmqpWorkQueueService<string>', () => {
       const service = new AmqpWorkQueueService<{ value: string }>(
         'test',
         logger,
-        connection as unknown as AmqpConnectionManager
+        connection as unknown as AmqpConnectionManager,
       );
       expect(() => service.getItems()).toThrow(/Service must be connected before items can be subscribed./);
     });

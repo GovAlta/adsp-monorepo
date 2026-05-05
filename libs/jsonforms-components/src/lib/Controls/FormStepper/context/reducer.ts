@@ -10,6 +10,7 @@ export type StepperAction =
   | { type: 'page/next' }
   | { type: 'page/prev' }
   | { type: 'page/to/index'; payload: { id: number; targetScope?: string } }
+  | { type: 'set/visited'; payload: { id: number } }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | { type: 'update/category'; payload: { errors?: ErrorObject[]; id: number; ajv: Ajv; schema: any; data: any } }
   | { type: 'validate/form'; payload: { errors?: ErrorObject[] } }
@@ -62,15 +63,12 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
     case 'page/to/index': {
       const { id, targetScope } = action.payload;
       const newActive = id;
-
-      const newCategories = categories.map((c, idx) => (idx === id ? { ...c, isVisited: true } : c));
-
       const isOnReview = newActive === lastId + 1;
 
       return {
         ...state,
         activeId: newActive,
-        categories: newCategories,
+        categories: categories,
         isOnReview,
         hasNextButton: !isOnReview,
         hasPrevButton: newActive !== 0,
@@ -104,12 +102,28 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
           ...cat,
           isCompleted: status === 'Completed',
           isValid: status === 'Completed',
-          isVisited: true,
           status,
         };
       });
 
       return { ...state, categories: newCategories };
+    }
+    case 'set/visited': {
+      const { id } = action.payload;
+
+      const newCategories = state.categories.map((cat) =>
+        cat.id === id
+          ? {
+              ...cat,
+              isVisited: true,
+            }
+          : cat,
+      );
+
+      return {
+        ...state,
+        categories: newCategories,
+      };
     }
 
     case 'validate/form': {
@@ -124,7 +138,7 @@ export const stepperReducer = (state: StepperContextDataType, action: StepperAct
       const { id } = action.payload;
 
       const newCategories = categories.map((cat, idx) =>
-        idx === id ? { ...cat, showReviewPageLink: !cat.showReviewPageLink } : cat
+        idx === id ? { ...cat, showReviewPageLink: !cat.showReviewPageLink } : cat,
       );
 
       return {

@@ -76,7 +76,7 @@ describe('AddressLookUpControlReview', () => {
           visible={false}
           {...props}
         />
-      </JsonFormContext.Provider>
+      </JsonFormContext.Provider>,
     );
   };
 
@@ -176,7 +176,7 @@ describe('AddressLoopUpControlTableReview', () => {
             />
           </JsonFormContext.Provider>
         }
-      />
+      />,
     );
   };
   it('should render the component with input fields', async () => {
@@ -282,5 +282,29 @@ describe('AddressLoopUpControlTableReview', () => {
     };
     renderComponent(propsWithUnknownProvince);
     expect(screen.getByText('XX')).toBeInTheDocument();
+  });
+
+  it('should show (none given) for non-required empty address fields', () => {
+    const propsWithEmptyOptionalFields = {
+      data: {
+        addressLine1: '123 Test St',
+        municipality: 'Calgary',
+        subdivisionCode: 'AB',
+        postalCode: 'T2P 1A1',
+        country: 'CAN',
+        // addressLine2 omitted - it is not required
+      },
+      schema: {
+        properties: {
+          subdivisionCode: { const: 'AB' },
+        },
+        required: ['addressLine1', 'municipality', 'subdivisionCode', 'postalCode', 'country'],
+      },
+    };
+    renderComponent(propsWithEmptyOptionalFields);
+    // Non-required empty fields should not render a row (addressLine2 is conditionally rendered)
+    // Required fields with values should NOT show (none given)
+    expect(screen.getByText('123 Test St')).toBeInTheDocument();
+    expect(screen.queryAllByText('(none given)').length).toBe(0);
   });
 });

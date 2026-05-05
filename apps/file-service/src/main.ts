@@ -68,6 +68,8 @@ async function initializeApp(): Promise<express.Application> {
       serviceId,
       displayName: 'File service',
       description: 'Service for upload and download of files.',
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       roles: [
         {
           role: ServiceUserRoles.Admin,
@@ -139,7 +141,7 @@ async function initializeApp(): Promise<express.Application> {
         },
       ],
     },
-    { logger }
+    { logger },
   );
 
   passport.use('jwt', tenantStrategy);
@@ -162,7 +164,7 @@ async function initializeApp(): Promise<express.Application> {
     metricsHandler,
     passport.authenticate(['jwt-core', 'jwt', 'anonymous'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   const storageProvider =

@@ -6,7 +6,13 @@ import { NotificationService, Subscriber } from '../../notification';
 import { CalendarService } from '../calendar';
 import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
-import { FormDefinition, Disposition, QueueTaskToProcess, SecurityClassificationType } from '../types';
+import {
+  FormDefinition,
+  Disposition,
+  QueueTaskToProcess,
+  SecurityClassificationType,
+  CustomSubmissionEvent,
+} from '../types';
 import {
   collectFileUrnPathTemplates,
   FileUrnPathTemplate,
@@ -37,6 +43,7 @@ export class FormDefinitionEntity implements FormDefinition {
   dryRun: boolean;
   includeDataInSubmission: boolean;
   registeredId?: string;
+  customSubmissionEvent?: CustomSubmissionEvent;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
   private fileUrnPathTemplates: FileUrnPathTemplate[];
@@ -46,7 +53,7 @@ export class FormDefinitionEntity implements FormDefinition {
     private calendarService: CalendarService,
     public tenantId: AdspId,
     definition: FormDefinition,
-    public revision?: number
+    public revision?: number,
   ) {
     this.id = definition.id;
     this.name = definition.name;
@@ -73,6 +80,7 @@ export class FormDefinitionEntity implements FormDefinition {
     this.scheduledIntakes = definition?.scheduledIntakes || false;
     this.includeDataInSubmission = definition?.includeDataInSubmission || false;
     this.registeredId = definition?.registeredId || null;
+    this.customSubmissionEvent = definition?.customSubmissionEvent || null;
   }
 
   public canAccessDefinition(user: User): boolean {
@@ -99,7 +107,7 @@ export class FormDefinitionEntity implements FormDefinition {
       this.anonymousApply
         ? [FormServiceRoles.IntakeApp, ...this.applicantRoles, ...this.clerkRoles]
         : [...this.applicantRoles, ...this.clerkRoles],
-      true
+      true,
     );
   }
 
@@ -137,7 +145,7 @@ export class FormDefinitionEntity implements FormDefinition {
     repository: FormRepository,
     notificationService: NotificationService,
     dryRun?: boolean,
-    applicantInfo?: Omit<Subscriber, 'urn'>
+    applicantInfo?: Omit<Subscriber, 'urn'>,
   ): Promise<FormEntity> {
     if (!(await this.checkScheduledIntakes(user, dryRun))) {
       throw new InvalidOperationError('Cannot create form as there is no active intake.');

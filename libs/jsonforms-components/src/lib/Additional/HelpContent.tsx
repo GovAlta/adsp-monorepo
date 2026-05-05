@@ -46,6 +46,12 @@ interface MdxMarkdownResponse {
   error: string;
 }
 
+export const markdownComponents = {
+  a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a {...props} target="_blank" rel="noopener noreferrer" />
+  ),
+};
+
 const HelpContentReviewComponent = (): JSX.Element => {
   return <> </>;
 };
@@ -68,7 +74,7 @@ export const MarkdownComponent = ({ markdown }: MdxMarkdown): JSX.Element => {
   const response = checkMarkDownIsValid(markdown);
   if (response.isValid) {
     const { default: MDXContent } = evaluateSync(markdown, { ...runtime, Fragment: React.Fragment });
-    return React.createElement(MDXContent, {});
+    return React.createElement(MDXContent, { components: markdownComponents });
   }
   return <InvalidMarkdown>Help content markdown is invalid: {response.error} </InvalidMarkdown>;
 };

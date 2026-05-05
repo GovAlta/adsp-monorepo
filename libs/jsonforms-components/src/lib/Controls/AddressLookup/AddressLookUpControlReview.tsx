@@ -10,6 +10,7 @@ import {
   ReviewLabel,
   ReviewValue,
   RequiredTextLabel,
+  NoneGivenText,
 } from '../Inputs/style-component';
 import { GoabButton, GoabFormItem } from '@abgov/react-components';
 import { useJsonForms } from '@jsonforms/react';
@@ -150,7 +151,7 @@ export const AddressLoopUpControlTableReview = (props: AddressViewProps): JSX.El
             )}
           </ReviewHeader>
           <ReviewValue>
-            {value}
+            {!value ? <NoneGivenText>(none given)</NoneGivenText> : value}
             {errorMessage && <GoabFormItem error={errorMessage} label=""></GoabFormItem>}
           </ReviewValue>
         </PageReviewContainer>

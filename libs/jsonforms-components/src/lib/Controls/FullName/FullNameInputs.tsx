@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GoabFormItem, GoabInput, GoabGrid } from '@abgov/react-components';
 import { GoabInputOnChangeDetail, GoabInputOnBlurDetail } from '@abgov/ui-components-common';
 
@@ -14,8 +14,10 @@ interface NameInputsProps {
   isStepperReview?: boolean;
   disabled?: boolean;
   // eslint-disable-next-line
-  data: any;
-  requiredFields: string[];
+  data?: any;
+  requiredFields?: string[];
+  errors?: Record<string, string>;
+  onFieldBlur?: (name: string) => void;
   // eslint-disable-next-line
   handleInputChange: (field: string, value: string) => void;
 }
@@ -28,15 +30,57 @@ export const NameInputs: React.FC<NameInputsProps> = ({
   data,
   requiredFields,
   disabled,
+  errors,
+  onFieldBlur,
 }: NameInputsProps): JSX.Element => {
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [internalErrors, setInternalErrors] = useState<Record<string, string>>({});
+  const currentValues = { firstName, middleName: middleName || '', lastName };
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      (['firstName', 'middleName', 'lastName'] as const).forEach((field) => {
+        const input = document.querySelector<HTMLInputElement>(`goa-input[name="${field}"]`);
+        const liveValue = input?.value?.trim() || '';
+
+        if (liveValue && !currentValues[field]) {
+          handleInputChange(field, liveValue);
+        }
+      });
+    }, 50);
+
+    return () => window.clearTimeout(timeout);
+  }, [firstName, middleName, lastName, handleInputChange]);
+
+  useEffect(() => {
+    if (errors) {
+      return;
+    }
+
+    setInternalErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
+      let hasChanges = false;
+
+      Object.keys(currentErrors).forEach((name) => {
+        const currentValue = (currentValues[name as keyof typeof currentValues] || '').trim();
+
+        if (requiredFields?.includes(name) && currentValue === '') {
+          return;
+        }
+
+        delete nextErrors[name];
+        hasChanges = true;
+      });
+
+      return hasChanges ? nextErrors : currentErrors;
+    });
+  }, [errors, firstName, middleName, lastName, requiredFields]);
 
   // eslint-disable-next-line
   const handleRequiredFieldBlur = (name: string, updatedData?: any) => {
-    const err = { ...errors };
+    const err = { ...internalErrors };
     if (
       (!data?.[name] || data?.[name] === '') &&
-      requiredFields.includes(name) &&
+      requiredFields?.includes(name) &&
       (!updatedData || updatedData?.[name] === '')
     ) {
       const modifiedName = name === 'firstName' ? 'First name' : name === 'lastName' ? 'Last name' : '';
@@ -44,7 +88,16 @@ export const NameInputs: React.FC<NameInputsProps> = ({
     } else {
       err[name] = '';
     }
-    setErrors(err);
+    setInternalErrors(err);
+  };
+
+  const displayedErrors = errors ?? internalErrors;
+  const handleBlur = (name: string) => {
+    if (onFieldBlur) {
+      onFieldBlur(name);
+    } else {
+      handleRequiredFieldBlur(name);
+    }
   };
 
   return (
@@ -53,7 +106,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
         testId="form-item-first-name"
         label="First name"
         requirement={requiredFields?.includes('firstName') ? 'required' : undefined}
-        error={errors?.['firstName'] ?? ''}
+        error={displayedErrors?.['firstName'] ?? ''}
       >
         <GoabInput
           type="text"
@@ -64,7 +117,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
           value={firstName || ''}
           onChange={(detail: GoabInputOnChangeDetail) => handleInputChange(detail.name, detail.value)}
           onBlur={(detail: GoabInputOnBlurDetail) => {
-            handleRequiredFieldBlur(detail.name);
+            handleBlur(detail.name);
           }}
           width="100%"
         />
@@ -89,7 +142,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
         testId="form-item-last-name"
         label="Last name"
         requirement={requiredFields?.includes('lastName') ? 'required' : undefined}
-        error={errors?.['lastName'] ?? ''}
+        error={displayedErrors?.['lastName'] ?? ''}
       >
         <GoabInput
           type="text"
@@ -100,7 +153,7 @@ export const NameInputs: React.FC<NameInputsProps> = ({
           value={lastName || ''}
           onChange={(detail: GoabInputOnChangeDetail) => handleInputChange(detail.name, detail.value)}
           onBlur={(detail: GoabInputOnBlurDetail) => {
-            handleRequiredFieldBlur(detail.name);
+            handleBlur(detail.name);
           }}
           width="100%"
         />

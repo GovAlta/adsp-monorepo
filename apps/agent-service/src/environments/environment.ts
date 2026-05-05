@@ -35,6 +35,7 @@ export const environment = envalid.cleanEnv(
     AGENT_MCP_SERVER_CREDENTIALS_FILE: envalid.str({ default: '/var/run/secrets/adsp/mcp/mcp-servers.json' }),
     AGENT_WORKSPACE_INIT_RETRY_ATTEMPTS: envalid.num({ default: 5 }),
     AGENT_WORKSPACE_INIT_RETRY_DELAY_MS: envalid.num({ default: 50 }),
+    OTEL_EXPORTER_OTLP_ENDPOINT: envalid.str({ default: '' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3380 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),

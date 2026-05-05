@@ -94,7 +94,7 @@ const initializeApp = async (): Promise<Server> => {
                         ? new AppStatusWebhookEntity(logger, hv)
                         : new WebhookEntity(logger, hv),
                     }),
-                    {} as Record<string, WebhookEntity>
+                    {} as Record<string, WebhookEntity>,
                   ),
               }
             : { ...c, [k]: new StreamEntity(logger, tenantId, s as Stream) };
@@ -103,9 +103,11 @@ const initializeApp = async (): Promise<Server> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
-      additionalExtractors: [fromSocketHandshake]
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      additionalExtractors: [fromSocketHandshake],
     },
-    { logger }
+    { logger },
   );
 
   const configurationSync = await createAmqpConfigUpdateService({
@@ -156,7 +158,7 @@ const initializeApp = async (): Promise<Server> => {
         // Passport JS calls end w/ 401 when all authenticators fail.
         end: () => next(new UnauthorizedError('User not authorized to connect.')),
       } as unknown as express.Response,
-      next
+      next,
     );
   };
 

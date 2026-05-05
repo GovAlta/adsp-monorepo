@@ -74,16 +74,16 @@ const initializeApp = async () => {
                     new AjvValueValidationService(logger),
                     repositories.valueRepository,
                     config[namespace],
-                    tenantId
+                    tenantId,
                   ),
                 }),
-                {}
+                {},
               )
             : null;
         },
         combineConfiguration: (
           tenantConfig: Record<string, NamespaceEntity>,
-          coreConfig: Record<string, NamespaceEntity>
+          coreConfig: Record<string, NamespaceEntity>,
         ) => [
           {
             ...tenantConfig,
@@ -92,6 +92,8 @@ const initializeApp = async () => {
         ],
         useLongConfigurationCacheTTL: true,
         enableConfigurationInvalidation: true,
+        tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+        metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
         serviceConfigurations: [
           {
             serviceId: adspId`urn:ads:platform:cache-service`,
@@ -104,7 +106,7 @@ const initializeApp = async () => {
           },
         ],
       },
-      { logger }
+      { logger },
     );
 
   passport.use('core', coreStrategy);
@@ -125,7 +127,7 @@ const initializeApp = async () => {
     passport.authenticate(['core', 'tenant'], { session: false }),
     assertAuthenticatedHandler,
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   applyValuesMiddleware(app, { logger, repository: repositories.valueRepository, eventService });

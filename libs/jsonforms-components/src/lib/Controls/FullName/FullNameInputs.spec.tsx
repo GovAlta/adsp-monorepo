@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { NameInputs } from './FullNameInputs';
 import { isFullName } from './FullNameTester';
 import '@testing-library/jest-dom';
@@ -183,6 +183,73 @@ describe('NameInputs', () => {
 
     const blurred = fireEvent.blur(lastNameInput);
     expect(blurred).toBe(true);
+  });
+
+  it('clears internal last name required error when value is later autofilled', async () => {
+    const { baseElement, rerender } = render(
+      <NameInputs
+        firstName={defaultName.firstName}
+        middleName={defaultName.middleName}
+        lastName=""
+        handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={{ ...defaultName, lastName: '' }}
+      />
+    );
+
+    const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
+    fireEvent(
+      lastNameInput,
+      new CustomEvent('_blur', {
+        detail: { name: 'lastName' },
+      })
+    );
+
+    await waitFor(() => {
+      const lastNameFormItem = baseElement.querySelector("goa-form-item[testId='form-item-last-name']");
+      expect(lastNameFormItem?.getAttribute('error')).toBe('Last name is required');
+    });
+
+    rerender(
+      <NameInputs
+        firstName={defaultName.firstName}
+        middleName={defaultName.middleName}
+        lastName="Doe"
+        handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={{ ...defaultName, lastName: 'Doe' }}
+      />
+    );
+
+    await waitFor(() => {
+      const lastNameFormItem = baseElement.querySelector("goa-form-item[testId='form-item-last-name']");
+      expect(lastNameFormItem?.getAttribute('error')).toBe('');
+    });
+  });
+
+  it('syncs autofilled first name back through handleInputChange', async () => {
+    jest.useFakeTimers();
+
+    const { baseElement } = render(
+      <NameInputs
+        firstName=""
+        middleName={defaultName.middleName}
+        lastName={defaultName.lastName}
+        handleInputChange={mockHandleInputChange}
+        requiredFields={requiredFields}
+        data={{ ...defaultName, firstName: '' }}
+      />
+    );
+
+    const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']") as HTMLInputElement;
+    firstNameInput.value = 'John';
+
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
+    expect(mockHandleInputChange).toHaveBeenCalledWith('firstName', 'John');
+    jest.useRealTimers();
   });
 
   expect(

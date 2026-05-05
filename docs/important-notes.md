@@ -28,7 +28,20 @@ New platform roles are introduced as new platform services are added, and tenant
 Platform services verify the token signature and verify that the service client ID is included in the `audience`. When using the pre-populated client roles with the base realm configuration, the client ID is automatically resolved and included in the token; this is handled by the *Audience Resolve* protocol mapper included in the *roles* scope. However, if you are using the configurable access capabilities of some services (e.g. `task-service` queue `workerRoles`), then you must configure the client that retrieves the token to include the target platform service in the audience with an *Audience Mapper*.
 
 **To add to audience**
-1. From Keycloak realm administration, select *Clients* and find the client that will request the access token.
-2. Open the client and select the *Mappers* tab.
-3. Click *Create* to create a new mapper.
-4. For *Mapper Type*, select *Audience*, then select the client corresponding the the platform service that will be accessed.
+1. Go to *Client scopes* in the left sidebar.
+2. Click *Create client scope*.
+3. Enter a *Name* (e.g., `api-audience`) and *Description*. Leave *Protocol* as `openid-connect`. Click *Save*.
+4. With your new scope selected, go to the *Mappers* tab.
+5. Click *Add mapper* and select *By configuration*.
+6. Choose **Audience** from the built-in mapper types.
+7. In the mapper configuration:
+   - **Name**: Enter a descriptive name (e.g., `audience-mapper`)
+   - **Included Client** (optional): Enter the client ID of the service that will consume the token
+   - **Included Custom Audience**: Enter the audience value (e.g., `urn:ads:platform:task-service`)
+   - **Add to ID token**: Off (or On if needed)
+   - **Add to access token**: **On**
+8. Click *Save*.
+9. Go to *Clients* and select the application that needs the token.
+10. Click the *Client scopes* tab.
+11. Click *Add client scope* and select your `api-audience` scope.
+12. Choose **Default** (always added) or **Optional** (only added when requested in scope parameter).

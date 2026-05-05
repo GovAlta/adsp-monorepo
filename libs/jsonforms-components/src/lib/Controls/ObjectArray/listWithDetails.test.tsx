@@ -348,7 +348,7 @@ it('errors are visible', async () => {
   expect(messageFormItem).not.toBeNull();
 
   // Check the error text
-  expect(messageFormItem).toHaveAttribute('error', 'Message must be at most 5 characters');
+  expect(messageFormItem).toHaveAttribute('error', 'must NOT have more than 5 characters');
 });
 it('required errors work', async () => {
   const data = { messages: [] };
@@ -556,7 +556,18 @@ describe('humanizeAjvError', () => {
       params: {},
       message: 'something went wrong',
     };
-    expect(humanizeAjvError(error, schema, uischema)).toBe('Field something went wrong');
+    expect(humanizeAjvError(error, schema, uischema)).toBe('something went wrong');
+  });
+
+  it('should handle unknown keyword without message', () => {
+    const error: ErrorObject = {
+      keyword: 'custom',
+      instancePath: '/field',
+      schemaPath: '#/properties/field/custom',
+      params: {},
+    };
+
+    expect(humanizeAjvError(error, schema, uischema)).toBe('Field is invalid');
   });
 });
 

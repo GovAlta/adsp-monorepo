@@ -88,6 +88,8 @@ const initializeApp = async (): Promise<express.Application> => {
       serviceId,
       displayName: 'Form service',
       description: 'Service that provides a model for intake forms completed by applicants and processed by assessors.',
+      tracing: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
+      metrics: environment.OTEL_EXPORTER_OTLP_ENDPOINT,
       roles: [
         {
           role: FormServiceRoles.Admin,
@@ -227,7 +229,7 @@ const initializeApp = async (): Promise<express.Application> => {
               ...defs,
               [id]: new FormDefinitionEntity(validationService, calendarService, tenantId, def),
             }),
-            {} as Record<string, FormDefinitionEntity>
+            {} as Record<string, FormDefinitionEntity>,
           );
         }
       },
@@ -237,7 +239,7 @@ const initializeApp = async (): Promise<express.Application> => {
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
     },
-    { logger }
+    { logger },
   );
 
   passport.use('core', coreStrategy);
@@ -260,7 +262,7 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
     tenantHandler,
-    configurationHandler
+    configurationHandler,
   );
 
   const notificationService = createNotificationService(adspId`${serviceId}:v1`, logger, directory, tokenProvider);

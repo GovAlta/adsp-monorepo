@@ -12,6 +12,7 @@ import { EventDefinitionModalForm } from './edit';
 import { defaultEventDefinition, EventDefinition } from '@store/event/models';
 
 import AsideLinks from '@components/AsideLinks';
+import { AsidePadding } from '../../../../components/Html';
 
 export const Events: FunctionComponent = () => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -67,7 +68,9 @@ export const Events: FunctionComponent = () => {
         )}
       </Main>
       <Aside>
-        <AsideLinks serviceName="event" />
+        <AsidePadding>
+          <AsideLinks serviceName="event" />
+        </AsidePadding>
       </Aside>
     </Page>
   );

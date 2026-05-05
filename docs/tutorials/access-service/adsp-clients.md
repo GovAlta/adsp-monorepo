@@ -8,11 +8,13 @@ grand_parent: Tutorials
 
 ## API Security
 
-ADSP clients are bearer-only clients. This means that you cannot use these clients to retrieve access tokens for your application work. In fact, the only reason these clients have been configured in your tenant is to add additional security when making ADSP API calls.
+<!-- tags: [keycloak] -->
+ADSP clients are bearer-only clients. This means that you cannot use these clients to retrieve access tokens for your application work.
 
 ### Configure an Audience
 
-Some ADSP services, such as the _File Service_, require that it's ID is included as part of an access token's _audience_. If your client needs to access one of these services you can set up the audience as follows.
+<!-- tags: [keycloak] -->
+Some ADSP services, such as the _File Service_, require that it's ID is included as part of an access token's _audience_.
 
 First, select _clients_ on Keycloaks left side-menu, and then select the client you are using; in this example its the _auto-test-client_.
 

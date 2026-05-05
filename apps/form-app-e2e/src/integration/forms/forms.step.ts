@@ -222,20 +222,20 @@ Then(
 Then(
   'the user views the summary of {string} with {string} as a {string}',
   function (sectionName, arrayElement: string, arrayLabel) {
-    const expectedValues = arrayElement.split(':').join(' ');
-    cy.log('Expected values string: ' + expectedValues);
-
-    formsObj.formSummaryPageListWithDetailItems(sectionName, arrayLabel).then((rows) => {
-      const rowTexts = Array.from(rows).map((row) =>
-        (row as HTMLElement).outerText
-          .replace(/\u00a0/g, ' ') // replace non-breaking spaces
-          .replace(/\s+/g, ' ') // collapse all whitespace
-          .trim()
-      );
-      cy.log('Row texts: ' + rowTexts.join('; '));
-      const isFound = rowTexts.some((text) => text.includes(expectedValues.trim()));
-      cy.wrap(isFound).should('be.true');
-    });
+    const allEntries: string[] = [];
+    formsObj
+      .formSummaryPageListWithDetailItems(sectionName, arrayLabel)
+      .each(($row) => {
+        cy.wrap($row)
+          .find('span[data-testid*="-review"]')
+          .then(($spans) => {
+            const joinedRowData = [...$spans].map((span) => Cypress.$(span).text().trim()).join(':');
+            allEntries.push(joinedRowData);
+          });
+      })
+      .then(() => {
+        expect(allEntries).to.include(arrayElement);
+      });
   }
 );
 

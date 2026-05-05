@@ -6,6 +6,7 @@ import { DirectoryOverview } from './overview';
 import { DirectoryService } from './services';
 import { ResourceTypePage } from './resourceType/resourceType';
 import AsideLinks from '@components/AsideLinks';
+import { AsidePadding } from '../../../../components/Html';
 
 export const Directory: FunctionComponent = () => {
   return (
@@ -28,7 +29,9 @@ export const Directory: FunctionComponent = () => {
         </>
       </Main>
       <Aside>
-        <AsideLinks serviceName="directory" />
+        <AsidePadding>
+          <AsideLinks serviceName="directory" />
+        </AsidePadding>
       </Aside>
     </Page>
   );

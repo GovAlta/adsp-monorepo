@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   GoabButton,
   GoabCircularProgress,
@@ -24,6 +24,7 @@ import {
   deleteResourceTags,
   setDefinitionSearchInput,
 } from '@store/form/action';
+import { selectFilteredDefinitions } from '@store/form/selectors';
 import { RootState } from '@store/index';
 import { ResourceTagFilterCriteria, ResourceTagResult, Service, Tag, ResourceTag } from '@store/directory/models';
 import { renderNoItem } from '@components/NoItem';
@@ -176,6 +177,10 @@ export const FormDefinitions = ({
       return <PageIndicator />;
     }
 
+    if (!indicator.show && !selectedTag && searchInput && Object.keys(formDefinitions).length === 0) {
+      return renderNoItem('form definitions');
+    }
+
     if (selectedTag && tagResources && !tagNext && Object.keys(tagResources)?.length >= 0 && tagsLoading) {
       return (
         <Center>
@@ -194,11 +199,7 @@ export const FormDefinitions = ({
     return null;
   };
 
-  const displayDefinitions = selectedTag ? tagResources : formDefinitions;
-
-  const filteredDefinitions = useMemo(() => {
-    return displayDefinitions || {};
-  }, [displayDefinitions]);
+  const filteredDefinitions = useSelector(selectFilteredDefinitions);
 
   return (
     <section>
@@ -220,7 +221,14 @@ export const FormDefinitions = ({
               onChange={(detail) => dispatch(setDefinitionSearchInput(detail.value))}
               onKeyPress={(detail) => {
                 if (detail.key === 'Enter') {
-                  dispatch(getFormDefinitions(undefined, searchInput || undefined));
+                  if (selectedTag && searchInput) {
+                    dispatch(getFormDefinitions(undefined, searchInput));
+                    dispatch(fetchResourcesByTag(selectedTag.value, resourceTagCriteria));
+                  } else if (selectedTag) {
+                    dispatch(fetchResourcesByTag(selectedTag.value, resourceTagCriteria));
+                  } else {
+                    dispatch(getFormDefinitions(undefined, searchInput || undefined));
+                  }
                 }
               }}
               testId="form-definition-search-input"
@@ -231,7 +239,16 @@ export const FormDefinitions = ({
           type="primary"
           mb={'m'}
           testId="form-definition-search-btn"
-          onClick={() => dispatch(getFormDefinitions(undefined, searchInput || undefined))}
+          onClick={() => {
+            if (selectedTag && searchInput) {
+              dispatch(getFormDefinitions(undefined, searchInput));
+              dispatch(fetchResourcesByTag(selectedTag.value, resourceTagCriteria));
+            } else if (selectedTag) {
+              dispatch(fetchResourcesByTag(selectedTag.value, resourceTagCriteria));
+            } else {
+              dispatch(getFormDefinitions(undefined, searchInput || undefined));
+            }
+          }}
         >
           Search
         </GoabButton>
@@ -248,6 +265,9 @@ export const FormDefinitions = ({
               dispatch(setSelectedTag(selectedTagObj));
               setTimeout(() => {
                 dispatch(fetchResourcesByTag(selectedTagObj.value, resourceTagCriteria));
+                if (searchInput) {
+                  dispatch(getFormDefinitions(undefined, searchInput));
+                }
               }, 300);
             } else {
               dispatch(setSelectedTag(null));

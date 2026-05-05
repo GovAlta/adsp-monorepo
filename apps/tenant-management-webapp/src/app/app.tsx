@@ -21,7 +21,7 @@ import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
 import styled from 'styled-components';
-import { GoAHeader } from '@abgov/react-components-old';
+import { GoabAppHeader } from '@abgov/react-components';
 import '@abgov/web-components/index.css';
 import { useScripts } from '@core-services/app-common';
 import { SelectTenant } from '@pages/public/SelectTenant';
@@ -30,7 +30,7 @@ const AppRouters = () => {
   return (
     <>
       <MobileMessage>
-        <GoAHeader serviceHome="/" serviceLevel="beta" serviceName={'Alberta Digital Service Platform'}></GoAHeader>
+        <GoabAppHeader url="/" heading={'Alberta Digital Service Platform'} />
         <h1>Portrait mode is currently not supported</h1>
         <h3>Please rotate your device</h3>
         <h3>For the best experience, please use a Desktop</h3>

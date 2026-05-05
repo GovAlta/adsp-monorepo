@@ -1,4 +1,10 @@
 import type { Logger } from 'winston';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { BatchSpanProcessor, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
+import { Resource } from '@opentelemetry/resources';
 import { createRealmStrategy, createTenantStrategy, createTokenProvider } from '../access';
 import { createConfigurationHandler, createConfigurationService } from '../configuration';
 import { createDirectory } from '../directory';
@@ -10,6 +16,14 @@ import { createTenantHandler, createTenantService } from '../tenant';
 import { createTraceHandler } from '../trace';
 import { LogOptions, PlatformCapabilities, PlatformOptions, PlatformServices } from './types';
 import { AdspId, assertAdspId, createLogger } from '../utils';
+
+function normalizeTelemetryOptions<T extends { endpoint: string }>(options?: T | string): T | undefined {
+  if (!options) {
+    return undefined;
+  }
+
+  return typeof options === 'string' ? ({ endpoint: options } as T) : options;
+}
 
 export async function initializePlatform(
   {
@@ -24,10 +38,12 @@ export async function initializePlatform(
     enableConfigurationInvalidation,
     useLongConfigurationCacheTTL,
     additionalExtractors,
+    tracing,
+    metrics,
     ...registration
   }: PlatformOptions,
   logOptions: Logger | LogOptions,
-  service?: Partial<PlatformServices>
+  service?: Partial<PlatformServices>,
 ): Promise<PlatformCapabilities> {
   assertAdspId(serviceId, null, 'service');
 
@@ -114,17 +130,106 @@ export async function initializePlatform(
     });
 
   // Skip health checks on anything that's injected or anything not configured (assumed not used).
-  const healthCheck = createHealthCheck(logger, accessServiceUrl, directoryUrl, directory, {
+  const excludedHealthChecks = {
     directory: !!service?.directory,
     tenant: !!service?.tenantService,
     configuration: !!service?.configurationService || !registration.configurationSchema,
     event: !!service?.eventService || !registration.events || !registration.events.length,
-  });
+  };
 
-  const metricsHandler = await createMetricsHandler(serviceId, logger, tokenProvider, directory);
+  const serviceName = serviceId.service;
+  const serviceVersion = '1.0.0';
+  const resource = new Resource({
+    'service.name': serviceName,
+    'service.version': serviceVersion,
+  });
+  const tracingOptions = normalizeTelemetryOptions(tracing);
+  const metricsOptions = normalizeTelemetryOptions(metrics);
+
+  let meterProvider: MeterProvider | undefined;
+  if (metricsOptions) {
+    try {
+      const metricReader = new PeriodicExportingMetricReader({
+        exporter: new OTLPMetricExporter({
+          url: `${metricsOptions.endpoint}/v1/metrics`,
+          headers: metricsOptions.headers,
+        }),
+        exportIntervalMillis: metricsOptions.exportIntervalMillis ?? 60000,
+        exportTimeoutMillis: metricsOptions.exportTimeoutMillis ?? 30000,
+      });
+
+      meterProvider = new MeterProvider({
+        resource,
+        readers: [metricReader],
+      } as unknown as never);
+
+      logger.info(`OpenTelemetry metrics initialized: ${serviceName} -> ${metricsOptions.endpoint}`);
+    } catch (err) {
+      logger.warn(
+        `Failed to initialize OpenTelemetry metrics: ${err instanceof Error ? err.message : String(err)}. Metrics disabled.`,
+      );
+      meterProvider = undefined;
+    }
+  }
+
+  const metricsHandler = await createMetricsHandler(
+    serviceId,
+    logger,
+    tokenProvider,
+    directory,
+    undefined,
+    meterProvider,
+  );
+  const healthCheck = createHealthCheck(
+    logger,
+    accessServiceUrl,
+    directoryUrl,
+    directory,
+    excludedHealthChecks,
+    meterProvider,
+  );
+
+  // Initialize tracer provider if tracing config is provided
+  let tracerProvider: NodeTracerProvider | undefined;
+  if (tracingOptions) {
+    try {
+      const endpoint = tracingOptions.endpoint;
+      const sampleRate = tracingOptions.sampleRate ?? 1.0;
+
+      // Create tracer provider with semantic attributes
+      tracerProvider = new NodeTracerProvider({
+        sampler: new TraceIdRatioBasedSampler(sampleRate),
+        resource,
+      });
+
+      const exporter = new OTLPTraceExporter({
+        url: `${endpoint}/v1/traces`,
+        headers: tracingOptions.headers,
+      });
+
+      // Add span processor
+      tracerProvider.addSpanProcessor(
+        new BatchSpanProcessor(exporter, {
+          maxQueueSize: 2048,
+          maxExportBatchSize: 512,
+          scheduledDelayMillis: 5000,
+          exportTimeoutMillis: 30000,
+        }),
+      );
+
+      tracerProvider.register();
+
+      logger.info(`OpenTelemetry tracing initialized: ${serviceName} → ${endpoint}`);
+    } catch (err) {
+      logger.warn(
+        `Failed to initialize OpenTelemetry tracing: ${err instanceof Error ? err.message : String(err)}. Tracing disabled.`,
+      );
+      tracerProvider = undefined;
+    }
+  }
 
   // Note: Sample rate is not currently used in the SDK.
-  const traceHandler = createTraceHandler({ logger, sampleRate: 0 });
+  const traceHandler = createTraceHandler({ logger, sampleRate: 0, tracerProvider });
 
   return {
     tokenProvider,
@@ -140,6 +245,8 @@ export async function initializePlatform(
     clearCached,
     metricsHandler,
     traceHandler,
+    tracerProvider,
+    meterProvider,
     logger,
   };
 }

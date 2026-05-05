@@ -7,6 +7,7 @@ import { ScriptsView } from './scriptsView';
 import { HeadingDiv } from '../styled-components';
 
 import AsideLinks from '@components/AsideLinks';
+import { AsidePadding } from '../../../../components/Html';
 
 export const Script = (): JSX.Element => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -50,7 +51,9 @@ export const Script = (): JSX.Element => {
       </Main>
 
       <Aside>
-        <AsideLinks serviceName="script" />
+        <AsidePadding>
+          <AsideLinks serviceName="script" />
+        </AsidePadding>
       </Aside>
     </Page>
   );

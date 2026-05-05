@@ -1,9 +1,11 @@
+import React from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { JsonForms } from '@jsonforms/react';
 import Ajv from 'ajv';
 import { GoACells, GoARenderers } from '../../index';
 import { UISchemaElement } from '@jsonforms/core';
+import { markdownComponents } from './HelpContent';
 
 /**
  * VERY IMPORTANT:  Rendering <JsonForms ... /> does not work unless the following
@@ -116,6 +118,17 @@ describe('Help Content Control', () => {
     const mainWrapper = renderer.container.querySelector('div > :scope goa-details');
     expect(mainWrapper).not.toBeNull();
     expect(mainWrapper?.getAttribute('heading')).toBe(helpSchema.label);
+  });
+
+  it('renders markdown links to open in a new window', () => {
+    const renderer = render(
+      React.createElement(markdownComponents.a, { href: 'https://www.alberta.ca' }, 'Open Alberta')
+    );
+    const link = renderer.getByRole('link', { name: 'Open Alberta' });
+
+    expect(link).toHaveAttribute('href', 'https://www.alberta.ca');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('will render image in help content', () => {

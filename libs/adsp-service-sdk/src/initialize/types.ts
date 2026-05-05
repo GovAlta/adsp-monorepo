@@ -2,6 +2,8 @@ import { RequestHandler } from 'express';
 import { Strategy } from 'passport';
 import { JwtFromRequestFunction } from 'passport-jwt';
 import type { Logger } from 'winston';
+import type { MeterProvider } from '@opentelemetry/sdk-metrics';
+import type { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { TokenProvider } from '../access';
 import { CombineConfiguration, ConfigurationConverter, ConfigurationService } from '../configuration';
 import { ServiceDirectory } from '../directory';
@@ -15,6 +17,65 @@ export interface LogOptions {
   logger?: Logger;
   logLevel?: string;
 }
+
+export interface TracingOptions {
+  /**
+   * OTLP exporter endpoint: URL of OTLP collector (e.g., http://otel-collector:4318).
+   *
+   * @type {string}
+   * @memberof TracingOptions
+   */
+  endpoint: string;
+  /**
+   * Sample rate: Trace sampling rate (0.0 to 1.0).
+   *
+   * @type {number}
+   * @memberof TracingOptions
+   */
+  sampleRate?: number;
+  /**
+   * Headers: Optional headers for OTLP exporter (e.g., authorization).
+   *
+   * @type {Record<string, string>}
+   * @memberof TracingOptions
+   */
+  headers?: Record<string, string>;
+}
+
+export type TracingConfiguration = TracingOptions | string;
+
+export interface MetricsOptions {
+  /**
+   * OTLP exporter endpoint: URL of OTLP collector (e.g., http://otel-collector:4318).
+   *
+   * @type {string}
+   * @memberof MetricsOptions
+   */
+  endpoint: string;
+  /**
+   * Export interval in milliseconds for periodic metric export.
+   *
+   * @type {number}
+   * @memberof MetricsOptions
+   */
+  exportIntervalMillis?: number;
+  /**
+   * Export timeout in milliseconds for periodic metric export.
+   *
+   * @type {number}
+   * @memberof MetricsOptions
+   */
+  exportTimeoutMillis?: number;
+  /**
+   * Headers: Optional headers for OTLP exporter (e.g., authorization).
+   *
+   * @type {Record<string, string>}
+   * @memberof MetricsOptions
+   */
+  headers?: Record<string, string>;
+}
+
+export type MetricsConfiguration = MetricsOptions | string;
 
 export interface PlatformOptions extends ServiceRegistration {
   /**
@@ -106,6 +167,24 @@ export interface PlatformOptions extends ServiceRegistration {
    * @memberof PlatformOptions
    */
   additionalExtractors?: JwtFromRequestFunction[];
+  /**
+   * Tracing options: Configuration for OpenTelemetry tracing and OTLP span export.
+   *
+   * Accepts either a full tracing configuration object or a raw OTLP endpoint URL.
+   *
+   * @type {TracingConfiguration}
+   * @memberof PlatformOptions
+   */
+  tracing?: TracingConfiguration;
+  /**
+   * Metrics options: Configuration for OpenTelemetry metrics and OTLP metric export.
+   *
+   * Accepts either a full metrics configuration object or a raw OTLP endpoint URL.
+   *
+   * @type {MetricsConfiguration}
+   * @memberof PlatformOptions
+   */
+  metrics?: MetricsConfiguration;
 }
 
 export interface PlatformServices {
@@ -214,6 +293,24 @@ export interface PlatformCapabilities extends PlatformServices {
    * @memberof PlatformCapabilities
    */
   traceHandler: RequestHandler;
+  /**
+   * Tracer provider: OpenTelemetry tracer provider for creating spans.
+   *
+   * Only available if tracing is enabled in platform options.
+   *
+   * @type {NodeTracerProvider}
+   * @memberof PlatformCapabilities
+   */
+  tracerProvider?: NodeTracerProvider;
+  /**
+   * Meter provider: OpenTelemetry meter provider for creating metric instruments.
+   *
+   * Only available if metrics is enabled in platform options.
+   *
+   * @type {MeterProvider}
+   * @memberof PlatformCapabilities
+   */
+  meterProvider?: MeterProvider;
   /**
    * Logger used by SDK components.
    *

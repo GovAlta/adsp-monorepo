@@ -25,6 +25,7 @@ import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import AsideLinks from '@components/AsideLinks';
 import { AddEditStatusWebhookType } from '@store/status/models';
 import { UpdateModalState } from '@store/session/actions';
+import { AsidePadding } from '../../../../components/Html';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -40,7 +41,7 @@ const userHealthSubscriptionSelector = createSelector(
           subscriber: userSubscriber,
         }
       : null;
-  }
+  },
 );
 
 function Status(): JSX.Element {
@@ -148,7 +149,7 @@ function Status(): JSX.Element {
                         type: AddEditStatusWebhookType,
                         isOpen: true,
                         id: null,
-                      })
+                      }),
                     );
                   }}
                   type="primary"
@@ -217,13 +218,15 @@ function Status(): JSX.Element {
       </Main>
 
       <Aside>
-        <AsideLinks serviceName="status" />
+        <AsidePadding>
+          <AsideLinks serviceName="status" />
 
-        <h3>Public status page</h3>
+          <h3>Public status page</h3>
 
-        <p>Url of the current tenant's public status page:</p>
-        <h3>Status page link</h3>
-        <LinkCopyComponent text={'Copy link'} link={publicStatusUrl} />
+          <p>Url of the current tenant's public status page:</p>
+          <h3>Status page link</h3>
+          <LinkCopyComponent text={'Copy link'} link={publicStatusUrl} />
+        </AsidePadding>
       </Aside>
     </Page>
   );

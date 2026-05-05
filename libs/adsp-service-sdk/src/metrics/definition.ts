@@ -1,3 +1,7 @@
+/**
+ * @deprecated Value service metrics recording is deprecated. Use OpenTelemetry instrumentation via the
+ * `meterProvider` option of `createMetricsHandler` instead.
+ */
 export const ServiceMetricsValueDefinition = {
   id: 'service-metrics',
   name: 'Service metrics',
