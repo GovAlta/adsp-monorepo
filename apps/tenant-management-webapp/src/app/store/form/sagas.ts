@@ -547,22 +547,22 @@ export function* fetchResourcesByTag({ tag, next, criteria }: FetchResourcesByTa
         yield put(fetchResourcesByTagSuccess(tag, null, page.next, page.after));
         return;
       }
-      const filteredFormDefinitions = results.reduce((acc, def) => {
-        const { urn, _embedded } = def;
-
-        const represents = _embedded?.represents?.latest?.configuration;
-        if (represents) {
-          acc[represents.id] = {
-            urn,
-            id: represents.id,
-            name: represents.name,
-            description: represents.description,
-            dataSchema: represents.dataSchema,
-            uiSchema: represents.uiSchema,
-          };
-        }
-        return acc;
-      }, {});
+      const filteredFormDefinitions = results
+        .filter(({ urn }) => urn?.includes('/configuration/form-service/'))
+        .reduce((acc: Record<string, FormDefinition>, def) => {
+          const { _embedded } = def;
+          const represents = _embedded?.represents?.latest?.configuration;
+          if (represents) {
+            acc[represents.id] = {
+              id: represents.id,
+              name: represents.name,
+              description: represents.description,
+              dataSchema: represents.dataSchema,
+              uiSchema: represents.uiSchema,
+            } as FormDefinition;
+          }
+          return acc;
+        }, {});
 
       yield put(UpdateIndicator({ show: false }));
       yield put(fetchResourcesByTagSuccess(tag, filteredFormDefinitions, page.next, page.after));
