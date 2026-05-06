@@ -86,8 +86,8 @@ const Dashboard = (): JSX.Element => {
                   <h1 data-testid="dashboard-title">Dashboard</h1>
                   <GoabGrid gap="s" minChildWidth="clamp(280px, 32%, 420px)">
                     {services.map((ref, index) => (
-                      <DashboardContainer>
-                        <HeadingDiv>
+                      <DashboardContainer data-testid={`dashboard-card-container-${index}`} key={index}>
+                        <HeadingDiv data-testid={`dashboard-card-title-${index}`}>
                           <h2>
                             <Link to={services[index].link}>{services[index].name}</Link>
                           </h2>
@@ -106,10 +106,12 @@ const Dashboard = (): JSX.Element => {
                             position="bottom"
                             key={index}
                           >
-                            <div>{truncate(services[index].description, descriptionLengthThreshold)}</div>
+                            <div data-testid={`dashboard-card-description-truncated-${index}`}>
+                              {truncate(services[index].description, descriptionLengthThreshold)}
+                            </div>
                           </GoabTooltip>
                         ) : (
-                          <div>{services[index].description}</div>
+                          <div data-testid={`dashboard-card-description-${index}`}>{services[index].description}</div>
                         )}
                       </DashboardContainer>
                     ))}
