@@ -192,7 +192,7 @@ export const PrimitiveArrayControl = (props: ControlProps) => {
   return (
     <Visible visible={visible}>
       <div style={{ marginBottom: '8px' }}>
-        <GoabButton disabled={!enabled} onClick={() => addItem()}>
+        <GoabButton type="secondary" disabled={!enabled} onClick={() => addItem()}>
           Add {prettyLabel.toLowerCase()}
         </GoabButton>
       </div>
