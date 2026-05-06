@@ -3,10 +3,12 @@ import '@testing-library/jest-dom';
 import { JsonForms } from '@jsonforms/react';
 import Ajv, { ErrorObject } from 'ajv';
 import { GoACells, GoARenderers } from '../../../index';
+import React, { useState } from 'react';
 import { isObjectArrayEmpty, renderCellColumn } from './ObjectListControlUtils';
 import { RenderCellColumnProps } from './ObjectListControlTypes';
 import { findControlLabel, humanizeAjvError } from './ListWithDetailControl'; // adjust path
 import { ControlElement, Layout, UISchemaElement, JsonSchema } from '@jsonforms/core';
+import { ContextProviderFactory } from '../../Context';
 
 // Mock ResizeObserver in the scope of this test file
 class MockResizeObserver {
@@ -139,6 +141,85 @@ const getFormRequired = (formData: object) => {
       renderers={GoARenderers}
       cells={GoACells}
     />
+  );
+};
+
+const fileUploadSchema = {
+  type: 'object',
+  properties: {
+    photos: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          file: {
+            type: 'string',
+            format: 'file-urn',
+          },
+        },
+        required: ['file'],
+        additionalProperties: false,
+      },
+    },
+  },
+};
+
+const fileUploadUiSchema = {
+  type: 'ListWithDetail',
+  scope: '#/properties/photos',
+  label: 'Photos',
+  options: {
+    detail: {
+      type: 'VerticalLayout',
+      elements: [
+        {
+          type: 'Control',
+          scope: '#/properties/file',
+          label: 'Photo File',
+          options: {
+            fileUpload: true,
+          },
+        },
+      ],
+    },
+  },
+};
+
+const ContextProvider = ContextProviderFactory();
+
+const FileUploadListWithDetailHarness = () => {
+  const [data, setData] = useState({ photos: [{ file: 'urn:file-1' }] });
+  const [fileList, setFileList] = useState<Record<string, { urn: string; filename: string }[]>>({
+    'photos.0.file': [{ urn: 'urn:file-1', filename: 'photo.jpg' }],
+  });
+
+  const deleteFile = jest.fn((file: { urn: string }, propertyId: string) => {
+    setFileList((previous) => {
+      const next = { ...previous };
+      delete next[propertyId];
+      return next;
+    });
+  });
+
+  return (
+    <ContextProvider
+      fileManagement={{
+        fileList,
+        uploadFile: jest.fn(),
+        downloadFile: jest.fn(),
+        deleteFile,
+      }}
+    >
+      <JsonForms
+        data={data}
+        schema={fileUploadSchema}
+        uischema={fileUploadUiSchema}
+        ajv={new Ajv({ allErrors: true, verbose: true, strict: false })}
+        renderers={GoARenderers}
+        cells={GoACells}
+        onChange={({ data }) => setData(data as { photos: { file?: string }[] })}
+      />
+    </ContextProvider>
   );
 };
 
@@ -315,6 +396,32 @@ describe('Object Array Renderer', () => {
     // Ensure item no longer exists
     const nameInput = baseElement.querySelector("goa-input[testId='#/properties/name-input']");
     expect(nameInput).toBeNull();
+  });
+
+  it('clears file upload state when deleting and re-adding a list-with-detail row', async () => {
+    const { baseElement, queryByText } = render(<FileUploadListWithDetailHarness />);
+
+    const deleteBtn = baseElement.querySelector("goa-icon-button[icon='trash']");
+    expect(deleteBtn).toBeInTheDocument();
+    fireEvent(deleteBtn!, new CustomEvent('_click'));
+
+    const confirm = baseElement.querySelector("goa-button[testId='object-array-confirm-button']");
+    expect(confirm).toBeInTheDocument();
+    fireEvent(confirm!, new CustomEvent('_click'));
+
+    await waitFor(() => {
+      expect(queryByText('photo.jpg')).not.toBeInTheDocument();
+    });
+
+    const addButton = baseElement.querySelector("goa-button[testId='object-array-toolbar-Photos']");
+    expect(addButton).toBeInTheDocument();
+    fireEvent(addButton!, new CustomEvent('_click'));
+
+    await waitFor(() => {
+      expect(baseElement.querySelector('goa-file-upload-input')).toBeInTheDocument();
+    });
+
+    expect(queryByText('photo.jpg')).not.toBeInTheDocument();
   });
 });
 
