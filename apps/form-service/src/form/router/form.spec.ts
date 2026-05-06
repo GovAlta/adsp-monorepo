@@ -249,7 +249,7 @@ describe('form router', () => {
     tenantId,
     definitionWithPdfTemplate,
     subscriber,
-    formInfo
+    formInfo,
   );
 
   const formSubmissionEntity = new FormSubmissionEntity(
@@ -257,7 +257,7 @@ describe('form router', () => {
     tenantId,
     formSubmissionInfo,
     definition,
-    entity
+    entity,
   );
 
   beforeEach(() => {
@@ -359,7 +359,7 @@ describe('form router', () => {
         expect.objectContaining({
           page: expect.any(Object),
           results: expect.arrayContaining([expect.objectContaining({ id: definition.id })]),
-        })
+        }),
       );
     });
   });
@@ -379,7 +379,9 @@ describe('form router', () => {
       const req = {
         user,
         params: { definitionId: 'test' },
+        query: {},
         getServiceConfiguration: jest.fn(),
+        getServiceConfigurationRevision: jest.fn(),
         getConfiguration: jest.fn(),
         tenant: { id: tenantId },
       };
@@ -403,7 +405,9 @@ describe('form router', () => {
       const req = {
         user,
         params: { definitionId: 'test' },
+        query: {},
         getServiceConfiguration: jest.fn(),
+        getServiceConfigurationRevision: jest.fn(),
         getConfiguration: jest.fn(),
         tenant: { id: tenantId },
       };
@@ -428,6 +432,7 @@ describe('form router', () => {
       const req = {
         user,
         params: { definitionId: 'test-2' },
+        query: {},
         getServiceConfiguration: jest.fn(),
         getConfiguration: jest.fn(),
         tenant: { id: tenantId },
@@ -573,7 +578,7 @@ describe('form router', () => {
         expect.objectContaining({
           page,
           results: expect.arrayContaining([expect.objectContaining({ id: formInfo.id, definition: null })]),
-        })
+        }),
       );
     });
 
@@ -675,7 +680,7 @@ describe('form router', () => {
       expect(repositoryMock.find).toHaveBeenCalledWith(
         expect.any(Number),
         undefined,
-        expect.objectContaining({ createdByIdEquals: user.id })
+        expect.objectContaining({ createdByIdEquals: user.id }),
       );
     });
 
@@ -715,7 +720,7 @@ describe('form router', () => {
         notificationServiceMock,
         fileServiceMock,
         queueTaskServiceMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       expect(handler).toBeTruthy();
     });
@@ -752,7 +757,7 @@ describe('form router', () => {
         notificationServiceMock,
         fileServiceMock,
         queueTaskServiceMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -792,7 +797,7 @@ describe('form router', () => {
         notificationServiceMock,
         fileServiceMock,
         queueTaskServiceMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -831,7 +836,7 @@ describe('form router', () => {
         notificationServiceMock,
         fileServiceMock,
         queueTaskServiceMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -871,7 +876,7 @@ describe('form router', () => {
         notificationServiceMock,
         fileServiceMock,
         queueTaskServiceMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -916,7 +921,7 @@ describe('form router', () => {
         notificationServiceMock,
         fileServiceMock,
         queueTaskServiceMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -961,16 +966,16 @@ describe('form router', () => {
         notificationServiceMock,
         fileServiceMock,
         queueTaskServiceMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(repositoryMock.save).toHaveBeenCalledTimes(2);
       expect(repositoryMock.save.mock.calls[1][0].files.attachment?.toString()).toBe(
-        'urn:ads:platform:file-service:v1:/files/test'
+        'urn:ads:platform:file-service:v1:/files/test',
       );
       expect(repositoryMock.save.mock.calls[1][0].files['nested.evidence']?.toString()).toBe(
-        'urn:ads:platform:file-service:v1:/files/test-2'
+        'urn:ads:platform:file-service:v1:/files/test-2',
       );
     });
 
@@ -1007,7 +1012,7 @@ describe('form router', () => {
         notificationServiceMock,
         fileServiceMock,
         queueTaskServiceMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1055,12 +1060,12 @@ describe('form router', () => {
         notificationServiceMock,
         fileServiceMock,
         queueTaskServiceMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ status: FormStatus.Submitted, submission: expect.any(Object) })
+        expect.objectContaining({ status: FormStatus.Submitted, submission: expect.any(Object) }),
       );
       expect(repositoryMock.save).toHaveBeenCalledTimes(2);
       expect(commentServiceMock.createSupportTopic).toHaveBeenCalledTimes(1);
@@ -1432,7 +1437,7 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       expect(handler).toBeTruthy();
     });
@@ -1461,7 +1466,7 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
 
@@ -1494,7 +1499,7 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Submitted }));
@@ -1526,7 +1531,7 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ status: FormStatus.Submitted }));
@@ -1551,7 +1556,7 @@ describe('form router', () => {
             submissionRecords: true,
           }),
           subscriber,
-          formInfo
+          formInfo,
         ),
       };
       const res = { send: jest.fn() };
@@ -1566,17 +1571,17 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ status: FormStatus.Submitted, submission: expect.any(Object) })
+        expect.objectContaining({ status: FormStatus.Submitted, submission: expect.any(Object) }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: FORM_SUBMITTED,
           payload: expect.objectContaining({ submission: expect.any(Object) }),
-        })
+        }),
       );
     });
 
@@ -1602,7 +1607,7 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
@@ -1631,7 +1636,7 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
@@ -1677,7 +1682,7 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.save).toHaveBeenCalledWith(locked);
@@ -1706,7 +1711,7 @@ describe('form router', () => {
         notificationServiceMock,
         queueTaskServiceMock,
         repositoryMock,
-        pdfServiceMock
+        pdfServiceMock,
       );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
@@ -1958,7 +1963,7 @@ describe('form router', () => {
       expect(formSubmissionMock.find).toBeCalledWith(
         100,
         undefined,
-        expect.objectContaining({ tenantIdEquals: tenantId })
+        expect.objectContaining({ tenantIdEquals: tenantId }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
@@ -1989,7 +1994,7 @@ describe('form router', () => {
         tenantId,
         formSubmissionInfo,
         definition,
-        entity
+        entity,
       );
       formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
 
@@ -2000,7 +2005,7 @@ describe('form router', () => {
       expect(formSubmissionMock.find).toBeCalledWith(
         10,
         'abc-123',
-        expect.objectContaining({ tenantIdEquals: tenantId, definitionIdEquals: definition.id })
+        expect.objectContaining({ tenantIdEquals: tenantId, definitionIdEquals: definition.id }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
@@ -2034,7 +2039,7 @@ describe('form router', () => {
         tenantId,
         formSubmissionInfo,
         definition,
-        entity
+        entity,
       );
       formSubmissionMock.find.mockResolvedValueOnce({ results: [formSubmissionEntity], page });
 
@@ -2045,7 +2050,7 @@ describe('form router', () => {
       expect(formSubmissionMock.find).toBeCalledWith(
         100,
         undefined,
-        expect.objectContaining({ tenantIdEquals: tenantId, definitionIdEquals: definition.id })
+        expect.objectContaining({ tenantIdEquals: tenantId, definitionIdEquals: definition.id }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
@@ -2151,7 +2156,7 @@ describe('form router', () => {
       expect(formSubmissionMock.find).toBeCalledWith(
         100,
         undefined,
-        expect.objectContaining({ tenantIdEquals: tenantId, formIdEquals: 'test-form' })
+        expect.objectContaining({ tenantIdEquals: tenantId, formIdEquals: 'test-form' }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
@@ -2181,7 +2186,7 @@ describe('form router', () => {
         tenantId,
         formSubmissionInfo,
         definition,
-        entity
+        entity,
       );
 
       repositoryMock.get.mockResolvedValueOnce(null);

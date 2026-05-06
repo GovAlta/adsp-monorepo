@@ -21,6 +21,7 @@ describe('createJobs', () => {
   const configurationService = {
     getConfiguration: jest.fn(() => Promise.resolve({})),
     getServiceConfiguration: jest.fn(),
+    getServiceConfigurationRevision: jest.fn(),
   } as unknown as ConfigurationService;
 
   const directory: ServiceDirectory = {
@@ -54,7 +55,7 @@ describe('createJobs', () => {
       expect.objectContaining({
         service: 'value-service',
         api: 'v1',
-      })
+      }),
     );
     expect(logEventModule.createLogEventJob).toHaveBeenCalledWith({
       serviceId,
@@ -97,7 +98,7 @@ describe('createJobs', () => {
 
     expect(logger.error).toHaveBeenCalledWith(
       expect.stringContaining('Error encountered in creation of event jobs'),
-      expect.objectContaining({ context: 'EventJobs' })
+      expect.objectContaining({ context: 'EventJobs' }),
     );
   });
 
@@ -122,7 +123,7 @@ describe('createJobs', () => {
 
     expect(logger.error).toHaveBeenCalledWith(
       expect.stringContaining('Error encountered in creation of event jobs'),
-      expect.objectContaining({ context: 'EventJobs' })
+      expect.objectContaining({ context: 'EventJobs' }),
     );
   });
 });

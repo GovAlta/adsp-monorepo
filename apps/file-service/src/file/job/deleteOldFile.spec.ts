@@ -31,11 +31,13 @@ describe('Delete old files', () => {
   const configurationServiceMockZero = {
     getConfiguration: jest.fn(),
     getServiceConfiguration: jest.fn(),
+    getServiceConfigurationRevision: jest.fn(),
   };
 
   const configurationService = {
     getConfiguration: jest.fn(() => Promise.resolve({})),
     getServiceConfiguration: jest.fn(),
+    getServiceConfigurationRevision: jest.fn(),
   };
 
   const tokenProviderMock = {
@@ -130,7 +132,7 @@ describe('Delete old files', () => {
         scanned: false,
         deleted: false,
         infected: false,
-      })
+      }),
     );
 
     const deleteJob = createDeleteOldFilesJob({
@@ -168,7 +170,7 @@ describe('Delete old files', () => {
         scanned: false,
         deleted: false,
         infected: false,
-      })
+      }),
     );
 
     const deleteJob = createDeleteOldFilesJob({

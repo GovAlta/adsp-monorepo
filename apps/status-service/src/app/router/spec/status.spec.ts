@@ -125,14 +125,14 @@ describe('Service router', () => {
         Promise.resolve({
           ...bobsApplicationStatus,
           status: 'maintenance',
-        })
+        }),
       ),
       update: jest.fn(() =>
         Promise.resolve({
           ...bobsApplicationStatus,
           name: 'updated-app',
           internalStatus: 'stopped',
-        })
+        }),
       ),
       delete: jest.fn(() => Promise.resolve()),
       canAccessById: jest.fn(() => {
@@ -203,6 +203,7 @@ describe('Service router', () => {
   const configurationService = {
     getConfiguration: jest.fn(),
     getServiceConfiguration: jest.fn(),
+    getServiceConfigurationRevision: jest.fn(),
   };
 
   const applicationRepo = new ApplicationRepo(
@@ -211,7 +212,7 @@ describe('Service router', () => {
     serviceId,
     serviceDirectoryMock,
     tokenProviderMock,
-    configurationService
+    configurationService,
   );
 
   describe('createStatusServiceRouter', () => {
@@ -314,7 +315,7 @@ describe('Service router', () => {
             timestamp: entriesMock[1].timestamp,
             status: entriesMock[1].status,
           }),
-        ])
+        ]),
       );
     });
   });
@@ -349,7 +350,7 @@ describe('Service router', () => {
             name: configurationMock[bobsAppKey].name,
             status: '',
           },
-        ])
+        ]),
       );
     });
   });
@@ -370,7 +371,7 @@ describe('Service router', () => {
         new ServiceStatusApplicationEntity(statusRepositoryMock, bobsApplicationStatus),
       ]);
       statusRepositoryMock.enable.mockResolvedValueOnce(
-        new ServiceStatusApplicationEntity(statusRepositoryMock, { ...bobsApplicationStatus, enabled: true })
+        new ServiceStatusApplicationEntity(statusRepositoryMock, { ...bobsApplicationStatus, enabled: true }),
       );
       configurationService.getConfiguration.mockResolvedValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
@@ -381,7 +382,7 @@ describe('Service router', () => {
           enabled: true,
           internalStatus: 'unhealthy',
           endpoint: { status: bobsApplicationStatus.endpoint.status, url: configurationMock[bobsAppKey].url },
-        })
+        }),
       );
     });
 
@@ -399,7 +400,7 @@ describe('Service router', () => {
         new ServiceStatusApplicationEntity(statusRepositoryMock, bobsApplicationStatus),
       ]);
       statusRepositoryMock.disable.mockResolvedValueOnce(
-        new ServiceStatusApplicationEntity(statusRepositoryMock, { ...bobsApplicationStatus, enabled: false })
+        new ServiceStatusApplicationEntity(statusRepositoryMock, { ...bobsApplicationStatus, enabled: false }),
       );
       configurationService.getConfiguration.mockResolvedValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
@@ -409,7 +410,7 @@ describe('Service router', () => {
           ...expected,
           enabled: false,
           endpoint: { status: bobsApplicationStatus.endpoint.status, url: configurationMock[bobsAppKey].url },
-        })
+        }),
       );
     });
 
@@ -429,13 +430,13 @@ describe('Service router', () => {
         new ServiceStatusApplicationEntity(statusRepositoryMock, bobsApplicationStatus),
       ]);
       statusRepositoryMock.enable.mockResolvedValueOnce(
-        new ServiceStatusApplicationEntity(statusRepositoryMock, { ...bobsApplicationStatus, enabled: true })
+        new ServiceStatusApplicationEntity(statusRepositoryMock, { ...bobsApplicationStatus, enabled: true }),
       );
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
           enabled: true,
-        })
+        }),
       );
     });
   });
@@ -519,7 +520,7 @@ describe('Service router', () => {
           name: 'updated-app',
           description: 'mock 10',
           endpoint: { status: bobsApplicationStatus.endpoint.status, url: 'http://mock-me.com' },
-        })
+        }),
       );
     });
 
@@ -547,7 +548,7 @@ describe('Service router', () => {
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'maintenance',
-        })
+        }),
       );
     });
     it('Can delete application', async () => {
