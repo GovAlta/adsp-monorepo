@@ -1,6 +1,7 @@
 import type { Logger } from 'winston';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { metrics as otelMetrics } from '@opentelemetry/api';
 import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { BatchSpanProcessor, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
@@ -162,6 +163,9 @@ export async function initializePlatform(
         resource,
         readers: [metricReader],
       } as unknown as never);
+
+      // Ensure instrumentation using OpenTelemetry global metrics API (e.g., benchmark metrics) shares this provider.
+      otelMetrics.setGlobalMeterProvider(meterProvider);
 
       logger.info(`OpenTelemetry metrics initialized: ${serviceName} -> ${metricsOptions.endpoint}`);
     } catch (err) {
