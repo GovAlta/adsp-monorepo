@@ -260,7 +260,14 @@ const header = `
     -- See the JSON in the Test Data tab for the examples used here.
     -->
   <p>Form submission</p>
-  <div class="subtitle"><span>{{data.definition.name}} (submitted: {{formatDate data.form.submitted}})</span><span>{{data.form.securityClassification}}</span></div>
+  <div class="subtitle">
+    <span>{{data.definition.name}}
+      {{#if (valueExists data.form.submitted)}}
+          (submitted: {{formatDate data.form.submitted}})
+      {{/if}}
+    </span>
+    <span>{{data.form.securityClassification}}</span>
+  </div>
   <div class="clear" />
 </div>
 `;
