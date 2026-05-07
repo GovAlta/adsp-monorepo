@@ -1,7 +1,6 @@
 import type { Logger } from 'winston';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { metrics as otelMetrics } from '@opentelemetry/api';
 import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { BatchSpanProcessor, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
@@ -11,7 +10,7 @@ import { createConfigurationHandler, createConfigurationService } from '../confi
 import { createDirectory } from '../directory';
 import { createEventService } from '../event';
 import { createHealthCheck } from '../healthCheck';
-import { createMetricsHandler } from '../metrics';
+import { createMetricsHandler, initializeBenchmarkMetrics } from '../metrics';
 import { createServiceRegistrar } from '../registration';
 import { createTenantHandler, createTenantService } from '../tenant';
 import { createTraceHandler } from '../trace';
@@ -164,8 +163,8 @@ export async function initializePlatform(
         readers: [metricReader],
       } as unknown as never);
 
-      // Ensure instrumentation using OpenTelemetry global metrics API (e.g., benchmark metrics) shares this provider.
-      otelMetrics.setGlobalMeterProvider(meterProvider);
+      // Explicitly initialize benchmark metrics with the configured provider to avoid race conditions.
+      initializeBenchmarkMetrics(meterProvider);
 
       logger.info(`OpenTelemetry metrics initialized: ${serviceName} -> ${metricsOptions.endpoint}`);
     } catch (err) {

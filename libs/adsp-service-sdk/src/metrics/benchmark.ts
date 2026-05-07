@@ -1,5 +1,6 @@
 import { Request } from 'express';
 import { metrics, trace } from '@opentelemetry/api';
+import type { Histogram, MeterProvider } from '@opentelemetry/api';
 import { EndBenchmark, RequestBenchmark, REQ_BENCHMARK } from './types';
 
 const BENCHMARK_METRIC_ALLOWLIST = new Set([
@@ -10,11 +11,39 @@ const BENCHMARK_METRIC_ALLOWLIST = new Set([
   'validation-time',
 ]);
 
-const benchmarkMeter = metrics.getMeter('adsp-service-sdk');
-const benchmarkDuration = benchmarkMeter.createHistogram('adsp.benchmark.duration', {
-  description: 'Benchmark duration measurements recorded by ADSP request handlers.',
-  unit: 'ms',
-});
+// Benchmark histogram, initialized explicitly by initializeBenchmarkMetrics() to avoid race conditions.
+let benchmarkDuration: Histogram | undefined;
+let isExplicitlyInitialized = false;
+
+/**
+ * Initialize benchmark metrics with an explicit MeterProvider.
+ * Call this during platform initialization to ensure the histogram is created
+ * with the correct instrumented meter provider before any benchmarks are recorded.
+ * Subsequent calls are no-ops if already explicitly initialized.
+ * @param meterProvider The MeterProvider to use for benchmark instrumentation
+ */
+export function initializeBenchmarkMetrics(meterProvider: MeterProvider): void {
+  if (!isExplicitlyInitialized) {
+    const benchmarkMeter = meterProvider.getMeter('adsp-service-sdk');
+    benchmarkDuration = benchmarkMeter.createHistogram('adsp.benchmark.duration', {
+      description: 'Benchmark duration measurements recorded by ADSP request handlers.',
+      unit: 'ms',
+    });
+    isExplicitlyInitialized = true;
+  }
+}
+
+function getBenchmarkDurationHistogram(): Histogram {
+  if (!benchmarkDuration) {
+    // Fallback: if not explicitly initialized, try global provider (less reliable but handles edge cases).
+    const benchmarkMeter = metrics.getMeter('adsp-service-sdk');
+    benchmarkDuration = benchmarkMeter.createHistogram('adsp.benchmark.duration', {
+      description: 'Benchmark duration measurements recorded by ADSP request handlers.',
+      unit: 'ms',
+    });
+  }
+  return benchmarkDuration;
+}
 
 function getBenchmarkMetricAttributes(req: Request, metric: string): Record<string, string> {
   const route = req.route?.path ? `${req.baseUrl || ''}${req.route.path}` : `${req.baseUrl || ''}${req.path || ''}`;
@@ -35,7 +64,7 @@ function recordBenchmarkDurationMetric(req: Request, metric: string, value: numb
     return;
   }
 
-  benchmarkDuration.record(value, getBenchmarkMetricAttributes(req, metric));
+  getBenchmarkDurationHistogram().record(value, getBenchmarkMetricAttributes(req, metric));
 }
 
 /**
