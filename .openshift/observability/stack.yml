@@ -69,7 +69,7 @@ parameters:
     description: Number of collector replicas.
     displayName: Collector Replicas
     required: true
-    value: '1'
+    value: '2'
 
   - name: PROMETHEUS_NAME
     description: Prometheus resource name.
@@ -459,6 +459,11 @@ objects:
             check_interval: 1s
             limit_mib: 1024
             spike_limit_mib: 256
+          filter/drop-low-value-http-spans:
+            error_mode: ignore
+            traces:
+              span:
+                - (attributes["http.method"] == "GET" and attributes["http.target"] == "/") or (attributes["http.method"] == "GET" and attributes["http.target"] == "/health")
           resource:
             attributes:
               - key: deployment.environment
@@ -485,6 +490,8 @@ objects:
               max_elapsed_time: 300s
           prometheus:
             endpoint: 0.0.0.0:8889
+            resource_to_telemetry_conversion:
+              enabled: true
 
         connectors:
           servicegraph:
@@ -510,7 +517,7 @@ objects:
           pipelines:
             traces:
               receivers: [otlp]
-              processors: [memory_limiter, resource, batch]
+              processors: [memory_limiter, filter/drop-low-value-http-spans, resource, batch]
               exporters: [otlp, servicegraph, spanmetrics]
             metrics:
               receivers: [otlp, servicegraph, spanmetrics]
@@ -661,6 +668,11 @@ objects:
           - job_name: prometheus
             static_configs:
               - targets: ['127.0.0.1:9090']
+
+          - job_name: rabbitmq
+            dns_sd_configs:
+              - names: ['event-service-rabbitmq.default.svc.cluster.local']
+                port: 15692
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:

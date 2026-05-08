@@ -22,6 +22,7 @@ describe('createLogEventJob', () => {
   const configurationService = {
     getConfiguration: jest.fn(() => Promise.resolve({})),
     getServiceConfiguration: jest.fn(),
+    getServiceConfigurationRevision: jest.fn(),
   };
 
   beforeEach(() => {
@@ -148,13 +149,13 @@ describe('createLogEventJob', () => {
       job(event, (err) => {
         expect(axiosMock.get).toHaveBeenCalledWith(
           expect.stringContaining(JSON.stringify({ namespace: 'test', name: 'test-prepared' })),
-          expect.any(Object)
+          expect.any(Object),
         );
         expect(axiosMock.post).toHaveBeenCalledTimes(1);
         expect(axios.post).toHaveBeenLastCalledWith(
           expect.any(String),
           expect.objectContaining({ metrics: expect.objectContaining({ 'test:duration': 30 }) }),
-          expect.any(Object)
+          expect.any(Object),
         );
         done(err);
       });
@@ -192,13 +193,13 @@ describe('createLogEventJob', () => {
       job(event, (err) => {
         expect(axiosMock.get).toHaveBeenCalledWith(
           expect.stringContaining(JSON.stringify({ value: 'a', namespace: 'test', name: 'test-prepared' })),
-          expect.any(Object)
+          expect.any(Object),
         );
         expect(axiosMock.post).toHaveBeenCalledTimes(1);
         expect(axios.post).toHaveBeenLastCalledWith(
           expect.any(String),
           expect.objectContaining({ metrics: expect.objectContaining({ 'test:duration': 30 }) }),
-          expect.any(Object)
+          expect.any(Object),
         );
         done(err);
       });
@@ -236,13 +237,13 @@ describe('createLogEventJob', () => {
       job(event, (err) => {
         expect(axiosMock.get).toHaveBeenCalledWith(
           expect.stringContaining(JSON.stringify({ value: 'a', namespace: 'test', name: 'test-prepared' })),
-          expect.any(Object)
+          expect.any(Object),
         );
         expect(axiosMock.post).toHaveBeenCalledTimes(1);
         expect(axios.post).toHaveBeenLastCalledWith(
           expect.any(String),
           expect.objectContaining({ metrics: expect.objectContaining({ 'test:duration': 30 }) }),
-          expect.any(Object)
+          expect.any(Object),
         );
         done(err);
       });

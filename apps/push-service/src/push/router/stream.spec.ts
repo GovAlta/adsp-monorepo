@@ -25,6 +25,7 @@ describe('stream router', () => {
   const configurationServiceMock = {
     getConfiguration: jest.fn(),
     getServiceConfiguration: jest.fn(),
+    getServiceConfigurationRevision: jest.fn(),
   };
 
   const loggerMock = {
@@ -121,7 +122,7 @@ describe('stream router', () => {
         {
           tenantId: nextEvent.tenantId,
           ...LOG_CONTEXT,
-        }
+        },
       );
     });
 
@@ -151,7 +152,7 @@ describe('stream router', () => {
         {
           tenantId: nextEvent.tenantId,
           ...LOG_CONTEXT,
-        }
+        },
       );
     });
 
@@ -291,7 +292,7 @@ describe('stream router', () => {
         req as unknown as Request,
         req.query.tenant,
         req.params.stream,
-        next
+        next,
       );
       expect(req['stream']).toBe(stream);
     });
@@ -316,12 +317,12 @@ describe('stream router', () => {
         req as unknown as Request,
         req.query.tenant,
         req.params.stream,
-        next
+        next,
       );
       expect(req['stream']).toBe(stream);
       expect(tenantServiceMock.getTenantByName).toHaveBeenCalledWith('test 2');
       expect(req.getConfiguration.mock.calls[0][0].toString()).toMatch(
-        'urn:ads:platform:tenant-service:v2:/tenants/test-2'
+        'urn:ads:platform:tenant-service:v2:/tenants/test-2',
       );
     });
 
@@ -344,12 +345,12 @@ describe('stream router', () => {
         req as unknown as Request,
         req.query.tenant,
         req.params.stream,
-        next
+        next,
       );
       expect(req['stream']).toBe(stream);
       expect(tenantServiceMock.getTenantByName).toHaveBeenCalledWith('test 2');
       expect(req.getConfiguration.mock.calls[0][0].toString()).toMatch(
-        'urn:ads:platform:tenant-service:v2:/tenants/test-2'
+        'urn:ads:platform:tenant-service:v2:/tenants/test-2',
       );
     });
 
@@ -372,7 +373,7 @@ describe('stream router', () => {
         req as unknown as Request,
         null,
         req.params.stream,
-        next
+        next,
       );
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
@@ -396,7 +397,7 @@ describe('stream router', () => {
         req as unknown as Request,
         null,
         req.params.stream,
-        next
+        next,
       );
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
@@ -420,7 +421,7 @@ describe('stream router', () => {
         req as unknown as Request,
         null,
         req.params.stream,
-        next
+        next,
       );
       expect(req['stream']).toBe(stream);
     });
@@ -445,7 +446,7 @@ describe('stream router', () => {
         req as unknown as Request,
         req.query.tenant,
         req.params.stream,
-        next
+        next,
       );
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
@@ -503,7 +504,7 @@ describe('stream router', () => {
       await getStreams(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ test: expect.objectContaining({ id: 'test' }) }));
       expect(req.getConfiguration.mock.calls[0][0].toString()).toMatch(
-        'urn:ads:platform:tenant-service:v2:/tenants/test-2'
+        'urn:ads:platform:tenant-service:v2:/tenants/test-2',
       );
     });
 
@@ -537,10 +538,10 @@ describe('stream router', () => {
       });
       await getStreams(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ other: expect.objectContaining({ id: 'other' }) })
+        expect.objectContaining({ other: expect.objectContaining({ id: 'other' }) }),
       );
       expect(req.getConfiguration.mock.calls[0][0].toString()).toMatch(
-        'urn:ads:platform:tenant-service:v2:/tenants/test-2'
+        'urn:ads:platform:tenant-service:v2:/tenants/test-2',
       );
     });
 
@@ -618,7 +619,7 @@ describe('stream router', () => {
           correlationId: '321',
           payload: {},
           traceparent: '123',
-        })
+        }),
       );
       handler(req as unknown as Request, res as unknown as Response, next);
     });
@@ -666,7 +667,7 @@ describe('stream router', () => {
           correlationId: '321',
           payload: {},
           traceparent: '123',
-        })
+        }),
       );
       handler(req as unknown as Request, res as unknown as Response, next);
     });
@@ -703,7 +704,7 @@ describe('stream router', () => {
           correlationId: '321',
           payload: {},
           traceparent: '123',
-        })
+        }),
       );
       handler(req as unknown as Request, res as unknown as Response, next);
     });
@@ -743,7 +744,7 @@ describe('stream router', () => {
           correlationId: '321',
           payload: {},
           traceparent: '123',
-        })
+        }),
       );
       handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(Error));
@@ -786,7 +787,7 @@ describe('stream router', () => {
           correlationId: '321',
           payload: {},
           traceparent: '123',
-        })
+        }),
       );
       listener(socket as unknown as Socket);
     });
@@ -832,7 +833,7 @@ describe('stream router', () => {
           correlationId: '321',
           payload: {},
           traceparent: '123',
-        })
+        }),
       );
       listener(socket as unknown as Socket);
     });
@@ -869,7 +870,7 @@ describe('stream router', () => {
           correlationId: '321',
           payload: {},
           traceparent: '123',
-        })
+        }),
       );
       listener(socket as unknown as Socket);
     });
@@ -904,7 +905,7 @@ describe('stream router', () => {
           correlationId: '321',
           payload: {},
           traceparent: '123',
-        })
+        }),
       );
       listener(socket as unknown as Socket);
     });

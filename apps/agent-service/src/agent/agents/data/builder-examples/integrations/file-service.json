@@ -1,0 +1,38 @@
+{
+  "id": "file-service-integration",
+  "name": "ADSP File Service Integration",
+  "category": "integrations",
+  "summary": "Upload and manage files using ADSP File Service.",
+  "service": "file-service",
+  "formIntegration": {
+    "description": "In ADSP forms, use format: 'file-urn' to enable file upload fields",
+    "dataSchema": {
+      "supportingDocument": {
+        "type": "string",
+        "format": "file-urn"
+      }
+    },
+    "uiSchema": {
+      "type": "Control",
+      "scope": "#/properties/supportingDocument",
+      "options": {
+        "accept": ".pdf,.doc,.docx",
+        "maxSize": 10485760
+      }
+    }
+  },
+  "directUploadPattern": {
+    "description": "For custom upload UI outside of forms",
+    "codeExample": "// Upload file to File Service\nconst uploadFile = async (file: File, accessToken: string) => {\n  const formData = new FormData();\n  formData.append('file', file);\n  formData.append('type', 'application-document');\n\n  const response = await fetch(`${fileServiceUrl}/file/v1/files`, {\n    method: 'POST',\n    headers: { 'Authorization': `Bearer ${accessToken}` },\n    body: formData\n  });\n\n  const { urn } = await response.json();\n  return urn; // e.g., 'urn:ads:platform:file-service:v1:/files/abc123'\n};"
+  },
+  "downloadPattern": {
+    "description": "Retrieve uploaded files",
+    "codeExample": "// Download file by URN\nconst downloadFile = async (fileUrn: string, accessToken: string) => {\n  const fileId = fileUrn.split('/files/')[1];\n  const response = await fetch(`${fileServiceUrl}/file/v1/files/${fileId}/download`, {\n    headers: { 'Authorization': `Bearer ${accessToken}` }\n  });\n  return response.blob();\n};"
+  },
+  "notes": [
+    "File uploads require authentication",
+    "Validate file types and sizes on client before upload",
+    "Store the returned URN, not the file content",
+    "Consider showing upload progress for large files"
+  ]
+}

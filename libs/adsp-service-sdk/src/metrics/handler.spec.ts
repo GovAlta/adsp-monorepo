@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Request, Response } from 'express';
 import * as responseTime from 'response-time';
+import { context as otelContext, createContextKey } from '@opentelemetry/api';
 import { Logger } from 'winston';
 import { adspId } from '../utils';
 import { createMetricsHandler, writeMetrics } from './handler';
@@ -149,6 +150,45 @@ describe('handler', () => {
           'http.response.status_code': 503,
         }),
       );
+    });
+
+    it('schedules throttled writes in root context', async () => {
+      jest.useFakeTimers();
+
+      try {
+        axiosMock.post.mockResolvedValueOnce({ data: null });
+
+        const testKey = createContextKey('metrics-handler-throttled-context');
+        tokenProviderMock.getAccessToken.mockImplementationOnce(async () => {
+          expect(otelContext.active().getValue(testKey)).toBeUndefined();
+          return 'token';
+        });
+
+        const req = {
+          method: 'GET',
+          baseUrl: '/resource',
+          path: '/123',
+          originalUrl: '/resource/123',
+          route: { path: '/:id' },
+          ip: '127.0.0.1',
+          user: { tenantId },
+        };
+        const res = { statusCode: 200 };
+        const next = jest.fn();
+
+        responseTimeMock.mockImplementationOnce((fn) => (req, res, _next) => fn(req, res, 123));
+        const handler = await createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock);
+
+        await otelContext.with(otelContext.active().setValue(testKey, 'request-span-context'), async () => {
+          handler(req as unknown as Request, res as Response, next);
+        });
+
+        await jest.advanceTimersByTimeAsync(60000);
+
+        expect(tokenProviderMock.getAccessToken).toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 
@@ -332,6 +372,48 @@ describe('handler', () => {
       });
 
       expect(axiosMock.post).toHaveBeenCalled();
+    });
+
+    it('retrieves token in root context', async () => {
+      axiosMock.post.mockResolvedValueOnce({ data: null });
+
+      const testKey = createContextKey('metrics-handler-context');
+      tokenProviderMock.getAccessToken.mockImplementationOnce(async () => {
+        expect(otelContext.active().getValue(testKey)).toBeUndefined();
+        return 'token';
+      });
+
+      await otelContext.with(otelContext.active().setValue(testKey, 'request-span-context'), async () => {
+        await writeMetrics(serviceId, directoryMock, loggerMock, tokenProviderMock, {
+          [`${tenantId}`]: [
+            {
+              timestamp: new Date(),
+              correlationId: 'GET:/abc/123',
+              tenantId: tenantId.toString(),
+              context: {
+                method: 'GET',
+                path: '/abc/123',
+              },
+              value: {
+                responseTime: 123,
+              },
+              metrics: {
+                'total:count': 1,
+                'GET:/abc/123:count': 1,
+              },
+            },
+          ],
+        });
+      });
+
+      expect(tokenProviderMock.getAccessToken).toHaveBeenCalled();
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        valueUrl.href,
+        expect.any(Array),
+        expect.objectContaining({
+          _otelSuppressTracing: true,
+        }),
+      );
     });
   });
 });

@@ -91,6 +91,79 @@ describe('EnumSelect component', () => {
 
       expect(handleChangeMock).toHaveBeenLastCalledWith('', 'option1-value');
     });
+
+    it('stores primitive dropdown value even when schema type is object without properties', () => {
+      const props = {
+        ...staticProps,
+        schema: { type: 'object' },
+        handleChange: handleChangeMock,
+      };
+      const { container } = render(<EnumSelect {...props} />);
+      const dropdown = container.querySelector('#jsonforms--dropdown');
+      expect(dropdown).toBeTruthy();
+
+      fireEvent(
+        dropdown as Element,
+        new CustomEvent('_change', {
+          detail: { name: 'jsonforms--dropdown', value: 'option2-value' },
+          bubbles: true,
+        })
+      );
+
+      expect(handleChangeMock).toHaveBeenLastCalledWith('', 'option2-value');
+    });
+
+    it('stores matched register object when schema expects object properties', () => {
+      const objectHandleChange = jest.fn();
+      const props = {
+        ...staticProps,
+        schema: {
+          type: 'object',
+          properties: {
+            value: { type: 'string' },
+            label: { type: 'string' },
+          },
+        },
+        uischema: {
+          ...dropDownUiSchema,
+          options: { register: { urn: 'mock-urn' } },
+        },
+        handleChange: objectHandleChange,
+      };
+
+      const { container } = render(
+        <JsonFormRegisterProvider
+          defaultRegisters={{
+            registerData: [
+              {
+                url: 'http://mock-api.com/mock-test',
+                urn: 'mock-urn',
+                data: [{ value: 'option1-value', label: 'option1-label', extra: 'payload' }],
+              },
+            ],
+          }}
+        >
+          <EnumSelect {...props} />
+        </JsonFormRegisterProvider>
+      );
+
+      const dropdown = container.querySelector('#jsonforms--dropdown');
+      expect(dropdown).toBeTruthy();
+
+      fireEvent(
+        dropdown as Element,
+        new CustomEvent('_change', {
+          detail: { name: 'jsonforms--dropdown', value: 'option1-value' },
+          bubbles: true,
+        })
+      );
+
+      expect(objectHandleChange).toHaveBeenLastCalledWith('', {
+        value: 'option1-value',
+        label: 'option1-label',
+        extra: 'payload',
+      });
+    });
   });
 
   describe('Enum Control', () => {

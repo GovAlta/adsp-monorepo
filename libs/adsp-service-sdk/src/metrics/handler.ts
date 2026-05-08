@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Request, RequestHandler, Response } from 'express';
 import { throttle } from 'lodash';
+import { context as otelContext, ROOT_CONTEXT } from '@opentelemetry/api';
 import type { MeterProvider } from '@opentelemetry/sdk-metrics';
 import * as responseTime from 'response-time';
 import { Logger } from 'winston';
@@ -18,12 +19,33 @@ function getRoute(req: Request): string {
   return req.baseUrl || req.path || req.originalUrl || 'unknown';
 }
 
-function getMetricAttributes(req: Request, res: Response): Record<string, string | number> {
-  return {
+function resolveTenantId(req: Request, defaultTenantId?: AdspId): string | undefined {
+  const tenantId = defaultTenantId || req.tenant?.id || req.user?.tenantId;
+  return tenantId ? tenantId.toString() : undefined;
+}
+
+function resolveTenantName(req: Request): string | undefined {
+  return req.tenant?.name;
+}
+
+function getMetricAttributes(req: Request, res: Response, defaultTenantId?: AdspId): Record<string, string | number> {
+  const attributes: Record<string, string | number> = {
     'http.request.method': req.method,
     'http.route': getRoute(req),
     'http.response.status_code': res.statusCode || 0,
   };
+
+  const tenantId = resolveTenantId(req, defaultTenantId);
+  if (tenantId) {
+    attributes['adsp.tenant.id'] = tenantId;
+  }
+
+  const tenantName = resolveTenantName(req);
+  if (tenantName) {
+    attributes['adsp.tenant.name'] = tenantName;
+  }
+
+  return attributes;
 }
 
 /**
@@ -108,7 +130,7 @@ export async function createMetricsHandler(
   });
 
   const responseTimeHandler = responseTime((req: Request, _res: Response, time) => {
-    const otelAttributes = getMetricAttributes(req, _res);
+    const otelAttributes = getMetricAttributes(req, _res, defaultTenantId);
     requestCount?.add(1, otelAttributes);
     requestDuration?.record(time, otelAttributes);
     activeRequests?.add(-1, { 'http.request.method': req.method });
@@ -166,7 +188,10 @@ export async function createMetricsHandler(
         valuesBuffer[value.tenantId] = [];
       }
       valuesBuffer[value.tenantId].push(value);
-      writeBuffer(serviceId, directory, logger, tokenProvider, valuesBuffer);
+      // Schedule deferred writes in ROOT_CONTEXT so delayed callbacks do not inherit request spans.
+      otelContext.with(ROOT_CONTEXT, () => {
+        writeBuffer(serviceId, directory, logger, tokenProvider, valuesBuffer);
+      });
     }
   });
 

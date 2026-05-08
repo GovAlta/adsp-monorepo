@@ -1,0 +1,33 @@
+{
+  "id": "status-service-integration",
+  "name": "ADSP Status Service Integration",
+  "category": "integrations",
+  "summary": "Display application status from ADSP Status Service.",
+  "service": "status-service",
+  "apiPattern": {
+    "lookup": "GET /status/v1/applications/{applicationId}",
+    "response": {
+      "id": "string",
+      "status": "'submitted' | 'in-review' | 'approved' | 'declined' | 'action-required'",
+      "description": "string",
+      "updatedAt": "ISO date string"
+    }
+  },
+  "codeExample": {
+    "hook": "// src/hooks/useStatusService.ts\nimport { useState, useCallback } from 'react';\n\nexport function useStatusService(baseUrl: string) {\n  const [status, setStatus] = useState(null);\n  const [loading, setLoading] = useState(false);\n  const [error, setError] = useState(null);\n\n  const lookupStatus = useCallback(async (applicationId: string) => {\n    setLoading(true);\n    setError(null);\n    try {\n      const response = await fetch(`${baseUrl}/status/v1/applications/${applicationId}`);\n      if (!response.ok) throw new Error('Application not found');\n      const data = await response.json();\n      setStatus(data);\n    } catch (err) {\n      setError(err.message);\n    } finally {\n      setLoading(false);\n    }\n  }, [baseUrl]);\n\n  return { status, loading, error, lookupStatus };\n}",
+    "usage": "const { status, loading, error, lookupStatus } = useStatusService(config.statusServiceUrl);\n\n<GoabButton onClick={() => lookupStatus(referenceNumber)}>Check status</GoabButton>\n\n{status && (\n  <GoabCallout type={statusTypeMap[status.status]}>\n    {status.description}\n  </GoabCallout>\n)}"
+  },
+  "statusDisplayMapping": {
+    "submitted": { "calloutType": "information", "icon": "checkmark-circle", "label": "Submitted" },
+    "in-review": { "calloutType": "information", "icon": "time", "label": "In review" },
+    "approved": { "calloutType": "success", "icon": "checkmark-circle", "label": "Approved" },
+    "declined": { "calloutType": "emergency", "icon": "warning", "label": "Declined" },
+    "action-required": { "calloutType": "important", "icon": "alert-circle", "label": "Action required" }
+  },
+  "notes": [
+    "Consider caching status to reduce API calls",
+    "Show loading state while fetching",
+    "Handle 'not found' gracefully with helpful message",
+    "Include timestamp of last status update"
+  ]
+}

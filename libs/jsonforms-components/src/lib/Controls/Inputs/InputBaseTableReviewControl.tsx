@@ -178,6 +178,16 @@ export const GoAInputBaseTableReview = (props: ControlProps): JSX.Element | null
     activeError = errors;
   }
 
+  const isRegisterBackedEnumFalsePositive =
+    uischema?.options?.register !== undefined &&
+    !isNilOrEmptyValue(data, true) &&
+    typeof activeError === 'string' &&
+    activeError.toLowerCase().includes('must be equal to one of the allowed values');
+
+  if (isRegisterBackedEnumFalsePositive) {
+    activeError = undefined;
+  }
+
   if (activeError && /\sis required$/i.test(activeError)) {
     activeError = `${labelToUpdate} is required`;
   }

@@ -156,5 +156,128 @@ describe('instrument', () => {
       withSpy.mockRestore();
       setSpanSpy.mockRestore();
     });
+
+    it('can set tenant attribute from resolved tenant context', () => {
+      const span = {
+        setAttributes: jest.fn(),
+        setStatus: jest.fn(),
+        end: jest.fn(),
+        isRecording: jest.fn().mockReturnValue(false),
+        recordException: jest.fn(),
+      };
+      const startSpan = jest.fn().mockReturnValue(span);
+      const tracerProvider = {
+        getTracer: jest.fn().mockReturnValue({ startSpan }),
+      };
+
+      const withSpy = jest.spyOn(otelContext, 'with').mockImplementation((_ctx, fn) => fn());
+      const setSpanSpy = jest.spyOn(otelTrace, 'setSpan').mockReturnValue({} as never);
+      jest.spyOn(propagation, 'extract').mockReturnValue({} as never);
+
+      const handler = createHttpServerTraceHandler(tracerProvider as never);
+      const req = {
+        method: 'GET',
+        path: '/resource',
+        originalUrl: '/resource',
+        hostname: 'localhost',
+        protocol: 'http',
+        httpVersion: '1.1',
+        ip: '127.0.0.1',
+        headers: {},
+        tenant: {
+          id: { toString: () => 'urn:ads:platform:tenant-service:v2:/tenants/test' },
+          name: 'test-tenant',
+        },
+        get: jest.fn().mockReturnValue('jest-agent'),
+      };
+      const res = {
+        statusCode: 200,
+        json: jest.fn(function (body) {
+          return body;
+        }),
+        send: jest.fn(function (body) {
+          return body;
+        }),
+        on: jest.fn(() => res),
+      };
+
+      handler(req as never, res as never, jest.fn());
+      (res.json as (body: unknown) => unknown)({ ok: true });
+
+      expect(startSpan).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          attributes: expect.objectContaining({
+            'adsp.tenant.id': 'urn:ads:platform:tenant-service:v2:/tenants/test',
+            'adsp.tenant.name': 'test-tenant',
+          }),
+        }),
+        expect.anything(),
+      );
+      expect(span.setAttributes).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'adsp.tenant.id': 'urn:ads:platform:tenant-service:v2:/tenants/test',
+          'adsp.tenant.name': 'test-tenant',
+          'http.status_code': 200,
+        }),
+      );
+
+      withSpy.mockRestore();
+      setSpanSpy.mockRestore();
+    });
+
+    it('can set tenant attribute from user context fallback', () => {
+      const span = {
+        setAttributes: jest.fn(),
+        setStatus: jest.fn(),
+        end: jest.fn(),
+        isRecording: jest.fn().mockReturnValue(false),
+        recordException: jest.fn(),
+      };
+      const tracerProvider = {
+        getTracer: jest.fn().mockReturnValue({ startSpan: jest.fn().mockReturnValue(span) }),
+      };
+
+      const withSpy = jest.spyOn(otelContext, 'with').mockImplementation((_ctx, fn) => fn());
+      const setSpanSpy = jest.spyOn(otelTrace, 'setSpan').mockReturnValue({} as never);
+      jest.spyOn(propagation, 'extract').mockReturnValue({} as never);
+
+      const handler = createHttpServerTraceHandler(tracerProvider as never);
+      const req = {
+        method: 'POST',
+        path: '/resource',
+        originalUrl: '/resource',
+        hostname: 'localhost',
+        protocol: 'http',
+        httpVersion: '1.1',
+        ip: '127.0.0.1',
+        headers: {},
+        user: { tenantId: { toString: () => 'urn:ads:platform:tenant-service:v2:/tenants/from-user' } },
+        get: jest.fn().mockReturnValue('jest-agent'),
+      };
+      const res = {
+        statusCode: 201,
+        json: jest.fn(function (body) {
+          return body;
+        }),
+        send: jest.fn(function (body) {
+          return body;
+        }),
+        on: jest.fn(() => res),
+      };
+
+      handler(req as never, res as never, jest.fn());
+      (res.send as (body: unknown) => unknown)({ ok: true });
+
+      expect(span.setAttributes).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'adsp.tenant.id': 'urn:ads:platform:tenant-service:v2:/tenants/from-user',
+          'http.status_code': 201,
+        }),
+      );
+
+      withSpy.mockRestore();
+      setSpanSpy.mockRestore();
+    });
   });
 });

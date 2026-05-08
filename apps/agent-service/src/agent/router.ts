@@ -12,6 +12,10 @@ import { environment } from '../environments/environment';
 
 const TOKEN_EXPIRY_THRESHOLD_MS = environment.AGENT_TOKEN_EXPIRY_THRESHOLD_MS;
 
+// Track in-progress workspace initializations to prevent concurrent init requests.
+// Key format: `${tenantId}:${userId}:${threadId}`
+const workspaceInitsInProgress = new Set<string>();
+
 // Chunk types that the client understands and can render.
 // Other stream parts (step-start, step-finish, finish, raw, etc.) contain
 // complex non-serializable data (getters, circular refs via messageList)
@@ -376,13 +380,31 @@ export function onIoConnection(logger: Logger) {
             throw new NotFoundError('agent', agent);
           }
 
+          // Guard against concurrent init requests for the same workspace
+          const initKey = `${tenant.id}:${user.id}:${threadId}`;
+          if (workspaceInitsInProgress.has(initKey)) {
+            logger.info(`Workspace initialization already in progress for thread ${threadId}, skipping duplicate.`, {
+              context: 'AgentRouter',
+              tenant: tenant?.id?.toString(),
+              user: `${user.name} (ID: ${user.id})`,
+            });
+            return;
+          }
+
+          workspaceInitsInProgress.add(initKey);
+
           logger.info(`User ${user.name} (ID: ${user.id}) initializing workspace for agent ${agent}.`, {
             context: 'AgentRouter',
             tenant: tenant?.id?.toString(),
             user: `${user.name} (ID: ${user.id})`,
           });
 
-          const revision = await aiAgent.initializeWorkspace(user, threadId, workspaceTarball);
+          let revision;
+          try {
+            revision = await aiAgent.initializeWorkspace(user, threadId, workspaceTarball);
+          } finally {
+            workspaceInitsInProgress.delete(initKey);
+          }
 
           socket.emit('workspace-ready', {
             agent,
