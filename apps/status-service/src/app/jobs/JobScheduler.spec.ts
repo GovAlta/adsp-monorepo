@@ -23,6 +23,7 @@ describe('JobScheduler', () => {
   const configurationServiceMock = {
     getConfiguration: jest.fn(),
     getServiceConfiguration: jest.fn(),
+    getServiceConfigurationRevision: jest.fn(),
   };
 
   const tenantServiceMock = {
@@ -106,7 +107,7 @@ describe('JobScheduler', () => {
       endpointRepoMock,
       directoryServiceMock,
       tenantServiceMock,
-      loggerMock
+      loggerMock,
     );
   };
 
@@ -166,10 +167,10 @@ describe('JobScheduler', () => {
     expect(cacheReloadScheduler).toHaveBeenCalledTimes(1);
     expect(healthCheckScheduler.schedule).toHaveBeenCalledTimes(2);
     expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(
-      expect.objectContaining({ ...app0, tenantId: tenantId })
+      expect.objectContaining({ ...app0, tenantId: tenantId }),
     );
     expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(
-      expect.objectContaining({ ...app1, tenantId: tenantId })
+      expect.objectContaining({ ...app1, tenantId: tenantId }),
     );
     expect(jobCache.getApplicationIds().length).toEqual(2);
     expect(jobCache.exists(app0.appKey)).toBe(true);

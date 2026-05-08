@@ -1,15 +1,11 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 import { Request, Response } from 'express';
-import * as context from 'express-http-context';
 import { Logger } from 'winston';
-import { context as otelContext, propagation, trace as otelTrace, SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import { propagation, trace as otelTrace, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { createTraceHandler, traceRequestInterceptor } from './handler';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
-
-jest.mock('express-http-context');
-const contextMock = context as jest.Mocked<typeof context>;
 
 const loggerMock = {
   debug: jest.fn(),
@@ -48,7 +44,6 @@ describe('handler', () => {
         };
         const res = {};
         const next = jest.fn();
-        contextMock.middleware.mockImplementationOnce((_req, _res, next) => next());
 
         const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
         handler(req as unknown as Request, res as Response, next);
@@ -61,12 +56,11 @@ describe('handler', () => {
         };
         const res = {};
         const next = jest.fn();
-        const err = new Error('oh noes!');
-        contextMock.middleware.mockImplementationOnce((_req, _res, next) => next(err));
 
         const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
         handler(req as unknown as Request, res as Response, next);
-        expect(next).toHaveBeenCalledWith(err);
+        // Without tracerProvider there is no error path; handler calls next() directly
+        expect(next).toHaveBeenCalled();
       });
     });
   });
@@ -111,7 +105,7 @@ describe('handler', () => {
         addEvent: jest.fn(),
       };
       const tracer = { startSpan: jest.fn().mockReturnValue(clientSpan) };
-      contextMock.get.mockReturnValue(parentSpan);
+      jest.spyOn(otelTrace, 'getActiveSpan').mockReturnValue(parentSpan as never);
 
       const setSpanSpy = jest.spyOn(otelTrace, 'setSpan');
 
@@ -147,6 +141,29 @@ describe('handler', () => {
         expect.objectContaining({ kind: SpanKind.CLIENT }),
         expect.anything(),
       );
+    });
+
+    it('can bypass tracing when suppression header is set', () => {
+      const config = {
+        headers: {
+          has: jest.fn(),
+          set: jest.fn(),
+        },
+        _otelSuppressTracing: true,
+        method: 'post',
+        url: 'http://example.com/deferred',
+      };
+
+      const tracer = { startSpan: jest.fn() };
+      const injectSpy = jest.spyOn(propagation, 'inject');
+
+      traceRequestInterceptor(config as unknown as InternalAxiosRequestConfig, tracer as never);
+
+      expect(tracer.startSpan).not.toHaveBeenCalled();
+      expect(injectSpy).not.toHaveBeenCalled();
+      expect((config as { _otelSuppressTracing?: boolean })._otelSuppressTracing).toBeUndefined();
+
+      injectSpy.mockRestore();
     });
 
     it('can end client span on axios error', async () => {

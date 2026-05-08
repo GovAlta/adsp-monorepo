@@ -17,6 +17,7 @@ ADSP is a broad set of API based services that help accelerate application devel
 - Securing your applications
 - etc.
 
+<!-- tags: [keycloak] -->
 The _Access Service_ is concerned with security, and is based on [Keycloak](https://www.keycloak.org/docs/latest/securing_apps/#planning-for-securing-applications-and-services) and the OIDC authentication protocol. Keycloak, in DDD, it is used for granting user access to applications and for granting applications access to the various ADSP services. The latter is the subject of this tutorial.
 
 ## Learn More

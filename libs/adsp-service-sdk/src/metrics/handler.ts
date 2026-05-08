@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Request, RequestHandler, Response } from 'express';
 import { throttle } from 'lodash';
+import { context as otelContext, ROOT_CONTEXT } from '@opentelemetry/api';
 import type { MeterProvider } from '@opentelemetry/sdk-metrics';
 import * as responseTime from 'response-time';
 import { Logger } from 'winston';
@@ -18,14 +19,39 @@ function getRoute(req: Request): string {
   return req.baseUrl || req.path || req.originalUrl || 'unknown';
 }
 
-function getMetricAttributes(req: Request, res: Response): Record<string, string | number> {
-  return {
+function resolveTenantId(req: Request, defaultTenantId?: AdspId): string | undefined {
+  const tenantId = defaultTenantId || req.tenant?.id || req.user?.tenantId;
+  return tenantId ? tenantId.toString() : undefined;
+}
+
+function resolveTenantName(req: Request): string | undefined {
+  return req.tenant?.name;
+}
+
+function getMetricAttributes(req: Request, res: Response, defaultTenantId?: AdspId): Record<string, string | number> {
+  const attributes: Record<string, string | number> = {
     'http.request.method': req.method,
     'http.route': getRoute(req),
     'http.response.status_code': res.statusCode || 0,
   };
+
+  const tenantId = resolveTenantId(req, defaultTenantId);
+  if (tenantId) {
+    attributes['adsp.tenant.id'] = tenantId;
+  }
+
+  const tenantName = resolveTenantName(req);
+  if (tenantName) {
+    attributes['adsp.tenant.name'] = tenantName;
+  }
+
+  return attributes;
 }
 
+/**
+ * @deprecated Value service metrics recording is deprecated. Use OpenTelemetry instrumentation via the
+ * `meterProvider` option of `createMetricsHandler` instead.
+ */
 export async function writeMetrics(
   serviceId: AdspId,
   directory: ServiceDirectory,
@@ -42,11 +68,17 @@ export async function writeMetrics(
       const values = buffer[tenantId]?.splice(0) || [];
       if (values.length > 0) {
         const token = await tokenProvider.getAccessToken();
+
+        // Suppress tracing for deferred writes so throttled metric flushes do not attach to
+        // request spans that scheduled the write.
         await axios.post(valueUrl.href, values, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
           params: { tenantId },
           timeout: 30000,
-        });
+          _otelSuppressTracing: true,
+        } as unknown as import('axios').InternalAxiosRequestConfig);
         logger.debug(`Wrote service metrics to value service.`, {
           context: 'MetricsHandler',
           tenant: tenantId,
@@ -63,6 +95,14 @@ export async function writeMetrics(
 
 // Throttle the metric writes so that there isn't a write request per measured request at higher request volumes.
 const WRITE_THROTTLE_MS = 60000;
+
+/**
+ * Creates an Express middleware handler for service request metrics.
+ *
+ * @deprecated The value service metrics recording path (requires `serviceId`, `tokenProvider`, `directory`) is
+ * deprecated. Provide a `meterProvider` and omit the value service dependencies to use OpenTelemetry instrumentation
+ * only. Value service metric recording will be removed in a future release.
+ */
 export async function createMetricsHandler(
   serviceId: AdspId,
   logger: Logger,
@@ -90,7 +130,7 @@ export async function createMetricsHandler(
   });
 
   const responseTimeHandler = responseTime((req: Request, _res: Response, time) => {
-    const otelAttributes = getMetricAttributes(req, _res);
+    const otelAttributes = getMetricAttributes(req, _res, defaultTenantId);
     requestCount?.add(1, otelAttributes);
     requestDuration?.record(time, otelAttributes);
     activeRequests?.add(-1, { 'http.request.method': req.method });
@@ -148,7 +188,10 @@ export async function createMetricsHandler(
         valuesBuffer[value.tenantId] = [];
       }
       valuesBuffer[value.tenantId].push(value);
-      writeBuffer(serviceId, directory, logger, tokenProvider, valuesBuffer);
+      // Schedule deferred writes in ROOT_CONTEXT so delayed callbacks do not inherit request spans.
+      otelContext.with(ROOT_CONTEXT, () => {
+        writeBuffer(serviceId, directory, logger, tokenProvider, valuesBuffer);
+      });
     }
   });
 

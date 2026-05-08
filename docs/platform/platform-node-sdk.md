@@ -34,6 +34,7 @@ npx nx workspace-generator adsp-service
 The generate output includes sub-project structure and initial files under `/apps` as well as deployment manifests under `.openshift/managed` and `.compose`.
 
 ## Setting up a service account
+<!-- tags: [keycloak] -->
 The SDK requires credentials for a service account and uses this account for accessing platform capabilities. Fine grained configuration is possible and principle of least privilege should be applied.
 
 In order to create the service account.
@@ -102,6 +103,7 @@ Core requests are used by platform services making requests to other platform se
 ```
 
 ### Service specific user roles
+<!-- tags: [keycloak] -->
 Keycloak issued tokens contain client roles nested under `realm_access`. Both tenant and core strategies flatten service specific roles from the token and qualifies roles related to other service clients with the client ID..
 
 For example:

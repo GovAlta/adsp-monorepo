@@ -22,7 +22,7 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
 
   return (
     <GoabInput
-      type="time"
+      type="datetime-local"
       error={isVisited && errors.length > 0}
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}

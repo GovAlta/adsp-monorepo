@@ -45,6 +45,7 @@ describe('checkEndpoint', () => {
   const configurationServiceMock = {
     getConfiguration: jest.fn(),
     getServiceConfiguration: jest.fn(),
+    getServiceConfigurationRevision: jest.fn(),
   };
 
   const mockTokenProvider = {
@@ -139,13 +140,13 @@ describe('checkEndpoint', () => {
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'n/a' },
-          } as ServiceStatusApplication)
+          } as ServiceStatusApplication),
         );
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
         await job();
         expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'application-healthy' }));
         expect(statusRepositoryMock.save).toHaveBeenCalledWith(
-          expect.objectContaining({ endpoint: expect.objectContaining({ status: 'online' }) })
+          expect.objectContaining({ endpoint: expect.objectContaining({ status: 'online' }) }),
         );
       });
 
@@ -184,14 +185,14 @@ describe('checkEndpoint', () => {
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'online' },
-          } as ServiceStatusApplication)
+          } as ServiceStatusApplication),
         );
 
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
         await job();
         expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'application-unhealthy' }));
         expect(statusRepositoryMock.save).toHaveBeenCalledWith(
-          expect.objectContaining({ endpoint: expect.objectContaining({ status: 'offline' }) })
+          expect.objectContaining({ endpoint: expect.objectContaining({ status: 'offline' }) }),
         );
       });
 
@@ -250,7 +251,7 @@ describe('checkEndpoint', () => {
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'online' },
-          } as ServiceStatusApplication)
+          } as ServiceStatusApplication),
         );
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
         await job();
@@ -313,12 +314,12 @@ describe('checkEndpoint', () => {
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'online' },
-          } as ServiceStatusApplication)
+          } as ServiceStatusApplication),
         );
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
         await job();
         expect(eventServiceMock.send).not.toHaveBeenCalledWith(
-          expect.objectContaining({ name: 'monitored-service-down' })
+          expect.objectContaining({ name: 'monitored-service-down' }),
         );
       });
 
@@ -376,7 +377,7 @@ describe('checkEndpoint', () => {
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'online' },
-          } as ServiceStatusApplication)
+          } as ServiceStatusApplication),
         );
         axiosMock.patch.mockResolvedValueOnce('success');
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
@@ -423,7 +424,7 @@ describe('checkEndpoint', () => {
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'offline' },
-          } as ServiceStatusApplication)
+          } as ServiceStatusApplication),
         );
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
         await job();

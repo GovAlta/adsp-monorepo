@@ -204,8 +204,8 @@ const FileList = (): JSX.Element => {
             {selectedFile && selectedFile.name
               ? selectedFile.name
               : hasUploadingFileCompleted || isUploadingFile
-              ? 'Please choose another file'
-              : 'No file was chosen'}
+                ? 'Please choose another file'
+                : 'No file was chosen'}
           </div>
         </div>
       </>
@@ -228,7 +228,7 @@ const FileList = (): JSX.Element => {
       </FileTypeDropdown>
 
       <GoabButton
-        type="submit"
+        type="secondary"
         onClick={onUploadSubmit}
         disabled={isUploadingFile || !(selectedFile && uploadFileType.length > 0) ? true : undefined}
       >

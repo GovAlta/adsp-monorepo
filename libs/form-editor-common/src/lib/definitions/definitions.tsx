@@ -236,7 +236,7 @@ export const FormDefinitions = ({
           </GoabFormItem>
         </SearchInputWrapper>
         <GoabButton
-          type="primary"
+          type="secondary"
           mb={'m'}
           testId="form-definition-search-btn"
           onClick={() => {

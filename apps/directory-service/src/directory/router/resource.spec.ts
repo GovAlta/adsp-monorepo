@@ -104,13 +104,13 @@ describe('resource', () => {
       expect(repositoryMock.getTags).toHaveBeenCalledWith(
         10,
         undefined,
-        expect.objectContaining({ tenantIdEquals: tenantId })
+        expect.objectContaining({ tenantIdEquals: tenantId }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           page,
           results: expect.arrayContaining([expect.objectContaining(results[0])]),
-        })
+        }),
       );
     });
 
@@ -137,13 +137,13 @@ describe('resource', () => {
       expect(repositoryMock.getTags).toHaveBeenCalledWith(
         42,
         '123',
-        expect.objectContaining({ tenantIdEquals: tenantId })
+        expect.objectContaining({ tenantIdEquals: tenantId }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           page,
           results: expect.arrayContaining([expect.objectContaining(results[0])]),
-        })
+        }),
       );
     });
 
@@ -192,7 +192,7 @@ describe('resource', () => {
       expect(repositoryMock.getTags).toHaveBeenCalledWith(
         1,
         null,
-        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag })
+        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(results[0]));
     });
@@ -230,7 +230,7 @@ describe('resource', () => {
       expect(repositoryMock.getTags).toHaveBeenCalledWith(
         1,
         null,
-        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag })
+        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag }),
       );
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
       expect(res.send).not.toHaveBeenCalled();
@@ -269,7 +269,7 @@ describe('resource', () => {
       expect(repositoryMock.getTags).toHaveBeenCalledWith(
         1,
         null,
-        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag })
+        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted }));
     });
@@ -307,7 +307,7 @@ describe('resource', () => {
       expect(repositoryMock.getTags).toHaveBeenCalledWith(
         1,
         null,
-        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag })
+        expect.objectContaining({ tenantIdEquals: tenantId, valueEquals: req.params.tag }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: false }));
       expect(next).not.toHaveBeenCalledWith();
@@ -352,19 +352,19 @@ describe('resource', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.applyTag).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId, ...tag }),
-        expect.objectContaining({ tenantId, urn: expect.any(AdspId) })
+        expect.objectContaining({ tenantId, urn: expect.any(AdspId) }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           tagged: true,
           tag: expect.objectContaining(tag),
           resource: expect.objectContaining({ urn: 'urn:ads:platform:file-service:v1:/files/123' }),
-        })
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'tagged-resource',
-        })
+        }),
       );
     });
 
@@ -400,19 +400,19 @@ describe('resource', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.removeTag).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId, ...tag }),
-        expect.objectContaining({ tenantId, urn: expect.any(AdspId) })
+        expect.objectContaining({ tenantId, urn: expect.any(AdspId) }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           untagged: true,
           tag: expect.objectContaining(tag),
           resource: expect.objectContaining({ urn: 'urn:ads:platform:file-service:v1:/files/123' }),
-        })
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'untagged-resource',
-        })
+        }),
       );
     });
 
@@ -448,19 +448,19 @@ describe('resource', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.applyTag).toHaveBeenCalledWith(
         expect.objectContaining({ tenantId, ...req.body.tag }),
-        expect.objectContaining({ tenantId, urn: expect.any(AdspId) })
+        expect.objectContaining({ tenantId, urn: expect.any(AdspId) }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           tagged: true,
           tag: expect.objectContaining(tag),
           resource: expect.objectContaining({ urn: 'urn:ads:platform:file-service:v1:/files/123' }),
-        })
+        }),
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'tagged-resource',
-        })
+        }),
       );
     });
 
@@ -694,7 +694,7 @@ describe('resource', () => {
             expect.objectContaining({ urn: 'urn:ads:platform:file-service:v1:/files/123' }),
           ]),
           page,
-        })
+        }),
       );
     });
 
@@ -725,7 +725,7 @@ describe('resource', () => {
             expect.objectContaining({ urn: 'urn:ads:platform:file-service:v1:/files/123' }),
           ]),
           page,
-        })
+        }),
       );
     });
 
@@ -754,7 +754,7 @@ describe('resource', () => {
         'test-tag',
         15,
         '123',
-        expect.objectContaining({ typeEquals: 'test' })
+        expect.objectContaining({ typeEquals: 'test' }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -762,7 +762,7 @@ describe('resource', () => {
             expect.objectContaining({ urn: 'urn:ads:platform:file-service:v1:/files/123' }),
           ]),
           page,
-        })
+        }),
       );
     });
 
@@ -785,6 +785,7 @@ describe('resource', () => {
     it('can get tagged resources and include data', async () => {
       const req = {
         getServiceConfiguration: jest.fn(),
+        getServiceConfigurationRevision: jest.fn(),
         tenant: { id: tenantId },
         user: {
           tenantId,
@@ -833,7 +834,7 @@ describe('resource', () => {
             }),
           ]),
           page,
-        })
+        }),
       );
     });
   });
@@ -866,13 +867,13 @@ describe('resource', () => {
       expect(repositoryMock.getResources).toHaveBeenCalledWith(
         10,
         undefined,
-        expect.objectContaining({ tenantIdEquals: tenantId })
+        expect.objectContaining({ tenantIdEquals: tenantId }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           page,
           results: expect.arrayContaining([expect.objectContaining({ urn: results[0].urn.toString() })]),
-        })
+        }),
       );
     });
 
@@ -899,12 +900,12 @@ describe('resource', () => {
       expect(repositoryMock.getResources).toHaveBeenCalledWith(
         10,
         undefined,
-        expect.objectContaining({ tenantIdEquals: tenantId })
+        expect.objectContaining({ tenantIdEquals: tenantId }),
       );
       expect(repositoryMock.getTags).toHaveBeenCalledWith(
         10,
         null,
-        expect.objectContaining({ tenantIdEquals: tenantId, resourceUrnEquals: results[0].urn })
+        expect.objectContaining({ tenantIdEquals: tenantId, resourceUrnEquals: results[0].urn }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -917,7 +918,7 @@ describe('resource', () => {
               }),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -943,13 +944,13 @@ describe('resource', () => {
       expect(repositoryMock.getResources).toHaveBeenCalledWith(
         42,
         '123',
-        expect.objectContaining({ tenantIdEquals: tenantId })
+        expect.objectContaining({ tenantIdEquals: tenantId }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           page,
           results: expect.arrayContaining([expect.objectContaining({ urn: results[0].urn.toString() })]),
-        })
+        }),
       );
     });
 
@@ -975,13 +976,13 @@ describe('resource', () => {
       expect(repositoryMock.getResources).toHaveBeenCalledWith(
         42,
         '123',
-        expect.objectContaining({ tenantIdEquals: tenantId, typeEquals: 'test' })
+        expect.objectContaining({ tenantIdEquals: tenantId, typeEquals: 'test' }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           page,
           results: expect.arrayContaining([expect.objectContaining({ urn: results[0].urn.toString() })]),
-        })
+        }),
       );
     });
 
@@ -1019,7 +1020,7 @@ describe('resource', () => {
       expect(repositoryMock.getResources).toHaveBeenCalledWith(
         1,
         null,
-        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1028,7 +1029,7 @@ describe('resource', () => {
             expect.objectContaining({ urn: results1[0].urn.toString() }),
             expect.objectContaining({ urn: results2[0].urn.toString() }),
           ]),
-        })
+        }),
       );
     });
 
@@ -1056,7 +1057,7 @@ describe('resource', () => {
       expect(repositoryMock.getResources).toHaveBeenCalledWith(
         1,
         null,
-        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) }),
       );
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.send).not.toHaveBeenCalled();
@@ -1106,7 +1107,7 @@ describe('resource', () => {
       expect(repositoryMock.getResources).toHaveBeenCalledWith(
         1,
         null,
-        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ urn: results[0].urn.toString() }));
     });
@@ -1144,7 +1145,7 @@ describe('resource', () => {
       expect(repositoryMock.getResources).toHaveBeenCalledWith(
         1,
         null,
-        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) }),
       );
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
       expect(res.send).not.toHaveBeenCalled();
@@ -1182,7 +1183,7 @@ describe('resource', () => {
       expect(repositoryMock.getResources).toHaveBeenCalledWith(
         1,
         null,
-        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted }));
     });
@@ -1220,7 +1221,7 @@ describe('resource', () => {
       expect(repositoryMock.getResources).toHaveBeenCalledWith(
         1,
         null,
-        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) })
+        expect.objectContaining({ tenantIdEquals: tenantId, urnEquals: expect.any(AdspId) }),
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: false }));
       expect(next).not.toHaveBeenCalledWith();
@@ -1257,13 +1258,13 @@ describe('resource', () => {
       expect(repositoryMock.getTags).toHaveBeenCalledWith(
         10,
         undefined,
-        expect.objectContaining({ tenantIdEquals: tenantId, resourceUrnEquals: expect.any(AdspId) })
+        expect.objectContaining({ tenantIdEquals: tenantId, resourceUrnEquals: expect.any(AdspId) }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           page,
           results: expect.arrayContaining([expect.objectContaining(results[0])]),
-        })
+        }),
       );
     });
 
@@ -1291,13 +1292,13 @@ describe('resource', () => {
       expect(repositoryMock.getTags).toHaveBeenCalledWith(
         42,
         '123',
-        expect.objectContaining({ tenantIdEquals: tenantId, resourceUrnEquals: expect.any(AdspId) })
+        expect.objectContaining({ tenantIdEquals: tenantId, resourceUrnEquals: expect.any(AdspId) }),
       );
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           page,
           results: expect.arrayContaining([expect.objectContaining(results[0])]),
-        })
+        }),
       );
     });
 

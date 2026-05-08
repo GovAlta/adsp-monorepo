@@ -1106,7 +1106,7 @@ const ObjectArrayList = ({
                   />
                 </FlexForm>
                 <GoabButton
-                  type={'primary'}
+                  type="secondary"
                   onClick={() => {
                     setCurrentListPage(0);
                   }}

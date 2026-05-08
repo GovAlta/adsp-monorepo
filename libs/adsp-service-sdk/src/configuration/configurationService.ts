@@ -38,6 +38,23 @@ export interface ConfigurationService {
    * @memberof ConfigurationService
    */
   getServiceConfiguration<C, R = [C, C, number?]>(name?: string, tenantId?: AdspId): Promise<R>;
+
+  /**
+   * Retrieves active configuration revision, with fallback to latest, for the service initialized with the SDK under its service account context.
+   *
+   * @template C Type of the configuration.
+   * @template R Type of the combined tenant and core configuration.
+   * @param {string} [revision] Revision of the configuration to retrieve.
+   * @param {string} [name] Name of the configuration to retrieve. Required when the service uses its own configuration namespace.
+   * @param {AdspId} [tenantId] Tenant to retrieve configuration for. Only used in platform (multi-tenant) services.
+   * @returns {Promise<R>}
+   * @memberof ConfigurationService
+   */
+  getServiceConfigurationRevision<C, R = [C, C, number?]>(
+    revision: string,
+    name?: string,
+    tenantId?: AdspId,
+  ): Promise<R>;
 }
 
 interface Revision<C> {
@@ -60,7 +77,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     tenantConfig: unknown,
     coreConfig: unknown,
     _tenantId?: AdspId,
-    revision?: number
+    revision?: number,
   ) => [tenantConfig, coreConfig, revision];
 
   constructor(
@@ -71,7 +88,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     private readonly useNamespace = false,
     converter: ConfigurationConverter = null,
     combine: CombineConfiguration = null,
-    cacheTTL = 900
+    cacheTTL = 900,
   ) {
     this.#configuration = new NodeCache({
       stdTTL: cacheTTL,
@@ -99,20 +116,21 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     }
   }
 
-  private getCacheKey(namespace: string, name: string, tenantId?: AdspId): string {
-    return `${tenantId ? tenantId.toString() + '-' : ''}${namespace}:${name}`;
+  private getCacheKey(namespace: string, name: string, tenantId?: AdspId, revision?: string): string {
+    return `${tenantId ? tenantId.toString() + '-' : ''}${namespace}:${name}${revision ? `:${revision}` : ''}`;
   }
 
   @LimitToOne(
     (propertyKey, namespace: string, name: string, _token, tenantId?: AdspId) =>
-      `${propertyKey}-${tenantId ? `${tenantId}-` : ''}${namespace}:${name}`
+      `${propertyKey}-${tenantId ? `${tenantId}-` : ''}${namespace}:${name}`,
   )
   private async retrieveConfiguration<C>(
     namespace: string,
     name: string,
     token: string,
     tenantId?: AdspId,
-    useActive?: boolean
+    useActive?: boolean,
+    revision?: string,
   ): Promise<Revision<C>> {
     this.logger.debug(`Retrieving (${tenantId?.toString() || 'core'}) configuration for ${namespace}${name}...'`, {
       ...this.LOG_CONTEXT,
@@ -120,12 +138,14 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     });
 
     const configurationServiceUrl = await this.directory.getServiceUrl(
-      adspId`urn:ads:platform:configuration-service:v2`
+      adspId`urn:ads:platform:configuration-service:v2`,
     );
 
-    const configUrl = useActive
-      ? new URL(`v2/configuration/${namespace}/${name}/active`, configurationServiceUrl)
-      : new URL(`v2/configuration/${namespace}/${name}/latest`, configurationServiceUrl);
+    const configUrl = revision
+      ? new URL(`v2/configuration/${namespace}/${name}/revisions/${revision}`, configurationServiceUrl)
+      : useActive
+        ? new URL(`v2/configuration/${namespace}/${name}/active`, configurationServiceUrl)
+        : new URL(`v2/configuration/${namespace}/${name}/latest`, configurationServiceUrl);
 
     this.logger.debug(`Retrieving configuration from ${configUrl}...'`, {
       ...this.LOG_CONTEXT,
@@ -160,7 +180,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
           {
             ...this.LOG_CONTEXT,
             tenant: tenantId?.toString(),
-          }
+          },
         );
       } else {
         // Cache an empty value to prevent API request every time.
@@ -186,36 +206,42 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     name: string,
     token: string,
     tenantId?: AdspId,
-    useActive = false
+    useActive = false,
+    revision?: string,
   ): Promise<Revision<C>> {
     let configuration: C = null,
-      revision: number;
-    const cached = this.#configuration.get<Revision<C>>(this.getCacheKey(namespace, name, tenantId));
+      readRevision: number;
+
+    const cached = this.#configuration.get<Revision<C>>(this.getCacheKey(namespace, name, tenantId, revision));
+
     if (cached) {
       configuration = cached.configuration;
-      revision = cached.revision;
+      readRevision = cached.revision;
 
       this.logger.debug(
-        `Configuration (${tenantId?.toString() || 'core'}) ${namespace}:${name} retrieved from cache.`,
+        `Configuration (${tenantId?.toString() || 'core'}) ${namespace}:${name}${
+          revision ? ` revision ${revision}` : ''
+        } retrieved from cache.`,
         {
           ...this.LOG_CONTEXT,
           tenant: tenantId?.toString(),
-        }
+        },
       );
     } else {
-      const { configuration: readConfiguration, revision: readRevision } = await this.retrieveConfiguration<C>(
+      const { configuration: apiConfiguration, revision: apiRevision } = await this.retrieveConfiguration<C>(
         namespace,
         name,
         token,
         tenantId,
-        useActive
+        useActive,
+        revision,
       );
 
-      configuration = readConfiguration;
-      revision = readRevision;
+      configuration = apiConfiguration;
+      readRevision = apiRevision;
     }
 
-    return { configuration, revision };
+    return { configuration, revision: readRevision };
   }
 
   getConfiguration = async <C, R = [C, C]>(serviceId: AdspId, token: string, tenantId?: AdspId): Promise<R> => {
@@ -246,7 +272,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
 
     if (!name) {
       throw new Error(
-        'Name must be specified if useNamespace is true and service has configuration across a namespace.'
+        'Name must be specified if useNamespace is true and service has configuration across a namespace.',
       );
     }
 
@@ -260,7 +286,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
         name,
         token,
         tenantId,
-        true
+        true,
       );
       tenantConfiguration = configuration;
       revision = tenantRev;
@@ -271,10 +297,54 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       name,
       token,
       null,
-      true
+      true,
     );
 
     return this.#combine(tenantConfiguration, coreConfiguration, tenantId, revision) as R;
+  };
+
+  getServiceConfigurationRevision = async <C, R = [C, C, number?]>(
+    revision: string,
+    name?: string,
+    tenantId?: AdspId,
+  ): Promise<R> => {
+    const namespace = this.useNamespace ? this.serviceId.service : this.serviceId.namespace;
+    name = this.useNamespace ? name : this.serviceId.service;
+
+    if (!name) {
+      throw new Error('Name must be specified if useNamespace is true.');
+    }
+
+    const token = await this.tokenProvider.getAccessToken();
+
+    let tenantConfiguration: C;
+    if (tenantId) {
+      assertAdspId(tenantId, 'Provided ID is not for a tenant', 'resource');
+
+      const { configuration } = await this.getConfigurationFromCacheOrApi<C>(
+        namespace,
+        name,
+        token,
+        tenantId,
+        false,
+        revision,
+      );
+
+      tenantConfiguration = configuration;
+    }
+
+    const { configuration: coreConfiguration } = await this.getConfigurationFromCacheOrApi<C>(
+      namespace,
+      name,
+      token,
+      null,
+      false,
+      revision,
+    );
+
+    const revisionNumber = parseInt(revision);
+
+    return this.#combine(tenantConfiguration, coreConfiguration, tenantId, revisionNumber) as R;
   };
 
   clearCached(tenantId: AdspId, namespace: string, name: string): void {

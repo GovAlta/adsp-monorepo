@@ -1,14 +1,10 @@
 import axios from 'axios';
-import * as context from 'express-http-context';
 import { context as otelContext, propagation, trace as otelTrace, SpanStatusCode } from '@opentelemetry/api';
 import { Logger } from 'winston';
-import { createHttpServerTraceHandler, getContextSpan, instrumentAxios, setContextSpan } from './instrument';
+import { createHttpServerTraceHandler, instrumentAxios } from './instrument';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
-
-jest.mock('express-http-context');
-const contextMock = context as jest.Mocked<typeof context>;
 
 describe('instrument', () => {
   const logger = {
@@ -43,23 +39,8 @@ describe('instrument', () => {
     });
   });
 
-  describe('span context helpers', () => {
-    it('can set and get context span', () => {
-      const span = { name: 'test-span' };
-      contextMock.get.mockReturnValueOnce(span as never);
-
-      setContextSpan(span as never);
-      const result = getContextSpan();
-
-      expect(contextMock.set).toHaveBeenCalledWith('otel-span', span);
-      expect(result).toBe(span);
-    });
-  });
-
   describe('createHttpServerTraceHandler', () => {
     it('can create span and complete it on json response', () => {
-      contextMock.middleware.mockImplementationOnce((_req, _res, next) => next());
-
       const span = {
         setAttributes: jest.fn(),
         setStatus: jest.fn(),
@@ -108,7 +89,6 @@ describe('instrument', () => {
       handler(req as never, res as never, next);
       expect(extractSpy).toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith();
-      expect(contextMock.set).toHaveBeenCalledWith('otel-span', span);
 
       (res.json as (body: unknown) => unknown)({ ok: true });
 
@@ -121,24 +101,7 @@ describe('instrument', () => {
       setSpanSpy.mockRestore();
     });
 
-    it('can pass through context middleware error', () => {
-      const err = new Error('middleware failed');
-      contextMock.middleware.mockImplementationOnce((_req, _res, next) => next(err));
-
-      const tracerProvider = {
-        getTracer: jest.fn().mockReturnValue({ startSpan: jest.fn() }),
-      };
-      const handler = createHttpServerTraceHandler(tracerProvider as never);
-
-      const next = jest.fn();
-      handler({} as never, {} as never, next);
-
-      expect(next).toHaveBeenCalledWith(err);
-    });
-
     it('can record errors and finish completion', () => {
-      contextMock.middleware.mockImplementationOnce((_req, _res, next) => next());
-
       const span = {
         setAttributes: jest.fn(),
         setStatus: jest.fn(),
@@ -189,6 +152,129 @@ describe('instrument', () => {
       expect(span.recordException).toHaveBeenCalled();
       expect(span.setStatus).toHaveBeenCalledWith({ code: SpanStatusCode.ERROR });
       expect(span.end).toHaveBeenCalled();
+
+      withSpy.mockRestore();
+      setSpanSpy.mockRestore();
+    });
+
+    it('can set tenant attribute from resolved tenant context', () => {
+      const span = {
+        setAttributes: jest.fn(),
+        setStatus: jest.fn(),
+        end: jest.fn(),
+        isRecording: jest.fn().mockReturnValue(false),
+        recordException: jest.fn(),
+      };
+      const startSpan = jest.fn().mockReturnValue(span);
+      const tracerProvider = {
+        getTracer: jest.fn().mockReturnValue({ startSpan }),
+      };
+
+      const withSpy = jest.spyOn(otelContext, 'with').mockImplementation((_ctx, fn) => fn());
+      const setSpanSpy = jest.spyOn(otelTrace, 'setSpan').mockReturnValue({} as never);
+      jest.spyOn(propagation, 'extract').mockReturnValue({} as never);
+
+      const handler = createHttpServerTraceHandler(tracerProvider as never);
+      const req = {
+        method: 'GET',
+        path: '/resource',
+        originalUrl: '/resource',
+        hostname: 'localhost',
+        protocol: 'http',
+        httpVersion: '1.1',
+        ip: '127.0.0.1',
+        headers: {},
+        tenant: {
+          id: { toString: () => 'urn:ads:platform:tenant-service:v2:/tenants/test' },
+          name: 'test-tenant',
+        },
+        get: jest.fn().mockReturnValue('jest-agent'),
+      };
+      const res = {
+        statusCode: 200,
+        json: jest.fn(function (body) {
+          return body;
+        }),
+        send: jest.fn(function (body) {
+          return body;
+        }),
+        on: jest.fn(() => res),
+      };
+
+      handler(req as never, res as never, jest.fn());
+      (res.json as (body: unknown) => unknown)({ ok: true });
+
+      expect(startSpan).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          attributes: expect.objectContaining({
+            'adsp.tenant.id': 'urn:ads:platform:tenant-service:v2:/tenants/test',
+            'adsp.tenant.name': 'test-tenant',
+          }),
+        }),
+        expect.anything(),
+      );
+      expect(span.setAttributes).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'adsp.tenant.id': 'urn:ads:platform:tenant-service:v2:/tenants/test',
+          'adsp.tenant.name': 'test-tenant',
+          'http.status_code': 200,
+        }),
+      );
+
+      withSpy.mockRestore();
+      setSpanSpy.mockRestore();
+    });
+
+    it('can set tenant attribute from user context fallback', () => {
+      const span = {
+        setAttributes: jest.fn(),
+        setStatus: jest.fn(),
+        end: jest.fn(),
+        isRecording: jest.fn().mockReturnValue(false),
+        recordException: jest.fn(),
+      };
+      const tracerProvider = {
+        getTracer: jest.fn().mockReturnValue({ startSpan: jest.fn().mockReturnValue(span) }),
+      };
+
+      const withSpy = jest.spyOn(otelContext, 'with').mockImplementation((_ctx, fn) => fn());
+      const setSpanSpy = jest.spyOn(otelTrace, 'setSpan').mockReturnValue({} as never);
+      jest.spyOn(propagation, 'extract').mockReturnValue({} as never);
+
+      const handler = createHttpServerTraceHandler(tracerProvider as never);
+      const req = {
+        method: 'POST',
+        path: '/resource',
+        originalUrl: '/resource',
+        hostname: 'localhost',
+        protocol: 'http',
+        httpVersion: '1.1',
+        ip: '127.0.0.1',
+        headers: {},
+        user: { tenantId: { toString: () => 'urn:ads:platform:tenant-service:v2:/tenants/from-user' } },
+        get: jest.fn().mockReturnValue('jest-agent'),
+      };
+      const res = {
+        statusCode: 201,
+        json: jest.fn(function (body) {
+          return body;
+        }),
+        send: jest.fn(function (body) {
+          return body;
+        }),
+        on: jest.fn(() => res),
+      };
+
+      handler(req as never, res as never, jest.fn());
+      (res.send as (body: unknown) => unknown)({ ok: true });
+
+      expect(span.setAttributes).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'adsp.tenant.id': 'urn:ads:platform:tenant-service:v2:/tenants/from-user',
+          'http.status_code': 201,
+        }),
+      );
 
       withSpy.mockRestore();
       setSpanSpy.mockRestore();

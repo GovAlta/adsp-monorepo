@@ -58,7 +58,7 @@ const FormDefinitionDetails = ({ formDefinition }: { formDefinition: FormDefinit
   const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, formDefinition?.id));
   const selectedCoreEvent = useSelector(
     (state: RootState) =>
-      state.calendarService?.coreCalendars?.['form-intake']?.calendarEvents?.[formDefinition?.id] ?? null // fallback (optional)
+      state.calendarService?.coreCalendars?.['form-intake']?.calendarEvents?.[formDefinition?.id] ?? null, // fallback (optional)
   );
 
   return (
@@ -146,10 +146,13 @@ export const FormDefinitionItem = ({
 
   const formLink = useSelector((state: RootState) => selectFormAppLink(state, formDefinition?.id));
   const resourceTags = useSelector((state: RootState) => selectFormResourceTags(state, formDefinition?.id));
+  const formIntakeLoaded = useSelector((state: RootState) => !!state.calendarService?.coreCalendars?.['form-intake']);
 
   useEffect(() => {
-    dispatch(fetchCalendars());
-  }, []);
+    if (!formIntakeLoaded) {
+      dispatch(fetchCalendars());
+    }
+  }, [dispatch, formIntakeLoaded]);
 
   return (
     <>
@@ -174,7 +177,7 @@ export const FormDefinitionItem = ({
                     UpdateSearchCriteriaAndFetchEvents({
                       recordId: `urn:ads:platform:configuration-service:v2:/configuration/form-service/${formDefinition.id}`,
                       calendarName: 'form-intake',
-                    })
+                    }),
                   );
                 }
 

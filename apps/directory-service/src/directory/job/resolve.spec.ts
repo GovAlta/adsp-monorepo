@@ -16,6 +16,7 @@ describe('resolve', () => {
   const configurationServiceMock = {
     getConfiguration: jest.fn(),
     getServiceConfiguration: jest.fn(),
+    getServiceConfigurationRevision: jest.fn(),
   };
 
   const eventServiceMock = {
@@ -134,7 +135,7 @@ describe('resolve', () => {
     });
     await job(tenantId, resourceId, false, done);
     expect(eventServiceMock.send).toHaveBeenCalledWith(
-      expect.objectContaining({ tenantId, name: 'resource-resolution-failed' })
+      expect.objectContaining({ tenantId, name: 'resource-resolution-failed' }),
     );
     expect(done).toHaveBeenCalledWith(expect.any(Error));
   });

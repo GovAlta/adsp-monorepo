@@ -1,12 +1,11 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 import type { RequestHandler } from 'express';
-import * as context from 'express-http-context';
 import type { Logger } from 'winston';
 import { context as otelContext, trace as otelTrace, propagation, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import type { Span, Tracer } from '@opentelemetry/api';
 import type { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { TRACE_PARENT_HEADER } from './context';
-import { createHttpServerTraceHandler, getContextSpan } from './instrument';
+import { createHttpServerTraceHandler } from './instrument';
 
 interface TraceHandlerOptions {
   logger: Logger;
@@ -16,6 +15,7 @@ interface TraceHandlerOptions {
 
 interface AxiosConfigWithSpan extends InternalAxiosRequestConfig {
   _otelClientSpan?: Span;
+  _otelSuppressTracing?: boolean;
 }
 
 function endClientSpan(span: Span | undefined, status: number, error?: unknown) {
@@ -44,12 +44,22 @@ function endClientSpan(span: Span | undefined, status: number, error?: unknown) 
 
 export function traceRequestInterceptor(config: InternalAxiosRequestConfig, tracer?: Tracer) {
   const configWithSpan = config as AxiosConfigWithSpan;
+  const suppressTracing = !!configWithSpan._otelSuppressTracing;
+
+  // Allow callers to opt out of tracing for deferred/background requests that should not
+  // inherit active request spans (e.g., throttled service-metrics writes). This is an
+  // in-process signal only and never sent on the wire.
+  if (suppressTracing) {
+    delete configWithSpan._otelSuppressTracing;
+    return config;
+  }
+
   const hasTraceparent =
     typeof config.headers?.has === 'function'
       ? config.headers.has(TRACE_PARENT_HEADER)
       : !!(config.headers as Record<string, unknown>)?.[TRACE_PARENT_HEADER];
 
-  const parentSpan = getContextSpan();
+  const parentSpan = otelTrace.getActiveSpan();
   const parentContext = parentSpan ? otelTrace.setSpan(otelContext.active(), parentSpan) : otelContext.active();
 
   if (tracer && !configWithSpan._otelClientSpan) {
@@ -133,7 +143,7 @@ export function createTraceHandler({
 
   const requestMiddleware = tracerProvider
     ? createHttpServerTraceHandler(tracerProvider)
-    : (req, res, next) => context.middleware(req, res, next as (err?: unknown) => void);
+    : (_req, _res, next) => next();
 
   return function (req, res, next) {
     requestMiddleware(req, res, (err: unknown) => {

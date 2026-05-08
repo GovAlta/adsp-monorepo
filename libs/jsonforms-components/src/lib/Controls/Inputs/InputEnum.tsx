@@ -13,6 +13,15 @@ import { GoabDropdown, GoabDropdownItem } from '@abgov/react-components';
 import { GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 type EnumSelectProps = EnumCellProps & WithClassname & TranslateProps & WithInputProps & ControlProps;
 
+function expectsObjectValue(schema: ControlProps['schema']): boolean {
+  return (
+    schema?.type === 'object' &&
+    typeof schema?.properties === 'object' &&
+    schema?.properties !== undefined &&
+    !Array.isArray(schema.properties)
+  );
+}
+
 function fetchRegisterConfigFromOptions(options: Record<string, unknown> | undefined): RegisterConfig | undefined {
   if (!options?.url && !options?.urn) return undefined;
   const config: RegisterConfig = {
@@ -89,7 +98,7 @@ export const EnumSelect = (props: EnumSelectProps): JSX.Element => {
           id={`jsonforms-${path}-dropdown`}
           filterable={autoCompletion}
           onChange={(detail: GoabDropdownOnChangeDetail) => {
-            if (schema.type === 'object') {
+            if (expectsObjectValue(schema)) {
               handleChange(
                 path,
                 registerData.find((o) => {
