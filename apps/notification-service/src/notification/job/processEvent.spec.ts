@@ -23,6 +23,7 @@ describe('createProcessEventJob', () => {
   const configurationServiceMock = {
     getConfiguration: jest.fn(),
     getServiceConfiguration: jest.fn(),
+    getServiceConfigurationRevision: jest.fn(),
   };
 
   const eventServiceMock = {

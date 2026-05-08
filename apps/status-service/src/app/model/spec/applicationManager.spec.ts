@@ -39,6 +39,7 @@ const tokenProviderMock = {
 const configurationServiceMock = {
   getConfiguration: jest.fn(),
   getServiceConfiguration: jest.fn(),
+  getServiceConfigurationRevision: jest.fn(),
 };
 
 const directoryServiceMock = {
@@ -124,7 +125,7 @@ describe('Application Manager', () => {
       endpointRepoMock,
       directoryServiceMock,
       tenantServiceMock,
-      loggerMock
+      loggerMock,
     );
   };
 });

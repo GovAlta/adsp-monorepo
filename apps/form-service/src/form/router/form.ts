@@ -158,7 +158,20 @@ export function getFormDefinition(tenantService: TenantService, calendarService:
         throw new InvalidOperationError('Cannot determine tenant context of request.');
       }
 
-      const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, req.tenant.id);
+      const { version } = req.query;
+
+      let definition: FormDefinitionEntity;
+
+      if (version) {
+        [definition] = await req.getServiceConfigurationRevision<FormDefinitionEntity>(
+          version as string,
+          definitionId,
+          req.tenant.id,
+        );
+      } else {
+        [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId, req.tenant.id);
+      }
+
       if (!definition) {
         throw new NotFoundError('form definition', definitionId);
       }

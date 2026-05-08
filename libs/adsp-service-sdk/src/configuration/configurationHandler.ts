@@ -24,6 +24,21 @@ export const createConfigurationHandler =
       return config;
     };
 
+    req.getServiceConfigurationRevision = async <C, R = [C, C, number?]>(
+      revision: string,
+      name?: string,
+      tenantId?: AdspId,
+    ) => {
+      const end = startBenchmark(req, 'get-configuration-time');
+
+      try {
+        const config = await service.getServiceConfigurationRevision<C, R>(revision, name, tenantId || contextTenantId);
+
+        return config;
+      } finally {
+        end();
+      }
+    };
     next();
   };
 
@@ -43,6 +58,18 @@ export const createTenantConfigurationHandler =
       const config = await service.getServiceConfiguration<C, R>(name, tenantId);
       end();
       return config;
+    };
+
+    req.getServiceConfigurationRevision = async <C, R = [C, C, number?]>(revision: string, name?: string) => {
+      const end = startBenchmark(req, 'get-configuration-time');
+
+      try {
+        const config = await service.getServiceConfigurationRevision<C, R>(revision, name, tenantId);
+
+        return config;
+      } finally {
+        end();
+      }
     };
 
     next();
