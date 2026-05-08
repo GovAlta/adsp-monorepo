@@ -47,8 +47,24 @@ class FormsPage {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="date"]`);
   }
 
+  formTimeInput(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="time"]`);
+  }
+
   formDropdown(label) {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-dropdown`);
+  }
+
+  formFileUploadButton(label) {
+    return cy.xpath(
+      `//goa-form-item[@label="${label}"]/following-sibling::div/goa-file-upload-input[@variant="button"]`
+    );
+  }
+
+  formFileDragDropZone(label) {
+    return cy.xpath(
+      `//goa-form-item[@label="${label}"]/following-sibling::div/goa-file-upload-input[@variant="dragdrop"]`
+    );
   }
 
   formNextButton() {
@@ -115,6 +131,12 @@ class FormsPage {
   formSummaryPageSectionRowValue(pageName, label) {
     return cy.xpath(
       `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]/ancestor::td//div[contains(@data-testid,"review-value")]`
+    );
+  }
+
+  formSummaryPageSectionRowValueError(pageName, label) {
+    return cy.xpath(
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]/ancestor::td//div[contains(@data-testid,"review-value")]/following-sibling::goa-form-item[@error]`
     );
   }
 
