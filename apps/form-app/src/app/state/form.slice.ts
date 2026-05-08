@@ -109,17 +109,21 @@ const CONFIGURATION_SERVICE_ID = 'urn:ads:platform:configuration-service:v2';
 const CACHE_SERVICE_ID = 'urn:ads:platform:cache-service';
 const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 
+interface SelectedDefinitionPayload {
+  definitionId?: string;
+  version?: string;
+}
+
 export const selectedDefinition = createAsyncThunk(
   'form/select-definition',
-  (definitionId: string, { getState, dispatch }) => {
+  ({ definitionId, version }: SelectedDefinitionPayload, { getState, dispatch }) => {
     const { form } = getState() as AppState;
 
     if (definitionId && !form.definitions[definitionId]) {
-      dispatch(loadDefinition(definitionId));
+      dispatch(loadDefinition({ definitionId, version }));
     }
   },
 );
-
 function pickRegisters(obj, property) {
   let registers = [];
   Object.keys(obj).forEach(function (key) {
@@ -149,7 +153,7 @@ const extraRegisterUrns = (uiSchema) => {
 
 export const loadDefinition = createAsyncThunk(
   'form/load-definition',
-  async (definitionId: string, { getState, rejectWithValue }) => {
+  async ({ definitionId, version }: { definitionId: string; version?: string }, { getState, rejectWithValue }) => {
     try {
       const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
@@ -167,7 +171,7 @@ export const loadDefinition = createAsyncThunk(
         new URL(`/form/v1/definitions/${definitionId}`, formServiceUrl).href,
         {
           headers,
-          params: { tenantId: tenantId.toString() },
+          params: { tenantId: tenantId.toString(), version },
         },
       );
 
@@ -237,7 +241,10 @@ export const loadDefinition = createAsyncThunk(
 
 export const findUserForms = createAsyncThunk(
   'form/find-user-forms',
-  async ({ definitionId, after }: { definitionId?: string; after?: string }, { getState, rejectWithValue }) => {
+  async (
+    { definitionId, after }: { definitionId?: string; version?: string; after?: string },
+    { getState, rejectWithValue },
+  ) => {
     try {
       const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
@@ -407,18 +414,14 @@ export const updateForm = createAsyncThunk(
     }
 
     return { data: nextData, files: nextFiles, errors };
-  }
+  },
 );
 
 export const applyServerFormUpdate = createAsyncThunk(
   'form/apply-server-form-update',
   async (
-    {
-      id,
-      data,
-      files,
-    }: { id?: string; data?: Record<string, unknown>; files?: Record<string, string> },
-    { getState, dispatch }
+    { id, data, files }: { id?: string; data?: Record<string, unknown>; files?: Record<string, string> },
+    { getState, dispatch },
   ) => {
     const { form, file } = getState() as AppState;
     const formId = id || form.form?.id;
@@ -438,7 +441,7 @@ export const applyServerFormUpdate = createAsyncThunk(
     const digest = formId ? await hashData({ id: formId, data: nextData, files: nextFiles }) : null;
 
     return { data: nextData, files: nextFiles, digest };
-  }
+  },
 );
 
 export const saveForm = createAsyncThunk(
@@ -623,9 +626,9 @@ export const formSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(selectedDefinition.fulfilled, (state, { meta }) => {
-        state.selected = meta.arg;
+        state.selected = meta.arg.definitionId;
         // Clear the form if the form definition is changing.
-        if (state.form && state.form.definition.id !== meta.arg) {
+        if (state.form && state.form.definition.id !== meta.arg.definitionId) {
           state.next = null;
           state.form = null;
           state.data = {};
@@ -638,7 +641,7 @@ export const formSlice = createSlice({
       })
       .addCase(loadDefinition.fulfilled, (state, { payload, meta }) => {
         state.busy.loading = false;
-        state.definitions[meta.arg] = payload;
+        state.definitions[meta.arg.definitionId] = payload;
       })
       .addCase(loadDefinition.rejected, (state) => {
         state.busy.loading = false;

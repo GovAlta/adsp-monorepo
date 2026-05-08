@@ -38,6 +38,8 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
   const urlParams = new URLSearchParams(location.search);
   const AUTO_CREATE_PARAM = 'autoCreate';
 
+  const version = urlParams.get('version');
+
   const { initialized, form, ambiguous } = useSelector(defaultUserFormSelector);
   const busy = useSelector(busySelector);
 
@@ -60,7 +62,11 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
   ) : (
     initialized &&
       (form?.id ? (
-        <ContinueApplication definition={definition} form={form} onContinue={() => navigate(`${form.id}`)} />
+        <ContinueApplication
+          definition={definition}
+          form={form}
+          onContinue={() => navigate(`${form.id}${version ? `?version=${version}` : ''}`)}
+        />
       ) : ambiguous ? (
         <Navigate to="forms" />
       ) : (
@@ -84,17 +90,30 @@ export const FormDefinition: FunctionComponent = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { definitionId } = useParams();
+  const location = useLocation();
+  const urlParams = new URLSearchParams(location.search);
 
   const tenant = useSelector(tenantSelector);
   const { user } = useSelector(userSelector);
+  const version = urlParams.get('version');
   const { definition, initialized: definitionInitialized } = useSelector(definitionSelector);
   const busy = useSelector(busySelector);
 
+  console.log('FormDefinition render', {
+    definitionId,
+    version,
+    tenant: tenant?.name,
+    user: user?.name,
+    definition,
+    definitionInitialized,
+  });
+
   useEffect(() => {
     if (tenant) {
-      dispatch(selectedDefinition(definitionId));
+      console.log('Selecting definition FORM DEFINITION', { definitionId, version, tenant: tenant.name });
+      dispatch(selectedDefinition({ definitionId, version }));
     }
-  }, [dispatch, definitionId, tenant]);
+  }, [dispatch, definitionId, version, tenant]);
 
   // Definition can be available even if there is no signed in user.
   // If definition is not available, then show the sign-in option as user might have access if they sign in.
@@ -105,6 +124,7 @@ export const FormDefinition: FunctionComponent = () => {
         (definition ? (
           <ScheduledIntake definition={definition}>
             <Routes>
+              hhhhhhhhhhhh
               <Route path="/draft" element={<AnonymousForm />} />
               <Route path="/forms" element={<Forms definition={definition} />} />
               <Route path="/:formId" element={<Form />} />

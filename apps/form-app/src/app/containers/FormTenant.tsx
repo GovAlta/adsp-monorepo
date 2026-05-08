@@ -28,6 +28,7 @@ const AccountActionsDiv = styled.div`
 export const FormTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
   const location = useLocation();
+  const urlParams = new URLSearchParams(location.search);
   const dispatch = useDispatch<AppDispatch>();
   const tenant = useSelector(tenantSelector);
   const userForm = useSelector(formSelector);
@@ -42,11 +43,14 @@ export const FormTenant = () => {
     }
   }, [configInitialized, tenantName, dispatch]);
 
+  const version = urlParams.get('version');
+
   useEffect(() => {
     if (tenant) {
-      dispatch(selectedDefinition(definitionId));
+      console.log('Selecting definition', { definitionId, version, tenant: tenant.name });
+      dispatch(selectedDefinition({ definitionId, version }));
     }
-  }, [dispatch, definitionId, tenant]);
+  }, [dispatch, definitionId, version, tenant]);
   useFeedbackLinkHandler();
 
   const { definition } = useSelector(definitionSelector);
@@ -83,6 +87,7 @@ export const FormTenant = () => {
         </>
       </GoabAppHeader>
       <FeedbackNotification />
+      xxxxxxxxxxx
       <main>
         {userInitialized && (
           <section>
