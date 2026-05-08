@@ -1,0 +1,37 @@
+{
+  "id": "confirmation-page",
+  "name": "Submission Confirmation Page",
+  "category": "pages",
+  "summary": "Success state displayed after a user successfully submits a form or application.",
+  "whenToUse": [
+    "After successful form submission",
+    "After completing a multi-step process",
+    "To provide reference number and next steps"
+  ],
+  "structure": {
+    "success": "GoabCallout with success type confirming submission",
+    "reference": "Prominently displayed reference number",
+    "nextSteps": "Clear list of what happens next",
+    "contact": "How to get help if needed"
+  },
+  "requiredElements": [
+    "Success confirmation message",
+    "Reference number (large, easy to copy)",
+    "Expected timeline for next steps",
+    "Contact information for questions"
+  ],
+  "codeExample": {
+    "file": "src/pages/Confirmation.tsx",
+    "imports": [
+      "import { GoabOneColumnLayout, GoabAppHeader, GoabPageBlock, GoabCallout, GoabButton, GoabAppFooter } from '@abgov/react-components';",
+      "import { useLocation, useNavigate } from 'react-router-dom';"
+    ],
+    "jsx": "const location = useLocation();\nconst navigate = useNavigate();\nconst referenceNumber = location.state?.referenceNumber || 'APP-2026-00000';\n\nreturn (\n  <GoabOneColumnLayout>\n    <GoabPageBlock width=\"704px\">\n      <GoabCallout type=\"success\" heading=\"Application submitted\">\n        Thank you. Your application has been received and will be reviewed.\n      </GoabCallout>\n\n      <div style={{ margin: '2rem 0', padding: '1.5rem', background: 'var(--goa-color-greyscale-100)', borderRadius: '4px' }}>\n        <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--goa-color-text-secondary)' }}>Your reference number</p>\n        <p style={{ margin: '0.5rem 0 0', fontSize: '1.5rem', fontWeight: 'bold' }}>{referenceNumber}</p>\n        <p style={{ margin: '0.5rem 0 0', fontSize: '0.875rem' }}>Save this number to check your application status.</p>\n      </div>\n\n      <h2>What happens next</h2>\n      <ol>\n        <li>We will review your application within 5-10 business days.</li>\n        <li>You will receive an email when a decision is made.</li>\n        <li>If we need more information, we will contact you.</li>\n      </ol>\n\n      <h2>Need help?</h2>\n      <p>Contact us at <a href=\"mailto:support@alberta.ca\">support@alberta.ca</a> or call 310-0000.</p>\n\n      <GoabButton type=\"secondary\" onClick={() => navigate('/')}>Return to home</GoabButton>\n    </GoabPageBlock>\n  </GoabOneColumnLayout>\n);"
+  },
+  "notes": [
+    "Reference number should be visually prominent and easy to copy",
+    "Include email confirmation mention if applicable",
+    "Provide realistic timeline expectations",
+    "Always include a way to get help"
+  ]
+}

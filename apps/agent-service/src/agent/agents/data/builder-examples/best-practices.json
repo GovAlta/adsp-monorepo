@@ -1,0 +1,158 @@
+{
+  "name": "Builder Best Practices",
+  "summary": "Guidelines for building effective Alberta government digital service prototypes",
+
+  "governmentServicePrinciples": {
+    "description": "Core principles for Alberta government digital services",
+    "principles": [
+      {
+        "name": "Plain language",
+        "guideline": "Write at grade 8-9 reading level. Avoid jargon and bureaucratic terms.",
+        "example": "Instead of 'Submit your application for adjudication', write 'Send your application. We'll review it.'"
+      },
+      {
+        "name": "Mobile-first",
+        "guideline": "All layouts must work on mobile devices. Test at 375px viewport.",
+        "example": "Use GoabGrid with minChildWidth instead of fixed column counts."
+      },
+      {
+        "name": "Accessibility",
+        "guideline": "WCAG 2.1 AA compliance. Use semantic HTML, ARIA labels, proper contrast.",
+        "example": "Use GOA components which have accessibility built in."
+      },
+      {
+        "name": "Privacy by design",
+        "guideline": "Include FOIP notices when collecting personal information.",
+        "example": "Add GoabCallout with privacy notice before any form collecting personal data."
+      },
+      {
+        "name": "Clear calls to action",
+        "guideline": "Every page should have one primary action that's obvious.",
+        "example": "Landing page has single 'Start application' button in hero."
+      },
+      {
+        "name": "Error prevention",
+        "guideline": "Validate early, show inline errors, preserve user input.",
+        "example": "Use form validation with clear error messages before submission."
+      },
+      {
+        "name": "Status transparency",
+        "guideline": "Always show users where they are in a process.",
+        "example": "Use step indicators, progress bars, or clear status callouts."
+      }
+    ]
+  },
+
+  "iterativeBuilding": {
+    "description": "How to build prototypes incrementally",
+    "steps": [
+      {
+        "step": 1,
+        "name": "Start minimal",
+        "guideline": "Create the simplest version that demonstrates the core concept.",
+        "example": "Landing page with hero and single CTA before adding features."
+      },
+      {
+        "step": 2,
+        "name": "Show progress",
+        "guideline": "After each change, briefly describe what was added and ask for feedback.",
+        "example": "'I added the eligibility checker page. Want me to adjust the questions?'"
+      },
+      {
+        "step": 3,
+        "name": "Suggest enhancements",
+        "guideline": "Offer 2-3 specific improvements based on government service patterns.",
+        "example": "'Would you like me to add a confirmation page or status tracking next?'"
+      },
+      {
+        "step": 4,
+        "name": "Keep changes atomic",
+        "guideline": "One feature per edit cycle so users can validate incrementally.",
+        "example": "Add one page at a time, not entire multi-page flow at once."
+      }
+    ]
+  },
+
+  "contentGuidelines": {
+    "description": "Writing effective content for government services",
+    "rules": [
+      "Use active voice: 'We will review your application' not 'Your application will be reviewed'",
+      "Be specific about timelines: '5-10 business days' not 'as soon as possible'",
+      "Use sentence case for headings: 'Apply for child care' not 'Apply For Child Care'",
+      "Front-load important information: lead with what users need to know",
+      "Use numbered lists for sequential steps, bullets for non-sequential items"
+    ]
+  },
+
+  "goaComponentSelection": {
+    "description": "When to use which GOA components",
+    "mappings": [
+      {
+        "need": "Full-width visual introduction",
+        "component": "GoabHeroBanner",
+        "scope": "Landing pages only"
+      },
+      {
+        "need": "Page content container",
+        "component": "GoabPageBlock",
+        "scope": "All interior pages"
+      },
+      {
+        "need": "Group related cards",
+        "component": "GoabGrid + GoabContainer",
+        "scope": "Feature lists, service categories"
+      },
+      {
+        "need": "Important notice or status",
+        "component": "GoabCallout",
+        "scope": "Privacy notices, success/error states, warnings"
+      },
+      {
+        "need": "Primary action",
+        "component": "GoabButton type='primary'",
+        "scope": "Main CTA (one per view)"
+      },
+      {
+        "need": "Secondary actions",
+        "component": "GoabButton type='secondary'",
+        "scope": "Alternative actions, navigation"
+      },
+      {
+        "need": "Data collection",
+        "component": "FormComponent (ADSP)",
+        "scope": "Applications, registrations"
+      }
+    ]
+  },
+
+  "proactiveQuestions": {
+    "description": "Questions to ask when starting a new service prototype",
+    "questions": [
+      {
+        "topic": "Target audience",
+        "question": "Is this for citizens, businesses, or internal staff?",
+        "whyAsk": "Affects language complexity, auth requirements, navigation patterns"
+      },
+      {
+        "topic": "Core user journey",
+        "question": "What's the main action users should take? (Apply, Check status, Find info)",
+        "whyAsk": "Determines primary CTA and page hierarchy"
+      },
+      {
+        "topic": "Data collection",
+        "question": "Does this service need to collect information from users?",
+        "whyAsk": "Determines if form integration is needed"
+      },
+      {
+        "topic": "Eligibility criteria",
+        "question": "Are there specific eligibility requirements?",
+        "whyAsk": "May need eligibility checker before application"
+      },
+      {
+        "topic": "Status tracking",
+        "question": "Do users need to check application status after submitting?",
+        "whyAsk": "May need status service integration"
+      }
+    ]
+  }
+}

@@ -1,4 +1,5 @@
 import type { RequestHandler } from 'express';
+import { trace } from '@opentelemetry/api';
 import { startBenchmark } from '../metrics';
 import { AdspId } from '../utils';
 import { TenantService } from './tenantService';
@@ -13,6 +14,8 @@ export const createTenantHandler =
       try {
         const tenant = await service.getTenant(tenantId);
         req.tenant = tenant;
+        trace.getActiveSpan()?.setAttribute('adsp.tenant.id', tenant.id.toString());
+        trace.getActiveSpan()?.setAttribute('adsp.tenant.name', tenant.name);
       } catch (err) {
         next(err);
         return;

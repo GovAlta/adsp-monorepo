@@ -746,9 +746,9 @@ export function AddEditFormDefinitionEditor({
                         </GoabTooltip>
                       </FlexRow>
                       {definition.scheduledIntakes && (
-                        <div style={{ marginBottom: '0.5rem' }}>
+                        <div style={{ marginBottom: '0.5rem', marginLeft: '0.125rem' }}>
                           <GoabButton
-                            type="primary"
+                            type="secondary"
                             testId="set-intake-period"
                             onClick={() => {
                               setIntakePeriodModal(true);

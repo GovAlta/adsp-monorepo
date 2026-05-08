@@ -1,0 +1,41 @@
+{
+  "id": "status-tracker",
+  "name": "Application Status Page",
+  "category": "pages",
+  "summary": "Allows users to check the current status of their submitted application using a reference number.",
+  "whenToUse": [
+    "Services where applications are processed asynchronously",
+    "Users need to track progress after submission",
+    "Reduce support calls asking 'where is my application?'"
+  ],
+  "structure": {
+    "lookup": "Reference number input field with lookup button",
+    "status": "Clear status indicator (submitted, in review, approved, etc.)",
+    "timeline": "Optional step indicator showing progress",
+    "nextSteps": "Actions user should take based on current status"
+  },
+  "requiredElements": [
+    "Reference number input",
+    "Clear status display (use GoabCallout with appropriate type)",
+    "Last updated timestamp",
+    "Next steps or expected timeline"
+  ],
+  "adspIntegration": {
+    "service": "status-service",
+    "pattern": "Fetch status via API, display in UI"
+  },
+  "codeExample": {
+    "file": "src/pages/StatusTracker.tsx",
+    "imports": [
+      "import { useState } from 'react';",
+      "import { GoabOneColumnLayout, GoabAppHeader, GoabPageBlock, GoabInput, GoabButton, GoabCallout, GoabAppFooter } from '@abgov/react-components';"
+    ],
+    "jsx": "const [referenceNumber, setReferenceNumber] = useState('');\nconst [status, setStatus] = useState(null);\nconst [loading, setLoading] = useState(false);\n\nconst lookupStatus = async () => {\n  setLoading(true);\n  // In production: fetch from status-service API\n  // Mock for prototype:\n  setStatus({\n    state: 'in-review',\n    updatedAt: new Date().toISOString(),\n    description: 'Your application is being reviewed by our team.'\n  });\n  setLoading(false);\n};\n\nconst statusTypeMap = {\n  'submitted': 'information',\n  'in-review': 'information',\n  'approved': 'success',\n  'declined': 'emergency',\n  'action-required': 'important'\n};\n\nreturn (\n  <GoabOneColumnLayout>\n    <GoabPageBlock width=\"704px\">\n      <h1>Check application status</h1>\n      <p>Enter your reference number to see the current status of your application.</p>\n\n      <GoabInput\n        name=\"referenceNumber\"\n        value={referenceNumber}\n        onChange={(_, value) => setReferenceNumber(value)}\n        placeholder=\"e.g., APP-2026-12345\"\n      />\n      <GoabButton onClick={lookupStatus} disabled={loading || !referenceNumber}>\n        {loading ? 'Looking up...' : 'Check status'}\n      </GoabButton>\n\n      {status && (\n        <>\n          <GoabCallout type={statusTypeMap[status.state]} heading={status.state.replace('-', ' ')}>\n            {status.description}\n          </GoabCallout>\n          <p><small>Last updated: {new Date(status.updatedAt).toLocaleDateString()}</small></p>\n        </>\n      )}\n    </GoabPageBlock>\n  </GoabOneColumnLayout>\n);"
+  },
+  "notes": [
+    "Consider authentication for sensitive status info",
+    "Show helpful message if reference number not found",
+    "Include contact info if user needs help",
+    "Timestamp helps set expectations on data freshness"
+  ]
+}

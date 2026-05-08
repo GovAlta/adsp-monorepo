@@ -15,6 +15,7 @@ import {
   getLabelText,
   validateSinWithLuhn,
   getControlLabelText,
+  checkFieldValidity,
 } from './stringUtils';
 import { describe } from 'node:test';
 import { GoAInputTextProps } from '../Controls';
@@ -192,6 +193,22 @@ describe('stringUtils string tests', () => {
       const results = getRequiredIfThen(clonedSchema);
       expect(results.length > 0).toBe(true);
     });
+  });
+
+  it('suppresses placeholder enum validation error for register-backed dropdowns with a selected value', () => {
+    const props = {
+      ...schemaIfThenProps,
+      data: 'EDUC',
+      errors: 'must be equal to one of the allowed values',
+      uischema: {
+        ...textBoxUiSchema,
+        options: {
+          register: { urn: 'mock-urn' },
+        },
+      },
+    } as ControlProps;
+
+    expect(checkFieldValidity(props, {})).toBe('');
   });
 
   it('When allOf should have at least one If condition', () => {

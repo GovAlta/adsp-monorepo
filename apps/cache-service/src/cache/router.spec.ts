@@ -24,6 +24,7 @@ describe('router', () => {
         tenant: { id: tenantId },
         params: { target: 'urn:ads:platform:file-service' },
         getServiceConfiguration: jest.fn(),
+        getServiceConfigurationRevision: jest.fn(),
       };
       const res = {};
       const next = jest.fn();
@@ -44,6 +45,7 @@ describe('router', () => {
         tenant: { id: tenantId },
         params: { target: 'urn:ads:platform:file-service' },
         getServiceConfiguration: jest.fn(),
+        getServiceConfigurationRevision: jest.fn(),
       };
       const res = {};
       const next = jest.fn();
@@ -62,6 +64,7 @@ describe('router', () => {
         tenant: { id: tenantId },
         params: { target: 'urn:ads:platform:file-service' },
         getServiceConfiguration: jest.fn(),
+        getServiceConfigurationRevision: jest.fn(),
       };
       const res = {};
       const next = jest.fn();
@@ -83,6 +86,7 @@ describe('router', () => {
       const req = {
         params: { target: 'urn:ads:platform:file-service' },
         getServiceConfiguration: jest.fn(),
+        getServiceConfigurationRevision: jest.fn(),
       };
       const res = {};
       const next = jest.fn();

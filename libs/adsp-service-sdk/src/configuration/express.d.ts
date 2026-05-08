@@ -15,6 +15,16 @@ declare global {
        * Note that configuration is retrieved from {service}:{name} if useNamespace is true in SDK initialization.
        */
       getServiceConfiguration?: <C, R = [C, C, number?]>(name?: string, tenantId?: AdspId) => Promise<R>;
+
+      /**
+       * Retrieves a specific service configuration revision for service initialized with SDK.
+       * Note that configuration is retrieved from {service}:{name} if useNamespace is true in SDK initialization.
+       */
+      getServiceConfigurationRevision?: <C, R = [C, C, number?]>(
+        revision: string,
+        name?: string,
+        tenantId?: AdspId,
+      ) => Promise<R>;
     }
   }
 }

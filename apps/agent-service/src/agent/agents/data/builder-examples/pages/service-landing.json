@@ -1,0 +1,37 @@
+{
+  "id": "service-landing",
+  "name": "Service Landing Page",
+  "category": "pages",
+  "summary": "Entry point for a government service with hero banner, value proposition, and primary call-to-action.",
+  "whenToUse": [
+    "Main entry page for a citizen-facing service",
+    "Program information with application CTA",
+    "Service overview before directing to forms"
+  ],
+  "structure": {
+    "header": "GoabAppHeader with service name and navigation links",
+    "hero": "GoabHeroBanner with heading, subtitle, and primary CTA button",
+    "content": "GoabPageBlock with service features in GoabGrid card layout",
+    "footer": "GoabAppFooter"
+  },
+  "requiredElements": [
+    "Clear service name in header",
+    "Hero with concise value proposition (1-2 sentences)",
+    "Primary CTA button (e.g., 'Start application', 'Check eligibility')",
+    "Brief description of what the service does"
+  ],
+  "codeExample": {
+    "file": "src/pages/ServiceLanding.tsx",
+    "imports": [
+      "import { GoabOneColumnLayout, GoabAppHeader, GoabHeroBanner, GoabPageBlock, GoabGrid, GoabContainer, GoabButton, GoabAppFooter } from '@abgov/react-components';",
+      "import { Link, useNavigate } from 'react-router-dom';"
+    ],
+    "jsx": "<GoabOneColumnLayout>\n  <section slot=\"header\">\n    <GoabAppHeader url=\"/\" heading=\"Child care subsidy\">\n      <Link to=\"/apply\">Apply</Link>\n      <Link to=\"/eligibility\">Check eligibility</Link>\n      <Link to=\"/contact\">Contact</Link>\n    </GoabAppHeader>\n  </section>\n\n  <GoabHeroBanner heading=\"Get help with child care costs\" backgroundUrl={heroImage}>\n    <p>Alberta families may qualify for subsidized child care based on income and family size.</p>\n    <GoabButton type=\"primary\" onClick={() => navigate('/eligibility')}>Check eligibility</GoabButton>\n  </GoabHeroBanner>\n\n  <GoabPageBlock width=\"704px\">\n    <h2>What you can get</h2>\n    <GoabGrid minChildWidth=\"30ch\">\n      <GoabContainer accent=\"thin\">\n        <h3>Reduced fees</h3>\n        <p>Pay less for licensed child care based on your family income.</p>\n      </GoabContainer>\n      <GoabContainer accent=\"thin\">\n        <h3>Multiple children</h3>\n        <p>Subsidy applies to each child in licensed care.</p>\n      </GoabContainer>\n    </GoabGrid>\n  </GoabPageBlock>\n\n  <section slot=\"footer\"><GoabAppFooter /></section>\n</GoabOneColumnLayout>"
+  },
+  "notes": [
+    "GoabHeroBanner should only appear on landing pages, not interior pages",
+    "Keep hero subtitle to 1-2 sentences maximum",
+    "Primary CTA should be the most important action for 80% of users",
+    "Use sentence casing for headings (capitalize first word only)"
+  ]
+}

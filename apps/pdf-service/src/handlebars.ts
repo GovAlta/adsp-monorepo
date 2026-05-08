@@ -26,6 +26,22 @@ handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }:
   return value;
 });
 
+handlebars.registerHelper('valueExists', function (value: unknown): boolean {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length > 0;
+  }
+
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  return true;
+});
+
 const resolveLabelFromScope = (scope: string) => {
   // eslint-disable-next-line no-useless-escape
   const validPatternRegex = /^#(\/properties\/[^\/]+)+$/;

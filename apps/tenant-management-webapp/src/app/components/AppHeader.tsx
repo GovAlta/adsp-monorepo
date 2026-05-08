@@ -131,6 +131,7 @@ const SidebarWrapper = styled.div<MenuState>`
 const HeaderContainer = styled.div`
   position: relative;
   border-bottom: 1px solid #dcdcdc;
+  margin-left: -2rem;
 `;
 
 const Actions = styled.div`

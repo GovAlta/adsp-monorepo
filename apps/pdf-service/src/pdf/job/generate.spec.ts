@@ -29,6 +29,7 @@ describe('generate', () => {
   const configurationServiceMock = {
     getConfiguration: jest.fn(),
     getServiceConfiguration: jest.fn(),
+    getServiceConfigurationRevision: jest.fn(),
   };
 
   const eventServiceMock = {
@@ -116,7 +117,7 @@ describe('generate', () => {
         expect(err).toBeFalsy();
         expect(repositoryMock.update).toHaveBeenCalledWith(item.jobId, 'completed', fileResult);
         expect(eventServiceMock.send).toHaveBeenCalledWith(
-          expect.objectContaining({ name: PDF_GENERATED, payload: expect.objectContaining({ file: fileResult }) })
+          expect.objectContaining({ name: PDF_GENERATED, payload: expect.objectContaining({ file: fileResult }) }),
         );
         done();
       });
@@ -163,7 +164,7 @@ describe('generate', () => {
         expect(err).toBeFalsy();
         expect(repositoryMock.update).toHaveBeenCalledWith(item.jobId, 'completed', fileResult);
         expect(eventServiceMock.send).toHaveBeenCalledWith(
-          expect.objectContaining({ name: PDF_GENERATED, payload: expect.objectContaining({ file: fileResult }) })
+          expect.objectContaining({ name: PDF_GENERATED, payload: expect.objectContaining({ file: fileResult }) }),
         );
         done();
       });
@@ -259,7 +260,7 @@ describe('generate', () => {
         expect(err).toBeFalsy();
         expect(repositoryMock.update).toHaveBeenCalledWith(item.jobId, 'completed', fileResult);
         expect(eventServiceMock.send).toHaveBeenCalledWith(
-          expect.objectContaining({ name: PDF_GENERATED, payload: expect.objectContaining({ file: fileResult }) })
+          expect.objectContaining({ name: PDF_GENERATED, payload: expect.objectContaining({ file: fileResult }) }),
         );
         done();
       });
@@ -323,7 +324,7 @@ describe('generate', () => {
             payload: expect.objectContaining({
               error: 'Error: oh noes!',
             }),
-          })
+          }),
         );
 
         done();
