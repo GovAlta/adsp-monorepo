@@ -1,8 +1,18 @@
 import axios from 'axios';
-import type { RequestHandler } from 'express';
+import type { Request, RequestHandler } from 'express';
 import type { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { Logger } from 'winston';
 import { context as otelContext, propagation, trace as otelTrace, SpanStatusCode, SpanKind } from '@opentelemetry/api';
+
+function getTenantId(req: Request): string | undefined {
+  const tenantId = req.tenant?.id || req.user?.tenantId;
+  return tenantId ? tenantId.toString() : undefined;
+}
+
+function getTenantName(req: Request): string | undefined {
+  return req.tenant?.name;
+}
+
 export function instrumentAxios(logger: Logger) {
   const timings = new Map();
 
@@ -52,73 +62,87 @@ export function createHttpServerTraceHandler(tracerProvider: NodeTracerProvider)
 
   return function (req, res, next) {
     const parentContext = propagation.extract(otelContext.active(), req.headers);
+    const tenantId = getTenantId(req);
+    const tenantName = getTenantName(req);
 
-      const span = tracer.startSpan(
-        `${req.method} ${req.route?.path || req.path}`,
-        {
-          kind: SpanKind.SERVER,
-          attributes: {
-            'http.method': req.method,
-            'http.url': req.originalUrl,
-            'http.target': req.path,
-            'http.host': req.hostname,
-            'http.scheme': req.protocol,
-            'http.flavor': `${req.httpVersion}`,
-            'http.client_ip': req.ip,
-            'http.user_agent': req.get('user-agent'),
-          },
+    const span = tracer.startSpan(
+      `${req.method} ${req.route?.path || req.path}`,
+      {
+        kind: SpanKind.SERVER,
+        attributes: {
+          'http.method': req.method,
+          'http.url': req.originalUrl,
+          'http.target': req.path,
+          'http.host': req.hostname,
+          'http.scheme': req.protocol,
+          'http.flavor': `${req.httpVersion}`,
+          'http.client_ip': req.ip,
+          'http.user_agent': req.get('user-agent'),
+          ...(tenantId ? { 'adsp.tenant.id': tenantId } : {}),
+          ...(tenantName ? { 'adsp.tenant.name': tenantName } : {}),
         },
-        parentContext,
-      );
+      },
+      parentContext,
+    );
 
-      // Record span completion on response
-      const originalJson = res.json.bind(res);
-      const originalSend = res.send.bind(res);
+    // Record span completion on response
+    const originalJson = res.json.bind(res);
+    const originalSend = res.send.bind(res);
 
-      const recordSpanCompletion = () => {
-        span.setAttributes({
-          'http.status_code': res.statusCode,
+    const recordSpanCompletion = () => {
+      const completionAttributes: Record<string, string | number> = {
+        'http.status_code': res.statusCode,
+      };
+      const completionTenantId = getTenantId(req);
+      if (completionTenantId) {
+        completionAttributes['adsp.tenant.id'] = completionTenantId;
+      }
+      const completionTenantName = getTenantName(req);
+      if (completionTenantName) {
+        completionAttributes['adsp.tenant.name'] = completionTenantName;
+      }
+
+      span.setAttributes(completionAttributes);
+
+      // Determine span status based on HTTP status code
+      if (res.statusCode >= 400) {
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: `HTTP ${res.statusCode}`,
         });
+      } else {
+        span.setStatus({ code: SpanStatusCode.OK });
+      }
 
-        // Determine span status based on HTTP status code
-        if (res.statusCode >= 400) {
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: `HTTP ${res.statusCode}`,
-          });
-        } else {
-          span.setStatus({ code: SpanStatusCode.OK });
-        }
+      span.end();
+    };
 
-        span.end();
-      };
+    res.json = function (...args) {
+      recordSpanCompletion();
+      return originalJson(...args);
+    };
 
-      res.json = function (...args) {
+    res.send = function (...args) {
+      recordSpanCompletion();
+      return originalSend(...args);
+    };
+
+    // Handle errors
+    res.on('error', (err) => {
+      span.recordException(err);
+      span.setStatus({ code: SpanStatusCode.ERROR });
+    });
+
+    // Ensure span ends even if response is not sent through json/send
+    res.on('finish', () => {
+      if (span.isRecording()) {
         recordSpanCompletion();
-        return originalJson(...args);
-      };
+      }
+    });
 
-      res.send = function (...args) {
-        recordSpanCompletion();
-        return originalSend(...args);
-      };
-
-      // Handle errors
-      res.on('error', (err) => {
-        span.recordException(err);
-        span.setStatus({ code: SpanStatusCode.ERROR });
-      });
-
-      // Ensure span ends even if response is not sent through json/send
-      res.on('finish', () => {
-        if (span.isRecording()) {
-          recordSpanCompletion();
-        }
-      });
-
-      // Run downstream handlers with span context active
-      otelContext.with(otelTrace.setSpan(parentContext, span), () => {
-        next();
-      });
+    // Run downstream handlers with span context active
+    otelContext.with(otelTrace.setSpan(parentContext, span), () => {
+      next();
+    });
   };
 }
