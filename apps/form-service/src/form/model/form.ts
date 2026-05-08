@@ -43,7 +43,7 @@ export class FormEntity implements Form {
     formDraftUrl: string,
     applicant?: Subscriber,
     dryRun?: boolean,
-    registeredId?: string
+    registeredId?: string,
   ): Promise<FormEntity> {
     if (!(await definition.canApply(user, dryRun))) {
       throw new UnauthorizedUserError('create form', user);
@@ -75,7 +75,7 @@ export class FormEntity implements Form {
     public definition: FormDefinitionEntity,
     public applicant: Subscriber,
     form: Omit<Form, 'definition' | 'applicant'>,
-    public hash: string = null
+    public hash: string = null,
   ) {
     this.definition = definition;
     this.tenantId = tenantId;
@@ -109,19 +109,22 @@ export class FormEntity implements Form {
   canRead(user: User): boolean {
     // Admins, intake apps, clerks and assessors are allowed read of the form.
     // Applicants are allowed to read forms they created.
+
+    // would have to change this to allow applicants to read form even if they did not create them
+
     return (
       isAllowedUser(
         user,
         this.tenantId,
         [FormServiceRoles.Admin, FormServiceRoles.IntakeApp, DirectoryServiceRoles.ResourceResolver],
-        true
+        true,
       ) ||
       isAllowedUser(user, this.tenantId, [
         ...(this.definition?.clerkRoles || []),
         ...(this.definition?.assessorRoles || []),
       ]) ||
       (isAllowedUser(user, this.tenantId, this.definition?.applicantRoles || []) &&
-        user.id === this.createdBy.id &&
+        // user.id === this.createdBy.id &&
         this.status !== FormStatus.Archived)
     );
   }
@@ -168,11 +171,14 @@ export class FormEntity implements Form {
     // 2. User is Applicant who created the form
     // 3. Form is Draft and user is Clerk
     // 4. Form is Submitted and user is Assessor
+    // 5. Any allowed user can now access the form to fill it out.
     if (
       isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true) ||
       (isAllowedUser(user, this.tenantId, this.definition?.applicantRoles || []) && user.id === this.createdBy.id) ||
       (this.status === FormStatus.Draft && isAllowedUser(user, this.tenantId, this.definition?.clerkRoles || [])) ||
-      (this.status === FormStatus.Submitted && isAllowedUser(user, this.tenantId, this.definition?.assessorRoles || []))
+      (this.status === FormStatus.Submitted &&
+        isAllowedUser(user, this.tenantId, this.definition?.assessorRoles || [])) ||
+      isAllowedUser(user, this.tenantId, this.definition?.applicantRoles || [])
     ) {
       return await this.access(user);
     } else {
@@ -184,7 +190,7 @@ export class FormEntity implements Form {
     user: User,
     fileService: FileService,
     data: Record<string, unknown>,
-    dryRun?: boolean
+    dryRun?: boolean,
   ): Promise<FormEntity> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot update form not in draft.');
@@ -204,13 +210,13 @@ export class FormEntity implements Form {
     const currentFileUrns = new Set(
       Object.values(this.files)
         .filter((file) => !!file)
-        .map((file) => file.toString())
+        .map((file) => file.toString()),
     );
     const removedFileUrns = new Set(
       Object.values(previousFiles)
         .filter((file) => !!file)
         .map((file) => file.toString())
-        .filter((fileUrn) => !currentFileUrns.has(fileUrn))
+        .filter((fileUrn) => !currentFileUrns.has(fileUrn)),
     );
 
     for (const fileUrn of removedFileUrns) {
@@ -269,7 +275,7 @@ export class FormEntity implements Form {
     queueTaskService: QueueTaskService,
     submissionRepository: FormSubmissionRepository,
     pdfService: PdfService,
-    dryRun?: boolean
+    dryRun?: boolean,
   ): Promise<[FormEntity, FormSubmissionEntity, string]> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');
