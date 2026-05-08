@@ -1,0 +1,119 @@
+{
+  "name": "Builder Anti-Patterns",
+  "summary": "Common mistakes to avoid when building Alberta government service prototypes",
+  "antiPatterns": [
+    {
+      "id": "hero-on-interior",
+      "name": "Hero banner on interior pages",
+      "severity": "medium",
+      "description": "Using GoabHeroBanner on pages other than the main landing page. Hero banners should only appear once as the entry visual.",
+      "bad": {
+        "description": "Putting hero banner on every page",
+        "pattern": "Apply.tsx with GoabHeroBanner"
+      },
+      "good": {
+        "description": "Hero only on landing, use GoabPageBlock with heading on interior pages",
+        "pattern": "Apply.tsx with <GoabPageBlock><h1>Apply</h1>...</GoabPageBlock>"
+      }
+    },
+    {
+      "id": "build-deps-in-runtime",
+      "name": "Build dependencies imported in runtime code",
+      "severity": "critical",
+      "description": "Importing build tools (vite, webpack, @vitejs/*, babel, @types/*) in application source files. These are not available at runtime and break the preview.",
+      "bad": {
+        "description": "Importing vite in a component",
+        "pattern": "import { defineConfig } from 'vite';"
+      },
+      "good": {
+        "description": "Only import runtime-safe packages in src/ files",
+        "pattern": "import { useState } from 'react';"
+      },
+      "detection": "Look for imports from: vite, @vitejs/*, webpack, @babel/*, @types/*"
+    },
+    {
+      "id": "missing-foip-notice",
+      "name": "Collecting personal info without privacy notice",
+      "severity": "high",
+      "description": "Forms collecting personal information must include a FOIP (Freedom of Information and Protection of Privacy) notice.",
+      "bad": {
+        "description": "Form without privacy notice",
+        "pattern": "<FormComponent /> with no FOIP callout"
+      },
+      "good": {
+        "description": "Include privacy notice before form",
+        "pattern": "<GoabCallout type=\"information\" heading=\"Privacy notice\">Information collected is used to...</GoabCallout>"
+      }
+    },
+    {
+      "id": "jargon-heavy-content",
+      "name": "Government jargon instead of plain language",
+      "severity": "medium",
+      "description": "Using bureaucratic language that citizens don't understand. Write at grade 8-9 reading level.",
+      "bad": {
+        "description": "Jargon-heavy text",
+        "pattern": "Submit your application for adjudication pursuant to Section 12(b) of the Act."
+      },
+      "good": {
+        "description": "Plain language",
+        "pattern": "Send your application. We'll review it and let you know the decision."
+      }
+    },
+    {
+      "id": "no-mobile-consideration",
+      "name": "Desktop-only layout assumptions",
+      "severity": "high",
+      "description": "Fixed widths or layouts that break on mobile devices. Use responsive GOA components.",
+      "bad": {
+        "description": "Fixed pixel widths",
+        "pattern": "style={{ width: '800px' }}"
+      },
+      "good": {
+        "description": "Use responsive GOA layout components",
+        "pattern": "<GoabPageBlock width=\"704px\"> or <GoabGrid minChildWidth=\"30ch\">"
+      }
+    },
+    {
+      "id": "missing-error-states",
+      "name": "No error handling for API failures",
+      "severity": "high",
+      "description": "Not showing users what went wrong when API calls fail.",
+      "bad": {
+        "description": "Silent failure",
+        "pattern": "catch (e) { console.error(e); }"
+      },
+      "good": {
+        "description": "User-visible error message",
+        "pattern": "catch (e) { setError('Unable to load. Please try again.'); }"
+      }
+    },
+    {
+      "id": "title-case-headings",
+      "name": "Using title case instead of sentence case",
+      "severity": "low",
+      "description": "Alberta Design System uses sentence case for headings (capitalize first word only).",
+      "bad": {
+        "description": "Title case heading",
+        "pattern": "<h1>Check Your Application Status</h1>"
+      },
+      "good": {
+        "description": "Sentence case heading",
+        "pattern": "<h1>Check your application status</h1>"
+      }
+    },
+    {
+      "id": "reference-number-buried",
+      "name": "Reference number not prominent on confirmation",
+      "severity": "medium",
+      "description": "After submission, the reference number should be visually prominent so users can easily save it.",
+      "bad": {
+        "description": "Reference number as small text",
+        "pattern": "<p>Reference: APP-123</p>"
+      },
+      "good": {
+        "description": "Large, highlighted reference number",
+        "pattern": "<div className=\"reference-box\"><span className=\"label\">Your reference number</span><span className=\"number\">APP-123</span></div>"
+      }
+    }
+  ]
+}

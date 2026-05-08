@@ -1,0 +1,45 @@
+{
+  "id": "form-page",
+  "name": "Application Form Page",
+  "category": "pages",
+  "summary": "Page with embedded ADSP form for collecting user data as part of a service application.",
+  "whenToUse": [
+    "Collecting structured data from users",
+    "Service applications requiring validation",
+    "Integration with ADSP Form Service"
+  ],
+  "structure": {
+    "intro": "Brief context about the form and what user needs to complete it",
+    "form": "Embedded ADSP form via FormComponent",
+    "help": "Optional sidebar or inline help content"
+  },
+  "requiredElements": [
+    "Page heading explaining the form purpose",
+    "FormComponent with proper configuration",
+    "Navigation to confirmation on successful submit"
+  ],
+  "adspIntegration": {
+    "service": "form-service",
+    "dependencies": ["@abgov/jsonforms-components", "@jsonforms/react"],
+    "config": {
+      "mode": "'mock' for prototyping, 'live' for real submissions",
+      "definitionId": "Form definition ID from Form Service",
+      "formServiceBaseUrl": "Form Service API URL"
+    }
+  },
+  "codeExample": {
+    "file": "src/pages/Apply.tsx",
+    "imports": [
+      "import { GoabOneColumnLayout, GoabAppHeader, GoabPageBlock, GoabCallout, GoabAppFooter } from '@abgov/react-components';",
+      "import FormComponent from '../components/FormComponent';",
+      "import { useNavigate } from 'react-router-dom';"
+    ],
+    "jsx": "const navigate = useNavigate();\n\nconst handleSubmit = async (data) => {\n  // In live mode, this submits to ADSP Form Service\n  // Generate reference number from response\n  const referenceNumber = `APP-${Date.now()}`;\n  navigate('/confirmation', { state: { referenceNumber } });\n};\n\nreturn (\n  <GoabOneColumnLayout>\n    <GoabPageBlock width=\"704px\">\n      <h1>Apply for child care subsidy</h1>\n      <p>Complete this form to apply. You will need:</p>\n      <ul>\n        <li>Your income information</li>\n        <li>Child care provider details</li>\n        <li>Proof of Alberta residency</li>\n      </ul>\n\n      <GoabCallout type=\"information\" heading=\"Privacy notice\">\n        Information collected is used to assess your eligibility under the Child Care Subsidy Act.\n        For questions, contact the FOIP Coordinator.\n      </GoabCallout>\n\n      <FormComponent onSubmit={handleSubmit} />\n    </GoabPageBlock>\n  </GoabOneColumnLayout>\n);"
+  },
+  "notes": [
+    "Always include a privacy/FOIP notice when collecting personal information",
+    "List what users need before starting (reduces abandonment)",
+    "Use mock mode for prototyping, switch to live for production",
+    "Handle submission errors gracefully with clear messaging"
+  ]
+}
