@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Request, RequestHandler, Response } from 'express';
 import { throttle } from 'lodash';
+import { context as otelContext, ROOT_CONTEXT } from '@opentelemetry/api';
 import type { MeterProvider } from '@opentelemetry/sdk-metrics';
 import * as responseTime from 'response-time';
 import { Logger } from 'winston';
@@ -166,7 +167,10 @@ export async function createMetricsHandler(
         valuesBuffer[value.tenantId] = [];
       }
       valuesBuffer[value.tenantId].push(value);
-      writeBuffer(serviceId, directory, logger, tokenProvider, valuesBuffer);
+      // Schedule deferred writes in ROOT_CONTEXT so delayed callbacks do not inherit request spans.
+      otelContext.with(ROOT_CONTEXT, () => {
+        writeBuffer(serviceId, directory, logger, tokenProvider, valuesBuffer);
+      });
     }
   });
 
