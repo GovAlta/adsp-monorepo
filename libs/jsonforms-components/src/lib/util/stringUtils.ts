@@ -202,6 +202,11 @@ export const getRequiredIfThen = (props: ControlProps) => {
 export const checkFieldValidity = (props: ControlProps, rootData?: unknown): string => {
   const { data, errors: ajvErrors, required, schema } = props;
   const labelToUpdate = getControlLabelText(props);
+  const isRegisterBackedEnum =
+    props.uischema?.options?.register !== undefined &&
+    typeof ajvErrors === 'string' &&
+    ajvErrors.toLowerCase().includes('must be equal to one of the allowed values') &&
+    !isNilOrEmptyValue(data, true);
 
   const rootRequired = getRequiredIfThen(props);
   const requiredByCondition = isRequiredBySchema(props.rootSchema as JsonSchema7, rootData, props.path, {
@@ -218,6 +223,10 @@ export const checkFieldValidity = (props: ControlProps, rootData?: unknown): str
         return `${labelToUpdate} is required`;
       }
     }
+  }
+
+  if (isRegisterBackedEnum) {
+    return '';
   }
 
   return ajvErrors;
