@@ -637,8 +637,8 @@ export const BuilderTenant = () => {
       socket.on('workspace-state', ({ revision, files: nextFiles }: WorkspaceStateEvent) => {
         dispatch(agentActions.setWorkspaceRefreshing(false));
         if (!nextFiles.length && workspaceInitInProgressRef.current) {
+          // Don't poll workspace-read during init — wait for workspace-ready event
           dispatch(agentActions.setWorkspaceStatus('Workspace initialization in progress'));
-          scheduleWorkspaceReadRetry();
           return;
         }
 
@@ -660,8 +660,8 @@ export const BuilderTenant = () => {
                     threadId,
                     workspaceTarball: urn,
                   });
+                  // Don't poll workspace-read during init — wait for workspace-ready event
                   dispatch(agentActions.setWorkspaceStatus('Restoring workspace from last saved snapshot'));
-                  scheduleWorkspaceReadRetry();
                 } else {
                   clearWorkspaceReadRetry();
                   setIsWorkspaceEmpty(true);

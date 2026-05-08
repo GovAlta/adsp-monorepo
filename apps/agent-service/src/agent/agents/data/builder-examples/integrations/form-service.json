@@ -1,0 +1,31 @@
+{
+  "id": "form-service-embed",
+  "name": "ADSP Form Service Integration",
+  "category": "integrations",
+  "summary": "Embed an ADSP form with live definition loading, validation, and submission.",
+  "service": "form-service",
+  "dependencies": ["@abgov/jsonforms-components", "@jsonforms/core", "@jsonforms/react"],
+  "configPattern": {
+    "description": "Centralize form config in src/config/adspForm.ts",
+    "properties": {
+      "mode": "'mock' for prototyping without backend, 'live' for real submissions",
+      "formServiceBaseUrl": "Base URL of Form Service API (required for live mode)",
+      "definitionId": "Form definition ID from Form Service (required for live mode)",
+      "accessToken": "Bearer token for authenticated requests (required for live mode)"
+    }
+  },
+  "codeExample": {
+    "config": "// src/config/adspForm.ts\nexport const adspFormConfig = {\n  mode: 'mock' as 'mock' | 'live',\n  formServiceBaseUrl: 'https://form-service.alberta.ca',\n  definitionId: 'child-care-subsidy-application',\n  // accessToken: obtained from auth flow\n};",
+    "component": "// src/components/FormComponent.tsx\nimport { JsonForms } from '@jsonforms/react';\nimport { GoARenderers } from '@abgov/jsonforms-components';\nimport { adspFormConfig } from '../config/adspForm';\n\nexport default function FormComponent({ onSubmit }) {\n  const [schema, setSchema] = useState(null);\n  const [uiSchema, setUiSchema] = useState(null);\n  const [data, setData] = useState({});\n\n  useEffect(() => {\n    if (adspFormConfig.mode === 'mock') {\n      // Use mock schemas for prototyping\n      setSchema({ type: 'object', properties: { name: { type: 'string' } } });\n      setUiSchema({ type: 'VerticalLayout', elements: [] });\n    } else {\n      // Fetch from Form Service\n      loadFormDefinition(adspFormConfig.definitionId);\n    }\n  }, []);\n\n  return (\n    <JsonForms\n      schema={schema}\n      uischema={uiSchema}\n      data={data}\n      renderers={GoARenderers}\n      onChange={({ data }) => setData(data)}\n    />\n  );\n}"
+  },
+  "mockModeNotes": [
+    "Mock mode allows rapid prototyping without Form Service setup",
+    "Define inline schemas to test form layouts",
+    "Switch to live mode when ready to connect to real backend"
+  ],
+  "liveModeNotes": [
+    "Requires authentication (Keycloak/OIDC)",
+    "Form definition must exist in Form Service",
+    "Submissions are persisted and can trigger workflows"
+  ]
+}
