@@ -60,7 +60,7 @@ class TenantAdminPage {
   }
 
   goaCardTexts() {
-    return cy.xpath('//goa-grid/div/div[2]');
+    return cy.xpath('//*[contains(@data-testid, "dashboard-card-description")]');
   }
 
   goaCardLink(text) {
