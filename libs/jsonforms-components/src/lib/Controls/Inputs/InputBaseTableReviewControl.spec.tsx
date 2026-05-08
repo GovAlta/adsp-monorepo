@@ -524,6 +524,41 @@ describe('InputBaseTableReviewControl', () => {
     expect(errorFormItem).toBeInTheDocument();
   });
 
+  it('suppresses placeholder enum validation error for register-backed dropdown review values', () => {
+    const { baseElement } = render(
+      <table>
+        <tbody>
+          <GoAInputBaseTableReview
+            data={'EDUC'}
+            visible={true}
+            label="Ministry"
+            path="ministry"
+            schema={{ type: 'string', enum: [''] }}
+            uischema={{
+              type: 'Control',
+              scope: '#/properties/ministry',
+              label: 'Ministry',
+              options: {
+                register: { urn: 'mock-urn' },
+              },
+            }}
+            enabled={true}
+            errors={'must be equal to one of the allowed values'}
+            cells={[]}
+            required={false}
+            id="ministry"
+            rootSchema={{ type: 'object', properties: {} }}
+            config={{}}
+            renderers={[]}
+            handleChange={jest.fn()}
+          />
+        </tbody>
+      </table>,
+    );
+
+    expect(baseElement.querySelector('goa-form-item[error]')).not.toBeInTheDocument();
+  });
+
   it('returns invalid SIN error from custom AJV', () => {
     const ajv = createDefaultAjv();
 
