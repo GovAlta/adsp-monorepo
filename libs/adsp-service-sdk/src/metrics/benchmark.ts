@@ -48,12 +48,20 @@ function getBenchmarkDurationHistogram(): Histogram {
 function getBenchmarkMetricAttributes(req: Request, metric: string): Record<string, string> {
   const route = req.route?.path ? `${req.baseUrl || ''}${req.route.path}` : `${req.baseUrl || ''}${req.path || ''}`;
   const attributes: Record<string, string> = { 'benchmark.name': metric };
+  const tenantId = req.tenant?.id || req.user?.tenantId;
+  const tenantName = req.tenant?.name;
 
   if (req.method) {
     attributes['http.request.method'] = req.method;
   }
   if (route) {
     attributes['http.route'] = route;
+  }
+  if (tenantId) {
+    attributes['adsp.tenant.id'] = tenantId.toString();
+  }
+  if (tenantName) {
+    attributes['adsp.tenant.name'] = tenantName;
   }
 
   return attributes;
