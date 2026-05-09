@@ -164,8 +164,8 @@ Feature: Form app
     Then the user views an error message of "Social insurance number is invalid" under the control labelled "Social insurance number"
     When the user clicks Back to application overview link on the form page
     And the user clicks "Summary" task on task list page
-    Then the user views "must be at least 3 characters" validation error message under "Single line textbox" field of "Controls" on summary page
-    And the user views "must be at least 10 characters" validation error message under "Multiline text area" field of "Controls" on summary page
+    Then the user views "must NOT have fewer than 3 characters" validation error message under "Single line textbox" field of "Controls" on summary page
+    And the user views "must NOT have fewer than 10 characters" validation error message under "Multiline text area" field of "Controls" on summary page
     And the user views "Checkbox is required" validation error message under "Checkbox" field of "Controls" on summary page
     And the user views "Radio group is required" validation error message under "Radio group" field of "Controls" on summary page
     And the user views "Data schema enumeration is required" validation error message under "Data schema enumeration" field of "Controls" on summary page
