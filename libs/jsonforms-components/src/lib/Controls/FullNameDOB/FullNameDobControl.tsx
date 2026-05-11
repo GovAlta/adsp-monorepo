@@ -12,7 +12,13 @@ type DateOfBirthControlProps = ControlProps;
 type NameDobData = ReturnType<typeof normalizeNameDobData>;
 const AUTOFILL_FIELDS = ['firstName', 'middleName', 'lastName', 'dateOfBirth'];
 const getRequiredLabel = (name: string) =>
-  name === 'firstName' ? 'First name' : name === 'lastName' ? 'Last name' : name === 'dateOfBirth' ? 'Date of birth' : name;
+  name === 'firstName'
+    ? 'First name'
+    : name === 'lastName'
+      ? 'Last name'
+      : name === 'dateOfBirth'
+        ? 'Date of birth'
+        : name;
 
 const normalizeNameDobData = (value?: Record<string, unknown>) => ({
   firstName: (value?.firstName as string) || '',
@@ -44,7 +50,9 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
   const [formData, setFormData] = useState(normalizeNameDobData(data));
 
   const updateFormData = (updatedData: NameDobData) => {
-    const nextData = Object.fromEntries(Object.entries(updatedData).filter(([_, value]) => value !== '')) as NameDobData;
+    const nextData = Object.fromEntries(
+      Object.entries(updatedData).filter(([_, value]) => value !== ''),
+    ) as NameDobData;
     setFormData(nextData);
     handleChange(path, nextData);
   };
@@ -73,7 +81,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
     const liveInputValue =
       updatedData?.[name] ??
       data?.[name] ??
-      document.querySelector<HTMLInputElement>(`goa-input[name="${name}"]`)?.value ??
+      controlRef.current?.querySelector<HTMLInputElement>(`goa-input[name="${name}"]`)?.value ??
       '';
 
     if (requiredFields.includes(name) && liveInputValue.trim() === '') {
@@ -84,12 +92,7 @@ export const FullNameDobControl = (props: DateOfBirthControlProps): JSX.Element 
 
     setErrors(err);
   };
-  useSyncAutofillFields(
-    AUTOFILL_FIELDS,
-    formData,
-    updateFormData,
-    handleRequiredFieldBlur,
-  );
+  useSyncAutofillFields(AUTOFILL_FIELDS, formData, updateFormData, handleRequiredFieldBlur, controlRef);
   useEffect(() => {
     const host = controlRef.current?.querySelector<HTMLElement>('goa-input[type="date"]') ?? null;
     host?.shadowRoot?.querySelector('input[type="date"]');

@@ -35,7 +35,7 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
 
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
@@ -59,7 +59,7 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
 
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
@@ -68,7 +68,7 @@ describe('NameInputs', () => {
       firstNameInput,
       new CustomEvent('_change', {
         detail: { name: 'firstName', value: 'John' },
-      })
+      }),
     );
     expect(mockHandleInputChange).toHaveBeenCalledTimes(1);
     expect(mockHandleInputChange).toHaveBeenCalledWith('firstName', 'John');
@@ -84,7 +84,7 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
     const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
@@ -107,7 +107,7 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
     const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
 
@@ -115,7 +115,7 @@ describe('NameInputs', () => {
       middleNameInput,
       new CustomEvent('_change', {
         detail: { name: 'middleName', value: 'A.' },
-      })
+      }),
     );
     expect(mockHandleInputChange).toHaveBeenCalledTimes(1);
     expect(mockHandleInputChange).toHaveBeenCalledWith('middleName', 'A.');
@@ -131,7 +131,7 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
 
     const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
@@ -139,7 +139,7 @@ describe('NameInputs', () => {
       lastNameInput,
       new CustomEvent('_change', {
         detail: { name: 'lastName', value: 'Doe' },
-      })
+      }),
     );
     expect(mockHandleInputChange).toHaveBeenCalledTimes(1);
     expect(mockHandleInputChange).toHaveBeenCalledWith('lastName', 'Doe');
@@ -155,7 +155,7 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={{ ...defaultName, firstName: '' }}
-      />
+      />,
     );
 
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
@@ -163,7 +163,7 @@ describe('NameInputs', () => {
       firstNameInput,
       new CustomEvent('_blur', {
         detail: { name: 'firstName', value: 'firstName' },
-      })
+      }),
     );
     expect(blurred).toBe(true);
   });
@@ -177,7 +177,7 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={{ ...defaultName, lastName: '' }}
-      />
+      />,
     );
     const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
 
@@ -194,7 +194,7 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={{ ...defaultName, lastName: '' }}
-      />
+      />,
     );
 
     const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
@@ -202,7 +202,7 @@ describe('NameInputs', () => {
       lastNameInput,
       new CustomEvent('_blur', {
         detail: { name: 'lastName' },
-      })
+      }),
     );
 
     await waitFor(() => {
@@ -218,7 +218,7 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={{ ...defaultName, lastName: 'Doe' }}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -238,7 +238,7 @@ describe('NameInputs', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={{ ...defaultName, firstName: '' }}
-      />
+      />,
     );
 
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']") as HTMLInputElement;
@@ -249,6 +249,44 @@ describe('NameInputs', () => {
     });
 
     expect(mockHandleInputChange).toHaveBeenCalledWith('firstName', 'John');
+    jest.useRealTimers();
+  });
+
+  it('does not sync autofilled values from another name control instance', async () => {
+    jest.useFakeTimers();
+    const firstHandleInputChange = jest.fn();
+    const secondHandleInputChange = jest.fn();
+
+    const { baseElement } = render(
+      <>
+        <NameInputs
+          firstName=""
+          middleName=""
+          lastName=""
+          handleInputChange={firstHandleInputChange}
+          requiredFields={requiredFields}
+          data={{ firstName: '', middleName: '', lastName: '' }}
+        />
+        <NameInputs
+          firstName=""
+          middleName=""
+          lastName=""
+          handleInputChange={secondHandleInputChange}
+          requiredFields={requiredFields}
+          data={{ firstName: '', middleName: '', lastName: '' }}
+        />
+      </>,
+    );
+
+    const firstNameInputs = baseElement.querySelectorAll("goa-input[testId='name-form-first-name']");
+    (firstNameInputs[0] as HTMLInputElement).value = 'John';
+
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
+    expect(firstHandleInputChange).toHaveBeenCalledWith('firstName', 'John');
+    expect(secondHandleInputChange).not.toHaveBeenCalledWith('firstName', 'John');
     jest.useRealTimers();
   });
 
@@ -292,8 +330,8 @@ describe('NameInputs', () => {
           } as JsonSchema7,
         },
       },
-      dummyTestContext
-    )
+      dummyTestContext,
+    ),
   ).toBe(true);
 });
 
@@ -321,7 +359,7 @@ describe('NameInputs Component', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
     const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
@@ -342,7 +380,7 @@ describe('NameInputs Component', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
     fireEvent.focus(firstNameInput);
@@ -350,7 +388,7 @@ describe('NameInputs Component', () => {
       firstNameInput,
       new CustomEvent('_change', {
         detail: { name: 'firstName', value: '' },
-      })
+      }),
     );
 
     fireEvent.blur(firstNameInput);
@@ -369,7 +407,7 @@ describe('NameInputs Component', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
 
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
@@ -377,7 +415,7 @@ describe('NameInputs Component', () => {
       firstNameInput,
       new CustomEvent('_change', {
         detail: { name: 'firstName', value: 'Jane' },
-      })
+      }),
     );
 
     expect(mockHandleInputChange).toHaveBeenCalledWith('firstName', 'Jane');
@@ -394,7 +432,7 @@ describe('NameInputs Component', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
 
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
@@ -420,7 +458,7 @@ describe('NameInputs Component', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
 
     const firstNameInput = baseElement.querySelector("goa-input[testId='name-form-first-name']");
@@ -439,7 +477,7 @@ describe('NameInputs Component', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={{ ...defaultName, middleName: '' }}
-      />
+      />,
     );
 
     expect(screen.queryByText('Middle Name is required')).not.toBeInTheDocument();
@@ -455,7 +493,7 @@ describe('NameInputs Component', () => {
         requiredFields={requiredFields}
         data={{ ...defaultName, middleName: '' }}
         disabled={true}
-      />
+      />,
     );
     const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
     expect(lastNameInput.getAttribute('disabled')).toBe('true');
@@ -470,7 +508,7 @@ describe('NameInputs Component', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
     const firstNameInput = baseElement.querySelector("goa-form-item[testId='form-item-first-name']");
     const middleNameInput = baseElement.querySelector("goa-form-item[testId='form-item-middle-name']");
@@ -499,7 +537,7 @@ describe('NameInputs Component', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
 
     const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
@@ -524,7 +562,7 @@ describe('NameInputs Component', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
 
     const lastNameInput = baseElement.querySelector("goa-input[testId='name-form-last-name']");
@@ -534,7 +572,7 @@ describe('NameInputs Component', () => {
           bubbles: true,
           composed: true,
           detail: { name: 'lastName' }, // match real component event signature
-        })
+        }),
       );
     });
 
@@ -557,7 +595,7 @@ describe('NameInputs Component', () => {
         handleInputChange={mockHandleInputChange}
         requiredFields={requiredFields}
         data={defaultName}
-      />
+      />,
     );
     const middleNameInput = baseElement.querySelector("goa-input[testId='name-form-middle-name']");
     act(() => {
@@ -566,7 +604,7 @@ describe('NameInputs Component', () => {
           bubbles: true,
           composed: true,
           detail: { name: 'middleName' }, // match real component event signature
-        })
+        }),
       );
     });
     expect(baseElement.innerHTML).not.toContain('Middle name is required');

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type RefObject } from 'react';
 
 export function useSyncAutofillFields(
   fields: string[],
@@ -7,7 +7,8 @@ export function useSyncAutofillFields(
   // eslint-disable-next-line
   updateFormData: (data: any) => void,
   // eslint-disable-next-line
-  handleRequiredFieldBlur: (name: string, updatedData?: any) => void
+  handleRequiredFieldBlur: (name: string, updatedData?: any) => void,
+  rootRef?: RefObject<HTMLElement>,
 ) {
   /* istanbul ignore next */
   useEffect(() => {
@@ -16,7 +17,8 @@ export function useSyncAutofillFields(
         const updated: Record<string, string> = {};
 
         fields.forEach((field) => {
-          const input = document.querySelector<HTMLInputElement>(`goa-input[name="${field}"]`);
+          const root = rootRef?.current ?? document;
+          const input = root.querySelector<HTMLInputElement>(`goa-input[name="${field}"]`);
           if (input && input.value && !formData?.[field]) {
             updated[field] = input.value;
           }
