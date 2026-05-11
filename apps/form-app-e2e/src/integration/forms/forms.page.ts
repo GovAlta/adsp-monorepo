@@ -199,6 +199,90 @@ class FormsPage {
   formSectionTitle(sectionTitle) {
     return cy.xpath(`//tbody/tr/td/goa-text [text()="${sectionTitle}"]`);
   }
+
+  formFullNameFirstNameField() {
+    return cy.xpath(
+      '//h3[text()="Full name"]//following-sibling::goa-container//goa-form-item[@label="First name"]/goa-input'
+    );
+  }
+
+  formFullNameMiddleNameField() {
+    return cy.xpath(
+      '//h3[text()="Full name"]//following-sibling::goa-container//goa-form-item[@label="Middle name"]/goa-input'
+    );
+  }
+
+  formFullNameLastNameField() {
+    return cy.xpath(
+      '//h3[text()="Full name"]//following-sibling::goa-container//goa-form-item[@label="Last name"]/goa-input'
+    );
+  }
+
+  formFullNameDobFirstNameField() {
+    return cy.xpath(
+      '//h3[text()="Full name and date of birth"]//following-sibling::goa-container//goa-form-item[@label="First name"]/goa-input'
+    );
+  }
+
+  formFullNameDobMiddleNameField() {
+    return cy.xpath(
+      '//h3[text()="Full name and date of birth"]//following-sibling::goa-container//goa-form-item[@label="Middle name"]/goa-input'
+    );
+  }
+
+  formFullNameDobLastNameField() {
+    return cy.xpath(
+      '//h3[text()="Full name and date of birth"]//following-sibling::goa-container//goa-form-item[@label="Last name"]/goa-input'
+    );
+  }
+
+  formFullNameDobDateOfBirthField() {
+    return cy.xpath(
+      '//h3[text()="Full name and date of birth"]//following-sibling::goa-container//goa-form-item[@label="Date of birth"]/goa-input'
+    );
+  }
+
+  formAlbertaPostalAddressStreetField() {
+    return cy.xpath(
+      '//h3[text()="Alberta mailing address"]//following-sibling::goa-container//goa-form-item[@label="Street address or P.O. box"]//goa-input'
+    );
+  }
+
+  formAlbertaPostalAddressCityField() {
+    return cy.xpath(
+      '//h3[text()="Alberta mailing address"]//following-sibling::goa-container//goa-form-item[@label="City"]/goa-input'
+    );
+  }
+
+  formAlbertaPostalAddressPostalCodeField() {
+    return cy.xpath(
+      '//h3[text()="Alberta mailing address"]//following-sibling::goa-container//goa-form-item[@label="Postal code"]/goa-input'
+    );
+  }
+
+  formCanadianPostalAddressStreetField() {
+    return cy.xpath(
+      '//h3[text()="Canadian mailing address"]//following-sibling::goa-container//goa-form-item[@label="Street address or P.O. box"]//goa-input'
+    );
+  }
+
+  formCanadianPostalAddressCityField() {
+    return cy.xpath(
+      '//h3[text()="Canadian mailing address"]//following-sibling::goa-container//goa-form-item[@label="City"]/goa-input'
+    );
+  }
+
+  formCanadianPostalAddressProvinceDropdown() {
+    return cy.xpath(
+      '//h3[text()="Canadian mailing address"]//following-sibling::goa-container//goa-form-item[@label="Province"]/goa-dropdown'
+    );
+  }
+
+  formCanadianPostalAddressPostalCodeField() {
+    return cy.xpath(
+      '//h3[text()="Canadian mailing address"]//following-sibling::goa-container//goa-form-item[@label="Postal code"]/goa-input'
+    );
+  }
 }
 
 export default FormsPage;
