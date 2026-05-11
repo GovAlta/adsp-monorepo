@@ -47,7 +47,6 @@ export const FormTenant = () => {
 
   useEffect(() => {
     if (tenant) {
-      console.log('Selecting definition', { definitionId, version, tenant: tenant.name });
       dispatch(selectedDefinition({ definitionId, version }));
     }
   }, [dispatch, definitionId, version, tenant]);
@@ -87,7 +86,6 @@ export const FormTenant = () => {
         </>
       </GoabAppHeader>
       <FeedbackNotification />
-      xxxxxxxxxxx
       <main>
         {userInitialized && (
           <section>

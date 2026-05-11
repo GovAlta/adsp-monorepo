@@ -99,18 +99,8 @@ export const FormDefinition: FunctionComponent = () => {
   const { definition, initialized: definitionInitialized } = useSelector(definitionSelector);
   const busy = useSelector(busySelector);
 
-  console.log('FormDefinition render', {
-    definitionId,
-    version,
-    tenant: tenant?.name,
-    user: user?.name,
-    definition,
-    definitionInitialized,
-  });
-
   useEffect(() => {
     if (tenant) {
-      console.log('Selecting definition FORM DEFINITION', { definitionId, version, tenant: tenant.name });
       dispatch(selectedDefinition({ definitionId, version }));
     }
   }, [dispatch, definitionId, version, tenant]);
@@ -124,7 +114,6 @@ export const FormDefinition: FunctionComponent = () => {
         (definition ? (
           <ScheduledIntake definition={definition}>
             <Routes>
-              hhhhhhhhhhhh
               <Route path="/draft" element={<AnonymousForm />} />
               <Route path="/forms" element={<Forms definition={definition} />} />
               <Route path="/:formId" element={<Form />} />

@@ -180,11 +180,13 @@ describe('form slice unit tests', () => {
         saved: null,
       };
       const meta = {
-        args: 'TEST1',
+        arg: {
+          definitionId: 'TEST1',
+        }
       };
       const action = { type: selectedDefinition.fulfilled, meta };
       const definition = formReducer(clonedDefinitionToTest, action);
-      expect(definition.definitions.TEST.id).not.toEqual(meta.args);
+      expect(definition.definitions.TEST.id).not.toEqual(meta.arg);
       expect(definition.form).toBeNull();
       expect(Object.getOwnPropertyNames(definition.data)).toEqual(expect.arrayContaining([]));
       expect(Object.getOwnPropertyNames(definition.files)).toEqual(expect.arrayContaining([]));
