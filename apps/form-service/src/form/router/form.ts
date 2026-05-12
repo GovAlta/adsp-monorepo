@@ -398,7 +398,7 @@ export function createForm(
 
       if (submit && form.definition.customSubmissionEvent?.namespace && form.definition.customSubmissionEvent?.name) {
         const customEvent = customFormSubmitted(apiId, user, form, formSubmission, dryRun);
-        eventService.send(customEvent);
+        await sendCustomEvent(directory, tokenProvider, logger, customEvent);
       }
 
       if (definition.supportTopic) {
@@ -709,7 +709,7 @@ export function formOperation(
           result.definition.customSubmissionEvent?.name
         ) {
           const customEvent = customFormSubmitted(apiId, user, result, formSubmissionResult, dryRun);
-          eventService.send(customEvent);
+          await sendCustomEvent(directory, tokenProvider, logger, customEvent);
         }
       }
 
