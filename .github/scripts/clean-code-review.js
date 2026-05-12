@@ -182,7 +182,7 @@ async function reviewWithGitHubModels(fileContent, fileName, systemPrompt) {
         { role: 'user', content: userMessage },
       ],
       temperature: 0.1,
-      max_tokens: 2000,
+      max_tokens: 4000,
     }),
   });
 
