@@ -429,7 +429,7 @@ async function sendCustomEvent(
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
   logger: Logger,
-  event: DomainEvent & { namespace: string }
+  event: DomainEvent & { namespace: string },
 ): Promise<void> {
   try {
     const eventServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:event-service:v1`);
@@ -443,7 +443,7 @@ async function sendCustomEvent(
         timestamp: event.timestamp.toISOString(),
         tenantId: event.tenantId?.toString(),
       },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
 
     logger.debug(`Sent custom event ${event.namespace}:${event.name}`, {
@@ -905,6 +905,8 @@ export function createFormRouter({
       logger,
       repository,
       submissionRepository,
+      directory,
+      tokenProvider,
       eventService,
       commentService,
       notificationService,
@@ -935,7 +937,7 @@ export function createFormRouter({
       ]),
     ),
     getForm(repository),
-    formOperation(apiId, logger, eventService, notificationService, queueTaskService, submissionRepository, pdfService),
+    formOperation(apiId, logger, directory, tokenProvider, eventService, notificationService, queueTaskService, submissionRepository, pdfService),
   );
   router.delete(
     '/forms/:formId',
