@@ -72,8 +72,8 @@ export class FormEntity implements Form {
   constructor(
     private repository: FormRepository,
     tenantId: AdspId,
-    public definition: FormDefinitionEntity,
-    public applicant: Subscriber,
+    public definition: FormDefinitionEntity | null,
+    public applicant: Subscriber | null,
     form: Omit<Form, 'definition' | 'applicant'>,
     public hash: string = null
   ) {

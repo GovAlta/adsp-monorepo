@@ -568,7 +568,7 @@ describe('form router', () => {
       const page = {};
 
       repositoryMock.find.mockResolvedValueOnce({
-        results: [new FormEntity(repositoryMock, tenantId, definition, subscriber, formInfo)],
+        results: [new FormEntity(repositoryMock, tenantId, null, subscriber, formInfo)],
         page,
       });
 
