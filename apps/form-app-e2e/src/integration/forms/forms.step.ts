@@ -111,14 +111,46 @@ When('the user enters {string} in a text area field labelled {string}', function
   formsObj.formTextAreaField(label).shadow().find('textarea').clear().type(text, { force: true, delay: 200 });
 });
 
+When('the user enters {string} in a numeric field labelled {string}', function (text: string, label) {
+  formsObj.formNumericField(label).shadow().find('input').clear().type(text, { force: true, delay: 200 });
+});
+
 When('the user enters {string} in a date picker labelled {string}', function (date: string, label) {
   formsObj.formDateInput(label).shadow().find('input').clear().type(date, { force: true });
+});
+
+When('the user enters {string} in a time picker labelled {string}', function (time: string, label) {
+  formsObj.formTimeInput(label).shadow().find('input').clear().type(time, { force: true });
 });
 
 When('the user enters {string} in a dropdown labelled {string}', function (value: string, label) {
   formsObj.formDropdown(label).shadow().find('input').click({ force: true });
   formsObj.formDropdown(label).shadow().find('goa-popover').find('li').contains(value).click({ force: true });
 });
+
+When(
+  'the user uploads a file of {string} using file upload button for {string}',
+  function (fileName: string, label: string) {
+    formsObj
+      .formFileUploadButton(label)
+      .scrollIntoView()
+      .find('input[type="file"]', { includeShadowDom: true })
+      .selectFile('src/fixtures/' + fileName, { force: true });
+    cy.wait(1000);
+  }
+);
+
+When(
+  'the user uploads a file of {string} using drag and drop zone for {string}',
+  function (fileName: string, label: string) {
+    formsObj
+      .formFileDragDropZone(label)
+      .scrollIntoView()
+      .find('input[type="file"]', { includeShadowDom: true })
+      .selectFile('src/fixtures/' + fileName, { force: true });
+    cy.wait(1000);
+  }
+);
 
 When('the user clicks Next button in the form', function () {
   formsObj.formNextButton().shadow().find('button').click({ force: true });
@@ -211,6 +243,22 @@ Then(
         break;
       default:
         expect(requiredOrNot).to.be.oneOf(['required', 'not required']);
+    }
+  }
+);
+
+Then(
+  'the user {string} validation error on the summary of {string} for {string}',
+  function (viewOrNot, sectionName, label: string) {
+    switch (viewOrNot) {
+      case 'should view':
+        formsObj.formSummaryPageSectionRowValueError(sectionName, label).should('not.exist');
+        break;
+      case 'should not view':
+        formsObj.formSummaryPageSectionRowValueError(sectionName, label).should('not.exist');
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['should view', 'should not view']);
     }
   }
 );

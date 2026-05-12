@@ -170,3 +170,41 @@ Feature: Form app
     And the user views "Radio group is required" validation error message under "Radio group" field of "Controls" on summary page
     And the user views "Data schema enumeration is required" validation error message under "Data schema enumeration" field of "Controls" on summary page
     And the user views "Social insurance number is invalid" validation error message under "Social insurance number" field of "Standard controls" on summary page
+
+  # TEST DATA: regression-control-examples is created with all types of control examples
+  @TEST_CS-4003 @regression
+  Scenario: As a form user, I can use basic controls in a form
+    Given an anonymous applicant goes to "regression-control-examples" application
+    Then the user views an anonymous form draft of "regression-control-examples"
+    When the user clicks "Controls" task on task list page
+    And the user enters "MySingleLineText" in a text field labelled "Single line textbox"
+    And the user enters "MyTextAreaText" in a text area field labelled "Multiline text area"
+    And the user enters "11.23" in a numeric field labelled "Decimal input"
+    And the user enters "100" in a numeric field labelled "Integer input with increment"
+    And the user "selects" a checkbox labelled "Checkbox (required)"
+    And the user selects "Yes" radio button for the question of "Radio group"
+    And the user enters "1970-10-30" in a date picker labelled "Value a"
+    And the user enters "16:25:10" in a time picker labelled "Value b"
+    # CS-4900 Date time control is rendered as time control in forms
+    # And the user enters "2020-01-10 11:10:00 PM" in a time picker labelled "Value c"
+    And the user enters "Option B" in a dropdown labelled "Data schema enumeration"
+    And the user enters "Designer" in a dropdown labelled "Register based enumeration"
+    And the user enters "border" in a dropdown labelled "API based enumeration"
+    # File upload operations get request rejected because captcha verification not successful (401)
+    # And the user uploads a file of "test.pdf" using file upload button for "File A"
+    # And the user uploads a file of "test-doc.txt" using drag and drop zone for "File B"
+    And the user clicks Back to application overview link on the form page
+    And the user clicks "Summary" task on task list page
+    Then the user views the summary of "Controls" with "MySingleLineText" as "not required" "Single line textbox"
+    And the user views the summary of "Controls" with "MyTextAreaText" as "not required" "Multiline text area"
+    And the user views the summary of "Controls" with "11.23" as "not required" "Decimal input"
+    And the user views the summary of "Controls" with "100" as "not required" "Integer input with increment"
+    And the user views the summary of "Controls" with "Yes" as "required" "Checkbox"
+    And the user views the summary of "Controls" with "Yes" as "required" "Radio group"
+    And the user views the summary of "Controls" with "1970-10-30" as "not required" "Value a"
+    And the user views the summary of "Controls" with "16:25:10" as "not required" "Value b"
+    And the user views the summary of "Controls" with "Option B" as "not required" "Data schema enumeration"
+    And the user views the summary of "Controls" with "Designer" as "not required" "Register based enumeration"
+    And the user "should not view" validation error on the summary of "Controls" for "Register based enumeration"
+    And the user views the summary of "Controls" with "border" as "not required" "API based enumeration"
+    And the user "should not view" validation error on the summary of "Controls" for "API based enumeration"
