@@ -7,7 +7,6 @@
  */
 
 const { Octokit } = require('@octokit/rest');
-const fetch = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
@@ -170,7 +169,7 @@ ${jiraSection}`;
 async function reviewWithGitHubModels(fileContent, fileName, systemPrompt) {
   const userMessage = `Review this file: ${fileName}\n\n\`\`\`\n${fileContent}\n\`\`\``;
 
-  const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
+  const response = await globalThis.fetch('https://models.inference.ai.azure.com/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -254,16 +253,26 @@ async function postReview(octokit, comments, hasErrors) {
       repo: REPO_NAME,
       pull_number: PR_NUMBER,
       commit_id: HEAD_SHA,
-      event: 'APPROVE',
-      body: '✅ **Clean Code Review** — No violations found. Looks good!',
+      event: 'COMMENT',
+      body: '✅ **Clean Code Review — No issues found!** The code looks good and meets all 18 Clean Code rules.',
     });
     return;
   }
 
+  const errorCount = comments.filter((c) => c.body.includes('ERROR')).length;
+  const warningCount = comments.filter((c) => c.body.includes('WARNING')).length;
+  const suggestionCount = comments.filter((c) => c.body.includes('SUGGESTION')).length;
+
+  const issueLines = [];
+  if (errorCount > 0) issueLines.push(`🔴 ${errorCount} error(s) that must be fixed before merging`);
+  if (warningCount > 0) issueLines.push(`🟡 ${warningCount} warning(s) that should be reviewed`);
+  if (suggestionCount > 0) issueLines.push(`🟢 ${suggestionCount} suggestion(s) for improvement`);
+
   const event = hasErrors ? 'REQUEST_CHANGES' : 'COMMENT';
+
   const summary = hasErrors
-    ? `🔴 **Clean Code Review** — ${comments.length} violation(s) found. Please review the comments below.`
-    : `🟡 **Clean Code Review** — ${comments.length} advisory comment(s). No blocking violations.`;
+    ? `🔴 **Clean Code Review — Issues found!**\n\nThere are issues in the code that need to be addressed before this PR can be merged:\n\n${issueLines.join('\n')}\n\nPlease review the inline comments on the changed lines for details on each issue.`
+    : `🟡 **Clean Code Review — Issues found!**\n\nThere are some items in the code that need to be reviewed:\n\n${issueLines.join('\n')}\n\nPlease review the inline comments on the changed lines for details.`;
 
   await octokit.rest.pulls.createReview({
     owner: REPO_OWNER,
