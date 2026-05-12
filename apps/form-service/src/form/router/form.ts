@@ -331,6 +331,8 @@ export function createForm(
   logger: Logger,
   repository: FormRepository,
   submissionRepository: FormSubmissionRepository,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
   eventService: EventService,
   commentService: CommentService,
   notificationService: NotificationService,
@@ -416,6 +418,44 @@ export function createForm(
       next(err);
     }
   };
+}
+
+/**
+ * Helper function to send events with custom namespace directly to event-service API.
+ * The SDK's EventService always uses the service's namespace, so for custom events
+ * we need to call the API directly.
+ */
+async function sendCustomEvent(
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  logger: Logger,
+  event: DomainEvent & { namespace: string }
+): Promise<void> {
+  try {
+    const eventServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:event-service:v1`);
+    const sendUrl = new URL('v1/events', eventServiceUrl);
+    const token = await tokenProvider.getAccessToken();
+
+    await axios.post(
+      sendUrl.href,
+      {
+        ...event,
+        timestamp: event.timestamp.toISOString(),
+        tenantId: event.tenantId?.toString(),
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    logger.debug(`Sent custom event ${event.namespace}:${event.name}`, {
+      context: 'FormRouter',
+      tenant: event.tenantId?.toString(),
+    });
+  } catch (err) {
+    logger.error(`Error sending custom event ${event.namespace}:${event.name}: ${err}`, {
+      context: 'FormRouter',
+      tenant: event.tenantId?.toString(),
+    });
+  }
 }
 
 const FORM = 'form';
@@ -622,6 +662,8 @@ export interface FormEntityWithJobId extends FormEntity {
 export function formOperation(
   apiId: AdspId,
   logger: Logger,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
   eventService: EventService,
   notificationService: NotificationService,
   queueTaskService: QueueTaskService,
