@@ -937,7 +937,17 @@ export function createFormRouter({
       ]),
     ),
     getForm(repository),
-    formOperation(apiId, logger, directory, tokenProvider, eventService, notificationService, queueTaskService, submissionRepository, pdfService),
+    formOperation(
+      apiId,
+      logger,
+      directory,
+      tokenProvider,
+      eventService,
+      notificationService,
+      queueTaskService,
+      submissionRepository,
+      pdfService,
+    ),
   );
   router.delete(
     '/forms/:formId',
