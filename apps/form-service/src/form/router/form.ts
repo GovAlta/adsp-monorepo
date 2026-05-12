@@ -396,7 +396,7 @@ export function createForm(
 
       eventService.send(event);
 
-      if (submit && form.definition.customSubmissionEvent) {
+      if (submit && form.definition.customSubmissionEvent?.namespace && form.definition.customSubmissionEvent?.name) {
         const customEvent = customFormSubmitted(apiId, user, form, formSubmission, dryRun);
         eventService.send(customEvent);
       }
@@ -703,7 +703,11 @@ export function formOperation(
       if (event) {
         eventService.send(event);
 
-        if (request.operation === SUBMIT_FORM_OPERATION && result.definition.customSubmissionEvent) {
+        if (
+          request.operation === SUBMIT_FORM_OPERATION &&
+          result.definition.customSubmissionEvent?.namespace &&
+          result.definition.customSubmissionEvent?.name
+        ) {
           const customEvent = customFormSubmitted(apiId, user, result, formSubmissionResult, dryRun);
           eventService.send(customEvent);
         }
