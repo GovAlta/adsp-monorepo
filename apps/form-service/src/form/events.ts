@@ -358,9 +358,14 @@ export function customFormSubmitted(
   form: FormEntity,
   submission?: FormSubmissionEntity,
   dryRun?: boolean,
-): DomainEvent {
+): DomainEvent & { namespace: string } {
+  if (!form.definition.customSubmissionEvent) {
+    throw new Error('Form definition must have customSubmissionEvent configured to create custom submission event.');
+  }
+
   const formResponse = mapForm(apiId, form);
   return {
+    namespace: form.definition.customSubmissionEvent.namespace,
     name: form.definition.customSubmissionEvent.name,
     timestamp: form.submitted,
     tenantId: form.tenantId,
