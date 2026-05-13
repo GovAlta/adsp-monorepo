@@ -248,6 +248,54 @@ Then(
 );
 
 Then(
+  'the user views the summary of {string} with {string} as {string} {string} under {string} for standard name control',
+  function (sectionName, value, requiredOrNot, label: string, subSection: string) {
+    switch (requiredOrNot) {
+      case 'required':
+        formsObj
+          .formSummaryPageSectionSubsectionRowLabel(sectionName, subSection, label)
+          .find('label')
+          .should('contains.text', 'required');
+        formsObj
+          .formSummaryPageSectionSubsectionRowValueForNameControl(sectionName, subSection, label)
+          .should('have.text', value);
+        break;
+      case 'not required':
+        formsObj
+          .formSummaryPageSectionSubsectionRowValueForNameControl(sectionName, subSection, label)
+          .should('have.text', value);
+        break;
+      default:
+        expect(requiredOrNot).to.be.oneOf(['required', 'not required']);
+    }
+  }
+);
+
+Then(
+  'the user views the summary of {string} with {string} as {string} {string} under {string} for standard postal address control',
+  function (sectionName, value, requiredOrNot, label: string, subSection: string) {
+    switch (requiredOrNot) {
+      case 'required':
+        formsObj
+          .formSummaryPageSectionSubsectionRowLabel(sectionName, subSection, label)
+          .find('label')
+          .should('contains.text', 'required');
+        formsObj
+          .formSummaryPageSectionSubsectionRowValueForAddressControl(sectionName, subSection, label)
+          .should('have.text', value);
+        break;
+      case 'not required':
+        formsObj
+          .formSummaryPageSectionSubsectionRowValueForAddressControl(sectionName, subSection, label)
+          .should('have.text', value);
+        break;
+      default:
+        expect(requiredOrNot).to.be.oneOf(['required', 'not required']);
+    }
+  }
+);
+
+Then(
   'the user {string} validation error on the summary of {string} for {string}',
   function (viewOrNot, sectionName, label: string) {
     switch (viewOrNot) {
@@ -421,40 +469,43 @@ Then(
   }
 );
 
-When('the user enters {string} in Social insurance number control', function (socialInsuranceNumber: string) {
-  formsObj.formSocialInsuranceNumberField().shadow().find('input').type(socialInsuranceNumber);
-});
+When(
+  'the user enters {string} in Social insurance number control under {string} label',
+  function (socialInsuranceNumber: string, label: string) {
+    formsObj.formSocialInsuranceNumberField(label).shadow().find('input').type(socialInsuranceNumber);
+  }
+);
 
-// Due to full name control and full name and DOB control have the same field labels, this step only works with full name control with h3 label with Full name
-When('the user enters {string} in full name control under Full name label', function (fullName: string) {
+// Due to full name control and full name and DOB control have the same field labels, this step only works with full name control with h3 label
+When('the user enters {string} in full name control under {string} label', function (fullName: string, label: string) {
   const fullNameParts = fullName.split(',').map((part) => part.trim());
   if (fullNameParts.length !== 3) {
     expect.fail('Full name should consist of three parts separated by commas: first name, middle name, and last name.');
   }
   formsObj
-    .formFullNameFirstNameField()
+    .formFullNameFirstNameField(label)
     .shadow()
     .find('input')
     .clear()
     .type(fullNameParts[0], { force: true, delay: 200 });
   formsObj
-    .formFullNameMiddleNameField()
+    .formFullNameMiddleNameField(label)
     .shadow()
     .find('input')
     .clear()
     .type(fullNameParts[1], { force: true, delay: 200 });
   formsObj
-    .formFullNameLastNameField()
+    .formFullNameLastNameField(label)
     .shadow()
     .find('input')
     .clear()
     .type(fullNameParts[2], { force: true, delay: 200 });
 });
 
-// Due to full name control and full name and DOB control have the same field labels, this step only works with full name and dob control with h3 label with Full name and date of birth
+// Due to full name control and full name and DOB control have the same field labels, this step only works with full name and dob control with h3 label
 When(
-  'the user enters {string} in full name and DOB control under Full name and date of birth label',
-  function (fullName: string) {
+  'the user enters {string} in full name and DOB control under {string} label',
+  function (fullName: string, label: string) {
     const fullNameDobParts = fullName.split(',').map((part) => part.trim());
     if (fullNameDobParts.length !== 4) {
       expect.fail(
@@ -462,26 +513,26 @@ When(
       );
     }
     formsObj
-      .formFullNameDobFirstNameField()
+      .formFullNameDobFirstNameField(label)
       .shadow()
       .find('input')
       .clear()
       .type(fullNameDobParts[0], { force: true, delay: 200 });
     formsObj
-      .formFullNameDobMiddleNameField()
+      .formFullNameDobMiddleNameField(label)
       .shadow()
       .find('input')
       .clear()
       .type(fullNameDobParts[1], { force: true, delay: 200 });
     formsObj
-      .formFullNameDobLastNameField()
+      .formFullNameDobLastNameField(label)
       .shadow()
       .find('input')
       .clear()
       .type('{selectall}{backspace}')
       .type(fullNameDobParts[2], { force: true, delay: 200 });
     formsObj
-      .formFullNameDobDateOfBirthField()
+      .formFullNameDobDateOfBirthField(label)
       .shadow()
       .find('input')
       .clear({ force: true })
@@ -490,8 +541,8 @@ When(
 );
 
 When(
-  'the user enters {string} in Alberta postal address control under Alberta mailing address label',
-  function (postalAddress: string) {
+  'the user enters {string} in Alberta postal address control under {string} label',
+  function (postalAddress: string, label: string) {
     const addressParts = postalAddress.split(',').map((part) => part.trim());
     if (addressParts.length !== 3) {
       expect.fail(
@@ -499,19 +550,19 @@ When(
       );
     }
     formsObj
-      .formAlbertaPostalAddressStreetField()
+      .formAlbertaPostalAddressStreetField(label)
       .shadow()
       .find('input')
       .clear()
       .type(addressParts[0], { force: true, delay: 200 });
     formsObj
-      .formAlbertaPostalAddressCityField()
+      .formAlbertaPostalAddressCityField(label)
       .shadow()
       .find('input')
       .clear()
       .type(addressParts[1], { force: true, delay: 200 });
     formsObj
-      .formAlbertaPostalAddressPostalCodeField()
+      .formAlbertaPostalAddressPostalCodeField(label)
       .shadow()
       .find('input')
       .clear()
@@ -520,8 +571,8 @@ When(
 );
 
 When(
-  'the user enters {string} in Canada postal address control under Canadian mailing address label',
-  function (postalAddress: string) {
+  'the user enters {string} in Canada postal address control under {string} label',
+  function (postalAddress: string, label: string) {
     const addressParts = postalAddress.split(',').map((part) => part.trim());
     if (addressParts.length !== 4) {
       expect.fail(
@@ -529,26 +580,26 @@ When(
       );
     }
     formsObj
-      .formCanadianPostalAddressStreetField()
+      .formCanadianPostalAddressStreetField(label)
       .shadow()
       .find('input')
       .clear()
       .type(addressParts[0], { force: true, delay: 200 });
     formsObj
-      .formCanadianPostalAddressCityField()
+      .formCanadianPostalAddressCityField(label)
       .shadow()
       .find('input')
       .clear()
       .type(addressParts[1], { force: true, delay: 200 });
     formsObj
-      .formCanadianPostalAddressPostalCodeField()
+      .formCanadianPostalAddressPostalCodeField(label)
       .shadow()
       .find('input')
       .clear()
       .type(addressParts[3], { force: true, delay: 200 });
-    formsObj.formCanadianPostalAddressProvinceDropdown().shadow().find('input').click({ force: true });
+    formsObj.formCanadianPostalAddressProvinceDropdown(label).shadow().find('input').click({ force: true });
     formsObj
-      .formCanadianPostalAddressProvinceDropdown()
+      .formCanadianPostalAddressProvinceDropdown(label)
       .shadow()
       .find('goa-popover')
       .find('li')
