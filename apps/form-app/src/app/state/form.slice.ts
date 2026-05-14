@@ -469,6 +469,7 @@ export const saveForm = createAsyncThunk(
           return await hashData(data);
         }
       } catch (err) {
+        dispatch(formActions.setSaving(false));
         if (axios.isAxiosError(err)) {
           // A 400 error likely means the data doesn't pass schema validation.
           // No need to generate a feedback notification since the form itself should show such validation errors.
