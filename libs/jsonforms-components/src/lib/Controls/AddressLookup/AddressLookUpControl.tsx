@@ -177,16 +177,26 @@ export const AddressLookUpControl = (props: AddressLookUpProps): JSX.Element => 
 
   const handleRequiredFieldBlur = (name: string, value?: string) => {
     const err = { ...errors };
-    if (!data?.[name] || data[name] === '' || data?.[name] === undefined) {
+    const addressValue = name in address ? address[name as keyof Address] : undefined;
+
+    const liveInputValue =
+      value ??
+      addressContainerRef.current?.querySelector<HTMLInputElement>(`goa-input[name="${name}"]`)?.value ??
+      addressValue ??
+      data?.[name] ??
+      '';
+
+    if (liveInputValue.trim() === '') {
       err[name] = `${getAddressLookupFieldLabel(name)} is required`;
-      setErrors(err);
     } else {
-      delete errors[name];
+      delete err[name];
     }
+
+    setErrors(err);
     setSuggestions([]);
     setOpen(false);
 
-    if (value) {
+    if (name === 'addressLine1' && value !== undefined) {
       const newAddress = { ...address, addressLine1: value };
       setAddress(newAddress);
       updateFormData(newAddress);
