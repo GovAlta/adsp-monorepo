@@ -56,7 +56,7 @@ const Dashboard = (): JSX.Element => {
 
   function getKeycloakAdminPortalUsers() {
     return session?.realm
-      ? `${keycloakConfig.url}/admin/${session.realm}/console/#/realms/${session.realm}/users`
+      ? `${keycloakConfig.url}/admin/${session.realm}/console/#/${session.realm}/users`
       : keycloakConfig.url;
   }
 
