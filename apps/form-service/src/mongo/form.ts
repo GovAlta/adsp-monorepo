@@ -7,6 +7,7 @@ import { FormDefinitionRepository } from '../form';
 import { NotificationService, Subscriber } from '../notification';
 import { formSchema } from './schema';
 import { FormDoc } from './types';
+import { getVersionFromDefinitionId } from './helpers';
 
 export class MongoFormRepository implements FormRepository {
   private model: Model<Document & FormDoc>;
@@ -14,7 +15,7 @@ export class MongoFormRepository implements FormRepository {
   constructor(
     private logger: Logger,
     private definitionRepository: FormDefinitionRepository,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
   ) {
     this.model = model<Document & FormDoc>('form', formSchema);
     this.model.on('index', (err: unknown) => {
@@ -33,8 +34,19 @@ export class MongoFormRepository implements FormRepository {
     }
 
     if (criteria?.definitionIdEquals) {
-      //check for case insensitivity.
-      query.definitionId = { $regex: `${criteria?.definitionIdEquals}`, $options: 'i' };
+      const escapedDefinitionId = criteria.definitionIdEquals.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      if (criteria?.revisionEquals !== undefined && criteria?.revisionEquals !== null) {
+        query.definitionId = {
+          $regex: `^${escapedDefinitionId}-v${criteria.revisionEquals}$`,
+          $options: 'i',
+        };
+      } else {
+        query.definitionId = {
+          $regex: `^${escapedDefinitionId}(?:-v\\d+)?$`,
+          $options: 'i',
+        };
+      }
     }
 
     if (criteria?.statusEquals) {
@@ -86,25 +98,64 @@ export class MongoFormRepository implements FormRepository {
 
   get(tenantId: AdspId, id: string): Promise<FormEntity> {
     return new Promise<FormEntity>((resolve, reject) => {
-      this.model.findOne({ tenantId: tenantId.toString(), id }, null, { lean: true }).exec(async (err, doc) => {
-        if (err) {
-          reject(err);
-        } else {
-          const entity = doc ? this.fromDoc(doc) : null;
-          resolve(entity);
-        }
-      });
+      const rawId = id;
+      const cleanId = rawId.replace(/-v\d+$/, '');
+
+      this.model
+        .findOne({ tenantId: tenantId.toString(), id: cleanId }, null, { lean: true })
+        .exec(async (err, doc) => {
+          if (err) {
+            reject(err);
+          } else {
+            const entity = doc ? this.fromDoc(doc) : null;
+            resolve(entity);
+          }
+        });
     });
   }
 
   async save(entity: FormEntity): Promise<FormEntity> {
     try {
+      let version = entity.version !== undefined && entity.version !== null ? Number(entity.version) : undefined;
+
+      if (version === undefined && entity.definition?.version !== undefined) {
+        version = entity.definition.version;
+      }
+
       const updateDoc = this.toDoc(entity);
+
+      if (version !== undefined) {
+        updateDoc.definitionId = `${updateDoc.definitionId}-v${version}`;
+
+        updateDoc.version = version;
+      }
+
       const { data, files, status, lastAccessed, locked, submitted, hash, ...insertDoc } = updateDoc;
+
+      const query: Record<string, unknown> = {
+        tenantId: entity.tenantId.toString(),
+        id: entity.id, // versionedId,
+      };
+
       const doc = await this.model.findOneAndUpdate(
-        { tenantId: entity.tenantId.toString(), id: entity.id },
-        { $setOnInsert: insertDoc, $set: { data, files, status, lastAccessed, locked, submitted, hash } },
-        { upsert: true, new: true, lean: true }
+        query,
+        {
+          $setOnInsert: insertDoc,
+          $set: {
+            data,
+            files,
+            status,
+            lastAccessed,
+            locked,
+            submitted,
+            hash,
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+          lean: true,
+        },
       );
 
       return this.fromDoc(doc);
@@ -117,12 +168,10 @@ export class MongoFormRepository implements FormRepository {
     }
   }
 
-  delete(entity: FormEntity): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
-      this.model
-        .findOneAndDelete({ tenantId: entity.tenantId.toString(), id: entity.id })
-        .exec((err, doc) => (err ? reject(err) : resolve(!!doc)));
-    });
+  async delete(entity: FormEntity): Promise<boolean> {
+    const doc = await this.model.findOneAndDelete({ tenantId: entity.tenantId.toString(), id: entity.id }).lean();
+
+    return !!doc;
   }
 
   private toDoc(entity: FormEntity): FormDoc {
@@ -152,10 +201,11 @@ export class MongoFormRepository implements FormRepository {
       data: entity.data,
       files: Object.entries(entity.files).reduce(
         (fs, [key, f]) => ({ ...fs, [key.replace('.', ':')]: f?.toString() }),
-        {}
+        {},
       ),
       dryRun: entity.dryRun,
       registeredId: entity.registeredId,
+      version: entity.version,
     };
   }
 
@@ -171,6 +221,8 @@ export class MongoFormRepository implements FormRepository {
       // this is necessary for backwards compatibility with index.
       applicant = await this.notificationService.getSubscriber(tenantId, AdspId.parse(doc.applicantId));
     }
+
+    const version = getVersionFromDefinitionId(doc.definitionId);
 
     return new FormEntity(
       this,
@@ -191,11 +243,12 @@ export class MongoFormRepository implements FormRepository {
         securityClassification: doc.securityClassification,
         files: Object.entries(doc.files).reduce(
           (fs, [key, f]) => ({ ...fs, [key.replace(':', '.')]: f ? AdspId.parse(f) : null }),
-          {}
+          {},
         ),
         dryRun: doc.dryRun,
+        version: version,
       },
-      doc.hash
+      doc.hash,
     );
   };
 }

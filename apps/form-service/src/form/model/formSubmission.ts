@@ -34,7 +34,7 @@ export class FormSubmissionEntity implements FormSubmission {
     user: User,
     repository: FormSubmissionRepository,
     form: FormEntity,
-    id: string
+    id: string,
   ): Promise<FormSubmissionEntity> {
     const formSubmission = new FormSubmissionEntity(
       repository,
@@ -57,7 +57,7 @@ export class FormSubmissionEntity implements FormSubmission {
         dryRun: form.dryRun,
       },
       form.definition,
-      form
+      form,
     );
 
     return await repository.save(formSubmission);
@@ -68,7 +68,7 @@ export class FormSubmissionEntity implements FormSubmission {
     tenantId: AdspId,
     formSubmission: FormSubmission,
     public definition?: FormDefinitionEntity,
-    public form?: FormEntity
+    public form?: FormEntity,
   ) {
     this.id = formSubmission.id;
     this.created = formSubmission.created;

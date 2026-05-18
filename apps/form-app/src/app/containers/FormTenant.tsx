@@ -10,7 +10,6 @@ import {
   formSelector,
   initializeTenant,
   logoutUser,
-  selectedDefinition,
   tenantSelector,
   userSelector,
 } from '../state';
@@ -28,14 +27,12 @@ const AccountActionsDiv = styled.div`
 export const FormTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
   const location = useLocation();
-  const urlParams = new URLSearchParams(location.search);
   const dispatch = useDispatch<AppDispatch>();
   const tenant = useSelector(tenantSelector);
   const userForm = useSelector(formSelector);
 
   const configInitialized = useSelector(configInitializedSelector);
   const { initialized: userInitialized, user } = useSelector(userSelector);
-  const { definitionId } = useParams();
 
   useEffect(() => {
     if (configInitialized) {
@@ -43,13 +40,6 @@ export const FormTenant = () => {
     }
   }, [configInitialized, tenantName, dispatch]);
 
-  const version = urlParams.get('version');
-
-  useEffect(() => {
-    if (tenant) {
-      dispatch(selectedDefinition({ definitionId, version }));
-    }
-  }, [dispatch, definitionId, version, tenant]);
   useFeedbackLinkHandler();
 
   const { definition } = useSelector(definitionSelector);

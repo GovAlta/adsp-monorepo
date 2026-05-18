@@ -24,6 +24,7 @@ import { LogoutModal } from '../components/LogoutModal';
 import { SubmittedForm } from '../components/SubmittedForm';
 import { FormSupportPane } from './FormSupportPane';
 import { UserNotAuthorized } from '../components/UserNotAuthorized';
+import { selectedDefinition } from '../state';
 
 interface FormProps {
   className?: string;
@@ -41,6 +42,15 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
   const fileBusy = useSelector(fileBusySelector);
   const canSubmit = useSelector(canSubmitSelector);
   const showSubmit = useSelector(showSubmitSelector);
+
+  const version = form?.definition?.version;
+  const definitionId = form?.definition?.id;
+
+  useEffect(() => {
+    if (definitionId && version !== undefined) {
+    dispatch(selectedDefinition({ definitionId, version }));
+    }
+  }, [version, definitionId]);
 
   useEffect(() => {
     if (document.body.style.overflow === 'hidden') {
@@ -64,7 +74,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
       {definition && !definition.anonymousApply && <LogoutModal />}
       <div className={className}>
         <Container vs={1} hs={1}>
-          {form ? (
+          {form || busy.loading ? (
             !fileBusy.loading && (
               <>
                 {form?.status === 'Submitted' && <SubmittedForm definition={definition} form={form} data={data} />}

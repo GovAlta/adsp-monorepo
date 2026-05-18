@@ -18,7 +18,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
   constructor(
     private logger: Logger,
     private definitionRepository: FormDefinitionRepository,
-    private formRepository: FormRepository
+    private formRepository: FormRepository,
   ) {
     this.submissionModel = model<Document & FormSubmissionDoc>('formSubmission', formSubmissionSchema);
     this.submissionModel.on('index', (err: unknown) => {
@@ -92,7 +92,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
         .skip(skip)
         .limit(top)
         .exec((err, docs) =>
-          err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(criteria.tenantIdEquals, doc))))
+          err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(criteria.tenantIdEquals, doc)))),
         );
     }).then((docs) => ({
       results: docs,
@@ -127,7 +127,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       const doc = await this.submissionModel.findOneAndUpdate(
         { tenantId: entity.tenantId.toString(), id: entity.id },
         this.toDoc(entity),
-        { upsert: true, new: true, lean: true }
+        { upsert: true, new: true, lean: true },
       );
 
       return this.fromDoc(entity.tenantId, doc);
@@ -165,7 +165,7 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
       formData: entity.formData,
       formFiles: Object.entries(entity.formFiles).reduce(
         (fs, [key, f]) => ({ ...fs, [key.replace('.', ':')]: f?.toString() }),
-        {} as Record<string, string>
+        {} as Record<string, string>,
       ),
       disposition: entity.disposition,
       hash: entity.hash,
@@ -195,14 +195,14 @@ export class MongoFormSubmissionRepository implements FormSubmissionRepository {
         formData: doc.formData,
         formFiles: Object.entries(doc.formFiles).reduce(
           (fs, [key, f]) => ({ ...fs, [key.replace(':', '.')]: f ? AdspId.parse(f) : null }),
-          {} as Record<string, AdspId>
+          {} as Record<string, AdspId>,
         ),
         disposition: doc.disposition,
         hash: doc.hash,
         dryRun: doc.dryRun,
       },
       definition,
-      form
+      form,
     );
   };
 }

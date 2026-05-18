@@ -28,6 +28,8 @@ export function mapFormDefinition(entity: FormDefinition, revision: number, inta
 }
 
 export function mapForm(apiId: AdspId, entity: FormEntityWithJobId, includeData = false) {
+  const version = entity.version;
+  const definitionId = entity.definition?.id.replace(/-v\d+$/, '');
   return {
     urn: `${apiId}:/forms/${entity.id}`,
     id: entity.id,
@@ -35,9 +37,10 @@ export function mapForm(apiId: AdspId, entity: FormEntityWithJobId, includeData 
     securityClassification: entity?.securityClassification,
     definition: entity.definition
       ? {
-          id: entity.definition.id,
+          id: definitionId,
           name: entity.definition.name,
           description: entity.definition.description,
+          version: version,
         }
       : null,
     formDraftUrl: entity.formDraftUrl,
@@ -68,7 +71,7 @@ export function mapFormWithFormSubmission(
   apiId: AdspId,
   entity: FormEntityWithJobId,
   submissionEntity: FormSubmissionEntity,
-  includeData = false
+  includeData = false,
 ) {
   const result = mapForm(apiId, entity, includeData);
   return {

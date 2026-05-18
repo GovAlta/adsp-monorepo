@@ -38,14 +38,16 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
   const urlParams = new URLSearchParams(location.search);
   const AUTO_CREATE_PARAM = 'autoCreate';
 
-  const version = urlParams.get('version');
+  const versionParam = urlParams.get('version');
+  const version = versionParam !== null ? Number(versionParam) : undefined;
 
   const { initialized, form, ambiguous } = useSelector(defaultUserFormSelector);
   const busy = useSelector(busySelector);
+  const hasSubmittedForm = initialized && form?.id && form?.status === FormStatus.submitted;
 
   useEffect(() => {
     if (definition?.id && user) {
-      dispatch(findUserForms({ definitionId: definition.id }));
+      dispatch(findUserForms({ definitionId: definition.id, version: version }));
     }
   }, [dispatch, definition?.id, user?.id]);
 
@@ -53,37 +55,59 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
     return <Navigate to="forms" />;
   }
 
-  if (initialized && form?.id && form?.status === FormStatus.submitted) {
+  if (hasSubmittedForm) {
     return <Navigate to={`${form.id}`} />;
   }
 
-  return definition.anonymousApply ? (
-    <Navigate to="draft" />
-  ) : (
-    initialized &&
-      (form?.id ? (
-        <ContinueApplication
-          definition={definition}
-          form={form}
-          onContinue={() => navigate(`${form.id}${version ? `?version=${version}` : ''}`)}
-        />
-      ) : ambiguous ? (
-        <Navigate to="forms" />
-      ) : (
-        <StartApplication
-          definition={definition}
-          autoCreate={urlParams.get(AUTO_CREATE_PARAM) === 'true'}
-          canCreate={!busy.creating}
-          onCreate={async () => {
-            const { payload } = await dispatch(createForm(definition.id));
-            const form = payload as FormObject;
-            if (form?.id) {
-              navigate(`${form?.id}`);
-            }
-          }}
-        />
-      ))
-  );
+ const getVersionQuery = () => (version !== undefined ? `?version=${version}` : '');
+
+ const renderContinueApplication = () => (
+   <ContinueApplication
+     definition={definition}
+     form={form}
+     onContinue={() => navigate(`${form.id}${getVersionQuery()}`)}
+   />
+ );
+
+ const renderNavigateToForms = () => <Navigate to="forms" />;
+
+ const renderStartApplication = () => (
+   <StartApplication
+     definition={definition}
+     autoCreate={urlParams.get(AUTO_CREATE_PARAM) === 'true'}
+     canCreate={!busy.creating}
+     onCreate={async () => {
+       const { payload } = await dispatch(createForm({ definitionId: definition.id, version }));
+       const form = payload as FormObject;
+
+       if (form?.id) {
+         navigate(`${form.id}${getVersionQuery()}`);
+       }
+     }}
+   />
+ );
+
+ const renderApplicationStart = () => {
+   if (definition.anonymousApply) {
+     return <Navigate to="draft" />;
+   }
+
+   if (!initialized) {
+     return null;
+   }
+
+   if (form?.id) {
+     return renderContinueApplication();
+   }
+
+   if (ambiguous) {
+     return renderNavigateToForms();
+   }
+
+   return renderStartApplication();
+ };
+
+ return renderApplicationStart();
 };
 
 export const FormDefinition: FunctionComponent = () => {
@@ -95,7 +119,9 @@ export const FormDefinition: FunctionComponent = () => {
 
   const tenant = useSelector(tenantSelector);
   const { user } = useSelector(userSelector);
-  const version = urlParams.get('version');
+  const versionParam = urlParams.get('version');
+  const version = versionParam ? Number(versionParam) : undefined;
+
   const { definition, initialized: definitionInitialized } = useSelector(definitionSelector);
   const busy = useSelector(busySelector);
 

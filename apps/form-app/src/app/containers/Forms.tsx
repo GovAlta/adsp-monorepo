@@ -29,6 +29,7 @@ import {
 import { SignInStartApplication } from '../components/SignInStartApplication';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { DeleteFormModal } from '../components/DeleteFormModal';
+import { useLocation } from 'react-router-dom';
 
 const PageTitleDiv = styled.div`
   display: flex;
@@ -52,6 +53,12 @@ const FormDescriptionParagraph = styled.p`
   margin-top: var(--goa-space-xs);
   margin-bottom: 0;
 `;
+const FormDescriptionVersion = styled.p`
+  color: var(--goa-color-text-secondary);
+  margin-top: var(--goa-space-xs);
+  margin-bottom: 0;
+  margin-left: 1rem;
+`;
 
 const FormMetadataLabel = styled.label`
   font-weight: bold;
@@ -74,6 +81,10 @@ const FormsLayout = styled.div`
     max-width: 1024px;
     padding-bottom: var(--goa-space-xl);
   }
+`;
+
+const FormTitle = styled.div`
+  display: Flex;
 `;
 
 const FormStatusBadge: FunctionComponent<{ status: FormStatus }> = ({ status }) => {
@@ -102,9 +113,14 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
   const { form: defaultForm } = useSelector(defaultUserFormSelector);
   const canCreateDraft = useSelector(canCreateDraftSelector);
   const [formToDelete, setFormToDelete] = useState(null);
+  const location = useLocation();
+  const urlParams = new URLSearchParams(location.search);
+
+  const versionParam = urlParams.get('version');
+  const version = versionParam ? Number(versionParam) : undefined;
 
   useEffect(() => {
-    dispatch(findUserForms({ definitionId: definition?.id }));
+    dispatch(findUserForms({ definitionId: definition?.id, version: version }));
   }, [dispatch, definition]);
 
   return initialized ? (
@@ -127,7 +143,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
                   type="tertiary"
                   leadingIcon="add"
                   onClick={async () => {
-                    const form = await dispatch(createForm(definition.id)).unwrap();
+                    const form = await dispatch(createForm({ definitionId: definition.id })).unwrap();
                     if (form?.id) {
                       navigate(`../${form.id}`);
                     }
@@ -143,10 +159,19 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
             .map((form) => (
               <GoabContainer key={form.id} mb="m">
                 <FormHeaderDiv>
-                  <div>
-                    {form.definition.name}
-                    <FormDescriptionParagraph>{form.definition.description}</FormDescriptionParagraph>
-                  </div>
+                  <FormTitle>
+                    <FormDescriptionParagraph>
+                      {form.definition.description || form.definition.name}
+                    </FormDescriptionParagraph>
+                    <FormDescriptionVersion>
+                      {form?.definition?.version != null && (
+                        <div>
+                          <b>Version: </b>
+                          {form.definition.version}
+                        </div>
+                      )}
+                    </FormDescriptionVersion>
+                  </FormTitle>
                   <GoabButtonGroup alignment="end">
                     {form.definition &&
                       (form.status === FormStatus.draft ? (

@@ -34,6 +34,7 @@ export class FormEntity implements Form {
   securityClassification: SecurityClassificationType;
   dryRun: boolean;
   registeredId?: string;
+  version?: number;
 
   static async create(
     user: User,
@@ -43,7 +44,8 @@ export class FormEntity implements Form {
     formDraftUrl: string,
     applicant?: Subscriber,
     dryRun?: boolean,
-    registeredId?: string
+    version?: number,
+    registeredId?: string,
   ): Promise<FormEntity> {
     if (!(await definition.canApply(user, dryRun))) {
       throw new UnauthorizedUserError('create form', user);
@@ -64,6 +66,7 @@ export class FormEntity implements Form {
       securityClassification: definition.securityClassification,
       dryRun: dryRun,
       registeredId: registeredId,
+      version: version,
     });
 
     return await repository.save(form);
@@ -75,7 +78,7 @@ export class FormEntity implements Form {
     public definition: FormDefinitionEntity,
     public applicant: Subscriber,
     form: Omit<Form, 'definition' | 'applicant'>,
-    public hash: string = null
+    public hash: string = null,
   ) {
     this.definition = definition;
     this.tenantId = tenantId;
@@ -94,6 +97,7 @@ export class FormEntity implements Form {
     this.securityClassification = form.securityClassification || definition?.securityClassification;
     this.dryRun = form.dryRun;
     this.registeredId = form.registeredId;
+    this.version = form.version;
   }
 
   /**
@@ -114,7 +118,7 @@ export class FormEntity implements Form {
         user,
         this.tenantId,
         [FormServiceRoles.Admin, FormServiceRoles.IntakeApp, DirectoryServiceRoles.ResourceResolver],
-        true
+        true,
       ) ||
       isAllowedUser(user, this.tenantId, [
         ...(this.definition?.clerkRoles || []),
@@ -184,7 +188,7 @@ export class FormEntity implements Form {
     user: User,
     fileService: FileService,
     data: Record<string, unknown>,
-    dryRun?: boolean
+    dryRun?: boolean,
   ): Promise<FormEntity> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot update form not in draft.');
@@ -204,13 +208,13 @@ export class FormEntity implements Form {
     const currentFileUrns = new Set(
       Object.values(this.files)
         .filter((file) => !!file)
-        .map((file) => file.toString())
+        .map((file) => file.toString()),
     );
     const removedFileUrns = new Set(
       Object.values(previousFiles)
         .filter((file) => !!file)
         .map((file) => file.toString())
-        .filter((fileUrn) => !currentFileUrns.has(fileUrn))
+        .filter((fileUrn) => !currentFileUrns.has(fileUrn)),
     );
 
     for (const fileUrn of removedFileUrns) {
@@ -269,7 +273,7 @@ export class FormEntity implements Form {
     queueTaskService: QueueTaskService,
     submissionRepository: FormSubmissionRepository,
     pdfService: PdfService,
-    dryRun?: boolean
+    dryRun?: boolean,
   ): Promise<[FormEntity, FormSubmissionEntity, string]> {
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot submit form not in draft.');

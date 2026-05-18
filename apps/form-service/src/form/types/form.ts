@@ -28,11 +28,13 @@ export interface Form {
   securityClassification?: SecurityClassificationType;
   dryRun: boolean;
   registeredId?: string;
+  version?: number;
 }
 
 export interface FormCriteria {
   tenantIdEquals?: AdspId;
   definitionIdEquals?: string;
+  revisionEquals?: string;
   statusEquals?: FormStatus;
   lastAccessedBefore?: Date;
   lockedBefore?: Date;

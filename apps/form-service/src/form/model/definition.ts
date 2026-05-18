@@ -44,6 +44,7 @@ export class FormDefinitionEntity implements FormDefinition {
   includeDataInSubmission: boolean;
   registeredId?: string;
   customSubmissionEvent?: CustomSubmissionEvent;
+  version: number;
 
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
   private fileUrnPathTemplates: FileUrnPathTemplate[];
@@ -146,6 +147,7 @@ export class FormDefinitionEntity implements FormDefinition {
     notificationService: NotificationService,
     dryRun?: boolean,
     applicantInfo?: Omit<Subscriber, 'urn'>,
+    version?: number,
   ): Promise<FormEntity> {
     if (!(await this.checkScheduledIntakes(user, dryRun))) {
       throw new InvalidOperationError('Cannot create form as there is no active intake.');
@@ -174,7 +176,17 @@ export class FormDefinitionEntity implements FormDefinition {
       : null;
 
     const formDraftUrl = this.urlTemplate({ id });
-    const form = await FormEntity.create(user, repository, this, id, formDraftUrl, applicant, dryRun);
+
+    const form = await FormEntity.create(
+      user,
+      repository,
+      this,
+      id,
+      formDraftUrl,
+      applicant,
+      dryRun,
+      version ?? this.revision,
+    );
 
     return form;
   }

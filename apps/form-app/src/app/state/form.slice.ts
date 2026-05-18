@@ -33,10 +33,11 @@ interface SerializableFormDefinition {
     isAllDay: boolean;
     isUpcoming: boolean;
   };
+  version?: number;
 }
 
 interface SerializableForm {
-  definition: { id: string; name: string; description: string };
+  definition: { id: string; name: string; description: string, version?: number };
   id: string;
   urn: string;
   status: 'draft' | 'locked' | 'submitted' | 'archived';
@@ -111,15 +112,18 @@ const ajv = createDefaultAjv(standardV1JsonSchema, commonV1JsonSchema);
 
 interface SelectedDefinitionPayload {
   definitionId?: string;
-  version?: string;
+  version?: number;
 }
 
 export const selectedDefinition = createAsyncThunk(
   'form/select-definition',
   ({ definitionId, version }: SelectedDefinitionPayload, { getState, dispatch }) => {
     const { form } = getState() as AppState;
-
-    if (definitionId && !form.definitions[definitionId]) {
+    let def = definitionId;
+    if (version !== undefined) {
+      def = def + "v" + version
+    }
+    if (definitionId && !form.definitions[def]) {
       dispatch(loadDefinition({ definitionId, version }));
     }
   },
@@ -153,7 +157,7 @@ const extraRegisterUrns = (uiSchema) => {
 
 export const loadDefinition = createAsyncThunk(
   'form/load-definition',
-  async ({ definitionId, version }: { definitionId: string; version?: string }, { getState, rejectWithValue }) => {
+  async ({ definitionId, version }: { definitionId: string; version?: number }, { getState, rejectWithValue }) => {
     try {
       const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
@@ -242,7 +246,7 @@ export const loadDefinition = createAsyncThunk(
 export const findUserForms = createAsyncThunk(
   'form/find-user-forms',
   async (
-    { definitionId, after }: { definitionId?: string; version?: string; after?: string },
+    { definitionId, version, after }: { definitionId?: string; version?: number; after?: string },
     { getState, rejectWithValue },
   ) => {
     try {
@@ -263,6 +267,7 @@ export const findUserForms = createAsyncThunk(
           criteria: JSON.stringify({
             createdByIdEquals: user.user.id,
             definitionIdEquals: definitionId,
+            revisionEquals: version,
           }),
         },
       });
@@ -354,23 +359,24 @@ export const loadForm = createAsyncThunk(
 
 export const createForm = createAsyncThunk(
   'form/create-form',
-  async (definitionId: string, { getState, rejectWithValue }) => {
+  async ({ definitionId, version }: { definitionId: string; version?: number }, { getState, rejectWithValue }) => {
     try {
       const { config, user } = getState() as AppState;
       const formServiceUrl = config.directory[FORM_SERVICE_ID];
       const token = await getAccessToken();
-      const { data } = await axios.post<SerializableForm>(
-        new URL(`/form/v1/forms`, formServiceUrl).href,
-        {
-          definitionId,
-          applicant: {
-            userId: user.user.id,
-            addressAs: user.user.name,
-            channels: [{ channel: 'email', address: user.user.email }],
-          },
+      const body = {
+        definitionId,
+        applicant: {
+          userId: user.user.id,
+          addressAs: user.user.name,
+          channels: [{ channel: 'email', address: user.user.email }],
         },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+        ...(version != null ? { version: Number(version) } : {}),
+      };
+
+      const { data } = await axios.post<SerializableForm>(new URL(`/form/v1/forms`, formServiceUrl).href, body, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       return data;
     } catch (err) {
@@ -627,6 +633,10 @@ export const formSlice = createSlice({
     builder
       .addCase(selectedDefinition.fulfilled, (state, { meta }) => {
         state.selected = meta.arg.definitionId;
+        if (meta.arg.version) {
+          state.selected = state.selected + 'v' + meta.arg.version
+        }
+
         // Clear the form if the form definition is changing.
         if (state.form && state.form.definition.id !== meta.arg.definitionId) {
           state.next = null;
@@ -641,7 +651,13 @@ export const formSlice = createSlice({
       })
       .addCase(loadDefinition.fulfilled, (state, { payload, meta }) => {
         state.busy.loading = false;
-        state.definitions[meta.arg.definitionId] = payload;
+
+        let def = meta.arg.definitionId;
+        if (meta.arg.version) {
+          def = def + "v" + meta.arg.version
+        }
+        
+        state.definitions[def] = payload;
       })
       .addCase(loadDefinition.rejected, (state) => {
         state.busy.loading = false;

@@ -162,7 +162,7 @@ export function getFormDefinition(tenantService: TenantService, calendarService:
 
       let definition: FormDefinitionEntity;
 
-      if (version) {
+      if (version !== undefined && version !== null) {
         [definition] = await req.getServiceConfigurationRevision<FormDefinitionEntity>(
           version as string,
           definitionId,
@@ -344,12 +344,13 @@ export function createForm(
 
       const user = req.user;
       const tenantId = req.tenant?.id;
-      const { definitionId, applicant: applicantInfo, data, submit, dryRun } = req.body;
+      const { definitionId, applicant: applicantInfo, data, submit, dryRun, version } = req.body;
 
-      logger.debug(`Creating form of definition '${definitionId}'...`, {
+      logger.debug(`Creating form of definition '${definitionId} and version '${version}'...`, {
         context: 'FormRouter',
         tenantId: tenantId?.toString,
         user: user ? `${user.name} (ID: ${user.id})` : null,
+        version: version,
       });
 
       const [definition] = await req.getServiceConfiguration<FormDefinitionEntity>(definitionId);
@@ -357,7 +358,7 @@ export function createForm(
         throw new NotFoundError('form definition', definitionId);
       }
 
-      let form = await definition.createForm(user, repository, notificationService, dryRun, applicantInfo);
+      let form = await definition.createForm(user, repository, notificationService, dryRun, applicantInfo, version);
       let formSubmission: FormSubmissionEntity = null;
       let event = formCreated(apiId, user, form, dryRun);
 
@@ -850,6 +851,7 @@ export function createFormRouter({
       body('applicant.id').optional().isString(),
       body('applicant.userId').optional().isString(),
       body('applicant.channels').optional().isArray(),
+      body('version').optional().isInt({ min: 0 }).toInt(),
       body('data').optional().isObject(),
       body('files').optional().isObject(),
       body('submit').optional().isBoolean(),
@@ -871,7 +873,7 @@ export function createFormRouter({
   router.get(
     '/forms/:formId',
     assertAuthenticatedHandler,
-    createValidationHandler(param('formId').isUUID(), query('includeData').optional().isBoolean()),
+    createValidationHandler(param('formId'), query('includeData').optional().isBoolean()),
     getForm(repository),
     mapFormForSubmission(apiId, submissionRepository),
   );
@@ -879,7 +881,7 @@ export function createFormRouter({
     '/forms/:formId',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('formId').isUUID(),
+      param('formId'),
       body('operation').isIn([
         SEND_CODE_OPERATION,
         UNLOCK_FORM_OPERATION,
@@ -894,7 +896,7 @@ export function createFormRouter({
   router.delete(
     '/forms/:formId',
     assertAuthenticatedHandler,
-    createValidationHandler(param('formId').isUUID()),
+    createValidationHandler(param('formId')),
     getForm(repository),
     deleteForm(apiId, logger, eventService, fileService, notificationService),
   );
@@ -902,17 +904,14 @@ export function createFormRouter({
   router.get(
     '/forms/:formId/data',
     assertAuthenticatedHandler,
-    createValidationHandler(
-      param('formId').isUUID(),
-      query('code').optional().isString().isLength({ min: 1, max: 10 }),
-    ),
+    createValidationHandler(param('formId'), query('code').optional().isString().isLength({ min: 1, max: 10 })),
     getForm(repository),
     accessForm(logger, notificationService),
   );
   router.put(
     '/forms/:formId/data',
     assertAuthenticatedHandler,
-    createValidationHandler(param('formId').isUUID(), body('data').exists().isObject()),
+    createValidationHandler(param('formId'), body('data').exists().isObject()),
     getForm(repository),
     updateFormData(logger, fileService),
   );
@@ -935,14 +934,14 @@ export function createFormRouter({
   router.get(
     '/submissions/:submissionId',
     assertAuthenticatedHandler,
-    createValidationHandler(param('submissionId').isUUID()),
+    createValidationHandler(param('submissionId')),
     getFormSubmission(apiId, submissionRepository),
   );
 
   router.delete(
     '/submissions/:submissionId',
     assertAuthenticatedHandler,
-    createValidationHandler(param('submissionId').isUUID()),
+    createValidationHandler(param('submissionId')),
     deleteFormSubmission(apiId, eventService, submissionRepository),
   );
 
@@ -950,7 +949,7 @@ export function createFormRouter({
     '/forms/:formId/submissions',
     assertAuthenticatedHandler,
     createValidationHandler(
-      param('formId').isUUID(),
+      param('formId'),
       query('top').optional().isInt({ min: 1, max: 5000 }),
       query('after').optional().isString(),
       query('criteria')
@@ -965,11 +964,7 @@ export function createFormRouter({
   router.get(
     '/forms/:formId/submissions/:submissionId',
     assertAuthenticatedHandler,
-    createValidationHandler(
-      param('formId').isUUID(),
-      param('submissionId').isUUID(),
-      getFormSubmission(apiId, submissionRepository),
-    ),
+    createValidationHandler(param('formId'), param('submissionId'), getFormSubmission(apiId, submissionRepository)),
   );
   router.post(
     '/forms/:formId/submissions/:submissionId',

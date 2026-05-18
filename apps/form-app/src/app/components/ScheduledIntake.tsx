@@ -1,8 +1,8 @@
 import { GoabCallout } from '@abgov/react-components';
-import { FunctionComponent, ReactNode, useEffect } from 'react';
+import { FunctionComponent, ReactNode } from 'react';
 import { FormDefinition } from '../state';
 import { FormNotAvailable } from './FormNoAvailable';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { userSelector } from '../state';
 import { defaultUserFormSelector, findUserForms, AppDispatch } from '../state';
 
@@ -12,14 +12,7 @@ interface ScheduledIntakeProps {
 }
 
 export const ScheduledIntake: FunctionComponent<ScheduledIntakeProps> = ({ definition, children }) => {
-  const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector(userSelector);
-  useEffect(() => {
-    if (definition && user) {
-      dispatch(findUserForms({ definitionId: definition.id }));
-    }
-  }, [dispatch, definition, user]);
-
   const { form } = useSelector(defaultUserFormSelector);
   // Allow through to the form if the form definition doesn't use scheduled intakes, or if there is an active intake.
 
