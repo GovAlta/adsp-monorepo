@@ -1,5 +1,5 @@
 /**
- * clean-code-review.js
+ * github-pr-clean-code-review.js
  * Clean Code AI Review Agent — ADSP Monorepo
  *
  * Uses GitHub Models API (free, no external API key needed)
@@ -18,14 +18,10 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const PR_NUMBER = parseInt(process.env.PR_NUMBER, 10);
 const REPO_OWNER = process.env.REPO_OWNER;
 const REPO_NAME = process.env.REPO_NAME;
-const BASE_SHA = process.env.BASE_SHA;
 const HEAD_SHA = process.env.HEAD_SHA;
 
-// File extensions to review — TypeScript/JavaScript first (Phase 1)
-const SUPPORTED_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx'];
-
-// Max lines per file to send for review (keep within model context)
-const MAX_LINES_PER_FILE = 400;
+const SUPPORTED_FILE_EXTENSIONS_FOR_REVIEW = ['.ts', '.tsx', '.js', '.jsx'];
+const MAX_FILE_LINES_BEFORE_TRUNCATION = 400;
 
 // ─────────────────────────────────────────────────────────────
 // Load rules config (.cleancode.yml) if present
@@ -57,9 +53,9 @@ function loadConfig() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Get changed files in this PR
+// Fetch and filter the PR's changed files to those with supported extensions
 // ─────────────────────────────────────────────────────────────
-async function getChangedFiles(octokit) {
+async function fetchChangedFiles(octokit) {
   const files = [];
   let page = 1;
   while (true) {
@@ -74,7 +70,9 @@ async function getChangedFiles(octokit) {
     if (res.data.length < 100) break;
     page++;
   }
-  return files.filter((f) => f.status !== 'removed' && SUPPORTED_EXTENSIONS.includes(path.extname(f.filename)));
+  return files.filter(
+    (f) => f.status !== 'removed' && SUPPORTED_FILE_EXTENSIONS_FOR_REVIEW.includes(path.extname(f.filename)),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -84,8 +82,8 @@ function getFileContent(filePath) {
   try {
     const content = execSync(`git show HEAD:${filePath}`, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 5 });
     const lines = content.split('\n');
-    if (lines.length > MAX_LINES_PER_FILE) {
-      return lines.slice(0, MAX_LINES_PER_FILE).join('\n') + '\n// ... (truncated for review)';
+    if (lines.length > MAX_FILE_LINES_BEFORE_TRUNCATION) {
+      return lines.slice(0, MAX_FILE_LINES_BEFORE_TRUNCATION).join('\n') + '\n// ... (truncated for review)';
     }
     return content;
   } catch (e) {
@@ -246,7 +244,7 @@ ${violation.message}
 // ─────────────────────────────────────────────────────────────
 // Post review comments to the PR
 // ─────────────────────────────────────────────────────────────
-async function postReview(octokit, comments, hasErrors) {
+async function postReviewSummary(octokit, comments, hasBlockingViolations) {
   if (comments.length === 0) {
     await octokit.rest.pulls.createReview({
       owner: REPO_OWNER,
@@ -264,14 +262,14 @@ async function postReview(octokit, comments, hasErrors) {
   const suggestionCount = comments.filter((c) => c.body.includes('SUGGESTION')).length;
 
   const issueLines = [];
-  if (errorCount > 0) issueLines.push(`🔴 ${errorCount} error(s) that must be fixed before merging`);
+  if (errorCount > 0) issueLines.push(`🔴 ${errorCount} error(s) — recommended to fix before merging`);
   if (warningCount > 0) issueLines.push(`🟡 ${warningCount} warning(s) that should be reviewed`);
   if (suggestionCount > 0) issueLines.push(`🟢 ${suggestionCount} suggestion(s) for improvement`);
 
-  const event = hasErrors ? 'REQUEST_CHANGES' : 'COMMENT';
+  const event = 'COMMENT';
 
-  const summary = hasErrors
-    ? `🔴 **Clean Code Review — Issues found!**\n\nThere are issues in the code that need to be addressed before this PR can be merged:\n\n${issueLines.join('\n')}\n\nPlease review the inline comments on the changed lines for details on each issue.`
+  const summary = hasBlockingViolations
+    ? `🔴 **Clean Code Review — Issues found!**\n\nThere are issues in the code that are recommended to be addressed before merging:\n\n${issueLines.join('\n')}\n\nPlease review the inline comments on the changed lines for details on each issue.`
     : `🟡 **Clean Code Review — Issues found!**\n\nThere are some items in the code that need to be reviewed:\n\n${issueLines.join('\n')}\n\nPlease review the inline comments on the changed lines for details.`;
 
   await octokit.rest.pulls.createReview({
@@ -285,43 +283,25 @@ async function postReview(octokit, comments, hasErrors) {
   });
 }
 
+function initializeOctokit() {
+  return new Octokit({ auth: GITHUB_TOKEN });
+}
+
 // ─────────────────────────────────────────────────────────────
-// Main
+// Process each changed file: call the AI model and collect review comments
 // ─────────────────────────────────────────────────────────────
-async function main() {
-  console.log('🔍 Clean Code Review Agent starting...');
-
-  const octokit = new Octokit({ auth: GITHUB_TOKEN });
-  const config = loadConfig();
-
-  const changedFiles = await getChangedFiles(octokit);
-  console.log(`📁 Files to review: ${changedFiles.length}`);
-
-  // Fetch Jira ticket context
-  const prData = await octokit.rest.pulls.get({
-    owner: REPO_OWNER,
-    repo: REPO_NAME,
-    pull_number: PR_NUMBER,
-  });
-  const jiraContext = await getJiraTicket(prData.data.title, prData.data.body);
-  if (jiraContext) {
-    console.log(`📋 Jira context: ${jiraContext}`);
-  }
-
-  const systemPrompt = buildSystemPrompt(config, jiraContext);
-
-  if (changedFiles.length === 0) {
-    console.log('No supported files changed. Skipping review.');
-    return;
-  }
-
+async function processFilesForReview(
+  changedFiles,
+  systemPrompt,
+  { getContent = getFileContent, reviewFile = reviewWithGitHubModels } = {},
+) {
   const reviewComments = [];
-  let hasErrors = false;
+  let hasBlockingViolations = false;
 
   for (const file of changedFiles) {
     console.log(`  Reviewing: ${file.filename}`);
 
-    const content = getFileContent(file.filename);
+    const content = getContent(file.filename);
     if (!content) {
       console.log(`  Could not read ${file.filename}, skipping.`);
       continue;
@@ -329,7 +309,7 @@ async function main() {
 
     let violations = [];
     try {
-      violations = await reviewWithGitHubModels(content, file.filename, systemPrompt);
+      violations = await reviewFile(content, file.filename, systemPrompt);
     } catch (e) {
       console.warn(`  Error reviewing ${file.filename}:`, e.message);
       continue;
@@ -348,7 +328,7 @@ async function main() {
       const position = lineToPosition[v.line];
       if (!position) continue;
 
-      if (v.severity === 'ERROR') hasErrors = true;
+      if (v.severity === 'ERROR') hasBlockingViolations = true;
 
       reviewComments.push({
         path: file.filename,
@@ -358,17 +338,60 @@ async function main() {
     }
   }
 
+  return { reviewComments, hasBlockingViolations };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Main
+// ─────────────────────────────────────────────────────────────
+async function main() {
+  console.log('🔍 Clean Code Review Agent starting...');
+
+  const octokit = initializeOctokit();
+  const config = loadConfig();
+
+  const changedFiles = await fetchChangedFiles(octokit);
+  console.log(`📁 Files to review: ${changedFiles.length}`);
+
+  if (changedFiles.length === 0) {
+    console.log('No supported files changed. Skipping review.');
+    return;
+  }
+
+  const prData = await octokit.rest.pulls.get({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    pull_number: PR_NUMBER,
+  });
+  const jiraContext = await getJiraTicket(prData.data.title, prData.data.body);
+  if (jiraContext) {
+    console.log(`📋 Jira context: ${jiraContext}`);
+  }
+
+  const systemPrompt = buildSystemPrompt(config, jiraContext);
+  const { reviewComments, hasBlockingViolations } = await processFilesForReview(changedFiles, systemPrompt);
+
   console.log(`\n📝 Posting review with ${reviewComments.length} comment(s)...`);
-  await postReview(octokit, reviewComments, hasErrors);
+  await postReviewSummary(octokit, reviewComments, hasBlockingViolations);
   console.log('✅ Clean Code Review complete.');
 
-  if (hasErrors) {
-    console.log('🔴 Blocking violations found — marking check as failed.');
-    process.exit(1);
+  if (hasBlockingViolations) {
+    console.log("🔴 Blocking violations found — merging is the human reviewer's decision.");
   }
 }
 
-main().catch((err) => {
-  console.error('❌ Clean Code Review Agent failed:', err);
-  process.exit(1);
-});
+// Guard against auto-execution when this module is require()'d by the test suite
+if (require.main === module) {
+  main().catch((err) => {
+    console.error('❌ Clean Code Review Agent failed:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  buildLineToPositionMap,
+  formatComment,
+  loadConfig,
+  buildSystemPrompt,
+  processFilesForReview,
+};
