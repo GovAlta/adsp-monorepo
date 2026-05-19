@@ -1,0 +1,33 @@
+# Clean Code Review Agent — Configuration
+# Place this file in the root of your repository
+
+# Function length threshold (lines) — triggers rule 2.3
+function_length_limit: 50
+
+# Languages to review in Phase 1 (TypeScript / JavaScript)
+languages:
+  - ts
+  - tsx
+  - js
+  - jsx
+
+# Severity overrides — uncomment to change defaults
+# severity_overrides:
+#   "2.6": SUGGESTION
+#   "2.11": SUGGESTION
+
+# Rules to disable entirely — uncomment to turn off
+# disabled_rules:
+#   - "2.6"
+
+# Paths to exclude from review
+exclude_paths:
+  - 'node_modules/**'
+  - 'dist/**'
+  - 'coverage/**'
+  - '**/*.spec.ts'
+  - '**/*.test.ts'
+  - '**/*.spec.tsx'
+  - '**/*.test.tsx'
+  - '**/*.spec.js'
+  - '**/*.test.js'
