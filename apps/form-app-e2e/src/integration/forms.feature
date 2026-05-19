@@ -160,7 +160,7 @@ Feature: Form app
     Then the user views an error message of "must NOT have fewer than 10 characters" under the control labelled "Multiline text area"
     When the user clicks Back to application overview link on the form page
     And the user clicks "Standard controls" task on task list page
-    And the user enters "111111111" in Social insurance number control
+    And the user enters "111111111" in Social insurance number control under "Social insurance number" label
     Then the user views an error message of "Social insurance number is invalid" under the control labelled "Social insurance number"
     When the user clicks Back to application overview link on the form page
     And the user clicks "Summary" task on task list page
@@ -208,3 +208,32 @@ Feature: Form app
     And the user "should not view" validation error on the summary of "Controls" for "Register based enumeration"
     And the user views the summary of "Controls" with "border" as "not required" "API based enumeration"
     And the user "should not view" validation error on the summary of "Controls" for "API based enumeration"
+
+  # TEST DATA: regression-control-examples is created with all types of control examples
+  @TEST_CS-4004 @regression
+  Scenario: As a form user, I can use basic controls in a form
+    Given an anonymous applicant goes to "regression-control-examples" application
+    Then the user views an anonymous form draft of "regression-control-examples"
+    When the user clicks "Standard controls" task on task list page
+    And the user enters "John, Mathew, Smith" in full name control under "Full name" label
+    And the user enters "Mary, Jones, Steward, 1978-01-15" in full name and DOB control under "Full name and date of birth" label
+    And the user enters "118 Foxboro Way, Sherwood Park, T8A 5Y6" in Alberta postal address control under "Alberta mailing address" label
+    And the user enters "1228 Robson St, Vancouver, British Columbia, V6E 1C1" in Canada postal address control under "Canadian mailing address" label
+    And the user enters "111111118" in Social insurance number control under "Social insurance number" label
+    And the user clicks Back to application overview link on the form page
+    And the user clicks "Summary" task on task list page
+    Then the user views the summary of "Standard controls" with "John" as "not required" "First name" under "Full name" for standard name control
+    And the user views the summary of "Standard controls" with "Mathew" as "not required" "Middle name" under "Full name" for standard name control
+    And the user views the summary of "Standard controls" with "Smith" as "not required" "Last name" under "Full name" for standard name control
+    And the user views the summary of "Standard controls" with "Mary" as "not required" "First name" under "Full name and date of birth" for standard name control
+    And the user views the summary of "Standard controls" with "Jones" as "not required" "Middle name" under "Full name and date of birth" for standard name control
+    And the user views the summary of "Standard controls" with "Steward" as "not required" "Last name" under "Full name and date of birth" for standard name control
+    And the user views the summary of "Standard controls" with "1978-01-15" as "not required" "Date of birth" under "Full name and date of birth" for standard name control
+    And the user views the summary of "Standard controls" with "118 Foxboro Way" as "required" "Address line 1" under "Alberta mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "Sherwood Park" as "required" "City" under "Alberta mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "T8A 5Y6" as "required" "Postal code" under "Alberta mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "1228 Robson St" as "required" "Address line 1" under "Canadian mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "Vancouver" as "required" "City" under "Canadian mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "British Columbia" as "required" "Province" under "Canadian mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "V6E 1C1" as "required" "Postal code" under "Canadian mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "111 111 118" as "not required" "Social insurance number"
