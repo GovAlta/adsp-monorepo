@@ -1127,6 +1127,34 @@ describe('AddressLookUpControl - More tests', () => {
       expect(formItem?.getAttribute('error')).toBe('');
     });
 
+    it('should not show addressLine1 required error when manually typed value is blurred', () => {
+      const { baseElement } = renderComponent({ data: {} });
+
+      const addressLine1Input = baseElement.querySelector("goa-input[testId='address-form-address1']");
+
+      act(() => {
+        fireEvent(
+          addressLine1Input!,
+          new CustomEvent('_change', {
+            detail: { name: 'addressLine1', value: '123 Manually Typed St' },
+          }),
+        );
+        fireEvent(
+          addressLine1Input!,
+          new CustomEvent('_blur', {
+            detail: { name: 'addressLine1', value: '123 Manually Typed St' },
+          }),
+        );
+      });
+
+      const formItem = baseElement.querySelector('goa-form-item[label="Street address or P.O. box"]');
+      expect(formItem?.getAttribute('error')).toBe('');
+      expect(mockHandleChange).toHaveBeenCalledWith(
+        'address',
+        expect.objectContaining({ addressLine1: '123 Manually Typed St' }),
+      );
+    });
+
     it('should close suggestions dropdown on blur', async () => {
       (fetchAddressSuggestions as jest.Mock).mockResolvedValue(mockSuggestions);
       (filterSuggestionsWithoutAddressCount as jest.Mock).mockReturnValue(mockSuggestions);

@@ -4,6 +4,7 @@ import {
   UploadFileService,
   FetchFilesService,
   DeleteFileService,
+  DeleteFilesService,
   DownloadFileService,
   FetchFileTypeService,
 } from '@store/file/actions';
@@ -14,6 +15,7 @@ import {
   GoabInput,
   GoabFormItem,
   GoabButtonGroup,
+  GoabCheckbox,
 } from '@abgov/react-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import DataTable from '@components/DataTable';
@@ -27,7 +29,11 @@ import { selectActionStateStart, selectActionStateCompleted } from '@store/sessi
 import { UPLOAD_FILE } from '@store/file/actions';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { NoPaddingH2 } from '@components/AppHeader';
-import { GoabInputOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
+import {
+  GoabInputOnChangeDetail,
+  GoabDropdownOnChangeDetail,
+  GoabCheckboxOnChangeDetail,
+} from '@abgov/ui-components-common';
 import { AnyAction } from 'redux';
 
 const FileList = (): JSX.Element => {
@@ -37,6 +43,7 @@ const FileList = (): JSX.Element => {
   const [filterFileType, setFilterFileType] = useState<string>('');
   const [resetFilter, setResetFilter] = useState<string>('visible');
   const [searchName, setSearchName] = useState<string>('');
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const dispatch = useDispatch();
   const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
@@ -91,6 +98,33 @@ const FileList = (): JSX.Element => {
     setDeletedFile(file);
     setShowDeleteConfirmation(true);
   };
+  const onDeleteSelectedFiles = () => {
+    setDeletedFile(null);
+    setShowDeleteConfirmation(true);
+  };
+
+  const visibleFileIds = fileList?.map((file) => file.id).filter((id): id is string => Boolean(id)) || [];
+  const selectedVisibleFileIds = selectedFileIds.filter((id) => visibleFileIds.includes(id));
+  const isAllVisibleFilesSelected =
+    visibleFileIds.length > 0 && selectedVisibleFileIds.length === visibleFileIds.length;
+
+  const onToggleFileSelection = (fileId: string, checked: boolean) => {
+    setSelectedFileIds((currentIds) => {
+      if (checked) {
+        return currentIds.includes(fileId) ? currentIds : [...currentIds, fileId];
+      }
+
+      return currentIds.filter((id) => id !== fileId);
+    });
+  };
+
+  const onToggleAllVisibleFiles = (checked: boolean) => {
+    setSelectedFileIds((currentIds) => {
+      const visibleIds = new Set(visibleFileIds);
+      const otherPageIds = currentIds.filter((id) => !visibleIds.has(id));
+      return checked ? [...otherPageIds, ...visibleFileIds] : otherPageIds;
+    });
+  };
 
   useEffect(() => {
     dispatch(FetchFilesService());
@@ -102,6 +136,11 @@ const FileList = (): JSX.Element => {
       setResetFilter('visible');
     }
   }, [resetFilter]);
+
+  useEffect(() => {
+    const fileIds = new Set(fileList?.map((file) => file.id).filter((id): id is string => Boolean(id)) || []);
+    setSelectedFileIds((currentIds) => currentIds.filter((id) => fileIds.has(id)));
+  }, [fileList]);
 
   interface Criteria {
     filenameContains?: string;
@@ -118,9 +157,31 @@ const FileList = (): JSX.Element => {
   const renderFileTable = () => {
     return (
       <FileTableStyles>
+        <div className="table-actions">
+          <GoabButton
+            type="secondary"
+            disabled={selectedFileIds.length === 0 ? true : undefined}
+            onClick={onDeleteSelectedFiles}
+          >
+            Delete selected
+          </GoabButton>
+          <span>{selectedFileIds.length} selected</span>
+        </div>
         <DataTable id="files-information">
           <thead>
             <tr>
+              <th className="selection-column">
+                <GoabCheckbox
+                  name="select-all-files"
+                  checked={isAllVisibleFilesSelected}
+                  disabled={visibleFileIds.length === 0 ? true : undefined}
+                  testId="select-all-files"
+                  ariaLabel="Select all files"
+                  onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                    onToggleAllVisibleFiles(detail.checked);
+                  }}
+                />
+              </th>
               <th>File name</th>
               <th>Size (KB)</th>
               <th>Type</th>
@@ -130,8 +191,23 @@ const FileList = (): JSX.Element => {
           </thead>
           <tbody>
             {fileList.map((file, key) => {
+              const isSelected = file.id ? selectedFileIds.includes(file.id) : false;
               return (
-                <tr key={key}>
+                <tr key={key} className={isSelected ? 'selected' : undefined}>
+                  <td className="selection-column">
+                    <GoabCheckbox
+                      name={`select-file-${file.id}`}
+                      checked={isSelected}
+                      disabled={!file.id ? true : undefined}
+                      testId={`select-file-${file.id}`}
+                      ariaLabel={`Select ${file.filename}`}
+                      onChange={(detail: GoabCheckboxOnChangeDetail) => {
+                        if (file.id) {
+                          onToggleFileSelection(file.id, detail.checked);
+                        }
+                      }}
+                    />
+                  </td>
                   <td>{file.filename}</td>
                   {/* Use ceil here to make sure people will allocate enough resouces */}
                   <td>{Math.ceil(file.size / 1024)}</td>
@@ -162,16 +238,29 @@ const FileList = (): JSX.Element => {
 
         <DeleteModal
           isOpen={showDeleteConfirmation}
-          title="Delete file"
+          title={deletedFile ? 'Delete file' : 'Delete files'}
           content={
             <div>
-              Are you sure you wish to delete <b> {deletedFile?.filename}</b>?
+              {deletedFile ? (
+                <>
+                  Are you sure you wish to delete <b> {deletedFile.filename}</b>?
+                </>
+              ) : (
+                <>
+                  Are you sure you wish to delete <b>{selectedFileIds.length}</b> selected files?
+                </>
+              )}
             </div>
           }
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
             setShowDeleteConfirmation(false);
-            dispatch(DeleteFileService(deletedFile?.id));
+            if (deletedFile?.id) {
+              dispatch(DeleteFileService(deletedFile.id));
+            } else {
+              dispatch(DeleteFilesService(selectedFileIds));
+              setSelectedFileIds([]);
+            }
           }}
         />
       </FileTableStyles>
@@ -306,6 +395,18 @@ const FileTypeDropdown = styled.div`
 `;
 
 const FileTableStyles = styled.div`
+  .table-actions {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+  }
+
+  .selection-column {
+    width: 3rem;
+  }
+
   .flex-horizontal {
     display: flex;
     flex-direction: row;

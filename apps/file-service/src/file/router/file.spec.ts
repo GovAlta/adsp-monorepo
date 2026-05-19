@@ -6,7 +6,7 @@ import { Mock, It } from 'moq.ts';
 import { downloadFile, getFiles, uploadFile } from '.';
 import { FileEntity, FileTypeEntity } from '..';
 import { FileType, ServiceUserRoles } from '../types';
-import { createFileRouter, deleteFile, fileOperation, getFile, getType, getTypes } from './file';
+import { createFileRouter, deleteFile, deleteFiles, fileOperation, getFile, getType, getTypes } from './file';
 import { Readable } from 'stream';
 
 describe('file router', () => {
@@ -137,7 +137,7 @@ describe('file router', () => {
       size: 123,
       created: new Date(),
       createdBy: { id: 'tester', name: 'Tester' },
-    }
+    },
   );
   const fileWithoutSecurityClassificationOrType = new FileEntity(storageProviderMock, fileRepositoryMock, null, {
     tenantId,
@@ -191,7 +191,7 @@ describe('file router', () => {
       req.getConfiguration.mockResolvedValueOnce(configuration);
       await getTypes(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
-        expect.arrayContaining([expect.objectContaining({ id: 'generated-pdf', name: 'Test' })])
+        expect.arrayContaining([expect.objectContaining({ id: 'generated-pdf', name: 'Test' })]),
       );
     });
   });
@@ -242,7 +242,7 @@ describe('file router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(next).toHaveBeenCalledWith(
-        new UnauthorizedError('User undefined (ID: test) not permitted to Access file type.')
+        new UnauthorizedError('User undefined (ID: test) not permitted to Access file type.'),
       );
     });
 
@@ -913,6 +913,134 @@ describe('file router', () => {
     });
   });
 
+  describe('deleteFiles', () => {
+    const createFile = (id: string) =>
+      new FileEntity(storageProviderMock, fileRepositoryMock, new FileTypeEntity(fileType), {
+        tenantId,
+        id,
+        filename: `${id}.txt`,
+        recordId: `record-${id}`,
+        deleted: false,
+        scanned: true,
+        size: 123,
+        created: new Date(),
+        createdBy: { id: 'tester', name: 'Tester' },
+        securityClassification: 'protected a',
+      });
+
+    it('can create handler', () => {
+      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, fileRepositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can delete multiple files from bracketed query parameter', async () => {
+      const firstFile = createFile('file-1');
+      const secondFile = createFile('file-2');
+      const req = {
+        user: {
+          tenantId,
+          id: 'tester',
+          name: 'Tester',
+          roles: ['test-updater'],
+        },
+        query: { files: '[file-1, file-2]' },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      fileRepositoryMock.get.mockResolvedValueOnce(firstFile).mockResolvedValueOnce(secondFile);
+      fileRepositoryMock.save.mockResolvedValue(file);
+
+      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, fileRepositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-1');
+      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-2');
+      expect(res.send).toHaveBeenCalledWith({
+        deleted: true,
+        results: [
+          { id: 'file-1', deleted: true },
+          { id: 'file-2', deleted: true },
+        ],
+      });
+      expect(eventServiceMock.send).toHaveBeenCalledTimes(2);
+    });
+
+    it('can delete multiple files from repeated query parameter', async () => {
+      const firstFile = createFile('file-1');
+      const secondFile = createFile('file-2');
+      const req = {
+        user: {
+          tenantId,
+          id: 'tester',
+          name: 'Tester',
+          roles: ['test-updater'],
+        },
+        query: { files: ['file-1', 'file-2'] },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      fileRepositoryMock.get.mockResolvedValueOnce(firstFile).mockResolvedValueOnce(secondFile);
+      fileRepositoryMock.save.mockResolvedValue(file);
+
+      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, fileRepositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-1');
+      expect(fileRepositoryMock.get).toHaveBeenCalledWith('file-2');
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+    });
+
+    it('fails when no file IDs are specified', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'tester',
+          name: 'Tester',
+          roles: ['test-updater'],
+        },
+        query: { files: '[]' },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, fileRepositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
+    it('fails when a file cannot be found', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'tester',
+          name: 'Tester',
+          roles: ['test-updater'],
+        },
+        query: { files: '[missing-file]' },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      fileRepositoryMock.get.mockResolvedValueOnce(null);
+
+      const handler = deleteFiles(apiId, loggerMock, eventServiceMock, fileRepositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+  });
+
   describe('fileOperation', () => {
     it('can create handler', () => {
       const handler = fileOperation(apiId, loggerMock, eventServiceMock);
@@ -945,7 +1073,7 @@ describe('file router', () => {
       const handler = fileOperation(apiId, loggerMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ id: expect.any(String), filename: file.filename })
+        expect.objectContaining({ id: expect.any(String), filename: file.filename }),
       );
       expect(eventServiceMock.send).toHaveBeenCalled();
       expect(storageProviderMock.copyFile).toHaveBeenCalledTimes(1);
@@ -990,7 +1118,7 @@ describe('file router', () => {
       const handler = fileOperation(apiId, loggerMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ id: expect.any(String), filename: req.body.filename })
+        expect.objectContaining({ id: expect.any(String), filename: req.body.filename }),
       );
       expect(eventServiceMock.send).toHaveBeenCalled();
       expect(storageProviderMock.copyFile).toHaveBeenCalledTimes(1);

@@ -64,7 +64,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
       {definition && !definition.anonymousApply && <LogoutModal />}
       <div className={className}>
         <Container vs={1} hs={1}>
-          {form ? (
+          {form || busy.loading ? (
             !fileBusy.loading && (
               <>
                 {form?.status === 'Submitted' && <SubmittedForm definition={definition} form={form} data={data} />}

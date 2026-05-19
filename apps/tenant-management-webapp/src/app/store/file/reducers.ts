@@ -3,6 +3,7 @@ import {
   FETCH_FILE_LIST_SUCCESSES,
   UPLOAD_FILE_SUCCESSES,
   DELETE_FILE_SUCCESSES,
+  DELETE_FILES_SUCCESSES,
   FETCH_FILE_TYPE_SUCCEEDED,
   DELETE_FILE_TYPE_SUCCEEDED,
   UPDATE_FILE_TYPE_SUCCEEDED,
@@ -38,11 +39,27 @@ function uploadFile(fileList, file) {
   return newFileList;
 }
 
-function deleteFile(fileList, id) {
+function deleteFiles(fileList, ids: string[]) {
+  const idsToDelete = new Set(ids);
   return fileList.filter((file) => {
-    return file.id !== id;
+    return !idsToDelete.has(file.id);
   });
 }
+
+function removeFilesFromNewFileList(newFileList, ids: string[]) {
+  if (!newFileList) {
+    return newFileList;
+  }
+
+  const idsToDelete = new Set(ids);
+  const nextFileList = { ...newFileList };
+  Object.keys(nextFileList).forEach((file) => {
+    nextFileList[file] = nextFileList[file].filter((f) => !idsToDelete.has(f.id));
+  });
+
+  return nextFileList;
+}
+
 export default function (state = FILE_INIT, action: ActionTypes): FileService {
   switch (action.type) {
     case CACHE_FILE: {
@@ -73,29 +90,17 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
       };
     }
     case DELETE_FILE_SUCCESSES: {
-      const newFileList = { ...state.newFileList };
-
-      if (newFileList) {
-        const keyList = Object.keys(newFileList);
-
-        keyList.forEach((file) => {
-          const fileList = newFileList[file];
-          newFileList[file] = fileList
-            .map((f) => {
-              if (f.id === action.payload.data) {
-                return null;
-              } else {
-                return f;
-              }
-            })
-            .filter(Boolean);
-        });
-      }
-
       return {
         ...state,
-        fileList: deleteFile(state.fileList, action.payload.data),
-        newFileList: newFileList,
+        fileList: deleteFiles(state.fileList, [action.payload.data]),
+        newFileList: removeFilesFromNewFileList(state.newFileList, [action.payload.data]),
+      };
+    }
+    case DELETE_FILES_SUCCESSES: {
+      return {
+        ...state,
+        fileList: deleteFiles(state.fileList, action.payload.data),
+        newFileList: removeFilesFromNewFileList(state.newFileList, action.payload.data),
       };
     }
     case FETCH_FILE_LIST:
