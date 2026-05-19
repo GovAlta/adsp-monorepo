@@ -59,6 +59,13 @@ export class FileApi {
     return res.data;
   }
 
+  async deleteFiles(ids: string[]): Promise<FileService> {
+    const files = ids.map((id) => encodeURIComponent(id)).join(',');
+    const url = `${this.fileConfig.endpoints.fileAdmin}?files=[${files}]`;
+    const res = await this.http.delete(url);
+    return res.data;
+  }
+
   async fetchFileTypeHasFile(fileTypeId: string): Promise<boolean> {
     const url = `${this.fileConfig.endpoints.fileAdmin}?top=1&criteria={"typeEquals":"${fileTypeId}"}`;
     const { data } = await this.http.get(url);

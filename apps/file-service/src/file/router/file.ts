@@ -6,6 +6,7 @@ import {
   isAllowedUser,
   startBenchmark,
   UnauthorizedUserError,
+  User,
 } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
@@ -26,7 +27,7 @@ import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
 import { DirectoryServiceRoles, FileCriteria } from '../types';
 import { mapFile, mapFileType } from '../mapper';
-import { FileTypeEntity } from '../model';
+import { FileEntity, FileTypeEntity } from '../model';
 
 interface FileRouterProps {
   apiId: AdspId;
@@ -44,7 +45,7 @@ export const getTypes: RequestHandler = async (req, res, next) => {
     res.send(
       Object.values(configuration)
         .filter((t) => t.canAccess(user))
-        .map(mapFileType)
+        .map(mapFileType),
     );
   } catch (err) {
     next(res);
@@ -127,7 +128,7 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
           context: 'file-router',
           tenant: fileEntity.tenantId?.toString(),
           user: `${user.name} (ID: ${user.id})`,
-        }
+        },
       );
     } catch (err) {
       next(err);
@@ -180,7 +181,7 @@ type Range = {
   {
     start: number;
     end: number;
-  }
+  },
 ];
 
 export function downloadFile(logger: Logger): RequestHandler {
@@ -226,7 +227,7 @@ export function downloadFile(logger: Logger): RequestHandler {
           'Content-Range',
           `bytes ${typeof fileStart !== 'number' ? '' : fileStart}-${typeof fileEnd !== 'number' ? '' : fileEnd}/${
             fileEntity.size
-          }`
+          }`,
         );
       }
       res.setHeader('Content-Type', validateMimeType(fileEntity.mimeType));
@@ -256,7 +257,7 @@ export function downloadFile(logger: Logger): RequestHandler {
             context: 'file-router',
             tenant: fileEntity.tenantId?.toString(),
             user: user ? `${user.name} (ID: ${user.id})` : null,
-          }
+          },
         );
       }
     } catch (err) {
@@ -287,21 +288,103 @@ export function deleteFile(apiId: AdspId, logger: Logger, eventService: EventSer
       const user = req.user;
       const fileEntity = req.fileEntity;
       await fileEntity.markForDeletion(user);
-
-      logger.info(
-        `File '${fileEntity.filename}' (ID: ${fileEntity.id}) marked for deletion by ` +
-          `user '${user.name}' (ID: ${user.id}).`,
-        {
-          context: 'file-router',
-          tenant: fileEntity.tenantId?.toString(),
-          user: `${user.name} (ID: ${user.id})`,
-        }
-      );
+      sendFileDeletedEvent(apiId, logger, eventService, user, fileEntity);
 
       end();
       res.send({ deleted: fileEntity.deleted });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
-      eventService.send(fileDeleted(apiId, user, fileEntity));
+function parseFileIds(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => parseFileIds(item));
+  }
+
+  if (typeof value !== 'string') {
+    return [];
+  }
+
+  const trimmedValue = value.trim();
+  if (!trimmedValue) {
+    return [];
+  }
+
+  if (trimmedValue.startsWith('[') && trimmedValue.endsWith(']')) {
+    try {
+      const parsedValue = JSON.parse(trimmedValue);
+      if (Array.isArray(parsedValue)) {
+        return parsedValue.flatMap((item) => parseFileIds(item));
+      }
+    } catch (_err) {
+      // The documented query format does not quote file IDs, so fall through to comma parsing.
+    }
+
+    return trimmedValue
+      .slice(1, -1)
+      .split(',')
+      .map((fileId) => fileId.trim().replace(/^["']|["']$/g, ''))
+      .filter(Boolean);
+  }
+
+  return trimmedValue
+    .split(',')
+    .map((fileId) => fileId.trim().replace(/^["']|["']$/g, ''))
+    .filter(Boolean);
+}
+
+function sendFileDeletedEvent(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  user: User,
+  fileEntity: FileEntity,
+) {
+  logger.info(
+    `File '${fileEntity.filename}' (ID: ${fileEntity.id}) marked for deletion by ` +
+      `user '${user.name}' (ID: ${user.id}).`,
+    {
+      context: 'file-router',
+      tenant: fileEntity.tenantId?.toString(),
+      user: `${user.name} (ID: ${user.id})`,
+    },
+  );
+
+  eventService.send(fileDeleted(apiId, user, fileEntity));
+}
+
+export function deleteFiles(
+  apiId: AdspId,
+  logger: Logger,
+  eventService: EventService,
+  repository: FileRepository,
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const end = startBenchmark(req, 'operation-handler-time');
+      const user = req.user;
+      const fileIds = parseFileIds(req.query.files);
+
+      if (fileIds.length === 0) {
+        throw new InvalidOperationError('At least one file ID must be specified for deletion.');
+      }
+
+      const results = [];
+      for (const fileId of fileIds) {
+        const fileEntity = await repository.get(fileId);
+        if (!fileEntity) {
+          throw new NotFoundError('File', fileId);
+        }
+
+        await fileEntity.markForDeletion(user);
+        sendFileDeletedEvent(apiId, logger, eventService, user, fileEntity);
+        results.push({ id: fileEntity.id, deleted: fileEntity.deleted });
+      }
+
+      end();
+      res.send({ deleted: results.every((result) => result.deleted), results });
     } catch (err) {
       next(err);
     }
@@ -341,7 +424,7 @@ export function fileOperation(apiId: AdspId, logger: Logger, eventService: Event
               context: 'file-router',
               tenant: fileEntity.tenantId?.toString(),
               user: `${user.name} (ID: ${user.id})`,
-            }
+            },
           );
           break;
         }
@@ -400,24 +483,45 @@ export const createFileRouter = ({
               throw new InvalidOperationError('lastAccessedBefore requires ISO-8061 date string.');
             }
           }
-        })
+        }),
     ),
-    getFiles(apiId, fileRepository)
+    getFiles(apiId, fileRepository),
   );
   fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), uploadFile(apiId, logger, eventService));
+  fileRouter.delete(
+    '/files',
+    assertAuthenticatedHandler,
+    createValidationHandler(
+      query('files')
+        .exists()
+        .custom((value) => {
+          const fileIds = parseFileIds(value);
+          if (fileIds.length === 0) {
+            throw new InvalidOperationError('At least one file ID must be specified for deletion.');
+          }
+
+          if (!fileIds.every((fileId) => validator.isUUID(fileId))) {
+            throw new InvalidOperationError('files must contain valid file IDs.');
+          }
+
+          return true;
+        }),
+    ),
+    deleteFiles(apiId, logger, eventService, fileRepository),
+  );
 
   fileRouter.get(
     '/files/:fileId',
     createValidationHandler(param('fileId').isUUID()),
     getFile(fileRepository, DirectoryServiceRoles.ResourceResolver),
-    (req: Request, res: Response) => res.send(mapFile(apiId, req.fileEntity))
+    (req: Request, res: Response) => res.send(mapFile(apiId, req.fileEntity)),
   );
   fileRouter.delete(
     '/files/:fileId',
     assertAuthenticatedHandler,
     createValidationHandler(param('fileId').isUUID()),
     getFile(fileRepository),
-    deleteFile(apiId, logger, eventService)
+    deleteFile(apiId, logger, eventService),
   );
   fileRouter.post(
     '/files/:fileId',
@@ -427,10 +531,10 @@ export const createFileRouter = ({
       body('operation').isIn(['copy']),
       body('type').optional({ nullable: true }).isString().isLength({ min: 1, max: 50 }),
       body('filename').optional({ nullable: true }).isString(),
-      body('recordId').optional({ nullable: true }).isString()
+      body('recordId').optional({ nullable: true }).isString(),
     ),
     getFile(fileRepository),
-    fileOperation(apiId, logger, eventService)
+    fileOperation(apiId, logger, eventService),
   );
 
   fileRouter.get(
@@ -438,10 +542,10 @@ export const createFileRouter = ({
     createValidationHandler(
       param('fileId').isUUID(),
       query('unsafe').optional().isBoolean(),
-      query('embed').optional().isBoolean()
+      query('embed').optional().isBoolean(),
     ),
     getFile(fileRepository),
-    downloadFile(logger)
+    downloadFile(logger),
   );
 
   return fileRouter;

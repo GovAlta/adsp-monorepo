@@ -179,6 +179,15 @@ export const JsonFormsStepperContextProvider = ({
 
   /* istanbul ignore next */
   useEffect(() => {
+    stepperDispatch({
+      type: 'validate/form',
+      payload: { errors: ctx?.core?.errors ?? [] },
+    });
+    //eslint-disable-next-line
+  }, [ctx?.core?.errors]);
+
+  /* istanbul ignore next */
+  useEffect(() => {
     const handleBeforeUnload = () => {
       if (isCacheStatus) {
         saveIsVisitFromLocalStorage(stepperState?.categories?.map((c) => c?.isVisited as boolean) || []);

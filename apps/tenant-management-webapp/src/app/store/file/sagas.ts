@@ -13,16 +13,19 @@ import {
   FetchFileTypeSucceededService,
   UpdateFileTypeSucceededService,
   DeleteFileSuccessService,
+  DeleteFilesSuccessService,
   CacheFileService,
   FetchFileTypeHasFileSucceededService,
   FetchFileTypeService,
   DeleteFileAction,
+  DeleteFilesAction,
   DeleteFileTypeAction,
   CreateFileTypeAction,
   UpdateFileTypeAction,
   FetchFileTypeHasFileAction,
   CREATE_FILE_TYPE,
   DELETE_FILE,
+  DELETE_FILES,
   DELETE_FILE_TYPE,
   DOWNLOAD_FILE,
   FETCH_FILE_LIST,
@@ -125,6 +128,18 @@ export function* deleteFile(file: DeleteFileAction): SagaIterator {
     const api = new FileApi(state.config, token);
     yield call([api, api.deleteFile], file.payload.data);
     yield put(DeleteFileSuccessService(file.payload.data));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+  }
+}
+
+export function* deleteFiles(file: DeleteFilesAction): SagaIterator {
+  const state = yield select();
+  try {
+    const token = yield call(getAccessToken);
+    const api = new FileApi(state.config, token);
+    yield call([api, api.deleteFiles], file.payload.data);
+    yield put(DeleteFilesSuccessService(file.payload.data));
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
   }
@@ -351,6 +366,7 @@ export function* watchFileSagas(): Generator {
   // Note: UPLOAD_FILE is now handled by a thunk in actions.ts, not a saga
   yield takeEvery(DOWNLOAD_FILE, downloadFile);
   yield takeEvery(DELETE_FILE, deleteFile);
+  yield takeEvery(DELETE_FILES, deleteFiles);
   yield takeEvery(FETCH_FILE_LIST, fetchFiles);
   yield takeEvery(FETCH_FILE, fetchFile);
   yield takeEvery(FETCH_FILE_TYPE_HAS_FILE, fetchFileTypeHasFile);
