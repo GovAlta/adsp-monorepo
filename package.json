@@ -92,6 +92,7 @@
     "express-rate-limit": "^7.1.4",
     "express-session": "^1.18.2",
     "express-validator": "^6.14.0",
+    "fast-xml-builder": "1.1.7",
     "flat": "^5.0.2",
     "handlebars": "^4.7.9",
     "hasha": "^5.2.0",
