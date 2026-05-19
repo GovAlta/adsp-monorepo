@@ -6,7 +6,7 @@ import { GoACells, GoARenderers } from '../../../index';
 import React, { useState } from 'react';
 import { isObjectArrayEmpty, renderCellColumn } from './ObjectListControlUtils';
 import { RenderCellColumnProps } from './ObjectListControlTypes';
-import { findControlLabel, humanizeAjvError } from './ListWithDetailControl'; // adjust path
+import { findControlLabel, humanizeAjvError, combineRequiredErrors } from './ListWithDetailControl'; // adjust path
 import { ControlElement, Layout, UISchemaElement, JsonSchema } from '@jsonforms/core';
 import { ContextProviderFactory } from '../../Context';
 
@@ -675,6 +675,38 @@ describe('humanizeAjvError', () => {
     };
 
     expect(humanizeAjvError(error, schema, uischema)).toBe('Field is invalid');
+  });
+});
+
+describe('combineRequiredErrors', () => {
+  it('returns single "is required" message unchanged', () => {
+    expect(combineRequiredErrors(['Name is required'])).toBe('Name is required');
+  });
+
+  it('combines multiple "is required" messages into "are required"', () => {
+    expect(combineRequiredErrors(['Name is required', 'Email is required'])).toBe('Name, Email are required');
+  });
+
+  it('combines three required fields into "are required"', () => {
+    expect(combineRequiredErrors(['First Name is required', 'Last Name is required', 'Phone is required'])).toBe(
+      'First Name, Last Name, Phone are required',
+    );
+  });
+
+  it('keeps non-required errors separate', () => {
+    expect(combineRequiredErrors(['Name is required', 'Email must be a valid email'])).toBe(
+      'Name is required, Email must be a valid email',
+    );
+  });
+
+  it('combines required errors and keeps other errors', () => {
+    expect(combineRequiredErrors(['Name is required', 'Email is required', 'Phone must be a valid phone'])).toBe(
+      'Name, Email are required, Phone must be a valid phone',
+    );
+  });
+
+  it('returns empty string for empty array', () => {
+    expect(combineRequiredErrors([])).toBe('');
   });
 });
 

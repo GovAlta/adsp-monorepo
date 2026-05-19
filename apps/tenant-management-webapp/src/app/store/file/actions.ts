@@ -18,6 +18,9 @@ export const FETCH_FILE_FAILED = 'tenant/file-service/file/fetch/fail';
 export const DELETE_FILE = 'tenant/file-service/file/delete';
 export const DELETE_FILE_SUCCESSES = 'tenant/file-service/file/delete/success';
 export const DELETE_FILE_FAILED = 'tenant/file-service/file/delete/fail';
+export const DELETE_FILES = 'tenant/file-service/files/delete';
+export const DELETE_FILES_SUCCESSES = 'tenant/file-service/files/delete/success';
+export const DELETE_FILES_FAILED = 'tenant/file-service/files/delete/fail';
 
 export const DOWNLOAD_FILE = 'tenant/file-service/file/download';
 export const CACHE_FILE = 'tenant/file-service/file/cache';
@@ -72,6 +75,9 @@ export type ActionTypes =
   | DeleteFileAction
   | DeleteFileSuccessAction
   | DeleteFileFailedAction
+  | DeleteFilesAction
+  | DeleteFilesSuccessAction
+  | DeleteFilesFailedAction
   | DownloadFileAction
   | CacheFileAction
   | DownloadFileFailedAction
@@ -179,13 +185,27 @@ interface DeleteFileFailedAction {
   payload: { data: string };
 }
 
+export interface DeleteFilesAction {
+  type: typeof DELETE_FILES;
+  payload: { data: string[] };
+}
+
+interface DeleteFilesSuccessAction {
+  type: typeof DELETE_FILES_SUCCESSES;
+  payload: { data: string[] };
+}
+interface DeleteFilesFailedAction {
+  type: typeof DELETE_FILES_FAILED;
+  payload: { data: string[] };
+}
+
 export interface DownloadFileAction {
   type: typeof DOWNLOAD_FILE;
   payload: { data: string };
 }
 interface CacheFileAction {
   type: typeof CACHE_FILE;
-  payload: { 
+  payload: {
     fileId: string;
     dataUrl: string;
   };
@@ -264,8 +284,8 @@ export interface FetchFileMetricsSucceededAction {
 // Action Methods
 // ==============
 
-export const UploadFileService = (data: FileUploadPayload) => 
-  async (dispatch: AppDispatch, getState: () => RootState) => {
+export const UploadFileService =
+  (data: FileUploadPayload) => async (dispatch: AppDispatch, getState: () => RootState) => {
     try {
       dispatch({
         type: UPLOAD_FILE,
@@ -275,13 +295,13 @@ export const UploadFileService = (data: FileUploadPayload) =>
       const state = getState();
       const token = await dispatch(getAccessToken());
       const config = state.config;
-      
+
       if (!token || !config) {
         throw new Error('Missing authentication or configuration');
       }
 
       const api = new FileApi(config, token);
-      
+
       // Build FormData
       const formData = new FormData();
       formData.append('type', data.type);
@@ -304,7 +324,7 @@ export const UploadFileService = (data: FileUploadPayload) =>
           reader.onerror = reject;
           reader.readAsDataURL(data.file);
         });
-        
+
         dispatch(CacheFileService(uploadedFile.id, dataUrl));
       }
 
@@ -411,6 +431,27 @@ export const DeleteFileFailedService = (data: string): DeleteFileFailedAction =>
   },
 });
 
+export const DeleteFilesService = (data: string[]): DeleteFilesAction => ({
+  type: DELETE_FILES,
+  payload: {
+    data,
+  },
+});
+
+export const DeleteFilesSuccessService = (data: string[]): DeleteFilesSuccessAction => ({
+  type: DELETE_FILES_SUCCESSES,
+  payload: {
+    data,
+  },
+});
+
+export const DeleteFilesFailedService = (data: string[]): DeleteFilesFailedAction => ({
+  type: DELETE_FILES_FAILED,
+  payload: {
+    data,
+  },
+});
+
 export const DownloadFileService = (data: string): DownloadFileAction => ({
   type: DOWNLOAD_FILE,
   payload: {
@@ -490,7 +531,7 @@ export const FetchFileTypeHasFileService = (fileTypeId: string): FetchFileTypeHa
 
 export const FetchFileTypeHasFileSucceededService = (
   existed: boolean,
-  fileTypeId: string
+  fileTypeId: string,
 ): FetchFileTypeHasFileSucceededAction => ({
   type: FETCH_FILE_TYPE_HAS_FILE_SUCCEEDED,
   payload: {

@@ -111,14 +111,46 @@ When('the user enters {string} in a text area field labelled {string}', function
   formsObj.formTextAreaField(label).shadow().find('textarea').clear().type(text, { force: true, delay: 200 });
 });
 
+When('the user enters {string} in a numeric field labelled {string}', function (text: string, label) {
+  formsObj.formNumericField(label).shadow().find('input').clear().type(text, { force: true, delay: 200 });
+});
+
 When('the user enters {string} in a date picker labelled {string}', function (date: string, label) {
   formsObj.formDateInput(label).shadow().find('input').clear().type(date, { force: true });
+});
+
+When('the user enters {string} in a time picker labelled {string}', function (time: string, label) {
+  formsObj.formTimeInput(label).shadow().find('input').clear().type(time, { force: true });
 });
 
 When('the user enters {string} in a dropdown labelled {string}', function (value: string, label) {
   formsObj.formDropdown(label).shadow().find('input').click({ force: true });
   formsObj.formDropdown(label).shadow().find('goa-popover').find('li').contains(value).click({ force: true });
 });
+
+When(
+  'the user uploads a file of {string} using file upload button for {string}',
+  function (fileName: string, label: string) {
+    formsObj
+      .formFileUploadButton(label)
+      .scrollIntoView()
+      .find('input[type="file"]', { includeShadowDom: true })
+      .selectFile('src/fixtures/' + fileName, { force: true });
+    cy.wait(1000);
+  }
+);
+
+When(
+  'the user uploads a file of {string} using drag and drop zone for {string}',
+  function (fileName: string, label: string) {
+    formsObj
+      .formFileDragDropZone(label)
+      .scrollIntoView()
+      .find('input[type="file"]', { includeShadowDom: true })
+      .selectFile('src/fixtures/' + fileName, { force: true });
+    cy.wait(1000);
+  }
+);
 
 When('the user clicks Next button in the form', function () {
   formsObj.formNextButton().shadow().find('button').click({ force: true });
@@ -211,6 +243,70 @@ Then(
         break;
       default:
         expect(requiredOrNot).to.be.oneOf(['required', 'not required']);
+    }
+  }
+);
+
+Then(
+  'the user views the summary of {string} with {string} as {string} {string} under {string} for standard name control',
+  function (sectionName, value, requiredOrNot, label: string, subSection: string) {
+    switch (requiredOrNot) {
+      case 'required':
+        formsObj
+          .formSummaryPageSectionSubsectionRowLabel(sectionName, subSection, label)
+          .find('label')
+          .should('contains.text', 'required');
+        formsObj
+          .formSummaryPageSectionSubsectionRowValueForNameControl(sectionName, subSection, label)
+          .should('have.text', value);
+        break;
+      case 'not required':
+        formsObj
+          .formSummaryPageSectionSubsectionRowValueForNameControl(sectionName, subSection, label)
+          .should('have.text', value);
+        break;
+      default:
+        expect(requiredOrNot).to.be.oneOf(['required', 'not required']);
+    }
+  }
+);
+
+Then(
+  'the user views the summary of {string} with {string} as {string} {string} under {string} for standard postal address control',
+  function (sectionName, value, requiredOrNot, label: string, subSection: string) {
+    switch (requiredOrNot) {
+      case 'required':
+        formsObj
+          .formSummaryPageSectionSubsectionRowLabel(sectionName, subSection, label)
+          .find('label')
+          .should('contains.text', 'required');
+        formsObj
+          .formSummaryPageSectionSubsectionRowValueForAddressControl(sectionName, subSection, label)
+          .should('have.text', value);
+        break;
+      case 'not required':
+        formsObj
+          .formSummaryPageSectionSubsectionRowValueForAddressControl(sectionName, subSection, label)
+          .should('have.text', value);
+        break;
+      default:
+        expect(requiredOrNot).to.be.oneOf(['required', 'not required']);
+    }
+  }
+);
+
+Then(
+  'the user {string} validation error on the summary of {string} for {string}',
+  function (viewOrNot, sectionName, label: string) {
+    switch (viewOrNot) {
+      case 'should view':
+        formsObj.formSummaryPageSectionRowValueError(sectionName, label).should('not.exist');
+        break;
+      case 'should not view':
+        formsObj.formSummaryPageSectionRowValueError(sectionName, label).should('not.exist');
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['should view', 'should not view']);
     }
   }
 );
@@ -373,6 +469,141 @@ Then(
   }
 );
 
-When('the user enters {string} in Social insurance number control', function (socialInsuranceNumber: string) {
-  formsObj.formSocialInsuranceNumberField().shadow().find('input').type(socialInsuranceNumber);
+When(
+  'the user enters {string} in Social insurance number control under {string} label',
+  function (socialInsuranceNumber: string, label: string) {
+    formsObj.formSocialInsuranceNumberField(label).shadow().find('input').type(socialInsuranceNumber);
+  }
+);
+
+// Due to full name control and full name and DOB control have the same field labels, this step only works with full name control with h3 label
+When('the user enters {string} in full name control under {string} label', function (fullName: string, label: string) {
+  const fullNameParts = fullName.split(',').map((part) => part.trim());
+  if (fullNameParts.length !== 3) {
+    expect.fail('Full name should consist of three parts separated by commas: first name, middle name, and last name.');
+  }
+  formsObj
+    .formFullNameFirstNameField(label)
+    .shadow()
+    .find('input')
+    .clear()
+    .type(fullNameParts[0], { force: true, delay: 200 });
+  formsObj
+    .formFullNameMiddleNameField(label)
+    .shadow()
+    .find('input')
+    .clear()
+    .type(fullNameParts[1], { force: true, delay: 200 });
+  formsObj
+    .formFullNameLastNameField(label)
+    .shadow()
+    .find('input')
+    .clear()
+    .type(fullNameParts[2], { force: true, delay: 200 });
 });
+
+// Due to full name control and full name and DOB control have the same field labels, this step only works with full name and dob control with h3 label
+When(
+  'the user enters {string} in full name and DOB control under {string} label',
+  function (fullName: string, label: string) {
+    const fullNameDobParts = fullName.split(',').map((part) => part.trim());
+    if (fullNameDobParts.length !== 4) {
+      expect.fail(
+        'Full name and DOB should consist of four parts separated by commas: first name, middle name, last name, and date of birth.'
+      );
+    }
+    formsObj
+      .formFullNameDobFirstNameField(label)
+      .shadow()
+      .find('input')
+      .clear()
+      .type(fullNameDobParts[0], { force: true, delay: 200 });
+    formsObj
+      .formFullNameDobMiddleNameField(label)
+      .shadow()
+      .find('input')
+      .clear()
+      .type(fullNameDobParts[1], { force: true, delay: 200 });
+    formsObj
+      .formFullNameDobLastNameField(label)
+      .shadow()
+      .find('input')
+      .clear()
+      .type('{selectall}{backspace}')
+      .type(fullNameDobParts[2], { force: true, delay: 200 });
+    formsObj
+      .formFullNameDobDateOfBirthField(label)
+      .shadow()
+      .find('input')
+      .clear({ force: true })
+      .type(fullNameDobParts[3], { force: true, delay: 200 });
+  }
+);
+
+When(
+  'the user enters {string} in Alberta postal address control under {string} label',
+  function (postalAddress: string, label: string) {
+    const addressParts = postalAddress.split(',').map((part) => part.trim());
+    if (addressParts.length !== 3) {
+      expect.fail(
+        'Alberta postal address should consist of three parts separated by commas: street address, city, and postal code.'
+      );
+    }
+    formsObj
+      .formAlbertaPostalAddressStreetField(label)
+      .shadow()
+      .find('input')
+      .clear()
+      .type(addressParts[0], { force: true, delay: 200 });
+    formsObj
+      .formAlbertaPostalAddressCityField(label)
+      .shadow()
+      .find('input')
+      .clear()
+      .type(addressParts[1], { force: true, delay: 200 });
+    formsObj
+      .formAlbertaPostalAddressPostalCodeField(label)
+      .shadow()
+      .find('input')
+      .clear()
+      .type(addressParts[2], { force: true, delay: 200 });
+  }
+);
+
+When(
+  'the user enters {string} in Canada postal address control under {string} label',
+  function (postalAddress: string, label: string) {
+    const addressParts = postalAddress.split(',').map((part) => part.trim());
+    if (addressParts.length !== 4) {
+      expect.fail(
+        'Canada postal address should consist of four parts separated by commas: street address, city, province, and postal code.'
+      );
+    }
+    formsObj
+      .formCanadianPostalAddressStreetField(label)
+      .shadow()
+      .find('input')
+      .clear()
+      .type(addressParts[0], { force: true, delay: 200 });
+    formsObj
+      .formCanadianPostalAddressCityField(label)
+      .shadow()
+      .find('input')
+      .clear()
+      .type(addressParts[1], { force: true, delay: 200 });
+    formsObj
+      .formCanadianPostalAddressPostalCodeField(label)
+      .shadow()
+      .find('input')
+      .clear()
+      .type(addressParts[3], { force: true, delay: 200 });
+    formsObj.formCanadianPostalAddressProvinceDropdown(label).shadow().find('input').click({ force: true });
+    formsObj
+      .formCanadianPostalAddressProvinceDropdown(label)
+      .shadow()
+      .find('goa-popover')
+      .find('li')
+      .contains(addressParts[2])
+      .click({ force: true });
+  }
+);

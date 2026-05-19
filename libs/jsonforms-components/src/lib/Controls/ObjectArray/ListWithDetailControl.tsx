@@ -749,6 +749,30 @@ export function humanizeAjvError(error: ErrorObject, schema: JsonSchema, uischem
   }
 }
 
+export function combineRequiredErrors(errors: string[]): string {
+  const requiredPattern = /^(.+) is required$/;
+  const requiredFields: string[] = [];
+  const otherErrors: string[] = [];
+
+  for (const error of errors) {
+    const match = error.match(requiredPattern);
+    if (match) {
+      requiredFields.push(match[1]);
+    } else {
+      otherErrors.push(error);
+    }
+  }
+
+  const parts: string[] = [...otherErrors];
+  if (requiredFields.length > 1) {
+    parts.unshift(`${requiredFields.join(', ')} are required`);
+  } else if (requiredFields.length === 1) {
+    parts.unshift(`${requiredFields[0]} is required`);
+  }
+
+  return parts.join(', ');
+}
+
 const LeftTab = ({
   childPath,
   rowIndex,
@@ -906,7 +930,7 @@ const MainTab = ({
 
   const errorText =
     fieldErrors && Object.values(fieldErrors.fields).length > 0
-      ? Object.values(fieldErrors.fields).join(', ')
+      ? combineRequiredErrors(Object.values(fieldErrors.fields))
       : fieldErrors?.row;
   return (
     <div key={childPath} data-testid={`object-array-main-item-${rowIndex}`}>

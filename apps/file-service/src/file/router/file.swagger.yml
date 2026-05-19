@@ -122,7 +122,7 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/FileType"
+                $ref: '#/components/schemas/FileType'
       401:
         description: User not authorized.
 
@@ -145,7 +145,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/FileType"
+              $ref: '#/components/schemas/FileType'
       401:
         description: User not authorized.
 
@@ -187,7 +187,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/File"
+              $ref: '#/components/schemas/File'
       400:
         description: Invalid parameters.
       401:
@@ -260,7 +260,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/File"
+                    $ref: '#/components/schemas/File'
                 page:
                   type: object
                   properties:
@@ -278,6 +278,43 @@ components:
                         as it will just repeat the set just returned.
                       example: Mw==
                       type: string
+      401:
+        description: User not authorized.
+  delete:
+    tags:
+      - File
+    description: Marks multiple files for deletion. File deletion is not immediate, but files will eventually disappear.
+    parameters:
+      - name: files
+        description: File IDs to delete, provided as a bracketed comma-separated list.
+        example: '[53fca659-362d-407f-9c4d-c2c8c6427bdb, ced3fbdd-7597-455e-84c6-1d0b3d03a274]'
+        in: query
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Delete result.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+                results:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      deleted:
+                        type: boolean
+      400:
+        description: Invalid parameters.
+      404:
+        description: File not found.
       401:
         description: User not authorized.
 
@@ -318,7 +355,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/File"
+              $ref: '#/components/schemas/File'
       404:
         description: File not found
       401:
@@ -332,11 +369,11 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/CopyFileOperation"
+              - $ref: '#/components/schemas/CopyFileOperation'
             discriminator:
               propertyName: operation
               mapping:
-                copy: "#/components/schemas/CopyFileOperation"
+                copy: '#/components/schemas/CopyFileOperation'
     responses:
       200:
         description: Result of the operation
@@ -344,7 +381,7 @@ components:
           application/json:
             schema:
               oneOf:
-                - $ref: "#/components/schemas/File"
+                - $ref: '#/components/schemas/File'
       404:
         description: File not found
       401:
