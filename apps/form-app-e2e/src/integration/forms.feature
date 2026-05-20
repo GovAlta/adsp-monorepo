@@ -185,8 +185,8 @@ Feature: Form app
     And the user selects "Yes" radio button for the question of "Radio group"
     And the user enters "1970-10-30" in a date picker labelled "Value a"
     And the user enters "16:25:10" in a time picker labelled "Value b"
-    # CS-4900 Date time control is rendered as time control in forms
-    # And the user enters "2020-01-10 11:10:00 PM" in a time picker labelled "Value c"
+    # CS-4946: Date time picker has issues
+    # And the user enters "2020-01-10T23:10:00" in a date time picker labelled "Value c"
     And the user enters "Option B" in a dropdown labelled "Data schema enumeration"
     And the user enters "Designer" in a dropdown labelled "Register based enumeration"
     And the user enters "border" in a dropdown labelled "API based enumeration"
@@ -203,6 +203,7 @@ Feature: Form app
     And the user views the summary of "Controls" with "Yes" as "required" "Radio group"
     And the user views the summary of "Controls" with "1970-10-30" as "not required" "Value a"
     And the user views the summary of "Controls" with "16:25:10" as "not required" "Value b"
+    # And the user views the summary of "Controls" with "2020-01-10 11:10:00 PM" as "not required" "Value c"
     And the user views the summary of "Controls" with "Option B" as "not required" "Data schema enumeration"
     And the user views the summary of "Controls" with "Designer" as "not required" "Register based enumeration"
     And the user "should not view" validation error on the summary of "Controls" for "Register based enumeration"

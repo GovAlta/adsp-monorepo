@@ -113,14 +113,22 @@ When('the user enters {string} in a text area field labelled {string}', function
 
 When('the user enters {string} in a numeric field labelled {string}', function (text: string, label) {
   formsObj.formNumericField(label).shadow().find('input').clear().type(text, { force: true, delay: 200 });
+  cy.wait(1000); // Wait for the numeric field to process the input
 });
 
 When('the user enters {string} in a date picker labelled {string}', function (date: string, label) {
   formsObj.formDateInput(label).shadow().find('input').clear().type(date, { force: true });
+  cy.wait(1000); // Wait for the date picker to process the input
 });
 
 When('the user enters {string} in a time picker labelled {string}', function (time: string, label) {
   formsObj.formTimeInput(label).shadow().find('input').clear().type(time, { force: true });
+  cy.wait(1000); // Wait for the date picker to process the input
+});
+
+When('the user enters {string} in a date time picker labelled {string}', function (time: string, label) {
+  formsObj.formDateTimeInput(label).shadow().find('input').clear().type(time, { force: true });
+  cy.wait(1000); // Wait for the date time picker to process the input
 });
 
 When('the user enters {string} in a dropdown labelled {string}', function (value: string, label) {
@@ -218,6 +226,7 @@ When(
   'the user enters {string} in list with detail element date input labelled {string}',
   function (date: string, label) {
     formsObj.formListWithDetailDependantDateInput(label).shadow().find('input').clear().type(date, { force: true });
+    cy.wait(1000); // Wait for the date picker to process the input
   }
 );
 
@@ -239,7 +248,7 @@ Then(
         formsObj.formSummaryPageSectionRowValue(sectionName, label).should('have.text', value);
         break;
       case 'not required':
-        formsObj.formSummaryPageSectionRowValue(sectionName, label).should('have.text', value);
+        formsObj.formSummaryPageSectionRowValue(sectionName, label).scrollIntoView().should('have.text', value);
         break;
       default:
         expect(requiredOrNot).to.be.oneOf(['required', 'not required']);
