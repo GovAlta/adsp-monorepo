@@ -9,7 +9,6 @@
 const { Octokit } = require('@octokit/rest');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 // ─────────────────────────────────────────────────────────────
 // Config
@@ -21,7 +20,6 @@ const REPO_NAME = process.env.REPO_NAME;
 const HEAD_SHA = process.env.HEAD_SHA;
 
 const SUPPORTED_FILE_EXTENSIONS_FOR_REVIEW = ['.ts', '.tsx', '.js', '.jsx'];
-const MAX_FILE_LINES_BEFORE_TRUNCATION = 400;
 
 // ─────────────────────────────────────────────────────────────
 // Load rules config (.cleancode.yml) if present
@@ -76,22 +74,6 @@ async function fetchChangedFiles(octokit) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Get file content at HEAD
-// ─────────────────────────────────────────────────────────────
-function getFileContent(filePath) {
-  try {
-    const content = execSync(`git show HEAD:${filePath}`, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 5 });
-    const lines = content.split('\n');
-    if (lines.length > MAX_FILE_LINES_BEFORE_TRUNCATION) {
-      return lines.slice(0, MAX_FILE_LINES_BEFORE_TRUNCATION).join('\n') + '\n// ... (truncated for review)';
-    }
-    return content;
-  } catch (e) {
-    return null;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
 // Fetch Jira ticket description linked to this PR
 // ─────────────────────────────────────────────────────────────
 async function getJiraTicket(prTitle, prBody) {
@@ -122,7 +104,14 @@ function buildSystemPrompt(config, jiraContext) {
   return `You are a Clean Code AI reviewer. Review the provided code and identify violations of the following rules.
 
 RULES:
-2.1  Function Names: Function names must accurately describe what they do. Flag vague or misleading names.
+NAMING STABILITY PRINCIPLE:
+Naming comments are SUGGESTION severity only — never ERROR or WARNING.
+Do not flag a name merely because another name is also reasonable.
+Do not reverse a previous naming suggestion unless it was clearly wrong.
+If both names are acceptable, prefer the existing name to avoid churn.
+Prefer stable, readable code over theoretically perfect names.
+
+2.1  Function Names: Only flag a function name when it is clearly misleading, ambiguous in its local scope, or likely to cause a real maintenance problem. Do not suggest a rename merely because another name is also reasonable. Before flagging, compare the name against its local context, nearby function names, and existing project naming conventions. If the current name is acceptable in context, do not comment. Every naming suggestion must include: (1) why the existing name is harmful or confusing, (2) why the proposed name is better, (3) whether the change is required or optional polish. If the reason is preference only, do not leave the comment. Never reverse a previous naming suggestion unless the original was clearly wrong. If both names are acceptable, prefer the existing name to avoid churn.
 2.2  File Names: Flag if the file name does not clearly reflect its purpose (comment at line 1).
 2.3  Function Length: No function should exceed ${config.function_length_limit} lines. For React/TSX, suggest extracting loops or conditional blocks into separate components.
 2.4  Long Conditionals: Complex conditions should be wrapped in a named function that describes what is being tested.
@@ -130,7 +119,7 @@ RULES:
 2.6  Encapsulation: If multiple functions operate on the same data, suggest creating a class or interface to encapsulate them.
 2.7  Minimize Coupling: Each file should have one clear purpose. Flag files with mixed concerns.
 2.8  Maximize Cohesion: If a single task is spread across multiple functions unnecessarily, suggest consolidation.
-2.9  Meaningful Names: Variables, classes, and constants must have intention-revealing names. No magic numbers. No single-letter variables except loop counters.
+2.9  Meaningful Names: Variables, classes, and constants must have intention-revealing names. No magic numbers. No single-letter variables except loop counters. Only suggest a rename when the current name is clearly misleading or ambiguous in its local scope — not because another name might also be reasonable. Check the surrounding context before flagging: if the scope already makes the meaning clear, the name is acceptable. Every naming suggestion must justify why the existing name causes confusion and why the new name is concretely better. If both names are acceptable, prefer the existing name. Apply the stability principle: prefer stable readable code over theoretically perfect names. Avoid suggestions that would cause churn without improving correctness, clarity, or maintainability.
 2.10 Functions Do One Thing: A function must do one thing only (Single Responsibility Principle). Flag functions doing multiple things.
 2.11 Comments: Flag redundant comments that restate what the code does. Flag outdated or misleading comments. Do not comment bad code — rewrite it. Comments that explain design decisions are acceptable and encouraged — e.g. why something was implemented one way instead of another.
 2.13 Error Handling: Use exceptions instead of returning error codes. Never suppress or silently ignore errors.
@@ -141,9 +130,9 @@ RULES:
 2.18 No Hidden Side Effects: Flag functions that modify external state unexpectedly or produce outputs not indicated by their name.
 
 SEVERITY LEVELS:
-- ERROR: Rules 2.1, 2.2, 2.3, 2.9, 2.10, 2.13, 2.14, 2.15, 2.16, 2.17, 2.18
-- WARNING: Rules 2.4, 2.7, 2.8
-- SUGGESTION: Rules 2.5, 2.6, 2.11
+- ERROR: Rules 2.13, 2.14, 2.18
+- WARNING: Rules 2.3, 2.4, 2.7, 2.8, 2.10
+- SUGGESTION: Rules 2.1, 2.2, 2.5, 2.6, 2.9, 2.11, 2.15, 2.16, 2.17
 
 SUPPRESSION: If a line contains the comment // clean-code-ignore: RULE_ID (e.g. // clean-code-ignore: 2.3), skip that rule for that line.
 
@@ -266,6 +255,18 @@ async function postReviewSummary(octokit, comments, hasBlockingViolations) {
   if (warningCount > 0) issueLines.push(`🟡 ${warningCount} warning(s) that should be reviewed`);
   if (suggestionCount > 0) issueLines.push(`🟢 ${suggestionCount} suggestion(s) for improvement`);
 
+  const SEVERITY_ORDER = { ERROR: 0, WARNING: 1, SUGGESTION: 2 };
+  const topComments = comments
+    .sort((a, b) => {
+      const getSeverity = (body) => {
+        if (body.includes('ERROR')) return SEVERITY_ORDER.ERROR;
+        if (body.includes('WARNING')) return SEVERITY_ORDER.WARNING;
+        return SEVERITY_ORDER.SUGGESTION;
+      };
+      return getSeverity(a.body) - getSeverity(b.body);
+    })
+    .slice(0, 5);
+
   const event = 'COMMENT';
 
   const summary = hasBlockingViolations
@@ -279,7 +280,7 @@ async function postReviewSummary(octokit, comments, hasBlockingViolations) {
     commit_id: HEAD_SHA,
     event,
     body: summary,
-    comments,
+    comments: topComments,
   });
 }
 
@@ -290,20 +291,16 @@ function initializeOctokit() {
 // ─────────────────────────────────────────────────────────────
 // Process each changed file: call the AI model and collect review comments
 // ─────────────────────────────────────────────────────────────
-async function processFilesForReview(
-  changedFiles,
-  systemPrompt,
-  { getContent = getFileContent, reviewFile = reviewWithGitHubModels } = {},
-) {
+async function processFilesForReview(changedFiles, systemPrompt, { reviewFile = reviewWithGitHubModels } = {}) {
   const reviewComments = [];
   let hasBlockingViolations = false;
 
   for (const file of changedFiles) {
     console.log(`  Reviewing: ${file.filename}`);
 
-    const content = getContent(file.filename);
+    const content = file.patch;
     if (!content) {
-      console.log(`  Could not read ${file.filename}, skipping.`);
+      console.log(`  No diff available for ${file.filename}, skipping.`);
       continue;
     }
 
@@ -355,6 +352,16 @@ async function main() {
 
   if (changedFiles.length === 0) {
     console.log('No supported files changed. Skipping review.');
+    return;
+  }
+
+  const commitsResponse = await octokit.rest.pulls.listCommits({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    pull_number: PR_NUMBER,
+  });
+  if (commitsResponse.data.length > 1) {
+    console.log('Skipping review — already reviewed on first push.');
     return;
   }
 
