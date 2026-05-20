@@ -160,7 +160,7 @@ Feature: Form app
     Then the user views an error message of "must NOT have fewer than 10 characters" under the control labelled "Multiline text area"
     When the user clicks Back to application overview link on the form page
     And the user clicks "Standard controls" task on task list page
-    And the user enters "111111111" in Social insurance number control
+    And the user enters "111111111" in Social insurance number control under "Social insurance number" label
     Then the user views an error message of "Social insurance number is invalid" under the control labelled "Social insurance number"
     When the user clicks Back to application overview link on the form page
     And the user clicks "Summary" task on task list page
@@ -185,8 +185,8 @@ Feature: Form app
     And the user selects "Yes" radio button for the question of "Radio group"
     And the user enters "1970-10-30" in a date picker labelled "Value a"
     And the user enters "16:25:10" in a time picker labelled "Value b"
-    # CS-4900 Date time control is rendered as time control in forms
-    # And the user enters "2020-01-10 11:10:00 PM" in a time picker labelled "Value c"
+    # CS-4946: Date time picker has issues
+    # And the user enters "2020-01-10T23:10:00" in a date time picker labelled "Value c"
     And the user enters "Option B" in a dropdown labelled "Data schema enumeration"
     And the user enters "Designer" in a dropdown labelled "Register based enumeration"
     And the user enters "border" in a dropdown labelled "API based enumeration"
@@ -203,8 +203,38 @@ Feature: Form app
     And the user views the summary of "Controls" with "Yes" as "required" "Radio group"
     And the user views the summary of "Controls" with "1970-10-30" as "not required" "Value a"
     And the user views the summary of "Controls" with "16:25:10" as "not required" "Value b"
+    # And the user views the summary of "Controls" with "2020-01-10 11:10:00 PM" as "not required" "Value c"
     And the user views the summary of "Controls" with "Option B" as "not required" "Data schema enumeration"
     And the user views the summary of "Controls" with "Designer" as "not required" "Register based enumeration"
     And the user "should not view" validation error on the summary of "Controls" for "Register based enumeration"
     And the user views the summary of "Controls" with "border" as "not required" "API based enumeration"
     And the user "should not view" validation error on the summary of "Controls" for "API based enumeration"
+
+  # TEST DATA: regression-control-examples is created with all types of control examples
+  @TEST_CS-4004 @regression
+  Scenario: As a form user, I can use basic controls in a form
+    Given an anonymous applicant goes to "regression-control-examples" application
+    Then the user views an anonymous form draft of "regression-control-examples"
+    When the user clicks "Standard controls" task on task list page
+    And the user enters "John, Mathew, Smith" in full name control under "Full name" label
+    And the user enters "Mary, Jones, Steward, 1978-01-15" in full name and DOB control under "Full name and date of birth" label
+    And the user enters "118 Foxboro Way, Sherwood Park, T8A 5Y6" in Alberta postal address control under "Alberta mailing address" label
+    And the user enters "1228 Robson St, Vancouver, British Columbia, V6E 1C1" in Canada postal address control under "Canadian mailing address" label
+    And the user enters "111111118" in Social insurance number control under "Social insurance number" label
+    And the user clicks Back to application overview link on the form page
+    And the user clicks "Summary" task on task list page
+    Then the user views the summary of "Standard controls" with "John" as "not required" "First name" under "Full name" for standard name control
+    And the user views the summary of "Standard controls" with "Mathew" as "not required" "Middle name" under "Full name" for standard name control
+    And the user views the summary of "Standard controls" with "Smith" as "not required" "Last name" under "Full name" for standard name control
+    And the user views the summary of "Standard controls" with "Mary" as "not required" "First name" under "Full name and date of birth" for standard name control
+    And the user views the summary of "Standard controls" with "Jones" as "not required" "Middle name" under "Full name and date of birth" for standard name control
+    And the user views the summary of "Standard controls" with "Steward" as "not required" "Last name" under "Full name and date of birth" for standard name control
+    And the user views the summary of "Standard controls" with "1978-01-15" as "not required" "Date of birth" under "Full name and date of birth" for standard name control
+    And the user views the summary of "Standard controls" with "118 Foxboro Way" as "required" "Address line 1" under "Alberta mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "Sherwood Park" as "required" "City" under "Alberta mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "T8A 5Y6" as "required" "Postal code" under "Alberta mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "1228 Robson St" as "required" "Address line 1" under "Canadian mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "Vancouver" as "required" "City" under "Canadian mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "British Columbia" as "required" "Province" under "Canadian mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "V6E 1C1" as "required" "Postal code" under "Canadian mailing address" for standard postal address control
+    And the user views the summary of "Standard controls" with "111 111 118" as "not required" "Social insurance number"

@@ -51,6 +51,10 @@ class FormsPage {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="time"]`);
   }
 
+  formDateTimeInput(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="datetime-local"]`);
+  }
+
   formDropdown(label) {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-dropdown`);
   }
@@ -75,8 +79,8 @@ class FormsPage {
     return cy.xpath(`//goa-checkbox[@text="${label}"]`);
   }
 
-  formSocialInsuranceNumberField() {
-    return cy.xpath('//goa-form-item[@label="Social insurance number"]//goa-input');
+  formSocialInsuranceNumberField(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input`);
   }
 
   formSubmitButton() {
@@ -128,9 +132,27 @@ class FormsPage {
     );
   }
 
+  formSummaryPageSectionSubsectionRowLabel(pageName, subsectionLabel, label) {
+    return cy.xpath(
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td//*[text()="${subsectionLabel}"]/ancestor::tbody//div[contains(text(), "${label}")]`
+    );
+  }
+
   formSummaryPageSectionRowValue(pageName, label) {
     return cy.xpath(
       `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td[1]//div[contains(text(), "${label}")]/ancestor::td//div[contains(@data-testid,"review-value")]`
+    );
+  }
+
+  formSummaryPageSectionSubsectionRowValueForNameControl(pageName, subsectionLabel, label) {
+    return cy.xpath(
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td//*[text()="${subsectionLabel}"]/ancestor::tbody//div[contains(text(), "${label}")]/ancestor::td//div[2]/div`
+    );
+  }
+
+  formSummaryPageSectionSubsectionRowValueForAddressControl(pageName, subsectionLabel, label) {
+    return cy.xpath(
+      `//div[text()="${pageName}"]/ancestor::div[contains(@class,"review-section")]/goa-table/table/tbody/tr/td//*[text()="${subsectionLabel}"]/ancestor::tbody//div[contains(text(), "${label}")]/ancestor::td//div[2]`
     );
   }
 
@@ -198,6 +220,90 @@ class FormsPage {
 
   formSectionTitle(sectionTitle) {
     return cy.xpath(`//tbody/tr/td/goa-text [text()="${sectionTitle}"]`);
+  }
+
+  formFullNameFirstNameField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="First name"]/goa-input`
+    );
+  }
+
+  formFullNameMiddleNameField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="Middle name"]/goa-input`
+    );
+  }
+
+  formFullNameLastNameField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="Last name"]/goa-input`
+    );
+  }
+
+  formFullNameDobFirstNameField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="First name"]/goa-input`
+    );
+  }
+
+  formFullNameDobMiddleNameField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="Middle name"]/goa-input`
+    );
+  }
+
+  formFullNameDobLastNameField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="Last name"]/goa-input`
+    );
+  }
+
+  formFullNameDobDateOfBirthField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="Date of birth"]/goa-input`
+    );
+  }
+
+  formAlbertaPostalAddressStreetField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="Street address or P.O. box"]//goa-input`
+    );
+  }
+
+  formAlbertaPostalAddressCityField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="City"]/goa-input`
+    );
+  }
+
+  formAlbertaPostalAddressPostalCodeField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="Postal code"]/goa-input`
+    );
+  }
+
+  formCanadianPostalAddressStreetField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="Street address or P.O. box"]//goa-input`
+    );
+  }
+
+  formCanadianPostalAddressCityField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="City"]/goa-input`
+    );
+  }
+
+  formCanadianPostalAddressProvinceDropdown(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="Province"]/goa-dropdown`
+    );
+  }
+
+  formCanadianPostalAddressPostalCodeField(label) {
+    return cy.xpath(
+      `//h3[text()="${label}"]//following-sibling::goa-container//goa-form-item[@label="Postal code"]/goa-input`
+    );
   }
 }
 
