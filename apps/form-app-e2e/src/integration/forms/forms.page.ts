@@ -51,6 +51,10 @@ class FormsPage {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="time"]`);
   }
 
+  formDateTimeInput(label) {
+    return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="datetime-local"]`);
+  }
+
   formDropdown(label) {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-dropdown`);
   }

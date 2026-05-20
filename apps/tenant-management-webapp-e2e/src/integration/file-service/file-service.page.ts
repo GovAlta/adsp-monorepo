@@ -197,7 +197,7 @@ class FileServicePage {
   }
 
   uploadFilesGridTypeCells() {
-    return cy.xpath('//tbody//td[3]');
+    return cy.xpath('//tbody//td[4]');
   }
 
   fileTypeClassificationDropdown() {
