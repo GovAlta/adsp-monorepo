@@ -473,7 +473,7 @@ Then('the user views an instruction of role requirement indicating user needs te
         Cypress.env('accessManagementApi') +
           '/admin/' +
           Cypress.env('realm') +
-          '/console/#/realms/' +
+          '/console/#/' +
           Cypress.env('realm') +
           '/users'
       );
