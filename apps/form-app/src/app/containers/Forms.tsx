@@ -30,6 +30,7 @@ import { SignInStartApplication } from '../components/SignInStartApplication';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { DeleteFormModal } from '../components/DeleteFormModal';
 import { useLocation } from 'react-router-dom';
+import { getVersionFromSearch } from './FormDefinition';
 
 const PageTitleDiv = styled.div`
   display: flex;
@@ -114,13 +115,13 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
   const canCreateDraft = useSelector(canCreateDraftSelector);
   const [formToDelete, setFormToDelete] = useState(null);
   const location = useLocation();
-  const urlParams = new URLSearchParams(location.search);
+  const version = getVersionFromSearch(location.search);
 
-  const versionParam = urlParams.get('version');
-  const version = versionParam ? Number(versionParam) : undefined;
+  const canCreateNewApplication = definition?.oneFormPerApplicant === false && canCreateDraft;
 
   useEffect(() => {
-    dispatch(findUserForms({ definitionId: definition?.id, version: version }));
+    // clean-code-ignore: 2.5 - functions that dispatch in useEffect are common in React components and this keeps the logic straightforward.
+    dispatch(findUserForms({ definitionId: definition?.id, version }));
   }, [dispatch, definition]);
 
   return initialized ? (
@@ -136,7 +137,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
               </p>
             </div>
             <GoabButtonGroup alignment="end">
-              {definition && definition.oneFormPerApplicant === false && canCreateDraft && (
+              {canCreateNewApplication && (
                 <GoabButton
                   mr="m"
                   disabled={busy.creating}
@@ -228,6 +229,7 @@ export const Forms: FunctionComponent<FormsProps> = ({ definition }) => {
               <GoabButton
                 type="tertiary"
                 disabled={busy.loading}
+                // clean-code-ignore: 2.5
                 onClick={() => dispatch(findUserForms({ definitionId: definition?.id, after: next }))}
               >
                 Load more

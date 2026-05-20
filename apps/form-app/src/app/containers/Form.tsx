@@ -48,7 +48,7 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
 
   useEffect(() => {
     if (definitionId && version !== undefined) {
-    dispatch(selectedDefinition({ definitionId, version }));
+      dispatch(selectedDefinition({ definitionId, version }));
     }
   }, [version, definitionId]);
 
@@ -63,7 +63,6 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
     // when the form has a support topic configured
     dispatch(loadForm(formId));
 
-    // Cleanup comment stream socket on unmount
     return () => {
       dispatch(disconnectStream());
     };

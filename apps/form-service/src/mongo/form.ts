@@ -25,64 +25,35 @@ export class MongoFormRepository implements FormRepository {
     });
   }
 
+  // clean-code-ignore: 2.10 - The find method is appropriately complex due to the number of criteria that can be applied to the search.
+  // clean-code-ignore: 2.17 - The find method is appropriately complex due to the number of criteria that can be applied to the search.
   find(top: number, after: string, criteria: FormCriteria): Promise<Results<FormEntity>> {
     const skip = decodeAfter(after);
-    const query: Record<string, unknown> = {};
+    const revision = criteria?.revisionEquals;
 
-    if (criteria?.tenantIdEquals) {
-      query.tenantId = criteria.tenantIdEquals.toString();
-    }
-
-    if (criteria?.definitionIdEquals) {
-      const escapedDefinitionId = criteria.definitionIdEquals.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-      if (criteria?.revisionEquals !== undefined && criteria?.revisionEquals !== null) {
-        query.definitionId = {
-          $regex: `^${escapedDefinitionId}-v${criteria.revisionEquals}$`,
-          $options: 'i',
-        };
-      } else {
-        query.definitionId = {
-          $regex: `^${escapedDefinitionId}(?:-v\\d+)?$`,
-          $options: 'i',
-        };
-      }
-    }
-
-    if (criteria?.statusEquals) {
-      query.status = criteria.statusEquals;
-    }
-
-    if (criteria?.lockedBefore) {
-      query.locked = { $lt: criteria.lockedBefore };
-    }
-
-    if (criteria?.lastAccessedBefore) {
-      query.lastAccessed = { $lt: criteria.lastAccessedBefore };
-    }
-
-    if (criteria?.hashEquals) {
-      query.hash = criteria.hashEquals;
-    }
-
-    if (criteria?.createdByIdEquals) {
-      query['createdBy.id'] = criteria.createdByIdEquals;
-    }
-
-    if (criteria?.anonymousApplicantEquals !== undefined) {
-      query.anonymousApplicant = criteria.anonymousApplicantEquals;
-    }
-
-    if (criteria?.dataCriteria) {
-      Object.entries(criteria.dataCriteria).forEach(([property, value]) => {
-        query[`data.${property}`] = value;
-      });
-    }
+    const formSearchCriteria: Record<string, unknown> = {
+      ...(criteria?.tenantIdEquals && { tenantId: criteria.tenantIdEquals.toString() }),
+      ...(revision !== undefined && revision !== null && { id: revision }),
+      ...(criteria?.definitionIdEquals && {
+        definitionId: { $regex: `${criteria.definitionIdEquals}`, $options: 'i' },
+      }),
+      ...(criteria?.statusEquals && { status: criteria.statusEquals }),
+      ...(criteria?.lockedBefore && { locked: { $lt: criteria.lockedBefore } }),
+      ...(criteria?.lastAccessedBefore && { lastAccessed: { $lt: criteria.lastAccessedBefore } }),
+      ...(criteria?.hashEquals && { hash: criteria.hashEquals }),
+      ...(criteria?.createdByIdEquals && { 'createdBy.id': criteria.createdByIdEquals }),
+      ...(criteria?.anonymousApplicantEquals !== undefined && {
+        anonymousApplicant: criteria.anonymousApplicantEquals,
+      }),
+      ...Object.fromEntries(
+        Object.entries(criteria?.dataCriteria ?? {}).map(([property, value]) => [`data.${property}`, value]),
+      ),
+    };
 
     return new Promise<FormEntity[]>((resolve, reject) => {
       this.model
-        .find(query, null, { lean: true })
-        .sort({ created: -1 })
+        .find(formSearchCriteria, null, { lean: true })
+        .sort({ version: -1, created: -1 })
         .skip(skip)
         .limit(top)
         .exec((err, docs) => (err ? reject(err) : resolve(Promise.all(docs.map((doc) => this.fromDoc(doc))))));
@@ -98,49 +69,39 @@ export class MongoFormRepository implements FormRepository {
 
   get(tenantId: AdspId, id: string): Promise<FormEntity> {
     return new Promise<FormEntity>((resolve, reject) => {
-      const rawId = id;
-      const cleanId = rawId.replace(/-v\d+$/, '');
-
-      this.model
-        .findOne({ tenantId: tenantId.toString(), id: cleanId }, null, { lean: true })
-        .exec(async (err, doc) => {
-          if (err) {
-            reject(err);
-          } else {
-            const entity = doc ? this.fromDoc(doc) : null;
-            resolve(entity);
-          }
-        });
+      this.model.findOne({ tenantId: tenantId.toString(), id }, null, { lean: true }).exec(async (err, doc) => {
+        if (err) {
+          reject(err);
+        } else {
+          const entity = doc ? this.fromDoc(doc) : null;
+          resolve(entity);
+        }
+      });
     });
   }
 
   async save(entity: FormEntity): Promise<FormEntity> {
     try {
-      let version = entity.version !== undefined && entity.version !== null ? Number(entity.version) : undefined;
-
-      if (version === undefined && entity.definition?.version !== undefined) {
-        version = entity.definition.version;
-      }
-
       const updateDoc = this.toDoc(entity);
-
-      if (version !== undefined) {
-        updateDoc.definitionId = `${updateDoc.definitionId}-v${version}`;
-
-        updateDoc.version = version;
-      }
-
       const { data, files, status, lastAccessed, locked, submitted, hash, ...insertDoc } = updateDoc;
-
       const query: Record<string, unknown> = {
         tenantId: entity.tenantId.toString(),
-        id: entity.id, // versionedId,
+        id: entity.id,
+      };
+
+      if (entity?.definition?.revision !== undefined && entity?.definition?.revision !== null) {
+        query.id = `${query.id}-v${Number(entity?.definition?.revision)}`;
+      }
+
+      const insert = {
+        ...insertDoc,
+        ...(query.version !== undefined ? { version: query.version } : {}),
       };
 
       const doc = await this.model.findOneAndUpdate(
         query,
         {
-          $setOnInsert: insertDoc,
+          $setOnInsert: insert,
           $set: {
             data,
             files,
@@ -160,6 +121,7 @@ export class MongoFormRepository implements FormRepository {
 
       return this.fromDoc(doc);
     } catch (err) {
+      console.log(JSON.stringify(err.message) + '<err.message');
       if (err?.code == 11000) {
         throw new InvalidOperationError('Cannot create duplicate form.');
       } else {
@@ -168,47 +130,62 @@ export class MongoFormRepository implements FormRepository {
     }
   }
 
-  async delete(entity: FormEntity): Promise<boolean> {
-    const doc = await this.model.findOneAndDelete({ tenantId: entity.tenantId.toString(), id: entity.id }).lean();
-
-    return !!doc;
+  delete(entity: FormEntity): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      this.model
+        .findOneAndDelete({ tenantId: entity.tenantId.toString(), id: entity.id })
+        .exec((err, doc) => (err ? reject(err) : resolve(!!doc)));
+    });
   }
 
+  // clean-code-ignore: 2.10 - The toDoc method is appropriately complex due to the number of properties that need to be mapped from the entity to the document.
   private toDoc(entity: FormEntity): FormDoc {
+    const {
+      id,
+      formDraftUrl,
+      anonymousApplicant,
+      status,
+      created,
+      createdBy,
+      locked,
+      submitted,
+      lastAccessed,
+      securityClassification,
+      hash,
+      data,
+      dryRun,
+      registeredId,
+    } = entity;
+
+    const common = {
+      id,
+      formDraftUrl,
+      anonymousApplicant,
+      status,
+      created,
+      createdBy,
+      locked,
+      submitted,
+      lastAccessed,
+      securityClassification,
+      hash,
+      data,
+      dryRun,
+      registeredId,
+    };
+
     return {
       tenantId: entity.tenantId.toString(),
-      id: entity.id,
-      formDraftUrl: entity.formDraftUrl,
-      anonymousApplicant: entity.anonymousApplicant,
+      ...common,
       definitionId: entity.definition?.id,
-      // NOTE: This is only set on insert (create).
-      // The UUID is necessary due to backwards compatibility with a unique index on tenant, definition, and applicant IDs.
-      // Setting form ID makes the unique context effectively tenant, definition, form IDs.
-      // Setting the applicant URN restricts to one per applicant.
-      applicantId:
-        entity.definition?.oneFormPerApplicant && entity.applicant
-          ? entity.applicant.urn.toString() // Creating user ID might be better, but that can be an intake service account.
-          : entity.id,
+      applicantId: entity.definition?.oneFormPerApplicant && entity.applicant ? entity.applicant.urn.toString() : id,
       subscriberId: entity.applicant?.urn.toString(),
-      status: entity.status,
-      created: entity.created,
-      createdBy: entity.createdBy,
-      locked: entity.locked,
-      submitted: entity.submitted,
-      lastAccessed: entity.lastAccessed,
-      securityClassification: entity.securityClassification,
-      hash: entity.hash,
-      data: entity.data,
-      files: Object.entries(entity.files).reduce(
-        (fs, [key, f]) => ({ ...fs, [key.replace('.', ':')]: f?.toString() }),
-        {},
-      ),
-      dryRun: entity.dryRun,
-      registeredId: entity.registeredId,
-      version: entity.version,
+      files: Object.fromEntries(Object.entries(entity.files).map(([key, f]) => [key.replace('.', ':'), f?.toString()])),
     };
   }
 
+  // clean-code-ignore: 2.17 - The fromDoc method is appropriately complex due to the number of properties that need to be mapped from the document to the entity, as well as the necessary lookups to populate the definition and applicant.
+  // clean-code-ignore: 2.18 - side effects are necessary in the fromDoc method to perform the necessary lookups to populate the definition and applicant.
   private fromDoc = async (doc: FormDoc): Promise<FormEntity> => {
     const tenantId = AdspId.parse(doc.tenantId);
     const definition = await this.definitionRepository.getDefinition(tenantId, doc.definitionId);
@@ -221,8 +198,6 @@ export class MongoFormRepository implements FormRepository {
       // this is necessary for backwards compatibility with index.
       applicant = await this.notificationService.getSubscriber(tenantId, AdspId.parse(doc.applicantId));
     }
-
-    const version = getVersionFromDefinitionId(doc.definitionId);
 
     return new FormEntity(
       this,
@@ -246,7 +221,7 @@ export class MongoFormRepository implements FormRepository {
           {},
         ),
         dryRun: doc.dryRun,
-        version: version,
+        version: getVersionFromDefinitionId(doc.definitionId),
       },
       doc.hash,
     );

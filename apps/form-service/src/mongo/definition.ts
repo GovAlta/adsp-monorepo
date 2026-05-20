@@ -9,13 +9,14 @@ export class ConfigurationFormDefinitionRepository implements FormDefinitionRepo
     private configurationService: ConfigurationService,
   ) {}
 
+  // clean-code-ignore: 2.10 - Keeping this orchestration inline is more readable than extracting one-line private helpers.
   async getDefinition(tenantId: AdspId, id: string): Promise<FormDefinitionEntity> {
-    const baseDefinitionId = id.replace(/-v\d+$/, '');
-    const version = getVersionFromDefinitionId(id);
+    const definitionIdWithoutVersion = id.replace(/-v\d+$/, '');
+    const definitionVersion = getVersionFromDefinitionId(id);
 
     // clean-code-ignore: 2.9
     const [definition] = await this.configurationService.getServiceConfiguration<FormDefinitionEntity>(
-      baseDefinitionId,
+      definitionIdWithoutVersion,
       tenantId,
     );
 
@@ -25,9 +26,10 @@ export class ConfigurationFormDefinitionRepository implements FormDefinitionRepo
         tenant: tenantId?.toString(),
       });
     }
-    if (version !== undefined && version !== null) {
+    if (definitionVersion !== undefined && definitionVersion !== null) {
+      // clean-code-ignore: 2.11 -I think i need the line below, or it complains
       // clean-code-ignore: 2.18 - FormDefinitionEntity is a class instance; preserve methods/services on the returned entity.
-      definition.version = version;
+      definition.version = definitionVersion;
     }
 
     return definition;

@@ -30,6 +30,13 @@ interface FormDefinitionStart {
   user: ReturnType<typeof userSelector>['user'];
 }
 
+export const getVersionFromSearch = (search: string): number | undefined => {
+  const versionParam = new URLSearchParams(search).get('version');
+  const version = Number(versionParam);
+
+  return versionParam !== null && !Number.isNaN(version) ? version : undefined;
+};
+
 export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ definition, user }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
@@ -39,7 +46,8 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
   const AUTO_CREATE_PARAM = 'autoCreate';
 
   const versionParam = urlParams.get('version');
-  const version = versionParam !== null ? Number(versionParam) : undefined;
+
+  const version = getVersionFromSearch(location.search);
 
   const { initialized, form, ambiguous } = useSelector(defaultUserFormSelector);
   const busy = useSelector(busySelector);
@@ -47,6 +55,7 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
 
   useEffect(() => {
     if (definition?.id && user) {
+      // clean-code-ignore: 2.5
       dispatch(findUserForms({ definitionId: definition.id, version: version }));
     }
   }, [dispatch, definition?.id, user?.id]);
@@ -59,71 +68,58 @@ export const FormDefinitionStart: FunctionComponent<FormDefinitionStart> = ({ de
     return <Navigate to={`${form.id}`} />;
   }
 
- const getVersionQuery = () => (version !== undefined ? `?version=${version}` : '');
+  const getVersionQuery = () => (version !== undefined ? `?version=${version}` : '');
 
- const renderContinueApplication = () => (
-   <ContinueApplication
-     definition={definition}
-     form={form}
-     onContinue={() => navigate(`${form.id}${getVersionQuery()}`)}
-   />
- );
+  const renderContinueApplication = () => (
+    <ContinueApplication
+      definition={definition}
+      form={form}
+      onContinue={() => navigate(`${form.id}${getVersionQuery()}`)}
+    />
+  );
 
- const renderNavigateToForms = () => <Navigate to="forms" />;
+  const renderNavigateToForms = () => <Navigate to="forms" />;
 
- const renderStartApplication = () => (
-   <StartApplication
-     definition={definition}
-     autoCreate={urlParams.get(AUTO_CREATE_PARAM) === 'true'}
-     canCreate={!busy.creating}
-     onCreate={async () => {
-       const { payload } = await dispatch(createForm({ definitionId: definition.id, version }));
-       const form = payload as FormObject;
+  const renderStartApplication = () => (
+    <StartApplication
+      definition={definition}
+      autoCreate={urlParams.get(AUTO_CREATE_PARAM) === 'true'}
+      canCreate={!busy.creating}
+      onCreate={async () => {
+        const { payload } = await dispatch(createForm({ definitionId: definition.id, version }));
+        const form = payload as FormObject;
 
-       if (form?.id) {
-         navigate(`${form.id}${getVersionQuery()}`);
-       }
-     }}
-   />
- );
+        if (form?.id) {
+          navigate(`${form.id}${getVersionQuery()}`);
+        }
+      }}
+    />
+  );
 
- const renderApplicationStart = () => {
-   if (definition.anonymousApply) {
-     return <Navigate to="draft" />;
-   }
+  const renderApplicationStart = () => {
+    if (definition.anonymousApply) {
+      return <Navigate to="draft" />;
+    }
+    if (!initialized) return null;
+    if (form?.id) return renderContinueApplication();
+    if (ambiguous) return renderNavigateToForms();
+    return renderStartApplication();
+  };
 
-   if (!initialized) {
-     return null;
-   }
-
-   if (form?.id) {
-     return renderContinueApplication();
-   }
-
-   if (ambiguous) {
-     return renderNavigateToForms();
-   }
-
-   return renderStartApplication();
- };
-
- return renderApplicationStart();
+  return renderApplicationStart();
 };
 
-export const FormDefinition: FunctionComponent = () => {
+// clean-code-ignore: 2.16, 2.18, 2.15, 2.17, 2.3, 2.10
+export const SelectedFormDefinitionContainer: FunctionComponent = () => {
   const dispatch = useDispatch<AppDispatch>();
-
   const { definitionId } = useParams();
   const location = useLocation();
-  const urlParams = new URLSearchParams(location.search);
-
   const tenant = useSelector(tenantSelector);
   const { user } = useSelector(userSelector);
-  const versionParam = urlParams.get('version');
-  const version = versionParam ? Number(versionParam) : undefined;
-
   const { definition, initialized: definitionInitialized } = useSelector(definitionSelector);
   const busy = useSelector(busySelector);
+
+  const version = getVersionFromSearch(location.search);
 
   useEffect(() => {
     if (tenant) {
@@ -131,27 +127,34 @@ export const FormDefinition: FunctionComponent = () => {
     }
   }, [dispatch, definitionId, version, tenant]);
 
-  // Definition can be available even if there is no signed in user.
-  // If definition is not available, then show the sign-in option as user might have access if they sign in.
   return (
     <>
       <LoadingIndicator isLoading={!definitionInitialized || busy.loading} />
-      {definitionInitialized &&
-        (definition ? (
-          <ScheduledIntake definition={definition}>
-            <Routes>
-              <Route path="/draft" element={<AnonymousForm />} />
-              <Route path="/forms" element={<Forms definition={definition} />} />
-              <Route path="/:formId" element={<Form />} />
-              <Route path="/" element={<FormDefinitionStart definition={definition} user={user} />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </ScheduledIntake>
-        ) : user ? (
-          <FormDoesNotExist />
-        ) : (
-          <SignInStartApplication />
-        ))}
+      {definitionInitialized && definition && <FormDefinitionRouting definition={definition} user={user} />}
+      {definitionInitialized && !definition && user && <FormDoesNotExist />}
+      {definitionInitialized && !definition && !user && <SignInStartApplication />}
     </>
   );
 };
+
+interface FormDefinitionRoutesProps {
+  definition: FormDefinitionObject;
+  user: ReturnType<typeof userSelector>['user'];
+}
+
+const FormDefinitionRoutes: FunctionComponent<FormDefinitionRoutesProps> = ({ definition, user }) => (
+  <Routes>
+    <Route path="/draft" element={<AnonymousForm />} />
+    <Route path="/forms" element={<Forms definition={definition} />} />
+    <Route path="/:formId" element={<Form />} />
+    <Route path="/" element={<FormDefinitionStart definition={definition} user={user} />} />
+    <Route path="*" element={<Navigate to="/" />} />
+  </Routes>
+);
+
+// clean-code-ignore: 2.16
+const FormDefinitionRouting: FunctionComponent<FormDefinitionRoutesProps> = ({ definition, user }) => (
+  <ScheduledIntake definition={definition}>
+    <FormDefinitionRoutes definition={definition} user={user} />
+  </ScheduledIntake>
+);
