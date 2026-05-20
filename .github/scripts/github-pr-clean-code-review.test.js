@@ -13,7 +13,6 @@ process.env.GITHUB_TOKEN = 'test-token';
 process.env.PR_NUMBER = '1';
 process.env.REPO_OWNER = 'test-owner';
 process.env.REPO_NAME = 'test-repo';
-process.env.BASE_SHA = 'base-sha';
 process.env.HEAD_SHA = 'head-sha';
 
 jest.mock('fs');
@@ -172,44 +171,39 @@ describe('processFilesForReview', () => {
   // on line 1 is included in reviewComments rather than silently dropped.
   const PATCH_WITH_LINE_1_ADDED = '@@ -0,0 +1 @@\n+const x = 1;';
 
-  test('skips a file and returns no reviewComments when getContent returns null', async () => {
-    const changedFiles = [{ filename: 'src/test.ts', patch: '' }];
-    const getContent = jest.fn().mockReturnValue(null);
+  test('skips a file and returns no reviewComments when patch is null', async () => {
+    const changedFiles = [{ filename: 'src/test.ts', patch: null }];
     const reviewFile = jest.fn();
 
-    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { getContent, reviewFile });
+    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(reviewComments).toHaveLength(0);
   });
 
-  test('does not call reviewFile when getContent returns null', async () => {
-    const changedFiles = [{ filename: 'src/test.ts', patch: '' }];
-    const getContent = jest.fn().mockReturnValue(null);
+  test('does not call reviewFile when patch is null', async () => {
+    const changedFiles = [{ filename: 'src/test.ts', patch: null }];
     const reviewFile = jest.fn();
 
-    await processFilesForReview(changedFiles, SYSTEM_PROMPT, { getContent, reviewFile });
+    await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(reviewFile).not.toHaveBeenCalled();
   });
 
   test('sets hasBlockingViolations to true when a violation with ERROR severity is returned', async () => {
     const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
-    const getContent = jest.fn().mockReturnValue('const x = 1;');
     const reviewFile = jest
       .fn()
-      .mockResolvedValue([{ rule: '2.9', severity: 'ERROR', line: 1, message: 'bad name', suggestion: 'rename' }]);
+      .mockResolvedValue([
+        { rule: '2.13', severity: 'ERROR', line: 1, message: 'error suppressed', suggestion: 'throw' },
+      ]);
 
-    const { hasBlockingViolations } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, {
-      getContent,
-      reviewFile,
-    });
+    const { hasBlockingViolations } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(hasBlockingViolations).toBe(true);
   });
 
   test('does not set hasBlockingViolations for WARNING severity violations', async () => {
     const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
-    const getContent = jest.fn().mockReturnValue('code');
     const reviewFile = jest.fn().mockResolvedValue([
       {
         rule: '2.7',
@@ -220,41 +214,42 @@ describe('processFilesForReview', () => {
       },
     ]);
 
-    const { hasBlockingViolations } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, {
-      getContent,
-      reviewFile,
-    });
+    const { hasBlockingViolations } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(hasBlockingViolations).toBe(false);
   });
 
   test('returns empty reviewComments when reviewFile returns no violations', async () => {
-    const changedFiles = [{ filename: 'src/test.ts', patch: '' }];
-    const getContent = jest.fn().mockReturnValue('const x = 1;');
+    const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
     const reviewFile = jest.fn().mockResolvedValue([]);
 
-    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { getContent, reviewFile });
+    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(reviewComments).toHaveLength(0);
   });
 
-  test('calls getContent with the correct file path', async () => {
-    const changedFiles = [{ filename: 'src/utils.ts', patch: '' }];
-    const getContent = jest.fn().mockReturnValue('code');
+  test('calls reviewFile with the patch content, filename, and system prompt', async () => {
+    const changedFiles = [{ filename: 'src/utils.ts', patch: 'const answer = 42;' }];
     const reviewFile = jest.fn().mockResolvedValue([]);
 
-    await processFilesForReview(changedFiles, SYSTEM_PROMPT, { getContent, reviewFile });
-
-    expect(getContent).toHaveBeenCalledWith('src/utils.ts');
-  });
-
-  test('calls reviewFile with the file content, filename, and system prompt', async () => {
-    const changedFiles = [{ filename: 'src/utils.ts', patch: '' }];
-    const getContent = jest.fn().mockReturnValue('const answer = 42;');
-    const reviewFile = jest.fn().mockResolvedValue([]);
-
-    await processFilesForReview(changedFiles, SYSTEM_PROMPT, { getContent, reviewFile });
+    await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(reviewFile).toHaveBeenCalledWith('const answer = 42;', 'src/utils.ts', SYSTEM_PROMPT);
+  });
+
+  test('posts only the top 5 violations when more than 5 are returned', async () => {
+    const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
+    const reviewFile = jest.fn().mockResolvedValue([
+      { rule: '2.5', severity: 'SUGGESTION', line: 1, message: 's1', suggestion: 'fix' },
+      { rule: '2.6', severity: 'SUGGESTION', line: 1, message: 's2', suggestion: 'fix' },
+      { rule: '2.7', severity: 'WARNING', line: 1, message: 'w1', suggestion: 'fix' },
+      { rule: '2.8', severity: 'WARNING', line: 1, message: 'w2', suggestion: 'fix' },
+      { rule: '2.13', severity: 'ERROR', line: 1, message: 'e1', suggestion: 'fix' },
+      { rule: '2.14', severity: 'ERROR', line: 1, message: 'e2', suggestion: 'fix' },
+    ]);
+
+    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
+
+    expect(reviewComments.length).toBeLessThanOrEqual(5);
   });
 });
