@@ -113,14 +113,14 @@ Prefer stable, readable code over theoretically perfect names.
 
 2.1  Function Names: Only flag a function name when it is clearly misleading, ambiguous in its local scope, or likely to cause a real maintenance problem. Do not suggest a rename merely because another name is also reasonable. Before flagging, compare the name against its local context, nearby function names, and existing project naming conventions. If the current name is acceptable in context, do not comment. Every naming suggestion must include: (1) why the existing name is harmful or confusing, (2) why the proposed name is better, (3) whether the change is required or optional polish. If the reason is preference only, do not leave the comment. Never reverse a previous naming suggestion unless the original was clearly wrong. If both names are acceptable, prefer the existing name to avoid churn.
 2.2  File Names: Flag if the file name does not clearly reflect its purpose (comment at line 1).
-2.3  Function Length: No function should exceed ${config.function_length_limit} lines. For React/TSX, suggest extracting loops or conditional blocks into separate components.
+2.3  Function Length: No function should exceed ${config.function_length_limit} lines. For React/TSX, suggest extracting loops or conditional blocks into separate components. EXCEPTION: Do not flag useEffect, useState, useCallback, useMemo, useRef, or any other standard React hook as a function length violation. Hooks are standard React patterns and cannot be cleanly extracted from a component. Do not count JSX return blocks toward function length when the JSX is the primary purpose of the component.
 2.4  Long Conditionals: Complex conditions should be wrapped in a named function that describes what is being tested.
 2.5  Reusability: Flag duplicate or near-duplicate logic that could be extracted into a shared reusable function.
 2.6  Encapsulation: If multiple functions operate on the same data, suggest creating a class or interface to encapsulate them.
 2.7  Minimize Coupling: Each file should have one clear purpose. Flag files with mixed concerns.
 2.8  Maximize Cohesion: If a single task is spread across multiple functions unnecessarily, suggest consolidation.
 2.9  Meaningful Names: Variables, classes, and constants must have intention-revealing names. No magic numbers. No single-letter variables except loop counters. Only suggest a rename when the current name is clearly misleading or ambiguous in its local scope — not because another name might also be reasonable. Check the surrounding context before flagging: if the scope already makes the meaning clear, the name is acceptable. Every naming suggestion must justify why the existing name causes confusion and why the new name is concretely better. If both names are acceptable, prefer the existing name. Apply the stability principle: prefer stable readable code over theoretically perfect names. Avoid suggestions that would cause churn without improving correctness, clarity, or maintainability.
-2.10 Functions Do One Thing: A function must do one thing only (Single Responsibility Principle). Flag functions doing multiple things.
+2.10 Functions Do One Thing: A function must do one thing only (Single Responsibility Principle). Flag functions doing multiple things. REACT EXCEPTION: Do not flag React components for combining state (useState), side effects (useEffect), and rendering (JSX return) in the same component. This is the standard React pattern and is not a Single Responsibility violation. A React component's single responsibility IS to manage its own state, effects, and rendering together. Only flag Rule 2.10 for non-React functions that are clearly doing multiple unrelated things.
 2.11 Comments: Flag redundant comments that restate what the code does. Flag outdated or misleading comments. Do not comment bad code — rewrite it. Comments that explain design decisions are acceptable and encouraged — e.g. why something was implemented one way instead of another.
 2.13 Error Handling: Use exceptions instead of returning error codes. Never suppress or silently ignore errors.
 2.14 DRY Principle: Flag any duplicated logic. If the same logic appears more than once, extract it.
@@ -128,6 +128,14 @@ Prefer stable, readable code over theoretically perfect names.
 2.16 Unit Tests: Flag any exported function or class that has no corresponding test.
 2.17 Testable Code: Flag functions that are too large or tightly coupled to be independently testable.
 2.18 No Hidden Side Effects: Flag functions that modify external state unexpectedly or produce outputs not indicated by their name.
+
+REACT PATTERNS — DO NOT FLAG:
+The following are standard React patterns and must never be flagged as violations of any rule:
+- useEffect hooks — cannot be cleanly extracted from a component
+- useState, useCallback, useMemo, useRef, useContext — standard hooks
+- JSX return blocks — rendering is the component's primary responsibility
+- Components that combine state + effects + rendering — this is correct React design
+- axios calls, logging, and single variable updates inside a service function — backend service functions that do one network call, log the result, and return data are intentionally simple and should not be flagged for complexity or length unless they genuinely exceed the function_length_limit
 
 SEVERITY LEVELS:
 - ERROR: Rules 2.13, 2.14, 2.18
