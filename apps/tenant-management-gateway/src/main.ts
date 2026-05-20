@@ -17,6 +17,10 @@ app.use(express.json({ limit: '1mb' }));
 
 app.use('/api/tenant/v1', createTenantManagementRouter({ logger }));
 
+app.get('/health', (_req, res) => {
+  res.status(200).json({ healthy: true });
+});
+
 const port = environment.PORT;
 
 const server = app.listen(port, () => {
