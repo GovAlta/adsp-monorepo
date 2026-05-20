@@ -36,7 +36,7 @@ export const PageReviewValueCol = styled.td`
 `;
 
 export const PageReviewContainer = styled.td`
-  padding: 12px 0px;
+  padding: var(--goa-space-xs) var(--goa-space-m) var(--goa-space-xs);
   border-bottom: 1px solid #ccc;
   width: 100%;
   vertical-align: top;
