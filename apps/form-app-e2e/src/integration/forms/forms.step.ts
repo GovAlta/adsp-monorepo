@@ -117,17 +117,17 @@ When('the user enters {string} in a numeric field labelled {string}', function (
 });
 
 When('the user enters {string} in a date picker labelled {string}', function (date: string, label) {
-  formsObj.formDateInput(label).shadow().find('input').clear().type(date, { force: true });
+  formsObj.formDateInput(label).shadow().find('input').clear().type(date, { force: true, delay: 200 });
   cy.wait(1000); // Wait for the date picker to process the input
 });
 
 When('the user enters {string} in a time picker labelled {string}', function (time: string, label) {
-  formsObj.formTimeInput(label).shadow().find('input').clear().type(time, { force: true });
+  formsObj.formTimeInput(label).shadow().find('input').clear().type(time, { force: true, delay: 200 });
   cy.wait(1000); // Wait for the date picker to process the input
 });
 
 When('the user enters {string} in a date time picker labelled {string}', function (time: string, label) {
-  formsObj.formDateTimeInput(label).shadow().find('input').clear().type(time, { force: true });
+  formsObj.formDateTimeInput(label).shadow().find('input').clear().type(time, { force: true, delay: 200 });
   cy.wait(1000); // Wait for the date time picker to process the input
 });
 
