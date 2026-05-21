@@ -54,7 +54,7 @@ describe('FullNameControlReview', () => {
     );
 
     expect(screen.queryByText('Full Name')).not.toBeInTheDocument();
-    expect(screen.queryByText('(required)')).not.toBeInTheDocument();
+    expect(screen.getAllByText('(required)')).toHaveLength(2);
   });
 
   it('renders individual field rows with values', () => {
@@ -91,7 +91,7 @@ describe('FullNameControlReview', () => {
     expect(changeButtons).toHaveLength(3);
   });
 
-  it('does not render middle name row when middleName is not present', () => {
+  it('renders middle name row when middleName is not present', () => {
     const propsWithoutMiddleName = {
       ...defaultProps,
       data: {
@@ -110,7 +110,7 @@ describe('FullNameControlReview', () => {
       </table>,
     );
 
-    expect(screen.queryByText('Middle name')).not.toBeInTheDocument();
+    expect(screen.queryByText('Middle name')).toBeInTheDocument();
     expect(screen.getByText('First name')).toBeInTheDocument();
     expect(screen.getByText('Last name')).toBeInTheDocument();
   });
