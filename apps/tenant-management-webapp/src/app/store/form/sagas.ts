@@ -617,16 +617,20 @@ const MUTATION_TOOLS = new Set([
   'dataRegisterUpdateTool',
 ]);
 
+function isMutationToolResult(chunk: AgentResponseAction['chunk']): boolean {
+  return chunk?.type === TOOL_CALL_RESULT && MUTATION_TOOLS.has(chunk.payload.toolName);
+}
+
 export function* refreshDefinitionOnAgentResponse({ chunk, done }: AgentResponseAction): SagaIterator {
   // Mark preview stale on any mutation tool result
-  if (chunk?.type === TOOL_CALL_RESULT && MUTATION_TOOLS.has(chunk.payload.toolName)) {
+  if (isMutationToolResult(chunk)) {
     yield put(markFormPreviewStale());
   }
 
   // Full refresh when stream completes and preview was marked stale
   if (done) {
-    const previewStale: boolean = yield select((state: RootState) => state.form.previewStale);
-    if (previewStale) {
+    const isPreviewMarkedStale: boolean = yield select((state: RootState) => state.form.previewStale);
+    if (isPreviewMarkedStale) {
       yield call(refreshDefinition);
       yield put(getConfigurationDefinitions());
       yield put(clearFormPreviewStale());
