@@ -23,6 +23,8 @@ import { bodyEditorConfig } from './config';
 import GeneratedPdfList from '../generatedPdfList';
 import { DeleteModal } from '@components/DeleteModal';
 import { LogoutModal } from '@components/LogoutModal';
+import { GoabBadge } from '@abgov/react-components';
+import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
 import {
   deletePdfFilesService,
   getPdfTemplates,
@@ -38,6 +40,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useDebounce } from '@lib/useDebounce';
 import { selectPdfTemplateById, selectCorePdfTemplateById } from '@store/pdf/selectors';
 import { CustomLoader } from '@components/CustomLoader';
+import useWindowDimensions from '@lib/useWindowDimensions';
+import { DefinitionAgentChat } from './AgentChat';
+import { v4 as uuid } from 'uuid';
 
 const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
@@ -57,6 +62,8 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
 };
 
 export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => {
+  const { height } = useWindowDimensions();
+  const [threadId] = useState(uuid());
   const dispatch = useDispatch();
   const { id } = useParams<{ id: string }>();
   const monaco = useMonaco();
@@ -165,7 +172,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const monacoHeight = `calc(100vh - 356px${notifications.length > 0 ? ' - 80px' : ''})`;
   const fileHistHeight = `calc(100vh - 428px${notifications.length > 0 ? ' - 80px' : ''})`;
   const pdfList = useSelector((state: RootState) =>
-    state.pdf?.jobs?.filter((job) => job.templateId === pdfTemplate.id)
+    state.pdf?.jobs?.filter((job) => job.templateId === pdfTemplate.id),
   );
 
   const backButtonDisabled = () => {
@@ -176,8 +183,9 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     return false;
   };
   const latestNotification = useSelector(
-    (state: RootState) => state.notifications?.notifications[state.notifications?.notifications?.length - 1]
+    (state: RootState) => state.notifications?.notifications[state.notifications?.notifications?.length - 1],
   );
+  const agentConnected = useSelector(agentConnectedSelector);
   const Height = latestNotification && !latestNotification.disabled ? 91 : 0;
 
   return (
@@ -281,6 +289,24 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                       />
                     </MonacoDivBody>
                   </GoabFormItem>
+                </Tab>
+
+                <Tab
+                  label={
+                    <span>
+                      AI
+                      <GoabBadge type="important" ml="xs" mt="2xs" content="Alpha" icon={false} />
+                    </span>
+                  }
+                  data-testid="form-editor-agent-tab"
+                  isTightContent={true}
+                >
+                  <DefinitionAgentChat
+                    definitionId={tmpTemplate.id}
+                    threadId={threadId}
+                    height={height - 400}
+                    disabled={!agentConnected}
+                  />
                 </Tab>
                 <Tab testId={`pdf-test-history`} label={<PdfEditorLabelWrapper>File history</PdfEditorLabelWrapper>}>
                   <GeneratorStyling style={{ height: fileHistHeight }}>
