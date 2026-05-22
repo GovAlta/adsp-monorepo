@@ -85,7 +85,7 @@ import { CalendarEventDefault } from '@store/calendar/models';
 import { getEventDefinitions } from '@store/event/actions';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
-import { EditorAgentChat } from './EditorAgentChat';
+import { EditorAgentChat } from '@core-services/app-common';
 import { agentConnectedSelector, messagesSelector, threadSelector } from '@store/agent/selectors';
 import { messageAgent, startThread } from '@store/agent/actions';
 import { v4 as uuid } from 'uuid';

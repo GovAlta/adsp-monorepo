@@ -1,5 +1,6 @@
-import { AgentChat, Attachment, UserContent } from '@core-services/app-common';
 import { FunctionComponent } from 'react';
+import { AgentChat } from './AgentChat';
+import { Attachment, UserContent } from '../types/agent';
 
 type Message = Parameters<typeof AgentChat>[0]['messages'][number];
 

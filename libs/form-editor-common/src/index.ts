@@ -6,5 +6,4 @@ export * from './lib/definitions/FallbackRenderer';
 export * from './lib/definitions/definitions'; // FormDefinitions (list/table)
 export * from './lib/definitions/definitionsList';
 export * from './lib/definitions/formDefinitionItem';
-export * from './lib/definitions/EditorAgentChat';
 export * from './lib/styled-components';
