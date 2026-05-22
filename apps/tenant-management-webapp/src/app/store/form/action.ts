@@ -78,6 +78,9 @@ export const DELETE_RESOURCE_TAGS_SUCCESS = 'form/resource/delete-resource-tags/
 export const INITIALIZE_FORM_EDITOR = 'form/initialize-form-editor';
 export const SET_DEFINITION_SEARCH_INPUT_ACTION = 'form/SET_DEFINITION_SEARCH_INPUT_ACTION';
 
+export const MARK_FORM_PREVIEW_STALE_ACTION = 'form/MARK_FORM_PREVIEW_STALE';
+export const CLEAR_FORM_PREVIEW_STALE_ACTION = 'form/CLEAR_FORM_PREVIEW_STALE';
+
 export interface ClearFormDefinitions {
   type: typeof CLEAR_FORM_DEFINITIONS_ACTION;
 }
@@ -238,6 +241,14 @@ export interface SetDefinitionSearchInputAction {
   searchInput: string;
 }
 
+export interface MarkFormPreviewStaleAction {
+  type: typeof MARK_FORM_PREVIEW_STALE_ACTION;
+}
+
+export interface ClearFormPreviewStaleAction {
+  type: typeof CLEAR_FORM_PREVIEW_STALE_ACTION;
+}
+
 export type FormActionTypes =
   | ClearFormDefinitions
   | FetchFormDefinitionsSuccessAction
@@ -282,7 +293,9 @@ export type FormActionTypes =
   | DeleteResourceTagsAction
   | DeleteResourceSuccessTagsAction
   | ClearAllTagsAction
-  | SetDefinitionSearchInputAction;
+  | SetDefinitionSearchInputAction
+  | MarkFormPreviewStaleAction
+  | ClearFormPreviewStaleAction;
 
 export interface FetchAllTagsAction {
   type: typeof FETCH_ALL_TAGS_ACTION;
@@ -398,7 +411,7 @@ export const setDefinitionSearchInput = (searchInput: string): SetDefinitionSear
 export const getFormDefinitionsSuccess = (
   results: Record<string, FormDefinition>,
   next: string,
-  after: string
+  after: string,
 ): FetchFormDefinitionsSuccessAction => ({
   type: FETCH_FORM_DEFINITIONS_SUCCESS_ACTION,
   payload: results,
@@ -411,7 +424,7 @@ export const getExportFormInfo = (
   resource: string,
   format: string,
   selectedColumn: string[],
-  fileNamePrefix: string
+  fileNamePrefix: string,
 ): ExportFormInfoAction => ({
   type: EXPORT_FORM_INFO_ACTION,
   id,
@@ -448,7 +461,7 @@ export const openEditorForDefinition = (id: string, newDefinition?: FormDefiniti
 
 export const openEditorForDefinitionSuccess = (
   definition: FormDefinition,
-  isNew: boolean
+  isNew: boolean,
 ): OpenEditorForDefinitionSuccessAction => ({
   type: OPEN_EDITOR_FOR_DEFINITION_SUCCESS_ACTION,
   definition,
@@ -461,7 +474,7 @@ export const openEditorForDefinitionFailed = (id: string): OpenEditorForDefiniti
 });
 
 export const updateEditorFormDefinition = (
-  update: Partial<Omit<FormDefinition, 'dataSchema' | 'uiSchema'>>
+  update: Partial<Omit<FormDefinition, 'dataSchema' | 'uiSchema'>>,
 ): UpdateEditorFormDefinitionAction => ({
   type: UPDATE_EDITOR_FORM_DEFINITION_ACTION,
   update,
@@ -573,7 +586,7 @@ export const fetchAllTagsFailed = (error: string): FetchAllTagsFailedAction => (
 export const fetchResourcesByTag = (
   tag: string,
   criteria: ResourceTagFilterCriteria,
-  next?: string
+  next?: string,
 ): FetchResourcesByTagAction => ({
   type: FETCH_RESOURCES_BY_TAG_ACTION,
   tag,
@@ -585,7 +598,7 @@ export const fetchResourcesByTagSuccess = (
   tag: string,
   resources: Record<string, FormDefinition>,
   next: string,
-  after: string
+  after: string,
 ): FetchResourcesByTagSuccessAction => ({
   type: FETCH_RESOURCES_BY_TAG_SUCCESS,
   payload: { tag, resources, next, after },
@@ -614,4 +627,12 @@ export const deleteResourceSuccessTags = (urn: string, formDefinitionId: string)
 });
 export const initializeFormEditor = (): InitializeFormEditorAction => ({
   type: INITIALIZE_FORM_EDITOR,
+});
+
+export const markFormPreviewStale = (): MarkFormPreviewStaleAction => ({
+  type: MARK_FORM_PREVIEW_STALE_ACTION,
+});
+
+export const clearFormPreviewStale = (): ClearFormPreviewStaleAction => ({
+  type: CLEAR_FORM_PREVIEW_STALE_ACTION,
 });

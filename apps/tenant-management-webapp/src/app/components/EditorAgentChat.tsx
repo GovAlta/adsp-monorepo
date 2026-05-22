@@ -1,36 +1,51 @@
 import { AgentChat, Attachment, UserContent } from '@core-services/app-common';
 import { AppDispatch, RootState } from '@store/index';
-import { messageAgent } from '@store/agent/actions';
-import { messagesSelector } from '@store/agent/selectors';
+import { messageAgent, startThread } from '@store/agent/actions';
+import { agentConnectedSelector, messagesSelector, threadSelector } from '@store/agent/selectors';
 import { UploadFileService } from '@store/file/actions';
-import { FunctionComponent } from 'react';
+import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AnyAction } from 'redux';
+import { v4 as uuid } from 'uuid';
 
-interface DefinitionAgentChatProps {
-  definitionId: string;
-  threadId: string;
+interface EditorAgentChatProps {
+  agentName: string;
+  resourceId: string;
+  context: Record<string, unknown>;
   height: number;
   disabled?: boolean;
+  uploadFileType?: string;
 }
 
-export const DefinitionAgentChat: FunctionComponent<DefinitionAgentChatProps> = ({
-  threadId,
-  definitionId,
+export const EditorAgentChat: FunctionComponent<EditorAgentChatProps> = ({
+  agentName,
+  resourceId,
+  context,
   height,
-  disabled,
+  disabled: disabledProp,
+  uploadFileType = 'agent-attachments',
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const [threadId] = useState(uuid());
+
+  const agentConnected = useSelector(agentConnectedSelector);
+  const thread = useSelector((state: RootState) => threadSelector(state, threadId));
   const messages = useSelector((state: RootState) => messagesSelector(state, threadId));
+
+  useEffect(() => {
+    if (!thread) {
+      dispatch(startThread(agentName, threadId));
+    }
+  }, [dispatch, agentName, thread, threadId]);
 
   const handleAttachmentUpload = async (file: File): Promise<Attachment> => {
     const type = file.type.startsWith('image/') ? 'image' : 'file';
 
     const { uploadedFile, dataUrl } = await dispatch(
       UploadFileService({
-        type: 'agent-attachments',
+        type: uploadFileType,
         file,
-        recordId: definitionId,
+        recordId: resourceId,
       }) as unknown as AnyAction,
     );
 
@@ -45,9 +60,9 @@ export const DefinitionAgentChat: FunctionComponent<DefinitionAgentChatProps> = 
   return (
     <div style={{ height }}>
       <AgentChat
-        disabled={disabled}
+        disabled={disabledProp || !agentConnected}
         threadId={threadId}
-        context={{ formDefinitionId: definitionId }}
+        context={context}
         messages={messages}
         onSend={(threadId: string, context: Record<string, unknown>, content: UserContent) =>
           dispatch(messageAgent(threadId, context, content))

@@ -85,10 +85,7 @@ import { CalendarEventDefault } from '@store/calendar/models';
 import { getEventDefinitions } from '@store/event/actions';
 import { StartEndDateEditor } from './startEndDateEditor';
 import type * as monacoNS from 'monaco-editor';
-import { DefinitionAgentChat } from './DefinitionAgentChat';
-import { agentConnectedSelector, threadSelector } from '@store/agent/selectors';
-import { startThread } from '@store/agent/actions';
-import { v4 as uuid } from 'uuid';
+import { EditorAgentChat } from '@components/EditorAgentChat';
 import { GoabCheckboxOnChangeDetail, GoabDropdownOnChangeDetail } from '@abgov/ui-components-common';
 import { RegisterConfigData } from '@abgov/jsonforms-components';
 
@@ -419,16 +416,6 @@ export function AddEditFormDefinitionEditor({
     return null;
   };
 
-  const agentConnected = useSelector(agentConnectedSelector);
-  const [threadId] = useState(uuid());
-
-  const thread = useSelector((state: RootState) => threadSelector(state, threadId));
-  useEffect(() => {
-    if (formAIEnabled && !thread) {
-      dispatch(startThread('formGenerationAgent', threadId));
-    }
-  }, [dispatch, formAIEnabled, thread]);
-
   return (
     <FormEditor>
       {isLoading ? (
@@ -562,11 +549,11 @@ export function AddEditFormDefinitionEditor({
                   data-testid="form-editor-agent-tab"
                   isTightContent={true}
                 >
-                  <DefinitionAgentChat
-                    definitionId={definition.id}
-                    threadId={threadId}
+                  <EditorAgentChat
+                    agentName="formGenerationAgent"
+                    resourceId={definition.id}
+                    context={{ formDefinitionId: definition.id }}
                     height={EditorHeight}
-                    disabled={!agentConnected}
                   />
                 </Tab>
               )}
