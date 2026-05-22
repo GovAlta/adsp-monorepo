@@ -16,9 +16,10 @@ languages:
 #   "2.6": SUGGESTION
 #   "2.11": SUGGESTION
 
-# Rules to disable entirely — uncomment to turn off
+# Rules to disable entirely — uncomment specific rules to turn them off
 # disabled_rules:
 #   - "2.6"
+#   - RULE-19  # Missing test file check — disable if test coverage is managed separately
 
 # Paths to exclude from review
 exclude_paths:
