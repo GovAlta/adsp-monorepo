@@ -26,6 +26,9 @@ const {
   loadConfig,
   buildSystemPrompt,
   processFilesForReview,
+  isTestFile,
+  deriveTestFilePaths,
+  checkMissingTestFiles,
 } = require('./github-pr-clean-code-review');
 
 // ─── buildLineToPositionMap ───────────────────────────────────────────────────
@@ -251,5 +254,95 @@ describe('processFilesForReview', () => {
     const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(reviewComments.length).toBeLessThanOrEqual(5);
+  });
+});
+
+// ─── isTestFile ───────────────────────────────────────────────────────────────
+
+describe('isTestFile', () => {
+  test('returns true for .test.ts files', () => {
+    expect(isTestFile('src/auth.service.test.ts')).toBe(true);
+  });
+
+  test('returns true for .spec.ts files', () => {
+    expect(isTestFile('src/auth.service.spec.ts')).toBe(true);
+  });
+
+  test('returns false for regular source files', () => {
+    expect(isTestFile('src/auth.service.ts')).toBe(false);
+  });
+});
+
+// ─── deriveTestFilePaths ──────────────────────────────────────────────────────
+
+describe('deriveTestFilePaths', () => {
+  test('returns .test and .spec paths for a .ts file', () => {
+    const paths = deriveTestFilePaths('src/auth.service.ts');
+    expect(paths).toEqual(['src/auth.service.test.ts', 'src/auth.service.spec.ts']);
+  });
+
+  test('returns .test and .spec paths for a .tsx file', () => {
+    const paths = deriveTestFilePaths('src/components/Button.tsx');
+    expect(paths).toEqual(['src/components/Button.test.tsx', 'src/components/Button.spec.tsx']);
+  });
+});
+
+// ─── checkMissingTestFiles ────────────────────────────────────────────────────
+
+describe('checkMissingTestFiles', () => {
+  // A minimal patch so buildLineToPositionMap returns at least one position.
+  const PATCH = '@@ -0,0 +1 @@\n+const x = 1;';
+  const DEFAULT_CONFIG = { disabled_rules: [] };
+
+  test('returns a RULE-19 warning when no test file exists in PR or repo', async () => {
+    const changedFiles = [{ filename: 'src/auth.service.ts', patch: PATCH }];
+    const checkRepoFile = jest.fn().mockResolvedValue(false);
+
+    const comments = await checkMissingTestFiles({}, changedFiles, DEFAULT_CONFIG, { checkRepoFile });
+
+    expect(comments).toHaveLength(1);
+    expect(comments[0].body).toContain('RULE-19');
+    expect(comments[0].path).toBe('src/auth.service.ts');
+  });
+
+  test('returns no comments when a matching test file is in the PR diff', async () => {
+    const changedFiles = [
+      { filename: 'src/auth.service.ts', patch: PATCH },
+      { filename: 'src/auth.service.test.ts', patch: PATCH },
+    ];
+    const checkRepoFile = jest.fn().mockResolvedValue(false);
+
+    const comments = await checkMissingTestFiles({}, changedFiles, DEFAULT_CONFIG, { checkRepoFile });
+
+    expect(comments).toHaveLength(0);
+  });
+
+  test('returns no comments when a test file already exists in the repo', async () => {
+    const changedFiles = [{ filename: 'src/auth.service.ts', patch: PATCH }];
+    const checkRepoFile = jest.fn().mockResolvedValue(true);
+
+    const comments = await checkMissingTestFiles({}, changedFiles, DEFAULT_CONFIG, { checkRepoFile });
+
+    expect(comments).toHaveLength(0);
+  });
+
+  test('skips a file that is already a test file', async () => {
+    const changedFiles = [{ filename: 'src/auth.service.test.ts', patch: PATCH }];
+    const checkRepoFile = jest.fn();
+
+    const comments = await checkMissingTestFiles({}, changedFiles, DEFAULT_CONFIG, { checkRepoFile });
+
+    expect(comments).toHaveLength(0);
+    expect(checkRepoFile).not.toHaveBeenCalled();
+  });
+
+  test('returns no comments when RULE-19 is disabled in config', async () => {
+    const changedFiles = [{ filename: 'src/auth.service.ts', patch: PATCH }];
+    const checkRepoFile = jest.fn().mockResolvedValue(false);
+
+    const comments = await checkMissingTestFiles({}, changedFiles, { disabled_rules: ['RULE-19'] }, { checkRepoFile });
+
+    expect(comments).toHaveLength(0);
+    expect(checkRepoFile).not.toHaveBeenCalled();
   });
 });
