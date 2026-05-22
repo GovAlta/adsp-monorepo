@@ -1,0 +1,54 @@
+# Unit Test Agent — Configuration (CS-4943)
+# Place this file in the root of your repository.
+# The unit test agent reads these settings at runtime to know how to
+# generate, review, and improve tests for this workspace.
+
+# Minimum line coverage that must be met or exceeded.
+# The agent will warn when generated tests fall below this percentage.
+coverage_threshold: 80
+
+# Nx target used to execute the test suite for a project.
+# Passed as-is to the shell: nx test <project-name>
+test_runner: nx test
+
+# Full command used when collecting coverage data.
+# The agent appends the project name: nx test <project-name> --coverage
+coverage_command: nx test --coverage
+
+# File extensions the agent will consider as source files.
+# Only files with these extensions are eligible for test generation.
+extensions:
+  - .ts
+  - .tsx
+  - .js
+  - .jsx
+
+# The suffix inserted before the extension to form the test file name.
+# e.g. auth.service.ts  →  auth.service.spec.ts
+test_suffix: .spec
+
+# How test files are located relative to their source file.
+# colocated: test file lives in the same folder as the source file.
+# Supported values: colocated
+test_location: colocated
+
+# Paths to exclude from test generation and coverage analysis.
+# Glob patterns relative to the repository root.
+exclude_paths:
+  - 'node_modules/**'
+  - 'dist/**'
+  - 'coverage/**'
+  - '**/*.spec.ts'
+  - '**/*.spec.tsx'
+  - '**/*.spec.js'
+  - '**/*.spec.jsx'
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - '**/*.test.js'
+  - '**/*.test.jsx'
+# Modes the agent will not run even when explicitly invoked.
+# Uncomment a mode name to disable it workspace-wide.
+# disabled_modes:
+#   - generate   # Prevent the agent from creating new test files
+#   - review     # Prevent the agent from reviewing existing tests
+#   - improve    # Prevent the agent from suggesting test improvements
