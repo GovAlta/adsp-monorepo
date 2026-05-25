@@ -134,6 +134,7 @@ When('the user enters {string} in a date time picker labelled {string}', functio
 When('the user enters {string} in a dropdown labelled {string}', function (value: string, label) {
   formsObj.formDropdown(label).shadow().find('input').click({ force: true });
   formsObj.formDropdown(label).shadow().find('goa-popover').find('li').contains(value).click({ force: true });
+  cy.wait(1000); // Wait for the dropdown to process the input
 });
 
 When(

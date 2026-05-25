@@ -13,6 +13,23 @@ import { GoabInputOnChangeDetail, GoabInputOnKeyPressDetail, GoabInputOnBlurDeta
 
 export type GoAInputDateTimeProps = CellProps & WithClassname & WithInputProps;
 
+export const toDateTimeLocalInputValue = (value: unknown): string => {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value as string);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const pad = (part: number) => String(part).padStart(2, '0');
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(
+    date.getMinutes(),
+  )}`;
+};
+
 export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
   const { data, config, id, enabled, uischema, isVisited, errors, label, setIsVisited } = props;
 
@@ -26,7 +43,7 @@ export const GoADateTimeInput = (props: GoAInputDateTimeProps): JSX.Element => {
       error={isVisited && errors.length > 0}
       width={width}
       name={appliedUiSchemaOptions?.name || `${id || label}-input`}
-      value={data ? new Date(data).toISOString().slice(0, 10) : ''}
+      value={toDateTimeLocalInputValue(data)}
       testId={appliedUiSchemaOptions?.testId || `${id}-input`}
       disabled={!enabled}
       readonly={readOnly}

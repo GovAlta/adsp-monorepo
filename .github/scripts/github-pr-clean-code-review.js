@@ -30,14 +30,31 @@ function loadConfig() {
     function_length_limit: 50,
     languages: ['ts', 'tsx', 'js', 'jsx'],
     suppressions: [],
+    disabled_rules: [],
   };
   if (fs.existsSync(configPath)) {
     try {
       const raw = fs.readFileSync(configPath, 'utf8');
       const lines = raw.split('\n');
+      let inDisabledRules = false;
       lines.forEach((line) => {
+        if (/^\s*disabled_rules\s*:/.test(line)) {
+          inDisabledRules = true;
+          return;
+        }
+        if (inDisabledRules) {
+          const listMatch = line.match(/^\s+-\s+"?([^"\s]+)"?\s*$/);
+          if (listMatch) {
+            defaults.disabled_rules.push(listMatch[1]);
+            return;
+          }
+          if (line.trim() && !line.trim().startsWith('#') && !/^\s/.test(line)) {
+            inDisabledRules = false;
+          }
+        }
         const match = line.match(/^\s*(\w+):\s*(.+)/);
         if (match) {
+          inDisabledRules = false;
           const key = match[1].trim();
           const val = match[2].trim();
           if (key === 'function_length_limit') defaults.function_length_limit = parseInt(val, 10);
@@ -273,6 +290,72 @@ ${violation.message}
 }
 
 // ─────────────────────────────────────────────────────────────
+// RULE-19: Check each changed source file has a colocated test file
+// ─────────────────────────────────────────────────────────────
+function isTestFile(filename) {
+  return /\.(test|spec)\.[jt]sx?$/.test(filename);
+}
+
+function deriveTestFilePaths(filename) {
+  const ext = path.extname(filename);
+  const base = filename.slice(0, -ext.length);
+  return [`${base}.test${ext}`, `${base}.spec${ext}`];
+}
+
+async function testFileExistsInRepo(octokit, filePath) {
+  try {
+    await octokit.rest.repos.getContent({
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      path: filePath,
+      ref: HEAD_SHA,
+    });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function checkMissingTestFiles(octokit, changedFiles, config, { checkRepoFile = testFileExistsInRepo } = {}) {
+  if (config.disabled_rules && config.disabled_rules.includes('RULE-19')) {
+    return [];
+  }
+
+  const prFilenames = new Set(changedFiles.map((f) => f.filename));
+  const missingTestComments = [];
+
+  for (const file of changedFiles) {
+    if (isTestFile(file.filename)) continue;
+    if (!file.patch) continue;
+
+    const expectedTestPaths = deriveTestFilePaths(file.filename);
+
+    const existsInPr = expectedTestPaths.some((p) => prFilenames.has(p));
+    if (existsInPr) continue;
+
+    const repoChecks = await Promise.all(expectedTestPaths.map((p) => checkRepoFile(octokit, p)));
+    if (repoChecks.some(Boolean)) continue;
+
+    const lineToPosition = buildLineToPositionMap(file.patch);
+    const positions = Object.values(lineToPosition);
+    if (positions.length === 0) continue;
+
+    missingTestComments.push({
+      path: file.filename,
+      position: Math.min(...positions),
+      body: formatComment({
+        rule: 'RULE-19',
+        severity: 'WARNING',
+        message: 'No unit test file found for this file. Please add or update tests.',
+        suggestion: `Create a test file at ${expectedTestPaths[0]} colocated with this file.`,
+      }),
+    });
+  }
+
+  return missingTestComments;
+}
+
+// ─────────────────────────────────────────────────────────────
 // Post review comments to the PR
 // ─────────────────────────────────────────────────────────────
 async function postReviewSummary(octokit, comments, hasBlockingViolations) {
@@ -420,8 +503,11 @@ async function main() {
   const systemPrompt = buildSystemPrompt(config, jiraContext);
   const { reviewComments, hasBlockingViolations } = await processFilesForReview(changedFiles, systemPrompt);
 
-  console.log(`\n📝 Posting review with ${reviewComments.length} comment(s)...`);
-  await postReviewSummary(octokit, reviewComments, hasBlockingViolations);
+  const missingTestComments = await checkMissingTestFiles(octokit, changedFiles, config);
+  const allComments = [...reviewComments, ...missingTestComments];
+
+  console.log(`\n📝 Posting review with ${allComments.length} comment(s)...`);
+  await postReviewSummary(octokit, allComments, hasBlockingViolations);
   console.log('✅ Clean Code Review complete.');
 
   if (hasBlockingViolations) {
@@ -443,4 +529,7 @@ module.exports = {
   loadConfig,
   buildSystemPrompt,
   processFilesForReview,
+  isTestFile,
+  deriveTestFilePaths,
+  checkMissingTestFiles,
 };
