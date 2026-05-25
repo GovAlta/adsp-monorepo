@@ -54,7 +54,7 @@ export const connectStream = createAsyncThunk(
   'comment/connectStream',
   async (
     { stream, typeId, topicId }: { stream: string; typeId?: string; topicId?: number },
-    { dispatch, getState }
+    { dispatch, getState },
   ) => {
     const state = getState() as AppState;
     const { directory } = state.config;
@@ -107,7 +107,7 @@ export const connectStream = createAsyncThunk(
     socket.on('comment-service:comment-created', onCommentUpdate);
     socket.on('comment-service:comment-updated', onCommentUpdate);
     socket.on('comment-service:comment-deleted', onCommentUpdate);
-  }
+  },
 );
 
 export const loadTopic = createAsyncThunk(
@@ -119,7 +119,6 @@ export const loadTopic = createAsyncThunk(
 
     const { config } = getState() as AppState;
     const commentServiceUrl = config.directory[COMMENT_SERVICE_ID];
-    // Using comment service is an optional. We will not report error when if the user cannot fetch comments from remote.
     try {
       const token = await getAccessToken();
       const { data } = await axios.get<{ results: (Omit<Topic, 'typeId'> & { type?: TopicType })[] }>(
@@ -129,16 +128,17 @@ export const loadTopic = createAsyncThunk(
           params: {
             criteria: JSON.stringify({ resourceIdEquals: resourceId, typeIdEquals: typeId }),
           },
-        }
+        },
       );
 
       const [topic] = data.results;
-
       return topic;
-    } finally {
-      // Using comment service is an optional. We will not report error when if the user cannot fetch comments from remote.
+    } catch (err) {
+      // clean-code-ignore: 2.13
+      console.error('Loading topic error: ' + err.message);
+      return null;
     }
-  }
+  },
 );
 
 export const loadComments = createAsyncThunk(
@@ -156,7 +156,7 @@ export const loadComments = createAsyncThunk(
           params: {
             after: next,
           },
-        }
+        },
       );
 
       return data;
@@ -170,7 +170,7 @@ export const loadComments = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 export const selectTopic = createAsyncThunk(
@@ -193,14 +193,14 @@ export const selectTopic = createAsyncThunk(
     }
 
     return { canComment, canRead };
-  }
+  },
 );
 
 export const addComment = createAsyncThunk(
   'comment/add-comment',
   async (
     { topic, comment, requiresAttention }: { topic: Topic; comment: NewComment; requiresAttention?: boolean },
-    { getState, rejectWithValue }
+    { getState, rejectWithValue },
   ) => {
     const { config } = getState() as AppState;
     const commentServiceUrl = config.directory[COMMENT_SERVICE_ID];
@@ -212,7 +212,7 @@ export const addComment = createAsyncThunk(
         { ...comment, requiresAttention },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       return data;
@@ -226,7 +226,7 @@ export const addComment = createAsyncThunk(
         throw err;
       }
     }
-  }
+  },
 );
 
 interface CommentState {
@@ -346,7 +346,7 @@ export const topicsSelector = (state: AppState) => state.comment.topics;
 export const selectedTopicSelector = createSelector(
   (state: AppState) => state.comment.topics,
   (state: AppState) => state.comment.selected.resourceId,
-  (topics, resourceId) => (resourceId ? topics[resourceId] : null)
+  (topics, resourceId) => (resourceId ? topics[resourceId] : null),
 );
 
 export const commentsSelector = createSelector(
@@ -357,7 +357,7 @@ export const commentsSelector = createSelector(
       .map((r) => ({ ...r, createdOn: new Date(r.createdOn), byCurrentUser: r.createdBy.id === userId }))
       .sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()),
     next,
-  })
+  }),
 );
 
 export const commentExecutingSelector = (state: AppState) => state.comment.busy.executing;

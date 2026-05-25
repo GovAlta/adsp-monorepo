@@ -5,6 +5,7 @@ import { withJsonFormsAllOfProps } from '@jsonforms/react';
 import { PageReviewContainer, ReviewHeader, ReviewLabel, ReviewValue } from '../Inputs/style-component';
 import { JsonFormsStepperContext } from '../FormStepper/context/StepperContext';
 import { isNilOrEmptyString } from '../../util';
+import { RequiredTextLabel } from '../Inputs/style-component';
 
 type DateOfBirthReviewControlProps = ControlProps;
 
@@ -20,6 +21,7 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
       <PageReviewContainer colSpan={3}>
         <ReviewHeader>
           <ReviewLabel>{fieldLabel}</ReviewLabel>
+          {requiredFields.includes(fieldName) && <RequiredTextLabel> (required)</RequiredTextLabel>}
           {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
             <GoabButton
               type="tertiary"
@@ -44,7 +46,7 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
   return (
     <>
       {renderRow('First name', data?.firstName, 'firstName', `firstName-control-${id}`)}
-      {data?.middleName && renderRow('Middle name', data?.middleName, 'middleName', `middleName-control-${id}`)}
+      {renderRow('Middle name', data?.middleName, 'middleName', `middleName-control-${id}`)}
       {renderRow('Last name', data?.lastName, 'lastName', `lastName-control-${id}`)}
       {renderRow('Date of birth', data?.dateOfBirth, 'dateOfBirth', `dob-control-${id}`)}
     </>

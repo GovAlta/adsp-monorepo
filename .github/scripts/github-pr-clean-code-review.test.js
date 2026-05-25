@@ -13,7 +13,6 @@ process.env.GITHUB_TOKEN = 'test-token';
 process.env.PR_NUMBER = '1';
 process.env.REPO_OWNER = 'test-owner';
 process.env.REPO_NAME = 'test-repo';
-process.env.BASE_SHA = 'base-sha';
 process.env.HEAD_SHA = 'head-sha';
 
 jest.mock('fs');
@@ -27,6 +26,9 @@ const {
   loadConfig,
   buildSystemPrompt,
   processFilesForReview,
+  isTestFile,
+  deriveTestFilePaths,
+  checkMissingTestFiles,
 } = require('./github-pr-clean-code-review');
 
 // ─── buildLineToPositionMap ───────────────────────────────────────────────────
@@ -172,44 +174,39 @@ describe('processFilesForReview', () => {
   // on line 1 is included in reviewComments rather than silently dropped.
   const PATCH_WITH_LINE_1_ADDED = '@@ -0,0 +1 @@\n+const x = 1;';
 
-  test('skips a file and returns no reviewComments when getContent returns null', async () => {
-    const changedFiles = [{ filename: 'src/test.ts', patch: '' }];
-    const getContent = jest.fn().mockReturnValue(null);
+  test('skips a file and returns no reviewComments when patch is null', async () => {
+    const changedFiles = [{ filename: 'src/test.ts', patch: null }];
     const reviewFile = jest.fn();
 
-    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { getContent, reviewFile });
+    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(reviewComments).toHaveLength(0);
   });
 
-  test('does not call reviewFile when getContent returns null', async () => {
-    const changedFiles = [{ filename: 'src/test.ts', patch: '' }];
-    const getContent = jest.fn().mockReturnValue(null);
+  test('does not call reviewFile when patch is null', async () => {
+    const changedFiles = [{ filename: 'src/test.ts', patch: null }];
     const reviewFile = jest.fn();
 
-    await processFilesForReview(changedFiles, SYSTEM_PROMPT, { getContent, reviewFile });
+    await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(reviewFile).not.toHaveBeenCalled();
   });
 
   test('sets hasBlockingViolations to true when a violation with ERROR severity is returned', async () => {
     const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
-    const getContent = jest.fn().mockReturnValue('const x = 1;');
     const reviewFile = jest
       .fn()
-      .mockResolvedValue([{ rule: '2.9', severity: 'ERROR', line: 1, message: 'bad name', suggestion: 'rename' }]);
+      .mockResolvedValue([
+        { rule: '2.13', severity: 'ERROR', line: 1, message: 'error suppressed', suggestion: 'throw' },
+      ]);
 
-    const { hasBlockingViolations } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, {
-      getContent,
-      reviewFile,
-    });
+    const { hasBlockingViolations } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(hasBlockingViolations).toBe(true);
   });
 
   test('does not set hasBlockingViolations for WARNING severity violations', async () => {
     const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
-    const getContent = jest.fn().mockReturnValue('code');
     const reviewFile = jest.fn().mockResolvedValue([
       {
         rule: '2.7',
@@ -220,41 +217,132 @@ describe('processFilesForReview', () => {
       },
     ]);
 
-    const { hasBlockingViolations } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, {
-      getContent,
-      reviewFile,
-    });
+    const { hasBlockingViolations } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(hasBlockingViolations).toBe(false);
   });
 
   test('returns empty reviewComments when reviewFile returns no violations', async () => {
-    const changedFiles = [{ filename: 'src/test.ts', patch: '' }];
-    const getContent = jest.fn().mockReturnValue('const x = 1;');
+    const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
     const reviewFile = jest.fn().mockResolvedValue([]);
 
-    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { getContent, reviewFile });
+    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(reviewComments).toHaveLength(0);
   });
 
-  test('calls getContent with the correct file path', async () => {
-    const changedFiles = [{ filename: 'src/utils.ts', patch: '' }];
-    const getContent = jest.fn().mockReturnValue('code');
+  test('calls reviewFile with the patch content, filename, and system prompt', async () => {
+    const changedFiles = [{ filename: 'src/utils.ts', patch: 'const answer = 42;' }];
     const reviewFile = jest.fn().mockResolvedValue([]);
 
-    await processFilesForReview(changedFiles, SYSTEM_PROMPT, { getContent, reviewFile });
-
-    expect(getContent).toHaveBeenCalledWith('src/utils.ts');
-  });
-
-  test('calls reviewFile with the file content, filename, and system prompt', async () => {
-    const changedFiles = [{ filename: 'src/utils.ts', patch: '' }];
-    const getContent = jest.fn().mockReturnValue('const answer = 42;');
-    const reviewFile = jest.fn().mockResolvedValue([]);
-
-    await processFilesForReview(changedFiles, SYSTEM_PROMPT, { getContent, reviewFile });
+    await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
 
     expect(reviewFile).toHaveBeenCalledWith('const answer = 42;', 'src/utils.ts', SYSTEM_PROMPT);
+  });
+
+  test('posts only the top 5 violations when more than 5 are returned', async () => {
+    const changedFiles = [{ filename: 'src/test.ts', patch: PATCH_WITH_LINE_1_ADDED }];
+    const reviewFile = jest.fn().mockResolvedValue([
+      { rule: '2.5', severity: 'SUGGESTION', line: 1, message: 's1', suggestion: 'fix' },
+      { rule: '2.6', severity: 'SUGGESTION', line: 1, message: 's2', suggestion: 'fix' },
+      { rule: '2.7', severity: 'WARNING', line: 1, message: 'w1', suggestion: 'fix' },
+      { rule: '2.8', severity: 'WARNING', line: 1, message: 'w2', suggestion: 'fix' },
+      { rule: '2.13', severity: 'ERROR', line: 1, message: 'e1', suggestion: 'fix' },
+      { rule: '2.14', severity: 'ERROR', line: 1, message: 'e2', suggestion: 'fix' },
+    ]);
+
+    const { reviewComments } = await processFilesForReview(changedFiles, SYSTEM_PROMPT, { reviewFile });
+
+    expect(reviewComments.length).toBeLessThanOrEqual(5);
+  });
+});
+
+// ─── isTestFile ───────────────────────────────────────────────────────────────
+
+describe('isTestFile', () => {
+  test('returns true for .test.ts files', () => {
+    expect(isTestFile('src/auth.service.test.ts')).toBe(true);
+  });
+
+  test('returns true for .spec.ts files', () => {
+    expect(isTestFile('src/auth.service.spec.ts')).toBe(true);
+  });
+
+  test('returns false for regular source files', () => {
+    expect(isTestFile('src/auth.service.ts')).toBe(false);
+  });
+});
+
+// ─── deriveTestFilePaths ──────────────────────────────────────────────────────
+
+describe('deriveTestFilePaths', () => {
+  test('returns .test and .spec paths for a .ts file', () => {
+    const paths = deriveTestFilePaths('src/auth.service.ts');
+    expect(paths).toEqual(['src/auth.service.test.ts', 'src/auth.service.spec.ts']);
+  });
+
+  test('returns .test and .spec paths for a .tsx file', () => {
+    const paths = deriveTestFilePaths('src/components/Button.tsx');
+    expect(paths).toEqual(['src/components/Button.test.tsx', 'src/components/Button.spec.tsx']);
+  });
+});
+
+// ─── checkMissingTestFiles ────────────────────────────────────────────────────
+
+describe('checkMissingTestFiles', () => {
+  // A minimal patch so buildLineToPositionMap returns at least one position.
+  const PATCH = '@@ -0,0 +1 @@\n+const x = 1;';
+  const DEFAULT_CONFIG = { disabled_rules: [] };
+
+  test('returns a RULE-19 warning when no test file exists in PR or repo', async () => {
+    const changedFiles = [{ filename: 'src/auth.service.ts', patch: PATCH }];
+    const checkRepoFile = jest.fn().mockResolvedValue(false);
+
+    const comments = await checkMissingTestFiles({}, changedFiles, DEFAULT_CONFIG, { checkRepoFile });
+
+    expect(comments).toHaveLength(1);
+    expect(comments[0].body).toContain('RULE-19');
+    expect(comments[0].path).toBe('src/auth.service.ts');
+  });
+
+  test('returns no comments when a matching test file is in the PR diff', async () => {
+    const changedFiles = [
+      { filename: 'src/auth.service.ts', patch: PATCH },
+      { filename: 'src/auth.service.test.ts', patch: PATCH },
+    ];
+    const checkRepoFile = jest.fn().mockResolvedValue(false);
+
+    const comments = await checkMissingTestFiles({}, changedFiles, DEFAULT_CONFIG, { checkRepoFile });
+
+    expect(comments).toHaveLength(0);
+  });
+
+  test('returns no comments when a test file already exists in the repo', async () => {
+    const changedFiles = [{ filename: 'src/auth.service.ts', patch: PATCH }];
+    const checkRepoFile = jest.fn().mockResolvedValue(true);
+
+    const comments = await checkMissingTestFiles({}, changedFiles, DEFAULT_CONFIG, { checkRepoFile });
+
+    expect(comments).toHaveLength(0);
+  });
+
+  test('skips a file that is already a test file', async () => {
+    const changedFiles = [{ filename: 'src/auth.service.test.ts', patch: PATCH }];
+    const checkRepoFile = jest.fn();
+
+    const comments = await checkMissingTestFiles({}, changedFiles, DEFAULT_CONFIG, { checkRepoFile });
+
+    expect(comments).toHaveLength(0);
+    expect(checkRepoFile).not.toHaveBeenCalled();
+  });
+
+  test('returns no comments when RULE-19 is disabled in config', async () => {
+    const changedFiles = [{ filename: 'src/auth.service.ts', patch: PATCH }];
+    const checkRepoFile = jest.fn().mockResolvedValue(false);
+
+    const comments = await checkMissingTestFiles({}, changedFiles, { disabled_rules: ['RULE-19'] }, { checkRepoFile });
+
+    expect(comments).toHaveLength(0);
+    expect(checkRepoFile).not.toHaveBeenCalled();
   });
 });

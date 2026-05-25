@@ -115,6 +115,8 @@ Nx CLI is installed local to the project. Use `npx` to run `nx` cli commands.
 
 > **📚 Full Nx reference**: See [.github/agents/nx.md](.github/agents/nx.md) for comprehensive Nx commands, troubleshooting, and best practices.
 
+> **🧪 Unit testing reference**: See [.github/agents/unit-testing.md](.github/agents/unit-testing.md) for Jest patterns, mock conventions, naming rules, and how to invoke the unit test agent.
+
 **Quick commands:**
 ```bash
 nx build <project-name>        # Build a project

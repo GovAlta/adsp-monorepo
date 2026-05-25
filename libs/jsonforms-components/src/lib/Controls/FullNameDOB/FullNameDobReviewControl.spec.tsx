@@ -55,7 +55,7 @@ describe('FullNameDobReviewControl', () => {
     );
 
     expect(screen.queryByText('Full Name and Date of Birth')).not.toBeInTheDocument();
-    expect(screen.queryByText('(required)')).not.toBeInTheDocument();
+    expect(screen.getAllByText('(required)')).toHaveLength(3);
   });
 
   it('renders individual field rows with values including date of birth', () => {
@@ -94,7 +94,7 @@ describe('FullNameDobReviewControl', () => {
     expect(changeButtons).toHaveLength(4);
   });
 
-  it('does not render middle name row when middleName is not present', () => {
+  it('renders middle name row when middleName is not present', () => {
     const propsWithoutMiddleName = {
       ...defaultProps,
       data: {
@@ -114,7 +114,7 @@ describe('FullNameDobReviewControl', () => {
       </table>,
     );
 
-    expect(screen.queryByText('Middle name')).not.toBeInTheDocument();
+    expect(screen.queryByText('Middle name')).toBeInTheDocument();
     expect(screen.getByText('First name')).toBeInTheDocument();
     expect(screen.getByText('Last name')).toBeInTheDocument();
     expect(screen.getByText('Date of birth')).toBeInTheDocument();
