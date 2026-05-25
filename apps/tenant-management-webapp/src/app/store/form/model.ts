@@ -116,6 +116,7 @@ export interface FormState {
   nextEntries: string | null;
   definitionSearchInput: string;
   exportResult: FormExportResponse;
+  previewStale: boolean;
   editor: {
     selectedId: string;
     loading: boolean;

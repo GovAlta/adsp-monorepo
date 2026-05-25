@@ -35,6 +35,8 @@ import {
   DELETE_RESOURCE_TAGS_SUCCESS,
   CLEAR_ALL_TAGS_ACTION,
   SET_DEFINITION_SEARCH_INPUT_ACTION,
+  MARK_FORM_PREVIEW_STALE_ACTION,
+  CLEAR_FORM_PREVIEW_STALE_ACTION,
 } from './action';
 
 import { FormResourceTag, FormState } from './model';
@@ -44,6 +46,7 @@ export const defaultState: FormState = {
   nextEntries: null,
   definitionSearchInput: '',
   exportResult: {},
+  previewStale: false,
   editor: {
     selectedId: null,
     loading: false,
@@ -82,8 +85,8 @@ export default function (state: FormState = defaultState, action: FormActionType
         definitions: action.after
           ? { ...state.definitions, ...action.payload }
           : action.payload
-          ? action.payload
-          : state.definitions,
+            ? action.payload
+            : state.definitions,
         nextEntries: action.next,
       };
 
@@ -365,8 +368,8 @@ export default function (state: FormState = defaultState, action: FormActionType
           tagResources: action.payload.after
             ? { ...state.formResourceTag.tagResources, ...(action.payload.resources ?? {}) }
             : action.payload.resources
-            ? action.payload.resources
-            : null,
+              ? action.payload.resources
+              : null,
         },
       };
 
@@ -403,6 +406,18 @@ export default function (state: FormState = defaultState, action: FormActionType
         },
       };
     }
+
+    case MARK_FORM_PREVIEW_STALE_ACTION:
+      return {
+        ...state,
+        previewStale: true,
+      };
+
+    case CLEAR_FORM_PREVIEW_STALE_ACTION:
+      return {
+        ...state,
+        previewStale: false,
+      };
 
     default:
       return state;
