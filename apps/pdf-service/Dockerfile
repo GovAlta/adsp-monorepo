@@ -17,7 +17,7 @@ RUN apt-get update \
 
 # Puppeteer will check the $HOME/.cache for the chome.
 ENV HOME=/puppeteer
-RUN npx puppeteer browsers install chrome
+RUN npx @puppeteer/browsers install chrome@127.0.6533.88
 RUN chmod 777 -R dist node_modules /puppeteer
 
 USER 1001:0
