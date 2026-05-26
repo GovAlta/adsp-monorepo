@@ -45,6 +45,10 @@ components:
           type: string
         content:
           type: string
+        context:
+          type: object
+          description: Arbitrary JSON context data associated with the comment.
+          additionalProperties: true
         createdBy:
           type: object
           properties:
@@ -379,6 +383,10 @@ components:
               content:
                 type: string
                 description: Content of the comment.
+              context:
+                type: object
+                description: Optional arbitrary JSON context data associated with the comment.
+                additionalProperties: true
     responses:
       200:
         description: Request completed successfully.
@@ -454,6 +462,10 @@ components:
               content:
                 type: string
                 description: Content of the comment.
+              context:
+                type: object
+                description: Optional arbitrary JSON context data. When supplied, it replaces the existing context.
+                additionalProperties: true
     responses:
       200:
         description: Request completed successfully.
