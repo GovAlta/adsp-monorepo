@@ -15,9 +15,9 @@ RUN apt-get update \
   --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
-# Puppeteer will check the $HOME/.cache for the chome.
+# Point Puppeteer to the system Chrome installed above via apt-get.
 ENV HOME=/puppeteer
-RUN npx puppeteer browsers install chrome
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 RUN chmod 777 -R dist node_modules /puppeteer
 
 USER 1001:0
