@@ -5,20 +5,19 @@ USER 0
 ARG SERVICE
 COPY . .
 
-# Install the chrome for the puppeteer
+# Install Chrome via direct .deb download — avoids apt repo/signing key issues on Debian Bookworm (node:24).
 RUN apt-get update \
-  && apt-get install -y wget gnupg \
-  && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-  && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-  && apt-get update \
-  && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
+  && apt-get install -y wget fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
   --no-install-recommends \
+  && wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+  && apt-get install -y /tmp/google-chrome.deb \
+  && rm /tmp/google-chrome.deb \
   && rm -rf /var/lib/apt/lists/*
 
 # Point Puppeteer to the system Chrome installed above via apt-get.
 ENV HOME=/puppeteer
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
-RUN chmod 777 -R dist node_modules /puppeteer
+RUN mkdir -p /puppeteer && chmod 777 -R dist node_modules /puppeteer
 
 USER 1001:0
 
