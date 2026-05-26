@@ -40,6 +40,10 @@ const commentSchema = {
     createdOn: { type: 'string', format: 'date-time' },
     lastUpdatedBy: userSchema,
     lastUpdatedOn: { type: 'string', format: 'date-time' },
+    context: {
+      type: 'object',
+      additionalProperties: true,
+    },
   },
 };
 
@@ -132,6 +136,7 @@ function mapComment(comment: Comment) {
     createdOn: comment.createdOn.toISOString(),
     lastUpdatedBy: comment.lastUpdatedBy,
     lastUpdatedOn: comment.lastUpdatedOn.toISOString(),
+    context: comment.context || {},
   };
 }
 

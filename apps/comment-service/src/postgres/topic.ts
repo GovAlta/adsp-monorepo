@@ -40,6 +40,7 @@ export class PostgresTopicRepository implements TopicRepository {
           },
           title: record.title,
           content: record.content,
+          context: record.context || {},
         }
       : null;
   }
@@ -206,6 +207,7 @@ export class PostgresTopicRepository implements TopicRepository {
           id: comment.id,
           title: comment.title,
           content: comment.content,
+          context: comment.context || {},
           createdById: comment.createdBy.id,
           createdByName: comment.createdBy.name,
           createdOn: comment.createdOn,
