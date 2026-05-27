@@ -395,6 +395,7 @@ export function createTopicRouter({ apiId, logger, eventService, repository }: T
       param('topicId').isInt(),
       body('title').optional({ nullable: true }).isString().isLength({ min: 1, max: 255 }),
       body('content').isString().isLength({ min: 1 }),
+      body('context').optional().isObject(),
       body('requiresAttention').optional({ nullable: true }).isBoolean()
     ),
     getTopic(repository),
@@ -409,7 +410,13 @@ export function createTopicRouter({ apiId, logger, eventService, repository }: T
   );
   router.patch(
     '/topics/:topicId/comments/:commentId',
-    createValidationHandler(param('topicId').isInt(), param('commentId').isInt()),
+    createValidationHandler(
+      param('topicId').isInt(),
+      param('commentId').isInt(),
+      body('title').optional({ nullable: true }).isString().isLength({ min: 1, max: 255 }),
+      body('content').optional().isString().isLength({ min: 1 }),
+      body('context').optional().isObject()
+    ),
     getTopic(repository),
     updateTopicComment(apiId, logger, eventService)
   );

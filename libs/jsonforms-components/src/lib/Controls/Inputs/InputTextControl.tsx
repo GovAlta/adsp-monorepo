@@ -104,6 +104,7 @@ export const InnerGoAInputText = (props: GoAInputTextProps): JSX.Element => {
 
     if (autoPopulatedValue && autoPopulatedValue !== data && !manualInput) {
       handleChange(props.path, autoPopulatedValue);
+      setLocalValue(autoPopulatedValue);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);

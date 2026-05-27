@@ -36,6 +36,8 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
       - name: Get last successful commit
         uses: nrwl/nx-set-shas@v5
         id: last_successful_commit

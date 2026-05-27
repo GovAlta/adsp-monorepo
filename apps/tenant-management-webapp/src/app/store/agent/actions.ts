@@ -240,6 +240,20 @@ interface QueuedMessage {
 }
 let queuedMessages: QueuedMessage[] = [];
 
+// Throttle stream chunk dispatches to one batch per animation frame to prevent
+// "Maximum update depth exceeded" when chunks arrive faster than React can render.
+let pendingChunks: Array<{ threadId: string; messageId: string; chunk: unknown; done: boolean; output: unknown }> = [];
+let rafId: number | null = null;
+
+function flushStreamChunks(dispatch: Dispatch) {
+  const chunks = pendingChunks;
+  pendingChunks = [];
+  rafId = null;
+  for (const { threadId, messageId, chunk, done, output } of chunks) {
+    dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, chunk, done, output });
+  }
+}
+
 function clearGraceTimer() {
   if (disconnectGraceTimer !== null) {
     clearTimeout(disconnectGraceTimer);
@@ -260,6 +274,7 @@ export function connectAgent() {
     const { config } = getState();
 
     socket = io(config.serviceUrls?.agentServiceApiUrl || 'localhost:3380', {
+      transports: ['websocket'],
       withCredentials: true,
       reconnection: true,
       reconnectionDelay: 1000,
@@ -322,7 +337,15 @@ export function connectAgent() {
 
     socket.on('stream', (message) => {
       const { threadId, messageId, chunk, done, output } = message;
-      dispatch({ type: AGENT_RESPONSE_ACTION, threadId, messageId, chunk, done, output });
+      // Heartbeat chunks are keep-alive signals to prevent proxy timeouts; ignore them.
+      if (chunk?.type === 'heartbeat') {
+        return;
+      }
+      // Batch chunk dispatches to one per animation frame to avoid overwhelming React.
+      pendingChunks.push({ threadId, messageId, chunk, done, output });
+      if (rafId === null) {
+        rafId = requestAnimationFrame(() => flushStreamChunks(dispatch));
+      }
     });
     socket.on('error', (err) => {
       dispatch(ErrorNotification({ message: err }));
