@@ -32,6 +32,8 @@ jobs:
         with:
           version: '1.6.1'
       - run: npm ci
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
       # Run with the target branch as the base.
       - name: Build
         uses: ./.github/actions/nx-production-build
