@@ -58,6 +58,7 @@ describe('topic', () => {
     id: 1,
     title: 'test',
     content: 'testing',
+    context: {},
     createdOn: new Date(),
     createdBy: {
       id: user.id,
@@ -632,6 +633,12 @@ describe('topic', () => {
         body: {
           title: 'test',
           content: 'testing',
+          context: {
+            pinned: true,
+            metadata: {
+              applicationId: 'test-app',
+            },
+          },
         },
         getConfiguration: jest.fn(),
       };
@@ -646,6 +653,17 @@ describe('topic', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(comment);
+      expect(repositoryMock.saveComment).toHaveBeenCalledWith(
+        topic,
+        expect.objectContaining({
+          context: {
+            pinned: true,
+            metadata: {
+              applicationId: 'test-app',
+            },
+          },
+        })
+      );
       expect(eventServiceMock.send).toHaveBeenCalled();
     });
 
@@ -703,7 +721,7 @@ describe('topic', () => {
       };
       const next = jest.fn();
 
-      const result = {};
+      const result = { ...comment, context: { pinned: true } };
       repositoryMock.getComment.mockResolvedValueOnce(result);
 
       const handler = getTopicComment();
@@ -784,7 +802,14 @@ describe('topic', () => {
         params: {
           commentId: '1',
         },
-        body: {},
+        body: {
+          context: {
+            pinned: true,
+            metadata: {
+              reason: 'application pin',
+            },
+          },
+        },
         getConfiguration: jest.fn(),
       };
       const res = {
@@ -799,6 +824,17 @@ describe('topic', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(comment);
+      expect(repositoryMock.saveComment).toHaveBeenCalledWith(
+        topic,
+        expect.objectContaining({
+          context: {
+            pinned: true,
+            metadata: {
+              reason: 'application pin',
+            },
+          },
+        })
+      );
       expect(eventServiceMock.send).toHaveBeenCalled();
     });
 
