@@ -29,23 +29,27 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: 'npm'
+          cache: "npm"
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10
       - uses: actions/setup-java@v5
         with:
-          java-version: '17'
+          java-version: "17"
           distribution: temurin
           cache: maven
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - uses: snok/install-poetry@v1
         with:
-          version: '1.6.1'
-      - run: npm ci --prefer-offline
-        timeout-minutes: 10
+          version: "1.6.1"
+      - run: |
+          npm config set fetch-retries 5
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          npm ci --prefer-offline --loglevel verbose
+        timeout-minutes: 15
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
       - name: Get last successful commit
@@ -94,7 +98,7 @@ jobs:
           app: ${{ matrix.app }}
           redhat-io-username: ${{ secrets.REGISTRY_REDHAT_IO_USER }}
           redhat-io-password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
-          build-context: './'
+          build-context: "./"
           container-file: ${{ hashFiles(format('./apps/{0}/Dockerfile', matrix.app)) && format('./apps/{0}/Dockerfile', matrix.app) || hashFiles(format('./dist/apps/{0}/index.html', matrix.app)) && './.openshift/app/Dockerfile' || './.openshift/service/Dockerfile' }}
           ghcr-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -137,13 +141,13 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: 'npm'
+          cache: "npm"
       - name: E2E Test
         uses: ./.github/actions/nx-cypress-e2e
         with:
           app: ${{ matrix.app }}
           environment: dev
-          tags: '@smoke-test and not @ignore'
+          tags: "@smoke-test and not @ignore"
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
@@ -198,13 +202,13 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: 'npm'
+          cache: "npm"
       - name: E2E Test
         uses: ./.github/actions/nx-cypress-e2e
         with:
           app: ${{ matrix.app }}
           environment: staging
-          tags: '@smoke-test and not @ignore'
+          tags: "@smoke-test and not @ignore"
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
