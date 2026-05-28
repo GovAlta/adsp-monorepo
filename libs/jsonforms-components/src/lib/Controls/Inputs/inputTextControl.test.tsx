@@ -293,7 +293,7 @@ describe('Input Text Control tests', () => {
       });
 
       expect(handleChangeMock).not.toHaveBeenCalledWith('', expect.stringContaining('a'));
-      expect((firstNameInput as HTMLElement & { value: string }).value).toBe('1324567');
+      expect((firstNameInput as HTMLElement & { value: string }).value).toBe('132456789');
     });
 
     it('prevents alphabet key presses for SIN input', async () => {

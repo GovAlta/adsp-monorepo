@@ -261,6 +261,21 @@ export function onIoConnection(logger: Logger) {
             const replyId = uuid();
 
             streaming = true;
+            // Send periodic heartbeats during streaming to prevent reverse proxy
+            // (e.g. OpenShift HAProxy route) from timing out the WebSocket connection
+            // during long LLM thinking or tool execution gaps.
+            const streamStartTime = Date.now();
+            const heartbeatInterval = setInterval(() => {
+              if (socket.connected) {
+                socket.emit('stream', {
+                  agent,
+                  threadId,
+                  messageId: replyId,
+                  replyTo: messageId,
+                  chunk: { type: 'heartbeat', payload: { timestamp: Date.now() } },
+                });
+              }
+            }, 15_000);
             try {
               if (rawChunks === true) {
                 const projector = await aiAgent.createProjector(user, threadId);
@@ -320,6 +335,7 @@ export function onIoConnection(logger: Logger) {
               }
 
               let output: unknown;
+              const streamLoopDurationMs = Date.now() - streamStartTime;
               try {
                 output = await result.object;
               } catch (err) {
@@ -334,6 +350,18 @@ export function onIoConnection(logger: Logger) {
                 );
               }
 
+              const totalDurationMs = Date.now() - streamStartTime;
+              logger.info(
+                `Stream complete for agent ${agent}: total=${totalDurationMs}ms, streamLoop=${streamLoopDurationMs}ms, resultObject=${totalDurationMs - streamLoopDurationMs}ms`,
+                {
+                  context: 'AgentRouter',
+                  tenant: tenant?.id?.toString(),
+                  user: `${user.name} (ID: ${user.id})`,
+                  totalDurationMs,
+                  streamLoopDurationMs,
+                },
+              );
+
               socket.emit('stream', {
                 agent,
                 threadId,
@@ -343,6 +371,7 @@ export function onIoConnection(logger: Logger) {
                 done: true,
               });
             } finally {
+              clearInterval(heartbeatInterval);
               streaming = false;
 
               // If a token-expiry disconnect was deferred while the stream was

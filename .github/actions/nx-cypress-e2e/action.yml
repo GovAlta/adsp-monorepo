@@ -44,6 +44,8 @@ runs:
         cypress_password: ${{ inputs.cy-password }}
         cypress_password2: ${{ inputs.cy-password-2 }}
         cypress_password3: ${{ inputs.cy-password-3 }}
+        PUPPETEER_SKIP_DOWNLOAD: 'true'
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       with:
         install-command: npm ci
         command: npx nx e2e ${{ inputs.app }}-e2e --dev-server-target='' --browser chrome --headed --cypress-config="apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.config.js"

@@ -54,6 +54,9 @@ jobs:
           dotnet-version: '10'
       - if: ${{ matrix.language != 'javascript' }}
         run: npm ci
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
