@@ -44,7 +44,8 @@ jobs:
       - uses: snok/install-poetry@v1
         with:
           version: '1.6.1'
-      - run: npm ci
+      - run: npm ci --prefer-offline
+        timeout-minutes: 10
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
       - name: Get last successful commit
