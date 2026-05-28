@@ -16,27 +16,22 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: "npm"
+          cache: 'npm'
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10
       - uses: actions/setup-java@v5
         with:
-          java-version: "17"
+          java-version: '17'
           distribution: temurin
           cache: maven
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: '3.11'
       - uses: snok/install-poetry@v1
         with:
-          version: "1.6.1"
-      - run: |
-          npm config set fetch-retries 5
-          npm config set fetch-retry-mintimeout 20000
-          npm config set fetch-retry-maxtimeout 120000
-          npm ci --prefer-offline --loglevel verbose
-        timeout-minutes: 15
+          version: '1.6.1'
+      - run: npm ci
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
