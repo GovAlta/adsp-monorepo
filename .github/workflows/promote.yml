@@ -38,6 +38,7 @@ jobs:
       - run: npm ci
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
       - name: Get last successful commit
         uses: nrwl/nx-set-shas@v5
         id: last_successful_commit
