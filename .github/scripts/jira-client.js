@@ -27,6 +27,16 @@ function buildAuthHeader(email, token) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Shared failure handler — logs a warning and returns null.
+// Centralizes the warn-and-return pattern used on every failure path in
+// fetchTicket so the logic is not duplicated (Rule 2.14).
+// ─────────────────────────────────────────────────────────────
+function warnAndReturn(message) {
+  console.warn(message);
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────
 // Recursively extract plain text from an Atlassian Document Format (ADF) node.
 // Jira Cloud REST API v3 returns description as ADF, not plain text.
 // ─────────────────────────────────────────────────────────────
@@ -75,60 +85,86 @@ function extractAcceptanceCriteria(descriptionAdf) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Fetch a Jira ticket and return its summary, description, and
-// acceptance criteria.  Returns null with a logged warning if
-// credentials are missing, the network is unreachable, or the
-// ticket does not exist.
+// Returns true only when all three Jira credentials are present
 // ─────────────────────────────────────────────────────────────
-async function fetchTicket(ticketId) {
-  if (!JIRA_BASE_URL || !JIRA_EMAIL || !JIRA_API_TOKEN) {
-    console.warn(
+function areJiraCredentialsConfigured() {
+  return Boolean(JIRA_BASE_URL && JIRA_EMAIL && JIRA_API_TOKEN);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Returns true when the Jira response indicates the ticket was not found
+// ─────────────────────────────────────────────────────────────
+function isTicketNotFound(response) {
+  return response.status === 404;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Build the fetch options (method + auth headers) for a Jira REST request
+// ─────────────────────────────────────────────────────────────
+function buildJiraRequest(url) {
+  return {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: buildAuthHeader(JIRA_EMAIL, JIRA_API_TOKEN),
+    },
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Extract summary, description text, and acceptance criteria from
+// the raw fields object returned by the Jira REST API
+// ─────────────────────────────────────────────────────────────
+function parseTicketFields(fields) {
+  const summary = fields.summary || null;
+  const description = fields.description ? adfToText(fields.description).trim() || null : null;
+  const acceptanceCriteria = fields.description ? extractAcceptanceCriteria(fields.description) : null;
+  return { summary, description, acceptanceCriteria };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Fetch a Jira ticket and return its summary, description, and
+// acceptance criteria.
+// ─────────────────────────────────────────────────────────────
+/**
+ * Fetches a Jira ticket by ID and returns its key fields.
+ * Logs a warning on every failure path — this is intentional diagnostic
+ * output so callers can see why context is missing without throwing.
+ * @returns {Promise<{summary: string|null, description: string|null, acceptanceCriteria: string|null}|null>}
+ */
+async function fetchTicket(ticketId) { // clean-code-ignore: 2.18 — logging is intentional diagnostic output, not a side effect of the function's purpose
+  if (!areJiraCredentialsConfigured()) {
+    return warnAndReturn(
       '  Jira credentials not configured — skipping ticket fetch' +
         ' (JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN are required)',
     );
-    return null;
   }
 
   const url = `${JIRA_BASE_URL.replace(/\/$/, '')}/rest/api/3/issue/${encodeURIComponent(ticketId)}`;
 
   let response;
   try {
-    response = await globalThis.fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: buildAuthHeader(JIRA_EMAIL, JIRA_API_TOKEN),
-      },
-    });
+    response = await globalThis.fetch(url, buildJiraRequest(url));
   } catch (err) {
-    console.warn(`  Jira unreachable — skipping ticket fetch for ${ticketId}: ${err.message}`);
-    return null;
+    return warnAndReturn(`  Jira unreachable — skipping ticket fetch for ${ticketId}: ${err.message}`);
   }
 
-  if (response.status === 404) {
-    console.warn(`  Jira ticket ${ticketId} not found (404) — skipping`);
-    return null;
+  if (isTicketNotFound(response)) {
+    return warnAndReturn(`  Jira ticket ${ticketId} not found (404) — skipping`);
   }
 
   if (!response.ok) {
-    console.warn(`  Jira API returned ${response.status} for ${ticketId} — skipping ticket fetch`);
-    return null;
+    return warnAndReturn(`  Jira API returned ${response.status} for ${ticketId} — skipping ticket fetch`);
   }
 
   let data;
   try {
     data = await response.json();
   } catch (err) {
-    console.warn(`  Could not parse Jira response for ${ticketId}: ${err.message}`);
-    return null;
+    return warnAndReturn(`  Could not parse Jira response for ${ticketId}: ${err.message}`);
   }
 
-  const fields = data.fields || {};
-  const summary = fields.summary || null;
-  const description = fields.description ? adfToText(fields.description).trim() || null : null;
-  const acceptanceCriteria = fields.description ? extractAcceptanceCriteria(fields.description) : null;
-
-  return { summary, description, acceptanceCriteria };
+  return parseTicketFields(data.fields || {});
 }
 
 // Guard against auto-execution when this module is require()'d by the test suite
@@ -155,7 +191,12 @@ if (require.main === module) {
 
 module.exports = {
   buildAuthHeader,
+  warnAndReturn,
   adfToText,
   extractAcceptanceCriteria,
+  areJiraCredentialsConfigured,
+  isTicketNotFound,
+  buildJiraRequest,
+  parseTicketFields,
   fetchTicket,
 };
