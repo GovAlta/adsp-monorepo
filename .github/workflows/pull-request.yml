@@ -40,6 +40,7 @@ jobs:
         timeout-minutes: 15
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
       # Run with the target branch as the base.
       - name: Build
         uses: ./.github/actions/nx-production-build

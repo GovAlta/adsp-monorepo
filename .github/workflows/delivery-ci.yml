@@ -53,6 +53,7 @@ jobs:
         timeout-minutes: 15
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
       - name: Get last successful commit
         id: last_successful_commit
         uses: nrwl/nx-set-shas@v5
