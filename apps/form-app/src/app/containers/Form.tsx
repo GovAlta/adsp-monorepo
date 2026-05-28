@@ -64,39 +64,37 @@ const FormComponent: FunctionComponent<FormProps> = ({ className }) => {
       {definition && !definition.anonymousApply && <LogoutModal />}
       <div className={className}>
         <Container vs={1} hs={1}>
-          {form || busy.loading ? (
-            !fileBusy.loading && (
-              <>
-                {form?.status === 'Submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
-                {form?.status === 'Draft' && (
-                  <DraftFormWrapper
-                    definition={definition}
-                    form={form}
-                    data={data}
-                    canSubmit={canSubmit}
-                    showSubmit={showSubmit}
-                    saving={busy.saving}
-                    submitting={busy.submitting}
-                    onChange={({ data, errors }) => {
-                      if (
-                        errors[0]?.message === 'should be equal to one of the allowed values' &&
-                        errors[0]?.schemaPath.includes('enum')
-                      ) {
-                        errors = null;
-                      }
+          {form ? (
+            <>
+              {form?.status === 'Submitted' && <SubmittedForm definition={definition} form={form} data={data} />}
+              {form?.status === 'Draft' && (
+                <DraftFormWrapper
+                  definition={definition}
+                  form={form}
+                  data={data}
+                  canSubmit={canSubmit}
+                  showSubmit={showSubmit}
+                  saving={busy.saving}
+                  submitting={busy.submitting}
+                  onChange={({ data, errors }) => {
+                    if (
+                      errors[0]?.message === 'should be equal to one of the allowed values' &&
+                      errors[0]?.schemaPath.includes('enum')
+                    ) {
+                      errors = null;
+                    }
 
-                      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
-                    }}
-                    onSave={({ data, errors }) => {
-                      dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
-                    }}
-                    onSubmit={(form) => dispatch(submitForm(form.id))}
-                  />
-                )}
-              </>
-            )
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
+                  }}
+                  onSave={({ data, errors }) => {
+                    dispatch(updateForm({ data: data as Record<string, unknown>, files, errors: errors }));
+                  }}
+                  onSubmit={(form) => dispatch(submitForm(form.id))}
+                />
+              )}
+            </>
           ) : (
-            <UserNotAuthorized />
+            fileBusy.loaded && <UserNotAuthorized />
           )}
         </Container>
         <FormSupportPane form={form} data={data} files={files} />
