@@ -240,7 +240,7 @@ Feature: Form app
     And the user views the summary of "Standard controls" with "111 111 118" as "not required" "Social insurance number"
 
   # TEST DATA: regression-control-examples is created with all types of control examples
-  @TEST_CS-4004 @regression
+  @TEST_CS-3993 @regression
   Scenario: As a form user, I can use rule to dynamically change the form based on user input
     Given an anonymous applicant goes to "regression-control-examples" application
     Then the user views an anonymous form draft of "regression-control-examples"
