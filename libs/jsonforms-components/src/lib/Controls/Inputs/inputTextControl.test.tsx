@@ -270,7 +270,7 @@ describe('Input Text Control tests', () => {
       expect(handleChangeMock).toHaveBeenCalledWith('', '123 456 789');
     });
 
-    it('does not update SIN input when alphabet characters are entered', async () => {
+    it('does not update SIN input when alphabet characters are entered (defaults enforced)', async () => {
       const props = { ...sinProps, handleChange: handleChangeMock };
       const { baseElement } = render(
         <JsonFormsContext.Provider value={mockContextValue}>
@@ -293,7 +293,7 @@ describe('Input Text Control tests', () => {
       });
 
       expect(handleChangeMock).not.toHaveBeenCalledWith('', expect.stringContaining('a'));
-      expect((firstNameInput as HTMLElement & { value: string }).value).toBe('132456789');
+      expect((firstNameInput as HTMLElement & { value: string }).value).toBe('123456789');
     });
 
     it('prevents alphabet key presses for SIN input', async () => {
