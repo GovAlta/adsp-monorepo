@@ -31,6 +31,53 @@ const getDataAt = (rootData: any, pathSegs: string[]): any => {
   return cur;
 };
 
+const forEachComposedSubSchema = (schema: any, callback: (subSchema: any) => void): void => {
+  for (const key of ['allOf', 'anyOf', 'oneOf']) {
+    if (Array.isArray(schema[key])) {
+      schema[key].forEach(callback);
+    }
+  }
+
+  if (schema.not) {
+    callback(schema.not);
+  }
+};
+
+const collectConditionPropertyPaths = (schema: any, basePath: string): string[] => {
+  if (!schema || typeof schema !== 'object') return [];
+
+  const paths: string[] = [];
+
+  if (isObject(schema.properties)) {
+    for (const [key, subSchema] of Object.entries(schema.properties)) {
+      const nextPath = basePath ? `${basePath}.${key}` : key;
+      paths.push(nextPath, ...collectConditionPropertyPaths(subSchema, nextPath));
+    }
+  }
+
+  forEachComposedSubSchema(schema, (subSchema) => {
+    paths.push(...collectConditionPropertyPaths(subSchema, basePath));
+  });
+
+  return paths;
+};
+
+const hasExplicitRequired = (schema: any): boolean => {
+  if (!schema || typeof schema !== 'object') return false;
+  if (Array.isArray(schema.required) && schema.required.length > 0) return true;
+
+  let found = false;
+  forEachComposedSubSchema(schema, (subSchema) => {
+    found = found || hasExplicitRequired(subSchema);
+  });
+  return found;
+};
+
+const hasAnyConditionPropertyValue = (schema: any, rootData: any, basePath: string): boolean => {
+  const paths = collectConditionPropertyPaths(schema, basePath);
+  return paths.length === 0 || paths.some((path) => getDataAt(rootData, splitPath(path)) !== undefined);
+};
+
 const compileAndTest = (ajv: Ajv, schema: any, data: any): { valid: boolean; errors?: ErrorObject[] } => {
   const validate = ajv.compile(schema);
   const ok = validate(data) as boolean;
@@ -94,8 +141,10 @@ const collectRequired = (
   const dataHere = basePath ? getDataAt(rootData, splitPath(basePath)) : rootData;
 
   if (schema.if && (schema.then || schema.else)) {
-    const ifResult = compileAndTest(ajv, schema.if, dataHere);
-    const branch = ifResult.valid ? schema.then : schema.else;
+    const shouldEvaluateCondition =
+      hasExplicitRequired(schema.if) || hasAnyConditionPropertyValue(schema.if, rootData, basePath);
+    const ifResult = shouldEvaluateCondition ? compileAndTest(ajv, schema.if, dataHere) : null;
+    const branch = ifResult ? (ifResult.valid ? schema.then : schema.else) : null;
     if (branch) {
       mergeSets(requiredPaths, collectRequired(ajv, branch, rootSchema, rootData, basePath, strategy));
     }
@@ -122,7 +171,7 @@ const collectRequired = (
     });
   }
 
-  if (Array.isArray(schema.required) && isObject(schema.properties)) {
+  if (Array.isArray(schema.required)) {
     for (const key of schema.required as string[]) {
       requiredPaths.add(basePath ? `${basePath}.${key}` : key);
     }

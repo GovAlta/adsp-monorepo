@@ -68,8 +68,13 @@ export const TextWrapDiv = styled.div`
 `;
 
 export const LabelDiv = styled.div`
-  font-size: var(--goa-font-size-2);
-  padding-bottom: var(--goa-space-l);
+  color: var(--goa-color-text-default);
+  font: var(--goa-typography-body-m);
+  min-height: 2.625rem;
+  display: flex;
+  align-items: center;
+  text-wrap: auto;
+  word-break: break-word;
 `;
 
 /* istanbul ignore next */

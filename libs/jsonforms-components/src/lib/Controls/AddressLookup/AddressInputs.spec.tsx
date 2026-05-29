@@ -153,6 +153,23 @@ describe('AddressInputs', () => {
     expect(mockHandleInputChange).toBeCalledTimes(1);
     expect(provinceInput).toBeTruthy();
   });
+
+  it('marks province as required for canadian address when subdivisionCode is required', () => {
+    const { baseElement } = render(
+      <AddressInputs
+        address={defaultAddress}
+        handleOnBlur={mockHandleInputBlur}
+        handleInputChange={mockHandleInputChange}
+        isAlbertaAddress={false}
+        requiredFields={['subdivisionCode']}
+      />
+    );
+
+    const provinceFormItem = baseElement.querySelector("goa-form-item[label='Province']");
+
+    expect(provinceFormItem?.getAttribute('requirement')).toBe('required');
+  });
+
   it(' province is label when isAlbertaAddress is true', () => {
     const component = render(
       <AddressInputs
