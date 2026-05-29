@@ -7,6 +7,18 @@ components:
           type: string
         name:
           type: string
+        adminRoles:
+          type: array
+          items:
+            type: string
+        readerRoles:
+          type: array
+          items:
+            type: string
+        commenterRoles:
+          type: array
+          items:
+            type: string
     Topic:
       type: object
       properties:
@@ -69,6 +81,54 @@ components:
         lastUpdatedOn:
           type: string
           format: date-time
+
+/comment/v1/topic-types:
+  post:
+    tags:
+      - Topic
+    description: Creates a new topic type for the tenant.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                description: ID of the topic type.
+                example: case
+              name:
+                type: string
+                description: Name of the topic type.
+                example: Case
+              readRoles:
+                type: array
+                description: Optional roles allowed to read topics of this type.
+                items:
+                  type: string
+              writeRoles:
+                type: array
+                description: Optional roles allowed to write comments on topics of this type.
+                items:
+                  type: string
+            required: [id, name]
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+      401:
+        description: Not authenticated.
+      403:
+        description: User not permitted for requested operation.
+      409:
+        description: Topic type name already exists.
 
 /comment/v1/topics:
   get:

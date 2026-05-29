@@ -1,4 +1,5 @@
 import { AdspId, EventService, adspId } from '@abgov/adsp-service-sdk';
+import type { ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { createCommentRouter, createTopicRouter } from './router';
@@ -16,6 +17,8 @@ interface CommentMiddlewareProps {
   logger: Logger;
   eventService: EventService;
   repository: TopicRepository;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
 }
 
 export function applyCommentMiddleware(app: Application, { serviceId, ...props }: CommentMiddlewareProps): Application {

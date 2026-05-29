@@ -55,11 +55,13 @@ const initializeApp = async (): Promise<express.Application> => {
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
     configurationHandler,
+    directory,
     coreStrategy,
     eventService,
     metricsHandler,
     tenantStrategy,
     tenantHandler,
+    tokenProvider,
     traceHandler,
     healthCheck,
   } = await initializePlatform(
@@ -149,7 +151,14 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationHandler,
   );
 
-  applyCommentMiddleware(app, { serviceId, logger, eventService, repository: repositories.topicRepository });
+  applyCommentMiddleware(app, {
+    serviceId,
+    logger,
+    eventService,
+    repository: repositories.topicRepository,
+    directory,
+    tokenProvider,
+  });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
