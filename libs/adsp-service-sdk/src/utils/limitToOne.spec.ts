@@ -1,4 +1,4 @@
-import { v4 as uuid } from 'uuid/dist/index';
+import { v4 as uuid } from 'uuid';
 import { LimitToOne } from './limitToOne';
 
 class Test {
