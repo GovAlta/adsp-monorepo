@@ -20,8 +20,11 @@ export const FullNameDobReviewControl = (props: DateOfBirthReviewControlProps): 
     <tr key={testId}>
       <PageReviewContainer colSpan={3}>
         <ReviewHeader>
-          <ReviewLabel>{fieldLabel}</ReviewLabel>
-          {requiredFields.includes(fieldName) && <RequiredTextLabel> (required)</RequiredTextLabel>}
+          <ReviewLabel>
+            {fieldLabel}
+            {requiredFields.includes(fieldName) && <RequiredTextLabel> (required)</RequiredTextLabel>}
+          </ReviewLabel>
+
           {stepId !== undefined && !uischema.options?.componentProps?.readOnly && (
             <GoabButton
               type="tertiary"
