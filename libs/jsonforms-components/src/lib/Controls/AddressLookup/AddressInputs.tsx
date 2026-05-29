@@ -102,7 +102,7 @@ export const AddressInputs: React.FC<AddressInputsProps> = ({
       </GoabGrid>
       <br />
       <GoabGrid minChildWidth="18rem" gap="s">
-        <GoabFormItem label="Province">
+        <GoabFormItem label="Province" requirement={requiredFields?.includes('subdivisionCode') ? 'required' : 'optional'}>
           {isAlbertaAddress && <LabelDiv data-testid="address-form-province">Alberta</LabelDiv>}
           {!isAlbertaAddress && (
             <GoabDropdown

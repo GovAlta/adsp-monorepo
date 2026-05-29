@@ -114,6 +114,101 @@ describe(' isRequiredBySchema test single and nest required cases', () => {
     expect(isRequiredBySchema(schema, { mode: 'B' }, 'b')).toBe(true);
   });
 
+  it('supports if/then required when then does not redeclare properties', () => {
+    const schema: JsonSchema7 = {
+      type: 'object',
+      properties: {
+        applicantType: {
+          type: 'string',
+          enum: ['Individual', 'Company'],
+        },
+        companyName: {
+          type: 'string',
+        },
+      },
+      allOf: [
+        {
+          if: {
+            properties: {
+              applicantType: { const: 'Company' },
+            },
+          },
+          then: {
+            required: ['companyName'],
+          },
+        },
+      ],
+    };
+
+    expect(isRequiredBySchema(schema, { applicantType: 'Company' }, 'companyName')).toBe(true);
+    expect(isRequiredBySchema(schema, { applicantType: 'Individual' }, 'companyName')).toBe(false);
+  });
+
+  it('does not apply if/then required before the controller field has data', () => {
+    const schema: JsonSchema7 = {
+      type: 'object',
+      properties: {
+        applicantType: {
+          type: 'string',
+          enum: ['Individual', 'Company'],
+        },
+        companyName: {
+          type: 'string',
+        },
+      },
+      allOf: [
+        {
+          if: {
+            properties: {
+              applicantType: { const: 'Company' },
+            },
+          },
+          then: {
+            required: ['companyName'],
+          },
+        },
+      ],
+    };
+
+    expect(isRequiredBySchema(schema, {}, 'companyName')).toBe(false);
+  });
+
+  it('supports if/else required only after the controller field has data', () => {
+    const schema: JsonSchema7 = {
+      type: 'object',
+      properties: {
+        contactMethod: {
+          type: 'string',
+          enum: ['Email', 'Phone'],
+        },
+        email: {
+          type: 'string',
+        },
+        phone: {
+          type: 'string',
+        },
+      },
+      if: {
+        properties: {
+          contactMethod: { const: 'Email' },
+        },
+      },
+      then: {
+        required: ['email'],
+      },
+      else: {
+        required: ['phone'],
+      },
+    };
+
+    expect(isRequiredBySchema(schema, {}, 'email')).toBe(false);
+    expect(isRequiredBySchema(schema, {}, 'phone')).toBe(false);
+    expect(isRequiredBySchema(schema, { contactMethod: 'Email' }, 'email')).toBe(true);
+    expect(isRequiredBySchema(schema, { contactMethod: 'Email' }, 'phone')).toBe(false);
+    expect(isRequiredBySchema(schema, { contactMethod: 'Phone' }, 'email')).toBe(false);
+    expect(isRequiredBySchema(schema, { contactMethod: 'Phone' }, 'phone')).toBe(true);
+  });
+
   it('supports allOf merging required (union)', () => {
     const schema: JsonSchema7 = {
       type: 'object',
