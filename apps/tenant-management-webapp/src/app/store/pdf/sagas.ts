@@ -57,11 +57,11 @@ export function* fetchPdfTemplates(): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading template...',
-    })
+    }),
   );
 
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
@@ -72,14 +72,14 @@ export function* fetchPdfTemplates(): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -89,11 +89,11 @@ export function* fetchCorePdfTemplates(): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Loading template...',
-    })
+    }),
   );
 
   const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl,
   );
   const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
@@ -105,14 +105,14 @@ export function* fetchCorePdfTemplates(): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -206,14 +206,17 @@ export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesActi
       };
 
       const body: UpdatePdfConfig = { operation: 'UPDATE', update: { ...pdfTemplate } };
-      const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
+      const url = `${baseUrl}/configuration/v2/configuration/pdf-service/${template.id}`;
+      console.log(JSON.stringify(options) + '<options-- 0');
       const { latest } = yield call(updatePDFTemplateApi, token, url, body);
+      console.log(JSON.stringify(options) + '<options--');
+      console.log(JSON.stringify(template.id) + '<template.id--');
 
       if (options === 'no-refresh') {
         yield put(
           updatePdfTemplateSuccessNoRefresh({
             ...latest.configuration,
-          })
+          }),
         );
       } else {
         yield put(
@@ -221,8 +224,8 @@ export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesActi
             {
               ...latest.configuration,
             },
-            { templateId: template.id }
-          )
+            { templateId: template.id },
+          ),
         );
       }
       yield put(UpdateElementIndicator({ show: false }));
@@ -248,7 +251,7 @@ export function* showCurrentFilePdf(action: ShowCurrentFilePdfAction): SagaItera
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -269,7 +272,7 @@ export function* deletePdfTemplate({ template }: DeletePdfTemplatesAction): Saga
       yield put(
         deletePdfTemplateSuccess({
           ...latest.configuration,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
@@ -343,7 +346,7 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
     UpdateIndicator({
       show: true,
       message: 'Processing may take a while. Please wait...',
-    })
+    }),
   );
 
   if (pdfServiceUrl && token && baseUrl) {
@@ -378,14 +381,14 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
-        })
+        }),
       );
     }
   }
@@ -403,7 +406,7 @@ export function* fetchPdfMetrics(): SagaIterator {
         generationDuration: metrics[durationMetric]?.values[0]
           ? parseInt(metrics[durationMetric]?.values[0].avg)
           : null,
-      })
+      }),
     );
   });
 }

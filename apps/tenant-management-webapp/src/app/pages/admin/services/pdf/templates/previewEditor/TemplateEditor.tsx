@@ -165,7 +165,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const monacoHeight = `calc(100vh - 356px${notifications.length > 0 ? ' - 80px' : ''})`;
   const fileHistHeight = `calc(100vh - 428px${notifications.length > 0 ? ' - 80px' : ''})`;
   const pdfList = useSelector((state: RootState) =>
-    state.pdf?.jobs?.filter((job) => job.templateId === pdfTemplate.id)
+    state.pdf?.jobs?.filter((job) => job.templateId === pdfTemplate.id),
   );
 
   const backButtonDisabled = () => {
@@ -176,7 +176,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     return false;
   };
   const latestNotification = useSelector(
-    (state: RootState) => state.notifications?.notifications[state.notifications?.notifications?.length - 1]
+    (state: RootState) => state.notifications?.notifications[state.notifications?.notifications?.length - 1],
   );
   const Height = latestNotification && !latestNotification.disabled ? 91 : 0;
 
