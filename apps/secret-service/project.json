@@ -1,0 +1,48 @@
+{
+  "name": "secret-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/secret-service/src",
+  "projectType": "application",
+  "prefix": "secret-service",
+  "tags": [],
+  "generators": {},
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "options": {
+        "webpackConfig": "apps/secret-service/webpack.config.js",
+        "outputPath": "dist/apps/secret-service",
+        "main": "apps/secret-service/src/main.ts",
+        "tsConfig": "apps/secret-service/tsconfig.app.json",
+        "assets": [],
+        "target": "node",
+        "compiler": "tsc",
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": []
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "secret-service:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "options": {
+        "jestConfig": "apps/secret-service/jest.config.ts",
+        "runInBand": true
+      }
+    }
+  }
+}
