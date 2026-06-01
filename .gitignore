@@ -75,6 +75,8 @@ coveragereport/*
 
 .nx/cache
 .nx/workspace-data
+.nx/polygraph
+.nx/self-healing
 .cache
 apps/builder-app/.generated
 

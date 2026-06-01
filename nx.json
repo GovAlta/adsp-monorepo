@@ -92,7 +92,13 @@
       "inputs": ["production", "^production"]
     },
     "@nx/eslint:lint": {
-      "inputs": ["default", "!{projectRoot}/Dockerfile", "{workspaceRoot}/.eslintrc.json"],
+      "inputs": [
+        "default",
+        "^default",
+        "!{projectRoot}/Dockerfile",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ],
       "cache": true
     },
     "@nx/jest:jest": {
@@ -137,5 +143,6 @@
       "!{projectRoot}/src/test-setup.[jt]s"
     ]
   },
-  "defaultBase": "main"
+  "defaultBase": "main",
+  "analytics": false
 }
