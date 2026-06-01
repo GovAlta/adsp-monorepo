@@ -35,6 +35,7 @@ jobs:
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      - run: rm -rf /tmp/.dotnet/shm
       - run: npm ci
         env:
           PUPPETEER_SKIP_DOWNLOAD: true

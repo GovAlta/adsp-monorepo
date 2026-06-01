@@ -53,6 +53,8 @@ jobs:
         with:
           dotnet-version: '10'
       - if: ${{ matrix.language != 'javascript' }}
+        run: rm -rf /tmp/.dotnet/shm
+      - if: ${{ matrix.language != 'javascript' }}
         run: npm ci
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
