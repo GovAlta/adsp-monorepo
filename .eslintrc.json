@@ -69,6 +69,14 @@
       "parserOptions": {
         "project": "./tsconfig.base.json"
       }
+    },
+    {
+      "files": [
+        "*.preset.js"
+      ],
+      "rules": {
+        "@nx/enforce-module-boundaries": "off"
+      }
     }
   ]
 }
