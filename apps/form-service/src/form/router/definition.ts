@@ -241,7 +241,10 @@ export function createFormDefinitionRouter({
     '/definitions',
     assertAuthenticatedHandler,
     createValidationHandler(
-      body('id').isString().isLength({ min: 1, max: 50 }),
+      body('id')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-z0-9-]+$/),
       body('name').isString().isLength({ min: 1 }),
       body('anonymousApply').isBoolean(),
       body('applicantRoles').isArray(),
@@ -251,19 +254,34 @@ export function createFormDefinitionRouter({
   );
   router.get(
     '/definitions/:definitionId',
-    createValidationHandler(param('definitionId').isString().isLength({ min: 1, max: 50 })),
+    createValidationHandler(
+      param('definitionId')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-z0-9-]+$/),
+    ),
     getFormDefinition(tenantService, calendarService),
   );
   router.put(
     '/definitions/:definitionId',
     assertAuthenticatedHandler,
-    createValidationHandler(param('definitionId').isString().isLength({ min: 1, max: 50 })),
+    createValidationHandler(
+      param('definitionId')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-z0-9-]+$/),
+    ),
     updateFormDefinition(directory, tokenProvider),
   );
   router.delete(
     '/definitions/:definitionId',
     assertAuthenticatedHandler,
-    createValidationHandler(param('definitionId').isString().isLength({ min: 1, max: 50 })),
+    createValidationHandler(
+      param('definitionId')
+        .isString()
+        .isLength({ min: 1, max: 50 })
+        .matches(/^[a-z0-9-]+$/),
+    ),
     deleteFormDefinition(directory, tokenProvider),
   );
 
