@@ -126,15 +126,15 @@ function resolveTestFilePath(sourceFile, config) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Build the GPT system prompt — loads unit-testing.md at runtime
+// Build the GPT system prompt — loads unit-testing-standards.md at runtime
 // ─────────────────────────────────────────────────────────────
 function buildSystemPrompt(config, mode) {
-  const skillsPath = path.join(process.cwd(), '.github', 'agents', 'unit-testing.md');
+  const skillsPath = path.join(process.cwd(), 'architecture', 'unit-testing-standards.md');
   let skillsContent = '';
   if (fs.existsSync(skillsPath)) {
     skillsContent = fs.readFileSync(skillsPath, 'utf8');
   } else {
-    console.warn('Warning: .github/agents/unit-testing.md not found — using minimal prompt');
+    console.warn('Warning: architecture/unit-testing-standards.md not found — using minimal prompt');
     skillsContent =
       'Write comprehensive Jest unit tests following the AAA pattern. One concept per test. No logic in tests. Colocate test files next to source files.';
   }
