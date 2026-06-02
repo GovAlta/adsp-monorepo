@@ -15,6 +15,7 @@ import {
   Results,
 } from '@core-services/core-common';
 import axios from 'axios';
+import * as HttpStatusCodes from 'http-status-codes';
 import { RequestHandler, Router } from 'express';
 import { body, param } from 'express-validator';
 import { FormDefinitionEntity } from '../model';
@@ -140,10 +141,13 @@ export function createFormDefinition(directory: ServiceDirectory, tokenProvider:
         {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId: tenantId?.toString() },
-          validateStatus: (status) => status === 200 || status === 404,
+          validateStatus: (status) => status === HttpStatusCodes.OK || status === HttpStatusCodes.NOT_FOUND,
         },
       );
-      if (existingDefinitionResponse.status === 200 && existingDefinitionResponse.data?.latest?.configuration) {
+      if (
+        existingDefinitionResponse.status === HttpStatusCodes.OK &&
+        existingDefinitionResponse.data?.latest?.configuration
+      ) {
         throw new InvalidOperationError(`Form definition with ID '${definition.id}' already exists.`, {
           statusCode: 409,
         });
@@ -158,7 +162,7 @@ export function createFormDefinition(directory: ServiceDirectory, tokenProvider:
         },
       );
 
-      res.status(201).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
+      res.status(HttpStatusCodes.CREATED).send(mapFormDefinition(data.latest.configuration, data.latest.revision));
     } catch (err) {
       next(err);
     }
@@ -214,7 +218,7 @@ export function deleteFormDefinition(directory: ServiceDirectory, tokenProvider:
         params: { tenantId: tenantId?.toString() },
       });
 
-      res.status(204).send();
+      res.status(HttpStatusCodes.NO_CONTENT).send();
     } catch (err) {
       next(err);
     }
