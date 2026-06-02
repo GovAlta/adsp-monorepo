@@ -149,7 +149,7 @@ export function createFormDefinition(directory: ServiceDirectory, tokenProvider:
         existingDefinitionResponse.data?.latest?.configuration
       ) {
         throw new InvalidOperationError(`Form definition with ID '${definition.id}' already exists.`, {
-          statusCode: 409,
+          statusCode: HttpStatusCodes.CONFLICT,
         });
       }
 
