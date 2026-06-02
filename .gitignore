@@ -52,6 +52,7 @@ globalConfig.json
 # env file
 **/.env
 **/.local.env
+.env.github-scripts
 
 # oc env configuration
 /.openshift/configuration/*.encoded.yml
