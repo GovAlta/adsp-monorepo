@@ -1,5 +1,6 @@
 import { adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { createTool } from '@mastra/core/tools';
+import type { ToolExecutionContext } from '@mastra/core/tools';
 import axios, { isAxiosError } from 'axios';
 import type { Logger } from 'winston';
 import z from 'zod';
@@ -38,7 +39,8 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
         }),
       ),
     }),
-    execute: async (_, { requestContext }: { requestContext: AdspRequestContext }) => {
+    execute: async (_, context: ToolExecutionContext) => {
+      const requestContext = context.requestContext as AdspRequestContext;
       const tenantId = requestContext.get('tenantId');
 
       try {
@@ -114,8 +116,9 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
       urn: z.string(),
       data: z.array(z.union([z.string(), z.record(z.unknown())])),
     }),
-    execute: async (inputData, { requestContext }: { requestContext: AdspRequestContext }) => {
+    execute: async (inputData, context: ToolExecutionContext) => {
       const { name, description, data: registerData } = inputData;
+      const requestContext = context.requestContext as AdspRequestContext;
       const tenantId = requestContext.get('tenantId');
 
       try {
@@ -206,8 +209,9 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
       name: z.string(),
       data: z.array(z.union([z.string(), z.record(z.unknown())])),
     }),
-    execute: async (inputData, { requestContext }: { requestContext: AdspRequestContext }) => {
+    execute: async (inputData, context: ToolExecutionContext) => {
       const { name } = inputData;
+      const requestContext = context.requestContext as AdspRequestContext;
       const tenantId = requestContext.get('tenantId');
 
       try {
@@ -266,8 +270,9 @@ export async function createDataRegisterTools({ directory, tokenProvider, logger
       name: z.string(),
       data: z.array(z.union([z.string(), z.record(z.unknown())])),
     }),
-    execute: async (inputData, { requestContext }: { requestContext: AdspRequestContext }) => {
+    execute: async (inputData, context: ToolExecutionContext) => {
       const { name, data: registerData } = inputData;
+      const requestContext = context.requestContext as AdspRequestContext;
       const tenantId = requestContext.get('tenantId');
 
       try {

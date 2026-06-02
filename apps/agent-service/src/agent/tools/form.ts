@@ -1,5 +1,6 @@
 import { adspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { createTool } from '@mastra/core/tools';
+import type { ToolExecutionContext } from '@mastra/core/tools';
 import axios, { isAxiosError } from 'axios';
 import { Logger } from 'winston';
 import z from 'zod';
@@ -24,7 +25,8 @@ export async function createFormTools({ directory, logger }: FormToolsProps) {
       data: z.object({}).passthrough(),
       files: z.record(z.string(), z.string())
     }),
-    execute: async (inputData, { requestContext }: { requestContext: AdspRequestContext<{ formId: string }> }) => {
+    execute: async (inputData, context: ToolExecutionContext) => {
+      const requestContext = context.requestContext as AdspRequestContext<{ formId: string }>;
       const tenantId = requestContext.get('tenantId');
       const user = requestContext.get('user');
       const formId = requestContext.get('formId');
@@ -78,7 +80,8 @@ export async function createFormTools({ directory, logger }: FormToolsProps) {
       data: z.object({}).passthrough(),
       files: z.record(z.string(), z.string())
     }),
-    execute: async (_, { requestContext }: { requestContext: AdspRequestContext<{ formId: string }> }) => {
+    execute: async (_, context: ToolExecutionContext) => {
+      const requestContext = context.requestContext as AdspRequestContext<{ formId: string }>;
       const tenantId = requestContext.get('tenantId');
       const user = requestContext.get('user');
       const formId = requestContext.get('formId');

@@ -1,5 +1,6 @@
 import { adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { createTool } from '@mastra/core/tools';
+import type { ToolExecutionContext } from '@mastra/core/tools';
 import type { Logger } from 'winston';
 import z from 'zod';
 import { createFileServiceClient } from '../clients';
@@ -34,7 +35,8 @@ export async function createDocumentTools({ directory, tokenProvider, logger }: 
       mimeType: z.string().describe('MIME type of the document.'),
       pageCount: z.number().optional().describe('Number of pages (PDF only).'),
     }),
-    execute: async (inputData, { requestContext }: { requestContext: AdspRequestContext }) => {
+    execute: async (inputData, context: ToolExecutionContext) => {
+      const requestContext = context.requestContext as AdspRequestContext;
       const tenantId = requestContext.get('tenantId');
       const { fileId } = inputData;
 
