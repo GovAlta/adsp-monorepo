@@ -13,12 +13,12 @@ import {
   deleteFormSubmission,
   findFormSubmissions,
   findSubmissions,
-  getFormDefinitions,
   getFormSubmission,
   mapFormForSubmission,
   updateFormSubmissionDisposition,
   validateCriteria,
 } from './form';
+import { getFormDefinitions } from './definition';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -302,8 +302,6 @@ describe('form router', () => {
       commentService: commentServiceMock,
       submissionRepository: repositoryMock,
       pdfService: pdfServiceMock,
-      tenantService: tenantServiceMock,
-      calendarService: calendarServiceMock,
     });
     expect(router).toBeTruthy();
   });
