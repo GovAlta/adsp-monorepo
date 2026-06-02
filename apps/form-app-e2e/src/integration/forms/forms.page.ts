@@ -27,7 +27,7 @@ class FormsPage {
     return cy.xpath(`//goa-form-item[@label="${label}"]//goa-input[@type="text"]`);
   }
 
-  formTextFieldFormItem(label) {
+  formFormItem(label) {
     return cy.xpath(`//goa-form-item[@label="${label}"]`);
   }
 
