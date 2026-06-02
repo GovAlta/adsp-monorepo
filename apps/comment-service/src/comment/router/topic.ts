@@ -132,6 +132,73 @@ export function createTopicType(
   };
 }
 
+export function deleteTopicType(
+  apiId: AdspId,
+  logger: Logger,
+  repository: TopicRepository,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id || user?.tenantId;
+      if (!user) {
+        throw new UnauthorizedError('User must be authenticated to delete a topic type.');
+      }
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
+        throw new UnauthorizedUserError('delete topic type', user);
+      }
+
+      const topicTypeId = req.params.topicTypeId;
+      const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
+        tenantId
+      );
+
+      if (!types?.[topicTypeId]) {
+        throw new NotFoundError('topic type', topicTypeId);
+      }
+
+      const associatedTopics = await repository.countTopicsByType(tenantId, topicTypeId);
+
+      if (associatedTopics > 0) {
+        res.status(HttpStatusCodes.CONFLICT).send({
+          errorMessage: `Topic type '${topicTypeId}' cannot be deleted because ${associatedTopics} topic(s) are associated with it.`,
+          topics: associatedTopics,
+        });
+        return;
+      }
+
+      const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+      const configurationUrl = new URL(`v2/configuration/${apiId.namespace}/${apiId.service}`, configurationServiceUrl);
+      const token = await tokenProvider.getAccessToken();
+
+      await axios.patch(
+        configurationUrl.href,
+        {
+          operation: 'DELETE',
+          property: topicTypeId,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+        }
+      );
+
+      res.send({ deleted: true, id: topicTypeId });
+
+      logger.info(`Topic type ${topicTypeId} deleted by user ${user.name} (ID: ${user.id}).`, {
+        context: 'comment-router',
+        tenantId: tenantId?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function getTopics(apiId: AdspId, repository: TopicRepository): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -432,6 +499,11 @@ export function createTopicRouter({
       body('writeRoles.*').optional().isString()
     ),
     createTopicType(apiId, logger, directory, tokenProvider)
+  );
+  router.delete(
+    '/topic-types/:topicTypeId',
+    createValidationHandler(param('topicTypeId').isString().isLength({ min: 1, max: 50 }).matches(/^[a-zA-Z0-9-_ ]{1,50}$/)),
+    deleteTopicType(apiId, logger, repository, directory, tokenProvider)
   );
 
   router.get(

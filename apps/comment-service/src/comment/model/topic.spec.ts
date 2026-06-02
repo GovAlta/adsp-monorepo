@@ -18,6 +18,8 @@ describe('TopicEntity', () => {
   const repositoryMock = {
     getTopic: jest.fn(),
     getTopics: jest.fn(),
+    countTopics: jest.fn(),
+    countTopicsByType: jest.fn(),
     getComment: jest.fn(),
     getComments: jest.fn(),
     save: jest.fn((entity) => Promise.resolve(entity)),
