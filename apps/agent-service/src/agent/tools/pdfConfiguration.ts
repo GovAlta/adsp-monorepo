@@ -11,14 +11,8 @@ interface PdfConfigurationToolsProps {
   logger: Logger;
 }
 
-export async function createPdfConfigurationTools({
-  directory,
-  tokenProvider,
-  logger,
-}: PdfConfigurationToolsProps) {
-  const configurationServiceUrl = await directory.getServiceUrl(
-    adspId`urn:ads:platform:configuration-service:v2`,
-  );
+export async function createPdfConfigurationTools({ directory, tokenProvider, logger }: PdfConfigurationToolsProps) {
+  const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
 
   /**
    * RETRIEVE (unchanged)
@@ -39,18 +33,17 @@ export async function createPdfConfigurationTools({
       footer: z.string().optional(),
       variables: z.string().optional(),
     }),
-    execute: async (
-      _,
-      { requestContext }: { requestContext: AdspRequestContext<{ pdfDefinitionId: string }> },
-    ) => {
+    execute: async (_, context) => {
+      const requestContext = context.requestContext as AdspRequestContext<{ pdfDefinitionId: string }> | undefined;
+
+      if (!requestContext) {
+        throw new Error('Missing request context.');
+      }
       const tenantId = requestContext.get('tenantId');
       const pdfDefinitionId = requestContext.get('pdfDefinitionId');
 
       try {
-        const pdfDefinitionUrl = new URL(
-          `v2/configuration/platform/pdf-service`,
-          configurationServiceUrl,
-        );
+        const pdfDefinitionUrl = new URL(`v2/configuration/platform/pdf-service`, configurationServiceUrl);
 
         const { data } = await axios.get(pdfDefinitionUrl.href, {
           params: { tenantId: tenantId?.toString() },
@@ -91,8 +84,7 @@ export async function createPdfConfigurationTools({
    */
   const pdfConfigurationUpdateTool = createTool({
     id: 'update-pdf-configuration',
-    description:
-      'Update the JSON PDF configuration template and related settings.',
+    description: 'Update the JSON PDF configuration template and related settings.',
     inputSchema: z.object({
       name: z.string().optional(),
       description: z.string().optional(),
@@ -119,34 +111,25 @@ export async function createPdfConfigurationTools({
       variables: z.string().optional(),
     }),
 
-    execute: async (
-      inputData,
-      { requestContext }: { requestContext: AdspRequestContext<{ pdfDefinitionId: string }> },
-    ) => {
-      const {
+    execute: async (inputData, context) => {
+      const requestContext = context.requestContext as AdspRequestContext<{ pdfDefinitionId: string }> | undefined;
 
-        template,
-        variables,
-        additionalStyles,
-        header,
-        footer,
-
-      } = inputData;
+      if (!requestContext) {
+        throw new Error('Missing request context.');
+      }
+      const { template, variables, additionalStyles, header, footer } = inputData;
 
       const pdfDefinitionId = requestContext.get('pdfDefinitionId');
       const tenantId = requestContext.get('tenantId');
 
-      const pdfDefinitionUrl = new URL(
-        `v2/configuration/platform/pdf-service`,
-        configurationServiceUrl,
-      );
+      const pdfDefinitionUrl = new URL(`v2/configuration/platform/pdf-service`, configurationServiceUrl);
 
-        const { data } = await axios.get(pdfDefinitionUrl.href, {
-            params: { tenantId: tenantId?.toString() },
-          headers: {
-            Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
-          },
-        });
+      const { data } = await axios.get(pdfDefinitionUrl.href, {
+        params: { tenantId: tenantId?.toString() },
+        headers: {
+          Authorization: `Bearer ${await tokenProvider.getAccessToken()}`,
+        },
+      });
 
       const currentPdfDefinition = data.latest.configuration[pdfDefinitionId];
 
@@ -162,12 +145,9 @@ export async function createPdfConfigurationTools({
           adspId`urn:ads:platform:configuration-service:v2`,
         );
 
-        const pdfDefinitionUrl = new URL(
-          `v2/configuration/platform/pdf-service`,
-          configurationServiceUrl,
-        );
+        const pdfDefinitionUrl = new URL(`v2/configuration/platform/pdf-service`, configurationServiceUrl);
 
-        const updatePayload = {[pdfDefinitionId]: {...currentPdfDefinition}};
+        const updatePayload = { [pdfDefinitionId]: { ...currentPdfDefinition } };
 
         const { data, status } = await axios.patch(
           pdfDefinitionUrl.href,
