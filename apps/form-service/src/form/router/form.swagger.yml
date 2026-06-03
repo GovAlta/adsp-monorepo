@@ -271,7 +271,7 @@ components:
                 results:
                   type: array
                   items:
-                  $ref: '#/components/schemas/FormDefinition'
+                    $ref: '#/components/schemas/FormDefinition'
                 page:
                   type: object
                   properties:
