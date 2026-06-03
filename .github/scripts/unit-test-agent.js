@@ -16,6 +16,7 @@ const { Octokit } = require('@octokit/rest');
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { fetchTicket } = require('./jira-client');
 
 // ─────────────────────────────────────────────────────────────
 // Environment
@@ -125,15 +126,15 @@ function resolveTestFilePath(sourceFile, config) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Build the GPT system prompt — loads unit-testing.md at runtime
+// Build the GPT system prompt — loads unit-testing-standards.md at runtime
 // ─────────────────────────────────────────────────────────────
 function buildSystemPrompt(config, mode) {
-  const skillsPath = path.join(process.cwd(), '.github', 'agents', 'unit-testing.md');
+  const skillsPath = path.join(process.cwd(), 'architecture', 'unit-testing-standards.md');
   let skillsContent = '';
   if (fs.existsSync(skillsPath)) {
     skillsContent = fs.readFileSync(skillsPath, 'utf8');
   } else {
-    console.warn('Warning: .github/agents/unit-testing.md not found — using minimal prompt');
+    console.warn('Warning: architecture/unit-testing-standards.md not found — using minimal prompt');
     skillsContent =
       'Write comprehensive Jest unit tests following the AAA pattern. One concept per test. No logic in tests. Colocate test files next to source files.';
   }
@@ -174,7 +175,11 @@ function buildUserPrompt(sourceFile, sourceContent, existingTestContent, jiraCon
   const parts = [];
 
   if (jiraContext) {
-    parts.push(`JIRA CONTEXT:\nTicket(s): ${jiraContext}`);
+    const jiraLines = ['JIRA CONTEXT:'];
+    if (jiraContext.summary) jiraLines.push(`Summary: ${jiraContext.summary}`);
+    if (jiraContext.description) jiraLines.push(`Description:\n${jiraContext.description}`);
+    if (jiraContext.acceptanceCriteria) jiraLines.push(`Acceptance Criteria:\n${jiraContext.acceptanceCriteria}`);
+    parts.push(jiraLines.join('\n'));
   }
 
   const truncatedSource =
@@ -377,7 +382,7 @@ function findUntestedFiles(projectName, config) {
 // ─────────────────────────────────────────────────────────────
 // Process a single source file: call GPT and write or print result
 // ─────────────────────────────────────────────────────────────
-async function processSourceFile(relativeSourcePath, args, config, systemPrompt) {
+async function processSourceFile(relativeSourcePath, args, config, systemPrompt, jiraTicket = null) {
   const absSourcePath = path.isAbsolute(relativeSourcePath)
     ? relativeSourcePath
     : path.join(process.cwd(), relativeSourcePath);
@@ -397,7 +402,7 @@ async function processSourceFile(relativeSourcePath, args, config, systemPrompt)
     console.log(`  Existing test file found: ${testFilePath}`);
   }
 
-  const userPrompt = buildUserPrompt(relativeSourcePath, sourceContent, existingTestContent, args.ticket || null, null);
+  const userPrompt = buildUserPrompt(relativeSourcePath, sourceContent, existingTestContent, jiraTicket, null);
 
   let result;
   try {
@@ -445,8 +450,13 @@ async function runLocalMode(args, config) {
 
   const systemPrompt = buildSystemPrompt(config, args.mode);
 
+  const jiraTicket = args.ticket ? await fetchTicket(args.ticket) : null;
+  if (jiraTicket) {
+    console.log(`  Jira ticket: ${args.ticket} — ${jiraTicket.summary || '(no summary)'}`);
+  }
+
   if (args.file) {
-    const result = await processSourceFile(args.file, args, config, systemPrompt);
+    const result = await processSourceFile(args.file, args, config, systemPrompt, jiraTicket);
 
     if (result && !args.dryRun) {
       // Infer project name from the file path — apps/<project>/... or libs/<project>/...
@@ -472,7 +482,7 @@ async function runLocalMode(args, config) {
     console.log(`  Found ${untestedFiles.length} untested file(s) in ${args.project}`);
     for (const absPath of untestedFiles) {
       const rel = path.relative(process.cwd(), absPath).replace(/\\/g, '/');
-      await processSourceFile(rel, args, config, systemPrompt);
+      await processSourceFile(rel, args, config, systemPrompt, jiraTicket);
     }
 
     if (!args.dryRun) {
@@ -508,9 +518,12 @@ async function runPrMode(args, config) {
     repo: REPO_NAME,
     pull_number: prNumber,
   });
-  const jiraContext = extractJiraTicket(prData.data.title, prData.data.body);
-  if (jiraContext) {
-    console.log(`  Jira context: ${jiraContext}`);
+  const ticketId = extractJiraTicket(prData.data.title, prData.data.body);
+  const jiraTicket = ticketId ? await fetchTicket(ticketId) : null;
+  if (jiraTicket) {
+    console.log(`  Jira ticket: ${ticketId} — ${jiraTicket.summary || '(no summary)'}`);
+  } else if (ticketId) {
+    console.log(`  Jira ticket ID found (${ticketId}) but fetch returned null — continuing without Jira context`);
   }
   const headSha = HEAD_SHA || prData.data.head.sha;
 
@@ -578,7 +591,7 @@ async function runPrMode(args, config) {
       file.filename,
       sourceContent,
       existingTestContent,
-      jiraContext,
+      jiraTicket,
       file.patch || null,
     );
 

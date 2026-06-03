@@ -83,6 +83,42 @@ components:
           format: date-time
 
 /comment/v1/topic-types:
+  get:
+    tags:
+      - Topic
+    description: Retrieves all topic types for the tenant.
+    responses:
+      200:
+        description: Topic types retrieved successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  adminRoles:
+                    type: array
+                    items:
+                      type: string
+                  readerRoles:
+                    type: array
+                    items:
+                      type: string
+                  commenterRoles:
+                    type: array
+                    items:
+                      type: string
+                  securityClassification:
+                    type: string
+      401:
+        description: Not authenticated.
+      403:
+        description: User not permitted for requested operation.
   post:
     tags:
       - Topic
@@ -129,6 +165,89 @@ components:
         description: User not permitted for requested operation.
       409:
         description: Topic type name already exists.
+
+/comment/v1/topic-types/{topic-type-id}:
+  get:
+    tags:
+      - Topic
+    description: Retrieves a specific topic type for the tenant.
+    parameters:
+      - name: topic-type-id
+        description: ID of the topic type to retrieve.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Topic type retrieved successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                adminRoles:
+                  type: array
+                  items:
+                    type: string
+                readerRoles:
+                  type: array
+                  items:
+                    type: string
+                commenterRoles:
+                  type: array
+                  items:
+                    type: string
+                securityClassification:
+                  type: string
+      401:
+        description: Not authenticated.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic type not found.
+  delete:
+    tags:
+      - Topic
+    description: Permanently deletes a topic type for the tenant.
+    parameters:
+      - name: topic-type-id
+        description: ID of the topic type to delete.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Topic type deleted successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+                id:
+                  type: string
+      401:
+        description: Not authenticated.
+      403:
+        description: User not permitted for requested operation.
+      409:
+        description: Topic type has associated topics that must be deleted first.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                errorMessage:
+                  type: string
+                topics:
+                  type: integer
 
 /comment/v1/topics:
   get:

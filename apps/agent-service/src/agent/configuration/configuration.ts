@@ -24,7 +24,8 @@ import { createAuthenticatedMcpFetch, loadKnownMcpServerSecrets, normalizeMcpSer
  * evaluated per-request.
  */
 function withContextualInstructions(instructions: string) {
-  return ({ requestContext }: { requestContext: RequestContext<Record<string, unknown>> }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ({ requestContext }: { requestContext: RequestContext<any> }) => {
     const now = new Date();
     const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
     const currentDateTime = now.toISOString();

@@ -63,6 +63,59 @@ function mapTopic(apiId: AdspId, topic: Topic): TopicResponse {
   };
 }
 
+export function getTopicTypes(): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id || user?.tenantId;
+      if (!user) {
+        throw new UnauthorizedError('User must be authenticated to get topic types.');
+      }
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
+        throw new UnauthorizedUserError('get topic types', user);
+      }
+
+      const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
+        tenantId
+      );
+
+      res.send(Object.values(types || {}).map(mapTopicType));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function getTopicType(): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id || user?.tenantId;
+      if (!user) {
+        throw new UnauthorizedError('User must be authenticated to get a topic type.');
+      }
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
+        throw new UnauthorizedUserError('get topic type', user);
+      }
+
+      const topicTypeId = req.params.topicTypeId;
+      const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
+        tenantId
+      );
+      const type = types?.[topicTypeId];
+      if (!type) {
+        throw new NotFoundError('topic type', topicTypeId);
+      }
+
+      res.send(mapTopicType(type));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function createTopicType(
   apiId: AdspId,
   logger: Logger,
@@ -122,6 +175,73 @@ export function createTopicType(
       res.send({ id });
 
       logger.info(`Topic type ${name} (ID: ${id}) created by user ${user.name} (ID: ${user.id}).`, {
+        context: 'comment-router',
+        tenantId: tenantId?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function deleteTopicType(
+  apiId: AdspId,
+  logger: Logger,
+  repository: TopicRepository,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id || user?.tenantId;
+      if (!user) {
+        throw new UnauthorizedError('User must be authenticated to delete a topic type.');
+      }
+
+      if (!isAllowedUser(user, tenantId, ServiceRoles.TopicSetter, true)) {
+        throw new UnauthorizedUserError('delete topic type', user);
+      }
+
+      const topicTypeId = req.params.topicTypeId;
+      const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
+        tenantId
+      );
+
+      if (!types?.[topicTypeId]) {
+        throw new NotFoundError('topic type', topicTypeId);
+      }
+
+      const associatedTopics = await repository.countTopicsByType(tenantId, topicTypeId);
+
+      if (associatedTopics > 0) {
+        res.status(HttpStatusCodes.CONFLICT).send({
+          errorMessage: `Topic type '${topicTypeId}' cannot be deleted because ${associatedTopics} topic(s) are associated with it.`,
+          topics: associatedTopics,
+        });
+        return;
+      }
+
+      const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+      const configurationUrl = new URL(`v2/configuration/${apiId.namespace}/${apiId.service}`, configurationServiceUrl);
+      const token = await tokenProvider.getAccessToken();
+
+      await axios.patch(
+        configurationUrl.href,
+        {
+          operation: 'DELETE',
+          property: topicTypeId,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId: tenantId?.toString() },
+        }
+      );
+
+      res.send({ deleted: true, id: topicTypeId });
+
+      logger.info(`Topic type ${topicTypeId} deleted by user ${user.name} (ID: ${user.id}).`, {
         context: 'comment-router',
         tenantId: tenantId?.toString(),
         user: `${user.name} (ID: ${user.id})`,
@@ -419,6 +539,7 @@ export function createTopicRouter({
 }: TopicRouterProps): Router {
   const router = Router();
 
+  router.get('/topic-types', getTopicTypes());
   router.post(
     '/topic-types',
     createValidationHandler(
@@ -432,6 +553,16 @@ export function createTopicRouter({
       body('writeRoles.*').optional().isString()
     ),
     createTopicType(apiId, logger, directory, tokenProvider)
+  );
+  router.get(
+    '/topic-types/:topicTypeId',
+    createValidationHandler(param('topicTypeId').isString().isLength({ min: 1, max: 50 }).matches(/^[a-zA-Z0-9-_ ]{1,50}$/)),
+    getTopicType()
+  );
+  router.delete(
+    '/topic-types/:topicTypeId',
+    createValidationHandler(param('topicTypeId').isString().isLength({ min: 1, max: 50 }).matches(/^[a-zA-Z0-9-_ ]{1,50}$/)),
+    deleteTopicType(apiId, logger, repository, directory, tokenProvider)
   );
 
   router.get(

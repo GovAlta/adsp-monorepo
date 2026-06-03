@@ -52,6 +52,7 @@ globalConfig.json
 # env file
 **/.env
 **/.local.env
+.env.github-scripts
 
 # oc env configuration
 /.openshift/configuration/*.encoded.yml
@@ -75,6 +76,8 @@ coveragereport/*
 
 .nx/cache
 .nx/workspace-data
+.nx/polygraph
+.nx/self-healing
 .cache
 apps/builder-app/.generated
 
